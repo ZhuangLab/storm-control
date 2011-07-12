@@ -1,0 +1,72 @@
+
+(1) Install Dependencies:
+ (a) Mingw
+ (b) Python
+ (c) PyQt
+ (d) pywin32
+ (e) numpy (for the optimal focus lock mode)
+ (f) scipy (for the optimal focus lock mode)
+
+
+(2) Compile UI elements (in the qtdesigner folder):
+ With PyQt you should get a program installed called pyuic.py. Typically
+ it can be found in PythonXY\lib\site-packages\pyqt4\uic\. You use it
+ like this pyuic.py asdf.ui > asdf.py. You'll need to compile all of the
+ following:
+
+ (a) camera-params-v1.ui > camera_params_v1.py
+ (b) camera-v1.ui > camera_v1.py
+ (c) focuslock-v1.ui > focuslock_v1.py
+ (d) hal-4000-v1.ui > hal_4000ui_v1.py
+ (e) illumination-v1.ui > illumination_v1.py
+ (f) misc-controls-v1.ui > misccontrolsui_v1.py
+ (g) spotcounter-v2.ui > spotcounterui_v1.py
+ (h) stage-v1.ui > stageui_v1.py
+ (i) progression-v1.ui > progressionui_v1.py
+
+
+(3) Compile C helper libraries:
+ Instructions on how to compile the libraries are in the library headers.
+ (a) andor/format_converters.c
+ (b) objectFinder/MedianCounter.c
+ (c) phreshPhotonics/averager.c (only if you are using their QPD).
+ (d) focusLock/focus_quality.c (for optimal focus lock mode)
+
+
+(4) Verify that the software works:
+ The settings_default.xml file contains all the options related to program
+ setup and etc. As a first step to verify that the software runs absent
+ any hardware issues do the following:
+
+ (a) Set camera_type to none
+ (b) Set have_illumination to 1
+ (c) Set have_stage to 1
+ (d) Set have_focus_lock to 1
+ (e) Set have_temperature_logger to 0
+ (f) Set have_misc_control to 0
+ (g) Set have_progressions to 1
+
+ Then, in the folder where the hal-4000.py file is located type 
+ "python hal-4000.py" to run the program. With these settings the software 
+ should start without any warning messages and display a simple pattern in 
+ the camera view area.
+
+
+(5) Modifying to work with your hardware:
+ This is the hard part as it is of course hardware dependent. Python classes
+ for control of the hardware that is available in our lab can be found in
+ folders that are named (more or less) by the manufacturer of the hardware.
+ 
+ In addition there are the following folders:
+ (1) Camera - Classes for camera control, image display & parameter display.
+ (2) focuslock - Classes for focus lock control.
+ (3) illumination - Classes for illumination & shuttering.
+ (4) stagecontrol - Classes for controlling a motorized XY stage.
+
+ In these folders you will see files/Classes that start with a machine name, 
+ e.g. storm3IlluminationControl or noneIlluminationControl. You will need to
+ create your own version of the files specialized to interface with your
+ specific hardware.
+
+ 
+

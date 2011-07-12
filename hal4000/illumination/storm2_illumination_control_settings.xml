@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<power_control_settings>
+  <block>
+    <description type="text">750</description>
+    <color type="rgb">255,50,50</color>
+    <basic_shutter type="boolean">TRUE</basic_shutter>
+    <channel type="int">0</channel>
+    <ni_board type="string">PCIe-6259</ni_board>
+    <dig_line type="int">0</dig_line>
+  </block>
+  <block>
+    <description type="text">647</description>
+    <color type="rgb">255,0,0</color>
+    <use_aotf type="boolean">TRUE</use_aotf>
+    <frequency type="float">77.734</frequency>
+    <!-- 10 * (22.5db (max) + 7.0db (min) + 2 * 0.6 (freq offset range)) -->
+    <amplitude type="float">307</amplitude>
+    <channel type="int">1</channel>
+    <ni_board type="string">PCIe-6259</ni_board>
+    <dig_line type="int">1</dig_line>
+  </block>
+  <block>
+    <description type="text">568</description>
+    <color type="rgb">255,255,0</color>
+    <use_aotf type="boolean">TRUE</use_aotf>
+    <frequency type="float">91.480</frequency>
+    <amplitude type="float">290</amplitude>
+    <channel type="int">2</channel>
+    <ni_board type="string">PCIe-6259</ni_board>
+    <dig_line type="int">2</dig_line>
+  </block>
+  <block>
+    <description type="text">532</description>
+    <color type="rgb">0,255,0</color>
+    <basic_shutter type="boolean">TRUE</basic_shutter>
+    <channel type="int">3</channel>
+    <ni_board type="string">PCIe-6259</ni_board>
+    <dig_line type="int">3</dig_line>
+  </block>
+  <block>
+    <description type="text">488</description>
+    <color type="rgb">0,0,255</color>
+    <use_aotf type="boolean">TRUE</use_aotf>
+    <frequency type="float">112.444</frequency>
+    <amplitude type="float">289</amplitude>
+    <channel type="int">4</channel>
+    <ni_board type="string">PCIe-6259</ni_board>
+    <dig_line type="int">8</dig_line>
+  </block>
+  <block>
+    <description type="text">457</description>
+    <color type="rgb">128,0,255</color>
+    <use_aotf type="boolean">TRUE</use_aotf>
+    <frequency type="float">123.427</frequency>
+    <amplitude type="float">278</amplitude>
+    <channel type="int">5</channel>
+    <ni_board type="string">PCIe-6259</ni_board>
+    <dig_line type="int">9</dig_line>
+  </block>
+  <block>
+    <description type="text">405</description>
+    <color type="rgb">255,0,255</color>
+    <channel type="int">6</channel>
+    <min_voltage type="float">0.0</min_voltage>
+    <max_voltage type="float">5.0</max_voltage>
+    <use_cube405 type="boolean">TRUE</use_cube405>
+    <frequency type="float">0.0</frequency>
+    <amplitude type="int">5000</amplitude>
+    <ni_board type="string">PCIe-6259</ni_board>
+    <dig_line type="int">10</dig_line>
+  </block>
+
+<!--
+  <block>
+    <description type="text">647</description>
+    <color type="rgb">255,100,100</color>
+    <basic_shutter type="boolean">TRUE</basic_shutter>
+    <channel type="int">1</channel>
+    <ni_board type="string">PCIe-6259</ni_board>
+    <dig_line type="int">1</dig_line>
+  </block>
+  <block>
+    <description type="text">568</description>
+    <color type="rgb">255,255,0</color>
+    <basic_shutter type="boolean">TRUE</basic_shutter>
+    <channel type="int">2</channel>
+    <ni_board type="string">PCIe-6259</ni_board>
+    <dig_line type="int">2</dig_line>
+  </block>
+  <block>
+    <description type="text">532</description>
+    <color type="rgb">0,255,0</color>
+    <basic_shutter type="boolean">TRUE</basic_shutter>
+    <channel type="int">3</channel>
+    <ni_board type="string">PCIe-6259</ni_board>
+    <dig_line type="int">3</dig_line>
+  </block>
+  <block>
+    <description type="text">405</description>
+    <color type="rgb">255,0,255</color>
+    <basic_shutter type="boolean">TRUE</basic_shutter>
+    <channel type="int">4</channel>
+    <ni_board type="string">PCIe-6259</ni_board>
+    <dig_line type="int">10</dig_line>
+  </block>
+-->
+
+
+
+<!--
+
+-->
+
+<!--
+  <block>
+    <description type="text">647</description>
+    <color type="rgb">255,100,100</color>
+    <aa_aotf type="boolean">TRUE</aa_aotf>
+    <aa_frequency type="float">77.734</aa_frequency>
+    <aa_channel type="int">1</aa_channel>
+    <channel type="int">1</channel>
+    <ao_board type="string">PCIe-6259</ao_board>
+    <ao_line type="int">1</ao_line>
+    <counter_board type="string">none</counter_board>
+    <counter type="int">0</counter>
+    <dig_board type="string">PCIe-6259</dig_board>
+    <dig_line type="int">1</dig_line>
+  </block>
+
+  <block>
+    <description type="text">568</description>
+    <color type="rgb">255,255,0</color>
+    <aa_aotf type="boolean">TRUE</aa_aotf>
+    <aa_frequency type="float">91.48</aa_frequency>
+    <aa_channel type="int">2</aa_channel>
+    <channel type="int">2</channel>
+    <ao_board type="string">PCIe-6259</ao_board>
+    <ao_line type="int">2</ao_line>
+    <counter_board type="string">PCIe-6259</counter_board>
+    <counter type="int">1</counter>
+    <dig_board type="string">PCIe-6259</dig_board>
+    <dig_line type="int">2</dig_line>
+  </block>
+
+  <block>
+    <description type="text">488</description>
+    <color type="rgb">0,0,255</color>
+    <aa_aotf type="boolean">TRUE</aa_aotf>
+    <aa_frequency type="float">112.444</aa_frequency>
+    <aa_channel type="int">3</aa_channel>
+    <channel type="int">3</channel>
+    <ao_board type="string">PCIe-6259</ao_board>
+    <ao_line type="int">3</ao_line>
+    <counter_board type="string">PCIe-6259</counter_board>
+    <counter type="int">2</counter>
+    <dig_board type="string">PCIe-6259</dig_board>
+    <dig_line type="int">3</dig_line>
+  </block>
+
+  <block>
+    <description type="text">457</description>
+    <color type="rgb">128,0,255</color>
+    <aa_aotf type="boolean">TRUE</aa_aotf>
+    <aa_frequency type="float">123.427</aa_frequency>
+    <aa_channel type="int">4</aa_channel>
+    <channel type="int">4</channel>
+    <ao_board type="string">PCIe-6259</ao_board>
+    <ao_line type="int">4</ao_line>
+    <counter_board type="string">PCIe-6259</counter_board>
+    <counter type="int">3</counter>
+    <dig_board type="string">PCIe-6259</dig_board>
+    <dig_line type="int">4</dig_line>
+  </block>
+
+  <block>
+    <description type="text">405</description>
+    <color type="rgb">255,0,255</color>
+    <channel type="int">2</channel>
+    <min_voltage type="float">0.0</min_voltage>
+    <max_voltage type="float">5.0</max_voltage>
+    <use_cube405 type="boolean">TRUE</use_cube405>
+    <frequency type="float">0.0</frequency>
+    <amplitude type="int">5000</amplitude>
+    <ni_board type="string">PCIe-6259</ni_board>
+    <dig_line type="int">10</dig_line>
+  </block>
+-->
+
+</power_control_settings>

@@ -1,0 +1,106 @@
+#!/usr/bin/python
+#
+# Communicates with the Newport SMC100 motor controller.
+#
+# Hazen 2/11
+#
+
+import time
+
+import halLib.RS232 as RS232
+
+class SMC100(RS232.RS232):
+    def __init__(self, id = 1, port = "COM5", timeout = None, baudrate = 57600):
+        RS232.RS232.__init__(self, port, timeout, baudrate, "\r\n", 0.1)
+        self.id = str(id)
+        try:
+            # check if we are referenced
+            if self.amNotReferenced():
+                print "SMC100 homing."
+                # reference
+                self.commWithResp(self.id + "OR")
+                # wait until homed
+                while self.amHoming():
+                    time.sleep(1)
+        except:
+            print "SMC100 controller is not responding."
+            print "Perhaps it is not turned on, or the Keyspan COM ports have been scrambled."
+            self.live = 0
+
+    def _compose(self, command):
+        return self.id + command
+
+    def _command(self, command):
+        if self.live:
+            self.sendCommand(self._compose(command))
+            return self.waitResponse()[:-2]
+
+    def amHoming(self):
+        self.state = self._command("TS")
+        if self.state == (self.id + "TS00001E"):
+            return 1
+        else:
+            return 0
+
+    def amMoving(self):
+        self.state = self._command("TS")
+        if self.state == (self.id + "TS000028"):
+            return 1
+        else:
+            return 0
+
+    def amNotReferenced(self):
+        self.state = self._command("TS")
+        assert len(self.state) == len(self.id + "TS00000A"), "SMC100 controller not responding."
+        if self.state == (self.id + "TS00000A"):
+            return 1
+        else:
+            return 0
+
+    def getPosition(self):
+        try:
+            return float(self._command("TP")[3:])
+        except:
+            return -1.0
+
+    def moveTo(self, position):
+        self.position = position
+        self.commWithResp(self.id + "PA"+str(self.position))
+        error = self._command("TE")
+        if not (error == (self.id + "TE@")):
+            print "SMC100 motion error:", error
+        self.position = float(self._command("TP")[3:])
+
+    def stopMove(self):
+        if self.amMoving():
+            self.sendCommand("ST")
+
+#
+# Testing
+# 
+
+if __name__ == "__main__":
+    smc100 = SMC100(id = 3)
+    pos = smc100.getPosition()
+    print pos
+    print smc100._command("TE")
+    print smc100._command("TS")
+    smc100.moveTo(0.0)
+    smc100.shutDown()
+
+#
+#    Copyright (C) 2011  Hazen Babcock
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
