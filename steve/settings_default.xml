@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<settings>
+  <!-- general -->
+  <setup_name type="string">storm3</setup_name>
+  <x_sign type="float">-1.0</x_sign>
+  <y_sign type="float">-1.0</y_sign>
+  <debug type="int">1</debug>
+  <use_as_default type="int">1</use_as_default>
+  <extrapolate_picture_count type="int">9</extrapolate_picture_count>
+  <mag1 type="string">100,100.0,0.0,0.0</mag1>
+  <mag2 type="string">10,9.09,-50.0,-438.0</mag2> -->
+
+  <!-- capture -->
+  <directory type="string">c:\users\data\</directory>
+  <image_filename type="string">steve</image_filename>
+  <pixels_to_um type="float">0.167</pixels_to_um>
+  <magnification type="float">1.0</magnification>
+
+  <!-- position rectangles -->
+  <rectangle_size type="float">43.0</rectangle_size>
+  <pen_width type="int">2</pen_width>
+  <pen_color type="int-array">255,0,0</pen_color>
+
+</settings>
