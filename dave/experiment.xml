@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<experiment>
+  <x_offset>0.0</x_offset>
+  <y_offset>0.0</y_offset>
+  <frame_rate>57.3</frame_rate>
+  <pass>
+    <movie>
+      <name>bleach</name>
+      <length>20</length>
+      <lock_target>0.0</lock_target>
+      <progression>
+	<type>lockedout</type>
+      </progression>
+    </movie>
+    <movie>
+      <name>movie1</name>
+      <length>100</length>
+      <progression>
+	<!--
+	<type>linear</type>
+	<channel start="1.0">1</channel>
+	<channel start="0.1" inc="0.1" frames="100">3</channel>
+	<channel start="0.1" inc="0.1" frames="100">6</channel>
+	-->
+	<!--
+	<type>exponential</type>
+	<channel start="1.0">1</channel>
+	<channel start="0.1" inc="0.1" frames="100">3</channel>
+	<channel start="0.1" inc="0.1" frames="100">6</channel>
+	-->
+	<type>file</type>
+      </progression>
+    </movie>
+    <movie>
+      <name>movie2</name>
+      <length>100</length>
+      <progression>
+	<type>file</type>
+      </progression>
+    </movie>
+  </pass>
+</experiment>

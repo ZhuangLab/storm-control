@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<sequence>
+  <progressions>
+    <name>p1</name>
+    <copy>0</copy>
+    <progression channel="0" initial_power="0.1" delay_time="1.0">0.1</progression>
+    <progression channel="6" initial_power="0.4" delay_time="2.0">0.2</progression>
+  </progressions>
+  <movie>
+    <pause>1</pause>
+    <stage_x>0.0</stage_x>
+    <stage_y>0.0</stage_y>
+    <parameters>0</parameters>
+    <lock_target>0</lock_target>
+    <name>movie1</name>
+    <length>100</length>
+    <progression channel="0" initial_power="0.1" delay_time="1.0">0.1</progression>
+    <progression channel="2" initial_power="0.2" delay_time="2.0">0.2</progression>
+    <progression channel="4" initial_power="0.4" delay_time="3.0">0.4</progression>
+  </movie>
+  <movie>
+    <pause>0</pause>
+    <stage_x>20.0</stage_x>
+    <stage_y>20.0</stage_y>
+    <parameters>1</parameters>
+    <lock_target>-100.0</lock_target>
+    <progressions>p1</progressions>
+    <name>movie2</name>
+    <length>100</length>
+  </movie>
+  <movie>
+    <pause>0</pause>
+    <stage_x>40.0</stage_x>
+    <stage_y>40.0</stage_y>
+    <parameters>2</parameters>
+    <lock_target>100.0</lock_target>
+    <progressions>p1</progressions>
+    <name>movie3</name>
+    <length>100</length>
+  </movie>
+</sequence>

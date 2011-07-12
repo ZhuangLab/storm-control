@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<experiment>
+  <x_offset>0.0</x_offset>
+  <y_offset>0.0</y_offset>
+  <frame_rate>57.3</frame_rate>
+  <pass>
+    <movie>
+      <name>conv</name>
+      <length>5</length>
+      <lock_target>0.0</lock_target>
+    </movie>
+  </pass>
+</experiment>

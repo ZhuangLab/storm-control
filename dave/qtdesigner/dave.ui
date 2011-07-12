@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>590</width>
+    <height>480</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>590</width>
+    <height>480</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>590</width>
+    <height>480</height>
+   </size>
+  </property>
+  <property name="acceptDrops">
+   <bool>true</bool>
+  </property>
+  <property name="windowTitle">
+   <string>Dave</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QGroupBox" name="sequenceGroupBox">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>261</width>
+      <height>291</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Sequence Details</string>
+    </property>
+    <widget class="QPushButton" name="startButton">
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>250</y>
+       <width>91</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Start Movie</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="skipButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>250</y>
+       <width>91</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Skip Movie</string>
+     </property>
+    </widget>
+    <widget class="QFrame" name="detailsFrame">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>241</width>
+       <height>221</height>
+      </rect>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
+     </property>
+     <widget class="QLabel" name="detailsLabel">
+      <property name="geometry">
+       <rect>
+        <x>5</x>
+        <y>3</y>
+        <width>231</width>
+        <height>261</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>TextLabel</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QPushButton" name="runButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>410</y>
+      <width>91</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Run</string>
+    </property>
+   </widget>
+   <widget class="QGroupBox" name="powerGroupBox">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>10</y>
+      <width>301</width>
+      <height>291</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Power Progression</string>
+    </property>
+    <widget class="QLabel" name="channelLabel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>71</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Channel</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="initialPowerLabel">
+     <property name="geometry">
+      <rect>
+       <x>80</x>
+       <y>20</y>
+       <width>71</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Initial Power</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="incrementLabel">
+     <property name="geometry">
+      <rect>
+       <x>220</x>
+       <y>20</y>
+       <width>71</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Increment</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="delayTimeLabel">
+     <property name="geometry">
+      <rect>
+       <x>150</x>
+       <y>20</y>
+       <width>71</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Delay Time</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QPushButton" name="abortButton">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>410</y>
+      <width>91</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Abort</string>
+    </property>
+   </widget>
+   <widget class="QGroupBox" name="estimatesGroupBox">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>350</y>
+      <width>571</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Estimates</string>
+    </property>
+    <widget class="QLabel" name="timeLabel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>251</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>TextLabel</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="spaceLabel">
+     <property name="geometry">
+      <rect>
+       <x>270</x>
+       <y>20</y>
+       <width>251</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>TextLabel</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="sequenceGroupBox_2">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>300</y>
+      <width>571</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Sequence</string>
+    </property>
+    <widget class="QLabel" name="sequenceLabel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>401</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>NA</string>
+     </property>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>590</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionNew_Sequence"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="menuXML">
+    <property name="title">
+     <string>XML</string>
+    </property>
+    <addaction name="actionGenerate"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuXML"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionNew_Sequence">
+   <property name="text">
+    <string>New Sequence</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionGenerate">
+   <property name="text">
+    <string>Generate</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
