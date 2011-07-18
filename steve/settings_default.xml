@@ -18,7 +18,7 @@
 
   <!-- position rectangles -->
   <rectangle_size type="float">43.0</rectangle_size>
-  <pen_width type="int">2</pen_width>
+  <pen_width type="int">20</pen_width>
   <pen_color type="int-array">255,0,0</pen_color>
 
 </settings>

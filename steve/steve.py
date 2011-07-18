@@ -75,6 +75,7 @@ class Window(QtGui.QMainWindow):
         self.connect(self.ui.actionDisconnect, QtCore.SIGNAL("triggered()"), self.handleDisconnect)
         self.connect(self.ui.actionClear_Mosaic, QtCore.SIGNAL("triggered()"), self.handleClearMosaic)
         self.connect(self.ui.actionLoad_Mosaic, QtCore.SIGNAL("triggered()"), self.handleLoadMosaic)
+        self.ui.actionLoad_Positions.triggered.connect(self.handleLoadPositions)
         self.connect(self.ui.actionSave_Mosaic, QtCore.SIGNAL("triggered()"), self.handleSaveMosaic)
         self.connect(self.ui.actionSave_Positions, QtCore.SIGNAL("triggered()"), self.handleSavePositions)
         self.connect(self.ui.actionSet_Working_Directory, QtCore.SIGNAL("triggered()"), self.handleSetWorkingDirectory)
@@ -90,6 +91,7 @@ class Window(QtGui.QMainWindow):
 
         self.connect(self.positions, QtCore.SIGNAL("currentRowChanged(int)"), self.handleRowChange)
         self.connect(self.positions, QtCore.SIGNAL("deletePosition(int)"), self.handleRowDelete)
+        self.connect(self.positions, QtCore.SIGNAL("addPosition(float, float)"), self.addPosition)
 
         self.connect(self.comm, QtCore.SIGNAL("captureComplete(float, float)"), self.addPixmap)
 
@@ -153,6 +155,14 @@ class Window(QtGui.QMainWindow):
                                                                 "*.msc"))
         if mosaic_filename:
             self.view.loadMosaicFile(mosaic_filename)
+
+    def handleLoadPositions(self):
+        positions_filename = str(QtGui.QFileDialog.getOpenFileName(self,
+                                                                   "Load Positions",
+                                                                   self.parameters.directory,
+                                                                   "*.txt"))
+        if positions_filename:
+            self.positions.loadPositions(positions_filename)
 
     def handleMagChange(self, magIndex):
         data = self.ui.magComboBox.itemData(magIndex).toString()

@@ -190,6 +190,7 @@
     <addaction name="separator"/>
     <addaction name="actionClear_Mosaic"/>
     <addaction name="actionLoad_Mosaic"/>
+    <addaction name="actionLoad_Positions"/>
     <addaction name="actionSave_Mosaic"/>
     <addaction name="actionSave_Positions"/>
     <addaction name="separator"/>
@@ -236,6 +237,11 @@
   <action name="actionClear_Mosaic">
    <property name="text">
     <string>Clear Mosaic</string>
+   </property>
+  </action>
+  <action name="actionLoad_Positions">
+   <property name="text">
+    <string>Load Positions</string>
    </property>
   </action>
  </widget>

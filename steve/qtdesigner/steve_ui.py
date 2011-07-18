@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'steve.ui'
 #
-# Created: Mon Jun 13 09:46:07 2011
+# Created: Mon Jul 18 13:59:25 2011
 #      by: PyQt4 UI code generator 4.8.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -127,12 +127,15 @@ class Ui_MainWindow(object):
         self.actionLoad_Mosaic.setObjectName(_fromUtf8("actionLoad_Mosaic"))
         self.actionClear_Mosaic = QtGui.QAction(MainWindow)
         self.actionClear_Mosaic.setObjectName(_fromUtf8("actionClear_Mosaic"))
+        self.actionLoad_Positions = QtGui.QAction(MainWindow)
+        self.actionLoad_Positions.setObjectName(_fromUtf8("actionLoad_Positions"))
         self.menuFile.addAction(self.actionConnect)
         self.menuFile.addAction(self.actionDisconnect)
         self.menuFile.addAction(self.actionSet_Working_Directory)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionClear_Mosaic)
         self.menuFile.addAction(self.actionLoad_Mosaic)
+        self.menuFile.addAction(self.actionLoad_Positions)
         self.menuFile.addAction(self.actionSave_Mosaic)
         self.menuFile.addAction(self.actionSave_Positions)
         self.menuFile.addSeparator()
@@ -159,4 +162,5 @@ class Ui_MainWindow(object):
         self.actionSet_Working_Directory.setText(QtGui.QApplication.translate("MainWindow", "Set Working Directory", None, QtGui.QApplication.UnicodeUTF8))
         self.actionLoad_Mosaic.setText(QtGui.QApplication.translate("MainWindow", "Load Mosaic", None, QtGui.QApplication.UnicodeUTF8))
         self.actionClear_Mosaic.setText(QtGui.QApplication.translate("MainWindow", "Clear Mosaic", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionLoad_Positions.setText(QtGui.QApplication.translate("MainWindow", "Load Positions", None, QtGui.QApplication.UnicodeUTF8))
 

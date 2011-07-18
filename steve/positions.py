@@ -2,7 +2,7 @@
 #
 # Handles the list of positions.
 #
-# Hazen 12/09
+# Hazen 07/11
 #
 
 from PyQt4 import QtCore, QtGui
@@ -38,6 +38,14 @@ class Positions(QtGui.QListWidget):
             self.emit(QtCore.SIGNAL("deletePosition(int)"), current)
         else:
             QtGui.QListWidget.keyPressEvent(self, event)
+
+    def loadPositions(self, filename):
+        pos_fp = open(filename, "r")
+        while 1:
+            line = pos_fp.readline()
+            if not line: break
+            [x, y] = line.split(",")
+            self.emit(QtCore.SIGNAL("addPosition(float, float)"), float(x), float(y))
 
     def savePositions(self, filename):
         fp = open(filename, "w")
