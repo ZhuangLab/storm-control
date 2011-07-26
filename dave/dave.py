@@ -17,7 +17,7 @@ import halLib.hdebug as hdebug
 # General
 import sequenceParser
 import xml_generator
-import lib.tcpClient
+import halLib.tcpClient
 
 # UIs.
 import qtdesigner.dave_ui as daveUi
@@ -75,7 +75,7 @@ class Window(QtGui.QMainWindow):
         self.connect(self.disconnect_timer, QtCore.SIGNAL("timeout()"), self.handleDisconnect)
 
         # tcp communications
-        self.comm = lib.tcpClient.TCPClient(self.ui.centralwidget)
+        self.comm = halLib.tcpClient.TCPClient(self.ui.centralwidget)
         self.connect(self.comm, QtCore.SIGNAL("complete()"), self.handleComplete)
 
     @hdebug.debug

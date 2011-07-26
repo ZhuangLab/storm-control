@@ -17,10 +17,10 @@ from PyQt4 import QtCore, QtGui
 import halLib.hdebug as hdebug
 
 # Communication with the acquisition software
-import lib.tcpClient
+import halLib.tcpClient
 
 # Reading DAX files
-import lib.daxspereader
+import halLib.daxspereader
 
 #
 # Movie class for use w/ tcpClient
@@ -47,7 +47,7 @@ class Capture(QtCore.QObject):
         self.filename = parameters.image_filename
         self.pixmaps = deque() # In the future we might support queuing captures?
         
-        self.tcp_client = lib.tcpClient.TCPClient()
+        self.tcp_client = halLib.tcpClient.TCPClient()
         self.connect(self.tcp_client, QtCore.SIGNAL("complete()"), self.captureDone)
         self.connected = False
 
@@ -63,7 +63,7 @@ class Capture(QtCore.QObject):
         tries = 0
         while (not success) and (tries < 4):
             try:
-                self.dax = lib.daxspereader.DaxReader(filename, verbose = 1)
+                self.dax = halLib.daxspereader.DaxReader(filename, verbose = 1)
                 frame = self.dax.loadAFrame(0).astype(numpy.float)
                 success = True
             except:
