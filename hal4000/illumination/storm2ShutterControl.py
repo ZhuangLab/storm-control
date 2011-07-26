@@ -16,6 +16,8 @@ class AShutterControl(shutterControl.ShutterControl):
         self.oversampling_default = 1
         self.number_channels = 7
         self.dig_shutter_channels = [0, 1, 2, 3, 8, 9, 10]
+#        self.number_channels = 6
+#        self.dig_shutter_channels = [0, 1, 2, 3, 8, 9]
         shutterControl.ShutterControl.__init__(self, powerToVoltage)
 
     def cleanup(self):

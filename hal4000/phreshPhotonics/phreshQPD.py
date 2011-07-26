@@ -108,7 +108,7 @@ class PhreshQPDPRISM2(PhreshQPD):
 #  Y diff - AI channel 2
 #
 class PhreshQPDSTORM2(PhreshQPD):
-    def __init__(self, samples = 5000, sample_rate_Hz = 50000):
+    def __init__(self, samples = 5000, sample_rate_Hz = 100000):
         PhreshQPD.__init__(self, samples = samples, sample_rate_Hz = sample_rate_Hz)
         self.qpd_task = nicontrol.AnalogInput("PCIe-6259", 0)
         self.qpd_task.addChannel(1)

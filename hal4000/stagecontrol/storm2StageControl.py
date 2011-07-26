@@ -19,7 +19,9 @@ import stagecontrol.stageControl as stageControl
 # also a global mutex so that stage XY and Z commands
 # don't get crossed.
 #
-prior_stage = prior.Prior(port = "COM1")
+
+#prior_stage = prior.Prior(port = "COM1")
+prior_stage = prior.Prior(port = "COM10", baudrate = 115200)
 prior_mutex = QtCore.QMutex()
 
 #

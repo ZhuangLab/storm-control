@@ -297,25 +297,27 @@ class QNiAnalogComm():
         self.filming = flag
 
 #
-# National Instruments digital communication. We ignore
-# the filming flag as the shutters should not be used
-# to modulate the light in sync with the camera. They
-# are used to backup whatever we are using to actaully
-# do the light modulation.
+# National Instruments digital communication. This is also
+# so fast that we don't bother to buffer.
 #
 
 class QNiDigitalComm():
     def __init__(self):
+        self.filming = False
         import nationalInstruments.nicontrol as nicontrol
         self.nicontrol = nicontrol
 
     def setShutter(self, on, board, channel):
-        task = self.nicontrol.DigitalOutput(board, channel)
-        if on:
-            task.output(True)
-        else:
-            task.output(False)
-        task.clearTask()
+        if not self.filming:
+            task = self.nicontrol.DigitalOutput(board, channel)
+            if on:
+                task.output(True)
+            else:
+                task.output(False)
+            task.clearTask()
+
+    def setFilming(self, flag):
+        self.filming = flag
 
 #
 # The MIT License
