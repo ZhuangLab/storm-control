@@ -22,12 +22,15 @@ import halLib.tcpClient
 # UIs.
 import qtdesigner.dave_ui as daveUi
 
+# Misc
+import halLib.parameters as params
+
 #
 # Main window
 #
 class Window(QtGui.QMainWindow):
     @hdebug.debug
-    def __init__(self, parent = None):
+    def __init__(self, parameters, parent = None):
         QtGui.QMainWindow.__init__(self, parent)
         
         # general
@@ -35,8 +38,10 @@ class Window(QtGui.QMainWindow):
         self.comm_queue = [None, None, None]
         self.current_comm = None
         self.directory = ""
+        self.html_update = False
         self.mode = "idle"
         self.movies = 0
+        self.parameters = parameters
         self.skip_pause = False
 
         self.delay_timer = QtCore.QTimer(self)
@@ -78,6 +83,11 @@ class Window(QtGui.QMainWindow):
         self.comm = halLib.tcpClient.TCPClient(self.ui.centralwidget)
         self.connect(self.comm, QtCore.SIGNAL("complete()"), self.handleComplete)
 
+        # html/xml update
+        if self.parameters.have_update:
+            import update_generator
+            self.html_update = update_generator.HTMLUpdate(parameters)
+
     @hdebug.debug
     def cleanUp(self):
         pass
@@ -85,11 +95,6 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def closeEvent(self, event):
         self.cleanUp()
-
-    @hdebug.debug
-    def handleComplete(self):
-        self.action = "complete"
-        self.updateState()
 
     @hdebug.debug
     def dragEnterEvent(self, event):
@@ -112,10 +117,17 @@ class Window(QtGui.QMainWindow):
         self.ui.runButton.setDown(False)
         self.ui.abortButton.setText("Abort")
         self.ui.abortButton.setDown(False)
+        if self.html_update:
+            self.html_update.stop()
 
     @hdebug.debug
     def handleAbortButton(self):
         self.action = "abortButton"
+        self.updateState()
+
+    @hdebug.debug
+    def handleComplete(self):
+        self.action = "complete"
         self.updateState()
 
     @hdebug.debug
@@ -190,6 +202,8 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def nextMovieSetup(self):
         movie = self.movies[self.movie_index]
+        if self.html_update:
+            self.html_update.newMovie(movie)
         self.comm.sendMovieParameters(movie)
         self.comm_queue = []
         delay = movie.delay
@@ -350,6 +364,8 @@ class Window(QtGui.QMainWindow):
             self.ui.skipButton.hide()
             self.ui.startButton.hide()
             self.comm.startMovie(self.movies[self.movie_index])
+            if self.html_update:
+                self.html_update.start()
 
 #        # find sum TCP event.
 #        elif (self.action == "sumComplete"):
@@ -379,7 +395,8 @@ class Window(QtGui.QMainWindow):
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
-    window = Window()
+    parameters = params.Parameters("settings_default.xml")
+    window = Window(parameters)
     window.show()
     app.exec_()
 
@@ -387,7 +404,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2010 Zhuang Lab, Harvard University
+# Copyright (c) 2011 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
