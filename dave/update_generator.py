@@ -16,6 +16,7 @@ class HTMLUpdate():
     def __init__(self, parameters):
         self.directory = parameters.directory
         self.password = parameters.password
+        self.port = parameters.server_port
         self.setup_name = parameters.setup_name
         self.server_name = parameters.server_name
         self.username = parameters.username
@@ -23,29 +24,29 @@ class HTMLUpdate():
         self.update_file = parameters.setup_name + ".txt"
 
     def getTime(self):
-        time.asctime(time.localtime(time.time()))
+        return time.asctime(time.localtime(time.time()))
 
     def newMovie(self, movie):
         fp = open(self.update_file, "a")
-        fp.write("Started movie " + movie.name + " at " + self.getTime())
+        fp.write("Started movie " + movie.name + " on " + self.getTime() + "\n")
         fp.close()
-        self.updateFileOnServer()
+        #self.updateFileOnServer()
 
     def start(self):
         fp = open(self.update_file, "w")
-        fp.write("Run started at: " + self.getTime())
+        fp.write("Run started on: " + self.getTime() + "\n")
         fp.close()
-        self.updateFileOnServer()
+        #self.updateFileOnServer()
 
     def stop(self):
         fp = open(self.update_file, "a")
-        fp.write("Run stopped at: " + self.getTime())
+        fp.write("Run stopped on: " + self.getTime() + "\n")
         fp.close()
-        self.updateFileOnServer()
+        #self.updateFileOnServer()
 
     def updateFileOnServer(self):
-        client = tinydav.WebDAVClient("physics.harvard.edu", 443)
-        client.setbasicauth("zhuang", "singlemolecule")
+        client = tinydav.WebDAVClient(self.server_name, self.port)
+        client.setbasicauth(self.username, self.password)
 
         local = self.update_file
         remote = self.directory + local
