@@ -147,16 +147,17 @@ class FocusLockZ(QtGui.QDialog):
         self.buttons[parameters.qpd_mode].setChecked(True)
 
         # offset display widget setup
-        self.offset_min = -0.4
-        self.offset_max = 0.4
+        # +-500nm display range hard coded (if qpd is properly calibrated).
+        self.offset_min = -500
+        self.offset_max = 500
         status_x = self.ui.offsetFrame.width() - 4
         status_y = self.ui.offsetFrame.height() - 4
         self.offsetDisplay = lockDisplayWidgets.QOffsetDisplay(status_x,
                                                                status_y,
                                                                self.offset_min,
                                                                self.offset_max,
-                                                               self.offset_min + 0.1,
-                                                               self.offset_max - 0.1,
+                                                               self.offset_min + 100,
+                                                               self.offset_max - 100,
                                                                has_center_bar = 1,
                                                                parent = self.ui.offsetFrame)
         self.offsetDisplay.setGeometry(2, 2, status_x, status_y)
@@ -259,7 +260,7 @@ class FocusLockZ(QtGui.QDialog):
         self.power = power
         self.stage_z = stage_z
         # Update the various displays
-        self.offsetDisplay.updateValue(offset)
+        self.offsetDisplay.updateValue(offset * self.scale)
         self.ui.offsetText.setText("{0:.1f}".format(offset * self.scale))
         self.sumDisplay.updateValue(power)
         self.ui.sumText.setText("{0:.1f}".format(power))
