@@ -306,14 +306,17 @@ class CounterOutput(NIDAQTask):
                                                    c_long(DAQmx_Val_FiniteSamps),
                                                    c_ulonglong(number_samples)))
 
-    def setTrigger(self, trigger_source, retriggerable = 1):
+    def setTrigger(self, trigger_source, retriggerable = 1, board = None):
         if retriggerable:
             checkStatus(nidaqmx.DAQmxSetStartTrigRetriggerable(self.taskHandle, 
                                                                c_long(1)))
         else:
             checkStatus(nidaqmx.DAQmxSetStartTrigRetriggerable(self.taskHandle, 
                                                                c_long(0)))
-        trigger = "/Dev" + str(self.board_number) + "/PFI" + str(trigger_source)
+        board_number = self.board_number
+        if board:
+            board_number = getBoardDevNumber(board)
+        trigger = "/Dev" + str(board_number) + "/PFI" + str(trigger_source)
 	checkStatus(nidaqmx.DAQmxCfgDigEdgeStartTrig(self.taskHandle,
                                                      c_char_p(trigger),
                                                      c_long(DAQmx_Val_Rising)))
