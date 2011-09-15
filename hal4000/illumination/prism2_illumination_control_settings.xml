@@ -9,6 +9,7 @@
     <use_aotf type="boolean">TRUE</use_aotf>
     <frequency type="float">88.60</frequency>
     <amplitude type="int">7600</amplitude>
+    <aotf_channel type="int">0</aotf_channel>
     <ni_board type="string">PCI-6722</ni_board>
     <dig_line type="int">0</dig_line>
   </block>
@@ -21,6 +22,7 @@
     <use_aotf type="boolean">TRUE</use_aotf>
     <frequency type="float">107.710</frequency>
     <amplitude type="int">6400</amplitude>
+    <aotf_channel type="int">1</aotf_channel>
     <ni_board type="string">PCI-6722</ni_board>
     <dig_line type="int">1</dig_line>
   </block>
@@ -33,6 +35,7 @@
     <use_aotf type="boolean">TRUE</use_aotf>
     <frequency type="float">115.64</frequency>
     <amplitude type="int">7000</amplitude>
+    <aotf_channel type="int">2</aotf_channel>
     <ni_board type="string">PCI-6722</ni_board>
     <dig_line type="int">2</dig_line>
   </block>
@@ -45,6 +48,7 @@
     <use_aotf type="boolean">TRUE</use_aotf>
     <frequency type="float">121.59</frequency>
     <amplitude type="int">6200</amplitude>
+    <aotf_channel type="int">3</aotf_channel>
     <ni_board type="string">PCI-6722</ni_board>
     <dig_line type="int">3</dig_line>
   </block>
@@ -57,6 +61,7 @@
     <use_aotf type="boolean">TRUE</use_aotf>
     <frequency type="float">141.97</frequency>
     <amplitude type="int">5500</amplitude>
+    <aotf_channel type="int">4</aotf_channel>
     <ni_board type="string">PCI-6722</ni_board>
     <dig_line type="int">4</dig_line>
   </block>
@@ -69,6 +74,7 @@
     <use_cube445 type="boolean">TRUE</use_cube445>
     <frequency type="float">0.0</frequency>
     <amplitude type="int">4000</amplitude>
+    <aotf_channel type="int">5</aotf_channel>
     <ni_board type="string">PCI-6722</ni_board>
     <dig_line type="int">5</dig_line>
   </block>
@@ -81,6 +87,7 @@
     <use_cube405 type="boolean">TRUE</use_cube405>
     <frequency type="float">0.0</frequency>
     <amplitude type="int">5000</amplitude>
+    <aotf_channel type="int">6</aotf_channel>
     <ni_board type="string">PCI-6722</ni_board>
     <dig_line type="int">6</dig_line>
   </block>

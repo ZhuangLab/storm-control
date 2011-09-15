@@ -218,28 +218,28 @@ class QAOTFChannel(QAdjustableChannel):
         if on:
             if not(self.inFskMode):
                 self.inFskMode = 1
-                self.cmd_queue.fskOnOff(self.channel_settings.channel, on)
+                self.cmd_queue.fskOnOff(self.channel_settings.aotf_channel, on)
                 self.cmd_queue.setFrequencies(self.channel_settings.channel,
                                               [off_freq, self.channel_settings.frequency, off_freq, off_freq])
         else:
             if self.inFskMode:
                 self.inFskMode = 0
-                self.cmd_queue.fskOnOff(self.channel_settings.channel, on)
+                self.cmd_queue.fskOnOff(self.channel_settings.aotf_channel, on)
                 self.cmd_queue.setFrequency(self.channel_settings.channel,
                                             self.channel_settings.frequency)
                 
 
     def setFrequency(self):
-        self.cmd_queue.setFrequency(self.channel_settings.channel,
+        self.cmd_queue.setFrequency(self.channel_settings.aotf_channel,
                                     self.channel_settings.frequency)
 
     def uiUpdate(self):
         self.cmd_queue.addRequest(self.amOn(),
-                                  self.channel_settings.channel,
+                                  self.channel_settings.aotf_channel,
                                   self.current_amplitude)
 
     def update(self, on):
-        self.cmd_queue.setAmplitude(on, self.channel_settings.channel, self.current_amplitude)
+        self.cmd_queue.setAmplitude(on, self.channel_settings.aotf_channel, self.current_amplitude)
 
 
 #

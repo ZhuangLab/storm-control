@@ -21,6 +21,7 @@
     <use_aotf type="boolean">TRUE</use_aotf>
     <frequency type="float">88.72</frequency>
     <amplitude type="int">8200</amplitude>
+    <aotf_channel type="int">0</aotf_channel>
   </block>
   <block>
     <description type="text">561</description>
@@ -31,6 +32,7 @@
     <use_aotf type="boolean">TRUE</use_aotf>
     <frequency type="float">108.31</frequency>
     <amplitude type="int">8000</amplitude>
+    <aotf_channel type="int">1</aotf_channel>
   </block>
   <block>
     <description type="text">532</description>
@@ -41,6 +43,7 @@
     <use_aotf type="boolean">TRUE</use_aotf>
     <frequency type="float">115.82</frequency>
     <amplitude type="int">6571</amplitude>
+    <aotf_channel type="int">2</aotf_channel>
   </block>
   <block>
     <description type="text">514</description>
@@ -51,6 +54,7 @@
     <use_aotf type="boolean">TRUE</use_aotf>
     <frequency type="float">121.26</frequency>
     <amplitude type="int">6500</amplitude>
+    <aotf_channel type="int">3</aotf_channel>
   </block>
   <block>
     <description type="text">488</description>
@@ -61,6 +65,7 @@
     <use_aotf type="boolean">TRUE</use_aotf>
     <frequency type="float">130.58</frequency>
     <amplitude type="int">6143</amplitude>
+    <aotf_channel type="int">4</aotf_channel>
   </block>
   <block>
     <description type="text">457</description>
@@ -71,6 +76,7 @@
     <use_aotf type="boolean">TRUE</use_aotf>
     <frequency type="float">143.36</frequency>
     <amplitude type="int">5786</amplitude>
+    <aotf_channel type="int">5</aotf_channel>
   </block>
   <block>
     <description type="text">405</description>
