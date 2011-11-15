@@ -87,7 +87,6 @@ class PlotWindow(QtGui.QWidget):
         x1 = numpy.max(qpd)
         y0 = x0*slope + offset
         y1 = x1*slope + offset
-        print x0, x1, y0, y1, offset, slope
         plplot.plcol0(2)
         plplot.plline([y0,y1],[x0,x1])
 
