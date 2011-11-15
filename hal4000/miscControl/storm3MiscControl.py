@@ -3,11 +3,15 @@
 # Miscellaneous controls, such as the EPI/TIRF motor and
 # the various lasers for STORM3.
 #
-# Hazen 5/11
+# Hazen 11/11
 #
 
+import Image
+import numpy
 import sys
 from PyQt4 import QtCore, QtGui
+
+import miscControl
 
 # Debugging
 import halLib.hdebug as hdebug
@@ -25,20 +29,15 @@ import stagecontrol.storm3StageControl as filterWheel
 #
 # Misc Control Dialog Box
 #
-class AMiscControl(QtGui.QDialog):
+class AMiscControl(miscControl.MiscControl):
     @hdebug.debug
     def __init__(self, parameters, tcp_control, parent = None):
-        QtGui.QMainWindow.__init__(self, parent)
+        super(AMiscControl, self).__init__(parameters, tcp_control, parent)
+
         self.filter_wheel = filterWheel.QPriorFilterWheel()
         self.move_timer = QtCore.QTimer(self)
         self.move_timer.setInterval(50)
-        self.parameters = parameters
         self.smc100 = SMC100.SMC100()
-
-        if parent:
-            self.have_parent = 1
-        else:
-            self.have_parent = 0
 
         # UI setup
         self.ui = miscControlsUi.Ui_Dialog()
@@ -48,20 +47,20 @@ class AMiscControl(QtGui.QDialog):
         # connect signals
         if self.have_parent:
             self.ui.okButton.setText("Close")
-            self.connect(self.ui.okButton, QtCore.SIGNAL("clicked()"), self.handleOk)
+            self.ui.okButton.clicked.connect(self.handleOk)
         else:
             self.ui.okButton.setText("Quit")
-            self.connect(self.ui.okButton, QtCore.SIGNAL("clicked()"), self.handleQuit)
+            self.ui.okButton.clicked.connect(self.handleQuit)
 
         # setup epi/tir stage control
-        self.connect(self.ui.EPIButton, QtCore.SIGNAL("clicked()"), self.goToEPI)
-        self.connect(self.ui.leftSmallButton, QtCore.SIGNAL("clicked()"), self.smallLeft)
-        self.connect(self.ui.rightSmallButton, QtCore.SIGNAL("clicked()"), self.smallRight)
-        self.connect(self.ui.leftLargeButton, QtCore.SIGNAL("clicked()"), self.largeLeft)
-        self.connect(self.ui.rightLargeButton, QtCore.SIGNAL("clicked()"), self.largeRight)
-        self.connect(self.ui.TIRFButton, QtCore.SIGNAL("clicked()"), self.goToTIRF)
-        self.connect(self.ui.tirGoButton, QtCore.SIGNAL("clicked()"), self.goToX)
-        self.connect(self.move_timer, QtCore.SIGNAL("timeout()"), self.updatePosition)
+        self.ui.EPIButton.clicked.connect(self.goToEPI)
+        self.ui.leftSmallButton.clicked.connect(self.smallLeft)
+        self.ui.rightSmallButton.clicked.connect(self.smallRight)
+        self.ui.leftLargeButton.clicked.connect(self.largeLeft)
+        self.ui.rightLargeButton.clicked.connect(self.largeRight)
+        self.ui.TIRFButton.clicked.connect(self.goToTIRF)
+        self.ui.tirGoButton.clicked.connect(self.goToX)
+        self.move_timer.timeout.connect(self.updatePosition)
 
         self.position = self.smc100.getPosition()
         self.setPositionText()
@@ -74,19 +73,19 @@ class AMiscControl(QtGui.QDialog):
                         self.ui.filter5Button,
                         self.ui.filter6Button]
         for filter in self.filters:
-            self.connect(filter, QtCore.SIGNAL("clicked()"), self.handleFilter)
+            filter.clicked.connect(self.handleFilter)
         self.filters[self.filter_wheel.getPosition()-1].click()
 
-        # set modeless
-#        self.setModal(False)
+        # Imagine Eyes stuff
+        self.ie_capture = False
+        self.ie_index = 1
+        self.ui.iEyesLabel.setText(self.getIEName())
+        self.ui.iEyesSaveButton.clicked.connect(self.handleSave)
 
-    @hdebug.debug
-    def closeEvent(self, event):
-        if self.have_parent:
-            event.ignore()
-            self.hide()
-        else:
-            self.quit()
+        self.newParameters(self.parameters)
+
+    def getIEName(self):
+        return "img.ch00.{0:04d}.tif".format(self.ie_index)
 
     @hdebug.debug
     def goToEPI(self):
@@ -118,8 +117,8 @@ class AMiscControl(QtGui.QDialog):
         self.hide()
 
     @hdebug.debug
-    def handleQuit(self):
-        self.close()
+    def handleSave(self):
+        self.ie_capture = True
 
     @hdebug.debug
     def largeLeft(self):
@@ -138,6 +137,15 @@ class AMiscControl(QtGui.QDialog):
         self.smc100.stopMove()
         self.smc100.moveTo(self.position)
         self.setPositionText()
+
+    def newFrame(self, frame):
+        if self.ie_capture:
+            self.ie_capture = False
+            p = self.parameters
+            image = Image.fromstring("I;16", (p.x_pixels, p.y_pixels), frame)
+            image.save("c:\\tif_directory\\" + self.getIEName())
+            self.ie_index += 1
+            self.ui.iEyesLabel.setText(self.getIEName())            
 
     @hdebug.debug
     def newParameters(self, parameters):

@@ -755,6 +755,8 @@ class Window(QtGui.QMainWindow):
                     self.frame = frame
                 if self.spot_counter:
                     self.spot_counter.newImageToCount(frame)
+                if self.misc_control:
+                    self.misc_control.newFrame(frame)
                 if self.temperature_logger:
                     self.temperature_logger.newData()
 
