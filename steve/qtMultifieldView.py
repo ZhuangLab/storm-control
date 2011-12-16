@@ -215,7 +215,7 @@ class MultifieldView(QtGui.QGraphicsView):
                 imagename = self.directory + "/" + imagename
 
             if os.path.exists(imagename + ".png"):
-                self.addViewPixmapItem(QtGui.QPixmap(imagename),
+                self.addViewPixmapItem(QtGui.QPixmap(imagename + ".png"),
                                        float(x_pix),
                                        float(y_pix),
                                        float(x_um),
