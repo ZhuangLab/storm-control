@@ -177,7 +177,7 @@
      <x>0</x>
      <y>0</y>
      <width>683</width>
-     <height>21</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -193,6 +193,7 @@
     <addaction name="actionLoad_Positions"/>
     <addaction name="actionSave_Mosaic"/>
     <addaction name="actionSave_Positions"/>
+    <addaction name="actionSave_Snapshot"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -242,6 +243,11 @@
   <action name="actionLoad_Positions">
    <property name="text">
     <string>Load Positions</string>
+   </property>
+  </action>
+  <action name="actionSave_Snapshot">
+   <property name="text">
+    <string>Save Snapshot</string>
    </property>
   </action>
  </widget>

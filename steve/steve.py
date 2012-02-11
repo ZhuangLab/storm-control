@@ -78,6 +78,7 @@ class Window(QtGui.QMainWindow):
         self.ui.actionLoad_Positions.triggered.connect(self.handleLoadPositions)
         self.connect(self.ui.actionSave_Mosaic, QtCore.SIGNAL("triggered()"), self.handleSaveMosaic)
         self.connect(self.ui.actionSave_Positions, QtCore.SIGNAL("triggered()"), self.handleSavePositions)
+        self.ui.actionSave_Snapshot.triggered.connect(self.handleCapture)
         self.connect(self.ui.actionSet_Working_Directory, QtCore.SIGNAL("triggered()"), self.handleSetWorkingDirectory)
         self.connect(self.ui.connectRadioButton, QtCore.SIGNAL("toggled(bool)"), self.handleConnectChange)
         self.connect(self.ui.magComboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.handleMagChange)
@@ -120,6 +121,15 @@ class Window(QtGui.QMainWindow):
 
     def gotoPosition(self, x, y):
         self.comm.gotoPosition(x, y)
+
+    def handleCapture(self):
+        snapshot_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
+                                                                  "Save Snapshot", 
+                                                                  self.parameters.directory, 
+                                                                  "*.png"))
+        if snapshot_filename:
+            pixmap = QtGui.QPixmap.grabWidget(self.view.viewport())
+            pixmap.save(snapshot_filename)
 
     def handleClearMosaic(self):
         reply = QtGui.QMessageBox.question(self,
