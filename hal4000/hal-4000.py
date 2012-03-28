@@ -592,8 +592,8 @@ class Window(QtGui.QMainWindow):
             self.illumination_control.quit()
 
             # shutdown the national instruments stuff
-            self.shutter_control.stopFilm()
             self.shutter_control.cleanup()
+            self.shutter_control.shutDown()
 
         # shutdown the stage
         if self.stage_control:
@@ -1022,10 +1022,10 @@ class Window(QtGui.QMainWindow):
 
                 # aotf prep
                 channels_used = self.shutter_control.getChannelsUsed()
+                self.shutter_control.prepare()
                 self.illumination_control.startFilm(channels_used)
                 
                 # ni prep
-                # self.shutter_control.parseXML()
                 self.shutter_control.setup(self.parameters.kinetic_value)
                 self.shutter_control.startFilm()
                     
@@ -1229,11 +1229,17 @@ if __name__ == "__main__":
     splash = QtGui.QSplashScreen(pixmap)
     splash.show()
     app.processEvents()
-    # Load app
+
+    # Load settings
     if len(sys.argv) > 1:
         parameters = params.Parameters(sys.argv[1])
     else:
         parameters = params.Parameters("settings_default.xml")
+    setup_name = parameters.setup_name
+    parameters = params.Parameters(setup_name + "_default.xml")    
+    parameters.setup_name = setup_name
+
+    # Load app
     window = Window(parameters)
     window.newParameters()
     splash.hide()

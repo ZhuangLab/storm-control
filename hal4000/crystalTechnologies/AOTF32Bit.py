@@ -1,25 +1,27 @@
 #!/usr/bin/python
 #
-# Run stage control only.
+# This is part of the work-around for the lack
+# of a 64 bit version of the AotfLibrary.dll file.
 #
-# Hazen 03/12
+# Hazen 3/12
 #
 
 import sys
-from PyQt4 import QtGui
 
-import halLib.parameters as params
+import AOTF
 
-if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
-    parameters = params.Parameters("settings_default.xml")
-    setup_name = parameters.setup_name
-    parameters = params.Parameters(setup_name + "_default.xml")
-    parameters.setup_name = setup_name
-    stagecontrol = __import__('stagecontrol.' + setup_name.lower() + 'StageControl', globals(), locals(), [setup_name], -1)
-    scontrol = stagecontrol.AStageControl(parameters, None)
-    scontrol.show()
-    app.exec_()
+my_aotf = AOTF.AOTF()
+while True:
+   next_cmd = sys.stdin.readline()
+   if not next_cmd:
+      break
+   next_cmd = next_cmd[:-1] if next_cmd.endswith('\n') else next_cmd
+   response = my_aotf._sendCmd(next_cmd)
+   if ("Invalid" in response):
+      sys.stdout.write("failed\n")
+   else:
+      sys.stdout.write(next_cmd + "\n")
+   sys.stdout.flush()
 
 #
 # The MIT License
@@ -44,3 +46,4 @@ if __name__ == "__main__":
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+ 

@@ -270,7 +270,18 @@ class QCTAOTFThread(QAOTFThread):
             self.aotf.setFrequency(channel, frequency)
         self.aotf_mutex.unlock()
 
+#
+# Crystal Technologies AOTF communication thread.
+# Communication with the AOTF by IPC for 64 bit machines.
+#
+class QCT64BitAOTFThread(QCTAOTFThread):
+    def __init__(self, parent = None):
+        QAOTFThread.__init__(self, parent)
 
+        import crystalTechnologies.AOTF as AOTF
+        self.aotf = AOTF.AOTF64Bit()
+        if not(self.aotf.getStatus()):
+            self.aotf = 0
 
 #
 # National Instruments analog communication. This is so

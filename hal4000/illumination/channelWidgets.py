@@ -2,7 +2,7 @@
 #
 # Widgets for illumination control and display.
 #
-# Hazen 12/09
+# Hazen 03/12
 #
 
 from PyQt4 import QtCore, QtGui
@@ -211,6 +211,7 @@ class QAdjustableChannel(QChannel):
 #
 class QAOTFChannel(QAdjustableChannel):
     def __init__(self, parent, settings, default_power, on_off_state, buttons, x_pos, width, height):
+        self.freq_set = False
         QAdjustableChannel.__init__(self, parent, settings, default_power, on_off_state, buttons, x_pos, width, height)
 
     def fskOnOff(self, on):
@@ -219,15 +220,14 @@ class QAOTFChannel(QAdjustableChannel):
             if not(self.inFskMode):
                 self.inFskMode = 1
                 self.cmd_queue.fskOnOff(self.channel_settings.aotf_channel, on)
-                self.cmd_queue.setFrequencies(self.channel_settings.channel,
+                self.cmd_queue.setFrequencies(self.channel_settings.aotf_channel,
                                               [off_freq, self.channel_settings.frequency, off_freq, off_freq])
         else:
             if self.inFskMode:
                 self.inFskMode = 0
                 self.cmd_queue.fskOnOff(self.channel_settings.aotf_channel, on)
-                self.cmd_queue.setFrequency(self.channel_settings.channel,
+                self.cmd_queue.setFrequency(self.channel_settings.aotf_channel,
                                             self.channel_settings.frequency)
-                
 
     def setFrequency(self):
         self.cmd_queue.setFrequency(self.channel_settings.aotf_channel,

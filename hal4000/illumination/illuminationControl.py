@@ -45,9 +45,9 @@ class QIlluminationControlWidget(QtGui.QWidget):
         self.channels = []
         self.newParameters(parameters)
 
-        # set the aotf frequencies & go to manual control
-        for channel in self.channels:
-            channel.setFrequency()
+        # go to manual control
+        #for channel in self.channels:
+        #    channel.setFrequency()
         self.manualControl()
 
     def allOff(self):
@@ -237,13 +237,13 @@ class IlluminationControl(QtGui.QDialog):
 
     @hdebug.debug
     def startFilm(self, channels_used):
-        self.turnOnOff(channels_used, 1)
         self.autoControl(channels_used)
+        self.turnOnOff(channels_used, 1)
 
     @hdebug.debug
     def stopFilm(self, channels_used):
-        self.manualControl()
         self.turnOnOff(channels_used, 0)
+        self.manualControl()
         self.reset()
 
     @hdebug.debug

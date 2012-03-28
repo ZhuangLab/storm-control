@@ -50,10 +50,14 @@ class ACameraControl(cameraControl.CameraControl):
         if not self.camera:
             if hdebug.getDebug():
                 print " Initializing Andor Camera"
-            if os.path.exists("c:/Program Files/Andor iXon/Drivers/"):
-                self.camera = andor.AndorCamera("c:/Program Files/Andor iXon/Drivers/")
+            if os.path.exists("c:/Program Files/Andor iXon/Drivers/atmcd32d.dll"):
+                self.camera = andor.AndorCamera("c:/Program Files/Andor iXon/Drivers/atmcd32d.dll")
+            elif os.path.exists("c:/Program Files/Andor SOLIS/atmcd32d.dll"):
+                self.camera = andor.AndorCamera("c:/Program Files/Andor SOLIS/atmcd32d.dll")
+            elif os.path.exists("c:/Program Files (x86)/Andor SOLIS/Drivers/atmcd64d.dll"):
+                self.camera = andor.AndorCamera("c:/Program Files (x86)/Andor SOLIS/Drivers/atmcd64d.dll")
             else:
-                self.camera = andor.AndorCamera("c:/Program Files/Andor SOLIS/")
+                print "Can't find Andor Camera drivers"
 
     @hdebug.debug
     def newFilmSettings(self, parameters, filming = 0):

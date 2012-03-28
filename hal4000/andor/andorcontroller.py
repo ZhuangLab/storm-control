@@ -41,10 +41,11 @@ class AndorCapabilities(Structure):
 # Handles loading the library (only once)
 
 andor = 0
-def loadAndorDLL(andor_path):
+def loadAndorDLL(andor_dll):
     global andor
     if(andor == 0):
-        andor = oledll.LoadLibrary(andor_path + "ATMCD32D")
+        andor = oledll.LoadLibrary(andor_dll)
+#        andor = oledll.LoadLibrary(andor_path + "ATMCD32D")
 
 
 # helper functions
@@ -642,7 +643,8 @@ if __name__ == "__main__":
             print key, '\t', dictionary[key]
 
     print "Initializing Camera"
-    camera = AndorCamera("c:/Program Files/Andor SOLIS/Drivers/")
+#    camera = AndorCamera("c:/Program Files/Andor SOLIS/Drivers/")
+    camera = AndorCamera("c:/Program Files (x86)/Andor SOLIS/Drivers/atmcd64d.dll")
 
     if 1:
         print "Camera Properties:"
@@ -724,7 +726,7 @@ if __name__ == "__main__":
         print camera.getAcquisitionTimings()
         camera.setFanMode(0)
 
-    if 0:
+    if 1:
         print ""
         print "Acquiring"
         camera.startAcquisition()

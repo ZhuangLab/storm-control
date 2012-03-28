@@ -2,17 +2,22 @@
 #
 # Communicates with the Crystal Technologies AOTF (via USB).
 #
-# Hazen 2/09
+# To work around the lack of a 64 bit version of the
+# AotfLibrary.dll file we handle a aotf communication
+# using the AOTF32Bit.py script which is need to be
+# run in 32 bit Python. Then we communicate with it
+# using basic IPC.
+#
+# Hazen 3/12
 #
 
 from ctypes import *
+import os
+import subprocess
 import time
 
+aotf = None
 response_time = 0.05
-
-# Load the AOTF driver library library.
-aotf = cdll.LoadLibrary("C:\Program Files\Crystal Technology\AOTF Utilities\AotfLibrary\LegacyAotfLibrary\DLL\AotfLibrary")
-
 instantiated = 0
 
 # FIXME: I'd like for this class to make sure that the AOTF is closed
@@ -20,12 +25,22 @@ instantiated = 0
 # lock (or at least it will lock the DOS prompt).
 class AOTF():
     def __init__(self):
-        global instantiated
         self.live = 1
+
+        global instantiated
         if instantiated:
-            print "Attempt to instantiate to AOTF communication classes."
+            print "Attempt to instantiate two AOTF communication classes."
             self.live = 0
         else:
+            # Load the AOTF driver library library.
+            global aotf
+            if os.path.exists('C:\Program Files\Crystal Technology\AOTF Utilities\AotfLibrary\LegacyAotfLibrary\DLL\AotfLibrary.dll'):
+                aotf = cdll.LoadLibrary('C:\Program Files\Crystal Technology\AOTF Utilities\AotfLibrary\LegacyAotfLibrary\DLL\AotfLibrary')
+            elif os.path.exists('C:\Program Files\Crystal Technology\Developer\AotfLibrary\DLL\AotfLibrary.dll'):
+                aotf = cdll.LoadLibrary('C:\Program Files\Crystal Technology\Developer\AotfLibrary\DLL\AotfLibrary')
+            else:
+                print "Failed to load AotfLibrary.dll"
+
             if self._aotfOpen():
                 self.live = 1
                 instantiated = 1
@@ -136,23 +151,62 @@ class AOTF():
 #    def __del__(self):
 #        if self.aotf_handle:
 #            self.shutDown()
-    
 
+class AOTF64Bit(AOTF):
+    def __init__(self):
+        self.aotf_cmd = os.path.dirname(__file__) + "\AOTF32Bit.py"
+        self.live = True
+        self.aotf_proc = subprocess.Popen(["c:\python27_32bit\python", self.aotf_cmd],
+                                          stdin = subprocess.PIPE,
+                                          stdout = subprocess.PIPE)
+        if not self._aotfOpen():
+            self.live = False
+            
+    def _aotfGetResp(self):
+        pass
+
+    def _aotfOpen(self):
+        response = self._sendCmd("dau en")
+        if ("Invalid" in response):
+            return False
+        else:
+            return True
+
+    def _aotfSendCmd(self, cmd):
+        pass
+
+    def _sendCmd(self, cmd):
+        if self.live:
+            self.aotf_proc.stdin.write(cmd + "\n")
+            self.aotf_proc.stdin.flush()
+            resp = self.aotf_proc.stdout.readline()
+            # This removes both \r and the \n.."
+            resp = resp[:-2] if resp.endswith('\n') else resp
+            return resp
+        else:
+            return "Invalid"
+
+    def shutDown(self):
+        if self.live:
+            self._sendCmd("dds Reset")
+            self.aotf_proc.terminate()
+        
 #
 # Testing.
 #
 
 if __name__ == "__main__":
-    my_aotf = AOTF()
+    my_aotf = AOTF64Bit()
     print my_aotf._sendCmd("BoardID ID")
-    print my_aotf._sendCmd("help adc")
+    print my_aotf._sendCmd("dds f 0 88.6")
+    print my_aotf._sendCmd("dds a 0 6100")
+    time.sleep(1.0)
     my_aotf.shutDown()
-
 
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

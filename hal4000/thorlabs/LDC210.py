@@ -14,7 +14,7 @@ except:
     sys.path.append("..")
     import nationalInstruments.nicontrol as nicontrol
 
-class LDC210:
+class LDC210():
     def __init__(self, board, channel):
         self.ni_task = nicontrol.DigitalOutput(board, channel)
         

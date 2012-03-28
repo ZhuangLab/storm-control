@@ -2,12 +2,7 @@
 #
 # Communicates with the National Instrument card(s).
 #
-# This is geared primarly towards doing retriggerable analog
-# output. Since the analog channels are not themselves retriggerable
-# the default is they run in continous mode and get clocked
-# by one of the counters, which are retriggerable.
-#
-# Hazen 5/11
+# Hazen 3/12
 #
 
 from ctypes import *
@@ -407,7 +402,7 @@ class DigitalWaveformOutput(NIDAQTask):
 
     def setWaveform(self, waveform, sample_rate, finite = 0, clock = "ctr0out", rising = True):
         #
-        # The output waveforms for all the analog channels are stored in one 
+        # The output waveforms for all the digital channels are stored in one 
         # big array, so the per channel waveform length is the total length 
         # divided by the number of channels.
         #
@@ -453,7 +448,21 @@ class DigitalWaveformOutput(NIDAQTask):
                                                    c_int(0)))
         assert c_samples_written.value == waveform_len, "Failed to write the right number of samples " + str(c_samples_written.value) + " " + str(waveform_len)
 
+#
+# Convenience functions.
+#
 
+def setAnalogLine(board, line, voltage):
+    task = VoltageOutput(board, line)
+    task.outputVoltage(voltage)
+    task.stopTask()
+    task.clearTask()
+
+def setDigitalLine(board, line, value):
+    task = DigitalOutput(board, line)
+    task.output(value)
+    task.stopTask()
+    task.clearTask()
 
 #
 # Testing.
@@ -461,7 +470,7 @@ class DigitalWaveformOutput(NIDAQTask):
 
 if __name__ == "__main__":
     print getDAQBoardInfo()
-    print getBoardDevNumber("PCIe-6259")
+    print getBoardDevNumber("PCI-6733")
     
     if 1:
         waveform1 = [1, 0, 1, 0, 1, 0]
@@ -469,13 +478,13 @@ if __name__ == "__main__":
         waveform3 = [0, 0, 0, 0, 0, 0]
         waveform = waveform1 + waveform2 + waveform3
         frequency = 1.0
-        wv_task = DigitalWaveformOutput("PCIe-6259", 0)
-        wv_task.addChannel("PCIe-6259", 3)
-        wv_task.addChannel("PCIe-6259", 5)
-        wv_task.setWaveform(waveform, 10.0 * frequency, clock = "PFI12")
+        wv_task = DigitalWaveformOutput("PCI-6733", 0)
+        wv_task.addChannel("PCI-6733", 1)
+        wv_task.addChannel("PCI-6733", 2)
+        wv_task.setWaveform(waveform, 10.0 * frequency)
         wv_task.startTask()
         
-        ct_task = CounterOutput("PCIe-6259", 0, frequency, 0.5)
+        ct_task = CounterOutput("PCI-6733", 0, frequency, 0.5)
         ct_task.setCounter(2*len(waveform))
 #        ct_task.setTrigger(0)
         ct_task.startTask()
@@ -524,7 +533,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

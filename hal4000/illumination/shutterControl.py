@@ -5,10 +5,10 @@
 # This class handles parsing XML shutter files and turning
 # them into Python arrays that specify the different
 # shutter/AOTF sequences. It also handles the various get functions.
-# The user should subclass this class and add setup, startFilm,
+# The user should subclass this class and add specialized setup, startFilm,
 # stopFilm and cleanup methods following eg. storm3ShutterControl.
 #
-# Hazen 6/09
+# Hazen 3/12
 #
 
 from xml.dom import minidom, Node
@@ -16,6 +16,11 @@ from xml.dom import minidom, Node
 class ShutterControl():
     def __init__(self, powerToVoltage):
         self.powerToVoltage = powerToVoltage
+        self.oversampling_default = 1
+        self.number_channels = 0
+
+    def cleanup(self):
+        pass
 
     def getChannelsUsed(self):
         return self.channels_used
@@ -119,11 +124,25 @@ class ShutterControl():
                         self.colors[i] = color
                         i += 1
 
+    def prepare(self):
+        pass
+
+    def setup(self, kinetic_cycle_time):
+        pass
+
+    def shutDown(self):
+        pass
+
+    def startFilm(self):
+        pass
+    
+    def stopFilm(self):
+        pass
 
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
