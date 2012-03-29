@@ -21,7 +21,7 @@ from VideoCapture import Device
 #pygame.camera.init()
 
 class VCCamera():
-    def __init__(self, camera_num = 0, xmin = 0, xmax = 300, ymin = 0, ymax = 300):
+    def __init__(self, camera_num = 0, xmin = 0, xmax = 150, ymin = 0, ymax = 300):
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
@@ -80,13 +80,13 @@ class openCvCamera():
 class USBQPD(VCCamera):
     def __init__(self, camera_num = 0, x_center = 150, y_center = 150, im_size = 300):
         VCCamera.__init__(self,
-                          camera_num = camera_num,
-                          xmin = x_center - im_size/2,
-                          xmax = x_center + im_size/2,
-                          ymin = y_center - im_size/2,
-                          ymax = y_center + im_size/2)
+                          camera_num = camera_num)
+#                          xmin = x_center - im_size/2,
+#                          xmax = x_center + im_size/2,
+#                          ymin = y_center - im_size/2,
+#                          ymax = y_center + im_size/2)
         self.image = None
-        self.X = numpy.arange(im_size) - float(im_size)*0.5
+        self.X = numpy.arange(150, 300) - float(im_size)*0.5
         self.last_sum = 0
 
     def capture(self):
@@ -119,11 +119,15 @@ class USBQPD(VCCamera):
 #
 
 if __name__ == "__main__":
-    if 0:
-        cam = openCvCamera()
-        for i in range(5):
-            cam.capture()
-            print i
+    if 1:
+        cam = VCCamera()
+        image = cam.capture()
+        im = Image.fromarray(image)
+        im.show()
+
+#        for i in range(5):
+#            cam.capture()
+#            print i
             #image = cam.capture()
             #print image.shape
         #image = image[0:300,0:300]
@@ -149,7 +153,7 @@ if __name__ == "__main__":
         im = Image.fromarray(image)
         im.show()
 
-    if 1:
+    if 0:
         pts = 10
         #qpd = USBQPD()
         start = time.time()

@@ -154,7 +154,12 @@ class AOTF():
 
 class AOTF64Bit(AOTF):
     def __init__(self):
-        self.aotf_cmd = os.path.dirname(__file__) + "\AOTF32Bit.py"
+        dir = os.path.dirname(__file__)
+        if (len(dir) > 0):
+            self.aotf_cmd = dir + "\AOTF32Bit.py"
+        else:
+            self.aotf_cmd = "AOTF32Bit.py"
+
         self.live = True
         self.aotf_proc = subprocess.Popen(["c:\python27_32bit\python", self.aotf_cmd],
                                           stdin = subprocess.PIPE,

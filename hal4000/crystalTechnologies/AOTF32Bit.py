@@ -11,13 +11,14 @@ import sys
 import AOTF
 
 my_aotf = AOTF.AOTF()
+
 while True:
    next_cmd = sys.stdin.readline()
    if not next_cmd:
       break
    next_cmd = next_cmd[:-1] if next_cmd.endswith('\n') else next_cmd
    response = my_aotf._sendCmd(next_cmd)
-   if ("Invalid" in response):
+   if (not response) or ("Invalid" in response):
       sys.stdout.write("failed\n")
    else:
       sys.stdout.write(next_cmd + "\n")
