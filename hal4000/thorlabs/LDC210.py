@@ -15,22 +15,22 @@ except:
     import nationalInstruments.nicontrol as nicontrol
 
 class LDC210():
-    def __init__(self, board, channel):
-        self.ni_task = nicontrol.DigitalOutput(board, channel)
+    def __init__(self, board, line):
+        self.board = board
+        self.line = line
         
     def on(self):
-        self.ni_task.output(True)
+        nicontrol.setDigitalLine(self.board, self.line, True)
 
     def off(self):
-        self.ni_task.output(False)
+        nicontrol.setDigitalLine(self.board, self.line, False)
 
 
 if __name__ == "__main__":
-    ldc = LDC210("PCIe-6321", 1)
+    ldc = LDC210("PCI-6733", 7)
     ldc.on()
     time.sleep(1)
     ldc.off()
-    
 
 #
 # The MIT License

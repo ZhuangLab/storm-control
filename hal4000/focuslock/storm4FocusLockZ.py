@@ -5,12 +5,12 @@
 # Hazen 03/12
 #
 
-# qpd and stage.
+# camera and stage.
 import madCityLabs.mclController as mclController
 import thorlabs.uc480Camera as uc480Cam
 
 # focus lock control thread.
-import focuslock.stageQPDControl as stageQPDControl
+import focuslock.stageOffsetControl as stageOffsetControl
 
 # ir laser control
 import thorlabs.LDC210 as LDC210
@@ -22,23 +22,23 @@ import focuslock.focusLockZ as focusLockZ
 # Focus Lock Dialog Box specialized for STORM4 with 
 # USB offset detector and MCL objective Z positioner.
 #
-class AFocusLockZ(focusLockZ.FocusLockZ):
+class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, parameters, tcp_control, parent = None):
-        qpd = uc480Cam.USBQPD()
+        cam = uc480Cam.cameraQPD()
         stage = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/")
-        lock_fn = lambda (x): 0.01 * x
-        control_thread = stageQPDControl.QControlThread(qpd,
-                                                        stage,
-                                                        lock_fn,
-                                                        50.0,
-                                                        parameters.qpd_zcenter)
-        ir_laser = LDC210.LDC210("PCI-6733", 6)
-        focusLockZ.FocusLockZ.__init__(self,
-                                       parameters,
-                                       tcp_control,
-                                       control_thread,
-                                       ir_laser,
-                                       parent)
+        lock_fn = lambda (x): 0.005 * x
+        control_thread = stageOffsetControl.stageCamThread(cam,
+                                                           stage,
+                                                           lock_fn,
+                                                           50.0,
+                                                           parameters.qpd_zcenter)
+        ir_laser = LDC210.LDC210("PCI-6733", 7)
+        focusLockZ.FocusLockZCam.__init__(self,
+                                          parameters,
+                                          tcp_control,
+                                          control_thread,
+                                          ir_laser,
+                                          parent)
 
 #
 # The MIT License

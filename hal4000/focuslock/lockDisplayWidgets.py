@@ -3,10 +3,10 @@
 # These widgets are used by the focusLockZ 
 # class to provide user feedback.
 #
-# Hazen 6/09
+# Hazen 03/12
 #
 
-from PyQt4 import QtGui
+from PyQt4 import QtCore, QtGui
 
 #
 # Status display widgets
@@ -122,10 +122,36 @@ class QQPDDisplay(QStatusDisplay):
         self.y_value = self.convert(y)
         self.update()
 
+class QCamDisplay(QtGui.QWidget):
+    def __init__(self, parent = None):
+        QtGui.QWidget.__init__(self, parent)
+        self.background = QtGui.QColor(0,0,0)
+        self.image = None
+
+    def newImage(self, np_data):
+        w, h = np_data.shape
+        self.image = QtGui.QImage(np_data.data, w, h, QtGui.QImage.Format_Indexed8)
+        self.image.ndarray = np_data
+        for i in range(256):
+            self.image.setColor(i, QtGui.QColor(i,i,i).rgb())
+        self.update()
+
+    def paintEvent(self, Event):
+        painter = QtGui.QPainter(self)
+        if self.image:
+            painter.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
+
+            destination_rect = QtCore.QRect(0, 0, self.width(), self.height())
+            painter.drawImage(destination_rect, self.image)
+        else:
+            painter.setPen(self.background)
+            painter.setBrush(self.background)
+            painter.drawRect(0, 0, self.width(), self.height())
+
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

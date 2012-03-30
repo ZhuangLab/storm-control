@@ -1,6 +1,17 @@
 #!/usr/bin/python
 #
-# Stage and QPD Control Thread Class
+# Stage and offset detector thread classes
+#
+# Hazen 03/12
+#
+
+from PyQt4 import QtCore
+
+# Debugging
+import halLib.hdebug as hdebug
+
+#
+# QPD monitoring and stage control thread.
 #
 # This is a PyQt thread for controlling the z stage position
 # and getting the current position reading from the QPD.
@@ -27,19 +38,7 @@
 # lock_fn is a function that takes a single number (the QPD error signal)
 #   and returns the appropriate response (in um) by the stage.
 #
-#
-# Hazen 6/09
-#
-
-from PyQt4 import QtCore
-
-# Debugging
-import halLib.hdebug as hdebug
-
-#
-# QPD monitoring and stage control thread.
-#
-class QControlThread(QtCore.QThread):
+class stageQPDThread(QtCore.QThread):
     @hdebug.debug
     def __init__(self, qpd, stage, lock_fn, min_sum, z_center, slow_stage = False, parent = None):
         QtCore.QThread.__init__(self, parent)
@@ -203,11 +202,86 @@ class QControlThread(QtCore.QThread):
         while(self.unacknowledged):
             self.msleep(20)
 
+#
+# Motorized Z, Piezo Stage and QPD Control Thread Class.
+#
+# This is a PyQt thread for controlling a motorized z stage,
+# a piezo stage (for focusing) and getting the current
+# position reading from the QPD. It is a subclass of the
+# stageQPDThread that also controls a motorized focus.
+#
+# motor is a class with the following methods:
+#
+#   zMoveRelative(z)
+#      Move the stage up or down by the amount z in um.
+#
+class motorStageQPDThread(stageQPDThread):
+    @hdebug.debug
+    def __init__(self, qpd, stage, motor, lock_fn, min_sum, z_center, slow_stage = False, parent = None):
+        stageQPDThread.__init__(self,
+                                qpd,
+                                stage,
+                                lock_fn,
+                                min_sum,
+                                z_center,
+                                slow_stage = slow_stage,
+                                parent = parent)
+        self.motor = motor
+
+    def recenterPiezo(self):
+        print "recenter", self.stage_z, self.z_center
+        if self.motor.live:
+            offset = self.z_center - self.stage_z
+            self.moveStageAbs(self.z_center)
+            self.motor.zMoveRelative(offset)
+        stageQPDControl.QControlThread.recenterPiezo(self)
+
+#
+# USB camera monitoring and stage control thread.
+#
+# This is a PyQt thread for controlling the z stage position
+# and getting the current position reading from a USB camera.
+# It is a subclass of stageQPDThread.
+#
+# cam is a class that uses a (USB) camera to emulate the readout
+#    that you would normally get from a QPD. It has the following 
+#    methods:
+#
+#   getImage()
+#      Returns the current image from the USB camera as a numpy.uint8
+#      2D array.
+#
+#   qpdScan()
+#      Return the current reading from the camera in the same format
+#      as we would have gotten from a QPD, [power, x_offset, y_offset]
+#
+#   shutDown()
+#      Perform whatever cleanup is necessary to stop the qpd cleanly
+#
+class stageCamThread(stageQPDThread):
+    @hdebug.debug
+    def __init__(self, cam, stage, lock_fn, min_sum, z_center, slow_stage = False, parent = None):
+        stageQPDThread.__init__(self,
+                                cam,
+                                stage,
+                                lock_fn,
+                                min_sum,
+                                z_center,
+                                slow_stage = slow_stage,
+                                parent = parent)
+        self.cam = cam
+
+    @hdebug.debug
+    def getImage(self):
+        self.qpd_mutex.lock()
+        image = self.cam.getImage().copy()
+        self.qpd_mutex.unlock()
+        return image
 
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

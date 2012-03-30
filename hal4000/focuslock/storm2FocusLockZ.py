@@ -3,7 +3,7 @@
 # QPD / Objective Z based focus lock 
 # control specialized for STORM2.
 #
-# Hazen 11/10
+# Hazen 03/12
 #
 
 # qpd and stage.
@@ -11,7 +11,7 @@ import stagecontrol.storm2StageControl as zstage
 import phreshPhotonics.phreshQPD as phreshQPD
 
 # focus lock control thread.
-import focuslock.stageQPDControl as stageQPDControl
+import focuslock.stageOffsetControl as stageOffsetControl
 
 # ir laser control
 import thorlabs.LDC210 as LDC210
@@ -23,30 +23,30 @@ import focuslock.focusLockZ as focusLockZ
 # Focus Lock Dialog Box specialized for STORM3
 # with Phresh QPD and MCL objective Z positioner.
 #
-class AFocusLockZ(focusLockZ.FocusLockZ):
+class AFocusLockZ(focusLockZ.FocusLockZQPD):
     def __init__(self, parameters, tcp_control, parent = None):
         qpd = phreshQPD.PhreshQPDSTORM2()
         stage = zstage.QPriorZ()
 #        lock_fn = lambda (x): -1.75 * x
         lock_fn = lambda (x): x
-        control_thread = stageQPDControl.QControlThread(qpd,
-                                                        stage,
-                                                        lock_fn,
-                                                        50.0, 
-                                                        parameters.qpd_zcenter,
-                                                        slow_stage = True)
+        control_thread = stageOffsetControl.stageQPDThread(qpd,
+                                                           stage,
+                                                           lock_fn,
+                                                           50.0, 
+                                                           parameters.qpd_zcenter,
+                                                           slow_stage = True)
         ir_laser = LDC210.LDC210("PCIe-6259", 5)
-        focusLockZ.FocusLockZ.__init__(self,
-                                       parameters,
-                                       tcp_control,
-                                       control_thread,
-                                       ir_laser,
-                                       parent)
+        focusLockZ.FocusLockZQPD.__init__(self,
+                                          parameters,
+                                          tcp_control,
+                                          control_thread,
+                                          ir_laser,
+                                          parent)
 
 #
 # The MIT License
 #
-# Copyright (c) 2010 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

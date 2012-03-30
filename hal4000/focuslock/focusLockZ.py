@@ -1,9 +1,36 @@
 #!/usr/bin/python
 #
+# Z focus lock dialog box.
+#
+# FocusLockZ is the base class.
+#
+# FocusLockZQPD is specialized for displaying QPD style
+#    offset data.
+#
+# FocusLockZCam is specialized for displaying USB camera
+#    offset data.
+#
+# Hazen 03/12
+#
+
+from PyQt4 import QtCore, QtGui
+
+# Debugging
+import halLib.hdebug as hdebug
+
+# UIs.
+import qtdesigner.focuslock_v1 as focusLockUi
+
+# Widgets
+import focuslock.lockDisplayWidgets as lockDisplayWidgets
+import focuslock.lockModes as lockModes
+
+#
+# Z Focus Lock Dialog Box
 # QPD / piezo Z Focus Lock Control Class
 #
-# This is the UI for focus lock based on some sort
-# of Z positioner and a QPD readout of the lock target.
+# This is the UI for focus lock based on some sort of 
+# Z positioner and a position readout of the lock target.
 # The interaction with the actual hardware occurs via
 # control_thread & ir_laser.
 #
@@ -69,25 +96,6 @@
 # off()
 #   Turn off the IR laser
 #
-#
-# Hazen 6/09
-#
-
-from PyQt4 import QtCore, QtGui
-
-# Debugging
-import halLib.hdebug as hdebug
-
-# UIs.
-import qtdesigner.focuslock_v1 as focusLockUi
-
-# Widgets
-import focuslock.lockDisplayWidgets as lockDisplayWidgets
-import focuslock.lockModes as lockModes
-
-#
-# Z Focus Lock Dialog Box
-#
 class FocusLockZ(QtGui.QDialog):
     @hdebug.debug
     def __init__(self, parameters, tcp_control, control_thread, ir_laser, parent):
@@ -145,56 +153,6 @@ class FocusLockZ(QtGui.QDialog):
                         self.ui.zScanRadioButton]
 
         self.buttons[parameters.qpd_mode].setChecked(True)
-
-        # offset display widget setup
-        # +-500nm display range hard coded (if qpd is properly calibrated).
-        self.offset_min = -500
-        self.offset_max = 500
-        status_x = self.ui.offsetFrame.width() - 4
-        status_y = self.ui.offsetFrame.height() - 4
-        self.offsetDisplay = lockDisplayWidgets.QOffsetDisplay(status_x,
-                                                               status_y,
-                                                               self.offset_min,
-                                                               self.offset_max,
-                                                               self.offset_min + 100,
-                                                               self.offset_max - 100,
-                                                               has_center_bar = 1,
-                                                               parent = self.ui.offsetFrame)
-        self.offsetDisplay.setGeometry(2, 2, status_x, status_y)
-
-        # sum display widget setup
-        self.sum_min = 100
-        status_x = self.ui.sumFrame.width() - 4
-        status_y = self.ui.sumFrame.height() - 4
-        self.sumDisplay = lockDisplayWidgets.QSumDisplay(status_x,
-                                                         status_y,
-                                                         0,
-                                                         parameters.qpd_sum_max,
-                                                         self.sum_min,
-                                                         parent = self.ui.sumFrame)
-        self.sumDisplay.setGeometry(2, 2, status_x, status_y)
-
-        # stage display widget setup
-        stage_max = int(2.0 * parameters.qpd_zcenter)
-        status_x = self.ui.zFrame.width() - 4
-        status_y = self.ui.zFrame.height() - 4
-        self.zDisplay = lockDisplayWidgets.QOffsetDisplay(status_x,
-                                                          status_y,
-                                                          0,
-                                                          stage_max,
-                                                          int(0.1 * stage_max),
-                                                          int(0.9 * stage_max),
-                                                          parent = self.ui.zFrame)
-        self.zDisplay.setGeometry(2, 2, status_x, status_y)
-
-        # qpd
-        status_x = self.ui.qpdFrame.width() - 4
-        status_y = self.ui.qpdFrame.height() - 4
-        self.qpdDisplay = lockDisplayWidgets.QQPDDisplay(status_x,
-                                                         status_y,
-                                                         200,
-                                                         parent = self.ui.qpdFrame)
-        self.qpdDisplay.setGeometry(2, 2, status_x, status_y)
 
         # connect signals
         if self.have_parent:
@@ -259,16 +217,6 @@ class FocusLockZ(QtGui.QDialog):
         self.offset = offset
         self.power = power
         self.stage_z = stage_z
-        # Update the various displays
-        self.offsetDisplay.updateValue(offset * self.scale)
-        self.ui.offsetText.setText("{0:.1f}".format(offset * self.scale))
-        self.sumDisplay.updateValue(power)
-        self.ui.sumText.setText("{0:.1f}".format(power))
-        self.qpdDisplay.updateValue(x_offset, y_offset)
-        self.ui.qpdXText.setText("x: {0:.1f}".format(x_offset))
-        self.ui.qpdYText.setText("y: {0:.1f}".format(y_offset))        
-        self.zDisplay.updateValue(stage_z)
-        self.ui.zText.setText("{0:.3f}um".format(stage_z))
 
     @hdebug.debug
     def foundSum(self):
@@ -420,9 +368,174 @@ class FocusLockZ(QtGui.QDialog):
             self.ui.lockButton.setStyleSheet("QPushButton { color: black}")
 
 #
+# FocusLockZ specialized for QPD style offset data.
+#
+class FocusLockZQPD(FocusLockZ):
+    @hdebug.debug
+    def __init__(self, parameters, tcp_control, control_thread, ir_laser, parent):
+        FocusLockZ.__init__(self, parameters, tcp_control, control_thread, ir_laser, parent)
+
+        #
+        # Setup lock display widgets used to display QPD style offset data.
+        #
+
+        # offset display widget setup
+        # +-500nm display range hard coded (if qpd is properly calibrated).
+        self.offset_min = -500
+        self.offset_max = 500
+        status_x = self.ui.offsetFrame.width() - 4
+        status_y = self.ui.offsetFrame.height() - 4
+        self.offsetDisplay = lockDisplayWidgets.QOffsetDisplay(status_x,
+                                                               status_y,
+                                                               self.offset_min,
+                                                               self.offset_max,
+                                                               self.offset_min + 100,
+                                                               self.offset_max - 100,
+                                                               has_center_bar = 1,
+                                                               parent = self.ui.offsetFrame)
+        self.offsetDisplay.setGeometry(2, 2, status_x, status_y)
+
+        # sum display widget setup
+        self.sum_min = 100
+        status_x = self.ui.sumFrame.width() - 4
+        status_y = self.ui.sumFrame.height() - 4
+        self.sumDisplay = lockDisplayWidgets.QSumDisplay(status_x,
+                                                         status_y,
+                                                         0,
+                                                         parameters.qpd_sum_max,
+                                                         self.sum_min,
+                                                         parent = self.ui.sumFrame)
+        self.sumDisplay.setGeometry(2, 2, status_x, status_y)
+
+        # stage display widget setup
+        stage_max = int(2.0 * parameters.qpd_zcenter)
+        status_x = self.ui.zFrame.width() - 4
+        status_y = self.ui.zFrame.height() - 4
+        self.zDisplay = lockDisplayWidgets.QOffsetDisplay(status_x,
+                                                          status_y,
+                                                          0,
+                                                          stage_max,
+                                                          int(0.1 * stage_max),
+                                                          int(0.9 * stage_max),
+                                                          parent = self.ui.zFrame)
+        self.zDisplay.setGeometry(2, 2, status_x, status_y)
+
+        # qpd
+        status_x = self.ui.qpdFrame.width() - 4
+        status_y = self.ui.qpdFrame.height() - 4
+        self.qpdDisplay = lockDisplayWidgets.QQPDDisplay(status_x,
+                                                         status_y,
+                                                         200,
+                                                         parent = self.ui.qpdFrame)
+        self.qpdDisplay.setGeometry(2, 2, status_x, status_y)
+
+    def controlUpdate(self, x_offset, y_offset, power, stage_z):
+        FocusLockZ.controlUpdate(self, x_offset, y_offset, power, stage_z)
+
+        # Update the various displays
+        self.offsetDisplay.updateValue(self.offset * self.scale)
+        self.ui.offsetText.setText("{0:.1f}".format(self.offset * self.scale))
+        self.sumDisplay.updateValue(power)
+        self.ui.sumText.setText("{0:.1f}".format(power))
+        self.qpdDisplay.updateValue(x_offset, y_offset)
+        self.ui.qpdXText.setText("x: {0:.1f}".format(x_offset))
+        self.ui.qpdYText.setText("y: {0:.1f}".format(y_offset))        
+        self.zDisplay.updateValue(stage_z)
+        self.ui.zText.setText("{0:.3f}um".format(stage_z))
+
+#
+# FocusLockZ specialized for camera style offset data.
+#
+class FocusLockZCam(FocusLockZ):
+    @hdebug.debug
+    def __init__(self, parameters, tcp_control, control_thread, ir_laser, parent):
+        FocusLockZ.__init__(self, parameters, tcp_control, control_thread, ir_laser, parent)
+
+        self.control_thread = control_thread
+        self.ui.qpdLabel.setText("Camera")
+        self.ui.qpdXText.hide()
+        self.ui.qpdYText.hide()
+
+        #
+        # Setup lock display widgets used to display camera style offset data.
+        #
+
+        # offset display widget setup
+        # +-500nm display range hard coded (if qpd is properly calibrated).
+        self.offset_min = -500
+        self.offset_max = 500
+        status_x = self.ui.offsetFrame.width() - 4
+        status_y = self.ui.offsetFrame.height() - 4
+        self.offsetDisplay = lockDisplayWidgets.QOffsetDisplay(status_x,
+                                                               status_y,
+                                                               self.offset_min,
+                                                               self.offset_max,
+                                                               self.offset_min + 100,
+                                                               self.offset_max - 100,
+                                                               has_center_bar = 1,
+                                                               parent = self.ui.offsetFrame)
+        self.offsetDisplay.setGeometry(2, 2, status_x, status_y)
+
+        # sum display widget setup
+        self.sum_min = 100
+        status_x = self.ui.sumFrame.width() - 4
+        status_y = self.ui.sumFrame.height() - 4
+        self.sumDisplay = lockDisplayWidgets.QSumDisplay(status_x,
+                                                         status_y,
+                                                         0,
+                                                         parameters.qpd_sum_max,
+                                                         self.sum_min,
+                                                         parent = self.ui.sumFrame)
+        self.sumDisplay.setGeometry(2, 2, status_x, status_y)
+
+        # stage display widget setup
+        stage_max = int(2.0 * parameters.qpd_zcenter)
+        status_x = self.ui.zFrame.width() - 4
+        status_y = self.ui.zFrame.height() - 4
+        self.zDisplay = lockDisplayWidgets.QOffsetDisplay(status_x,
+                                                          status_y,
+                                                          0,
+                                                          stage_max,
+                                                          int(0.1 * stage_max),
+                                                          int(0.9 * stage_max),
+                                                          parent = self.ui.zFrame)
+        self.zDisplay.setGeometry(2, 2, status_x, status_y)
+
+        # camera display
+        status_x = self.ui.qpdFrame.width() - 4
+        status_y = self.ui.qpdFrame.height() - 4
+        self.camDisplay = lockDisplayWidgets.QCamDisplay(parent = self.ui.qpdFrame)
+        self.camDisplay.setGeometry(2, 2, status_x, status_y)
+
+        # timer for updating the display of snapshots captured by the camera.
+        self.cam_timer = QtCore.QTimer()
+        self.cam_timer.setInterval(100)
+        self.cam_timer.start()
+
+        self.cam_timer.timeout.connect(self.updateCamera)
+
+    def controlUpdate(self, x_offset, y_offset, power, stage_z):
+        FocusLockZ.controlUpdate(self, x_offset, y_offset, power, stage_z)
+
+        # Update the various displays
+        self.offsetDisplay.updateValue(self.offset * self.scale)
+        self.ui.offsetText.setText("{0:.1f}".format(self.offset * self.scale))
+        self.sumDisplay.updateValue(power)
+        self.ui.sumText.setText("{0:.1f}".format(power))
+        self.zDisplay.updateValue(stage_z)
+        self.ui.zText.setText("{0:.3f}um".format(stage_z))
+
+    def updateCamera(self):
+        self.camDisplay.newImage(self.control_thread.getImage())
+
+    def quit(self):
+        FocusLockZ.quit(self)
+        self.cam_timer.stop()
+
+#
 # The MIT License
 #
-# Copyright (c) 2010 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

@@ -84,13 +84,13 @@
   <y_sign type="int">1</y_sign>
 
   <!-- focus lock settings -->
-  <have_focus_lock type="int">0</have_focus_lock>
+  <have_focus_lock type="int">1</have_focus_lock>
   <qpd_mode type="int">0</qpd_mode>
   <qpd_zcenter type="float">50.0</qpd_zcenter>
 <!--  <qpd_scale type="float">1350.0</qpd_scale> -->
 <!--  <qpd_scale type="float">3200.0</qpd_scale> -->
 <!--  <qpd_scale type="float">1421.0</qpd_scale> -->
-  <qpd_scale type="float">50.0</qpd_scale>
+  <qpd_scale type="float">-70.0</qpd_scale>
   <qpd_sum_max type="int">1500</qpd_sum_max>
   <cal_deadtime type="int">20</cal_deadtime>
   <cal_range type="float">600</cal_range>
@@ -107,7 +107,7 @@
   <olock_quality_threshold type="float">0.0</olock_quality_threshold>
 
   <!-- spot counter -->
-  <have_spot_counter type="int">0</have_spot_counter>
+  <have_spot_counter type="int">1</have_spot_counter>
   <cell_size type="int">32</cell_size>
   <threshold type="int">250</threshold>
   <min_spots type="int">0</min_spots>
@@ -131,7 +131,7 @@
   <tcp_port type="int">9000</tcp_port>
 
   <!-- power progression settings -->
-  <have_progressions type="int">0</have_progressions>
+  <have_progressions type="int">1</have_progressions>
   <use_progressions type="int">0</use_progressions>
   <pstart_value type="float">0.1</pstart_value>
   <pinc_value type="float">0.01</pinc_value>

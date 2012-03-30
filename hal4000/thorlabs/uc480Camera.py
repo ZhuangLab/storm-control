@@ -19,8 +19,10 @@ IS_AOI_IMAGE_GET_AOI = 0x0002
 IS_AOI_IMAGE_SET_AOI = 0x0001
 IS_DONT_WAIT = 0
 IS_GET_STATUS = 0x8000
+IS_IGNORE_PARAMETER = -1
 IS_SEQUENCE_CT = 2
 IS_SET_CM_Y8 = 6
+IS_SET_GAINBOOST_OFF = 0x0000
 IS_SUCCESS = 0
 IS_WAIT = 1
 
@@ -69,8 +71,15 @@ class Camera(Handle):
         self.im_width = self.info.nMaxWidth
         self.im_height = self.info.nMaxHeight
 
-        # Set camera to capture in BW.
+        # Initialize some general camera settings.
         check(uc480.is_SetColorMode(self, IS_SET_CM_Y8))
+        check(uc480.is_SetGainBoost(self, IS_SET_GAINBOOST_OFF))
+        check(uc480.is_SetGamma(self, 1))
+        check(uc480.is_SetHardwareGain(self,
+                                       0,
+                                       IS_IGNORE_PARAMETER,
+                                       IS_IGNORE_PARAMETER,
+                                       IS_IGNORE_PARAMETER))
 
         # Setup capture parameters.
         self.bitpixel = 8     # This is correct for a BW camera anyway..
@@ -143,7 +152,7 @@ class Camera(Handle):
         check(uc480.is_StopLiveVideo(self, IS_WAIT))
 
 # QPD emulation class
-class USBQPD():
+class cameraQPD():
     def __init__(self):
         self.image = None
 
@@ -151,10 +160,10 @@ class USBQPD():
         self.cam = Camera()
 
         # set camera AOI
-        self.x_start = 836
-        self.y_start = 434
-        self.x_width = 300
-        self.y_width = 300
+        self.x_start = 772
+        self.y_start = 580
+        self.x_width = 200
+        self.y_width = 200
         self.cam.setAOI(self.x_start,
                         self.y_start,
                         self.x_width,
@@ -188,7 +197,7 @@ if __name__ == "__main__":
     reps = 50
 
     if 1:
-        cam.setAOI(900, 500, 300, 300)
+        cam.setAOI(772, 566, 200, 200)
         cam.setFrameRate(verbose = True)
         image = cam.captureImage()
         im = Image.fromarray(image)
