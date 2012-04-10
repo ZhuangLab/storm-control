@@ -2,7 +2,7 @@
 #
 # Stage control for Prism2.
 #
-# Hazen 7/09
+# Hazen 04/12
 #
 
 # stage.
@@ -12,12 +12,12 @@ import marzhauser.marzhauser as marzhauser
 import stagecontrol.stageControl as stageControl
 
 #
-# Stage control dialog specialized for STORM3
-# with Prior motorized stage.
+# Stage control dialog specialized for Prism2
+# with marzhauser motorized stage.
 #
 class AStageControl(stageControl.StageControl):
     def __init__(self, parameters, tcp_control, parent = None):
-        self.stage = marzhauser.Marzhauser()
+        self.stage = marzhauser.MarzhauserDLL("COM3")
         stageControl.StageControl.__init__(self, 
                                            parameters,
                                            tcp_control,
@@ -26,7 +26,7 @@ class AStageControl(stageControl.StageControl):
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

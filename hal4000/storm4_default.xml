@@ -77,7 +77,7 @@
   <button channel="6" power="0.1">Low</button>
 
   <!-- stage settings -->
-  <have_stage type="int">0</have_stage>
+  <have_stage type="int">1</have_stage>
   <small_step_size type="float">5.0</small_step_size>
   <large_step_size type="float">25.0</large_step_size>
   <x_sign type="int">-1</x_sign>

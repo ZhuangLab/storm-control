@@ -1,13 +1,21 @@
 #!/usr/bin/python
 #
-# ctypes interface to a Marzhauser stage.
+# ctypes or RS232 interface to a Marzhauser stage.
 #
-# Hazen 7/09
+# Hazen 04/12
 #
 
 from ctypes import *
+import sys
 import time
 
+try:
+    import halLib.RS232 as RS232
+except:
+    sys.path.append("..")
+    import halLib.RS232 as RS232
+
+# DLL loading
 tango = 0
 def loadTangoDLL():
     global tango
@@ -15,8 +23,68 @@ def loadTangoDLL():
         tango = windll.LoadLibrary("C:\Program Files\SwitchBoard\Tango_DLL")
 
 instantiated = 0
-class Marzhauser():
-    def __init__(self):
+
+
+# Marzhauser RS232 interface class
+class MarzhauserRS232(RS232.RS232):
+    def __init__(self, port):
+
+        self.unit_to_um = 1000.0
+        self.um_to_unit = 1.0/self.unit_to_um
+
+        # RS232 stuff
+        RS232.RS232.__init__(self, port, None, 57600, "\r", 0.02)
+        try:
+            test = self.commWithResp("?version")
+        except:
+            self.live = False
+        if not self.live:
+            print "Marzhauser Stage is not connected? Stage is not on?"
+
+    def getStatus(self):
+        return self.live
+
+    def goAbsolute(self, x, y):
+        if self.live:
+            X = x * self.um_to_unit
+            Y = y * self.um_to_unit
+            self.commWithResp("!moa " + str(X) + " " + str(Y) + " 0")
+
+    def goRelative(self, x, y):
+        if self.live:
+            X = x * self.um_to_unit
+            Y = y * self.um_to_unit
+            self.commWithResp("!mor " + str(X) + " " + str(Y) + " 0")
+
+    # FIXME: lockout the joystick here.
+    def joystickOnOff(self, on):
+        if self.live:
+            pass
+
+    def position(self):
+        if self.live:
+            [x, y] = map(lambda x: float(x)*self.unit_to_um, 
+                         self.commWithResp("?pos")[:-2].split(" "))
+            return [x, y, 0.0]
+        else:
+            return [0.0, 0.0, 0.0]
+
+    def serialNumber(self):
+        if self.live:
+            return self.commWithResp("?readsn")
+        else:
+            return "NA"
+
+    def zero(self):
+        if self.live:
+            self.commWithResp("!pos 0 0 0")
+
+
+# Marzhauser DLL interface class
+class MarzhauserDLL():
+    def __init__(self, port):
+        Marzhauser.__init__(self, port)
+
         self.wait = 1 # move commands wait for motion to stop
         self.unit_to_um = 1000.0
         self.um_to_unit = 1.0/self.unit_to_um
@@ -34,7 +102,7 @@ class Marzhauser():
         temp = c_int(-1)
         tango.LSX_CreateLSID(byref(temp))
         self.LSID = temp.value
-        error = tango.LSX_ConnectSimple(self.LSID, 1, "COM3", 57600, 0)
+        error = tango.LSX_ConnectSimple(self.LSID, 1, port, 57600, 0)
         if error:
             print "Marzhauser error", error
             self.good = 0
@@ -57,7 +125,7 @@ class Marzhauser():
             tango.LSX_MoveRel(self.LSID, dX, dY, dZA, dZA, self.wait)
 
     # FIXME: lockout the joystick here.
-    def lockout(self, flag):
+    def joystickOnOff(self, on):
         if self.good:
             pass
 
@@ -103,7 +171,7 @@ class Marzhauser():
 # 
 
 if __name__ == "__main__":
-    stage = Marzhauser()
+    stage = MarzhauserRS232("COM6")
     print "SN:", stage.serialNumber()
     stage.zero()
     print "Position:", stage.position()
