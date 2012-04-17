@@ -19,6 +19,7 @@ class STORM3QIlluminationControlWidget(illuminationControl.QIlluminationControlW
         # setup the AOTF communication thread
         self.aotf_queue = commandQueues.QCTAOTFThread()
         self.aotf_queue.start(QtCore.QThread.NormalPriority)
+        self.aotf_queue.analogModulationOn()
 
         # setup the Cube communication thread
         self.cube_queue = commandQueues.QCubeThread()
@@ -27,14 +28,14 @@ class STORM3QIlluminationControlWidget(illuminationControl.QIlluminationControlW
         illuminationControl.QIlluminationControlWidget.__init__(self, settings_file_name, parameters, parent)
 
     def autoControl(self, channels):
-        self.aotf_queue.analogModulationOn()
         self.cube_queue.analogModulationOn()
-        illuminationControl.QIlluminationControlWidget.autoControl(self, channels)
+        for channel in self.channels:
+            channel.setFilmMode(1)
 
     def manualControl(self):
-        self.aotf_queue.analogModulationOff()
         self.cube_queue.analogModulationOff()
-        illuminationControl.QIlluminationControlWidget.manualControl(self)
+        for channel in self.channels:
+            channel.setFilmMode(0)
 
     def newParameters(self, parameters):
         illuminationControl.QIlluminationControlWidget.newParameters(self, parameters)
@@ -71,6 +72,7 @@ class STORM3QIlluminationControlWidget(illuminationControl.QIlluminationControlW
                                                       dx,
                                                       height)
                 channel.setCmdQueue(self.aotf_queue)
+                channel.fskOnOff(1)
                 self.channels.append(channel)
             elif hasattr(self.settings[i], 'use_cube405'):
                 channel = channelWidgets.QCubeChannel(self,

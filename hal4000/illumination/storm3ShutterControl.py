@@ -17,12 +17,15 @@ import illumination.shutterControl as shutterControl
 
 class AShutterControl(shutterControl.ShutterControl):
     def __init__(self, powerToVoltage):
-        self.ct_task = 0
-        self.wv_task = 0
-        self.board = "PCI-6722"
+        shutterControl.ShutterControl.__init__(self, powerToVoltage)
         self.oversampling_default = 100
         self.number_channels = 7
-        shutterControl.ShutterControl.__init__(self, powerToVoltage)
+
+        self.board = "PCI-6722"
+        self.ct_task = False
+        self.wv_task = False
+
+        self.defaultAOTFLines()
 
     def cleanup(self):
         if self.ct_task:
@@ -30,6 +33,17 @@ class AShutterControl(shutterControl.ShutterControl):
             self.wv_task.clearTask()
             self.ct_task = 0
             self.wv_task = 0
+
+    def defaultAOTFLines(self):
+        for i in range(self.number_channels):
+            # set analog lines to default (max).
+            nicontrol.setAnalogLine(self.board, i, self.powerToVoltage(i, 1.0))
+
+    def prepare(self):
+        # This sets things so we don't get a burst of light at the
+        # begining with all the lasers coming on.
+        for i in range(self.number_channels):
+            nicontrol.setAnalogLine(self.board, i, 0.0)
 
     def setup(self, kinetic_cycle_time):
         assert self.ct_task == 0, "Attempt to call setup without first calling cleanup."
@@ -67,12 +81,14 @@ class AShutterControl(shutterControl.ShutterControl):
             self.wv_task = 0
 
         # reset all the analog signals.
-        for i in range(self.number_channels):
-            ao_task = nicontrol.VoltageOutput(self.board, i)
-            ao_task.outputVoltage(self.powerToVoltage(i, 0.0))
-            ao_task.startTask()
-            ao_task.stopTask()
-            ao_task.clearTask()
+        self.defaultAOTFLines()
+
+        #for i in range(self.number_channels):
+        #    ao_task = nicontrol.VoltageOutput(self.board, i)
+        #    ao_task.outputVoltage(self.powerToVoltage(i, 0.0))
+        #    ao_task.startTask()
+        #    ao_task.stopTask()
+        #    ao_task.clearTask()
             
         
 #
