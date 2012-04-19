@@ -17,7 +17,7 @@ import stagecontrol.stageControl as stageControl
 #
 class AStageControl(stageControl.StageControl):
     def __init__(self, parameters, tcp_control, parent = None):
-        self.stage = marzhauser.MarzhauserDLL("COM3")
+        self.stage = marzhauser.MarzhauserDLL("COM5")
         stageControl.StageControl.__init__(self, 
                                            parameters,
                                            tcp_control,

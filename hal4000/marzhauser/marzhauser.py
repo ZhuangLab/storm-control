@@ -83,8 +83,6 @@ class MarzhauserRS232(RS232.RS232):
 # Marzhauser DLL interface class
 class MarzhauserDLL():
     def __init__(self, port):
-        Marzhauser.__init__(self, port)
-
         self.wait = 1 # move commands wait for motion to stop
         self.unit_to_um = 1000.0
         self.um_to_unit = 1.0/self.unit_to_um
@@ -128,6 +126,9 @@ class MarzhauserDLL():
     def joystickOnOff(self, on):
         if self.good:
             pass
+
+    def lockout(self, flag):
+        self.joystickOnOff(not flag)
 
     def position(self):
         if self.good:

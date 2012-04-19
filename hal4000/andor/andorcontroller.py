@@ -78,7 +78,7 @@ class AndorCamera:
     # then querying it to determine its various properties.
     #
 
-    def __init__(self, andor_path):
+    def __init__(self, andor_dll):
         # check that this class has not already been instantiated
         global instantiated
         assert instantiated == 0, "Attempt to instantiate two camera controller instances."
@@ -90,10 +90,10 @@ class AndorCamera:
         self._props_ = {}
 
         # load the andor DLL library
-        loadAndorDLL(andor_path)
+        loadAndorDLL(andor_dll)
 
         # initialize the camera
-        status = andor.Initialize(andor_path + "Detector.ini")
+        status = andor.Initialize(andor_dll + "Detector.ini")
         assert status == drv_success, "Initialization failed: " + str(status)
 
         # determine camera capabilities (useful??)

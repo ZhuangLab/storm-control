@@ -19,11 +19,12 @@ class Prism2QIlluminationControlWidget(illuminationControl.QIlluminationControlW
         # setup the AOTF communication thread
         self.aotf_queue = commandQueues.QCTAOTFThread()
         self.aotf_queue.start(QtCore.QThread.NormalPriority)
+        self.aotf_queue.analogModulationOn()
 
         # setup the Cube communication threads
-        self.cube405_queue = commandQueues.QCubeThread("COM5")
+        self.cube405_queue = commandQueues.QCubeThread("COM4")
         self.cube405_queue.start(QtCore.QThread.NormalPriority)
-        self.cube445_queue = commandQueues.QCubeThread("COM1")
+        self.cube445_queue = commandQueues.QCubeThread("COM3")
         self.cube445_queue.start(QtCore.QThread.NormalPriority)
 
         # setup for NI communication (analog, camera synced)
@@ -35,18 +36,22 @@ class Prism2QIlluminationControlWidget(illuminationControl.QIlluminationControlW
         illuminationControl.QIlluminationControlWidget.__init__(self, settings_file_name, parameters, parent)
 
     def autoControl(self, channels):
-        self.aotf_queue.analogModulationOn()
+        #self.aotf_queue.analogModulationOn()
         self.cube445_queue.analogModulationOn()
         self.cube405_queue.analogModulationOn()
         self.ni_queue.setFilming(1)
-        illuminationControl.QIlluminationControlWidget.autoControl(self, channels)
+        for channel in self.channels:
+            channel.setFilmMode(1)
+        #illuminationControl.QIlluminationControlWidget.autoControl(self, channels)
 
     def manualControl(self):
-        self.aotf_queue.analogModulationOff()
+        #self.aotf_queue.analogModulationOff()
         self.cube445_queue.analogModulationOff()
         self.cube405_queue.analogModulationOff()
         self.ni_queue.setFilming(0)
-        illuminationControl.QIlluminationControlWidget.manualControl(self)
+        for channel in self.channels:
+            channel.setFilmMode(0)
+        #illuminationControl.QIlluminationControlWidget.manualControl(self)
 
     def newParameters(self, parameters):
         illuminationControl.QIlluminationControlWidget.newParameters(self, parameters)
@@ -83,6 +88,7 @@ class Prism2QIlluminationControlWidget(illuminationControl.QIlluminationControlW
                                                               height)
                 channel.setCmdQueue(self.aotf_queue)
                 channel.setShutterQueue(self.shutter_queue)
+                channel.fskOnOff(1)
                 self.channels.append(channel)
             elif hasattr(self.settings[i], 'use_cube445'):
                 channel = channelWidgets.QCubeChannelWShutter(self,

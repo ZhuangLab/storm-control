@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Prism3 shutter control.
+# Prism2 shutter control.
 #
 # Channels 0-3 are controlled by the AOTF.
 # Channel 4 is a Coherent 405 diode laser which is
@@ -10,7 +10,7 @@
 # These are driven by the analog out lines of a
 # National Instruments PCI-6722 card.
 #
-# Hazen 11/09
+# Hazen 04/12
 #
 
 import nationalInstruments.nicontrol as nicontrol
@@ -19,12 +19,15 @@ import illumination.shutterControl as shutterControl
 
 class AShutterControl(shutterControl.ShutterControl):
     def __init__(self, powerToVoltage):
+        shutterControl.ShutterControl.__init__(self, powerToVoltage)
+        self.oversampling_default = 100
+        self.number_channels = 8
+
         self.ct_task = 0
         self.wv_task = 0
         self.board = "PCI-6722"
-        self.oversampling_default = 100
-        self.number_channels = 8
-        shutterControl.ShutterControl.__init__(self, powerToVoltage)
+
+        self.defaultAOTFLines()
 
     def cleanup(self):
         if self.ct_task:
@@ -32,6 +35,17 @@ class AShutterControl(shutterControl.ShutterControl):
             self.wv_task.clearTask()
             self.ct_task = 0
             self.wv_task = 0
+
+    def defaultAOTFLines(self):
+        for i in range(self.number_channels):
+            # set analog lines to default (max).
+            nicontrol.setAnalogLine(self.board, i, self.powerToVoltage(i, 1.0))
+
+    def prepare(self):
+        # This sets things so we don't get a burst of light at the
+        # begining with all the lasers coming on.
+        for i in range(self.number_channels):
+            nicontrol.setAnalogLine(self.board, i, 0.0)
 
     def setup(self, kinetic_cycle_time):
         assert self.ct_task == 0, "Attempt to call setup without first calling cleanup."
@@ -69,18 +83,19 @@ class AShutterControl(shutterControl.ShutterControl):
             self.wv_task = 0
 
         # reset all the analog signals.
-        for i in range(self.number_channels):
-            ao_task = nicontrol.VoltageOutput(self.board, i)
-            ao_task.outputVoltage(self.powerToVoltage(i, 0.0))
-            ao_task.startTask()
-            ao_task.stopTask()
-            ao_task.clearTask()
+        self.defaultAOTFLines()
+#        for i in range(self.number_channels):
+#            ao_task = nicontrol.VoltageOutput(self.board, i)
+#            ao_task.outputVoltage(self.powerToVoltage(i, 0.0))
+#            ao_task.startTask()
+#            ao_task.stopTask()
+#            ao_task.clearTask()
             
         
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
