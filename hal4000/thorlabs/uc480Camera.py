@@ -10,6 +10,8 @@ import ctypes.util
 import ctypes.wintypes
 import numpy
 from PIL import Image
+import scipy
+import scipy.optimize
 import time
 
 Handle = ctypes.wintypes.HANDLE
@@ -52,10 +54,46 @@ class AOIRect(ctypes.Structure):
 
 uc480 = ctypes.cdll.LoadLibrary("c:\windows\system32\uc480_64.dll")
 
-# helper functions
+# Helper functions
 def check(fn_return):
     if not (fn_return == IS_SUCCESS):
         print "uc480: Call failed with error", fn_return
+
+
+# Least squares gaussian fitting functions
+def fitAFunctionLS(data, params, fn):
+    result = params
+    errorfunction = lambda p: numpy.ravel(fn(*p)(*numpy.indices(data.shape)) - data)
+    good = True
+    [result, cov_x, infodict, mesg, success] = scipy.optimize.leastsq(errorfunction, params, full_output = 1, maxfev = 500)
+    if (success < 1) or (success > 4):
+        print "Fitting problem:", mesg
+        good = False
+    return [result, good]
+
+def symmetricGaussian(background, height, center_x, center_y, width):
+    return lambda x,y: background + height*numpy.exp(-(((center_x-x)/width)**2 + ((center_y-y)/width)**2) * 2)
+
+def fixedEllipticalGaussian(background, height, center_x, center_y, width_x, width_y):
+    return lambda x,y: background + height*numpy.exp(-(((center_x-x)/width_x)**2 + ((center_y-y)/width_y)**2) * 2)
+
+def fitSymmetricGaussian(data, sigma):
+    params = [numpy.min(data),
+              numpy.max(data),
+              0.5 * data.shape[0],
+              0.5 * data.shape[1],
+              2.0 * sigma]
+    return fitAFunctionLS(data, params, symmetricGaussian)
+
+def fitFixedEllipticalGaussian(data, sigma):
+    params = [numpy.min(data),
+              numpy.max(data),
+              0.5 * data.shape[0],
+              0.5 * data.shape[1],
+              2.0 * sigma,
+              2.0 * sigma]
+    return fitAFunctionLS(data, params, fixedEllipticalGaussian)
+
 
 # Camera Interface Class
 class Camera(Handle):
@@ -160,8 +198,8 @@ class cameraQPD():
         self.cam = Camera()
 
         # set camera AOI
-        self.x_start = 772
-        self.y_start = 580
+        self.x_start = 652
+        self.y_start = 214
         self.x_width = 200
         self.y_width = 200
         self.cam.setAOI(self.x_start,
@@ -172,31 +210,100 @@ class cameraQPD():
         # set camera to run as fast as possible
         self.cam.setFrameRate()
 
+        # some derived parameters
+        self.half_x = self.x_width/2
+        self.half_y = self.y_width/2
         self.X = numpy.arange(self.y_width) - 0.5*float(self.y_width)
+
+        # other variables
+        self.fit_size = 10
+        self.x_off1 = self.half_x
+        self.y_off1 = self.half_y
+        self.x_off2 = self.half_x
+        self.y_off2 = self.half_y
 
     def capture(self):
         self.image = self.cam.captureImage()
         return self.image
 
-    def getImage(self):
-        return self.image
+    def fitGaussian(self, data):
+        max_i = data.argmax()
+        max_x = int(max_i/data.shape[0])
+        max_y = int(max_i%data.shape[0])
+        if (max_x > (self.fit_size-1)) and (max_x < (self.x_width - self.fit_size)) and (max_y > (self.fit_size-1)) and (max_y < (self.y_width - self.fit_size)):
+            #[params, status] = fitSymmetricGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 3.0)
+            [params, status] = fitFixedEllipticalGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 6.0)
+            params[2] -= self.fit_size/2
+            params[3] -= self.fit_size/2
+            return [max_x, max_y, params, status]
+        else:
+            return [False, False, False, False]
 
-    def qpdScan(self):
-        data = self.capture()
-        data_ave = numpy.average(data, axis = 1)
-        power = numpy.sum(data_ave)
-        x_offset = numpy.sum(self.X * data_ave)
-        return [power, x_offset, 0.0]
+    def getImage(self):
+        return [self.image, self.x_off1, self.y_off1, self.x_off2, self.y_off2]
+
+    def qpdScan(self, reps = 4):
+        power_total = 0.0
+        offset_total = 0.0
+        good_total = 0.0
+        for i in range(reps):
+            data = self.singleQpdScan()
+            if (data[0] > 0):
+                power_total += data[0]
+                offset_total += data[1]
+                good_total += 1.0
+        if (good_total > 0):
+            inv_good = 1.0/good_total
+            return [power_total * inv_good, offset_total * inv_good, 0]
+        else:
+            return [0, 0, 0]
 
     def shutDown(self):
         self.cam.shutDown()
+
+    def singleQpdScan(self):
+        data = self.capture().copy()
+
+        # determine offset by moments calculation.
+        if 0:
+            data_ave = numpy.average(data, axis = 1)
+            power = numpy.sum(data_ave)
+            x_offset = numpy.sum(self.X * data_ave)
+            y_offset = 0.0
+
+        # determine offset by fitting gaussians to the two beam spots.
+        if 1:
+            power = numpy.max(data)
+
+            if (power < 25):
+                return [0, 0, 0]
+
+            # fit first gaussian & subtract
+            [max_x, max_y, params, status] = self.fitGaussian(data)
+            if (not status):
+                return [0, 0, 0]
+            data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size] = 0
+            self.x_off1 = float(max_x) + params[2] - self.half_x
+            self.y_off1 = float(max_y) + params[3] - self.half_y
+
+            # fit second gaussian
+            [max_x, max_y, params, status] = self.fitGaussian(data)
+            if (not status):
+                return [0, 0, 0]
+            self.x_off2 = float(max_x) + params[2] - self.half_x
+            self.y_off2 = float(max_y) + params[3] - self.half_y
+
+            offset = (abs(self.y_off1 -  self.y_off2)-100.0)*power
+
+        return [power, offset, 0]
+
 
 # Testing
 if __name__ == "__main__":
     cam = Camera()
     reps = 50
 
-    if 1:
+    if 0:
         cam.setAOI(772, 566, 200, 200)
         cam.setFrameRate(verbose = True)
         image = cam.captureImage()
@@ -219,6 +326,13 @@ if __name__ == "__main__":
             print i
             image = cam.captureImage()
         print "time:", time.time() - st
+
+    if 1:
+        for i in range(50):
+            print i
+            image = cam.captureImage()
+            im = Image.fromarray(image)
+            im.save("temp_" + str(i) + ".png")
 
     cam.shutDown()
 

@@ -297,9 +297,14 @@ class CounterOutput(NIDAQTask):
                                                        c_double(duty_cycle)))
 
     def setCounter(self, number_samples):
-        checkStatus(nidaqmx.DAQmxCfgImplicitTiming(self.taskHandle,
-                                                   c_long(DAQmx_Val_FiniteSamps),
-                                                   c_ulonglong(number_samples)))
+        if (number_samples > 0):
+            checkStatus(nidaqmx.DAQmxCfgImplicitTiming(self.taskHandle,
+                                                       c_long(DAQmx_Val_FiniteSamps),
+                                                       c_ulonglong(number_samples)))
+        else:
+            checkStatus(nidaqmx.DAQmxCfgImplicitTiming(self.taskHandle,
+                                                       c_long(DAQmx_Val_ContSamps),
+                                                       c_ulonglong(1000)))
 
     def setTrigger(self, trigger_source, retriggerable = 1, board = None):
         if retriggerable:
@@ -472,7 +477,7 @@ if __name__ == "__main__":
     print getDAQBoardInfo()
     print getBoardDevNumber("PCI-6733")
     
-    if 1:
+    if 0:
         waveform1 = [1, 0, 1, 0, 1, 0]
         waveform2 = [0, 1, 0, 1, 0, 1]
         waveform3 = [0, 0, 0, 0, 0, 0]
@@ -528,6 +533,13 @@ if __name__ == "__main__":
             print data[i]
         a_task.stopTask()
         a_task.clearTask()
+    if 1:
+        ct_task = CounterOutput("PCI-6733", 1, 50000, 0.10)
+        ct_task.setCounter(-1)
+        ct_task.startTask()
+        time.sleep(60)
+        ct_task.stopTask()
+        ct_task.clearTask()
 
 
 #

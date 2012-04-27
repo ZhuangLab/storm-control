@@ -9,7 +9,7 @@ import halLib.RS232 as RS232
 import time
 
 class IX2UCB(RS232.RS232):
-    def __init__(self, port = "COM6"):
+    def __init__(self, port = "COM4"):
         self.position = 0
         try:
             # open port

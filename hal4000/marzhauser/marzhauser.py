@@ -56,10 +56,11 @@ class MarzhauserRS232(RS232.RS232):
             Y = y * self.um_to_unit
             self.commWithResp("!mor " + str(X) + " " + str(Y) + " 0")
 
-    # FIXME: lockout the joystick here.
     def joystickOnOff(self, on):
         if self.live:
-            pass
+            self.commWithResp("!joy 2")
+        else:
+            self.commWithResp("!joy 0")
 
     def position(self):
         if self.live:

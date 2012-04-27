@@ -26,13 +26,13 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, parameters, tcp_control, parent = None):
         cam = uc480Cam.cameraQPD()
         stage = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/")
-        lock_fn = lambda (x): 0.005 * x
+        lock_fn = lambda (x): -0.03 * x
         control_thread = stageOffsetControl.stageCamThread(cam,
                                                            stage,
                                                            lock_fn,
                                                            50.0,
                                                            parameters.qpd_zcenter)
-        ir_laser = LDC210.LDC210("PCI-6733", 7)
+        ir_laser = LDC210.LDC210PWM("PCI-6733", 1)
         focusLockZ.FocusLockZCam.__init__(self,
                                           parameters,
                                           tcp_control,

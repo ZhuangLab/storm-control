@@ -41,9 +41,13 @@ class QStatusDisplay(QtGui.QWidget):
         self.update()
 
 class QSumDisplay(QStatusDisplay):
-    def __init__(self, x_size, y_size, scale_min, scale_max, warning_low, parent = None):
+    def __init__(self, x_size, y_size, scale_min, scale_max, warning_low, warning_high, parent = None):
         QStatusDisplay.__init__(self, x_size, y_size, scale_min, scale_max, parent = parent)
         self.warning_low = self.convert(float(warning_low))
+        if warning_high:
+            self.warning_high = self.convert(float(warning_high))
+        else:
+            self.warning_high = False
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
@@ -59,6 +63,9 @@ class QSumDisplay(QStatusDisplay):
         color = QtGui.QColor(0, 255, 0, 200)
         if self.value < self.warning_low:
             color = QtGui.QColor(255, 0, 0, 200)
+        if self.warning_high:
+            if self.value >= self.warning_high:
+                color = QtGui.QColor(255, 0, 0, 200)
         painter.setPen(color)
         painter.setBrush(color)
         painter.drawRect(2, self.y_size - self.value, self.x_size - 5, self.value)
@@ -126,23 +133,43 @@ class QCamDisplay(QtGui.QWidget):
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.background = QtGui.QColor(0,0,0)
+        self.foreground = QtGui.QColor(0,255,0)
         self.image = None
+        self.x_off1 = 0
+        self.y_off1 = 0
+        self.x_off2 = 0
+        self.y_off2 = 0
 
-    def newImage(self, np_data):
+    def newImage(self, data):
+        # update image
+        np_data = data[0]
         w, h = np_data.shape
         self.image = QtGui.QImage(np_data.data, w, h, QtGui.QImage.Format_Indexed8)
         self.image.ndarray = np_data
         for i in range(256):
             self.image.setColor(i, QtGui.QColor(i,i,i).rgb())
+
+        # update offsets
+        self.x_off1 = ((data[2]+w/2)/float(w))*float(self.width()) - 2
+        self.y_off1 = ((data[1]+h/2)/float(h))*float(self.height()) - 2
+        self.x_off2 = ((data[4]+w/2)/float(w))*float(self.width()) - 2
+        self.y_off2 = ((data[3]+h/2)/float(h))*float(self.height()) - 2
+
         self.update()
 
     def paintEvent(self, Event):
         painter = QtGui.QPainter(self)
         if self.image:
+            # draw image
             painter.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
-
             destination_rect = QtCore.QRect(0, 0, self.width(), self.height())
             painter.drawImage(destination_rect, self.image)
+
+            # draw beam tracking circle
+            painter.setRenderHint(QtGui.QPainter.Antialiasing)
+            painter.setPen(self.foreground)
+            painter.drawEllipse(QtCore.QPointF(self.x_off1, self.y_off1), 8.0, 8.0)
+            painter.drawEllipse(QtCore.QPointF(self.x_off2, self.y_off2), 8.0, 8.0)
         else:
             painter.setPen(self.background)
             painter.setBrush(self.background)

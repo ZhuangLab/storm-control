@@ -13,6 +13,7 @@
 # Hazen 03/12
 #
 
+import numpy
 from PyQt4 import QtCore, QtGui
 
 # Debugging
@@ -404,6 +405,7 @@ class FocusLockZQPD(FocusLockZ):
                                                          0,
                                                          parameters.qpd_sum_max,
                                                          self.sum_min,
+                                                         False,
                                                          parent = self.ui.sumFrame)
         self.sumDisplay.setGeometry(2, 2, status_x, status_y)
 
@@ -452,6 +454,10 @@ class FocusLockZCam(FocusLockZ):
         FocusLockZ.__init__(self, parameters, tcp_control, control_thread, ir_laser, parent)
 
         self.control_thread = control_thread
+        self.filename = ""
+        self.x_offset = 0
+        self.y_offset = 0
+
         self.ui.qpdLabel.setText("Camera")
         self.ui.qpdXText.hide()
         self.ui.qpdYText.hide()
@@ -477,7 +483,7 @@ class FocusLockZCam(FocusLockZ):
         self.offsetDisplay.setGeometry(2, 2, status_x, status_y)
 
         # sum display widget setup
-        self.sum_min = 100
+        self.sum_min = 50
         status_x = self.ui.sumFrame.width() - 4
         status_y = self.ui.sumFrame.height() - 4
         self.sumDisplay = lockDisplayWidgets.QSumDisplay(status_x,
@@ -485,6 +491,7 @@ class FocusLockZCam(FocusLockZ):
                                                          0,
                                                          parameters.qpd_sum_max,
                                                          self.sum_min,
+                                                         255,
                                                          parent = self.ui.sumFrame)
         self.sumDisplay.setGeometry(2, 2, status_x, status_y)
 
@@ -525,6 +532,22 @@ class FocusLockZCam(FocusLockZ):
         self.zDisplay.updateValue(stage_z)
         self.ui.zText.setText("{0:.3f}um".format(stage_z))
 
+        # save offset values
+        if (power > 0):
+            self.x_offset = x_offset/power
+            self.y_offset = y_offset/power
+
+    # for debugging..
+#    def openOffsetFile(self, filename):
+#        self.filename = filename
+#        FocusLockZ.openOffsetFile(self, filename)
+#
+#    def newFrame(self, frame):
+#        FocusLockZ.newFrame(self, frame)
+#        if self.offset_file:
+#            numpy.save(self.filename + "_" + str(self.frame_number) + ".npy",
+#                       self.control_thread.getImage()[0])
+        
     def updateCamera(self):
         self.camDisplay.newImage(self.control_thread.getImage())
 
