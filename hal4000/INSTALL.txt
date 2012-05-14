@@ -16,7 +16,7 @@
 
  (a) camera-params-v1.ui > camera_params_v1.py
  (b) camera-v1.ui > camera_v1.py
- (c) focuslock-v1.ui > focuslock_v1.py
+ (c) focuslock-v1.ui > focuslock.py
  (d) hal-4000-v1.ui > hal_4000ui_v1.py
  (e) illumination-v1.ui > illumination_v1.py
  (f) spotcounter-v2.ui > spotcounterui_v1.py

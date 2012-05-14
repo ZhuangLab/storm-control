@@ -20,8 +20,11 @@ class LDC210():
     def __init__(self, board, line):
         self.board = board
         self.line = line
-        
-    def on(self):
+
+    def havePowerControl(self):
+        return False
+
+    def on(self, dummy):
         nicontrol.setDigitalLine(self.board, self.line, True)
 
     def off(self):
@@ -37,7 +40,12 @@ class LDC210PWM():
         self.frequency = frequency
         self.line = line
 
-    def on(self, duty_cycle = 0.07):
+    def havePowerControl(self):
+        return True
+
+    # power is an integer between 0 and 100
+    def on(self, power):
+        duty_cycle = float(power)*0.01
         if (duty_cycle < 0.0):
             duty_cycle = 0.0
         if (duty_cycle > 1.0):
@@ -65,10 +73,16 @@ if __name__ == "__main__":
         ldc.off()
 
     if 1:
+        ct_task = nicontrol.CounterOutput("PCI-6733", 0, 100, 0.5)
+        ct_task.setCounter(100)
+        ct_task.setTrigger(0)
+        ct_task.startTask()
         ldc = LDC210PWM("PCI-6733", 1)
-        ldc.on()
-        time.sleep(60)
+        ldc.on(7)
+        time.sleep(5)
         ldc.off()
+        ct_task.stopTask()
+        ct_task.clearTask()
 
 #
 # The MIT License

@@ -20,7 +20,7 @@ from PyQt4 import QtCore, QtGui
 import halLib.hdebug as hdebug
 
 # UIs.
-import qtdesigner.focuslock_v1 as focusLockUi
+import qtdesigner.focuslock as focusLockUi
 
 # Widgets
 import focuslock.lockDisplayWidgets as lockDisplayWidgets
@@ -110,6 +110,7 @@ class FocusLockZ(QtGui.QDialog):
         self.frame_number = 0
         self.offset = 0
         self.offset_file = 0
+        self.parameters = parameters
         self.power = 0
         self.stage_z = 0
         self.tcp_control = tcp_control
@@ -143,6 +144,8 @@ class FocusLockZ(QtGui.QDialog):
         self.ui.lockLabel.setStyleSheet("QLabel { color: green }")
         self.toggleLockButtonDisplay(self.current_mode.shouldDisplayLockButton())
         self.toggleLockLabelDisplay(self.current_mode.shouldDisplayLockLabel())
+        if (not ir_laser.havePowerControl()):
+            self.ui.irSlider.hide()
 
         # The mode radio buttons, these should be in the
         # same order as the lock modes above.
@@ -172,6 +175,7 @@ class FocusLockZ(QtGui.QDialog):
         self.connect(self.ui.jumpSpinBox, QtCore.SIGNAL("valueChanged(double)"), self.handleJumpSpinBox)
         self.connect(self.ui.jumpButton, QtCore.SIGNAL("clicked()"), self.handleJumpButton)
         self.connect(self.ui.irButton, QtCore.SIGNAL("clicked()"), self.handleIrButton)
+        self.ui.irSlider.valueChanged.connect(self.handleIrSlider)
 
         # tcp signals
         if self.tcp_control:
@@ -239,10 +243,16 @@ class FocusLockZ(QtGui.QDialog):
             self.ui.irButton.setText("IR ON")
             self.ui.irButton.setStyleSheet("QPushButton { color: green }")
         else:
-            self.ir_laser.on()
+            self.ir_laser.on(self.parameters.ir_power)
             self.ir_state = True
             self.ui.irButton.setText("IR OFF")
             self.ui.irButton.setStyleSheet("QPushButton { color: red }")
+
+    def handleIrSlider(self, value):
+        self.parameters.ir_power = value
+        if self.ir_state:
+            self.ir_laser.off()
+            self.ir_laser.on(self.parameters.ir_power)
 
     @hdebug.debug
     def handleJumpButton(self):
@@ -297,6 +307,7 @@ class FocusLockZ(QtGui.QDialog):
 
     @hdebug.debug
     def newParameters(self, parameters):
+        self.parameters = parameters
         p = parameters
         for lock_mode in self.lock_modes:
             lock_mode.newParameters(parameters)
@@ -304,6 +315,8 @@ class FocusLockZ(QtGui.QDialog):
         if not self.current_mode.amLocked():
             self.control_thread.recenter()
         self.scale = p.qpd_scale
+        if self.ir_laser.havePowerControl():
+            self.ui.irSlider.setValue(p.ir_power)
 
     @hdebug.debug
     def quit(self):

@@ -198,8 +198,8 @@ class cameraQPD():
         self.cam = Camera()
 
         # set camera AOI
-        self.x_start = 652
-        self.y_start = 214
+        self.x_start = 640
+        self.y_start = 210
         self.x_width = 200
         self.y_width = 200
         self.cam.setAOI(self.x_start,
@@ -216,7 +216,7 @@ class cameraQPD():
         self.X = numpy.arange(self.y_width) - 0.5*float(self.y_width)
 
         # other variables
-        self.fit_size = 10
+        self.fit_size = 12
         self.x_off1 = self.half_x
         self.y_off1 = self.half_y
         self.x_off2 = self.half_x
@@ -231,8 +231,8 @@ class cameraQPD():
         max_x = int(max_i/data.shape[0])
         max_y = int(max_i%data.shape[0])
         if (max_x > (self.fit_size-1)) and (max_x < (self.x_width - self.fit_size)) and (max_y > (self.fit_size-1)) and (max_y < (self.y_width - self.fit_size)):
-            #[params, status] = fitSymmetricGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 3.0)
-            [params, status] = fitFixedEllipticalGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 6.0)
+            #[params, status] = fitSymmetricGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
+            [params, status] = fitFixedEllipticalGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
             params[2] -= self.fit_size/2
             params[3] -= self.fit_size/2
             return [max_x, max_y, params, status]

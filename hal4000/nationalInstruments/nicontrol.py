@@ -40,7 +40,8 @@ def checkStatus(status):
         buf_size = 1000
         buf = create_string_buffer(buf_size)
         nidaqmx.DAQmxGetErrorString(c_long(status), buf, buf_size)
-        raise RuntimeError('nidaq call failed with error %d: %s'%(status, buf.value))
+        print "nidaq error:", status, buf.value
+        #raise RuntimeError('nidaq call failed with error %d: %s'%(status, buf.value))
 
 
 #
@@ -160,7 +161,7 @@ class WaveformOutput(NIDAQTask):
         self.channels += 1
         board_number = self.board_number
         if board:
-            board_number = getBoardDevNumber("PCI-6722")
+            board_number = getBoardDevNumber(board)
         self.dev_and_channel = "Dev" + str(board_number) + "/ao" + str(channel)
         checkStatus(nidaqmx.DAQmxCreateAOVoltageChan(self.taskHandle, 
                                                      c_char_p(self.dev_and_channel),
@@ -517,11 +518,13 @@ if __name__ == "__main__":
         
         wv_task.stopTask()
         wv_task.clearTask()
+
     if 0:
         d_task = DigitalOutput("PCI-6722", 0)
         d_task.output(1)
         time.sleep(2)
         d_task.output(0)
+
     if 0:
         samples = 10
         a_task = AnalogInput("PCIe-6321", 0)
@@ -533,7 +536,8 @@ if __name__ == "__main__":
             print data[i]
         a_task.stopTask()
         a_task.clearTask()
-    if 1:
+
+    if 0:
         ct_task = CounterOutput("PCI-6733", 1, 50000, 0.10)
         ct_task.setCounter(-1)
         ct_task.startTask()
@@ -541,6 +545,31 @@ if __name__ == "__main__":
         ct_task.stopTask()
         ct_task.clearTask()
 
+    if 1:
+        waveform = [0, 1.0]
+        print "1"
+        #wv_task1 = WaveformOutput("PCI-6733", 6)
+        #wv_task1.setWaveform(waveform, 100000.0, clock="")
+        print "2"
+        wv_task2 = WaveformOutput("PCI-6733", 0)
+        wv_task2.setWaveform(waveform, 100000.0)
+
+        #wv_task1.startTask()
+        wv_task2.startTask()
+
+        print "3"
+        ct_task = CounterOutput("PCI-6733", 0, 1000, 0.5)
+        ct_task.setCounter(100)
+        ct_task.setTrigger(0)
+        ct_task.startTask()
+        foo = raw_input("Key Return")
+        ct_task.stopTask()
+        ct_task.clearTask()
+        
+        #wv_task1.stopTask()
+        #wv_task1.clearTask()
+        wv_task2.stopTask()
+        wv_task2.clearTask()
 
 #
 # The MIT License

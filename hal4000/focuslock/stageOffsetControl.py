@@ -274,7 +274,7 @@ class stageCamThread(stageQPDThread):
     @hdebug.debug
     def getImage(self):
         self.qpd_mutex.lock()
-        data = self.cam.getImage()
+        data = list(self.cam.getImage())
         data[0] = data[0].copy()
         self.qpd_mutex.unlock()
         return data

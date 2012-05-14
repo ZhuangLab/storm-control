@@ -9,11 +9,11 @@ import halLib.RS232 as RS232
 import time
 
 class IX2UCB(RS232.RS232):
-    def __init__(self, port = "COM4"):
+    def __init__(self, port = "COM4", baud = 9600):
         self.position = 0
         try:
             # open port
-            RS232.RS232.__init__(self, port, None, 9600, "\r", 0.05)
+            RS232.RS232.__init__(self, port, None, baud, "\r", 0.05)
 
             # verify that we can talk to the filter wheel
             assert not(self.commWithResp("1LOG IN") == None)

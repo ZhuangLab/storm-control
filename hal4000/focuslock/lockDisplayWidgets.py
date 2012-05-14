@@ -133,12 +133,18 @@ class QCamDisplay(QtGui.QWidget):
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.background = QtGui.QColor(0,0,0)
+        self.display_circles = True
+        self.display_lines = False
         self.foreground = QtGui.QColor(0,255,0)
         self.image = None
+        self.e_size = 8
         self.x_off1 = 0
         self.y_off1 = 0
         self.x_off2 = 0
         self.y_off2 = 0
+
+    def keyPressEvent(self, event):
+        print event.key()
 
     def newImage(self, data):
         # update image
@@ -150,10 +156,10 @@ class QCamDisplay(QtGui.QWidget):
             self.image.setColor(i, QtGui.QColor(i,i,i).rgb())
 
         # update offsets
-        self.x_off1 = ((data[2]+w/2)/float(w))*float(self.width()) - 2
-        self.y_off1 = ((data[1]+h/2)/float(h))*float(self.height()) - 2
-        self.x_off2 = ((data[4]+w/2)/float(w))*float(self.width()) - 2
-        self.y_off2 = ((data[3]+h/2)/float(h))*float(self.height()) - 2
+        self.x_off1 = ((data[2]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size + 1
+        self.y_off1 = ((data[1]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size + 1
+        self.x_off2 = ((data[4]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size + 1
+        self.y_off2 = ((data[3]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size + 1
 
         self.update()
 
@@ -165,15 +171,31 @@ class QCamDisplay(QtGui.QWidget):
             destination_rect = QtCore.QRect(0, 0, self.width(), self.height())
             painter.drawImage(destination_rect, self.image)
 
+            # draw alignment lines
+            if self.display_lines:
+                painter.setPen(QtGui.QColor(100,100,100))
+                painter.drawLine(0.0, 0.5*self.height(), self.width(), 0.5*self.height())
+                for mult in [0.25, 0.5, 0.75]:
+                    painter.drawLine(mult*self.width(), 0.0, mult*self.width(), self.height())
+
+
             # draw beam tracking circle
-            painter.setRenderHint(QtGui.QPainter.Antialiasing)
-            painter.setPen(self.foreground)
-            painter.drawEllipse(QtCore.QPointF(self.x_off1, self.y_off1), 8.0, 8.0)
-            painter.drawEllipse(QtCore.QPointF(self.x_off2, self.y_off2), 8.0, 8.0)
+            if self.display_circles:
+                painter.setRenderHint(QtGui.QPainter.Antialiasing)
+                painter.setPen(QtGui.QColor(0,255,0))
+                painter.drawEllipse(QtCore.QPointF(self.x_off1, self.y_off1), self.e_size, self.e_size)
+                painter.drawEllipse(QtCore.QPointF(self.x_off2, self.y_off2), self.e_size, self.e_size)
         else:
             painter.setPen(self.background)
             painter.setBrush(self.background)
             painter.drawRect(0, 0, self.width(), self.height())
+
+    def toggleCircles(self):
+        self.display_circles = not self.display_circles
+
+    def toggleLine(self):
+        self.display_lines = not self.display_lines
+
 
 #
 # The MIT License

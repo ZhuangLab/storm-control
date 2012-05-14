@@ -29,6 +29,7 @@ instantiated = 0
 class MarzhauserRS232(RS232.RS232):
     def __init__(self, port):
 
+        self.live = True
         self.unit_to_um = 1000.0
         self.um_to_unit = 1.0/self.unit_to_um
 
@@ -36,6 +37,8 @@ class MarzhauserRS232(RS232.RS232):
         RS232.RS232.__init__(self, port, None, 57600, "\r", 0.02)
         try:
             test = self.commWithResp("?version")
+            if not test:
+                self.live = False
         except:
             self.live = False
         if not self.live:
