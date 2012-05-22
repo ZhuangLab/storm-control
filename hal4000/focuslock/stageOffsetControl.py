@@ -112,6 +112,9 @@ class stageQPDThread(QtCore.QThread):
     def newZCenter(self, z_center):
         self.z_center = z_center
 
+    def qpdScan(self):
+        return self.qpd.qpdScan()
+
     def recenter(self):
         self.moveStageAbs(self.z_center)
 
@@ -120,7 +123,7 @@ class stageQPDThread(QtCore.QThread):
 
     def run(self):
         while(self.running):
-            [power, x_offset, y_offset] = self.qpd.qpdScan()
+            [power, x_offset, y_offset] = self.qpdScan()
 
             self.qpd_mutex.lock()
             if (power > 0):
@@ -270,14 +273,24 @@ class stageCamThread(stageQPDThread):
                                 slow_stage = slow_stage,
                                 parent = parent)
         self.cam = cam
+        self.cam_data = False
+        self.cam_mutex = QtCore.QMutex()
 
     @hdebug.debug
     def getImage(self):
-        self.qpd_mutex.lock()
-        data = list(self.cam.getImage())
-        data[0] = data[0].copy()
-        self.qpd_mutex.unlock()
+        self.cam_mutex.lock()
+        data = self.cam_data
+        self.cam_mutex.unlock()
         return data
+
+    def qpdScan(self):
+        self.cam_mutex.lock()
+        data = self.cam.qpdScan()
+        self.cam_data = list(self.cam.getImage())
+        self.cam_data[0] = self.cam_data[0].copy()
+        self.cam_mutex.unlock()
+        return data
+
 
 #
 # The MIT License
