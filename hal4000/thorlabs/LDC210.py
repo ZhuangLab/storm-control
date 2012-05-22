@@ -14,8 +14,17 @@ except:
     sys.path.append("..")
     import nationalInstruments.nicontrol as nicontrol
 
+try:
+    import labjack.labjack_u3 as labjack_u3
+except:
+    sys.path.append("..")
+    import labjack.labjack_u3 as labjack_u3
+
+
+#
 # Turn on/off with a digital line connected to the
 # TTL input of the laser diode controller.
+#
 class LDC210():
     def __init__(self, board, line):
         self.board = board
@@ -30,9 +39,13 @@ class LDC210():
     def off(self):
         nicontrol.setDigitalLine(self.board, self.line, False)
 
+#
 # Turn on/off with a counter connected to the analog
 # modulation input. This also lets you control the power.
-class LDC210PWM():
+#
+# National Instruments version
+#
+class LDC210PWMNI():
     def __init__(self, board, line, frequency = 50000):
         self.am_on = False
         self.board = board
@@ -65,6 +78,31 @@ class LDC210PWM():
             self.am_on = False
 
 
+#
+# Turn on/off with a counter connected to the analog
+# modulation input. This also lets you control the power.
+#
+# Labjack U3 version.
+#
+class LDC210PWMLJ():
+    def __init__(self):
+        self.am_on = False
+        self.dev = labjack_u3.PWM()
+
+    def havePowerControl(self):
+        return True
+
+    # power is an integer between 0 and 100
+    def on(self, power):
+        self.dev.startPWM(power)
+        self.am_on = True
+
+    def off(self):
+        if self.am_on:
+            self.dev.stopPWM()
+            self.am_on = False
+
+
 if __name__ == "__main__":
     if 0:
         ldc = LDC210("PCI-6733", 7)
@@ -72,17 +110,23 @@ if __name__ == "__main__":
         time.sleep(1)
         ldc.off()
 
-    if 1:
+    if 0:
         ct_task = nicontrol.CounterOutput("PCI-6733", 0, 100, 0.5)
         ct_task.setCounter(100)
         ct_task.setTrigger(0)
         ct_task.startTask()
-        ldc = LDC210PWM("PCI-6733", 1)
+        ldc = LDC210PWMNI("PCI-6733", 1)
         ldc.on(7)
         time.sleep(5)
         ldc.off()
         ct_task.stopTask()
         ct_task.clearTask()
+
+    if 1:
+        ldc = LDC210PWMLJ()
+        ldc.on(10)
+        time.sleep(5)
+        ldc.off()
 
 #
 # The MIT License

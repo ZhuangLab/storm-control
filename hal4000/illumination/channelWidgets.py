@@ -339,16 +339,40 @@ class QBasicChannel(QChannel):
 
     def uiUpdate(self):
         self.shutter(self.amOn())
-        QChannel.uiUpdate(self)
 
     def update(self, on):
         self.shutter(on)
-        QChannel.update(self, on)
+
+
+#
+# QChannel specialized for filter wheel control.
+# This is assumed to also have a mechanical shutter.
+#
+class QFilterWheelChannel(QAdjustableChannel):
+    def __init__(self, parent, settings, default_power, on_off_state, buttons, x_pos, width, height):
+        QAdjustableChannel.__init__(self, parent, settings, default_power, on_off_state, buttons, x_pos, width, height)
+        self.displayed_amplitude = self.current_amplitude + 1
+        self.channel_frame.power_label.setText(str(self.displayed_amplitude))
+
+    def amplitudeChange(self, amplitude):
+        self.current_amplitude = amplitude
+        self.displayed_amplitude = amplitude + 1
+        self.channel_frame.power_label.setText(str(self.displayed_amplitude))
+        self.uiUpdate()
+
+    def uiUpdate(self):
+        self.shutter(self.amOn())
+        self.cmd_queue.addRequest(self.amOn(), self.current_amplitude)
+
+    def update(self, on):
+        self.shutter(on)
+        self.cmd_queue.setAmplitude(on, self.current_amplitude)
+
 
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

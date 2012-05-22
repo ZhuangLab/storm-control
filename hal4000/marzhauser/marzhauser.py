@@ -61,15 +61,19 @@ class MarzhauserRS232(RS232.RS232):
 
     def joystickOnOff(self, on):
         if self.live:
-            self.commWithResp("!joy 2")
-        else:
-            self.commWithResp("!joy 0")
+            if on:
+                self.commWithResp("!joy 2")
+            else:
+                self.commWithResp("!joy 0")
 
     def position(self):
         if self.live:
-            [x, y] = map(lambda x: float(x)*self.unit_to_um, 
-                         self.commWithResp("?pos")[:-2].split(" "))
-            return [x, y, 0.0]
+            try:
+                [self.x, self.y] = map(lambda x: float(x)*self.unit_to_um, 
+                                       self.commWithResp("?pos")[:-2].split(" "))
+            except:
+                print "  Bad position from Marzhauser stage."
+            return [self.x, self.y, 0.0]
         else:
             return [0.0, 0.0, 0.0]
 

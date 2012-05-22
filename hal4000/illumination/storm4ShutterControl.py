@@ -21,7 +21,7 @@ import illumination.shutterControl as shutterControl
 class AShutterControl(shutterControl.ShutterControl):
     def __init__(self, powerToVoltage):
         shutterControl.ShutterControl.__init__(self, powerToVoltage)
-        self.oversampling_default = 1
+        self.oversampling_default = 100
         self.number_channels = 7
 
         self.board = "PCI-6733"
@@ -33,8 +33,7 @@ class AShutterControl(shutterControl.ShutterControl):
 
     def cleanup(self):
         if self.ct_task:
-            #for task in [self.ct_task, self.ao_task, self.do_task]:
-            for task in [self.ao_task, self.do_task]:
+            for task in [self.ct_task, self.ao_task, self.do_task]:
                 task.stopTask()
                 task.clearTask()
             self.ct_task = False
@@ -72,24 +71,21 @@ class AShutterControl(shutterControl.ShutterControl):
             self.do_task.addChannel(self.board, i + 1)
 
         # set up the waveforms
-        #self.ao_task.setWaveform(self.waveforms, frequency)
-        #self.do_task.setWaveform(self.waveforms, frequency)
-        self.ao_task.setWaveform(self.waveforms, frequency, clock = "pfi0")
-        self.do_task.setWaveform(self.waveforms, frequency, clock = "pfi0")
+        self.ao_task.setWaveform(self.waveforms, frequency)
+        self.do_task.setWaveform(self.waveforms, frequency)
 
         # set up the counter
         self.ct_task = True
-        #self.ct_task = nicontrol.CounterOutput(self.board, 0, frequency, 0.5)
-        #self.ct_task.setCounter(self.waveform_len)
-        #self.ct_task.setTrigger(0)
+        self.ct_task = nicontrol.CounterOutput(self.board, 0, frequency, 0.5)
+        self.ct_task.setCounter(self.waveform_len)
+        self.ct_task.setTrigger(0)
 
     def shutDown(self):
         self.prepare()
 
     def startFilm(self):
         if self.ct_task:
-            #for task in [self.ct_task, self.ao_task, self.do_task]:
-            for task in [self.ao_task, self.do_task]:
+            for task in [self.ct_task, self.ao_task, self.do_task]:
                 task.startTask()
 
     def stopFilm(self):

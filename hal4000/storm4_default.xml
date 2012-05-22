@@ -85,7 +85,7 @@
 
   <!-- focus lock settings -->
   <have_focus_lock type="int">1</have_focus_lock>
-  <ir_power type="int">8</ir_power>
+  <ir_power type="int">30</ir_power>
   <qpd_mode type="int">0</qpd_mode>
   <qpd_zcenter type="float">50.0</qpd_zcenter>
   <qpd_scale type="float">30.0</qpd_scale>

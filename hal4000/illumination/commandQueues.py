@@ -4,13 +4,12 @@
 # of hardware. These queues are based on PyQt threads.
 # They are currently implemented for:
 #
-# Coherent Cube405 laser connected via serial port.
+# 1. Coherent Cube405 laser connected via serial port.
+# 2. Crystal Technologies AOTF connected via USB.
+# 3. National Instruments card installed in the computer.
+# 4. Thorlabs filter wheel.
 #
-# Crystal Technologies AOTF connected via USB.
-#
-# National Instruments card installed in the computer.
-#
-# Hazen 6/09
+# Hazen 5/12
 #
 
 from PyQt4 import QtCore
@@ -331,9 +330,64 @@ class QNiDigitalComm():
         self.filming = flag
 
 #
+# Thorlabs filter wheel with mechanical shutter.
+# Commands to the filter wheel are buffered, commands
+# to the shutter are not.
+#
+class QFilterWheelThread(QtCore.QThread):
+    def __init__(self, port = None, parent = None):
+        QtCore.QThread.__init__(self, parent)
+        self.buffer = []
+        self.buffer_mutex = QtCore.QMutex()
+        self.fw_mutex = QtCore.QMutex()
+        self.running = 1
+
+        import thorlabs.FW102C as FW102C
+        if port:
+            self.fw = FW102C.FW102C(port)
+        else:
+            self.fw = FW102C.FW102C()
+        if not(self.fw.getStatus()):
+            self.fw.shutDown()
+            self.fw = 0
+
+    def run(self):
+        while (self.running):
+            self.buffer_mutex.lock()
+            if len(self.buffer) > 0:
+                [on, amplitude] = self.buffer.pop()
+                self.buffer = []
+                self.buffer_mutex.unlock()
+                self.setAmplitude(on, amplitude)
+            else:
+                self.buffer_mutex.unlock()
+            self.msleep(10)
+
+    def addRequest(self, on, amplitude):
+        self.buffer_mutex.lock()
+        self.buffer.append([on, amplitude])
+        self.buffer_mutex.unlock()
+
+    def setAmplitude(self, on, amplitude):
+        self.fw_mutex.lock()
+        if self.fw:
+            self.fw.setPosition(amplitude+1)
+        else:
+            print "Filter Wheel: ", amplitude
+        self.fw_mutex.unlock()
+
+    def stopThread(self):
+        self.running = 0
+        while (self.isRunning()):
+            self.msleep(50)
+        if self.fw:
+            self.fw.shutDown()
+
+
+#
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

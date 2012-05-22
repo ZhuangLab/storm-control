@@ -32,7 +32,7 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                                            lock_fn,
                                                            50.0,
                                                            parameters.qpd_zcenter)
-        ir_laser = LDC210.LDC210PWM("PCI-6733", 1)
+        ir_laser = LDC210.LDC210PWMLJ()
         focusLockZ.FocusLockZCam.__init__(self,
                                           parameters,
                                           tcp_control,

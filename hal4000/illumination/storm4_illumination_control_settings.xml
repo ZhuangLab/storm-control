@@ -4,6 +4,8 @@
     <description type="text">750</description>
     <color type="rgb">255,0,0</color>
     <channel type="int">0</channel>
+    <use_filter_wheel type="boolean">TRUE</use_filter_wheel>
+    <amplitude type="int">5</amplitude>
     <basic_shutter type="boolean">TRUE</basic_shutter>
     <ni_board type="string">PCI-6733</ni_board>
     <dig_line type="int">0</dig_line>

@@ -2,7 +2,7 @@
 #
 # Illumination control specialized for STORM4.
 #
-# Hazen 3/12
+# Hazen 5/12
 #
 
 from PyQt4 import QtCore
@@ -24,6 +24,11 @@ class STORM4QIlluminationControlWidget(illuminationControl.QIlluminationControlW
         # setup the Cube communication thread
         self.cube_queue = commandQueues.QCubeThread()
         self.cube_queue.start(QtCore.QThread.NormalPriority)
+
+        # Setup the filter wheel communication thread.
+        # There is only one filter wheel, which is in 750 laser path.
+        self.fw_queue = commandQueues.QFilterWheelThread()
+        self.fw_queue.start(QtCore.QThread.NormalPriority)
 
         # setup for NI communication with mechanical shutters (digital, unsynced)
         self.shutter_queue = commandQueues.QNiDigitalComm()
@@ -88,13 +93,16 @@ class STORM4QIlluminationControlWidget(illuminationControl.QIlluminationControlW
                                                       height)
                 channel.setCmdQueue(self.cube_queue)
                 self.channels.append(channel)
-            elif hasattr(self.settings[i], 'basic_shutter'):
-                channel = channelWidgets.QBasicChannel(self,
-                                                       self.settings[i],
-                                                       parameters.on_off_state[n],
-                                                       x,
-                                                       dx,
-                                                       height)
+            elif hasattr(self.settings[i], 'use_filter_wheel'):
+                channel = channelWidgets.QFilterWheelChannel(self,
+                                                             self.settings[i],
+                                                             parameters.default_power[n],
+                                                             parameters.on_off_state[n],
+                                                             parameters.power_buttons[n],
+                                                             x,
+                                                             dx,
+                                                             height)
+                channel.setCmdQueue(self.fw_queue)
                 channel.setShutterQueue(self.shutter_queue)
                 self.channels.append(channel)
             x += dx
@@ -113,6 +121,8 @@ class STORM4QIlluminationControlWidget(illuminationControl.QIlluminationControlW
         self.aotf_queue.wait()
         self.cube_queue.stopThread()
         self.cube_queue.wait()
+        self.fw_queue.stopThread()
+        self.fw_queue.wait()
 
 
 #
@@ -126,10 +136,11 @@ class AIlluminationControl(illuminationControl.IlluminationControl):
                                                               parent = self.ui.laserBox)
         self.updateSize()
 
+
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
