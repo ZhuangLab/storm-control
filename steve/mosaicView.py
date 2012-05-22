@@ -217,6 +217,8 @@ class MosaicView(multiView.MultifieldView):
             return QtCore.QPointF(x * self.x_sign, y * self.y_sign)
         elif self.setup_name == "storm2":
             return QtCore.QPointF(y * self.x_sign, x * self.y_sign)
+        elif self.setup_name == "storm4":
+            return QtCore.QPointF(y * self.x_sign, x * self.y_sign)
         else:
             return QtCore.QPointF(x, y)
 
