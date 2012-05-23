@@ -284,8 +284,8 @@ class stageCamThread(stageQPDThread):
         return data
 
     def qpdScan(self):
-        self.cam_mutex.lock()
         data = self.cam.qpdScan()
+        self.cam_mutex.lock()
         self.cam_data = list(self.cam.getImage())
         self.cam_data[0] = self.cam_data[0].copy()
         self.cam_mutex.unlock()

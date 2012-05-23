@@ -198,7 +198,7 @@ class cameraQPD():
         self.cam = Camera()
 
         # set camera AOI
-        self.x_start = 640
+        self.x_start = 650
         self.y_start = 210
         self.x_width = 200
         self.y_width = 200
