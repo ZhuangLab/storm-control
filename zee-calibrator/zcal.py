@@ -64,6 +64,7 @@ def readHeader(fp):
     return [frames, molecules, version, status]
 
 def loadI3File(filename, nm_per_pixel):
+    print "nm_per_pixel", nm_per_pixel
     fp = open(filename, "rb")
 
     # Read header
@@ -126,7 +127,7 @@ class ZCalibration():
         self.wx_fit = None
         self.wy_fit = None
         self.z = None
-        self.z_offset = None
+        self.z_offset = 0
 
         # Is this a molecule list file?
         if(filename[-4:] == ".bin"):
@@ -151,7 +152,7 @@ class ZCalibration():
         wx = zcalibs[self.fit_power](self.wx_fit, z)
         wy = zcalibs[self.fit_power](self.wy_fit, z)
         i_min_z = numpy.argmin(numpy.abs(wx - wy))
-        self.z_offset = z[i_min_z]
+        self.z_offset += z[i_min_z]
         return True
 
     # Fits the "standard" defocusing curve
@@ -170,13 +171,13 @@ class ZCalibration():
                 params.append(0.0)
             [results, success] = scipy.optimize.leastsq(f_zcalib, params, args=(aw, sz))
             if (success < 1) or (success > 4):
-                print "fitDefocusing: power", self.power, "fit failed!"
+                print "fitDefocusing: power", self.fit_power, "fit failed!"
                 return None
             else:
                 return results
 
-        self.wx_fit = doFit(wx, params = [3.0, 400.0, 500.0])
-        self.wy_fit = doFit(wy, params = [3.0, -400.0, 500.0])
+        self.wx_fit = doFit(wx, params = [3.0, -400.0, 500.0])
+        self.wy_fit = doFit(wy, params = [3.0, 400.0, 500.0])
         if (type(self.wx_fit) == type(numpy.array([]))) and (type(self.wy_fit) == type(numpy.array([]))):
             self.calcQuickZ()
             return True
@@ -208,6 +209,7 @@ class ZCalibration():
             print "fitTilt: fit failed!"
             return False
         else:
+            print results
             self.tilt = results
             return True
 

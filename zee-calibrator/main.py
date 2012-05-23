@@ -84,24 +84,26 @@ class Window(QtGui.QMainWindow):
             good = self.z_calib.fitDefocusing()
             if (not good):
                 self.errorMessageBox("A problem occurred in the 1st pass of defocus fitting.")
-        
+
         # determine stage tilt
         if good:
             good = self.z_calib.fitTilt()
             if (not good):
                 self.errorMessageBox("A problem occurred fitting for stage tilt.")
-        
-        # determine z offset of the point where wx = wy
-        if good:
-            good = self.z_calib.findZOffset()
-            if (not good):
-                self.errorMessageBox("A problem occurred finding the z offset.")
 
-        # second pass on the defocusing curve
-        if good:
-            good = self.z_calib.fitDefocusing()
-            if (not good):
-                self.errorMessageBox("A problem occurred in the 2nd pass of defocus fitting.")
+        for i in range(2):
+
+            # determine z offset of the point where wx = wy
+            if good:
+                good = self.z_calib.findZOffset()
+                if (not good):
+                    self.errorMessageBox("A problem occurred finding the z offset.")
+ 
+            # second pass on the defocusing curve
+            if good:
+                good = self.z_calib.fitDefocusing()
+                if (not good):
+                    self.errorMessageBox("A problem occurred in a later pass of defocus fitting.")
 
         # plot results
         if good:
