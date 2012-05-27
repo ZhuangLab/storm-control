@@ -9,7 +9,7 @@
 import focuslock.noneWidgets as noneWidgets
 
 # focus lock control thread.
-import focuslock.stageQPDControl as stageQPDControl
+import focuslock.stageOffsetControl as stageOffsetControl
 
 # focus lock dialog.
 import focuslock.focusLockZ as focusLockZ
@@ -22,11 +22,11 @@ class AFocusLockZ(focusLockZ.FocusLockZ):
         qpd = noneWidgets.QPD()
         stage = noneWidgets.NanoP()
         lock_fn = lambda (x): 0.0 * x
-        control_thread = stageQPDControl.QControlThread(qpd,
-                                                        stage,
-                                                        lock_fn,
-                                                        50.0, 
-                                                        parameters.qpd_zcenter)
+        control_thread = stageOffsetControl.stageQPDThread(qpd,
+                                                           stage,
+                                                           lock_fn,
+                                                           50.0, 
+                                                           parameters.qpd_zcenter)
         ir_laser = noneWidgets.IRLaser()
         focusLockZ.FocusLockZ.__init__(self,
                                        parameters,

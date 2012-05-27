@@ -275,7 +275,7 @@ from PyQt4 import QtCore, QtGui
 import halLib.hdebug as hdebug
 
 # UIs.
-import qtdesigner.hal_4000ui_v1 as halUi
+import qtdesigner.hal4000_ui as halUi
 
 # Experiment Control Modules
 
@@ -335,16 +335,23 @@ class Window(QtGui.QMainWindow):
         # ui setup
         self.ui = halUi.Ui_MainWindow()
         self.ui.setupUi(self)
-
+        
         self.setWindowTitle(self.parameters.setup_name)
+
         self.ui.settingsButton1.setText(getFileName(parameters.parameters_file))
         self.ui.settingsButton1.setChecked(True)
-
         self.ui.settingsButton2.hide()
         self.ui.settingsButton3.hide()
         self.ui.settingsButton4.hide()
         self.ui.settingsButton5.hide()
         self.ui.settingsButton6.hide()
+
+        file_types = writers.availableFileFormats()
+        for type in file_types:
+            self.ui.filetypeComboBox.addItem(type)
+        file_type_index = self.ui.filetypeComboBox.findText(parameters.filetype)
+        if (file_type_index > -1):
+            self.ui.filetypeComboBox.setCurrentIndex(self.ui.filetypeComboBox.findText(parameters.filetype))
 
         #
         # remote control via TCP/IP
@@ -370,7 +377,15 @@ class Window(QtGui.QMainWindow):
         # Camera
         cameraControl = __import__('camera.' + camera_type + 'CameraControl', globals(), locals(), [camera_type], -1)
         self.camera_control = cameraControl.ACameraControl(parameters, parent = self)
-        self.camera_display = cameraDisplay.CameraDisplay(parameters, parent = self.ui.cameraFrame)
+        self.camera_display = cameraDisplay.CameraDisplay(parameters,
+                                                          have_record_button = True,
+                                                          have_shutter_button = True,
+                                                          parent = self.ui.cameraFrame)
+        self.ui.recordButton = self.camera_display.getRecordButton()
+        self.ui.cameraShutterButton = self.camera_display.getShutterButton()
+        layout = QtGui.QGridLayout(self.ui.cameraFrame)
+        layout.setMargin(0)
+        layout.addWidget(self.camera_display)
         self.camera_params = cameraParams.CameraParams(parent = self.ui.cameraParamsFrame)
 
         # AOTF / DAQ illumination control
@@ -445,7 +460,7 @@ class Window(QtGui.QMainWindow):
         self.connect(self.ui.actionStage, QtCore.SIGNAL("triggered()"), self.handleStage)
         self.connect(self.ui.actionQuit, QtCore.SIGNAL("triggered()"), self.quit)
         self.connect(self.ui.modeComboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.handleModeComboBox)
-        self.connect(self.ui.cameraShutterButton, QtCore.SIGNAL("clicked()"), self.toggleShutter)
+        #self.connect(self.ui.cameraShutterButton, QtCore.SIGNAL("clicked()"), self.toggleShutter)
         self.connect(self.ui.autoShuttersCheckBox, QtCore.SIGNAL("stateChanged(int)"), self.handleAutoShutters)
         self.connect(self.ui.recordButton, QtCore.SIGNAL("clicked()"), self.toggleFilm)
         self.connect(self.ui.filenameEdit, QtCore.SIGNAL("textChanged(const QString&)"), self.updateFilenameLabel)
@@ -454,6 +469,7 @@ class Window(QtGui.QMainWindow):
         self.connect(self.ui.extensionComboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.updateFilenameLabel)
         self.connect(self.ui.indexSpinBox, QtCore.SIGNAL("valueChanged(int)"), self.updateFilenameLabel)
         self.connect(self.ui.autoIncCheckBox, QtCore.SIGNAL("stateChanged(int)"), self.handleAutoInc)
+        self.ui.filetypeComboBox.currentIndexChanged.connect(self.updateFilenameLabel)
         for i in range(self.max_saved):
             button = getattr(self.ui, "settingsButton" + str(i+1))
             self.connect(button, QtCore.SIGNAL("clicked()"), self.toggleSettings)
@@ -976,6 +992,7 @@ class Window(QtGui.QMainWindow):
         self.frame_count = 0
         save_film = self.ui.saveMovieCheckBox.isChecked()
         self.filename = self.parameters.directory + str(self.ui.filenameLabel.text())
+        self.filename = self.filename[:-len(self.ui.filetypeComboBox.currentText())]
 
         # If the user wants a really long fixed length film we go to a software
         # stop mode to avoid problems with the Andor software trying to allocate
@@ -987,7 +1004,10 @@ class Window(QtGui.QMainWindow):
         # film file prep
         self.ui.recordButton.setText("Stop")
         if save_film:
-            self.writer = writers.DaxFile(self.filename, self.parameters)
+            print self.filename
+            self.writer = writers.createFileWriter(self.ui.filetypeComboBox.currentText(),
+                                                   self.filename,
+                                                   self.parameters)
             self.camera_control.startFilming(self.writer)
             self.ui.recordButton.setStyleSheet("QPushButton { color: red }")
         else:
@@ -1186,8 +1206,9 @@ class Window(QtGui.QMainWindow):
         self.parameters.extension = str(self.ui.extensionComboBox.currentText())
         if len(self.parameters.extension) > 0:
             name += "_" + self.parameters.extension
+        name += self.ui.filetypeComboBox.currentText()
         self.ui.filenameLabel.setText(name)
-        if os.path.exists(self.parameters.directory + name + ".dax"):
+        if os.path.exists(self.parameters.directory + name):
             self.will_overwrite = True
             self.ui.filenameLabel.setStyleSheet("QLabel { color: red}")
         else:

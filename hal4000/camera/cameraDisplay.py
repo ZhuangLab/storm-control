@@ -11,7 +11,7 @@ from PyQt4 import QtCore, QtGui
 import halLib.hdebug as hdebug
 
 # UIs.
-import qtdesigner.camera_v1 as camera_ui
+import qtdesigner.camera_ui as camera_ui
 
 # Camera Helper Modules
 import qtWidgets.qtColorGradient as qtColorGradient
@@ -22,7 +22,7 @@ import colorTables.colorTables as colorTables
 
 class CameraDisplay(QtGui.QFrame):
     @hdebug.debug
-    def __init__(self, parameters, parent = None):
+    def __init__(self, parameters, have_record_button = False, have_shutter_button = False, parent = None):
         QtGui.QFrame.__init__(self, parent)
 
         # general (alphabetically ordered)
@@ -39,8 +39,10 @@ class CameraDisplay(QtGui.QFrame):
         # ui setup
         self.ui = camera_ui.Ui_Frame()
         self.ui.setupUi(self)
-        self.ui.rangeSlider = qtRangeSlider.QVRangeSlider(parent = self)
-        self.ui.rangeSlider.setGeometry(542, 29, 25, 471)
+        self.ui.rangeSlider = qtRangeSlider.QVRangeSlider(parent = self.ui.rangeSliderWidget)
+        layout = QtGui.QGridLayout(self.ui.rangeSliderWidget)
+        layout.addWidget(self.ui.rangeSlider)
+        self.ui.rangeSlider.setGeometry(0, 0, self.ui.rangeSliderWidget.width(), self.ui.rangeSliderWidget.height())
         self.ui.rangeSlider.setRange([0.0, self.max_intensity])
         self.ui.rangeSlider.setEmitWhileMoving(True)
         for color_name in self.color_tables.getColorTableNames():
@@ -50,13 +52,24 @@ class CameraDisplay(QtGui.QFrame):
         self.ui.targetAct = QtGui.QAction(self.tr("Show Target"), self)
         self.ui.syncLabel.hide()
         self.ui.syncSpinBox.hide()
-        
+
+        # show/hide shutter and record button as appropriate
+        if have_record_button:
+            self.ui.recordButton.show()
+        else:
+            self.ui.recordButton.hide()
+
+        if have_shutter_button:
+            self.ui.cameraShutterButton.show()
+        else:
+            self.ui.cameraShutterButton.hide()
+
         # Camera display widget. Load as appropriate 
         # based on the camera type.
         camera_type = parameters.camera_type.lower()
         cameraWidget = __import__('camera.' + camera_type + 'CameraWidget', globals(), locals(), [camera_type], -1)
         self.camera_widget = cameraWidget.ACameraWidget(parent = self.ui.cameraDisplayFrame)
-        self.camera_widget.setGeometry(10, 10, 512, 512)
+        self.camera_widget.setGeometry(5, 5, 512, 512)
         self.camera_widget.show()
 
         # signals
@@ -99,6 +112,12 @@ class CameraDisplay(QtGui.QFrame):
 
     def displayFrame(self, frame):
         self.camera_widget.updateImageWithData(frame)
+
+    def getShutterButton(self):
+        return self.ui.cameraShutterButton
+
+    def getRecordButton(self):
+        return self.ui.recordButton
 
     @hdebug.debug
     def handleGrid(self):
@@ -162,13 +181,11 @@ class CameraDisplay(QtGui.QFrame):
         if self.color_gradient:
             self.color_gradient.newColorTable(self.color_table)
         else:
-            cg_x_size = self.ui.colorFrame.width() - 4
-            cg_y_size = self.ui.colorFrame.height() - 4
-            self.color_gradient = qtColorGradient.QColorGradient(x_size = cg_x_size, 
-                                                                 y_size = cg_y_size,
-                                                                 colortable = self.color_table,
+            self.color_gradient = qtColorGradient.QColorGradient(colortable = self.color_table,
                                                                  parent = self.ui.colorFrame)
-            self.color_gradient.setGeometry(2, 2, cg_x_size, cg_y_size)
+            layout = QtGui.QGridLayout(self.ui.colorFrame)
+            layout.setMargin(2)
+            layout.addWidget(self.color_gradient)
 
         self.ui.colorComboBox.setCurrentIndex(self.ui.colorComboBox.findText(p.colortable[:-5]))
 

@@ -10,10 +10,8 @@ import sys
 
 # Camera widget
 class QColorGradient(QtGui.QWidget):
-    def __init__(self, x_size = 50, y_size = 255, colortable = 0, parent = None):
+    def __init__(self, colortable = 0, parent = None):
         QtGui.QWidget.__init__(self, parent)
-        self.x_size = x_size
-        self.y_size = y_size
         self.min = 0
         self.max = 256
         self.image = QtGui.QImage(1, self.max - self.min, QtGui.QImage.Format_Indexed8)
@@ -44,7 +42,7 @@ class QColorGradient(QtGui.QWidget):
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
-        painter.drawImage(0, 0, self.image.scaled(self.x_size, self.y_size))
+        painter.drawImage(0, 0, self.image.scaled(self.width(), self.height()))
             
 
 #

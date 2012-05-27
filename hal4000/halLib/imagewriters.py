@@ -2,37 +2,42 @@
 #
 # Image file writers for various formats.
 #
-# Hazen 2/09
+# Hazen 5/12
 #
+
+import struct
 
 try:
     import andor.formatconverters as fconv
 except:
     print "failed to load andor.formatconverters."
 
-# Dax file writing class
-class DaxFile:
-    def __init__(self, filename, parameters):
-        self.parameters = parameters
-        self.filename = filename
-        self.fp = open(filename + ".dax", "wb")
-        self.frames = 0
-        self.open = 1
+#
+# Return a list of the available movie formats.
+#
+def availableFileFormats():
+    return [".dax", ".spe"]
 
-    def saveFrame(self, frame):
-        if self.parameters.want_big_endian:
-            self.fp.write(fconv.LEtoBE(frame))
-        else:
-            self.fp.write(frame)            
-        self.frames += 1
- 
-    def closeFile(self, stage_position, lock_target):
-        self.fp.close()
-        fp = open(self.filename + ".inf", "w")
-        p = self.parameters
+def createFileWriter(filetype, filename, parameters):
+    if (filetype == ".dax"):
+        return DaxFile(filename, parameters)
+    elif (filetype == ".spe"):
+        return SPEFile(filename, parameters)
+    else:
+        print "Unknown output file format, defaulting to .dax"
+        return DaxFile(filename, parameters)
+
+#
+# Inf writing function. We save one of these regardless of the
+# output format of the data as it is a easy way to preserve
+# the file meta-data.
+#
+def writeInfFile(file_class, stage_position, lock_target):
+        fp = open(file_class.filename + ".inf", "w")
+        p = file_class.parameters
         nl =  "\n"
         fp.write("information file for" + nl)
-        fp.write(self.filename + ".dax" + nl)
+        fp.write(file_class.filename + p.filetype + nl)
         fp.write("machine name = " + p.setup_name + nl)
         fp.write("parameters file = " + p.parameters_file + nl)
         fp.write("shutters file = " + p.shutters + nl)
@@ -52,7 +57,7 @@ class DaxFile:
         fp.write("Exposure Time = " + str(p.exposure_value) + nl)
         fp.write("Frames Per Second = " + str(1.0/p.kinetic_value) + nl)
         fp.write("camera temperature (deg. C) = " + str(p.actual_temperature) + nl)
-        fp.write("number of frames = " + str(self.frames) + nl)
+        fp.write("number of frames = " + str(file_class.frames) + nl)
         fp.write("camera head = " + str(p.head_model) + nl)
 
         #
@@ -82,13 +87,74 @@ class DaxFile:
         fp.write("scalemax = " + str(p.scalemax) + nl)
         fp.write("scalemin = " + str(p.scalemin) + nl)
         fp.write("notes = " + str(p.notes) + nl)
+        fp.close()
 
+#
+# Dax file writing class
+#
+class DaxFile:
+    def __init__(self, filename, parameters):
+        self.parameters = parameters
+        self.filename = filename
+        self.fp = open(filename + ".dax", "wb")
+        self.frames = 0
+        self.open = 1
+
+    def saveFrame(self, frame):
+        if self.parameters.want_big_endian:
+            self.fp.write(fconv.LEtoBE(frame))
+        else:
+            self.fp.write(frame)            
+        self.frames += 1
+ 
+    def closeFile(self, stage_position, lock_target):
+        self.fp.close()
+        writeInfFile(self, stage_position, lock_target)
         self.open = 0
 
     def __del__(self):
         if self.open:
             self.closeFile()
         
+#
+# SPE file writing class
+#
+class SPEFile:
+    def __init__(self, filename, parameters):
+        self.parameters = parameters
+        self.filename = filename
+        self.fp = open(filename + ".spe", "wb")
+        self.frames = 0
+        self.open = 1
+        
+        # write header
+        header = chr(0) * 4100
+        self.fp.write(header)
+        self.fp.seek(42)
+        self.fp.write(struct.pack("h", parameters.x_pixels))
+        self.fp.seek(656)
+        self.fp.write(struct.pack("h", parameters.y_pixels))
+        self.fp.seek(108)
+        self.fp.write(struct.pack("h", 3))
+        self.fp.seek(4100)
+
+    def saveFrame(self, frame):
+        self.fp.write(frame)
+        self.frames += 1
+ 
+    def closeFile(self, stage_position, lock_target):
+        # write film length & close the file
+        self.fp.seek(1446)
+        self.fp.write(struct.pack("i", self.frames))
+        self.fp.close()
+
+        writeInfFile(self, stage_position, lock_target)
+        self.open = 0
+
+    def __del__(self):
+        if self.open:
+            self.closeFile()
+
 
 #
 # Testing
@@ -114,7 +180,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
