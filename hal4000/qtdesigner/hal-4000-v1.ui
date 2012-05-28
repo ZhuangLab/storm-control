@@ -132,84 +132,34 @@
             <property name="title">
              <string>Settings</string>
             </property>
-            <widget class="QRadioButton" name="settingsButton1">
-             <property name="geometry">
-              <rect>
-               <x>10</x>
-               <y>20</y>
-               <width>211</width>
-               <height>19</height>
-              </rect>
+            <layout class="QGridLayout" name="gridLayout">
+             <property name="margin">
+              <number>2</number>
              </property>
-             <property name="text">
-              <string>RadioButton</string>
+             <property name="spacing">
+              <number>2</number>
              </property>
-            </widget>
-            <widget class="QRadioButton" name="settingsButton2">
-             <property name="geometry">
-              <rect>
-               <x>10</x>
-               <y>40</y>
-               <width>211</width>
-               <height>19</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>RadioButton</string>
-             </property>
-            </widget>
-            <widget class="QRadioButton" name="settingsButton3">
-             <property name="geometry">
-              <rect>
-               <x>10</x>
-               <y>60</y>
-               <width>211</width>
-               <height>19</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>RadioButton</string>
-             </property>
-            </widget>
-            <widget class="QRadioButton" name="settingsButton4">
-             <property name="geometry">
-              <rect>
-               <x>10</x>
-               <y>80</y>
-               <width>211</width>
-               <height>19</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>RadioButton</string>
-             </property>
-            </widget>
-            <widget class="QRadioButton" name="settingsButton5">
-             <property name="geometry">
-              <rect>
-               <x>10</x>
-               <y>100</y>
-               <width>211</width>
-               <height>19</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>RadioButton</string>
-             </property>
-            </widget>
-            <widget class="QRadioButton" name="settingsButton6">
-             <property name="geometry">
-              <rect>
-               <x>10</x>
-               <y>120</y>
-               <width>211</width>
-               <height>19</height>
-              </rect>
-             </property>
-             <property name="text">
-              <string>RadioButton</string>
-             </property>
-            </widget>
+             <item row="0" column="0">
+              <widget class="QScrollArea" name="settingsScrollArea">
+               <property name="frameShape">
+                <enum>QFrame::NoFrame</enum>
+               </property>
+               <property name="widgetResizable">
+                <bool>true</bool>
+               </property>
+               <widget class="QWidget" name="scrollAreaWidgetContents">
+                <property name="geometry">
+                 <rect>
+                  <x>0</x>
+                  <y>0</y>
+                  <width>225</width>
+                  <height>110</height>
+                 </rect>
+                </property>
+               </widget>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
           <item>

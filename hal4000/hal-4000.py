@@ -286,6 +286,7 @@ import camera.cameraParams as cameraParams
 # Misc.
 import halLib.parameters as params
 import halLib.imagewriters as writers
+import qtWidgets.qtParametersBox as qtParametersBox
 
 # helper functions
 def trimString(string, max_len):
@@ -317,12 +318,9 @@ class Window(QtGui.QMainWindow):
         self.frame_count = 0
         self.key = 0
         self.logfile_fp = open(parameters.logfile, "a")
-        self.max_saved = 6
         self.old_shutters_file = ""
         self.parameters = parameters
         self.running_shutters = 0
-        self.saved_parameters = []
-        self.saved_parameters.append(parameters)
         self.settings = QtCore.QSettings("Zhuang Lab", "hal-4000")
         self.software_max_frames = 0
         self.will_overwrite = False
@@ -338,13 +336,10 @@ class Window(QtGui.QMainWindow):
         
         self.setWindowTitle(self.parameters.setup_name)
 
-        self.ui.settingsButton1.setText(getFileName(parameters.parameters_file))
-        self.ui.settingsButton1.setChecked(True)
-        self.ui.settingsButton2.hide()
-        self.ui.settingsButton3.hide()
-        self.ui.settingsButton4.hide()
-        self.ui.settingsButton5.hide()
-        self.ui.settingsButton6.hide()
+        self.parameters_box = qtParametersBox.QParametersBox(self.ui.settingsScrollArea)
+        self.ui.settingsScrollArea.setWidget(self.parameters_box)
+        self.ui.settingsScrollArea.setWidgetResizable(True)
+        self.parameters_box.addParameters(self.parameters)
 
         file_types = writers.availableFileFormats()
         for type in file_types:
@@ -467,9 +462,7 @@ class Window(QtGui.QMainWindow):
         self.connect(self.ui.indexSpinBox, QtCore.SIGNAL("valueChanged(int)"), self.updateFilenameLabel)
         self.connect(self.ui.autoIncCheckBox, QtCore.SIGNAL("stateChanged(int)"), self.handleAutoInc)
         self.ui.filetypeComboBox.currentIndexChanged.connect(self.updateFilenameLabel)
-        for i in range(self.max_saved):
-            button = getattr(self.ui, "settingsButton" + str(i+1))
-            self.connect(button, QtCore.SIGNAL("clicked()"), self.toggleSettings)
+        self.parameters_box.settingsToggled.connect(self.toggleSettings)
         self.connect(self, QtCore.SIGNAL("reachedMaxFrames()"), self.handleMaxFrames)
 
         # camera signals
@@ -546,9 +539,7 @@ class Window(QtGui.QMainWindow):
 
     @hdebug.debug
     def handleCommParameters(self, index):
-        if index < self.saved_parameters:
-            button = getattr(self.ui, "settingsButton" + str(index+1))
-            button.click()
+        self.parameters_box.setCurrentParameters(index)
 
     @hdebug.debug
     def handleCommSetDirectory(self, directory):
@@ -884,23 +875,24 @@ class Window(QtGui.QMainWindow):
     def newSettings(self, parameters_filename):
         # parse parameters file
         parameters = params.Parameters(parameters_filename)
+        self.parameters_box.addParameters(parameters)
 
-        # add to the list of saved parameters, ejecting the oldest
-        # added if the list is already too long.
-        self.saved_parameters = [parameters] + self.saved_parameters
-        if len(self.saved_parameters) > self.max_saved:
-            self.saved_parameters.pop()
-
-        # update the radio buttons to reflect the new parameters.
-        for i, p in enumerate(self.saved_parameters):
-            filename = getFileName(p.parameters_file)
-            button = getattr(self.ui, "settingsButton" + str(i+1))
-            button.setText(filename)
-            button.show()
-
-        # the new settings are the first settings, generate a 
-        # click event on the first button.
-        self.ui.settingsButton1.click()
+        ## add to the list of saved parameters, ejecting the oldest
+        ## added if the list is already too long.
+        #self.saved_parameters = [parameters] + self.saved_parameters
+        #if len(self.saved_parameters) > self.max_saved:
+        #    self.saved_parameters.pop()
+        #
+        ## update the radio buttons to reflect the new parameters.
+        #for i, p in enumerate(self.saved_parameters):
+        #    filename = getFileName(p.parameters_file)
+        #    button = getattr(self.ui, "settingsButton" + str(i+1))
+        #    button.setText(filename)
+        #    button.show()
+        #
+        ## the new settings are the first settings, generate a 
+        ## click event on the first button.
+        #self.ui.settingsButton1.click()
 
     @hdebug.debug
     def newSettingsFile(self):
@@ -1179,12 +1171,16 @@ class Window(QtGui.QMainWindow):
 
     @hdebug.debug
     def toggleSettings(self):
-        for i, p in enumerate(self.saved_parameters):
-            button = getattr(self.ui, "settingsButton" + str(i+1))
-            if button.isChecked():
-                self.parameters = p
-                self.stopCamera()
-                self.newParameters()
+        self.parameters = self.parameters_box.getCurrentParameters()
+        self.stopCamera()
+        self.newParameters()
+        #pass
+        #for i, p in enumerate(self.saved_parameters):
+        #    button = getattr(self.ui, "settingsButton" + str(i+1))
+        #    if button.isChecked():
+        #        self.parameters = p
+        #        self.stopCamera()
+        #        self.newParameters()
 
     @hdebug.debug
     def toggleShutter(self):
