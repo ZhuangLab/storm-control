@@ -30,13 +30,22 @@ DateTime = 306
 class TiffWriter:
     def __init__(self, filename, bytes_per_pixel = 2, software = "unknown"):
         self.bytes_per_pixel = 2
-        self.date_time = "2012:05:28 11:45:22" + chr(0)
         self.fp = open(filename, "wb")
         self.frames = 0
         self.last_ifd_offset = 0
         self.newsubfiletag_loc = 0
         self.software = software + chr(0)
 
+        # get the current time, in the correct format
+        cur_time = time.localtime()
+        self.date_time = "{0:04d}:{1:02d}:{2:02d} {3:02d}:{4:02d}:{5:02d}".format(cur_time.tm_year,
+                                                                                  cur_time.tm_mon,
+                                                                                  cur_time.tm_mday,
+                                                                                  cur_time.tm_hour,
+                                                                                  cur_time.tm_min,
+                                                                                  cur_time.tm_sec) + chr(0)
+        print self.date_time
+                                                                                  
         #
         # write tiff header
         #
