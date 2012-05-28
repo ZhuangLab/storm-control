@@ -31,7 +31,7 @@ class TiffWriter:
     def __init__(self, filename, bytes_per_pixel = 2, software = "unknown"):
         self.bytes_per_pixel = 2
         self.date_time = "2012:05:28 11:45:22" + chr(0)
-        self.fp = open(sys.argv[1], "wb")
+        self.fp = open(filename, "wb")
         self.frames = 0
         self.last_ifd_offset = 0
         self.newsubfiletag_loc = 0
@@ -156,112 +156,28 @@ if __name__ == "__main__":
 
     im.close()
 
-#
-# Write image IFD
-#
-#
-#cur_loc = fp.tell()
-#
-## Settings (for the test image)
-#num_tags = 15
-#image_x = 60
-#image_y = 60
-#bytes_per_pixel = 2
-#image_size = image_x*image_y*bytes_per_pixel
-#software = "hal4000" + chr(0)
-#datetime = "2012:05:28 11:45:22" + chr(0)
-#
-## Calculations
-#ifd_end = cur_loc + 2 + num_tags*12 + 4
-#software_offset = ifd_end + 2*8
-#datetime_offset = software_offset + len(software)
-#image_offset =  datetime_offset + len(datetime)
-#
-## number of tags
-#fp.write(struct.pack("H", num_tags))
-#
-## Tags. These are (apparently) required to be in ascending order.
-#
-## NewSubfileType tag
-#writeTag(fp, 254, "long", 1, 0)
-#
-## ImageWidth
-#writeTag(fp, 256, "long", 1, image_x)
-#
-## ImageLength
-#writeTag(fp, 257, "long", 1, image_y)
-#
-## BitsPerSample
-#writeTag(fp, 258, "short", 1, 8*bytes_per_pixel)
-#
-## Compression
-#writeTag(fp, 259, "short", 1, 1)
-#
-## PhotometricInterpretation
-#writeTag(fp, 262, "short", 1, 1)
-#
-## StripOffsets
-##writeTag(fp, 273, "long", 1, ifd_end)
-#writeTag(fp, 273, "long", 1, image_offset)
-#
-## SamplesPerPixel
-#writeTag(fp, 277, "short", 1, 1)
-#
-## RowsPerStrip
-#writeTag(fp, 278, "long", 1, image_y)
-#
-## StripByteCounts
-##writeTag(fp, 279, "long", 1, ifd_end + 4)
-#writeTag(fp, 279, "long", 1, image_size)
-#
-## XResolution
-#writeTag(fp, 282, "rational", 1, ifd_end)
-#
-## YResolution
-#writeTag(fp, 283, "rational", 1, ifd_end + 8)
-#
-## ResolutionUnit
-#writeTag(fp, 296, "short", 1, 1)
-#
-## Software
-#writeTag(fp, 305, "ascii", len(software), software_offset)
-#
-## DateTime
-#writeTag(fp, 306, "ascii", len(datetime), datetime_offset)
-#
-## Next IFD offset (4 bytes)
-#fp.write(struct.pack("I", 0))
-#
-##
-## Additional tag data
-##
-#
-## strip offset (4 bytes)
-##fp.write(struct.pack("I", image_offset))
-#
-## strip byte counts (4 bytes)
-##fp.write(struct.pack("I", image_size))
-#
-## X resolution (8 bytes)
-#fp.write(struct.pack("I", 1))
-#fp.write(struct.pack("I", 1))
-#
-## Y resolution (8 bytes)
-#fp.write(struct.pack("I", 1))
-#fp.write(struct.pack("I", 1))
-#
-## Software (arb)
-#fp.write(struct.pack(str(len(software)) + "s", software))
-#
-## DateTime (arb)
-#fp.write(struct.pack(str(len(datetime)) + "s", datetime))
-#
-#
-##
-## Write the image.
-##
-#image = chr(10) * image_size
-#fp.write(image)
-#fp.close()
-#
 
+#
+# The MIT License
+#
+# Copyright (c) 2012 Zhuang Lab, Harvard University
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+ 

@@ -6,6 +6,7 @@
 #
 
 import struct
+import tiffwriter
 
 try:
     import andor.formatconverters as fconv
@@ -16,13 +17,15 @@ except:
 # Return a list of the available movie formats.
 #
 def availableFileFormats():
-    return [".dax", ".spe"]
+    return [".dax", ".spe", ".tif"]
 
 def createFileWriter(filetype, filename, parameters):
     if (filetype == ".dax"):
         return DaxFile(filename, parameters)
     elif (filetype == ".spe"):
         return SPEFile(filename, parameters)
+    elif (filetype == ".tif"):
+        return TIFFile(filename, parameters)
     else:
         print "Unknown output file format, defaulting to .dax"
         return DaxFile(filename, parameters)
@@ -148,6 +151,33 @@ class SPEFile:
         self.fp.write(struct.pack("i", self.frames))
         self.fp.close()
 
+        writeInfFile(self, stage_position, lock_target)
+        self.open = 0
+
+    def __del__(self):
+        if self.open:
+            self.closeFile()
+
+#
+# TIF file writing class
+#
+class TIFFile:
+    def __init__(self, filename, parameters):
+        self.parameters = parameters
+        self.filename = filename
+        self.frames = 0
+        self.open = 1
+        self.tif_writer = tiffwriter.TiffWriter(filename + ".tif",
+                                                software = "hal4000")
+
+    def saveFrame(self, frame):
+        self.tif_writer.addFrame(frame,
+                                 self.parameters.x_pixels,
+                                 self.parameters.x_pixels)
+        self.frames += 1
+ 
+    def closeFile(self, stage_position, lock_target):
+        self.tif_writer.close()
         writeInfFile(self, stage_position, lock_target)
         self.open = 0
 

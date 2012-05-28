@@ -349,9 +349,6 @@ class Window(QtGui.QMainWindow):
         file_types = writers.availableFileFormats()
         for type in file_types:
             self.ui.filetypeComboBox.addItem(type)
-        file_type_index = self.ui.filetypeComboBox.findText(parameters.filetype)
-        if (file_type_index > -1):
-            self.ui.filetypeComboBox.setCurrentIndex(self.ui.filetypeComboBox.findText(parameters.filetype))
 
         #
         # remote control via TCP/IP
@@ -854,6 +851,7 @@ class Window(QtGui.QMainWindow):
 
         # film settings
         extension = p.extension # Save a temporary copy as the original will get wiped out when we set the filename, etc.
+        filetype = p.filetype
         self.ui.directoryText.setText(trimString(p.directory, 31))
         self.ui.filenameEdit.setText(p.filename)
         if p.auto_increment:
@@ -864,6 +862,7 @@ class Window(QtGui.QMainWindow):
         for ext in p.extensions:
             self.ui.extensionComboBox.addItem(ext)
         self.ui.extensionComboBox.setCurrentIndex(self.ui.extensionComboBox.findText(extension))
+        self.ui.filetypeComboBox.setCurrentIndex(self.ui.filetypeComboBox.findText(filetype))
         if p.acq_mode == "run_till_abort":
             self.ui.modeComboBox.setCurrentIndex(0)
         else:
@@ -1202,11 +1201,16 @@ class Window(QtGui.QMainWindow):
     def updateFilenameLabel(self, dummy):
         name = str(self.ui.filenameEdit.displayText())
         self.parameters.filename = name
+
         name += "_{0:04d}".format(self.ui.indexSpinBox.value())
+
         self.parameters.extension = str(self.ui.extensionComboBox.currentText())
         if len(self.parameters.extension) > 0:
             name += "_" + self.parameters.extension
-        name += self.ui.filetypeComboBox.currentText()
+
+        self.parameters.filetype = str(self.ui.filetypeComboBox.currentText())
+        name += self.parameters.filetype
+
         self.ui.filenameLabel.setText(name)
         if os.path.exists(self.parameters.directory + name):
             self.will_overwrite = True
