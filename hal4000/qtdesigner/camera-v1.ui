@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>580</width>
-    <height>549</height>
+    <width>586</width>
+    <height>545</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,8 +36,8 @@
      </property>
      <property name="maximumSize">
       <size>
-       <width>580</width>
-       <height>580</height>
+       <width>586</width>
+       <height>586</height>
       </size>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -66,24 +66,22 @@
         </property>
         <property name="minimumSize">
          <size>
-          <width>512</width>
-          <height>512</height>
+          <width>518</width>
+          <height>518</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>512</width>
-          <height>512</height>
+          <width>518</width>
+          <height>518</height>
          </size>
         </property>
         <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
+         <enum>QFrame::Box</enum>
         </property>
         <property name="frameShadow">
          <enum>QFrame::Raised</enum>
         </property>
-        <zorder>horizontalSpacer</zorder>
-        <zorder>verticalSpacer</zorder>
        </widget>
       </item>
       <item>
@@ -133,7 +131,14 @@
           <widget class="QWidget" name="slideWidget" native="true">
            <layout class="QHBoxLayout" name="horizontalLayout">
             <item>
-             <widget class="QWidget" name="rangeSliderWidget" native="true"/>
+             <widget class="QWidget" name="rangeSliderWidget" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>9</width>
+                <height>0</height>
+               </size>
+              </property>
+             </widget>
             </item>
             <item>
              <widget class="QFrame" name="colorFrame">

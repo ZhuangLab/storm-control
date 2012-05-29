@@ -39,8 +39,7 @@ class QParametersBox(QtGui.QWidget):
     def addParameters(self, parameters):
         self.current_parameters = parameters
         self.parameters.append(parameters)
-        radio_button = QtGui.QRadioButton(getFileName(parameters.parameters_file),
-                                          parent = self)
+        radio_button = QtGui.QRadioButton(getFileName(parameters.parameters_file), self)
         self.radio_buttons.append(radio_button)
         self.layout.insertWidget(0, radio_button)
         radio_button.clicked.connect(self.toggleParameters)

@@ -69,7 +69,7 @@ class CameraDisplay(QtGui.QFrame):
         camera_type = parameters.camera_type.lower()
         cameraWidget = __import__('camera.' + camera_type + 'CameraWidget', globals(), locals(), [camera_type], -1)
         self.camera_widget = cameraWidget.ACameraWidget(parent = self.ui.cameraDisplayFrame)
-        self.camera_widget.setGeometry(5, 5, 512, 512)
+        self.camera_widget.setGeometry(3, 3, 512, 512)
         self.camera_widget.show()
 
         # signals

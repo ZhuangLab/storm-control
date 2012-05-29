@@ -20,7 +20,7 @@ from PyQt4 import QtCore, QtGui
 import halLib.hdebug as hdebug
 
 # UIs.
-import qtdesigner.focuslock as focusLockUi
+import qtdesigner.focuslock_ui as focuslockUi
 
 # Widgets
 import focuslock.lockDisplayWidgets as lockDisplayWidgets
@@ -139,7 +139,7 @@ class FocusLockZ(QtGui.QDialog):
         self.current_mode = self.lock_modes[parameters.qpd_mode]
 
         # UI setup
-        self.ui = focusLockUi.Ui_Dialog()
+        self.ui = focuslockUi.Ui_Dialog()
         self.ui.setupUi(self)
         self.setWindowTitle(parameters.setup_name + " Focus Lock")
         self.ui.lockLabel.setStyleSheet("QLabel { color: green }")

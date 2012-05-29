@@ -452,7 +452,7 @@ class Window(QtGui.QMainWindow):
         self.connect(self.ui.actionStage, QtCore.SIGNAL("triggered()"), self.handleStage)
         self.connect(self.ui.actionQuit, QtCore.SIGNAL("triggered()"), self.quit)
         self.connect(self.ui.modeComboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.handleModeComboBox)
-        #self.connect(self.ui.cameraShutterButton, QtCore.SIGNAL("clicked()"), self.toggleShutter)
+        self.connect(self.ui.cameraShutterButton, QtCore.SIGNAL("clicked()"), self.toggleShutter)
         self.connect(self.ui.autoShuttersCheckBox, QtCore.SIGNAL("stateChanged(int)"), self.handleAutoShutters)
         self.connect(self.ui.recordButton, QtCore.SIGNAL("clicked()"), self.toggleFilm)
         self.connect(self.ui.filenameEdit, QtCore.SIGNAL("textChanged(const QString&)"), self.updateFilenameLabel)
