@@ -14,13 +14,6 @@ except:
     sys.path.append("..")
     import nationalInstruments.nicontrol as nicontrol
 
-try:
-    import labjack.labjack_u3 as labjack_u3
-except:
-    sys.path.append("..")
-    import labjack.labjack_u3 as labjack_u3
-
-
 #
 # Turn on/off with a digital line connected to the
 # TTL input of the laser diode controller.
@@ -47,6 +40,7 @@ class LDC210():
 #
 class LDC210PWMNI():
     def __init__(self, board, line, frequency = 50000):
+
         self.am_on = False
         self.board = board
         self.ct_task = None
@@ -86,6 +80,13 @@ class LDC210PWMNI():
 #
 class LDC210PWMLJ():
     def __init__(self):
+
+        try:
+            import labjack.labjack_u3 as labjack_u3
+        except:
+            sys.path.append("..")
+            import labjack.labjack_u3 as labjack_u3
+
         self.am_on = False
         self.dev = labjack_u3.PWM()
 
