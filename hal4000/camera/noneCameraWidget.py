@@ -1,18 +1,14 @@
 #!/usr/bin/python
 #
-# qtCameraWidget speciliazed for data for no camera.
+# qtCameraWidget specialized for data for no camera.
 #
-# Hazen 11/09
+# Hazen 05/12
 #
 
-from PyQt4 import QtCore
+import numpy
+from PyQt4 import QtCore, QtGui
 
 import qtWidgets.qtCameraWidget as qtCameraWidget
-
-try:
-    import andor.formatconverters as fconv
-except:
-    print "failed to load andor.formatconverters."
 
 # None Camera widget
 class ACameraWidget(qtCameraWidget.QCameraWidget):
@@ -21,27 +17,41 @@ class ACameraWidget(qtCameraWidget.QCameraWidget):
 
     def updateImageWithData(self, new_data):
         if new_data:
-            # update image
             w = self.image.width()
             h = self.image.height()
-            [self.image_min, self.image_max] = fconv.andorToQtImage(new_data,
-                                                                    int(self.image.scanLine(0)),
-                                                                    w * h,
-                                                                    self.display_range[0], self.display_range[1])
-            self.update()
-            # emit signal with camera intensity information at last click location
-            if self.show_info:
-                x_loc = (self.x * w)/512
-                y_loc = (self.y * h)/512
-                loc = 2*(y_loc * w + x_loc)
-                # FIXME: range check needed.
-                value = ord(new_data[loc]) + 255*ord(new_data[loc+1])
-                self.emit(QtCore.SIGNAL("intensityInfo(int, int, int)"), x_loc, y_loc, value)
+            image_data = numpy.fromstring(new_data, dtype=numpy.uint16)
+            if (image_data.size == h*w):
+                image_data = image_data.reshape((h,w))
+                self.image_min = numpy.min(image_data)
+                self.image_max = numpy.max(image_data)
+
+                temp = image_data.astype(numpy.float32)
+                temp = 255.0*(temp - self.display_range[0])/(self.display_range[1] - self.display_range[0])
+                temp[(temp > 255.0)] = 255.0
+                temp[(temp < 0.0)] = 0.0
+                temp = temp.astype(numpy.uint8)
+
+                self.image = QtGui.QImage(temp.data, w, h, QtGui.QImage.Format_Indexed8)
+                self.image.ndarray = temp
+
+                self.setColorTable()
+                self.update()
+
+                if self.show_info:
+                    x_loc = (self.x * w)/512
+                    y_loc = (self.y * w)/512
+                    value = 0
+                    if ((x_loc >= 0) and (x_loc < w) and (y_loc >= 0) and (y_loc < h)):
+                        value = image_data[y_loc, x_loc]
+                        self.emit(QtCore.SIGNAL("intensityInfo(int, int, int)"), x_loc, y_loc, value)
+
+            else:
+                print "Camera image size does not match expected image size."
 
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

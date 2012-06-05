@@ -43,7 +43,8 @@ class QCameraWidget(QtGui.QWidget):
         self.y = event.y()
 
     def newColorTable(self, colortable):
-        self.setColorTable(colortable)
+        self.colortable = colortable
+        self.setColorTable()
         self.update()
 
     def newParameters(self, parameters, colortable, display_range):
@@ -56,13 +57,10 @@ class QCameraWidget(QtGui.QWidget):
             self.y_final = 512 * self.y_size / self.x_size
         if self.x_size < self.y_size:
             self.x_final = 512 * self.x_size / self.y_size
+        self.colortable = colortable
         self.display_range = display_range
         self.image = QtGui.QImage(self.x_size, self.y_size, QtGui.QImage.Format_Indexed8)
-        if colortable:
-            self.setColorTable(colortable)
-        else:
-            for i in range(256):
-                self.image.setColor(i,QtGui.qRgb(i,i,i))
+        self.setColorTable()
         self.blank()
 
     def newRange(self, range):
@@ -85,11 +83,15 @@ class QCameraWidget(QtGui.QWidget):
                 painter.setPen(QtGui.QColor(255, 255, 255))
                 painter.drawEllipse(236, 236, 40, 40)
                 
-    def setColorTable(self, colortable):
-        for i in range(256):
-            self.image.setColor(i, QtGui.qRgb(colortable[i][0], 
-                                              colortable[i][1], 
-                                              colortable[i][2]))
+    def setColorTable(self):
+        if self.colortable:
+            for i in range(256):
+                self.image.setColor(i, QtGui.qRgb(self.colortable[i][0], 
+                                                  self.colortable[i][1], 
+                                                  self.colortable[i][2]))
+        else:
+            for i in range(256):
+                self.image.setColor(i,QtGui.qRgb(i,i,i))
 
     def setShowGrid(self, bool):
         if bool:

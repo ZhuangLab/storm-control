@@ -4,7 +4,7 @@
  (b) Python
  (c) PyQt
  (d) pywin32
- (e) numpy (for the optimal focus lock mode)
+ (e) numpy
  (f) scipy (for the optimal focus lock mode)
 
 

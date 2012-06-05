@@ -20,6 +20,7 @@ Handle = ctypes.wintypes.HANDLE
 IS_AOI_IMAGE_GET_AOI = 0x0002
 IS_AOI_IMAGE_SET_AOI = 0x0001
 IS_DONT_WAIT = 0
+IS_ENABLE_ERR_REP = 1
 IS_GET_STATUS = 0x8000
 IS_IGNORE_PARAMETER = -1
 IS_SEQUENCE_CT = 2
@@ -102,6 +103,7 @@ class Camera(Handle):
 
         # Initialize camera.
         check(uc480.is_InitCamera(ctypes.byref(self), ctypes.wintypes.HWND(0)))
+        check(uc480.is_SetErrorReport(self, IS_ENABLE_ERR_REP))
 
         # Get some information about the camera.
         self.info = CameraInfo()
