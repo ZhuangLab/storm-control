@@ -173,7 +173,7 @@ class QAdjustableChannel(QChannel):
             temp_fn = button_fn(button[1])
             self.channel_frame.buttons_fns.append(temp_fn)
             QtCore.QObject.connect(temp, QtCore.SIGNAL("clicked()"), temp_fn)
-
+        
             y += 22
 
         # power on/off radio button

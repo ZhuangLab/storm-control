@@ -107,7 +107,7 @@ class STORM4QIlluminationControlWidget(illuminationControl.QIlluminationControlW
                 self.channels.append(channel)
             x += dx
 
-        # Update the channels to reflect there current ui settings.
+        # Update the channels to reflect their current ui settings.
         for channel in self.channels:
             channel.uiUpdate()
                             

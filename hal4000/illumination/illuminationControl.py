@@ -6,6 +6,7 @@
 #
 
 from PyQt4 import QtCore, QtGui
+import sip
 from xml.dom import minidom, Node
 
 import illumination.channelWidgets as channelWidgets
@@ -80,7 +81,8 @@ class QIlluminationControlWidget(QtGui.QWidget):
                 n = self.settings[i].channel
                 self.last_parameters.on_off_state[n] = channel.amOn()
                 self.last_parameters.default_power[n] = channel.getCurrentDefaultPower()
-                channel.close()
+                sip.delete(channel)
+                channel = None
         # Delete old channels, if they exist.
         self.channels = []
 

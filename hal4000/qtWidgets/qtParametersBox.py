@@ -52,7 +52,8 @@ class QParametersBox(QtGui.QWidget):
     def setCurrentParameters(self, index):
         if (index >= 0) and (index < len(self.radio_buttons)):
             self.radio_buttons[index].click()
-        print "Requested parameter index not available", index
+        else:
+            print "Requested parameter index not available", index
         
     def toggleParameters(self):
         for i, button in enumerate(self.radio_buttons):

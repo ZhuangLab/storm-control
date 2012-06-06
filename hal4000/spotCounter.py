@@ -7,6 +7,7 @@
 
 import sys
 from PyQt4 import QtCore, QtGui
+import sip
 
 import halLib.parameters as params
 
@@ -243,8 +244,8 @@ class SpotCounter(QtGui.QDialog):
         self.parameters = parameters
 
         if self.spot_graph:
-            self.spot_graph.close()
-            self.image_graph.close()
+            sip.delete(self.spot_graph)
+            sip.delete(self.image_graph)
 
         points_per_cycle = len(colors)
         total_points = points_per_cycle
