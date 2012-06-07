@@ -28,8 +28,22 @@ class AShutterControl(shutterControl.ShutterControl):
     def setup(self, kinetic_cycle_time):
         frequency = 1.001/kinetic_cycle_time
 
+        #
+        # STORM2 crazy mad AOTF/Cube405 shutter control scheme 
+        #  (board PCIe-6259)
+        #
+        # channel dig-channel  wavelength  modulation
+        # 1       11           647         none
+        # 2       12           568         PCI-6713 (analog 0) / PCIe-6259 (counter 0)
+        # 4       13           488         PCI-6713 (analog 1) / PCIe-6259 (counter 1)
+        # 5       14           457         PCI-6713 (analog 2) / PCI-6713 (counter 0)
+        # 6       15           405         PCI-6713 (analog 3) / PCI-6713 (counter 1)
+        #
+
+        # set up digital channels to drive the shutters and AOTF counters.
         self.dig_wv_task = nicontrol.DigitalWaveformOutput(self.board,
                                                            self.dig_shutter_channels[0])
+
         for i in range(self.number_channels - 1):
             self.dig_wv_task.addChannel(self.board,
                                         self.dig_shutter_channels[i + 1])
@@ -43,6 +57,7 @@ class AShutterControl(shutterControl.ShutterControl):
 
     def stopFilm(self):
         if self.dig_wv_task:
+            self.dig_wv_task.stopTask()
             self.dig_wv_task.clearTask()
             self.dig_wv_task = 0
                     

@@ -32,11 +32,11 @@ class Storm2QIlluminationControlWidget(illuminationControl.QIlluminationControlW
         illuminationControl.QIlluminationControlWidget.__init__(self, settings_file_name, parameters, parent)
 
     def autoControl(self, channels):
-        self.shutter_queue.setFilming(True)
+        self.shutter_queue.setFilming(channels)
         illuminationControl.QIlluminationControlWidget.autoControl(self, channels)
 
     def manualControl(self):
-        self.shutter_queue.setFilming(False)
+        self.shutter_queue.setFilming([])
         illuminationControl.QIlluminationControlWidget.manualControl(self)
 
     def newParameters(self, parameters):

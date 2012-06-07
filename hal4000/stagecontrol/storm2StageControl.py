@@ -34,11 +34,13 @@ class QPriorZ(QtCore.QObject):
         global prior_mutex
         self.stage = prior_stage
         self.mutex = prior_mutex
+        self.running = self.stage.getStatus()
 
     def zMoveTo(self, z):
-        self.mutex.lock()
-        self.stage.zMoveTo(z)
-        self.mutex.unlock()
+        if self.running:
+            self.mutex.lock()
+            self.stage.zMoveTo(z)
+            self.mutex.unlock()
 
     def shutDown(self):
         pass

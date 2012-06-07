@@ -182,9 +182,52 @@ class QAAAOTFThread(QAOTFThread):
         if not(self.aotf.getStatus()):
             self.aotf = 0
 
+        # The AOTF is set up (on STORM2) to use a wacky analog/
+        # digital counter control scheme when in analog or
+        # "use shutters mode". We try and hide those differences
+        # from the user here.
+        import nationalInstruments.nicontrol as nicontrol
+
+        # set up re-triggerable single shot counters to drive the AOTF.
+        ctr_info = [["PCIe-6259", 0, "PCIe-6259", 12],  # 568
+                    ["PCIe-6259", 1, "PCIe-6259", 13],  # 488
+                    ["PCI-6713",  0, "PCIe-6259", 14]]  # 457
+        self.ctr_tasks = []
+        for info in ctr_info:
+            ctr_task = nicontrol.CounterOutput(info[0], info[1], 60.0, 0.999)
+            ctr_task.setTrigger(info[3], board = info[2])
+            self.ctr_tasks.append(ctr_task)
+
+        # setup analog modulation
+        ana_info = [["PCI-6713", 0],  # 568
+                    ["PCI-6713", 1],  # 488
+                    ["PCI-6713", 2]]  # 457
+        self.ana_tasks = []
+        for info in ana_info:
+            ana_task = nicontrol.VoltageOutput(info[0], info[1], min_val = -0.01, max_val = 5.01)
+            self.ana_tasks.append(ana_task)
+
+    def analogModulationOff(self):
+        self.aotf_mutex.lock()
+        if self.aotf:
+            self.aotf.analogModulationOff()
+        for ctr in self.ctr_tasks:
+            ctr.stopTask()
+        self.aotf_mutex.unlock()
+
+    def analogModulationOn(self):
+        self.aotf_mutex.lock()
+        if self.aotf:
+            self.aotf.analogModulationOn()
+        for ctr in self.ctr_tasks:
+            ctr.startTask()
+        self.aotf_mutex.unlock()
+
     def setAmplitude(self, on, channel, amplitude):
         self.aotf_mutex.lock()
         if self.aotf:
+            
+            # digital modulation
             if on:
                 if (amplitude > 0):
                     self.aotf.channelOnOff(channel, True)
@@ -200,14 +243,34 @@ class QAAAOTFThread(QAOTFThread):
                     self.aotf.offsetFrequency(channel, freq_offset)
             else:
                 self.aotf.channelOnOff(channel, False)
-        self.aotf_mutex.unlock()
 
+            # analog modulation
+            # FIXME: using hard-coded lowest amplitude value as we
+            #        don't know what max to actually use here.
+            if (channel>2):
+                if (amplitude > 278.0):
+                    amplitude = 278.0
+                voltage = 5.0 * float(amplitude)/278.0
+                print voltage
+                self.ana_tasks[(channel-2)].outputVoltage(voltage)
+                
+        self.aotf_mutex.unlock()
+                               
     def setFrequency(self, channel, frequency):
         self.aotf_mutex.lock()
         if self.aotf:
             self.aotf.setFrequency(channel, frequency)
         self.aotf_mutex.unlock()
 
+    def stopThread(self):
+        for ctr in self.ctr_tasks:
+            ctr.stopTask()
+            ctr.clearTask()
+        for ana in self.ana_tasks:
+            ana.stopTask()
+            ana.clearTask()
+        QAOTFThread.stopThread(self)
+                               
 
 #
 # Crystal Technologies AOTF communication thread.
@@ -313,12 +376,13 @@ class QNiAnalogComm():
 
 class QNiDigitalComm():
     def __init__(self):
-        self.filming = False
+        self.used_channel = []
         import nationalInstruments.nicontrol as nicontrol
         self.nicontrol = nicontrol
 
     def setShutter(self, on, board, channel):
-        if not self.filming:
+        #if not (channel in self.used_channels):
+        if 1:
             task = self.nicontrol.DigitalOutput(board, channel)
             if on:
                 task.output(True)
@@ -326,8 +390,8 @@ class QNiDigitalComm():
                 task.output(False)
             task.clearTask()
 
-    def setFilming(self, flag):
-        self.filming = flag
+    def setFilming(self, channels):
+        self.used_channels = channels
 
 #
 # Thorlabs filter wheel with mechanical shutter.

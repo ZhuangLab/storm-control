@@ -30,6 +30,8 @@ class AMiscControl(miscControl.MiscControl):
         super(AMiscControl, self).__init__(parameters, tcp_control, parent)
 
         self.filter_wheel = ix2ucb.IX2UCB()
+        if (not self.filter_wheel.getStatus()):
+            self.filter_wheel = False
         self.lamp_servo = phidget.Phidget("c:/Program Files/Phidgets/")
 
         # we need to stall briefly to give time for 
@@ -68,14 +70,16 @@ class AMiscControl(miscControl.MiscControl):
                         self.ui.filter6Button]
         for filter in self.filters:
             filter.clicked.connect(self.handleFilter)
-        self.filters[self.filter_wheel.getPosition()-1].click()
+        if self.filter_wheel:
+            self.filters[self.filter_wheel.getPosition()-1].click()
 
     @hdebug.debug
     def handleFilter(self):
         for i, filter in enumerate(self.filters):
             if filter.isChecked():
                 filter.setStyleSheet("QPushButton { color: red}")
-                self.filter_wheel.setPosition(i+1)
+                if self.filter_wheel:
+                    self.filter_wheel.setPosition(i+1)
                 self.parameters.filter_position = i
             else:
                 filter.setStyleSheet("QPushButton { color: black}")
@@ -107,7 +111,8 @@ class AMiscControl(miscControl.MiscControl):
 
     @hdebug.debug
     def quit(self):
-        self.filter_wheel.shutDown()
+        if self.filter_wheel:
+            self.filter_wheel.shutDown()
         self.lamp_servo.shutDown()
 
 #
