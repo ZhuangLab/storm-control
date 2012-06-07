@@ -524,7 +524,7 @@ class Window(QtGui.QMainWindow):
 
         # set to new comm specific values
         self.ui.saveMovieCheckBox.setChecked(True)
-        self.ui.filenameLabel.setText(name)
+        self.ui.filenameLabel.setText(name + p.filetype)
         p.acq_mode = "fixed_length"
         p.frames = length
 
