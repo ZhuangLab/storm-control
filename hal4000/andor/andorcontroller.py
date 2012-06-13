@@ -22,6 +22,7 @@ drv_temp_not_stabilized = 20035
 drv_temp_off = 20034
 drv_temp_stabilized = 20036
 drv_temp_not_reached = 20037
+drv_temp_drift = 20040
 
 class AndorCapabilities(Structure):
     _fields_ = [("ulSize", c_ulong),
@@ -247,10 +248,11 @@ class AndorCamera:
         status = andor.GetTemperature(byref(temperature))
         if status == drv_temp_stabilized:
             return [temperature.value, "stable"]
-        elif (status == drv_temp_off) or (status == drv_temp_not_stabilized) or (status == drv_temp_not_reached):
+        elif (status == drv_temp_off) or (status == drv_temp_not_stabilized) or (status == drv_temp_not_reached) or (status == drv_temp_drift):
             return [temperature.value, "unstable"]
         else:
             print "GetTemperature failed: ", status
+            return [50, "unstable"]
 
     # Loops until the camera stabilizes at the desired temperature
     def goToTemperature(self, temperature):

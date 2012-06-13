@@ -37,7 +37,7 @@ class AShutterControl(shutterControl.ShutterControl):
             self.wv_task = 0
 
     def defaultAOTFLines(self):
-        for i in range(self.number_channels):
+        for i in range(7):
             # set analog lines to default (max).
             nicontrol.setAnalogLine(self.board, i, self.powerToVoltage(i, 1.0))
 

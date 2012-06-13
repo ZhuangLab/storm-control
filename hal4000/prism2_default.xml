@@ -44,6 +44,7 @@
   <auto_increment type="int">1</auto_increment>
   <want_bell type="int">1</want_bell>
   <auto_shutters type="int">1</auto_shutters>
+  <filetype type="string">.dax</filetype>
 
   <!-- view settings -->
   <scalemax type="int">2000</scalemax>
