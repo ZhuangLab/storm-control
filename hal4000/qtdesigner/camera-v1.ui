@@ -197,6 +197,25 @@
        <number>2</number>
       </property>
       <item>
+       <widget class="QPushButton" name="recordButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>75</width>
+          <height>23</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Record</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="cameraShutterButton">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -215,25 +234,6 @@
         </property>
         <property name="text">
          <string>Open Shutter</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="recordButton">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>75</width>
-          <height>23</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Record</string>
         </property>
        </widget>
       </item>
