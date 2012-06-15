@@ -59,7 +59,7 @@ class CameraControl(QtCore.QThread):
         self.mutex = QtCore.QMutex()
         self.running = 1
         self.shutter = 0
-        self.forced_idle = 0
+        self.forced_idle = False
         self.debug = p.debug
         self.frames = []
         self.have_paused = 1

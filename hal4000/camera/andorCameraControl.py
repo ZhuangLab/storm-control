@@ -190,13 +190,23 @@ class ACameraControl(cameraControl.CameraControl):
                         else:
                             self.frames = frames
 
-                        self.emit(QtCore.SIGNAL("newData(int)"), self.key)
                         if self.filming:
                             for frame in frames:
                                 self.daxfile.saveFrame(frame)
+
+                        self.emit(QtCore.SIGNAL("newData(int)"), self.key)
+
                 elif state == "idle":
+                    
+                    # Write any last frames to disk.
+                    if self.filming and len(frames) > 0:
+                        for frame in frames:
+                            self.daxfile.saveFrame(frame)
+
+                    # Signal that the camera is idle, but only once.
                     if not(self.forced_idle):
                         self.emit(QtCore.SIGNAL("idleCamera()"))
+                        self.forced_idle = True
                 else:
                     print " run " + state
             else:
@@ -216,7 +226,7 @@ class ACameraControl(cameraControl.CameraControl):
         if self.have_paused:
             self.mutex.lock()
             self.key = key
-            self.forced_idle = 0
+            self.forced_idle = False
             self.should_acquire = 1
             self.have_paused = 0
             if self.got_camera:
@@ -227,7 +237,7 @@ class ACameraControl(cameraControl.CameraControl):
     def stopAcq(self):
         if self.should_acquire:
             self.mutex.lock()
-            self.forced_idle = 1
+            self.forced_idle = True
             if self.got_camera:
                 self.camera.stopAcquisition()
             self.should_acquire = 0
