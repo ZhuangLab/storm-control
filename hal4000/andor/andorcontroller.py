@@ -559,37 +559,42 @@ class AndorCamera:
     # second is the current state of the camera.
     def getImages16(self):
         frames = []
-        
+
+        # Check whether camera is idle or acquiring first.
+        state = _getStatus_()
+
         # Check to see if there is any new data, and if so, how much.
         first = c_long(0)
         last = c_long(0)
         status = andor.GetNumberNewImages(byref(first), byref(last))
 
         # There is new data.
-        if status == drv_success:
+        if (status == drv_success):
 
             # Allocate space & get the data.
             diff = last.value - first.value + 1
             buffer_size = self.pixels * diff
-            buffer = create_string_buffer(2 * buffer_size)
+            data_buffer = create_string_buffer(2 * buffer_size)
             valid_first = c_long(0)
             valid_last = c_long(0)
-            status = andor.GetImages16(first, last, buffer, c_ulong(buffer_size), byref(valid_first), byref(valid_last))
-            if first.value != valid_first.value:
+            status = andor.GetImages16(first, last, data_buffer, c_ulong(buffer_size), byref(valid_first), byref(valid_last))
+            if (first.value != valid_first.value):
                 print "getImages16 first value problem", first.value, valid_first.value
-            if last.value != valid_last.value:
+            if (last.value != valid_last.value):
                 print "getImages16 last value problem", last.value, valid_last.value
 
             # Got the data. Split the data buffer up into frames.
-            if status == drv_success:
+            if (status == drv_success):
                 for i in range(diff):
-                    frames.append(buffer[2*i*self.pixels:2*(i+1)*self.pixels])
-                return [frames, "acquiring"]
+                    frames.append(data_buffer[2*i*self.pixels:2*(i+1)*self.pixels])
+                if (state == drv_idle):
+                    return [frames, "idle"]
+                else:
+                    return [frames, "acquiring"]
 
             # Not sure if we can actually end up here, but just in case.
-            elif status == drv_no_new_data:
-                state = _getStatus_()
-                if state == drv_idle:
+            elif (status == drv_no_new_data):
+                if (state == drv_idle):
                     return [frames, "idle"]
                 else:
                     return [frames, "acquiring"]
@@ -598,10 +603,9 @@ class AndorCamera:
             else:
                 raise AssertionError, "GetImages16 failed: " + str(status)
 
-        # There is no new data. Check if the camera is idle or acquiring.
-        elif status == drv_no_new_data:
-            state = _getStatus_()
-            if state == drv_idle:
+        # There is no new data.
+        elif (status == drv_no_new_data):
+            if (state == drv_idle):
                 return [frames, "idle"]
             else:
                 return [frames, "acquiring"]
