@@ -411,7 +411,7 @@ class Window(QtGui.QMainWindow):
         self.misc_control = 0
         if parameters.have_misc_control:
             misccontrol = __import__('miscControl.' + setup_name + 'MiscControl', globals(), locals(), [setup_name], -1)
-            self.misc_control = misccontrol.AMiscControl(parameters, self.tcp_control, parent = self)
+            self.misc_control = misccontrol.AMiscControl(parameters, self.tcp_control, self.camera_display.camera_widget, parent = self)
 
         # temperature logger
         self.temperature_logger = 0

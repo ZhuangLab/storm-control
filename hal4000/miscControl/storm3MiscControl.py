@@ -3,11 +3,13 @@
 # Miscellaneous controls, such as the EPI/TIRF motor and
 # the various lasers for STORM3.
 #
-# Hazen 11/11
+# Hazen 06/12
 #
 
+import glob
 import Image
 import numpy
+import os
 import sys
 from PyQt4 import QtCore, QtGui
 
@@ -31,8 +33,8 @@ import stagecontrol.storm3StageControl as filterWheel
 #
 class AMiscControl(miscControl.MiscControl):
     @hdebug.debug
-    def __init__(self, parameters, tcp_control, parent = None):
-        super(AMiscControl, self).__init__(parameters, tcp_control, parent)
+    def __init__(self, parameters, tcp_control, camera_widget, parent = None):
+        super(AMiscControl, self).__init__(parameters, tcp_control, camera_widget, parent)
 
         self.filter_wheel = filterWheel.QPriorFilterWheel()
         self.move_timer = QtCore.QTimer(self)
@@ -77,10 +79,25 @@ class AMiscControl(miscControl.MiscControl):
         self.filters[self.filter_wheel.getPosition()-1].click()
 
         # Imagine Eyes stuff
+        self.ie_autosave = False
         self.ie_capture = False
+        self.ie_directory = "c:\\tif_directory\\"
         self.ie_index = 1
+        self.ie_setting_ROI = 0
+        self.ie_start_x = 0
+        self.ie_start_y = 0
+        self.ie_stop_x = 0
+        self.ie_stop_y = 0
         self.ui.iEyesLabel.setText(self.getIEName())
+
+        self.ui.iEyesAutoSaveButton.clicked.connect(self.handleAutoSave)
+        self.ui.iEyesClearROIButton.clicked.connect(self.handleClearROI)
+        self.ui.iEyesResetButton.clicked.connect(self.handleReset)
         self.ui.iEyesSaveButton.clicked.connect(self.handleSave)
+        self.ui.iEyesSetROIButton.clicked.connect(self.handleSetROI)
+
+        if self.camera_widget:
+            self.camera_widget.mouse_press.connect(self.handleMousePress)
 
         self.newParameters(self.parameters)
 
@@ -103,6 +120,27 @@ class AMiscControl(miscControl.MiscControl):
         self.moveStage()
 
     @hdebug.debug
+    def handleAutoSave(self):
+        if self.ie_autosave:
+            self.ui.iEyesAutoSaveButton.setText("Auto Save")
+            self.ui.iEyesAutoSaveButton.setStyleSheet("QPushButton { color: black }")
+            self.ie_autosave = False
+            self.ie_capture = False
+        else:
+            self.ui.iEyesAutoSaveButton.setText("Stop Saving")
+            self.ui.iEyesAutoSaveButton.setStyleSheet("QPushButton { color: red }")
+            self.ie_autosave = True
+            self.ie_capture = True
+            
+    @hdebug.debug
+    def handleClearROI(self):
+        self.start_x = 0
+        self.stop_x = self.parameters.x_pixels
+        self.start_y = 0
+        self.stop_y = self.parameters.y_pixels
+        self.updateROIText()
+
+    @hdebug.debug
     def handleFilter(self):
         for i, filter in enumerate(self.filters):
             if filter.isChecked():
@@ -117,8 +155,45 @@ class AMiscControl(miscControl.MiscControl):
         self.hide()
 
     @hdebug.debug
+    def handleMousePress(self, mouse_x, mouse_y):
+        mouse_x = mouse_x * self.camera_widget.image.width()/512
+        mouse_y = mouse_y * self.camera_widget.image.height()/512
+        if (self.ie_setting_ROI == 1):
+            self.start_x = mouse_x
+            self.start_y = mouse_y
+            self.ie_setting_ROI = 2
+            self.updateROIText()
+        elif (self.ie_setting_ROI == 2):
+            self.stop_x = mouse_x
+            self.stop_y = mouse_y
+            if (self.stop_x < self.start_x):
+                temp = self.start_x
+                self.start_x = self.stop_x
+                self.stop_x = temp
+            if (self.stop_y < self.start_y):
+                temp = self.start_y
+                self.start_y = self.stop_y
+                self.stop_y = temp
+            self.ie_setting_ROI = 0
+            self.ui.iEyesSetROIButton.setEnabled(True)
+            self.updateROIText()
+
+    @hdebug.debug
+    def handleReset(self):
+        tif_files = glob.glob(self.ie_directory + "*.tif")
+        for file in tif_files:
+            os.remove(file)
+        self.ie_index = 1
+        self.ui.iEyesLabel.setText(self.getIEName())     
+
+    @hdebug.debug
     def handleSave(self):
         self.ie_capture = True
+
+    @hdebug.debug
+    def handleSetROI(self):
+        self.ui.iEyesSetROIButton.setEnabled(False)
+        self.ie_setting_ROI = 1
 
     @hdebug.debug
     def largeLeft(self):
@@ -139,13 +214,18 @@ class AMiscControl(miscControl.MiscControl):
         self.setPositionText()
 
     def newFrame(self, frame):
-        if self.ie_capture:
-            self.ie_capture = False
-            p = self.parameters
-            image = Image.fromstring("I;16", (p.x_pixels, p.y_pixels), frame)
-            image.save("c:\\tif_directory\\" + self.getIEName())
+        if self.ie_capture and frame and not self.ie_setting_ROI:
+            if (not self.ie_autosave):
+                self.ie_capture = False
+            frame_data = numpy.fromstring(frame,dtype=numpy.uint16).reshape((self.camera_widget.image.height(),
+                                                                             self.camera_widget.image.width()))
+            frame_data = frame_data[self.start_y:self.stop_y,self.start_x:self.stop_x]
+            image = Image.fromstring("I;16",
+                                     (frame_data.shape[1], frame_data.shape[0]), 
+                                     frame_data.tostring())
+            image.save(self.ie_directory + self.getIEName())
             self.ie_index += 1
-            self.ui.iEyesLabel.setText(self.getIEName())            
+            self.ui.iEyesLabel.setText(self.getIEName())
 
     @hdebug.debug
     def newParameters(self, parameters):
@@ -153,11 +233,14 @@ class AMiscControl(miscControl.MiscControl):
         self.jog_size = parameters.jog_size
         self.epi_position = parameters.epi_position
         self.tirf_position = parameters.tirf_position
+
         names = parameters.filter_names
         if (len(names) == 6):
             for i in range(6):
                 self.filters[i].setText(names[i])
         self.filters[self.parameters.filter_position].click()
+
+        self.handleClearROI()
 
     def setPositionText(self):
         self.ui.positionText.setText("{0:.3f}".format(self.position))
@@ -174,6 +257,10 @@ class AMiscControl(miscControl.MiscControl):
             self.position += self.jog_size
             self.moveStage()
 
+    @hdebug.debug
+    def updateROIText(self):
+        self.ui.iEyesROILabel.setText("(" + str(self.start_x) + ", " + str(self.start_y) + ") - (" + str(self.stop_x) + ", " + str(self.stop_y) + ")")
+
     def updatePosition(self):
         if not self.smc100.amMoving():
             self.move_timer.stop()
@@ -187,7 +274,7 @@ class AMiscControl(miscControl.MiscControl):
 #
 # The MIT License
 #
-# Copyright (c) 2011 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

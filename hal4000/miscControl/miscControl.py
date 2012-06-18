@@ -2,7 +2,7 @@
 #
 # The defualt miscControl class.
 #
-# Hazen 11/11
+# Hazen 06/12
 #
 
 import sys
@@ -16,9 +16,10 @@ import halLib.hdebug as hdebug
 #
 class MiscControl(QtGui.QDialog):
     @hdebug.debug
-    def __init__(self, parameters, tcp_control, parent = None):
-        super(MiscControl, self).__init__(parent)
+    def __init__(self, parameters, tcp_control, camera_widget, parent = None):
+        QtGui.QDialog.__init__(self, parent)
         
+        self.camera_widget = camera_widget
         self.parameters = parameters
         self.tcp_control = tcp_control
 
@@ -50,7 +51,7 @@ class MiscControl(QtGui.QDialog):
 #
 # The MIT License
 #
-# Copyright (c) 2011 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

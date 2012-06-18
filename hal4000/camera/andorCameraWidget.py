@@ -38,8 +38,8 @@ class ACameraWidget(qtCameraWidget.QCameraWidget):
                 self.update()
 
                 if self.show_info:
-                    x_loc = (self.x * w)/512
-                    y_loc = (self.y * w)/512
+                    x_loc = (self.x_click * w)/512
+                    y_loc = (self.y_click * h)/512
                     value = 0
                     if ((x_loc >= 0) and (x_loc < w) and (y_loc >= 0) and (y_loc < h)):
                         value = image_data[y_loc, x_loc]

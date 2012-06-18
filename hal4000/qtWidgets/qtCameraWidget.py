@@ -10,6 +10,9 @@ import sys
 
 # Camera widget
 class QCameraWidget(QtGui.QWidget):
+
+    mouse_press = QtCore.pyqtSignal(int, int, name='mousePress')
+
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.buffer = QtGui.QPixmap(512, 512)
@@ -20,10 +23,10 @@ class QCameraWidget(QtGui.QWidget):
         self.show_grid = 0
         self.show_info = 1
         self.show_target = 0
-        self.x = 0
+        self.x_click = 0
         self.x_final = 512
         self.x_size = 0
-        self.y = 0
+        self.y_click = 0
         self.y_final = 512
         self.y_size = 0
 
@@ -39,8 +42,9 @@ class QCameraWidget(QtGui.QWidget):
         return [self.image_min - margin, self.image_max + margin]
 
     def mousePressEvent(self, event):
-        self.x = event.x()
-        self.y = event.y()
+        self.x_click = event.x()
+        self.y_click = event.y()
+        self.mouse_press.emit(self.x_click, self.y_click)
 
     def newColorTable(self, colortable):
         self.colortable = colortable
@@ -115,7 +119,7 @@ class QCameraWidget(QtGui.QWidget):
         self.blank()
         self.update()
         if self.show_info:
-            self.emit(QtCore.SIGNAL("intensityInfo(int, int, int)"), self.x, self.y, 0)
+            self.emit(QtCore.SIGNAL("intensityInfo(int, int, int)"), self.x_click, self.y_click, 0)
 
 #
 # Testing

@@ -10,6 +10,7 @@
     <use_aotf type="boolean">TRUE</use_aotf>
     <frequency type="float">90.36</frequency>
     <amplitude type="int">7857</amplitude>
+    <aotf_channel type="int">0</aotf_channel>
   </block>
 -->
   <block>

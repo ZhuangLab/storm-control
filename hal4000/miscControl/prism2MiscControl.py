@@ -20,8 +20,8 @@ import thorlabs.mgmotorAX as mgmotorAX
 # Misc Control Dialog Box
 #
 class AMiscControl(miscControl.MiscControl):
-    def __init__(self, parameters, tcp_control, parent = None):
-        super(AMiscControl, self).__init__(parameters, tcp_control, parent)
+    def __init__(self, parameters, tcp_control, camera_widget, parent = None):
+        super(AMiscControl, self).__init__(parameters, tcp_control, camera_widget, parent)
 
         self.debug = 1
 
