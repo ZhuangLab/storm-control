@@ -11,6 +11,7 @@ import illumination.shutterControl as shutterControl
 
 class AShutterControl(shutterControl.ShutterControl):
     def __init__(self, powerToVoltage):
+        shutterControl.ShutterControl.__init__(self, powerToVoltage)
         self.board = "PCIe-6259"
         self.dig_wv_task = 0
         self.oversampling_default = 1
@@ -18,7 +19,6 @@ class AShutterControl(shutterControl.ShutterControl):
         self.dig_shutter_channels = [0, 1, 2, 3, 8, 9, 10]
 #        self.number_channels = 6
 #        self.dig_shutter_channels = [0, 1, 2, 3, 8, 9]
-        shutterControl.ShutterControl.__init__(self, powerToVoltage)
 
     def cleanup(self):
         if self.dig_wv_task:
