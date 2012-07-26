@@ -21,11 +21,12 @@ from PyQt4 import QtCore, QtGui
 # 100x defined as 1.0 (so 20x = 0.2).
 #
 class viewPixmapItem(QtGui.QGraphicsItem):
-    def __init__(self, pixmap, x_pix, y_pix, x_um, y_um, magnification, name, zvalue):
+    def __init__(self, pixmap, x_pix, y_pix, x_um, y_um, magnification, name, params, zvalue):
         QtGui.QGraphicsItem.__init__(self, None)
         size = pixmap.size()
         self.magnification = magnification
         self.name = name
+        self.parameters = params
         self.pixmap = pixmap
         self.p_width = size.width()
         self.p_height = size.height()
@@ -40,17 +41,23 @@ class viewPixmapItem(QtGui.QGraphicsItem):
     def boundingRect(self):
         return QtCore.QRectF(0, 0, self.p_width, self.p_height)
 
-    def getPixmap(self):
-        return self.pixmap
-
     def getMagnification(self):
         return self.magnification
 
     def getName(self):
         return self.name
 
+    def getParameters(self):
+        return self.parameters
+
+    def getPixmap(self):
+        return self.pixmap
+
     def getRealPosition(self):
         return [self.real_x, self.real_y]
+
+    def paint(self, painter, options, widget):
+        painter.drawPixmap(0, 0, self.pixmap)
 
     def realX(self):
         return self.real_x
@@ -62,8 +69,7 @@ class viewPixmapItem(QtGui.QGraphicsItem):
         self.real_x = rx
         self.real_y = ry
 
-    def paint(self, painter, options, widget):
-        painter.drawPixmap(0, 0, self.pixmap)
+
 
 
 #
@@ -119,8 +125,8 @@ class MultifieldView(QtGui.QGraphicsView):
         rect.setZValue(z_val)
         return rect
 
-    def addViewPixmapItem(self, pixmap, x_pix, y_pix, x_um, y_um, mag, name, z_pos):
-        a_graphics_item = viewPixmapItem(pixmap, x_pix, y_pix, x_um, y_um, mag, name, z_pos)
+    def addViewPixmapItem(self, pixmap, x_pix, y_pix, x_um, y_um, mag, name, params, z_pos):
+        a_graphics_item = viewPixmapItem(pixmap, x_pix, y_pix, x_um, y_um, mag, name, params, z_pos)
 
         # update scene rect
         if (x_pix < (self.scene_rect[0] + self.margin)):
@@ -195,13 +201,16 @@ class MultifieldView(QtGui.QGraphicsView):
             data = line.split(",")
             picture_mag = 1.0
             imagename = None
+            params = "NA"
             if len(data) == 4:
                 [x_um, y_um, x_pix, y_pix] = data
                 z_value += 0.01
             elif len(data) == 6:
                 [x_um, y_um, x_pix, y_pix, picture_mag, z_value] = data
-            else:
+            elif len(data) == 7:
                 [imagename, x_um, y_um, x_pix, y_pix, picture_mag, z_value] = data
+            else:
+                [imagename, x_um, y_um, x_pix, y_pix, picture_mag, z_value, params] = data
 
             if not(imagename):
                 # Due to a bug, some legacy mosaics do not start at image_1.
@@ -222,6 +231,7 @@ class MultifieldView(QtGui.QGraphicsView):
                                        float(y_um),
                                        float(picture_mag),
                                        os.path.basename(imagename),
+                                       params.strip(),
                                        float(z_value))
             else:
                 print "Could not find:", imagename + ".png"
@@ -250,19 +260,20 @@ class MultifieldView(QtGui.QGraphicsView):
         fp = open(filename, "w")
         basename = os.path.splitext(os.path.basename(filename))[0]
         dirname = os.path.dirname(filename) + "/"
-        fp.write("name, x(um), y(um), x(pixels), y(pixels), magnification, z-position\r\n")
+        fp.write("name, x(um), y(um), x(pixels), y(pixels), magnification, z-position parameters\r\n")
         for i, item in enumerate(self.items()):
             progress_bar.setValue(i)
             if progress_bar.wasCanceled(): break
             if (isinstance(item, viewPixmapItem)):
                 name = basename + "_" + str(i+1)
                 fp.write(name + ", ")
-                fp.write("{0:.2f}, {1:.2f}, {2:.2f}, {3:.2f}, {4:.2f}, {5:.3f}\r\n".format(item.realX(),
-                                                                                           item.realY(),
-                                                                                           item.x(),
-                                                                                           item.y(),
-                                                                                           item.getMagnification(),
-                                                                                           item.zValue()))
+                fp.write("{0:.2f}, {1:.2f}, {2:.2f}, {3:.2f}, {4:.2f}, {5:.3f}, ".format(item.realX(),
+                                                                                         item.realY(),
+                                                                                         item.x(),
+                                                                                         item.y(),
+                                                                                         item.getMagnification(),
+                                                                                         item.zValue()))
+                fp.write(item.getParameters() + "\r\n")
                 item.getPixmap().save(QtCore.QString(dirname + name + ".png"), "PNG")
 
         progress_bar.close()

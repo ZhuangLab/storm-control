@@ -94,12 +94,12 @@ class Window(QtGui.QMainWindow):
         self.connect(self.positions, QtCore.SIGNAL("deletePosition(int)"), self.handleRowDelete)
         self.connect(self.positions, QtCore.SIGNAL("addPosition(float, float)"), self.addPosition)
 
-        self.connect(self.comm, QtCore.SIGNAL("captureComplete(float, float)"), self.addPixmap)
+        self.connect(self.comm, QtCore.SIGNAL("captureComplete(float, float, PyQt_PyObject)"), self.addPixmap)
 
 
-    def addPixmap(self, x, y):
+    def addPixmap(self, x, y, params):
         pixmap = self.comm.currentPixmap()
-        self.view.addPixmap(pixmap, x, y)
+        self.view.addPixmap(pixmap, x, y, params)
         if len(self.picture_queue) > 0:
             [tx, ty] = self.picture_queue[0]
             nx = self.x_center + 0.95 * float(pixmap.width()) * tx * self.parameters.pixels_to_um / self.parameters.magnification

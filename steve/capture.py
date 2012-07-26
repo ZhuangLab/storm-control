@@ -94,7 +94,8 @@ class Capture(QtCore.QObject):
 
             # get location & emit signal
             [x, y] = self.dax.filmLocation()
-            self.emit(QtCore.SIGNAL("captureComplete(float, float)"), x, y)
+            params = self.dax.filmParameters()
+            self.emit(QtCore.SIGNAL("captureComplete(float, float, PyQt_PyObject)"), x, y, params)
 
     @hdebug.debug
     def captureStart(self, stagex, stagey):

@@ -51,16 +51,23 @@ class Reader:
     def filmFilename(self):
         return self.filename
 
-    # returns the film size
-    def filmSize(self):
-        return [self.image_width, self.image_height, self.number_frames]
-
     # returns the picture x,y location, if available
     def filmLocation(self):
         if hasattr(self, "stage_x"):
             return [self.stage_x, self.stage_y]
         else:
             return ["NA", "NA"]
+
+    # returns the film parameters file, if available
+    def filmParameters(self):
+        if hasattr(self, "parameters"):
+            return self.parameters
+        else:
+            return "NA"
+
+    # returns the film size
+    def filmSize(self):
+        return [self.image_width, self.image_height, self.number_frames]
 
     # returns the film focus lock target
     def lockTarget(self):
@@ -102,6 +109,7 @@ class DaxReader(Reader):
         lock_target_re = re.compile(r'Lock Target = ([\d\.\-]+)')
         scalemax_re = re.compile(r'scalemax = ([\d\.\-]+)')
         scalemin_re = re.compile(r'scalemin = ([\d\.\-]+)')
+        parameters_re = re.compile(r'parameters file = (.+)')
 
         inf_file = open(self.inf_filename, "r")
         while 1:
@@ -135,6 +143,9 @@ class DaxReader(Reader):
             m = scalemin_re.match(line)
             if m:
                 self.scalemin = int(m.group(1))
+            m = parameters_re.match(line)
+            if m:
+                self.parameters = m.group(1)
 
         inf_file.close()
 

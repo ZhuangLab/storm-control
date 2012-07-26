@@ -123,7 +123,7 @@ class MosaicView(multiView.MultifieldView):
         self.connect(self.removeAct, QtCore.SIGNAL("triggered()"), self.handleRemoveLastItem)
         self.connect(self.extrapolateAct, QtCore.SIGNAL("triggered()"), self.handleExtrapolate)
 
-    def addPixmap(self, pixmap, x_um, y_um):
+    def addPixmap(self, pixmap, x_um, y_um, params):
         x_pix = x_um / self.pixels_to_um - pixmap.width() * 0.5 * self.x_sign / self.magnification + self.xoffset
         y_pix = y_um / self.pixels_to_um - pixmap.height() * 0.5 * self.y_sign / self.magnification + self.yoffset
         mapped_pos = self.mapPosition(x_pix, y_pix)
@@ -134,6 +134,7 @@ class MosaicView(multiView.MultifieldView):
                                y_um,
                                self.magnification,
                                "new",
+                               params,
                                self.currentz)
         self.currentz += 0.01
 
