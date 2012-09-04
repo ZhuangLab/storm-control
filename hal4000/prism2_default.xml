@@ -138,4 +138,7 @@
   <pinc_value type="float">0.01</pinc_value>
   <pframe_value type="int">1000</pframe_value>
 
+  <!-- joystick setting -->
+  <have_joystick type="int">1</have_joystick>
+
 </settings>

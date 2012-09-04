@@ -430,6 +430,11 @@ class Window(QtGui.QMainWindow):
             self.connect(self.progression_control, QtCore.SIGNAL("progSetPower(int, float)"), self.handleProgSetPower)
             self.connect(self.progression_control, QtCore.SIGNAL("progIncPower(int, float)"), self.handleProgIncPower)
 
+        self.joystick_control = 0
+        if parameters.have_joystick:
+            joystick = __import__('joystick.' + setup_name + 'JoystickControl', globals(), locals(), [setup_name], -1)
+            self.joystick_control = joystick.AJoystick(parameters, parent = self)
+
         #
         # More ui stuff
         #
@@ -619,6 +624,10 @@ class Window(QtGui.QMainWindow):
         if self.progression_control:
             self.progression_control.close()
 
+        # shutdown joystick
+        if self.joystick_control:
+            self.joystick_control.close()
+
     @hdebug.debug
     def closeEvent(self, event):
         self.cleanUp()
@@ -641,7 +650,8 @@ class Window(QtGui.QMainWindow):
             try:
                 params.Parameters(filename)
                 self.newSettings(filename)
-            except:
+            except Exception, e:
+                print e
                 print " Not a settings file, trying as shutters file"
                 self.newShutters(filename)
 
