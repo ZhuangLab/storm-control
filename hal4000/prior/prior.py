@@ -18,7 +18,7 @@ class Prior(RS232.RS232):
         self.um_to_unit = 1.0/self.unit_to_um
 
         # RS232 stuff
-        RS232.RS232.__init__(self, port, timeout, baudrate, "\r", 0.02)
+        RS232.RS232.__init__(self, port, timeout, baudrate, "\r", 0.0001)
         try:
             test = self.commWithResp("?")
         except:
@@ -68,6 +68,10 @@ class Prior(RS232.RS232):
 
     def info(self):
         return self._command("?")
+
+    def jog(self, x_speed, y_speed):
+        #print "VS {0:.1f},{1:.1f}".format(x_speed,y_speed)
+        self._command("VS {0:.1f},{1:.1f}".format(x_speed,y_speed))
 
     def joystickOnOff(self, on):
         if on:

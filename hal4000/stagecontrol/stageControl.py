@@ -14,6 +14,9 @@
 # goRelative(dx, dy)
 #   Change position by dx in x, dy in y (in um).
 #
+# jog(sx, sy)
+#   Jog at a speed given by sx, sy in um/second
+#
 # joystickLockout(flag)
 #   Stage ignores the joystick controller if flag
 #   is True.
@@ -233,6 +236,14 @@ class StageControl(QtGui.QDialog):
             [xvar, yvar] = data
             self.ui.xmoveDoubleSpinBox.setValue(xvar.toDouble()[0])
             self.ui.ymoveDoubleSpinBox.setValue(yvar.toDouble()[0])
+
+    @hdebug.debug
+    def jog(self, x_speed, y_speed):
+        # x_speed and y_speed range from -1.0 to 1.0.
+        # convert to units of microns per second
+        x_speed = 10.0*x_speed
+        y_speed = 10.0*y_speed
+        self.stage.jog(x_speed, y_speed)
 
     @hdebug.debug
     def keyPressEvent(self, event):

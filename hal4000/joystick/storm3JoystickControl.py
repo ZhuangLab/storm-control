@@ -1,39 +1,24 @@
 #!/usr/bin/python
 #
-# Joystick monitoring class.
+# Joystick monitoring class specialized for storm3.
 #
 # Hazen 09/12
 #
 
 from PyQt4 import QtCore
 
+import joystick
+import logitech.dualAction as dualAction
+
 # Debugging
 import halLib.hdebug as hdebug
 
-#
-# Joystick monitoring class.
-#
-class JoystickObject(QtCore.QObject):
-    toggle_film = QtCore.pyqtSignal()
-    motion = QtCore.pyqtSignal(float, float, float, float)
-
+class AJoystick(joystick.JoystickObject):
     @hdebug.debug
-    def __init__(self, joystick, parent = None):
-        QtCore.QObject.__init__(self, parent)
-        self.jstick = joystick
-        self.jstick.start(self.joystickHandler)
+    def __init__(self, parameters, parent = None):
+        jstick = dualAction.DualAction()
 
-    @hdebug.debug
-    def close(self):
-        self.jstick.shutDown()
-
-    def joystickHandler(self, data):
-        event_data = self.jstick.translate(data)
-        if (event_data[0] == "Button"):
-            if (event_data[1] == 6):
-                self.toggle_film.emit()
-        if (event_data[0] == "Joystick"):
-            self.motion.emit(*event_data[1:])
+        joystick.JoystickObject.__init__(self, jstick, parent)
 
 #
 # The MIT License

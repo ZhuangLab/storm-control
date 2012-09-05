@@ -140,5 +140,6 @@
 
   <!-- joystick setting -->
   <have_joystick type="int">1</have_joystick>
+  <min_offset type="float">0.05</min_offset>
 
 </settings>

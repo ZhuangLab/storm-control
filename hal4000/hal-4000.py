@@ -434,6 +434,8 @@ class Window(QtGui.QMainWindow):
         if parameters.have_joystick:
             joystick = __import__('joystick.' + setup_name + 'JoystickControl', globals(), locals(), [setup_name], -1)
             self.joystick_control = joystick.AJoystick(parameters, parent = self)
+            self.joystick_control.motion.connect(self.jstickMotion)
+            self.joystick_control.toggle_film.connect(self.jstickToggleFilm)
 
         #
         # More ui stuff
@@ -496,13 +498,13 @@ class Window(QtGui.QMainWindow):
         #
         self.camera_control.cameraInit()
 
-
-    #
-    # Methods that handle external/remote commands.
-    #
-    # In keeping with the new tradition these should all
-    # be renamed tcpXYZ
-    #
+    ########################################################
+    ##
+    ## Methods that handle external/remote commands.
+    ##
+    ## In keeping with the new tradition these should all
+    ## be renamed tcpXYZ
+    ##
 
     @hdebug.debug
     def handleCommAbortMovie(self):
@@ -569,10 +571,27 @@ class Window(QtGui.QMainWindow):
         if self.stage_control:
             self.stage_control.stopLockout()
 
+    ########################################################
+    ##
+    ## Methods for joystick control.
+    ##
+    @hdebug.debug
+    def jstickMotion(self, x1, y1, x2, y2):
+        if self.stage_control:
+            min_offset = self.parameters.min_offset
+            if(abs(x1) > min_offset) or (abs(y1) > min_offset):
+                self.stage_control.jog(x1,y1)
+            else:
+                self.stage_control.jog(0.0,0.0)
 
-    #
-    # All other methods alphabetically ordered, for lack of a better system
-    #
+    @hdebug.debug
+    def jstickToggleFilm(self):
+        self.toggleFilm()
+
+    ########################################################
+    ##
+    ## All other methods alphabetically ordered, for lack of a better system.
+    ##
 
     @hdebug.debug
     def changeCameraParameters(self):

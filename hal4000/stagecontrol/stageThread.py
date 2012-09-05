@@ -18,6 +18,7 @@ from PyQt4 import QtCore
 class QStageThread(QtCore.QThread):
     def __init__(self, stage, parent = None):
         QtCore.QThread.__init__(self, parent)
+        self.jbuffer = []
         self.stage = stage
         self.stage_position = [0.0, 0.0, 0.0]
         self.running = self.stage.getStatus()
@@ -37,7 +38,12 @@ class QStageThread(QtCore.QThread):
         self.stage.goRelative(dx, dy)
         #self.stage_position = self.stage.position()
         self.mutex.unlock()
-        
+
+    def jog(self, x_speed, y_speed):
+        self.mutex.lock()
+        self.jbuffer = [x_speed, y_speed]
+        self.mutex.unlock()
+
     def lockout(self, flag):
         self.mutex.lock()
         self.stage.joystickOnOff(not flag)
@@ -50,11 +56,18 @@ class QStageThread(QtCore.QThread):
         return stage_position
 
     def run(self):
+        counter = 0
         while self.running:
             self.mutex.lock()
-            self.stage_position = self.stage.position()
+            counter += 1
+            if (len(self.jbuffer) > 0):
+                self.stage.jog(self.jbuffer[0], self.jbuffer[1])
+                self.jbuffer = []
+            if (counter == 100):
+                self.stage_position = self.stage.position()
+                counter = 0
             self.mutex.unlock()
-            self.msleep(500)
+            self.msleep(5)
 
     def shutDown(self):
         self.running = 0

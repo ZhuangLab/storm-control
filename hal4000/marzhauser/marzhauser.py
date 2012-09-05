@@ -59,6 +59,9 @@ class MarzhauserRS232(RS232.RS232):
             Y = y * self.um_to_unit
             self.commWithResp("!mor " + str(X) + " " + str(Y) + " 0")
 
+    def jog(self, x_speed, y_speed):
+        pass
+
     def joystickOnOff(self, on):
         if self.live:
             if on:
@@ -129,6 +132,9 @@ class MarzhauserDLL():
             dY = c_double(dy * self.um_to_unit)
             dZA = c_double(0.0)
             tango.LSX_MoveRel(self.LSID, dX, dY, dZA, dZA, self.wait)
+
+    def jog(self, x_speed, y_speed):
+        pass
 
     # FIXME: lockout the joystick here.
     def joystickOnOff(self, on):

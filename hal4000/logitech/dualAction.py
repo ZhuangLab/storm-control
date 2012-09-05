@@ -1,52 +1,74 @@
 #!/usr/bin/python
 #
-# Interface to logitech dual action joystick.
+# Interface to Logitech dual action joystick.
 #
 # Hazen 9/12
 #
 
-import pygame
-
-ref_count = 0
+import pywinusb.hid as hid
 
 class DualAction():
-    def __init__(self, id = 0, verbose = False):
-        global ref_count
-        ref_count += 1
-        pygame.joystick.init()
-        self.jstick = pygame.joystick.Joystick(id)
-        self.jstick.init()
-        if verbose:
-            print "Name:", self.jstick.get_name()
-            print "Axes:", self.jstick.get_numaxes()
-            print "Trackballs:", self.jstick.get_numballs()
-            print "Buttons:", self.jstick.get_numbuttons()
-            print "Hats:", self.jstick.get_numhats()
+    def __init__(self):
+        self.buttons = [[1,24,0],  # 1
+                        [2,40,0],  # 2
+                        [3,72,0],  # 3
+                        [4,136,0], # 4
+                        [5,8,1],   # 5
+                        [6,8,2],   # 6
+                        [7,8,4],   # 7
+                        [8,8,8],   # 8
+                        [9,8,16],  # 9
+                        [10,8,32]]  # 10
+        self.down = False
+        self.hats = [["up",0,0],
+                     ["left",6,0],
+                     ["right",2,0],
+                     ["down",4,0]]
 
-    def getAxis(self, axis):
-        return self.jstick.get_axis(axis)
+        # initialize connection to joystick
+        all_hids = hid.find_all_hid_devices()
+        self.jdev = False
+        for device in all_hids:
+            if (device.product_name == "Logitech Dual Action"):
+                self.jdev = device
+                
+        if not self.jdev:
+            print "Logitech Dual Action joystick not found."
 
-    def getButton(self, button):
-        return self.jstick.get_button(button)
-
-    def getHat(self, hat):
-        return self.jstick.get_hat(hat)
-
-    def getNumberAxis(self):
-        return self.jstick.get_numaxes()
-
-    def getNumberButtons(self):
-        return self.jstick.get_numbuttons()
-
-    def getNumberHats(self):
-        return self.jstick.get_numhats()
+    def dataHandler(self, data):
+        print self.translate(data)
 
     def shutDown(self):
-        self.jstick.quit()
-        global ref_count
-        ref_count -= 1
-        if(ref_count == 0):
-            pygame.joystick.quit()
+        if self.jdev:
+            self.jdev.close()
+
+    def start(self, handler):
+        self.jdev.open()
+        self.jdev.set_raw_data_handler(handler)
+
+    def translate(self, data):
+        # check if it was a button event
+        for button in self.buttons:
+            if (button[1] == data[5]) and (button[2] == data[6]):
+                self.down = True
+                return ["Button", button[0]]
+
+        # check if it was a hat event
+        for hat in self.hats:
+            if (hat[1] == data[5]) and (hat[2] == data[6]):
+                self.down = True
+                return ["Hat", hat[0]]
+
+        # otherwise it must have been a joystick event
+        if not self.down:
+            jpos = ["Joystick"]
+            for i in range(4):
+                tmp = (float(data[i+1])-128.0)/128.0
+                jpos.append(tmp)
+            return jpos
+
+        self.down = False
+        return ["NA"]
 
 
 #
@@ -54,18 +76,14 @@ class DualAction():
 #
 
 if __name__ == "__main__":
-    js = DualAction(verbose = True)
-    print "Axis test:"
-    for i in range(4):
-        print " - ", i, js.getAxis(i)
-    print "Button test:"
-    for i in range(12):
-        print " - ", i, js.getButton(i)
-    print "Hat test:"
-    for i in range(1):
-        print " - ", i, js.getHat(i)
-    js.shutDown()
+    from msvcrt import kbhit
+    from time import sleep
 
+    js = DualAction()
+    js.start(js.dataHandler)
+    while not kbhit():
+        sleep(0.5)
+    js.shutDown()
 
 #
 # The MIT License
