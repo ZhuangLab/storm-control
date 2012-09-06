@@ -30,7 +30,7 @@
 # zero()
 #   Define the current position as zero.
 #
-# Hazen 7/09
+# Hazen 9/12
 #
 
 from PyQt4 import QtCore, QtGui
@@ -239,11 +239,23 @@ class StageControl(QtGui.QDialog):
 
     @hdebug.debug
     def jog(self, x_speed, y_speed):
+        p = self.parameters
+
+        if (p.joystick_mode == "quadratic"):
+            x_speed = x_speed * x_speed * cmp(x_speed, 0.0)
+            y_speed = y_speed * y_speed * cmp(y_speed, 0.0)
+
         # x_speed and y_speed range from -1.0 to 1.0.
         # convert to units of microns per second
-        x_speed = 10.0*x_speed
-        y_speed = 10.0*y_speed
-        self.stage.jog(x_speed, y_speed)
+        x_speed = p.joystick_gain*x_speed
+        y_speed = p.joystick_gain*y_speed
+
+        if p.xy_swap:
+            tmp = x_speed
+            x_speed = y_speed
+            y_speed = tmp
+        
+        self.stage.jog(x_speed*p.joystick_signx, y_speed*p.joystick_signy)
 
     @hdebug.debug
     def keyPressEvent(self, event):
@@ -314,6 +326,21 @@ class StageControl(QtGui.QDialog):
     def startLockout(self):
         if self.stage:
             self.stage.lockout(True)
+
+    @hdebug.debug
+    def step(self, x, y):
+        print x,y
+        p = self.parameters
+
+        if p.xy_swap:
+            tmp = x
+            x = y
+            y = tmp
+
+        if(x!=0):
+            self.moveRelative(0, float(x)*p.hat_step*p.joystick_signx)
+        else:
+            self.moveRelative(1, float(y)*p.hat_step*p.joystick_signy)
 
     @hdebug.debug
     def stopLockout(self):

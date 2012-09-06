@@ -14,8 +14,10 @@ import halLib.hdebug as hdebug
 # Joystick monitoring class.
 #
 class JoystickObject(QtCore.QObject):
-    toggle_film = QtCore.pyqtSignal()
+    lock_jump = QtCore.pyqtSignal(int)
     motion = QtCore.pyqtSignal(float, float, float, float)
+    step = QtCore.pyqtSignal(int, int)
+    toggle_film = QtCore.pyqtSignal()
 
     @hdebug.debug
     def __init__(self, joystick, parent = None):
@@ -30,8 +32,23 @@ class JoystickObject(QtCore.QObject):
     def joystickHandler(self, data):
         event_data = self.jstick.translate(data)
         if (event_data[0] == "Button"):
-            if (event_data[1] == 6):
+            if(event_data[1] == 5):
+                self.lock_jump.emit(1)
+            elif(event_data[1] == 6):
                 self.toggle_film.emit()
+            elif(event_data[1] == 7):
+                self.lock_jump.emit(-1)
+            elif(event_data[1] == 9): # hard stop hack for a drifting joystick..
+                self.motion.emit(0.0, 0.0, 0.0, 0.0)
+        if (event_data[0] == "Hat"):
+            if(event_data[1] == "up"):
+                self.step.emit(1,0)
+            elif(event_data[1] == "down"):
+                self.step.emit(-1,0)
+            elif(event_data[1] == "left"):
+                self.step.emit(0,-1)
+            elif(event_data[1] == "right"):
+                self.step.emit(0,1)
         if (event_data[0] == "Joystick"):
             self.motion.emit(*event_data[1:])
 

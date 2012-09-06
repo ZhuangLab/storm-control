@@ -13,12 +13,15 @@ import time
 # XY Prior stage, possibly with piezo Z control & a filter wheel.
 #
 class Prior(RS232.RS232):
-    def __init__(self, port = "COM2", timeout = None, baudrate = 9600):
+    def __init__(self, port = "COM2", timeout = None, baudrate = 9600, wait_time = 0.02):
         self.unit_to_um = 1.0
         self.um_to_unit = 1.0/self.unit_to_um
+        self.x = 0.0
+        self.y = 0.0
+        self.z = 0.0
 
         # RS232 stuff
-        RS232.RS232.__init__(self, port, timeout, baudrate, "\r", 0.0001)
+        RS232.RS232.__init__(self, port, timeout, baudrate, "\r", wait_time)
         try:
             test = self.commWithResp("?")
         except:
@@ -84,7 +87,7 @@ class Prior(RS232.RS232):
             response = self._command("P")[0]
             [self.x, self.y, self.z] = map(int, response.split(","))
         except:
-            print "  Bad position from Prior stage."
+            pass
         return [self.x * self.unit_to_um, 
                 self.y * self.unit_to_um, 
                 self.z * self.unit_to_um]
