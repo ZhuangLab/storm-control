@@ -2,11 +2,16 @@
 #
 # Stage control for Prism2.
 #
-# Hazen 04/12
+# Hazen 09/12
 #
+
+from PyQt4 import QtCore
 
 # stage.
 import marzhauser.marzhauser as marzhauser
+
+# stage control thread
+import stagecontrol.stageThread as stageThread
 
 # stage control dialog.
 import stagecontrol.stageControl as stageControl
@@ -17,7 +22,8 @@ import stagecontrol.stageControl as stageControl
 #
 class AStageControl(stageControl.StageControl):
     def __init__(self, parameters, tcp_control, parent = None):
-        self.stage = marzhauser.MarzhauserDLL("COM5")
+        self.stage = stageThread.QStageThread(marzhauser.MarzhauserDLL("COM5"))
+        self.stage.start(QtCore.QThread.NormalPriority)
         stageControl.StageControl.__init__(self, 
                                            parameters,
                                            tcp_control,

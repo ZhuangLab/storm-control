@@ -43,8 +43,11 @@ class DualAction():
             self.jdev.close()
 
     def start(self, handler):
-        self.jdev.open()
-        self.jdev.set_raw_data_handler(handler)
+        if self.jdev:
+            self.jdev.open()
+            self.jdev.set_raw_data_handler(handler)
+        else:
+            print "dual action joystick not connected?"
 
     def translate(self, data):
         # check if it was a button event

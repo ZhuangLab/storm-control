@@ -121,6 +121,10 @@ class MarzhauserDLL():
 
     def goAbsolute(self, x, y):
         if self.good:
+            # If the stage is currently moving due to a jog command
+            # and then you try to do a positional move everything
+            # will freeze, so we stop the stage first.
+            self.jog(0.0,0.0)
             X = c_double(x * self.um_to_unit)
             Y = c_double(y * self.um_to_unit)
             ZA = c_double(0.0)
@@ -128,18 +132,26 @@ class MarzhauserDLL():
 
     def goRelative(self, dx, dy):
         if self.good:
+            self.jog(0.0,0.0)
             dX = c_double(dx * self.um_to_unit)
             dY = c_double(dy * self.um_to_unit)
             dZA = c_double(0.0)
             tango.LSX_MoveRel(self.LSID, dX, dY, dZA, dZA, self.wait)
 
     def jog(self, x_speed, y_speed):
-        pass
+        if self.good:
+            c_xs = c_double(x_speed * self.um_to_unit)
+            c_ys = c_double(y_speed * self.um_to_unit)
+            c_zr = c_double(0.0)
+            tango.LSX_SetDigJoySpeed(self.LSID, c_xs, c_ys, c_zr, c_zr)
 
     # FIXME: lockout the joystick here.
     def joystickOnOff(self, on):
         if self.good:
-            pass
+            if on:
+                tango.LSX_SetJoystickOn(self.LSID, 1, 1)
+            else:
+                tango.LSX_SetJoystickOff(self.LSID)
 
     def lockout(self, flag):
         self.joystickOnOff(not flag)
@@ -177,6 +189,7 @@ class MarzhauserDLL():
 
     def zero(self):
         if self.good:
+            self.jog(0.0,0.0)
             x = c_double(0)
             tango.LSX_SetPos(self.LSID, x, x, x, x)
 

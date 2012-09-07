@@ -329,7 +329,6 @@ class StageControl(QtGui.QDialog):
 
     @hdebug.debug
     def step(self, x, y):
-        print x,y
         p = self.parameters
 
         if p.xy_swap:

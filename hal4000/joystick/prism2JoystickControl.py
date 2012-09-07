@@ -13,13 +13,12 @@ import logitech.dualAction as dualAction
 # Debugging
 import halLib.hdebug as hdebug
 
-class AJoystick(joystick.JoystickThread):
+class AJoystick(joystick.JoystickObject):
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         jstick = dualAction.DualAction()
 
-        joystick.JoystickThread.__init__(self, jstick, parent)
-        self.start(QtCore.QThread.NormalPriority)
+        joystick.JoystickObject.__init__(self, jstick, parent)
 
 #
 # The MIT License
