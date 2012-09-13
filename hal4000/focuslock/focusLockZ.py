@@ -298,8 +298,8 @@ class FocusLockZ(QtGui.QDialog):
 #            self.control_thread.recenterPiezo()
 
     @hdebug.debug
-    def jump(self, dir):
-        self.current_mode.handleJump(float(dir)*self.parameters.lockt_step)
+    def jump(self, step_size):
+        self.current_mode.handleJump(step_size)
 
     @hdebug.debug
     def openOffsetFile(self, filename):

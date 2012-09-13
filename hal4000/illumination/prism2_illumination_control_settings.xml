@@ -33,8 +33,8 @@
     <min_voltage type="float">0.0</min_voltage>
     <max_voltage type="float">2.0</max_voltage>
     <use_aotf type="boolean">TRUE</use_aotf>
-    <frequency type="float">115.64</frequency>
-    <amplitude type="int">7000</amplitude>
+    <frequency type="float">115.62</frequency>
+    <amplitude type="int">6500</amplitude>
     <aotf_channel type="int">2</aotf_channel>
     <ni_board type="string">PCI-6722</ni_board>
     <dig_line type="int">2</dig_line>

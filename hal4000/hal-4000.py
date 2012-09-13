@@ -430,6 +430,7 @@ class Window(QtGui.QMainWindow):
             self.connect(self.progression_control, QtCore.SIGNAL("progSetPower(int, float)"), self.handleProgSetPower)
             self.connect(self.progression_control, QtCore.SIGNAL("progIncPower(int, float)"), self.handleProgIncPower)
 
+        # Joystick
         self.joystick_control = 0
         if parameters.have_joystick:
             joystick = __import__('joystick.' + setup_name + 'JoystickControl', globals(), locals(), [setup_name], -1)
@@ -580,28 +581,23 @@ class Window(QtGui.QMainWindow):
     ##
 
     @hdebug.debug
-    def jstickLockJump(self, dir):
+    def jstickLockJump(self, step_size):
         if self.focus_lock and (not self.filming):
-            self.focus_lock.jump(dir)
+            self.focus_lock.jump(step_size)
 
     @hdebug.debug
-    def jstickMotion(self, x1, y1, x2, y2):
+    def jstickMotion(self, x_speed, y_speed):
         if self.stage_control and (not self.filming):
-            min_offset = self.parameters.min_offset
-            if(abs(x1) > min_offset) or (abs(y1) > min_offset):
-                self.stage_control.jog(x1,y1)
-            else:
-                self.stage_control.jog(0.0,0.0)
+            self.stage_control.jog(x_speed, y_speed)
 
     @hdebug.debug
-    def jstickStep(self, x, y):
+    def jstickStep(self, x_step, y_step):
         if self.stage_control and (not self.filming):
-            self.stage_control.step(x,y)
+            self.stage_control.step(x_step, y_step)
     
     @hdebug.debug
     def jstickToggleFilm(self):
         self.toggleFilm()
-
 
     ########################################################
     ##
@@ -1303,7 +1299,7 @@ if __name__ == "__main__":
     setup_name = parameters.setup_name
     parameters = params.Parameters(setup_name + "_default.xml")    
     parameters.setup_name = setup_name
-
+    
     # Load app
     window = Window(parameters)
     window.newParameters()

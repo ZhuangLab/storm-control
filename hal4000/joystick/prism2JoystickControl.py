@@ -18,7 +18,7 @@ class AJoystick(joystick.JoystickObject):
     def __init__(self, parameters, parent = None):
         jstick = dualAction.DualAction()
 
-        joystick.JoystickObject.__init__(self, jstick, parent)
+        joystick.JoystickObject.__init__(self, parameters, jstick, parent)
 
 #
 # The MIT License

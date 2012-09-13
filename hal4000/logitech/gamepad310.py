@@ -1,13 +1,16 @@
 #!/usr/bin/python
 #
-# Interface to Logitech dual action joystick.
+# Interface to Logitech gamepad 310 joystick.
+#
+# The joystick needs to be in "direct input" mode.
+# This is done using the switch on the back of the joystick.
 #
 # Hazen 9/12
 #
 
 import pywinusb.hid as hid
 
-class DualAction():
+class Gamepad310():
     def __init__(self):
         self.buttons = [[1,24,0],  # 1
                         [2,40,0],  # 2
@@ -31,12 +34,13 @@ class DualAction():
         for device in all_hids:
             if (device.product_name == "Logitech Dual Action"):
                 self.jdev = device
-
+                
         if not self.jdev:
-            print "Logitech Dual Action joystick not found."
+            print "Gamepad 310 joystick not found."
 
     def dataHandler(self, data):
-        print self.translate(data)
+        print data
+        #print self.translate(data)
 
     def shutDown(self):
         if self.jdev:
@@ -83,7 +87,7 @@ if __name__ == "__main__":
     from msvcrt import kbhit
     from time import sleep
 
-    js = DualAction()
+    js = Gamepad310()
     js.start(js.dataHandler)
     while not kbhit():
         sleep(0.5)
