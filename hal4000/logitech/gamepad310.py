@@ -39,8 +39,8 @@ class Gamepad310():
                                 6: [False, False, False, True],
                                 7: [True, False, False, True],
                                 8: [False, False, False, False]}
-        self.joysticks = [["right joystick", 128, 128], #[name, state 1, state 2]
-                         ["left joystick", 128, 128]]
+        self.joysticks = [["right joystick", [128, 128]], #[name, [state 1, state 2]]
+                         ["left joystick", [128, 128]]]
         self.data = [0, 128, 127, 128, 127, 8, 0, 0, 255] #default data
         self.events_to_send = []
         
@@ -134,12 +134,12 @@ class Gamepad310():
         # translate joystick data
         new_j_data = [data[3:5], data[1:3]] # deal data to each joystick
         for index, joystick in enumerate(self.joysticks):
-            if (new_j_data[index][0] != joystick[1]) | (new_j_data[index][1] != joystick[2]):
+            if (new_j_data[index][0] != joystick[1][0]) | (new_j_data[index][1] != joystick[1][1]):
                 x = (float(new_j_data[index][0]) - 128.0)/128.0
                 y = (float(new_j_data[index][1]) - 128.0)/128.0
-                self.events_to_send.append([joystick[0], x, y])
+                self.events_to_send.append([joystick[0], [x, y]])
             # update joysticks
-            self.joysticks[index][1:3] = new_j_data[index][0:2]
+            self.joysticks[index][1] = new_j_data[index]
 #
 # Testing
 #
