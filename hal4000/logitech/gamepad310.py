@@ -55,6 +55,9 @@ class Gamepad310():
             print "Gamepad 310 joystick not found."
 
     def dataHandler(self, data):
+        # delete previous events
+        self.events_to_send = []
+        
         # look for differences between previous data and current data
         data_diff = [0,0,0,0,0,0,0,0,0]
         for i in range(len(data)):
@@ -68,10 +71,8 @@ class Gamepad310():
             self.translateAction(data)
         # remember data for the next instance
         self.data = data
-        print 'Broadcasting: '
         print self.events_to_send
-        # delete events after they have been sent
-        self.events_to_send = []
+        return self.events_to_send        
         
     def shutDown(self):
         if self.jdev:
@@ -80,7 +81,7 @@ class Gamepad310():
     def start(self, handler):
         if self.jdev:
             self.jdev.open()
-            self.jdev.(handler)
+            self.jdev.set_raw_data_handler(handler)
         else:
             print "dual action joystick not connected?"
 
