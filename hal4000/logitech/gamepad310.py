@@ -6,28 +6,44 @@
 # This is done using the switch on the back of the joystick.
 #
 # Hazen 9/12
+# Jeff 9/12
 #
 
 import pywinusb.hid as hid
 
 class Gamepad310():
     def __init__(self):
-        self.buttons = [[1,24,0],  # 1
-                        [2,40,0],  # 2
-                        [3,72,0],  # 3
-                        [4,136,0], # 4
-                        [5,8,1],   # 5
-                        [6,8,2],   # 6
-                        [7,8,4],   # 7
-                        [8,8,8],   # 8
-                        [9,8,16],  # 9
-                        [10,8,32]]  # 10
-        self.down = False
-        self.hats = [["up",0,0],
-                     ["left",6,0],
-                     ["right",2,0],
-                     ["down",4,0]]
-
+        # initialize internal variables
+        self.buttons = [["A", False, 2], #[name, state bit]
+                        ["B", False, 3],
+                        ["X", False, 1],
+                        ["Y", False, 4]]
+        self.actions = [["left joystick press", False, 7], #[name, state, bit]
+                        ["right joystick press", False, 8],
+                        ["left upper trigger", False, 1],
+                        ["right upper trigger", False, 2],
+                        ["left lower trigger", False, 3],
+                        ["right lower trigger", False, 4],
+                        ["back", False, 5],
+                        ["start", False, 6]]
+        self.hats = [["up", False], #[name, state]
+                     ["right",False],
+                     ["down",False],
+                     ["left",False]]
+        self.hats_dictionary = {0: [True, False, False, False], 
+                                1: [True, True, False, False],
+                                2: [False, True, False, False],
+                                3: [False, True, True, False],
+                                4: [False, False, True, False],
+                                5: [False, False, True, True],
+                                6: [False, False, False, True],
+                                7: [True, False, False, True],
+                                8: [False, False, False, False]}
+        self.joysticks = [["right joystick", 128, 128], #[name, state 1, state 2]
+                         ["left joystick", 128, 128]]
+        self.data = [0, 128, 127, 128, 127, 8, 0, 0, 255] #default data
+        self.events_to_send = []
+        
         # initialize connection to joystick
         all_hids = hid.find_all_hid_devices()
         self.jdev = False
@@ -39,9 +55,24 @@ class Gamepad310():
             print "Gamepad 310 joystick not found."
 
     def dataHandler(self, data):
-        print data
-        #print self.translate(data)
-
+        # look for differences between previous data and current data
+        data_diff = [0,0,0,0,0,0,0,0,0]
+        for i in range(len(data)):
+            data_diff[i] = data[i] - self.data[i]
+        
+        if any(data_diff[1:5]):
+            self.translateJoystick(data)
+        if data_diff[5]:
+            self.translateHatAndButtons(data)
+        if data_diff[6]:
+            self.translateAction(data)
+        # remember data for the next instance
+        self.data = data
+        print 'Broadcasting: '
+        print self.events_to_send
+        # delete events after they have been sent
+        self.events_to_send = []
+        
     def shutDown(self):
         if self.jdev:
             self.jdev.close()
@@ -49,36 +80,65 @@ class Gamepad310():
     def start(self, handler):
         if self.jdev:
             self.jdev.open()
-            self.jdev.set_raw_data_handler(handler)
+            self.jdev.(handler)
         else:
             print "dual action joystick not connected?"
 
-    def translate(self, data):
-        # check if it was a button event
-        ##JRM If multiple joystick events are generated, this software can generate the wrong signal
-        for button in self.buttons:
-            if (button[1] == data[5]) and (button[2] == data[6]):
-                self.down = True
-                return ["Button", button[0]]
+    def translateAction(self, data):
+        # translate action data
+        for index, action in enumerate(self.actions):
+            # mask appropriate bit to find value of action button
+            bit = 1 << (action[2] - 1)
+            new_action_value = (data[6] & bit) == bit
+            old_action_value = action[1]
 
-        # check if it was a hat event
-        for hat in self.hats:
-            if (hat[1] == data[5]) and (hat[2] == data[6]):
-                self.down = True
-                return ["Hat", hat[0]]
+            # generate event
+            if new_action_value & (not old_action_value):
+                self.events_to_send.append([action[0], "Press"])
+            elif (not new_action_value) & old_action_value:
+                self.events_to_send.append([action[0], "Release"])
 
-        # otherwise it must have been a joystick event
-        if not self.down:
-            jpos = ["Joystick"]
-            for i in range(4):
-                tmp = (float(data[i+1])-128.0)/128.0
-                jpos.append(tmp)
-            return jpos
+            # update self
+            self.actions[index][1] = new_action_value
+            
+    def translateHatAndButtons(self, data):        
+        # translate button data
+        for index, button in enumerate(self.buttons):
+            # mask appropriate bit to find value of action button
+            bit = 1 << (button[2] - 1)
+            new_button_value = ((data[5]>>4) & bit) == bit # shift to left most bits then mask
+            old_button_value = button[1]
+            # generate event
+            if new_button_value & (not old_button_value):
+                self.events_to_send.append([button[0], "Press"])
+            elif (not new_button_value) & old_button_value:
+                self.events_to_send.append([button[0], "Release"])
 
-        self.down = False
-        return ["NA"]
-
-
+            # update self
+            self.buttons[index][1] = new_button_value
+            
+        # translate hat data
+        hat_state = self.hats_dictionary[data[5]&15] # remove the button data in the last 4 bits
+        
+        # generate Event
+        for index, old_hat in enumerate(self.hats):
+            if hat_state[index] & (not old_hat[1]):
+                self.events_to_send.append([old_hat[0], "Press"])
+            elif (not hat_state[index])& old_hat[1]:
+                self.events_to_send.append([old_hat[0], "Release"])
+            # update hats
+            self.hats[index][1] = hat_state[index]
+        
+    def translateJoystick(self, data):        
+        # translate joystick data
+        new_j_data = [data[3:5], data[1:3]] # deal data to each joystick
+        for index, joystick in enumerate(self.joysticks):
+            if (new_j_data[index][0] != joystick[1]) | (new_j_data[index][1] != joystick[2]):
+                x = (float(new_j_data[index][0]) - 128.0)/128.0
+                y = (float(new_j_data[index][1]) - 128.0)/128.0
+                self.events_to_send.append([joystick[0], x, y])
+            # update joysticks
+            self.joysticks[index][1:3] = new_j_data[index][0:2]
 #
 # Testing
 #
