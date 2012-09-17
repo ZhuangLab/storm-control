@@ -22,84 +22,101 @@ class JoystickObject(QtCore.QObject):
     @hdebug.debug
     def __init__(self, parameters, joystick, parent = None):
         QtCore.QObject.__init__(self, parent)
+        self.button_timer = QtCore.QTimer(self)
         self.jstick = joystick
         self.parameters = parameters
         self.parameters.joystick_gain_index = 0
+        self.to_emit = False
 
         self.jstick.start(self.joystickHandler)
+
+        self.button_timer.setInterval(100)
+        self.button_timer.setSingleShot(True)
+        self.button_timer.timeout.connect(self.buttonDownHandler)
+
+    def buttonDownHandler(self):
+        if self.to_emit:
+            self.to_emit()
+            self.button_timer.start()
 
     @hdebug.debug
     def close(self):
         self.jstick.shutDown()
 
+    def hatEvent(self, sx, sy):
+        p = self.parameters
+        sx = sx*p.hat_step*p.joystick_signx
+        sy = sy*p.hat_step*p.joystick_signy
+
+        if p.xy_swap:
+            tmp = sx
+            sx = sy
+            sy = tmp
+
+        self.step.emit(sx,sy)
+
     def joystickHandler(self, data):
         p = self.parameters
-        event_data = self.jstick.translate(data)
+        events = self.jstick.dataHandler(data)
 
-        # Button
-        if (event_data[0] == "Button"):
-            if(event_data[1] == 5):
+        for [e_type, e_data] in events:
+
+            # Buttons
+            if(e_type == "left upper trigger") and (e_data == "Press"):
+                #self.to_emit = lambda: self.lock_jump.emit(p.lockt_step)
+                #self.buttonDownHandler()
                 self.lock_jump.emit(p.lockt_step)
-            elif(event_data[1] == 6):
-                self.toggle_film.emit()
-            elif(event_data[1] == 7):
+            #elif(e_type == "left upper trigger") and (e_data == "Release"):
+                #self.to_emit = False
+                #self.button_timer.stop()
+            elif(e_type == "left lower trigger") and (e_data == "Press"):
                 self.lock_jump.emit(-p.lockt_step)
-            elif(event_data[1] == 9): # hard stop hack for a drifting joystick..
+            elif(e_type == "right upper trigger") and (e_data == "Press"):
+                self.toggle_film.emit()
+            # hard stop hack for a drifting joystick..
+            elif(e_type == "back") and (e_data == "Press"): 
                 self.motion.emit(0.0, 0.0, 0.0, 0.0)
-            elif(event_data[1] == 10):
+            elif(e_type == "left joystick press") and (e_data == "Press"):
                 p.joystick_gain_index += 1
                 if(p.joystick_gain_index == len(p.joystick_gain)):
                     p.joystick_gain_index = 0
 
-        # Hat
-        if (event_data[0] == "Hat"):
-            sx = 0.0
-            sy = 0.0
-            if(event_data[1] == "up"):
-                sy = -1.0
-            elif(event_data[1] == "down"):
-                sy = 1.0
-            elif(event_data[1] == "left"):
-                sx = -1.0
-            elif(event_data[1] == "right"):
-                sx = 1.0
+            # Hat
+            elif(e_type == "up") and (e_data == "Press"):
+                self.hatEvent(0.0,-1.0)
+            elif(e_type == "down") and (e_data == "Press"):
+                self.hatEvent(0.0,1.0)
+            elif(e_type == "left") and (e_data == "Press"):
+                self.hatEvent(-1.0,0.0)
+            elif(e_type == "right") and (e_data == "Press"):
+                self.hatEvent(1.0,0.0)
 
-            sx = sx*p.hat_step*p.joystick_signx
-            sy = sy*p.hat_step*p.joystick_signy
+            # Joysticks
+            elif (e_type == "left joystick"):
+                x_speed = e_data[0]
+                y_speed = e_data[1]
+                if(abs(x_speed) > p.min_offset) or (abs(y_speed) > p.min_offset):
+                    if (p.joystick_mode == "quadratic"):
+                        x_speed = x_speed * x_speed * cmp(x_speed, 0.0)
+                        y_speed = y_speed * y_speed * cmp(y_speed, 0.0)
 
-            if p.xy_swap:
-                tmp = sx
-                sx = sy
-                sy = tmp
+                    # x_speed and y_speed range from -1.0 to 1.0.
+                    # convert to units of microns per second
+                    gain = p.joystick_gain[p.joystick_gain_index]
+                    x_speed = gain*x_speed*p.joystick_signx
+                    y_speed = gain*y_speed*p.joystick_signy
 
-            self.step.emit(sx,sy)
+                    # The stage and the joystick might have different ideas
+                    # about which direction is x.
+                    if p.xy_swap:
+                        tmp = x_speed
+                        x_speed = y_speed
+                        y_speed = tmp
+                        
+                    self.motion.emit(x_speed, y_speed)
 
-        # Joystick
-        if (event_data[0] == "Joystick"):
-            x_speed = event_data[1]
-            y_speed = event_data[2]
-            if(abs(x_speed) > p.min_offset) or (abs(y_speed) > p.min_offset):
-                if (p.joystick_mode == "quadratic"):
-                    x_speed = x_speed * x_speed * cmp(x_speed, 0.0)
-                    y_speed = y_speed * y_speed * cmp(y_speed, 0.0)
-
-                # x_speed and y_speed range from -1.0 to 1.0.
-                # convert to units of microns per second
-                gain = p.joystick_gain[p.joystick_gain_index]
-                x_speed = gain*x_speed*p.joystick_signx
-                y_speed = gain*y_speed*p.joystick_signy
-
-                # The stage and the joystick might have different ideas
-                # about which direction is x.
-                if p.xy_swap:
-                    tmp = x_speed
-                    x_speed = y_speed
-                    y_speed = tmp
-                
-                self.motion.emit(x_speed, y_speed)
-
-            else:
-                self.motion.emit(0.0, 0.0)
+                else:
+                    self.motion.emit(0.0, 0.0)
 
 #
 # The MIT License

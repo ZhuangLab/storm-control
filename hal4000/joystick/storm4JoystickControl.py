@@ -1,33 +1,24 @@
 #!/usr/bin/python
 #
-# Stage control for Storm4.
+# Joystick monitoring class specialized for storm4.
 #
-# Hazen 04/12
+# Hazen 09/12
 #
 
 from PyQt4 import QtCore
 
-# stage.
-import marzhauser.marzhauser as marzhauser
+import joystick
+import logitech.gamepad310 as gamepad310
 
-# stage control thread
-import stagecontrol.stageThread as stageThread
+# Debugging
+import halLib.hdebug as hdebug
 
-# stage control dialog.
-import stagecontrol.stageControl as stageControl
+class AJoystick(joystick.JoystickObject):
+    @hdebug.debug
+    def __init__(self, parameters, parent = None):
+        jstick = gamepad310.Gamepad310()
 
-#
-# Stage control dialog specialized for Storm4
-# with RS232 Marzhauser motorized stage.
-#
-class AStageControl(stageControl.StageControl):
-    def __init__(self, parameters, tcp_control, parent = None):
-        self.stage = stageThread.QStageThread(marzhauser.MarzhauserRS232("COM6", wait_time = 1.0e-3))
-        self.stage.start(QtCore.QThread.NormalPriority)
-        stageControl.StageControl.__init__(self, 
-                                           parameters,
-                                           tcp_control,
-                                           parent)
+        joystick.JoystickObject.__init__(self, parameters, jstick, parent)
 
 #
 # The MIT License

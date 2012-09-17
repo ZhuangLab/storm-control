@@ -27,14 +27,14 @@ instantiated = 0
 
 # Marzhauser RS232 interface class
 class MarzhauserRS232(RS232.RS232):
-    def __init__(self, port):
+    def __init__(self, port, wait_time = 0.02):
 
         self.live = True
         self.unit_to_um = 1000.0
         self.um_to_unit = 1.0/self.unit_to_um
 
         # RS232 stuff
-        RS232.RS232.__init__(self, port, None, 57600, "\r", 0.02)
+        RS232.RS232.__init__(self, port, None, 57600, "\r", wait_time)
         try:
             test = self.commWithResp("?version")
             if not test:
@@ -60,7 +60,10 @@ class MarzhauserRS232(RS232.RS232):
             self.commWithResp("!mor " + str(X) + " " + str(Y) + " 0")
 
     def jog(self, x_speed, y_speed):
-        pass
+        if self.live:
+            vx = x_speed * self.um_to_unit
+            vy = y_speed * self.um_to_unit
+            self.commWithResp("!speed " + str(vx) + " " + str(vy))
 
     def joystickOnOff(self, on):
         if self.live:

@@ -12,7 +12,7 @@
 import pywinusb.hid as hid
 
 class Gamepad310():
-    def __init__(self):
+    def __init__(self, verbose = False):
         # initialize internal variables
         self.buttons = [["A", False, 2], #[name, state bit]
                         ["B", False, 3],
@@ -41,13 +41,19 @@ class Gamepad310():
                                 8: [False, False, False, False]}
         self.joysticks = [["right joystick", [128, 128]], #[name, [state 1, state 2]]
                          ["left joystick", [128, 128]]]
+
         self.data = [0, 128, 127, 128, 127, 8, 0, 0, 255] #default data
         self.events_to_send = []
+        self.verbose = verbose
         
         # initialize connection to joystick
         all_hids = hid.find_all_hid_devices()
         self.jdev = False
+        if self.verbose:
+            print "Searching for HID devices"
         for device in all_hids:
+            if self.verbose:
+                print device.product_name
             if (device.product_name == "Logitech Dual Action"):
                 self.jdev = device
                 
@@ -71,8 +77,9 @@ class Gamepad310():
             self.translateAction(data)
         # remember data for the next instance
         self.data = data
-        print self.events_to_send
-        return self.events_to_send        
+        if self.verbose:
+            print self.events_to_send
+        return self.events_to_send
         
     def shutDown(self):
         if self.jdev:
@@ -148,7 +155,7 @@ if __name__ == "__main__":
     from msvcrt import kbhit
     from time import sleep
 
-    js = Gamepad310()
+    js = Gamepad310(verbose = True)
     js.start(js.dataHandler)
     while not kbhit():
         sleep(0.5)
