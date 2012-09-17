@@ -136,14 +136,15 @@
   <pframe_value type="int">1000</pframe_value>
 
   <!-- joystick setting -->
-  <have_joystick type="int">0</have_joystick>
+  <have_joystick type="int">1</have_joystick>
   <hat_step type="float">1.0</hat_step> <!-- step size in um for hat button press -->
-  <joystick_gain type="float">500.0</joystick_gain>   <!-- max velocity in um/s -->
+  <joystick_gain type="float-array">25, 250, 2500</joystick_gain>   <!-- max velocity in um/s: valid range 100 -> 1000 -->
+  <!-- <joystick_gain_index type = "int">0</joystick_gain_index> -->
   <joystick_mode type="string">quadratic</joystick_mode> <!-- linear or quadratic -->
-  <joystick_signx type="float">-1.0</joystick_signx>
-  <joystick_signy type="float">-1.0</joystick_signy>
-  <lockt_step type="float">0.1</lockt_step> <!-- focus lock step size in um -->
-  <min_offset type="float">0.1</min_offset> <!-- min joystick offset to be non-zero -->
+  <joystick_signx type="float">1.0</joystick_signx>
+  <joystick_signy type="float">1.0</joystick_signy>
+  <lockt_step type="float">0.025</lockt_step> <!-- focus lock step size in um -->
+  <min_offset type="float">0.1</min_offset> <!-- min joystick offset to be non-zero (0.0 - 1.0) -->
   <xy_swap type="int">1</xy_swap> <!-- swap x and y axises -->
 
 </settings>

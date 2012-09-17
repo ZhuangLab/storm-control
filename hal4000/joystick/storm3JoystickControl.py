@@ -8,7 +8,7 @@
 from PyQt4 import QtCore
 
 import joystick
-import logitech.dualAction as dualAction
+import logitech.gamepad310 as gamepad310
 
 # Debugging
 import halLib.hdebug as hdebug
@@ -16,9 +16,9 @@ import halLib.hdebug as hdebug
 class AJoystick(joystick.JoystickObject):
     @hdebug.debug
     def __init__(self, parameters, parent = None):
-        jstick = dualAction.DualAction()
+        jstick = gamepad310.Gamepad310()
 
-        joystick.JoystickObject.__init__(self, jstick, parent)
+        joystick.JoystickObject.__init__(self, parameters, jstick, parent)
 
 #
 # The MIT License
