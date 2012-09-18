@@ -79,6 +79,8 @@ class AMiscControl(miscControl.MiscControl):
         self.filters[self.filter_wheel.getPosition()-1].click()
 
         # Imagine Eyes stuff
+        self.ie_accumulate = False
+        self.ie_accumulate_count = 0
         self.ie_autosave = False
         self.ie_capture = False
         self.ie_directory = "c:\\tif_directory\\"
@@ -215,17 +217,32 @@ class AMiscControl(miscControl.MiscControl):
 
     def newFrame(self, frame):
         if self.ie_capture and frame and not self.ie_setting_ROI:
-            if (not self.ie_autosave):
-                self.ie_capture = False
+
+            bg_term = self.ui.iEyesBackgroundSpinBox.value()
             frame_data = numpy.fromstring(frame,dtype=numpy.uint16).reshape((self.camera_widget.image.height(),
                                                                              self.camera_widget.image.width()))
-            frame_data = frame_data[self.start_y:self.stop_y,self.start_x:self.stop_x]
-            image = Image.fromstring("I;16",
-                                     (frame_data.shape[1], frame_data.shape[0]), 
-                                     frame_data.tostring())
-            image.save(self.ie_directory + self.getIEName())
-            self.ie_index += 1
-            self.ui.iEyesLabel.setText(self.getIEName())
+            frame_data[(frame_data<bg_term)] = bg_term
+            frame_data = frame_data[self.start_y:self.stop_y,self.start_x:self.stop_x] - bg_term
+
+            if (type(self.ie_accumulate) == type(numpy.array([]))):
+                self.ie_accumulate = numpy.concatenate((self.ie_accumulate, frame_data),axis=1)
+            else:
+                self.ie_accumulate = frame_data
+
+            self.ie_accumulate_count += 1
+            if (self.ie_accumulate_count >= self.ui.iEyesAccumulateSpinBox.value()):
+                print self.ie_accumulate.dtype
+                image = Image.fromstring("I;16",
+                                         (self.ie_accumulate.shape[1], self.ie_accumulate.shape[0]), 
+                                         self.ie_accumulate.tostring())
+                image.save(self.ie_directory + self.getIEName())
+                self.ie_index += 1
+                self.ui.iEyesLabel.setText(self.getIEName())
+                self.ie_accumulate = False
+                self.ie_accumulate_count = 0
+
+                if (not self.ie_autosave):
+                    self.ie_capture = False
 
     @hdebug.debug
     def newParameters(self, parameters):
