@@ -3,7 +3,7 @@
 # Joystick monitoring class.
 #
 # Hazen 09/12
-#
+# Jeff 09/12
 
 from PyQt4 import QtCore
 
@@ -26,6 +26,7 @@ class JoystickObject(QtCore.QObject):
         self.jstick = joystick
         self.parameters = parameters
         self.parameters.joystick_gain_index = 0
+        self.parameters.multiplier = 1
         self.to_emit = False
 
         self.jstick.start(self.joystickHandler)
@@ -65,12 +66,12 @@ class JoystickObject(QtCore.QObject):
             if(e_type == "left upper trigger") and (e_data == "Press"):
                 #self.to_emit = lambda: self.lock_jump.emit(p.lockt_step)
                 #self.buttonDownHandler()
-                self.lock_jump.emit(p.lockt_step)
+                self.lock_jump.emit(p.multiplier*p.lockt_step)
             #elif(e_type == "left upper trigger") and (e_data == "Release"):
                 #self.to_emit = False
                 #self.button_timer.stop()
             elif(e_type == "left lower trigger") and (e_data == "Press"):
-                self.lock_jump.emit(-p.lockt_step)
+                self.lock_jump.emit(-p.multiplier*p.lockt_step)
             elif(e_type == "right upper trigger") and (e_data == "Press"):
                 self.toggle_film.emit()
             # hard stop hack for a drifting joystick..
@@ -80,6 +81,11 @@ class JoystickObject(QtCore.QObject):
                 p.joystick_gain_index += 1
                 if(p.joystick_gain_index == len(p.joystick_gain)):
                     p.joystick_gain_index = 0
+            elif(e_type == "X"):
+                if (e_data == "Press"):
+                    p.multiplier = p.joystick_muliplier_value
+                else: # "Release"
+                    p.multiplier = 1
 
             # Hat
             elif(e_type == "up") and (e_data == "Press"):
@@ -102,7 +108,7 @@ class JoystickObject(QtCore.QObject):
 
                     # x_speed and y_speed range from -1.0 to 1.0.
                     # convert to units of microns per second
-                    gain = p.joystick_gain[p.joystick_gain_index]
+                    gain = p.multiplier*p.joystick_gain[p.joystick_gain_index]
                     x_speed = gain*x_speed*p.joystick_signx
                     y_speed = gain*y_speed*p.joystick_signy
 
