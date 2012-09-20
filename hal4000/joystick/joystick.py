@@ -58,6 +58,7 @@ class JoystickObject(QtCore.QObject):
 
     def rightJoystickEvent(self, x_speed, y_speed):
         # the right joystick is not currently used
+        print
         
     def leftJoystickEvent(self, x_speed, y_speed):
         p = self.parameters
@@ -77,7 +78,7 @@ class JoystickObject(QtCore.QObject):
                 # about which direction is x.
                 if p.xy_swap:
                     self.motion.emit(y_speed, x_speed)
-                else
+                else:
                     self.motion.emit(x_speed, y_speed)
         else:
             self.motion.emit(0.0, 0.0)
@@ -102,11 +103,11 @@ class JoystickObject(QtCore.QObject):
                     p.joystick_gain_index = 0
             elif(e_type == "X"): # engage/disengage movement multiplier
                 if (e_data == "Press"):
-                    p.multiplier = p.joystick_muliplier_value
+                    p.multiplier = p.joystick_multiplier_value 
                 else: # "Release"
                     p.multiplier = 1
                 # Recall joystick event to reflect changes in gain
-                self.leftJoystickEvent(self.old_left_joystick)
+                self.leftJoystickEvent(self.old_left_joystick[0], self.old_left_joystick[1])
 
             # Hat
             elif(e_type == "up") and (e_data == "Press"):
