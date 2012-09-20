@@ -58,7 +58,7 @@ class JoystickObject(QtCore.QObject):
 
     def rightJoystickEvent(self, x_speed, y_speed):
         # the right joystick is not currently used
-        print
+        pass
         
     def leftJoystickEvent(self, x_speed, y_speed):
         p = self.parameters
