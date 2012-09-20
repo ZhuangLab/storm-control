@@ -27,6 +27,8 @@ class JoystickObject(QtCore.QObject):
         self.parameters = parameters
         self.parameters.joystick_gain_index = 0
         self.parameters.multiplier = 1
+        self.old_right_joystick = [0, 0]
+        self.old_left_joystick = [0, 0]
         self.to_emit = False
 
         self.jstick.start(self.joystickHandler)
@@ -50,42 +52,61 @@ class JoystickObject(QtCore.QObject):
         sy = sy*p.hat_step*p.joystick_signy
 
         if p.xy_swap:
-            tmp = sx
-            sx = sy
-            sy = tmp
+            self.step.emit(sy, sx)
+        else:
+            self.step.emit(sx,sy)
 
-        self.step.emit(sx,sy)
+    def rightJoystickEvent(self, x_speed, y_speed):
+        # the right joystick is not currently used
+        
+    def leftJoystickEvent(self, x_speed, y_speed):
+        p = self.parameters
 
+        if(abs(x_speed) > p.min_offset) or (abs(y_speed) > p.min_offset):
+            if (p.joystick_mode == "quadratic"):
+                x_speed = x_speed * x_speed * cmp(x_speed, 0.0)
+                y_speed = y_speed * y_speed * cmp(y_speed, 0.0)
+
+                # x_speed and y_speed range from -1.0 to 1.0.
+                # convert to units of microns per second
+                gain = p.multiplier*p.joystick_gain[p.joystick_gain_index]
+                x_speed = gain*x_speed*p.joystick_signx
+                y_speed = gain*y_speed*p.joystick_signy
+
+                # The stage and the joystick might have different ideas
+                # about which direction is x.
+                if p.xy_swap:
+                    self.motion.emit(y_speed, x_speed)
+                else
+                    self.motion.emit(x_speed, y_speed)
+        else:
+            self.motion.emit(0.0, 0.0)
+        
     def joystickHandler(self, data):
         p = self.parameters
         events = self.jstick.dataHandler(data)
 
         for [e_type, e_data] in events:
-
             # Buttons
-            if(e_type == "left upper trigger") and (e_data == "Press"):
-                #self.to_emit = lambda: self.lock_jump.emit(p.lockt_step)
-                #self.buttonDownHandler()
+            if(e_type == "left upper trigger") and (e_data == "Press"): # focus up
                 self.lock_jump.emit(p.multiplier*p.lockt_step)
-            #elif(e_type == "left upper trigger") and (e_data == "Release"):
-                #self.to_emit = False
-                #self.button_timer.stop()
-            elif(e_type == "left lower trigger") and (e_data == "Press"):
+            elif(e_type == "left lower trigger") and (e_data == "Press"): # focus down
                 self.lock_jump.emit(-p.multiplier*p.lockt_step)
-            elif(e_type == "right upper trigger") and (e_data == "Press"):
+            elif(e_type == "right upper trigger") and (e_data == "Press"): # start/stop film
                 self.toggle_film.emit()
-            # hard stop hack for a drifting joystick..
-            elif(e_type == "back") and (e_data == "Press"): 
-                self.motion.emit(0.0, 0.0, 0.0, 0.0)
-            elif(e_type == "left joystick press") and (e_data == "Press"):
+            elif(e_type == "back") and (e_data == "Press"): # emergency stage stop
+                self.motion.emit(0.0, 0.0)
+            elif(e_type == "left joystick press") and (e_data == "Press"): # toggle movement gain
                 p.joystick_gain_index += 1
                 if(p.joystick_gain_index == len(p.joystick_gain)):
                     p.joystick_gain_index = 0
-            elif(e_type == "X"):
+            elif(e_type == "X"): # engage/disengage movement multiplier
                 if (e_data == "Press"):
                     p.multiplier = p.joystick_muliplier_value
                 else: # "Release"
                     p.multiplier = 1
+                # Recall joystick event to reflect changes in gain
+                self.leftJoystickEvent(self.old_left_joystick)
 
             # Hat
             elif(e_type == "up") and (e_data == "Press"):
@@ -99,30 +120,8 @@ class JoystickObject(QtCore.QObject):
 
             # Joysticks
             elif (e_type == "left joystick"):
-                x_speed = e_data[0]
-                y_speed = e_data[1]
-                if(abs(x_speed) > p.min_offset) or (abs(y_speed) > p.min_offset):
-                    if (p.joystick_mode == "quadratic"):
-                        x_speed = x_speed * x_speed * cmp(x_speed, 0.0)
-                        y_speed = y_speed * y_speed * cmp(y_speed, 0.0)
-
-                    # x_speed and y_speed range from -1.0 to 1.0.
-                    # convert to units of microns per second
-                    gain = p.multiplier*p.joystick_gain[p.joystick_gain_index]
-                    x_speed = gain*x_speed*p.joystick_signx
-                    y_speed = gain*y_speed*p.joystick_signy
-
-                    # The stage and the joystick might have different ideas
-                    # about which direction is x.
-                    if p.xy_swap:
-                        tmp = x_speed
-                        x_speed = y_speed
-                        y_speed = tmp
-                        
-                    self.motion.emit(x_speed, y_speed)
-
-                else:
-                    self.motion.emit(0.0, 0.0)
+                self.leftJoystickEvent(e_data[0], e_data[1])
+                self.old_left_joystick = e_data # remember joystick state
 
 #
 # The MIT License
