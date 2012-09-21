@@ -30,6 +30,15 @@ IS_SUCCESS = 0
 IS_WAIT = 1
 
 class CameraInfo(ctypes.Structure):
+    _fields_ = [("CameraID", ctypes.wintypes.DWORD),
+                ("DeviceID", ctypes.wintypes.DWORD),
+                ("SensorID", ctypes.wintypes.DWORD),
+                ("InUse", ctypes.wintypes.DWORD),
+                ("SerNo", ctypes.c_char * 16),
+                ("Model", ctypes.c_char * 16),
+                ("Reserved", ctypes.wintypes.DWORD * 16)]
+
+class CameraProperties(ctypes.Structure):
     _fields_ = [("SensorID", ctypes.wintypes.WORD),
                 ("strSensorName", ctypes.c_char * 32),
                 ("nColorMode", ctypes.c_char),
@@ -59,6 +68,14 @@ uc480 = ctypes.cdll.LoadLibrary("c:\windows\system32\uc480_64.dll")
 def check(fn_return):
     if not (fn_return == IS_SUCCESS):
         print "uc480: Call failed with error", fn_return
+
+def create_camera_list(num_cameras):
+    class CameraList(ctypes.Structure):
+        _fields_ = [("Count", ctypes.c_long),
+                    ("Cameras", CameraInfo*num_cameras)]
+    a_list = CameraList()
+    a_list.Count = num_cameras
+    return a_list
 
 
 # Least squares gaussian fitting functions
@@ -98,15 +115,15 @@ def fitFixedEllipticalGaussian(data, sigma):
 
 # Camera Interface Class
 class Camera(Handle):
-    def __init__(self, camera_id = 0):
-        Handle.__init__(self, 0)
+    def __init__(self, camera_id):
+        Handle.__init__(self, camera_id)
 
         # Initialize camera.
         check(uc480.is_InitCamera(ctypes.byref(self), ctypes.wintypes.HWND(0)))
         check(uc480.is_SetErrorReport(self, IS_ENABLE_ERR_REP))
 
         # Get some information about the camera.
-        self.info = CameraInfo()
+        self.info = CameraProperties()
         check(uc480.is_GetSensorInfo(self, ctypes.byref(self.info)))
         self.im_width = self.info.nMaxWidth
         self.im_height = self.info.nMaxHeight
@@ -193,11 +210,11 @@ class Camera(Handle):
 
 # QPD emulation class
 class cameraQPD():
-    def __init__(self):
+    def __init__(self, camera_id = 1):
         self.image = None
 
         # open camera
-        self.cam = Camera()
+        self.cam = Camera(camera_id)
 
         # set camera AOI
         self.x_start = 650
@@ -302,7 +319,7 @@ class cameraQPD():
 
 # Testing
 if __name__ == "__main__":
-    cam = Camera()
+    cam = Camera(3)
     reps = 50
 
     if 0:
@@ -330,7 +347,7 @@ if __name__ == "__main__":
         print "time:", time.time() - st
 
     if 1:
-        for i in range(50):
+        for i in range(1):
             print i
             image = cam.captureImage()
             im = Image.fromarray(image)
@@ -361,6 +378,22 @@ if __name__ == "__main__":
 #                                        ctypes.byref(self.image),
 #                                        ctypes.byref(self.id)))
 
+#        # Determine number of cameras available.
+#        c_num_cams = ctypes.wintypes.INT()
+#        check(uc480.is_GetNumberOfCameras(ctypes.byref(c_num_cams)))
+#        num_cams = int(c_num_cams.value)
+#        # Initialize camera.
+#        if(num_cams == 1):
+#
+#            check(uc480.is_InitCamera(ctypes.byref(self), ctypes.wintypes.HWND(0)))
+#        else:
+#            # We have to find the camera we want..
+#            print "Found", num_cams, "cameras"
+#            camera_data = create_camera_list(num_cams)
+#            check(uc480.is_GetCameraList(ctypes.byref(camera_data)))
+#            for camera in camera_data.Cameras:
+#                print camera.SerNo, camera.CameraID, camera.DeviceID
+#
 
 #
 # The MIT License
