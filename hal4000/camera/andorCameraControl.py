@@ -194,7 +194,8 @@ class ACameraControl(cameraControl.CameraControl):
                             for frame in frames:
                                 self.daxfile.saveFrame(frame)
 
-                        self.emit(QtCore.SIGNAL("newData(int)"), self.key)
+                        #self.emit(QtCore.SIGNAL("newData(int)"), self.key)
+                        self.newData.emit(self.key)
 
                 elif state == "idle":
                     
@@ -205,7 +206,8 @@ class ACameraControl(cameraControl.CameraControl):
 
                     # Signal that the camera is idle, but only once.
                     if not(self.forced_idle):
-                        self.emit(QtCore.SIGNAL("idleCamera()"))
+                        #self.emit(QtCore.SIGNAL("idleCamera()"))
+                        self.idleCamera.emit()
                         self.forced_idle = True
                 else:
                     print " run " + state

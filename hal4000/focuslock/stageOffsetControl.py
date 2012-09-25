@@ -39,6 +39,10 @@ import halLib.hdebug as hdebug
 #   and returns the appropriate response (in um) by the stage.
 #
 class stageQPDThread(QtCore.QThread):
+    controlUpdate = QtCore.pyqtSignal(float, float, float, float)
+    foundSum = QtCore.pyqtSignal()
+    recenteredPiezo = QtCore.pyqtSignal()
+
     @hdebug.debug
     def __init__(self, qpd, stage, lock_fn, min_sum, z_center, slow_stage = False, parent = None):
         QtCore.QThread.__init__(self, parent)
@@ -96,7 +100,8 @@ class stageQPDThread(QtCore.QThread):
             self.moveStageAbs(0)
             self.qpd_mutex.unlock()
         else:
-            self.emit(QtCore.SIGNAL("foundSum()"))
+            #self.emit(QtCore.SIGNAL("foundSum()"))
+            self.foundSum.emit()
 
     def moveStageAbs(self, new_z):
         self.stage_mutex.lock()
@@ -119,7 +124,8 @@ class stageQPDThread(QtCore.QThread):
         self.moveStageAbs(self.z_center)
 
     def recenterPiezo(self):
-        self.emit(QtCore.SIGNAL("recenteredPiezo()"))
+        #self.emit(QtCore.SIGNAL("recenteredPiezo()"))
+        self.recenteredPiezo.emit()
 
     def run(self):
         while(self.running):
@@ -139,7 +145,8 @@ class stageQPDThread(QtCore.QThread):
                 if (power > (2.0 * self.sum_min)) and (power < (0.5 * self.max_sum)):
                     self.moveStageAbs(self.max_pos)
                     self.find_sum = False
-                    self.emit(QtCore.SIGNAL("foundSum()"))
+                    #self.emit(QtCore.SIGNAL("foundSum()"))
+                    self.foundSum.emit()
                 else:
                     if (self.stage_z >= (2 * self.z_center)):
                         if (self.max_sum > 0):
@@ -147,7 +154,8 @@ class stageQPDThread(QtCore.QThread):
                         else:
                             self.moveStageAbs(self.z_center)
                         self.find_sum = False
-                        self.emit(QtCore.SIGNAL("foundSum()"))
+                        #self.emit(QtCore.SIGNAL("foundSum()"))
+                        self.foundSum.emit()
                     else:
                         self.moveStageRel(1.0)
 
@@ -162,7 +170,8 @@ class stageQPDThread(QtCore.QThread):
                     else:
                         self.moveStageRel(self.lock_fn(self.offset - self.target))
 
-            self.emit(QtCore.SIGNAL("controlUpdate(float, float, float, float)"), x_offset, y_offset, power, self.stage_z)
+            #self.emit(QtCore.SIGNAL("controlUpdate(float, float, float, float)"), x_offset, y_offset, power, self.stage_z)
+            self.controlUpdate.emit(x_offset, y_offset, power, self.stage_z)
             self.qpd_mutex.unlock()
             self.msleep(1)
 

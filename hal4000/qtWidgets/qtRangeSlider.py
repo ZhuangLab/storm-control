@@ -10,6 +10,9 @@ import sys
 
 # Range Slider super class
 class QRangeSlider(QtGui.QWidget):
+    doubleClick = QtCore.pyqtSignal()
+    rangeChanged = QtCore.pyqtSignal(float, float)
+
     def __init__(self, slider_range, values, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.emit_while_moving = 0
@@ -27,7 +30,8 @@ class QRangeSlider(QtGui.QWidget):
             self.setValues([0.3, 0.6])
 
     def emitRange(self):
-        self.emit(QtCore.SIGNAL("rangeChanged(float, float)"), self.scale_min, self.scale_max)
+        #self.emit(QtCore.SIGNAL("rangeChanged(float, float)"), self.scale_min, self.scale_max)
+        self.rangeChanged.emit(self.scale_min, self.scale_max)
         if 0:
             print "Range change:", self.scale_min, self.scale_max
 
@@ -60,7 +64,8 @@ class QRangeSlider(QtGui.QWidget):
         self.emitRange()
     
     def mouseDoubleClickEvent(self, event):
-        self.emit(QtCore.SIGNAL("doubleClick()"))
+        #self.emit(QtCore.SIGNAL("doubleClick()"))
+        self.doubleClick.emit()
 
     def mouseMoveEvent(self, event):
         size = self.rangeSliderSize()

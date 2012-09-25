@@ -36,7 +36,7 @@ class IRLaser():
     def havePowerControl(self):
         return False
 
-    def on(self):
+    def on(self, power):
         pass
 
     def off(self):

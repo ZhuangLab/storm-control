@@ -68,13 +68,15 @@ class ACameraControl(cameraControl.CameraControl):
             self.mutex.lock()
             if self.should_acquire and self.got_camera:
                 self.frames.extend([self.fake_frame])
-                self.emit(QtCore.SIGNAL("newData(int)"), self.key)
+                #self.emit(QtCore.SIGNAL("newData(int)"), self.key)
+                self.newData.emit(self.key)
                 if self.filming:
                     self.daxfile.saveFrame(self.fake_frame)
                 self.acquired += 1
                 if self.acq_mode == "fixed_length":
                     if (self.acquired > self.frames_to_take):
-                        self.emit(QtCore.SIGNAL("idleCamera()"))
+                        #self.emit(QtCore.SIGNAL("idleCamera()"))
+                        self.idleCamera.emit()
             self.mutex.unlock()
             self.msleep(self.sleep_time)
 

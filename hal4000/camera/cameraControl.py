@@ -46,6 +46,9 @@ import halLib.hdebug as hdebug
 #    example when at the end of a fixed_length acquisition.
 #
 class CameraControl(QtCore.QThread):
+    idleCamera = QtCore.pyqtSignal()
+    newData = QtCore.pyqtSignal(int)
+
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         QtCore.QThread.__init__(self, parent)

@@ -28,6 +28,8 @@ import qtdesigner.camera_params_v1 as camera_params_ui
 # Camera Params Group Box
 #
 class CameraParams(QtGui.QGroupBox):
+    gainChange = QtCore.pyqtSignal(int)
+
     def __init__(self, parent = None):
         QtGui.QGroupBox.__init__(self, parent)
         self.temperature = 0
@@ -37,11 +39,12 @@ class CameraParams(QtGui.QGroupBox):
         self.ui.setupUi(self)
 
         # connect signals
-        self.connect(self.ui.EMCCDSlider, QtCore.SIGNAL("valueChanged(int)"), self.gainChange)
+        self.connect(self.ui.EMCCDSlider, QtCore.SIGNAL("valueChanged(int)"), self.cameraGainChange)
 
-    def gainChange(self, new_gain):
+    def cameraGainChange(self, new_gain):
         self.ui.EMCCDLabel.setText("EMCCD Gain: %d" % new_gain)
-        self.emit(QtCore.SIGNAL("gainChange(int)"), new_gain)
+        #self.emit(QtCore.SIGNAL("gainChange(int)"), new_gain)
+        self.gainChange.emit(new_gain)
         
     def newParameters(self, parameters):
         p = parameters

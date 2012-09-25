@@ -185,10 +185,12 @@ class QAdjustableChannel(QChannel):
             self.channel_frame.on_off_button.setChecked(False)
 
         # connect signals
-        self.connect(self.channel_frame.powerslider, QtCore.SIGNAL("valueChanged(int)"),
-                     self.amplitudeChange)
-        self.connect(self.channel_frame.on_off_button, QtCore.SIGNAL("clicked()"),
-                     self.onOffChange)
+        #self.connect(self.channel_frame.powerslider, QtCore.SIGNAL("valueChanged(int)"),
+        #             self.amplitudeChange)
+        self.channel_frame.powerslider.valueChanged.connect(self.amplitudeChange)
+        #self.connect(self.channel_frame.on_off_button, QtCore.SIGNAL("clicked()"),
+        #             self.onOffChange)
+        self.channel_frame.on_off_button.clicked.connect(self.onOffChange)
 
         self.show()
 
@@ -301,8 +303,9 @@ class QNIChannel(QChannel):
             self.channel_frame.on_off_button.setChecked(False)
 
         # connect signals
-        self.connect(self.channel_frame.on_off_button, QtCore.SIGNAL("clicked()"),
-                     self.onOffChange)
+        #self.connect(self.channel_frame.on_off_button, QtCore.SIGNAL("clicked()"),
+        #             self.onOffChange)
+        self.channel_frame.on_off_button.clicked.connect(self.onOffChange)
 
         self.show()
 
@@ -332,8 +335,9 @@ class QBasicChannel(QChannel):
             self.channel_frame.on_off_button.setChecked(False)
 
         # connect signals
-        self.connect(self.channel_frame.on_off_button, QtCore.SIGNAL("clicked()"),
-                     self.onOffChange)
+        #self.connect(self.channel_frame.on_off_button, QtCore.SIGNAL("clicked()"),
+        #             self.onOffChange)
+        self.channel_frame.on_off_button.clicked.connect(self.onOffChange)
 
         self.show()
 

@@ -10,8 +10,8 @@ import sys
 
 # Camera widget
 class QCameraWidget(QtGui.QWidget):
-
-    mouse_press = QtCore.pyqtSignal(int, int, name='mousePress')
+    intensityInfo = QtCore.pyqtSignal(int, int, int)
+    mousePress = QtCore.pyqtSignal(int, int)
 
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
@@ -119,7 +119,8 @@ class QCameraWidget(QtGui.QWidget):
         self.blank()
         self.update()
         if self.show_info:
-            self.emit(QtCore.SIGNAL("intensityInfo(int, int, int)"), self.x_click, self.y_click, 0)
+            #self.emit(QtCore.SIGNAL("intensityInfo(int, int, int)"), self.x_click, self.y_click, 0)
+            self.emit.intensityInfo(self.x_click, self.y_click, 0)
 
 #
 # Testing

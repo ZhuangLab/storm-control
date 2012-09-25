@@ -24,13 +24,10 @@
 #    getTemperature()
 #      Get the current camera temperature.
 #
-#    newFilmSettings(parameters, filming = 0)
-#      Called when the film settings are changed.
-#
 #    newParameters(parameters)
 #      Called when the parameters have been changed.
 #
-#    setEMCCGain(gain)
+#    setEMCCDGain(gain)
 #      Set the EMCCD gain.
 #
 #    startAcq()
@@ -40,9 +37,6 @@
 #      Setup the camera for filming, but do not actually
 #      start the camera. Writer is a class used for storing
 #      the data recorded by the camera.
-#
-#    stopAcq()
-#      Stop the camera.
 #
 #    stopFilming()
 #      Clean up from filming and stop the camera.
@@ -63,7 +57,8 @@
 #
 #
 # cameraDisplay:
-#   Display the data from the camera & handle auto-scale, etc.
+#   Display the data from the camera & handle auto-scale, etc. Also
+#   provides the record and shutter buttons for the camera.
 #
 #  Methods called:
 #    __init__(parameters, parent)
@@ -72,10 +67,23 @@
 #    displayFrame(frame)
 #       Draw the data in frame on the screen.
 #
+#    getRecordButton()
+#       Return the record button from the display ui.
+#
+#    getShutterButton()
+#       Return the shutter button from the display ui.
+#
 #    newParameters(parameters)
 #       Called when the parameters have been changed.
 #
 #    setSyncMax(int)
+#       Set the maximum frame in the for the sync ui element.
+#
+#    startFilm()
+#       Called when filming starts.
+#
+#    stopFilm()
+#       Called when filming ends.
 #
 #  Signals emitted:
 #    syncChange(int)
@@ -122,7 +130,10 @@
 #    getLockTarget()
 #      Returns the current lock target (in nm).
 #
-#    newFrame()
+#    jump(offset)
+#      Change the focus by offset (in um).
+#
+#    newFrame(frame)
 #      Called when filming and a new image is available
 #      from the camera.
 #
@@ -245,6 +256,13 @@
 #    __init__(parameters, self.tcp_control, parent = ..)
 #      Class initializer.
 #
+#    getStagePosition()
+#      Return the current stage position.
+#
+#    jog(x_speed, y_speed)
+#      Move stage at the velocity given by x_speed and
+#      y_speed (microns / second).
+#
 #    newParameters(parameters)
 #      Update stage settings with the new parameters.
 #
@@ -258,12 +276,21 @@
 #      Called when filming starts. At this point the stage
 #      could be set to lockout the joystick control, if any.
 #
+#    startLockout()
+#      Lockout the joystick.
+#
+#    step(x_step, y_step)
+#      Move the stage by x_step in x, y_step in y (in microns).
+#
 #    stopFilm()
 #      Called when filming finishes. If the joystick is 
 #      locked out then maybe renable it.
 #
+#    stopLockout()
+#      Turn off joystick lockout
 #
-# Hazen 10/09
+#
+# Hazen 09/12
 #
 
 import os
@@ -302,6 +329,8 @@ def getFileName(path):
 # Main window
 #
 class Window(QtGui.QMainWindow):
+    reachedMaxFrames = QtCore.pyqtSignal()
+
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         QtGui.QMainWindow.__init__(self, parent)
@@ -450,37 +479,64 @@ class Window(QtGui.QMainWindow):
         self.ui.centralwidget.__class__.dropEvent = self.dropEvent
 
         # ui signals
-        self.connect(self.ui.actionSettings, QtCore.SIGNAL("triggered()"), self.newSettingsFile)
-        self.connect(self.ui.actionShutter, QtCore.SIGNAL("triggered()"), self.newShuttersFile)
-        self.connect(self.ui.actionDirectory, QtCore.SIGNAL("triggered()"), self.newDirectory)
-        self.connect(self.ui.actionDisconnect, QtCore.SIGNAL("triggered()"), self.handleCommDisconnect)
-        self.connect(self.ui.actionFocus_Lock, QtCore.SIGNAL("triggered()"), self.handleFocusLock)
-        self.connect(self.ui.actionIllumination, QtCore.SIGNAL("triggered()"), self.handleIllumination)
-        self.connect(self.ui.actionMisc_Controls, QtCore.SIGNAL("triggered()"), self.handleMiscControls)
-        self.connect(self.ui.actionProgression, QtCore.SIGNAL("triggered()"), self.handleProgressions)
-        self.connect(self.ui.actionSpot_Counter, QtCore.SIGNAL("triggered()"), self.handleSpotCounter)
-        self.connect(self.ui.actionStage, QtCore.SIGNAL("triggered()"), self.handleStage)
-        self.connect(self.ui.actionQuit, QtCore.SIGNAL("triggered()"), self.quit)
-        self.connect(self.ui.modeComboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.handleModeComboBox)
-        self.connect(self.ui.cameraShutterButton, QtCore.SIGNAL("clicked()"), self.toggleShutter)
-        self.connect(self.ui.autoShuttersCheckBox, QtCore.SIGNAL("stateChanged(int)"), self.handleAutoShutters)
-        self.connect(self.ui.recordButton, QtCore.SIGNAL("clicked()"), self.toggleFilm)
-        self.connect(self.ui.filenameEdit, QtCore.SIGNAL("textChanged(const QString&)"), self.updateFilenameLabel)
-        self.connect(self.ui.lengthSpinBox, QtCore.SIGNAL("valueChanged(int)"), self.updateLength)
-        self.connect(self.ui.notesEdit, QtCore.SIGNAL("textChanged()"), self.updateNotes)
-        self.connect(self.ui.extensionComboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.updateFilenameLabel)
-        self.connect(self.ui.indexSpinBox, QtCore.SIGNAL("valueChanged(int)"), self.updateFilenameLabel)
-        self.connect(self.ui.autoIncCheckBox, QtCore.SIGNAL("stateChanged(int)"), self.handleAutoInc)
+        #self.connect(self.ui.actionSettings, QtCore.SIGNAL("triggered()"), self.newSettingsFile)
+        self.ui.actionSettings.triggered.connect(self.newSettingsFile)
+        #self.connect(self.ui.actionShutter, QtCore.SIGNAL("triggered()"), self.newShuttersFile)
+        self.ui.actionShutter.triggered.connect(self.newShuttersFile)
+        #self.connect(self.ui.actionDirectory, QtCore.SIGNAL("triggered()"), self.newDirectory)
+        self.ui.actionDirectory.triggered.connect(self.newDirectory)
+        #self.connect(self.ui.actionDisconnect, QtCore.SIGNAL("triggered()"), self.handleCommDisconnect)
+        self.ui.actionDisconnect.triggered.connect(self.handleCommDisconnect)
+        #self.connect(self.ui.actionFocus_Lock, QtCore.SIGNAL("triggered()"), self.handleFocusLock)
+        self.ui.actionFocus_Lock.triggered.connect(self.handleFocusLock)
+        #self.connect(self.ui.actionIllumination, QtCore.SIGNAL("triggered()"), self.handleIllumination)
+        self.ui.actionIllumination.triggered.connect(self.handleIllumination)
+        #self.connect(self.ui.actionMisc_Controls, QtCore.SIGNAL("triggered()"), self.handleMiscControls)
+        self.ui.actionMisc_Controls.triggered.connect(self.handleMiscControls)
+        #self.connect(self.ui.actionProgression, QtCore.SIGNAL("triggered()"), self.handleProgressions)
+        self.ui.actionProgression.triggered.connect(self.handleProgressions)
+        #self.connect(self.ui.actionSpot_Counter, QtCore.SIGNAL("triggered()"), self.handleSpotCounter)
+        self.ui.actionSpot_Counter.triggered.connect(self.handleSpotCounter)
+        #self.connect(self.ui.actionStage, QtCore.SIGNAL("triggered()"), self.handleStage)
+        self.ui.actionStage.triggered.connect(self.handleStage)
+        #self.connect(self.ui.actionQuit, QtCore.SIGNAL("triggered()"), self.quit)
+        self.ui.actionQuit.triggered.connect(self.quit)
+        #self.connect(self.ui.modeComboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.handleModeComboBox)
+        self.ui.modeComboBox.currentIndexChanged.connect(self.handleModeComboBox)
+        #self.connect(self.ui.cameraShutterButton, QtCore.SIGNAL("clicked()"), self.toggleShutter)
+        self.ui.cameraShutterButton.clicked.connect(self.toggleShutter)
+        #self.connect(self.ui.autoShuttersCheckBox, QtCore.SIGNAL("stateChanged(int)"), self.handleAutoShutters)
+        self.ui.autoShuttersCheckBox.stateChanged.connect(self.handleAutoShutters)
+        #self.connect(self.ui.recordButton, QtCore.SIGNAL("clicked()"), self.toggleFilm)
+        self.ui.recordButton.clicked.connect(self.toggleFilm)
+        #self.connect(self.ui.filenameEdit, QtCore.SIGNAL("textChanged(const QString&)"), self.updateFilenameLabel)
+        self.ui.filenameEdit.textChanged.connect(self.updateFilenameLabel)
+        #self.connect(self.ui.lengthSpinBox, QtCore.SIGNAL("valueChanged(int)"), self.updateLength)
+        self.ui.lengthSpinBox.valueChanged.connect(self.updateLength)
+        #self.connect(self.ui.notesEdit, QtCore.SIGNAL("textChanged()"), self.updateNotes)
+        self.ui.notesEdit.textChanged.connect(self.updateNotes)
+        #self.connect(self.ui.extensionComboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.updateFilenameLabel)
+        self.ui.extensionComboBox.currentIndexChanged.connect(self.updateFilenameLabel)
+        #self.connect(self.ui.indexSpinBox, QtCore.SIGNAL("valueChanged(int)"), self.updateFilenameLabel)
+        self.ui.indexSpinBox.valueChanged.connect(self.updateFilenameLabel)
+        #self.connect(self.ui.autoIncCheckBox, QtCore.SIGNAL("stateChanged(int)"), self.handleAutoInc)
+        self.ui.autoIncCheckBox.stateChanged.connect(self.handleAutoInc)
         self.ui.filetypeComboBox.currentIndexChanged.connect(self.updateFilenameLabel)
         self.parameters_box.settingsToggled.connect(self.toggleSettings)
-        self.connect(self, QtCore.SIGNAL("reachedMaxFrames()"), self.handleMaxFrames)
+        #self.connect(self, QtCore.SIGNAL("reachedMaxFrames()"), self.handleMaxFrames)
+        self.reachedMaxFrames.connect(self.handleMaxFrames)
 
         # camera signals
-        self.connect(self.camera_control, QtCore.SIGNAL("idleCamera()"), self.idleCamera)
-        self.connect(self.camera_control, QtCore.SIGNAL("newData(int)"), self.newData)
-        self.connect(self.camera_display, QtCore.SIGNAL("syncChange(int)"), self.handleSyncChange)
-        self.connect(self.camera_params, QtCore.SIGNAL("gainChange(int)"), self.handleGainChange)
-        self.connect(self.display_timer, QtCore.SIGNAL("timeout()"), self.displayFrame)
+        #self.connect(self.camera_control, QtCore.SIGNAL("idleCamera()"), self.idleCamera)
+        self.camera_control.idleCamera.connect(self.idleCamera)
+        #self.connect(self.camera_control, QtCore.SIGNAL("newData(int)"), self.newData)
+        self.camera_control.newData.connect(self.newData)
+        #self.connect(self.camera_display, QtCore.SIGNAL("syncChange(int)"), self.handleSyncChange)
+        self.camera_display.syncChange.connect(self.handleSyncChange)
+        #self.connect(self.camera_params, QtCore.SIGNAL("gainChange(int)"), self.handleGainChange)
+        self.camera_params.gainChange.connect(self.handleGainChange)
+        #self.connect(self.display_timer, QtCore.SIGNAL("timeout()"), self.displayFrame)
+        self.display_timer.timeout.connect(self.displayFrame)
 
         # load GUI settings
         self.move(self.settings.value("main_pos", QtCore.QPoint(100, 100)).toPoint())
@@ -1259,7 +1315,8 @@ class Window(QtGui.QMainWindow):
         self.frame_count += 1
         if self.software_max_frames:
             if self.frame_count > self.software_max_frames and self.filming:
-                self.emit(QtCore.SIGNAL("reachedMaxFrames()"))
+                self.reachedMaxFrames.emit()
+                #self.emit(QtCore.SIGNAL("reachedMaxFrames()"))
         self.ui.framesText.setText("%d" % self.frame_count)
         if self.writer: # The flag for whether or not we are actually saving anything.
             size = self.frame_count * self.parameters.bytesPerFrame * 0.000000953674
