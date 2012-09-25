@@ -6,6 +6,7 @@
  (d) pywin32
  (e) numpy
  (f) scipy (for the optimal focus lock mode)
+ (g) pywinusb (for the logitech joystick)
 
 
 (2) Compile UI elements (in the qtdesigner folder):
