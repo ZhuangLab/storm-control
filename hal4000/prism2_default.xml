@@ -142,7 +142,6 @@
   <have_joystick type="int">1</have_joystick>
   <hat_step type="float">1.0</hat_step> <!-- step size in um for hat button press -->
   <joystick_gain type="float-array">25, 2500</joystick_gain>   <!-- max velocity in um/s: valid range 100 -> 1000 -->
-  <!-- <joystick_gain_index type = "int">0</joystick_gain_index> -->
   <joystick_multiplier_value type="float">5</joystick_multiplier_value> <!-- X button multiplier for joystick and focus lock -->
   <joystick_mode type="string">quadratic</joystick_mode> <!-- linear or quadratic -->
   <joystick_signx type="float">1.0</joystick_signx>
