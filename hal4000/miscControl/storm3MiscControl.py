@@ -99,7 +99,7 @@ class AMiscControl(miscControl.MiscControl):
         self.ui.iEyesSetROIButton.clicked.connect(self.handleSetROI)
 
         if self.camera_widget:
-            self.camera_widget.mouse_press.connect(self.handleMousePress)
+            self.camera_widget.mousePress.connect(self.handleMousePress)
 
         self.newParameters(self.parameters)
 

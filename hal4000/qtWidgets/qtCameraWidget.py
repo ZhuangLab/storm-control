@@ -44,7 +44,7 @@ class QCameraWidget(QtGui.QWidget):
     def mousePressEvent(self, event):
         self.x_click = event.x()
         self.y_click = event.y()
-        self.mouse_press.emit(self.x_click, self.y_click)
+        self.mousePress.emit(self.x_click, self.y_click)
 
     def newColorTable(self, colortable):
         self.colortable = colortable
