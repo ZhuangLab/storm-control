@@ -15,7 +15,7 @@ import halLib.parameters as params
 import halLib.hdebug as hdebug
 
 # UIs.
-import qtdesigner.spotcounterui_v1 as spotCounterUi
+import qtdesigner.spotcounter_ui as spotCounterUi
 
 # stage
 import qtWidgets.qtSpotCounter as qtSpotCounter

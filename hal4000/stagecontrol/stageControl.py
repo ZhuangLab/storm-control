@@ -39,7 +39,7 @@ from PyQt4 import QtCore, QtGui
 import halLib.hdebug as hdebug
 
 # UIs.
-import qtdesigner.stageui_v1 as stageUi
+import qtdesigner.stage_ui as stageUi
 
 #
 # Stage Control Dialog Box

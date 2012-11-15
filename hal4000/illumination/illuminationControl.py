@@ -15,7 +15,7 @@ import illumination.channelWidgets as channelWidgets
 import halLib.hdebug as hdebug
 
 # UIs.
-import qtdesigner.illumination_v1 as illuminationUi
+import qtdesigner.illumination_ui as illuminationUi
 
 #
 # Illumination power control.

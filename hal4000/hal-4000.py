@@ -302,7 +302,7 @@ from PyQt4 import QtCore, QtGui
 import halLib.hdebug as hdebug
 
 # UIs.
-import qtdesigner.hal4000_ui as halUi
+import qtdesigner.hal4000_ui as hal4000Ui
 
 # Experiment Control Modules
 
@@ -360,7 +360,7 @@ class Window(QtGui.QMainWindow):
         self.logfile_fp.flush()
 
         # ui setup
-        self.ui = halUi.Ui_MainWindow()
+        self.ui = hal4000Ui.Ui_MainWindow()
         self.ui.setupUi(self)
         
         self.setWindowTitle(self.parameters.setup_name)

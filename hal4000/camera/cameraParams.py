@@ -22,7 +22,7 @@
 from PyQt4 import QtCore, QtGui
 
 # UIs.
-import qtdesigner.camera_params_v1 as camera_params_ui
+import qtdesigner.camera_params_ui as cameraParamsUi
 
 #
 # Camera Params Group Box
@@ -35,7 +35,7 @@ class CameraParams(QtGui.QGroupBox):
         self.temperature = 0
 
         # UI setup
-        self.ui = camera_params_ui.Ui_GroupBox()
+        self.ui = cameraParamsUi.Ui_GroupBox()
         self.ui.setupUi(self)
 
         # connect signals

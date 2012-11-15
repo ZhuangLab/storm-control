@@ -11,7 +11,7 @@ from PyQt4 import QtCore, QtGui
 import halLib.hdebug as hdebug
 
 # UIs.
-import qtdesigner.camera_ui as camera_ui
+import qtdesigner.camera_ui as cameraUi
 
 # Camera Helper Modules
 import qtWidgets.qtColorGradient as qtColorGradient
@@ -39,7 +39,7 @@ class CameraDisplay(QtGui.QFrame):
         self.show_target = 0
 
         # ui setup
-        self.ui = camera_ui.Ui_Frame()
+        self.ui = cameraUi.Ui_Frame()
         self.ui.setupUi(self)
         self.ui.rangeSlider = qtRangeSlider.QVRangeSlider(parent = self.ui.rangeSliderWidget)
         layout = QtGui.QGridLayout(self.ui.rangeSliderWidget)

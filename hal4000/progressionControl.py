@@ -15,7 +15,7 @@ import halLib.parameters as params
 import halLib.hdebug as hdebug
 
 # UIs.
-import qtdesigner.progressionui_v1 as progressionUi
+import qtdesigner.progression_ui as progressionUi
 
 #
 # Progression control.
