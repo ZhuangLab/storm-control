@@ -312,15 +312,11 @@ class ProgressionControl(QtGui.QDialog):
         # connect signals
         if self.have_parent:
             self.ui.okButton.setText("Close")
-            #self.connect(self.ui.okButton, QtCore.SIGNAL("clicked()"), self.handleOk)
             self.ui.okButton.clicked.connect(self.handleOk)
         else:
             self.ui.okButton.setText("Quit")
-            #self.connect(self.ui.okButton, QtCore.SIGNAL("clicked()"), self.handleQuit)
             self.ui.okButton.clicked.connect(self.handleQuit)
-        #self.connect(self.ui.progressionsCheckBox, QtCore.SIGNAL("stateChanged(int)"), self.handleProgCheck)
         self.ui.progressionsCheckBox.stateChanged.connect(self.handleProgCheck)
-        #self.connect(self.ui.loadFileButton, QtCore.SIGNAL("clicked()"), self.newPowerFile)
         self.ui.loadFileButton.clicked.connect(self.newPowerFile)
 
         if self.tcp_control:

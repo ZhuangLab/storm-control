@@ -158,11 +158,9 @@ class IlluminationControl(QtGui.QDialog):
         # connect signals
         if self.have_parent:
             self.ui.okButton.setText("Close")
-            #self.connect(self.ui.okButton, QtCore.SIGNAL("clicked()"), self.handleOk)
             self.ui.okButton.clicked.connect(self.handleOk)
         else:
             self.ui.okButton.setText("Quit")
-            #self.connect(self.ui.okButton, QtCore.SIGNAL("clicked()"), self.handleQuit)
             self.ui.okButton.clicked.connect(self.handleQuit)
 
         if self.tcp_control:

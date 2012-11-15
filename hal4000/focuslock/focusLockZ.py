@@ -162,31 +162,19 @@ class FocusLockZ(QtGui.QDialog):
         # connect signals
         if self.have_parent:
             self.ui.okButton.setText("Close")
-            #self.connect(self.ui.okButton, QtCore.SIGNAL("clicked()"), self.handleOk)
             self.ui.okButton.clicked.connect(self.handleOk)
         else:
             self.ui.okButton.setText("Quit")
-            #self.connect(self.ui.okButton, QtCore.SIGNAL("clicked()"), self.handleQuit)
             self.ui.okButton.clicked.connect(self.handleQuit)
-        #self.connect(self.ui.autoRadioButton, QtCore.SIGNAL("clicked()"), self.handleRadioButtons)
         self.ui.autoRadioButton.clicked.connect(self.handleRadioButtons)
-        #self.connect(self.ui.calRadioButton, QtCore.SIGNAL("clicked()"), self.handleRadioButtons)
         self.ui.calRadioButton.clicked.connect(self.handleRadioButtons)
-        #self.connect(self.ui.offRadioButton, QtCore.SIGNAL("clicked()"), self.handleRadioButtons)
         self.ui.offRadioButton.clicked.connect(self.handleRadioButtons)
-        #self.connect(self.ui.onRadioButton, QtCore.SIGNAL("clicked()"), self.handleRadioButtons)
         self.ui.onRadioButton.clicked.connect(self.handleRadioButtons)
-        #self.connect(self.ui.optimalRadioButton, QtCore.SIGNAL("clicked()"), self.handleRadioButtons)        
         self.ui.optimalRadioButton.clicked.connect(self.handleRadioButtons)
-        #self.connect(self.ui.zScanRadioButton, QtCore.SIGNAL("clicked()"), self.handleRadioButtons)
         self.ui.zScanRadioButton.clicked.connect(self.handleRadioButtons)
-        #self.connect(self.ui.lockButton, QtCore.SIGNAL("clicked()"), self.handleLockButton)
         self.ui.lockButton.clicked.connect(self.handleLockButton)
-        #self.connect(self.ui.jumpSpinBox, QtCore.SIGNAL("valueChanged(double)"), self.handleJumpSpinBox)
         self.ui.jumpSpinBox.valueChanged.connect(self.handleJumpSpinBox)
-        #self.connect(self.ui.jumpButton, QtCore.SIGNAL("clicked()"), self.handleJumpButton)
         self.ui.jumpButton.clicked.connect(self.handleJumpButton)
-        #self.connect(self.ui.irButton, QtCore.SIGNAL("clicked()"), self.handleIrButton)
         self.ui.irButton.clicked.connect(self.handleIrButton)
         self.ui.irSlider.valueChanged.connect(self.handleIrSlider)
 
@@ -202,11 +190,8 @@ class FocusLockZ(QtGui.QDialog):
         # start the qpd monitoring thread & stage control thread
         self.control_thread = control_thread
         self.control_thread.start(QtCore.QThread.NormalPriority)
-        #self.connect(self.control_thread, QtCore.SIGNAL("controlUpdate(float, float, float, float)"), self.controlUpdate)
         self.control_thread.controlUpdate.connect(self.controlUpdate)
-        #self.connect(self.control_thread, QtCore.SIGNAL("foundSum()"), self.foundSum)
         self.control_thread.foundSum.connect(self.foundSum)
-        #self.connect(self.control_thread, QtCore.SIGNAL("recenteredPiezo()"), self.recenteredPiezo)
         self.control_thread.recenteredPiezo.connect(self.recenteredPiezo)
 
         # connect to the ir laser & turn it off.

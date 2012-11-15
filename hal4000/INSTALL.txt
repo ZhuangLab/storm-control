@@ -45,6 +45,9 @@
  should start without any warning messages and display a simple pattern in 
  the camera view area.
 
+ This will use the parameters from the none_default.xml file. Other example
+ parameter files are labeled prism2_default.xml storm3_default.xml, etc..
+
 
 (5) Modifying to work with your hardware:
  This is the hard part as it is of course hardware dependent. Python classes
