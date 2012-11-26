@@ -920,7 +920,7 @@ class Window(QtGui.QMainWindow):
             self.camera.startFilm(self.writer)
             self.ui.recordButton.setStyleSheet("QPushButton { color: red }")
         else:
-            self.camera_control.startFilm(None)
+            self.camera.startFilm(None)
             self.ui.recordButton.setStyleSheet("QPushButton { color: orange }")
 
         # stage
@@ -1103,10 +1103,8 @@ class Window(QtGui.QMainWindow):
             self.ui.filenameLabel.setStyleSheet("QLabel { color: black}")
 
     def updateFramesForFilm(self, frame):
-        # FIXME: do we need to check both software_max_frames and filming?
-        if self.software_max_frames:
-            if self.filming and (self.frame.number >= self.software_max_frames):
-                self.reachedMaxFrames.emit()
+        if self.software_max_frames and (frame.number >= self.software_max_frames):
+            self.reachedMaxFrames.emit()
         # The first frame is numbered zero so we need to adjust for that.
         self.ui.framesText.setText("%d" % (frame.number+1))
         if self.writer: # The flag for whether or not we are actually saving anything.

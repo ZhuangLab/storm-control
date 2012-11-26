@@ -88,7 +88,6 @@ class ACameraControl(cameraControl.CameraControl):
                     self.camera.setFanMode(2) # fan off
                 else:
                     self.camera.setFanMode(0) # fan on full
-        self.frames = []
         self.filming = filming
         self.mutex.unlock()
 
@@ -179,14 +178,14 @@ class ACameraControl(cameraControl.CameraControl):
             if self.should_acquire and self.got_camera:
                 [frames, state] = self.camera.getImages16()
                 if (state == "acquiring"):
-                    if len(frames) > 0:
+                    if (len(frames) > 0):
                         if self.filming:
                             for aframe in frames:
                                 self.daxfile.saveFrame(aframe)
 
                         frame_data = []
                         for aframe in frames:
-                            frame_data.extend(frame.Frame(aframe,
+                            frame_data.append(frame.Frame(aframe,
                                                           self.frame_number,
                                                           self.type))
                             self.frame_number += 1
@@ -195,9 +194,10 @@ class ACameraControl(cameraControl.CameraControl):
                 elif (state == "idle"):
                     
                     # Write any last frames to disk.
+                    # FIXME: Do we also need to emit these?
                     if self.filming and len(frames) > 0:
-                        for frame in frames:
-                            self.daxfile.saveFrame(frame)
+                        for aframe in frames:
+                            self.daxfile.saveFrame(aframe)
 
                     # Signal that the camera is idle, but only once.
                     if not(self.forced_idle):

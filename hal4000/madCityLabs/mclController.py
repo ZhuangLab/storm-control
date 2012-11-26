@@ -33,34 +33,44 @@ def loadMCLDLL(mcl_path):
 # The MCL control class.
 #
 
-instantiated = 0
 class MCLStage:
 
     # Class instance variables
+    dll_loaded = False
+    handles_grabbed = False
     
     #
     # Initializes the object by initializing the camera
     # then querying it to determine its various properties.
     #
+    def __init__(self, mcl_path, serial_number = False):
 
-    def __init__(self, mcl_path):
-        # check that this class has not already been instantiated
-        global instantiated
-        assert instantiated == 0, "Attempt to instantiate two MCL stage instances."
-        instantiated = 1
+        # load DLL is necessary
+        if not MCLStage.dll_loaded:
+            loadMCLDLL(mcl_path)
+            MCLStage.dll_loaded = True
 
         # stage properties storage
         self._props_ = {}
 
-        # load the MCL DLL library
-        loadMCLDLL(mcl_path)
-
         # define the return types of some the functions
         mcl.MCL_GetCalibration.restype = c_double
         mcl.MCL_SingleReadN.restype = c_double
-        
-        # get a stage handle
-        self.handle = mcl.MCL_InitHandle()
+
+        #
+        # Get a stage handle.
+        #
+        # If the stage serial number is not specified we assume that there
+        # is only stage connected (or at least powered on).
+        #
+        if not serial_number:
+            self.handle = mcl.MCL_InitHandle()
+        else:
+            if not MCLStage.handles_grabbed:
+                mcl.MCL_GrabAllHandles()
+                MCLStage.handles_grabbed = True
+            self.handle = mcl.MCL_GetHandleBySerial(int(serial_number))
+
         #assert not(self.handle == 0), "Cannot get a MCL stage device handle."
         if self.handle == 0:
             print "Failed to connect to the MCL stage. Perhaps it is turned off?"
@@ -75,6 +85,7 @@ class MCLStage:
             self._props_['Product_id'] = caps.Product_id
             self._props_['FirmwareVersion'] = caps.FirmwareVersion
             self._props_['FirmwareProfile'] = caps.FirmwareProfile
+            self._props_['SerialNumber'] = mcl.MCL_GetSerialNumber(self.handle)
 
         # store which axises are valid
         #
@@ -147,8 +158,6 @@ class MCLStage:
                 self.moveTo(i, 0.0)
         if self.handle:
             mcl.MCL_ReleaseHandle(self.handle)
-        global instantiated
-        instantiated = 0
 
     def zMoveTo(self, position):
         self.moveTo(3, position)
@@ -166,17 +175,26 @@ if __name__ == "__main__":
             print key, '\t', dict[key]
 
     print "Initializing Stage"
-    stage = MCLStage("c:/Program Files/NanoDrive/")
-    if 1:
-        print "Stage Properties:"
-        printDict(stage.getProperties())
+    #stage = MCLStage("c:\\Program Files\\Mad City Labs\\NanoDrive\\")
+    stage1 = MCLStage("c:\\Program Files\\Mad City Labs\\NanoDrive\\", serial_number = 2359)
+    stage2 = MCLStage("c:\\Program Files\\Mad City Labs\\NanoDrive\\", serial_number = 2636)
+    stage3 = MCLStage("c:\\Program Files\\Mad City Labs\\NanoDrive\\", serial_number = 2637)
+    for stage in [stage1, stage2, stage3]:
+        if 1:
+            print "Stage Properties:"
+            printDict(stage.getProperties())
+            print ""
+
+        for i in range(3):
+            axis = i + 1
+            print "Axis:", axis, "Range:", "%.2fum" % stage.getAxisRange(axis)
+
         print ""
+        stage.shutDown()
+        
+    exit()
 
-    for i in range(3):
-        axis = i + 1
-        print "Axis:", axis, "Range:", "%.2fum" % stage.getAxisRange(axis)
-
-    test = 3
+    test = -1
     if test == 0:
         count = 0
         offset = 5.0
