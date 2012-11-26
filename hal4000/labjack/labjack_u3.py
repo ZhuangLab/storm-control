@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # Labjack U3 Interface.
+# Everything happens on the FIO4 pin.
 #
 # Hazen 5/12
 #
@@ -11,6 +12,7 @@ import time
 class PWM():
     def __init__(self):
         self.device = u3.U3()
+        self.device.writeRegister(6004,0) # set FIO4 state to low.
         self.device.configTimerClock(TimerClockBase = 5, TimerClockDivisor = 1)
 
     def shutDown(self):
@@ -25,7 +27,6 @@ class PWM():
     def stopPWM(self):
         self.device.getFeedback(u3.Timer0(Value = 65535, UpdateReset = True))
         self.device.configIO(NumberOfTimersEnabled = 0)
-
 
 #
 # Testing

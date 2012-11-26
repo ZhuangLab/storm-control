@@ -32,6 +32,8 @@ class MarzhauserRS232(RS232.RS232):
         self.live = True
         self.unit_to_um = 1000.0
         self.um_to_unit = 1.0/self.unit_to_um
+        self.x = 0.0
+        self.y = 0.0
 
         # RS232 stuff
         RS232.RS232.__init__(self, port, None, 57600, "\r", wait_time)
@@ -78,7 +80,7 @@ class MarzhauserRS232(RS232.RS232):
                 [self.x, self.y] = map(lambda x: float(x)*self.unit_to_um, 
                                        self.commWithResp("?pos")[:-2].split(" "))
             except:
-                print "  Bad position from Marzhauser stage."
+                print "  Warning: Bad position from Marzhauser stage."
             return [self.x, self.y, 0.0]
         else:
             return [0.0, 0.0, 0.0]
