@@ -198,7 +198,7 @@ class OptimalLockMode(JumpLockMode):
     def newFrame(self, frame, offset, power, stage_z):
         if (self.mode == "Optimizing"):
             if frame:
-                quality = focusQuality.imageGradient(frame, self.image_x, self.image_y)
+                quality = focusQuality.imageGradient(frame.data, self.image_x, self.image_y)
                 if (quality > self.quality_threshold):
                     self.zvalues[self.counter] = offset
                     self.fvalues[self.counter] = quality

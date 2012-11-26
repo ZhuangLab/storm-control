@@ -12,6 +12,7 @@ from PyQt4 import QtCore
 import halLib.hdebug as hdebug
 
 import camera.cameraControl as cameraControl
+import camera.frame as frame
 
 class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
@@ -35,6 +36,7 @@ class ACameraControl(cameraControl.CameraControl):
 
     @hdebug.debug
     def newFilmSettings(self, parameters, filming = 0):
+        self.stopCamera()
         self.mutex.lock()
         self.parameters = parameters
         p = parameters
@@ -67,16 +69,18 @@ class ACameraControl(cameraControl.CameraControl):
         while(self.running):
             self.mutex.lock()
             if self.should_acquire and self.got_camera:
-                self.frames.extend([self.fake_frame])
-                #self.emit(QtCore.SIGNAL("newData(int)"), self.key)
-                self.newData.emit(self.key)
+                aframe = frame.Frame(self.fake_frame, self.frame_number, self.type)
+                self.newData.emit([aframe], self.key)
+
                 if self.filming:
                     self.daxfile.saveFrame(self.fake_frame)
-                self.acquired += 1
+
                 if self.acq_mode == "fixed_length":
-                    if (self.acquired > self.frames_to_take):
-                        #self.emit(QtCore.SIGNAL("idleCamera()"))
+                    if (self.frame_number == (self.frames_to_take-1)):
+                        self.should_acquire = 0
                         self.idleCamera.emit()
+
+                self.frame_number += 1
             self.mutex.unlock()
             self.msleep(self.sleep_time)
 

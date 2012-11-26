@@ -11,6 +11,7 @@ import os
 # Debugging
 import halLib.hdebug as hdebug
 
+import camera.frame as frame
 import camera.cameraControl as cameraControl
 import andor.andorcontroller as andor
 
@@ -22,7 +23,7 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def closeShutter(self):
         self.shutter = 0
-        self.stopAcq()
+        self.stopCamera()
         if self.got_camera:
             if self.reversed_shutter:
                 self.camera.openShutter()
@@ -31,7 +32,7 @@ class ACameraControl(cameraControl.CameraControl):
 
     @hdebug.debug
     def getAcquisitionTimings(self):
-        self.stopAcq()
+        self.stopCamera()
         if self.got_camera:
             return self.camera.getAcquisitionTimings()
         else:
@@ -39,7 +40,7 @@ class ACameraControl(cameraControl.CameraControl):
 
     @hdebug.debug
     def getTemperature(self):
-        self.stopAcq()
+        self.stopCamera()
         if self.got_camera:
             return self.camera.getTemperature()
         else:
@@ -61,7 +62,7 @@ class ACameraControl(cameraControl.CameraControl):
 
     @hdebug.debug
     def newFilmSettings(self, parameters, filming = 0):
-        self.stopAcq()
+        self.stopCamera()
         self.mutex.lock()
         self.parameters = parameters
         p = parameters
@@ -158,7 +159,7 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def openShutter(self):
         self.shutter = 1
-        self.stopAcq()
+        self.stopCamera()
         if self.got_camera:
             if self.reversed_shutter:
                 self.camera.closeShutter()
@@ -177,27 +178,21 @@ class ACameraControl(cameraControl.CameraControl):
             self.mutex.lock()
             if self.should_acquire and self.got_camera:
                 [frames, state] = self.camera.getImages16()
-                if state == "acquiring":
+                if (state == "acquiring"):
                     if len(frames) > 0:
-
-                        # If we get behind, dummy out the frame storage array
-                        # so that the display does not get out of phase with
-                        # the camera. Downstream code needs to check that it 
-                        # got a frame and not just a zero.
-                        if len(self.frames) > 0:
-                            for i in range(len(frames)):
-                                self.frames.extend([0])
-                        else:
-                            self.frames = frames
-
                         if self.filming:
-                            for frame in frames:
-                                self.daxfile.saveFrame(frame)
+                            for aframe in frames:
+                                self.daxfile.saveFrame(aframe)
 
-                        #self.emit(QtCore.SIGNAL("newData(int)"), self.key)
-                        self.newData.emit(self.key)
+                        frame_data = []
+                        for aframe in frames:
+                            frame_data.extend(frame.Frame(aframe,
+                                                          self.frame_number,
+                                                          self.type))
+                            self.frame_number += 1
+                        self.newData.emit(frame_data, self.key)
 
-                elif state == "idle":
+                elif (state == "idle"):
                     
                     # Write any last frames to disk.
                     if self.filming and len(frames) > 0:
@@ -206,29 +201,28 @@ class ACameraControl(cameraControl.CameraControl):
 
                     # Signal that the camera is idle, but only once.
                     if not(self.forced_idle):
-                        #self.emit(QtCore.SIGNAL("idleCamera()"))
                         self.idleCamera.emit()
                         self.forced_idle = True
                 else:
                     print " run " + state
             else:
-                self.frames = []
                 self.have_paused = 1
             self.mutex.unlock()
             self.msleep(5)
 
     @hdebug.debug
     def setEMCCDGain(self, gain):
-        self.stopAcq()
+        self.stopCamera()
         if self.got_camera:
             self.camera.setEMCCDGain(gain)
 
     @hdebug.debug        
-    def startAcq(self, key):
+    def startCamera(self, key):
         if self.have_paused:
             self.mutex.lock()
             self.key = key
             self.forced_idle = False
+            self.frame_number = 0
             self.should_acquire = 1
             self.have_paused = 0
             if self.got_camera:
@@ -236,7 +230,7 @@ class ACameraControl(cameraControl.CameraControl):
             self.mutex.unlock()
 
     @hdebug.debug
-    def stopAcq(self):
+    def stopCamera(self):
         if self.should_acquire:
             self.mutex.lock()
             self.forced_idle = True

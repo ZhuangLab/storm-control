@@ -39,18 +39,20 @@ import halLib.hdebug as hdebug
 #
 # This class generates two kinds of Qt signals:
 #
-# 1. newData() when new data has been recieved from the camera.
-#    The data can be accessed with getFrame().
-# 2. idleCamera() when the camera has stop acquiring without
+# 1. idleCamera() when the camera has stop acquiring without
 #    being explicitly commanded to do so. This happens for
 #    example when at the end of a fixed_length acquisition.
 #
+# 2. newData() when new data has been received from the camera.
+#    Data is supplied as a list of frame objects as part of
+#    the signal.
+#
 class CameraControl(QtCore.QThread):
     idleCamera = QtCore.pyqtSignal()
-    newData = QtCore.pyqtSignal(int)
+    newData = QtCore.pyqtSignal(object, int)
 
     @hdebug.debug
-    def __init__(self, parameters, parent = None):
+    def __init__(self, parameters, type = "camera1", parent = None):
         QtCore.QThread.__init__(self, parent)
 
         p = parameters
@@ -58,23 +60,24 @@ class CameraControl(QtCore.QThread):
 
         # other class initializations
         self.daxfile = 0
+        self.debug = p.debug
         self.filming = 0
+        self.forced_idle = False
+        self.frame_number = 0
+        self.have_paused = 1
+        self.key = -1
+        self.mode = "run_till_abort"
         self.mutex = QtCore.QMutex()
         self.running = 1
-        self.shutter = 0
-        self.forced_idle = False
-        self.debug = p.debug
-        self.frames = []
-        self.have_paused = 1
         self.should_acquire = 0
-        self.key = 0
-        self.acquired = 0
-        self.mode = "run_till_abort"
+        self.shutter = 0
+        self.type = type
 
         # camera initialization
         self.camera = 0
         self.got_camera = 0
         self.reversed_shutter = 0
+
         self.initCamera()
 
     def cameraInit(self):
@@ -83,13 +86,6 @@ class CameraControl(QtCore.QThread):
     @hdebug.debug
     def closeShutter(self):
         self.shutter = 0
-
-    def getFrames(self):
-        self.mutex.lock()
-        frames = self.frames
-        self.frames = []
-        self.mutex.unlock()
-        return frames
 
     @hdebug.debug
     def getTemperature(self):
@@ -123,14 +119,15 @@ class CameraControl(QtCore.QThread):
         pass
 
     @hdebug.debug        
-    def startAcq(self, key):
+    def startCamera(self, key):
         self.mutex.lock()
-        self.should_acquire = 1
+        self.frame_number = 0
         self.key = key
+        self.should_acquire = 1
         self.mutex.unlock()
 
     @hdebug.debug
-    def startFilming(self, daxfile):
+    def startFilm(self, daxfile):
         if daxfile:
             self.daxfile = daxfile
             self.newFilmSettings(self.parameters, filming = 1)
@@ -138,7 +135,7 @@ class CameraControl(QtCore.QThread):
             self.newFilmSettings(self.parameters)
 
     @hdebug.debug
-    def stopAcq(self):
+    def stopCamera(self):
         self.mutex.lock()
         self.should_acquire = 0
         self.mutex.unlock()
@@ -148,7 +145,7 @@ class CameraControl(QtCore.QThread):
         self.running = 0
 
     @hdebug.debug
-    def stopFilming(self):
+    def stopFilm(self):
         self.newFilmSettings(self.parameters)
         self.daxfile = 0
 

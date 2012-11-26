@@ -107,7 +107,6 @@ class FocusLockZ(QtGui.QDialog):
             self.have_parent = False
 
         # general
-        self.frame_number = 0
         self.ir_power = 0
         self.offset = 0
         self.offset_file = 0
@@ -308,8 +307,7 @@ class FocusLockZ(QtGui.QDialog):
 
     def newFrame(self, frame):
         if self.offset_file:
-            self.offset_file.write("{0:d} {1:.6f} {2:.6f} {3:.6f}\n".format(self.frame_number, self.offset, self.power, self.stage_z))
-            self.frame_number += 1
+            self.offset_file.write("{0:d} {1:.6f} {2:.6f} {3:.6f}\n".format(frame.number, self.offset, self.power, self.stage_z))
         self.current_mode.newFrame(frame, self.offset, self.power, self.stage_z)
 
     @hdebug.debug
@@ -341,7 +339,6 @@ class FocusLockZ(QtGui.QDialog):
         self.error = 0.0
         self.error_counts = 0
         if filename:
-            self.frame_number = 1
             self.openOffsetFile(filename)
         self.current_mode.startLock()
         self.toggleLockButtonText(self.current_mode.amLocked())

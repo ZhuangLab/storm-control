@@ -232,9 +232,9 @@ class SpotCounter(QtGui.QDialog):
     def handleQuit(self):
         self.close()
 
-    def newImageToCount(self, frame):
+    def newFrame(self, frame):
         if self.spot_counter:
-            self.spot_counter.newImageToCount(frame)
+            self.spot_counter.newImageToCount(frame.data)
 
     @hdebug.debug
     def newParameters(self, parameters, colors):

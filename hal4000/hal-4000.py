@@ -5,107 +5,15 @@
 # In its most basic form, this just runs a camera
 # and displays (and records) the resulting data.
 #
-# cameraControl:
-#   Control of a camera.
+# ACamera:
+#   Control, record and display the data from one (or more)
+#   camera(s).
 #
-#  Methods called:
-#    __init__(parameters, parent)
-#      Class initializer.
-#
-#    cameraInit()
-#      Called once the main program setup is finished.
-#
-#    getAcquisitionTimings()
-#      Get the current acquisition timings.
-#
-#    getFrames()
-#      Get frame data from the camera.
-#
-#    getTemperature()
-#      Get the current camera temperature.
-#
-#    newParameters(parameters)
-#      Called when the parameters have been changed.
-#
-#    setEMCCDGain(gain)
-#      Set the EMCCD gain.
-#
-#    startAcq()
-#      Start the camera.
-#
-#    startFilming(writer)
-#      Setup the camera for filming, but do not actually
-#      start the camera. Writer is a class used for storing
-#      the data recorded by the camera.
-#
-#    stopFilming()
-#      Clean up from filming and stop the camera.
-#
-#    toggleShutter()
-#      Open/close the shutter.
-#
-#    quit()
-#      Called when the main program ends.
-#
-#  Signals emitted:
-#    idleCamera()
-#      The camera has reached the end of a fixed length
-#      film and awaits further instruction.
-#
-#    newData()
-#      New data is available from the camera.
-#
-#
-# cameraDisplay:
-#   Display the data from the camera & handle auto-scale, etc. Also
-#   provides the record and shutter buttons for the camera.
-#
-#  Methods called:
-#    __init__(parameters, parent)
-#       Class initializer.
-#
-#    displayFrame(frame)
-#       Draw the data in frame on the screen.
-#
-#    getRecordButton()
-#       Return the record button from the display ui.
-#
-#    getShutterButton()
-#       Return the shutter button from the display ui.
-#
-#    newParameters(parameters)
-#       Called when the parameters have been changed.
-#
-#    setSyncMax(int)
-#       Set the maximum frame in the for the sync ui element.
-#
-#    startFilm()
-#       Called when filming starts.
-#
-#    stopFilm()
-#       Called when filming ends.
-#
-#  Signals emitted:
-#    syncChange(int)
-#       User changed the sync combo box.
-#
-#
-# cameraParams:
-#   Display the current camera parameters.
-# 
-#  Methods called:
-#    __init__(parent)
-#      Class initializer.
-#
-#    newParameters(parameters)
-#      Called with new parameters.
-#
-#    newTemperature(temperature_data)
-#      Called when the temperature has been updated.
-#
-#  Signals emitted:
-#    gainChange(int)
-#      The camera gain slider has been changed.
+#  The camera control class should be a subclass of
+#  camera.genericCamera, which (attempts to) encapsulate
+#  all the stuff related to the controlling and displaying
+#  the data from one or more cameras. Examples and related
+#  classes can all be found in the camera directory.
 #
 #
 # More advanced functionality is provided by the following
@@ -301,14 +209,7 @@ from PyQt4 import QtCore, QtGui
 # Debugging
 import halLib.hdebug as hdebug
 
-# UIs.
-import qtdesigner.hal4000_ui as hal4000Ui
-
 # Experiment Control Modules
-
-# Camera
-import camera.cameraDisplay as cameraDisplay
-import camera.cameraParams as cameraParams
 
 # Misc.
 import halLib.parameters as params
@@ -337,29 +238,30 @@ class Window(QtGui.QMainWindow):
 
         # general (alphabetically ordered)
         self.current_directory = False
-        self.cycle_length = 1
         self.debug = parameters.debug
-        self.directory = 0
-        self.display_timer = QtCore.QTimer(self)
+        self.directory = False
         self.filename = ""
-        self.filming = 0
-        self.frame = 0
-        self.frame_count = 0
-        self.key = 0
+        self.filming = False
         self.logfile_fp = open(parameters.logfile, "a")
         self.old_shutters_file = ""
         self.parameters = parameters
-        self.running_shutters = 0
+        self.running_shutters = False
         self.settings = QtCore.QSettings("Zhuang Lab", "hal-4000")
-        self.software_max_frames = 0
+        self.software_max_frames = False
         self.will_overwrite = False
-        self.writer = 0
+        self.writer = False
 
         # logfile setup
         self.logfile_fp.write("\r\n")
         self.logfile_fp.flush()
 
-        # ui setup
+        # ui setup (single objective or dual objective)
+        if hasattr(parameters, "dual_objective"):
+            import qtdesigner.hal4000Dual_ui as hal4000Ui
+            parameters.single_objective = False
+        else:
+            import qtdesigner.hal4000_ui as hal4000Ui
+            parameters.single_objective = True
         self.ui = hal4000Ui.Ui_MainWindow()
         self.ui.setupUi(self)
         
@@ -393,28 +295,35 @@ class Window(QtGui.QMainWindow):
         # experiment control modules
         #
         setup_name = parameters.setup_name.lower()
-        camera_type = parameters.camera_type.lower()
 
-        # Camera
-        cameraControl = __import__('camera.' + camera_type + 'CameraControl', globals(), locals(), [camera_type], -1)
-        self.camera_control = cameraControl.ACameraControl(parameters, parent = self)
-        self.camera_display = cameraDisplay.CameraDisplay(parameters,
-                                                          have_record_button = True,
-                                                          have_shutter_button = True,
-                                                          parent = self.ui.cameraFrame)
-        self.ui.recordButton = self.camera_display.getRecordButton()
-        self.ui.cameraShutterButton = self.camera_display.getShutterButton()
-        layout = QtGui.QGridLayout(self.ui.cameraFrame)
-        layout.setMargin(0)
-        layout.addWidget(self.camera_display)
-        self.camera_params = cameraParams.CameraParams(parent = self.ui.cameraParamsFrame)
+        # Camera control
+        the_camera = __import__('camera.' + setup_name + 'Camera', globals(), locals(), [setup_name], -1)
+
+        # This is the classic single-window HAL display. To work properly, the camera 
+        # controls UI elements that "belong" to the main window and vice-versa.
+        if parameters.single_objective:
+            self.camera = the_camera.ACamera(parameters,
+                                             self.ui.cameraFrame,
+                                             self.ui.cameraParamsFrame,
+                                             parent = self)
+            layout = QtGui.QGridLayout(self.ui.cameraFrame)
+            layout.setMargin(0)
+            layout.addWidget(self.camera.getCameraDisplay())
+            self.ui.recordButton = self.camera.getRecordButton()
+        else:
+            self.camera = camera.ACamera(parameters,
+                                         None,
+                                         None,
+                                         parent = self)
 
         # AOTF / DAQ illumination control
         self.shutter_control = 0
         self.illumination_control = 0
         if parameters.have_illumination:
             illuminationControl = __import__('illumination.' + setup_name + 'IlluminationControl', globals(), locals(), [setup_name], -1)
-            self.illumination_control = illuminationControl.AIlluminationControl(parameters, self.tcp_control, parent = self)
+            self.illumination_control = illuminationControl.AIlluminationControl(parameters,
+                                                                                 self.tcp_control,
+                                                                                 parent = self)
             shutterControl = __import__('illumination.' + setup_name + 'ShutterControl', globals(), locals(), [setup_name], -1)
             self.shutter_control = shutterControl.AShutterControl(self.illumination_control.power_control.powerToVoltage)
 
@@ -424,25 +333,32 @@ class Window(QtGui.QMainWindow):
             stagecontrol = __import__('stagecontrol.' + setup_name + 'StageControl', globals(), locals(), [setup_name], -1)
             self.stage_control = stagecontrol.AStageControl(parameters, self.tcp_control, parent = self)
 
-        # Piezo Z stage with QPD feedback and control
+        # Piezo Z stage with feedback control
         self.focus_lock = 0
         if parameters.have_focus_lock:
             focusLock = __import__('focuslock.' + setup_name + 'FocusLockZ', globals(), locals(), [setup_name], -1)
-            self.focus_lock = focusLock.AFocusLockZ(parameters, self.tcp_control, parent = self)
+            self.focus_lock = focusLock.AFocusLockZ(parameters,
+                                                    self.tcp_control,
+                                                    parent = self)
 
-        # spot counter
+        # Spot counter
         self.spot_counter = 0
         if parameters.have_spot_counter:
             import spotCounter
-            self.spot_counter = spotCounter.SpotCounter(parameters, parent = self)
+            self.spot_counter = spotCounter.SpotCounter(parameters,
+                                                        parent = self)
 
-        # misc control
+        # Misc control
+        #  This needs the camera display area for the purpose of capturing mouse events
         self.misc_control = 0
         if parameters.have_misc_control:
             misccontrol = __import__('miscControl.' + setup_name + 'MiscControl', globals(), locals(), [setup_name], -1)
-            self.misc_control = misccontrol.AMiscControl(parameters, self.tcp_control, self.camera_display.camera_widget, parent = self)
+            self.misc_control = misccontrol.AMiscControl(parameters,
+                                                         self.tcp_control,
+                                                         self.camera.getCameraDisplayArea(),
+                                                         parent = self)
 
-        # temperature logger
+        # Temperature logger
         self.temperature_logger = 0
         if parameters.have_temperature_logger:
             import THUM.thum as thum
@@ -472,44 +388,41 @@ class Window(QtGui.QMainWindow):
         #
         # More ui stuff
         #
-        self.display_timer.setInterval(100)
 
         # handling file drops
         self.ui.centralwidget.__class__.dragEnterEvent = self.dragEnterEvent
         self.ui.centralwidget.__class__.dropEvent = self.dropEvent
 
         # ui signals
-        self.ui.actionSettings.triggered.connect(self.newSettingsFile)
-        self.ui.actionShutter.triggered.connect(self.newShuttersFile)
         self.ui.actionDirectory.triggered.connect(self.newDirectory)
         self.ui.actionDisconnect.triggered.connect(self.handleCommDisconnect)
         self.ui.actionFocus_Lock.triggered.connect(self.handleFocusLock)
         self.ui.actionIllumination.triggered.connect(self.handleIllumination)
         self.ui.actionMisc_Controls.triggered.connect(self.handleMiscControls)
         self.ui.actionProgression.triggered.connect(self.handleProgressions)
+        self.ui.actionSettings.triggered.connect(self.newSettingsFile)
+        self.ui.actionShutter.triggered.connect(self.newShuttersFile)
         self.ui.actionSpot_Counter.triggered.connect(self.handleSpotCounter)
         self.ui.actionStage.triggered.connect(self.handleStage)
         self.ui.actionQuit.triggered.connect(self.quit)
-        self.ui.modeComboBox.currentIndexChanged.connect(self.handleModeComboBox)
-        self.ui.cameraShutterButton.clicked.connect(self.toggleShutter)
-        self.ui.autoShuttersCheckBox.stateChanged.connect(self.handleAutoShutters)
-        self.ui.recordButton.clicked.connect(self.toggleFilm)
-        self.ui.filenameEdit.textChanged.connect(self.updateFilenameLabel)
-        self.ui.lengthSpinBox.valueChanged.connect(self.updateLength)
-        self.ui.notesEdit.textChanged.connect(self.updateNotes)
-        self.ui.extensionComboBox.currentIndexChanged.connect(self.updateFilenameLabel)
-        self.ui.indexSpinBox.valueChanged.connect(self.updateFilenameLabel)
         self.ui.autoIncCheckBox.stateChanged.connect(self.handleAutoInc)
+        self.ui.autoShuttersCheckBox.stateChanged.connect(self.handleAutoShutters)
+        self.ui.extensionComboBox.currentIndexChanged.connect(self.updateFilenameLabel)
+        self.ui.filenameEdit.textChanged.connect(self.updateFilenameLabel)
         self.ui.filetypeComboBox.currentIndexChanged.connect(self.updateFilenameLabel)
+        self.ui.indexSpinBox.valueChanged.connect(self.updateFilenameLabel)
+        self.ui.lengthSpinBox.valueChanged.connect(self.updateLength)
+        self.ui.modeComboBox.currentIndexChanged.connect(self.handleModeComboBox)
+        self.ui.notesEdit.textChanged.connect(self.updateNotes)
+        self.ui.recordButton.clicked.connect(self.toggleFilm)
+
+        # other signals
         self.parameters_box.settingsToggled.connect(self.toggleSettings)
         self.reachedMaxFrames.connect(self.handleMaxFrames)
 
         # camera signals
-        self.camera_control.idleCamera.connect(self.idleCamera)
-        self.camera_control.newData.connect(self.newData)
-        self.camera_display.syncChange.connect(self.handleSyncChange)
-        self.camera_params.gainChange.connect(self.handleGainChange)
-        self.display_timer.timeout.connect(self.displayFrame)
+        self.camera.idleCamera.connect(self.idleCamera)
+        self.camera.newFrames.connect(self.newFrames)
 
         # load GUI settings
         self.move(self.settings.value("main_pos", QtCore.QPoint(100, 100)).toPoint())
@@ -528,7 +441,7 @@ class Window(QtGui.QMainWindow):
         #
         # start the camera
         #
-        self.camera_control.cameraInit()
+        self.camera.cameraInit()
 
     ########################################################
     ##
@@ -634,11 +547,6 @@ class Window(QtGui.QMainWindow):
     ##
 
     @hdebug.debug
-    def changeCameraParameters(self):
-        self.camera_control.newParameters(self.parameters)
-        self.startCamera()
-
-    @hdebug.debug
     def cleanUp(self):
         print " Dave? What are you doing Dave?"
         print "  ..."
@@ -646,7 +554,7 @@ class Window(QtGui.QMainWindow):
         self.logfile_fp.close()
 
         # stop the camera
-        self.camera_control.quit()
+        self.camera.quit()
 
         # stop the spot counter
         if self.spot_counter:
@@ -691,9 +599,6 @@ class Window(QtGui.QMainWindow):
     def closeEvent(self, event):
         self.cleanUp()
 
-    def displayFrame(self):
-        self.camera_display.displayFrame(self.frame)
-
     @hdebug.debug
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
@@ -728,13 +633,6 @@ class Window(QtGui.QMainWindow):
             self.focus_lock.show()
 
     @hdebug.debug
-    def handleGainChange(self, gain):
-        self.stopCamera()
-        self.parameters.emccd_gain = gain
-        self.camera_control.setEMCCDGain(self.parameters.emccd_gain)
-        self.startCamera()
-
-    @hdebug.debug
     def handleIllumination(self):
         if self.illumination_control:
             self.illumination_control.show()
@@ -750,6 +648,15 @@ class Window(QtGui.QMainWindow):
             self.misc_control.show()
 
     @hdebug.debug
+    def handleModeComboBox(self, mode):
+        if mode == 0:
+            self.parameters.acq_mode = "run_till_abort"
+        else:
+            self.parameters.acq_mode = "fixed_length"
+        self.showHideLength()
+        #self.changeCameraParameters()
+
+    @hdebug.debug
     def handleProgIncPower(self, channel, power_inc):
         if self.illumination_control:
             self.illumination_control.remoteIncPower(channel, power_inc)
@@ -763,15 +670,6 @@ class Window(QtGui.QMainWindow):
     def handleProgSetPower(self, channel, power):
         if self.illumination_control:
             self.illumination_control.remoteSetPower(channel, power)
-
-    @hdebug.debug
-    def handleModeComboBox(self, mode):
-        if mode == 0:
-            self.parameters.acq_mode = "run_till_abort"
-        else:
-            self.parameters.acq_mode = "fixed_length"
-        self.showHideLength()
-        self.changeCameraParameters()
 
     @hdebug.debug
     def handleSpotCounter(self):
@@ -796,42 +694,9 @@ class Window(QtGui.QMainWindow):
         # But we get here anyway due to some dead time between when
         # we start the camera thread and starting the camera acquiring?
         #
+        # FIXME: Is this still true??
         if self.filming:
             self.stopFilm()
-
-    def newData(self, key):
-        #
-        # The key check is to catch the camera thread returning images
-        # from a previous acquisition "cycle", messing up the timing
-        # in the current "cycle".
-        #
-        # Note that frame can be zero instead of being an image so
-        # downstream code needs to catch that.
-        #
-        if key == self.key:
-            frames = self.camera_control.getFrames()
-            for frame in frames:
-                if self.filming:
-                    if self.parameters.sync:
-                        if (self.frame_count % self.cycle_length) == (self.parameters.sync - 1):
-                            self.frame = frame
-                    else:
-                        self.frame = frame
-                    self.updateFramesForFilm()
-                    if self.focus_lock:
-                        self.focus_lock.newFrame(frame)
-                    if self.illumination_control:
-                        self.illumination_control.newFrame()
-                    if self.progression_control:
-                        self.progression_control.newFrame(self.frame_count)
-                else:
-                    self.frame = frame
-                if self.spot_counter:
-                    self.spot_counter.newImageToCount(frame)
-                if self.misc_control:
-                    self.misc_control.newFrame(frame)
-                if self.temperature_logger:
-                    self.temperature_logger.newData()
 
     @hdebug.debug            
     def newDirectory(self, directory = False):
@@ -848,26 +713,32 @@ class Window(QtGui.QMainWindow):
         self.updateFilenameLabel("foo")
         self.startCamera()
 
+    def newFrames(self, frames):
+        for frame in frames:
+            if self.filming:
+                self.updateFramesForFilm(frame)
+                if self.focus_lock:
+                    self.focus_lock.newFrame(frame)
+                if self.illumination_control:
+                    self.illumination_control.newFrame(frame)
+                if self.progression_control:
+                    self.progression_control.newFrame(frame)
+            if self.spot_counter:
+                self.spot_counter.newFrame(frame)
+            if self.misc_control:
+                self.misc_control.newFrame(frame)
+            if self.temperature_logger:
+                self.temperature_logger.newFrame()
+
     @hdebug.debug
     def newParameters(self):
         # for conveniently accessing parameters
         p = self.parameters
 
         #
-        # setup camera control
+        # setup camera
         #
-        self.camera_control.newParameters(p)
-        [p.exposure_value, p.accumulate_value, p.kinetic_value] = self.camera_control.getAcquisitionTimings()
-
-        #
-        # setup camera display
-        #
-        self.camera_display.newParameters(p)
-
-        #
-        # setup camera parameters
-        #
-        self.camera_params.newParameters(p)
+        self.camera.newParameters(p)
 
         # The working directory is set by the initial parameters. Subsequent
         # parameters files don't change the directory
@@ -946,23 +817,6 @@ class Window(QtGui.QMainWindow):
         parameters = params.Parameters(parameters_filename)
         self.parameters_box.addParameters(parameters)
 
-        ## add to the list of saved parameters, ejecting the oldest
-        ## added if the list is already too long.
-        #self.saved_parameters = [parameters] + self.saved_parameters
-        #if len(self.saved_parameters) > self.max_saved:
-        #    self.saved_parameters.pop()
-        #
-        ## update the radio buttons to reflect the new parameters.
-        #for i, p in enumerate(self.saved_parameters):
-        #    filename = getFileName(p.parameters_file)
-        #    button = getattr(self.ui, "settingsButton" + str(i+1))
-        #    button.setText(filename)
-        #    button.show()
-        #
-        ## the new settings are the first settings, generate a 
-        ## click event on the first button.
-        #self.ui.settingsButton1.click()
-
     @hdebug.debug
     def newSettingsFile(self):
         self.stopCamera()
@@ -994,10 +848,8 @@ class Window(QtGui.QMainWindow):
             if new_shutters:
                 self.parameters.shutters = shutters_filename
                 self.old_shutters_file = shutters_filename
-                #self.ui.shuttersText.setText(trimString(self.parameters.shutters, 21))
                 self.ui.shuttersText.setText(getFileName(self.parameters.shutters))
-                self.cycle_length = self.shutter_control.getCycleLength()
-                self.camera_display.setSyncMax(self.cycle_length)
+                self.camera.setSyncMax(self.shutter_control.getCycleLength())
                 params.setDefaultShutter(shutters_filename)
             if self.spot_counter:
                 colors = self.shutter_control.getColors()
@@ -1042,9 +894,7 @@ class Window(QtGui.QMainWindow):
 
     @hdebug.debug
     def startCamera(self):
-        self.updateTemperature()
-        self.camera_control.startAcq(self.key)
-        self.display_timer.start()
+        self.camera.startCamera()
 
     @hdebug.debug
     def startFilm(self):
@@ -1064,15 +914,13 @@ class Window(QtGui.QMainWindow):
         # film file prep
         self.ui.recordButton.setText("Stop")
         if save_film:
-            print self.filename
             self.writer = writers.createFileWriter(self.ui.filetypeComboBox.currentText(),
                                                    self.filename,
                                                    self.parameters)
-            self.camera_control.startFilming(self.writer)
+            self.camera.startFilm(self.writer)
             self.ui.recordButton.setStyleSheet("QPushButton { color: red }")
         else:
-            self.camera_control.startFilming(None)
-#            self.stopCamera()
+            self.camera_control.startFilm(None)
             self.ui.recordButton.setStyleSheet("QPushButton { color: orange }")
 
         # stage
@@ -1120,20 +968,12 @@ class Window(QtGui.QMainWindow):
         if self.progression_control:
             self.progression_control.startFilm()
 
-        # display frame synchronization spin box
-        self.camera_display.startFilm()
-
         # go...
         self.startCamera()
 
     @hdebug.debug
     def stopCamera(self):
-        self.key += 1
-        self.frame = 0
-        self.display_timer.stop()
-        # Since checking the temperature will stop the camera, it
-        # is only necessary to check the temperature.
-        self.updateTemperature()
+        self.camera.stopCamera()
 
     @hdebug.debug
     def stopFilm(self):
@@ -1152,7 +992,7 @@ class Window(QtGui.QMainWindow):
 
         # film file finishing up
         if self.writer:
-            self.camera_control.stopFilming()
+            self.camera.stopFilm()
             stage_position = [0.0, 0.0, 0.0]
             if self.stage_control:
                 stage_position = self.stage_control.getStagePosition()
@@ -1163,13 +1003,12 @@ class Window(QtGui.QMainWindow):
             self.logfile_fp.write(str(datetime.datetime.now()) + "," + self.filename + "," + str(self.parameters.notes) + "\r\n")
             self.logfile_fp.flush()
             self.writer.closeFile(stage_position, lock_target)
-            self.writer = 0
+            self.writer = False
             if self.ui.autoIncCheckBox.isChecked() and (not self.tcp_requested_movie):
                 self.ui.indexSpinBox.setValue(self.ui.indexSpinBox.value() + 1)
             self.updateFilenameLabel("foo")
         else:
-            self.camera_control.stopFilming()
-#            self.stopCamera()
+            self.camera.stopFilm()
 
         # shutters
         if self.illumination_control:
@@ -1202,9 +1041,6 @@ class Window(QtGui.QMainWindow):
         if self.progression_control:
             self.progression_control.stopFilm()
 
-        # hide frame synchronization spin box
-        self.camera_display.stopFilm()
-            
         # restart the camera
         self.startCamera()
         self.ui.recordButton.setText("Record")
@@ -1243,24 +1079,6 @@ class Window(QtGui.QMainWindow):
         self.parameters = self.parameters_box.getCurrentParameters()
         self.stopCamera()
         self.newParameters()
-        #pass
-        #for i, p in enumerate(self.saved_parameters):
-        #    button = getattr(self.ui, "settingsButton" + str(i+1))
-        #    if button.isChecked():
-        #        self.parameters = p
-        #        self.stopCamera()
-        #        self.newParameters()
-
-    @hdebug.debug
-    def toggleShutter(self):
-        open = self.camera_control.toggleShutter()
-        if open:
-            self.ui.cameraShutterButton.setText("Close Shutter")
-            self.ui.cameraShutterButton.setStyleSheet("QPushButton { color: green }")
-        else:
-            self.ui.cameraShutterButton.setText("Open Shutter")
-            self.ui.cameraShutterButton.setStyleSheet("QPushButton { color: black }")
-        self.startCamera()
 
     @hdebug.debug
     def updateFilenameLabel(self, dummy):
@@ -1284,15 +1102,15 @@ class Window(QtGui.QMainWindow):
             self.will_overwrite = False
             self.ui.filenameLabel.setStyleSheet("QLabel { color: black}")
 
-    def updateFramesForFilm(self):
-        self.frame_count += 1
+    def updateFramesForFilm(self, frame):
+        # FIXME: do we need to check both software_max_frames and filming?
         if self.software_max_frames:
-            if self.frame_count > self.software_max_frames and self.filming:
+            if self.filming and (self.frame.number >= self.software_max_frames):
                 self.reachedMaxFrames.emit()
-                #self.emit(QtCore.SIGNAL("reachedMaxFrames()"))
-        self.ui.framesText.setText("%d" % self.frame_count)
+        # The first frame is numbered zero so we need to adjust for that.
+        self.ui.framesText.setText("%d" % (frame.number+1))
         if self.writer: # The flag for whether or not we are actually saving anything.
-            size = self.frame_count * self.parameters.bytesPerFrame * 0.000000953674
+            size = frame.number * self.parameters.bytesPerFrame * 0.000000953674
             if size < 1000.0:
                 self.ui.sizeText.setText("%.1f MB" % size)
             else:
@@ -1305,12 +1123,6 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def updateNotes(self):
         self.parameters.notes = self.ui.notesEdit.toPlainText()
-
-    def updateTemperature(self):
-        cur_temp = self.camera_control.getTemperature()
-        self.parameters.actual_temperature = cur_temp[0]
-        self.camera_params.newTemperature(cur_temp)
-
 
 
 if __name__ == "__main__":

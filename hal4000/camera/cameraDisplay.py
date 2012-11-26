@@ -24,7 +24,7 @@ class CameraDisplay(QtGui.QFrame):
     syncChange = QtCore.pyqtSignal(int)
 
     @hdebug.debug
-    def __init__(self, parameters, have_record_button = False, have_shutter_button = False, parent = None):
+    def __init__(self, parameters, show_record_button = False, show_shutter_button = False, parent = None):
         QtGui.QFrame.__init__(self, parent)
 
         # general (alphabetically ordered)
@@ -56,12 +56,12 @@ class CameraDisplay(QtGui.QFrame):
         self.ui.syncSpinBox.hide()
 
         # show/hide shutter and record button as appropriate
-        if have_record_button:
+        if show_record_button:
             self.ui.recordButton.show()
         else:
             self.ui.recordButton.hide()
 
-        if have_shutter_button:
+        if show_shutter_button:
             self.ui.cameraShutterButton.show()
         else:
             self.ui.cameraShutterButton.hide()
@@ -75,23 +75,14 @@ class CameraDisplay(QtGui.QFrame):
         self.camera_widget.show()
 
         # signals
-        #self.connect(self.ui.rangeSlider, QtCore.SIGNAL("rangeChanged(float, float)"), self.rangeChange)
         self.ui.rangeSlider.rangeChanged.connect(self.rangeChange)
-        #self.connect(self.ui.rangeSlider, QtCore.SIGNAL("doubleClick()"), self.autoScale)
         self.ui.rangeSlider.doubleClick.connect(self.autoScale)
-        #self.connect(self.ui.autoScaleButton, QtCore.SIGNAL("clicked()"), self.autoScale)
         self.ui.autoScaleButton.clicked.connect(self.autoScale)
-        #self.connect(self.ui.colorComboBox, QtCore.SIGNAL("currentIndexChanged(int)"), self.colorTableChange)
         self.ui.colorComboBox.currentIndexChanged.connect(self.colorTableChange)
-        #self.connect(self.ui.syncSpinBox, QtCore.SIGNAL("valueChanged(int)"), self.handleSync)
         self.ui.syncSpinBox.valueChanged.connect(self.handleSync)
-        #self.connect(self.camera_widget, QtCore.SIGNAL("intensityInfo(int, int, int)"), self.handleIntensityInfo)
         self.camera_widget.intensityInfo.connect(self.handleIntensityInfo)
-        #self.connect(self.ui.gridAct, QtCore.SIGNAL("triggered()"), self.handleGrid)
         self.ui.gridAct.triggered.connect(self.handleGrid)
-        #self.connect(self.ui.infoAct, QtCore.SIGNAL("triggered()"), self.handleInfo)
         self.ui.infoAct.triggered.connect(self.handleInfo)
-        #self.connect(self.ui.targetAct, QtCore.SIGNAL("triggered()"), self.handleTarget)
         self.ui.targetAct.triggered.connect(self.handleTarget)
 
     #
@@ -234,7 +225,7 @@ class CameraDisplay(QtGui.QFrame):
 
     def updateImage(self, frame):
         if frame:
-            self.camera_widget.updateImageWithData(frame)
+            self.camera_widget.updateImageWithData(frame.data)
 
     @hdebug.debug
     def updateRange(self):

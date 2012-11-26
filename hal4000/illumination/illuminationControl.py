@@ -143,7 +143,6 @@ class IlluminationControl(QtGui.QDialog):
     def __init__(self, parameters, tcp_control, parent = None):
         QtGui.QDialog.__init__(self, parent)
         self.fp = 0
-        self.frame = 1
         if parent:
             self.have_parent = 1
         else:
@@ -204,10 +203,9 @@ class IlluminationControl(QtGui.QDialog):
     def manualControl(self):
         self.power_control.manualControl()
 
-    def newFrame(self):
+    def newFrame(self, frame):
         if self.fp:
-            self.power_control.savePowers(self.fp, self.frame)
-            self.frame += 1
+            self.power_control.savePowers(self.fp, frame.number)
 
     @hdebug.debug
     def newParameters(self, parameters):
