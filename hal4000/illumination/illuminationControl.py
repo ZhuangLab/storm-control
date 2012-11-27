@@ -255,7 +255,6 @@ class IlluminationControl(QtGui.QDialog):
 
     @hdebug.debug
     def newParameters(self, parameters):
-        self.debug = parameters.debug
         self.power_control.newParameters(parameters)
         self.updateSize()
 

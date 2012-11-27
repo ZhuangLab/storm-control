@@ -78,9 +78,8 @@ class Window(QtGui.QMainWindow):
     def __init__(self, parameters, parent = None):
         QtGui.QMainWindow.__init__(self, parent)
 
-        # general (alphabetically ordered)
+        # General (alphabetically ordered)
         self.current_directory = False
-        self.debug = parameters.debug
         self.directory = False
         self.filename = ""
         self.filming = False
@@ -90,22 +89,51 @@ class Window(QtGui.QMainWindow):
         self.running_shutters = False
         self.settings = QtCore.QSettings("Zhuang Lab", "hal-4000")
         self.software_max_frames = False
+        self.ui_mode = ""
         self.will_overwrite = False
         self.writer = False
 
-        # logfile setup
+        # Logfile setup
         self.logfile_fp.write("\r\n")
         self.logfile_fp.flush()
 
-        # ui setup (single objective or dual objective)
-        if hasattr(parameters, "dual_objective"):
-            import qtdesigner.hal4000Dual_ui as hal4000Ui
-            parameters.single_objective = False
-        else:
+        #
+        # Load the camera module
+        #
+        # The camera module defines (to some extent) what the HAL UI
+        # will look like.
+        #
+        setup_name = parameters.setup_name.lower()
+        the_camera = __import__('camera.' + setup_name + 'Camera', globals(), locals(), [setup_name], -1)
+        self.ui_mode = the_camera.getMode()
+
+        #
+        # UI setup, this is one of:
+        #
+        # 1. single: single window, single camera
+        # 2. detached: detached camera window, single camera
+        # 3. dual: detached camera windows, dual camera
+        #
+        if (self.ui_mode == "single"):
             import qtdesigner.hal4000_ui as hal4000Ui
-            parameters.single_objective = True
+        elif (self.ui_mode == "detached"):
+            import qtdesigner.hal4000_detached_ui as hal4000Ui
+        elif (self.ui_mode == "dual"):
+            import qtdesigner.hal4000_detached_ui as hal4000Ui
+        else:
+            print "unrecognized mode:", self.ui_mode
+            print " mode should be one of: single, detached or dual"
+            exit()
+
+        # Load the ui
         self.ui = hal4000Ui.Ui_MainWindow()
         self.ui.setupUi(self)
+        
+        # Insert additional menu items for the camera(s) as necessary
+        if (self.ui_mode == "detached"):
+            self.ui.actionCamera1 = QtGui.QAction(self.tr("Camera"), self)
+            self.ui.menuFile.insertAction(self.ui.actionFocus_Lock, self.ui.actionCamera1)
+            self.ui.actionCamera1.triggered.connect(self.handleCamera1)
         
         self.setWindowTitle(self.parameters.setup_name)
 
@@ -119,7 +147,7 @@ class Window(QtGui.QMainWindow):
             self.ui.filetypeComboBox.addItem(type)
 
         #
-        # remote control via TCP/IP
+        # Remote control via TCP/IP
         #
         self.tcp_requested_movie = 0
         self.tcp_control = 0
@@ -134,16 +162,12 @@ class Window(QtGui.QMainWindow):
             self.connect(self.tcp_control, QtCore.SIGNAL("setDirectory(PyQt_PyObject)"), self.handleCommSetDirectory)
 
         #
-        # experiment control modules
+        # Hardware control modules
         #
-        setup_name = parameters.setup_name.lower()
-
-        # Camera control
-        the_camera = __import__('camera.' + setup_name + 'Camera', globals(), locals(), [setup_name], -1)
 
         # This is the classic single-window HAL display. To work properly, the camera 
         # controls UI elements that "belong" to the main window and vice-versa.
-        if parameters.single_objective:
+        if (self.ui_mode == "single"):
             self.camera = the_camera.ACamera(parameters,
                                              self.ui.cameraFrame,
                                              self.ui.cameraParamsFrame,
@@ -152,11 +176,12 @@ class Window(QtGui.QMainWindow):
             layout.setMargin(0)
             layout.addWidget(self.camera.getCameraDisplay())
             self.ui.recordButton = self.camera.getRecordButton()
+        # Both detached and dual-modes have the proper separation of UI elements
         else:
-            self.camera = camera.ACamera(parameters,
-                                         None,
-                                         None,
-                                         parent = self)
+            self.camera = the_camera.ACamera(parameters,
+                                             None,
+                                             None,
+                                             parent = self)
 
         # AOTF / DAQ illumination control
         self.shutter_control = False
@@ -269,17 +294,22 @@ class Window(QtGui.QMainWindow):
         # load GUI settings
         self.move(self.settings.value("main_pos", QtCore.QPoint(100, 100)).toPoint())
 
-        for [object, name] in [[self.illumination_control, "illumination"],
-                               [self.stage_control, "stage"],
-                               [self.focus_lock, "focus_lock"],
-                               [self.spot_counter, "spot_counter"],
-                               [self.misc_control, "misc"],
-                               [self.progression_control, "progression"]]:
+        self.gui_settings = [[self.illumination_control, "illumination"],
+                             [self.stage_control, "stage"],
+                             [self.focus_lock, "focus_lock"],
+                             [self.spot_counter, "spot_counter"],
+                             [self.misc_control, "misc"],
+                             [self.progression_control, "progression"]]
+
+        if (self.ui_mode == "detached"):
+            self.gui_settings.append([self.camera, "camera1"])
+
+        for [object, name] in self.gui_settings:
             if object:
                 object.move(self.settings.value(name + "_pos", QtCore.QPoint(200, 200)).toPoint())
                 if self.settings.value(name + "_visible", False).toBool():
                     object.show()
-         
+
         #
         # start the camera
         #
@@ -468,6 +498,14 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleAutoShutters(self, flag):
         self.parameters.auto_shutters = flag
+
+    @hdebug.debug
+    def handleCamera1(self):
+        self.camera.showCamera1()
+
+    @hdebug.debug
+    def handleCamera2(self):
+        self.camera.showCamera2()
 
     @hdebug.debug
     def handleFocusLock(self):
@@ -713,12 +751,7 @@ class Window(QtGui.QMainWindow):
     def quit(self):
         # Save GUI settings
         self.settings.setValue("main_pos", self.pos())
-        for [object, name] in [[self.illumination_control, "illumination"],
-                               [self.stage_control, "stage"],
-                               [self.focus_lock, "focus_lock"],
-                               [self.spot_counter, "spot_counter"],
-                               [self.misc_control, "misc"],
-                               [self.progression_control, "progression"]]:
+        for [object, name] in self.gui_settings:
             if object:
                 self.settings.setValue(name + "_pos", object.pos())
                 self.settings.setValue(name + "_visible", object.isVisible())

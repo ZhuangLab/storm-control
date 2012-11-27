@@ -56,11 +56,9 @@ class CameraControl(QtCore.QThread):
         QtCore.QThread.__init__(self, parent)
 
         p = parameters
-        self.debug = p.debug
 
         # other class initializations
         self.daxfile = 0
-        self.debug = p.debug
         self.filming = 0
         self.forced_idle = False
         self.frame_number = 0

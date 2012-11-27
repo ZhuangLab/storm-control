@@ -10,9 +10,6 @@ from PyQt4 import QtCore, QtGui
 # Debugging
 import halLib.hdebug as hdebug
 
-# UIs.
-import qtdesigner.camera_ui as cameraUi
-
 # Camera Helper Modules
 import qtWidgets.qtColorGradient as qtColorGradient
 import qtWidgets.qtRangeSlider as qtRangeSlider
@@ -24,14 +21,13 @@ class CameraDisplay(QtGui.QFrame):
     syncChange = QtCore.pyqtSignal(int)
 
     @hdebug.debug
-    def __init__(self, parameters, show_record_button = False, show_shutter_button = False, parent = None):
+    def __init__(self, parameters, camera_display_ui, show_record_button = False, show_shutter_button = False, parent = None):
         QtGui.QFrame.__init__(self, parent)
 
         # general (alphabetically ordered)
         self.color_gradient = 0
         self.color_table = 0
         self.color_tables = colorTables.ColorTables("./colorTables/all_tables/")
-        self.debug = parameters.debug
         self.max_intensity = parameters.max_intensity
         self.parameters = parameters
         self.show_grid = 0
@@ -39,7 +35,7 @@ class CameraDisplay(QtGui.QFrame):
         self.show_target = 0
 
         # ui setup
-        self.ui = cameraUi.Ui_Frame()
+        self.ui = camera_display_ui
         self.ui.setupUi(self)
         self.ui.rangeSlider = qtRangeSlider.QVRangeSlider(parent = self.ui.rangeSliderWidget)
         layout = QtGui.QGridLayout(self.ui.rangeSliderWidget)

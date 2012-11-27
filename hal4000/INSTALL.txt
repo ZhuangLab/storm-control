@@ -16,13 +16,19 @@
  following:
 
  (a) camera-params.ui > camera_params_ui.py
- (b) camera.ui > camera_ui.py
+ (b) camera-display.ui > camera_display_ui.py
  (c) focuslock.ui > focuslock_ui.py
  (d) hal4000.ui > hal4000_ui.py
  (e) illumination.ui > illumination_ui.py
  (f) spotcounter.ui > spotcounter_ui.py
  (g) stage.ui > stage_ui.py
  (h) progression.ui > progression_ui.py
+
+ If you plan to use the detached camera view, or two cameras you will
+ also need to compile these files:
+ (a) hal4000-detached.ui > hal4000_detached_ui.py
+ (b) camera-detached.ui > camera_detached_ui.py
+ (c) camera-params-detached.ui > camera_params_detached_ui.py
 
 
 (3) Compile C helper libraries:

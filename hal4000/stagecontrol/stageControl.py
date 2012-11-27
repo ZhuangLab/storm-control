@@ -76,7 +76,6 @@ class StageControl(QtGui.QDialog):
     @hdebug.debug
     def __init__(self, parameters, tcp_control, parent):
         QtGui.QMainWindow.__init__(self, parent)
-        self.debug = 1
         self.locked_out = False
         self.parameters = parameters
         self.position_update_timer = QtCore.QTimer(self)
@@ -308,7 +307,6 @@ class StageControl(QtGui.QDialog):
 
     @hdebug.debug    
     def newParameters(self, parameters):
-        self.debug = parameters.debug
         self.parameters = parameters
         self.small_step_size = int(parameters.small_step_size)
         self.large_step_size = int(parameters.large_step_size)

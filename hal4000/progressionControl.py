@@ -258,7 +258,6 @@ class ProgressionControl(QtGui.QDialog):
         QtGui.QDialog.__init__(self, parent)
         self.channels = False
         self.parameters = parameters
-        self.debug = parameters.debug
         self.tcp_control = tcp_control
         self.use_was_checked = False
         self.which_checked = []

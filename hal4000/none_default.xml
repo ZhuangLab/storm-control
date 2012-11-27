@@ -2,7 +2,6 @@
 <settings>
   <!-- general -->
   <camera_type type="string">none</camera_type>
-  <debug type="int">1</debug>
   <use_as_default type="int">1</use_as_default>
 
   <!-- camera settings -->

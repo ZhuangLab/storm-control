@@ -3,6 +3,16 @@
 # Base class for handling the control and display of the
 # data from one (or more) cameras.
 #
+# Classes that sub-class this also need to include a 
+# separate function getMode() which should return
+# one of the following strings, depending on what sort
+# of UI is appropriate for the camera:
+# 
+# 1. "single" - classic single window HAL UI.
+# 2. "detached" - the camera window is separate.
+# 3. "dual" - the camera window is separate and there
+#             are two cameras.
+#
 # Hazen 11/12
 #
 
@@ -15,13 +25,13 @@ import halLib.hdebug as hdebug
 # The generic base class. Classes designed for a particular 
 # set-up need to be modified as appropriate.
 #
-class Camera(QtGui.QWidget):
+class Camera(QtGui.QDialog):
     idleCamera = QtCore.pyqtSignal()
     newFrames = QtCore.pyqtSignal(object)
 
     @hdebug.debug
     def __init__(self, parent = None):
-        QtGui.QWidget.__init__(self, parent)
+        QtGui.QDialog.__init__(self, parent)
 
     # Called once HAL has finished initializing.
     def cameraInit(self):
@@ -55,6 +65,14 @@ class Camera(QtGui.QWidget):
 
     # Set the sync max (this is based on the shutters file)
     def setSyncMax(self, sync_max):
+        pass
+
+    # Show UI window for camera 1
+    def showCamera1(self):
+        pass
+
+    # Show UI window for camera 2
+    def showCamera2(self):
         pass
 
     # Start the camera(s).

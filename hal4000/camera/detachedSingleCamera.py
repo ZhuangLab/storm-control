@@ -11,34 +11,59 @@ from PyQt4 import QtCore, QtGui
 import halLib.hdebug as hdebug
 
 # UIs
+import qtdesigner.camera_detached_ui as cameraDetachedUi
 import qtdesigner.camera_display_ui as cameraDisplayUi
-import qtdesigner.camera_params_ui as cameraParamsUi
+import qtdesigner.camera_params_detached_ui as cameraParamsUi
 
 import camera.singleCamera as singleCamera
 import camera.cameraDisplay as cameraDisplay
 import camera.cameraParams as cameraParams
 
-class ClassicSingleCamera(singleCamera.SingleCamera):
+class DetachedSingleCamera(singleCamera.SingleCamera):
 
     @hdebug.debug
     def __init__(self, parameters, camera_frame, camera_params_frame, parent = None):
         singleCamera.SingleCamera.__init__(self, parameters, parent)
 
+        self.ui = cameraDetachedUi.Ui_Dialog()
+        self.ui.setupUi(self)
+        self.setWindowTitle(parameters.setup_name + " Camera")
+
         camera_display_ui = cameraDisplayUi.Ui_Frame()
         self.camera_display = cameraDisplay.CameraDisplay(parameters,
                                                           camera_display_ui,
-                                                          show_record_button = True,
+                                                          show_record_button = False,
                                                           show_shutter_button = True,
-                                                          parent = camera_frame)
+                                                          parent = self.ui.cameraFrame)
 
         camera_params_ui = cameraParamsUi.Ui_GroupBox()
         self.camera_params = cameraParams.CameraParams(camera_params_ui,
-                                                       parent = camera_params_frame)
+                                                       parent = self.ui.cameraParamsFrame)
+
+        layout = QtGui.QGridLayout(self.ui.cameraParamsFrame)
+        layout.setMargin(0)
+        layout.addWidget(self.camera_params)
             
         # Connect ui elements.
+        self.ui.okButton.setText("Close")
+        self.ui.okButton.clicked.connect(self.handleOk)
+
         self.camera_display.ui.cameraShutterButton.clicked.connect(self.toggleShutter)
         self.camera_display.syncChange.connect(self.handleSyncChange)
         self.camera_params.gainChange.connect(self.handleGainChange)
+
+    @hdebug.debug
+    def closeEvent(self, event):
+        event.ignore()
+        self.hide()
+
+    @hdebug.debug
+    def handleOk(self):
+        self.hide()
+
+    @hdebug.debug
+    def showCamera1(self):
+        self.show()
 
 #
 # The MIT License
