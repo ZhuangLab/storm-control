@@ -31,174 +31,18 @@
 # AFocusLockZ:
 #   Piezo Z stage with QPD feedback and control.
 #
-#  Methods called:
-#    __init__(parameters, tcp_control, parent = ..)
-#      Class initializer.
-#
-#    getLockTarget()
-#      Returns the current lock target (in nm).
-#
-#    jump(offset)
-#      Change the focus by offset (in um).
-#
-#    newFrame(frame)
-#      Called when filming and a new image is available
-#      from the camera.
-#
-#    newParameters(parameters)
-#      Called when the parameters file has been changed.
-#
-#    show()
-#      Show the focus lock UI dialog box (if any).
-#
-#    startLock(filename)
-#      Called when the filming (recording) starts. "filename"
-#      can also be 0 meaning that we are taking a "test" film,
-#      ie we are not actually saving the data.
-#
-#    stopLock()
-#      Called when filming has ended.
-#
-#    quit()
-#      Clean up and shutdown prior to the program ending.
-#
-#
 # AIlluminationControl:
 #   Control of laser powers. Control of shutters except
 #   when filming.
 #
-#  Methods_called:
-#    __init__(parameters, tcp_control, parent = ..)
-#      Class initializer.
-#
-#    getNumberChannels()
-#      Returns the number of channels that are controlled.
-#
-#    newFrame()
-#      Called when a new frame of data is available. This
-#      causes illuminationControl to write the current
-#      power settings into the power log file.
-#
-#    newParameters(parameters)
-#      Update sliders, buttons, etc. on the dialog box with
-#      new settings.
-#
-#    openFile(filename)
-#      Called before filming starts with the filename for
-#      logging the power setting during filming. This function
-#      appends ".power" to the filename & opens the file.
-#
-#    powerToVoltage(channel, power)
-#      Returns what voltage corresponds to what power
-#      (0.0 - 1.0).
-#
-#    quit()
-#      Cleanup and shutdown prior to the program ending.
-#
-#    remoteIncPower(channel, power_inc)
-#      Increment power of channel about amount power_inc
-#
-#    remoteSetPower(channel, power)
-#      Set power of channel about to power
-#
-#    show()
-#      Display the illumination control dialog box.
-#
-#    startFilm(channels_used)
-#      Setup for filming. Prepare the specified channels
-#      for automatic control via the shutterControl class.
-#
-#    stopFilm(channels_used)
-#      Cleanup from filming. Close the power log file. Revert
-#      the specified channels to manual control mode.
-#
-#
 # AShutterControl:
 #   "Automatic" control of the shutters during filming.
-#
-#  Methods called:
-#    __init__(powerToVoltage)
-#      Class initializer. powerToVoltage is function that takes
-#      a channel and a power (0.0-1.0) and returns the appropriate
-#      voltage (or equivalent) to use for this power in the
-#      waveform.
-#
-#    cleanup()
-#      Clean up and shutdown prior to the program ending.
-#
-#    getChannelsUsed()
-#      Returns an array containing which channels are actually
-#      used in the shutter sequence (as opposed to being always
-#      off).
-# 
-#    getColors()
-#      Returns the colors that the user specified in the shutter
-#      file for the rendering of that particular frame by the
-#      real time spot counter.
-#
-#    getCycleLength()
-#      Returns the length of the shutter sequence in frames.
-#
-#    parseXML(illumination_file)
-#      Parses the XML illumination file and generates the
-#      corresponding Pyhon arrays to be loaded to a National
-#      Instruments card (or equivalent).
-#
-#    setup(kinetic_cycle_time)
-#      kinetic_cycle_time is the length of a frame in seconds.
-#      This function is called to load the waveforms into
-#      whatever hardware is going output them.
-#    
-#    startFilm()
-#      Called at the start of filming to tell get the hardware
-#      prepared.
-#
-#    stopFilm()
-#      Called at the end of filming to tell the hardware to stop.
-#
 #
 # AStageControl:
 #   Control of a motorized stage.
 #
-#  Methods called:
-#    __init__(parameters, self.tcp_control, parent = ..)
-#      Class initializer.
 #
-#    getStagePosition()
-#      Return the current stage position.
-#
-#    jog(x_speed, y_speed)
-#      Move stage at the velocity given by x_speed and
-#      y_speed (microns / second).
-#
-#    newParameters(parameters)
-#      Update stage settings with the new parameters.
-#
-#    quit()
-#      Cleanup and shutdown prior to the program ending.
-#
-#    show()
-#      Display the stage control dialog box.
-#
-#    startFilm()
-#      Called when filming starts. At this point the stage
-#      could be set to lockout the joystick control, if any.
-#
-#    startLockout()
-#      Lockout the joystick.
-#
-#    step(x_step, y_step)
-#      Move the stage by x_step in x, y_step in y (in microns).
-#
-#    stopFilm()
-#      Called when filming finishes. If the joystick is 
-#      locked out then maybe renable it.
-#
-#    stopLockout()
-#      Turn off joystick lockout
-#
-#
-# Hazen 09/12
+# Hazen 11/12
 #
 
 import os
@@ -208,8 +52,6 @@ from PyQt4 import QtCore, QtGui
 
 # Debugging
 import halLib.hdebug as hdebug
-
-# Experiment Control Modules
 
 # Misc.
 import halLib.parameters as params
@@ -317,8 +159,8 @@ class Window(QtGui.QMainWindow):
                                          parent = self)
 
         # AOTF / DAQ illumination control
-        self.shutter_control = 0
-        self.illumination_control = 0
+        self.shutter_control = False
+        self.illumination_control = False
         if parameters.have_illumination:
             illuminationControl = __import__('illumination.' + setup_name + 'IlluminationControl', globals(), locals(), [setup_name], -1)
             self.illumination_control = illuminationControl.AIlluminationControl(parameters,
@@ -328,13 +170,13 @@ class Window(QtGui.QMainWindow):
             self.shutter_control = shutterControl.AShutterControl(self.illumination_control.power_control.powerToVoltage)
 
         # Motorized stage control
-        self.stage_control = 0
+        self.stage_control = False
         if parameters.have_stage:
             stagecontrol = __import__('stagecontrol.' + setup_name + 'StageControl', globals(), locals(), [setup_name], -1)
             self.stage_control = stagecontrol.AStageControl(parameters, self.tcp_control, parent = self)
 
         # Piezo Z stage with feedback control
-        self.focus_lock = 0
+        self.focus_lock = False
         if parameters.have_focus_lock:
             focusLock = __import__('focuslock.' + setup_name + 'FocusLockZ', globals(), locals(), [setup_name], -1)
             self.focus_lock = focusLock.AFocusLockZ(parameters,
@@ -342,7 +184,7 @@ class Window(QtGui.QMainWindow):
                                                     parent = self)
 
         # Spot counter
-        self.spot_counter = 0
+        self.spot_counter = False
         if parameters.have_spot_counter:
             import spotCounter
             self.spot_counter = spotCounter.SpotCounter(parameters,
@@ -350,7 +192,7 @@ class Window(QtGui.QMainWindow):
 
         # Misc control
         #  This needs the camera display area for the purpose of capturing mouse events
-        self.misc_control = 0
+        self.misc_control = False
         if parameters.have_misc_control:
             misccontrol = __import__('miscControl.' + setup_name + 'MiscControl', globals(), locals(), [setup_name], -1)
             self.misc_control = misccontrol.AMiscControl(parameters,
@@ -359,13 +201,13 @@ class Window(QtGui.QMainWindow):
                                                          parent = self)
 
         # Temperature logger
-        self.temperature_logger = 0
+        self.temperature_logger = False
         if parameters.have_temperature_logger:
             import THUM.thum as thum
             self.temperature_logger = thum.Thum()
 
         # Progression control
-        self.progression_control = 0
+        self.progression_control = False
         if parameters.have_progressions and parameters.have_illumination:
             import progressionControl
             self.progression_control = progressionControl.ProgressionControl(parameters,
@@ -376,7 +218,7 @@ class Window(QtGui.QMainWindow):
             self.connect(self.progression_control, QtCore.SIGNAL("progIncPower(int, float)"), self.handleProgIncPower)
 
         # Joystick
-        self.joystick_control = 0
+        self.joystick_control = False
         if parameters.have_joystick:
             joystick = __import__('joystick.' + setup_name + 'JoystickControl', globals(), locals(), [setup_name], -1)
             self.joystick_control = joystick.AJoystick(parameters, parent = self)

@@ -2,7 +2,53 @@
 #
 # Illumination control master classes.
 #
-# Hazen 6/09
+#  Methods called by HAL:
+#
+#    closeFile()
+#      Called after filming ends to close the power log file.
+#
+#    getNumberChannels()
+#      Returns the number of channels that are controlled.
+#
+#    newFrame()
+#      Called when a new frame of data is available. This
+#      causes illuminationControl to write the current
+#      power settings into the power log file.
+#
+#    newParameters(parameters)
+#      Update sliders, buttons, etc. on the dialog box with
+#      new settings.
+#
+#    openFile(filename)
+#      Called before filming starts with the filename for
+#      logging the power setting during filming. This function
+#      appends ".power" to the filename & opens the file.
+#
+#    powerToVoltage(channel, power)
+#      Returns what voltage corresponds to what power
+#      (0.0 - 1.0).
+#
+#    quit()
+#      Cleanup and shutdown prior to the program ending.
+#
+#    remoteIncPower(channel, power_inc)
+#      Increment power of channel about amount power_inc
+#
+#    remoteSetPower(channel, power)
+#      Set power of channel about to power
+#
+#    show()
+#      Display the illumination control dialog box.
+#
+#    startFilm(channels_used)
+#      Setup for filming. Prepare the specified channels
+#      for automatic control via the shutterControl class.
+#
+#    stopFilm(channels_used)
+#      Cleanup from filming. Close the power log file. Revert
+#      the specified channels to manual control mode.
+#
+# Hazen 11/12
 #
 
 from PyQt4 import QtCore, QtGui

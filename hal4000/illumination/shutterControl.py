@@ -8,7 +8,45 @@
 # The user should subclass this class and add specialized setup, startFilm,
 # stopFilm and cleanup methods following eg. storm3ShutterControl.
 #
-# Hazen 3/12
+#  Methods called by HAL:
+#
+#    cleanup()
+#      Clean up at the end of a film.
+#
+#    getChannelsUsed()
+#      Returns an array containing which channels are actually
+#      used in the shutter sequence (as opposed to being always
+#      off).
+# 
+#    getColors()
+#      Returns the colors that the user specified in the shutter
+#      file for the rendering of that particular frame by the
+#      real time spot counter.
+#
+#    getCycleLength()
+#      Returns the length of the shutter sequence in frames.
+#
+#    parseXML(illumination_file)
+#      Parses the XML illumination file and generates the
+#      corresponding Pyhon arrays to be loaded to a National
+#      Instruments card (or equivalent).
+#
+#    setup(kinetic_cycle_time)
+#      kinetic_cycle_time is the length of a frame in seconds.
+#      This function is called to load the waveforms into
+#      whatever hardware is going output them.
+#
+#    shutDown()
+#      Reset everything prior to HAL closing.
+#     
+#    startFilm()
+#      Called at the start of filming to tell get the hardware
+#      prepared.
+#
+#    stopFilm()
+#      Called at the end of filming to tell the hardware to stop.
+#  
+# Hazen 11/12
 #
 
 from xml.dom import minidom, Node

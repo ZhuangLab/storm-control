@@ -10,7 +10,37 @@
 # FocusLockZCam is specialized for displaying USB camera
 #    offset data.
 #
-# Hazen 03/12
+#
+#  Methods called by HAL:
+#
+#    getLockTarget()
+#      Returns the current lock target (in nm).
+#
+#    jump(offset)
+#      Change the focus by offset (in um).
+#
+#    newFrame(frame)
+#      Called when filming and a new image is available
+#      from the camera.
+#
+#    newParameters(parameters)
+#      Called when the parameters file has been changed.
+#
+#    show()
+#      Show the focus lock UI dialog box (if any).
+#
+#    startLock(filename)
+#      Called when the filming (recording) starts. "filename"
+#      can also be 0 meaning that we are taking a "test" film,
+#      ie we are not actually saving the data.
+#
+#    stopLock()
+#      Called when filming has ended.
+#
+#    quit()
+#      Clean up and shutdown prior to the program ending.
+#
+# Hazen 11/12
 #
 
 import numpy

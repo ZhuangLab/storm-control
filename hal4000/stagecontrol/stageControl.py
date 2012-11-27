@@ -3,7 +3,35 @@
 # This is the UI for stage control based on some sort 
 # of motorized stage.
 #
-# The motorizes stage class must provide the following methods:
+#  Methods called by HAL:
+#
+#    getStagePosition()
+#      Return the current stage position.
+#
+#    jog(x_speed, y_speed)
+#      Move stage at the velocity given by x_speed and
+#      y_speed (microns / second).
+#
+#    newParameters(parameters)
+#      Update stage settings with the new parameters.
+#
+#    quit()
+#      Cleanup and shutdown prior to the program ending.
+#
+#    show()
+#      Display the stage control dialog box.
+#
+#    startLockout()
+#      Lockout the joystick.
+#
+#    step(x_step, y_step)
+#      Move the stage by x_step in x, y_step in y (in microns).
+#
+#    stopLockout()
+#      Turn off joystick lockout
+#
+#
+# The motorized stage class must provide the following methods:
 #
 # getStatus()
 #   Returns True if the stage is alive and running, False otherwise.
