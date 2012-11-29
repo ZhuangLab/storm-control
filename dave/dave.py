@@ -155,7 +155,7 @@ class Window(QtGui.QMainWindow):
                                           str(sys.exc_info()[0]))
         else:
             self.newSequence(output_filename)
-
+            
     @hdebug.debug
     def handleRunButton(self):
         if self.movies:

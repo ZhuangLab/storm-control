@@ -6,6 +6,7 @@
 # Hazen 12/10
 #
 
+import math
 import os
 from xml.dom import minidom, Node
 from PyQt4 import QtCore, QtGui
@@ -36,11 +37,20 @@ def generateXML(descriptor_file, position_file, output_file, directory, parent):
 
     x_offset = float(xml.getElementsByTagName("x_offset").item(0).firstChild.nodeValue)
     y_offset = float(xml.getElementsByTagName("y_offset").item(0).firstChild.nodeValue)
+
+    # Determine minimum delay time (in milliseconds)
     temp = xml.getElementsByTagName("delay")
     if (len(temp) > 0):
         delay_time = int(temp.item(0).firstChild.nodeValue)
     else:
-        delay_time = 5000
+        delay_time = 500
+
+    # Determine stage speed (in units of mm/second)
+    temp = xml.getElementsByTagName("stage_speed")
+    if (len(temp) > 0):
+        stage_speed = float(temp.item(0).firstChild.nodeValue)
+    else:
+        stage_speed = 2.0
 
     passes = xml.getElementsByTagName("pass")
 
@@ -51,6 +61,8 @@ def generateXML(descriptor_file, position_file, output_file, directory, parent):
     first_movie = True
     pass_number = 0
     for a_pass in passes:
+        old_mx = 0.0
+        old_my = 0.0
         power_filenames = {}
         for i in range(len(x_pos)):
             mx = x_pos[i] + x_offset
@@ -86,15 +98,26 @@ def generateXML(descriptor_file, position_file, output_file, directory, parent):
                         filename.appendChild(dom.createTextNode(power_filenames[movie_name]))
                         progression.appendChild(filename)
 
-                # add delay element, if it doesn't exist
+                # Add delay element, if it doesn't exist
                 delay = temp.getElementsByTagName("delay")
                 if(len(delay) == 0):
                     delay = dom.createElement("delay")
                     if (j == 0) and (not first_movie):
                         delay.appendChild(dom.createTextNode(str(delay_time)))
                     else:
-                        delay.appendChild(dom.createTextNode(str(1000)))
+                        delay.appendChild(dom.createTextNode(str(200)))
                     temp.appendChild(delay)
+
+                # Add additional delay to allow for stage motion between positions.
+                if (j == 0) and (not first_movie):
+                    dist_x = mx - old_mx
+                    dist_y = my - old_my
+                    dist = math.sqrt(dist_x*dist_x + dist_y*dist_y)
+                    time = int(dist/stage_speed)
+                    if (hasattr(delay, "firstChild")):
+                        delay.firstChild.nodeValue = str(time + int(delay.firstChild.nodeValue))
+                    else:
+                        delay.item(0).firstChild.nodeValue = str(time + int(delay.item(0).firstChild.nodeValue))
 
                 # remove find_sum and recenter if this is the first movie
                 if first_movie:
@@ -126,6 +149,11 @@ def generateXML(descriptor_file, position_file, output_file, directory, parent):
                 # write the xml for this movie
                 writeSingleMovie(out_fp, temp)
                 out_fp.write(nl)
+
+            # record current stage position
+            old_mx = mx
+            old_my = my
+
             out_fp.write(nl)
         out_fp.write(nl)
         pass_number += 1
