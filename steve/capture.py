@@ -7,6 +7,7 @@
 # Hazen 12/09
 #
 
+import math
 import numpy
 import time
 
@@ -42,9 +43,13 @@ class Capture(QtCore.QObject):
     def __init__(self, parameters):
         QtCore.QObject.__init__(self)
         self.capturing = False
+        self.curr_x = 0.0
+        self.curr_y = 0.0
         self.dax = None
         self.directory = parameters.directory
         self.filename = parameters.image_filename
+        self.stage_speed = parameters.stage_speed
+
         self.pixmaps = deque() # In the future we might support queuing captures?
         
         self.tcp_client = halLib.tcpClient.TCPClient()
@@ -100,12 +105,26 @@ class Capture(QtCore.QObject):
     @hdebug.debug
     def captureStart(self, stagex, stagey):
         if not self.capturing and self.connected:
+
+            # set up for capture
             self.capturing = True
             self.movie = Movie(self.filename, stagex, stagey)
             self.tcp_client.sendMovieParameters(self.movie)
-            # depending on how far we could perhaps handle this more intelligently?
-            time.sleep(0.5)
+
+            # determine how long to wait, depending on stage speed.
+            dist_x = stagex - self.curr_x
+            dist_y = stagey - self.curr_y
+            dist = math.sqrt(dist_x*dist_x + dist_y*dist_y)
+            sleep_time = 0.001 * (dist/self.stage_speed) + 1.0
+            print sleep_time
+            time.sleep(sleep_time)
+
+            # take picture
             self.tcp_client.startMovie(self.movie)
+
+            # record current position
+            self.curr_x = stagex
+            self.curr_y = stagey
         else:
             print "Disconnected? Busy?"
 
