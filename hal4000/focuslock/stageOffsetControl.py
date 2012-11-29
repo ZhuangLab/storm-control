@@ -259,6 +259,9 @@ class motorStageQPDThread(stageQPDThread):
 #    that you would normally get from a QPD. It has the following 
 #    methods:
 #
+#   adjustCamera(dx, dy)
+#      Adjust the AOI of the camera.
+#
 #   getImage()
 #      Returns the current image from the USB camera as a numpy.uint8
 #      2D array.
@@ -286,6 +289,12 @@ class stageCamThread(stageQPDThread):
         self.cam_mutex = QtCore.QMutex()
 
     @hdebug.debug
+    def adjustCamera(self, dx, dy):
+        self.cam_mutex.lock()
+        self.cam.adjustAOI(dx, dy)
+        self.cam_mutex.unlock()
+
+    @hdebug.debug
     def getImage(self):
         self.cam_mutex.lock()
         data = self.cam_data
@@ -293,8 +302,8 @@ class stageCamThread(stageQPDThread):
         return data
 
     def qpdScan(self):
-        data = self.cam.qpdScan()
         self.cam_mutex.lock()
+        data = self.cam.qpdScan()
         self.cam_data = list(self.cam.getImage())
         self.cam_data[0] = self.cam_data[0].copy()
         self.cam_mutex.unlock()

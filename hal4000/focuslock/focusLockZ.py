@@ -558,6 +558,7 @@ class FocusLockZCam(FocusLockZ):
         status_y = self.ui.qpdFrame.height() - 4
         self.camDisplay = lockDisplayWidgets.QCamDisplay(parent = self.ui.qpdFrame)
         self.camDisplay.setGeometry(2, 2, status_x, status_y)
+        self.camDisplay.adjustCamera.connect(self.handleAdjustAOI)
 
         # timer for updating the display of snapshots captured by the camera.
         self.cam_timer = QtCore.QTimer()
@@ -581,6 +582,9 @@ class FocusLockZCam(FocusLockZ):
         if (power > 0):
             self.x_offset = x_offset/power
             self.y_offset = y_offset/power
+
+    def handleAdjustAOI(self, dx, dy):
+        self.control_thread.adjustCamera(dx, dy)
 
     # for debugging..
 #    def openOffsetFile(self, filename):

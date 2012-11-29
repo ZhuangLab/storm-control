@@ -9,6 +9,7 @@ import ctypes
 import ctypes.util
 import ctypes.wintypes
 import numpy
+import os
 from PIL import Image
 import scipy
 import scipy.optimize
@@ -168,6 +169,10 @@ class Camera(Handle):
         return self.info
 
     def setAOI(self, x_start, y_start, width, height):
+        # x and y start have to be multiples of 2.
+        x_start = int(x_start/2)*2
+        y_start = int(y_start/2)*2
+
         self.im_width = width
         self.im_height = height
         aoi_rect = AOIRect(x_start, y_start, width, height)
@@ -211,20 +216,23 @@ class Camera(Handle):
 # QPD emulation class
 class cameraQPD():
     def __init__(self, camera_id = 1):
+        self.file_name = "cam_offsets.txt"
         self.image = None
 
         # open camera
         self.cam = Camera(camera_id)
 
         # set camera AOI
-        self.x_start = 650
-        self.y_start = 210
+        if (os.path.exists(self.file_name)):
+            fp = open(self.file_name, "r")
+            [self.x_start, self.y_start] = map(int, fp.readline().split(","))
+            fp.close()
+        else:
+            self.x_start = 646
+            self.y_start = 218
         self.x_width = 200
         self.y_width = 200
-        self.cam.setAOI(self.x_start,
-                        self.y_start,
-                        self.x_width,
-                        self.y_width)
+        self.setAOI()
 
         # set camera to run as fast as possible
         self.cam.setFrameRate()
@@ -240,6 +248,19 @@ class cameraQPD():
         self.y_off1 = self.half_y
         self.x_off2 = self.half_x
         self.y_off2 = self.half_y
+
+    def adjustAOI(self, dx, dy):
+        self.x_start += dx
+        self.y_start += dy
+        if(self.x_start < 0):
+            self.x_start = 0
+        if(self.y_start < 0):
+            self.y_start = 0
+        if((self.x_start + self.x_width + 2) > self.cam.info.nMaxWidth):
+            self.x_start = self.cam.info.nMaxWidth - (self.x_width + 2)
+        if((self.y_start + self.y_width + 2) > self.cam.info.nMaxHeight):
+            self.y_start = self.cam.info.nMaxHeight - (self.y_width + 2)
+        self.setAOI()
 
     def capture(self):
         self.image = self.cam.captureImage()
@@ -277,7 +298,16 @@ class cameraQPD():
         else:
             return [0, 0, 0]
 
+    def setAOI(self):
+        self.cam.setAOI(self.x_start,
+                        self.y_start,
+                        self.x_width,
+                        self.y_width)
+
     def shutDown(self):
+        fp = open(self.file_name, "w")
+        fp.write(str(self.x_start) + "," + str(self.y_start))
+        fp.close()
         self.cam.shutDown()
 
     def singleQpdScan(self):

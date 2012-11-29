@@ -129,22 +129,41 @@ class QQPDDisplay(QStatusDisplay):
         self.y_value = self.convert(y)
         self.update()
 
-class QCamDisplay(QtGui.QWidget):
+class QCamDisplay(QtGui.QWidget):    
+    adjustCamera = QtCore.pyqtSignal(int, int)
+
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
+        self.adjust_mode = False
         self.background = QtGui.QColor(0,0,0)
-        self.display_circles = True
-        self.display_lines = False
+        self.e_size = 8
         self.foreground = QtGui.QColor(0,255,0)
         self.image = None
-        self.e_size = 8
+        self.live_check = 0
         self.x_off1 = 0
         self.y_off1 = 0
         self.x_off2 = 0
         self.y_off2 = 0
 
+        self.setFocusPolicy(QtCore.Qt.ClickFocus)
+
     def keyPressEvent(self, event):
-        print event.key()
+        if self.adjust_mode:
+            which_key = event.key()
+            # The minimun increment (at least for the
+            # Thorlabs USB camera) is two pixels.
+            if (which_key == QtCore.Qt.Key_Left):
+                self.adjustCamera.emit(2,0)
+            if (which_key == QtCore.Qt.Key_Right):
+                self.adjustCamera.emit(-2,0)
+            if (which_key == QtCore.Qt.Key_Up):
+                self.adjustCamera.emit(0,2)
+            if (which_key == QtCore.Qt.Key_Down):
+                self.adjustCamera.emit(0,-2)
+
+    def mousePressEvent(self, event):
+        self.adjust_mode = not self.adjust_mode
+        self.update()
 
     def newImage(self, data):
         # update image
@@ -161,6 +180,15 @@ class QCamDisplay(QtGui.QWidget):
         self.x_off2 = ((data[4]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size + 1
         self.y_off2 = ((data[3]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size + 1
 
+        # Update live check
+        #
+        # This is for debugging an issue where the 
+        # USB camera appears to freeze.
+        #
+        self.live_check += 255
+        if(self.live_check > 255):
+            self.live_check = 0
+
         self.update()
 
     def paintEvent(self, Event):
@@ -172,7 +200,7 @@ class QCamDisplay(QtGui.QWidget):
             painter.drawImage(destination_rect, self.image)
 
             # draw alignment lines
-            if self.display_lines:
+            if self.adjust_mode:
                 painter.setPen(QtGui.QColor(100,100,100))
                 painter.drawLine(0.0, 0.5*self.height(), self.width(), 0.5*self.height())
                 for mult in [0.25, 0.5, 0.75]:
@@ -180,11 +208,16 @@ class QCamDisplay(QtGui.QWidget):
 
 
             # draw beam tracking circle
-            if self.display_circles:
+            else:
                 painter.setRenderHint(QtGui.QPainter.Antialiasing)
                 painter.setPen(QtGui.QColor(0,255,0))
                 painter.drawEllipse(QtCore.QPointF(self.x_off1, self.y_off1), self.e_size, self.e_size)
                 painter.drawEllipse(QtCore.QPointF(self.x_off2, self.y_off2), self.e_size, self.e_size)
+
+            # display live check (for debugging)
+            painter.setPen(QtGui.QColor(self.live_check,0,0))
+            painter.drawRect(2,2,2,2)
+
         else:
             painter.setPen(self.background)
             painter.setBrush(self.background)
