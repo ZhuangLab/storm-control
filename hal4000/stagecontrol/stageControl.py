@@ -52,6 +52,9 @@
 # position()
 #   Returns [x, y, z] stage position (in um).
 #
+# setVelocity(vx, vy)
+#   Set maximum stage velocity in x and y (in mm/sec).
+#
 # shutDown()
 #   Cleanup prior to the program quitting.
 #
@@ -162,6 +165,8 @@ class StageControl(QtGui.QDialog):
             print "Failed to connect to the microscope stage. Perhaps it is turned off?"
             self.stage.shutDown()
             self.stage = 0
+        else:
+            self.stage.setVelocity(parameters.stage_speed, parameters.stage_speed)
         self.updatePosition()
         self.position_update_timer.start()
 

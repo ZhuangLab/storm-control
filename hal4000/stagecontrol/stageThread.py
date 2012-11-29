@@ -69,6 +69,11 @@ class QStageThread(QtCore.QThread):
             self.mutex.unlock()
             self.msleep(5)
 
+    def setVelocity(self, x_vel, y_vel):
+        self.mutex.lock()
+        self.stage.setVelocity(x_vel, y_vel)
+        self.mutex.unlock()
+
     def shutDown(self):
         self.running = 0
         self.wait()

@@ -91,6 +91,10 @@ class MarzhauserRS232(RS232.RS232):
         else:
             return "NA"
 
+    def setVelocity(self, x_vel, y_vel):
+        if self.live:
+            self.commWithResp("!vel " + str(x_vel) + " " + str(y_vel))
+
     def zero(self):
         if self.live:
             self.commWithResp("!pos 0 0 0")
