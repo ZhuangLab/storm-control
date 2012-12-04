@@ -500,6 +500,7 @@ class FocusLockZCam(FocusLockZ):
 
         self.control_thread = control_thread
         self.filename = ""
+        self.show_dot = False
         self.x_offset = 0
         self.y_offset = 0
 
@@ -578,10 +579,13 @@ class FocusLockZCam(FocusLockZ):
         self.zDisplay.updateValue(stage_z)
         self.ui.zText.setText("{0:.3f}um".format(stage_z))
 
-        # save offset values
+        # Save offset values
         if (power > 0):
             self.x_offset = x_offset/power
             self.y_offset = y_offset/power
+
+        # Change blinking value so that the red dot in the camera display blinks.
+        self.show_dot = not self.show_dot
 
     def handleAdjustAOI(self, dx, dy):
         self.control_thread.adjustCamera(dx, dy)
@@ -598,7 +602,7 @@ class FocusLockZCam(FocusLockZ):
 #                       self.control_thread.getImage()[0])
         
     def updateCamera(self):
-        self.camDisplay.newImage(self.control_thread.getImage())
+        self.camDisplay.newImage(self.control_thread.getImage(), self.show_dot)
 
     def quit(self):
         FocusLockZ.quit(self)

@@ -28,6 +28,7 @@ IS_SEQUENCE_CT = 2
 IS_SET_CM_Y8 = 6
 IS_SET_GAINBOOST_OFF = 0x0000
 IS_SUCCESS = 0
+IS_TRIGGER_TIMEOUT = 0
 IS_WAIT = 1
 
 class CameraInfo(ctypes.Structure):
@@ -121,7 +122,7 @@ class Camera(Handle):
 
         # Initialize camera.
         check(uc480.is_InitCamera(ctypes.byref(self), ctypes.wintypes.HWND(0)))
-        check(uc480.is_SetErrorReport(self, IS_ENABLE_ERR_REP))
+        #check(uc480.is_SetErrorReport(self, IS_ENABLE_ERR_REP))
 
         # Get some information about the camera.
         self.info = CameraProperties()
@@ -152,6 +153,9 @@ class Camera(Handle):
         check(uc480.is_FreezeVideo(self, IS_WAIT))
         return self.getImage()
 
+    def captureImageTest(self):
+        check(uc480.is_FreezeVideo(self, IS_WAIT))
+
     def getCameraStatus(self, status_code):
         return uc480.is_CameraStatus(self, status_code, IS_GET_STATUS)
 
@@ -167,6 +171,14 @@ class Camera(Handle):
 
     def getSensorInfo(self):
         return self.info
+
+    def getTimeout(self):
+        nMode = IS_TRIGGER_TIMEOUT
+        pTimeout = ctypes.c_int(1)
+        check(uc480.is_GetTimeout(self,
+                                  ctypes.c_int(nMode),
+                                  ctypes.byref(pTimeout)))
+        return pTimeout.value
 
     def setAOI(self, x_start, y_start, width, height):
         # x and y start have to be multiples of 2.
@@ -204,6 +216,12 @@ class Camera(Handle):
         if verbose:
             print "uc480: Set frame rate to", new_fps.value, "FPS"
 
+    def setTimeout(self, timeout):
+        nMode = IS_TRIGGER_TIMEOUT
+        check(uc480.is_SetTimeout(self,
+                                  ctypes.c_int(nMode),
+                                  ctypes.c_int(timeout)))
+
     def shutDown(self):
         check(uc480.is_ExitCamera(self))
 
@@ -219,10 +237,13 @@ class cameraQPD():
         self.file_name = "cam_offsets.txt"
         self.image = None
 
-        # open camera
+        # Open camera
         self.cam = Camera(camera_id)
 
-        # set camera AOI
+        # Set timeout
+        self.cam.setTimeout(1)
+
+        # Set camera AOI
         if (os.path.exists(self.file_name)):
             fp = open(self.file_name, "r")
             [self.x_start, self.y_start] = map(int, fp.readline().split(","))
@@ -234,15 +255,15 @@ class cameraQPD():
         self.y_width = 200
         self.setAOI()
 
-        # set camera to run as fast as possible
+        # Set camera to run as fast as possible
         self.cam.setFrameRate()
 
-        # some derived parameters
+        # Some derived parameters
         self.half_x = self.x_width/2
         self.half_y = self.y_width/2
         self.X = numpy.arange(self.y_width) - 0.5*float(self.y_width)
 
-        # other variables
+        # Other variables
         self.fit_size = 12
         self.x_off1 = self.half_x
         self.y_off1 = self.half_y
@@ -325,6 +346,9 @@ class cameraQPD():
             power = numpy.max(data)
 
             if (power < 25):
+                # This hack is because if you bombard the USB camera with 
+                # update requests too frequently it will freeze.
+                time.sleep(0.01) 
                 return [0, 0, 0]
 
             # fit first gaussian & subtract
@@ -349,15 +373,20 @@ class cameraQPD():
 
 # Testing
 if __name__ == "__main__":
-    cam = Camera(3)
+    cam = Camera(1)
     reps = 50
 
-    if 0:
+    if 1:
         cam.setAOI(772, 566, 200, 200)
         cam.setFrameRate(verbose = True)
-        image = cam.captureImage()
-        im = Image.fromarray(image)
-        im.save("temp.png")
+        for i in range(100):
+            print "start", i
+            for j in range(100):
+                image = cam.captureImage()
+            print " stop"
+
+        #im = Image.fromarray(image)
+        #im.save("temp.png")
 
     if 0:
         cam.startCapture()
@@ -376,7 +405,7 @@ if __name__ == "__main__":
             image = cam.captureImage()
         print "time:", time.time() - st
 
-    if 1:
+    if 0:
         for i in range(1):
             print i
             image = cam.captureImage()

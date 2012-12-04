@@ -290,9 +290,9 @@ class stageCamThread(stageQPDThread):
 
     @hdebug.debug
     def adjustCamera(self, dx, dy):
-        self.cam_mutex.lock()
+        self.qpd_mutex.lock()
         self.cam.adjustAOI(dx, dy)
-        self.cam_mutex.unlock()
+        self.qpd_mutex.unlock()
 
     @hdebug.debug
     def getImage(self):
@@ -302,8 +302,11 @@ class stageCamThread(stageQPDThread):
         return data
 
     def qpdScan(self):
-        self.cam_mutex.lock()
+        self.qpd_mutex.lock()
         data = self.cam.qpdScan()
+        self.qpd_mutex.unlock()
+
+        self.cam_mutex.lock()
         self.cam_data = list(self.cam.getImage())
         self.cam_data[0] = self.cam_data[0].copy()
         self.cam_mutex.unlock()

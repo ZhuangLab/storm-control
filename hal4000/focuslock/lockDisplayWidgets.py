@@ -139,7 +139,7 @@ class QCamDisplay(QtGui.QWidget):
         self.e_size = 8
         self.foreground = QtGui.QColor(0,255,0)
         self.image = None
-        self.live_check = 0
+        self.show_dot = False
         self.x_off1 = 0
         self.y_off1 = 0
         self.x_off2 = 0
@@ -165,8 +165,8 @@ class QCamDisplay(QtGui.QWidget):
         self.adjust_mode = not self.adjust_mode
         self.update()
 
-    def newImage(self, data):
-        # update image
+    def newImage(self, data, show_dot):
+        # Update image
         np_data = data[0]
         w, h = np_data.shape
         self.image = QtGui.QImage(np_data.data, w, h, QtGui.QImage.Format_Indexed8)
@@ -174,20 +174,14 @@ class QCamDisplay(QtGui.QWidget):
         for i in range(256):
             self.image.setColor(i, QtGui.QColor(i,i,i).rgb())
 
-        # update offsets
+        # Update offsets
         self.x_off1 = ((data[2]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size + 1
         self.y_off1 = ((data[1]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size + 1
         self.x_off2 = ((data[4]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size + 1
         self.y_off2 = ((data[3]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size + 1
 
-        # Update live check
-        #
-        # This is for debugging an issue where the 
-        # USB camera appears to freeze.
-        #
-        self.live_check += 255
-        if(self.live_check > 255):
-            self.live_check = 0
+        # Red dot in camera display
+        self.show_dot = show_dot
 
         self.update()
 
@@ -214,9 +208,10 @@ class QCamDisplay(QtGui.QWidget):
                 painter.drawEllipse(QtCore.QPointF(self.x_off1, self.y_off1), self.e_size, self.e_size)
                 painter.drawEllipse(QtCore.QPointF(self.x_off2, self.y_off2), self.e_size, self.e_size)
 
-            # display live check (for debugging)
-            painter.setPen(QtGui.QColor(self.live_check,0,0))
-            painter.drawRect(2,2,2,2)
+            # display red dot (or not)
+            if self.show_dot:
+                painter.setPen(QtGui.QColor(255,0,0))
+                painter.drawRect(2,2,2,2)
 
         else:
             painter.setPen(self.background)

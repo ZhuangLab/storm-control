@@ -350,7 +350,7 @@ class ProgressionControl(QtGui.QDialog):
 
     def newFrame(self, frame):
         if self.channels:
-            [active, increment] = self.channels.newFrame(frame.frame_number)
+            [active, increment] = self.channels.newFrame(frame.number)
             for i in range(len(active)):
                 if active[i]:
                     self.emit(QtCore.SIGNAL("progIncPower(int, float)"), 

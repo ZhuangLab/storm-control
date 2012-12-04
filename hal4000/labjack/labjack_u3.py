@@ -11,22 +11,34 @@ import time
 
 class PWM():
     def __init__(self):
-        self.device = u3.U3()
-        self.device.writeRegister(6004,0) # set FIO4 state to low.
-        self.device.configTimerClock(TimerClockBase = 5, TimerClockDivisor = 1)
+        self.live = True
+        try:
+            self.device = u3.U3()
+        except:
+            self.live = False
+        if not self.live:
+            print "Could not connect to Labjack, reset by unplugging / plugging the USB connection"
+        else:
+            self.device.writeRegister(6004,0) # set FIO4 state to low.
+            self.device.configTimerClock(TimerClockBase = 5, TimerClockDivisor = 1)
 
     def shutDown(self):
-        self.device.close()
+        if self.live:
+            self.device.close()
 
     def startPWM(self, duty_cycle):
-        temp = 65535 - 256*duty_cycle
-        self.device.configIO(NumberOfTimersEnabled = 1)
-        self.device.getFeedback(u3.Timer0Config(TimerMode = 1, Value = 65535))
-        self.device.getFeedback(u3.Timer0(Value = temp, UpdateReset = True))
+        if self.live:
+            temp = 65535 - 256*duty_cycle
+            self.device.configIO(NumberOfTimersEnabled = 1)
+            self.device.getFeedback(u3.Timer0Config(TimerMode = 1, Value = 65535))
+            self.device.getFeedback(u3.Timer0(Value = temp, UpdateReset = True))
+        else:
+            print "duty cycle:", duty_cycle
 
     def stopPWM(self):
-        self.device.getFeedback(u3.Timer0(Value = 65535, UpdateReset = True))
-        self.device.configIO(NumberOfTimersEnabled = 0)
+        if self.live:
+            #self.device.getFeedback(u3.Timer0(Value = 65535, UpdateReset = True))
+            self.device.configIO(NumberOfTimersEnabled = 0)
 
 #
 # Testing
@@ -35,9 +47,13 @@ class PWM():
 if __name__ == "__main__":
     dev = PWM()
     for i in range(10):
+        print i
         dev.startPWM(i)
         time.sleep(2)
+    print "stopping"
     dev.stopPWM()
+    time.sleep(5)
+    print "shutdown"
     dev.shutDown()
 
 
