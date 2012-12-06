@@ -8,10 +8,11 @@
 
 class Frame():
 
-    def __init__(self, data, number, type):
+    def __init__(self, data, frame_number, camera, master):
+        self.camera = camera
         self.data = data
-        self.number = number
-        self.type = type
+        self.master = master
+        self.number = frame_number
 
 #
 # The MIT License

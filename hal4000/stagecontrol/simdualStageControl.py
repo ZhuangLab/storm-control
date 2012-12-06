@@ -1,21 +1,59 @@
 #!/usr/bin/python
 #
-# qtCameraWidget specialized for data for no camera.
+# Pseudo stage control for the simulated dual-objective setup.
 #
-# Hazen 05/12
+# Hazen 12/12
 #
 
-import numpy
-from PyQt4 import QtCore, QtGui
-
-import camera.andorCameraWidget as andorCameraWidget
+# stage control dialog.
+import stagecontrol.stageControl as stageControl
 
 #
-# None Camera widget. This is the same as the Andor widget.
+# Dummy stage class
 #
-class ACameraWidget(andorCameraWidget.ACameraWidget):
+class Stage():
     def __init__(self, parent = None):
-        andorCameraWidget.ACameraWidget.__init__(self, parent)
+        self.x = 0.0
+        self.y = 0.0
+
+    def getStatus(self):
+        return True
+
+    def goAbsolute(self, x, y):
+        self.x = x
+        self.y = y
+
+    def goRelative(self, dx, dy):
+        self.x += dx
+        self.y += dy
+        
+    def lockout(self, flag):
+        pass
+
+    def position(self):
+        return [self.x, self.y, 0.0]
+
+    def setVelocity(self, vx, vy):
+        pass
+
+    def shutDown(self):
+        pass
+
+    def zero(self):
+        self.x = 0.0
+        self.y = 0.0
+
+#
+# Stage control dialog specialized for STORM3
+# with Prior motorized stage.
+#
+class AStageControl(stageControl.StageControl):
+    def __init__(self, parameters, tcp_control, parent = None):
+        self.stage = Stage()
+        stageControl.StageControl.__init__(self, 
+                                           parameters,
+                                           tcp_control,
+                                           parent)
 
 #
 # The MIT License

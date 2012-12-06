@@ -13,10 +13,9 @@ class Thum():
         self.last_sample_time = 0
         self.fp = 0
         self.data = 0
-        self.frame_number = 0
 
-    def newData(self):
-        if self.fp:
+    def newFrame(self, frame):
+        if self.fp and frame.master:
             current_time = time.time()
             if (current_time - self.last_sample_time) > 5.0:
                 self.last_sample_time = current_time
@@ -28,11 +27,9 @@ class Thum():
                 for datum in data:
                     self.data += str(datum) + ","
                 self.data = self.data[:-1]
-            self.fp.write(str(self.frame_number) + "," + self.data)
-            self.frame_number += 1
+            self.fp.write(str(frame.number+1) + "," + self.data)
 
     def startThum(self, filename):
-        self.frame_number = 1
         self.fp = open(filename + ".log", "w")
 
     def stopThum(self):

@@ -336,9 +336,10 @@ class FocusLockZ(QtGui.QDialog):
         self.offset_file.write("frame offset power stage-z\n")
 
     def newFrame(self, frame):
-        if self.offset_file:
-            self.offset_file.write("{0:d} {1:.6f} {2:.6f} {3:.6f}\n".format(frame.number, self.offset, self.power, self.stage_z))
-        self.current_mode.newFrame(frame, self.offset, self.power, self.stage_z)
+        if frame.master:
+            if self.offset_file:
+                self.offset_file.write("{0:d} {1:.6f} {2:.6f} {3:.6f}\n".format(frame.number, self.offset, self.power, self.stage_z))
+            self.current_mode.newFrame(frame, self.offset, self.power, self.stage_z)
 
     @hdebug.debug
     def newParameters(self, parameters):

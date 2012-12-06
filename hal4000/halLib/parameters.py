@@ -4,7 +4,7 @@
 # the resulting settings. Primarily designed for use
 # by the hal acquisition program.
 #
-# Hazen 12/09
+# Hazen 12/12
 #
 
 import copy
@@ -12,23 +12,102 @@ from xml.dom import minidom, Node
 
 default_params = 0
 
+def copyAttributes(original, duplicate):
+    for k, v in original.__dict__.iteritems():
+        if not hasattr(duplicate, k):
+            setattr(duplicate, k, copy.copy(v))
+
+def Parameters(parameters_file, is_HAL = False):
+    xml = minidom.parse(parameters_file)
+
+    # Read general settings
+    settings = xml.getElementsByTagName("settings").item(0)
+    xml_object = StormXMLObject(settings.childNodes)
+
+    # Read camera1/camera2 settings (only used with dual camera setups).
+    camera1 = xml.getElementsByTagName("camera1").item(0)
+    if camera1:
+        xml_object.camera1 = StormXMLObject(camera1.childNodes)
+
+    camera2 = xml.getElementsByTagName("camera2").item(0)
+    if camera2:
+        xml_object.camera2 = StormXMLObject(camera2.childNodes)
+
+    xml_object.parameters_file = parameters_file
+
+    if (is_HAL):
+        #
+        # Perform HAL acquisition program specific modifications
+        #
+        # Store as the default, if the default does not exist.
+        # If the default does exist, then fill in all the
+        # missing parameters with values from the default.
+        # This way only the default starting file has to have all
+        # the parameters.
+        #
+        use_as_default = 0
+        if hasattr(xml_object, "use_as_default"):
+            use_as_default = xml_object.use_as_default
+
+        global default_params
+        if default_params:
+            copyAttributes(default_params, xml_object)
+            if hasattr(xml_object, "camera1"):
+                copyAttributes(default_params.camera1, xml_object.camera1)
+                copyAttributes(default_params.camera2, xml_object.camera2)
+        
+        if use_as_default or (not default_params):
+            default_params = copy.deepcopy(xml_object)
+
+        # Define some camera specific derivative parameters
+        if hasattr(xml_object, "camera1"):
+            setCameraParameters(xml_object.camera1)
+            setCameraParameters(xml_object.camera2)
+            xml_object.exposure_value = 0
+            xml_object.accumulate_value = 0
+            xml_object.kinetic_value = 0
+        else:
+            setCameraParameters(xml_object)
+
+        # And a few random other things
+        xml_object.notes = ""
+        xml_object.extension = xml_object.extensions[0]
+
+        xml_object.parameters_file = parameters_file
+
+    return xml_object
+
+def setCameraParameters(camera):
+    camera.x_pixels = camera.x_end - camera.x_start + 1
+    camera.y_pixels = camera.y_end - camera.y_start + 1
+    camera.ROI = [camera.x_start, camera.x_end, camera.y_start, camera.y_end]
+    camera.binning = [camera.x_bin, camera.y_bin]
+
+    camera.exposure_value = 0
+    camera.accumulate_value = 0
+    camera.kinetic_value = 0
+    camera.bytesPerFrame = 2 * camera.x_pixels * camera.y_pixels/(camera.x_bin * camera.y_bin)
+    camera.actual_temperature = 0
+
 def setDefaultShutter(shutters_filename):
     global default_params
     if default_params:
         default_params.shutters = shutters_filename
 
-class Parameters:
-    # Dynamically create the class by processing the 
-    # parameters xml file.
-    def __init__(self, parameters_file):
+class StormXMLObject:
+
+    # Dynamically create class based on xml data
+    def __init__(self, nodes):
+
+        # FIXME: someday this is going to cause a problem..
         max_channels = 8
-        xml = minidom.parse(parameters_file)
-        settings = xml.getElementsByTagName("settings").item(0)
-        for node in settings.childNodes:
-            if node.nodeType == Node.ELEMENT_NODE:
+
+        for node in nodes:
+            if (node.nodeType == Node.ELEMENT_NODE):
+                slot = node.nodeName
+
                 # single parameter setting
                 if len(node.childNodes) == 1:
-                    slot = node.nodeName
                     # default power settings
                     if slot == "default_power":
                         if not hasattr(self, "default_power"):
@@ -74,51 +153,6 @@ class Parameters:
                             setattr(self, slot, value.split(","))
                         else: # everything else is assumed to be a string
                             setattr(self, slot, value)
-                # multiple parameter settings.
-                else:
-                    print "multi parameter setting unimplemented."
-#                    print node.nodeName, len(node.childNodes)
-
-        #
-        # Store as the default, if the default does not exist.
-        # If the default does exist, then fill in all the
-        # missing parameters with values from the default.
-        # This way only the default starting file has to have all
-        # the parameters.
-        #
-        use_as_default = 0
-        if hasattr(self, "use_as_default"):
-            use_as_default = self.use_as_default
-
-        global default_params
-        if default_params:
-            for k, v in default_params.__dict__.iteritems():
-                if not hasattr(self, k):
-                    setattr(self, k, copy.copy(v))
-        
-        if use_as_default or (not default_params):
-            default_params = copy.deepcopy(self)
-
-        #
-        # Acquisition program specific.
-        #
-        if hasattr(self, "x_start"):
-            # Define some other useful derivative parameters
-            self.x_pixels = self.x_end - self.x_start + 1
-            self.y_pixels = self.y_end - self.y_start + 1
-            self.ROI = [self.x_start, self.x_end, self.y_start, self.y_end]
-            self.binning = [self.x_bin, self.y_bin]
-
-            # And a few random other things
-            self.exposure_value = 0
-            self.accumulate_value = 0
-            self.kinetic_value = 0
-            self.bytesPerFrame = 2 * self.x_pixels * self.y_pixels/(self.x_bin * self.y_bin)
-            self.actual_temperature = 0
-            self.notes = ""
-            self.extension = self.extensions[0]
-
-        self.parameters_file = parameters_file
 
 
 #
@@ -126,10 +160,19 @@ class Parameters:
 # 
 
 if __name__ == "__main__":
-    test = Parameters("settings_test_1.xml")
-    print test.x_start, test.x_end, test.x_pixels, test.frames
+    import sys
+
+    test = Parameters(sys.argv[1], True)
+    if hasattr(test, "x_start"):
+        print test.x_start, test.x_end, test.x_pixels, test.frames
+    else:
+        print test.camera1.x_start, test.camera1.x_end
     print test.default_power, len(test.default_power)
     print test.power_buttons, len(test.power_buttons)
+#    print dir(test)
+#    for k,v in test.__dict__.iteritems():
+#        print k
+    
 
 #    test = Parameters("settings_test_2.xml")
 #    print test.x_start, test.x_end, test.x_pixels, test.frames
@@ -139,7 +182,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

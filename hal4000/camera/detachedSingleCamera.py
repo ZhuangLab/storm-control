@@ -22,7 +22,7 @@ import camera.cameraParams as cameraParams
 class DetachedSingleCamera(singleCamera.SingleCamera):
 
     @hdebug.debug
-    def __init__(self, parameters, camera_frame, camera_params_frame, parent = None):
+    def __init__(self, parameters, parent = None):
         singleCamera.SingleCamera.__init__(self, parameters, parent)
 
         self.ui = cameraDetachedUi.Ui_Dialog()

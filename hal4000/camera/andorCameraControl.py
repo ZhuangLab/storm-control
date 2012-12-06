@@ -187,7 +187,8 @@ class ACameraControl(cameraControl.CameraControl):
                         for aframe in frames:
                             frame_data.append(frame.Frame(aframe,
                                                           self.frame_number,
-                                                          self.type))
+                                                          self.type,
+                                                          True))
                             self.frame_number += 1
                         self.newData.emit(frame_data, self.key)
 

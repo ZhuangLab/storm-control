@@ -1,22 +1,30 @@
 #!/usr/bin/python
 #
-# qtCameraWidget specialized for data for no camera.
+# Simulated dual-objective shutter control.
 #
-# Hazen 05/12
+# Hazen 12/12
 #
 
-import numpy
-from PyQt4 import QtCore, QtGui
+import illumination.shutterControl as shutterControl
 
-import camera.andorCameraWidget as andorCameraWidget
+class AShutterControl(shutterControl.ShutterControl):
+    def __init__(self, powerToVoltage):
+        self.oversampling_default = 100
+        self.number_channels = 7
+        shutterControl.ShutterControl.__init__(self, powerToVoltage)
 
-#
-# None Camera widget. This is the same as the Andor widget.
-#
-class ACameraWidget(andorCameraWidget.ACameraWidget):
-    def __init__(self, parent = None):
-        andorCameraWidget.ACameraWidget.__init__(self, parent)
+    def cleanup(self):
+        pass
 
+    def setup(self, kinetic_cycle_time):
+        pass
+
+    def startFilm(self):
+        pass
+
+    def stopFilm(self):
+        pass
+        
 #
 # The MIT License
 #
@@ -40,3 +48,4 @@ class ACameraWidget(andorCameraWidget.ACameraWidget):
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+

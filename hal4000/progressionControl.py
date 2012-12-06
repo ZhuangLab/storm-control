@@ -349,7 +349,7 @@ class ProgressionControl(QtGui.QDialog):
         self.close()
 
     def newFrame(self, frame):
-        if self.channels:
+        if self.channels and frame.master:
             [active, increment] = self.channels.newFrame(frame.number)
             for i in range(len(active)):
                 if active[i]:

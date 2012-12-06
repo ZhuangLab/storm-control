@@ -1,21 +1,22 @@
 #!/usr/bin/python
 #
-# qtCameraWidget specialized for data for no camera.
+# Camera for the simulated dual camera setup.
 #
-# Hazen 05/12
+# Hazen 12/12
 #
 
-import numpy
-from PyQt4 import QtCore, QtGui
+import halLib.hdebug as hdebug
 
-import camera.andorCameraWidget as andorCameraWidget
+import camera.dualCamera as dualCamera
 
-#
-# None Camera widget. This is the same as the Andor widget.
-#
-class ACameraWidget(andorCameraWidget.ACameraWidget):
-    def __init__(self, parent = None):
-        andorCameraWidget.ACameraWidget.__init__(self, parent)
+def getMode():
+    return "dual"
+
+class ACamera(dualCamera.DualCamera):
+
+    @hdebug.debug
+    def __init__(self, parameters, parent = None):
+        dualCamera.DualCamera.__init__(self, parameters, parent)
 
 #
 # The MIT License
@@ -40,3 +41,4 @@ class ACameraWidget(andorCameraWidget.ACameraWidget):
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+

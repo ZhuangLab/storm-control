@@ -33,6 +33,9 @@ class Stage():
     def position(self):
         return [self.x, self.y, 0.0]
 
+    def setVelocity(self, vx, vy):
+        pass
+
     def shutDown(self):
         pass
 

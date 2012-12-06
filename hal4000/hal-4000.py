@@ -42,7 +42,7 @@
 #   Control of a motorized stage.
 #
 #
-# Hazen 11/12
+# Hazen 12/12
 #
 
 import os
@@ -129,12 +129,6 @@ class Window(QtGui.QMainWindow):
         self.ui = hal4000Ui.Ui_MainWindow()
         self.ui.setupUi(self)
         
-        # Insert additional menu items for the camera(s) as necessary
-        if (self.ui_mode == "detached"):
-            self.ui.actionCamera1 = QtGui.QAction(self.tr("Camera"), self)
-            self.ui.menuFile.insertAction(self.ui.actionFocus_Lock, self.ui.actionCamera1)
-            self.ui.actionCamera1.triggered.connect(self.handleCamera1)
-        
         self.setWindowTitle(self.parameters.setup_name)
 
         self.parameters_box = qtParametersBox.QParametersBox(self.ui.settingsScrollArea)
@@ -179,10 +173,23 @@ class Window(QtGui.QMainWindow):
         # Both detached and dual-modes have the proper separation of UI elements
         else:
             self.camera = the_camera.ACamera(parameters,
-                                             None,
-                                             None,
                                              parent = self)
 
+        # Insert additional menu items for the camera(s) as necessary
+        if (self.ui_mode == "detached"):
+            self.ui.actionCamera1 = QtGui.QAction(self.tr("Camera"), self)
+            self.ui.menuFile.insertAction(self.ui.actionFocus_Lock, self.ui.actionCamera1)
+            self.ui.actionCamera1.triggered.connect(self.camera.showCamera1)
+
+        if (self.ui_mode == "dual"):
+            self.ui.actionCamera1 = QtGui.QAction(self.tr("Camera1"), self)
+            self.ui.menuFile.insertAction(self.ui.actionFocus_Lock, self.ui.actionCamera1)
+            self.ui.actionCamera1.triggered.connect(self.camera.showCamera1)
+
+            self.ui.actionCamera2 = QtGui.QAction(self.tr("Camera2"), self)
+            self.ui.menuFile.insertAction(self.ui.actionFocus_Lock, self.ui.actionCamera2)
+            self.ui.actionCamera2.triggered.connect(self.camera.showCamera2)
+        
         # AOTF / DAQ illumination control
         self.shutter_control = False
         self.illumination_control = False
@@ -303,6 +310,10 @@ class Window(QtGui.QMainWindow):
 
         if (self.ui_mode == "detached"):
             self.gui_settings.append([self.camera, "camera1"])
+
+        if (self.ui_mode == "dual"):
+            self.gui_settings.append([self.camera.camera1, "camera1"])
+            self.gui_settings.append([self.camera.camera2, "camera2"])
 
         for [object, name] in self.gui_settings:
             if object:
@@ -500,14 +511,6 @@ class Window(QtGui.QMainWindow):
         self.parameters.auto_shutters = flag
 
     @hdebug.debug
-    def handleCamera1(self):
-        self.camera.showCamera1()
-
-    @hdebug.debug
-    def handleCamera2(self):
-        self.camera.showCamera2()
-
-    @hdebug.debug
     def handleFocusLock(self):
         if self.focus_lock:
             self.focus_lock.show()
@@ -608,7 +611,7 @@ class Window(QtGui.QMainWindow):
             if self.misc_control:
                 self.misc_control.newFrame(frame)
             if self.temperature_logger:
-                self.temperature_logger.newFrame()
+                self.temperature_logger.newFrame(frame)
 
     @hdebug.debug
     def newParameters(self):
@@ -694,7 +697,7 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def newSettings(self, parameters_filename):
         # parse parameters file
-        parameters = params.Parameters(parameters_filename)
+        parameters = params.Parameters(parameters_filename, is_HAL = True)
         self.parameters_box.addParameters(parameters)
 
     @hdebug.debug
@@ -703,7 +706,7 @@ class Window(QtGui.QMainWindow):
         parameters_filename = QtGui.QFileDialog.getOpenFileName(self, "New Settings", "", "*.xml")
         if parameters_filename:
             try:
-                params.Parameters(str(parameters_filename))
+                params.Parameters(str(parameters_filename), is_HAL = True)
                 self.newSettings(str(parameters_filename))
             except:
                 print "failed to parse settings file"
@@ -978,16 +981,17 @@ class Window(QtGui.QMainWindow):
             self.ui.filenameLabel.setStyleSheet("QLabel { color: black}")
 
     def updateFramesForFilm(self, frame):
-        if self.software_max_frames and (frame.number >= self.software_max_frames):
-            self.reachedMaxFrames.emit()
-        # The first frame is numbered zero so we need to adjust for that.
-        self.ui.framesText.setText("%d" % (frame.number+1))
-        if self.writer: # The flag for whether or not we are actually saving anything.
-            size = frame.number * self.parameters.bytesPerFrame * 0.000000953674
-            if size < 1000.0:
-                self.ui.sizeText.setText("%.1f MB" % size)
-            else:
-                self.ui.sizeText.setText("%.1f GB" % (size * 0.00097656))
+        if frame.master:
+            if self.software_max_frames and (frame.number >= self.software_max_frames):
+                self.reachedMaxFrames.emit()
+            # The first frame is numbered zero so we need to adjust for that.
+            self.ui.framesText.setText("%d" % (frame.number+1))
+            if self.writer: # The flag for whether or not we are actually saving anything.
+                size = frame.number * self.parameters.bytesPerFrame * 0.000000953674
+                if size < 1000.0:
+                    self.ui.sizeText.setText("%.1f MB" % size)
+                else:
+                    self.ui.sizeText.setText("%.1f GB" % (size * 0.00097656))
 
     @hdebug.debug
     def updateLength(self, length):
@@ -1012,7 +1016,7 @@ if __name__ == "__main__":
     else:
         parameters = params.Parameters("settings_default.xml")
     setup_name = parameters.setup_name
-    parameters = params.Parameters(setup_name + "_default.xml")    
+    parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
     parameters.setup_name = setup_name
     
     # Load app
@@ -1026,7 +1030,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

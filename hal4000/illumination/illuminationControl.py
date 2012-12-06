@@ -250,7 +250,7 @@ class IlluminationControl(QtGui.QDialog):
         self.power_control.manualControl()
 
     def newFrame(self, frame):
-        if self.fp:
+        if self.fp and frame.master:
             self.power_control.savePowers(self.fp, frame.number)
 
     @hdebug.debug

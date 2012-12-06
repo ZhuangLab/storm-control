@@ -18,14 +18,21 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         cameraControl.CameraControl.__init__(self, parameters, parent)
-        self.fake_frame = 0
+        self.camera1_fake_frame = 0
+        self.camera2_fake_frame = 0
         self.frames_to_take = 0
+        self.shutter1 = False
+        self.shutter2 = False
         self.sleep_time = 50
 
     @hdebug.debug
     def getAcquisitionTimings(self):
         time = 0.001 * float(self.sleep_time)
         return [time, time, time]
+
+    @hdebug.debug
+    def getTemperature(self, camera):
+        return [40, "unstable"]
 
     def initCamera(self):
         if not self.camera:
@@ -53,23 +60,43 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def newParameters(self, parameters):
         self.initCamera()
-        if (parameters.exposure_time > 0.010):
-            self.sleep_time = int(1000.0 * parameters.exposure_time)
+
+        # Run at the speed determined by camera 1
+        if (parameters.camera1.exposure_time > 0.010):
+            self.sleep_time = int(1000.0 * parameters.camera1.exposure_time)
         else:
             self.sleep_time = 10
-        size_x = parameters.x_pixels
-        size_y = parameters.y_pixels
-        self.fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
+
+        # Set acquisition timing values for camera1 and camera2
+        [parameters.camera1.exposure_value, parameters.camera1.accumulate_value, parameters.camera1.kinetic_value] = self.getAcquisitionTimings()
+        [parameters.camera2.exposure_value, parameters.camera2.accumulate_value, parameters.camera2.kinetic_value] = self.getAcquisitionTimings()
+
+        # Create fake image for camera 1
+        size_x = parameters.camera1.x_pixels
+        size_y = parameters.camera1.y_pixels
+        self.camera1_fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
         for i in range(size_x):
             for j in range(size_y):
-                self.fake_frame[i*2*size_y + j*2] = chr(i % 128 + j % 128)
+                self.camera1_fake_frame[i*2*size_y + j*2] = chr(i % 128 + j % 128)
+
+        # Create fake image for camera 2
+        size_x = parameters.camera2.x_pixels
+        size_y = parameters.camera2.y_pixels
+        self.camera2_fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
+        for i in range(size_x):
+            for j in range(size_y):
+                self.camera2_fake_frame[i*2*size_y + j*2] = chr(255 - (j % 128 + i % 128))
+
         self.newFilmSettings(parameters)
 
     def run(self):
         while(self.running):
             self.mutex.lock()
             if self.should_acquire and self.got_camera:
-                aframe = frame.Frame(self.fake_frame, self.frame_number, self.type, True)
+                aframe = frame.Frame(self.camera1_fake_frame, self.frame_number, "camera1", True)
+                self.newData.emit([aframe], self.key)
+
+                aframe = frame.Frame(self.camera2_fake_frame, self.frame_number, "camera2", False)
                 self.newData.emit([aframe], self.key)
 
                 if self.filming:
@@ -83,6 +110,19 @@ class ACameraControl(cameraControl.CameraControl):
                 self.frame_number += 1
             self.mutex.unlock()
             self.msleep(self.sleep_time)
+
+    @hdebug.debug
+    def setEMCCDGain(self, camera, gain):
+        pass
+
+    @hdebug.debug
+    def toggleShutter(self, camera):
+        if (camera == 1):
+            self.shutter1 = not self.shutter1
+            return self.shutter1
+        else:
+            self.shutter2 = not self.shutter2
+            return self.shutter2
 
 #
 # The MIT License

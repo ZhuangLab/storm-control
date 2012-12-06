@@ -11,15 +11,19 @@ import halLib.hdebug as hdebug
 import camera.detachedSingleCamera as detachedSingleCamera
 
 def getMode():
+#    return "single"
     return "detached"
 
 #class ACamera(classicSingleCamera.ClassicSingleCamera):
 class ACamera(detachedSingleCamera.DetachedSingleCamera):
 
+#    @hdebug.debug
+#    def __init__(self, parameters, camera_frame, camera_params_frame, parent = None):
+#        classicSingleCamera.ClassicSingleCamera.__init__(self, parameters, camera_frame, camera_params_frame, parent)
+
     @hdebug.debug
-    def __init__(self, parameters, camera_frame, camera_params_frame, parent = None):
-        #classicSingleCamera.ClassicSingleCamera.__init__(self, parameters, camera_frame, camera_params_frame, parent)
-        detachedSingleCamera.DetachedSingleCamera.__init__(self, parameters, camera_frame, camera_params_frame, parent)
+    def __init__(self, parameters, parent = None):
+        detachedSingleCamera.DetachedSingleCamera.__init__(self, parameters, parent)
 
 #
 # The MIT License
