@@ -83,8 +83,8 @@ class SingleCamera(genericCamera.Camera):
     def handleNewFrames(self, frames, key):
         if (key == self.key):
             for frame in frames:
-                if self.filming:
-                    if((frame.number % self.cycle_length) == self.parameters.sync):
+                if self.filming and self.parameters.sync:
+                    if((frame.number % self.cycle_length) == (self.parameters.sync-1)):
                         self.frame = frame
                 else:
                     self.frame = frame
