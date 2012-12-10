@@ -18,21 +18,25 @@ import qtWidgets.qtRangeSlider as qtRangeSlider
 import colorTables.colorTables as colorTables
 
 class CameraDisplay(QtGui.QFrame):
-    syncChange = QtCore.pyqtSignal(int)
 
     @hdebug.debug
-    def __init__(self, parameters, camera_display_ui, show_record_button = False, show_shutter_button = False, parent = None):
+    def __init__(self, parameters, camera_display_ui, which_camera, show_record_button = False, show_shutter_button = False, parent = None):
         QtGui.QFrame.__init__(self, parent)
 
         # general (alphabetically ordered)
         self.color_gradient = 0
         self.color_table = 0
         self.color_tables = colorTables.ColorTables("./colorTables/all_tables/")
+        self.cycle_length = 0
+        self.display_timer = QtCore.QTimer(self)
+        self.filming = False
+        self.frame = False
         self.max_intensity = parameters.max_intensity
         self.parameters = parameters
         self.show_grid = 0
         self.show_info = 1
         self.show_target = 0
+        self.which_camera = which_camera
 
         # ui setup
         self.ui = camera_display_ui
@@ -81,6 +85,11 @@ class CameraDisplay(QtGui.QFrame):
         self.ui.infoAct.triggered.connect(self.handleInfo)
         self.ui.targetAct.triggered.connect(self.handleTarget)
 
+        # Display timer
+        self.display_timer.setInterval(100)
+        self.display_timer.timeout.connect(self.displayFrame)
+        self.display_timer.start()
+
     #
     # All other methods alphabetically ordered, for lack of a better system
     #
@@ -108,8 +117,9 @@ class CameraDisplay(QtGui.QFrame):
         menu.addAction(self.ui.gridAct)
         menu.exec_(event.globalPos())
 
-    def displayFrame(self, frame):
-        self.camera_widget.updateImageWithData(frame)
+    def displayFrame(self):
+        if self.frame:
+            self.camera_widget.updateImageWithData(self.frame.data)
 
     def getShutterButton(self):
         return self.ui.cameraShutterButton
@@ -147,8 +157,9 @@ class CameraDisplay(QtGui.QFrame):
 
     @hdebug.debug
     def handleSync(self, frame):
+        self.parameters.sync = frame
         #self.emit(QtCore.SIGNAL("syncChange(int)"), frame)
-        self.syncChange.emit(frame)
+        #self.syncChange.emit(frame)
 
     @hdebug.debug
     def handleTarget(self):
@@ -159,6 +170,15 @@ class CameraDisplay(QtGui.QFrame):
             self.show_target = 1
             self.ui.targetAct.setText("Hide Target")
         self.camera_widget.setShowTarget(self.show_target)
+
+    def newFrames(self, frames):
+        for frame in frames:
+            if (frame.which_camera == self.which_camera):
+                if self.filming and self.parameters.sync:
+                    if((frame.number % self.cycle_length) == (self.parameters.sync-1)):
+                        self.frame = frame
+                else:
+                    self.frame = frame
 
     @hdebug.debug
     def newParameters(self, parameters):
@@ -207,15 +227,18 @@ class CameraDisplay(QtGui.QFrame):
 
     @hdebug.debug
     def setSyncMax(self, sync_max):
+        self.cycle_length = sync_max
         self.ui.syncSpinBox.setMaximum(sync_max)
 
     @hdebug.debug
     def startFilm(self):
+        self.filming = True
         self.ui.syncLabel.show()
         self.ui.syncSpinBox.show()
 
     @hdebug.debug
     def stopFilm(self):
+        self.filming = False
         self.ui.syncLabel.hide()
         self.ui.syncSpinBox.hide()
 

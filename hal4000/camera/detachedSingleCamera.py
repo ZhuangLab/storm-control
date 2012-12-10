@@ -32,6 +32,7 @@ class DetachedSingleCamera(singleCamera.SingleCamera):
         camera_display_ui = cameraDisplayUi.Ui_Frame()
         self.camera_display = cameraDisplay.CameraDisplay(parameters,
                                                           camera_display_ui,
+                                                          "camera1",
                                                           show_record_button = False,
                                                           show_shutter_button = True,
                                                           parent = self.ui.cameraFrame)
@@ -49,7 +50,6 @@ class DetachedSingleCamera(singleCamera.SingleCamera):
         self.ui.okButton.clicked.connect(self.handleOk)
 
         self.camera_display.ui.cameraShutterButton.clicked.connect(self.toggleShutter)
-        self.camera_display.syncChange.connect(self.handleSyncChange)
         self.camera_params.gainChange.connect(self.handleGainChange)
 
     @hdebug.debug

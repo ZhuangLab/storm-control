@@ -93,14 +93,21 @@ class ACameraControl(cameraControl.CameraControl):
         while(self.running):
             self.mutex.lock()
             if self.should_acquire and self.got_camera:
+
+                # Fake data from camera1
                 aframe = frame.Frame(self.camera1_fake_frame, self.frame_number, "camera1", True)
                 self.newData.emit([aframe], self.key)
 
+                if self.filming:
+                    self.daxfile.saveFrame(aframe)
+
+                # Fake data from camera2
                 aframe = frame.Frame(self.camera2_fake_frame, self.frame_number, "camera2", False)
                 self.newData.emit([aframe], self.key)
 
                 if self.filming:
-                    self.daxfile.saveFrame(self.fake_frame)
+                    self.daxfile.saveFrame(aframe)
+
 
                 if self.acq_mode == "fixed_length":
                     if (self.frame_number == (self.frames_to_take-1)):

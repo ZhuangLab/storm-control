@@ -6,7 +6,7 @@
 # is a generic class and should be specialized for control
 # of particular camera types.
 #
-# Hazen 11/09
+# Hazen 12/12
 #
 
 from PyQt4 import QtCore
@@ -52,7 +52,7 @@ class CameraControl(QtCore.QThread):
     newData = QtCore.pyqtSignal(object, int)
 
     @hdebug.debug
-    def __init__(self, parameters, type = "camera1", parent = None):
+    def __init__(self, parameters, parent = None):
         QtCore.QThread.__init__(self, parent)
 
         p = parameters
@@ -69,7 +69,6 @@ class CameraControl(QtCore.QThread):
         self.running = 1
         self.should_acquire = 0
         self.shutter = 0
-        self.type = type
 
         # camera initialization
         self.camera = 0
@@ -161,7 +160,7 @@ class CameraControl(QtCore.QThread):
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

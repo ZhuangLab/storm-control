@@ -31,9 +31,7 @@ class SingleCamera(genericCamera.Camera):
 
         # Class variables
         self.cycle_length = 1
-        self.display_timer = QtCore.QTimer(self)
         self.filming = False
-        self.frame = False
         self.key = 0
         self.parameters = parameters
 
@@ -46,16 +44,9 @@ class SingleCamera(genericCamera.Camera):
         self.camera_control.idleCamera.connect(self.handleIdleCamera)
         self.camera_control.newData.connect(self.handleNewFrames)
 
-        # Display timer
-        self.display_timer.setInterval(100)
-        self.display_timer.timeout.connect(self.displayFrame)
-
     @hdebug.debug
     def cameraInit(self):
         self.camera_control.cameraInit()
-
-    def displayFrame(self):
-        self.camera_display.updateImage(self.frame)
 
     @hdebug.debug
     def getCameraDisplay(self):
@@ -82,17 +73,8 @@ class SingleCamera(genericCamera.Camera):
 
     def handleNewFrames(self, frames, key):
         if (key == self.key):
-            for frame in frames:
-                if self.filming and self.parameters.sync:
-                    if((frame.number % self.cycle_length) == (self.parameters.sync-1)):
-                        self.frame = frame
-                else:
-                    self.frame = frame
+            self.camera_display.newFrames(frames)
             self.newFrames.emit(frames)
-
-    @hdebug.debug
-    def handleSyncChange(self, sync):
-        self.parameters.sync = sync
 
     @hdebug.debug
     def newParameters(self, parameters):
@@ -112,7 +94,6 @@ class SingleCamera(genericCamera.Camera):
         self.key += 1
         self.updateTemperature()
         self.camera_control.startCamera(self.key)
-        self.display_timer.start()
 
     @hdebug.debug
     def setSyncMax(self, sync_max):
@@ -127,7 +108,6 @@ class SingleCamera(genericCamera.Camera):
 
     @hdebug.debug
     def stopCamera(self):
-        self.display_timer.stop()
         self.updateTemperature()
 
     @hdebug.debug

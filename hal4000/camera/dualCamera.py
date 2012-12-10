@@ -25,7 +25,7 @@ import camera.cameraParams as cameraParams
 class CameraDialog(QtGui.QDialog):
     
     @hdebug.debug
-    def __init__(self, parameters, name, parent = None):
+    def __init__(self, parameters, name, which_camera, parent = None):
         QtGui.QDialog.__init__(self, parent)
 
         self.ui = cameraDetachedUi.Ui_Dialog()
@@ -35,6 +35,7 @@ class CameraDialog(QtGui.QDialog):
         camera_display_ui = cameraDisplayUi.Ui_Frame()
         self.camera_display = cameraDisplay.CameraDisplay(parameters,
                                                           camera_display_ui,
+                                                          which_camera,
                                                           show_record_button = False,
                                                           show_shutter_button = True,
                                                           parent = self.ui.cameraFrame)
@@ -73,7 +74,6 @@ class DualCamera(genericCamera.Camera):
 
         # Class variables
         self.cycle_length = 1
-        self.display_timer = QtCore.QTimer(self)
         self.filming = False
         self.frame_cam1 = False
         self.frame_cam2 = False
@@ -83,10 +83,12 @@ class DualCamera(genericCamera.Camera):
         # Setup UI
         self.camera1 = CameraDialog(parameters.camera1,
                                     parameters.setup_name + " Camera1",
+                                    "camera1",
                                     parent)
 
         self.camera2 = CameraDialog(parameters.camera1,
                                     parameters.setup_name + " Camera2",
+                                    "camera2",
                                     parent)
 
         # Setup camera control.
@@ -100,24 +102,14 @@ class DualCamera(genericCamera.Camera):
 
         # Connect ui elements.
         self.camera1.camera_display.ui.cameraShutterButton.clicked.connect(self.toggleShutterCamera1)
-        self.camera1.camera_display.syncChange.connect(self.handleSyncChangeCamera1)
         self.camera1.camera_params.gainChange.connect(self.handleGainChangeCamera1)
 
         self.camera2.camera_display.ui.cameraShutterButton.clicked.connect(self.toggleShutterCamera2)
-        self.camera2.camera_display.syncChange.connect(self.handleSyncChangeCamera2)
         self.camera2.camera_params.gainChange.connect(self.handleGainChangeCamera2)
-
-        # Setup display timer
-        self.display_timer.setInterval(100)
-        self.display_timer.timeout.connect(self.displayFrame)
 
     @hdebug.debug
     def cameraInit(self):
         self.camera_control.cameraInit()
-
-    def displayFrame(self):
-        self.camera1.camera_display.updateImage(self.frame_cam1)
-        self.camera2.camera_display.updateImage(self.frame_cam2)
 
     @hdebug.debug
     def handleGainChangeCamera1(self, gain):
@@ -139,28 +131,9 @@ class DualCamera(genericCamera.Camera):
 
     def handleNewFrames(self, frames, key):
         if (key == self.key):
-            for frame in frames:
-                if self.filming:
-                    if(frame.camera == "camera1"):
-                        if((frame.number % self.cycle_length) == self.parameters.camera1.sync):
-                            self.frame_cam1 = frame
-                    else:
-                        if((frame.number % self.cycle_length) == self.parameters.camera2.sync):
-                            self.frame_cam2 = frame
-                else:
-                    if(frame.camera == "camera1"):
-                        self.frame_cam1 = frame
-                    else:
-                        self.frame_cam2 = frame
+            self.camera1.camera_display.newFrames(frames)
+            self.camera2.camera_display.newFrames(frames)
             self.newFrames.emit(frames)
-
-    @hdebug.debug
-    def handleSyncChangeCamera1(self, sync):
-        self.parameters.camera1.sync = sync
-
-    @hdebug.debug
-    def handleSyncChangeCamera2(self, sync):
-        self.parameters.camera2.sync = sync
 
     @hdebug.debug
     def newParameters(self, parameters):
@@ -203,18 +176,16 @@ class DualCamera(genericCamera.Camera):
         self.key += 1
         self.updateTemperature()
         self.camera_control.startCamera(self.key)
-        self.display_timer.start()
 
     @hdebug.debug
-    def startFilm(self, writer1, writer2):
-        self.camera_control.startFilm(writer1, writer2)
+    def startFilm(self, writer):
+        self.camera_control.startFilm(writer)
         self.camera1.camera_display.startFilm()
         self.camera2.camera_display.startFilm()
         self.filming = True
 
     @hdebug.debug
     def stopCamera(self):
-        self.display_timer.stop()
         self.updateTemperature()
 
     @hdebug.debug

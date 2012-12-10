@@ -27,6 +27,7 @@ class ClassicSingleCamera(singleCamera.SingleCamera):
         camera_display_ui = cameraDisplayUi.Ui_Frame()
         self.camera_display = cameraDisplay.CameraDisplay(parameters,
                                                           camera_display_ui,
+                                                          "camera1",
                                                           show_record_button = True,
                                                           show_shutter_button = True,
                                                           parent = camera_frame)
@@ -37,7 +38,6 @@ class ClassicSingleCamera(singleCamera.SingleCamera):
             
         # Connect ui elements.
         self.camera_display.ui.cameraShutterButton.clicked.connect(self.toggleShutter)
-        self.camera_display.syncChange.connect(self.handleSyncChange)
         self.camera_params.gainChange.connect(self.handleGainChange)
 
 #

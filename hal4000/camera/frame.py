@@ -3,16 +3,21 @@
 # Class for storage of a single frame of camera data
 # and its meta-information.
 #
+# Note that the which_camera field is expected to be
+# one of the following:
+#   "camera1"
+#   "camera2"
+#
 # Hazen 11/12
 #
 
 class Frame():
 
-    def __init__(self, data, frame_number, camera, master):
-        self.camera = camera
+    def __init__(self, data, frame_number, which_camera, master):
         self.data = data
         self.master = master
         self.number = frame_number
+        self.which_camera = which_camera
 
 #
 # The MIT License

@@ -385,14 +385,14 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleCommStart(self):
         print "commStart"
-        self.ui.recordButton.hide()
+        self.ui.recordButton.setEnabled(False)
         if self.stage_control:
             self.stage_control.startLockout()
 
     @hdebug.debug
     def handleCommStop(self):
         print "commStop"
-        self.ui.recordButton.show()
+        self.ui.recordButton.setEnabled(True)
         if self.current_directory:
             self.newDirectory(self.current_directory)
             self.current_directory = False
@@ -792,9 +792,16 @@ class Window(QtGui.QMainWindow):
         # film file prep
         self.ui.recordButton.setText("Stop")
         if save_film:
-            self.writer = writers.createFileWriter(self.ui.filetypeComboBox.currentText(),
-                                                   self.filename,
-                                                   self.parameters)
+            if (self.ui_mode == "dual"):
+                self.writer = writers.createFileWriter(self.ui.filetypeComboBox.currentText(),
+                                                       self.filename,
+                                                       self.parameters,
+                                                       ["camera1", "camera2"])
+            else:
+                self.writer = writers.createFileWriter(self.ui.filetypeComboBox.currentText(),
+                                                       self.filename,
+                                                       self.parameters,
+                                                       ["camera1"])
             self.camera.startFilm(self.writer)
             self.ui.recordButton.setStyleSheet("QPushButton { color: red }")
         else:
@@ -987,7 +994,10 @@ class Window(QtGui.QMainWindow):
             # The first frame is numbered zero so we need to adjust for that.
             self.ui.framesText.setText("%d" % (frame.number+1))
             if self.writer: # The flag for whether or not we are actually saving anything.
-                size = frame.number * self.parameters.bytesPerFrame * 0.000000953674
+                if hasattr(self.parameters, "camera1"):
+                    size = frame.number * self.parameters.camera1.bytesPerFrame * 0.000000953674
+                else:
+                    size = frame.number * self.parameters.bytesPerFrame * 0.000000953674
                 if size < 1000.0:
                     self.ui.sizeText.setText("%.1f MB" % size)
                 else:
@@ -1012,12 +1022,14 @@ if __name__ == "__main__":
 
     # Load settings
     if len(sys.argv) > 1:
-        parameters = params.Parameters(sys.argv[1])
+        setup_name = sys.argv[1]
+        parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
+        parameters.setup_name = setup_name
     else:
         parameters = params.Parameters("settings_default.xml")
-    setup_name = parameters.setup_name
-    parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
-    parameters.setup_name = setup_name
+        setup_name = parameters.setup_name
+        parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
+        parameters.setup_name = setup_name
     
     # Load app
     window = Window(parameters)
