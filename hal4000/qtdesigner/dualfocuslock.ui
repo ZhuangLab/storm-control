@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>510</width>
+    <width>811</width>
     <height>310</height>
    </rect>
   </property>
@@ -18,13 +18,13 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>510</width>
+    <width>811</width>
     <height>310</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>510</width>
+    <width>811</width>
     <height>310</height>
    </size>
   </property>
@@ -36,7 +36,7 @@
     <rect>
      <x>10</x>
      <y>0</y>
-     <width>491</width>
+     <width>792</width>
      <height>271</height>
     </rect>
    </property>
@@ -239,10 +239,20 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="lockDisplayWidget" native="true">
+   <widget class="QWidget" name="lockDisplay1Widget" native="true">
     <property name="geometry">
      <rect>
       <x>193</x>
+      <y>20</y>
+      <width>298</width>
+      <height>249</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QWidget" name="lockDisplay2Widget" native="true">
+    <property name="geometry">
+     <rect>
+      <x>494</x>
       <y>20</y>
       <width>298</width>
       <height>249</height>
@@ -253,7 +263,7 @@
   <widget class="QPushButton" name="okButton">
    <property name="geometry">
     <rect>
-     <x>430</x>
+     <x>730</x>
      <y>280</y>
      <width>75</width>
      <height>24</height>

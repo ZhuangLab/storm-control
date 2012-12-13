@@ -14,7 +14,7 @@ if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     parameters = params.Parameters("settings_default.xml")
     setup_name = parameters.setup_name
-    parameters = params.Parameters(setup_name + "_default.xml")
+    parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
     parameters.setup_name = setup_name
     focuslock = __import__('focuslock.' + setup_name.lower() + 'FocusLockZ', globals(), locals(), [setup_name], -1)
     flock = focuslock.AFocusLockZ(parameters, None)

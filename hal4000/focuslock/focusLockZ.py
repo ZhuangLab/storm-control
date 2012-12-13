@@ -10,37 +10,10 @@
 # FocusLockZCam is specialized for displaying USB camera
 #    offset data.
 #
+# FocusLockZDualCam is specializef for displaying USB
+#    camera data from the dual objective setup.
 #
-#  Methods called by HAL:
-#
-#    getLockTarget()
-#      Returns the current lock target (in nm).
-#
-#    jump(offset)
-#      Change the focus by offset (in um).
-#
-#    newFrame(frame)
-#      Called when filming and a new image is available
-#      from the camera.
-#
-#    newParameters(parameters)
-#      Called when the parameters file has been changed.
-#
-#    show()
-#      Show the focus lock UI dialog box (if any).
-#
-#    startLock(filename)
-#      Called when the filming (recording) starts. "filename"
-#      can also be 0 meaning that we are taking a "test" film,
-#      ie we are not actually saving the data.
-#
-#    stopLock()
-#      Called when filming has ended.
-#
-#    quit()
-#      Clean up and shutdown prior to the program ending.
-#
-# Hazen 11/12
+# Hazen 12/12
 #
 
 import numpy
@@ -49,136 +22,53 @@ from PyQt4 import QtCore, QtGui
 # Debugging
 import halLib.hdebug as hdebug
 
-# UIs.
-import qtdesigner.focuslock_ui as focuslockUi
-
 # Widgets
-import focuslock.lockDisplayWidgets as lockDisplayWidgets
+import focuslock.lockDisplay as lockDisplay
 import focuslock.lockModes as lockModes
 
 #
-# Z Focus Lock Dialog Box
-# QPD / piezo Z Focus Lock Control Class
-#
-# This is the UI for focus lock based on some sort of 
-# Z positioner and a position readout of the lock target.
-# The interaction with the actual hardware occurs via
-# control_thread & ir_laser.
-#
-# The control_thread is a class with the following methods:
-#
-# cleanup()
-#    Perform any cleanup that needs to be done prior to quitting.
-#
-# getLockTarget()
-#    Returns the current lock target in QPD units.
-#
-# findSumSignal()
-#    Finds sum signal, if it is too low, otherwise does nothing.
-#
-# moveStageAbs(pos)
-#    Moves the stage to the position (in um) given by pos
-#
-# moveStageRel(size)
-#    Moves the stage relative to it current position by size um.
-#
-# newZCenter(center)
-#    Sets the position the stage returns when the lock stops (in um).
-#
-# recenter()
-#    Move the stage back to its center position.
-#
-# recenterPiezo()
-#    Center the piezo with the focus motor, if available.
-#
-# setStage(stage)
-#    Replace current stage control class with class instance stage.
-#
-# setTarget()
-#    Set the lock target in QPD units.
-#
-# start()
-#    Start any threads that are needed for the focus lock.
-#
-# startLock()
-#    Start the focus lock.
-#
-# stopLock()
-#    Stop the focus lock.
-#
-# stopThread()
-#    Stop any threads that are running in preparation for quitting.
-#
-# wait()
-#    Return once all running threads have stopped.
-#
-#
-# The control_thread class should emit the following signal when it has
-# new QPD/stage position data.
-#
-# controlUpdate(float x_offset, float y_offset, float power, float stage_z)
-#
-#
-# ir_laser is a class with the following methods:
-#
-# on(power)
-#   Turn on the IR laser. Power is a value from 1 to 100.
-#
-# off()
-#   Turn off the IR laser
+# The base class.
 #
 class FocusLockZ(QtGui.QDialog):
     @hdebug.debug
-    def __init__(self, parameters, tcp_control, control_thread, ir_laser, parent):
-        QtGui.QMainWindow.__init__(self, parent)
+    def __init__(self, parameters, tcp_control, parent):
+        QtGui.QDialog.__init__(self, parent)
         if parent:
             self.have_parent = True
         else:
             self.have_parent = False
 
         # general
-        self.ir_power = 0
-        self.offset = 0
         self.offset_file = 0
         self.parameters = parameters
-        self.power = 0
-        self.stage_z = 0
         self.tcp_control = tcp_control
 
-        # Lock modes
-        self.lock_modes = [lockModes.NoLockMode(control_thread,
-                                                parameters,
-                                                self),
-                           lockModes.AutoLockMode(control_thread,
-                                                  parameters,
-                                                  self),
-                           lockModes.AlwaysOnLockMode(control_thread,
-                                                      parameters,
-                                                      self),
-                           lockModes.OptimalLockMode(control_thread,
-                                                     parameters,
-                                                     self),
-                           lockModes.CalibrationLockMode(control_thread,
-                                                         parameters,
-                                                         self),
-                           lockModes.ZScanLockMode(control_thread,
-                                                   parameters,
-                                                   self)]
-        
-        self.current_mode = self.lock_modes[parameters.qpd_mode]
+    @hdebug.debug    
+    def closeEvent(self, event):
+        if self.have_parent:
+            event.ignore()
+            self.hide()
+        else:
+            self.quit()
+
+    @hdebug.debug
+    def closeOffsetFile(self):
+        if self.offset_file:
+            self.offset_file.close()
+            self.offset_file = 0
+
+    @hdebug.debug
+    def configureUI(self):
+        parameters = self.parameters
 
         # UI setup
-        self.ui = focuslockUi.Ui_Dialog()
-        self.ui.setupUi(self)
         self.setWindowTitle(parameters.setup_name + " Focus Lock")
         self.ui.lockLabel.setStyleSheet("QLabel { color: green }")
-        self.toggleLockButtonDisplay(self.current_mode.shouldDisplayLockButton())
-        self.toggleLockLabelDisplay(self.current_mode.shouldDisplayLockLabel())
-        if (not ir_laser.havePowerControl()):
-            self.ui.irSlider.hide()
+        self.toggleLockButtonDisplay(self.lock_display1.shouldDisplayLockButton())
+        self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())
 
         # The mode radio buttons, these should be in the
-        # same order as the lock modes above.
+        # same order as the lock modes in the lockDisplay class.
         self.buttons = [self.ui.offRadioButton,
                         self.ui.autoRadioButton,
                         self.ui.onRadioButton,
@@ -204,8 +94,6 @@ class FocusLockZ(QtGui.QDialog):
         self.ui.lockButton.clicked.connect(self.handleLockButton)
         self.ui.jumpSpinBox.valueChanged.connect(self.handleJumpSpinBox)
         self.ui.jumpButton.clicked.connect(self.handleJumpButton)
-        self.ui.irButton.clicked.connect(self.handleIrButton)
-        self.ui.irSlider.valueChanged.connect(self.handleIrSlider)
 
         # tcp signals
         if self.tcp_control:
@@ -216,79 +104,17 @@ class FocusLockZ(QtGui.QDialog):
         # set modeless
         self.setModal(False)
 
-        # start the qpd monitoring thread & stage control thread
-        self.control_thread = control_thread
-        self.control_thread.start(QtCore.QThread.NormalPriority)
-        self.control_thread.controlUpdate.connect(self.controlUpdate)
-        self.control_thread.foundSum.connect(self.foundSum)
-        self.control_thread.recenteredPiezo.connect(self.recenteredPiezo)
-
-        # connect to the ir laser & turn it off.
-        self.ir_laser = ir_laser
-        self.ir_state = True
-        self.handleIrButton()
-        if self.ir_laser.havePowerControl():
-            self.ui.irSlider.setValue(parameters.ir_power)
-
-        self.newParameters(parameters)
-
-    @hdebug.debug    
-    def closeEvent(self, event):
-        if self.have_parent:
-            event.ignore()
-            self.hide()
-        else:
-            self.quit()
-
-    @hdebug.debug
-    def closeOffsetFile(self):
-        if self.offset_file:
-            self.offset_file.close()
-            self.offset_file = 0
-
-    def controlUpdate(self, x_offset, y_offset, power, stage_z):
-        offset = 0
-        if (power > 10):
-            offset = x_offset / power
-        # These are saved so that they can be recorded when we are filming
-        self.offset = offset
-        self.power = power
-        self.stage_z = stage_z
-
-    @hdebug.debug
-    def foundSum(self):
-        self.tcp_control.sendComplete()
-            
     @hdebug.debug
     def getLockTarget(self):
-        target = self.control_thread.getLockTarget()
-        if target == None:
-            return "NA"
-        else:
-            return target * self.scale
+        return self.lock_display1.getLockTarget()
 
     @hdebug.debug
-    def handleIrButton(self):
-        if self.ir_state:
-            self.ir_laser.off()
-            self.ir_state = False
-            self.ui.irButton.setText("IR ON")
-            self.ui.irButton.setStyleSheet("QPushButton { color: green }")
-        else:
-            self.ir_laser.on(self.ir_power)
-            self.ir_state = True
-            self.ui.irButton.setText("IR OFF")
-            self.ui.irButton.setStyleSheet("QPushButton { color: red }")
-
-    def handleIrSlider(self, value):
-        self.ir_power = value
-        if self.ir_state:
-            self.ir_laser.off()
-            self.ir_laser.on(self.ir_power)
+    def handleFoundSum(self):
+        self.tcp_control.sendComplete()
 
     @hdebug.debug
     def handleJumpButton(self):
-        self.current_mode.handleJump(self.jumpsize)
+        self.lock_display1.jump(self.jumpsize)
 
     @hdebug.debug                    
     def handleJumpSpinBox(self, jumpsize):
@@ -296,9 +122,9 @@ class FocusLockZ(QtGui.QDialog):
 
     @hdebug.debug
     def handleLockButton(self):
-        self.current_mode.lockButtonToggle()
-        self.toggleLockButtonText(self.current_mode.amLocked())
-        self.toggleLockLabelDisplay(self.current_mode.shouldDisplayLockLabel())
+        self.lock_display1.lockButtonToggle()
+        self.toggleLockButtonText(self.lock_display1.amLocked())
+        self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())
 
     @hdebug.debug
     def handleOk(self):
@@ -308,27 +134,22 @@ class FocusLockZ(QtGui.QDialog):
     def handleRadioButtons(self):
         for i in range(len(self.buttons)):
             if self.buttons[i].isChecked():
-                if not (self.current_mode == self.lock_modes[i]):
-                    self.current_mode.stopLock()
-                    self.current_mode.reset()
-                    self.current_mode = self.lock_modes[i]
-                    self.toggleLockButtonDisplay(self.current_mode.shouldDisplayLockButton())
-                    self.toggleLockButtonText(self.current_mode.amLocked())
-                    self.toggleLockLabelDisplay(self.current_mode.shouldDisplayLockLabel())
+                if self.lock_display1.changeLockMode(i):
+                    self.toggleLockButtonDisplay(self.lock_display1.shouldDisplayLockButton())
+                    self.toggleLockButtonText(self.lock_display1.amLocked())
+                    self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())
+
+    @hdebug.debug
+    def handleRecenteredPiezo(self):
+        self.tcp_control.sendComplete()
 
     @hdebug.debug
     def handleQuit(self):
         self.close()
 
-    # This is for debugging, not for general use.
-#    def keyPressEvent(self, event):
-#        print event.key()
-#        if (event.key() == 83):
-#            self.control_thread.recenterPiezo()
-
     @hdebug.debug
     def jump(self, step_size):
-        self.current_mode.handleJump(step_size)
+        self.lock_display1.jump(step_size)
 
     @hdebug.debug
     def openOffsetFile(self, filename):
@@ -338,32 +159,20 @@ class FocusLockZ(QtGui.QDialog):
     def newFrame(self, frame):
         if frame.master:
             if self.offset_file:
-                self.offset_file.write("{0:d} {1:.6f} {2:.6f} {3:.6f}\n".format(frame.number, self.offset, self.power, self.stage_z))
-            self.current_mode.newFrame(frame, self.offset, self.power, self.stage_z)
+                [offset, power, stage_z] = self.lock_display1.getOffsetPowerStage()
+                self.offset_file.write("{0:d} {1:.6f} {2:.6f} {3:.6f}\n".format(frame.number, offset, power, stage_z))
+            self.lock_display1.newFrame(frame)
 
     @hdebug.debug
     def newParameters(self, parameters):
         self.parameters = parameters
-        p = parameters
-        for lock_mode in self.lock_modes:
-            lock_mode.newParameters(parameters)
-        self.control_thread.newZCenter(p.qpd_zcenter)
-        if not self.current_mode.amLocked():
-            self.control_thread.recenter()
-        self.scale = p.qpd_scale
+        self.lock_display1.newParameters(self.parameters)
 
     @hdebug.debug
     def quit(self):
-        self.control_thread.stopThread()
-        self.control_thread.wait()
-        self.control_thread.cleanUp()
+        self.lock_display1.quit()
         self.closeOffsetFile()
-        self.ir_laser.off()
-
-    @hdebug.debug
-    def recenteredPiezo(self):
-        self.tcp_control.sendComplete()
-
+        
     @hdebug.debug
     def startLock(self, filename):
         self.counter = 0
@@ -371,28 +180,28 @@ class FocusLockZ(QtGui.QDialog):
         self.error_counts = 0
         if filename:
             self.openOffsetFile(filename)
-        self.current_mode.startLock()
-        self.toggleLockButtonText(self.current_mode.amLocked())
-        self.toggleLockLabelDisplay(self.current_mode.shouldDisplayLockLabel())
+        self.lock_display1.startLock()
+        self.toggleLockButtonText(self.lock_display1.amLocked())
+        self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())
 
     @hdebug.debug
-    def stopLock(self, override = 0):
-        self.current_mode.stopLock()
-        self.toggleLockButtonText(self.current_mode.amLocked())
-        self.toggleLockLabelDisplay(self.current_mode.shouldDisplayLockLabel())
+    def stopLock(self):
+        self.lock_display1.stopLock()
+        self.toggleLockButtonText(self.lock_display1.amLocked())
+        self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())
         self.closeOffsetFile()
 
     @hdebug.debug
     def tcpHandleFindSum(self):
-        self.control_thread.findSumSignal()
+        self.lock_display1.tcpHandleFindSum()
 
     @hdebug.debug
     def tcpHandleRecenterPiezo(self):
-        self.control_thread.recenterPiezo()
+        self.lock_display1.tcpHandleRecenterPiezo()
 
     @hdebug.debug
     def tcpHandleSetLockTarget(self, target):
-        self.current_mode.setLockTarget(target/self.scale)
+        self.lock_display1.tcpHandleSetLockTarget(target)
 
     def toggleLockButtonDisplay(self, show):
         if show:
@@ -420,76 +229,23 @@ class FocusLockZ(QtGui.QDialog):
 class FocusLockZQPD(FocusLockZ):
     @hdebug.debug
     def __init__(self, parameters, tcp_control, control_thread, ir_laser, parent):
-        FocusLockZ.__init__(self, parameters, tcp_control, control_thread, ir_laser, parent)
+        FocusLockZ.__init__(self, parameters, tcp_control, parent)
 
-        #
-        # Setup lock display widgets used to display QPD style offset data.
-        #
+        # Setup UI.
+        import qtdesigner.focuslock_ui as focuslockUi
 
-        # offset display widget setup
-        # +-500nm display range hard coded (if qpd is properly calibrated).
-        self.offset_min = -500
-        self.offset_max = 500
-        status_x = self.ui.offsetFrame.width() - 4
-        status_y = self.ui.offsetFrame.height() - 4
-        self.offsetDisplay = lockDisplayWidgets.QOffsetDisplay(status_x,
-                                                               status_y,
-                                                               self.offset_min,
-                                                               self.offset_max,
-                                                               self.offset_min + 100,
-                                                               self.offset_max - 100,
-                                                               has_center_bar = 1,
-                                                               parent = self.ui.offsetFrame)
-        self.offsetDisplay.setGeometry(2, 2, status_x, status_y)
+        self.ui = focuslockUi.Ui_Dialog()
+        self.ui.setupUi(self)
 
-        # sum display widget setup
-        self.sum_min = 100
-        status_x = self.ui.sumFrame.width() - 4
-        status_y = self.ui.sumFrame.height() - 4
-        self.sumDisplay = lockDisplayWidgets.QSumDisplay(status_x,
-                                                         status_y,
-                                                         0,
-                                                         parameters.qpd_sum_max,
-                                                         self.sum_min,
-                                                         False,
-                                                         parent = self.ui.sumFrame)
-        self.sumDisplay.setGeometry(2, 2, status_x, status_y)
+        # Add QPD lock display.
+        self.lock_display1 = lockDisplay.LockDisplayQPD(parameters,
+                                                        control_thread, 
+                                                        ir_laser, 
+                                                        self.ui.lockDisplayWidget)
+        self.lock_display1.foundSum.connect(self.handleFoundSum)
+        self.lock_display1.recenteredPiezo.connect(self.handleRecenteredPiezo)
 
-        # stage display widget setup
-        stage_max = int(2.0 * parameters.qpd_zcenter)
-        status_x = self.ui.zFrame.width() - 4
-        status_y = self.ui.zFrame.height() - 4
-        self.zDisplay = lockDisplayWidgets.QOffsetDisplay(status_x,
-                                                          status_y,
-                                                          0,
-                                                          stage_max,
-                                                          int(0.1 * stage_max),
-                                                          int(0.9 * stage_max),
-                                                          parent = self.ui.zFrame)
-        self.zDisplay.setGeometry(2, 2, status_x, status_y)
-
-        # qpd
-        status_x = self.ui.qpdFrame.width() - 4
-        status_y = self.ui.qpdFrame.height() - 4
-        self.qpdDisplay = lockDisplayWidgets.QQPDDisplay(status_x,
-                                                         status_y,
-                                                         200,
-                                                         parent = self.ui.qpdFrame)
-        self.qpdDisplay.setGeometry(2, 2, status_x, status_y)
-
-    def controlUpdate(self, x_offset, y_offset, power, stage_z):
-        FocusLockZ.controlUpdate(self, x_offset, y_offset, power, stage_z)
-
-        # Update the various displays
-        self.offsetDisplay.updateValue(self.offset * self.scale)
-        self.ui.offsetText.setText("{0:.1f}".format(self.offset * self.scale))
-        self.sumDisplay.updateValue(power)
-        self.ui.sumText.setText("{0:.1f}".format(power))
-        self.qpdDisplay.updateValue(x_offset, y_offset)
-        self.ui.qpdXText.setText("x: {0:.1f}".format(x_offset))
-        self.ui.qpdYText.setText("y: {0:.1f}".format(y_offset))        
-        self.zDisplay.updateValue(stage_z)
-        self.ui.zText.setText("{0:.3f}um".format(stage_z))
+        FocusLockZ.configureUI(self)
 
 #
 # FocusLockZ specialized for camera style offset data.
@@ -497,117 +253,86 @@ class FocusLockZQPD(FocusLockZ):
 class FocusLockZCam(FocusLockZ):
     @hdebug.debug
     def __init__(self, parameters, tcp_control, control_thread, ir_laser, parent):
-        FocusLockZ.__init__(self, parameters, tcp_control, control_thread, ir_laser, parent)
+        FocusLockZ.__init__(self, parameters, tcp_control, parent)
 
-        self.control_thread = control_thread
-        self.filename = ""
-        self.show_dot = False
-        self.x_offset = 0
-        self.y_offset = 0
+        # Setup UI.
+        import qtdesigner.focuslock_ui as focuslockUi
 
-        self.ui.qpdLabel.setText("Camera")
-        self.ui.qpdXText.hide()
-        self.ui.qpdYText.hide()
+        self.ui = focuslockUi.Ui_Dialog()
+        self.ui.setupUi(self)
 
-        #
-        # Setup lock display widgets used to display camera style offset data.
-        #
+        # Add Camera lock display.
+        self.lock_display1 = lockDisplay.LockDisplayCam(parameters,
+                                                        control_thread, 
+                                                        ir_laser, 
+                                                        self.ui.lockDisplayWidget)
+        self.lock_display1.foundSum.connect(self.handleFoundSum)
+        self.lock_display1.recenteredPiezo.connect(self.handleRecenteredPiezo)
 
-        # offset display widget setup
-        # +-500nm display range hard coded (if qpd is properly calibrated).
-        self.offset_min = -500
-        self.offset_max = 500
-        status_x = self.ui.offsetFrame.width() - 4
-        status_y = self.ui.offsetFrame.height() - 4
-        self.offsetDisplay = lockDisplayWidgets.QOffsetDisplay(status_x,
-                                                               status_y,
-                                                               self.offset_min,
-                                                               self.offset_max,
-                                                               self.offset_min + 100,
-                                                               self.offset_max - 100,
-                                                               has_center_bar = 1,
-                                                               parent = self.ui.offsetFrame)
-        self.offsetDisplay.setGeometry(2, 2, status_x, status_y)
+        FocusLockZ.configureUI(self)
 
-        # sum display widget setup
-        self.sum_min = 50
-        status_x = self.ui.sumFrame.width() - 4
-        status_y = self.ui.sumFrame.height() - 4
-        self.sumDisplay = lockDisplayWidgets.QSumDisplay(status_x,
-                                                         status_y,
-                                                         0,
-                                                         parameters.qpd_sum_max,
-                                                         self.sum_min,
-                                                         255,
-                                                         parent = self.ui.sumFrame)
-        self.sumDisplay.setGeometry(2, 2, status_x, status_y)
-
-        # stage display widget setup
-        stage_max = int(2.0 * parameters.qpd_zcenter)
-        status_x = self.ui.zFrame.width() - 4
-        status_y = self.ui.zFrame.height() - 4
-        self.zDisplay = lockDisplayWidgets.QOffsetDisplay(status_x,
-                                                          status_y,
-                                                          0,
-                                                          stage_max,
-                                                          int(0.1 * stage_max),
-                                                          int(0.9 * stage_max),
-                                                          parent = self.ui.zFrame)
-        self.zDisplay.setGeometry(2, 2, status_x, status_y)
-
-        # camera display
-        status_x = self.ui.qpdFrame.width() - 4
-        status_y = self.ui.qpdFrame.height() - 4
-        self.camDisplay = lockDisplayWidgets.QCamDisplay(parent = self.ui.qpdFrame)
-        self.camDisplay.setGeometry(2, 2, status_x, status_y)
-        self.camDisplay.adjustCamera.connect(self.handleAdjustAOI)
-
-        # timer for updating the display of snapshots captured by the camera.
-        self.cam_timer = QtCore.QTimer()
-        self.cam_timer.setInterval(100)
-        self.cam_timer.start()
-
-        self.cam_timer.timeout.connect(self.updateCamera)
-
-    def controlUpdate(self, x_offset, y_offset, power, stage_z):
-        FocusLockZ.controlUpdate(self, x_offset, y_offset, power, stage_z)
-
-        # Update the various displays
-        self.offsetDisplay.updateValue(self.offset * self.scale)
-        self.ui.offsetText.setText("{0:.1f}".format(self.offset * self.scale))
-        self.sumDisplay.updateValue(power)
-        self.ui.sumText.setText("{0:.1f}".format(power))
-        self.zDisplay.updateValue(stage_z)
-        self.ui.zText.setText("{0:.3f}um".format(stage_z))
-
-        # Save offset values
-        if (power > 0):
-            self.x_offset = x_offset/power
-            self.y_offset = y_offset/power
-
-        # Change blinking value so that the red dot in the camera display blinks.
-        self.show_dot = not self.show_dot
-
-    def handleAdjustAOI(self, dx, dy):
-        self.control_thread.adjustCamera(dx, dy)
-
-    # for debugging..
-#    def openOffsetFile(self, filename):
-#        self.filename = filename
-#        FocusLockZ.openOffsetFile(self, filename)
 #
-#    def newFrame(self, frame):
-#        FocusLockZ.newFrame(self, frame)
-#        if self.offset_file:
-#            numpy.save(self.filename + "_" + str(self.frame_number) + ".npy",
-#                       self.control_thread.getImage()[0])
-        
-    def updateCamera(self):
-        self.camDisplay.newImage(self.control_thread.getImage(), self.show_dot)
+# FocusLockZ specialized for dual camera offset data.
+#
+class FocusLockZDualCam(FocusLockZ):
+    @hdebug.debug
+    def __init__(self, parameters, tcp_control, control_thread, ir_laser, parent):
+        FocusLockZ.__init__(self, parameters, tcp_control, parent)
 
+        # Setup UI.
+        import qtdesigner.dualfocuslock_ui as dualfocuslockUi
+
+        self.ui = dualfocuslockUi.Ui_Dialog()
+        self.ui.setupUi(self)
+
+        # Add Camera1 lock display.
+        self.lock_display1 = lockDisplay.LockDisplayCam(parameters,
+                                                        control_thread, 
+                                                        ir_laser, 
+                                                        self.ui.lockDisplay1Widget)
+        self.lock_display1.ui.statusBox.setTitle("Lock1 Status")
+        self.lock_display1.foundSum.connect(self.handleFoundSum)
+        self.lock_display1.recenteredPiezo.connect(self.handleRecenteredPiezo)
+
+        # Add Camera2 lock display.
+        self.lock_display2 = lockDisplay.LockDisplayCam(parameters,
+                                                        control_thread, 
+                                                        ir_laser, 
+                                                        self.ui.lockDisplay2Widget)
+        self.lock_display2.ui.statusBox.setTitle("Lock2 Status")
+
+        FocusLockZ.configureUI(self)
+
+    @hdebug.debug
+    def handleRadioButtons(self):
+        for i in range(len(self.buttons)):
+            if self.buttons[i].isChecked():
+                if self.lock_display1.changeLockMode(i):
+                    self.lock_display2.changeLockMode(i)
+                    self.toggleLockButtonDisplay(self.lock_display1.shouldDisplayLockButton())
+                    self.toggleLockButtonText(self.lock_display1.amLocked())
+                    self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())
+
+    @hdebug.debug
+    def jump(self, step_size):
+        self.lock_display1.jump(step_size)
+        self.lock_display2.jump(-step_size)
+
+    @hdebug.debug
     def quit(self):
-        FocusLockZ.quit(self)
-        self.cam_timer.stop()
+        self.lock_display1.quit()
+        self.lock_display2.quit()
+        self.closeOffsetFile()
+
+    @hdebug.debug
+    def startLock(self, filename):
+        FocusLockZ.startLock(self, filename)
+        self.lock_display2.startLock()
+
+    @hdebug.debug
+    def stopLock(self):
+        FocusLockZ.stopLock(self)
+        self.lock_display2.stopLock()
 
 #
 # The MIT License

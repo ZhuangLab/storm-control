@@ -12,7 +12,6 @@ import phreshPhotonics.phreshQPD as phreshQPD
 import prior.prior as prior
 
 # focus lock control thread.
-#import focuslock.stageQPDControl as stageQPDControl
 import focuslock.stageOffsetControl as stageOffsetControl
 
 # ir laser control

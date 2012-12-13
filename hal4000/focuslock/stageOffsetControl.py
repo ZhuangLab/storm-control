@@ -2,7 +2,65 @@
 #
 # Stage and offset detector thread classes
 #
-# Hazen 03/12
+# This is the hardware interface for a  focus lock based 
+# on some sort of Z positioner and a position readout of 
+# the lock target.
+#
+# The control_thread has the following methods:
+#
+# cleanup()
+#    Perform any cleanup that needs to be done prior to quitting.
+#
+# getLockTarget()
+#    Returns the current lock target in QPD units.
+#
+# findSumSignal()
+#    Finds sum signal, if it is too low, otherwise does nothing.
+#
+# moveStageAbs(pos)
+#    Moves the stage to the position (in um) given by pos
+#
+# moveStageRel(size)
+#    Moves the stage relative to it current position by size um.
+#
+# newZCenter(center)
+#    Sets the position the stage returns when the lock stops (in um).
+#
+# recenter()
+#    Move the stage back to its center position.
+#
+# recenterPiezo()
+#    Center the piezo with the focus motor, if available.
+#
+# setStage(stage)
+#    Replace current stage control class with class instance stage.
+#
+# setTarget()
+#    Set the lock target in QPD units.
+#
+# start()
+#    Start any threads that are needed for the focus lock.
+#
+# startLock()
+#    Start the focus lock.
+#
+# stopLock()
+#    Stop the focus lock.
+#
+# stopThread()
+#    Stop any threads that are running in preparation for quitting.
+#
+# wait()
+#    Return once all running threads have stopped.
+#
+#
+# The control_thread class should emit the following signal when it has
+# new QPD/stage position data.
+#
+# controlUpdate(float x_offset, float y_offset, float power, float stage_z)
+#
+#
+# Hazen 12/12
 #
 
 from PyQt4 import QtCore

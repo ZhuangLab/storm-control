@@ -14,7 +14,7 @@ if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     parameters = params.Parameters("settings_default.xml")
     setup_name = parameters.setup_name
-    parameters = params.Parameters(setup_name + "_default.xml")    
+    parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
     parameters.setup_name = setup_name
     illumination = __import__('illumination.' + setup_name.lower() + 'IlluminationControl', globals(), locals(), [setup_name], -1)
     illum = illumination.AIlluminationControl(parameters, None)
