@@ -194,36 +194,37 @@ class ACameraControl(cameraControl.CameraControl):
         while(self.running):
             self.mutex.lock()
             if self.should_acquire and self.got_camera:
+
+                # Get data from camera and create frame objects.
                 [frames, state] = self.camera.getImages16()
-                if (state == "acquiring"):
-                    if (len(frames) > 0):
-                        if self.filming:
-                            for aframe in frames:
-                                self.daxfile.saveFrame(aframe)
 
-                        frame_data = []
-                        for aframe in frames:
-                            frame_data.append(frame.Frame(aframe,
-                                                          self.frame_number,
-                                                          "camera1",
-                                                          True))
-                            self.frame_number += 1
-                        self.newData.emit(frame_data, self.key)
+                # Check if we got new frame data.
+                if (len(frames) > 0):
 
-                elif (state == "idle"):
-                    
-                    # Write any last frames to disk.
-                    # FIXME: Do we also need to emit these?
-                    if self.filming and len(frames) > 0:
-                        for aframe in frames:
+                    # Create frame objects.
+                    frame_data = []
+                    for raw_frame in frames:
+                        frame_data.append(frame.Frame(raw_frame,
+                                                      self.frame_number,
+                                                      "camera1",
+                                                      True))
+                        self.frame_number += 1
+
+                    # Save frames if we are filming.
+                    if self.filming:
+                        for aframe in frame_data:
                             self.daxfile.saveFrame(aframe)
 
+                    # Emit new data signal
+                    self.newData.emit(frame_data, self.key)
+
+                # Emit idle signal if the camera is idle.
+                if (state == "idle"):
                     # Signal that the camera is idle, but only once.
                     if not(self.forced_idle):
                         self.idleCamera.emit()
                         self.forced_idle = True
-                else:
-                    print " run " + state
+
             else:
                 self.have_paused = 1
             self.mutex.unlock()
