@@ -1,24 +1,22 @@
 #!/usr/bin/python
 #
-# Class for storage of a single frame of camera data
-# and its meta-information.
+# Camera for the none storm4pi setup.
 #
-# Note that the which_camera field is expected to be
-# one of the following:
-#   "camera1"
-#   "camera2"
-#
-# Hazen 11/12
+# Hazen 12/12
 #
 
-class Frame():
+import halLib.hdebug as hdebug
 
-    # FIXME: Are we consistent in the use of master vs. camera1?
-    def __init__(self, data, frame_number, which_camera, master):
-        self.data = data
-        self.master = master
-        self.number = frame_number
-        self.which_camera = which_camera
+import camera.classicSingleCamera as classicSingleCamera
+
+def getMode():
+    return "single"
+
+class ACamera(classicSingleCamera.ClassicSingleCamera):
+
+    @hdebug.debug
+    def __init__(self, parameters, camera_frame, camera_params_frame, parent = None):
+        classicSingleCamera.ClassicSingleCamera.__init__(self, parameters, camera_frame, camera_params_frame, parent)
 
 #
 # The MIT License

@@ -173,7 +173,6 @@ class SpotCounter(QtGui.QDialog):
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         QtGui.QMainWindow.__init__(self, parent)
-        self.debug = 1
         self.filming = 0
         self.filename = 0
         self.spots = 0
@@ -240,7 +239,6 @@ class SpotCounter(QtGui.QDialog):
     def newParameters(self, parameters, colors):
         if self.spot_counter:
             self.spot_counter.shutDown()
-        self.debug = parameters.debug
         self.parameters = parameters
 
         if self.spot_graph:

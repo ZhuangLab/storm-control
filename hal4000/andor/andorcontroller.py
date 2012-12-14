@@ -5,13 +5,15 @@
 #
 # Cameras are 1 indexed?
 #
-# Hazen 2/09
+# This can control more than one camera.
+#
+# Hazen 12/12
 #
 
 from ctypes import *
 import time
 
-# Andor constants & structures
+# Andor constants & structures.
 
 drv_acquiring = 20072
 drv_idle = 20073
@@ -38,51 +40,51 @@ class AndorCapabilities(Structure):
                 ("ulEMGainCapability", c_ulong),
                 ("ulFTReadModes", c_ulong)]
 
-
-# Handles loading the library (only once)
+# Handles loading the library (only once).
 
 andor = 0
 def loadAndorDLL(andor_dll):
     global andor
     if(andor == 0):
         andor = oledll.LoadLibrary(andor_dll)
-#        andor = oledll.LoadLibrary(andor_path + "ATMCD32D")
 
+def andorCheck(status, message):
+    assert status == drv_success, message + "failed with status = " + str(status)
 
-# helper functions
-def _getStatus_():
-    i_state = c_int()
-    status = andor.GetStatus(byref(i_state))
-    assert status == drv_success, "GetStatus failed: " + str(status)
-    return i_state.value
+# Dealing with multiple cameras.
+def getAvailableCameras():
+    number_cameras = c_long()
+    andorCheck(andor.GetAvailableCameras(byref(number_cameras)), "GetAvailableCameras")
+    return number_cameras.value
 
-def _abortIfAcquiring_():
-    state = _getStatus_()
-    if state == drv_acquiring :
-        status = andor.AbortAcquisition()
-        assert status == drv_success, "AbortAcquisition failed: " + str(status)
-    elif state != drv_idle and state != drv_tempcycle:
-        raise AssertionError, "Driver is a bad place?: " + str(state)
-    
+def getCameraHandles():
+    number_cameras = getAvailableCameras()
+    handles = []
+    temp = c_long()
+    for i in range(getAvailableCameras()):
+        andorCheck(andor.GetCameraHandle(i, byref(temp)), "GetCameraHandle")
+        handles.append(temp.value)
+    return handles
+
+current_handle = -1
+def setCurrentCamera(camera_handle):
+    global current_handle
+    if camera_handle:
+        if (current_handle != camera_handle):
+            current_handle = camera_handle
+            andorCheck(andor.SetCurrentCamera(camera_handle), "SetCurrentCamera")
 
 #
 # The camera control class.
 #
-
-instantiated = 0
 class AndorCamera:
-
-    # Class instance variables
-    
     #
     # Initializes the object by initializing the camera
     # then querying it to determine its various properties.
     #
-
-    def __init__(self, andor_dll):
-        # check that this class has not already been instantiated
-        global instantiated
-        assert instantiated == 0, "Attempt to instantiate two camera controller instances."
+    def __init__(self, andor_path, camera_handle):
+        print "AndorCamera handle:", camera_handle
+        self.camera_handle = camera_handle
 
         # general
         self.pixels = 0
@@ -90,17 +92,13 @@ class AndorCamera:
         # camera properties storage
         self._props_ = {}
 
-        # load the andor DLL library
-        loadAndorDLL(andor_dll)
-
         # initialize the camera
-        status = andor.Initialize(andor_dll + "Detector.ini")
-        assert status == drv_success, "Initialization failed: " + str(status)
+        setCurrentCamera(self.camera_handle)
+        andorCheck(andor.Initialize(andor_path + "Detector.ini"), "Initialize")
 
         # determine camera capabilities (useful??)
         caps = AndorCapabilities(sizeof(c_ulong)*12,0,0,0,0,0,0,0,0,0,0,0)
-        status = andor.GetCapabilities(byref(caps))
-        assert status == drv_success, "GetCapabilities failed: " + str(status)
+        andorCheck(andor.GetCapabilities(byref(caps)), "GetCapabilities")
         self._props_['AcqModes'] = caps.ulAcqModes
         self._props_['ReadModes'] = caps.ulReadModes
         self._props_['TriggerModes'] = caps.ulTriggerModes
@@ -116,15 +114,13 @@ class AndorCamera:
         # determine camera pixel size
         x_pixels = c_long()
         y_pixels = c_long()
-        status = andor.GetDetector(byref(x_pixels), byref(y_pixels))
-        assert status == drv_success, "GetDetector failed: " + str(status)
+        andorCheck(andor.GetDetector(byref(x_pixels), byref(y_pixels)), "GetDetector")
         self._props_['XPixels'] = x_pixels.value
         self._props_['YPixels'] = y_pixels.value
 
         # determine camera head model
         head_model = create_string_buffer(32)
-        status = andor.GetHeadModel(head_model)
-        assert status == drv_success, "GetHeadModel failed: " + str(status)
+        andorCheck(andor.GetHeadModel(head_model), "GetHeadModel")
         self._props_['HeadModel'] = head_model.value
 
         # determine hardware version
@@ -134,13 +130,13 @@ class AndorCamera:
         dummy2 = c_uint()
         camera_firmware_version = c_uint()
         camera_firmware_build = c_uint()
-        status = andor.GetHardwareVersion(byref(plug_in_card_version),
-                                          byref(flex_10k_file_version),
-                                          byref(dummy1),
-                                          byref(dummy2),
-                                          byref(camera_firmware_version),
-                                          byref(camera_firmware_build))
-        assert status == drv_success, "GetHardwareVersion failed: " + status
+        andorCheck(andor.GetHardwareVersion(byref(plug_in_card_version),
+                                            byref(flex_10k_file_version),
+                                            byref(dummy1),
+                                            byref(dummy2),
+                                            byref(camera_firmware_version),
+                                            byref(camera_firmware_build)),
+                   "GetHardwareVersion")
         self._props_["PlugInCardVersion"] = plug_in_card_version.value
         self._props_["Flex10kFileVersion"] = flex_10k_file_version.value
         self._props_["CameraFirmwareVersion"] = camera_firmware_version.value
@@ -148,61 +144,64 @@ class AndorCamera:
 
         # determine vertical shift speeds
         number = c_int()
-        status = andor.GetNumberVSSpeeds(byref(number))
-        assert status == drv_success, "GetNumberVSSpeeds failed: " + str(status)
+        andorCheck(andor.GetNumberVSSpeeds(byref(number)), "GetNumberVSSpeeds")
         self._props_["VSSpeeds"] = range(number.value)
         for i in range(number.value):
             index = c_int(i)
             speed = c_float()
-            status = andor.GetVSSpeed(index, byref(speed))
-            assert status == drv_success, "GetVSSpeed failed: " + str(status)
+            andorCheck(andor.GetVSSpeed(index, byref(speed)), "GetVSSpeed")
             self._props_["VSSpeeds"][i] = speed.value
 
         # determine horizontal shift speeds
-        status = andor.GetNumberADChannels(byref(number))
-        assert status == drv_success, "GetNumberADChannels failed: " + str(status)
+        andorCheck(andor.GetNumberADChannels(byref(number)), "GetNumberADChannels")
         self._props_["NumberADChannels"] = number.value
         self._props_["HSSpeeds"] = range(number.value)
         for i in range(number.value):
             channel = c_int(i)
-            status = andor.GetNumberHSSpeeds(channel, 0, byref(number))
-            assert status == drv_success, "GetNumberHSSpeeds failed: " + str(status)
+            andorCheck(andor.GetNumberHSSpeeds(channel, 0, byref(number)), "GetNumberHSSpeeds")
             self._props_["HSSpeeds"][i] = range(number.value)
             for j in range(number.value):
                 type = c_int(j)
                 speed = c_float()
-                status = andor.GetHSSpeed(channel, 0, type, byref(speed))
-                assert status == drv_success, "GetHSSpeed failed: " + str(status)
+                andorCheck(andor.GetHSSpeed(channel, 0, type, byref(speed)), "GetHSSpeed")
                 self._props_["HSSpeeds"][i][j] = speed.value
         
         # determine temperature range
         min_temp = c_int()
         max_temp = c_int()
-        status = andor.GetTemperatureRange(byref(min_temp), byref(max_temp))
-        assert status == drv_success, "GetTemperatureRange failed: " + str(status)
+        andorCheck(andor.GetTemperatureRange(byref(min_temp), byref(max_temp)), "GetTemperatureRange")
         self._props_["TemperatureRange"] = [min_temp.value, max_temp.value]
 
         # determine preamp gains available
         number = c_int()
-        status = andor.GetNumberPreAmpGains(byref(number))
-        assert status == drv_success, "GetNumberPreAmpGains failed: " + str(status)
+        andorCheck(andor.GetNumberPreAmpGains(byref(number)), "GetNumberPreAmpGains")
         self._props_["PreAmpGains"] = range(number.value)
         for i in range(number.value):
             index = c_int(i)
             gain = c_float()
-            status = andor.GetPreAmpGain(index, byref(gain))
-            assert status == drv_success, "GetPreAmpGain failed: " + str(status)
+            andorCheck(andor.GetPreAmpGain(index, byref(gain)), "GetPreAmpGain")
             self._props_["PreAmpGains"][i] = gain.value
 
         # determine EM gain range
         low = c_int()
         high = c_int()
-        status = andor.GetEMGainRange(byref(low), byref(high))
-        assert status == drv_success, "GetEMGainRange failed: " + str(status)
+        andorCheck(andor.GetEMGainRange(byref(low), byref(high)), "GetEMGainRange")
         self._props_["EMGainRange"] = [low.value, high.value]
 
-        instantiated = 1
+    #
+    # Helper functions.
+    #
+    def _getStatus_(self):
+        i_state = c_int()
+        andorCheck(andor.GetStatus(byref(i_state)), "GetStatus")
+        return i_state.value
 
+    def _abortIfAcquiring_(self):
+        state = self._getStatus_()
+        if state == drv_acquiring :
+            andorCheck(andor.AbortAcquisition(), "AbortAcquisition")
+        elif state != drv_idle and state != drv_tempcycle:
+            raise AssertionError, "Driver is in a bad place?: " + str(state)
 
     #
     # Camera property queries
@@ -235,15 +234,16 @@ class AndorCamera:
 
     # Cooler control
     def coolerOff(self):
-        status = andor.CoolerOFF()
-        assert status == drv_success, "CoolerOff failed: " + str(status)
+        setCurrentCamera(self.camera_handle)
+        andorCheck(andor.CoolerOFF(), "CoolerOff")
 
     def coolerOn(self):
-        status = andor.CoolerON()
-        assert status == drv_success, "CoolerOn failed: " + str(status)
+        setCurrentCamera(self.camera_handle)
+        andorCheck(andor.CoolerON(), "CoolerOn")
 
     # Return the current camera temperature
     def getTemperature(self):
+        setCurrentCamera(self.camera_handle)
         temperature = c_int()
         status = andor.GetTemperature(byref(temperature))
         if status == drv_temp_stabilized:
@@ -256,6 +256,7 @@ class AndorCamera:
 
     # Loops until the camera stabilizes at the desired temperature
     def goToTemperature(self, temperature):
+        setCurrentCamera(self.camera_handle)
         self.setTemperature(temperature)
         status = self.getTemperature()
         while status[1] == "unstable":
@@ -264,6 +265,7 @@ class AndorCamera:
 
     # Set the camera temperature
     def setTemperature(self, temperature):
+        setCurrentCamera(self.camera_handle)
         self.coolerOn()
         [t_min, t_max] = self._props_["TemperatureRange"]
         if temperature < t_min:
@@ -273,9 +275,7 @@ class AndorCamera:
             print "setTemperature: Temperature is too high (" + str(temperature) + " > " + str(t_max)
             temperature = t_max
         i_temp = c_int(temperature)
-        status = andor.SetTemperature(i_temp)
-        assert status == drv_success, "SetTemperature failed: " + status
-            
+        andorCheck(andor.SetTemperature(i_temp), "SetTemperature")
 
     #
     # Shutter Control
@@ -284,13 +284,15 @@ class AndorCamera:
     #
 
     def openShutter(self):
-        _abortIfAcquiring_()
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
         status = andor.SetShutter(0, 1, 0, 0)
         if status != drv_success:
             print "SetShutter (open) failed: ", status
 
     def closeShutter(self):
-        _abortIfAcquiring_()
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
         status = andor.SetShutter(0, 2, 0, 0)
         if status != drv_success:
             print "SetShutter (closed) failed: ", status
@@ -304,12 +306,13 @@ class AndorCamera:
 
     # Get the acquisition timings.
     def getAcquisitionTimings(self):
-        _abortIfAcquiring_()
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
         exposure = c_float()
         accumulate = c_float()
         kinetic = c_float()
-        status = andor.GetAcquisitionTimings(byref(exposure), byref(accumulate), byref(kinetic))
-        assert status == drv_success, "getAquisitionTimings failed: " + str(status)
+        andorCheck(andor.GetAcquisitionTimings(byref(exposure), byref(accumulate), byref(kinetic)),
+                   "GetAcqisitionTimings")
         return [exposure.value, accumulate.value, kinetic.value]
 
     # Get the current camera setup.
@@ -331,87 +334,81 @@ class AndorCamera:
     # returns the acquisition timing.
     # mode is one of "single_frame", "multiple_frame" or "free_running"    
     def setACQMode(self, mode, number_frames = "undef"):
-        _abortIfAcquiring_()
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
         if mode == "single_frame":
-            status = andor.SetAcquisitionMode(1)
-            assert status == drv_success, "SetAcquisitionMode failed: " + str(status)
+            andorCheck(andor.SetAcquisitionMode(1), "SetAcquisitionMOde")
         elif mode == "fixed_length":
-            status = andor.SetAcquisitionMode(3)
-            assert status == drv_success, "SetAcquisitionMode failed: " + str(status)
-            status = andor.SetNumberAccumulations(1)
-            assert status == drv_success, "SetNumberAccumulations failed: " + str(status)
-            status = andor.SetAccumulationCycleTime(0)
-            assert status == drv_success, "SetAccumulationCycleTime failed: " + str(status)
+            andorCheck(andor.SetAcquisitionMode(3), "SetAcquisitionMode")
+            andorCheck(andor.SetNumberAccumulations(1), "SetNumberAccumulations")
+            andorCheck(andor.SetAccumulationCycleTime(0), "SetAccumulationCycleTime")
+            andorCheck(andor.SetNumberKinetics(c_int(number_frames)), "SetNumberKinetics")
         elif mode == "run_till_abort":
-            status = andor.SetAcquisitionMode(5)
-            assert status == drv_success, "SetAcquisitionMode failed: " + str(status)
+            andorCheck(andor.SetAcquisitionMode(5), "SetAcquisitionMode")
         else:
             print "Unknown mode: " + mode
             return
-        if mode == "fixed_length":
-            status = andor.SetNumberKinetics(c_int(number_frames))
-            assert status == drv_success, "SetNumberKinetics failed: " + str(status)
         self.acqmode = mode
 
     # ADChannel.
     def setADChannel(self, channel):
+        setCurrentCamera(self.camera_handle)
         if (channel >= 0) and (channel < self._props_["NumberADChannels"]):
-            _abortIfAcquiring_()
-            status = andor.SetADChannel(c_int(channel))
-            assert status == drv_success, "SetADChannel failed: " + str(status)
-            status = andor.SetOutputAmplifier(c_int(channel))
-            assert status == drv_success, "SetOutputAmplifier failed: " + str(status)
+            self._abortIfAcquiring_()
+            andorCheck(andor.SetADChannel(c_int(channel)), "SetADChannel")
+            andorCheck(andor.SetOutputAmplifier(c_int(channel)), "SetOutputAmplifier")
             self.adchannel = channel
         else:
             print "Invalid channel: ", channel
 
     # Baseline clamp.
     def setBaselineClamp(self, active):
+        setCurrentCamera(self.camera_handle)
         if active:
             active = 1
         else:
             active = 0
-        status = andor.SetBaselineClamp(c_int(active))
-        assert status == drv_success, "SetBaselineClamp failed: " + str(status)
+        andorCheck(andor.SetBaselineClamp(c_int(active)), "SetBaselineClamp")
 
     # EM gain.
     def setEMCCDGain(self, gain):
-        _abortIfAcquiring_()
-        status = andor.SetEMCCDGain(gain)
-        assert status == drv_success, "SetEMCCDGain failed: " + str(status)
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        andorCheck(andor.SetEMCCDGain(gain), "SetEMCCDGain")
 
     # EM gain mode.
     def setEMGainMode(self, mode):
-        _abortIfAcquiring_()
-        status = andor.SetEMGainMode(c_int(mode))
-        assert status == drv_success, "SetEMGainMode failed: " + str(status)
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        andorCheck(andor.SetEMGainMode(c_int(mode)), "SetEMGainMode")
 
     # Exposure time.
     def setExposureTime(self, exposure_time):
-        _abortIfAcquiring_()
-        status = andor.SetExposureTime(c_float(exposure_time))
-        assert status == drv_success, "SetExposureTime failed: " + str(status)
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        andorCheck(andor.SetExposureTime(c_float(exposure_time)), "SetExposureTime")
         self.exposure_time = exposure_time
 
     # Set the fan mode
     # 0 = full, 1 = low, 2 = off
     def setFanMode(self, mode):
-        _abortIfAcquiring_()
-        status = andor.SetFanMode(c_int(mode))
-        assert status == drv_success, "SetFanMode failed: " + str(status)
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        andorCheck(andor.SetFanMode(c_int(mode)), "SetFanMode")
 
     # Set frame transfer mode
     # 0 is off, 1 is on
     def setFrameTransferMode(self, mode):
-        _abortIfAcquiring_()
-        status = andor.SetFrameTransferMode(c_int(mode))
-        assert status == drv_success, "SetFrameTransferMode failed: " + str(status)
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        andorCheck(andor.SetFrameTransferMode(c_int(mode)), "SetFrameTransferMode")
         self.frame_transfer_mode = mode
 
     # Horizontal shift speed.
     # This will choose the nearest HSSpeed to the requested hsspeed.
     def setHSSpeed(self, hsspeed):
-        _abortIfAcquiring_()
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
         if not hasattr(self, "adchannel"):
             self.adchannel = 0
         speeds = self._props_["HSSpeeds"][self.adchannel]
@@ -422,23 +419,22 @@ class AndorCamera:
             if cur < best:
                 best = cur
                 index = i
-#        print "HS", speeds, index
-        status = andor.SetHSSpeed(0, c_int(index))
-        assert status == drv_success, "SetHHSpeed failed: " + str(status)
+        andorCheck(andor.SetHSSpeed(0, c_int(index)), "SetHSSpeed")
         self.hsspeed = speeds[index]
 
     # Set the kinetic cycle time.
     # This is the time between frames.
     def setKineticCycleTime(self, kinetic_time):
-        _abortIfAcquiring_()
-        status = andor.SetKineticCycleTime(c_float(kinetic_time))
-        assert status == drv_success, "SetKineticCyleTime failed: " + str(status)
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        andorCheck(andor.SetKineticCycleTime(c_float(kinetic_time)), "SetKineticCycleTime")
         self.kinetic_cycle_time = kinetic_time
 
     # Set the preamp gain.
     # This will choose the nearest available gain to the requested gain.
     def setPreAmpGain(self, gain):
-        _abortIfAcquiring_()
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
         gains = self._props_["PreAmpGains"]
         index = 0
         best = abs(gain - gains[index])
@@ -447,16 +443,14 @@ class AndorCamera:
             if cur < best:
                 best = cur
                 index = i
-#        print "sPAG", index
-        status = andor.SetPreAmpGain(c_int(index))
-        assert status == drv_success, "SetPreAmpGain failed: " + str(status)
+        andorCheck(andor.SetPreAmpGain(c_int(index)), "SetPreAmpGain")
         
     # Set the read mode.
     # mode is a integer 0-4, with meaning as specfied in the andor documentation
     def setReadMode(self, mode):
-        _abortIfAcquiring_()
-        status = andor.SetReadMode(c_int(mode))
-        assert status == drv_success, "SetReadMode failed: " + str(status)
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        andorCheck(andor.SetReadMode(c_int(mode)), "SetReadMode")
 
     # ROI and Binning.
     # binning is [bx, by] where bx > 0, by > 0
@@ -470,42 +464,41 @@ class AndorCamera:
             raise AssertionError, "Invalid x range: " + str(ROI[0]) + "," + str(ROI[1])
         if (ROI[2] > ROI[3]) or (ROI[2] >= y_pixels) or (ROI[3] > y_pixels):
             raise AssertionError, "Invalid y range: " + str(ROI[2]) + "," +str(ROI[3])
-        _abortIfAcquiring_()
-        status = andor.SetImage(c_int(binning[0]), c_int(binning[1]),
-                                c_int(ROI[0]), c_int(ROI[1]), c_int(ROI[2]), c_int(ROI[3]))
-        assert status == drv_success, "SetImage failed: " + str(status)
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        andorCheck(andor.SetImage(c_int(binning[0]), c_int(binning[1]),
+                                  c_int(ROI[0]), c_int(ROI[1]), c_int(ROI[2]), c_int(ROI[3])),
+                   "SetImage")
         self.ROI = ROI
         self.binning = binning
         self.pixels = (self.ROI[1] - self.ROI[0] + 1) * (self.ROI[3] - self.ROI[2] + 1) / (self.binning[0] * self.binning[1])
 
     # Set the trigger mode.
     def setTriggerMode(self, mode):
-        _abortIfAcquiring_()
-        status = andor.SetTriggerMode(c_int(mode))
-        assert status == drv_success, "SetTriggerMode failed: " + str(status)
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        andorCheck(andor.SetTriggerMode(c_int(mode)), "SetTriggerMode")
 
     # Vertical clock voltage.
     def setVSAmplitude(self, amplitude):
-        _abortIfAcquiring_()
-        status = andor.SetVSAmplitude(c_int(amplitude))
-        assert status == drv_success, "SetVSAmplitude failed: " + str(status)
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        andorCheck(andor.SetVSAmplitude(c_int(amplitude)), "SetVSAmplitude")
 
     # Vertical shift speed.
     # This will choose the nearest VSSpeed to the requested vsspeed.
     def setVSSpeed(self, vsspeed):
-        _abortIfAcquiring_()
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
         speeds = self._props_["VSSpeeds"]
         index = 0
         best = abs(vsspeed - speeds[index])
         for i in range(len(speeds)):
             cur = abs(vsspeed - speeds[i])
-#            print best, cur, i
             if cur < best:
                 best = cur
                 index = i
-        status = andor.SetVSSpeed(c_int(index))
-#        print "VS", speeds, index
-        assert status == drv_success, "SetVSSpeed failed: " + str(status)
+        andorCheck(andor.SetVSSpeed(c_int(index)), "SetVSSpeed")
         self.vsspeed = speeds[index]
 
         
@@ -515,12 +508,13 @@ class AndorCamera:
         
     # Start the acquisition.
     def startAcquisition(self):
-        status = andor.StartAcquisition()
-        assert status == drv_success, "StartAcquisition failed: " + str(status)
+        setCurrentCamera(self.camera_handle)
+        andorCheck(andor.StartAcquisition(), "StartAcquisition")
 
     # Stop the acquisition.
     def stopAcquisition(self):
-        _abortIfAcquiring_()
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
 
     # Returns the oldest image in the acquisition buffer. 
     # Call until there is no new data.
@@ -531,11 +525,12 @@ class AndorCamera:
     # is it acquiring data? Or is it idle?
     #
     # Use this function with 16 bit cameras.
-    def getOldestImage16(self):
-        if 1:
+    def getOldestImage16(self, check = True):
+        setCurrentCamera(self.camera_handle)
+        if check:
             first = c_long(0)
             last = c_long(0)
-            status = andor.GetNumberNewImages(byref(first), byref(last))
+            andor.GetNumberNewImages(byref(first), byref(last))
             diff = first.value - last.value
             if (diff > 1):
                 print "  warning: acquisition is", diff, "frames behind..."
@@ -558,10 +553,11 @@ class AndorCamera:
     # containing the frames acquired (possibly an empty array). The 
     # second is the current state of the camera.
     def getImages16(self):
+        setCurrentCamera(self.camera_handle)
         frames = []
 
         # Check whether camera is idle or acquiring first.
-        state = _getStatus_()
+        state = self._getStatus_()
 
         # Check to see if there is any new data, and if so, how much.
         first = c_long(0)
@@ -620,7 +616,8 @@ class AndorCamera:
     #
 
     def shutdown(self):
-        _abortIfAcquiring_()
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
         self.closeShutter()
         self.coolerOff()
         if 0:
@@ -633,8 +630,7 @@ class AndorCamera:
                 time.sleep(5.0)
                 current_temp = self.getTemperature()[0]
             andor.ShutDown()
-        global instantiated
-        instantiated = 0
+
 
 #
 # Testing section.
@@ -648,119 +644,36 @@ if __name__ == "__main__":
         for key in keys:
             print key, '\t', dictionary[key]
 
-    print "Initializing Camera"
-#    camera = AndorCamera("c:/Program Files/Andor SOLIS/Drivers/")
-    camera = AndorCamera("c:/Program Files (x86)/Andor SOLIS/Drivers/atmcd64d.dll")
+    andor_path = "c:/Program Files (x86)/Andor SOLIS/Drivers/"
+    loadAndorDLL(andor_path + "atmcd64d.dll")
+    print getAvailableCameras(), "cameras connected"
+    handles = getCameraHandles()
+    print "camera handles: ", handles
 
-    if 1:
-        print "Camera Properties:"
+    cameras = []
+    for handle in handles:
+        camera = AndorCamera(andor_path, handle)
+        cameras.append(camera)
+        print "Camera", handle, "Properties:"
         printDict(camera.getProperties())
         print ""
 
-    number_frames = 10
-    print "Setting up the camera:"
-    camera.setReadMode(4)
-    camera.setTemperature(0)
-    camera.setTriggerMode(0)
-    camera.setADChannel(0)
-#    camera.setROIAndBinning([1,512,1,512],[1,1])
-#    camera.setROIAndBinning([129,384,129,384],[1,1])
-#    camera.setROIAndBinning([129,384,129,384],[1,1])
-    camera.setROIAndBinning([1, 128, 1, 128], [1, 1])
-    camera.setHSSpeed(11.1)
-    camera.setVSAmplitude(0)
-    camera.setVSSpeed(1.0)
-    camera.setEMGainMode(0)
-    camera.setEMCCDGain(0)
-    camera.setBaselineClamp(1)
-    camera.setPreAmpGain(2.4)
-    camera.setACQMode("run_till_abort")
-    camera.setFrameTransferMode(1)
-    camera.setExposureTime(0.0)
-    camera.setKineticCycleTime(0.0)
-#    camera.setKineticCycleTime(0.0)
+#    camera = AndorCamera("c:/Program Files/Andor SOLIS/Drivers/")
+#    camera = AndorCamera("c:/Program Files (x86)/Andor SOLIS/Drivers/atmcd64d.dll")
 
-#    print "sleeping"
-#    time.sleep(1)
+#    if 1:
+#        print "Camera Properties:"
+#        printDict(camera.getProperties())
+#        print ""
 
-    camera.setACQMode("run_till_abort")
-    camera.setFrameTransferMode(1)
-
-##    camera.setACQMode("fixed_length", number_frames)
-
-
-    print ""
-    print "Timings"
-    print camera.getAcquisitionTimings()
-
-    print ""
-    print "Temperature"
-    temp = camera.getTemperature()[0]
-#    while temp < 5:
-    if 0:
-        for i in range(100):
-            print i, temp
-            time.sleep(0.5)
-            temp = camera.getTemperature()[0]
-        print camera.getTemperature()
-
-    if 0:
-        print ""
-        print "Cooling"
-        camera.setTemperature(-70)
-        time.sleep(40)
-
-    if 0:
-        print camera.getTemperature()
-        camera.setFanMode(2)
-        print ""
-        print "Acquiring"
-        for i in range(1):
-            print "Cycle", i
-            acquired = 0
-            print camera.getTemperature()
-            camera.startAcquisition()
-            while(acquired < number_frames):
-                [frames, state] = camera.getImages16()
-                time.sleep(0.5)
-                if state == "acquiring":
-                    acquired += len(frames)
-                else:
-                    acquired += 100
-            camera.stopAcquisition()
-        print "Timings"
-        print camera.getAcquisitionTimings()
-        camera.setFanMode(0)
-
-    if 1:
-        print ""
-        print "Acquiring"
-        camera.startAcquisition()
-        acquired = 0
-        while(acquired < (number_frames + 50)):
-            print "Checking Camera"
-            [frames, state] = camera.getImages16()
-            time.sleep(0.5)
-            if state == "acquiring":
-                print " Acquired", len(frames)
-                for frame in frames:
-                    acquired += 1
-                    print "  Frame", acquired, "[0,0]=", ord(frame[0]) +  256*ord(frame[1])
-            else:
-                print " Idle Camera"
-                acquired += 100
-
-        camera.stopAcquisition()
-
-
-    print "shutdown"
-    camera.shutdown()
+    for camera in cameras:
+        camera.shutdown()
 
 
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

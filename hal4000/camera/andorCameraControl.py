@@ -51,14 +51,32 @@ class ACameraControl(cameraControl.CameraControl):
         if not self.camera:
             if hdebug.getDebug():
                 print " Initializing Andor Camera"
-            if os.path.exists("c:/Program Files/Andor iXon/Drivers/atmcd32d.dll"):
-                self.camera = andor.AndorCamera("c:/Program Files/Andor iXon/Drivers/atmcd32d.dll")
-            elif os.path.exists("c:/Program Files/Andor SOLIS/atmcd32d.dll"):
-                self.camera = andor.AndorCamera("c:/Program Files/Andor SOLIS/atmcd32d.dll")
-            elif os.path.exists("c:/Program Files (x86)/Andor SOLIS/Drivers/atmcd64d.dll"):
-                self.camera = andor.AndorCamera("c:/Program Files (x86)/Andor SOLIS/Drivers/atmcd64d.dll")
-            else:
-                print "Can't find Andor Camera drivers"
+
+            path = "c:/Program Files/Andor iXon/Drivers/"
+            driver = "atmcd32d.dll"
+            if os.path.exists(path + driver):
+                self.initCameraHelperFn(path, driver)
+                return
+
+            path = "c:/Program Files/Andor Solis/"
+            driver = "atmcd32d.dll"
+            if os.path.exists(path + driver):
+                self.initCameraHelperFn(path, driver)
+                return
+
+            path = "c:/Program Files (x86)/Andor Solis/Drivers/"
+            driver = "atmcd64d.dll"
+            if os.path.exists(path + driver):
+                self.initCameraHelperFn(path, driver)
+                return
+
+            print "Can't find Andor Camera drivers"
+
+    @hdebug.debug
+    def initCameraHelperFn(self, path, driver):
+        andor.loadAndorDLL(path + driver)
+        handle = andor.getCameraHandles()[0]
+        self.camera = andor.AndorCamera(path, handle)
 
     @hdebug.debug
     def newFilmSettings(self, parameters, filming = 0):
@@ -150,8 +168,8 @@ class ACameraControl(cameraControl.CameraControl):
                 print " Camera Initialized"
             self.got_camera = 1
         except:
-            if hdebug.getDebug():
-                print "QCameraThread: Bad camera settings"
+            #if hdebug.getDebug():
+            print "QCameraThread: Bad camera settings"
             self.got_camera = 0
         self.newFilmSettings(parameters)
 
@@ -187,7 +205,7 @@ class ACameraControl(cameraControl.CameraControl):
                         for aframe in frames:
                             frame_data.append(frame.Frame(aframe,
                                                           self.frame_number,
-                                                          self.type,
+                                                          "camera1",
                                                           True))
                             self.frame_number += 1
                         self.newData.emit(frame_data, self.key)

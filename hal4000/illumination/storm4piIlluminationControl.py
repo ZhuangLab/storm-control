@@ -1,9 +1,8 @@
 #!/usr/bin/python
 #
-# Illumination control specialized for STORM4pi. 
-# This is the same as STORM3 as the lasers are shared.
+# Illumination control specialized for STORM4.
 #
-# Hazen 12/09
+# Hazen 5/12
 #
 
 from PyQt4 import QtCore
@@ -13,29 +12,38 @@ import illumination.commandQueues as commandQueues
 import illumination.illuminationControl as illuminationControl
 
 #
-# Illumination power control specialized for STORM3.
+# Illumination power control specialized for STORM4.
 #
-class STORM4PIQIlluminationControlWidget(illuminationControl.QIlluminationControlWidget):
+class STORM4QIlluminationControlWidget(illuminationControl.QIlluminationControlWidget):
     def __init__(self, settings_file_name, parameters, parent = None):
         # setup the AOTF communication thread
-        self.aotf_queue = commandQueues.QAOTFThread()
+        self.aotf_queue = commandQueues.QCT64BitAOTFThread()
         self.aotf_queue.start(QtCore.QThread.NormalPriority)
+        self.aotf_queue.analogModulationOn()
 
         # setup the Cube communication thread
-        self.cube_queue = commandQueues.QCubeThread("COM10")
+        self.cube_queue = commandQueues.QCubeThread()
         self.cube_queue.start(QtCore.QThread.NormalPriority)
+
+        # Setup the filter wheel communication thread.
+        # There is only one filter wheel, which is in 750 laser path.
+        self.fw_queue = commandQueues.QFilterWheelThread()
+        self.fw_queue.start(QtCore.QThread.NormalPriority)
+
+        # setup for NI communication with mechanical shutters (digital, unsynced)
+        self.shutter_queue = commandQueues.QNiDigitalComm()
 
         illuminationControl.QIlluminationControlWidget.__init__(self, settings_file_name, parameters, parent)
 
     def autoControl(self, channels):
-        self.aotf_queue.analogModulationOn()
         self.cube_queue.analogModulationOn()
-        illuminationControl.QIlluminationControlWidget.autoControl(self, channels)
+        for channel in self.channels:
+            channel.setFilmMode(1)
 
     def manualControl(self):
-        self.aotf_queue.analogModulationOff()
         self.cube_queue.analogModulationOff()
-        illuminationControl.QIlluminationControlWidget.manualControl(self)
+        for channel in self.channels:
+            channel.setFilmMode(0)
 
     def newParameters(self, parameters):
         illuminationControl.QIlluminationControlWidget.newParameters(self, parameters)
@@ -72,21 +80,34 @@ class STORM4PIQIlluminationControlWidget(illuminationControl.QIlluminationContro
                                                       dx,
                                                       height)
                 channel.setCmdQueue(self.aotf_queue)
+                channel.fskOnOff(1)
                 self.channels.append(channel)
             elif hasattr(self.settings[i], 'use_cube405'):
-                channel = channelWidgets.QCube405Channel(self,
-                                                         self.settings[i],
-                                                         parameters.default_power[n],
-                                                         parameters.on_off_state[n],
-                                                         parameters.power_buttons[n],
-                                                         x,
-                                                         dx,
-                                                         height)
+                channel = channelWidgets.QCubeChannel(self,
+                                                      self.settings[i],
+                                                      parameters.default_power[n],
+                                                      parameters.on_off_state[n],
+                                                      parameters.power_buttons[n],
+                                                      x,
+                                                      dx,
+                                                      height)
                 channel.setCmdQueue(self.cube_queue)
+                self.channels.append(channel)
+            elif hasattr(self.settings[i], 'use_filter_wheel'):
+                channel = channelWidgets.QFilterWheelChannel(self,
+                                                             self.settings[i],
+                                                             parameters.default_power[n],
+                                                             parameters.on_off_state[n],
+                                                             parameters.power_buttons[n],
+                                                             x,
+                                                             dx,
+                                                             height)
+                channel.setCmdQueue(self.fw_queue)
+                channel.setShutterQueue(self.shutter_queue)
                 self.channels.append(channel)
             x += dx
 
-        # Update the channels to reflect there current ui settings.
+        # Update the channels to reflect their current ui settings.
         for channel in self.channels:
             channel.uiUpdate()
                             
@@ -100,23 +121,26 @@ class STORM4PIQIlluminationControlWidget(illuminationControl.QIlluminationContro
         self.aotf_queue.wait()
         self.cube_queue.stopThread()
         self.cube_queue.wait()
+        self.fw_queue.stopThread()
+        self.fw_queue.wait()
 
 
 #
 # Illumination power control dialog box specialized for STORM3.
 #
 class AIlluminationControl(illuminationControl.IlluminationControl):
-    def __init__(self, parameters, parent = None):
-        illuminationControl.IlluminationControl.__init__(self, parameters, parent)
-        self.power_control = STORM4PIQIlluminationControlWidget("illumination/storm4pi_illumination_control_settings.xml",
-                                                                parameters,
-                                                                parent = self.ui.laserBox)
+    def __init__(self, parameters, tcp_control, parent = None):
+        illuminationControl.IlluminationControl.__init__(self, parameters, tcp_control, parent)
+        self.power_control = STORM4QIlluminationControlWidget("illumination/storm4_illumination_control_settings.xml",
+                                                              parameters,
+                                                              parent = self.ui.laserBox)
         self.updateSize()
+
 
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
