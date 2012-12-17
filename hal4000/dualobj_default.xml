@@ -1,35 +1,80 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <settings>
   <!-- general -->
-  <camera_type type="string">andor</camera_type>
-  <debug type="int">1</debug>
   <use_as_default type="int">1</use_as_default>
 
   <!-- camera settings -->
-  <emccd_gain type="int">0</emccd_gain>
-  <x_start type="int">1</x_start>
-  <x_end type="int">512</x_end>
-  <y_start type="int">1</y_start>
-  <y_end type="int">512</y_end>
-  <x_bin type="int">1</x_bin>
-  <y_bin type="int">1</y_bin>
-  <exposure_time type="float">0.0</exposure_time>
-  <frame_transfer_mode type="int">1</frame_transfer_mode>
-  <temperature type="int">-70</temperature>
+  <camera1>
+    <camera_type type="string">andordual</camera_type>
 
-  <!-- less common camera settings -->
-  <preampgain type="float">1.0</preampgain>
-  <hsspeed type="float">10.0</hsspeed>
-  <vsspeed type="float">3.3</vsspeed>
-  <kinetic_cycle_time type="float">0.0</kinetic_cycle_time>
-  <adchannel type="int">0</adchannel>
-  <emgainmode type="int">0</emgainmode>
-  <baselineclamp type="int">1</baselineclamp>
-  <vsamplitude type="int">0</vsamplitude>
-  <off_during_filming type="int">0</off_during_filming>
-  <low_during_filming type="int">0</low_during_filming>
-  <head_model type="string">unknown</head_model>
-  <reversed_shutter type="int">0</reversed_shutter>
+    <emccd_gain type="int">0</emccd_gain>
+    <x_start type="int">1</x_start>
+    <x_end type="int">512</x_end>
+    <y_start type="int">1</y_start>
+    <y_end type="int">512</y_end>
+    <x_bin type="int">1</x_bin>
+    <y_bin type="int">1</y_bin>
+    <exposure_time type="float">0.0</exposure_time>
+    <frame_transfer_mode type="int">1</frame_transfer_mode>
+    <temperature type="int">-70</temperature>
+
+    <!-- less common camera settings -->
+    <preampgain type="float">1.0</preampgain>
+    <hsspeed type="float">10.0</hsspeed>
+    <vsspeed type="float">3.3</vsspeed>
+    <kinetic_cycle_time type="float">0.0</kinetic_cycle_time>
+    <adchannel type="int">0</adchannel>
+    <emgainmode type="int">0</emgainmode>
+    <baselineclamp type="int">1</baselineclamp>
+    <vsamplitude type="int">0</vsamplitude>
+    <off_during_filming type="int">0</off_during_filming>
+    <low_during_filming type="int">0</low_during_filming>
+    <head_model type="string">unknown</head_model>
+    <reversed_shutter type="int">0</reversed_shutter>
+
+    <!-- camera1 view settings -->
+    <scalemax type="int">2000</scalemax>
+    <scalemin type="int">100</scalemin>
+    <max_intensity type="int">10000</max_intensity>
+    <colortable type="string">idl5.ctbl</colortable>
+    <sync type="int">0</sync>
+  </camera1>
+
+  <camera2>
+    <camera_type type="string">andordual</camera_type>
+
+    <emccd_gain type="int">0</emccd_gain>
+    <x_start type="int">1</x_start>
+    <x_end type="int">512</x_end>
+    <y_start type="int">1</y_start>
+    <y_end type="int">512</y_end>
+    <x_bin type="int">1</x_bin>
+    <y_bin type="int">1</y_bin>
+    <exposure_time type="float">0.0</exposure_time>
+    <frame_transfer_mode type="int">1</frame_transfer_mode>
+    <temperature type="int">-70</temperature>
+
+    <!-- less common camera settings -->
+    <preampgain type="float">1.0</preampgain>
+    <hsspeed type="float">10.0</hsspeed>
+    <vsspeed type="float">3.3</vsspeed>
+    <kinetic_cycle_time type="float">0.0</kinetic_cycle_time>
+    <adchannel type="int">0</adchannel>
+    <emgainmode type="int">0</emgainmode>
+    <baselineclamp type="int">1</baselineclamp>
+    <vsamplitude type="int">0</vsamplitude>
+    <off_during_filming type="int">0</off_during_filming>
+    <low_during_filming type="int">0</low_during_filming>
+    <head_model type="string">unknown</head_model>
+    <reversed_shutter type="int">0</reversed_shutter>
+
+    <!-- camera2 view settings -->
+    <scalemax type="int">2000</scalemax>
+    <scalemin type="int">100</scalemin>
+    <max_intensity type="int">10000</max_intensity>
+    <colortable type="string">ramp.ctbl</colortable>
+    <sync type="int">0</sync>
+  </camera2>
 
   <!-- film settings -->
   <want_big_endian type="int">1</want_big_endian>
@@ -45,15 +90,8 @@
   <auto_shutters type="int">1</auto_shutters>
   <filetype type="string">.dax</filetype>
 
-  <!-- view settings -->
-  <scalemax type="int">2000</scalemax>
-  <scalemin type="int">100</scalemin>
-  <max_intensity type="int">10000</max_intensity>
-  <colortable type="string">idl5.ctbl</colortable>
-  <sync type="int">0</sync>
-
   <!-- illumination settings -->
-  <have_illumination type="int">1</have_illumination>
+  <have_illumination type="int">0</have_illumination>
   <shutters type="string">shutters_default.xml</shutters>
   <default_power channel="0">1.0</default_power>
   <default_power channel="1">1.0</default_power>
@@ -106,7 +144,7 @@
   <olock_quality_threshold type="float">0.0</olock_quality_threshold>
 
   <!-- spot counter -->
-  <have_spot_counter type="int">1</have_spot_counter>
+  <have_spot_counter type="int">0</have_spot_counter>
   <cell_size type="int">32</cell_size>
   <threshold type="int">250</threshold>
   <min_spots type="int">0</min_spots>
@@ -127,7 +165,7 @@
   <tcp_port type="int">9000</tcp_port>
 
   <!-- power progression settings -->
-  <have_progressions type="int">1</have_progressions>
+  <have_progressions type="int">0</have_progressions>
   <use_progressions type="int">0</use_progressions>
   <pstart_value type="float">0.1</pstart_value>
   <pinc_value type="float">0.01</pinc_value>

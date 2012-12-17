@@ -115,14 +115,14 @@ class DualCamera(genericCamera.Camera):
     def handleGainChangeCamera1(self, gain):
         self.stopCamera()
         self.parameters.camera1.emccd_gain = gain
-        self.camera_control.setEMCCDGain(1, self.parameters.camera1.emccd_gain)
+        self.camera_control.setEMCCDGain(0, self.parameters.camera1.emccd_gain)
         self.startCamera()
 
     @hdebug.debug
     def handleGainChangeCamera2(self, gain):
         self.stopCamera()
         self.parameters.camera2.emccd_gain = gain
-        self.camera_control.setEMCCDGain(2, self.parameters.camera2.emccd_gain)
+        self.camera_control.setEMCCDGain(1, self.parameters.camera2.emccd_gain)
         self.startCamera()
 
     @hdebug.debug
@@ -145,11 +145,13 @@ class DualCamera(genericCamera.Camera):
         # These values are used by the shutterControl class to figure out how fast 
         # to run the shutter timers. As written the shutters are driven by camera1.
         #
-        [p.exposure_value, p.accumulate_value, p.kinetic_value] = self.camera_control.getAcquisitionTimings()        
+        [p.exposure_value, p.accumulate_value, p.kinetic_value] = self.camera_control.getAcquisitionTimings(0)
 
+        [p.camera1.exposure_value, p.camera1.accumulate_value, p.camera1.kinetic_value] = self.camera_control.getAcquisitionTimings(0)
         self.camera1.camera_display.newParameters(parameters.camera1)
         self.camera1.camera_params.newParameters(parameters.camera1)
 
+        [p.camera2.exposure_value, p.camera2.accumulate_value, p.camera2.kinetic_value] = self.camera_control.getAcquisitionTimings(1)
         self.camera2.camera_display.newParameters(parameters.camera2)
         self.camera2.camera_params.newParameters(parameters.camera2)
 
@@ -197,7 +199,7 @@ class DualCamera(genericCamera.Camera):
 
     @hdebug.debug        
     def toggleShutterCamera1(self):
-        open = self.camera_control.toggleShutter(1)
+        open = self.camera_control.toggleShutter(0)
         if open:
             self.camera1.camera_display.ui.cameraShutterButton.setText("Close Shutter")
             self.camera1.camera_display.ui.cameraShutterButton.setStyleSheet("QPushButton { color: green }")
@@ -208,7 +210,7 @@ class DualCamera(genericCamera.Camera):
 
     @hdebug.debug        
     def toggleShutterCamera2(self):
-        open = self.camera_control.toggleShutter(2)
+        open = self.camera_control.toggleShutter(1)
         if open:
             self.camera2.camera_display.ui.cameraShutterButton.setText("Close Shutter")
             self.camera2.camera_display.ui.cameraShutterButton.setStyleSheet("QPushButton { color: green }")
@@ -221,12 +223,12 @@ class DualCamera(genericCamera.Camera):
     def updateTemperature(self):
 
         # Get camera1 temperature
-        cur_temp = self.camera_control.getTemperature(1)
+        cur_temp = self.camera_control.getTemperature(0)
         self.parameters.camera1.actual_temperature = cur_temp[0]
         self.camera1.camera_params.newTemperature(cur_temp)
 
         # Get camera2 temperature
-        cur_temp = self.camera_control.getTemperature(2)
+        cur_temp = self.camera_control.getTemperature(1)
         self.parameters.camera2.actual_temperature = cur_temp[0]
         self.camera2.camera_params.newTemperature(cur_temp)
 

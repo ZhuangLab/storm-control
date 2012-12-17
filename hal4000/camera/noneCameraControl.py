@@ -21,6 +21,7 @@ class ACameraControl(cameraControl.CameraControl):
         self.fake_frame = 0
         self.frames_to_take = 0
         self.sleep_time = 50
+        self.initCamera()
 
     @hdebug.debug
     def getAcquisitionTimings(self):

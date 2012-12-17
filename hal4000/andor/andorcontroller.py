@@ -83,7 +83,6 @@ class AndorCamera:
     # then querying it to determine its various properties.
     #
     def __init__(self, andor_path, camera_handle):
-        print "AndorCamera handle:", camera_handle
         self.camera_handle = camera_handle
 
         # general

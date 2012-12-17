@@ -19,6 +19,7 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         cameraControl.CameraControl.__init__(self, parameters, parent)
+        self.initCamera()
 
     @hdebug.debug
     def closeShutter(self):

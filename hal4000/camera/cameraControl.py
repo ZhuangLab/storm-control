@@ -75,8 +75,6 @@ class CameraControl(QtCore.QThread):
         self.got_camera = 0
         self.reversed_shutter = 0
 
-        self.initCamera()
-
     def cameraInit(self):
         self.start(QtCore.QThread.NormalPriority)
 
