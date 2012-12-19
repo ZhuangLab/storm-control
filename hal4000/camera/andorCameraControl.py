@@ -197,7 +197,7 @@ class ACameraControl(cameraControl.CameraControl):
             if self.should_acquire and self.got_camera:
 
                 # Get data from camera and create frame objects.
-                [frames, state] = self.camera.getImages16()
+                [frames, frame_size, state] = self.camera.getImages16()
 
                 # Check if we got new frame data.
                 if (len(frames) > 0):
@@ -207,6 +207,8 @@ class ACameraControl(cameraControl.CameraControl):
                     for raw_frame in frames:
                         frame_data.append(frame.Frame(raw_frame,
                                                       self.frame_number,
+                                                      frame_size[0],
+                                                      frame_size[1],
                                                       "camera1",
                                                       True))
                         self.frame_number += 1

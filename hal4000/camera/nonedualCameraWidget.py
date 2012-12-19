@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# qtCameraWidget specialized for data for no camera.
+# qtCameraWidget specialized for data for no camera (dual).
 #
 # Hazen 12/12
 #
@@ -10,7 +10,9 @@ from PyQt4 import QtCore, QtGui
 
 import camera.andorCameraWidget as andorCameraWidget
 
-# None Camera widget.
+#
+# None Camera widget. This is the same as the Andor widget.
+#
 class ACameraWidget(andorCameraWidget.ACameraWidget):
     def __init__(self, parent = None):
         andorCameraWidget.ACameraWidget.__init__(self, parent)

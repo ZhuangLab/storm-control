@@ -3,7 +3,7 @@
 # Qt Thread for counting the number of spots 
 # in a frame and graphing the results.
 #
-# Hazen 3/09
+# Hazen 12/12
 #
 
 from PyQt4 import QtCore, QtGui
@@ -20,62 +20,43 @@ except:
 # The thread class, which does all the actual object counting.
 #
 class QObjectCounterThread(QtCore.QThread):
-    def __init__(self, parameters, index, timing_mode = 0, parent = None):
+    imageProcessed = QtCore.pyqtSignal(int, object, int, object, object, int)
+
+    def __init__(self, index, timing_mode = 0, parent = None):
         QtCore.QThread.__init__(self, parent)
 
         self.FOF = FOF.MedFastObjectFinder(parameters.cell_size,
                                            parameters.threshold)
+
+        self.frame = False
         self.mutex = QtCore.QMutex()
         self.running = 1
-        self.image_x = parameters.x_pixels/parameters.x_bin
-        self.image_y = parameters.y_pixels/parameters.y_bin
-        self.image = 0
         self.thread_index = index
-        self.frame_index = 0
+
         self.counts = 0
-
         self.timing_mode = timing_mode
-        self.x_locs = 0
-        self.y_locs = 0
-        self.spots = 0
-        self.retrieved = 1
 
-    def getCounts(self):
+    def newImage(self, frame):
         self.mutex.lock()
-        temp = self.counts
-        self.mutex.unlock()
-        return temp
-
-    def getData(self):
-        self.mutex.lock()
-        x_locs = self.x_locs
-        y_locs = self.y_locs
-        spots = self.spots
-        self.retrieved = 1
-        self.mutex.unlock()
-        return [x_locs, y_locs, spots]
-
-    def newImage(self, image, index):
-        self.mutex.lock()
-        self.frame_index = index
-        self.image = image
+        self.frame = frame
         self.mutex.unlock()
 
     def run(self):
          while (self.running):
             self.mutex.lock()
-            if self.image and self.retrieved:
-                [self.x_locs, self.y_locs, self.spots] = self.FOF.findObjects(self.image,
-                                                                              self.image_x,
-                                                                              self.image_y)
+            if self.image:
+                [x_locs, y_locs, spots] = self.FOF.findObjects(self.frame.data,
+                                                               self.frame.image_x,
+                                                               self.frame.image_y)
                 if self.timing_mode:
                     self.counts += 1
                 else:
-                    self.retrieved = 0
-                    self.emit(QtCore.SIGNAL("imageProcessed(int, int)"), 
-                              self.thread_index, 
-                              self.frame_index)
-                    self.image = 0
+                    self.imageProcessed.emit(self.thread_index,
+                                             self.frame.which_camera,
+                                             self.frame.number,
+                                             x_locs,
+                                             y_locs,
+                                             spots)
             self.mutex.unlock()
             if not(self.timing_mode):
                 self.usleep(50)
@@ -88,49 +69,46 @@ class QObjectCounterThread(QtCore.QThread):
 # The front end.
 #
 class QObjectCounter(QtGui.QWidget):
-    def __init__(self, parameters, number_threads = 16, parent = None):
+    imageProcessed = QtCore.pyqtSignal(object, int, object, object, int)
+
+    def __init__(self, number_threads = 16, parent = None):
         QtGui.QWidget.__init__(self, parent)
 
         self.total = 0
         self.dropped = 0
         self.number_threads = number_threads
-        self.frame_index = 0
 
         self.idle = []
         self.threads = []
         for i in range(self.number_threads):
-            self.threads.append(QObjectCounterThread(parameters, i))
-            self.idle.append(1)
+            self.threads.append(QObjectCounterThread(i))
+            self.idle.append(True)
             
         for thread in self.threads:
             thread.start(QtCore.QThread.NormalPriority)
-            self.connect(thread, QtCore.SIGNAL("imageProcessed(int, int)"), self.imageProcessed)
+            thread.imageProcessed.connect(self.returnResults)
 
-    def getResults(self, thread_index):
-        self.idle[thread_index] = 1
-        return self.threads[thread_index].getData()
-
-    def imageProcessed(self, thread_index, frame_index):
-        self.emit(QtCore.SIGNAL("imageProcessed(int, int)"), thread_index, frame_index)
-
-    def newImageToCount(self, image):
+    def newImageToCount(self, frame):
         self.total += 1
         if image:
             i = 0
-            not_found = 1
+            not_found = True
             while (i < self.number_threads) and not_found:
                 if self.idle[i]:
-                    self.threads[i].newImage(image, self.frame_index)
-                    self.idle[i] = 0
-                    not_found = 0
+                    self.threads[i].newImage(frame)
+                    self.idle[i] = False
+                    not_found = False
                 i += 1
             if not_found:
-#            print "Spot counter dropped a frame."
                 self.dropped += 1
-        self.frame_index += 1
 
-    def reset(self):
-        self.frame_index = 0
+    def returnResults(self, thread_index, which_camera, frame_number, x_locs, y_locs, spots):
+        self.idle[thread_index] = True
+        self.imageProcessed.emit(which_camera,
+                                 frame_number,
+                                 x_locs,
+                                 y_locs,
+                                 spots)
 
     def shutDown(self):
         for thread in self.threads:
@@ -188,7 +166,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

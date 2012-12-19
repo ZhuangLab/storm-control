@@ -211,18 +211,27 @@ class ACameraControl(cameraControl.CameraControl):
 
                 for i in range(2):
                     # Get data from camera and create frame objects.
-                    [frames, state] = self.cameras[i].getImages16()
+                    [frames, frame_size, state] = self.cameras[i].getImages16()
 
                     # Check if we got new frame data.
                     if (len(frames) > 0):
 
+                        #
                         # Create frame objects.
+                        # The first camera is considered to be the master camera.
+                        #
+                        if (i==0):
+                            master = True
+                        else:
+                            master = False
                         frame_data = []
                         for raw_frame in frames:
                             frame_data.append(frame.Frame(raw_frame,
                                                           self.frame_number[i],
+                                                          frame_size[0],
+                                                          frame_size[1],
                                                           "camera" + str(i+1),
-                                                          True))
+                                                          master))
                             self.frame_number[i] += 1
 
                         # Save frames if we are filming.

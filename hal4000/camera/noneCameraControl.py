@@ -19,6 +19,7 @@ class ACameraControl(cameraControl.CameraControl):
     def __init__(self, parameters, parent = None):
         cameraControl.CameraControl.__init__(self, parameters, parent)
         self.fake_frame = 0
+        self.fake_frame_size = [0,0]
         self.frames_to_take = 0
         self.sleep_time = 50
         self.initCamera()
@@ -60,6 +61,7 @@ class ACameraControl(cameraControl.CameraControl):
             self.sleep_time = 10
         size_x = parameters.x_pixels
         size_y = parameters.y_pixels
+        self.fake_frame_size = [size_x, size_y]
         self.fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
         for i in range(size_x):
             for j in range(size_y):
@@ -70,7 +72,12 @@ class ACameraControl(cameraControl.CameraControl):
         while(self.running):
             self.mutex.lock()
             if self.should_acquire and self.got_camera:
-                aframe = frame.Frame(self.fake_frame, self.frame_number, "camera1", True)
+                aframe = frame.Frame(self.fake_frame, 
+                                     self.frame_number,
+                                     self.fake_frame_size[0],
+                                     self.fake_frame_size[1],
+                                     "camera1", 
+                                     True)
                 self.newData.emit([aframe], self.key)
 
                 if self.filming:

@@ -470,7 +470,10 @@ class AndorCamera:
                    "SetImage")
         self.ROI = ROI
         self.binning = binning
-        self.pixels = (self.ROI[1] - self.ROI[0] + 1) * (self.ROI[3] - self.ROI[2] + 1) / (self.binning[0] * self.binning[1])
+        self.x_pixels = (self.ROI[1] - self.ROI[0] + 1)/self.binning[0]
+        self.y_pixels = (self.ROI[3] - self.ROI[2] + 1)/self.binning[1]
+        self.pixels = self.x_pixels * self.y_pixels
+        self.frame_size = [self.x_pixels, self.y_pixels]
 
     # Set the trigger mode.
     def setTriggerMode(self, mode):
@@ -536,13 +539,13 @@ class AndorCamera:
         buffer = create_string_buffer(2 * self.pixels)
         status = andor.GetOldestImage16(buffer, c_ulong(self.pixels))
         if status == drv_success:
-            return [buffer, "acquiring"]
+            return [buffer, self.frame_size, "acquiring"]
         elif status == drv_no_new_data:
             state = _getStatus_()
             if state == drv_idle:
-                return [0, "idle"]
+                return [0, self.frame_size, "idle"]
             else:
-                return [0, "acquiring"]
+                return [0, self.frame_size, "acquiring"]
         else:
             raise AssertionError, "GetOldestImage16 failed: " + str(status)
 
@@ -583,16 +586,16 @@ class AndorCamera:
                 for i in range(diff):
                     frames.append(data_buffer[2*i*self.pixels:2*(i+1)*self.pixels])
                 if (state == drv_idle):
-                    return [frames, "idle"]
+                    return [frames, self.frame_size, "idle"]
                 else:
-                    return [frames, "acquiring"]
+                    return [frames, self.frame_size, "acquiring"]
 
             # Not sure if we can actually end up here, but just in case.
             elif (status == drv_no_new_data):
                 if (state == drv_idle):
-                    return [frames, "idle"]
+                    return [frames, self.frame_size, "idle"]
                 else:
-                    return [frames, "acquiring"]
+                    return [frames, self.frame_size, "acquiring"]
 
             # Something bad happened.
             else:
@@ -601,9 +604,9 @@ class AndorCamera:
         # There is no new data.
         elif (status == drv_no_new_data):
             if (state == drv_idle):
-                return [frames, "idle"]
+                return [frames, self.frame_size, "idle"]
             else:
-                return [frames, "acquiring"]
+                return [frames, self.frame_size, "acquiring"]
 
         # Something bad must have happened.
         else:

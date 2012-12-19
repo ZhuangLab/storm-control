@@ -2,7 +2,7 @@
 #
 # Spot counter.
 #
-# Hazen 3/09
+# Hazen 12/12
 #
 
 import sys
@@ -14,12 +14,28 @@ import halLib.parameters as params
 # Debugging
 import halLib.hdebug as hdebug
 
-# UIs.
-import qtdesigner.spotcounter_ui as spotCounterUi
-
 # stage
 import qtWidgets.qtSpotCounter as qtSpotCounter
 
+
+#
+# Widget for keeping the various count display up to date.
+#
+class Counter():
+    def __init__(self, q_label1, q_label2):
+        self.counts = 0
+        self.q_label1 = q_label1
+        self.q_label2 = q_label2
+        self.update(0)
+
+    def reset(self):
+        self.counts = 0
+        self.update(0)
+
+    def update(self, counts):
+        self.counts += counts
+        self.q_label1.setText(str(self.counts))
+        self.q_label2.setText(str(self.counts))
 
 #
 # Spot Count Graphing Widget.
@@ -171,26 +187,45 @@ class QImageGraph(QtGui.QWidget):
 #
 class SpotCounter(QtGui.QDialog):
     @hdebug.debug
-    def __init__(self, parameters, parent = None):
+    def __init__(self, parameters, single_camera, parent = None):
         QtGui.QMainWindow.__init__(self, parent)
+
+        self.counters = [False]
         self.filming = 0
-        self.filename = 0
-        self.spots = 0
-        self.spot_counter = 0
-        self.spot_graph = 0
-        self.image_graph = 0
+        self.filenames = [False, False]
+        self.image_graphs = [False]
+        self.number_cameras = 1
+        self.spot_counter = False
+        self.spot_graphs = [False]
 
         if parent:
-            self.have_parent = 1
+            self.have_parent = True
         else:
-            self.have_parent = 0
+            self.have_parent = False
 
-        # UI setup
+        # UI setup.
+        if self.single_camera:
+            import qtdesigner.spotcounter_ui as spotCounterUi
+        else:
+            import qtdesigner.dualspotcounter_ui as spotCounterUi
+            self.number_cameras = 2
+
         self.ui = spotCounterUi.Ui_Dialog()
         self.ui.setupUi(self)
         self.setWindowTitle(parameters.setup_name + " Spot Counter")
 
-        # connect signals
+        # Setup Counter objects.
+        if self.single_camera:
+            self.counters = [Counter(self.ui.countsLabel1, self.ui.countsLabel2)]
+        else:
+            self.counters = [Counter(self.ui.countsLabel1, self.ui.countsLabel2),
+                             Counter(self.ui.countsLabel3, self.ui.countsLabel4)]
+
+        # Setup spot counter.
+        self.spot_counter = qtSpotCounter.QObjectCounter()
+        self.spot_counter.imageProcessed.connect(self.update)
+
+        # Connect signals.
         if self.have_parent:
             self.ui.okButton.setText("Close")
             self.ui.okButton.clicked.connect(self.handleOk)
@@ -200,7 +235,7 @@ class SpotCounter(QtGui.QDialog):
         self.ui.maxSpinBox.valueChanged.connect(self.handleMaxChange)
         self.ui.minSpinBox.valueChanged.connect(self.handleMinChange)
 
-        # set modeless
+        # Set modeless.
         self.setModal(False)
 
     @hdebug.debug
@@ -213,13 +248,15 @@ class SpotCounter(QtGui.QDialog):
 
     @hdebug.debug
     def handleMaxChange(self, new_max):
-        self.spot_graph.changeYRange(y_max = new_max)
+        for i in range(self.number_cameras):
+            self.spot_graphs[i].changeYRange(y_max = new_max)
         self.ui.minSpinBox.setMaximum(new_max - 10)
         self.parameters.max_spots = new_max
 
     @hdebug.debug
     def handleMinChange(self, new_min):
-        self.spot_graph.changeYRange(y_min = new_min)
+        for i in range(self.number_cameras):
+            self.spot_graphs[i].changeYRange(y_min = new_min)
         self.ui.maxSpinBox.setMinimum(new_min + 10)
         self.parameters.max_spots = new_min
 
@@ -232,71 +269,95 @@ class SpotCounter(QtGui.QDialog):
         self.close()
 
     def newFrame(self, frame):
-        if self.spot_counter and frame.master:
-            self.spot_counter.newImageToCount(frame.data)
+        if self.spot_counter:
+            self.spot_counter.newImageToCount(frame)
 
     @hdebug.debug
     def newParameters(self, parameters, colors):
-        if self.spot_counter:
-            self.spot_counter.shutDown()
         self.parameters = parameters
 
-        if self.spot_graph:
-            sip.delete(self.spot_graph)
-            sip.delete(self.image_graph)
+        if self.spot_graph[0]:
+            for i in range(self.number_cameras):
+                sip.delete(self.spot_graph[i])
+                sip.delete(self.image_graph[i])
 
         points_per_cycle = len(colors)
         total_points = points_per_cycle
         while total_points < 100:
             total_points += points_per_cycle
 
-        # spot counts graph
-        graph_w = self.ui.graphFrame.width() - 4
-        graph_h = self.ui.graphFrame.height() - 4
-        self.spot_graph = QSpotGraph(graph_w,
-                                     graph_h,
-                                     total_points,
-                                     parameters.min_spots,
-                                     parameters.max_spots,
-                                     colors,
-                                     parent = self.ui.graphFrame)
-        self.spot_graph.setGeometry(2, 2, graph_w, graph_h)
-        self.spot_graph.show()
+        #
+        # FIXME:
+        #  Do we really need to create/delete these for new parameters?
+        #
 
-        # STORM image
-        image_w = self.ui.imageFrame.width() - 4
-        image_h = self.ui.imageFrame.height() - 4
-        scale_bar_len = (parameters.scale_bar_len / parameters.nm_per_pixel) * \
-            float(image_w) / float(parameters.x_pixels * parameters.x_bin)
-        self.image_graph = QImageGraph(image_w,
-                                       image_h,
-                                       parameters.x_pixels / parameters.x_bin,
-                                       parameters.y_pixels / parameters.y_bin,
-                                       scale_bar_len,
-                                       colors,
-                                       parent = self.ui.imageFrame)
-        self.image_graph.setGeometry(2, 2, image_w, image_h)
-        self.image_graph.blank()
-        self.image_graph.show()
+        # Spot counts graph(s).
+        if (self.number_cameras == 1):
+            parents = [self.ui.graphFrame]
+        else:
+            parents = [self.ui.graphFrame, self.ui.graphFrame2]
 
-        # The spot counter
-        self.spot_counter = qtSpotCounter.QObjectCounter(parameters)
-        self.connect(self.spot_counter, QtCore.SIGNAL("imageProcessed(int, int)"), self.update)
+        for i in range(self.number_cameras):
+            graph_w = parents[i].width() - 4
+            graph_h = parents[i].height() - 4
+            self.spot_graphs[i] = QSpotGraph(graph_w,
+                                             graph_h,
+                                             total_points,
+                                             parameters.min_spots,
+                                             parameters.max_spots,
+                                             colors,
+                                             parent = parents[i])
+            self.spot_graph[i].setGeometry(2, 2, graph_w, graph_h)
+            self.spot_graph[i].show()
 
-        # UI update
+        # STORM image(s).
+        if (self.number_cameras == 1):
+            parents = [self.ui.imageFrame]
+        else:
+            parents = [self.ui.imageFrame, self.ui.imageFrame2]
+
+        for i in range(self.number_cameras):
+            camera_params = parameters
+            if hasattr(parameters, "camera" + str(i+1)):
+                camera_params = getattr(parameters, "camera" + str(i+1))
+
+            image_w = parents[i].width() - 4
+            image_h = parents[i].height() - 4
+            scale_bar_len = (parameters.scale_bar_len / parameters.nm_per_pixel) * \
+                float(image_w) / float(camera_params.x_pixels * camera_params.x_bin)
+
+            self.image_graphs[i] = QImageGraph(image_w,
+                                               image_h,
+                                               camera_params.x_pixels / camera_params.x_bin,
+                                               camera_params.y_pixels / camera_params.y_bin,
+                                               scale_bar_len,
+                                               colors,
+                                               parent = parents[i])
+            self.image_graph[i].setGeometry(2, 2, image_w, image_h)
+            self.image_graph[i].blank()
+            self.image_graph[i].show()
+
+        # UI update.
         self.ui.maxSpinBox.setValue(parameters.max_spots)
         self.ui.minSpinBox.setValue(parameters.min_spots)
-        self.ui.countsLabel1.setText("0")
-        self.ui.countsLabel2.setText("0")
 
-    def update(self, thread_index, frame_index):
-        [x_locs, y_locs, spots] = self.spot_counter.getResults(thread_index)
-        self.spots += spots
-        self.spot_graph.updateGraph(frame_index, spots)
-        if self.filming:
-            self.ui.countsLabel1.setText(str(self.spots))
-            self.ui.countsLabel2.setText(str(self.spots))
-            self.image_graph.updateImage(frame_index, x_locs, y_locs, spots)
+        # Reset counters.
+        for i in range(self.number_cameras):
+            self.counters[i].reset()
+
+    def update(self, which_camera, frame_number, x_locs, y_locs, spots):
+        if (which_camera == "camera1"):
+            self.spot_graphs[0].updateGraph(frame_number, spots)
+            if self.filming:
+                self.counters[0].update(spots)
+                self.image_graphs[0].updateImage(frame_number, x_locs, y_locs, spots)
+        elif (which_camera == "camera2"):
+            self.spot_graphs[1].updateGraph(frame_number, spots)
+            if self.filming:
+                self.counters[1].update(spots)
+                self.image_graphs[1].updateImage(frame_number, x_locs, y_locs, spots)
+        else:
+            print "spotCounter.update Unknown camera:", which_camera
 
     @hdebug.debug        
     def quit(self):
@@ -310,20 +371,24 @@ class SpotCounter(QtGui.QDialog):
     @hdebug.debug
     def startCounter(self, name):
         if self.spot_counter:
-            self.spot_counter.reset()
-            self.image_graph.blank()
-            self.spots = 0
-            self.filming = 1
-            self.filename = 0
+            for i in range(self.number_cameras):
+                self.counters[i].reset()
+                self.image_graphs[i].blank()
+            self.filming = True
+            self.filenames = [False, False]
             if name:
-                self.filename = name + ".png"
+                if (self.number_cameras == 1):
+                    self.filenames[0] = name + ".png"
+                else:
+                    self.filenames[0] = name + "_cam1.png"
+                    self.filenames[1] = name + "_cam2.png"
 
     @hdebug.debug
     def stopCounter(self):
-        self.spots = 0
-        self.filming = 0
-        if self.filename:
-            self.image_graph.saveImage(self.filename)
+        self.filming = False
+        if self.filenames[0]:
+            for i in range(self.number_cameras):
+                self.image_graphs[i].saveImage(self.filenames[i])
 
 
 #
@@ -341,7 +406,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

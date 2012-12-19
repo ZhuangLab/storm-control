@@ -19,7 +19,9 @@ class ACameraControl(cameraControl.CameraControl):
     def __init__(self, parameters, parent = None):
         cameraControl.CameraControl.__init__(self, parameters, parent)
         self.camera1_fake_frame = 0
+        self.camera1_frame_size = [0,0]
         self.camera2_fake_frame = 0
+        self.camera2_frame_size = [0,0]
         self.frames_to_take = 0
         self.shutter1 = False
         self.shutter2 = False
@@ -74,6 +76,7 @@ class ACameraControl(cameraControl.CameraControl):
         # Create fake image for camera 1
         size_x = parameters.camera1.x_pixels
         size_y = parameters.camera1.y_pixels
+        self.camera1_frame_size = [size_x, size_y]
         self.camera1_fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
         for i in range(size_x):
             for j in range(size_y):
@@ -82,6 +85,7 @@ class ACameraControl(cameraControl.CameraControl):
         # Create fake image for camera 2
         size_x = parameters.camera2.x_pixels
         size_y = parameters.camera2.y_pixels
+        self.camera2_frame_size = [size_x, size_y]
         self.camera2_fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
         for i in range(size_x):
             for j in range(size_y):
@@ -95,14 +99,24 @@ class ACameraControl(cameraControl.CameraControl):
             if self.should_acquire and self.got_camera:
 
                 # Fake data from camera1
-                aframe = frame.Frame(self.camera1_fake_frame, self.frame_number, "camera1", True)
+                aframe = frame.Frame(self.camera1_fake_frame, 
+                                     self.frame_number,
+                                     self.camera1_frame_size[0],
+                                     self.camera1_frame_size[1],
+                                     "camera1", 
+                                     True)
                 self.newData.emit([aframe], self.key)
 
                 if self.filming:
                     self.daxfile.saveFrame(aframe)
 
                 # Fake data from camera2
-                aframe = frame.Frame(self.camera2_fake_frame, self.frame_number, "camera2", False)
+                aframe = frame.Frame(self.camera2_fake_frame, 
+                                     self.frame_number,         
+                                     self.camera2_frame_size[0],
+                                     self.camera2_frame_size[1],
+                                     "camera2",
+                                     False)
                 self.newData.emit([aframe], self.key)
 
                 if self.filming:

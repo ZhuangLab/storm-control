@@ -14,8 +14,10 @@
 class Frame():
 
     # FIXME: Are we consistent in the use of master vs. camera1?
-    def __init__(self, data, frame_number, which_camera, master):
+    def __init__(self, data, frame_number, image_x, image_y, which_camera, master):
         self.data = data
+        self.image_x = image_x
+        self.image_y = image_y
         self.master = master
         self.number = frame_number
         self.which_camera = which_camera
