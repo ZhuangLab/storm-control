@@ -14,7 +14,7 @@
     <y_end type="int">512</y_end>
     <x_bin type="int">1</x_bin>
     <y_bin type="int">1</y_bin>
-    <exposure_time type="float">0.0</exposure_time>
+    <exposure_time type="float">0.035</exposure_time>
     <frame_transfer_mode type="int">1</frame_transfer_mode>
     <temperature type="int">-70</temperature>
 
@@ -31,6 +31,7 @@
     <low_during_filming type="int">0</low_during_filming>
     <head_model type="string">unknown</head_model>
     <reversed_shutter type="int">0</reversed_shutter>
+    <external_trigger type="int">0</external_trigger>
 
     <!-- camera1 view settings -->
     <scalemax type="int">2000</scalemax>
@@ -67,12 +68,13 @@
     <low_during_filming type="int">0</low_during_filming>
     <head_model type="string">unknown</head_model>
     <reversed_shutter type="int">0</reversed_shutter>
+    <external_trigger type="int">1</external_trigger>
 
     <!-- camera2 view settings -->
     <scalemax type="int">2000</scalemax>
     <scalemin type="int">100</scalemin>
     <max_intensity type="int">10000</max_intensity>
-    <colortable type="string">ramp.ctbl</colortable>
+    <colortable type="string">idl5.ctbl</colortable>
     <sync type="int">0</sync>
   </camera2>
 
@@ -91,7 +93,7 @@
   <filetype type="string">.dax</filetype>
 
   <!-- illumination settings -->
-  <have_illumination type="int">0</have_illumination>
+  <have_illumination type="int">1</have_illumination>
   <shutters type="string">shutters_default.xml</shutters>
   <default_power channel="0">1.0</default_power>
   <default_power channel="1">1.0</default_power>
@@ -144,7 +146,7 @@
   <olock_quality_threshold type="float">0.0</olock_quality_threshold>
 
   <!-- spot counter -->
-  <have_spot_counter type="int">0</have_spot_counter>
+  <have_spot_counter type="int">1</have_spot_counter>
   <cell_size type="int">32</cell_size>
   <threshold type="int">250</threshold>
   <min_spots type="int">0</min_spots>

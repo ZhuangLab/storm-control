@@ -22,7 +22,7 @@ except:
 class QObjectCounterThread(QtCore.QThread):
     imageProcessed = QtCore.pyqtSignal(int, object, int, object, object, int)
 
-    def __init__(self, index, timing_mode = 0, parent = None):
+    def __init__(self, parameters, index, timing_mode = 0, parent = None):
         QtCore.QThread.__init__(self, parent)
 
         self.FOF = FOF.MedFastObjectFinder(parameters.cell_size,
@@ -44,7 +44,7 @@ class QObjectCounterThread(QtCore.QThread):
     def run(self):
          while (self.running):
             self.mutex.lock()
-            if self.image:
+            if self.frame:
                 [x_locs, y_locs, spots] = self.FOF.findObjects(self.frame.data,
                                                                self.frame.image_x,
                                                                self.frame.image_y)
@@ -57,6 +57,8 @@ class QObjectCounterThread(QtCore.QThread):
                                              x_locs,
                                              y_locs,
                                              spots)
+                    self.frame = False
+
             self.mutex.unlock()
             if not(self.timing_mode):
                 self.usleep(50)
@@ -71,7 +73,7 @@ class QObjectCounterThread(QtCore.QThread):
 class QObjectCounter(QtGui.QWidget):
     imageProcessed = QtCore.pyqtSignal(object, int, object, object, int)
 
-    def __init__(self, number_threads = 16, parent = None):
+    def __init__(self, parameters, number_threads = 16, parent = None):
         QtGui.QWidget.__init__(self, parent)
 
         self.total = 0
@@ -81,7 +83,7 @@ class QObjectCounter(QtGui.QWidget):
         self.idle = []
         self.threads = []
         for i in range(self.number_threads):
-            self.threads.append(QObjectCounterThread(i))
+            self.threads.append(QObjectCounterThread(parameters, i))
             self.idle.append(True)
             
         for thread in self.threads:
@@ -90,7 +92,7 @@ class QObjectCounter(QtGui.QWidget):
 
     def newImageToCount(self, frame):
         self.total += 1
-        if image:
+        if frame:
             i = 0
             not_found = True
             while (i < self.number_threads) and not_found:

@@ -481,6 +481,12 @@ class AndorCamera:
         self._abortIfAcquiring_()
         andorCheck(andor.SetTriggerMode(c_int(mode)), "SetTriggerMode")
 
+    # Set fast external trigger.
+    def setFastExtTrigger(self, mode):
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        andorCheck(andor.SetFastExtTrigger(c_int(mode)), "SetFastTriggerMode")
+
     # Vertical clock voltage.
     def setVSAmplitude(self, amplitude):
         setCurrentCamera(self.camera_handle)

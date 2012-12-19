@@ -43,19 +43,25 @@ class Counter():
 class QSpotGraph(QtGui.QWidget):
     def __init__(self, x_size, y_size, y_min, y_max, parent = None):
         QtGui.QWidget.__init__(self, parent)
+        self.range = y_max - y_min
         self.x_size = x_size
         self.y_size = y_size
         self.y_min = float(y_min)
         self.y_max = float(y_max)
 
-        self.colors = []
-        self.cycle = 0
-        self.data = []
-        self.points_per_cycle = 1
-        self.range = y_max - y_min
-        self.x_points = 0
-        self.x_scale = 1.0
+        self.colors = [False]
+        self.points_per_cycle = len(self.colors)
+        self.x_points = 100
+
+        self.x_scale = float(self.x_size)/float(self.x_points)
         self.y_scale = float(y_size)/5.0
+        self.cycle = 0
+        if self.points_per_cycle > 1:
+            self.cycle = self.x_scale * float(self.points_per_cycle)
+
+        self.data = []
+        for i in range(self.x_points):
+            self.data.append(0)
 
     def changeYRange(self, y_min = None, y_max = None):
         if y_min:
@@ -67,12 +73,13 @@ class QSpotGraph(QtGui.QWidget):
     def newParameters(self, colors, total_points):
         self.colors = colors
         self.points_per_cycle = len(colors)
-        self.x_scale = float(self.x_size)/float(total_points)
+        self.x_points = total_points
+
+        self.x_scale = float(self.x_size)/float(self.x_points)
         self.cycle = 0
         if self.points_per_cycle > 1:
             self.cycle = self.x_scale * float(self.points_per_cycle)
 
-        self.x_points = total_points
         self.data = []
         for i in range(self.x_points):
             self.data.append(0)
@@ -142,7 +149,6 @@ class QSpotGraph(QtGui.QWidget):
         self.data[frame_index % self.x_points] = spots
         self.update()
 
-
 #
 # STORM image display widget.
 #
@@ -154,8 +160,8 @@ class QImageGraph(QtGui.QWidget):
         self.x_size = x_size
         self.y_size = y_size
 
-        self.colors = []
-        self.points_per_cycle = len(colors)
+        self.colors = [False]
+        self.points_per_cycle = len(self.colors)
         self.scale_bar_len = 1
         self.x_scale = 1.0
         self.y_scale = 1.0
@@ -211,13 +217,13 @@ class SpotCounter(QtGui.QDialog):
     def __init__(self, parameters, single_camera, parent = None):
         QtGui.QMainWindow.__init__(self, parent)
 
-        self.counters = [False]
+        self.counters = [False, False]
         self.filming = 0
         self.filenames = [False, False]
-        self.image_graphs = [False]
+        self.image_graphs = [False, False]
         self.number_cameras = 1
         self.spot_counter = False
-        self.spot_graphs = [False]
+        self.spot_graphs = [False, False]
 
         if parent:
             self.have_parent = True
@@ -225,7 +231,7 @@ class SpotCounter(QtGui.QDialog):
             self.have_parent = False
 
         # UI setup.
-        if self.single_camera:
+        if single_camera:
             import qtdesigner.spotcounter_ui as spotCounterUi
         else:
             import qtdesigner.dualspotcounter_ui as spotCounterUi
@@ -236,14 +242,14 @@ class SpotCounter(QtGui.QDialog):
         self.setWindowTitle(parameters.setup_name + " Spot Counter")
 
         # Setup Counter objects.
-        if self.single_camera:
+        if single_camera:
             self.counters = [Counter(self.ui.countsLabel1, self.ui.countsLabel2)]
         else:
             self.counters = [Counter(self.ui.countsLabel1, self.ui.countsLabel2),
                              Counter(self.ui.countsLabel3, self.ui.countsLabel4)]
 
         # Setup spot counter.
-        self.spot_counter = qtSpotCounter.QObjectCounter()
+        self.spot_counter = qtSpotCounter.QObjectCounter(parameters)
         self.spot_counter.imageProcessed.connect(self.updateCounts)
 
         # Setup spot counts graph(s).
@@ -260,8 +266,8 @@ class SpotCounter(QtGui.QDialog):
                                              parameters.min_spots,
                                              parameters.max_spots,
                                              parent = parents[i])
-            self.spot_graph[i].setGeometry(2, 2, graph_w, graph_h)
-            self.spot_graph[i].show()
+            self.spot_graphs[i].setGeometry(2, 2, graph_w, graph_h)
+            self.spot_graphs[i].show()
 
         # Setup STORM image(s).
         if (self.number_cameras == 1):
@@ -282,9 +288,9 @@ class SpotCounter(QtGui.QDialog):
             self.image_graphs[i] = QImageGraph(image_w,
                                                image_h,
                                                parent = parents[i])
-            self.image_graph[i].setGeometry(2, 2, image_w, image_h)
-            self.image_graph[i].blank()
-            self.image_graph[i].show()
+            self.image_graphs[i].setGeometry(2, 2, image_w, image_h)
+            self.image_graphs[i].blank()
+            self.image_graphs[i].show()
 
         # Connect signals.
         if self.have_parent:
@@ -351,7 +357,7 @@ class SpotCounter(QtGui.QDialog):
             if hasattr(parameters, "camera" + str(i+1)):
                 camera_params = getattr(parameters, "camera" + str(i+1))
             scale_bar_len = (parameters.scale_bar_len / parameters.nm_per_pixel) * \
-                float(image_w) / float(camera_params.x_pixels * camera_params.x_bin)
+                float(self.image_graphs[i].width()) / float(camera_params.x_pixels * camera_params.x_bin)
             self.image_graphs[i].newParameters(colors,
                                                scale_bar_len,
                                                camera_params.x_pixels / camera_params.x_bin,

@@ -29,6 +29,8 @@ class QRangeSlider(QtGui.QWidget):
         else:
             self.setValues([0.3, 0.6])
 
+        self.setFocusPolicy(QtCore.Qt.ClickFocus)
+
     def emitRange(self):
         #self.emit(QtCore.SIGNAL("rangeChanged(float, float)"), self.scale_min, self.scale_max)
         self.rangeChanged.emit(self.scale_min, self.scale_max)

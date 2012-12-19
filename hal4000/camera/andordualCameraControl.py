@@ -137,7 +137,11 @@ class ACameraControl(cameraControl.CameraControl):
                 self.cameras[i].setTemperature(p.temperature)
                 if hdebug.getDebug():
                     print "  Setting Trigger Mode"
-                self.cameras[i].setTriggerMode(0)
+                if p.external_trigger:
+                    self.cameras[i].setTriggerMode(1)
+                    self.cameras[1].setFastExtTrigger(1)
+                else:
+                    self.cameras[i].setTriggerMode(0)
                 if hdebug.getDebug():
                     print "  Setting ROI and Binning"
                 self.cameras[i].setROIAndBinning(p.ROI, p.binning)
@@ -270,8 +274,8 @@ class ACameraControl(cameraControl.CameraControl):
             self.should_acquire = 1
             self.have_paused = 0
             if self.got_camera:
-                for i in range(2):
-                    self.cameras[i].startAcquisition()
+                self.cameras[1].startAcquisition()
+                self.cameras[0].startAcquisition()
             self.mutex.unlock()
 
     @hdebug.debug
@@ -280,8 +284,8 @@ class ACameraControl(cameraControl.CameraControl):
             self.mutex.lock()
             self.forced_idle = True
             if self.got_camera:
-                for i in range(2):
-                    self.cameras[i].stopAcquisition()
+                self.cameras[0].stopAcquisition()
+                self.cameras[1].stopAcquisition()
             self.should_acquire = 0
             self.mutex.unlock()
             while not self.have_paused:
