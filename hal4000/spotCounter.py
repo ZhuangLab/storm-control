@@ -26,13 +26,13 @@ class Counter():
         self.counts = 0
         self.q_label1 = q_label1
         self.q_label2 = q_label2
-        self.update(0)
+        self.updateCounts(0)
 
     def reset(self):
         self.counts = 0
-        self.update(0)
+        self.updateCounts(0)
 
-    def update(self, counts):
+    def updateCounts(self, counts):
         self.counts += counts
         self.q_label1.setText(str(self.counts))
         self.q_label2.setText(str(self.counts))
@@ -41,24 +41,21 @@ class Counter():
 # Spot Count Graphing Widget.
 #
 class QSpotGraph(QtGui.QWidget):
-    def __init__(self, x_size, y_size, x_points, y_min, y_max, colors, parent = None):
+    def __init__(self, x_size, y_size, y_min, y_max, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.x_size = x_size
         self.y_size = y_size
         self.y_min = float(y_min)
         self.y_max = float(y_max)
-        self.colors = colors
-        self.points_per_cycle = len(colors)
-        self.x_scale = float(x_size)/float(x_points)
+
+        self.colors = []
         self.cycle = 0
-        if self.points_per_cycle > 1:
-            self.cycle = self.x_scale * float(self.points_per_cycle)
-        self.y_scale = float(y_size)/5.0
-        self.range = y_max - y_min
-        self.x_points = x_points
         self.data = []
-        for i in range(self.x_points):
-            self.data.append(0)
+        self.points_per_cycle = 1
+        self.range = y_max - y_min
+        self.x_points = 0
+        self.x_scale = 1.0
+        self.y_scale = float(y_size)/5.0
 
     def changeYRange(self, y_min = None, y_max = None):
         if y_min:
@@ -66,6 +63,21 @@ class QSpotGraph(QtGui.QWidget):
         if y_max:
             self.y_max = y_max
         self.range = self.y_max - self.y_min
+
+    def newParameters(self, colors, total_points):
+        self.colors = colors
+        self.points_per_cycle = len(colors)
+        self.x_scale = float(self.x_size)/float(total_points)
+        self.cycle = 0
+        if self.points_per_cycle > 1:
+            self.cycle = self.x_scale * float(self.points_per_cycle)
+
+        self.x_points = total_points
+        self.data = []
+        for i in range(self.x_points):
+            self.data.append(0)
+
+        self.update()
 
     def paintEvent(self, Event):
         painter = QtGui.QPainter(self)
@@ -94,7 +106,7 @@ class QSpotGraph(QtGui.QWidget):
                 painter.drawLine(0, iy, self.x_size, iy)
                 y += self.y_scale
 
-        if self.data:
+        if (len(self.data)>0):
             # Lines
             painter.setPen(QtGui.QColor(0, 0, 0))
             x1 = int(self.x_scale * float(0))
@@ -135,16 +147,18 @@ class QSpotGraph(QtGui.QWidget):
 # STORM image display widget.
 #
 class QImageGraph(QtGui.QWidget):
-    def __init__(self, x_size, y_size, x_range, y_range, scale_bar_len, colors, parent = None):
+    def __init__(self, x_size, y_size, parent = None):
         QtGui.QWidget.__init__(self, parent)
+
+        self.buffer = QtGui.QPixmap(x_size, y_size)
         self.x_size = x_size
         self.y_size = y_size
-        self.x_scale = float(x_size)/float(x_range)
-        self.y_scale = float(y_size)/float(y_range)
-        self.scale_bar_len = int(round(scale_bar_len))
-        self.buffer = QtGui.QPixmap(x_size, y_size)
-        self.colors = colors
+
+        self.colors = []
         self.points_per_cycle = len(colors)
+        self.scale_bar_len = 1
+        self.x_scale = 1.0
+        self.y_scale = 1.0
 
     def blank(self):
         painter = QtGui.QPainter(self.buffer)
@@ -153,6 +167,14 @@ class QImageGraph(QtGui.QWidget):
         painter.setBrush(color)
         painter.drawRect(0, 0, self.x_size, self.y_size)
         self.update()
+
+    def newParameters(self, colors, scale_bar_len, x_range, y_range):
+        self.colors = colors
+        self.points_per_cycle = len(colors)
+        self.scale_bar_len = int(round(scale_bar_len))
+        self.x_scale = float(self.x_size)/float(x_range)
+        self.y_scale = float(self.y_size)/float(y_range)
+        self.blank()
 
     def paintEvent(self, Event):
         # draw the scale bar
@@ -179,7 +201,6 @@ class QImageGraph(QtGui.QWidget):
                 iy = int(self.y_scale * y_locs[i])
                 painter.drawPoint(ix, iy)
             self.update()
-            
 
 #
 #
@@ -223,7 +244,47 @@ class SpotCounter(QtGui.QDialog):
 
         # Setup spot counter.
         self.spot_counter = qtSpotCounter.QObjectCounter()
-        self.spot_counter.imageProcessed.connect(self.update)
+        self.spot_counter.imageProcessed.connect(self.updateCounts)
+
+        # Setup spot counts graph(s).
+        if (self.number_cameras == 1):
+            parents = [self.ui.graphFrame]
+        else:
+            parents = [self.ui.graphFrame, self.ui.graphFrame2]
+
+        for i in range(self.number_cameras):
+            graph_w = parents[i].width() - 4
+            graph_h = parents[i].height() - 4
+            self.spot_graphs[i] = QSpotGraph(graph_w,
+                                             graph_h,
+                                             parameters.min_spots,
+                                             parameters.max_spots,
+                                             parent = parents[i])
+            self.spot_graph[i].setGeometry(2, 2, graph_w, graph_h)
+            self.spot_graph[i].show()
+
+        # Setup STORM image(s).
+        if (self.number_cameras == 1):
+            parents = [self.ui.imageFrame]
+        else:
+            parents = [self.ui.imageFrame, self.ui.imageFrame2]
+
+        for i in range(self.number_cameras):
+            camera_params = parameters
+            if hasattr(parameters, "camera" + str(i+1)):
+                camera_params = getattr(parameters, "camera" + str(i+1))
+
+            image_w = parents[i].width() - 4
+            image_h = parents[i].height() - 4
+            scale_bar_len = (parameters.scale_bar_len / parameters.nm_per_pixel) * \
+                float(image_w) / float(camera_params.x_pixels * camera_params.x_bin)
+
+            self.image_graphs[i] = QImageGraph(image_w,
+                                               image_h,
+                                               parent = parents[i])
+            self.image_graph[i].setGeometry(2, 2, image_w, image_h)
+            self.image_graph[i].blank()
+            self.image_graph[i].show()
 
         # Connect signals.
         if self.have_parent:
@@ -276,85 +337,40 @@ class SpotCounter(QtGui.QDialog):
     def newParameters(self, parameters, colors):
         self.parameters = parameters
 
-        if self.spot_graph[0]:
-            for i in range(self.number_cameras):
-                sip.delete(self.spot_graph[i])
-                sip.delete(self.image_graph[i])
-
+        # Update counters, count graph(s) & STORM image(s).
         points_per_cycle = len(colors)
         total_points = points_per_cycle
         while total_points < 100:
             total_points += points_per_cycle
 
-        #
-        # FIXME:
-        #  Do we really need to create/delete these for new parameters?
-        #
-
-        # Spot counts graph(s).
-        if (self.number_cameras == 1):
-            parents = [self.ui.graphFrame]
-        else:
-            parents = [self.ui.graphFrame, self.ui.graphFrame2]
-
         for i in range(self.number_cameras):
-            graph_w = parents[i].width() - 4
-            graph_h = parents[i].height() - 4
-            self.spot_graphs[i] = QSpotGraph(graph_w,
-                                             graph_h,
-                                             total_points,
-                                             parameters.min_spots,
-                                             parameters.max_spots,
-                                             colors,
-                                             parent = parents[i])
-            self.spot_graph[i].setGeometry(2, 2, graph_w, graph_h)
-            self.spot_graph[i].show()
+            self.counters[i].reset()
+            self.spot_graphs[i].newParameters(colors, total_points)
 
-        # STORM image(s).
-        if (self.number_cameras == 1):
-            parents = [self.ui.imageFrame]
-        else:
-            parents = [self.ui.imageFrame, self.ui.imageFrame2]
-
-        for i in range(self.number_cameras):
             camera_params = parameters
             if hasattr(parameters, "camera" + str(i+1)):
                 camera_params = getattr(parameters, "camera" + str(i+1))
-
-            image_w = parents[i].width() - 4
-            image_h = parents[i].height() - 4
             scale_bar_len = (parameters.scale_bar_len / parameters.nm_per_pixel) * \
                 float(image_w) / float(camera_params.x_pixels * camera_params.x_bin)
-
-            self.image_graphs[i] = QImageGraph(image_w,
-                                               image_h,
-                                               camera_params.x_pixels / camera_params.x_bin,
-                                               camera_params.y_pixels / camera_params.y_bin,
+            self.image_graphs[i].newParameters(colors,
                                                scale_bar_len,
-                                               colors,
-                                               parent = parents[i])
-            self.image_graph[i].setGeometry(2, 2, image_w, image_h)
-            self.image_graph[i].blank()
-            self.image_graph[i].show()
+                                               camera_params.x_pixels / camera_params.x_bin,
+                                               camera_params.y_pixels / camera_params.y_bin)
 
         # UI update.
         self.ui.maxSpinBox.setValue(parameters.max_spots)
         self.ui.minSpinBox.setValue(parameters.min_spots)
 
-        # Reset counters.
-        for i in range(self.number_cameras):
-            self.counters[i].reset()
-
-    def update(self, which_camera, frame_number, x_locs, y_locs, spots):
+    def updateCounts(self, which_camera, frame_number, x_locs, y_locs, spots):
         if (which_camera == "camera1"):
             self.spot_graphs[0].updateGraph(frame_number, spots)
             if self.filming:
-                self.counters[0].update(spots)
+                self.counters[0].updateCounts(spots)
                 self.image_graphs[0].updateImage(frame_number, x_locs, y_locs, spots)
         elif (which_camera == "camera2"):
             self.spot_graphs[1].updateGraph(frame_number, spots)
             if self.filming:
-                self.counters[1].update(spots)
+                self.counters[1].updateCounts(spots)
                 self.image_graphs[1].updateImage(frame_number, x_locs, y_locs, spots)
         else:
             print "spotCounter.update Unknown camera:", which_camera
