@@ -26,10 +26,10 @@ c_imageGradient.restype = c_float
 # Returns the magnitude of the image gradient in the x direction.
 #
 
-def imageGradient(image, image_x, image_y):
-    return c_imageGradient(image,
-                           c_int(image_x),
-                           c_int(image_y))
+def imageGradient(frame):
+    return c_imageGradient(frame.data,
+                           c_int(frame.image_x),
+                           c_int(frame.image_y))
 
 
 #

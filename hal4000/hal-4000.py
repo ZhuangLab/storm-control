@@ -87,7 +87,7 @@ class Window(QtGui.QMainWindow):
         self.old_shutters_file = ""
         self.parameters = parameters
         self.running_shutters = False
-        self.settings = QtCore.QSettings("Zhuang Lab", "hal-4000")
+        self.settings = QtCore.QSettings("Zhuang Lab", "hal-4000_" + parameters.setup_name.lower())
         self.software_max_frames = False
         self.ui_mode = ""
         self.will_overwrite = False
@@ -216,10 +216,14 @@ class Window(QtGui.QMainWindow):
                                                     parent = self)
 
         # Spot counter
+        single_camera = True
+        if (self.ui_mode == "dual"):
+            single_camera = False
         self.spot_counter = False
         if parameters.have_spot_counter:
             import spotCounter
             self.spot_counter = spotCounter.SpotCounter(parameters,
+                                                        single_camera,
                                                         parent = self)
 
         # Misc control
@@ -1024,12 +1028,11 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         setup_name = sys.argv[1]
         parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
-        parameters.setup_name = setup_name
     else:
         parameters = params.Parameters("settings_default.xml")
         setup_name = parameters.setup_name
         parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
-        parameters.setup_name = setup_name
+    params.setSetupName(parameters, setup_name)
     
     # Load app
     window = Window(parameters)

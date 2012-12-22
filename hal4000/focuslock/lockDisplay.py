@@ -30,6 +30,10 @@ import focuslock.lockModes as lockModes
 # off()
 #   Turn off the IR laser
 #
+
+#
+# Base class
+#
 class LockDisplay(QtGui.QWidget):
     foundSum = QtCore.pyqtSignal()
     recenteredPiezo = QtCore.pyqtSignal()
@@ -71,12 +75,16 @@ class LockDisplay(QtGui.QWidget):
         # UI setup
         self.ui = lockdisplayUi.Ui_Form()
         self.ui.setupUi(self)
-        if (not ir_laser.havePowerControl()):
-            self.ui.irSlider.hide()
+        if self.ir_laser:
+            if (not ir_laser.havePowerControl()):
+                self.ui.irSlider.hide()
+            # connect signals
+            self.ui.irButton.clicked.connect(self.handleIrButton)
+            self.ui.irSlider.valueChanged.connect(self.handleIrSlider)
 
-        # connect signals
-        self.ui.irButton.clicked.connect(self.handleIrButton)
-        self.ui.irSlider.valueChanged.connect(self.handleIrSlider)
+        else:
+            self.ui.irButton.hide()
+            self.ui.irSlider.hide()
 
         # start the qpd monitoring thread & stage control thread
         self.control_thread = control_thread
@@ -86,11 +94,11 @@ class LockDisplay(QtGui.QWidget):
         self.control_thread.recenteredPiezo.connect(self.handleRecenteredPiezo)
 
         # connect to the ir laser & turn it off.
-        self.ir_laser = ir_laser
-        self.ir_state = True
-        self.handleIrButton()
-        if self.ir_laser.havePowerControl():
-            self.ui.irSlider.setValue(parameters.ir_power)
+        if self.ir_laser:
+            self.ir_state = True
+            self.handleIrButton()
+            if self.ir_laser.havePowerControl():
+                self.ui.irSlider.setValue(parameters.ir_power)
 
         self.newParameters(parameters)
 
@@ -128,6 +136,10 @@ class LockDisplay(QtGui.QWidget):
 
     def getOffsetPowerStage(self):
         return [self.offset, self.power, self.stage_z]
+
+    @hdebug.debug
+    def handleAdjustStage(self, direction):
+        self.jump(float(direction)*self.parameters.lockt_step)
 
     @hdebug.debug
     def handleFoundSum(self):
@@ -184,7 +196,8 @@ class LockDisplay(QtGui.QWidget):
         self.control_thread.stopThread()
         self.control_thread.wait()
         self.control_thread.cleanUp()
-        self.ir_laser.off()
+        if self.ir_laser:
+            self.ir_laser.off()
 
     @hdebug.debug
     def shouldDisplayLockButton(self):
@@ -258,13 +271,13 @@ class LockDisplayQPD(LockDisplay):
         stage_max = int(2.0 * parameters.qpd_zcenter)
         status_x = self.ui.zFrame.width() - 4
         status_y = self.ui.zFrame.height() - 4
-        self.zDisplay = lockDisplayWidgets.QOffsetDisplay(status_x,
-                                                          status_y,
-                                                          0,
-                                                          stage_max,
-                                                          int(0.1 * stage_max),
-                                                          int(0.9 * stage_max),
-                                                          parent = self.ui.zFrame)
+        self.zDisplay = lockDisplayWidgets.QStageDisplay(status_x,
+                                                         status_y,
+                                                         0,
+                                                         stage_max,
+                                                         int(0.1 * stage_max),
+                                                         int(0.9 * stage_max),
+                                                         parent = self.ui.zFrame)
         self.zDisplay.setGeometry(2, 2, status_x, status_y)
 
         # qpd
@@ -344,14 +357,15 @@ class LockDisplayCam(LockDisplay):
         stage_max = int(2.0 * parameters.qpd_zcenter)
         status_x = self.ui.zFrame.width() - 4
         status_y = self.ui.zFrame.height() - 4
-        self.zDisplay = lockDisplayWidgets.QOffsetDisplay(status_x,
-                                                          status_y,
-                                                          0,
-                                                          stage_max,
-                                                          int(0.1 * stage_max),
-                                                          int(0.9 * stage_max),
-                                                          parent = self.ui.zFrame)
+        self.zDisplay = lockDisplayWidgets.QStageDisplay(status_x,
+                                                         status_y,
+                                                         0,
+                                                         stage_max,
+                                                         int(0.1 * stage_max),
+                                                         int(0.9 * stage_max),
+                                                         parent = self.ui.zFrame)
         self.zDisplay.setGeometry(2, 2, status_x, status_y)
+        self.zDisplay.adjustStage.connect(self.handleAdjustStage)
 
         # camera display
         status_x = self.ui.qpdFrame.width() - 4
@@ -359,6 +373,7 @@ class LockDisplayCam(LockDisplay):
         self.camDisplay = lockDisplayWidgets.QCamDisplay(parent = self.ui.qpdFrame)
         self.camDisplay.setGeometry(2, 2, status_x, status_y)
         self.camDisplay.adjustCamera.connect(self.handleAdjustAOI)
+        self.camDisplay.adjustOffset.connect(self.handleAdjustOffset)
 
         # timer for updating the display of snapshots captured by the camera.
         self.cam_timer = QtCore.QTimer()
@@ -388,6 +403,9 @@ class LockDisplayCam(LockDisplay):
 
     def handleAdjustAOI(self, dx, dy):
         self.control_thread.adjustCamera(dx, dy)
+
+    def handleAdjustOffset(self, dx):
+        self.control_thread.adjustOffset(dx)
 
     # for debugging..
 #    def openOffsetFile(self, filename):

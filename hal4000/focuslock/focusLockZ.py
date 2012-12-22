@@ -41,6 +41,7 @@ class FocusLockZ(QtGui.QDialog):
         # general
         self.offset_file = 0
         self.parameters = parameters
+        self.jumpsize = 0.0
         self.tcp_control = tcp_control
 
     @hdebug.debug    
@@ -276,7 +277,7 @@ class FocusLockZCam(FocusLockZ):
 #
 class FocusLockZDualCam(FocusLockZ):
     @hdebug.debug
-    def __init__(self, parameters, tcp_control, control_thread, ir_laser, parent):
+    def __init__(self, parameters, tcp_control, control_threads, ir_lasers, parent):
         FocusLockZ.__init__(self, parameters, tcp_control, parent)
 
         # Setup UI.
@@ -287,8 +288,8 @@ class FocusLockZDualCam(FocusLockZ):
 
         # Add Camera1 lock display.
         self.lock_display1 = lockDisplay.LockDisplayCam(parameters,
-                                                        control_thread, 
-                                                        ir_laser, 
+                                                        control_threads[0], 
+                                                        ir_lasers[0], 
                                                         self.ui.lockDisplay1Widget)
         self.lock_display1.ui.statusBox.setTitle("Lock1 Status")
         self.lock_display1.foundSum.connect(self.handleFoundSum)
@@ -296,12 +297,22 @@ class FocusLockZDualCam(FocusLockZ):
 
         # Add Camera2 lock display.
         self.lock_display2 = lockDisplay.LockDisplayCam(parameters,
-                                                        control_thread, 
-                                                        ir_laser, 
+                                                        control_threads[1],
+                                                        ir_lasers[1],
                                                         self.ui.lockDisplay2Widget)
         self.lock_display2.ui.statusBox.setTitle("Lock2 Status")
 
         FocusLockZ.configureUI(self)
+
+    @hdebug.debug
+    def handleJumpButton(self):
+        FocusLockZ.handleJumpButton(self)
+        self.lock_display2.jump(-self.jumpsize)
+
+    @hdebug.debug
+    def handleLockButton(self):
+        FocusLockZ.handleLockButton(self)
+        self.lock_display2.lockButtonToggle()
 
     @hdebug.debug
     def handleRadioButtons(self):

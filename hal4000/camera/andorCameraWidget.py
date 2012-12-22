@@ -15,38 +15,34 @@ class ACameraWidget(qtCameraWidget.QCameraWidget):
     def __init__(self, parent = None):
         qtCameraWidget.QCameraWidget.__init__(self, parent)
 
-    def updateImageWithData(self, new_data):
-        if new_data:
-            w = self.image.width()
-            h = self.image.height()
-            image_data = numpy.fromstring(new_data, dtype=numpy.uint16)
-            if (image_data.size == h*w):
-                image_data = image_data.reshape((h,w))
-                self.image_min = numpy.min(image_data)
-                self.image_max = numpy.max(image_data)
+    def updateImageWithFrame(self, frame):
+        if frame:
+            w = frame.image_x
+            h = frame.image_y
+            image_data = numpy.fromstring(frame.data, dtype=numpy.uint16)
+            image_data = image_data.reshape((h,w))
+            self.image_min = numpy.min(image_data)
+            self.image_max = numpy.max(image_data)
 
-                temp = image_data.astype(numpy.float32)
-                temp = 255.0*(temp - self.display_range[0])/(self.display_range[1] - self.display_range[0])
-                temp[(temp > 255.0)] = 255.0
-                temp[(temp < 0.0)] = 0.0
-                temp = temp.astype(numpy.uint8)
+            temp = image_data.astype(numpy.float32)
+            temp = 255.0*(temp - self.display_range[0])/(self.display_range[1] - self.display_range[0])
+            temp[(temp > 255.0)] = 255.0
+            temp[(temp < 0.0)] = 0.0
+            temp = temp.astype(numpy.uint8)
 
-                self.image = QtGui.QImage(temp.data, w, h, QtGui.QImage.Format_Indexed8)
-                self.image.ndarray = temp
+            self.image = QtGui.QImage(temp.data, w, h, QtGui.QImage.Format_Indexed8)
+            self.image.ndarray = temp
 
-                self.setColorTable()
-                self.update()
+            self.setColorTable()
+            self.update()
 
-                if self.show_info:
-                    x_loc = (self.x_click * w)/512
-                    y_loc = (self.y_click * h)/512
-                    value = 0
-                    if ((x_loc >= 0) and (x_loc < w) and (y_loc >= 0) and (y_loc < h)):
-                        value = image_data[y_loc, x_loc]
-                        self.emit(QtCore.SIGNAL("intensityInfo(int, int, int)"), x_loc, y_loc, value)
-
-            else:
-                print "Camera image size does not match expected image size."
+            if self.show_info:
+                x_loc = (self.x_click * w)/512
+                y_loc = (self.y_click * h)/512
+                value = 0
+                if ((x_loc >= 0) and (x_loc < w) and (y_loc >= 0) and (y_loc < h)):
+                    value = image_data[y_loc, x_loc]
+                    self.intensityInfo.emit(x_loc, y_loc, value)
 
 #
 # The MIT License

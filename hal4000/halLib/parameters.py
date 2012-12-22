@@ -94,6 +94,12 @@ def setDefaultShutter(shutters_filename):
     if default_params:
         default_params.shutters = shutters_filename
 
+def setSetupName(parameters, setup_name):
+    parameters.setup_name = setup_name
+    global default_params
+    if default_params:
+        default_params.setup_name = setup_name
+
 class StormXMLObject:
 
     # Dynamically create class based on xml data

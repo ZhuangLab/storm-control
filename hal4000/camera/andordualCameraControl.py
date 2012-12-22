@@ -138,8 +138,8 @@ class ACameraControl(cameraControl.CameraControl):
                 if hdebug.getDebug():
                     print "  Setting Trigger Mode"
                 if p.external_trigger:
-                    self.cameras[i].setTriggerMode(1)
-                    self.cameras[1].setFastExtTrigger(1)
+                    self.cameras[i].setTriggerMode(p.external_trigger)
+                    #self.cameras[1].setFastExtTrigger(1)
                 else:
                     self.cameras[i].setTriggerMode(0)
                 if hdebug.getDebug():

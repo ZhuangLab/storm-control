@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Camera for a dual andor camera setup.
+# Camera for generic dual andor camera setup.
 #
 # Hazen 12/12
 #

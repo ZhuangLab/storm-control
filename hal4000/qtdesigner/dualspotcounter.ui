@@ -81,18 +81,18 @@
       <rect>
        <x>20</x>
        <y>10</y>
-       <width>101</width>
+       <width>141</width>
        <height>16</height>
       </rect>
      </property>
      <property name="text">
-      <string>Total Localizations:</string>
+      <string>Camera1 Total Localizations:</string>
      </property>
     </widget>
     <widget class="QLabel" name="countsLabel1">
      <property name="geometry">
       <rect>
-       <x>130</x>
+       <x>160</x>
        <y>10</y>
        <width>61</width>
        <height>16</height>
@@ -164,18 +164,18 @@
       <rect>
        <x>20</x>
        <y>290</y>
-       <width>101</width>
+       <width>141</width>
        <height>16</height>
       </rect>
      </property>
      <property name="text">
-      <string>Total Localizations:</string>
+      <string>Camera2 Total Localizations:</string>
      </property>
     </widget>
     <widget class="QLabel" name="countsLabel3">
      <property name="geometry">
       <rect>
-       <x>130</x>
+       <x>160</x>
        <y>290</y>
        <width>61</width>
        <height>16</height>
@@ -214,18 +214,18 @@
       <rect>
        <x>20</x>
        <y>10</y>
-       <width>101</width>
+       <width>141</width>
        <height>16</height>
       </rect>
      </property>
      <property name="text">
-      <string>Total Localizations:</string>
+      <string>Camera1 Total Localizations:</string>
      </property>
     </widget>
     <widget class="QLabel" name="countsLabel2">
      <property name="geometry">
       <rect>
-       <x>130</x>
+       <x>160</x>
        <y>10</y>
        <width>61</width>
        <height>16</height>
@@ -246,7 +246,7 @@
     <widget class="QLabel" name="countsLabel4">
      <property name="geometry">
       <rect>
-       <x>130</x>
+       <x>160</x>
        <y>10</y>
        <width>61</width>
        <height>16</height>
@@ -280,12 +280,12 @@
       <rect>
        <x>20</x>
        <y>10</y>
-       <width>101</width>
+       <width>141</width>
        <height>16</height>
       </rect>
      </property>
      <property name="text">
-      <string>Total Localizations:</string>
+      <string>Camera2 Total Localizations:</string>
      </property>
     </widget>
    </widget>

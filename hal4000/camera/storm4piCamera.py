@@ -1,22 +1,22 @@
 #!/usr/bin/python
 #
-# Camera for the none storm4pi setup.
+# Camera for the storm4pi setup.
 #
 # Hazen 12/12
 #
 
 import halLib.hdebug as hdebug
 
-import camera.classicSingleCamera as classicSingleCamera
+import camera.dualCamera as dualCamera
 
 def getMode():
-    return "single"
+    return "dual"
 
-class ACamera(classicSingleCamera.ClassicSingleCamera):
+class ACamera(dualCamera.DualCamera):
 
     @hdebug.debug
-    def __init__(self, parameters, camera_frame, camera_params_frame, parent = None):
-        classicSingleCamera.ClassicSingleCamera.__init__(self, parameters, camera_frame, camera_params_frame, parent)
+    def __init__(self, parameters, parent = None):
+        dualCamera.DualCamera.__init__(self, parameters, parent)
 
 #
 # The MIT License

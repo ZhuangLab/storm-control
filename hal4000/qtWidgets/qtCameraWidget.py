@@ -2,7 +2,7 @@
 #
 # Qt Widget for handling the display of camera data.
 #
-# Hazen 11/09
+# Hazen 12/12
 #
 
 from PyQt4 import QtCore, QtGui
@@ -115,12 +115,11 @@ class QCameraWidget(QtGui.QWidget):
         else:
             self.show_target = 0
 
-    def updateImageWithData(self, new_data):
+    def updateImageWithFrame(self, frame):
         self.blank()
         self.update()
         if self.show_info:
-            #self.emit(QtCore.SIGNAL("intensityInfo(int, int, int)"), self.x_click, self.y_click, 0)
-            self.emit.intensityInfo(self.x_click, self.y_click, 0)
+            self.intensityInfo.emit(self.x_click, self.y_click, 0)
 
 #
 # Testing
@@ -143,7 +142,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

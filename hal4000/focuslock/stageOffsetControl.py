@@ -120,6 +120,7 @@ class stageQPDThread(QtCore.QThread):
         self.running = 1
         self.slow_stage = slow_stage
         self.stage_mutex = QtCore.QMutex()
+
         self.stage_z = z_center - 1.0
         self.sum = 0
         self.target = None
@@ -353,6 +354,12 @@ class stageCamThread(stageQPDThread):
         self.qpd_mutex.unlock()
 
     @hdebug.debug
+    def adjustOffset(self, dx):
+        self.qpd_mutex.lock()
+        self.cam.adjustZeroDist(dx)
+        self.qpd_mutex.unlock()
+
+    @hdebug.debug
     def getImage(self):
         self.cam_mutex.lock()
         data = self.cam_data
@@ -369,7 +376,6 @@ class stageCamThread(stageQPDThread):
         self.cam_data[0] = self.cam_data[0].copy()
         self.cam_mutex.unlock()
         return data
-
 
 #
 # The MIT License

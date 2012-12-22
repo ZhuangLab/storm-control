@@ -11,6 +11,8 @@ from PyQt4 import QtCore, QtGui
 #
 # Status display widgets
 #
+
+# Base class.
 class QStatusDisplay(QtGui.QWidget):
     def __init__(self, x_size, y_size, scale_min, scale_max, parent = None):
         QtGui.QWidget.__init__(self, parent)
@@ -40,6 +42,7 @@ class QStatusDisplay(QtGui.QWidget):
         self.value = self.convert(value)
         self.update()
 
+# Focus lock sum signal.
 class QSumDisplay(QStatusDisplay):
     def __init__(self, x_size, y_size, scale_min, scale_max, warning_low, warning_high, parent = None):
         QStatusDisplay.__init__(self, x_size, y_size, scale_min, scale_max, parent = parent)
@@ -70,6 +73,7 @@ class QSumDisplay(QStatusDisplay):
         painter.setBrush(color)
         painter.drawRect(2, self.y_size - self.value, self.x_size - 5, self.value)
 
+# Focus lock offset & stage position.
 class QOffsetDisplay(QStatusDisplay):
     def __init__(self, x_size, y_size, scale_min, scale_max, warning_low, warning_high, has_center_bar = 0, parent = None):
         QStatusDisplay.__init__(self, x_size, y_size, scale_min, scale_max, parent = parent)
@@ -101,6 +105,47 @@ class QOffsetDisplay(QStatusDisplay):
         painter.setBrush(color)
         painter.drawRect(2, self.y_size - self.value - 2, self.x_size - 5, 3)
 
+# Stage position.
+class QStageDisplay(QOffsetDisplay):
+    adjustStage = QtCore.pyqtSignal(int)
+
+    def __init__(self, x_size, y_size, scale_min, scale_max, warning_low, warning_high, has_center_bar = 0, parent = None):
+        QOffsetDisplay.__init__(self,
+                                x_size,
+                                y_size,
+                                scale_min,
+                                scale_max,
+                                warning_low,
+                                warning_high,
+                                has_center_bar = has_center_bar,
+                                parent = parent)
+
+        self.adjust_mode = False
+        self.setFocusPolicy(QtCore.Qt.ClickFocus)
+
+    def paintBackground(self, painter):
+        if self.adjust_mode:
+            color = QtGui.QColor(180, 180, 180)
+        else:
+            color = QtGui.QColor(255, 255, 255)
+        painter.setPen(color)
+        painter.setBrush(color)
+        painter.drawRect(0, 0, self.x_size, self.y_size)
+
+    def mousePressEvent(self, event):
+        self.adjust_mode = not self.adjust_mode
+        self.update()
+
+    def wheelEvent(self, wheel_event):
+        if self.adjust_mode:
+            if (wheel_event.delta() > 0):
+                self.adjustStage.emit(1)
+            else:
+                self.adjustStage.emit(-1)
+        else:
+            wheel_event.ignore()
+
+# QPD XY position.
 class QQPDDisplay(QStatusDisplay):
     def __init__(self, x_size, y_size, scale, parent = None):
         QStatusDisplay.__init__(self, x_size, y_size, (-1 * scale), scale, parent = parent)
@@ -129,8 +174,10 @@ class QQPDDisplay(QStatusDisplay):
         self.y_value = self.convert(y)
         self.update()
 
+# USB camera image display.
 class QCamDisplay(QtGui.QWidget):    
     adjustCamera = QtCore.pyqtSignal(int, int)
+    adjustOffset = QtCore.pyqtSignal(int)
 
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
@@ -154,36 +201,42 @@ class QCamDisplay(QtGui.QWidget):
             # Thorlabs USB camera) is two pixels.
             if (which_key == QtCore.Qt.Key_Left):
                 self.adjustCamera.emit(2,0)
-            if (which_key == QtCore.Qt.Key_Right):
+            elif (which_key == QtCore.Qt.Key_Right):
                 self.adjustCamera.emit(-2,0)
-            if (which_key == QtCore.Qt.Key_Up):
+            elif (which_key == QtCore.Qt.Key_Up):
                 self.adjustCamera.emit(0,2)
-            if (which_key == QtCore.Qt.Key_Down):
+            elif (which_key == QtCore.Qt.Key_Down):
                 self.adjustCamera.emit(0,-2)
+
+            elif (which_key == QtCore.Qt.Key_Comma):
+                self.adjustOffset.emit(-1)
+            elif (which_key == QtCore.Qt.Key_Period):
+                self.adjustOffset.emit(+1)
 
     def mousePressEvent(self, event):
         self.adjust_mode = not self.adjust_mode
         self.update()
 
     def newImage(self, data, show_dot):
-        # Update image
-        np_data = data[0]
-        w, h = np_data.shape
-        self.image = QtGui.QImage(np_data.data, w, h, QtGui.QImage.Format_Indexed8)
-        self.image.ndarray = np_data
-        for i in range(256):
-            self.image.setColor(i, QtGui.QColor(i,i,i).rgb())
+        # Update image if data is good..
+        if (type(data) == type([])):
+            np_data = data[0]
+            w, h = np_data.shape
+            self.image = QtGui.QImage(np_data.data, w, h, QtGui.QImage.Format_Indexed8)
+            self.image.ndarray = np_data
+            for i in range(256):
+                self.image.setColor(i, QtGui.QColor(i,i,i).rgb())
 
-        # Update offsets
-        self.x_off1 = ((data[2]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size + 1
-        self.y_off1 = ((data[1]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size + 1
-        self.x_off2 = ((data[4]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size + 1
-        self.y_off2 = ((data[3]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size + 1
+            # Update offsets
+            self.x_off1 = ((data[2]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size + 1
+            self.y_off1 = ((data[1]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size + 1
+            self.x_off2 = ((data[4]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size + 1
+            self.y_off2 = ((data[3]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size + 1
 
-        # Red dot in camera display
-        self.show_dot = show_dot
+            # Red dot in camera display
+            self.show_dot = show_dot
 
-        self.update()
+            self.update()
 
     def paintEvent(self, Event):
         painter = QtGui.QPainter(self)

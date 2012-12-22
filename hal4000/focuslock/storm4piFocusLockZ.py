@@ -1,57 +1,73 @@
 #!/usr/bin/python
 #
-# QPD / Objective Z based focus lock 
-# control specialized for STORM4PI.
+# Focus lock control specialized for Storm4 dual objective.
 #
-# Hazen 12/09
+# Hazen 12/12
 #
 
-# none widgets
-import focuslock.noneWidgets as noneWidgets
+from PyQt4 import QtCore
 
-# piezo control.
-import thorlabs.TPZ001 as TPZ001
+# camera and stage.
+import madCityLabs.mclController as mclController
+import thorlabs.uc480Camera as uc480Cam
 
 # focus lock control thread.
-import focuslock.stageQPDControl as stageQPDControl
+import focuslock.stageOffsetControl as stageOffsetControl
+
+# ir laser control
+import thorlabs.LDC210 as LDC210
 
 # focus lock dialog.
 import focuslock.focusLockZ as focusLockZ
 
 #
-# Focus Lock Dialog Box specialized for STORM4PI
-# which only has a piezo stage positioner.
+# Focus Lock Dialog Box specialized for the dual objective Storm4 
+# scope with two USB cameras and two MCL objective Z positioners.
 #
-class AFocusLockZ(focusLockZ.FocusLockZ):
-    def __init__(self, parameters, parent = None):
-        qpd = noneWidgets.QPD()
-        stage = noneWidgets.NanoP()
-        lock_fn = lambda (x): 0.0 * x
-        control_thread = stageQPDControl.QControlThread(qpd,
-                                                        stage,
-                                                        lock_fn,
-                                                        50.0,
-                                                        parameters.qpd_zcenter)
-        ir_laser = noneWidgets.IRLaser()
-        focusLockZ.FocusLockZ.__init__(self,
-                                       parameters, 
-                                       control_thread,
-                                       ir_laser,
-                                       parent)
+class AFocusLockZ(focusLockZ.FocusLockZDualCam):
+    def __init__(self, parameters, tcp_control, parent = None):
 
-        # Since the stage is an ActiveX control & such controls
-        # have to have a parent we have to change the stage class
-        # after the focus lock dialog box has been initialized.
-        stage = TPZ001.APTPiezo(parent = self)
-        stage.hide()
-        stage.moveTo(0, parameters.qpd_zcenter)
-        control_thread.setStage(stage)
-        control_thread.recenter()
+        # The numpy fitting routine is apparently not thread safe.
+        fit_mutex = QtCore.QMutex()
+
+        # Lower objective camera and piezo.
+        cam1 = uc480Cam.cameraQPD(camera_id = 2,
+                                  fit_mutex = fit_mutex)
+        stage1 = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/",
+                                        serial_number = 2636)
+        lock_fn = lambda (x): -0.03 * x
+        control_thread1 = stageOffsetControl.stageCamThread(cam1,
+                                                            stage1,
+                                                            lock_fn,
+                                                            50.0,
+                                                            parameters.qpd_zcenter)
+
+        # Upper objective camera and piezo.
+        cam2 = uc480Cam.cameraQPD(camera_id = 3,
+                                  fit_mutex = fit_mutex)
+        stage2 = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/",
+                                        serial_number = 2637)
+        lock_fn = lambda (x): -0.03 * x
+        control_thread2 = stageOffsetControl.stageCamThread(cam2,
+                                                            stage2,
+                                                            lock_fn,
+                                                            50.0,
+                                                            parameters.qpd_zcenter)
+
+        ir_laser = LDC210.LDC210PWMLJ()
+
+        focusLockZ.FocusLockZDualCam.__init__(self,
+                                              parameters,
+                                              tcp_control,
+                                              [control_thread1, control_thread2],
+                                              [ir_laser, False],
+                                              parent)
+
 
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

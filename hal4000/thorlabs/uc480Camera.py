@@ -231,10 +231,12 @@ class Camera(Handle):
     def stopCapture(self):
         check(uc480.is_StopLiveVideo(self, IS_WAIT))
 
+
 # QPD emulation class
 class cameraQPD():
-    def __init__(self, camera_id = 1):
-        self.file_name = "cam_offsets.txt"
+    def __init__(self, camera_id = 1, fit_mutex = False):
+        self.file_name = "cam_offsets_" + str(camera_id) + ".txt"
+        self.fit_mutex = fit_mutex
         self.image = None
 
         # Open camera
@@ -246,11 +248,12 @@ class cameraQPD():
         # Set camera AOI
         if (os.path.exists(self.file_name)):
             fp = open(self.file_name, "r")
-            [self.x_start, self.y_start] = map(int, fp.readline().split(","))
+            [self.x_start, self.y_start, self.zero_dist] = map(int, fp.readline().split(","))
             fp.close()
         else:
             self.x_start = 646
-            self.y_start = 218
+            self.y_start = 216
+            self.zero_dist = 100
         self.x_width = 200
         self.y_width = 200
         self.setAOI()
@@ -283,6 +286,9 @@ class cameraQPD():
             self.y_start = self.cam.info.nMaxHeight - (self.y_width + 2)
         self.setAOI()
 
+    def adjustZeroDist(self, inc):
+        self.zero_dist += inc
+
     def capture(self):
         self.image = self.cam.captureImage()
         return self.image
@@ -293,7 +299,11 @@ class cameraQPD():
         max_y = int(max_i%data.shape[0])
         if (max_x > (self.fit_size-1)) and (max_x < (self.x_width - self.fit_size)) and (max_y > (self.fit_size-1)) and (max_y < (self.y_width - self.fit_size)):
             #[params, status] = fitSymmetricGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
+            if self.fit_mutex:
+                self.fit_mutex.lock()
             [params, status] = fitFixedEllipticalGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
+            if self.fit_mutex:
+                self.fit_mutex.unlock()
             params[2] -= self.fit_size/2
             params[3] -= self.fit_size/2
             return [max_x, max_y, params, status]
@@ -302,6 +312,9 @@ class cameraQPD():
 
     def getImage(self):
         return [self.image, self.x_off1, self.y_off1, self.x_off2, self.y_off2]
+
+    def getZeroDist(self):
+        return self.zero_dist
 
     def qpdScan(self, reps = 4):
         power_total = 0.0
@@ -327,7 +340,7 @@ class cameraQPD():
 
     def shutDown(self):
         fp = open(self.file_name, "w")
-        fp.write(str(self.x_start) + "," + str(self.y_start))
+        fp.write(str(self.x_start) + "," + str(self.y_start) + "," + str(self.zero_dist))
         fp.close()
         self.cam.shutDown()
 
@@ -366,7 +379,7 @@ class cameraQPD():
             self.x_off2 = float(max_x) + params[2] - self.half_x
             self.y_off2 = float(max_y) + params[3] - self.half_y
 
-            offset = (abs(self.y_off1 -  self.y_off2)-100.0)*power
+            offset = (abs(self.y_off1 -  self.y_off2) - self.zero_dist)*power
 
         return [power, offset, 0]
 

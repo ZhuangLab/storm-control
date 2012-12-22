@@ -2,7 +2,7 @@
 #
 # Camera control and display class.
 #
-# Hazen 9/09
+# Hazen 12/12
 #
 
 from PyQt4 import QtCore, QtGui
@@ -119,7 +119,7 @@ class CameraDisplay(QtGui.QFrame):
 
     def displayFrame(self):
         if self.frame:
-            self.camera_widget.updateImageWithData(self.frame.data)
+            self.camera_widget.updateImageWithFrame(self.frame)
 
     def getShutterButton(self):
         return self.ui.cameraShutterButton
@@ -158,8 +158,6 @@ class CameraDisplay(QtGui.QFrame):
     @hdebug.debug
     def handleSync(self, frame):
         self.parameters.sync = frame
-        #self.emit(QtCore.SIGNAL("syncChange(int)"), frame)
-        #self.syncChange.emit(frame)
 
     @hdebug.debug
     def handleTarget(self):
@@ -242,9 +240,9 @@ class CameraDisplay(QtGui.QFrame):
         self.ui.syncLabel.hide()
         self.ui.syncSpinBox.hide()
 
-    def updateImage(self, frame):
-        if frame:
-            self.camera_widget.updateImageWithData(frame.data)
+#    def updateImage(self, frame):
+#        if frame:
+#            self.camera_widget.updateImageWithFrame(frame)
 
     @hdebug.debug
     def updateRange(self):

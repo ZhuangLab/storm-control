@@ -53,9 +53,13 @@ class CameraParams(QtGui.QGroupBox):
         self.ui.preampGainText.setText("%.1f" % p.preampgain)
         self.ui.pictureSizeText.setText(str(p.x_pixels) + " x " + str(p.y_pixels) +
                                         " (" + str(p.x_bin) + "," + str(p.y_bin) + ")")
-        self.ui.exposureTimeText.setText("%.4f" % p.exposure_value)
-        self.ui.FPSText.setText("%.4f" % (1.0/p.kinetic_value))
-                
+        if p.external_trigger:
+            self.ui.exposureTimeText.setText("External")
+            self.ui.FPSText.setText("External")
+        else:
+            self.ui.exposureTimeText.setText("%.4f" % p.exposure_value)
+            self.ui.FPSText.setText("%.4f" % (1.0/p.kinetic_value))
+
     def newTemperature(self, temp_data):
         if temp_data[1] == "stable":
             self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
