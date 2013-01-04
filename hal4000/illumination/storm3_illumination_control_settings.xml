@@ -31,8 +31,8 @@
     <min_voltage type="float">-0.035</min_voltage>
     <max_voltage type="float">6.0</max_voltage>
     <use_aotf type="boolean">TRUE</use_aotf>
-    <frequency type="float">108.31</frequency>
-    <amplitude type="int">8000</amplitude>
+    <frequency type="float">107.92</frequency>
+    <amplitude type="int">7000</amplitude>
     <aotf_channel type="int">1</aotf_channel>
   </block>
   <block>

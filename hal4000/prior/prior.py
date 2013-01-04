@@ -106,6 +106,13 @@ class Prior(RS232.RS232):
         else:
             self._command("SERVO,0")
 
+    def setVelocity(self, x_vel, y_vel):
+        # FIXME: units are 1-100, but not exactly sure what..
+        speed = x_vel * 10.0
+        if (speed > 100.0):
+            speed = 100.0
+        self._command("SMS," + str(speed))
+
     def state(self):
         response = self._command("#")[0]
         state = []
@@ -153,10 +160,13 @@ class PriorFocus(Prior):
 if __name__ == "__main__":
     if 1:
         stage = Prior(port = "COM9", baudrate = 115200)
+        stage.setVelocity(1.0, 1.0)
+        print stage._command("SMS")
+
         for info in stage.info():
             print info
 
-        if 1:
+        if 0:
             print stage.getServo()
             stage.setServo(True)
             print stage.getServo()
