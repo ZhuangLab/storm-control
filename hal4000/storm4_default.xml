@@ -29,6 +29,7 @@
   <low_during_filming type="int">0</low_during_filming>
   <head_model type="string">unknown</head_model>
   <reversed_shutter type="int">0</reversed_shutter>
+  <external_trigger type="int">0</external_trigger>
 
   <!-- film settings -->
   <want_big_endian type="int">1</want_big_endian>

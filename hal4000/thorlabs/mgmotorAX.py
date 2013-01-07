@@ -20,7 +20,8 @@ class APTUser(QAxContainer.QAxWidget):
     def __init__(self, parent = None):
         QAxContainer.QAxWidget.__init__(self, parent)
         self.setControl("MGMOTOR.MGMotorCtrl.1")
-        self.dynamicCall('SetHWSerialNum(int)', 83811462)
+        #self.setControl("APTPZMOTOR.APTPZMotorCtrl.1")
+        self.dynamicCall('SetHWSerialNum(int)', 83833758)
         self.dynamicCall('StartCtrl()')
 
     def moveTo(self, pos):

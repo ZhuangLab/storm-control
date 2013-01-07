@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Camera for the none storm4 setup.
+# Camera for the storm4 setup.
 #
 # Hazen 12/12
 #

@@ -11,14 +11,14 @@
     <dig_line type="int">0</dig_line>
   </block>
   <block>
-    <description type="text">657</description>
+    <description type="text">642</description>
     <color type="rgb">255,0,0</color>
     <channel type="int">1</channel>
     <min_voltage type="float">0.0</min_voltage>
     <max_voltage type="float">1.0</max_voltage>
     <use_aotf type="boolean">TRUE</use_aotf>
-    <frequency type="float">88.71</frequency>
-    <amplitude type="int">6000</amplitude>
+    <frequency type="float">91.22</frequency>
+    <amplitude type="int">6100</amplitude>
     <aotf_channel type="int">0</aotf_channel>
   </block>
   <block>
@@ -28,8 +28,8 @@
     <min_voltage type="float">0.0</min_voltage>
     <max_voltage type="float">1.0</max_voltage>
     <use_aotf type="boolean">TRUE</use_aotf>
-    <frequency type="float">107.85</frequency>
-    <amplitude type="int">6600</amplitude>
+    <frequency type="float">108.28</frequency>
+    <amplitude type="int">6500</amplitude>
     <aotf_channel type="int">1</aotf_channel>
   </block>
   <block>
