@@ -294,10 +294,14 @@ class cameraQPD():
         return self.image
 
     def fitGaussian(self, data):
+        if (numpy.max(data) < 25):
+            return [False, False, False, False]
+        x_width = data.shape[0]
+        y_width = data.shape[1]
         max_i = data.argmax()
-        max_x = int(max_i/data.shape[0])
-        max_y = int(max_i%data.shape[0])
-        if (max_x > (self.fit_size-1)) and (max_x < (self.x_width - self.fit_size)) and (max_y > (self.fit_size-1)) and (max_y < (self.y_width - self.fit_size)):
+        max_x = int(max_i/y_width)
+        max_y = int(max_i%y_width)
+        if (max_x > (self.fit_size-1)) and (max_x < (x_width - self.fit_size)) and (max_y > (self.fit_size-1)) and (max_y < (y_width - self.fit_size)):
             #[params, status] = fitSymmetricGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
             if self.fit_mutex:
                 self.fit_mutex.lock()
@@ -347,39 +351,57 @@ class cameraQPD():
     def singleQpdScan(self):
         data = self.capture().copy()
 
-        # determine offset by moments calculation.
+        # Determine offset by moments calculation.
         if 0:
             data_ave = numpy.average(data, axis = 1)
             power = numpy.sum(data_ave)
             x_offset = numpy.sum(self.X * data_ave)
             y_offset = 0.0
 
-        # determine offset by fitting gaussians to the two beam spots.
+        # Determine offset by fitting gaussians to the two beam spots.
+        # In the event that only beam spot can be fit then this will
+        # attempt to compensate. However this assumes that the two
+        # spots are centered across the mid-line of camera ROI.
         if 1:
+            dist1 = 0
+            dist2 = 0
+            self.x_off1 = 0.0
+            self.y_off1 = 0.0
+            self.x_off2 = 0.0
+            self.y_off2 = 0.0
+
             power = numpy.max(data)
 
             if (power < 25):
                 # This hack is because if you bombard the USB camera with 
-                # update requests too frequently it will freeze.
+                # update requests too frequently it will freeze. Or so I
+                # believe, not sure if this is actually true.
                 time.sleep(0.01) 
                 return [0, 0, 0]
 
-            # fit first gaussian & subtract
-            [max_x, max_y, params, status] = self.fitGaussian(data)
-            if (not status):
-                return [0, 0, 0]
-            data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size] = 0
-            self.x_off1 = float(max_x) + params[2] - self.half_x
-            self.y_off1 = float(max_y) + params[3] - self.half_y
+            # Fit first gaussian to data in the left half of the picture.
+            total_good =0
+            [max_x, max_y, params, status] = self.fitGaussian(data[:,:self.half_y])
+            if status:
+                total_good += 1
+                self.x_off1 = float(max_x) + params[2] - self.half_x
+                self.y_off1 = float(max_y) + params[3] - self.half_y
+                dist1 = abs(self.y_off1)
 
-            # fit second gaussian
-            [max_x, max_y, params, status] = self.fitGaussian(data)
-            if (not status):
-                return [0, 0, 0]
-            self.x_off2 = float(max_x) + params[2] - self.half_x
-            self.y_off2 = float(max_y) + params[3] - self.half_y
+            # Fit second gaussian to data in the right half of the picture.
+            [max_x, max_y, params, status] = self.fitGaussian(data[:,-self.half_y:])
+            if status:
+                total_good += 1
+                self.x_off2 = float(max_x) + params[2] - self.half_x
+                self.y_off2 = float(max_y) + params[3]
+                dist2 = abs(self.y_off2)
 
-            offset = (abs(self.y_off1 -  self.y_off2) - self.zero_dist)*power
+            if (total_good == 0):
+                offset = 0
+            elif (total_good == 1):
+                offset = ((dist1 + dist2) - 0.5*self.zero_dist)*power
+            else:
+                offset = ((dist1 + dist2) - self.zero_dist)*power
 
         return [power, offset, 0]
 

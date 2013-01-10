@@ -183,6 +183,8 @@ class QCamDisplay(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
         self.adjust_mode = False
         self.background = QtGui.QColor(0,0,0)
+        self.draw_e1 = True
+        self.draw_e2 = True
         self.e_size = 8
         self.foreground = QtGui.QColor(0,255,0)
         self.image = None
@@ -228,10 +230,19 @@ class QCamDisplay(QtGui.QWidget):
                 self.image.setColor(i, QtGui.QColor(i,i,i).rgb())
 
             # Update offsets
-            self.x_off1 = ((data[2]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size + 1
-            self.y_off1 = ((data[1]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size + 1
-            self.x_off2 = ((data[4]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size + 1
-            self.y_off2 = ((data[3]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size + 1
+            if (data[1] == 0.0):
+                self.draw_e1 = False
+            else:
+                self.draw_e1 = True
+                self.x_off1 = ((data[2]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size + 1
+                self.y_off1 = ((data[1]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size + 1
+
+            if (data[3] == 0.0):
+                self.draw_e2 = False
+            else:
+                self.draw_e2 = True
+                self.x_off2 = ((data[4]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size + 1
+                self.y_off2 = ((data[3]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size + 1
 
             # Red dot in camera display
             self.show_dot = show_dot
@@ -258,8 +269,10 @@ class QCamDisplay(QtGui.QWidget):
             else:
                 painter.setRenderHint(QtGui.QPainter.Antialiasing)
                 painter.setPen(QtGui.QColor(0,255,0))
-                painter.drawEllipse(QtCore.QPointF(self.x_off1, self.y_off1), self.e_size, self.e_size)
-                painter.drawEllipse(QtCore.QPointF(self.x_off2, self.y_off2), self.e_size, self.e_size)
+                if self.draw_e1:
+                    painter.drawEllipse(QtCore.QPointF(self.x_off1, self.y_off1), self.e_size, self.e_size)
+                if self.draw_e2:
+                    painter.drawEllipse(QtCore.QPointF(self.x_off2, self.y_off2), self.e_size, self.e_size)
 
             # display red dot (or not)
             if self.show_dot:
