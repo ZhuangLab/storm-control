@@ -329,6 +329,20 @@ class FocusLockZDualCam(FocusLockZ):
         self.lock_display1.jump(step_size)
         self.lock_display2.jump(-step_size)
 
+    def newFrame(self, frame):
+        if frame.master:
+            if self.offset_file:
+                [offset1, power1, stage_z1] = self.lock_display1.getOffsetPowerStage()
+                [offset2, power2, stage_z2] = self.lock_display2.getOffsetPowerStage()
+                self.offset_file.write("{0:d} {1:.6f} {2:.6f} {3:.6f} {4:.6f} {5:.6f} {6:.6f}\n".format(frame.number, offset1, power1, stage_z1, offset2, power2, stage_z2))
+            self.lock_display1.newFrame(frame)
+            self.lock_display2.newFrame(frame)
+
+    @hdebug.debug
+    def openOffsetFile(self, filename):
+        self.offset_file = open(filename + ".off", "w")
+        self.offset_file.write("frame offset1 power1 stage-z1 offset2 power2 stage-z2\n")
+
     @hdebug.debug
     def quit(self):
         self.lock_display1.quit()
