@@ -81,25 +81,10 @@ def writeInfFile(filename, filetype, number_frames, parameters, camera, stage_po
     fp.write("scalemax = " + str(c.scalemax) + nl)
     fp.write("scalemin = " + str(c.scalemin) + nl)
 
-    #
-    # If Insight3 sees the following block it will assume that the
-    # acquisition software did not rotate the camera image. This is
-    # useful on Prism2 because then the image as displayed by
-    # Insight3 will have the same orientation as the image on the
-    # camera. Not sure why Insight3 otherwise chooses to do its
-    # own additional rotations.
-    #
-    #if p.setup_name == "prism2":
-    #    fp.write("hstart=" + str(p.x_start) + nl)
-    #    fp.write("hend=" + str(p.x_end) + nl)
-    #    fp.write("vstart=" + str(p.y_start) + nl)
-    #    fp.write("vend=" + str(p.y_end) + nl)            
-    #else:
-    #    fp.write("x_start = " + str(p.x_start) + nl)
-    #    fp.write("x_end = " + str(p.x_end) + nl)
-    #    fp.write("y_start = " + str(p.y_start) + nl)
-    #    fp.write("y_end = " + str(p.y_end) + nl)
-    #
+    fp.write("x_start = " + str(c.x_start) + nl)
+    fp.write("x_end = " + str(c.x_end) + nl)
+    fp.write("y_start = " + str(c.y_start) + nl)
+    fp.write("y_end = " + str(c.y_end) + nl)
 
     # Additional info
     fp.write("Stage X = {0:.2f}".format(stage_position[0]) + nl)
