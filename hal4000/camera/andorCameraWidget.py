@@ -12,8 +12,9 @@ import qtWidgets.qtCameraWidget as qtCameraWidget
 
 # Andor Camera Widget
 class ACameraWidget(qtCameraWidget.QCameraWidget):
-    def __init__(self, parent = None):
-        qtCameraWidget.QCameraWidget.__init__(self, parent)
+
+    def __init__(self, flip_horizontal, parent = None):
+        qtCameraWidget.QCameraWidget.__init__(self, flip_horizontal, parent)
 
     def updateImageWithFrame(self, frame):
         if frame:
@@ -32,6 +33,9 @@ class ACameraWidget(qtCameraWidget.QCameraWidget):
 
             self.image = QtGui.QImage(temp.data, w, h, QtGui.QImage.Format_Indexed8)
             self.image.ndarray = temp
+
+            if self.flip_horizontal:
+                self.image = self.image.mirrored(horizontal = True, vertical = False)
 
             self.setColorTable()
             self.update()

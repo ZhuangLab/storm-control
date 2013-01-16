@@ -20,7 +20,7 @@ import colorTables.colorTables as colorTables
 class CameraDisplay(QtGui.QFrame):
 
     @hdebug.debug
-    def __init__(self, parameters, camera_display_ui, which_camera, show_record_button = False, show_shutter_button = False, parent = None):
+    def __init__(self, parameters, camera_display_ui, which_camera, show_record_button = False, show_shutter_button = False, flip_horizontal = False, parent = None):
         QtGui.QFrame.__init__(self, parent)
 
         # general (alphabetically ordered)
@@ -70,7 +70,7 @@ class CameraDisplay(QtGui.QFrame):
         # based on the camera type.
         camera_type = parameters.camera_type.lower()
         cameraWidget = __import__('camera.' + camera_type + 'CameraWidget', globals(), locals(), [camera_type], -1)
-        self.camera_widget = cameraWidget.ACameraWidget(parent = self.ui.cameraDisplayFrame)
+        self.camera_widget = cameraWidget.ACameraWidget(flip_horizontal, parent = self.ui.cameraDisplayFrame)
         self.camera_widget.setGeometry(3, 3, 512, 512)
         self.camera_widget.show()
 

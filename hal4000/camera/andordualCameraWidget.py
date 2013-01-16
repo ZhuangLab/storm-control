@@ -12,8 +12,8 @@ import camera.andorCameraWidget as andorCameraWidget
 
 # Andor Camera Widget
 class ACameraWidget(andorCameraWidget.ACameraWidget):
-    def __init__(self, parent = None):
-        andorCameraWidget.ACameraWidget.__init__(self, parent)
+    def __init__(self, flip_horizontal, parent = None):
+        andorCameraWidget.ACameraWidget.__init__(self, flip_horizontal, parent)
 
 #
 # The MIT License

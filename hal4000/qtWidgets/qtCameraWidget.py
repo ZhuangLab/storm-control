@@ -13,9 +13,10 @@ class QCameraWidget(QtGui.QWidget):
     intensityInfo = QtCore.pyqtSignal(int, int, int)
     mousePress = QtCore.pyqtSignal(int, int)
 
-    def __init__(self, parent = None):
+    def __init__(self, flip_horizontal, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.buffer = QtGui.QPixmap(512, 512)
+        self.flip_horizontal = flip_horizontal
         self.image = 0
         self.image_min = 0
         self.image_max = 1
