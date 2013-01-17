@@ -13,7 +13,7 @@
 # FocusLockZDualCam is specializef for displaying USB
 #    camera data from the dual objective setup.
 #
-# Hazen 12/12
+# Hazen 1/13
 #
 
 import numpy
@@ -359,10 +359,25 @@ class FocusLockZDualCam(FocusLockZ):
         FocusLockZ.stopLock(self)
         self.lock_display2.stopLock()
 
+    @hdebug.debug
+    def tcpHandleFindSum(self):
+        self.lock_display1.tcpHandleFindSum()
+        self.lock_display2.tcpHandleFindSum()
+
+    @hdebug.debug
+    def tcpHandleRecenterPiezo(self):
+        self.lock_display1.tcpHandleRecenterPiezo()
+        self.lock_display2.tcpHandleRecenterPiezo()
+
+    @hdebug.debug
+    def tcpHandleSetLockTarget(self, target):
+        self.lock_display1.tcpHandleSetLockTarget(target)
+        self.lock_display2.tcpHandleSetLockTarget(-target)
+
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
