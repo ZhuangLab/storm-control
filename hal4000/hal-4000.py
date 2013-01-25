@@ -496,8 +496,10 @@ class Window(QtGui.QMainWindow):
     # FIXME: Does not handle paths with spaces in the name?
     @hdebug.debug
     def dropEvent(self, event):
+        filenames = []
         for url in event.mimeData().urls():
-            filename = str(url.encodedPath())[1:]
+            filenames.append(str(url.encodedPath())[1:])
+        for filename in sorted(filenames):
             try:
                 params.Parameters(filename)
                 self.newSettings(filename)

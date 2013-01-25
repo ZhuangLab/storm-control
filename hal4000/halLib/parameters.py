@@ -8,6 +8,7 @@
 #
 
 import copy
+import os
 from xml.dom import minidom, Node
 
 default_params = 0
@@ -71,7 +72,11 @@ def Parameters(parameters_file, is_HAL = False):
 
         # And a few random other things
         xml_object.notes = ""
-        xml_object.extension = xml_object.extensions[0]
+        if not hasattr(xml_object, "extension"):
+            xml_object.extension = xml_object.extensions[0]
+
+        if not os.path.exists(xml_object.shutters):
+            xml_object.shutters = os.path.dirname(parameters_file) + "/" + xml_object.shutters
 
         xml_object.parameters_file = parameters_file
 
