@@ -11,7 +11,7 @@
 #
 # Note: This should not be confused with the parameter 
 # setting "single" which is handled by the sub-class 
-# camera.classSingleCamera.
+# camera.classicSingleCamera.
 #
 # Hazen 11/12
 #
@@ -55,6 +55,10 @@ class SingleCamera(genericCamera.Camera):
     @hdebug.debug
     def getCameraDisplayArea(self):
         return self.camera_display.camera_widget
+
+    @hdebug.debug
+    def getFilmSize(self):
+        return self.camera_control.getFilmSize()
     
     @hdebug.debug
     def getRecordButton(self):

@@ -136,7 +136,7 @@ class Window(QtGui.QMainWindow):
         self.ui.settingsScrollArea.setWidgetResizable(True)
         self.parameters_box.addParameters(self.parameters)
 
-        file_types = writers.availableFileFormats()
+        file_types = writers.availableFileFormats(self.ui_mode)
         for type in file_types:
             self.ui.filetypeComboBox.addItem(type)
 
@@ -1000,10 +1000,11 @@ class Window(QtGui.QMainWindow):
             # The first frame is numbered zero so we need to adjust for that.
             self.ui.framesText.setText("%d" % (frame.number+1))
             if self.writer: # The flag for whether or not we are actually saving anything.
-                if hasattr(self.parameters, "camera1"):
-                    size = frame.number * self.parameters.camera1.bytesPerFrame * 0.000000953674
-                else:
-                    size = frame.number * self.parameters.bytesPerFrame * 0.000000953674
+                size = self.camera.getFilmSize()
+                #if hasattr(self.parameters, "camera1"):
+                #    size = frame.number * self.parameters.camera1.bytesPerFrame * 0.000000953674
+                #else:
+                #    size = frame.number * self.parameters.bytesPerFrame * 0.000000953674
                 if size < 1000.0:
                     self.ui.sizeText.setText("%.1f MB" % size)
                 else:

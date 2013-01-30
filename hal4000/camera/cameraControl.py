@@ -83,6 +83,15 @@ class CameraControl(QtCore.QThread):
         self.shutter = 0
 
     @hdebug.debug
+    def getFilmSize(self):
+        film_size = 0
+        if self.daxfile:
+            self.mutex.lock()
+            film_size = self.daxfile.totalFilmSize()
+            self.mutex.unlock()
+        return film_size
+
+    @hdebug.debug
     def getTemperature(self):
         return [50, "unstable"]
 

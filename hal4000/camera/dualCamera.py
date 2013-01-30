@@ -25,7 +25,7 @@ import camera.cameraParams as cameraParams
 class CameraDialog(QtGui.QDialog):
     
     @hdebug.debug
-    def __init__(self, parameters, name, which_camera, flip_horiz, parent = None):
+    def __init__(self, parameters, name, which_camera, parent = None):
         QtGui.QDialog.__init__(self, parent)
 
         self.ui = cameraDetachedUi.Ui_Dialog()
@@ -38,7 +38,6 @@ class CameraDialog(QtGui.QDialog):
                                                           which_camera,
                                                           show_record_button = False,
                                                           show_shutter_button = True,
-                                                          flip_horizontal = flip_horiz,
                                                           parent = self.ui.cameraFrame)
 
         camera_params_ui = cameraParamsUi.Ui_GroupBox()
@@ -85,13 +84,11 @@ class DualCamera(genericCamera.Camera):
         self.camera1 = CameraDialog(parameters.camera1,
                                     parameters.setup_name + " Camera1",
                                     "camera1",
-                                    False,
                                     parent)
 
         self.camera2 = CameraDialog(parameters.camera1,
                                     parameters.setup_name + " Camera2",
                                     "camera2",
-                                    True,
                                     parent)
 
         # Setup camera control.
@@ -113,6 +110,10 @@ class DualCamera(genericCamera.Camera):
     @hdebug.debug
     def cameraInit(self):
         self.camera_control.cameraInit()
+
+    @hdebug.debug
+    def getFilmSize(self):
+        return self.camera_control.getFilmSize()
 
     @hdebug.debug
     def handleGainChangeCamera1(self, gain):

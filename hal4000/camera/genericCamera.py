@@ -49,6 +49,11 @@ class Camera(QtGui.QDialog):
     def getCameraDisplayArea(self):
         return False
 
+    # Return the total size of the film(s) the camera(s)
+    # is/are taking.
+    def getFilmSize(self):
+        return 0
+
     # Return the record button. This is a property of the
     # camera display frame, but it is needed by HAL in
     # classic single camera display mode.

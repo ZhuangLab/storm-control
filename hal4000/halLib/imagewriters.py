@@ -5,6 +5,7 @@
 # Hazen 5/12
 #
 
+import copy
 import struct
 import tiffwriter
 
@@ -16,12 +17,17 @@ except:
 #
 # Return a list of the available movie formats.
 #
-def availableFileFormats():
-    return [".dax", ".spe", ".tif"]
+def availableFileFormats(ui_mode):
+    if (ui_mode == "dual"):
+        return [".dax", ".dcf", ".spe", ".tif"]
+    else:
+        return [".dax", ".spe", ".tif"]
 
 def createFileWriter(filetype, filename, parameters, cameras):
     if (filetype == ".dax"):
         return DaxFile(filename, parameters, cameras)
+    elif (filetype == ".dcf"):
+        return DualCameraFormatFile(filename, parameters, cameras)
     elif (filetype == ".spe"):
         return SPEFile(filename, parameters, cameras)
     elif (filetype == ".tif"):
@@ -134,7 +140,7 @@ class GenericFile:
                 fp.close()
 
         # Write the inf files.
-        for i in range(len(self.file_ptrs)):
+        for i in range(len(self.filenames)):
             if (hasattr(self.parameters, self.cameras[i])):
                 camera = getattr(self.parameters, self.cameras[i])
             else:
@@ -148,6 +154,16 @@ class GenericFile:
                          lock_target)
 
         self.open = False
+
+    def totalFilmSize(self):
+        total_size = 0.0
+        for i in range(len(self.filenames)):
+            if (hasattr(self.parameters, self.cameras[i])):
+                temp = getattr(self.parameters, self.cameras[i])
+            else:
+                temp = self.parameters
+            total_size += self.number_frames[i] * temp.bytesPerFrame * 0.000000953674
+        return total_size
 
     def __del__(self):
         if self.open:
@@ -169,7 +185,27 @@ class DaxFile(GenericFile):
                     self.file_ptrs[i].write(frame.data)
 
                 self.number_frames[i] += 1
- 
+
+#
+# Dual camera format writing class
+#
+# This is just the dax format with the camera number encoded into the
+# first pixel of the image. It is useful because writing two files
+# at once at a high data rate can overwhelm a hard-drive.
+# 
+class DualCameraFormatFile(GenericFile):
+    def __init__(self, filename, parameters, cameras):
+        GenericFile.__init__(self, filename, parameters, cameras, "dax")
+
+    def saveFrame(self, frame):
+        camera_int = int(frame.which_camera[6:])-1
+        temp = chr(camera_int) + chr(camera_int) + copy.copy(frame.data[2:])
+        if self.parameters.want_big_endian:
+            self.file_ptrs[0].write(fconv.LEtoBE(temp))
+        else:
+            self.file_ptrs[0].write(temp)
+        self.number_frames[0] += 1
+
 #
 # SPE file writing class
 #
