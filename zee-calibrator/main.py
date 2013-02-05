@@ -2,7 +2,7 @@
 #
 # Utility for calculating z calibration curves.
 #
-# Hazen 11/11
+# Hazen 02/13
 #
 
 import os, sys
@@ -56,12 +56,29 @@ class Window(QtGui.QMainWindow):
         self.ui.actionLoad_Calibration.triggered.connect(self.handleLoadCalibration)
         self.ui.actionLoad_Data.triggered.connect(self.handleLoadData)
 
-        # plot window
-        self.plot_widget = plot.PlotWindow(self.ui.wxwyvzTab)
-        self.plot_layout = QtGui.QHBoxLayout()
-        self.plot_layout.addWidget(self.plot_widget)
-        self.ui.plotTabWidget.currentChanged.connect(self.handleTabChanges)
-        self.handleTabChanges(0)
+        # plots
+        self.wxwyvz_plot = plot.PlotWindow("Z (nm)", [-500.0, 500.0, 100.0], "Wx, Wy (pixels)", [0.0, 6.0, 1.0], self.ui.wxwyvzTab)
+        layout = QtGui.QHBoxLayout()
+        layout.addWidget(self.wxwyvz_plot)
+        self.ui.wxwyvzTab.setLayout(layout)
+
+        #policy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
+        #policy.setHeightForWidth(True)
+        #self.ui.wxvwyPlotWidget.setSizePolicy(policy)
+        #self.ui.wxvwyPlotWidget.heightForWidth = lambda(x): x
+
+        self.wxvwy_plot = plot.SquarePlotWindow("Wx (pixels)", [0.0, 5.0, 1.0], "Wy (pixels)", [0.0, 5.0, 1.0], self.ui.wxvwyPlotWidget)
+        layout = QtGui.QHBoxLayout()
+        layout.addWidget(self.wxvwy_plot)
+        self.ui.wxvwyPlotWidget.setLayout(layout)
+
+        self.stage_plot = plot.PlotWindow("Stage Position (um)", [-1.0, 1.0, 0.2], "QPD offset (au)", [-0.5, 0.5, 0.1], self.ui.stageTab)
+        layout = QtGui.QHBoxLayout()
+        layout.addWidget(self.stage_plot)
+        self.ui.stageTab.setLayout(layout)
+
+        #self.ui.plotTabWidget.currentChanged.connect(self.handleTabChanges)
+        #self.handleTabChanges(0)
 
     def analyzeData(self, filename):
         self.ui.plotTabWidget.setCurrentIndex(0)
@@ -201,34 +218,34 @@ class Window(QtGui.QMainWindow):
             self.directory = os.path.dirname(filename)
             self.z_calib.saveCalibration(filename)
 
-    def handleTabChanges(self, index):
-        if (index == 0):
-            self.ui.wxwyvzTab.setLayout(self.plot_layout)
-            self.plot_widget.plotInit("z_graph")
-            if(len(self.points)>0):
-                self.plot_widget.plotData(*self.points)
-            if(len(self.binned_points)>0):
-                self.plot_widget.plotBinnedData(*self.binned_points)
-            if(len(self.fit_values)>0):
-                self.plot_widget.plotFit(*self.fit_values)
-            self.plot_widget.update()
-        elif (index == 1):
-            self.ui.wxvwyTab.setLayout(self.plot_layout)
-            self.plot_widget.plotInit("wx_vs_wy")
-            if(len(self.wx_wy_cat)>0):
-                self.plot_widget.plotWxWyData(*self.wx_wy_cat)
-            if(len(self.fit_values)>0):
-                self.plot_widget.plotWxWyFit(self.fit_values[1], self.fit_values[2])
-            self.plot_widget.update()
-        elif (index == 2):
-            self.ui.stageTab.setLayout(self.plot_layout)
-            self.plot_widget.plotInit("stage")
-            if(len(self.stage_qpd)>0):
-                self.plot_widget.plotStageQPD(self.stage_qpd[0],
-                                              self.stage_qpd[1],
-                                              self.stage_fit[0],
-                                              self.stage_fit[1])
-            self.plot_widget.update()
+#    def handleTabChanges(self, index):
+#        if (index == 0):
+#            self.ui.wxwyvzTab.setLayout(self.plot_layout)
+#            self.plot_widget.plotInit("z_graph")
+#            if(len(self.points)>0):
+#                self.plot_widget.plotData(*self.points)
+#            if(len(self.binned_points)>0):
+#                self.plot_widget.plotBinnedData(*self.binned_points)
+#            if(len(self.fit_values)>0):
+#                self.plot_widget.plotFit(*self.fit_values)
+#            self.plot_widget.update()
+#        elif (index == 1):
+#            self.ui.wxvwyTab.setLayout(self.plot_layout)
+#            self.plot_widget.plotInit("wx_vs_wy")
+#            if(len(self.wx_wy_cat)>0):
+#                self.plot_widget.plotWxWyData(*self.wx_wy_cat)
+#            if(len(self.fit_values)>0):
+#                self.plot_widget.plotWxWyFit(self.fit_values[1], self.fit_values[2])
+#            self.plot_widget.update()
+#        elif (index == 2):
+#            self.ui.stageTab.setLayout(self.plot_layout)
+#            self.plot_widget.plotInit("stage")
+#            if(len(self.stage_qpd)>0):
+#                self.plot_widget.plotStageQPD(self.stage_qpd[0],
+#                                              self.stage_qpd[1],
+#                                              self.stage_fit[0],
+#                                              self.stage_fit[1])
+#            self.plot_widget.update()
 
     def quit(self):
         self.close()
@@ -243,7 +260,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2011 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

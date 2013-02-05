@@ -2,131 +2,77 @@
 #
 # Handles the plotting window
 #
-# Hazen 11/11
+# Hazen 02/13
 #
 
 from PyQt4 import QtCore, QtGui
+import PyQt4.Qwt5 as Qwt
 
 import numpy
 
-import plplot
-import plplot_pyqt4
-
 class PlotWindow(QtGui.QWidget):
-    def __init__(self, parent = None):
-        super(PlotWindow, self).__init__(parent)
 
-        # create plotting widget
-        self.plot = plplot_pyqt4.QtExtWidget(842,
-                                             595,
-                                             self)
-        plot_layout = QtGui.QHBoxLayout()
-        plot_layout.addWidget(self.plot)
-        self.setLayout(plot_layout)
-        plplot_pyqt4.plsetqtdev(self.plot)
+    def __init__(self, x_label, x_range, y_label, y_range, parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.curves = []
 
-        # initialize
-        plplot.plsdev("extqt")
-        plplot.plscol0(0, 255, 255, 255)
-        plplot.plscol0(1, 0, 0, 0)
-        plplot.plscol0(2, 255, 0, 0)
-        plplot.plscol0(3, 0, 255, 0)
-        plplot.plscol0(4, 0, 0, 255)
-        plplot.plinit()
+        self.plot = Qwt.QwtPlot(self)
+        layout = QtGui.QHBoxLayout()
+        layout.addWidget(self.plot)
+        self.setLayout(layout)
+
+        self.plot.setCanvasBackground(QtCore.Qt.white)
+        self.plot.setAxisTitle(Qwt.QwtPlot.xBottom, x_label)
+        self.plot.setAxisScale(Qwt.QwtPlot.xBottom, x_range[0], x_range[1], x_range[2])
+        self.plot.setAxisTitle(Qwt.QwtPlot.yLeft, y_label)
+        self.plot.setAxisScale(Qwt.QwtPlot.yLeft, y_range[0], y_range[1], y_range[2])
+
+#        if square:
+#            self.rescaler = Qwt.QwtPlotRescaler(self.plot.canvas())
+#            self.rescaler.setReferenceAxis(Qwt.QwtPlot.xBottom)
+#            self.rescaler.setAspectRatio(Qwt.QwtPlot.yLeft, 1.0)
+#            self.rescaler.setAspectRatio(Qwt.QwtPlot.yRight, 0.0)
+#            self.rescaler.setAspectRatio(Qwt.QwtPlot.xTop, 0.0)
 
     def clear(self):
-        self.plot.clearWidget()
-
-    def paintEvent(self, event):
-        self.plot.show()
+        pass
 
     def plotBinnedData(self, b_sz, b_wx, b_wy):
-        plplot.plcol0(1)
-        plplot.plpoin(b_sz, b_wx, 9)
-        plplot.plpoin(b_sz, b_wy, 9)
+        pass
 
     def plotData(self, sz, wx, wy):
-        self.clear()
-        self.plotInit("z_graph")
-        plplot.plcol0(2)
-        plplot.plpoin(sz, wx, 1)
-        plplot.plcol0(3)
-        plplot.plpoin(sz, wy, 1)
+        pass
 
     def plotFit(self, sz, xfit, yfit):
-        plplot.plcol0(4)
-        plplot.plline(sz, xfit)
-        plplot.plline(sz, yfit)
-
-    def plotInit(self, type):
-        plplot.pladv(0)
-        plplot.plcol0(1)
-        if (type == "z_graph"):
-            plplot.plvasp(0.707)
-            plplot.plwind(-500, 500, 0, 6.0)
-            plplot.plcol0(1)
-            plplot.plbox("bcnst", 0, 0, "bcnst", 0, 0)
-            plplot.pllab("Z (nm)", "Wx, Wy (pixels)", "Z Versus Wx, Wy")
-        if (type == "wx_vs_wy"):
-            plplot.plvasp(1.0)
-            plplot.plwind(1.0, 5.0, 1.0, 5.0)
-            plplot.plcol0(1)
-            plplot.plbox("bcnst", 0, 0, "bcnst", 0, 0)
-            plplot.pllab("Wx (pixels)", "Wy (pixels)", "Wx Versus Wy")
-        if (type == "stage"):
-            plplot.plvasp(0.707)
-            plplot.plwind(-1.0, 1.0, -0.5, 0.5)
-            plplot.plcol0(1)
-            plplot.plbox("bcnst", 0, 0, "bcnst", 0, 0)
-            plplot.pllab("Stage Position (um)", "QPD offset (au)", "Stage Calibration")
+        pass
 
     def plotStageQPD(self, stage, qpd, slope, offset):
-        plplot.plcol0(1)
-        plplot.plpoin(stage, qpd, 1)
-        x0 = numpy.min(qpd)
-        x1 = numpy.max(qpd)
-        y0 = x0*slope + offset
-        y1 = x1*slope + offset
-        plplot.plcol0(2)
-        plplot.plline([y0,y1],[x0,x1])
+        pass
 
     def plotWxWyData(self, wx, wy, cat):
-        max_points = 20000.0
-        points = int(wx.shape[0])
-        if (points > max_points):
-            mask = numpy.random.random(points)
-            reject = max_points/float(points)
-            mask = (mask < (max_points/float(points)))
-            pwx = wx[mask]
-            pwy = wy[mask]
-            pc = cat[mask]
-        else:
-            pwx = wx
-            pwy = wy
-            pc = cat
-
-        if 0:
-            bad_mask = (pc == 9)
-            plplot.plcol0(2)
-            plplot.plpoin(pwx[bad_mask], pwy[bad_mask], 1)
-
-            good_mask = (pc != 9)
-            plplot.plcol0(3)
-            plplot.plpoin(pwx[good_mask], pwy[good_mask], 1)
-        else:
-            plplot.plcol0(2)
-            plplot.plpoin(pwx, pwy, 1)
-
-#        print "Fraction bad:", float(bad_mask
+        pass
 
     def plotWxWyFit(self, wxfit, wyfit):
-        plplot.plcol0(4)
-        plplot.plline(wxfit, wyfit)
+        pass
+
+class SquarePlotWindow(PlotWindow):
+
+    def __init__(self, x_label, x_range, y_label, y_range, parent):
+        PlotWindow.__init__(self, x_label, x_range, y_label, y_range, parent)
+
+        policy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
+        #policy = QtGui.QSizePolicy()
+        policy.setHeightForWidth(True)
+        self.setSizePolicy(policy)
+
+    def heightForWidth(self, w):
+        print "hFW:", w
+        return w
 
 #
 # The MIT License
 #
-# Copyright (c) 2011 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
