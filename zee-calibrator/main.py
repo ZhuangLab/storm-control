@@ -67,7 +67,7 @@ class Window(QtGui.QMainWindow):
         #self.ui.wxvwyPlotWidget.setSizePolicy(policy)
         #self.ui.wxvwyPlotWidget.heightForWidth = lambda(x): x
 
-        self.wxvwy_plot = plot.SquarePlotWindow("Wx (pixels)", [0.0, 5.0, 1.0], "Wy (pixels)", [0.0, 5.0, 1.0], self.ui.wxvwyPlotWidget)
+        self.wxvwy_plot = plot.SquarePlotWindow("Wx (pixels)", [0.0, 6.0, 1.0], "Wy (pixels)", [0.0, 6.0, 1.0], self.ui.wxvwyPlotWidget)
         layout = QtGui.QHBoxLayout()
         layout.addWidget(self.wxvwy_plot)
         self.ui.wxvwyPlotWidget.setLayout(layout)
@@ -125,6 +125,11 @@ class Window(QtGui.QMainWindow):
         # plot results
         if good:
 
+            # clear plots
+            self.wxwyvz_plot.clear()
+            self.wxvwy_plot.clear()
+            self.stage_plot.clear()
+
             # get stage calibration info
             self.stage_fit = self.z_calib.getStageFit()
             self.stage_qpd = self.z_calib.getStageQPD()
@@ -136,20 +141,29 @@ class Window(QtGui.QMainWindow):
 
             # plot data
             self.points = self.z_calib.getPoints()
-            self.plot_widget.plotData(*self.points)
+            self.wxwyvz_plot.plotData(*self.points)
 
             # plot smoothed data
             self.binned_points = self.z_calib.getBinnedPoints()
-            self.plot_widget.plotBinnedData(*self.binned_points)
+            self.wxwyvz_plot.plotBinnedData(*self.binned_points)
 
             # plot fit
             self.fit_values = self.z_calib.getFitValues()
-            self.plot_widget.plotFit(*self.fit_values)
+            self.wxwyvz_plot.plotFit(*self.fit_values)
 
+            # plot wx vs wy data
+            self.wxvwy_plot.plotWxWyData(*self.wx_wy_cat)
 
+            # plot wx vs wy fit
+            self.wxvwy_plot.plotWxWyFit(self.fit_values[1], self.fit_values[2])
 
-            self.plot_widget.update()
+            # plot stage / qpd data
+            self.stage_plot.plotStageQPD(self.stage_qpd[0],
+                                         self.stage_qpd[1],
+                                         self.stage_fit[0],
+                                         self.stage_fit[1])
 
+            # update calibration expression
             self.ui.calLineEdit.setText(self.z_calib.getWxString() + self.z_calib.getWyString())
 
         # print & save coefficients

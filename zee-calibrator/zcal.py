@@ -171,7 +171,6 @@ class ZCalibration():
                 params.append(0.0)
             [results, success] = scipy.optimize.leastsq(f_zcalib, params, args=(aw, sz))
             if (success < 1) or (success > 4):
-                print "fitDefocusing: power", self.fit_power, "fit failed!"
                 return None
             else:
                 return results
@@ -182,7 +181,15 @@ class ZCalibration():
             self.calcQuickZ()
             return True
         else:
-            return False
+            # if the fit fails, try again with the initial arguments reversed
+            self.wx_fit = doFit(wx, params = [3.0, 400.0, 500.0])
+            self.wy_fit = doFit(wy, params = [3.0, -400.0, 500.0])
+            if (type(self.wx_fit) == type(numpy.array([]))) and (type(self.wy_fit) == type(numpy.array([]))):
+                self.calcQuickZ()
+                return True
+            else:
+                print "fitDefocusing: power", self.fit_power, "fit failed!"
+                return False
 
     # Fits for the stage tilt
     def fitTilt(self):

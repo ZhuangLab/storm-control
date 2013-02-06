@@ -10,13 +10,41 @@ import PyQt4.Qwt5 as Qwt
 
 import numpy
 
+def createCurve(pen, brush, symbol_size):
+    curve = Qwt.QwtPlotCurve('')
+    curve.setRenderHint(Qwt.QwtPlotItem.RenderAntialiased)
+    curve.setPen(pen)
+    if (symbol_size > 0):
+        curve.setSymbol(Qwt.QwtSymbol(Qwt.QwtSymbol.Ellipse,
+                                      brush,
+                                      pen,
+                                      QtCore.QSize(symbol_size, symbol_size)))
+        curve.setStyle(Qwt.QwtPlotCurve.NoCurve)
+    return curve
+
+class ZeePlot(Qwt.QwtPlot):
+
+    def __init__(self, parent):
+        Qwt.QwtPlot.__init__(self, parent)
+        self.static_text = False
+
+    def drawCanvas (self, p):
+        Qwt.QwtPlot.drawCanvas(self, p)
+
+        if self.static_text:
+            p.drawStaticText(10, 10, self.static_text)
+
+    def setStaticText(self, text):
+        self.static_text = text
+
 class PlotWindow(QtGui.QWidget):
 
     def __init__(self, x_label, x_range, y_label, y_range, parent):
         QtGui.QWidget.__init__(self, parent)
         self.curves = []
+        self.text = False
 
-        self.plot = Qwt.QwtPlot(self)
+        self.plot = ZeePlot(self)
         layout = QtGui.QHBoxLayout()
         layout.addWidget(self.plot)
         self.setLayout(layout)
@@ -35,25 +63,111 @@ class PlotWindow(QtGui.QWidget):
 #            self.rescaler.setAspectRatio(Qwt.QwtPlot.xTop, 0.0)
 
     def clear(self):
-        pass
+        for curve in self.curves:
+            curve.detach()
 
     def plotBinnedData(self, b_sz, b_wx, b_wy):
-        pass
+        pen = QtGui.QPen(QtCore.Qt.black)
+        pen.setWidth(2)
+        curve = createCurve(pen,
+                            QtGui.QBrush(),
+                            9)
+        curve.setData(b_sz, b_wx)
+        curve.attach(self.plot)
+        self.curves.append(curve)
+
+        curve = createCurve(pen,
+                            QtGui.QBrush(),
+                            9)
+        curve.setData(b_sz, b_wy)
+        curve.attach(self.plot)
+        self.curves.append(curve)
+        self.plot.replot()
 
     def plotData(self, sz, wx, wy):
-        pass
+        curve = createCurve(QtGui.QPen(QtCore.Qt.red),
+                            QtGui.QBrush(QtCore.Qt.red),
+                            3)
+        curve.setData(sz, wx)
+        curve.attach(self.plot)
+        self.curves.append(curve)
+
+        curve = createCurve(QtGui.QPen(QtCore.Qt.green),
+                            QtGui.QBrush(QtCore.Qt.green),
+                            3)
+        curve.setData(sz, wy)
+        curve.attach(self.plot)
+        self.curves.append(curve)
+        self.plot.replot()
 
     def plotFit(self, sz, xfit, yfit):
-        pass
+        pen = QtGui.QPen(QtCore.Qt.black)
+        pen.setWidth(2)
+        curve = createCurve(pen,
+                            QtGui.QBrush(),
+                            0)
+        curve.setData(sz, xfit)
+        curve.attach(self.plot)
+        self.curves.append(curve)
+
+        curve = createCurve(pen,
+                            QtGui.QBrush(),
+                            0)
+        curve.setData(sz, yfit)
+        curve.attach(self.plot)
+        self.curves.append(curve)
+        self.plot.replot()
 
     def plotStageQPD(self, stage, qpd, slope, offset):
-        pass
+
+        qpd_min = numpy.min(qpd)
+        qpd_max = numpy.max(qpd)
+
+        self.plot.setAxisScale(Qwt.QwtPlot.yLeft, 1.1*qpd_min, 1.1*qpd_max)
+
+        curve = createCurve(QtGui.QPen(QtCore.Qt.black),
+                            QtGui.QBrush(),
+                            7)
+        curve.setData(stage, qpd)
+        curve.attach(self.plot)
+        self.curves.append(curve)
+        self.plot.replot()
+
+        x_vals = numpy.array([-1.0, 1.0])
+        y_vals = (x_vals - offset)/slope
+
+        pen = QtGui.QPen(QtCore.Qt.black)
+        pen.setWidth(2)
+        curve = createCurve(pen,
+                            QtGui.QBrush(),
+                            0)
+        curve.setData(x_vals, y_vals)
+        curve.attach(self.plot)
+        self.curves.append(curve)
+
+        self.plot.setStaticText(QtGui.QStaticText("slope = {0:.3f} au/um".format(-1.0/offset)))
+
+        self.plot.replot()
 
     def plotWxWyData(self, wx, wy, cat):
-        pass
+        curve = createCurve(QtGui.QPen(QtCore.Qt.red),
+                            QtGui.QBrush(QtCore.Qt.red),
+                            3)
+        curve.setData(wx, wy)
+        curve.attach(self.plot)
+        self.curves.append(curve)
+        self.plot.replot()
 
     def plotWxWyFit(self, wxfit, wyfit):
-        pass
+        pen = QtGui.QPen(QtCore.Qt.black)
+        pen.setWidth(2)
+        curve = createCurve(pen,
+                            QtGui.QBrush(),
+                            0)
+        curve.setData(wxfit, wyfit)
+        curve.attach(self.plot)
+        self.curves.append(curve)
+        self.plot.replot()
 
 class SquarePlotWindow(PlotWindow):
 
