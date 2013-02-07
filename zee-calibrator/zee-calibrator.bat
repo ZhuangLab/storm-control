@@ -1,2 +1,2 @@
-path=c:\Python26;c:\Qt\2009.05\qt\bin;c:\MinGW\bin;
+path=c:\Python27;
 python main.py
