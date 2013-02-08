@@ -27,6 +27,7 @@ else:
 class PhreshQPD:
     def __init__(self, samples = 5000, sample_rate_Hz = 100000):
         self.samples = samples
+        self.sample_rate_Hz = sample_rate_Hz
 
     def collectData(self):
         # Collect the data.
@@ -93,11 +94,9 @@ class PhreshQPDPRISM2(PhreshQPD):
         averager.averager(ctypes.byref(data), 
                           ctypes.byref(average), 
                           ctypes.c_int(self.samples),
-#                          ctypes.c_int(1))
+                          #                          ctypes.c_int(1))
                           ctypes.c_int(2))
         return [1000.0 * average[0] - 25.4, 1000.0 * average[1] - 40.8, 0.0]
-#        return [1000.0 * average[0], 0.0, 0.0]
-
 
 #
 # STORM2 QPD Class
@@ -110,23 +109,38 @@ class PhreshQPDPRISM2(PhreshQPD):
 class PhreshQPDSTORM2(PhreshQPD):
     def __init__(self, samples = 5000, sample_rate_Hz = 100000):
         PhreshQPD.__init__(self, samples = samples, sample_rate_Hz = sample_rate_Hz)
+        self.createTask()
+
+    def createTask(self):
         self.qpd_task = nicontrol.AnalogInput("PCIe-6259", 0)
         self.qpd_task.addChannel(1)
         self.qpd_task.addChannel(2)
-        self.qpd_task.configureAcquisition(samples, sample_rate_Hz)
+        self.qpd_task.configureAcquisition(self.samples, self.sample_rate_Hz)
 
     def qpdScan(self):
-        data = self.collectData()
+        good = True
+        try:
+            data = self.collectData()
+        except:
+            print "Caught QPD NI analog input error, ignoring.."
+            self.qpd_task.clearTask()
+            self.createTask()
+            good = False
 
-        # Compute the average using C helper library (for speed purposes).
-        average_type = ctypes.c_double * 3
-        average = average_type()
-        averager.averager(ctypes.byref(data), 
-                          ctypes.byref(average), 
-                          ctypes.c_int(self.samples),
-                          ctypes.c_int(3))
-        return [1000.0 * average[0], 1000.0 * average[1], 1000.0 * average[2]]
+        if good:
+            # Compute the average using C helper library (for speed purposes).
+            average_type = ctypes.c_double * 3
+            average = average_type()
+            averager.averager(ctypes.byref(data), 
+                              ctypes.byref(average), 
+                              ctypes.c_int(self.samples),
+                              ctypes.c_int(3))
+            return [1000.0 * average[0], 1000.0 * average[1], 1000.0 * average[2]]
+        else:
+            return [0.0, 0.0, 0.0]
 
+
+        
 
 # testing
 if __name__ == "__main__":

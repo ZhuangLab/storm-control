@@ -1,8 +1,8 @@
 #!/usr/bin/python
 #
-# Illumination control specialized for Storm2.
+# Illumination control specialized for STORM2.
 #
-# Hazen 12/10
+# Hazen 11/12
 #
 
 from PyQt4 import QtCore
@@ -12,40 +12,45 @@ import illumination.commandQueues as commandQueues
 import illumination.illuminationControl as illuminationControl
 
 #
-# Illumination power control specialized for Storm2.
+# Illumination power control specialized for STORM4.
 #
-class Storm2QIlluminationControlWidget(illuminationControl.QIlluminationControlWidget):
+class STORM2QIlluminationControlWidget(illuminationControl.QIlluminationControlWidget):
     def __init__(self, settings_file_name, parameters, parent = None):
-
-        # setup the AA AOTF communication thread
-        self.aotf_queue = commandQueues.QAAAOTFThread()
+        # setup the AOTF communication thread
+        self.aotf_queue = commandQueues.QCT64BitAOTFThread()
         self.aotf_queue.start(QtCore.QThread.NormalPriority)
+        self.aotf_queue.analogModulationOn()
 
         # setup the Cube communication thread
-        self.cube405_queue = commandQueues.QCubeThread("COM8")
-        self.cube405_queue.start(QtCore.QThread.NormalPriority)
-        self.cube405_queue.analogModulationOff()
+        self.cube_queue = commandQueues.QCubeThread(port = "COM5")
+        self.cube_queue.start(QtCore.QThread.NormalPriority)
 
-        # setup for NI communication with mechanical backup shutters (digital, unsynced)
+        # Setup the filter wheel communication thread.
+        # There is only one filter wheel, which is in 750 laser path.
+        self.fw_queue = commandQueues.QFilterWheelThread(port = "COM6")
+        self.fw_queue.start(QtCore.QThread.NormalPriority)
+
+        # setup for NI communication with mechanical shutters (digital, unsynced)
         self.shutter_queue = commandQueues.QNiDigitalComm()
 
         illuminationControl.QIlluminationControlWidget.__init__(self, settings_file_name, parameters, parent)
 
     def autoControl(self, channels):
-        self.shutter_queue.setFilming(channels)
-        illuminationControl.QIlluminationControlWidget.autoControl(self, channels)
+        self.cube_queue.analogModulationOn()
+        for channel in self.channels:
+            channel.setFilmMode(1)
 
     def manualControl(self):
-        self.shutter_queue.setFilming([])
-        illuminationControl.QIlluminationControlWidget.manualControl(self)
+        self.cube_queue.analogModulationOff()
+        for channel in self.channels:
+            channel.setFilmMode(0)
 
     def newParameters(self, parameters):
         illuminationControl.QIlluminationControlWidget.newParameters(self, parameters)
 
-        # Set the size based on the number of channels
+        # Layout the widget
         dx = 50
         width = self.number_channels * dx
-        height = 44
 
         # The height is based on how many buttons there are per channel,
         # so first we figure out the number of buttons per channel.
@@ -56,6 +61,7 @@ class Storm2QIlluminationControlWidget(illuminationControl.QIlluminationControlW
                 max_buttons = n_buttons
         height = 204 + max_buttons * 22
 
+        # Set the size based on the number of channels and buttons
         self.resize(width, height)
         self.setMinimumSize(QtCore.QSize(width, height))
         self.setMaximumSize(QtCore.QSize(width, height))
@@ -64,16 +70,7 @@ class Storm2QIlluminationControlWidget(illuminationControl.QIlluminationControlW
         x = 0
         for i in range(self.number_channels):
             n = self.settings[i].channel
-            if hasattr(self.settings[i], 'basic_shutter'):
-                channel = channelWidgets.QBasicChannel(self,
-                                                       self.settings[i],
-                                                       parameters.on_off_state[n],
-                                                       x,
-                                                       dx,
-                                                       height)
-                channel.setShutterQueue(self.shutter_queue)
-                self.channels.append(channel)
-            elif hasattr(self.settings[i], 'use_aotf'):
+            if hasattr(self.settings[i], 'use_aotf'):
                 channel = channelWidgets.QAOTFChannelWShutter(self,
                                                               self.settings[i],
                                                               parameters.default_power[n],
@@ -84,6 +81,7 @@ class Storm2QIlluminationControlWidget(illuminationControl.QIlluminationControlW
                                                               height)
                 channel.setCmdQueue(self.aotf_queue)
                 channel.setShutterQueue(self.shutter_queue)
+                channel.fskOnOff(1)
                 self.channels.append(channel)
             elif hasattr(self.settings[i], 'use_cube405'):
                 channel = channelWidgets.QCubeChannelWShutter(self,
@@ -94,12 +92,24 @@ class Storm2QIlluminationControlWidget(illuminationControl.QIlluminationControlW
                                                               x,
                                                               dx,
                                                               height)
-                channel.setCmdQueue(self.cube405_queue)
+                channel.setCmdQueue(self.cube_queue)
+                channel.setShutterQueue(self.shutter_queue)
+                self.channels.append(channel)
+            elif hasattr(self.settings[i], 'use_filter_wheel'):
+                channel = channelWidgets.QFilterWheelChannel(self,
+                                                             self.settings[i],
+                                                             parameters.default_power[n],
+                                                             parameters.on_off_state[n],
+                                                             parameters.power_buttons[n],
+                                                             x,
+                                                             dx,
+                                                             height)
+                channel.setCmdQueue(self.fw_queue)
                 channel.setShutterQueue(self.shutter_queue)
                 self.channels.append(channel)
             x += dx
 
-        # Update the channels to reflect there current ui settings.
+        # Update the channels to reflect their current ui settings.
         for channel in self.channels:
             channel.uiUpdate()
                             
@@ -111,24 +121,28 @@ class Storm2QIlluminationControlWidget(illuminationControl.QIlluminationControlW
         illuminationControl.QIlluminationControlWidget.shutDown(self)
         self.aotf_queue.stopThread()
         self.aotf_queue.wait()
-        self.cube405_queue.stopThread()
-        self.cube405_queue.wait()
+        self.cube_queue.stopThread()
+        self.cube_queue.wait()
+        self.fw_queue.stopThread()
+        self.fw_queue.wait()
+
 
 #
-# Illumination power control dialog box specialized for Prism2.
+# Illumination power control dialog box specialized for STORM3.
 #
 class AIlluminationControl(illuminationControl.IlluminationControl):
     def __init__(self, parameters, tcp_control, parent = None):
         illuminationControl.IlluminationControl.__init__(self, parameters, tcp_control, parent)
-        self.power_control = Storm2QIlluminationControlWidget("illumination/storm2_illumination_control_settings.xml",
+        self.power_control = STORM2QIlluminationControlWidget("illumination/storm2_illumination_control_settings.xml",
                                                               parameters,
                                                               parent = self.ui.laserBox)
         self.updateSize()
 
+
 #
 # The MIT License
 #
-# Copyright (c) 2010 Zhuang Lab, Harvard University
+# Copyright (c) 2012 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

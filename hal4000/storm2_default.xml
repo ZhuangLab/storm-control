@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <settings>
+  <setup_name type="string">storm2</setup_name>
   <camera_type type="string">andor</camera_type>
   <debug type="int">1</debug>
   <use_as_default type="int">1</use_as_default>
@@ -29,15 +30,16 @@
   <low_during_filming type="int">0</low_during_filming>
   <head_model type="string">unknown</head_model>
   <reversed_shutter type="int">0</reversed_shutter>
+  <external_trigger type="int">0</external_trigger>
 
   <!-- film settings -->
   <want_big_endian type="int">1</want_big_endian>
-  <directory type="string">D:\user\tir_data\</directory>
+  <directory type="string">C:\Users\Data\</directory>
   <filename type="string">movie</filename>
   <acq_mode type="string">run_till_abort</acq_mode>
 <!--  <acq_mode type="string">fixed_length</acq_mode> -->
   <frames type="int">600</frames>
-  <logfile type="string">c:\user\tir_data\image_log.txt</logfile>
+  <logfile type="string">c:\Users\Data\image_log.txt</logfile>
   <extensions type="string-array">,A750,A647,Cy5,Cy3,Cy2,A405,FITC,YFP,GFP,BF</extensions>
   <auto_increment type="int">1</auto_increment>
   <want_bell type="int">1</want_bell>
@@ -45,10 +47,12 @@
   <filetype type="string">.dax</filetype>
 
   <!-- view settings -->
+  <flip_horizontal type="int">0</flip_horizontal>
+  <flip_vertical type="int">0</flip_vertical>
   <scalemax type="int">2000</scalemax>
   <scalemin type="int">100</scalemin>
-  <max_intensity type="int">10000</max_intensity>
-  <colortable type="string">idl5.ctbl</colortable>
+  <max_intensity type="int">50000</max_intensity>
+  <colortable type="string">ramp.ctbl</colortable>
   <sync type="int">0</sync>
 
   <!-- illumination settings -->
@@ -57,16 +61,18 @@
   <default_power channel="0">1.0</default_power>
   <default_power channel="1">1.0</default_power>
   <default_power channel="2">1.0</default_power>
+  <default_power channel="3">1.0</default_power>
+  <default_power channel="4">1.0</default_power>
+  <button channel="0" power="1.0">Max</button>
+  <button channel="0" power="0.1">Low</button>
   <button channel="1" power="1.0">Max</button>
   <button channel="1" power="0.1">Low</button>
   <button channel="2" power="1.0">Max</button>
   <button channel="2" power="0.1">Low</button>
+  <button channel="3" power="1.0">Max</button>
+  <button channel="3" power="0.1">Low</button>
   <button channel="4" power="1.0">Max</button>
   <button channel="4" power="0.1">Low</button>
-  <button channel="5" power="1.0">Max</button>
-  <button channel="5" power="0.1">Low</button>
-  <button channel="6" power="1.0">Max</button>
-  <button channel="6" power="0.1">Low</button>
 
   <!-- stage settings -->
   <have_stage type="int">1</have_stage>
@@ -74,6 +80,7 @@
   <large_step_size type="float">25.0</large_step_size>
   <x_sign type="int">-1</x_sign>
   <y_sign type="int">1</y_sign>
+  <stage_speed type="float">5.0</stage_speed>
 
   <!-- focus lock settings -->
   <have_focus_lock type="int">1</have_focus_lock>
@@ -104,14 +111,14 @@
   <min_spots type="int">0</min_spots>
   <max_spots type="int">500</max_spots>
   <scale_bar_len type="float">1000</scale_bar_len>
-  <nm_per_pixel type="float">164</nm_per_pixel>
+  <nm_per_pixel type="float">158</nm_per_pixel>
 
   <!-- temperature logger settings -->
   <have_temperature_logger type="int">0</have_temperature_logger>
 
   <!-- misc control -->
   <have_misc_control type="int">1</have_misc_control>
-  <filter_names type="string-array">STORM,Cy3,Cy2,mEOS2,DAPI,Cy7</filter_names>
+  <filter_names type="string-array">Dy750,Al647,mEos2,Atto488,DAPI,Penta</filter_names>
   <filter_position type="int">0</filter_position>
 
   <!-- TCP/IP control -->
@@ -124,5 +131,17 @@
   <pstart_value type="float">0.1</pstart_value>
   <pinc_value type="float">0.01</pinc_value>
   <pframe_value type="int">1000</pframe_value>
+
+  <!-- joystick setting -->
+  <have_joystick type="int">0</have_joystick>
+  <hat_step type="float">1.0</hat_step> <!-- step size in um for hat button press -->
+  <joystick_gain type="float-array">25, 250, 2500</joystick_gain>   <!-- max velocity in um/s: valid range 100 -> 1000 -->
+  <!-- <joystick_gain_index type = "int">0</joystick_gain_index> -->
+  <joystick_mode type="string">quadratic</joystick_mode> <!-- linear or quadratic -->
+  <joystick_signx type="float">1.0</joystick_signx>
+  <joystick_signy type="float">1.0</joystick_signy>
+  <lockt_step type="float">0.025</lockt_step> <!-- focus lock step size in um -->
+  <min_offset type="float">0.1</min_offset> <!-- min joystick offset to be non-zero (0.0 - 1.0) -->
+  <xy_swap type="int">1</xy_swap> <!-- swap x and y axises -->
 
 </settings>

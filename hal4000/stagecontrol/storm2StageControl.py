@@ -21,7 +21,7 @@ import stagecontrol.stageControl as stageControl
 #
 
 #prior_stage = prior.Prior(port = "COM1")
-prior_stage = prior.Prior(port = "COM10", baudrate = 115200)
+prior_stage = prior.Prior(port = "COM10", baudrate = 9600)
 prior_mutex = QtCore.QMutex()
 
 #
@@ -94,6 +94,11 @@ class QPriorThread(QtCore.QThread):
             self.stage_position = self.stage.position()
             self.mutex.unlock()
             self.msleep(500)
+
+    def setVelocity(self, vx, vy):
+        self.mutex.lock()
+        self.stage.setVelocity(vx, vy)
+        self.mutex.unlock()
 
     def shutDown(self):
         self.running = 0

@@ -43,8 +43,12 @@ class IX2UCB(RS232.RS232):
                 print "IX2-UCB: Filter wheel is still moving"
                 return 1
             else:
-                self.position = int(temp)
-                return self.position
+                try:
+                    self.position = int(temp)
+                    return self.position
+                except:
+                    print "IX2-UCB: Could not parse:", temp
+                    return 1
         else:
             print "IX2-UCB: Failed to get filter wheel position"
             return 1
