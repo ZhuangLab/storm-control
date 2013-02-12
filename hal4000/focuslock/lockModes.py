@@ -286,9 +286,9 @@ class OptimalLockMode(JumpLockMode):
 # Calibration lock mode - No lock, the stage is driven through
 #   a pre-determined set of z positions for calibration purposes
 #   during filming.
-class CalibrationLockMode(LockMode):
+class CalibrationLockMode(JumpLockMode):
     def __init__(self, control_thread, parameters, parent):
-        LockMode.__init__(self, control_thread, parameters, parent)
+        JumpLockMode.__init__(self, control_thread, parameters, parent)
         self.counter = 0
         self.max_zvals = 0
         self.zvals = []
@@ -314,28 +314,33 @@ class CalibrationLockMode(LockMode):
         step_size = 0.001 * step_size
 
         # initial hold
-        for i in range(deadtime):
+        for i in range(deadtime-1):
             addZval(z_center)
 
         # staircase
+        addZval(-zrange)
         z = z_center - zrange
-        stop = z_center + zrange + 0.5 * step_size
+        stop = z_center + zrange - 0.5 * step_size
         while (z < stop):
-            for i in range(frames_to_pause):
-                addZval(z)
+            for i in range(frames_to_pause-1):
+                addZval(0.0)
+            addZval(step_size)
             z += step_size
 
+        addZval(-zrange)
+
         # final hold
-        for i in range(deadtime):
+        for i in range(deadtime-1):
             addZval(z_center)
 
     def newFrame(self, frame, offset, power, stage_z):
         if self.counter < self.max_zvals:
-            self.control_thread.moveStageAbs(self.zvals[self.counter])
+            self.control_thread.moveStageRel(self.zvals[self.counter])
             self.counter += 1
 
     def newParameters(self, parameters):
-        self.calibrationSetup(parameters.qpd_zcenter, 
+        #self.calibrationSetup(parameters.qpd_zcenter, 
+        self.calibrationSetup(0.0, 
                               parameters.cal_deadtime, 
                               parameters.cal_range, 
                               parameters.cal_step_size, 
@@ -344,8 +349,8 @@ class CalibrationLockMode(LockMode):
     def startLock(self):
         self.counter = 0
 
-    def stopLock(self):
-        self.control_thread.recenter()
+#    def stopLock(self):
+#        self.control_thread.recenter()
 
 
 # Z scan lock mode - The stage will move through a series of
