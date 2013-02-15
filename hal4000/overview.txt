@@ -1,0 +1,116 @@
+
+A brief overview of the classes.
+
+HAL-4000 (QtGui.QMainWindow)
+  
+  Selecting settings / parameters files:
+    qtParametersBox.QParametersBox (QtGui.QWidget)
+
+
+  Control of the software via TCP/IP:
+    tcpControl.TCPControl (QtNetwork.QTcpServer)
+
+
+  Camera:
+
+    Overall camera control:
+
+      genericCamera.Camera (QtGui.QDialog)
+        singleCamera.SingleCamera (genericCamera.Camera)
+          classicSingleCamera.ClassicSingleCamera (singleCamera.SingleCamera)
+          detachedSingleCamera.DetachedSingleCamera (singleCamera.SingleCamera)
+  
+        dualCamera.DualCamera (genericCamera.Camera)
+
+    Camera image display & display setting:
+      cameraDisplay.CameraDisplay (QtGui.QFrame)
+
+      Displaying the images from the camera:
+        qtCameraWidget.QCameraWidget (QtGui.QWidget)
+
+    Displaying the camera settings (exposure time, etc)
+      cameraParams.CameraParams(QtGui.QGroupBox)
+
+
+  Illumination / Shutter:
+
+    Illumination control dialog:
+      illuminationControl.IlluminationControl (QtGui.QDialog)
+
+    Illumination control powers / shutters:
+
+      Overall power control:
+        illuminationControl.QIlluminationControlWidget (QtGui.QWidget)
+
+        Control of a particular channel:
+          channelWidgets.QChannel (QtGui.QWidget)
+
+        Queueing commands for talking to the hardware:
+          commandQueues.QCubeThread (QtCore.QThread)
+          commandQueues.QAOTFThread (QtCore.QThread)
+          ...
+
+      Shutter control:
+        shutterControl.ShutterControl ()
+
+
+  Stage:
+    stageControl.StageControl (QtGui.QDialog)
+
+    Thread for talking to the hardware:
+      stageThread.QStageThread (QtCore.QThread)
+
+
+  Focus Lock:
+    focusLockZ.FocusLockZ (QtGui.QDialog)
+
+    Feedback control and current offset & position display
+      lockDisplay.LockDisplay (QtGui.QWidget)
+
+      Specialized for QPD display:
+        lockDisplay.LockDisplayQPD (LockDisplay)
+
+      Specialized for a USB camera:
+        lockDisplay.LockDisplayCam (LockDisplay)
+
+      The focus lock modes:
+        lockModes.LockMode (QtCore.QObject)
+          lockModes.NoLockMoke (LockMode)
+          ...
+
+      Displaying focus lock information:
+        lockDisplayWidgets.QStatusDisplay (QtGui.QWidget)
+          lockDisplayWidgets.QSumDisplay (QStatusDisplay)
+          lockDisplayWidgets.QOffsetDisplay (QStatusDisplay)
+            lockDisplayWidgets.QStageDisplay (QOffsetDisplay)
+          lockDisplayWidgets.QQPDDisplay (QStatusDisplay)
+        lockDisplayWidgets.QCamDisplay (QtGui.QWidget)
+
+      Interface to the hardware:
+        stageOffsetControl.stageQPDThread (QtCore.QThread)
+
+        Specialized for the addition of motorized Z:
+          stageOffsetControl.motorStageQPDThread (QtCore.QThread)
+
+        Specialized for USB camera instead of a QPD:
+          stageOffsetControl.stageCamThread (stageQPDThread)
+
+
+  Spot Counter:
+    spotCounter.SpotCounter (QtGui.QDialog)
+
+    Handling the spot counting:
+      qtSpotCounter.QObjectCounter (QtGui.QWidget)
+
+
+  Miscellaneous hardware:
+    miscControl.MiscControl (QtGui.QDialog)
+
+
+  Laser power progressions:
+    progressionControl.ProgressionControl (QtGui.QDialog)
+
+
+  Joystick:
+    joystick.JoystickObject (QtCore.QObject)
+

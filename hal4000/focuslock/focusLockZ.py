@@ -24,7 +24,6 @@ import halLib.hdebug as hdebug
 
 # Widgets
 import focuslock.lockDisplay as lockDisplay
-import focuslock.lockModes as lockModes
 
 #
 # The base class.
