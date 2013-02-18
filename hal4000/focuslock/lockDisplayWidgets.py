@@ -178,6 +178,7 @@ class QQPDDisplay(QStatusDisplay):
 class QCamDisplay(QtGui.QWidget):    
     adjustCamera = QtCore.pyqtSignal(int, int)
     adjustOffset = QtCore.pyqtSignal(int)
+    changeFitMode = QtCore.pyqtSignal(int)
 
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
@@ -186,6 +187,7 @@ class QCamDisplay(QtGui.QWidget):
         self.draw_e1 = True
         self.draw_e2 = True
         self.e_size = 8
+        self.fit_mode = True
         self.foreground = QtGui.QColor(0,255,0)
         self.image = None
         self.show_dot = False
@@ -210,10 +212,18 @@ class QCamDisplay(QtGui.QWidget):
             elif (which_key == QtCore.Qt.Key_Down):
                 self.adjustCamera.emit(0,-2)
 
+            # Adjust the distance between the spots which
+            # is considered to be zero.
             elif (which_key == QtCore.Qt.Key_Comma):
                 self.adjustOffset.emit(-1)
             elif (which_key == QtCore.Qt.Key_Period):
                 self.adjustOffset.emit(+1)
+
+            # Adjust how to the offset is determined,
+            # i.e. by fitting or by a moment calculation
+            elif (which_key == QtCore.Qt.Key_M):
+                self.fit_mode = not self.fit_mode
+                self.changeFitMode.emit(int(self.fit_mode))
 
     def mousePressEvent(self, event):
         self.adjust_mode = not self.adjust_mode
@@ -252,12 +262,12 @@ class QCamDisplay(QtGui.QWidget):
     def paintEvent(self, Event):
         painter = QtGui.QPainter(self)
         if self.image:
-            # draw image
+            # Draw image.
             painter.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
             destination_rect = QtCore.QRect(0, 0, self.width(), self.height())
             painter.drawImage(destination_rect, self.image)
 
-            # draw alignment lines
+            # Draw alignment lines.
             if self.adjust_mode:
                 painter.setPen(QtGui.QColor(100,100,100))
                 painter.drawLine(0.0, 0.5*self.height(), self.width(), 0.5*self.height())
@@ -265,14 +275,25 @@ class QCamDisplay(QtGui.QWidget):
                     painter.drawLine(mult*self.width(), 0.0, mult*self.width(), self.height())
 
 
-            # draw beam tracking circle
+            # Draw focus lock feedback.
             else:
                 painter.setRenderHint(QtGui.QPainter.Antialiasing)
-                painter.setPen(QtGui.QColor(0,255,0))
-                if self.draw_e1:
-                    painter.drawEllipse(QtCore.QPointF(self.x_off1, self.y_off1), self.e_size, self.e_size)
-                if self.draw_e2:
-                    painter.drawEllipse(QtCore.QPointF(self.x_off2, self.y_off2), self.e_size, self.e_size)
+
+                # Round green circles for fitting mode.
+                if self.fit_mode:
+                    painter.setPen(QtGui.QColor(0,255,0))
+                    if self.draw_e1:
+                        painter.drawEllipse(QtCore.QPointF(self.x_off1, self.y_off1), self.e_size, self.e_size)
+                    if self.draw_e2:
+                        painter.drawEllipse(QtCore.QPointF(self.x_off2, self.y_off2), self.e_size, self.e_size)
+
+                # Square blue boxes for moment mode.
+                else:
+                    painter.setPen(QtGui.QColor(0,0,255))
+                    if self.draw_e1:
+                        painter.drawRect(self.x_off1, self.y_off1, self.e_size, self.e_size)
+                    if self.draw_e2:
+                        painter.drawRect(self.x_off2, self.y_off2, self.e_size, self.e_size)
 
             # display red dot (or not)
             if self.show_dot:

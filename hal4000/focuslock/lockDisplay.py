@@ -374,6 +374,7 @@ class LockDisplayCam(LockDisplay):
         self.camDisplay.setGeometry(2, 2, status_x, status_y)
         self.camDisplay.adjustCamera.connect(self.handleAdjustAOI)
         self.camDisplay.adjustOffset.connect(self.handleAdjustOffset)
+        self.camDisplay.changeFitMode.connect(self.handleChangeFitMode)
 
         # timer for updating the display of snapshots captured by the camera.
         self.cam_timer = QtCore.QTimer()
@@ -406,6 +407,9 @@ class LockDisplayCam(LockDisplay):
 
     def handleAdjustOffset(self, dx):
         self.control_thread.adjustOffset(dx)
+
+    def handleChangeFitMode(self, mode):
+        self.control_thread.changeFitMode(mode)
 
     # for debugging..
 #    def openOffsetFile(self, filename):

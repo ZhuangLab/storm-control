@@ -360,6 +360,12 @@ class stageCamThread(stageQPDThread):
         self.qpd_mutex.unlock()
 
     @hdebug.debug
+    def changeFitMode(self, mode):
+        self.qpd_mutex.lock()
+        self.cam.changeFitMode(mode)
+        self.qpd_mutex.unlock()
+
+    @hdebug.debug
     def getImage(self):
         self.cam_mutex.lock()
         data = self.cam_data

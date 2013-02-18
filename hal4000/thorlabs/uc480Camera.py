@@ -2,7 +2,7 @@
 #
 # Captures pictures from a Thorlabs uc480 (software) series cameras.
 #
-# Hazen 03/12
+# Hazen 02/13
 #
 
 import ctypes
@@ -236,8 +236,14 @@ class Camera(Handle):
 class cameraQPD():
     def __init__(self, camera_id = 1, fit_mutex = False):
         self.file_name = "cam_offsets_" + str(camera_id) + ".txt"
+        self.fit_mode = 1
         self.fit_mutex = fit_mutex
+        self.fit_size = 12
         self.image = None
+        self.x_off1 = 0.0
+        self.y_off1 = 0.0
+        self.x_off2 = 0.0
+        self.y_off2 = 0.0
 
         # Open camera
         self.cam = Camera(camera_id)
@@ -266,13 +272,6 @@ class cameraQPD():
         self.half_y = self.y_width/2
         self.X = numpy.arange(self.y_width) - 0.5*float(self.y_width)
 
-        # Other variables
-        self.fit_size = 12
-        self.x_off1 = self.half_x
-        self.y_off1 = self.half_y
-        self.x_off2 = self.half_x
-        self.y_off2 = self.half_y
-
     def adjustAOI(self, dx, dy):
         self.x_start += dx
         self.y_start += dy
@@ -293,6 +292,9 @@ class cameraQPD():
         self.image = self.cam.captureImage()
         return self.image
 
+    def changeFitMode(self, mode):
+        self.fit_mode = mode
+
     def fitGaussian(self, data):
         if (numpy.max(data) < 25):
             return [False, False, False, False]
@@ -302,9 +304,9 @@ class cameraQPD():
         max_x = int(max_i/y_width)
         max_y = int(max_i%y_width)
         if (max_x > (self.fit_size-1)) and (max_x < (x_width - self.fit_size)) and (max_y > (self.fit_size-1)) and (max_y < (y_width - self.fit_size)):
-            #[params, status] = fitSymmetricGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
             if self.fit_mutex:
                 self.fit_mutex.lock()
+            #[params, status] = fitSymmetricGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
             [params, status] = fitFixedEllipticalGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
             if self.fit_mutex:
                 self.fit_mutex.unlock()
@@ -350,34 +352,27 @@ class cameraQPD():
 
     def singleQpdScan(self):
         data = self.capture().copy()
+        power = numpy.max(data)
 
-        # Determine offset by moments calculation.
-        if 0:
-            data_ave = numpy.average(data, axis = 1)
-            power = numpy.sum(data_ave)
-            x_offset = numpy.sum(self.X * data_ave)
-            y_offset = 0.0
+        if (power < 25):
+            # This hack is because if you bombard the USB camera with 
+            # update requests too frequently it will freeze. Or so I
+            # believe, not sure if this is actually true.
+            # It still seems to freeze?
+            time.sleep(0.01) 
+            return [0, 0, 0]
 
         # Determine offset by fitting gaussians to the two beam spots.
         # In the event that only beam spot can be fit then this will
         # attempt to compensate. However this assumes that the two
         # spots are centered across the mid-line of camera ROI.
-        if 1:
+        if (self.fit_mode == 1):
             dist1 = 0
             dist2 = 0
             self.x_off1 = 0.0
             self.y_off1 = 0.0
             self.x_off2 = 0.0
             self.y_off2 = 0.0
-
-            power = numpy.max(data)
-
-            if (power < 25):
-                # This hack is because if you bombard the USB camera with 
-                # update requests too frequently it will freeze. Or so I
-                # believe, not sure if this is actually true.
-                time.sleep(0.01) 
-                return [0, 0, 0]
 
             # Fit first gaussian to data in the left half of the picture.
             total_good =0
@@ -403,7 +398,47 @@ class cameraQPD():
             else:
                 offset = ((dist1 + dist2) - self.zero_dist)*power
 
-        return [power, offset, 0]
+            return [power, offset, 0]
+
+        # Determine offset by moments calculation.
+        else:
+            self.x_off1 = 1.0e-6
+            self.y_off1 = 0.0
+            self.x_off2 = 1.0e-6
+            self.y_off2 = 0.0
+
+            total_good = 0
+            data_band = data[self.half_x-3:self.half_x+3,:]
+
+            # Moment for the object in the left half of the picture.
+            x = numpy.arange(self.half_y)
+            data_ave = numpy.average(data_band[:,:self.half_y], axis = 0)
+            power1 = numpy.sum(data_ave)
+
+            dist1 = 0.0
+            if (power1 > 0.0):
+                total_good += 1
+                self.y_off1 = numpy.sum(x * data_ave) / power1 - self.half_y
+                dist1 = abs(self.y_off1)
+
+            # Moment for the object in the right half of the picture.
+            data_ave = numpy.average(data_band[:,self.half_y:], axis = 0)
+            power2 = numpy.sum(data_ave)
+
+            dist2 = 0.0
+            if (power2 > 0.0):
+                total_good += 1
+                self.y_off2 = numpy.sum(x * data_ave) / power2
+                dist2 = abs(self.y_off2)
+
+            if (total_good == 0):
+                offset = 0
+            elif (total_good == 1):
+                offset = ((dist1 + dist2) - 0.5*self.zero_dist)*power
+            else:
+                offset = ((dist1 + dist2) - self.zero_dist)*power
+
+            return [power, offset, 0]
 
 
 # Testing
@@ -492,7 +527,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

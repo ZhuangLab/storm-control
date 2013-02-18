@@ -153,10 +153,12 @@ class QSpotGraph(QtGui.QWidget):
 # STORM image display widget.
 #
 class QImageGraph(QtGui.QWidget):
-    def __init__(self, x_size, y_size, parent = None):
+    def __init__(self, x_size, y_size, flip_horizontal, flip_vertical, parent = None):
         QtGui.QWidget.__init__(self, parent)
 
         self.buffer = QtGui.QPixmap(x_size, y_size)
+        self.flip_horizontal = flip_horizontal
+        self.flip_vertical = flip_vertical
         self.x_size = x_size
         self.y_size = y_size
 
@@ -174,8 +176,10 @@ class QImageGraph(QtGui.QWidget):
         painter.drawRect(0, 0, self.x_size, self.y_size)
         self.update()
 
-    def newParameters(self, colors, scale_bar_len, x_range, y_range):
+    def newParameters(self, colors, flip_horizontal, flip_vertical, scale_bar_len, x_range, y_range):
         self.colors = colors
+        self.flip_horizontal = flip_horizontal
+        self.flip_vertical = flip_vertical
         self.points_per_cycle = len(colors)
         self.scale_bar_len = int(round(scale_bar_len))
         self.x_scale = float(self.x_size)/float(x_range)
@@ -183,13 +187,16 @@ class QImageGraph(QtGui.QWidget):
         self.blank()
 
     def paintEvent(self, Event):
-        # draw the scale bar
+        # Draw the scale bar.
         painter = QtGui.QPainter(self.buffer)
         painter.setPen(QtGui.QColor(255, 255, 255))
         painter.setBrush(QtGui.QColor(255, 255, 255))
         painter.drawRect(5, 5, 5 + self.scale_bar_len, 5)
+
+        # Mirror as necessary.
+        #self.image = self.image.mirrored(self.flip_horizontal, self.flip_vertical)
             
-        # transfer to display
+        # Transfer to display.
         painter = QtGui.QPainter(self)
         painter.drawPixmap(0, 0, self.buffer)
 
@@ -287,6 +294,8 @@ class SpotCounter(QtGui.QDialog):
 
             self.image_graphs[i] = QImageGraph(image_w,
                                                image_h,
+                                               camera_params.flip_horizontal,
+                                               camera_params.flip_vertical,
                                                parent = parents[i])
             self.image_graphs[i].setGeometry(2, 2, image_w, image_h)
             self.image_graphs[i].blank()
@@ -359,6 +368,8 @@ class SpotCounter(QtGui.QDialog):
             scale_bar_len = (parameters.scale_bar_len / parameters.nm_per_pixel) * \
                 float(self.image_graphs[i].width()) / float(camera_params.x_pixels * camera_params.x_bin)
             self.image_graphs[i].newParameters(colors,
+                                               camera_params.flip_horizontal,
+                                               camera_params.flip_vertical,
                                                scale_bar_len,
                                                camera_params.x_pixels / camera_params.x_bin,
                                                camera_params.y_pixels / camera_params.y_bin)

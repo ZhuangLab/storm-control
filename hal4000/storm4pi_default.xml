@@ -78,6 +78,11 @@
     <max_intensity type="int">10000</max_intensity>
     <colortable type="string">idl5.ctbl</colortable>
     <sync type="int">0</sync>
+    <!-- oil
+    <flip_horizontal type="int">1</flip_horizontal>
+    <flip_vertical type="int">0</flip_vertical>
+    -->
+    <!-- water -->
     <flip_horizontal type="int">0</flip_horizontal>
     <flip_vertical type="int">1</flip_vertical>
   </camera2>
