@@ -11,6 +11,7 @@ import ctypes.wintypes
 import numpy
 import os
 from PIL import Image
+import platform
 import scipy
 import scipy.optimize
 import time
@@ -64,12 +65,16 @@ class AOIRect(ctypes.Structure):
 #if uc480_dll is None:
 #    print 'uc480.dll not found'
 
-uc480 = ctypes.cdll.LoadLibrary("c:\windows\system32\uc480_64.dll")
+if (platform.architecture()[0] == "32bit"):
+    uc480 = ctypes.cdll.LoadLibrary("c:\windows\system32\uc480.dll")
+else:
+    uc480 = ctypes.cdll.LoadLibrary("c:\windows\system32\uc480_64.dll")
+
 
 # Helper functions
-def check(fn_return):
+def check(fn_return, fn_name = ""):
     if not (fn_return == IS_SUCCESS):
-        print "uc480: Call failed with error", fn_return
+        print "uc480: Call failed with error", fn_return, fn_name
 
 def create_camera_list(num_cameras):
     class CameraList(ctypes.Structure):
@@ -121,24 +126,25 @@ class Camera(Handle):
         Handle.__init__(self, camera_id)
 
         # Initialize camera.
-        check(uc480.is_InitCamera(ctypes.byref(self), ctypes.wintypes.HWND(0)))
+        check(uc480.is_InitCamera(ctypes.byref(self), ctypes.wintypes.HWND(0)), "is_InitCamera")
         #check(uc480.is_SetErrorReport(self, IS_ENABLE_ERR_REP))
 
         # Get some information about the camera.
         self.info = CameraProperties()
-        check(uc480.is_GetSensorInfo(self, ctypes.byref(self.info)))
+        check(uc480.is_GetSensorInfo(self, ctypes.byref(self.info)), "is_GetSensorInfo")
         self.im_width = self.info.nMaxWidth
         self.im_height = self.info.nMaxHeight
 
         # Initialize some general camera settings.
-        check(uc480.is_SetColorMode(self, IS_SET_CM_Y8))
-        check(uc480.is_SetGainBoost(self, IS_SET_GAINBOOST_OFF))
-        check(uc480.is_SetGamma(self, 1))
+        check(uc480.is_SetColorMode(self, IS_SET_CM_Y8), "is_SetColorMode")
+        check(uc480.is_SetGainBoost(self, IS_SET_GAINBOOST_OFF), "is_SetGainBoost")
+        check(uc480.is_SetGamma(self, 1), "is_SetGamma")
         check(uc480.is_SetHardwareGain(self,
                                        0,
                                        IS_IGNORE_PARAMETER,
                                        IS_IGNORE_PARAMETER,
-                                       IS_IGNORE_PARAMETER))
+                                       IS_IGNORE_PARAMETER),
+              "is_SetHardwareGain")
 
         # Setup capture parameters.
         self.bitpixel = 8     # This is correct for a BW camera anyway..
@@ -150,17 +156,17 @@ class Camera(Handle):
         self.setBuffers()
 
     def captureImage(self):
-        check(uc480.is_FreezeVideo(self, IS_WAIT))
+        check(uc480.is_FreezeVideo(self, IS_WAIT), "is_FreezeVideo")
         return self.getImage()
 
     def captureImageTest(self):
-        check(uc480.is_FreezeVideo(self, IS_WAIT))
+        check(uc480.is_FreezeVideo(self, IS_WAIT), "is_FreezeVideo")
 
     def getCameraStatus(self, status_code):
-        return uc480.is_CameraStatus(self, status_code, IS_GET_STATUS)
+        return uc480.is_CameraStatus(self, status_code, IS_GET_STATUS, "is_CameraStatus")
 
     def getImage(self):
-        check(uc480.is_CopyImageMem(self, self.image, self.id, self.data.ctypes.data))
+        check(uc480.is_CopyImageMem(self, self.image, self.id, self.data.ctypes.data), "is_CopyImageMem")
         return self.data
 
     def getNextImage(self):
@@ -177,7 +183,8 @@ class Camera(Handle):
         pTimeout = ctypes.c_int(1)
         check(uc480.is_GetTimeout(self,
                                   ctypes.c_int(nMode),
-                                  ctypes.byref(pTimeout)))
+                                  ctypes.byref(pTimeout)),
+              "is_GetTimeout")
         return pTimeout.value
 
     def setAOI(self, x_start, y_start, width, height):
@@ -191,7 +198,8 @@ class Camera(Handle):
         check(uc480.is_AOI(self,
                            IS_AOI_IMAGE_SET_AOI,
                            ctypes.byref(aoi_rect),
-                           ctypes.sizeof(aoi_rect)))
+                           ctypes.sizeof(aoi_rect)),
+              "is_AOI")
         self.setBuffers()
 
     def setBuffers(self):
@@ -205,14 +213,16 @@ class Camera(Handle):
                                      ctypes.c_int(self.im_height),
                                      ctypes.c_int(self.bitpixel),
                                      ctypes.byref(self.image),
-                                     ctypes.byref(self.id)))
-        check(uc480.is_SetImageMem(self, self.image, self.id))
+                                     ctypes.byref(self.id)),
+              "is_AllocImageMem")
+        check(uc480.is_SetImageMem(self, self.image, self.id), "is_SetImageMem")
 
     def setFrameRate(self, frame_rate = 1000, verbose = False):
         new_fps = ctypes.c_double()
         check(uc480.is_SetFrameRate(self,
                                     ctypes.c_double(frame_rate),
-                                    ctypes.byref(new_fps)))
+                                    ctypes.byref(new_fps)),
+              "is_SetFrameRate")
         if verbose:
             print "uc480: Set frame rate to", new_fps.value, "FPS"
 
@@ -220,16 +230,17 @@ class Camera(Handle):
         nMode = IS_TRIGGER_TIMEOUT
         check(uc480.is_SetTimeout(self,
                                   ctypes.c_int(nMode),
-                                  ctypes.c_int(timeout)))
+                                  ctypes.c_int(timeout)),
+              "is_SetTimeout")
 
     def shutDown(self):
-        check(uc480.is_ExitCamera(self))
+        check(uc480.is_ExitCamera(self), "is_ExitCamera")
 
     def startCapture(self):
-        check(uc480.is_CaptureVideo(self, IS_DONT_WAIT))
+        check(uc480.is_CaptureVideo(self, IS_DONT_WAIT), "is_CaptureVideo")
 
     def stopCapture(self):
-        check(uc480.is_StopLiveVideo(self, IS_WAIT))
+        check(uc480.is_StopLiveVideo(self, IS_WAIT), "is_StopLiveVideo")
 
 
 # QPD emulation class
@@ -446,7 +457,7 @@ if __name__ == "__main__":
     cam = Camera(1)
     reps = 50
 
-    if 1:
+    if 0:
         cam.setAOI(772, 566, 200, 200)
         cam.setFrameRate(verbose = True)
         for i in range(100):
@@ -475,7 +486,7 @@ if __name__ == "__main__":
             image = cam.captureImage()
         print "time:", time.time() - st
 
-    if 0:
+    if 1:
         for i in range(1):
             print i
             image = cam.captureImage()

@@ -121,7 +121,10 @@ class QStageDisplay(QOffsetDisplay):
                                 parent = parent)
 
         self.adjust_mode = False
+        self.tooltips = ["click to adjust", "use scroll wheel to move stage"]
+
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.setToolTip(self.tooltips[0])
 
     def paintBackground(self, painter):
         if self.adjust_mode:
@@ -134,6 +137,10 @@ class QStageDisplay(QOffsetDisplay):
 
     def mousePressEvent(self, event):
         self.adjust_mode = not self.adjust_mode
+        if self.adjust_mode:
+            self.setToolTip(self.tooltips[1])
+        else:
+            self.setToolTip(self.tooltips[0])
         self.update()
 
     def wheelEvent(self, wheel_event):
@@ -191,12 +198,16 @@ class QCamDisplay(QtGui.QWidget):
         self.foreground = QtGui.QColor(0,255,0)
         self.image = None
         self.show_dot = False
+        self.static_text = [QtGui.QStaticText("Fit"), QtGui.QStaticText("Moment")]
+        self.tooltips = ["click to adjust", "<m> key to change mode\n<arrow> keys to move spots\n<,.> keys to change zero point"]
+
         self.x_off1 = 0
         self.y_off1 = 0
         self.x_off2 = 0
         self.y_off2 = 0
 
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.setToolTip(self.tooltips[0])
 
     def keyPressEvent(self, event):
         if self.adjust_mode:
@@ -227,6 +238,10 @@ class QCamDisplay(QtGui.QWidget):
 
     def mousePressEvent(self, event):
         self.adjust_mode = not self.adjust_mode
+        if self.adjust_mode:
+            self.setToolTip(self.tooltips[1])
+        else:
+            self.setToolTip(self.tooltips[0])
         self.update()
 
     def newImage(self, data, show_dot):
@@ -274,6 +289,11 @@ class QCamDisplay(QtGui.QWidget):
                 for mult in [0.25, 0.5, 0.75]:
                     painter.drawLine(mult*self.width(), 0.0, mult*self.width(), self.height())
 
+                painter.setPen(QtGui.QColor(255,255,255))
+                if self.fit_mode:
+                    painter.drawStaticText(2, 102, self.static_text[0])
+                else:
+                    painter.drawStaticText(2, 102, self.static_text[1])
 
             # Draw focus lock feedback.
             else:

@@ -90,10 +90,11 @@
 
   <!-- focus lock settings -->
   <have_focus_lock type="int">1</have_focus_lock>
+  <ir_power type="int">12</ir_power>
   <qpd_mode type="int">0</qpd_mode>
   <qpd_zcenter type="float">50.0</qpd_zcenter>
-  <qpd_scale type="float">2700.0</qpd_scale>
-  <qpd_sum_max type="int">1500</qpd_sum_max>
+  <qpd_scale type="float">65.0</qpd_scale>
+  <qpd_sum_max type="int">256</qpd_sum_max>
   <cal_deadtime type="int">20</cal_deadtime>
   <cal_range type="float">600</cal_range>
   <cal_step_size type="float">10</cal_step_size>

@@ -8,8 +8,9 @@
 
 # qpd, stage and motor.
 import madCityLabs.mclController as mclController
-import phreshPhotonics.phreshQPD as phreshQPD
-import prior.prior as prior
+import thorlabs.uc480Camera as uc480Cam
+#import phreshPhotonics.phreshQPD as phreshQPD
+#import prior.prior as prior
 
 # focus lock control thread.
 import focuslock.stageOffsetControl as stageOffsetControl
@@ -24,25 +25,46 @@ import focuslock.focusLockZ as focusLockZ
 # Focus Lock Dialog Box specialized for STORM3
 # with Phresh QPD and MCL objective Z positioner.
 #
-class AFocusLockZ(focusLockZ.FocusLockZQPD):
+class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, parameters, tcp_control, parent = None):
-        qpd = phreshQPD.PhreshQPDSTORM3()
+        cam = uc480Cam.cameraQPD(camera_id = 1)
         stage = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/")
-        motor = prior.PriorFocus()
-        lock_fn = lambda (x): -1.75 * x
-        control_thread = stageOffsetControl.motorStageQPDThread(qpd,
-                                                                stage,
-                                                                motor,
-                                                                lock_fn,
-                                                                50.0,
-                                                                parameters.qpd_zcenter)
-        ir_laser = LDC210.LDC210("PCI-6722", 1)
-        focusLockZ.FocusLockZQPD.__init__(self,
+        lock_fn = lambda (x): -0.04 * x
+        control_thread = stageOffsetControl.stageCamThread(cam,
+                                                           stage,
+                                                           lock_fn,
+                                                           50.0,
+                                                           parameters.qpd_zcenter)
+        #ir_laser = LDC210.LDC210("PCI-6722", 1)
+        ir_laser = LDC210.LDC210PWMNI("PCI-MIO-16E-4", 0)
+        focusLockZ.FocusLockZCam.__init__(self,
                                           parameters,
                                           tcp_control,
                                           control_thread,
                                           ir_laser,
                                           parent)
+
+
+#class AFocusLockZ(focusLockZ.FocusLockZQPD:)
+#    def __init__(self, parameters, tcp_control, parent = None):
+#        qpd = phreshQPD.PhreshQPDSTORM3()
+#        stage = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/")
+#        motor = prior.PriorFocus()
+#        lock_fn = lambda (x): -1.75 * x
+#        control_thread = stageOffsetControl.motorStageQPDThread(qpd,
+#                                                                stage,
+#                                                                motor,
+#                                                                lock_fn,
+#                                                                50.0,
+#                                                                parameters.qpd_zcenter)
+#        ir_laser = LDC210.LDC210("PCI-6722", 1)
+#        focusLockZ.FocusLockZQPD.__init__(self,
+#                                          parameters,
+#                                          tcp_control,
+#                                          control_thread,
+#                                          ir_laser,
+#                                          parent)
+
 
 #
 # The MIT License
