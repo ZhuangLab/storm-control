@@ -9,12 +9,14 @@ import sys
 from PyQt4 import QtCore, QtGui
 import sip
 
+import qtWidgets.qtAppIcon as qtAppIcon
+
 import halLib.parameters as params
 
-# Debugging
+# Debugging.
 import halLib.hdebug as hdebug
 
-# stage
+# The module that actually does the analysis.
 import qtWidgets.qtSpotCounter as qtSpotCounter
 
 
@@ -247,6 +249,7 @@ class SpotCounter(QtGui.QDialog):
         self.ui = spotCounterUi.Ui_Dialog()
         self.ui.setupUi(self)
         self.setWindowTitle(parameters.setup_name + " Spot Counter")
+        self.setWindowIcon(qtAppIcon.QAppIcon())
 
         # Setup Counter objects.
         if single_camera:

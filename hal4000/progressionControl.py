@@ -10,6 +10,7 @@ import sys
 from PyQt4 import QtCore, QtGui
 
 import halLib.parameters as params
+import qtWidgets.qtAppIcon as qtAppIcon
 
 # Debugging
 import halLib.hdebug as hdebug
@@ -274,6 +275,7 @@ class ProgressionControl(QtGui.QDialog):
         self.ui = progressionUi.Ui_Dialog()
         self.ui.setupUi(self)
         self.setWindowTitle(parameters.setup_name + " Progression Control")
+        self.setWindowIcon(qtAppIcon.QAppIcon())
 
         # linear increasing power tab setup
         self.linear_channels = LinearChannels(channels,

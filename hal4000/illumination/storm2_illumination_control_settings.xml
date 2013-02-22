@@ -57,7 +57,7 @@
     <max_voltage type="float">5.0</max_voltage>
     <use_cube405 type="boolean">TRUE</use_cube405>
     <frequency type="float">0.0</frequency>
-    <amplitude type="int">5000</amplitude>
+    <amplitude type="int">10000</amplitude>
     <ni_board type="string">PCIe-6259</ni_board>
     <dig_line type="int">0</dig_line>
   </block>

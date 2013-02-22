@@ -55,6 +55,7 @@ from PyQt4 import QtCore, QtGui
 import sip
 from xml.dom import minidom, Node
 
+import qtWidgets.qtAppIcon as qtAppIcon
 import illumination.channelWidgets as channelWidgets
 
 # Debugging
@@ -199,6 +200,7 @@ class IlluminationControl(QtGui.QDialog):
         self.ui = illuminationUi.Ui_Dialog()
         self.ui.setupUi(self)
         self.setWindowTitle(parameters.setup_name + " Illumination Control")
+        self.setWindowIcon(qtAppIcon.QAppIcon())
 
         # connect signals
         if self.have_parent:

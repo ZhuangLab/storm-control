@@ -56,6 +56,7 @@ import halLib.hdebug as hdebug
 # Misc.
 import halLib.parameters as params
 import halLib.imagewriters as writers
+import qtWidgets.qtAppIcon as qtAppIcon
 import qtWidgets.qtParametersBox as qtParametersBox
 
 # helper functions
@@ -130,6 +131,7 @@ class Window(QtGui.QMainWindow):
         self.ui.setupUi(self)
         
         self.setWindowTitle(self.parameters.setup_name)
+        self.setWindowIcon(qtAppIcon.QAppIcon())
 
         self.parameters_box = qtParametersBox.QParametersBox(self.ui.settingsScrollArea)
         self.ui.settingsScrollArea.setWidget(self.parameters_box)
@@ -1021,13 +1023,13 @@ class Window(QtGui.QMainWindow):
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
-    # Splash Screen
+    # Splash Screen.
     pixmap = QtGui.QPixmap("splash.png")
     splash = QtGui.QSplashScreen(pixmap)
     splash.show()
     app.processEvents()
 
-    # Load settings
+    # Load settings.
     if len(sys.argv) > 1:
         setup_name = sys.argv[1]
         parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
@@ -1037,11 +1039,12 @@ if __name__ == "__main__":
         parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
     params.setSetupName(parameters, setup_name)
     
-    # Load app
+    # Load app.
     window = Window(parameters)
     window.newParameters()
     splash.hide()
     window.show()
+
     app.exec_()
 
 

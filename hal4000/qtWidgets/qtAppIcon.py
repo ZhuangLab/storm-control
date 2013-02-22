@@ -1,61 +1,22 @@
 #!/usr/bin/python
 #
-# The defualt miscControl class.
+# Load the appropriate application icon.
 #
-# Hazen 06/12
+# Hazen 02/13
 #
 
-import sys
 from PyQt4 import QtCore, QtGui
 
-import qtWidgets.qtAppIcon as qtAppIcon
+# Vertical Range Slider
+class QAppIcon(QtGui.QIcon):
 
-# Debugging
-import halLib.hdebug as hdebug
-
-#
-# Misc Control Dialog Box
-#
-class MiscControl(QtGui.QDialog):
-    @hdebug.debug
-    def __init__(self, parameters, tcp_control, camera_widget, parent = None):
-        QtGui.QDialog.__init__(self, parent)
-        
-        self.camera_widget = camera_widget
-        self.parameters = parameters
-        self.tcp_control = tcp_control
-
-        if parent:
-            self.have_parent = 1
-        else:
-            self.have_parent = 0
-
-        self.setWindowIcon(qtAppIcon.QAppIcon())
-
-    @hdebug.debug
-    def closeEvent(self, event):
-        if self.have_parent:
-            event.ignore()
-            self.hide()
-        else:
-            self.quit()
-
-    @hdebug.debug
-    def handleQuit(self):
-        self.close()
-
-    @hdebug.debug
-    def newFrame(self, frame):
-        pass
-        
-    @hdebug.debug
-    def quit(self):
-        pass
+    def __init__(self):
+        QtGui.QIcon.__init__(self, "icons/HAL-9000.ico")
 
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -75,3 +36,4 @@ class MiscControl(QtGui.QDialog):
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+

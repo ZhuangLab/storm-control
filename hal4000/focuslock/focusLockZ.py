@@ -19,6 +19,8 @@
 import numpy
 from PyQt4 import QtCore, QtGui
 
+import qtWidgets.qtAppIcon as qtAppIcon
+
 # Debugging
 import halLib.hdebug as hdebug
 
@@ -63,6 +65,7 @@ class FocusLockZ(QtGui.QDialog):
 
         # UI setup
         self.setWindowTitle(parameters.setup_name + " Focus Lock")
+        self.setWindowIcon(qtAppIcon.QAppIcon())
         self.ui.lockLabel.setStyleSheet("QLabel { color: green }")
         self.toggleLockButtonDisplay(self.lock_display1.shouldDisplayLockButton())
         self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())

@@ -66,6 +66,8 @@
 
 from PyQt4 import QtCore, QtGui
 
+import qtWidgets.qtAppIcon as qtAppIcon
+
 # Debugging
 import halLib.hdebug as hdebug
 
@@ -94,6 +96,7 @@ class StageControl(QtGui.QDialog):
         self.ui = stageUi.Ui_Dialog()
         self.ui.setupUi(self)
         self.setWindowTitle(parameters.setup_name + " Stage Control")
+        self.setWindowIcon(qtAppIcon.QAppIcon())
 
         self.ui.leftSButton.setIcon(QtGui.QIcon("./icons/1leftarrow-128.png"))
         self.ui.leftSButton.setIconSize(QtCore.QSize(56, 56))
