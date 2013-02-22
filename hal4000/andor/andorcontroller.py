@@ -59,6 +59,7 @@ def getAvailableCameras():
 
 def getCameraHandles():
     number_cameras = getAvailableCameras()
+    assert number_cameras > 0, "No Andor cameras detected!!"
     handles = []
     temp = c_long()
     for i in range(getAvailableCameras()):
