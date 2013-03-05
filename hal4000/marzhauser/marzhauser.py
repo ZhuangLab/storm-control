@@ -187,6 +187,10 @@ class MarzhauserDLL():
         else:
             return "NA"
 
+    # FIXME: figure out how to set velocity..
+    def setVelocity(self, x_vel, y_vel):
+        pass
+
     def shutDown(self):
         # Disconnect from the stage
         if self.good:

@@ -31,6 +31,7 @@
   <low_during_filming type="int">0</low_during_filming>
   <head_model type="string">unknown</head_model>
   <reversed_shutter type="int">0</reversed_shutter>
+  <external_trigger type="int">0</external_trigger>
 
   <!-- film settings -->
   <want_big_endian type="int">1</want_big_endian>
@@ -47,6 +48,8 @@
   <filetype type="string">.dax</filetype>
 
   <!-- view settings -->
+  <flip_horizontal type="int">0</flip_horizontal>
+  <flip_vertical type="int">0</flip_vertical>
   <scalemax type="int">2000</scalemax>
   <scalemin type="int">100</scalemin>
   <max_intensity type="int">10000</max_intensity>
@@ -84,6 +87,7 @@
   <large_step_size type="float">25.0</large_step_size>
   <x_sign type="int">-1</x_sign>
   <y_sign type="int">1</y_sign>
+  <stage_speed type="float">2.0</stage_speed>
 
   <!-- focus lock settings -->
   <have_focus_lock type="int">1</have_focus_lock>

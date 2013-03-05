@@ -1,29 +1,27 @@
 #!/usr/bin/python
 #
-# Joystick monitoring class specialized for prism2.
+# Camera for the prism2 setup.
 #
-# Hazen 09/12
+# Hazen 03/13
 #
 
-from PyQt4 import QtCore
-
-import joystick
-import logitech.gamepad310 as gamepad310
-
-# Debugging
 import halLib.hdebug as hdebug
 
-class AJoystick(joystick.JoystickObject):
-    @hdebug.debug
-    def __init__(self, parameters, parent = None):
-        jstick = gamepad310.Gamepad310()
+import camera.classicSingleCamera as classicSingleCamera
 
-        joystick.JoystickObject.__init__(self, parameters, jstick, parent)
+def getMode():
+    return "single"
+
+class ACamera(classicSingleCamera.ClassicSingleCamera):
+
+    @hdebug.debug
+    def __init__(self, parameters, camera_frame, camera_params_frame, parent = None):
+        classicSingleCamera.ClassicSingleCamera.__init__(self, parameters, camera_frame, camera_params_frame, parent)
 
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -43,3 +41,4 @@ class AJoystick(joystick.JoystickObject):
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+
