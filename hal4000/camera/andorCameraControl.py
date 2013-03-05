@@ -19,7 +19,10 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         cameraControl.CameraControl.__init__(self, parameters, parent)
-        self.initCamera()
+        if hasattr(parameters, "pci_card"):
+            self.initCamera(parameters.pci_card)
+        else:
+            self.initCamera()
 
     @hdebug.debug
     def closeShutter(self):
@@ -48,7 +51,7 @@ class ACameraControl(cameraControl.CameraControl):
             return [50, "unstable"]
 
     @hdebug.debug
-    def initCamera(self):
+    def initCamera(self, pci_card = 0):
         if not self.camera:
             if hdebug.getDebug():
                 print " Initializing Andor Camera"
@@ -56,27 +59,27 @@ class ACameraControl(cameraControl.CameraControl):
             path = "c:/Program Files/Andor iXon/Drivers/"
             driver = "atmcd32d.dll"
             if os.path.exists(path + driver):
-                self.initCameraHelperFn(path, driver)
+                self.initCameraHelperFn(path, driver, pci_card)
                 return
 
             path = "c:/Program Files/Andor Solis/"
             driver = "atmcd32d.dll"
             if os.path.exists(path + driver):
-                self.initCameraHelperFn(path, driver)
+                self.initCameraHelperFn(path, driver, pci_card)
                 return
 
             path = "c:/Program Files (x86)/Andor Solis/Drivers/"
             driver = "atmcd64d.dll"
             if os.path.exists(path + driver):
-                self.initCameraHelperFn(path, driver)
+                self.initCameraHelperFn(path, driver, pci_card)
                 return
 
             print "Can't find Andor Camera drivers"
 
     @hdebug.debug
-    def initCameraHelperFn(self, path, driver):
+    def initCameraHelperFn(self, path, driver, pci_card):
         andor.loadAndorDLL(path + driver)
-        handle = andor.getCameraHandles()[0]
+        handle = andor.getCameraHandles()[pci_card]
         self.camera = andor.AndorCamera(path, handle)
 
     @hdebug.debug
