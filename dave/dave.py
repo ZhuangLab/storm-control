@@ -56,6 +56,9 @@ class Window(QtGui.QMainWindow):
         # ui setup
         self.ui = daveUi.Ui_MainWindow()
         self.ui.setupUi(self)
+
+        self.setWindowIcon(QtGui.QIcon("dave.ico"))
+
         self.ui.detailsFrame.setStyleSheet("QFrame { background: white }")
         self.ui.detailsLabel.setStyleSheet("QLabel { background: white }")
         self.ui.detailsLabel.setText("No sequence loaded")

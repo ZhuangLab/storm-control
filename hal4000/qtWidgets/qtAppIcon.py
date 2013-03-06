@@ -7,7 +7,7 @@
 
 from PyQt4 import QtCore, QtGui
 
-# Vertical Range Slider
+# HAL icon class.
 class QAppIcon(QtGui.QIcon):
 
     def __init__(self):
