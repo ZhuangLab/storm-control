@@ -82,6 +82,7 @@ class AMiscControl(miscControl.MiscControl):
         self.ie_accumulate = False
         self.ie_accumulate_count = 0
         self.ie_autosave = False
+        self.ie_basename = "img.ch00."
         self.ie_capture = False
         self.ie_directory = "c:\\tif_directory\\"
         self.ie_index = 1
@@ -91,9 +92,11 @@ class AMiscControl(miscControl.MiscControl):
         self.ie_stop_x = 0
         self.ie_stop_y = 0
         self.ui.iEyesLabel.setText(self.getIEName())
+        self.ui.iEyesLineEdit.setText(self.ie_basename)
 
         self.ui.iEyesAutoSaveButton.clicked.connect(self.handleAutoSave)
         self.ui.iEyesClearROIButton.clicked.connect(self.handleClearROI)
+        self.ui.iEyesLineEdit.textChanged.connect(self.handleLineEdit)
         self.ui.iEyesResetButton.clicked.connect(self.handleReset)
         self.ui.iEyesSaveButton.clicked.connect(self.handleSave)
         self.ui.iEyesSetROIButton.clicked.connect(self.handleSetROI)
@@ -104,7 +107,7 @@ class AMiscControl(miscControl.MiscControl):
         self.newParameters(self.parameters)
 
     def getIEName(self):
-        return "img.ch00.{0:04d}.tif".format(self.ie_index)
+        return self.ie_basename + "{0:04d}.tif".format(self.ie_index)
 
     @hdebug.debug
     def goToEPI(self):
@@ -151,6 +154,11 @@ class AMiscControl(miscControl.MiscControl):
                 self.parameters.filter_position = i
             else:
                 filter.setStyleSheet("QPushButton { color: black}")
+
+    @hdebug.debug
+    def handleLineEdit(self, new_text):
+        self.ie_basename = str(new_text)
+        self.ui.iEyesLabel.setText(self.getIEName())
 
     @hdebug.debug
     def handleOk(self):
@@ -231,7 +239,7 @@ class AMiscControl(miscControl.MiscControl):
 
             self.ie_accumulate_count += 1
             if (self.ie_accumulate_count >= self.ui.iEyesAccumulateSpinBox.value()):
-                print self.ie_accumulate.dtype
+                #print self.ie_accumulate.dtype
                 image = Image.fromstring("I;16",
                                          (self.ie_accumulate.shape[1], self.ie_accumulate.shape[0]), 
                                          self.ie_accumulate.tostring())

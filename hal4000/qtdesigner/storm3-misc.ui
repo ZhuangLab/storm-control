@@ -330,7 +330,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>40</y>
+      <y>43</y>
       <width>77</width>
       <height>25</height>
      </rect>
@@ -348,9 +348,9 @@
    <widget class="QLabel" name="iEyesLabel">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>150</x>
       <y>20</y>
-      <width>281</width>
+      <width>141</width>
       <height>16</height>
      </rect>
     </property>
@@ -362,7 +362,7 @@
     <property name="geometry">
      <rect>
       <x>90</x>
-      <y>40</y>
+      <y>43</y>
       <width>77</width>
       <height>25</height>
      </rect>
@@ -381,7 +381,7 @@
     <property name="geometry">
      <rect>
       <x>220</x>
-      <y>40</y>
+      <y>43</y>
       <width>77</width>
       <height>25</height>
      </rect>
@@ -400,7 +400,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>70</y>
+      <y>73</y>
       <width>281</width>
       <height>16</height>
      </rect>
@@ -413,7 +413,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>90</y>
+      <y>93</y>
       <width>77</width>
       <height>25</height>
      </rect>
@@ -432,7 +432,7 @@
     <property name="geometry">
      <rect>
       <x>90</x>
-      <y>90</y>
+      <y>93</y>
       <width>77</width>
       <height>25</height>
      </rect>
@@ -500,6 +500,19 @@
     </property>
     <property name="minimum">
      <number>1</number>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="iEyesLineEdit">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>18</y>
+      <width>111</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>img.ch00</string>
     </property>
    </widget>
   </widget>
