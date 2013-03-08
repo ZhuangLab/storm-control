@@ -205,8 +205,12 @@ class Window(QtGui.QMainWindow):
                                              self.minimum_intensity,
                                              self.ui.pixelSpinBox.value())
             self.fit_values = self.z_calib.getFitValues()
-            self.plot_widget.plotInit("z_graph")
-            self.plot_widget.plotFit(*self.fit_values)
+
+            self.wxwyvz_plot.clear()
+            self.wxvwy_plot.clear()
+            self.stage_plot.clear()
+            self.wxwyvz_plot.plotFit(*self.fit_values)
+            self.wxvwy_plot.plotWxWyFit(self.fit_values[1], self.fit_values[2])
 
     def handleLoadData(self):
         filename = str(QtGui.QFileDialog.getOpenFileName(self, "Load Data", self.directory, "*.bin"))
@@ -214,15 +218,17 @@ class Window(QtGui.QMainWindow):
             self.directory = os.path.dirname(filename)
             if self.z_calib:
                 self.ui.plotTabWidget.setCurrentIndex(1)
-                self.plot.clear()
-                self.plot.plotInit("wx_vs_wy")
+                #self.plot.clear()
+                #self.plot.plotInit("wx_vs_wy")
                 self.z_calib.loadMolecules(filename, self.minimum_intensity)
                 [wx, wy] = self.z_calib.getWxWyData()
                 cat = self.z_calib.getCategory()
                 self.wx_wy_cat = [wx, wy, cat]
-                self.plot.plotWxWyData(*self.wx_wy_cat)
                 self.fit_values = self.z_calib.getFitValues()
-                self.plot.plotWxWyFit(self.fit_values[1], self.fit_values[2])
+                self.wxvwy_plot.plotWxWyData(*self.wx_wy_cat)
+                self.wxvwy_plot.plotWxWyFit(self.fit_values[1], self.fit_values[2])
+            else:
+                print "You need to load a calibration curve first."
 
     def handleRedo(self):
         if self.filename:
