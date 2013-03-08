@@ -1030,9 +1030,9 @@ if __name__ == "__main__":
     app.processEvents()
 
     # Load settings.
-    if len(sys.argv) > 1:
+    if (len(sys.argv) == 3):
         setup_name = sys.argv[1]
-        parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
+        parameters = params.Parameters(sys.argv[2], is_HAL = True)
     else:
         parameters = params.Parameters("settings_default.xml")
         setup_name = parameters.setup_name

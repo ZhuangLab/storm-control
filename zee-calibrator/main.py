@@ -39,6 +39,8 @@ class Window(QtGui.QMainWindow):
         self.ui = mainwindow_ui.Ui_MainWindow()
         self.ui.setupUi(self)
 
+        self.setWindowIcon(QtGui.QIcon("leifeng.ico"))
+
         # set ui defaults
         self.ui.pixelSpinBox.setValue(167.0)
         self.ui.powerComboBox.addItems(["0","1","2","3","4"])
