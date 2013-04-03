@@ -2,15 +2,21 @@
 #
 # Handles the list of positions.
 #
-# Hazen 07/11
+# Hazen 03/13
 #
 
 from PyQt4 import QtCore, QtGui
+
+import coord
 
 #
 # List of Positions
 #
 class Positions(QtGui.QListWidget):
+    addPositionSig = QtCore.pyqtSignal(object)
+    currentPositionChange = QtCore.pyqtSignal(object)
+    deletePosition = QtCore.pyqtSignal(int)
+
     def __init__(self, parent = None):
         QtGui.QListWidget.__init__(self, parent)
 
@@ -21,21 +27,24 @@ class Positions(QtGui.QListWidget):
         sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
         self.setSizePolicy(sizePolicy)
 
-    def addPosition(self, x, y):
-        self.addItem("{0:.2f}, {1:.2f}".format(x, y))
+        self.currentRowChanged.connect(self.handleRowChange)
 
-    def getCurrentPosition(self, row):
+    def addPosition(self, a_point):
+        self.addItem("{0:.2f}, {1:.2f}".format(a_point.x_um, a_point.y_um))
+
+    def handleRowChange(self, row):
         if (row > -1):
             [x, y] = str(self.item(row).text()).split(",")
-            return [float(x), float(y)]
+            self.currentPositionChange.emit(coord.Point(float(x), float(y), "um"))
         else:
-            return [0.0, 0.0]
+            self.currentPositionChange.emit(coord.Point(0.0, 0.0, "um"))
 
     def keyPressEvent(self, event):
         if (event.key() == QtCore.Qt.Key_Backspace) or (event.key() == QtCore.Qt.Key_Delete):
-            current = self.currentRow()
-            self.takeItem(current)
-            self.emit(QtCore.SIGNAL("deletePosition(int)"), current)
+            if (self.count() > 0):
+                current = self.currentRow()
+                self.takeItem(current)
+                self.deletePosition.emit(current)
         else:
             QtGui.QListWidget.keyPressEvent(self, event)
 
@@ -45,7 +54,7 @@ class Positions(QtGui.QListWidget):
             line = pos_fp.readline()
             if not line: break
             [x, y] = line.split(",")
-            self.emit(QtCore.SIGNAL("addPosition(float, float)"), float(x), float(y))
+            self.addPositionSig.emit([coord.Point(float(x), float(y), "um")])
 
     def savePositions(self, filename):
         fp = open(filename, "w")
@@ -56,7 +65,7 @@ class Positions(QtGui.QListWidget):
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

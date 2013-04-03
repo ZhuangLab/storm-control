@@ -4,14 +4,13 @@
 # a picture & converts the captured image into a
 # QPixmap.
 #
-# Hazen 12/09
+# Hazen 02/13
 #
 
 import math
 import numpy
 import time
 
-from collections import deque
 from PyQt4 import QtCore, QtGui
 
 # Debugging
@@ -22,6 +21,29 @@ import halLib.tcpClient
 
 # Reading DAX files
 import halLib.daxspereader
+
+import coord
+
+#
+# Image class for temporary storage of image data.
+#
+class Image():
+    def __init__(self, data, size, display_scale, location, params):
+        self.data = data
+        self.height = size[1]
+        self.image_min = display_scale[0]
+        self.image_max = display_scale[1]
+        self.parameters_file = params
+        self.width = size[0]
+
+        # FIXME: Should we flip x and y?
+        self.x_um = location[0]
+        self.y_um = location[1]
+
+        # Calculate location in pixels.
+        a_point = coord.Point(self.x_um, self.y_um, "um")
+        self.x_pix = a_point.x_pix
+        self.y_pix = a_point.y_pix
 
 #
 # Movie class for use w/ tcpClient
@@ -39,6 +61,8 @@ class Movie():
 # Capture
 #
 class Capture(QtCore.QObject):
+    captureComplete = QtCore.pyqtSignal(object)
+
     @hdebug.debug
     def __init__(self, parameters):
         QtCore.QObject.__init__(self)
@@ -48,13 +72,20 @@ class Capture(QtCore.QObject):
         self.dax = None
         self.directory = parameters.directory
         self.filename = parameters.image_filename
+        self.flip_horizontal = parameters.flip_horizontal
+        self.flip_vertical = parameters.flip_vertical
         self.stage_speed = parameters.stage_speed
+        self.start_timer = QtCore.QTimer(self)
 
-        self.pixmaps = deque() # In the future we might support queuing captures?
-        
+        self.start_timer.setSingleShot(True)
+        self.start_timer.timeout.connect(self.handleStartTimer)
+
         self.tcp_client = halLib.tcpClient.TCPClient()
         self.connect(self.tcp_client, QtCore.SIGNAL("complete()"), self.captureDone)
         self.connected = False
+
+    def abort(self):
+        self.capturing = False
 
     @hdebug.debug
     def captureDone(self):
@@ -79,28 +110,17 @@ class Capture(QtCore.QObject):
         self.capturing = False
         
         if type(frame) == type(numpy.array([])):
-            # scale to match the view when saved & threshold it
-            scale = self.dax.filmScale()
-            frame = 255.0 * (frame - float(scale[0]))/float(scale[1] - scale[0])
-            frame[(frame > 255.0)] = 255.0
-            frame[(frame < 0.0)] = 0.0
+            if self.flip_horizontal:
+                frame = numpy.fliplr(frame)
+            if self.flip_vertical:
+                frame = numpy.flipud(frame)
+            image = Image(frame,
+                          self.dax.filmSize(),
+                          self.dax.filmScale(),
+                          self.dax.filmLocation(),
+                          self.dax.filmParameters())
 
-            # transform to match the camera view
-            frame = numpy.transpose(frame).copy()
-
-            # convert to QPixmap
-            frame = frame.astype(numpy.uint8)
-            w, h = frame.shape
-            image = QtGui.QImage(frame.data, w, h, QtGui.QImage.Format_Indexed8)
-            image.ndarray = frame
-            for i in range(256):
-                image.setColor(i, QtGui.QColor(i,i,i).rgb())
-            self.pixmaps.append(QtGui.QPixmap.fromImage(image))
-
-            # get location & emit signal
-            [x, y] = self.dax.filmLocation()
-            params = self.dax.filmParameters()
-            self.emit(QtCore.SIGNAL("captureComplete(float, float, PyQt_PyObject)"), x, y, params)
+            self.captureComplete.emit(image)
 
     @hdebug.debug
     def captureStart(self, stagex, stagey):
@@ -116,11 +136,12 @@ class Capture(QtCore.QObject):
             dist_y = stagey - self.curr_y
             dist = math.sqrt(dist_x*dist_x + dist_y*dist_y)
             sleep_time = 0.001 * (dist/self.stage_speed) + 1.0
-            print sleep_time
-            time.sleep(sleep_time)
+            self.start_timer.setInterval(1000.0 * sleep_time)
+            self.start_timer.start()
+            #time.sleep(sleep_time)
 
             # take picture
-            self.tcp_client.startMovie(self.movie)
+            #self.tcp_client.startMovie(self.movie)
 
             # record current position
             self.curr_x = stagex
@@ -142,16 +163,16 @@ class Capture(QtCore.QObject):
             self.connected = False
 
     @hdebug.debug
-    def currentPixmap(self):
-        return self.pixmaps.popleft()
-
-    @hdebug.debug
     def gotoPosition(self, stagex, stagey):        
         if not self.capturing and self.connected:
             self.movie = Movie(self.filename, stagex, stagey)
             self.tcp_client.sendMovieParameters(self.movie)
         else:
             print "Disconnected? Busy?"
+
+    def handleStartTimer(self):
+        if self.capturing:
+            self.tcp_client.startMovie(self.movie)
 
     def setDirectory(self, directory):
         self.directory = directory
@@ -164,7 +185,7 @@ class Capture(QtCore.QObject):
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

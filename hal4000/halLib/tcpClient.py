@@ -70,7 +70,7 @@ class TCPClient(QtGui.QWidget):
         else:
             print " unknown state:", self.state
         self.emit(QtCore.SIGNAL("complete()"))
-        self.state = None            
+        self.state = None
 
     def sendCommand(self, command):
         if self.connected:
