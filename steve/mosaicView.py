@@ -27,7 +27,7 @@ def createGrid(nx, ny):
                     if ((direction%2)==0):
                         positions.append([j,i])
                     else:
-                        positions.append([nx-j-1,i])
+                        positions.append([-j,i])
             direction += 1
     return positions
 
