@@ -366,7 +366,7 @@ class MultifieldView(QtGui.QGraphicsView):
         progress_bar.setWindowModality(QtCore.Qt.WindowModal)
 
         self.directory = os.path.dirname(filename)
-        z_value = 0.0
+        file_number = 1
         while 1:
             if progress_bar.wasCanceled(): break
             image_name = fp.readline().rstrip()
@@ -378,6 +378,9 @@ class MultifieldView(QtGui.QGraphicsView):
             self.image_items.append(a_image_item)
             self.scene.addItem(a_image_item)
             self.centerOn(a_image_item.x_pix, a_image_item.y_pix)
+
+            progress_bar.setValue(file_number)
+            file_number += 1
 
         progress_bar.close()
         fp.close()
