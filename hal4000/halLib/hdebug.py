@@ -7,7 +7,7 @@
 
 import time
 
-want_debugging = False
+want_debugging = True
 
 def debug(fn):
     def debug_f(*args, **kw):
@@ -20,6 +20,23 @@ def debug(fn):
             for i, arg in enumerate(args):
                 print "      " + str(i) + ".", arg
         return fn(*args, **kw)
+    global want_debugging
+    if want_debugging:
+        return debug_f
+    else:
+        return fn
+
+def debugSlot(fn):
+    def debug_f(*args):
+        if fn.__module__ == "__main__":
+            print fn.__module__ + "." + fn.__name__ + ": " + str(time.time())
+            for i, arg in enumerate(args):
+                print "    " + str(i) + ".", arg
+        else:
+            print "  " + fn.__module__ + "." + fn.__name__ + ": " + str(time.time())
+            for i, arg in enumerate(args):
+                print "      " + str(i) + ".", arg
+        return fn(*args[:-1])
     global want_debugging
     if want_debugging:
         return debug_f

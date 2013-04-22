@@ -96,7 +96,7 @@ import halLib.hdebug as hdebug
 # lock_fn is a function that takes a single number (the QPD error signal)
 #   and returns the appropriate response (in um) by the stage.
 #
-class stageQPDThread(QtCore.QThread):
+class StageQPDThread(QtCore.QThread):
     controlUpdate = QtCore.pyqtSignal(float, float, float, float)
     foundSum = QtCore.pyqtSignal()
     recenteredPiezo = QtCore.pyqtSignal()
@@ -286,10 +286,10 @@ class stageQPDThread(QtCore.QThread):
 #   zMoveRelative(z)
 #      Move the stage up or down by the amount z in um.
 #
-class motorStageQPDThread(stageQPDThread):
+class MotorStageQPDThread(StageQPDThread):
     @hdebug.debug
     def __init__(self, qpd, stage, motor, lock_fn, min_sum, z_center, slow_stage = False, parent = None):
-        stageQPDThread.__init__(self,
+        StageQPDThread.__init__(self,
                                 qpd,
                                 stage,
                                 lock_fn,
@@ -305,7 +305,7 @@ class motorStageQPDThread(stageQPDThread):
             offset = self.z_center - self.stage_z
             self.moveStageAbs(self.z_center)
             self.motor.zMoveRelative(offset)
-        stageQPDControl.QControlThread.recenterPiezo(self)
+        StageQPDControl.QControlThread.recenterPiezo(self)
 
 #
 # USB camera monitoring and stage control thread.
@@ -332,10 +332,10 @@ class motorStageQPDThread(stageQPDThread):
 #   shutDown()
 #      Perform whatever cleanup is necessary to stop the qpd cleanly
 #
-class stageCamThread(stageQPDThread):
+class StageCamThread(StageQPDThread):
     @hdebug.debug
     def __init__(self, cam, stage, lock_fn, min_sum, z_center, slow_stage = False, parent = None):
-        stageQPDThread.__init__(self,
+        StageQPDThread.__init__(self,
                                 cam,
                                 stage,
                                 lock_fn,

@@ -22,7 +22,7 @@ class AFocusLockZ(focusLockZ.FocusLockZQPD):
         qpd = noneWidgets.QPD()
         stage = noneWidgets.NanoP()
         lock_fn = lambda (x): 0.0 * x
-        control_thread = stageOffsetControl.stageQPDThread(qpd,
+        control_thread = stageOffsetControl.StageQPDThread(qpd,
                                                            stage,
                                                            lock_fn,
                                                            50.0, 

@@ -36,7 +36,7 @@ class AFocusLockZ(focusLockZ.FocusLockZDualCam):
         stage1 = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/",
                                         serial_number = 2636)
         lock_fn = lambda (x): -0.03 * x
-        control_thread1 = stageOffsetControl.stageCamThread(cam1,
+        control_thread1 = stageOffsetControl.StageCamThread(cam1,
                                                             stage1,
                                                             lock_fn,
                                                             50.0,
@@ -48,7 +48,7 @@ class AFocusLockZ(focusLockZ.FocusLockZDualCam):
         stage2 = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/",
                                         serial_number = 2637)
         lock_fn = lambda (x): -0.03 * x
-        control_thread2 = stageOffsetControl.stageCamThread(cam2,
+        control_thread2 = stageOffsetControl.StageCamThread(cam2,
                                                             stage2,
                                                             lock_fn,
                                                             50.0,

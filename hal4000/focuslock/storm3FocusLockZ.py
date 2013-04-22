@@ -30,7 +30,7 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
         cam = uc480Cam.cameraQPD(camera_id = 1)
         stage = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/")
         lock_fn = lambda (x): -0.04 * x
-        control_thread = stageOffsetControl.stageCamThread(cam,
+        control_thread = stageOffsetControl.StageCamThread(cam,
                                                            stage,
                                                            lock_fn,
                                                            50.0,

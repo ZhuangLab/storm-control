@@ -28,7 +28,7 @@ class AFocusLockZ(focusLockZ.FocusLockZQPD):
         qpd = phreshQPD.PhreshQPDPRISM2()
         stage = mclController.MCLStage("c:/Program Files/NanoDrive/")
         lock_fn = lambda (x): -1.75 * x
-        control_thread = stageOffsetControl.stageQPDThread(qpd,
+        control_thread = stageOffsetControl.StageQPDThread(qpd,
                                                            stage,
                                                            lock_fn,
                                                            50.0, 

@@ -758,7 +758,7 @@ class Window(QtGui.QMainWindow):
             self.newShutters(str(shutters_filename))
         self.startCamera()
 
-    @hdebug.debug
+    @hdebug.debugSlot
     def quit(self):
         # Save GUI settings
         self.settings.setValue("main_pos", self.pos())
