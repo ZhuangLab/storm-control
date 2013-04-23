@@ -7,7 +7,7 @@
 
 import time
 
-want_debugging = True
+want_debugging = False
 
 def debug(fn):
     def debug_f(*args, **kw):
