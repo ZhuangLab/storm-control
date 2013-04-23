@@ -369,8 +369,9 @@ class cameraQPD():
             # This hack is because if you bombard the USB camera with 
             # update requests too frequently it will freeze. Or so I
             # believe, not sure if this is actually true.
+            #
             # It still seems to freeze?
-            time.sleep(0.01) 
+            time.sleep(0.05)
             return [0, 0, 0]
 
         # Determine offset by fitting gaussians to the two beam spots.
@@ -448,6 +449,10 @@ class cameraQPD():
                 offset = ((dist1 + dist2) - 0.5*self.zero_dist)*power
             else:
                 offset = ((dist1 + dist2) - self.zero_dist)*power
+
+            # The moment calculation is too fast. This is to slow
+            # things down so that the camera doesn't freeze up.
+            time.sleep(0.02)
 
             return [power, offset, 0]
 

@@ -942,6 +942,9 @@ class Window(QtGui.QMainWindow):
         # notify tcp/ip client that the movie is finished
         # if the client requested the movie.
         if self.tcp_requested_movie:
+            if (lock_target == "failed"):
+                print "QPD/Camera appears to have frozen.."
+                self.quit()
             self.tcp_control.sendComplete()
             self.tcp_requested_movie = 0
 

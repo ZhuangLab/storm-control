@@ -137,10 +137,13 @@ class StageQPDThread(QtCore.QThread):
 
     @hdebug.debug
     def getLockTarget(self):
-        self.qpd_mutex.lock()
-        target = self.target
-        self.qpd_mutex.unlock()
-        return target
+        if self.qpd_mutex.tryLock(1000):
+            target = self.target
+            self.qpd_mutex.unlock()
+            return target
+        else:
+            print "QPD/Camera are frozen?"
+            return "failed"
 
     @hdebug.debug
     def getOffset(self):

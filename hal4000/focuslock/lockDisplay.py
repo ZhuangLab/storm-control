@@ -129,8 +129,10 @@ class LockDisplay(QtGui.QWidget):
     @hdebug.debug
     def getLockTarget(self):
         target = self.control_thread.getLockTarget()
-        if target == None:
+        if (target == None):
             return "NA"
+        elif (target == "failed"):
+            return "failed"
         else:
             return target * self.scale
 
