@@ -61,7 +61,7 @@
  folders that are named (more or less) by the manufacturer of the hardware.
  
  In addition there are the following folders:
- (1) Camera - Classes for camera control, image display & parameter display.
+ (1) camera - Classes for camera control, image display & parameter display.
  (2) focuslock - Classes for focus lock control.
  (3) illumination - Classes for illumination & shuttering.
  (4) stagecontrol - Classes for controlling a motorized XY stage.

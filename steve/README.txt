@@ -1,0 +1,44 @@
+
+The Steve software is used for generating image mosaics and
+determining how your sample is laid out on a coverslip.
+
+The "settings_default.xml" is used to define the setup
+(which objectives are available, camera orientations).
+
+The "Connected" radio button is used to connect to Hal in
+order to take pictures.
+
+"File" -> "Save Positions" will create a list of positions
+that you can use with the Dave program.
+
+The scroll wheel on the mouse can be used to zoom in or out
+when the Mosaic tab is in front.
+
+Right clicking on the Mosaic window or the Sections window
+will bring up a menu of options. In addition there are a
+number of "secret" keys:
+
+ Mosaic tab in front:
+  <space> - Take a picture at the current mouse position.
+  <3> - Take a 3x3 grid of pictures around the current mouse
+     position.
+  <5> - Take a 5x5 grid of pictures.
+  <7> - Take a 7x7 grid of pictures.
+  <9> - Take a 9x9 grid of pictures.
+  <g> - Take a X x Y grid of pictures.
+  <p> - Add the current mouse position to the list of 
+     positions.
+  <s> - Add the current mouse position to the list of
+     sections.
+
+ Sections tab in front:
+  <up arrow> - Change the currently active section.
+  <down arrow> - Change the currently active section.
+  <q,w,e,a,s,d> - Translate & rotate the section.
+  <delete> - Delete the section.
+  <space> - Take an images at each section center.
+  <3> - Take a 3x3 grid of pictures at each section
+     center.
+  <5> - Take a 5x5 grid of pictures.
+  <g> - Take a X x Y grid of pictures.
+
