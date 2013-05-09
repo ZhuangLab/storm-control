@@ -31,7 +31,7 @@ class viewImageItem(QtGui.QGraphicsItem):
         self.data = False
         self.height = 0
         self.magnification = magnification
-        self.objective_name = objective_name
+        self.objective_name = str(objective_name)
         self.parameters_file = ""
         self.pixmap = False
         self.pixmap_min = 0
