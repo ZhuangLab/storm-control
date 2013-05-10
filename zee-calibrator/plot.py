@@ -145,7 +145,7 @@ class PlotWindow(QtGui.QWidget):
         curve.attach(self.plot)
         self.curves.append(curve)
 
-        self.plot.setStaticText(QtGui.QStaticText("slope = {0:.3f} au/um".format(-1.0/offset)))
+        self.plot.setStaticText(QtGui.QStaticText("slope = {0:.3f} au/um".format(-1.0/slope)))
 
         self.plot.replot()
 
