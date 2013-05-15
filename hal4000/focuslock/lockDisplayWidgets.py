@@ -200,6 +200,12 @@ class QCamDisplay(QtGui.QWidget):
         self.show_dot = False
         self.static_text = [QtGui.QStaticText("Fit"), QtGui.QStaticText("Moment")]
         self.tooltips = ["click to adjust", "<m> key to change mode\n<arrow> keys to move spots\n<,.> keys to change zero point"]
+        self.zoom_image = False
+        self.zoom_size = 40
+        self.zoom_im_x = -1
+        self.zoom_im_y = -1
+        self.zoom_x = 0
+        self.zoom_y = 0
 
         self.x_off1 = 0
         self.y_off1 = 0
@@ -207,6 +213,7 @@ class QCamDisplay(QtGui.QWidget):
         self.y_off2 = 0
 
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.setMouseTracking(True)
         self.setToolTip(self.tooltips[0])
 
     def keyPressEvent(self, event):
@@ -214,7 +221,7 @@ class QCamDisplay(QtGui.QWidget):
             which_key = event.key()
             # The minimun increment (at least for the
             # Thorlabs USB camera) is two pixels.
-            if (which_key == QtCore.Qt.Key_Left):
+            if (which_key == QtCore.Qt.Key_Left): 
                 self.adjustCamera.emit(2,0)
             elif (which_key == QtCore.Qt.Key_Right):
                 self.adjustCamera.emit(-2,0)
@@ -236,6 +243,18 @@ class QCamDisplay(QtGui.QWidget):
                 self.fit_mode = not self.fit_mode
                 self.changeFitMode.emit(int(self.fit_mode))
 
+    def mouseMoveEvent(self, event):
+        self.zoom_im_x = -1
+        if self.image and self.adjust_mode:
+            half_size = self.zoom_size / 2
+            x_bound = half_size * self.width()/self.image.width() + 1
+            y_bound = half_size * self.height()/self.image.height() + 1
+            if ((event.x() >= x_bound) and (event.x() < (self.width() - x_bound)) and (event.y() >= y_bound) and (event.y() < (self.height() - y_bound))):
+                self.zoom_im_x = event.x() * self.image.width()/self.width() - half_size
+                self.zoom_im_y = event.y() * self.image.height()/self.height() - half_size
+                self.zoom_x = event.x() - half_size
+                self.zoom_y = event.y() - half_size
+
     def mousePressEvent(self, event):
         self.adjust_mode = not self.adjust_mode
         if self.adjust_mode:
@@ -247,27 +266,39 @@ class QCamDisplay(QtGui.QWidget):
     def newImage(self, data, show_dot):
         # Update image if data is good..
         if (type(data) == type([])):
+
+            # Update the image.
             np_data = data[0]
             w, h = np_data.shape
             self.image = QtGui.QImage(np_data.data, w, h, QtGui.QImage.Format_Indexed8)
             self.image.ndarray = np_data
             for i in range(256):
                 self.image.setColor(i, QtGui.QColor(i,i,i).rgb())
+            
+            # Update zoomed image (if necessary).
+            if (self.zoom_im_x >= 0):
+                self.zoom_image = QtGui.QImage(self.zoom_size, self.zoom_size, QtGui.QImage.Format_RGB32)
+                painter = QtGui.QPainter(self.zoom_image)
+                painter.drawImage(0, 0, self.image, self.zoom_im_x, self.zoom_im_y, self.zoom_size, self.zoom_size)
+            else:
+                self.zoom_image = False
+
+            self.e_size = round(12.0*float(self.width())/float(w))
 
             # Update offsets
             if (data[1] == 0.0):
                 self.draw_e1 = False
             else:
                 self.draw_e1 = True
-                self.x_off1 = ((data[2]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size + 1
-                self.y_off1 = ((data[1]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size + 1
-
+                self.x_off1 = ((data[2]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size
+                self.y_off1 = ((data[1]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size
+            
             if (data[3] == 0.0):
                 self.draw_e2 = False
             else:
                 self.draw_e2 = True
-                self.x_off2 = ((data[4]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size + 1
-                self.y_off2 = ((data[3]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size + 1
+                self.x_off2 = ((data[4]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size
+                self.y_off2 = ((data[3]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size
 
             # Red dot in camera display
             self.show_dot = show_dot
@@ -282,12 +313,19 @@ class QCamDisplay(QtGui.QWidget):
             destination_rect = QtCore.QRect(0, 0, self.width(), self.height())
             painter.drawImage(destination_rect, self.image)
 
-            # Draw alignment lines.
+            # Draw alignment lines & zoomed image.
             if self.adjust_mode:
+
                 painter.setPen(QtGui.QColor(100,100,100))
                 painter.drawLine(0.0, 0.5*self.height(), self.width(), 0.5*self.height())
                 for mult in [0.25, 0.5, 0.75]:
                     painter.drawLine(mult*self.width(), 0.0, mult*self.width(), self.height())
+
+                if self.zoom_image:
+                    destination_rect = QtCore.QRect(self.zoom_x, self.zoom_y, self.zoom_size, self.zoom_size)
+                    painter.drawImage(destination_rect, self.zoom_image)
+                    painter.setPen(QtGui.QColor(200,200,200))
+                    painter.drawRect(destination_rect)
 
                 painter.setPen(QtGui.QColor(255,255,255))
                 if self.fit_mode:
@@ -311,9 +349,9 @@ class QCamDisplay(QtGui.QWidget):
                 else:
                     painter.setPen(QtGui.QColor(0,0,255))
                     if self.draw_e1:
-                        painter.drawRect(self.x_off1, self.y_off1, self.e_size, self.e_size)
+                        painter.drawRect(self.x_off1, self.y_off1, 2*self.e_size, 2*self.e_size)
                     if self.draw_e2:
-                        painter.drawRect(self.x_off2, self.y_off2, self.e_size, self.e_size)
+                        painter.drawRect(self.x_off2, self.y_off2, 2*self.e_size, 2*self.e_size)
 
             # display red dot (or not)
             if self.show_dot:

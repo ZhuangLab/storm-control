@@ -120,7 +120,9 @@ def fitFixedEllipticalGaussian(data, sigma):
     return fitAFunctionLS(data, params, fixedEllipticalGaussian)
 
 
-# Camera Interface Class
+#
+# UC480 Camera Interface Class
+#
 class Camera(Handle):
     def __init__(self, camera_id):
         Handle.__init__(self, camera_id)
@@ -243,8 +245,12 @@ class Camera(Handle):
         check(uc480.is_StopLiveVideo(self, IS_WAIT), "is_StopLiveVideo")
 
 
-# QPD emulation class
-class cameraQPD():
+#
+# QPD emulation class.
+#
+# Default camera ROI of 200x200 pixels.
+#
+class CameraQPD():
     def __init__(self, camera_id = 1, fit_mutex = False):
         self.file_name = "cam_offsets_" + str(camera_id) + ".txt"
         self.fit_mode = 1
@@ -420,7 +426,7 @@ class cameraQPD():
             self.y_off2 = 0.0
 
             total_good = 0
-            data_band = data[self.half_x-3:self.half_x+3,:]
+            data_band = data[self.half_x-15:self.half_x+15,:]
 
             # Moment for the object in the left half of the picture.
             x = numpy.arange(self.half_y)
@@ -450,11 +456,31 @@ class cameraQPD():
             else:
                 offset = ((dist1 + dist2) - self.zero_dist)*power
 
-            # The moment calculation is too fast. This is to slow
-            # things down so that the camera doesn't freeze up.
+            # The moment calculation is too fast. This is to slow things
+            # down so that (hopefully) the camera doesn't freeze up.
             time.sleep(0.02)
 
             return [power, offset, 0]
+
+#
+# QPD emulation class with a 300x300 pixel ROI.
+#
+class CameraQPD300(CameraQPD):
+    def __init__(self, camera_id = 1, fit_mutex = False):
+        CameraQPD.__init__(self, camera_id, fit_mutex)
+
+        # Change width to 300 x 300.
+        self.x_width = 300
+        self.y_width = 300
+        self.setAOI()
+
+        # Set camera to run as fast as possible
+        self.cam.setFrameRate()
+        
+        # Some derived parameters
+        self.half_x = self.x_width/2
+        self.half_y = self.y_width/2
+        self.X = numpy.arange(self.y_width) - 0.5*float(self.y_width)
 
 
 # Testing
