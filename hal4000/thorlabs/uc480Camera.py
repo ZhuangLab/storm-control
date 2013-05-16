@@ -228,6 +228,11 @@ class Camera(Handle):
         if verbose:
             print "uc480: Set frame rate to", new_fps.value, "FPS"
 
+    # 43MHz seems to be the max for this camera.
+    def setPixelClock(self, pixel_clock_MHz = 40):
+        check(uc480.is_SetPixelClock(self,
+                                     ctypes.c_int(pixel_clock_MHz)))
+
     def setTimeout(self, timeout):
         nMode = IS_TRIGGER_TIMEOUT
         check(uc480.is_SetTimeout(self,
@@ -282,6 +287,7 @@ class CameraQPD():
         self.setAOI()
 
         # Set camera to run as fast as possible
+        self.cam.setPixelClock()
         self.cam.setFrameRate()
 
         # Some derived parameters
@@ -475,6 +481,7 @@ class CameraQPD300(CameraQPD):
         self.setAOI()
 
         # Set camera to run as fast as possible
+        self.cam.setPixelClock()
         self.cam.setFrameRate()
         
         # Some derived parameters
