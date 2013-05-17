@@ -126,6 +126,9 @@ class LockDisplay(QtGui.QWidget):
         self.power = power
         self.stage_z = stage_z
 
+    def getLockModes(self):
+        return self.lock_modes
+
     @hdebug.debug
     def getLockTarget(self):
         target = self.control_thread.getLockTarget()

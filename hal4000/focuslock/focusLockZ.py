@@ -70,33 +70,33 @@ class FocusLockZ(QtGui.QDialog):
         self.toggleLockButtonDisplay(self.lock_display1.shouldDisplayLockButton())
         self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())
 
-        # The mode radio buttons, these should be in the
-        # same order as the lock modes in the lockDisplay class.
-        self.buttons = [self.ui.offRadioButton,
-                        self.ui.autoRadioButton,
-                        self.ui.onRadioButton,
-                        self.ui.optimalRadioButton,
-                        self.ui.calRadioButton,
-                        self.ui.zScanRadioButton]
+        # Setup mode radio buttons.
+        vbox_layout = QtGui.QVBoxLayout(self.ui.modeWidget)
+        self.ui.modeWidget.setLayout(vbox_layout)
+        lock_modes = self.lock_display1.getLockModes()
+        self.buttons = []
+        for i, mode in enumerate(lock_modes):
+            button = QtGui.QRadioButton(mode.getName(), self.ui.modeWidget)
+            vbox_layout.addWidget(button)
+            self.buttons.append(button)
 
         self.buttons[parameters.qpd_mode].setChecked(True)
 
-        # connect signals
+        for button in self.buttons:
+            button.clicked.connect(self.handleRadioButtons)
+
+        # Connect signals
         if self.have_parent:
             self.ui.okButton.setText("Close")
             self.ui.okButton.clicked.connect(self.handleOk)
         else:
             self.ui.okButton.setText("Quit")
             self.ui.okButton.clicked.connect(self.handleQuit)
-        self.ui.autoRadioButton.clicked.connect(self.handleRadioButtons)
-        self.ui.calRadioButton.clicked.connect(self.handleRadioButtons)
-        self.ui.offRadioButton.clicked.connect(self.handleRadioButtons)
-        self.ui.onRadioButton.clicked.connect(self.handleRadioButtons)
-        self.ui.optimalRadioButton.clicked.connect(self.handleRadioButtons)
-        self.ui.zScanRadioButton.clicked.connect(self.handleRadioButtons)
+
         self.ui.lockButton.clicked.connect(self.handleLockButton)
+        self.ui.jumpPButton.clicked.connect(self.handleJumpPButton)
+        self.ui.jumpNButton.clicked.connect(self.handleJumpNButton)
         self.ui.jumpSpinBox.valueChanged.connect(self.handleJumpSpinBox)
-        self.ui.jumpButton.clicked.connect(self.handleJumpButton)
 
         # tcp signals
         if self.tcp_control:
@@ -116,8 +116,11 @@ class FocusLockZ(QtGui.QDialog):
         self.tcp_control.sendComplete()
 
     @hdebug.debug
-    def handleJumpButton(self):
+    def handleJumpPButton(self):
         self.lock_display1.jump(self.jumpsize)
+
+    def handleJumpNButton(self):
+        self.lock_display1.jump(-self.jumpsize)
 
     @hdebug.debug                    
     def handleJumpSpinBox(self, jumpsize):

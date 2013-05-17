@@ -20,9 +20,13 @@ class LockMode(QtCore.QObject):
         QtCore.QObject.__init__(self, parent)
         self.control_thread = control_thread
         self.locked = False
+        self.name = "NA"
 
     def amLocked(self):
         return self.locked
+
+    def getName(self):
+        return self.name
 
     def handleJump(self, jumpsize):
         pass
@@ -91,6 +95,7 @@ class JumpLockMode(LockMode):
 class NoLockMode(LockMode):
     def __init__(self, control_thread, parameters, parent):
         LockMode.__init__(self, control_thread, parameters, parent)
+        self.name = "Off"
 
     def handleJump(self, jumpsize):
         self.control_thread.moveStageRel(jumpsize)
@@ -100,6 +105,7 @@ class NoLockMode(LockMode):
 class AutoLockMode(JumpLockMode):
     def __init__(self, control_thread, parameters, parent):
         JumpLockMode.__init__(self, control_thread, parameters, parent)
+        self.name = "Auto Lock"
 
     def startLock(self):
         self.control_thread.startLock()
@@ -119,6 +125,7 @@ class AlwaysOnLockMode(JumpLockMode):
     def __init__(self, control_thread, parameters, parent):
         JumpLockMode.__init__(self, control_thread, parameters, parent)
         self.button_locked = False
+        self.name = "Always On"
 
     def lockButtonToggle(self):
         if self.button_locked:
@@ -168,11 +175,15 @@ class OptimalLockMode(JumpLockMode):
         self.fvalues = None
         self.lock_target = None
         self.mode = "None"
+        self.name = "Optimal"
         self.quality_threshold = 0
         self.scan_hold = None
         self.scan_step = None
         self.scan_state = 1
         self.zvalues = None
+
+    def getName(self):
+        return "Optimal"
 
     def initScan(self):
         self.cur_z = 0.0
@@ -291,6 +302,7 @@ class CalibrationLockMode(JumpLockMode):
         JumpLockMode.__init__(self, control_thread, parameters, parent)
         self.counter = 0
         self.max_zvals = 0
+        self.name = "Calibrate"
         self.zvals = []
 
     def calibrationSetup(self, z_center, deadtime, zrange, step_size, frames_to_pause):
@@ -361,6 +373,7 @@ class ZScanLockMode(JumpLockMode):
         JumpLockMode.__init__(self, control_thread, parameters, parent)
         self.counter = 0
         self.current_z = None
+        self.name = "Z Scan"
         self.z_start = None
         self.z_step = None
         self.z_frames_to_pause = None
