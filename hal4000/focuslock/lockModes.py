@@ -416,6 +416,74 @@ class ZScanLockMode(JumpLockMode):
         self.control_thread.recenter()
 
 #
+# For Shu & Graham.
+#
+# The stage will jump the distance specified with jump control.
+# Every 600 frames it will jump back to the zero position, relock,
+# and then jump back again. This gives you a focus lock that
+# (sort of) works a large distance from a surface.
+#
+class LargeOffsetLock(JumpLockMode):
+    def __init__(self, control_thread, parameters, parent):
+        JumpLockMode.__init__(self, control_thread, parameters, parent)
+        self.frame_delay = 600
+        self.name = "Large Offset"
+
+        self.jump_down_timer = QtCore.QTimer(self)
+        self.jump_down_timer.setInterval(1000)
+        self.jump_down_timer.setSingleShot(True)
+        self.jump_down_timer.timeout.connect(self.restartLock)
+
+        self.jump_up_timer = QtCore.QTimer(self)
+        self.jump_up_timer.setInterval(2000)
+        self.jump_up_timer.setSingleShot(True)
+        self.jump_up_timer.timeout.connect(self.jumpBackToTarget)
+    
+        self.jumpsize = 0.0
+
+    def handleJump(self, jumpsize):
+        self.jumpsize = jumpsize
+
+    def jumpBackToTarget(self):
+        if self.locked:
+            self.control_thread.stopLock()
+            self.control_thread.moveStageRel(self.jumpsize)
+
+    def newFrame(self, frame, offset, power, stage_z):
+        if ((frame.number != 0) and ((frame.number % self.frame_delay) == 0)):
+            self.refindLock()
+
+    def newParameters(self, parameters):
+        if hasattr(parameters, "jump_down_delay"):
+            self.jump_down_timer.setInterval(parameters.jump_down_delay)
+        if hasattr(parameters, "frame_delay"):
+            self.frame_delay = parameters.frame_delay
+        if hasattr(parameters, "jump_up_delay"):
+            self.jump_up_timer.setInterval(parameters.jump_up_delay)
+
+    def refindLock(self):
+        if self.locked:
+            self.control_thread.moveStageRel(-self.jumpsize)
+            self.jump_down_timer.start()
+        
+    def restartLock(self):
+        if self.locked:
+            self.control_thread.startLock()
+            self.jump_up_timer.start()
+
+    def startLock(self):
+        self.locked = True
+        self.control_thread.startLock()
+        self.jump_up_timer.start()
+
+    def stopLock(self):
+        if self.locked:
+            self.locked = False
+            self.control_thread.stopLock()
+            self.control_thread.recenter()
+
+
+#
 # The MIT License
 #
 # Copyright (c) 2010 Zhuang Lab, Harvard University
