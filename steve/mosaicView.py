@@ -68,6 +68,18 @@ def createSpiral(number):
 
 
 #
+# Show/Hide ellipses and rectangles in the mosaic
+#
+def displayEllipseRect(visible):
+    if visible:
+        multiView.viewEllipseItem.visible = True
+        multiView.viewRectItem.visible = True
+    else:
+        multiView.viewEllipseItem.visible = False
+        multiView.viewRectItem.visible = False
+
+
+#
 # Handles user interaction with the mosaic.
 #
 # All coordinates are in pixels.

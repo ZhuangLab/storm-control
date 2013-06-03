@@ -236,6 +236,9 @@ class SectionRenderer(QtGui.QGraphicsView):
     def __init__(self, scene, width, height, parent):
         QtGui.QGraphicsView.__init__(self, parent)
 
+        self.index = 0
+        self.scale = 1.0
+
         self.setScene(scene)
         scene.changed.connect(self.handleSceneChange)
 
@@ -262,16 +265,24 @@ class SectionRenderer(QtGui.QGraphicsView):
 
     # Draw the section pixmap.
     def renderSectionPixmap(self, a_point, a_angle):
+        mosaicView.displayEllipseRect(False)
         self.centerOn(a_point.x_pix, a_point.y_pix)
         transform = QtGui.QTransform()
         transform.rotate(a_angle)
+        transform.scale(self.scale, self.scale)
         self.setTransform(transform)
         a_pixmap = QtGui.QPixmap.grabWidget(self.viewport())
+        mosaicView.displayEllipseRect(True)
 
+        #a_pixmap.save("RSP" + str(self.index) + ".png")
+        #self.index += 1
         return a_pixmap
 
     def setRenderSize(self, width, height):
         self.setFixedSize(width, height)
+
+    def setScale(self, new_scale):
+        self.scale = new_scale
 
 #
 # Handles all section interaction.
@@ -283,21 +294,16 @@ class Sections(QtGui.QWidget):
     moveSection = QtCore.pyqtSignal(int, object)
     takePictures = QtCore.pyqtSignal(object)
 
-    def __init__(self, view_object, display_frame, scroll_area, section_width, section_height, parent):
+    def __init__(self, view_object, display_frame, scroll_area, parent):
         QtGui.QWidget.__init__(self, parent)
 
         self.active_section = False
         self.number_x = 5
         self.number_y = 3
+        self.scale = 1.0
         self.sections = []
         self.view_object = view_object
 
-        self.section_renderer = SectionRenderer(self.view_object.getScene(),
-                                                section_width,
-                                                section_height,
-                                                self)
-        self.section_renderer.hide()
-        
         self.sections_controls_list = SectionControlsList(scroll_area)
         scroll_area.setWidget(self.sections_controls_list)
         scroll_area.setWidgetResizable(True)
@@ -307,11 +313,19 @@ class Sections(QtGui.QWidget):
         layout.addWidget(self.sections_view)
         self.sections_view.show()
 
+        self.section_renderer = SectionRenderer(self.view_object.getScene(), 
+                                                self.sections_view.width(),
+                                                self.sections_view.height(),
+                                                self)
+        self.section_renderer.hide()
+        
         self.section_renderer.sceneChanged.connect(self.viewUpdate)
         self.sections_controls_list.keyEvent.connect(self.handleKeyEvent)
         self.sections_view.keyEvent.connect(self.handleKeyEvent)
         self.sections_view.pictureEvent.connect(self.handlePictures)
         self.sections_view.positionEvent.connect(self.handlePositions)
+        self.sections_view.sizeEvent.connect(self.handleSectionSizeChange)
+        self.sections_view.zoomEvent.connect(self.handleScaleChange)
 
     def addSection(self, a_point):
         a_section = Section(len(self.sections),
@@ -367,10 +381,18 @@ class Sections(QtGui.QWidget):
         elif (which_key == QtCore.Qt.Key_E):
             self.active_section.incrementAngle(1)
 
+        # Save the section images as numpy arrays.
+        elif (which_key == QtCore.Qt.Key_P):
+            self.saveSectionsNumpy()
+
         # Delete the active section.
         elif (which_key == QtCore.Qt.Key_Delete):
             if self.active_section:
                 self.removeActiveSection()
+
+        # Force a display update.
+        elif (which_key == QtCore.Qt.Key_U):
+            self.viewUpdate()
 
     def handlePictures(self, number_pictures):
         picture_list = []
@@ -390,6 +412,11 @@ class Sections(QtGui.QWidget):
         if (len(position_list) > 0):
             self.addPositions.emit(position_list)
 
+    def handleScaleChange(self, scale_multiplier):
+        self.scale = self.scale * scale_multiplier
+        self.section_renderer.setScale(self.scale)
+        self.viewUpdate()
+
     # This is triggered by a change in the active section parameters.
     # It signals mosaicView (via steve) to update the graphics scene.
     def handleSectionChange(self):
@@ -403,6 +430,10 @@ class Sections(QtGui.QWidget):
         if self.active_section.isChecked():
             self.updateBackgroundPixmap()
         self.updateForegroundPixmap()
+
+    def handleSectionSizeChange(self, width, height):
+        self.section_renderer.setRenderSize(width, height)
+        self.viewUpdate()
 
     def incrementActiveSection(self, diff):
         if self.active_section:
@@ -437,10 +468,15 @@ class Sections(QtGui.QWidget):
 
         # Notify steve to remove the section circle from the view.
         self.deleteSection.emit(which_section)
-        
-    def sectionSizeChange(self, width, height):
-        self.section_renderer.setRenderSize(width, height)
-        self.viewUpdate()
+
+    # This is used for figuring out ways to automatically align sections.
+    def saveSectionsNumpy(self):
+        index = 0
+        for section in self.sections:
+            temp = self.section_renderer.renderSectionNumpy(section.getLocation(),
+                                                            section.getAngle())
+            numpy.save("section_" + str(index), temp)
+            index += 1
 
     def updateBackgroundPixmap(self):
         if (len(self.sections) == 0):
@@ -500,13 +536,17 @@ class SectionsView(QtGui.QWidget):
     keyEvent = QtCore.pyqtSignal(int)
     pictureEvent = QtCore.pyqtSignal(int)
     positionEvent = QtCore.pyqtSignal()
+    sizeEvent = QtCore.pyqtSignal(int, int)
+    zoomEvent = QtCore.pyqtSignal(float)
 
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
 
+        self.background_pixmap = None
         self.foreground_opacity = 0.5
         self.foreground_pixmap = None
-        self.background_pixmap = None
+        self.old_width = self.width()
+        self.old_height = self.height()
         
         self.pictAct = QtGui.QAction(self.tr("Take Pictures"), self)
         self.posAct = QtGui.QAction(self.tr("Record Positions"), self)
@@ -552,22 +592,40 @@ class SectionsView(QtGui.QWidget):
         painter.setBrush(color)
         painter.drawRect(0, 0, self.width(), self.height())
 
+        # Draw background pixmap
         painter.setOpacity(1.0)
         if self.background_pixmap:
             x_loc = (self.width() - self.background_pixmap.width())/2
             y_loc = (self.height() - self.background_pixmap.height())/2
             painter.drawPixmap(x_loc, y_loc, self.background_pixmap)
 
+        # Draw foreground pixmap
         painter.setOpacity(self.foreground_opacity)
         if self.foreground_pixmap:
             x_loc = (self.width() - self.foreground_pixmap.width())/2
             y_loc = (self.height() - self.foreground_pixmap.height())/2
             painter.drawPixmap(x_loc, y_loc, self.foreground_pixmap)
 
+        # Draw guides lines
+        #color = QtGui.QColor(128,128,128)
+        #painter.setPen(color)
+        #painter.setOpacity(1.0)
+        painter.setOpacity(0.2)
+        x_mid = self.width()/2
+        y_mid = self.height()/2
+        painter.drawLine(0, y_mid, self.width(), y_mid)
+        painter.drawLine(x_mid, 0, x_mid, self.height())
+
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.RightButton:
             self.popup_menu.exec_(event.globalPos())
 
+    def resizeEvent(self, event):
+        if (self.old_height != self.height()) or (self.old_width != self.width()):
+            self.old_height = self.height()
+            self.old_width = self.width()
+            self.sizeEvent.emit(self.width(), self.height())
+        
     def setBackgroundPixmap(self, pixmap):
         self.background_pixmap = pixmap
         self.update()
@@ -575,6 +633,12 @@ class SectionsView(QtGui.QWidget):
     def setForegroundPixmap(self, pixmap):
         self.foreground_pixmap = pixmap
         self.update()
+
+    def wheelEvent(self, event):
+        if (event.delta() > 0):
+            self.zoomEvent.emit(1.2)
+        else:
+            self.zoomEvent.emit(1.0/1.2)
 
 #
 # Slightly specialized double spin box

@@ -107,6 +107,15 @@ class Window(QtGui.QMainWindow):
         self.ui = steveUi.Ui_MainWindow()
         self.ui.setupUi(self)
 
+        # hide some things that we don't currently use & resize group-box.
+        self.ui.backgroundComboBox.hide()
+        self.ui.backgroundLabel.hide()
+        self.ui.moveAllSectionsCheckBox.hide()
+        self.ui.showFeaturesCheckBox.hide()
+        self.ui.thresholdLabel.hide()
+        self.ui.thresholdSlider.hide()
+        self.ui.sectionViewSettingsGroupBox.setMaximumHeight(50)
+
         self.setWindowIcon(QtGui.QIcon("steve.ico"))
 
         # Initialize objectives.
@@ -158,12 +167,10 @@ class Window(QtGui.QMainWindow):
         layout.addWidget(self.positions)
         self.positions.show()
 
-        # Initiliaze sections.
+        # Initialize sections.
         self.sections = sections.Sections(self.view,
                                           self.ui.sectionsDisplayFrame,
                                           self.ui.sectionsScrollArea,
-                                          self.ui.xSizeSpinBox.value(),
-                                          self.ui.ySizeSpinBox.value(),
                                           self.ui.sectionsTab)
 
         # Initialize communications.
@@ -185,9 +192,7 @@ class Window(QtGui.QMainWindow):
         self.ui.foregroundOpacitySlider.valueChanged.connect(self.handleOpacityChange)
         self.ui.magComboBox.currentIndexChanged.connect(self.handleObjectiveChange)
         self.ui.tabWidget.currentChanged.connect(self.handleTabChange)
-        self.ui.xSizeSpinBox.valueChanged.connect(self.handleSectionSizeChange)
         self.ui.xSpinBox.valueChanged.connect(self.handleGridChange)
-        self.ui.ySizeSpinBox.valueChanged.connect(self.handleSectionSizeChange)
         self.ui.ySpinBox.valueChanged.connect(self.handleGridChange)
 
         self.view.addPosition.connect(self.addPositions)
@@ -362,10 +367,6 @@ class Window(QtGui.QMainWindow):
     def handleSectionSelection(self, a_point):
         self.view.moveSectionSelection(a_point)
         self.sections.handleSectionChanged()
-
-    def handleSectionSizeChange(self, value):
-        self.sections.sectionSizeChange(self.ui.xSizeSpinBox.value(),
-                                        self.ui.ySizeSpinBox.value())
 
     def handleSetWorkingDirectory(self):
         directory = str(QtGui.QFileDialog.getExistingDirectory(self,
