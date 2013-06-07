@@ -7,6 +7,7 @@
 
 from PyQt4 import QtCore
 import os
+import platform
 
 # Debugging
 import halLib.hdebug as hdebug
@@ -56,29 +57,31 @@ class ACameraControl(cameraControl.CameraControl):
             if hdebug.getDebug():
                 print " Initializing Andor Camera"
 
-            path = "c:/Program Files/Andor iXon/Drivers/"
-            driver = "atmcd32d.dll"
-            if os.path.exists(path + driver):
-                self.initCameraHelperFn(path, driver, pci_card)
-                return
+            if (platform.architecture()[0] == "32bit"):
+                path = "c:/Program Files/Andor iXon/Drivers/"
+                driver = "atmcd32d.dll"
+                if os.path.exists(path + driver):
+                    self.initCameraHelperFn(path, driver, pci_card)
+                    return
 
-            path = "c:/Program Files/Andor Solis/Drivers/"
-            driver = "atmcd64d.dll"
-            if os.path.exists(path + driver):
-                self.initCameraHelperFn(path, driver, pci_card)
-                return
+                path = "c:/Program Files/Andor Solis/"
+                driver = "atmcd32d.dll"
+                if os.path.exists(path + driver):
+                    self.initCameraHelperFn(path, driver, pci_card)
+                    return
 
-            path = "c:/Program Files/Andor Solis/"
-            driver = "atmcd32d.dll"
-            if os.path.exists(path + driver):
-                self.initCameraHelperFn(path, driver, pci_card)
-                return
+            else:
+                path = "c:/Program Files/Andor Solis/Drivers/"
+                driver = "atmcd64d.dll"
+                if os.path.exists(path + driver):
+                    self.initCameraHelperFn(path, driver, pci_card)
+                    return
 
-            path = "c:/Program Files (x86)/Andor Solis/Drivers/"
-            driver = "atmcd64d.dll"
-            if os.path.exists(path + driver):
-                self.initCameraHelperFn(path, driver, pci_card)
-                return
+                path = "c:/Program Files (x86)/Andor Solis/Drivers/"
+                driver = "atmcd64d.dll"
+                if os.path.exists(path + driver):
+                    self.initCameraHelperFn(path, driver, pci_card)
+                    return
 
             print "Can't find Andor Camera drivers"
 
