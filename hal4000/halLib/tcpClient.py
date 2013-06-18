@@ -3,7 +3,7 @@
 # TCP interface to HAL-4000 data taking program 
 # for the Dave command scripting program.
 #
-# Hazen 12/10
+# Hazen 12/13
 #
 
 import sys
@@ -13,6 +13,9 @@ from PyQt4 import QtCore, QtGui, QtNetwork
 
 # The socket for communication with HAL-4000
 class HALSocket(QtNetwork.QTcpSocket):
+    acknowledged = QtCore.pyqtSignal()
+    complete = QtCore.pyqtSignal(str)
+
     def __init__(self, port):
         QtNetwork.QTcpSocket.__init__(self)
 
@@ -29,11 +32,15 @@ class HALSocket(QtNetwork.QTcpSocket):
 
     def handleReadyRead(self):
         while self.canReadLine():
-            line = str(self.readLine()).strip()
-            if line == "Ack":
-                self.emit(QtCore.SIGNAL("acknowledged()"))
-            if line == "Complete":
-                self.emit(QtCore.SIGNAL("complete()"))
+            line = str(self.readLine()).strip()            
+            if (line == "Ack"):
+                self.acknowledged.emit()
+            if (line[0:8] == "Complete"):
+                values = line.split(",")
+                if (len(values)==2):
+                    self.complete.emit(values[1])
+                else:
+                    self.complete.emit("NA")
 
     def sendCommand(self, command):
         self.write(QtCore.QByteArray(command + "\n"))
@@ -41,6 +48,9 @@ class HALSocket(QtNetwork.QTcpSocket):
 
 # Communication wrapper class
 class TCPClient(QtGui.QWidget):
+    acknowledged = QtCore.pyqtSignal()
+    complete = QtCore.pyqtSignal(str)
+
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.connected = 0
@@ -53,14 +63,13 @@ class TCPClient(QtGui.QWidget):
             self.testing_timer = QtCore.QTimer(self)
             self.testing_timer.setInterval(5000)
             self.testing_timer.setSingleShot(True)
-            self.connect(self.testing_timer, 
-                         QtCore.SIGNAL("timeout()"),
-                         self.handleComplete)
+            self.testing_timer.timeout.connect(self.handleComplete)
 
     def handleAcknowledged(self):
         self.unacknowledged -= 1
+        self.acknowledged.emit()
 
-    def handleComplete(self):
+    def handleComplete(self, a_string):
         if (self.state == "filming"):
             print " movie complete"
         elif (self.state == "finding_sum"):
@@ -69,7 +78,7 @@ class TCPClient(QtGui.QWidget):
             print " recentering complete"
         else:
             print " unknown state:", self.state
-        self.emit(QtCore.SIGNAL("complete()"))
+        self.complete.emit(a_string)
         self.state = None
 
     def sendCommand(self, command):
@@ -120,8 +129,8 @@ class TCPClient(QtGui.QWidget):
         self.socket = HALSocket(9000)
         self.connected = 1
         self.unacknowledged = 0
-        self.connect(self.socket, QtCore.SIGNAL("acknowledged()"), self.handleAcknowledged)
-        self.connect(self.socket, QtCore.SIGNAL("complete()"), self.handleComplete)
+        self.socket.acknowledged.connect(self.handleAcknowledged)
+        self.socket.complete.connect(self.handleComplete)
 
     def startFindSum(self):
         print " start find sum"
@@ -172,14 +181,14 @@ class TCPClient(QtGui.QWidget):
         print " stop movie"
         if self.testing:
             self.testing_timer.stop()
-            self.emit(QtCore.SIGNAL("movieComplete()"))
+            self.complete.emit()
         else:
             self.sendCommand("abortMovie")
 
 #
 # The MIT License
 #
-# Copyright (c) 2010 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
