@@ -81,14 +81,14 @@ class Capture(QtCore.QObject):
         self.start_timer.timeout.connect(self.handleStartTimer)
 
         self.tcp_client = halLib.tcpClient.TCPClient()
-        self.connect(self.tcp_client, QtCore.SIGNAL("complete()"), self.captureDone)
+        self.tcp_client.complete.connect(self.captureDone)
         self.connected = False
 
     def abort(self):
         self.capturing = False
 
     @hdebug.debug
-    def captureDone(self):
+    def captureDone(self, a_string):
         # load the first frame of the dax file
         filename = self.directory + self.filename + ".dax"
         success = False
