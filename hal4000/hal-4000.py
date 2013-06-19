@@ -945,7 +945,10 @@ class Window(QtGui.QMainWindow):
             if (lock_target == "failed"):
                 print "QPD/Camera appears to have frozen.."
                 self.quit()
-            self.tcp_control.sendComplete()
+            if self.spot_counter:
+                self.tcp_control.sendComplete(str(self.spot_counter.getCounts()))
+            else:
+                self.tcp_control.sendComplete()
             self.tcp_requested_movie = 0
 
     def toggleFilm(self):

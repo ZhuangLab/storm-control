@@ -70,6 +70,7 @@ class TCPClient(QtGui.QWidget):
         self.acknowledged.emit()
 
     def handleComplete(self, a_string):
+        print "handleComplete", a_string
         if (self.state == "filming"):
             print " movie complete"
         elif (self.state == "finding_sum"):

@@ -30,6 +30,9 @@ class Counter():
         self.q_label2 = q_label2
         self.updateCounts(0)
 
+    def getCounts(self):
+        return self.counts
+
     def reset(self):
         self.counts = 0
         self.updateCounts(0)
@@ -325,6 +328,10 @@ class SpotCounter(QtGui.QDialog):
         else:
             self.quit()
 
+    @hdebug.debug
+    def getCounts(self):
+        return self.counters[0].getCounts()
+        
     @hdebug.debug
     def handleMaxChange(self, new_max):
         for i in range(self.number_cameras):

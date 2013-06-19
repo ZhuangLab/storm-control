@@ -98,7 +98,7 @@ import halLib.hdebug as hdebug
 #
 class StageQPDThread(QtCore.QThread):
     controlUpdate = QtCore.pyqtSignal(float, float, float, float)
-    foundSum = QtCore.pyqtSignal()
+    foundSum = QtCore.pyqtSignal(float)
     recenteredPiezo = QtCore.pyqtSignal()
 
     @hdebug.debug
@@ -162,8 +162,7 @@ class StageQPDThread(QtCore.QThread):
             self.moveStageAbs(0)
             self.qpd_mutex.unlock()
         else:
-            #self.emit(QtCore.SIGNAL("foundSum()"))
-            self.foundSum.emit()
+            self.foundSum.emit(self.sum)
 
     def moveStageAbs(self, new_z):
         self.stage_mutex.lock()
@@ -207,8 +206,7 @@ class StageQPDThread(QtCore.QThread):
                 if (power > (2.0 * self.sum_min)) and (power < (0.5 * self.max_sum)):
                     self.moveStageAbs(self.max_pos)
                     self.find_sum = False
-                    #self.emit(QtCore.SIGNAL("foundSum()"))
-                    self.foundSum.emit()
+                    self.foundSum.emit(power)
                 else:
                     if (self.stage_z >= (2 * self.z_center)):
                         if (self.max_sum > 0):
@@ -216,8 +214,7 @@ class StageQPDThread(QtCore.QThread):
                         else:
                             self.moveStageAbs(self.z_center)
                         self.find_sum = False
-                        #self.emit(QtCore.SIGNAL("foundSum()"))
-                        self.foundSum.emit()
+                        self.foundSum.emit(power)
                     else:
                         self.moveStageRel(1.0)
 

@@ -35,7 +35,7 @@ import focuslock.lockModes as lockModes
 # Base class
 #
 class LockDisplay(QtGui.QWidget):
-    foundSum = QtCore.pyqtSignal()
+    foundSum = QtCore.pyqtSignal(float)
     recenteredPiezo = QtCore.pyqtSignal()
 
     @hdebug.debug
@@ -147,8 +147,8 @@ class LockDisplay(QtGui.QWidget):
         self.jump(float(direction)*self.parameters.lockt_step)
 
     @hdebug.debug
-    def handleFoundSum(self):
-        self.foundSum.emit()
+    def handleFoundSum(self, sum):
+        self.foundSum.emit(sum)
 
     @hdebug.debug
     def handleIrButton(self):
@@ -213,7 +213,7 @@ class LockDisplay(QtGui.QWidget):
         return self.current_mode.shouldDisplayLockLabel()
 
     @hdebug.debug
-    def startLock(self):
+    def startLock(self, filename):
         self.current_mode.startLock()
 
     @hdebug.debug
@@ -317,6 +317,7 @@ class LockDisplayCam(LockDisplay):
         LockDisplay.__init__(self, parameters, control_thread, ir_laser, parent)
 
         self.filename = ""
+        self.save_image = False
         self.show_dot = False
         self.x_offset = 0
         self.y_offset = 0
@@ -426,9 +427,22 @@ class LockDisplayCam(LockDisplay):
 #        if self.offset_file:
 #            numpy.save(self.filename + "_" + str(self.frame_number) + ".npy",
 #                       self.control_thread.getImage()[0])
-        
+ 
+    @hdebug.debug
+    def startLock(self, filename):
+        LockDisplay.startLock(self, filename)
+        self.filename = filename + "_lock_cam.png"
+        self.save_image = True
+       
     def updateCamera(self):
         self.camDisplay.newImage(self.control_thread.getImage(), self.show_dot)
+        
+        # Save the first (more or less) image from the focus lock USB camera 
+        # for debugging purposes.
+        if self.save_image:
+            q_image = self.camDisplay.getImage()
+            q_image.save(self.filename)
+            self.save_image = False
 
     def quit(self):
         LockDisplay.quit(self)

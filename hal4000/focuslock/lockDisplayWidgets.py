@@ -216,6 +216,9 @@ class QCamDisplay(QtGui.QWidget):
         self.setMouseTracking(True)
         self.setToolTip(self.tooltips[0])
 
+    def getImage(self):
+        return self.image
+
     def keyPressEvent(self, event):
         if self.adjust_mode:
             which_key = event.key()

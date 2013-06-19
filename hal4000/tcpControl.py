@@ -115,56 +115,11 @@ class TCPControl(QtNetwork.QTcpServer):
             print signal
             self.emit(QtCore.SIGNAL(signal), *parsed_data)
 
-#            if match("abortMovie", command):
-#                self.emit(QtCore.SIGNAL("commAbortMovie()"))
-#                if self.debug:
-#                    print " commAbortMovie"
-#            elif match("incPower", command):
-#                [channel, power_inc] = command.split(",")[1:]
-#                self.emit(QtCore.SIGNAL("commIncPower(int, float)"), int(channel), float(power_inc))
-#            elif match("movie", command):
-#                [name, length] = command.split(",")[1:]
-#                self.emit(QtCore.SIGNAL("commMovie(PyQt_PyObject, int)"), name, int(length))
-#                if self.debug:
-#                    print " commMovie", name, int(length)
-#            elif match("moveTo", command):
-#                [x, y] = command.split(",")[1:]
-#                self.emit(QtCore.SIGNAL("commMoveTo(float, float)"), float(x), float(y))
-#                if self.debug:
-#                    print " commMoveTo", float(x), float(y)
-#            elif match("parameters", command):
-#                index = int(command.split(",")[1])
-#                self.emit(QtCore.SIGNAL("commParameters(int)"), index)
-#                if self.debug:
-#                    print " commParameters", index
-#            elif match("progressionLockout", command):
-#                self.emit(QtCore.SIGNAL("commProgressionLockout()"))
-#                if self.debug:
-#                    print " commProgressionLockout"
-#            elif match("setDirectory", command):
-#                directory = command.split(",")[1]
-#                self.emit(QtCore.SIGNAL("commSetDirectory(PyQt_PyObject)"), directory)
-#                if self.debug:
-#                    print " commSetDirectory", directory
-#            elif match("setLockTarget", command):
-#                target = command.split(",")[1]
-#                self.emit(QtCore.SIGNAL("commSetLockTarget(float)"), float(target))
-#                if self.debug:
-#                    print " commSetLockTarget", float(target)
-#            elif match("setPower", command):
-#                [channel, power] = command.split(",")[1:]
-#                self.emit(QtCore.SIGNAL("commSetPower(int, float)"), int(channel), float(power))
-#            elif match("quit", command) and (not self.have_parent):
-#                sys.exit()
-#            else:
-#                if self.debug:
-#                    print " readyRead, no such command:", command
-
-    def sendComplete(self):
+    def sendComplete(self, a_string = "NA"):
         if self.debug:
             print "sendComplete"
         if self.connected:
-            self.socket.write(QtCore.QByteArray("Complete\n"))
+            self.socket.write(QtCore.QByteArray("Complete," + a_string + "\n"))
             self.socket.flush()
 
     def sendStatus(self, status):

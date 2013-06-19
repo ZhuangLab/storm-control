@@ -112,8 +112,8 @@ class FocusLockZ(QtGui.QDialog):
         return self.lock_display1.getLockTarget()
 
     @hdebug.debug
-    def handleFoundSum(self):
-        self.tcp_control.sendComplete()
+    def handleFoundSum(self,sum):
+        self.tcp_control.sendComplete(str(sum))
 
     @hdebug.debug
     def handleJumpPButton(self):
@@ -186,7 +186,7 @@ class FocusLockZ(QtGui.QDialog):
         self.error_counts = 0
         if filename:
             self.openOffsetFile(filename)
-        self.lock_display1.startLock()
+        self.lock_display1.startLock(filename)
         self.toggleLockButtonText(self.lock_display1.amLocked())
         self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())
 

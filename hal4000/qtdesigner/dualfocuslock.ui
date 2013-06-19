@@ -55,48 +55,6 @@
     <property name="title">
      <string>Mode</string>
     </property>
-    <widget class="QRadioButton" name="offRadioButton">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>20</y>
-       <width>82</width>
-       <height>19</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Off</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-    <widget class="QRadioButton" name="autoRadioButton">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>40</y>
-       <width>82</width>
-       <height>19</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Auto Lock</string>
-     </property>
-    </widget>
-    <widget class="QRadioButton" name="onRadioButton">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>60</y>
-       <width>82</width>
-       <height>19</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Always On</string>
-     </property>
-    </widget>
     <widget class="QPushButton" name="lockButton">
      <property name="geometry">
       <rect>
@@ -108,25 +66,6 @@
      </property>
      <property name="text">
       <string>Lock</string>
-     </property>
-    </widget>
-    <widget class="QRadioButton" name="calRadioButton">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>100</y>
-       <width>82</width>
-       <height>19</height>
-      </rect>
-     </property>
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string>Calibrate</string>
      </property>
     </widget>
     <widget class="QLabel" name="lockLabel">
@@ -145,36 +84,14 @@
       <set>Qt::AlignCenter</set>
      </property>
     </widget>
-    <widget class="QRadioButton" name="zScanRadioButton">
+    <widget class="QWidget" name="modeWidget" native="true">
      <property name="geometry">
       <rect>
-       <x>20</x>
-       <y>120</y>
-       <width>82</width>
-       <height>19</height>
+       <x>7</x>
+       <y>12</y>
+       <width>101</width>
+       <height>131</height>
       </rect>
-     </property>
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string>Z Scan</string>
-     </property>
-    </widget>
-    <widget class="QRadioButton" name="optimalRadioButton">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>80</y>
-       <width>82</width>
-       <height>19</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Optimal</string>
      </property>
     </widget>
    </widget>
