@@ -112,11 +112,11 @@ class TCPClient(QtGui.QWidget):
             if hasattr(movie, "lock_target"):
                 self.sendCommand("setLockTarget,float,{0:.1f}".format(movie.lock_target))
 
-    def sendPowerUpdate(self, channel, power_increment):
-        if self.testing:
-            print " send power update", channel, power_increment
-        else:
-            self.sendCommand("incPower,int,{0:d},float,{1:.4f}".format(channel, power_increment))
+    #def sendPowerUpdate(self, channel, power_increment):
+    #    if self.testing:
+    #        print " send power update", channel, power_increment
+    #    else:
+    #        self.sendCommand("incPower,int,{0:d},float,{1:.4f}".format(channel, power_increment))
 
     def sendSetDirectory(self, directory):
         if self.testing:
