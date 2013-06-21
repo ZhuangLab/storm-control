@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>590</width>
-    <height>480</height>
+    <height>500</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,13 +19,13 @@
   <property name="minimumSize">
    <size>
     <width>590</width>
-    <height>480</height>
+    <height>500</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>590</width>
-    <height>480</height>
+    <height>500</height>
    </size>
   </property>
   <property name="acceptDrops">
@@ -35,76 +35,56 @@
    <string>Dave</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QGroupBox" name="sequenceGroupBox">
+   <widget class="QGroupBox" name="movieGroupBox">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>261</width>
+      <width>271</width>
       <height>291</height>
      </rect>
     </property>
     <property name="title">
-     <string>Sequence Details</string>
+     <string>Movie Details</string>
     </property>
-    <widget class="QPushButton" name="startButton">
-     <property name="geometry">
-      <rect>
-       <x>160</x>
-       <y>250</y>
-       <width>91</width>
-       <height>24</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Start Movie</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="skipButton">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>250</y>
-       <width>91</width>
-       <height>24</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Skip Movie</string>
-     </property>
-    </widget>
-    <widget class="QFrame" name="detailsFrame">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>20</y>
-       <width>241</width>
-       <height>221</height>
-      </rect>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Sunken</enum>
-     </property>
-     <widget class="QLabel" name="detailsLabel">
-      <property name="geometry">
-       <rect>
-        <x>5</x>
-        <y>3</y>
-        <width>231</width>
-        <height>261</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>TextLabel</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-      </property>
-     </widget>
-    </widget>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QTableWidget" name="movieTableWidget">
+       <property name="font">
+        <font>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="selectionMode">
+        <enum>QAbstractItemView::NoSelection</enum>
+       </property>
+       <property name="showGrid">
+        <bool>false</bool>
+       </property>
+       <property name="wordWrap">
+        <bool>false</bool>
+       </property>
+       <attribute name="horizontalHeaderVisible">
+        <bool>false</bool>
+       </attribute>
+       <attribute name="horizontalHeaderMinimumSectionSize">
+        <number>18</number>
+       </attribute>
+       <attribute name="verticalHeaderVisible">
+        <bool>false</bool>
+       </attribute>
+       <attribute name="verticalHeaderDefaultSectionSize">
+        <number>18</number>
+       </attribute>
+       <attribute name="verticalHeaderMinimumSectionSize">
+        <number>18</number>
+       </attribute>
+      </widget>
+     </item>
+    </layout>
    </widget>
    <widget class="QPushButton" name="runButton">
     <property name="geometry">
@@ -119,68 +99,160 @@
      <string>Run</string>
     </property>
    </widget>
-   <widget class="QGroupBox" name="powerGroupBox">
+   <widget class="QGroupBox" name="notificationGroupBox">
     <property name="geometry">
      <rect>
-      <x>280</x>
+      <x>290</x>
       <y>10</y>
-      <width>301</width>
+      <width>291</width>
       <height>291</height>
      </rect>
     </property>
     <property name="title">
-     <string>Power Progression</string>
+     <string>Notifications</string>
     </property>
-    <widget class="QLabel" name="channelLabel">
+    <widget class="QLineEdit" name="smtpServerLineEdit">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>40</y>
+       <width>261</width>
+       <height>20</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="smtpServerLabel">
      <property name="geometry">
       <rect>
        <x>10</x>
        <y>20</y>
-       <width>71</width>
+       <width>271</width>
        <height>16</height>
       </rect>
      </property>
      <property name="text">
-      <string>Channel</string>
+      <string>SMTP Server:</string>
      </property>
     </widget>
-    <widget class="QLabel" name="initialPowerLabel">
+    <widget class="QLabel" name="fromAddressLabel">
      <property name="geometry">
       <rect>
-       <x>80</x>
-       <y>20</y>
-       <width>71</width>
+       <x>10</x>
+       <y>70</y>
+       <width>271</width>
        <height>16</height>
       </rect>
      </property>
      <property name="text">
-      <string>Initial Power</string>
+      <string>From address:</string>
      </property>
     </widget>
-    <widget class="QLabel" name="incrementLabel">
+    <widget class="QLineEdit" name="fromAddressLineEdit">
      <property name="geometry">
       <rect>
-       <x>220</x>
-       <y>20</y>
-       <width>71</width>
+       <x>20</x>
+       <y>90</y>
+       <width>261</width>
+       <height>20</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="fromPasswordLabel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>120</y>
+       <width>271</width>
        <height>16</height>
       </rect>
      </property>
      <property name="text">
-      <string>Increment</string>
+      <string>From password:</string>
      </property>
     </widget>
-    <widget class="QLabel" name="delayTimeLabel">
+    <widget class="QLineEdit" name="fromPasswordLineEdit">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>140</y>
+       <width>261</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="echoMode">
+      <enum>QLineEdit::PasswordEchoOnEdit</enum>
+     </property>
+    </widget>
+    <widget class="QLabel" name="toAddressLabel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>170</y>
+       <width>271</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>To address:</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="toAddressLineEdit">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>190</y>
+       <width>261</width>
+       <height>20</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="errorMsgCheckBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>220</y>
+       <width>141</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>e-mail error messages</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="statusMsgCheckBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>250</y>
+       <width>141</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>e-mail status messages</string>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="frequencySpinBox">
+     <property name="geometry">
+      <rect>
+       <x>210</x>
+       <y>250</y>
+       <width>71</width>
+       <height>22</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="frequencyLabel">
      <property name="geometry">
       <rect>
        <x>150</x>
-       <y>20</y>
+       <y>250</y>
        <width>71</width>
-       <height>16</height>
+       <height>20</height>
       </rect>
      </property>
      <property name="text">
-      <string>Delay Time</string>
+      <string>Frequency:</string>
      </property>
     </widget>
    </widget>
@@ -227,7 +299,7 @@
       <rect>
        <x>270</x>
        <y>20</y>
-       <width>251</width>
+       <width>291</width>
        <height>20</height>
       </rect>
      </property>
@@ -236,7 +308,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QGroupBox" name="sequenceGroupBox_2">
+   <widget class="QGroupBox" name="sequenceGroupBox">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -253,7 +325,7 @@
       <rect>
        <x>10</x>
        <y>20</y>
-       <width>401</width>
+       <width>551</width>
        <height>21</height>
       </rect>
      </property>

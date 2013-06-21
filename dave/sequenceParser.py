@@ -38,9 +38,10 @@ class Movie:
     def __init__(self, movie_xml):
 
         # default settings
-        self.delay = 5000
-        self.find_sum = 0
+        self.delay = 0
+        self.find_sum = 0.0
         self.length = 1
+        self.min_spots = 0
         self.name = "default"
         self.pause = 1
         self.progression = None
@@ -49,26 +50,28 @@ class Movie:
         # parse settings
         for node in movie_xml.childNodes:
             if node.nodeType == Node.ELEMENT_NODE:
-                if node.nodeName == "pause":
-                    self.pause = int(node.firstChild.nodeValue)
-                elif node.nodeName == "stage_x":
-                    self.stage_x = float(node.firstChild.nodeValue)
-                elif node.nodeName == "stage_y":
-                    self.stage_y = float(node.firstChild.nodeValue)
-                elif node.nodeName == "parameters":
-                    self.parameters = int(node.firstChild.nodeValue)
-                elif node.nodeName == "lock_target":
-                    self.lock_target = float(node.firstChild.nodeValue)
-                elif node.nodeName == "name":
-                    self.name = node.firstChild.nodeValue
-                elif node.nodeName == "length":
-                    self.length = int(node.firstChild.nodeValue)
-                elif node.nodeName == "find_sum":
-                    self.find_sum = int(node.firstChild.nodeValue)
-                elif node.nodeName == "recenter":
-                    self.recenter = int(node.firstChild.nodeValue)
-                elif node.nodeName == "delay":
+                if (node.nodeName == "delay"):
                     self.delay = int(node.firstChild.nodeValue)
+                elif (node.nodeName == "find_sum"):
+                    self.find_sum = float(node.firstChild.nodeValue)
+                elif (node.nodeName == "length"):
+                    self.length = int(node.firstChild.nodeValue)
+                elif (node.nodeName == "lock_target"):
+                    self.lock_target = float(node.firstChild.nodeValue)
+                elif (node.nodeName == "min_spots"):
+                    self.min_spots = int(node.firstChild.nodeValue)
+                elif (node.nodeName == "name"):
+                    self.name = node.firstChild.nodeValue
+                elif (node.nodeName == "parameters"):
+                    self.parameters = int(node.firstChild.nodeValue)
+                elif (node.nodeName == "pause"):
+                    self.pause = int(node.firstChild.nodeValue)
+                elif (node.nodeName == "recenter"):
+                    self.recenter = int(node.firstChild.nodeValue)
+                elif (node.nodeName == "stage_x"):
+                    self.stage_x = float(node.firstChild.nodeValue)
+                elif (node.nodeName == "stage_y"):
+                    self.stage_y = float(node.firstChild.nodeValue)
 
         # parse progressions
         progression_xml = movie_xml.getElementsByTagName("progression")

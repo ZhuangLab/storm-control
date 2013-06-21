@@ -119,6 +119,13 @@ def generateXML(descriptor_file, position_file, output_file, directory, parent):
                     else:
                         delay.item(0).firstChild.nodeValue = str(time + int(delay.item(0).firstChild.nodeValue))
 
+                # set delay of the first movie to zero
+                if first_movie:
+                    if (hasattr(delay, "firstChild")):
+                        delay.firstChild.nodeValue = "0"
+                    else:
+                        delay.item(0).firstChild.nodeValue = "0"
+
                 # remove find_sum and recenter if this is the first movie
                 if first_movie:
                     find_sum = temp.getElementsByTagName("find_sum")

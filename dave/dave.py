@@ -3,27 +3,312 @@
 # Utility for running scripting files for remote
 # control of the HAL-4000 data taking program.
 #
-# Hazen 12/10
+# Hazen 06/13
 #
 
 import os
 import sys
-from PyQt4 import QtCore, QtGui
+import traceback
 from xml.dom import minidom, Node
+
+from PyQt4 import QtCore, QtGui
 
 # Debugging
 import halLib.hdebug as hdebug
 
 # General
+import halLib.tcpClient
+import notifications
 import sequenceParser
 import xml_generator
-import halLib.tcpClient
 
 # UIs.
 import qtdesigner.dave_ui as daveUi
 
 # Misc
 import halLib.parameters as params
+
+
+def createTableWidget(text):
+    widget = QtGui.QTableWidgetItem(text)
+    widget.setFlags(QtCore.Qt.ItemIsEnabled)
+    return widget
+
+#
+# Actions for taking a movie.
+#
+class DaveAction():
+
+    def __init__(self):
+        self.delay = 0
+        self.message = ""
+
+    def abort(self, comm):
+        pass
+
+    def getMessage(self):
+        return self.message
+
+    def handleAcknowledged(self):
+        return True
+
+    def handleComplete(self, a_string):
+        return True
+
+    def shouldPause(self):
+        return False
+
+    def start(self, comm):
+        pass
+
+    def startTimer(self, timer):
+        if (self.delay > 0):
+            timer.setInterval(self.delay)
+            timer.start()
+            return True
+        else:
+            return False
+
+
+class DaveActionFindSum(DaveAction):
+
+    def __init__(self, min_sum):
+        DaveAction.__init__(self)
+        self.min_sum = min_sum
+
+    def handleAcknowledged(self):
+        return False
+
+    def handleComplete(self, a_string):
+        if (a_string == "NA") or (float(a_string) > self.min_sum):
+            return True
+        else:
+            self.message = "Sum signal " + a_string + " is below threshold value of " + str(self.min_sum)
+            return False
+
+    def start(self, comm):
+        comm.startFindSum()
+
+
+class DaveActionMovie(DaveAction):
+
+    def __init__(self, movie):
+        DaveAction.__init__(self)
+        self.acquiring = False
+        self.movie = movie
+
+    def abort(self, comm):
+        if self.acquiring:
+            comm.stopMovie()
+
+    def handleAcknowledged(self):
+        return False
+
+    def handleComplete(self, a_string):
+        self.acquiring = False
+        if (a_string == "NA") or (int(a_string) >= self.movie.min_spots):
+            return True
+        else:
+            self.message = "Spot finder counts " + a_string + " is below threshold value of " + str(self.movie.min_spots)
+            return False
+
+    def start(self, comm):
+        self.acquiring = True
+        comm.startMovie(self.movie)
+
+
+class DaveActionMovieParameters(DaveAction):
+
+    def __init__(self, movie):
+        DaveAction.__init__(self)
+        self.delay = movie.delay
+        self.movie = movie
+
+    def shouldPause(self):
+        return self.movie.pause
+
+    def start(self, comm):
+        comm.sendMovieParameters(self.movie)
+
+
+class DaveActionRecenter(DaveAction):
+    
+    def __init__(self):
+        DaveAction.__init__(self)
+        self.delay = 200
+
+    def handleAcknowledged(self):
+        return False
+
+    def start(self, comm):
+        comm.startRecenterPiezo()
+
+
+#
+# This handles taking a movie & updating the movie details.
+#
+class MovieEngine(QtGui.QWidget):
+    done = QtCore.pyqtSignal()
+    idle = QtCore.pyqtSignal()
+    problem = QtCore.pyqtSignal(str)
+
+    def __init__(self, details_table, parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.actions = []
+        self.current_action = False
+        self.details_table = details_table
+        self.movie = False
+        self.number_movies = 0
+        self.should_pause = False
+
+        # Setup Info Table.
+        fields = ["Delay",
+                  "Find Sum",
+                  "Length",
+                  "Lock Target",
+                  "Minimum Spots",
+                  "Name",
+                  "Parameters",
+                  "Pause",
+                  "Progression",
+                  "Recenter Piezo",
+                  "Stage Position"]
+
+        self.details_table.setRowCount(len(fields)+1)
+        self.details_table.setColumnCount(3)
+        for i, field in enumerate(fields):
+            self.details_table.setItem(i+1,0,createTableWidget(" "))
+            self.details_table.setItem(i+1,1,createTableWidget(field))
+        self.details_table.resizeColumnToContents(0)
+        self.details_table.setSpan(0,0,1,3)
+
+        self.delay_timer = QtCore.QTimer(self)
+        self.delay_timer.setSingleShot(True)
+        self.delay_timer.timeout.connect(self.checkPause)
+
+        # TCP communications.
+        self.comm = halLib.tcpClient.TCPClient(self)
+        self.comm.acknowledged.connect(self.handleAcknowledged)
+        self.comm.complete.connect(self.handleComplete)
+
+    def abort(self):
+        if self.current_action:
+            self.delay_timer.stop()
+            self.current_action.abort(self.comm)
+
+    def checkPause(self):
+        if (self.current_action.shouldPause()) or self.should_pause:
+            self.idle.emit()
+            self.should_pause = False
+            self.comm.stopCommunication()
+        else:
+            self.nextAction()
+
+    def handleAcknowledged(self):
+        if (self.current_action.handleAcknowledged()):
+            if (not self.current_action.startTimer(self.delay_timer)):
+                self.checkPause()
+
+    def handleComplete(self, a_string):
+        if self.current_action.handleComplete(a_string):
+            self.checkPause()
+        else:
+            self.comm.stopCommunication()
+            self.problem.emit(self.current_action.getMessage())
+
+    def newMovie(self, movie, index):
+        self.details_table.setItem(0,0,createTableWidget("Movie {0:d} of {1:d}\n\n".format(index+1, self.number_movies)))
+
+        # Update movie details display.
+        # delay
+        index = 1
+        self.details_table.setItem(index,2,createTableWidget("{0:d}".format(movie.delay)))
+
+        # find sum
+        index += 1
+        if (movie.find_sum > 0.0):
+            self.details_table.setItem(index,2,createTableWidget("{0:.1f}".format(movie.find_sum)))
+        else:
+            self.details_table.setItem(index,2,createTableWidget("No"))
+
+        # length
+        index += 1
+        self.details_table.setItem(index,2,createTableWidget("{0:d}".format(movie.length)))
+
+        # lock target
+        index += 1
+        if hasattr(movie, "lock_target"):
+            self.details_table.setItem(index,2,createTableWidget("{0:.1f}".format(movie.lock_target)))
+        else:
+            self.details_table.setItem(index,2,createTableWidget("None"))
+
+        # minimum spots
+        index += 1
+        self.details_table.setItem(index,2,createTableWidget("{0:d}".format(movie.min_spots)))
+
+        # name
+        index += 1
+        self.details_table.setItem(index,2,createTableWidget("{0:s}".format(movie.name)))
+
+        # parameters
+        index += 1
+        if hasattr(movie, "parameters"):
+            self.details_table.setItem(index,2,createTableWidget("{0:d}".format(movie.parameters)))
+        else:
+            self.details_table.setItem(index,2,createTableWidget("None"))
+
+        # pause
+        index += 1
+        if movie.pause:
+            self.details_table.setItem(index,2,createTableWidget("Yes"))
+        else:
+            self.details_table.setItem(index,2,createTableWidget("No"))
+
+        # progression
+        index += 1
+        self.details_table.setItem(index,2,createTableWidget(movie.progression.type))
+
+        # recenter
+        index += 1
+        if movie.recenter:
+            self.details_table.setItem(index,2,createTableWidget("Yes"))
+        else:
+            self.details_table.setItem(index,2,createTableWidget("No"))
+
+        # stage position
+        index += 1
+        if hasattr(movie, "stage_x") and hasattr(movie, "stage_y"):
+            self.details_table.setItem(index,2,createTableWidget("{0:.2f}, {1:.2f}".format(movie.stage_x, movie.stage_y)))
+        else:
+            self.details_table.setItem(index,2,createTableWidget("NA,NA"))
+
+        # Generate actions for taking the movie.
+        self.actions = []
+        self.actions.append(DaveActionMovieParameters(movie))
+        if movie.recenter:
+            self.actions.append(DaveActionRecenter())
+        if (movie.find_sum > 0.0):
+            self.actions.append(DaveActionFindSum(movie.find_sum))
+        if (movie.length > 0):
+            self.actions.append(DaveActionMovie(movie))
+
+    def nextAction(self):
+        if (len(self.actions) > 0):
+            self.current_action = self.actions[0]
+            self.actions = self.actions[1:]
+            self.current_action.start(self.comm)
+        else:
+            self.done.emit()
+
+    def pause(self):
+        self.should_pause = True
+
+    def setNumberMovies(self, number):
+        self.number_movies = number
+
+    def startCommunication(self):
+        self.comm.startCommunication()
+
 
 #
 # Main window
@@ -33,67 +318,67 @@ class Window(QtGui.QMainWindow):
     def __init__(self, parameters, parent = None):
         QtGui.QMainWindow.__init__(self, parent)
         
-        # general
-        self.action = "none"
-        self.comm_queue = [None, None, None]
-        self.current_comm = None
+        # General.
         self.directory = ""
-        self.html_update = False
-        self.mode = "idle"
-        self.movies = 0
         self.parameters = parameters
-        self.skip_pause = False
+        self.movie_index = 0
+        self.movies = []
+        self.notifier = notifications.Notifier("", "", "", "")
+        self.running = False
+        self.settings = QtCore.QSettings("Zhuang Lab", "dave")
 
-        self.delay_timer = QtCore.QTimer(self)
-        self.delay_timer.setSingleShot(True)
-
-        # This is for disconnecting. We wait for all the commands
-        # to get processed before we break the connection.
-        self.disconnect_timer = QtCore.QTimer(self)
-        self.disconnect_timer.setInterval(100)
-        self.disconnect_timer.setSingleShot(True)
-
-        # ui setup
+        # UI setup.
         self.ui = daveUi.Ui_MainWindow()
         self.ui.setupUi(self)
+        self.ui.spaceLabel.setText("")
+        self.ui.timeLabel.setText("")
+
+        self.ui.abortButton.hide()
+        #self.ui.backButton.hide()
+        #self.ui.forwardButton.hide()
+        self.ui.frequencyLabel.hide()
+        self.ui.frequencySpinBox.hide()
+        self.ui.movieTableWidget.hide()
+        self.ui.runButton.hide()
+        self.ui.statusMsgCheckBox.hide()
 
         self.setWindowIcon(QtGui.QIcon("dave.ico"))
 
-        self.ui.detailsFrame.setStyleSheet("QFrame { background: white }")
-        self.ui.detailsLabel.setStyleSheet("QLabel { background: white }")
-        self.ui.detailsLabel.setText("No sequence loaded")
-        self.ui.spaceLabel.setText("")
-        self.ui.timeLabel.setText("")
-        self.ui.startButton.hide()
-        self.ui.skipButton.hide()
-
-        # handling file drops
+        # This is for handling file drops.
         self.ui.centralwidget.__class__.dragEnterEvent = self.dragEnterEvent
         self.ui.centralwidget.__class__.dropEvent = self.dropEvent
 
-        # signals
-        self.connect(self.ui.actionNew_Sequence, QtCore.SIGNAL("triggered()"), self.newSequenceFile)
-        self.connect(self.ui.actionQuit, QtCore.SIGNAL("triggered()"), self.quit)
-        self.connect(self.ui.actionGenerate, QtCore.SIGNAL("triggered()"), self.handleGenerate)
-        self.connect(self.ui.runButton, QtCore.SIGNAL("clicked()"), self.handleRunButton)
-        self.connect(self.ui.abortButton, QtCore.SIGNAL("clicked()"), self.handleAbortButton)
-        self.connect(self.ui.skipButton, QtCore.SIGNAL("clicked()"), self.handleSkipButton)
-        self.connect(self.ui.startButton, QtCore.SIGNAL("clicked()"), self.handleStartButton)
-        self.connect(self.delay_timer, QtCore.SIGNAL("timeout()"), self.handleDelay)
-        self.connect(self.disconnect_timer, QtCore.SIGNAL("timeout()"), self.handleDisconnect)
+        # Connect UI signals.
+        self.ui.abortButton.clicked.connect(self.handleAbortButton)
+        self.ui.actionNew_Sequence.triggered.connect(self.newSequenceFile)
+        self.ui.actionQuit.triggered.connect(self.quit)
+        self.ui.actionGenerate.triggered.connect(self.handleGenerate)
+        self.ui.fromAddressLineEdit.textChanged.connect(self.handleNotifierChange)
+        self.ui.fromPasswordLineEdit.textChanged.connect(self.handleNotifierChange)
+        self.ui.runButton.clicked.connect(self.handleRunButton)
+        self.ui.smtpServerLineEdit.textChanged.connect(self.handleNotifierChange)
+        self.ui.toAddressLineEdit.textChanged.connect(self.handleNotifierChange)
 
-        # tcp communications
-        self.comm = halLib.tcpClient.TCPClient(self.ui.centralwidget)
-        self.connect(self.comm, QtCore.SIGNAL("complete()"), self.handleComplete)
+        # Movie engine.
+        self.movie_engine = MovieEngine(self.ui.movieTableWidget, self.ui.movieGroupBox)
+        self.movie_engine.done.connect(self.handleDone)
+        self.movie_engine.idle.connect(self.handleIdle)
+        self.movie_engine.problem.connect(self.handleProblem)
 
-        # html/xml update
-        if self.parameters.have_update:
-            import update_generator
-            self.html_update = update_generator.HTMLUpdate(parameters)
+        # Load saved notifications settings.
+        self.noti_settings = [[self.ui.fromAddressLineEdit, "from_address"],
+                              [self.ui.fromPasswordLineEdit, "from_password"],
+                              [self.ui.smtpServerLineEdit, "smtp_server"],
+                              [self.ui.toAddressLineEdit, "to_address"]]
+
+        for [object, name] in self.noti_settings:
+            object.setText(self.settings.value(name, "").toString())
 
     @hdebug.debug
     def cleanUp(self):
-        pass
+        # Save notification settings.
+        for [object, name] in self.noti_settings:
+            self.settings.setValue(name, object.text())
 
     @hdebug.debug
     def closeEvent(self, event):
@@ -112,37 +397,31 @@ class Window(QtGui.QMainWindow):
             self.newSequence(str(url.encodedPath())[1:])
 
     @hdebug.debug
-    def goToIdle(self):
-        self.ui.skipButton.hide()
-        self.ui.startButton.hide()
-        self.handleDisconnect()
-        self.ui.runButton.setText("Run")
-        self.ui.runButton.setDown(False)
-        self.ui.abortButton.setText("Abort")
-        self.ui.abortButton.setDown(False)
-        if self.html_update:
-            self.html_update.stop()
-
-    @hdebug.debug
     def handleAbortButton(self):
-        self.action = "abortButton"
-        self.updateState()
-
-    @hdebug.debug
-    def handleComplete(self):
-        self.action = "complete"
-        self.updateState()
-
-    @hdebug.debug
-    def handleDelay(self):
-        self.action = "delayTimeOver"
-        self.updateState()
+        if (self.running):
+            self.movie_engine.abort()
+            self.movie_index = 0
+            self.movie_engine.newMovie(self.movies[self.movie_index], self.movie_index)
+            self.running = False
+            self.ui.abortButton.hide()
+            self.ui.runButton.setText("Start")
 
     @hdebug.debug
     def handleDisconnect(self):
         if not self.comm.stopCommunication():
             self.disconnect_timer.start()
-            
+
+    @hdebug.debug
+    def handleDone(self):
+        if (self.movie_index < (self.number_movies-1)):
+            self.movie_index += 1
+        else:
+            self.movie_index = 0
+            self.ui.runButton.setText("Run")
+            self.running = False
+        self.movie_engine.newMovie(self.movies[self.movie_index], self.movie_index)
+        self.movie_engine.nextAction()
+
     @hdebug.debug
     def handleGenerate(self):
         positions_filename = str(QtGui.QFileDialog.getOpenFileName(self, "Positions File", self.directory, "*.txt"))
@@ -150,106 +429,84 @@ class Window(QtGui.QMainWindow):
         experiment_filename = str(QtGui.QFileDialog.getOpenFileName(self, "Experiment File", self.directory, "*.xml"))
         self.directory = os.path.dirname(experiment_filename)
         output_filename = str(QtGui.QFileDialog.getSaveFileName(self, "Generated File", self.directory, "*.xml"))
+        tb = "No Error"
         try:
             xml_generator.generateXML(experiment_filename, positions_filename, output_filename, self.directory, self)
         except:
             QtGui.QMessageBox.information(self,
                                           "XML Generation Error",
-                                          str(sys.exc_info()[0]))
+                                          traceback.format_exc())
+                                          #str(sys.exc_info()[0]))
         else:
             self.newSequence(output_filename)
-            
+
+    @hdebug.debug
+    def handleIdle(self):
+        self.ui.abortButton.hide()
+        self.ui.runButton.setText("Start")
+        self.running = False
+
+    @hdebug.debug
+    def handleNotifierChange(self, some_text):
+        self.notifier.setFields(self.ui.smtpServerLineEdit.text(),
+                                self.ui.fromAddressLineEdit.text(),
+                                self.ui.fromPasswordLineEdit.text(),
+                                self.ui.toAddressLineEdit.text())
+
+    @hdebug.debug
+    def handleProblem(self, message):
+        self.ui.runButton.setText("Start")
+        self.running = False
+        if (self.ui.errorMsgCheckBox.isChecked()):
+            self.notifier.sendMessage("Acquisition Problem",
+                                      message)
+        QtGui.QMessageBox.information(self,
+                                      "Acquisition Problem",
+                                      message)
+
     @hdebug.debug
     def handleRunButton(self):
-        if self.movies:
-            if self.mode == "idle":
-                self.action = "runButton"
-            else:
-                self.action = "idleButton"
-            self.updateState()
-
-    @hdebug.debug
-    def handleSkipButton(self):
-        self.action = "skipButton"
-        self.updateState()
-
-    @hdebug.debug
-    def handleStartButton(self):
-        self.action = "startButton"
-        self.updateState()
+        if (self.running):
+            self.movie_engine.pause()
+            self.ui.runButton.setText("Pausing..")
+            self.ui.runButton.setDown(True)
+            self.running = False
+        else:
+            self.movie_engine.startCommunication()
+            self.movie_engine.nextAction()
+            self.ui.abortButton.show()
+            self.ui.runButton.setText("Pause")
+            self.running = True
 
     @hdebug.debug
     def newSequence(self, sequence_filename):
-        if self.mode == "idle":
-            new_movies = 0
+        if (not self.running):
+            new_movies = []
             try:
                 new_movies = sequenceParser.parseMovieXml(sequence_filename)
             except:
                 QtGui.QMessageBox.information(self,
                                               "XML Generation Error",
-                                              str(sys.exc_info()[0]))
+                                              traceback.format_exc())
+                #str(sys.exc_info()[0]))
             else:
                 self.movies = new_movies
                 self.movie_index = 0
                 self.number_movies = len(self.movies)
                 self.updateEstimates()
-                self.updateDetails()
+                self.ui.abortButton.show()
+                self.ui.movieTableWidget.show()
+                self.ui.runButton.setText("Run")
+                self.ui.runButton.show()
                 self.ui.sequenceLabel.setText(sequence_filename)
+                self.movie_engine.setNumberMovies(self.number_movies)
+                self.movie_engine.newMovie(self.movies[self.movie_index], self.movie_index)
 
     @hdebug.debug
     def newSequenceFile(self):
         sequence_filename = str(QtGui.QFileDialog.getOpenFileName(self, "New Sequence", self.directory, "*.xml"))
         self.directory = os.path.dirname(sequence_filename)
         self.newSequence(sequence_filename)
-
-    @hdebug.debug
-    def nextMovieSetup(self):
-        movie = self.movies[self.movie_index]
-        if self.html_update:
-            self.html_update.newMovie(movie)
-        self.comm.sendMovieParameters(movie)
-        self.comm_queue = []
-        delay = movie.delay
-        if movie.recenter:
-            self.comm_queue.append(["recenter", delay])
-            delay = 200
-        if movie.find_sum:
-            self.comm_queue.append(["find_sum", delay])
-            delay = 200
-        if (movie.length > 0):
-            self.comm_queue.append(["movie", delay])
-        print self.comm_queue
-        self.handleComplete()
-
-    @hdebug.debug
-    def updateDetails(self):
-        spacing = "    "
-        movie = self.movies[self.movie_index]
-        details = "Movie {0:d} of {1:d}\n\n".format(self.movie_index+1, self.number_movies)
-        details += "Parameters:\n"
-        if movie.pause:
-            details += spacing + "Pause: True\n"
-        else:
-            details += spacing + "Pause: False\n"
-        if hasattr(movie, "stage_x") and hasattr(movie, "stage_y"):
-            details += spacing + "Stage X,Y: {0:.2f}, {1:.2f}\n".format(movie.stage_x, movie.stage_y)
-        if hasattr(movie, "parameters"):
-            details += spacing + "Parameters: {0:d}\n".format(movie.parameters)
-        if hasattr(movie, "lock_target"):
-            details += spacing + "Lock Target: {0:.1f}\n".format(movie.lock_target)
-        if movie.recenter:
-            details += spacing + "Recenter Piezo: True\n"
-        else:
-            details += spacing + "Recenter Piezo: False\n"
-        if movie.find_sum:
-            details += spacing + "Find Sum: True\n"
-        else:
-            details += spacing + "Find Sum: False\n"
-        details += spacing + "Name: {0:s}\n".format(movie.name)
-        details += spacing + "Length: {0:d}\n".format(movie.length)
-        details += spacing + "Progression: " + movie.progression.type + "\n"
-        details += spacing + "Start Delay in ms: {0:d}\n".format(movie.delay)
-        self.ui.detailsLabel.setText(details)
 
     @hdebug.debug
     def updateEstimates(self):
@@ -260,136 +517,6 @@ class Window(QtGui.QMainWindow):
         est_space = float(256 * 256 * 2 * total_frames)/(1000.0 * 1000.0 * 1000.0)
         self.ui.timeLabel.setText("Run Length: {0:.1f} hours (57Hz)".format(est_time))
         self.ui.spaceLabel.setText("Run Size: {0:.1f} GB (256x256)".format(est_space))
-
-    #
-    # This is where everything happens. The idea is that having it all in 
-    # one function will make it little easier to achieve the correct 
-    # behavior then having stuff scattered across multiple functions.
-    # It still seems quite messy however.
-    #
-    # mode = "run", we are connected & running.
-    # mode = "pause", we are not connected.
-    #
-    @hdebug.debug
-    def updateState(self):
-        update = True
-        print self.action
-
-        # abort button.
-        if (self.action == "abortButton"):
-            self.movie_index = 0
-            self.mode = "idle"
-            if self.current_comm:
-                if (self.current_comm == "movie"):
-                    self.comm.stopMovie()
-                self.ui.abortButton.setText("Aborting...")
-                self.ui.abortButton.setDown(True)
-            else:
-                self.goToIdle()
-
-        # complete event.
-        elif (self.action == "complete"):
-            if (self.mode == "running"):
-                self.current_comm = False
-                if (len(self.comm_queue) > 0):
-                    next = self.comm_queue[0]
-                    self.delay_timer.setInterval(next[1])
-                    self.delay_timer.start()
-                else:
-                    self.movie_index += 1
-                    if (self.movie_index == self.number_movies):
-                        self.mode = "idle"
-                        self.movie_index = 0
-                        self.comm.sendMovieParameters(self.movies[0])
-                        self.goToIdle()
-                    else:
-                        self.nextMovieSetup()
-            else:
-                self.goToIdle()
-
-        # delay time over event.
-        elif (self.action == "delayTimeOver"):
-            if (self.mode == "running"):
-                    next = self.comm_queue[0]
-                    self.current_comm = next[0]
-                    if (next[0] == "recenter"):
-                        self.comm.startRecenterPiezo()
-                    elif (next[0] == "find_sum"):
-                        self.comm.startFindSum()
-                    elif (next[0] == "movie"):
-                        movie = self.movies[self.movie_index]
-                        if movie.pause:
-#                            self.ui.skipButton.show()
-                            self.ui.startButton.show()
-                        else:
-                            self.comm.startMovie(movie)
-                    else:
-                        print "???", next[0]
-                    self.comm_queue = self.comm_queue[1:]
-            else:
-                self.goToIdle()
-
-        # idle button.
-        elif (self.action == "idleButton"):
-            self.mode = "idle"
-            if self.current_comm:
-                self.ui.runButton.setText("Pausing...")
-                self.ui.runButton.setDown(True)
-                self.movie_index += 1
-                update = False
-            else:
-                self.goToIdle()
-
-        # run button.
-        elif (self.action == "runButton"):
-            self.mode = "running"
-            self.ui.runButton.setText("Pause")
-            self.comm.startCommunication()
-            self.nextMovieSetup()
-
-        # skip button.
-        elif (self.action == "skipButton"):
-            if self.filming:
-                self.comm.stopMovie()
-            self.movie_index += 1
-            if (self.movie_index == self.number_movies):
-                self.mode = "idle"
-                self.movie_index = 0
-                self.comm.sendMovieParameters(self.movies[0])
-                self.goToIdle()
-            else:
-                self.ui.skipButton.hide()
-                self.ui.startButton.hide()
-                self.nextMovieSetup()
-
-        # start button.
-        elif (self.action == "startButton"):
-            self.ui.skipButton.hide()
-            self.ui.startButton.hide()
-            self.comm.startMovie(self.movies[self.movie_index])
-            if self.html_update:
-                self.html_update.start()
-
-#        # find sum TCP event.
-#        elif (self.action == "sumComplete"):
-#            self.finding_sum = False
-#            if (self.mode == "running"):
-#                movie = self.movies[self.movie_index]
-#                if movie.pause:
-##                    self.ui.skipButton.show()
-#                    self.ui.startButton.show()
-#                else:
-#                    self.filming = True
-#                    self.comm.startMovie(movie)
-#            else:
-#                self.goToIdle()
-
-        # unknown.
-        else:
-            print "unexpected action:", self.action
-
-        if update:
-            self.updateDetails()
 
     @hdebug.debug
     def quit(self):
@@ -407,7 +534,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2011 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
