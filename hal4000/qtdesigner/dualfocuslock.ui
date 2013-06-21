@@ -120,19 +120,6 @@
       <string>Offset (um)</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="jumpButton">
-     <property name="geometry">
-      <rect>
-       <x>50</x>
-       <y>50</y>
-       <width>75</width>
-       <height>24</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Jump</string>
-     </property>
-    </widget>
     <widget class="QDoubleSpinBox" name="jumpSpinBox">
      <property name="geometry">
       <rect>
@@ -153,6 +140,32 @@
      </property>
      <property name="singleStep">
       <double>0.010000000000000</double>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="jumpPButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>50</y>
+       <width>75</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Jump (+)</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="jumpNButton">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>50</y>
+       <width>75</width>
+       <height>24</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Jump (-)</string>
      </property>
     </widget>
    </widget>

@@ -431,8 +431,9 @@ class LockDisplayCam(LockDisplay):
     @hdebug.debug
     def startLock(self, filename):
         LockDisplay.startLock(self, filename)
-        self.filename = filename + "_lock_cam.png"
-        self.save_image = True
+        if filename:
+            self.filename = filename + "_lock_cam.png"
+            self.save_image = True
        
     def updateCamera(self):
         self.camDisplay.newImage(self.control_thread.getImage(), self.show_dot)

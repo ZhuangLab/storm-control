@@ -26,16 +26,16 @@ import focuslock.focusLockZ as focusLockZ
 #
 class AFocusLockZ(focusLockZ.FocusLockZDualCam):
     def __init__(self, parameters, tcp_control, parent = None):
+        lock_fn = lambda(x): 0.05*x
 
         # The numpy fitting routine is apparently not thread safe.
         fit_mutex = QtCore.QMutex()
 
         # Lower objective camera and piezo.
-        cam1 = uc480Cam.cameraQPD(camera_id = 2,
-                                  fit_mutex = fit_mutex)
+        cam1 = uc480Cam.CameraQPD300(camera_id = 2,
+                                     fit_mutex = fit_mutex)
         stage1 = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/",
                                         serial_number = 2636)
-        lock_fn = lambda (x): -0.03 * x
         control_thread1 = stageOffsetControl.StageCamThread(cam1,
                                                             stage1,
                                                             lock_fn,
@@ -43,11 +43,10 @@ class AFocusLockZ(focusLockZ.FocusLockZDualCam):
                                                             parameters.qpd_zcenter)
 
         # Upper objective camera and piezo.
-        cam2 = uc480Cam.cameraQPD(camera_id = 3,
-                                  fit_mutex = fit_mutex)
+        cam2 = uc480Cam.CameraQPD300(camera_id = 3,
+                                     fit_mutex = fit_mutex)
         stage2 = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/",
                                         serial_number = 2637)
-        lock_fn = lambda (x): -0.03 * x
         control_thread2 = stageOffsetControl.StageCamThread(cam2,
                                                             stage2,
                                                             lock_fn,

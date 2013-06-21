@@ -78,13 +78,15 @@
     <max_intensity type="int">10000</max_intensity>
     <colortable type="string">idl5.ctbl</colortable>
     <sync type="int">0</sync>
-    <!-- oil
+    <!-- oil -->
     <flip_horizontal type="int">1</flip_horizontal>
     <flip_vertical type="int">0</flip_vertical>
-    -->
-    <!-- water -->
+
+    <!-- water
     <flip_horizontal type="int">0</flip_horizontal>
     <flip_vertical type="int">1</flip_vertical>
+    -->
+
   </camera2>
 
   <!-- film settings -->
@@ -139,7 +141,7 @@
   <ir_power type="int">15</ir_power>
   <qpd_mode type="int">0</qpd_mode>
   <qpd_zcenter type="float">50.0</qpd_zcenter>
-  <qpd_scale type="float">30.0</qpd_scale>
+  <qpd_scale type="float">-100.0</qpd_scale>
   <qpd_sum_max type="int">256</qpd_sum_max>
   <cal_deadtime type="int">20</cal_deadtime>
   <cal_range type="float">600</cal_range>

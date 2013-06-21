@@ -357,7 +357,7 @@ class FocusLockZDualCam(FocusLockZ):
     @hdebug.debug
     def startLock(self, filename):
         FocusLockZ.startLock(self, filename)
-        self.lock_display2.startLock()
+        self.lock_display2.startLock(False)
 
     @hdebug.debug
     def stopLock(self):
