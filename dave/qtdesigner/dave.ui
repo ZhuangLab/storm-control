@@ -131,7 +131,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>SMTP Server:</string>
+      <string>SMTP server:</string>
      </property>
     </widget>
     <widget class="QLabel" name="fromAddressLabel">
@@ -236,7 +236,7 @@
      <property name="geometry">
       <rect>
        <x>210</x>
-       <y>250</y>
+       <y>249</y>
        <width>71</width>
        <height>22</height>
       </rect>
@@ -246,7 +246,7 @@
      <property name="geometry">
       <rect>
        <x>150</x>
-       <y>250</y>
+       <y>249</y>
        <width>71</width>
        <height>20</height>
       </rect>
