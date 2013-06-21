@@ -276,7 +276,11 @@ class CameraQPD():
         # Set camera AOI
         if (os.path.exists(self.file_name)):
             fp = open(self.file_name, "r")
-            [self.x_start, self.y_start, self.zero_dist] = map(int, fp.readline().split(","))
+            data = fp.readline().split(",")
+            self.x_start = int(data[0])
+            self.y_start = int(data[1])
+            self.zero_dist = float(data[2])
+            #[self.x_start, self.y_start, self.zero_dist] = map(int, fp.readline().split(","))
             fp.close()
         else:
             self.x_start = 646
