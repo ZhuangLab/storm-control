@@ -193,8 +193,9 @@ class StageQPDThread(QtCore.QThread):
             [power, x_offset, y_offset] = self.qpdScan()
 
             self.qpd_mutex.lock()
+            self.sum = power
+
             if (power > 0):
-                self.sum = power
                 self.offset = x_offset / power
             self.unacknowledged = 0
 

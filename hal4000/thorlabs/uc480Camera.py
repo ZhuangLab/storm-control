@@ -281,7 +281,7 @@ class CameraQPD():
         else:
             self.x_start = 646
             self.y_start = 216
-            self.zero_dist = 100
+            self.zero_dist = 100.0
         self.x_width = 200
         self.y_width = 200
         self.setAOI()

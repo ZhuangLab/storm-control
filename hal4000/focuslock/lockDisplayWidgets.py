@@ -184,7 +184,7 @@ class QQPDDisplay(QStatusDisplay):
 # USB camera image display.
 class QCamDisplay(QtGui.QWidget):    
     adjustCamera = QtCore.pyqtSignal(int, int)
-    adjustOffset = QtCore.pyqtSignal(int)
+    adjustOffset = QtCore.pyqtSignal(float)
     changeFitMode = QtCore.pyqtSignal(int)
 
     def __init__(self, parent = None):
@@ -236,9 +236,9 @@ class QCamDisplay(QtGui.QWidget):
             # Adjust the distance between the spots which
             # is considered to be zero.
             elif (which_key == QtCore.Qt.Key_Comma):
-                self.adjustOffset.emit(-1)
+                self.adjustOffset.emit(-0.1)
             elif (which_key == QtCore.Qt.Key_Period):
-                self.adjustOffset.emit(+1)
+                self.adjustOffset.emit(+0.1)
 
             # Adjust how to the offset is determined,
             # i.e. by fitting or by a moment calculation
