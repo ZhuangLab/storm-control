@@ -417,8 +417,9 @@ class Window(QtGui.QMainWindow):
             self.movie_index += 1
         else:
             self.movie_index = 0
-            self.ui.runButton.setText("Run")
-            self.running = False
+            self.movies[self.movie_index].pause = True # This keeps us from looping forever.
+            #self.ui.runButton.setText("Run")
+            #self.running = False
         self.movie_engine.newMovie(self.movies[self.movie_index], self.movie_index)
         self.movie_engine.nextAction()
 
