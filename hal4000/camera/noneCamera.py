@@ -8,7 +8,7 @@
 import halLib.hdebug as hdebug
 
 import camera.classicSingleCamera as classicSingleCamera
-import camera.detachedSingleCamera as detachedSingleCamera
+#import camera.detachedSingleCamera as detachedSingleCamera
 
 def getMode():
     return "single"

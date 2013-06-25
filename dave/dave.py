@@ -415,13 +415,14 @@ class Window(QtGui.QMainWindow):
     def handleDone(self):
         if (self.movie_index < (self.number_movies-1)):
             self.movie_index += 1
+            self.movie_engine.newMovie(self.movies[self.movie_index], self.movie_index)
+            self.movie_engine.nextAction()
         else:
             self.movie_index = 0
-            self.movies[self.movie_index].pause = True # This keeps us from looping forever.
-            #self.ui.runButton.setText("Run")
-            #self.running = False
-        self.movie_engine.newMovie(self.movies[self.movie_index], self.movie_index)
-        self.movie_engine.nextAction()
+            #self.movies[self.movie_index].pause = True # This keeps us from looping forever.
+            self.ui.runButton.setText("Run")
+            self.running = False
+            self.movie_engine.newMovie(self.movies[self.movie_index], self.movie_index)
 
     @hdebug.debug
     def handleGenerate(self):
