@@ -1029,6 +1029,7 @@ class Window(QtGui.QMainWindow):
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
+
     # Splash Screen.
     pixmap = QtGui.QPixmap("splash.png")
     splash = QtGui.QSplashScreen(pixmap)
@@ -1044,7 +1045,10 @@ if __name__ == "__main__":
         setup_name = parameters.setup_name
         parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
     params.setSetupName(parameters, setup_name)
-    
+
+    # Start logger.
+    hdebug.startLogging(parameters.directory + "logs/", "hal4000")
+
     # Load app.
     window = Window(parameters)
     window.newParameters()
