@@ -368,8 +368,8 @@ class Window(QtGui.QMainWindow):
         # Load saved notifications settings.
         self.noti_settings = [[self.ui.fromAddressLineEdit, "from_address"],
                               [self.ui.fromPasswordLineEdit, "from_password"],
-                              [self.ui.smtpServerLineEdit, "smtp_server"],
-                              [self.ui.toAddressLineEdit, "to_address"]]
+                              [self.ui.smtpServerLineEdit, "smtp_server"]]
+#                              [self.ui.toAddressLineEdit, "to_address"]]
 
         for [object, name] in self.noti_settings:
             object.setText(self.settings.value(name, "").toString())
