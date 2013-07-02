@@ -66,19 +66,20 @@ def startLogging(directory, program_name):
     a_logger = logging.getLogger(program_name)
     a_logger.setLevel(logging.DEBUG)
 
-    # Create formatter.
-    a_formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s')
+    # Create formatters.
+    rt_formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s')
+    st_formatter = logging.Formatter('%(message)s')
 
     # Rotating file handle for saving output.
     rf_handler = logging.handlers.RotatingFileHandler(directory + program_name + ".out",
                                                       maxBytes = 10000,
                                                       backupCount = 5)
-    rf_handler.setFormatter(a_formatter)
+    rf_handler.setFormatter(rt_formatter)
     a_logger.addHandler(rf_handler)
 
     # Stream handler for console output.
     st_handler = logging.StreamHandler()
-    st_handler.setFormatter(a_formatter)
+    st_handler.setFormatter(st_formatter)
     a_logger.addHandler(st_handler)
 
     # Set to capture stdout.
