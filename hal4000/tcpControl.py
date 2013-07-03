@@ -116,9 +116,8 @@ class TCPControl(QtNetwork.QTcpServer):
             self.emit(QtCore.SIGNAL(signal), *parsed_data)
 
     def sendComplete(self, a_string = "NA"):
-        if self.debug:
-            print "sendComplete"
         if self.connected:
+            print "sendComplete", a_string
             self.socket.write(QtCore.QByteArray("Complete," + a_string + "\n"))
             self.socket.flush()
 

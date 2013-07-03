@@ -66,39 +66,42 @@ class TCPClient(QtGui.QWidget):
             self.testing_timer.timeout.connect(self.handleComplete)
 
     def handleAcknowledged(self):
+        print " got response"
         self.unacknowledged -= 1
-        self.acknowledged.emit()
-
+        if (self.unacknowledged == 0):
+            print " acknowledged"
+            self.acknowledged.emit()
+        
     def handleComplete(self, a_string):
         if (self.state == "filming"):
-            print " movie complete", a_string
+            print "movie complete", a_string
         elif (self.state == "finding_sum"):
-            print " finding sum complete", a_string
+            print "finding sum complete", a_string
         elif (self.state == "recentering"):
-            print " recentering complete", a_string
+            print "recentering complete", a_string
         else:
-            print " unknown state:", self.state
+            print "unknown state:", self.state
         self.complete.emit(a_string)
         self.state = None
 
     def sendCommand(self, command):
         if self.connected:
+            print "sending:", command
             self.unacknowledged += 1
             self.socket.sendCommand(command)
             self.socket.flush()
             time.sleep(0.05)
-            print " sent command:", command
         else:
-            print " Not connected?!?"
+            print "Not connected?!?"
 
     def sendInitialPowers(self, movie):
         if self.testing:
-            print " sending initial powers"
+            print "sending initial powers"
 
     # Fire all the data off at once...
     def sendMovieParameters(self, movie):
         if self.testing:
-            print " sending movie parameters"
+            print "sending movie parameters"
         else:
             if self.unacknowledged != 0:
                 print self.unacknowledged, "commands are still pending"
@@ -125,7 +128,7 @@ class TCPClient(QtGui.QWidget):
             self.sendCommand("setDirectory,string,{0:s}".format(directory))
 
     def startCommunication(self):
-        print " starting communications"
+        print "starting communications"
         self.socket = HALSocket(9000)
         self.connected = 1
         self.unacknowledged = 0
@@ -133,12 +136,12 @@ class TCPClient(QtGui.QWidget):
         self.socket.complete.connect(self.handleComplete)
 
     def startFindSum(self):
-        print " start find sum"
+        print "start find sum"
         self.state = "finding_sum"
         self.sendCommand("findSum")
 
     def startMovie(self, movie):
-        print " start movie"
+        print "start movie"
         if self.testing:
             self.testing_timer.start()
         else:
@@ -165,12 +168,12 @@ class TCPClient(QtGui.QWidget):
             self.sendCommand("movie,string,{0:s},int,{1:d}".format(movie.name, movie.length))
 
     def startRecenterPiezo(self):
-        print " start recenter piezo"
+        print "start recenter piezo"
         self.state = "recentering"
         self.sendCommand("recenterPiezo")
 
     def stopCommunication(self):
-        print " stopping communications"
+        print "stopping communications"
         if self.unacknowledged == 0:
             self.socket.disconnectFromHost()
             return True
@@ -178,7 +181,7 @@ class TCPClient(QtGui.QWidget):
             return False
 
     def stopMovie(self):
-        print " stop movie"
+        print "stop movie"
         if self.testing:
             self.testing_timer.stop()
             self.complete.emit()

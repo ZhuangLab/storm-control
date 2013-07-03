@@ -507,8 +507,9 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def newSequenceFile(self):
         sequence_filename = str(QtGui.QFileDialog.getOpenFileName(self, "New Sequence", self.directory, "*.xml"))
-        self.directory = os.path.dirname(sequence_filename)
-        self.newSequence(sequence_filename)
+        if sequence_filename:
+            self.directory = os.path.dirname(sequence_filename)
+            self.newSequence(sequence_filename)
 
     @hdebug.debug
     def updateEstimates(self):
