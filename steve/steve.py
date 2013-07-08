@@ -2,9 +2,10 @@
 #
 # Utility for imaging array tomography samples.
 #
-# Hazen 02/13
+# Hazen 07/13
 #
 
+import os
 import sys
 from PyQt4 import QtCore, QtGui
 
@@ -93,7 +94,7 @@ class Window(QtGui.QMainWindow):
         coord.Point.pixels_to_um = parameters.pixels_to_um
 
         # variables
-        self.circles = []
+        #self.circles = []
         self.current_center = coord.Point(0.0, 0.0, "um")
         self.current_magnification = 1.0
         self.current_objective = False
@@ -101,7 +102,7 @@ class Window(QtGui.QMainWindow):
         self.debug = parameters.debug
         self.parameters = parameters
         self.picture_queue = []
-        self.rects = []
+        #self.rects = []
 
         # ui setup
         self.ui = steveUi.Ui_MainWindow()
@@ -162,13 +163,17 @@ class Window(QtGui.QMainWindow):
         self.view.show()
 
         # Initialize positions list.
-        self.positions = positions.Positions(self.ui.positionsFrame)
+        self.positions = positions.Positions(parameters,
+                                             self.view.getScene(),
+                                             self.ui.positionsFrame)
         layout = QtGui.QGridLayout(self.ui.positionsFrame)
         layout.addWidget(self.positions)
+        self.ui.positionsFrame.setLayout(layout)
         self.positions.show()
 
         # Initialize sections.
-        self.sections = sections.Sections(self.view,
+        self.sections = sections.Sections(parameters,
+                                          self.view.getScene(),
                                           self.ui.sectionsDisplayFrame,
                                           self.ui.sectionsScrollArea,
                                           self.ui.sectionsTab)
@@ -201,14 +206,14 @@ class Window(QtGui.QMainWindow):
         self.view.mouseMove.connect(self.updateMosaicLabel)
         self.view.takePictures.connect(self.takePictures)
 
-        self.positions.addPositionSig.connect(self.addPositions)
-        self.positions.currentPositionChange.connect(self.handlePositionSelection)
-        self.positions.deletePosition.connect(self.handlePositionDelete)
+        #self.positions.addPositionSig.connect(self.addPositions)
+        #self.positions.currentPositionChange.connect(self.handlePositionSelection)
+        #self.positions.deletePosition.connect(self.handlePositionDelete)
 
         self.sections.addPositions.connect(self.addPositions)
-        self.sections.currentSectionChange.connect(self.handleSectionSelection)
-        self.sections.deleteSection.connect(self.handleSectionDelete)
-        self.sections.moveSection.connect(self.handleSectionMove)
+        #self.sections.currentSectionChange.connect(self.handleSectionSelection)
+        #self.sections.deleteSection.connect(self.handleSectionDelete)
+        #self.sections.moveSection.connect(self.handleSectionMove)
         self.sections.takePictures.connect(self.takePictures)
 
         self.comm.captureComplete.connect(self.addImage)
@@ -232,11 +237,11 @@ class Window(QtGui.QMainWindow):
 
     def addPositions(self, points):
         for a_point in points:
-            self.rects.append(self.view.addPositionRectangle(a_point))
+            #self.rects.append(self.view.addPositionRectangle(a_point))
             self.positions.addPosition(a_point)
 
     def addSection(self, a_point):
-        self.circles.append(self.view.addSectionCircle(a_point))
+        #self.circles.append(self.view.addSectionCircle(a_point))
         self.sections.addSection(a_point)
 
     @hdebug.debug
@@ -289,7 +294,53 @@ class Window(QtGui.QMainWindow):
                                                                 self.parameters.directory,
                                                                 "*.msc"))
         if mosaic_filename:
-            self.view.loadMosaicFile(mosaic_filename)
+            legacy_format = False
+            dirname = os.path.dirname(mosaic_filename)
+
+            mosaic_fp = open(mosaic_filename, "r")
+
+            # First, figure out file size
+            mosaic_fp.readline()
+            number_lines = 0
+            while 1:
+                line = mosaic_fp.readline()
+                if not line: break
+                number_lines += 1
+            mosaic_fp.seek(0)
+
+            # Create progress bar
+            progress_bar = QtGui.QProgressDialog("Load Files...",
+                                                 "Abort Load",
+                                                 0,
+                                                 number_lines,
+                                                 self)
+            progress_bar.setWindowModality(QtCore.Qt.WindowModal)
+
+            mosaic_dirname = os.path.dirname(mosaic_filename)
+            file_number = 1
+            while 1:
+                if progress_bar.wasCanceled(): break
+                line = mosaic_fp.readline().rstrip()
+                if not line: break
+                data = line.split(",")
+                if (self.view.loadFromMosaicFileData(data, mosaic_dirname)):
+                    legacy_format = False
+                elif (self.positions.loadFromMosaicFileData(data, mosaic_dirname)):
+                    legacy_format = False
+                elif (self.sections.loadFromMosaicFileData(data, mosaic_dirname)):
+                    legacy_format = False
+                else:
+                    print "Unrecognized scene element:", data[0]
+                
+                progress_bar.setValue(file_number)
+                file_number += 1
+
+            progress_bar.close()
+            mosaic_fp.close()
+
+            if legacy_format:
+                # load older data formats here..
+                pass
 
     def handleLoadPositions(self):
         positions_filename = str(QtGui.QFileDialog.getOpenFileName(self,
@@ -332,12 +383,12 @@ class Window(QtGui.QMainWindow):
     def handleOpacityChange(self, value):
         self.sections.changeOpacity(0.01*float(value))
 
-    def handlePositionDelete(self, index):
-        self.view.removeRectangle(self.rects[index])
-        del self.rects[index]
+    #def handlePositionDelete(self, index):
+    #    self.view.removeRectangle(self.rects[index])
+    #    del self.rects[index]
 
-    def handlePositionSelection(self, a_point):
-        self.view.moveSelectionRectangle(a_point)
+    #def handlePositionSelection(self, a_point):
+    #    self.view.moveSelectionRectangle(a_point)
 
     def handleSavePositions(self):
         positions_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
@@ -353,20 +404,25 @@ class Window(QtGui.QMainWindow):
                                                                 self.parameters.directory,
                                                                 "*.msc"))
         if mosaic_filename:
-            self.view.saveMosaicFile(mosaic_filename)
+            mosaic_fileptr = open(mosaic_filename, "w")
+            self.view.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
+            self.positions.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
+            self.sections.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
 
-    def handleSectionDelete(self, index):
-        self.view.removeCircle(self.circles[index])
-        del self.circles[index]
+#            self.view.saveMosaicFile(mosaic_filename)
 
-    def handleSectionMove(self, index, a_point):
-        self.view.moveSectionEllipse(self.circles[index], a_point)
-        self.view.moveSectionSelection(a_point)
-        self.sections.handleSectionChanged()
+    #def handleSectionDelete(self, index):
+    #    self.view.removeCircle(self.circles[index])
+    #    del self.circles[index]
 
-    def handleSectionSelection(self, a_point):
-        self.view.moveSectionSelection(a_point)
-        self.sections.handleSectionChanged()
+    #def handleSectionMove(self, index, a_point):
+    #    self.view.moveSectionEllipse(self.circles[index], a_point)
+    #    self.view.moveSectionSelection(a_point)
+    #    self.sections.handleSectionChanged()
+
+    #def handleSectionSelection(self, a_point):
+    #    self.view.moveSectionSelection(a_point)
+    #    self.sections.handleSectionChanged()
 
     def handleSetWorkingDirectory(self):
         directory = str(QtGui.QFileDialog.getExistingDirectory(self,
@@ -390,8 +446,10 @@ class Window(QtGui.QMainWindow):
     def handleTabChange(self, value):
         if (value == 0):
             self.ui.mosaicLabel.show()
+            self.sections.setSceneItemsVisible(True)
         else:
             self.ui.mosaicLabel.hide()
+            self.sections.setSceneItemsVisible(False)
 
     def updateMosaicLabel(self, a_point):
         self.ui.mosaicLabel.setText("{0:.2f}, {1:.2f}".format(a_point.x_um, a_point.y_um))

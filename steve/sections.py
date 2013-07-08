@@ -3,7 +3,7 @@
 # Handles section manipulation.
 # Classes organized alphabetically.
 #
-# Hazen 03/13
+# Hazen 07/13
 #
 
 import numpy
@@ -13,9 +13,40 @@ import coord
 import mosaicView
 
 #
+# Section ellipse rendering.
+#
+class SceneEllipseItem(QtGui.QGraphicsEllipseItem):
+
+    visible = True
+
+    def __init__(self, x_size, y_size, pen, brush):
+        QtGui.QGraphicsEllipseItem.__init__(self,
+                                            0,
+                                            0,
+                                            x_size,
+                                            y_size)
+        self.setPen(pen)
+        self.setBrush(brush)
+        self.setZValue(999.0)
+
+    def paint(self, painter, options, widget):
+        if self.visible:
+            QtGui.QGraphicsEllipseItem.paint(self, painter, options, widget)
+
+
+#
 # A Section
 #
 class Section(QtGui.QWidget):
+
+    # Variables.
+    brush = QtGui.QBrush(QtGui.QColor(255,255,255,0))
+    deselected_pen = QtGui.QPen(QtGui.QColor(0,0,255))
+    selected_pen = QtGui.QPen(QtGui.QColor(255,0,0))
+    x_size = 1
+    y_size = 1
+
+    # Signals.
     sectionChanged = QtCore.pyqtSignal()
     sectionCheckBoxChange = QtCore.pyqtSignal()
     sectionSelected = QtCore.pyqtSignal(int)
@@ -30,11 +61,22 @@ class Section(QtGui.QWidget):
         self.controls.sectionCheckBoxChange.connect(self.handleCheckBox)
         self.controls.sectionSelected.connect(self.handleSelection)
 
+        self.scene_ellipse_item = SceneEllipseItem(self.x_size,
+                                                   self.y_size,
+                                                   self.selected_pen,
+                                                   self.brush)
+        self.setLocation()
+
     def deselect(self):
+        self.scene_ellipse_item.setZValue(999.0)
+        self.scene_ellipse_item.setPen(self.deselected_pen)
         self.controls.deselect()
 
     def getAngle(self):
         return self.controls.currentAngle()
+
+    def getSceneEllipseItem(self):
+        return self.scene_ellipse_item
 
     def getLocation(self):
         return self.controls.currentLocation()
@@ -49,6 +91,7 @@ class Section(QtGui.QWidget):
         self.sectionCheckBoxChange.emit()
 
     def handleSectionChanged(self):
+        self.setLocation()
         self.sectionChanged.emit()
 
     def handleSelection(self):
@@ -66,8 +109,27 @@ class Section(QtGui.QWidget):
     def isChecked(self):
         return self.controls.isChecked()
 
+#    @staticmethod
+#    def load(string):
+#        [number, x_pos, y_pos, angle] = string.strip().split(",")
+#        return [int(number), float(x_pos), float(y_pos), float(angle)]
+
+    def saveToMosaicFile(self, filep):
+        number = self.getSectionNumber()
+        a_point = self.getLocation()
+        angle = self.getAngle()
+        [x_um, y_um] = a_point.getUm()
+        filep.write("section," + ",".join(map(str,[number, x_um, y_um, angle])) + "\r\n")
+
     def select(self):
+        self.scene_ellipse_item.setZValue(1999.0)
+        self.scene_ellipse_item.setPen(self.selected_pen)
         self.controls.select()
+
+    def setLocation(self):
+        a_point = self.getLocation()
+        self.scene_ellipse_item.setPos(a_point.x_pix - 0.5 * self.x_size,
+                                       a_point.y_pix - 0.5 * self.y_size)
 
     def setSectionNumber(self, number):
         self.section_number = number
@@ -289,20 +351,22 @@ class SectionRenderer(QtGui.QGraphicsView):
 #
 class Sections(QtGui.QWidget):
     addPositions = QtCore.pyqtSignal(object)
-    currentSectionChange = QtCore.pyqtSignal(object)
-    deleteSection = QtCore.pyqtSignal(int)
-    moveSection = QtCore.pyqtSignal(int, object)
     takePictures = QtCore.pyqtSignal(object)
 
-    def __init__(self, view_object, display_frame, scroll_area, parent):
+    def __init__(self, parameters, scene, display_frame, scroll_area, parent):
         QtGui.QWidget.__init__(self, parent)
 
         self.active_section = False
         self.number_x = 5
         self.number_y = 3
         self.scale = 1.0
+        self.scene = scene
         self.sections = []
-        self.view_object = view_object
+
+        Section.deselected_pen.setWidth(parameters.pen_width)
+        Section.selected_pen.setWidth(parameters.pen_width)
+        Section.x_size = parameters.ellipse_size
+        Section.y_size = parameters.ellipse_size
 
         self.sections_controls_list = SectionControlsList(scroll_area)
         scroll_area.setWidget(self.sections_controls_list)
@@ -313,7 +377,7 @@ class Sections(QtGui.QWidget):
         layout.addWidget(self.sections_view)
         self.sections_view.show()
 
-        self.section_renderer = SectionRenderer(self.view_object.getScene(), 
+        self.section_renderer = SectionRenderer(self.scene,
                                                 self.sections_view.width(),
                                                 self.sections_view.height(),
                                                 self)
@@ -327,17 +391,18 @@ class Sections(QtGui.QWidget):
         self.sections_view.sizeEvent.connect(self.handleSectionSizeChange)
         self.sections_view.zoomEvent.connect(self.handleScaleChange)
 
-    def addSection(self, a_point):
+    def addSection(self, a_point, angle = 0.0):
         a_section = Section(len(self.sections),
                             a_point.x_um,
                             a_point.y_um,
-                            0.0,
+                            angle,
                             self)
-        a_section.sectionChanged.connect(self.handleSectionChange)
+        a_section.sectionChanged.connect(self.handleSectionUpdate)
         a_section.sectionCheckBoxChange.connect(self.updateBackgroundPixmap)
         a_section.sectionSelected.connect(self.handleActiveSectionUpdate)
         self.sections.append(a_section)
         self.sections_controls_list.addSection(a_section)
+        self.scene.addItem(a_section.getSceneEllipseItem())
         if not self.active_section:
             self.handleActiveSectionUpdate(0)
 
@@ -357,7 +422,7 @@ class Sections(QtGui.QWidget):
         else:
             self.active_section = self.sections[which_section]
             self.active_section.select()
-        self.currentSectionChange.emit(self.active_section.getLocation())
+        #self.currentSectionChange.emit(self.active_section.getLocation())
 
     def handleKeyEvent(self, which_key):
 
@@ -417,30 +482,41 @@ class Sections(QtGui.QWidget):
         self.section_renderer.setScale(self.scale)
         self.viewUpdate()
 
-    # This is triggered by a change in the active section parameters.
-    # It signals mosaicView (via steve) to update the graphics scene.
-    def handleSectionChange(self):
-        # The active section should always be the one that is changing..
-        self.moveSection.emit(self.active_section.getSectionNumber(),
-                              self.active_section.getLocation())
-
-    # This is called once the scene has been updated to redraw the
-    # active section based on its new parameters.
-    def handleSectionChanged(self):
-        if self.active_section.isChecked():
-            self.updateBackgroundPixmap()
-        self.updateForegroundPixmap()
+#    # This is triggered by a change in the active section parameters.
+#    # It signals mosaicView (via steve) to update the graphics scene.
+#    def handleSectionChange(self):
+#        # The active section should always be the one that is changing..
+#        self.moveSection.emit(self.active_section.getSectionNumber(),
+#                              self.active_section.getLocation())
 
     def handleSectionSizeChange(self, width, height):
         self.section_renderer.setRenderSize(width, height)
         self.viewUpdate()
+
+    # This is called once the scene has been updated to redraw the
+    # active section based on its new parameters.
+    def handleSectionUpdate(self):
+        if self.active_section.isChecked():
+            self.updateBackgroundPixmap()
+        self.updateForegroundPixmap()
 
     def incrementActiveSection(self, diff):
         if self.active_section:
             next_section = (self.active_section.getSectionNumber() + diff) % len(self.sections)
             self.handleActiveSectionUpdate(next_section)
 
+    def loadFromMosaicFileData(self, data, directory):
+        if (data[0] == "section"):
+            self.addSection(coord.Point(float(data[2]), float(data[3]), "um"),
+                            float(data[4]))
+            return True
+        else:
+            return False
+
     def removeActiveSection(self):
+        # Remove the active section from the scene
+        self.scene.removeItem(self.active_section.getSceneEllipseItem())
+
         # Remove the active section from the list of controls.
         self.sections_controls_list.removeSection(self.active_section)
 
@@ -467,7 +543,11 @@ class Sections(QtGui.QWidget):
                 self.handleActiveSectionUpdate(0)
 
         # Notify steve to remove the section circle from the view.
-        self.deleteSection.emit(which_section)
+        #self.deleteSection.emit(which_section)
+
+    def saveToMosaicFile(self, file_ptr, filename):
+        for section in self.sections:
+            section.saveToMosaicFile(file_ptr)
 
     # This is used for figuring out ways to automatically align sections.
     def saveSectionsNumpy(self):
@@ -477,6 +557,10 @@ class Sections(QtGui.QWidget):
                                                             section.getAngle())
             numpy.save("section_" + str(index), temp)
             index += 1
+
+    def setSceneItemsVisible(self, visible):
+        SceneEllipseItem.visible = visible
+        self.handleSectionUpdate()
 
     def updateBackgroundPixmap(self):
         if (len(self.sections) == 0):

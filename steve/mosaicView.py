@@ -2,7 +2,7 @@
 #
 # Handles viewing the mosaic.
 #
-# Hazen 02/13
+# Hazen 07/13
 #
 
 import os
@@ -95,36 +95,36 @@ class MosaicView(multiView.MultifieldView):
         multiView.MultifieldView.__init__(self, parameters, parent)
 
         # class variables
-        self.ellipse_size = parameters.ellipse_size
+        #self.ellipse_size = parameters.ellipse_size
         self.extrapolate_count = parameters.extrapolate_picture_count
         self.extrapolate_start = None
         self.number_x = 5
         self.number_y = 3
         self.pointf = 0
-        self.rectangle_size = parameters.rectangle_size/parameters.pixels_to_um
+        #self.rectangle_size = parameters.rectangle_size/parameters.pixels_to_um
         self.xoffset = 0.0
         self.yoffset = 0.0
 
-        self.pen = QtGui.QPen(self.pen_color)
-        self.pen.setWidth(self.pen_width)
+        #self.pen = QtGui.QPen(self.pen_color)
+        #self.pen.setWidth(self.pen_width)
 
-        pen = QtGui.QPen(QtGui.QColor(0, 0, 255))
-        pen.setWidth(self.pen_width)
-        self.selection_rect = self.addRectangle(0,
-                                                0,
-                                                self.rectangle_size,
-                                                self.rectangle_size,
-                                                pen,
-                                                2000.0)
-
-        pen = QtGui.QPen(QtGui.QColor(0, 0, 255))
-        pen.setWidth(self.pen_width)
-        self.section_ellipse = self.addEllipse(0,
-                                               0,
-                                               self.ellipse_size,
-                                               self.ellipse_size,
-                                               pen,
-                                               1999.0)
+        #pen = QtGui.QPen(QtGui.QColor(0, 0, 255))
+        #pen.setWidth(self.pen_width)
+        #self.selection_rect = self.addRectangle(0,
+        #                                        0,
+        #                                        self.rectangle_size,
+        #                                        self.rectangle_size,
+        #                                        pen,
+        #                                        2000.0)
+        #
+        #pen = QtGui.QPen(QtGui.QColor(0, 0, 255))
+        #pen.setWidth(self.pen_width)
+        #self.section_ellipse = self.addEllipse(0,
+        #                                       0,
+        #                                       self.ellipse_size,
+        #                                       self.ellipse_size,
+        #                                       pen,
+        #                                       1999.0)
 
         # popup menu initializiation
         self.pictAct = QtGui.QAction(self.tr("Take Picture"), self)
@@ -163,21 +163,21 @@ class MosaicView(multiView.MultifieldView):
                               self.currentz)
         self.currentz += 0.01
 
-    def addPositionRectangle(self, a_point):
-        return self.addRectangle(a_point.x_pix,
-                                 a_point.y_pix,
-                                 self.rectangle_size,
-                                 self.rectangle_size,
-                                 self.pen,
-                                 1000.0)
-
-    def addSectionCircle(self, a_point):
-        return self.addEllipse(a_point.x_pix,
-                               a_point.y_pix,
-                               self.ellipse_size,
-                               self.ellipse_size,
-                               self.pen,
-                               999.0)
+#    def addPositionRectangle(self, a_point):
+#        return self.addRectangle(a_point.x_pix,
+#                                 a_point.y_pix,
+#                                 self.rectangle_size,
+#                                 self.rectangle_size,
+#                                 self.pen,
+#                                 1000.0)
+#
+#    def addSectionCircle(self, a_point):
+#        return self.addEllipse(a_point.x_pix,
+#                               a_point.y_pix,
+#                               self.ellipse_size,
+#                               self.ellipse_size,
+#                               self.pen,
+#                               999.0)
 
     def changeMagnification(self, objective, new_magnification):
         self.changeImageMagnifications(objective, new_magnification)
@@ -287,23 +287,23 @@ class MosaicView(multiView.MultifieldView):
 #        y_pix = y_um / self.pixels_to_um
 #        rect.setPos(x_pix, y_pix)
 
-    # Move one of the (red) ellipses that indicates section position.
-    def moveSectionEllipse(self, a_ellipse, a_point):
-        x_pix = a_point.x_pix - (self.ellipse_size * 0.5)
-        y_pix = a_point.y_pix - (self.ellipse_size * 0.5)
-        a_ellipse.setPos(x_pix, y_pix)
+#    # Move one of the (red) ellipses that indicates section position.
+#    def moveSectionEllipse(self, a_ellipse, a_point):
+#        x_pix = a_point.x_pix - (self.ellipse_size * 0.5)
+#        y_pix = a_point.y_pix - (self.ellipse_size * 0.5)
+#        a_ellipse.setPos(x_pix, y_pix)
 
-    # Move the blue ellipse that indicates which is the current section.
-    def moveSectionSelection(self, a_point):
-        x_pix = a_point.x_pix - (self.ellipse_size * 0.5)
-        y_pix = a_point.y_pix - (self.ellipse_size * 0.5)
-        self.section_ellipse.setPos(x_pix, y_pix)
+#    # Move the blue ellipse that indicates which is the current section.
+#    def moveSectionSelection(self, a_point):
+#        x_pix = a_point.x_pix - (self.ellipse_size * 0.5)
+#        y_pix = a_point.y_pix - (self.ellipse_size * 0.5)
+#        self.section_ellipse.setPos(x_pix, y_pix)
 
-    # Move the blue square that indicates which is the current position.
-    def moveSelectionRectangle(self, a_point):
-        x_pix = a_point.x_pix - (self.rectangle_size * 0.5)
-        y_pix = a_point.y_pix - (self.rectangle_size * 0.5)
-        self.selection_rect.setPos(x_pix, y_pix)
+#    # Move the blue square that indicates which is the current position.
+#    def moveSelectionRectangle(self, a_point):
+#        x_pix = a_point.x_pix - (self.rectangle_size * 0.5)
+#        y_pix = a_point.y_pix - (self.rectangle_size * 0.5)
+#        self.selection_rect.setPos(x_pix, y_pix)
 
 #
 # The MIT License

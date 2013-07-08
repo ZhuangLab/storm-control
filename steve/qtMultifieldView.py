@@ -5,7 +5,7 @@
 # by the steve software and others for image
 # display.
 #
-# Hazen 02/13
+# Hazen 07/13
 #
 
 import pickle
@@ -34,23 +34,23 @@ class MultifieldView(QtGui.QGraphicsView):
         self.directory = ""
         self.image_items = []
         self.margin = 8000.0
-        self.pen_color = QtGui.QColor(parameters.pen_color[0],
-                                      parameters.pen_color[1],
-                                      parameters.pen_color[2])
-        self.pen_width = parameters.pen_width
+        #self.pen_color = QtGui.QColor(parameters.pen_color[0],
+        #                              parameters.pen_color[1],
+        #                              parameters.pen_color[2])
+        #self.pen_width = parameters.pen_width
         self.scene_rect = [-self.margin, -self.margin, self.margin, self.margin]
         self.zoom_in = 1.2
         self.zoom_out = 1.0/self.zoom_in
 
-        self.pen = QtGui.QPen(self.pen_color)
-        self.pen.setWidth(self.pen_width)
+        #self.pen = QtGui.QPen(self.pen_color)
+        #self.pen.setWidth(self.pen_width)
 
         # ui initializiation
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
-        self.setSizePolicy(sizePolicy)
+        #sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding)
+        #sizePolicy.setHorizontalStretch(0)
+        #sizePolicy.setVerticalStretch(0)
+        #sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
+        #self.setSizePolicy(sizePolicy)
         self.setMinimumSize(QtCore.QSize(200, 200))
 
         # scene initialization
@@ -61,38 +61,38 @@ class MultifieldView(QtGui.QGraphicsView):
         self.setMouseTracking(True)
         self.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
 
-    def addEllipse(self, x_pix, y_pix, x_size, y_size, pen, z_val):        
-        #ellipse = self.scene.addEllipse(0, 
-        #                                0,
-        #                                x_size,
-        #                                y_size,
-        #                                pen,
-        #                                QtGui.QBrush(QtGui.QColor(255,255,255,0)))
-        ellipse = viewEllipseItem(x_size,
-                                  y_size,
-                                  pen,
-                                  QtGui.QBrush(QtGui.QColor(255,255,255,0)))
+#    def addEllipse(self, x_pix, y_pix, x_size, y_size, pen, z_val):        
+#        #ellipse = self.scene.addEllipse(0, 
+#        #                                0,
+#        #                                x_size,
+#        #                                y_size,
+#        #                                pen,
+#        #                                QtGui.QBrush(QtGui.QColor(255,255,255,0)))
+#        ellipse = viewEllipseItem(x_size,
+#                                  y_size,
+#                                  pen,
+#                                  QtGui.QBrush(QtGui.QColor(255,255,255,0)))
+#
+#        ellipse.setPos(x_pix - 0.5*x_size, y_pix - 0.5*y_size)
+#        ellipse.setZValue(z_val)
+#        self.scene.addItem(ellipse)
+#        return ellipse
 
-        ellipse.setPos(x_pix - 0.5*x_size, y_pix - 0.5*y_size)
-        ellipse.setZValue(z_val)
-        self.scene.addItem(ellipse)
-        return ellipse
-
-    def addRectangle(self, x_pix, y_pix, x_size, y_size, pen, z_val):
-        #rect = self.scene.addRect(0, 
-        #                          0,
-        #                          x_size,
-        #                          y_size,
-        #                          pen,
-        #                          QtGui.QBrush(QtGui.QColor(255,255,255,0)))
-        rect = viewRectItem(x_size,
-                            y_size,
-                            pen,
-                            QtGui.QBrush(QtGui.QColor(255,255,255,0)))
-        rect.setPos(x_pix - 0.5*x_size, y_pix - 0.5*y_size)
-        rect.setZValue(z_val)
-        self.scene.addItem(rect)
-        return rect
+#    def addRectangle(self, x_pix, y_pix, x_size, y_size, pen, z_val):
+#        #rect = self.scene.addRect(0, 
+#        #                          0,
+#        #                          x_size,
+#        #                          y_size,
+#        #                          pen,
+#        #                          QtGui.QBrush(QtGui.QColor(255,255,255,0)))
+#        rect = viewRectItem(x_size,
+#                            y_size,
+#                            pen,
+#                            QtGui.QBrush(QtGui.QColor(255,255,255,0)))
+#        rect.setPos(x_pix - 0.5*x_size, y_pix - 0.5*y_size)
+#        rect.setZValue(z_val)
+#        self.scene.addItem(rect)
+#        return rect
 
     def addViewImageItem(self, image, x_pix, y_pix, x_offset_pix, y_offset_pix, magnification, objective, z_pos):
         a_image_item = viewImageItem(x_pix, y_pix, x_offset_pix, y_offset_pix, magnification, objective, z_pos)
@@ -143,131 +143,30 @@ class MultifieldView(QtGui.QGraphicsView):
         # this allows keyboard scrolling to work
         QtGui.QGraphicsView.keyPressEvent(self, event)
 
-    def loadLegacyMosaicFile(self, filename):
-        self.filename = filename
-        fp = open(filename, "r")
-
-        # First, figure out file size
-        fp.readline()
-        number_lines = 0
-        while 1:
-            line = fp.readline()
-            if not line: break
-            number_lines += 1
-        fp.seek(0)
-
-        # Create progress bar
-        progress_bar = QtGui.QProgressDialog("Load Files...",
-                                             "Abort Load",
-                                             0,
-                                             number_lines,
-                                             self)
-        progress_bar.setWindowModality(QtCore.Qt.WindowModal)
-
-        self.directory = os.path.dirname(filename)
-        basename = filename[:-4] + "_"
-        fp.readline()
-        file_number = 1
-        z_value = 0.0
-        while 1:
-            if progress_bar.wasCanceled(): break
-            line = fp.readline()
-            if not line: break
-            data = line.split(",")
-            picture_mag = 1.0
-            imagename = None
-            params = "NA"
-            if len(data) == 4:
-                [x_um, y_um, x_pix, y_pix] = data
-                z_value += 0.01
-            elif len(data) == 6:
-                [x_um, y_um, x_pix, y_pix, picture_mag, z_value] = data
-            elif len(data) == 7:
-                [imagename, x_um, y_um, x_pix, y_pix, picture_mag, z_value] = data
-            else:
-                [imagename, x_um, y_um, x_pix, y_pix, picture_mag, z_value, params] = data
-
-            if not(imagename):
-                # Due to a bug, some legacy mosaics do not start at image_1.
-                imagename = basename + str(file_number)
-                iterations = 0
-                while (not os.path.exists(imagename + ".png")) and (iterations < 100):
-                    file_number += 1
-                    iterations += 1
-                    imagename = basename + str(file_number)
-            else:
-                imagename = self.directory + "/" + imagename
-
-            if os.path.exists(imagename + ".png"):
-                self.addViewPixmapItem(QtGui.QPixmap(imagename + ".png"),
-                                       float(x_pix),
-                                       float(y_pix),
-                                       float(x_um),
-                                       float(y_um),
-                                       float(picture_mag),
-                                       os.path.basename(imagename),
-                                       params.strip(),
-                                       float(z_value))
-            else:
-                print "Could not find:", imagename + ".png"
-            progress_bar.setValue(file_number)
-            file_number += 1
-
-        self.currentz = float(z_value) + 0.01
-        progress_bar.close()
-        fp.close()
-
-    def loadMosaicFile(self, filename):
-        self.filename = filename
-        fp = open(filename, "r")
-
-        # First, figure out file size
-        fp.readline()
-        number_lines = 0
-        while 1:
-            line = fp.readline()
-            if not line: break
-            number_lines += 1
-        fp.seek(0)
-
-        # Create progress bar
-        progress_bar = QtGui.QProgressDialog("Load Files...",
-                                             "Abort Load",
-                                             0,
-                                             number_lines,
-                                             self)
-        progress_bar.setWindowModality(QtCore.Qt.WindowModal)
-
-        self.directory = os.path.dirname(filename)
-        file_number = 1
-        while 1:
-            if progress_bar.wasCanceled(): break
-            image_name = fp.readline().rstrip()
-            if not image_name: break
-            image_dict = pickle.load(open(self.directory + "/" + image_name))
+    def loadFromMosaicFileData(self, data, directory):
+        if (data[0] == "image"):
+            image_dict = pickle.load(open(directory + "/" + data[1]))
             a_image_item = viewImageItem(0, 0, 0, 0, "na", 1.0, 0.0)
             a_image_item.setState(image_dict)
 
             self.image_items.append(a_image_item)
             self.scene.addItem(a_image_item)
             self.centerOn(a_image_item.x_pix, a_image_item.y_pix)
-            self.updateSceneRect(a_image_item.x_pix, a_image_item.y_pix)
+            self.updateSceneRect(a_image_item.x_pix, a_image_item.y_pix)        
 
-            progress_bar.setValue(file_number)
-            file_number += 1
-
-        progress_bar.close()
-        fp.close()
+            return True
+        else:
+            return False
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             self.centerOn(self.mapToScene(event.pos()))
 
-    def removeCircle(self, circle):
-        self.scene.removeItem(circle)
+#    def removeCircle(self, circle):
+#        self.scene.removeItem(circle)
 
-    def removeRectangle(self, rect):
-        self.scene.removeItem(rect)
+#    def removeRectangle(self, rect):
+#        self.scene.removeItem(rect)
 
 #    def saveLegacyMosaicFile(self, filename):
 #        progress_bar = QtGui.QProgressDialog("Saving Files...",
@@ -299,7 +198,7 @@ class MultifieldView(QtGui.QGraphicsView):
 #        progress_bar.close()
 #        fp.close()
 
-    def saveMosaicFile(self, filename):
+    def saveToMosaicFile(self, fileptr, filename):
         progress_bar = QtGui.QProgressDialog("Saving Files...",
                                              "Abort Save",
                                              0,
@@ -307,7 +206,6 @@ class MultifieldView(QtGui.QGraphicsView):
                                              self)
         progress_bar.setWindowModality(QtCore.Qt.WindowModal)
 
-        fp = open(filename, "w")
         basename = os.path.splitext(os.path.basename(filename))[0]
         dirname = os.path.dirname(filename) + "/"
 
@@ -316,12 +214,11 @@ class MultifieldView(QtGui.QGraphicsView):
             if progress_bar.wasCanceled(): break
             
             name = basename + "_" + str(i+1)
-            fp.write(name + ".stv\r\n")
+            fileptr.write("image," + name + ".stv\r\n")
 
             pickle.dump(item.getState(), open(dirname + name + ".stv", "w"))
 
         progress_bar.close()
-        fp.close()
 
     def updateSceneRect(self, x_pix, y_pix, update = False):
         needs_update = update

@@ -2,51 +2,135 @@
 #
 # Handles the list of positions.
 #
-# Hazen 03/13
+# Hazen 07/13
 #
 
 from PyQt4 import QtCore, QtGui
 
 import coord
 
+
 #
-# List of Positions
+# Position item.
 #
-class Positions(QtGui.QListWidget):
-    addPositionSig = QtCore.pyqtSignal(object)
-    currentPositionChange = QtCore.pyqtSignal(object)
-    deletePosition = QtCore.pyqtSignal(int)
+class PositionItem():
+
+    brush = QtGui.QBrush(QtGui.QColor(255,255,255,0))
+    deselected_pen = QtGui.QPen(QtGui.QColor(0,0,255))
+    selected_pen = QtGui.QPen(QtGui.QColor(255,0,0))
+    x_size = 1
+    y_size = 1
+
+    def __init__(self, a_point):
+        self.scene_position_item = ScenePositionItem(self.x_size,
+                                                     self.y_size,
+                                                     self.deselected_pen,
+                                                     self.brush)
+        self.scene_position_item.setZValue(1000.0)
+        self.setLocation(a_point)
+
+    def getText(self):
+        return self.text
+
+    def getScenePositionItem(self):
+        return self.scene_position_item
+    
+    def setLocation(self, a_point):
+        self.text = "{0:.2f}, {1:.2f}".format(a_point.x_um, a_point.y_um)
+        self.scene_position_item.setPos(a_point.x_pix - 0.5 * self.x_size,
+                                        a_point.y_pix - 0.5 * self.y_size)
+
+    def setSelected(self, selected):
+        if selected:
+            self.scene_position_item.setZValue(2000.0)
+            self.scene_position_item.setPen(self.selected_pen)
+        else:
+            self.scene_position_item.setZValue(1000.0)
+            self.scene_position_item.setPen(self.deselected_pen)
+            
+
+#
+# Position list model.
+#
+class PositionListModel(QtCore.QAbstractListModel):
 
     def __init__(self, parent = None):
-        QtGui.QListWidget.__init__(self, parent)
+        QtCore.QAbstractListModel.__init__(self, parent)
 
-        # ui initialization
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
-        self.setSizePolicy(sizePolicy)
+        self.positions = []
 
-        self.currentRowChanged.connect(self.handleRowChange)
+    def addPosition(self, a_position, parent = QtCore.QModelIndex()):
+        self.beginInsertRows(QtCore.QModelIndex(), self.rowCount(), self.rowCount()+1)
+        self.positions.append(a_position)
+        self.endInsertRows()
+
+    def data(self, index, role):
+        if index.isValid() and (role == QtCore.Qt.DisplayRole):
+            return QtCore.QVariant(self.positions[index.row()].text)
+        else:
+            return QtCore.QVariant()
+
+    def getPositionItems(self):
+        return self.positions
+
+    def removePosition(self, index, parent = QtCore.QModelIndex()):
+        self.beginRemoveRows(parent, index, index + 1)
+        a_scene_position_item = self.positions[index].getScenePositionItem()
+        del self.positions[index]
+        self.endRemoveRows()
+        return a_scene_position_item
+        
+    def rowCount(self, parent = QtCore.QModelIndex()):
+        return len(self.positions)
+
+    def setSelected(self, index, selected):
+        self.positions[index].setSelected(selected)
+
+    
+#
+# Position list view.
+#
+class Positions(QtGui.QListView):
+
+    def __init__(self, parameters, scene, parent = None):
+        QtGui.QListView.__init__(self, parent)
+
+        self.plist_model = PositionListModel(parent)
+        self.scene = scene
+
+        PositionItem.deselected_pen.setWidth(parameters.pen_width)
+        PositionItem.selected_pen.setWidth(parameters.pen_width)
+        rectangle_size = parameters.rectangle_size/parameters.pixels_to_um
+        PositionItem.x_size = rectangle_size
+        PositionItem.y_size = rectangle_size
+
+        self.setModel(self.plist_model)
 
     def addPosition(self, a_point):
-        self.addItem("{0:.2f}, {1:.2f}".format(a_point.x_um, a_point.y_um))
+        a_position = PositionItem(a_point)
+        self.plist_model.addPosition(a_position)
+        self.scene.addItem(a_position.getScenePositionItem())
 
-    def handleRowChange(self, row):
-        if (row > -1):
-            [x, y] = str(self.item(row).text()).split(",")
-            self.currentPositionChange.emit(coord.Point(float(x), float(y), "um"))
-        else:
-            self.currentPositionChange.emit(coord.Point(0.0, 0.0, "um"))
+    def currentChanged(self, current, previous):
+        if (previous.row() >= 0):
+            self.plist_model.setSelected(previous.row(), False)
+        if (current.row() >= 0):
+            self.plist_model.setSelected(current.row(), True)
 
     def keyPressEvent(self, event):
         if (event.key() == QtCore.Qt.Key_Backspace) or (event.key() == QtCore.Qt.Key_Delete):
-            if (self.count() > 0):
-                current = self.currentRow()
-                self.takeItem(current)
-                self.deletePosition.emit(current)
+            current_index = self.currentIndex().row()
+            if (current_index >= 0):
+                self.scene.removeItem(self.plist_model.removePosition(current_index))
         else:
-            QtGui.QListWidget.keyPressEvent(self, event)
+            QtGui.QListView.keyPressEvent(self, event)
+
+    def loadFromMosaicFileData(self, data, directory):
+        if (data[0] == "position"):
+            self.addPosition(coord.Point(float(data[1]), float(data[2]), "um"))
+            return True
+        else:
+            return False
 
     def loadPositions(self, filename):
         pos_fp = open(filename, "r")
@@ -54,13 +138,43 @@ class Positions(QtGui.QListWidget):
             line = pos_fp.readline()
             if not line: break
             [x, y] = line.split(",")
-            self.addPositionSig.emit([coord.Point(float(x), float(y), "um")])
+            self.addPosition(coord.Point(float(x), float(y), "um"))
+
+    def saveToMosaicFile(self, file_ptr, filename):
+        for position in self.plist_model.getPositionItems():
+            file_ptr.write("position," + position.getText() + "\r\n")
 
     def savePositions(self, filename):
         fp = open(filename, "w")
-        for i in range(self.count()):
-            fp.write(str(self.item(i).text()) + "\r\n")
+        for position_item in self.plist_model.getPositionItems():
+            fp.write(position_item.text + "\r\n")
         fp.close()
+
+    def setSceneItemsVisible(self, visible):
+        ScenePositionItem.visible = visible
+
+
+#
+# Position rectangle rendering.
+#
+class ScenePositionItem(QtGui.QGraphicsRectItem):
+
+    visible = True
+
+    def __init__(self, x_size, y_size, pen, brush):
+        QtGui.QGraphicsRectItem.__init__(self,
+                                         0,
+                                         0,
+                                         x_size,
+                                         y_size)
+        self.setPen(pen)
+        self.setBrush(brush)
+        self.setZValue(1000.0)
+
+    def paint(self, painter, options, widget):
+        if self.visible:
+            QtGui.QGraphicsRectItem.paint(self, painter, options, widget)
+
 
 #
 # The MIT License
