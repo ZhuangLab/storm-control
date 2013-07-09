@@ -22,18 +22,25 @@ class PositionItem():
     y_size = 1
 
     def __init__(self, a_point):
+        self.a_point = a_point
         self.scene_position_item = ScenePositionItem(self.x_size,
                                                      self.y_size,
                                                      self.deselected_pen,
                                                      self.brush)
         self.scene_position_item.setZValue(1000.0)
-        self.setLocation(a_point)
+        self.setLocation(self.a_point)
 
     def getText(self):
         return self.text
 
     def getScenePositionItem(self):
         return self.scene_position_item
+
+    def movePosition(self, dx_um, dy_um):
+        self.a_point = coord.Point(self.a_point.x_um + dx_um,
+                                   self.a_point.y_um + dy_um,
+                                   "um")
+        self.setLocation(self.a_point)
     
     def setLocation(self, a_point):
         self.text = "{0:.2f}, {1:.2f}".format(a_point.x_um, a_point.y_um)
@@ -73,6 +80,10 @@ class PositionListModel(QtCore.QAbstractListModel):
     def getPositionItems(self):
         return self.positions
 
+    def movePosition(self, q_index, dx_um, dy_um):
+        self.positions[q_index.row()].movePosition(dx_um, dy_um)
+        self.dataChanged.emit(q_index, q_index)
+
     def removePosition(self, index, parent = QtCore.QModelIndex()):
         self.beginRemoveRows(parent, index, index + 1)
         a_scene_position_item = self.positions[index].getScenePositionItem()
@@ -97,6 +108,7 @@ class Positions(QtGui.QListView):
 
         self.plist_model = PositionListModel(parent)
         self.scene = scene
+        self.step_size = parameters.step_size
 
         PositionItem.deselected_pen.setWidth(parameters.pen_width)
         PositionItem.selected_pen.setWidth(parameters.pen_width)
@@ -118,10 +130,19 @@ class Positions(QtGui.QListView):
             self.plist_model.setSelected(current.row(), True)
 
     def keyPressEvent(self, event):
-        if (event.key() == QtCore.Qt.Key_Backspace) or (event.key() == QtCore.Qt.Key_Delete):
+        which_key = event.key()
+        if (which_key == QtCore.Qt.Key_Backspace) or (which_key == QtCore.Qt.Key_Delete):
             current_index = self.currentIndex().row()
             if (current_index >= 0):
                 self.scene.removeItem(self.plist_model.removePosition(current_index))
+        elif (which_key == QtCore.Qt.Key_W):
+            self.plist_model.movePosition(self.currentIndex(), 0.0, -self.step_size)
+        elif (which_key == QtCore.Qt.Key_S):
+            self.plist_model.movePosition(self.currentIndex(), 0.0, self.step_size)
+        elif (which_key == QtCore.Qt.Key_A):
+            self.plist_model.movePosition(self.currentIndex(), -self.step_size, 0.0)
+        elif (which_key == QtCore.Qt.Key_D):
+            self.plist_model.movePosition(self.currentIndex(), self.step_size, 0.0)
         else:
             QtGui.QListView.keyPressEvent(self, event)
 
