@@ -327,14 +327,14 @@ class SectionRenderer(QtGui.QGraphicsView):
 
     # Draw the section pixmap.
     def renderSectionPixmap(self, a_point, a_angle):
-        mosaicView.displayEllipseRect(False)
+        #mosaicView.displayEllipseRect(False)
         self.centerOn(a_point.x_pix, a_point.y_pix)
         transform = QtGui.QTransform()
         transform.rotate(a_angle)
         transform.scale(self.scale, self.scale)
         self.setTransform(transform)
         a_pixmap = QtGui.QPixmap.grabWidget(self.viewport())
-        mosaicView.displayEllipseRect(True)
+        #mosaicView.displayEllipseRect(True)
 
         #a_pixmap.save("RSP" + str(self.index) + ".png")
         #self.index += 1

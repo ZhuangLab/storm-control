@@ -34,23 +34,10 @@ class MultifieldView(QtGui.QGraphicsView):
         self.directory = ""
         self.image_items = []
         self.margin = 8000.0
-        #self.pen_color = QtGui.QColor(parameters.pen_color[0],
-        #                              parameters.pen_color[1],
-        #                              parameters.pen_color[2])
-        #self.pen_width = parameters.pen_width
         self.scene_rect = [-self.margin, -self.margin, self.margin, self.margin]
         self.zoom_in = 1.2
         self.zoom_out = 1.0/self.zoom_in
 
-        #self.pen = QtGui.QPen(self.pen_color)
-        #self.pen.setWidth(self.pen_width)
-
-        # ui initializiation
-        #sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding)
-        #sizePolicy.setHorizontalStretch(0)
-        #sizePolicy.setVerticalStretch(0)
-        #sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
-        #self.setSizePolicy(sizePolicy)
         self.setMinimumSize(QtCore.QSize(200, 200))
 
         # scene initialization
@@ -60,39 +47,6 @@ class MultifieldView(QtGui.QGraphicsView):
         self.updateSceneRect(0, 0, True)
         self.setMouseTracking(True)
         self.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
-
-#    def addEllipse(self, x_pix, y_pix, x_size, y_size, pen, z_val):        
-#        #ellipse = self.scene.addEllipse(0, 
-#        #                                0,
-#        #                                x_size,
-#        #                                y_size,
-#        #                                pen,
-#        #                                QtGui.QBrush(QtGui.QColor(255,255,255,0)))
-#        ellipse = viewEllipseItem(x_size,
-#                                  y_size,
-#                                  pen,
-#                                  QtGui.QBrush(QtGui.QColor(255,255,255,0)))
-#
-#        ellipse.setPos(x_pix - 0.5*x_size, y_pix - 0.5*y_size)
-#        ellipse.setZValue(z_val)
-#        self.scene.addItem(ellipse)
-#        return ellipse
-
-#    def addRectangle(self, x_pix, y_pix, x_size, y_size, pen, z_val):
-#        #rect = self.scene.addRect(0, 
-#        #                          0,
-#        #                          x_size,
-#        #                          y_size,
-#        #                          pen,
-#        #                          QtGui.QBrush(QtGui.QColor(255,255,255,0)))
-#        rect = viewRectItem(x_size,
-#                            y_size,
-#                            pen,
-#                            QtGui.QBrush(QtGui.QColor(255,255,255,0)))
-#        rect.setPos(x_pix - 0.5*x_size, y_pix - 0.5*y_size)
-#        rect.setZValue(z_val)
-#        self.scene.addItem(rect)
-#        return rect
 
     def addViewImageItem(self, image, x_pix, y_pix, x_offset_pix, y_offset_pix, magnification, objective, z_pos):
         a_image_item = viewImageItem(x_pix, y_pix, x_offset_pix, y_offset_pix, magnification, objective, z_pos)
@@ -120,10 +74,9 @@ class MultifieldView(QtGui.QGraphicsView):
                 item.setYOffset(y_offset_pix)
 
     def clearMosaic(self):
-        for item in self.items():
-            if(isinstance(item, viewImageItem)):
-                self.scene.removeItem(item)
-        self.initSceneRect()
+        for image_item in self.image_items:
+            self.scene.removeItem(image_item)
+        #self.initSceneRect()
         self.currentz = 0.0
         self.image_items = []
 
@@ -161,42 +114,6 @@ class MultifieldView(QtGui.QGraphicsView):
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             self.centerOn(self.mapToScene(event.pos()))
-
-#    def removeCircle(self, circle):
-#        self.scene.removeItem(circle)
-
-#    def removeRectangle(self, rect):
-#        self.scene.removeItem(rect)
-
-#    def saveLegacyMosaicFile(self, filename):
-#        progress_bar = QtGui.QProgressDialog("Saving Files...",
-#                                             "Abort Save",
-#                                             0,
-#                                             len(self.items()),
-#                                             self)
-#        progress_bar.setWindowModality(QtCore.Qt.WindowModal)
-#
-#        fp = open(filename, "w")
-#        basename = os.path.splitext(os.path.basename(filename))[0]
-#        dirname = os.path.dirname(filename) + "/"
-#        fp.write("name, x(um), y(um), x(pixels), y(pixels), magnification, z-position parameters\r\n")
-#        for i, item in enumerate(self.items()):
-#            progress_bar.setValue(i)
-#            if progress_bar.wasCanceled(): break
-#            if (isinstance(item, viewPixmapItem)):
-#                name = basename + "_" + str(i+1)
-#                fp.write(name + ", ")
-#                fp.write("{0:.2f}, {1:.2f}, {2:.2f}, {3:.2f}, {4:.2f}, {5:.3f}, ".format(item.realX(),
-#                                                                                         item.realY(),
-#                                                                                         item.x(),
-#                                                                                         item.y(),
-#                                                                                         item.getMagnification(),
-#                                                                                         item.zValue()))
-#                fp.write(item.getParameters() + "\r\n")
-#                item.getPixmap().save(QtCore.QString(dirname + name + ".png"), "PNG")
-#
-#        progress_bar.close()
-#        fp.close()
 
     def saveToMosaicFile(self, fileptr, filename):
         progress_bar = QtGui.QProgressDialog("Saving Files...",
@@ -259,27 +176,6 @@ class MultifieldView(QtGui.QGraphicsView):
 
 
 #
-# Ellipse rendering.
-#
-class viewEllipseItem(QtGui.QGraphicsEllipseItem):
-
-    visible = True
-
-    def __init__(self, x_size, y_size, pen, brush):
-        QtGui.QGraphicsEllipseItem.__init__(self,
-                                            0,
-                                            0,
-                                            x_size,
-                                            y_size)
-        self.setPen(pen)
-        self.setBrush(brush)
-
-    def paint(self, painter, options, widget):
-        if self.visible:
-            QtGui.QGraphicsEllipseItem.paint(self, painter, options, widget)
-
-
-#
 # Image handling class.
 #
 # The real position is the stage position in um where
@@ -310,9 +206,6 @@ class viewImageItem(QtGui.QGraphicsItem):
         self.zvalue = zvalue
 
     def boundingRect(self):
-        #size_x = int(float(self.pixmap_width)/self.magnification) + 1
-        #size_y = int(float(self.pixmap_height)/self.magnification) + 1
-        #return QtCore.QRectF(0, 0, size_x, size_y)
         return QtCore.QRectF(0, 0, self.pixmap.width(), self.pixmap.height())
 
     def createPixmap(self):
@@ -382,7 +275,6 @@ class viewImageItem(QtGui.QGraphicsItem):
     def setMagnification(self, magnification):
         self.magnification = magnification
         self.setTransform(QtGui.QTransform().scale(1.0/self.magnification, 1.0/self.magnification))
-        #self.setPixmapGeometry()
 
     def setRealPosition(self, rx, ry):
         self.real_x = rx
@@ -396,33 +288,10 @@ class viewImageItem(QtGui.QGraphicsItem):
     def setXOffset(self, x_offset):
         self.x_offset_pix = x_offset
         self.setPos(self.x_pix + self.x_offset_pix, self.y_pix + self.y_offset_pix)
-        #self.setPixmapGeometry()
 
     def setYOffset(self, y_offset):
         self.y_offset_pix = y_offset
         self.setPos(self.x_pix + self.x_offset_pix, self.y_pix + self.y_offset_pix)
-        #self.setPixmapGeometry()
-
-
-#
-# Rectangle rendering.
-#
-class viewRectItem(QtGui.QGraphicsRectItem):
-
-    visible = True
-
-    def __init__(self, x_size, y_size, pen, brush):
-        QtGui.QGraphicsRectItem.__init__(self,
-                                         0,
-                                         0,
-                                         x_size,
-                                         y_size)
-        self.setPen(pen)
-        self.setBrush(brush)
-
-    def paint(self, painter, options, widget):
-        if self.visible:
-            QtGui.QGraphicsRectItem.paint(self, painter, options, widget)
 
 
 #

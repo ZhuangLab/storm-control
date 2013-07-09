@@ -68,18 +68,6 @@ def createSpiral(number):
 
 
 #
-# Show/Hide ellipses and rectangles in the mosaic
-#
-def displayEllipseRect(visible):
-    if visible:
-        multiView.viewEllipseItem.visible = True
-        multiView.viewRectItem.visible = True
-    else:
-        multiView.viewEllipseItem.visible = False
-        multiView.viewRectItem.visible = False
-
-
-#
 # Handles user interaction with the mosaic.
 #
 # All coordinates are in pixels.
@@ -95,36 +83,13 @@ class MosaicView(multiView.MultifieldView):
         multiView.MultifieldView.__init__(self, parameters, parent)
 
         # class variables
-        #self.ellipse_size = parameters.ellipse_size
         self.extrapolate_count = parameters.extrapolate_picture_count
         self.extrapolate_start = None
         self.number_x = 5
         self.number_y = 3
         self.pointf = 0
-        #self.rectangle_size = parameters.rectangle_size/parameters.pixels_to_um
         self.xoffset = 0.0
         self.yoffset = 0.0
-
-        #self.pen = QtGui.QPen(self.pen_color)
-        #self.pen.setWidth(self.pen_width)
-
-        #pen = QtGui.QPen(QtGui.QColor(0, 0, 255))
-        #pen.setWidth(self.pen_width)
-        #self.selection_rect = self.addRectangle(0,
-        #                                        0,
-        #                                        self.rectangle_size,
-        #                                        self.rectangle_size,
-        #                                        pen,
-        #                                        2000.0)
-        #
-        #pen = QtGui.QPen(QtGui.QColor(0, 0, 255))
-        #pen.setWidth(self.pen_width)
-        #self.section_ellipse = self.addEllipse(0,
-        #                                       0,
-        #                                       self.ellipse_size,
-        #                                       self.ellipse_size,
-        #                                       pen,
-        #                                       1999.0)
 
         # popup menu initializiation
         self.pictAct = QtGui.QAction(self.tr("Take Picture"), self)
@@ -162,22 +127,6 @@ class MosaicView(multiView.MultifieldView):
                               magnification,
                               self.currentz)
         self.currentz += 0.01
-
-#    def addPositionRectangle(self, a_point):
-#        return self.addRectangle(a_point.x_pix,
-#                                 a_point.y_pix,
-#                                 self.rectangle_size,
-#                                 self.rectangle_size,
-#                                 self.pen,
-#                                 1000.0)
-#
-#    def addSectionCircle(self, a_point):
-#        return self.addEllipse(a_point.x_pix,
-#                               a_point.y_pix,
-#                               self.ellipse_size,
-#                               self.ellipse_size,
-#                               self.pen,
-#                               999.0)
 
     def changeMagnification(self, objective, new_magnification):
         self.changeImageMagnifications(objective, new_magnification)
@@ -251,23 +200,6 @@ class MosaicView(multiView.MultifieldView):
 
         multiView.MultifieldView.keyPressEvent(self, event)
 
-#    def mapPosition(self, x, y = None):
-#        if (type(x) == type(QtCore.QPointF())):
-#            y = x.y()
-#            x = x.x()
-#        if self.setup_name == "storm3":
-#            return QtCore.QPointF(y * self.x_sign, x * self.y_sign)
-#        elif self.setup_name == "prism2":
-#            return QtCore.QPointF(x * self.x_sign, y * self.y_sign)
-#        elif self.setup_name == "storm2":
-#            return QtCore.QPointF(y * self.x_sign, x * self.y_sign)
-#        elif self.setup_name == "storm4":
-#            return QtCore.QPointF(y * self.x_sign, x * self.y_sign)
-#        elif self.setup_name == "none":
-#            return QtCore.QPointF(x * self.x_sign, y * self.y_sign)
-#        else:
-#            return QtCore.QPointF(x, y)
-
     def mouseMoveEvent(self, event):
         pointf = self.mapToScene(event.pos())
         self.mouseMove.emit(coord.Point(pointf.x(), pointf.y(), "pix"))
@@ -282,28 +214,6 @@ class MosaicView(multiView.MultifieldView):
             else:
                 self.popup_menu.exec_(event.globalPos())
 
-#    def moveRectangle(self, rect, x_um, y_um):
-#        x_pix = x_um / self.pixels_to_um
-#        y_pix = y_um / self.pixels_to_um
-#        rect.setPos(x_pix, y_pix)
-
-#    # Move one of the (red) ellipses that indicates section position.
-#    def moveSectionEllipse(self, a_ellipse, a_point):
-#        x_pix = a_point.x_pix - (self.ellipse_size * 0.5)
-#        y_pix = a_point.y_pix - (self.ellipse_size * 0.5)
-#        a_ellipse.setPos(x_pix, y_pix)
-
-#    # Move the blue ellipse that indicates which is the current section.
-#    def moveSectionSelection(self, a_point):
-#        x_pix = a_point.x_pix - (self.ellipse_size * 0.5)
-#        y_pix = a_point.y_pix - (self.ellipse_size * 0.5)
-#        self.section_ellipse.setPos(x_pix, y_pix)
-
-#    # Move the blue square that indicates which is the current position.
-#    def moveSelectionRectangle(self, a_point):
-#        x_pix = a_point.x_pix - (self.rectangle_size * 0.5)
-#        y_pix = a_point.y_pix - (self.rectangle_size * 0.5)
-#        self.selection_rect.setPos(x_pix, y_pix)
 
 #
 # The MIT License

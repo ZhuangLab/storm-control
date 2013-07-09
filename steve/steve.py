@@ -94,7 +94,6 @@ class Window(QtGui.QMainWindow):
         coord.Point.pixels_to_um = parameters.pixels_to_um
 
         # variables
-        #self.circles = []
         self.current_center = coord.Point(0.0, 0.0, "um")
         self.current_magnification = 1.0
         self.current_objective = False
@@ -102,7 +101,6 @@ class Window(QtGui.QMainWindow):
         self.debug = parameters.debug
         self.parameters = parameters
         self.picture_queue = []
-        #self.rects = []
 
         # ui setup
         self.ui = steveUi.Ui_MainWindow()
@@ -160,6 +158,7 @@ class Window(QtGui.QMainWindow):
         self.view = mosaicView.MosaicView(parameters, self.ui.mosaicFrame)
         layout = QtGui.QGridLayout(self.ui.mosaicFrame)
         layout.addWidget(self.view)
+        self.ui.mosaicFrame.setLayout(layout)
         self.view.show()
 
         # Initialize positions list.
@@ -185,8 +184,8 @@ class Window(QtGui.QMainWindow):
         self.ui.abortButton.clicked.connect(self.handleAbort)
         self.ui.actionQuit.triggered.connect(self.quit)
         self.ui.actionConnect.triggered.connect(self.handleConnect)
+        self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
         self.ui.actionDisconnect.triggered.connect(self.handleDisconnect)
-        self.ui.actionClear_Mosaic.triggered.connect(self.handleClearMosaic)
         self.ui.actionLoad_Mosaic.triggered.connect(self.handleLoadMosaic)
         self.ui.actionLoad_Positions.triggered.connect(self.handleLoadPositions)
         self.ui.actionSave_Mosaic.triggered.connect(self.handleSaveMosaic)
@@ -206,14 +205,7 @@ class Window(QtGui.QMainWindow):
         self.view.mouseMove.connect(self.updateMosaicLabel)
         self.view.takePictures.connect(self.takePictures)
 
-        #self.positions.addPositionSig.connect(self.addPositions)
-        #self.positions.currentPositionChange.connect(self.handlePositionSelection)
-        #self.positions.deletePosition.connect(self.handlePositionDelete)
-
         self.sections.addPositions.connect(self.addPositions)
-        #self.sections.currentSectionChange.connect(self.handleSectionSelection)
-        #self.sections.deleteSection.connect(self.handleSectionDelete)
-        #self.sections.moveSection.connect(self.handleSectionMove)
         self.sections.takePictures.connect(self.takePictures)
 
         self.comm.captureComplete.connect(self.addImage)
@@ -237,11 +229,9 @@ class Window(QtGui.QMainWindow):
 
     def addPositions(self, points):
         for a_point in points:
-            #self.rects.append(self.view.addPositionRectangle(a_point))
             self.positions.addPosition(a_point)
 
     def addSection(self, a_point):
-        #self.circles.append(self.view.addSectionCircle(a_point))
         self.sections.addSection(a_point)
 
     @hdebug.debug
@@ -259,15 +249,6 @@ class Window(QtGui.QMainWindow):
         self.comm.abort()
         self.picture_queue = []
 
-    def handleClearMosaic(self):
-        reply = QtGui.QMessageBox.question(self,
-                                           "Warning!",
-                                           "Clear Mosaic?",
-                                           QtGui.QMessageBox.Yes,
-                                           QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
-            self.view.clearMosaic()
-
     def handleConnect(self):
         if not self.ui.connectRadioButton.isChecked():
             self.ui.connectRadioButton.click()
@@ -277,6 +258,15 @@ class Window(QtGui.QMainWindow):
             self.comm.commConnect()
         else:
             self.comm.commDisconnect()
+
+    def handleDeleteImages(self):
+        reply = QtGui.QMessageBox.question(self,
+                                           "Warning!",
+                                           "Delete Images?",
+                                           QtGui.QMessageBox.Yes,
+                                           QtGui.QMessageBox.No)
+        if reply == QtGui.QMessageBox.Yes:
+            self.view.clearMosaic()
 
     def handleDisconnect(self):
         if self.ui.connectRadioButton.isChecked():
@@ -294,7 +284,7 @@ class Window(QtGui.QMainWindow):
                                                                 self.parameters.directory,
                                                                 "*.msc"))
         if mosaic_filename:
-            legacy_format = False
+            legacy_format = True
             dirname = os.path.dirname(mosaic_filename)
 
             mosaic_fp = open(mosaic_filename, "r")
@@ -383,13 +373,6 @@ class Window(QtGui.QMainWindow):
     def handleOpacityChange(self, value):
         self.sections.changeOpacity(0.01*float(value))
 
-    #def handlePositionDelete(self, index):
-    #    self.view.removeRectangle(self.rects[index])
-    #    del self.rects[index]
-
-    #def handlePositionSelection(self, a_point):
-    #    self.view.moveSelectionRectangle(a_point)
-
     def handleSavePositions(self):
         positions_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
                                                                    "Save Positions", 
@@ -408,21 +391,6 @@ class Window(QtGui.QMainWindow):
             self.view.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
             self.positions.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
             self.sections.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
-
-#            self.view.saveMosaicFile(mosaic_filename)
-
-    #def handleSectionDelete(self, index):
-    #    self.view.removeCircle(self.circles[index])
-    #    del self.circles[index]
-
-    #def handleSectionMove(self, index, a_point):
-    #    self.view.moveSectionEllipse(self.circles[index], a_point)
-    #    self.view.moveSectionSelection(a_point)
-    #    self.sections.handleSectionChanged()
-
-    #def handleSectionSelection(self, a_point):
-    #    self.view.moveSectionSelection(a_point)
-    #    self.sections.handleSectionChanged()
 
     def handleSetWorkingDirectory(self):
         directory = str(QtGui.QFileDialog.getExistingDirectory(self,
