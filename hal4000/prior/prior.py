@@ -56,7 +56,11 @@ class Prior(RS232.RS232):
             self.waitResponse()
 
     def getFilter(self):
-        return int(self._command("7,1,F")[0])
+        try:
+            return int(self._command("7,1,F")[0])
+        except:
+            print "Error reading filter position."
+            return -1
 
     def getServo(self):
         return [self._command("SERVO,X"), self._command("SERVO,Y")]

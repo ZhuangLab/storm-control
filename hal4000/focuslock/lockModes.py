@@ -468,11 +468,13 @@ class LargeOffsetLock(JumpLockMode):
         
     def restartLock(self):
         if self.locked:
+            self.control_thread.setTarget(0.0)
             self.control_thread.startLock()
             self.jump_up_timer.start()
 
     def startLock(self):
         self.locked = True
+        self.control_thread.setTarget(0.0)
         self.control_thread.startLock()
         self.jump_up_timer.start()
 
