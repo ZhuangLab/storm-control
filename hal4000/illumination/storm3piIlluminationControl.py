@@ -109,7 +109,7 @@ class STORM3QIlluminationControlWidget(illuminationControl.QIlluminationControlW
 class AIlluminationControl(illuminationControl.IlluminationControl):
     def __init__(self, parameters, tcp_control, parent = None):
         illuminationControl.IlluminationControl.__init__(self, parameters, tcp_control, parent)
-        self.power_control = STORM3QIlluminationControlWidget("illumination/storm3_illumination_control_settings.xml",
+        self.power_control = STORM3QIlluminationControlWidget("illumination/storm3pi_illumination_control_settings.xml",
                                                               parameters,
                                                               parent = self.ui.laserBox)
         self.updateSize()

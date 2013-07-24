@@ -39,7 +39,7 @@ class AMiscControl(miscControl.MiscControl):
         self.filter_wheel = filterWheel.QPriorFilterWheel()
         self.move_timer = QtCore.QTimer(self)
         self.move_timer.setInterval(50)
-        self.smc100 = SMC100.SMC100()
+        self.smc100 = SMC100.SMC100(port = "COM5")
 
         # UI setup
         self.ui = miscControlsUi.Ui_Dialog()
