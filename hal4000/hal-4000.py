@@ -42,12 +42,14 @@
 #   Control of a motorized stage.
 #
 #
-# Hazen 12/12
+# Hazen 07/13
 #
 
 import os
 import sys
 import datetime
+import traceback
+
 from PyQt4 import QtCore, QtGui
 
 # Debugging
@@ -450,6 +452,7 @@ class Window(QtGui.QMainWindow):
             try:
                 self.spot_counter.shutDown()
             except:
+                print traceback.format_exc()
                 print "problem stopping the spot counter."
 
         if self.illumination_control:
@@ -505,8 +508,8 @@ class Window(QtGui.QMainWindow):
             try:
                 params.Parameters(filename)
                 self.newSettings(filename)
-            except Exception, e:
-                print e
+            except:
+                print traceback.format_exc()
                 print " Not a settings file, trying as shutters file"
                 self.newShutters(filename)
 
@@ -717,6 +720,7 @@ class Window(QtGui.QMainWindow):
                 params.Parameters(str(parameters_filename), is_HAL = True)
                 self.newSettings(str(parameters_filename))
             except:
+                print traceback.format_exc()
                 print "failed to parse settings file"
         else:
             self.startCamera()
@@ -733,6 +737,7 @@ class Window(QtGui.QMainWindow):
                 self.shutter_control.parseXML(shutters_filename)
                 new_shutters = 1
             except:
+                print traceback.format_exc()
                 print "failed to parse shutter file."
                 self.shutter_control.parseXML(self.old_shutters_file)
                 self.parameters.shutters = self.old_shutters_file
@@ -1061,7 +1066,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
