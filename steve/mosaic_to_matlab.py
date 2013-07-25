@@ -3,7 +3,7 @@
 # Convert .stv files to .mat files for those 
 # (fools) who persist in using Matlab.
 #
-# Hazen 04/13
+# Hazen 07/13
 #
 
 import os
@@ -24,26 +24,31 @@ fp = open(sys.argv[1], "r")
 
 file_number = 1
 while 1:
-    image_name = fp.readline().rstrip()
-    if not image_name: break
+    line = fp.readline().rstrip()
+    if not line: break
 
-    print "converting:", image_name
+    data = line.split(",")
+    if (data[0] == "image"):
+        image_name = data[1]
 
-    image_dict = pickle.load(open(directory + "/" + image_name))
+        print "converting:", image_name
 
-    mat_dict = {}
-    for key in image_dict:
-        val_type = type(image_dict[key])
-        if (val_type in [type(""), type(0), type(0.0), type(numpy.array([]))]):
+        image_dict = pickle.load(open(directory + "/" + image_name))
+
+        mat_dict = {}
+        for key in image_dict:
+            val_type = type(image_dict[key])
+            #print key, val_type
+            if (val_type in [type(""), type(0), type(0.0), type(numpy.array([]))]):
             #print key, type(image_dict[key])
-            mat_dict[key] = image_dict[key]
-        else:
+                mat_dict[key] = image_dict[key]
+            else:
             #print key, str(image_dict[key])
-            mat_dict[key] = str(image_dict[key])
+                mat_dict[key] = str(image_dict[key])
 
-    scipy.io.savemat(directory + "/" + image_name[:-4] + ".mat", mat_dict)
-
-    file_number += 1
+        scipy.io.savemat(directory + "/" + image_name[:-4] + ".mat", mat_dict)
+        
+        file_number += 1
 
 fp.close()
 
