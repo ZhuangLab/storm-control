@@ -10,6 +10,8 @@ import logging.handlers
 import sys
 import time
 
+from PyQt4 import QtCore
+
 want_debugging = False
 
 def debug(fn):
@@ -94,13 +96,16 @@ def startLogging(directory, program_name):
 #    
 class StreamToLogger(object):
 
-   def __init__(self, logger, log_level):
-      self.logger = logger
-      self.log_level = log_level
- 
-   def write(self, buf):
-      for line in buf.rstrip().splitlines():
-         self.logger.log(self.log_level, line.rstrip())
+    def __init__(self, logger, log_level):
+        self.logger = logger
+        self.log_level = log_level
+        self.write_mutex = QtCore.QMutex()
+        
+    def write(self, buf):
+        self.write_mutex.lock()
+        for line in buf.rstrip().splitlines():
+            self.logger.log(self.log_level, line.rstrip())
+        self.write_mutex.unlock()
 
 #
 # The MIT License

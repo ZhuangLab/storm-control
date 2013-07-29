@@ -362,6 +362,8 @@ class SpotCounter(QtGui.QDialog):
     def newParameters(self, parameters, colors):
         self.parameters = parameters
 
+        self.spot_counter.newParameters(parameters)
+
         # Update counters, count graph(s) & STORM image(s).
         points_per_cycle = len(colors)
         total_points = points_per_cycle

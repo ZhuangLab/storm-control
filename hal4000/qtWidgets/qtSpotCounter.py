@@ -41,6 +41,12 @@ class QObjectCounterThread(QtCore.QThread):
         self.frame = frame
         self.mutex.unlock()
 
+    def newParameters(self, parameters):
+        self.mutex.lock()
+        self.FOF.setCellSize(parameters.cell_size)
+        self.FOF.setThreshold(parameters.threshold)
+        self.mutex.unlock()
+
     def run(self):
          while (self.running):
             self.mutex.lock()
@@ -103,6 +109,10 @@ class QObjectCounter(QtGui.QWidget):
                 i += 1
             if not_found:
                 self.dropped += 1
+
+    def newParameters(self, parameters):
+        for thread in self.threads:
+            thread.newParameters(parameters)
 
     def returnResults(self, thread_index, which_camera, frame_number, x_locs, y_locs, spots):
         self.idle[thread_index] = True

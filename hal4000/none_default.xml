@@ -111,7 +111,7 @@
   <olock_quality_threshold type="float">0.0</olock_quality_threshold>
 
   <!-- spot counter -->
-  <have_spot_counter type="int">0</have_spot_counter>
+  <have_spot_counter type="int">1</have_spot_counter>
   <cell_size type="int">32</cell_size>
   <threshold type="int">250</threshold>
   <min_spots type="int">0</min_spots>

@@ -67,6 +67,13 @@ class MedFastObjectFinder:
                                       y,
                                       byref(n))
         return [x, y, n.value]
+
+    def setCellSize(self, cell_size):
+        self.cell_size = cell_size
+
+    def setThreshold(self, threshold):
+        print "threshold:", threshold
+        self.threshold = threshold
         
 
 # testing
