@@ -2,7 +2,7 @@
 #
 # Qt Widget Range slider widget.
 #
-# Hazen 4/09
+# Hazen 06/13
 #
 
 from PyQt4 import QtCore, QtGui
@@ -15,15 +15,19 @@ class QRangeSlider(QtGui.QWidget):
 
     def __init__(self, slider_range, values, parent = None):
         QtGui.QWidget.__init__(self, parent)
+        self.bar_width = 10
         self.emit_while_moving = 0
+        self.moving = "none"
+        self.old_scale_min = 0.0
+        self.old_scale_max = 0.0
         self.scale = 0
         self.setMouseTracking(False)
-        self.moving = "none"
-        self.bar_width = 10
+        self.single_step = 0.0
+
         if slider_range:
             self.setRange(slider_range)
         else:
-            self.setRange([0.0, 1.0])
+            self.setRange([0.0, 1.0, 0.01])
         if values:
             self.setValues(values)
         else:
@@ -32,38 +36,54 @@ class QRangeSlider(QtGui.QWidget):
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
 
     def emitRange(self):
-        #self.emit(QtCore.SIGNAL("rangeChanged(float, float)"), self.scale_min, self.scale_max)
-        self.rangeChanged.emit(self.scale_min, self.scale_max)
-        if 0:
-            print "Range change:", self.scale_min, self.scale_max
+        if (self.old_scale_min != self.scale_min) or (self.old_scale_max != self.scale_max):
+            self.rangeChanged.emit(self.scale_min, self.scale_max)
+            self.old_scale_min = self.scale_min
+            self.old_scale_max = self.scale_max
+            if 0:
+                print "Range change:", self.scale_min, self.scale_max
+
+    def getValues(self):
+        return [self.scale_min, self.scale_max]
 
     def keyPressEvent(self, event):
         key = event.key()
 
         # move bars based on arrow keys
-        if key == 16777235: # up arrow
-            self.display_max += 1
-        elif key == 16777237: # down arrow
-            self.display_max -= 1
-        elif key == 16777234: # left arrow
-            self.display_min -= 1
-        elif key == 16777236: # right arror
-            self.display_min += 1
+        moving_max = False
+        if key == QtCore.Qt.Key_Up:
+            self.scale_max += self.single_step
+            moving_max = True
+        elif key == QtCore.Qt.Key_Down:
+            self.scale_max -= self.single_step
+            moving_max = True
+        elif key == QtCore.Qt.Key_Left:
+            self.scale_min -= self.single_step
+        elif key == QtCore.Qt.Key_Right:
+            self.scale_min += self.single_step
 
-        # update (if necessary based on allowed range
-        size = self.rangeSliderSize()
-        if self.display_min < self.bar_width:
-            self.display_min = self.bar_width
-        if self.display_min >= size - self.bar_width:
-            self.display_min = size - self.bar_width - 1
-        if self.display_max < self.bar_width:
-            self.display_max = self.bar_width
-        if self.display_max >= size - self.bar_width:
-            self.display_max = size - self.bar_width - 1
-        if self.display_max < self.display_min:
-            self.display_max = self.display_min
-        self.updateScaleValues()
+        # update (if necessary) based on allowed range
+        if moving_max:
+            if (self.scale_max < self.scale_min):
+                self.scale_min = self.scale_max
+        else:
+            if (self.scale_min > self.scale_max):
+                self.scale_max = self.scale_min
+
+        if (self.scale_min < self.start):
+            self.scale_min = self.start
+        if (self.scale_max < self.start):
+            self.scale_max = self.start
+
+        slider_max = self.start + self.scale
+        if (self.scale_min > slider_max):
+            self.scale_min = slider_max
+        if (self.scale_max > slider_max):
+            self.scale_max = slider_max
+
         self.emitRange()
+        self.updateDisplayValues()
+        self.update()
     
     def mouseDoubleClickEvent(self, event):
         #self.emit(QtCore.SIGNAL("doubleClick()"))
@@ -122,6 +142,7 @@ class QRangeSlider(QtGui.QWidget):
     def setRange(self, slider_range):
         self.start = slider_range[0]
         self.scale = slider_range[1] - slider_range[0]
+        self.single_step = slider_range[2]
 
     def setValues(self, values):
         self.scale_min = values[0]
@@ -143,8 +164,13 @@ class QRangeSlider(QtGui.QWidget):
 
     def updateScaleValues(self):
         size = float(self.rangeSliderSize() - 2 * self.bar_width - 1)
-        self.scale_min = self.start + (self.display_min - self.bar_width)/float(size) * self.scale
-        self.scale_max = self.start + (self.display_max - self.bar_width)/float(size) * self.scale
+        if (self.moving == "min") or (self.moving == "bar"):
+            self.scale_min = self.start + (self.display_min - self.bar_width)/float(size) * self.scale
+            self.scale_min = float(round(self.scale_min/self.single_step))*self.single_step
+        if (self.moving == "max") or (self.moving == "bar"):
+            self.scale_max = self.start + (self.display_max - self.bar_width)/float(size) * self.scale
+            self.scale_max = float(round(self.scale_max/self.single_step))*self.single_step
+        self.updateDisplayValues()
         self.update()
 
 # Horizontal Range Slider
@@ -234,11 +260,11 @@ if __name__ == "__main__":
 
     app = QtGui.QApplication(sys.argv)
     if 0:
-        hslider = QHRangeSlider(slider_range = [-5.0, 5.0], values = [-2.5, 2.5])
+        hslider = QHRangeSlider(slider_range = [-5.0, 5.0, 0.5], values = [-2.5, 2.5])
         hslider.setEmitWhileMoving(True)
         hslider.show()
     if 1:
-        vslider = QVRangeSlider(slider_range = [-5.0, 5.0], values = [-2.5, 2.5])
+        vslider = QVRangeSlider(slider_range = [-5.0, 5.0, 0.5], values = [-2.5, 2.5])
         vslider.setEmitWhileMoving(True)
         vslider.show()
     sys.exit(app.exec_())

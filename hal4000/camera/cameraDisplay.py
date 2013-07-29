@@ -45,7 +45,7 @@ class CameraDisplay(QtGui.QFrame):
         layout = QtGui.QGridLayout(self.ui.rangeSliderWidget)
         layout.addWidget(self.ui.rangeSlider)
         self.ui.rangeSlider.setGeometry(0, 0, self.ui.rangeSliderWidget.width(), self.ui.rangeSliderWidget.height())
-        self.ui.rangeSlider.setRange([0.0, self.max_intensity])
+        self.ui.rangeSlider.setRange([0.0, self.max_intensity, 1.0])
         self.ui.rangeSlider.setEmitWhileMoving(True)
         for color_name in self.color_tables.getColorTableNames():
             self.ui.colorComboBox.addItem(color_name[:-5])
@@ -208,7 +208,7 @@ class CameraDisplay(QtGui.QFrame):
 
         # general settings
         self.max_intensity = parameters.max_intensity
-        self.ui.rangeSlider.setRange([0.0, self.max_intensity])
+        self.ui.rangeSlider.setRange([0.0, self.max_intensity, 1.0])
         self.ui.rangeSlider.setValues([float(p.scalemin), float(p.scalemax)])
         self.ui.syncSpinBox.setValue(p.sync)
 
