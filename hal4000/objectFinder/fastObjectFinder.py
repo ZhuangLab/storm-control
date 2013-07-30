@@ -72,7 +72,6 @@ class MedFastObjectFinder:
         self.cell_size = cell_size
 
     def setThreshold(self, threshold):
-        print "threshold:", threshold
         self.threshold = threshold
         
 
