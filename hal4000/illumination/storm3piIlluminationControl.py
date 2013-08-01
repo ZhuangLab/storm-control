@@ -1,8 +1,8 @@
 #!/usr/bin/python
 #
-# Illumination control specialized for STORM3.
+# Illumination control specialized for STORM3 dual objective.
 #
-# Hazen 04/12
+# Hazen 07/13
 #
 
 from PyQt4 import QtCore
@@ -117,7 +117,7 @@ class AIlluminationControl(illuminationControl.IlluminationControl):
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

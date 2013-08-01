@@ -10,7 +10,7 @@ import ctypes.util
 import ctypes.wintypes
 import numpy
 import os
-from PIL import Image
+
 import platform
 import scipy
 import scipy.optimize
@@ -172,7 +172,9 @@ class Camera(Handle):
         return self.data
 
     def getNextImage(self):
+        print self.cur_frame, self.getCameraStatus(IS_SEQUENCE_CT)
         while (self.cur_frame == self.getCameraStatus(IS_SEQUENCE_CT)):
+            print "waiting.."
             time.sleep(0.05)
         self.cur_frame += 1
         return self.getImage()
@@ -229,7 +231,7 @@ class Camera(Handle):
             print "uc480: Set frame rate to", new_fps.value, "FPS"
 
     # 43MHz seems to be the max for this camera.
-    def setPixelClock(self, pixel_clock_MHz = 40):
+    def setPixelClock(self, pixel_clock_MHz = 30):
         check(uc480.is_SetPixelClock(self,
                                      ctypes.c_int(pixel_clock_MHz)))
 
@@ -387,7 +389,7 @@ class CameraQPD():
             # believe, not sure if this is actually true.
             #
             # It still seems to freeze?
-            time.sleep(0.05)
+            time.sleep(0.02)
             return [0, 0, 0]
 
         # Determine offset by fitting gaussians to the two beam spots.
@@ -496,6 +498,9 @@ class CameraQPD300(CameraQPD):
 
 # Testing
 if __name__ == "__main__":
+
+    from PIL import Image
+
     cam = Camera(1)
     reps = 50
 
@@ -511,24 +516,31 @@ if __name__ == "__main__":
         #im = Image.fromarray(image)
         #im.save("temp.png")
 
-    if 0:
+    if 1:
+        cam.setAOI(100, 100, 300, 300)
+        cam.setPixelClock()
+        cam.setFrameRate()
         cam.startCapture()
         st = time.time()
         for i in range(reps):
-            print i
+            #print i
             image = cam.getNextImage()
+            #print i, numpy.sum(image)
         print "time:", time.time() - st
         cam.stopCapture()
 
     if 0:
-        cam.setAOI(100, 100, 200, 200)
+        cam.setAOI(100, 100, 300, 300)
+        cam.setPixelClock()
+        cam.setFrameRate()
         st = time.time()
         for i in range(reps):
-            print i
+            #print i
             image = cam.captureImage()
+            print i, numpy.sum(image)
         print "time:", time.time() - st
 
-    if 1:
+    if 0:
         for i in range(1):
             print i
             image = cam.captureImage()

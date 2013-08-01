@@ -2,7 +2,7 @@
 #
 # Illumination control specialized for STORM3.
 #
-# Hazen 04/12
+# Hazen 08/13
 #
 
 from PyQt4 import QtCore
@@ -109,15 +109,21 @@ class STORM3QIlluminationControlWidget(illuminationControl.QIlluminationControlW
 class AIlluminationControl(illuminationControl.IlluminationControl):
     def __init__(self, parameters, tcp_control, parent = None):
         illuminationControl.IlluminationControl.__init__(self, parameters, tcp_control, parent)
-        self.power_control = STORM3QIlluminationControlWidget("illumination/storm3_illumination_control_settings.xml",
-                                                              parameters,
-                                                              parent = self.ui.laserBox)
+        if (hasattr(parameters, "use_647") and (parameters.use_647 != 0)):
+            self.power_control = STORM3QIlluminationControlWidget("illumination/storm3_illumination_control_settings_647.xml",
+                                                                  parameters,
+                                                                  parent = self.ui.laserBox)
+        else:
+            self.power_control = STORM3QIlluminationControlWidget("illumination/storm3_illumination_control_settings.xml",
+                                                                  parameters,
+                                                                  parent = self.ui.laserBox)
+
         self.updateSize()
 
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

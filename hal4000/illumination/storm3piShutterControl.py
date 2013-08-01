@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Storm3 shutter control.
+# Storm3 dual objective shutter control.
 #
 # Channels 0-5 are controlled by the AOTF.
 # Channel 6 is a Coherent 405 diode laser.
@@ -8,7 +8,7 @@
 # These are driven by the analog out lines of a
 # National Instruments PCI-6722 card.
 #
-# Hazen 04/12
+# Hazen 07/13
 #
 
 import nationalInstruments.nicontrol as nicontrol
@@ -94,7 +94,7 @@ class AShutterControl(shutterControl.ShutterControl):
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

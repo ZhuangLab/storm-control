@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <power_control_settings>
   <block>
-    <description type="text">656</description>
+    <description type="text">647</description>
     <color type="rgb">255,0,0</color>
     <channel type="int">0</channel>
     <min_voltage type="float">-0.06</min_voltage>
     <max_voltage type="float">6.0</max_voltage>
     <use_aotf type="boolean">TRUE</use_aotf>
-    <frequency type="float">88.72</frequency>
-    <amplitude type="int">8200</amplitude>
+    <frequency type="float">90.36</frequency>
+    <amplitude type="int">7857</amplitude>
     <aotf_channel type="int">0</aotf_channel>
   </block>
   <block>
