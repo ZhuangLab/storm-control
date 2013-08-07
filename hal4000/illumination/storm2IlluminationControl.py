@@ -22,12 +22,12 @@ class STORM2QIlluminationControlWidget(illuminationControl.QIlluminationControlW
         self.aotf_queue.analogModulationOn()
 
         # setup the Cube communication thread
-        self.cube_queue = commandQueues.QCubeThread(port = "COM5")
+        self.cube_queue = commandQueues.QCubeThread(port = "COM13")
         self.cube_queue.start(QtCore.QThread.NormalPriority)
 
         # Setup the filter wheel communication thread.
         # There is only one filter wheel, which is in 750 laser path.
-        self.fw_queue = commandQueues.QFilterWheelThread(port = "COM6")
+        self.fw_queue = commandQueues.QFilterWheelThread(port = "COM14")
         self.fw_queue.start(QtCore.QThread.NormalPriority)
 
         # setup for NI communication with mechanical shutters (digital, unsynced)

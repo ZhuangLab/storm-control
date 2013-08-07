@@ -2,13 +2,13 @@
 #
 # Coherent CUBE 405 laser control.
 #
-# Hazen 7/10
+# Hazen 7/10 (com port modified Josh 6/26/13)
 #
 
 import cube
 
 class Cube405(cube.Cube):
-    def __init__(self, port = "COM3"):
+    def __init__(self, port = "COM13"):
         cube.Cube.__init__(self, port)
 
 #
@@ -16,7 +16,7 @@ class Cube405(cube.Cube):
 #
 
 if __name__ == "__main__":
-    cube = Cube405()
+    cube = Cube405(port = "COM13")
     if cube.getStatus():
         print cube.getPowerRange()
         print cube.getLaserOnOff()

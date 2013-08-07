@@ -101,8 +101,8 @@ class NIDAQTask():
         checkStatus(nidaqmx.DAQmxStopTask(self.taskHandle))
 
     def taskIsDoneP(self):
-        done = c_long(0)
-        checkStatus(nidaqmx.DAQmxIsTaskDone(self.taskHandle, byref(done)))
+        #done = c_long(0)
+        checkStatus(nidaqmx.DAQmxIsTaskDone(self.taskHandle, None))
         return done.value
 
 
@@ -134,7 +134,7 @@ class VoltageOutput(NIDAQTask):
                                                 c_long(DAQmx_Val_GroupByChannel),
                                                 byref(c_voltage),
                                                 byref(c_samples_written), 
-                                                c_long(0)))
+                                                None))
         assert c_samples_written.value == 1, "outputVoltage failed: " + str(c_samples_written.value) + " 1"
 
 
@@ -213,7 +213,7 @@ class WaveformOutput(NIDAQTask):
                                                 c_long(DAQmx_Val_GroupByChannel),
                                                 byref(self.c_waveform), 
                                                 byref(c_samples_written), 
-                                                c_long(0)))
+                                                None))
         assert c_samples_written.value == waveform_len, "Failed to write the right number of samples " + str(c_samples_written.value) + " " + str(waveform_len)
 
 
@@ -238,7 +238,7 @@ class AnalogInput(NIDAQTask):
                                                      c_double(self.min_val), 
                                                      c_double(self.max_val), 
                                                      c_int(DAQmx_Val_Volts),
-                                                     c_long(0)))
+                                                     None))
 
     def addChannel(self, channel):
         self.channels += 1
@@ -250,7 +250,7 @@ class AnalogInput(NIDAQTask):
                                                      c_double(self.min_val), 
                                                      c_double(self.max_val), 
                                                      c_int(DAQmx_Val_Volts),
-                                                     c_long(0)))
+                                                     None))
 
     def configureAcquisition(self, samples, sample_rate_Hz):
         # set the sample timing and buffer length.
@@ -275,7 +275,7 @@ class AnalogInput(NIDAQTask):
                                                byref(data),
                                                c_ulong(self.channels*self.samples),
                                                byref(c_samples_read),
-                                               c_long(0)))
+                                               None))
         assert c_samples_read.value == self.samples, "Failed to read the right number of samples " + str(c_samples_read.value) + " " + str(self.samples)
         return data
 
@@ -349,7 +349,7 @@ class DigitalOutput(NIDAQTask):
                                                    c_long(DAQmx_Val_GroupByChannel),
                                                    byref(c_data),
                                                    byref(c_written),
-                                                   c_long(0)))
+                                                   None))
         assert c_written.value == 1, "Digital output failed"
 
 
@@ -377,7 +377,7 @@ class DigitalInput(NIDAQTask):
                                                   c_long(1),
                                                   byref(c_samps_read),
                                                   byref(c_bytes_per_samp),
-                                                  c_long(0)))
+                                                  None))
         assert c_samps_read.value == 1, "Digital input failed"
         if c_read.value == 1:
             return 1
@@ -451,7 +451,7 @@ class DigitalWaveformOutput(NIDAQTask):
                                                    c_int(DAQmx_Val_GroupByChannel),
                                                    byref(self.c_waveform), 
                                                    byref(c_samples_written), 
-                                                   c_int(0)))
+                                                   None))
         assert c_samples_written.value == waveform_len, "Failed to write the right number of samples " + str(c_samples_written.value) + " " + str(waveform_len)
 
 #

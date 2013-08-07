@@ -2,14 +2,14 @@
 #
 # Thorlabs FW102C control.
 #
-# Hazen 5/12
+# Hazen 5/12 (Josh 6/26/2013)
 #
 
 import halLib.RS232 as RS232
 
 
 class FW102C(RS232.RS232):
-    def __init__(self, port = "COM5"):
+    def __init__(self, port = "COM14"): # changed to "COM14" (was "COM5" before), Josh 6/26/13"
         self.on = False
         try:
             # open port
