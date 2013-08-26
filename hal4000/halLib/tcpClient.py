@@ -33,7 +33,7 @@ class HALSocket(QtNetwork.QTcpSocket):
             print "Couldn't connect to HAL-4000, waiting 1 second and retrying"
             time.sleep(1)
             tries += 1
-            self.connectToHost(addr, port)
+            self.connectToHost(addr, self.port)
 
         if (tries == 5):
             print "Could not connect to HAL-4000."
@@ -61,6 +61,7 @@ class HALSocket(QtNetwork.QTcpSocket):
 class TCPClient(QtGui.QWidget):
     acknowledged = QtCore.pyqtSignal()
     complete = QtCore.pyqtSignal(str)
+    disconnect = QtCore.pyqtSignal()
 
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
@@ -72,6 +73,7 @@ class TCPClient(QtGui.QWidget):
 
         self.socket.acknowledged.connect(self.handleAcknowledged)
         self.socket.complete.connect(self.handleComplete)
+        self.socket.disconnected.connect(self.handleDisconnect)
 
     def getConnected(self):
         return self.connected
@@ -94,6 +96,10 @@ class TCPClient(QtGui.QWidget):
             print "unknown state:", self.state
         self.complete.emit(a_string)
         self.state = None
+
+    def handleDisconnect(self):
+        self.connected = False
+        self.disconnect.emit()
 
     def sendCommand(self, command):
         if self.connected:

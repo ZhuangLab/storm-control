@@ -152,9 +152,9 @@ class Window(QtGui.QMainWindow):
         if parameters.have_tcp_control:
             import tcpControl
             self.tcp_control = tcpControl.TCPControl(parameters.tcp_port, parent = self)
+            self.tcp_control.commGotConnection.connect(self.handleCommStart)
+            self.tcp_control.commLostConnection.connect(self.handleCommStop)
             self.connect(self.tcp_control, QtCore.SIGNAL("abortMovie()"), self.handleCommAbortMovie)
-            self.connect(self.tcp_control, QtCore.SIGNAL("commGotConnection()"), self.handleCommStart)
-            self.connect(self.tcp_control, QtCore.SIGNAL("commLostConnection()"), self.handleCommStop)
             self.connect(self.tcp_control, QtCore.SIGNAL("parameters(int)"), self.handleCommParameters)
             self.connect(self.tcp_control, QtCore.SIGNAL("movie(PyQt_PyObject, int)"), self.handleCommMovie)
             self.connect(self.tcp_control, QtCore.SIGNAL("setDirectory(PyQt_PyObject)"), self.handleCommSetDirectory)

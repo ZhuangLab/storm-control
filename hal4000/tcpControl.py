@@ -2,7 +2,7 @@
 #
 # Handles remote control (via TCP/IP of the data collection program)
 #
-# Hazen 5/09
+# Hazen 8/13
 #
 
 import sys
@@ -21,23 +21,29 @@ def match(string1, string2):
 #
 # TCP/IP Control Class
 #
-# This should only allow one connection at a time from the local computer.
+# To allow only one connection at a time from the local computer
+# the server is closed once the connection is made. When the
+# connection is broken the server is opened again.
 #
 class TCPControl(QtNetwork.QTcpServer):
+    commGotConnection = QtCore.pyqtSignal()
+    commLostConnection = QtCore.pyqtSignal()
+
     def __init__(self, port, parent = None):
         QtNetwork.QTcpServer.__init__(self, parent)
         self.debug = 1
-        self.connected = 0
+        self.connected = False
+        self.port = port
         self.socket = None
         if parent:
             self.have_parent = 1
         else:
             self.have_parent = 0
 
-        self.connect(self, QtCore.SIGNAL("newConnection()"), self.handleConnection)
+        self.newConnection.connect(self.handleConnection)
 
         # Configure to listen on the appropriate port.
-        self.listen(QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost), port)
+        self.listen(QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost), self.port)
 
     def amConnected(self):
         if self.connected:
@@ -47,26 +53,32 @@ class TCPControl(QtNetwork.QTcpServer):
 
     def disconnect(self):
         if self.connected:
-            self.connected = 0
+            self.connected = False
             self.socket.close()
-            self.emit(QtCore.SIGNAL("commLostConnection()"))
+            self.socket = None
+            self.listen(QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost), self.port)
+            self.commLostConnection.emit()
 
     def disconnected(self):
         if self.debug:
             print " TCPControl lost connection.", self.socket.state()
-        self.connected = 0
+        self.connected = False
         self.socket.close()
-        self.emit(QtCore.SIGNAL("commLostConnection()"))
+        self.socket = None
+        self.listen(QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost), self.port)
+        self.commLostConnection.emit()
         
     def handleConnection(self):
         if self.debug:
-            print " TCPControl got connection."
+            print " TCPControl got connection.", self.connected
         if not self.connected:
+            print "  connecting.."
             self.socket = self.nextPendingConnection()
-            self.socket.connect(self.socket, QtCore.SIGNAL("readyRead()"), self.readyRead)
-            self.socket.connect(self.socket, QtCore.SIGNAL("disconnected()"), self.disconnected)
-            self.connected = 1
-            self.emit(QtCore.SIGNAL("commGotConnection()"))
+            self.socket.readyRead.connect(self.readyRead)
+            self.socket.disconnected.connect(self.disconnected)
+            self.connected = True
+            self.close()
+            self.commGotConnection.emit()
 
     def readyRead(self):
         while self.socket.canReadLine():
@@ -141,7 +153,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
