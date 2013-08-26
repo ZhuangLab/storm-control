@@ -183,16 +183,13 @@ class Window(QtGui.QMainWindow):
         # signals
         self.ui.abortButton.clicked.connect(self.handleAbort)
         self.ui.actionQuit.triggered.connect(self.quit)
-        self.ui.actionConnect.triggered.connect(self.handleConnect)
         self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
-        self.ui.actionDisconnect.triggered.connect(self.handleDisconnect)
         self.ui.actionLoad_Mosaic.triggered.connect(self.handleLoadMosaic)
         self.ui.actionLoad_Positions.triggered.connect(self.handleLoadPositions)
         self.ui.actionSave_Mosaic.triggered.connect(self.handleSaveMosaic)
         self.ui.actionSave_Positions.triggered.connect(self.handleSavePositions)
         self.ui.actionSave_Snapshot.triggered.connect(self.handleSnapshot)
         self.ui.actionSet_Working_Directory.triggered.connect(self.handleSetWorkingDirectory)
-        self.ui.connectRadioButton.toggled.connect(self.handleConnectChange)
         self.ui.foregroundOpacitySlider.valueChanged.connect(self.handleOpacityChange)
         self.ui.magComboBox.currentIndexChanged.connect(self.handleObjectiveChange)
         self.ui.tabWidget.currentChanged.connect(self.handleTabChange)
@@ -225,7 +222,7 @@ class Window(QtGui.QMainWindow):
                 next_x_um = self.current_center.x_um + 0.95 * float(image.width) * self.parameters.pixels_to_um * tx / self.current_magnification
                 next_y_um = self.current_center.y_um + 0.95 * float(image.height) * self.parameters.pixels_to_um * ty / self.current_magnification
             self.picture_queue = self.picture_queue[1:]
-            self.comm.captureStart(next_x_um, next_y_um)
+            self.comm.captureStart(next_x_um, next_y_um, len(self.picture_queue))
 
     def addPositions(self, points):
         for a_point in points:
@@ -248,16 +245,6 @@ class Window(QtGui.QMainWindow):
     def handleAbort(self):
         self.comm.abort()
         self.picture_queue = []
-
-    def handleConnect(self):
-        if not self.ui.connectRadioButton.isChecked():
-            self.ui.connectRadioButton.click()
-
-    def handleConnectChange(self, state):
-        if state:
-            self.comm.commConnect()
-        else:
-            self.comm.commDisconnect()
 
     def handleDeleteImages(self):
         reply = QtGui.QMessageBox.question(self,
@@ -428,11 +415,13 @@ class Window(QtGui.QMainWindow):
         self.current_center = coord.Point(x_um, y_um, "um")
 
     def takePictures(self, picture_list):
+        print "start len:", len(picture_list)
         point = picture_list[0]
         self.setCenter(point)
         self.picture_queue = picture_list[1:]
         self.comm.captureStart(self.current_center.x_um, 
-                               self.current_center.y_um)
+                               self.current_center.y_um,
+                               len(self.picture_queue))
 
     @hdebug.debug
     def quit(self):
@@ -443,7 +432,7 @@ if __name__ == "__main__":
     parameters = params.Parameters("settings_default.xml")
 
     # Start logger.
-    hdebug.startLogging(parameters.directory + "logs/", "steve")
+    #hdebug.startLogging(parameters.directory + "logs/", "steve")
 
     # Load app.
     window = Window(parameters)

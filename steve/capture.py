@@ -71,9 +71,11 @@ class Capture(QtCore.QObject):
         self.curr_y = 0.0
         self.dax = None
         self.directory = parameters.directory
+        self.goto = False
         self.filename = parameters.image_filename
         self.flip_horizontal = parameters.flip_horizontal
         self.flip_vertical = parameters.flip_vertical
+        self.movies_remaining = 0
         self.stage_speed = parameters.stage_speed
         self.start_timer = QtCore.QTimer(self)
 
@@ -81,14 +83,18 @@ class Capture(QtCore.QObject):
         self.start_timer.timeout.connect(self.handleStartTimer)
 
         self.tcp_client = halLib.tcpClient.TCPClient()
+        self.tcp_client.acknowledged.connect(self.handleAcknowledged)
         self.tcp_client.complete.connect(self.captureDone)
+        self.tcp_client.disconnect.connect(self.handleDisconnect)
         self.connected = False
 
     def abort(self):
-        self.capturing = False
+        if self.capturing:
+            self.movies_remaining = 0
 
     @hdebug.debug
     def captureDone(self, a_string):
+
         # load the first frame of the dax file
         filename = self.directory + self.filename + ".dax"
         success = False
@@ -107,7 +113,12 @@ class Capture(QtCore.QObject):
                 frame = None
                 time.sleep(0.05)
             tries += 1
+
         self.capturing = False
+
+        if (self.movies_remaining == 0):
+            print "captureDone disconnect"
+            self.commDisconnect()
         
         if type(frame) == type(numpy.array([])):
             if self.flip_horizontal:
@@ -123,64 +134,78 @@ class Capture(QtCore.QObject):
             self.captureComplete.emit(image)
 
     @hdebug.debug
-    def captureStart(self, stagex, stagey):
-        if not self.capturing and self.connected:
+    def captureStart(self, stagex, stagey, movies_remaining):
+        if not self.capturing:
+            self.movies_remaining = movies_remaining
 
-            # set up for capture
-            self.capturing = True
-            self.movie = Movie(self.filename, stagex, stagey)
-            self.tcp_client.sendMovieParameters(self.movie)
+            if not self.connected:
+                self.commConnect(True)
 
-            # determine how long to wait, depending on stage speed.
-            dist_x = stagex - self.curr_x
-            dist_y = stagey - self.curr_y
-            dist = math.sqrt(dist_x*dist_x + dist_y*dist_y)
-            sleep_time = 0.001 * (dist/self.stage_speed) + 1.0
-            self.start_timer.setInterval(1000.0 * sleep_time)
-            self.start_timer.start()
-            #time.sleep(sleep_time)
+            if self.connected:
+                # set up for capture
+                self.capturing = True
+                self.movie = Movie(self.filename, stagex, stagey)
+                self.tcp_client.sendMovieParameters(self.movie)
 
-            # take picture
-            #self.tcp_client.startMovie(self.movie)
+                # determine how long to wait, depending on stage speed.
+                dist_x = stagex - self.curr_x
+                dist_y = stagey - self.curr_y
+                dist = math.sqrt(dist_x*dist_x + dist_y*dist_y)
+                sleep_time = 0.001 * (dist/self.stage_speed) + 1.0
+                self.start_timer.setInterval(1000.0 * sleep_time)
+                self.start_timer.start()
 
-            # record current position
-            self.curr_x = stagex
-            self.curr_y = stagey
+                # record current position
+                self.curr_x = stagex
+                self.curr_y = stagey
         else:
-            print "Disconnected? Busy?"
+            print "Busy?"
 
     @hdebug.debug
-    def commConnect(self):
-        if not self.connected:
-            self.tcp_client.startCommunication()
-            self.connected = True
+    def commConnect(self, set_directory = False):
+        self.tcp_client.startCommunication()
+        self.connected = self.tcp_client.getConnected()
+        if self.connected and set_directory:
             self.tcp_client.sendSetDirectory(self.directory[:-1])
 
     @hdebug.debug
     def commDisconnect(self):
-        if self.connected:
-            self.tcp_client.stopCommunication()
-            self.connected = False
+        self.tcp_client.stopCommunication()
+        self.connected = False
 
     @hdebug.debug
-    def gotoPosition(self, stagex, stagey):        
-        if not self.capturing and self.connected:
-            self.movie = Movie(self.filename, stagex, stagey)
-            self.tcp_client.sendMovieParameters(self.movie)
+    def gotoPosition(self, stagex, stagey):
+        #if ((not self.capturing) and (self.movies_remaining == 0)):
+        if not self.capturing:
+            if not self.connected:
+                self.commConnect()
+            if self.connected:
+                self.movie = Movie(self.filename, stagex, stagey)
+                self.tcp_client.sendMovieParameters(self.movie)
+                self.goto = True
         else:
-            print "Disconnected? Busy?"
+            print "Busy?"
+
+    def handleAcknowledged(self):
+        if self.goto:
+            print "handleAcknowledged disconnect"
+            self.commDisconnect()
+            self.goto = False
+
+    def handleDisconnect(self):
+        self.capturing = False
+        self.connected = False
 
     def handleStartTimer(self):
-        if self.capturing:
+        if self.connected and self.capturing:
             self.tcp_client.startMovie(self.movie)
 
     def setDirectory(self, directory):
         self.directory = directory
-        if self.connected:
-            self.tcp_client.sendSetDirectory(self.directory[:-1])
 
     def shutDown(self):
-        self.commDisconnect()
+        if self.connected:
+            self.commDisconnect()
 
 #
 # The MIT License

@@ -496,7 +496,7 @@ class Sections(QtGui.QWidget):
     # This is called once the scene has been updated to redraw the
     # active section based on its new parameters.
     def handleSectionUpdate(self):
-        if self.active_section.isChecked():
+        if self.active_section and self.active_section.isChecked():
             self.updateBackgroundPixmap()
         self.updateForegroundPixmap()
 

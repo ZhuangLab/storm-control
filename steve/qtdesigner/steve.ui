@@ -357,13 +357,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QRadioButton" name="connectRadioButton">
-        <property name="text">
-         <string>Connected</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QPushButton" name="abortButton">
         <property name="text">
          <string>Abort Acquistion</string>
@@ -413,8 +406,6 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionConnect"/>
-    <addaction name="actionDisconnect"/>
     <addaction name="actionSet_Working_Directory"/>
     <addaction name="separator"/>
     <addaction name="actionDelete_Images"/>
