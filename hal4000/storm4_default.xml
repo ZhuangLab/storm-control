@@ -39,7 +39,7 @@
 <!--  <acq_mode type="string">fixed_length</acq_mode> -->
   <frames type="int">600</frames>
   <logfile type="string">c:\users\Data\image_log.txt</logfile>
-  <extensions type="string-array">,A647,Cy5,Cy3,Cy2,A405,FITC,YFP,GFP,BF</extensions>
+  <extensions type="string-array">,A750,A647,Cy3,A488,BF</extensions>
   <auto_increment type="int">1</auto_increment>
   <want_bell type="int">1</want_bell>
   <auto_shutters type="int">1</auto_shutters>
@@ -139,7 +139,7 @@
   <!-- joystick setting -->
   <have_joystick type="int">1</have_joystick>
   <hat_step type="float">1.0</hat_step> <!-- step size in um for hat button press -->
-  <joystick_gain type="float-array">25, 2500</joystick_gain>   <!-- max velocity in um/s: valid range 1 to max stage speed -->
+  <joystick_gain type="float-array">25,250,2500</joystick_gain>   <!-- max velocity in um/s: valid range 1 to max stage speed -->
   <joystick_multiplier_value type="float">5</joystick_multiplier_value> <!-- X button multiplier for joystick and focus lock -->
   <joystick_mode type="string">quadratic</joystick_mode> <!-- linear or quadratic -->
   <joystick_signx type="float">1.0</joystick_signx>

@@ -389,7 +389,7 @@ class QSerialLaserComm(QSerialComm):
     def __init__(self, sdevice, parent = None):
         QSerialComm.__init__(self, sdevice, parent)
 
-   def analogModulationOff(self):
+    def analogModulationOff(self):
         self.sdevice_mutex.lock()
         if self.sdevice:
             self.sdevice.setExtControl(0)
