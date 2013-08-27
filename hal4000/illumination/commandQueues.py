@@ -27,84 +27,6 @@ def removeChannelDuplicates(queue, channel):
         final_queue.append(item)
     return final_queue
 
-
-#
-# Cube communication thread.
-#
-# This "buffers" communication with a Coherent cube laser.
-#
-# All communication with a cube should go 
-# through this thread to avoid two processes trying 
-# to talk to the laser at the same time.
-#
-class QCubeThread(QtCore.QThread):
-    def __init__(self, port = None, parent = None):
-        QtCore.QThread.__init__(self, parent)
-        self.buffer = []
-        self.buffer_mutex = QtCore.QMutex()
-        self.cube_mutex = QtCore.QMutex()
-        self.running = 1
-
-        import coherent.cube405 as cube405
-        if port:
-            self.cube = cube405.Cube405(port)
-        else:
-            self.cube = cube405.Cube405()
-        if not(self.cube.getStatus()):
-            self.cube.shutDown()
-            self.cube = 0
-
-    def run(self):
-        while (self.running):
-            self.buffer_mutex.lock()
-            if len(self.buffer) > 0:
-                [on, amplitude] = self.buffer.pop()
-                self.buffer = []
-                self.buffer_mutex.unlock()
-                self.setAmplitude(on, amplitude)
-            else:
-                self.buffer_mutex.unlock()
-            self.msleep(10)
-
-    def addRequest(self, on, amplitude):
-        self.buffer_mutex.lock()
-        self.buffer.append([on, amplitude])
-        self.buffer_mutex.unlock()
-
-    def analogModulationOff(self):
-        self.cube_mutex.lock()
-        if self.cube:
-            self.cube.setExtControl(0)
-        self.cube_mutex.unlock()
-
-    def analogModulationOn(self):
-        self.cube_mutex.lock()
-        if self.cube:
-            self.cube.setExtControl(1)
-        self.cube_mutex.unlock()
-
-    def setAmplitude(self, on, amplitude):
-        self.cube_mutex.lock()
-        if self.cube:
-            if on:
-                self.cube.setPower(amplitude)
-            else:
-                self.cube.setPower(0)
-        else:
-            if on:
-                print "CUBE: ", amplitude
-            else:
-                print "CUBE: ", 0
-        self.cube_mutex.unlock()
-
-    def stopThread(self):
-        self.running = 0
-        while (self.isRunning()):
-            self.msleep(50)
-        if self.cube:
-            self.cube.shutDown()
-
-
 #
 # Generic AOTF communication thread
 #
@@ -346,34 +268,9 @@ class QCT64BitAOTFThread(QCTAOTFThread):
             self.aotf = 0
 
 #
-# National Instruments analog communication. This is so
-# fast that we don't even bother to buffer.
-#
-
-class QNiAnalogComm():
-    def __init__(self, on_voltage):
-        self.filming = 0
-        self.on_voltage = on_voltage
-        import nationalInstruments.nicontrol as nicontrol
-        self.nicontrol = nicontrol
-
-    def addRequest(self, on, board, channel):
-        if not self.filming:
-            task = self.nicontrol.VoltageOutput(board, channel)
-            if on:
-                task.outputVoltage(self.on_voltage)
-            else:
-                task.outputVoltage(0.0)
-            task.clearTask()
-
-    def setFilming(self, flag):
-        self.filming = flag
-
-#
 # National Instruments digital communication. This is also
 # so fast that we don't bother to buffer.
 #
-
 class QNiDigitalComm():
     def __init__(self):
         self.used_channel = []
@@ -394,26 +291,45 @@ class QNiDigitalComm():
         self.used_channels = channels
 
 #
-# Thorlabs filter wheel with mechanical shutter.
-# Commands to the filter wheel are buffered, commands
-# to the shutter are not.
+# National Instruments analog communication. This is so
+# fast that we don't even bother to buffer.
 #
-class QFilterWheelThread(QtCore.QThread):
-    def __init__(self, port = None, parent = None):
+class QNiAnalogComm():
+    def __init__(self, on_voltage):
+        self.filming = 0
+        self.on_voltage = on_voltage
+        import nationalInstruments.nicontrol as nicontrol
+        self.nicontrol = nicontrol
+
+    def addRequest(self, on, board, channel):
+        if not self.filming:
+            task = self.nicontrol.VoltageOutput(board, channel)
+            if on:
+                task.outputVoltage(self.on_voltage)
+            else:
+                task.outputVoltage(0.0)
+            task.clearTask()
+
+    def setFilming(self, flag):
+        self.filming = flag
+
+#
+# Generic serial device communication.
+#
+# This "buffers" communication with a serial device.
+#
+class QSerialComm(QtCore.QThread):
+    def __init__(self, sdevice, parent = None):
         QtCore.QThread.__init__(self, parent)
         self.buffer = []
         self.buffer_mutex = QtCore.QMutex()
-        self.fw_mutex = QtCore.QMutex()
+        self.sdevice_mutex = QtCore.QMutex()
         self.running = 1
 
-        import thorlabs.FW102C as FW102C
-        if port:
-            self.fw = FW102C.FW102C(port)
-        else:
-            self.fw = FW102C.FW102C()
-        if not(self.fw.getStatus()):
-            self.fw.shutDown()
-            self.fw = 0
+        self.sdevice = sdevice
+        if not (self.sdevice.getStatus()):
+            self.sdevice.shutdown
+            self.sdevice = False
 
     def run(self):
         while (self.running):
@@ -432,26 +348,77 @@ class QFilterWheelThread(QtCore.QThread):
         self.buffer.append([on, amplitude])
         self.buffer_mutex.unlock()
 
-    def setAmplitude(self, on, amplitude):
-        self.fw_mutex.lock()
-        if self.fw:
-            self.fw.setPosition(amplitude+1)
-        else:
-            print "Filter Wheel: ", amplitude
-        self.fw_mutex.unlock()
-
     def stopThread(self):
         self.running = 0
         while (self.isRunning()):
             self.msleep(50)
-        if self.fw:
-            self.fw.shutDown()
+        if self.sdevice:
+            self.sdevice.shutDown()
 
+#
+# Serial port controlled filter-wheel.
+#
+# This "buffers" communication with a serial filter wheel.
+#
+# All communication with the device should go 
+# through this thread to avoid two processes trying 
+# to talk to the laser at the same time.
+#
+class QSerialFilterWheelComm(QSerialComm):
+    def __init__(self, sdevice, parent = None):
+        QSerialComm.__init__(self, sdevice, parent)
+
+    def setAmplitude(self, on, amplitude):
+        self.sdevice_mutex.lock()
+        if self.sdevice:
+            self.sdevice.setPosition(amplitude+1)
+        else:
+            print "Filter Wheel: ", amplitude
+        self.sdevice_mutex.unlock()
+
+#
+# Serial port controlled laser.
+#
+# This "buffers" communication with a laser.
+#
+# All communication with the device should go 
+# through this thread to avoid two processes trying 
+# to talk to the laser at the same time.
+#
+class QSerialLaserComm(QSerialComm):
+    def __init__(self, sdevice, parent = None):
+        QSerialComm.__init__(self, sdevice, parent)
+
+   def analogModulationOff(self):
+        self.sdevice_mutex.lock()
+        if self.sdevice:
+            self.sdevice.setExtControl(0)
+        self.sdevice_mutex.unlock()
+
+    def analogModulationOn(self):
+        self.sdevice_mutex.lock()
+        if self.sdevice:
+            self.sdevice.setExtControl(1)
+        self.sdevice_mutex.unlock()
+
+    def setAmplitude(self, on, amplitude):
+        self.sdevice_mutex.lock()
+        if self.sdevice:
+            if on:
+                self.sdevice.setPower(amplitude)
+            else:
+                self.sdevice.setPower(0)
+        else:
+            if on:
+                print "LASER: ", amplitude
+            else:
+                print "LASER: ", 0
+        self.sdevice_mutex.unlock()
 
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
