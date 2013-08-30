@@ -22,7 +22,7 @@ except:
 class QObjectCounterThread(QtCore.QThread):
     imageProcessed = QtCore.pyqtSignal(int, object, int, object, object, int)
 
-    def __init__(self, parameters, index, timing_mode = 0, parent = None):
+    def __init__(self, parameters, index, timing_mode = False, parent = None):
         QtCore.QThread.__init__(self, parent)
 
         self.FOF = FOF.MedFastObjectFinder(parameters.cell_size,
@@ -49,25 +49,25 @@ class QObjectCounterThread(QtCore.QThread):
 
     def run(self):
          while (self.running):
-            self.mutex.lock()
-            if self.frame:
-                [x_locs, y_locs, spots] = self.FOF.findObjects(self.frame.data,
-                                                               self.frame.image_x,
-                                                               self.frame.image_y)
-                if self.timing_mode:
-                    self.counts += 1
-                else:
-                    self.imageProcessed.emit(self.thread_index,
-                                             self.frame.which_camera,
-                                             self.frame.number,
-                                             x_locs,
-                                             y_locs,
-                                             spots)
-                    self.frame = False
-
-            self.mutex.unlock()
-            if not(self.timing_mode):
-                self.usleep(50)
+             self.mutex.lock()
+             if self.frame:
+                 [x_locs, y_locs, spots] = self.FOF.findObjects(self.frame.data,
+                                                                self.frame.image_x,
+                                                                self.frame.image_y)
+                 if self.timing_mode:
+                     self.counts += 1
+                 else:
+                     self.imageProcessed.emit(self.thread_index,
+                                              self.frame.which_camera,
+                                              self.frame.number,
+                                              x_locs,
+                                              y_locs,
+                                              spots)
+                     self.frame = False
+                     
+             self.mutex.unlock()
+             if not(self.timing_mode):
+                 self.usleep(50)
 
     def stopThread(self):
         self.running = 0

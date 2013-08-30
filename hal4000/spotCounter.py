@@ -2,7 +2,7 @@
 #
 # Spot counter.
 #
-# Hazen 12/12
+# Hazen 08/13
 #
 
 import sys
@@ -18,7 +18,6 @@ import halLib.hdebug as hdebug
 
 # The module that actually does the analysis.
 import qtWidgets.qtSpotCounter as qtSpotCounter
-
 
 #
 # Widget for keeping the various count display up to date.
@@ -41,6 +40,51 @@ class Counter():
         self.counts += counts
         self.q_label1.setText(str(self.counts))
         self.q_label2.setText(str(self.counts))
+
+#
+# Offline analysis driver widget.
+#
+class OfflineDriver(QtCore.QObject):
+    
+    def __init__(self, spot_counter, data_file, png_filename, parent = None):
+        QtCore.QObject.__init__(self, parent)
+
+        self.cur_frame = 0
+        self.data_file = data_file
+        self.png_filename = png_filename
+        self.spot_counter = spot_counter
+
+        [self.width, self.height, self.length] = data_file.filmSize()
+
+        self.start_timer = QtCore.QTimer(self)
+        self.start_timer.setSingleShot(True)
+        self.start_timer.timeout.connect(self.startAnalysis)
+        self.start_timer.setInterval(500)
+        self.start_timer.start()
+
+        self.spot_counter.imageProcessed.connect(self.nextImage)
+
+    def nextImage(self):
+        if (self.cur_frame < self.length):
+        #if (self.cur_frame < 5):
+            np_data = data_file.loadAFrame(self.cur_frame)
+            np_data = numpy.ascontiguousarray(np_data, dtype=numpy.int16)
+            self.spot_counter.newFrame(frame.Frame(np_data.ctypes.data,
+                                                   self.cur_frame,
+                                                   self.width,
+                                                   self.height,
+                                                   "camera1",
+                                                   True))
+            self.cur_frame += 1
+            if ((self.cur_frame % 100) == 0):
+                print "Frame:", self.cur_frame, "(", self.length, ")"
+        else:
+            self.spot_counter.stopCounter()
+            print "Finished Analysis"
+
+    def startAnalysis(self):
+        self.spot_counter.startCounter(self.png_filename)
+        self.nextImage()
 
 #
 # Spot Count Graphing Widget.
@@ -189,6 +233,12 @@ class QImageGraph(QtGui.QWidget):
         self.scale_bar_len = int(round(scale_bar_len))
         self.x_scale = float(self.x_size)/float(x_range)
         self.y_scale = float(self.y_size)/float(y_range)
+
+        if (self.x_scale > self.y_scale):
+            self.x_scale = self.y_scale
+        else:
+            self.y_scale = self.x_scale
+
         self.blank()
 
     def paintEvent(self, Event):
@@ -217,6 +267,7 @@ class QImageGraph(QtGui.QWidget):
             for i in range(spots):
                 ix = int(self.x_scale * x_locs[i])
                 iy = int(self.y_scale * y_locs[i])
+                #print ix, x_locs[i], iy, y_locs[i]
                 painter.drawPoint(ix, iy)
             self.update()
 
@@ -225,6 +276,8 @@ class QImageGraph(QtGui.QWidget):
 # Spot Counter Dialog Box
 #
 class SpotCounter(QtGui.QDialog):
+    imageProcessed = QtCore.pyqtSignal()
+
     @hdebug.debug
     def __init__(self, parameters, single_camera, parent = None):
         QtGui.QMainWindow.__init__(self, parent)
@@ -403,6 +456,7 @@ class SpotCounter(QtGui.QDialog):
                 self.image_graphs[1].updateImage(frame_number, x_locs, y_locs, spots)
         else:
             print "spotCounter.update Unknown camera:", which_camera
+        self.imageProcessed.emit()
 
     @hdebug.debug        
     def quit(self):
@@ -437,13 +491,44 @@ class SpotCounter(QtGui.QDialog):
 
 
 #
-# testing
+# Testing.
 #
-
+#   Load a movie file, analyze it & save the result.
+#
 if __name__ == "__main__":
+
+    import numpy
+
+    import camera.frame as frame
+
+    # This file is available in the ZhuangLab storm-analysis project on github.
+    import sa_library.datareader as datareader
+
+    if (len(sys.argv) != 4):
+        print "usage: <settings> <movie_in> <png_out>"
+        exit()
+
+    # Open movie & get size.
+    data_file = datareader.inferReader(sys.argv[2])
+    [width, height, length] = data_file.filmSize()
+
+    # Start spotCounter as a stand-alone application.
     app = QtGui.QApplication(sys.argv)
-    parameters = params.Parameters("settings_default.xml")
-    spotCounter = SpotCounter(parameters)
+    parameters = params.Parameters(sys.argv[1], is_HAL = True)
+    parameters.setup_name = "offline"
+    
+    parameters.x_pixels = width
+    parameters.y_pixels = height
+    parameters.x_bin = 1
+    parameters.y_bin = 1
+
+    spotCounter = SpotCounter(parameters, True)
+    spotCounter.newParameters(parameters, [[255,255,255]])
+
+    # Start driver.
+    driver = OfflineDriver(spotCounter, data_file, sys.argv[3])
+
+    # Show window & start application.
     spotCounter.show()
     app.exec_()
 
@@ -451,7 +536,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
