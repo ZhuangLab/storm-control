@@ -328,7 +328,7 @@ class QSerialComm(QtCore.QThread):
 
         self.sdevice = sdevice
         if not (self.sdevice.getStatus()):
-            self.sdevice.shutdown
+            self.sdevice.shutDown()
             self.sdevice = False
 
     def run(self):
