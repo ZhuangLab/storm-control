@@ -79,21 +79,21 @@ class TCPClient(QtGui.QWidget):
         return self.connected
 
     def handleAcknowledged(self):
-        print " got response"
         self.unacknowledged -= 1
+        print "  got response", self.unacknowledged
         if (self.unacknowledged == 0):
             print " acknowledged"
             self.acknowledged.emit()
         
     def handleComplete(self, a_string):
         if (self.state == "filming"):
-            print "movie complete", a_string
+            print " movie complete", a_string
         elif (self.state == "finding_sum"):
-            print "finding sum complete", a_string
+            print " finding sum complete", a_string
         elif (self.state == "recentering"):
-            print "recentering complete", a_string
+            print " recentering complete", a_string
         else:
-            print "unknown state:", self.state
+            print " unknown state:", self.state
         self.complete.emit(a_string)
         self.state = None
 
@@ -103,7 +103,7 @@ class TCPClient(QtGui.QWidget):
 
     def sendCommand(self, command):
         if self.connected:
-            print "sending:", command
+            print "  sending:", command
             self.unacknowledged += 1
             self.socket.sendCommand(command)
             self.socket.flush()
@@ -117,8 +117,8 @@ class TCPClient(QtGui.QWidget):
 
     # Fire all the settings off at once...
     def sendMovieParameters(self, movie):
-        if self.unacknowledged != 0:
-            print self.unacknowledged, "commands are still pending"
+        #if self.unacknowledged != 0:
+        #    print self.unacknowledged, "commands are still pending"
         # send parameters index.
         if hasattr(movie, "parameters"):
             self.sendCommand("parameters,int,{0:d}".format(movie.parameters))
@@ -139,19 +139,19 @@ class TCPClient(QtGui.QWidget):
         self.sendCommand("setDirectory,string,{0:s}".format(directory))
 
     def startCommunication(self):
-        print "starting communications"
+        print " starting communications"
         if not self.connected:
             self.socket.connectToHAL()
             self.connected = self.socket.connected
             self.unacknowledged = 0
 
     def startFindSum(self):
-        print "start find sum"
+        print " start find sum"
         self.state = "finding_sum"
         self.sendCommand("findSum")
 
     def startMovie(self, movie):
-        print "start movie"
+        print " start movie"
         if hasattr(movie, "progression"):
             if (movie.progression.type == "lockedout"):
                 self.sendCommand("progressionLockout")
@@ -175,18 +175,18 @@ class TCPClient(QtGui.QWidget):
         self.sendCommand("movie,string,{0:s},int,{1:d}".format(movie.name, movie.length))
 
     def startRecenterPiezo(self):
-        print "start recenter piezo"
+        print " start recenter piezo"
         self.state = "recentering"
         self.sendCommand("recenterPiezo")
 
     def stopCommunication(self):
-        print "stopping communications"
+        print " stopping communications"
         if self.connected:
             self.socket.disconnectFromHost()
             self.connected = False
 
     def stopMovie(self):
-        print "stop movie"
+        print " stop movie"
         self.sendCommand("abortMovie")
 
 #

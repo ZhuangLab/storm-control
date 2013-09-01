@@ -101,6 +101,7 @@ class Window(QtGui.QMainWindow):
         self.debug = parameters.debug
         self.parameters = parameters
         self.picture_queue = []
+        self.taking_pictures = False
 
         # ui setup
         self.ui = steveUi.Ui_MainWindow()
@@ -211,7 +212,7 @@ class Window(QtGui.QMainWindow):
 
     def addImage(self, image):
         self.view.addImage(image, self.current_objective, self.current_magnification, self.current_offset)
-        if len(self.picture_queue) > 0:
+        if (len(self.picture_queue) > 0):
             next_item = self.picture_queue[0]
             if (type(next_item) == type(coord.Point(0,0,"um"))):
                 self.setCenter(next_item)
@@ -222,7 +223,10 @@ class Window(QtGui.QMainWindow):
                 next_x_um = self.current_center.x_um + 0.95 * float(image.width) * self.parameters.pixels_to_um * tx / self.current_magnification
                 next_y_um = self.current_center.y_um + 0.95 * float(image.height) * self.parameters.pixels_to_um * ty / self.current_magnification
             self.picture_queue = self.picture_queue[1:]
-            self.comm.captureStart(next_x_um, next_y_um, len(self.picture_queue))
+            self.comm.captureStart(next_x_um, next_y_um)
+        else:
+            self.taking_pictures = False
+            self.comm.commDisconnect()
 
     def addPositions(self, points):
         for a_point in points:
@@ -240,10 +244,10 @@ class Window(QtGui.QMainWindow):
         self.cleanUp()
 
     def gotoPosition(self, point):
-        self.comm.gotoPosition(point.x_um - self.current_offset.x_um, point.y_um - self.current_offset.y_um)
+        if not self.taking_pictures:
+            self.comm.gotoPosition(point.x_um - self.current_offset.x_um, point.y_um - self.current_offset.y_um)
 
     def handleAbort(self):
-        self.comm.abort()
         self.picture_queue = []
 
     def handleDeleteImages(self):
@@ -415,13 +419,16 @@ class Window(QtGui.QMainWindow):
         self.current_center = coord.Point(x_um, y_um, "um")
 
     def takePictures(self, picture_list):
-        print "start len:", len(picture_list)
-        point = picture_list[0]
-        self.setCenter(point)
-        self.picture_queue = picture_list[1:]
-        self.comm.captureStart(self.current_center.x_um, 
-                               self.current_center.y_um,
-                               len(self.picture_queue))
+        if self.taking_pictures:
+            self.picture_queue = []
+        else:
+            point = picture_list[0]
+            self.setCenter(point)
+            self.picture_queue = picture_list[1:]
+            self.taking_pictures = True
+            if not self.comm.captureStart(self.current_center.x_um, self.current_center.y_um):
+                self.taking_pictures = False
+                self.picture_queue = []
 
     @hdebug.debug
     def quit(self):
