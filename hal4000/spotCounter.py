@@ -65,8 +65,8 @@ class OfflineDriver(QtCore.QObject):
         self.spot_counter.imageProcessed.connect(self.nextImage)
 
     def nextImage(self):
-        #if (self.cur_frame < self.length):
-        if (self.cur_frame < 1):
+        if (self.cur_frame < self.length):
+        #if (self.cur_frame < 5):
             np_data = data_file.loadAFrame(self.cur_frame)
             np_data = numpy.ascontiguousarray(np_data, dtype=numpy.int16)
             self.spot_counter.newFrame(frame.Frame(np_data.ctypes.data,
@@ -267,7 +267,7 @@ class QImageGraph(QtGui.QWidget):
             for i in range(spots):
                 ix = int(self.x_scale * x_locs[i])
                 iy = int(self.y_scale * y_locs[i])
-                print ix, x_locs[i], iy, y_locs[i]
+                #print ix, x_locs[i], iy, y_locs[i]
                 painter.drawPoint(ix, iy)
             self.update()
 

@@ -55,7 +55,7 @@ void initialize(void);
 int isLocalMaxima(short [], int, int, int, int);
 int isPeak(short [], int, int, int, int, int);
 void numberAndLocObjects(short [], int, int, int, float [], float [], int *);
-void peakPosition(short [], int, int, int, int, float *, float *);
+void peakPosition(short [], int, int, int, int, int, float *, float *);
 
 
 /* 
@@ -111,7 +111,7 @@ void initialize(void)
       else if (peak[i*size+j] == 2){
 	cnt_dx[l] = i - BSIZE + 1;
 	cnt_dy[l] = j - BSIZE + 1;
-	printf(" %d %d\n", cnt_dx[l], cnt_dy[l]);
+	// printf(" %d %d\n", cnt_dx[l], cnt_dy[l]);
 	l++;
       }
     }
@@ -172,7 +172,9 @@ int isLocalMaxima(short image[], int size_x, int size_y, int x, int y)
  * y : y position of pixel of interest.
  * threshold : peak height above background ring to be considered a peak.
  *
- * returns 1 if this is a peak, zero otherwise.
+ * returns the mean on the boundary if this is a peak, zero otherwise.
+ *   This is assuming that there is always at least some offset.
+ *
  */
 int isPeak(short image[], int size_x, int size_y, int x, int y, int threshold)
 {
@@ -183,8 +185,9 @@ int isPeak(short image[], int size_x, int size_y, int x, int y, int threshold)
     sum += image[(x + bdy_dx[i])*size_x + (y + bdy_dy[i])];
   }
 
-  if(image[x*size_x+y] > (threshold + sum/bdy_len)){
-    return 1;
+  mean = sum/bdy_len;
+  if(image[x*size_x+y] > (threshold + mean)){
+    return mean;
   }
   else {
     return 0;
@@ -209,13 +212,15 @@ int isPeak(short image[], int size_x, int size_y, int x, int y, int threshold)
 void numberAndLocObjects(short image[], int size_x, int size_y, int threshold, float x_arr[], float y_arr[], int *counts)
 {
   int n,x,y;
+  int mean;
 
   n = 0;
   for(x=BSIZE;x<(size_x-BSIZE);x++){
     for(y=BSIZE;y<(size_y-BSIZE);y++){
       if(isLocalMaxima(image, size_x, size_y, x, y)){
-	if(isPeak(image, size_x, size_y, x, y, threshold)){
-	  peakPosition(image, size_x, size_y, x, y, &(x_arr[n]), &(y_arr[n]));
+	mean = isPeak(image, size_x, size_y, x, y, threshold);
+	if(mean > 0){
+	  peakPosition(image, size_x, size_y, x, y, mean, &(x_arr[n]), &(y_arr[n]));
 	  n++;
 	  if(n == *counts){
 	    x = size_x;
@@ -240,25 +245,32 @@ void numberAndLocObjects(short image[], int size_x, int size_y, int threshold, f
  * size_y : the size of the y dimension of the image.
  * x : x position of pixel of interest.
  * y : y position of pixel of interest.
+ * mean : mean intensity on the boundary.
  * px : peak position in x.
  * py : peak position in y.
  *
  * returns nothing.
  */
-void peakPosition(short image[], int size_x, int size_y, int x, int y, float *px, float *py)
+void peakPosition(short image[], int size_x, int size_y, int x, int y, int mean, float *px, float *py)
 {
   int cur,i,sum,sumx,sumy;
 
   sum = sumx = sumy = 0;
   for(i=0;i<cnt_len;i++){
-    cur = image[(x + cnt_dx[i])*size_x + (y + cnt_dy[i])];
+    cur = image[(x + cnt_dx[i])*size_x + (y + cnt_dy[i])] - mean;
     sum += cur;
     sumx += cur*cnt_dx[i];
     sumy += cur*cnt_dy[i];
   }
 
-  *px = ((float)y) + ((float)sumy)/((float)sum);
-  *py = ((float)x) + ((float)sumx)/((float)sum);
+  if (sum > 0){
+    *px = ((float)y) + ((float)sumy)/((float)sum);
+    *py = ((float)x) + ((float)sumx)/((float)sum);
+  }
+  else{
+    *px = -1.0;
+    *py = -1.0;
+  }
 }
 
 /*
