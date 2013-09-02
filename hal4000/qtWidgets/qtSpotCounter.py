@@ -3,17 +3,17 @@
 # Qt Thread for counting the number of spots 
 # in a frame and graphing the results.
 #
-# Hazen 12/12
+# Hazen 09/13
 #
 
 from PyQt4 import QtCore, QtGui
 
 try:
-    import objectFinder.fastObjectFinder as FOF
+    import objectFinder.lmmObjectFinder as lmmObjectFinder
 except:
     import sys
     sys.path.append("../")
-    import objectFinder.fastObjectFinder as FOF
+    import objectFinder.lmmObjectFinder as lmmObjectFinder
 
 
 #
@@ -22,19 +22,14 @@ except:
 class QObjectCounterThread(QtCore.QThread):
     imageProcessed = QtCore.pyqtSignal(int, object, int, object, object, int)
 
-    def __init__(self, parameters, index, timing_mode = False, parent = None):
+    def __init__(self, parameters, index, parent = None):
         QtCore.QThread.__init__(self, parent)
-
-        self.FOF = FOF.MedFastObjectFinder(parameters.cell_size,
-                                           parameters.threshold)
 
         self.frame = False
         self.mutex = QtCore.QMutex()
-        self.running = 1
+        self.running = True
         self.thread_index = index
-
-        self.counts = 0
-        self.timing_mode = timing_mode
+        self.threshold = parameters.threshold
 
     def newImage(self, frame):
         self.mutex.lock()
@@ -43,34 +38,30 @@ class QObjectCounterThread(QtCore.QThread):
 
     def newParameters(self, parameters):
         self.mutex.lock()
-        self.FOF.setCellSize(parameters.cell_size)
-        self.FOF.setThreshold(parameters.threshold)
+        self.threshold = parameters.threshold
         self.mutex.unlock()
 
     def run(self):
          while (self.running):
              self.mutex.lock()
              if self.frame:
-                 [x_locs, y_locs, spots] = self.FOF.findObjects(self.frame.data,
-                                                                self.frame.image_x,
-                                                                self.frame.image_y)
-                 if self.timing_mode:
-                     self.counts += 1
-                 else:
-                     self.imageProcessed.emit(self.thread_index,
-                                              self.frame.which_camera,
-                                              self.frame.number,
-                                              x_locs,
-                                              y_locs,
-                                              spots)
-                     self.frame = False
+                 [x_locs, y_locs, spots] = lmmObjectFinder.findObjects(self.frame.data,
+                                                                       self.frame.image_x,
+                                                                       self.frame.image_y,
+                                                                       self.threshold)
+                 self.imageProcessed.emit(self.thread_index,
+                                          self.frame.which_camera,
+                                          self.frame.number,
+                                          x_locs,
+                                          y_locs,
+                                          spots)
+                 self.frame = False
                      
              self.mutex.unlock()
-             if not(self.timing_mode):
-                 self.usleep(50)
+             self.usleep(50)
 
     def stopThread(self):
-        self.running = 0
+        self.running = False
 
 
 #
@@ -82,10 +73,14 @@ class QObjectCounter(QtGui.QWidget):
     def __init__(self, parameters, number_threads = 16, parent = None):
         QtGui.QWidget.__init__(self, parent)
 
-        self.total = 0
         self.dropped = 0
         self.number_threads = number_threads
+        self.total = 0
 
+        # Initialize object finder.
+        lmmObjectFinder.initialize()
+
+        # Initialize threads.
         self.idle = []
         self.threads = []
         for i in range(self.number_threads):
@@ -123,6 +118,10 @@ class QObjectCounter(QtGui.QWidget):
                                  spots)
 
     def shutDown(self):
+        # Object finder cleanup.
+        lmmObjectFinder.cleanup()
+
+        # Thread cleanup.
         for thread in self.threads:
             thread.stopThread()
             thread.wait()
@@ -130,55 +129,9 @@ class QObjectCounter(QtGui.QWidget):
 
 
 #
-# Testing
-#
-
-if __name__ == "__main__":
-    import ctypes
-    import time
-
-    class Parameters():
-        def __init__(self):
-            self.x_pixels = 512
-            self.y_pixels = 512
-            self.x_bin = 1
-            self.y_bin = 1
-            self.cell_size = 32
-            self.threshold = 3.0
-            self.coefficients = [-25, 0.05, 7.0e-6]
-
-    parameters = Parameters()
-    image_x = 512
-    image_y = 512
-    image_type = ctypes.c_short * (image_x * image_y)
-    threads = []
-    number_threads = 4
-    for i in range(number_threads):
-        threads.append(QObjectCounterThread(parameters, i, timing_mode = 1))
-        image = image_type()
-        threads[i].newImage(image, 1)
-
-    for thread in threads:
-        thread.start(QtCore.QThread.NormalPriority)
-
-    wait_time = 5
-    time.sleep(wait_time)
-    sum = 0
-    for thread in threads:
-        thread.stopThread()
-
-    for thread in threads:
-        thread.wait()
-        sum += thread.getCounts()
-
-    print "Processed:", sum, "images in", wait_time, "seconds"
-    print "%.3f" % (sum/wait_time), "images per second"
-        
-
-#
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
