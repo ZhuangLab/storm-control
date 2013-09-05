@@ -18,7 +18,6 @@ class HALSocket(QtNetwork.QTcpSocket):
 
     def __init__(self, port):
         QtNetwork.QTcpSocket.__init__(self)
-        self.connected = False
         self.port = port
 
         # signals
@@ -30,28 +29,29 @@ class HALSocket(QtNetwork.QTcpSocket):
         self.connectToHost(addr, self.port)
         tries = 0
         while (not self.waitForConnected() and (tries < 5)):
-            print "Couldn't connect to HAL-4000, waiting 1 second and retrying"
+            print " Couldn't connect to HAL-4000, waiting 1 second and retrying"
             time.sleep(1)
             tries += 1
             self.connectToHost(addr, self.port)
 
         if (tries == 5):
-            print "Could not connect to HAL-4000."
-            self.connected = False
+            print " Could not connect to HAL-4000."
         else:
-            self.connected = True
+            print " Connected to HAL-4000."
 
     def handleReadyRead(self):
         while self.canReadLine():
             line = str(self.readLine()).strip()            
             if (line == "Ack"):
                 self.acknowledged.emit()
-            if (line[0:8] == "Complete"):
+            elif (line[0:8] == "Complete"):
                 values = line.split(",")
                 if (len(values)==2):
                     self.complete.emit(values[1])
                 else:
                     self.complete.emit("NA")
+            elif (line == "Busy"):
+                self.socket.disconnectFromHost()
 
     def sendCommand(self, command):
         self.write(QtCore.QByteArray(command + "\n"))
@@ -65,7 +65,6 @@ class TCPClient(QtGui.QWidget):
 
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
-        self.connected = False
         self.socket = HALSocket(9000)
         self.state = None
         self.testing = False
@@ -74,9 +73,6 @@ class TCPClient(QtGui.QWidget):
         self.socket.acknowledged.connect(self.handleAcknowledged)
         self.socket.complete.connect(self.handleComplete)
         self.socket.disconnected.connect(self.handleDisconnect)
-
-    def getConnected(self):
-        return self.connected
 
     def handleAcknowledged(self):
         self.unacknowledged -= 1
@@ -98,51 +94,48 @@ class TCPClient(QtGui.QWidget):
         self.state = None
 
     def handleDisconnect(self):
-        self.connected = False
         self.disconnect.emit()
 
+    def isConnected(self):
+        if (self.socket.state() == QtNetwork.QAbstractSocket.ConnectedState):
+            return True
+        else:
+            return False
+
     def sendCommand(self, command):
-        if self.connected:
+        if self.isConnected():
             print "  sending:", command
             self.unacknowledged += 1
             self.socket.sendCommand(command)
             self.socket.flush()
             time.sleep(0.05)
         else:
-            print "Not connected?!?"
+            print " Not connected?!?"
 
-    #def sendInitialPowers(self, movie):
-    #    if self.testing:
-    #        print "sending initial powers"
-
+    #
     # Fire all the settings off at once...
+    #
     def sendMovieParameters(self, movie):
-        #if self.unacknowledged != 0:
-        #    print self.unacknowledged, "commands are still pending"
+
         # send parameters index.
         if hasattr(movie, "parameters"):
             self.sendCommand("parameters,int,{0:d}".format(movie.parameters))
+
         # send stage position.
         if hasattr(movie, "stage_x") and hasattr(movie, "stage_y"):
             self.sendCommand("moveTo,float,{0:.2f},float,{1:.2f}".format(movie.stage_x, movie.stage_y))
+
         # send lock target.
         if hasattr(movie, "lock_target"):
             self.sendCommand("setLockTarget,float,{0:.1f}".format(movie.lock_target))
-
-    #def sendPowerUpdate(self, channel, power_increment):
-    #    if self.testing:
-    #        print " send power update", channel, power_increment
-    #    else:
-    #        self.sendCommand("incPower,int,{0:d},float,{1:.4f}".format(channel, power_increment))
 
     def sendSetDirectory(self, directory):
         self.sendCommand("setDirectory,string,{0:s}".format(directory))
 
     def startCommunication(self):
-        print " starting communications"
-        if not self.connected:
+        print " starting communications", self.isConnected()
+        if not self.isConnected():
             self.socket.connectToHAL()
-            self.connected = self.socket.connected
             self.unacknowledged = 0
 
     def startFindSum(self):
@@ -180,10 +173,11 @@ class TCPClient(QtGui.QWidget):
         self.sendCommand("recenterPiezo")
 
     def stopCommunication(self):
-        print " stopping communications"
-        if self.connected:
+        print " stopping communications", self.isConnected()
+        if self.isConnected():
             self.socket.disconnectFromHost()
-            self.connected = False
+            #self.socket.waitForDisconnected()
+            print "  ", self.isConnected()
 
     def stopMovie(self):
         print " stop movie"

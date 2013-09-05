@@ -207,6 +207,7 @@ class Window(QtGui.QMainWindow):
         self.sections.takePictures.connect(self.takePictures)
 
         self.comm.captureComplete.connect(self.addImage)
+        self.comm.disconnected.connect(self.handleDisconnected)
 
         self.handleObjectiveChange(0)
 
@@ -259,9 +260,8 @@ class Window(QtGui.QMainWindow):
         if reply == QtGui.QMessageBox.Yes:
             self.view.clearMosaic()
 
-    def handleDisconnect(self):
-        if self.ui.connectRadioButton.isChecked():
-            self.ui.connectRadioButton.click()
+    def handleDisconnected(self):
+        self.taking_pictures = False
 
     def handleGridChange(self, num):
         self.view.gridChange(self.ui.xSpinBox.value(),

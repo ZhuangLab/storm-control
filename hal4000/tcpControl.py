@@ -31,8 +31,7 @@ class TCPControl(QtNetwork.QTcpServer):
 
     def __init__(self, port, parent = None):
         QtNetwork.QTcpServer.__init__(self, parent)
-        self.debug = 1
-        self.connected = False
+        self.debug = True
         self.port = port
         self.socket = None
         if parent:
@@ -45,15 +44,18 @@ class TCPControl(QtNetwork.QTcpServer):
         # Configure to listen on the appropriate port.
         self.listen(QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost), self.port)
 
-    def amConnected(self):
-        if self.connected:
+    def isConnected(self):
+        if self.socket and (self.socket.state() == QtNetwork.QAbstractSocket.ConnectedState):
             return True
         else:
             return False
 
     def disconnect(self):
-        if self.connected:
-            self.connected = False
+        if self.debug:
+            print " TCPControl forced dis-connect.", self.isConnected()
+        if self.isConnected():
+            self.socket.disconnectFromHost()
+            self.socket.waitForDisconnected()
             self.socket.close()
             self.socket = None
             self.listen(QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost), self.port)
@@ -61,25 +63,29 @@ class TCPControl(QtNetwork.QTcpServer):
 
     def disconnected(self):
         if self.debug:
-            print " TCPControl lost connection.", self.socket.state()
-        self.connected = False
+            print " TCPControl lost connection.", self.isConnected()
+        self.socket.disconnectFromHost()
         self.socket.close()
         self.socket = None
-        self.listen(QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost), self.port)
         self.commLostConnection.emit()
         
     def handleConnection(self):
         if self.debug:
-            print " TCPControl got connection.", self.connected
-        if not self.connected:
+            print " TCPControl got connection.", self.isConnected()
+
+        socket = self.nextPendingConnection()        
+        if self.isConnected():
+            print "  busy.."
+            socket.write(QtCore.QByteArray("Busy\n"))
+            socket.disconnectFromHost()
+            socket.close()
+        else:
             print "  connecting.."
-            self.socket = self.nextPendingConnection()
+            self.socket = socket
             self.socket.readyRead.connect(self.readyRead)
             self.socket.disconnected.connect(self.disconnected)
-            self.connected = True
-            self.close()
             self.commGotConnection.emit()
-
+            
     def readyRead(self):
         while self.socket.canReadLine():
             command = str(self.socket.readLine())[:-1]
@@ -128,16 +134,22 @@ class TCPControl(QtNetwork.QTcpServer):
             self.emit(QtCore.SIGNAL(signal), *parsed_data)
 
     def sendComplete(self, a_string = "NA"):
-        if self.connected:
+        if self.isConnected():
             print "sendComplete", a_string
             self.socket.write(QtCore.QByteArray("Complete," + a_string + "\n"))
             self.socket.flush()
+        else:
+            print "sendComplete: not connected"
 
     def sendStatus(self, status):
         if self.debug:
             print "sendStatus"
-        if self.connected:
+
+        if self.isConnected():
             self.socket.write(QtCore.QByteArray("Status," + str(status)))
+        else:
+            print "sendStatus: not connected"
+
 
 #
 # testing

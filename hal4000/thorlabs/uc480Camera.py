@@ -191,6 +191,10 @@ class Camera(Handle):
               "is_GetTimeout")
         return pTimeout.value
 
+    def saveParameters(self, file):
+        check(uc480.is_SaveParameters(self,
+                                      ctypes.c_char_p(file)))
+
     def setAOI(self, x_start, y_start, width, height):
         # x and y start have to be multiples of 2.
         x_start = int(x_start/2)*2
@@ -516,7 +520,7 @@ if __name__ == "__main__":
         #im = Image.fromarray(image)
         #im.save("temp.png")
 
-    if 1:
+    if 0:
         cam.setAOI(100, 100, 300, 300)
         cam.setPixelClock()
         cam.setFrameRate()
@@ -540,12 +544,11 @@ if __name__ == "__main__":
             print i, numpy.sum(image)
         print "time:", time.time() - st
 
-    if 0:
-        for i in range(1):
-            print i
-            image = cam.captureImage()
-            im = Image.fromarray(image)
-            im.save("temp_" + str(i) + ".png")
+    if 1:
+        image = cam.captureImage()
+        im = Image.fromarray(image)
+        im.save("temp.png")
+        cam.saveParameters("cam1.ini")
 
     cam.shutDown()
 

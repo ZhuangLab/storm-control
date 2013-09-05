@@ -62,6 +62,7 @@ class Movie():
 #
 class Capture(QtCore.QObject):
     captureComplete = QtCore.pyqtSignal(object)
+    disconnected = QtCore.pyqtSignal()
 
     @hdebug.debug
     def __init__(self, parameters):
@@ -126,10 +127,10 @@ class Capture(QtCore.QObject):
     @hdebug.debug
     def captureStart(self, stagex, stagey):
         print "captureStart:", stagex, stagey
-        if not self.connected:
+        if not self.tcp_client.isConnected():
             self.commConnect(True)
 
-        if self.connected:
+        if self.tcp_client.isConnected():
             # set up for capture
             self.movie = Movie(self.filename, stagex, stagey)
             self.tcp_client.sendMovieParameters(self.movie)
@@ -148,28 +149,32 @@ class Capture(QtCore.QObject):
 
             return True
         else:
+            print "captureStage: not connected"
             return False
 
     @hdebug.debug
     def commConnect(self, set_directory = False):
         self.tcp_client.startCommunication()
-        self.connected = self.tcp_client.getConnected()
-        if self.connected and set_directory:
+        if self.tcp_client.isConnected() and set_directory:
             self.tcp_client.sendSetDirectory(self.directory[:-1])
 
     @hdebug.debug
     def commDisconnect(self):
         self.tcp_client.stopCommunication()
-        self.connected = False
 
     @hdebug.debug
     def gotoPosition(self, stagex, stagey):
-        if not self.connected:
+        print "gotoPosition:", stagex, stagey
+
+        if not self.tcp_client.isConnected():
             self.commConnect()
-        if self.connected:
+
+        if self.tcp_client.isConnected():
             self.movie = Movie(self.filename, stagex, stagey)
             self.tcp_client.sendMovieParameters(self.movie)
             self.goto = True
+        else:
+            print "gotoPosition: not connected"
 
     def handleAcknowledged(self):
         if self.goto:
@@ -177,17 +182,20 @@ class Capture(QtCore.QObject):
             self.goto = False
 
     def handleDisconnect(self):
-        self.connected = False
+        pass
 
     def handleStartTimer(self):
-        if self.connected:
+        if self.tcp_client.isConnected():
             self.tcp_client.startMovie(self.movie)
+        else:
+            print "handleStartTimer: not connected"
+            self.disconnected.emit()
 
     def setDirectory(self, directory):
         self.directory = directory
 
     def shutDown(self):
-        if self.connected:
+        if self.tcp_client.isConnected():
             self.commDisconnect()
 
 #
