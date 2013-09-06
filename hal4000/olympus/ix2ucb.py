@@ -2,7 +2,7 @@
 #
 # Olympus IX2-UCB filter wheel control
 #
-# Hazen 12/10
+# Hazen 09/13
 #
 
 import halLib.RS232 as RS232
@@ -33,6 +33,7 @@ class IX2UCB(RS232.RS232):
                 return False
         else:
             print "IX2-UCB: Failed query motion status"
+            return False
 
     def getPosition(self):
         resp = self.commWithResp("1MU?")
@@ -60,6 +61,7 @@ class IX2UCB(RS232.RS232):
             position = 6
         self.commWithResp("1MU " + str(position))
 
+
 #
 # Testing
 #
@@ -83,7 +85,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2010 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

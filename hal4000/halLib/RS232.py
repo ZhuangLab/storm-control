@@ -33,14 +33,6 @@ class RS232():
         if len(response) > 0:
             return response
 
-    def sendCommand(self, command):
-        self.tty.flush()
-        self.tty.write(command + self.end_of_line)
-
-    def shutDown(self):
-        if self.live:
-            del(self.tty)
-
     def getResponse(self):
         response = ""
         response_len = self.tty.inWaiting()
@@ -53,6 +45,14 @@ class RS232():
 
     def getStatus(self):
         return self.live
+
+    def sendCommand(self, command):
+        self.tty.flush()
+        self.tty.write(command + self.end_of_line)
+
+    def shutDown(self):
+        if self.live:
+            del(self.tty)
 
     def waitResponse(self, end_of_response = 0, max_attempts = 200):
         if not end_of_response:
