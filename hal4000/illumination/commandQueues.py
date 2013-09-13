@@ -348,6 +348,9 @@ class QSerialComm(QtCore.QThread):
         self.buffer.append([on, amplitude])
         self.buffer_mutex.unlock()
 
+    def setAmplitude(self, on, amplitude):
+        pass
+
     def stopThread(self):
         self.running = 0
         while (self.isRunning()):

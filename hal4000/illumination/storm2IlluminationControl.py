@@ -11,6 +11,9 @@ import illumination.channelWidgets as channelWidgets
 import illumination.commandQueues as commandQueues
 import illumination.illuminationControl as illuminationControl
 
+import coherent.cube405 as cube405
+import thorlabs.FW102C as FW102C
+
 #
 # Illumination power control specialized for STORM4.
 #
@@ -22,12 +25,12 @@ class STORM2QIlluminationControlWidget(illuminationControl.QIlluminationControlW
         self.aotf_queue.analogModulationOn()
 
         # setup the Cube communication thread
-        self.cube_queue = commandQueues.QCubeThread(port = "COM13")
+        self.cube_queue = commandQueues.QSerialLaserComm(cube405.Cube405(port = "COM13"))
         self.cube_queue.start(QtCore.QThread.NormalPriority)
 
         # Setup the filter wheel communication thread.
         # There is only one filter wheel, which is in 750 laser path.
-        self.fw_queue = commandQueues.QFilterWheelThread(port = "COM14")
+        self.fw_queue = commandQueues.QSerialFilterWheelComm(FW102C.FW102C(port = "COM14"))
         self.fw_queue.start(QtCore.QThread.NormalPriority)
 
         # setup for NI communication with mechanical shutters (digital, unsynced)
