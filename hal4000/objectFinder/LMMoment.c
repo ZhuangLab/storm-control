@@ -178,20 +178,20 @@ int isLocalMaxima(short image[], int size_x, int size_y, int x, int y)
  */
 int isPeak(short image[], int size_x, int size_y, int x, int y, int threshold)
 {
-  int i,mean,sum;
+  int i,cur,mean,sum,tmp;
 
+  cur = image[x*size_x+y];
   sum = 0;
   for(i=0;i<bdy_len;i++){
-    sum += image[(x + bdy_dx[i])*size_x + (y + bdy_dy[i])];
+    tmp = image[(x + bdy_dx[i])*size_x + (y + bdy_dy[i])];
+    if (cur < (tmp + threshold)){
+      return 0;
+    }
+    sum += tmp;
   }
 
   mean = sum/bdy_len;
-  if(image[x*size_x+y] > (threshold + mean)){
-    return mean;
-  }
-  else {
-    return 0;
-  }
+  return mean;
 }
 
 /*
