@@ -11,6 +11,8 @@ import illumination.channelWidgets as channelWidgets
 import illumination.commandQueues as commandQueues
 import illumination.illuminationControl as illuminationControl
 
+import coherent.cube405 as cube405
+
 #
 # Illumination power control specialized for STORM3.
 #
@@ -22,7 +24,7 @@ class STORM3QIlluminationControlWidget(illuminationControl.QIlluminationControlW
         self.aotf_queue.analogModulationOn()
 
         # setup the Cube communication thread
-        self.cube_queue = commandQueues.QCubeThread(port = "COM13")
+        self.cube_queue = commandQueues.QSerialLaserComm(cube405.Cube405(port = "COM13"))
         self.cube_queue.start(QtCore.QThread.NormalPriority)
 
         illuminationControl.QIlluminationControlWidget.__init__(self, settings_file_name, parameters, parent)
