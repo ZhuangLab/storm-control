@@ -133,14 +133,14 @@ int isLocalMaxima(short image[], int size_x, int size_y, int x, int y)
 {
   int cur;
 
-  cur = x*size_x + y;
-  if(image[cur] <= image[cur - size_x - 1]){
+  cur = x*size_y + y;
+  if(image[cur] <= image[cur - size_y - 1]){
     return 0;
   }
-  if(image[cur] <= image[cur - size_x]){
+  if(image[cur] <= image[cur - size_y]){
     return 0;
   }
-  if(image[cur] <= image[cur - size_x + 1]){
+  if(image[cur] <= image[cur - size_y + 1]){
     return 0;
   }
   if(image[cur] <= image[cur - 1]){
@@ -149,13 +149,13 @@ int isLocalMaxima(short image[], int size_x, int size_y, int x, int y)
   if(image[cur] < image[cur + 1]){
     return 0;
   }
-  if(image[cur] <= image[cur + size_x - 1]){
+  if(image[cur] <= image[cur + size_y - 1]){
     return 0;
   }
-  if(image[cur] < image[cur + size_x]){
+  if(image[cur] < image[cur + size_y]){
     return 0;
   }
-  if(image[cur] < image[cur + size_x + 1]){
+  if(image[cur] < image[cur + size_y + 1]){
     return 0;
   }
 
@@ -180,10 +180,10 @@ int isPeak(short image[], int size_x, int size_y, int x, int y, int threshold)
 {
   int i,cur,mean,sum,tmp;
 
-  cur = image[x*size_x+y];
+  cur = image[x*size_y+y];
   sum = 0;
   for(i=0;i<bdy_len;i++){
-    tmp = image[(x + bdy_dx[i])*size_x + (y + bdy_dy[i])];
+    tmp = image[(x + bdy_dx[i])*size_y + (y + bdy_dy[i])];
     if (cur < (tmp + threshold)){
       return 0;
     }
@@ -257,7 +257,7 @@ void peakPosition(short image[], int size_x, int size_y, int x, int y, int mean,
 
   sum = sumx = sumy = 0;
   for(i=0;i<cnt_len;i++){
-    cur = image[(x + cnt_dx[i])*size_x + (y + cnt_dy[i])] - mean;
+    cur = image[(x + cnt_dx[i])*size_y + (y + cnt_dy[i])] - mean;
     sum += cur;
     sumx += cur*cnt_dx[i];
     sumy += cur*cnt_dy[i];
