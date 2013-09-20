@@ -30,6 +30,7 @@ class MultifieldView(QtGui.QGraphicsView):
         QtGui.QGraphicsView.__init__(self, parent)
 
         # class variables
+        self.bg_brush = QtGui.QBrush(QtGui.QColor(255,255,255))
         self.currentz = 0.0
         self.directory = ""
         self.image_items = []
@@ -39,6 +40,9 @@ class MultifieldView(QtGui.QGraphicsView):
         self.zoom_out = 1.0/self.zoom_in
 
         self.setMinimumSize(QtCore.QSize(200, 200))
+
+        # background brush
+        self.setBackgroundBrush(self.bg_brush)
 
         # scene initialization
         self.scene = QtGui.QGraphicsScene()
