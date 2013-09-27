@@ -2,7 +2,7 @@
 #
 # Camera control specialized for a Andor camera.
 #
-# Hazen 11/09
+# Hazen 09/13
 #
 
 from PyQt4 import QtCore
@@ -20,6 +20,10 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         cameraControl.CameraControl.__init__(self, parameters, parent)
+
+        self.have_paused = True
+        self.stop_at_max = True
+
         if hasattr(parameters, "pci_card"):
             self.initCamera(parameters.pci_card)
         else:
@@ -27,7 +31,7 @@ class ACameraControl(cameraControl.CameraControl):
 
     @hdebug.debug
     def closeShutter(self):
-        self.shutter = 0
+        self.shutter = False
         self.stopCamera()
         if self.got_camera:
             if self.reversed_shutter:
@@ -92,26 +96,42 @@ class ACameraControl(cameraControl.CameraControl):
         self.camera = andor.AndorCamera(path, handle)
 
     @hdebug.debug
-    def newFilmSettings(self, parameters, filming = 0):
+    def newFilmSettings(self, parameters, filming = False):
         self.stopCamera()
         self.mutex.lock()
         self.parameters = parameters
         p = parameters
         if self.got_camera:
+
             if filming:
-                self.camera.setACQMode(p.acq_mode, number_frames = p.frames)
+                if (p.acq_mode == "fixed_length"):
+                    self.stop_at_max = True
+
+                    # If the film is really long then we use a software stop, otherwise 
+                    # we tell the camera to take the number of frames that was requested.
+                    if (p.frames > 1000):
+                        self.camera.setACQMode("run_till_abort")
+                    else:
+                        self.camera.setACQMode("fixed_length", number_frames = p.frames)
+                    #print p.frames, self.stop_at_max
+                else:
+                    self.stop_at_max = False
+                    self.camera.setACQMode("run_till_abort")
             else:
                 self.camera.setACQMode("run_till_abort")
+
             # Due to what I can only assume is a bug in some of the
             # older Andor software you need to reset the frame
             # transfer mode after setting the aquisition mode.
             self.camera.setFrameTransferMode(p.frame_transfer_mode)
+
             # Set camera fan to low. This is overriden by the off option
             if p.low_during_filming:
                 if filming:
                     self.camera.setFanMode(1) # fan on low
                 else:
                     self.camera.setFanMode(0) # fan on full
+
             # This is for testing whether the camera fan is shaking the
             # the camera, adding noise to the images.
             if p.off_during_filming:
@@ -179,16 +199,16 @@ class ACameraControl(cameraControl.CameraControl):
             p.head_model = self.camera.getHeadModel()
             if hdebug.getDebug():
                 print " Camera Initialized"
-            self.got_camera = 1
+            self.got_camera = True
         except:
             #if hdebug.getDebug():
             print "QCameraThread: Bad camera settings"
-            self.got_camera = 0
+            self.got_camera = False
         self.newFilmSettings(parameters)
 
     @hdebug.debug
     def openShutter(self):
-        self.shutter = 1
+        self.shutter = True
         self.stopCamera()
         if self.got_camera:
             if self.reversed_shutter:
@@ -224,24 +244,21 @@ class ACameraControl(cameraControl.CameraControl):
                                                       "camera1",
                                                       True))
                         self.frame_number += 1
-
+                        if self.filming and self.stop_at_max and (self.frame_number == self.parameters.frames):
+                            self.reachedMaxFrames.emit()
+                            break
+                            
                     # Save frames if we are filming.
-                    if self.filming:
+                    if self.filming and self.daxfile:
                         for aframe in frame_data:
                             self.daxfile.saveFrame(aframe)
 
                     # Emit new data signal
                     self.newData.emit(frame_data, self.key)
 
-                # Emit idle signal if the camera is idle.
-                if (state == "idle"):
-                    # Signal that the camera is idle, but only once.
-                    if not(self.forced_idle):
-                        self.idleCamera.emit()
-                        self.forced_idle = True
-
             else:
-                self.have_paused = 1
+                self.have_paused = True
+
             self.mutex.unlock()
             self.msleep(5)
 
@@ -256,10 +273,9 @@ class ACameraControl(cameraControl.CameraControl):
         if self.have_paused:
             self.mutex.lock()
             self.key = key
-            self.forced_idle = False
             self.frame_number = 0
-            self.should_acquire = 1
-            self.have_paused = 0
+            self.should_acquire = True
+            self.have_paused = False
             if self.got_camera:
                 self.camera.startAcquisition()
             self.mutex.unlock()
@@ -268,10 +284,9 @@ class ACameraControl(cameraControl.CameraControl):
     def stopCamera(self):
         if self.should_acquire:
             self.mutex.lock()
-            self.forced_idle = True
             if self.got_camera:
                 self.camera.stopAcquisition()
-            self.should_acquire = 0
+            self.should_acquire = False
             self.mutex.unlock()
             while not self.have_paused:
                 self.usleep(50)
@@ -280,7 +295,7 @@ class ACameraControl(cameraControl.CameraControl):
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

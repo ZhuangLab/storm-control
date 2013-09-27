@@ -75,7 +75,6 @@ def getFileName(path):
 # Main window
 #
 class Window(QtGui.QMainWindow):
-    reachedMaxFrames = QtCore.pyqtSignal()
 
     @hdebug.debug
     def __init__(self, parameters, parent = None):
@@ -91,7 +90,6 @@ class Window(QtGui.QMainWindow):
         self.parameters = parameters
         self.running_shutters = False
         self.settings = QtCore.QSettings("Zhuang Lab", "hal-4000_" + parameters.setup_name.lower())
-        self.software_max_frames = False
         self.ui_mode = ""
         self.will_overwrite = False
         self.writer = False
@@ -300,10 +298,9 @@ class Window(QtGui.QMainWindow):
 
         # other signals
         self.parameters_box.settingsToggled.connect(self.toggleSettings)
-        self.reachedMaxFrames.connect(self.handleMaxFrames)
 
         # camera signals
-        self.camera.idleCamera.connect(self.idleCamera)
+        self.camera.reachedMaxFrames.connect(self.stopFilm)
         self.camera.newFrames.connect(self.newFrames)
 
         # load GUI settings
@@ -532,11 +529,6 @@ class Window(QtGui.QMainWindow):
             self.illumination_control.show()
 
     @hdebug.debug
-    def handleMaxFrames(self):
-        if self.filming:
-            self.stopFilm()
-
-    @hdebug.debug
     def handleMiscControls(self):
         if self.misc_control:
             self.misc_control.show()
@@ -548,7 +540,6 @@ class Window(QtGui.QMainWindow):
         else:
             self.parameters.acq_mode = "fixed_length"
         self.showHideLength()
-        #self.changeCameraParameters()
 
     @hdebug.debug
     def handleProgIncPower(self, channel, power_inc):
@@ -578,19 +569,6 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleSyncChange(self, sync):
         self.parameters.sync = sync
-
-    @hdebug.debug
-    def idleCamera(self):
-        #
-        # We should only get here in the event that we reach the end
-        # of a fixed length film, so we stop the film.
-        #
-        # But we get here anyway due to some dead time between when
-        # we start the camera thread and starting the camera acquiring?
-        #
-        # FIXME: Is this still true??
-        if self.filming:
-            self.stopFilm()
 
     @hdebug.debug            
     def newDirectory(self, directory = False):
@@ -789,8 +767,7 @@ class Window(QtGui.QMainWindow):
 
     @hdebug.debug
     def startFilm(self):
-        self.filming = 1
-        self.frame_count = 0
+        self.filming = True
         save_film = self.ui.saveMovieCheckBox.isChecked()
         self.filename = self.parameters.directory + str(self.ui.filenameLabel.text())
         self.filename = self.filename[:-len(self.ui.filetypeComboBox.currentText())]
@@ -798,9 +775,9 @@ class Window(QtGui.QMainWindow):
         # If the user wants a really long fixed length film we go to a software
         # stop mode to avoid problems with the Andor software trying to allocate
         # enough memory to store the entire film.
-        if (self.parameters.acq_mode == "fixed_length") and (self.parameters.frames > 1000):
-            self.software_max_frames = self.parameters.frames
-            self.parameters.acq_mode = "run_till_abort"
+        #if (self.parameters.acq_mode == "fixed_length") and (self.parameters.frames > 1000):
+        #    self.software_max_frames = self.parameters.frames
+        #    self.parameters.acq_mode = "run_till_abort"
 
         # film file prep
         self.ui.recordButton.setText("Stop")
@@ -875,12 +852,7 @@ class Window(QtGui.QMainWindow):
 
     @hdebug.debug
     def stopFilm(self):
-        self.filming = 0
-
-        # we should only land here in the case of long fixed length films
-        if self.software_max_frames != 0:
-            self.software_max_frames = 0
-            self.parameters.acq_mode = "fixed_length"
+        self.filming = False
 
         # beep to warn the user that the film is done in the case of longer 
         # fixed length films during which they might have passed out.
@@ -1008,8 +980,6 @@ class Window(QtGui.QMainWindow):
 
     def updateFramesForFilm(self, frame):
         if frame.master:
-            if self.software_max_frames and (frame.number >= self.software_max_frames):
-                self.reachedMaxFrames.emit()
             # The first frame is numbered zero so we need to adjust for that.
             self.ui.framesText.setText("%d" % (frame.number+1))
             if self.writer: # The flag for whether or not we are actually saving anything.

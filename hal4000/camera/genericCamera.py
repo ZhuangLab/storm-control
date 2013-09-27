@@ -26,7 +26,7 @@ import halLib.hdebug as hdebug
 # set-up need to be modified as appropriate.
 #
 class Camera(QtGui.QDialog):
-    idleCamera = QtCore.pyqtSignal()
+    reachedMaxFrames = QtCore.pyqtSignal()
     newFrames = QtCore.pyqtSignal(object)
 
     @hdebug.debug

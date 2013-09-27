@@ -41,7 +41,7 @@ class SingleCamera(genericCamera.Camera):
         cameraControl = __import__('camera.' + camera_type + 'CameraControl', globals(), locals(), [camera_type], -1)
         self.camera_control = cameraControl.ACameraControl(parameters, parent = self)
 
-        self.camera_control.idleCamera.connect(self.handleIdleCamera)
+        self.camera_control.reachedMaxFrames.connect(self.handleMaxFrames)
         self.camera_control.newData.connect(self.handleNewFrames)
 
     @hdebug.debug
@@ -72,8 +72,8 @@ class SingleCamera(genericCamera.Camera):
         self.startCamera()
 
     @hdebug.debug
-    def handleIdleCamera(self):
-        self.idleCamera.emit()
+    def handleMaxFrames(self):
+        self.reachedMaxFrames.emit()
 
     def handleNewFrames(self, frames, key):
         if (key == self.key):

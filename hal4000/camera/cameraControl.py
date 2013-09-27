@@ -39,16 +39,16 @@ import halLib.hdebug as hdebug
 #
 # This class generates two kinds of Qt signals:
 #
-# 1. idleCamera() when the camera has stop acquiring without
-#    being explicitly commanded to do so. This happens for
-#    example when at the end of a fixed_length acquisition.
+# 1. reachedMaxFrames() when the camera has acquired the
+#    number of frames it was told to acquire by the
+#    parameters.frames.
 #
 # 2. newData() when new data has been received from the camera.
 #    Data is supplied as a list of frame objects as part of
 #    the signal.
 #
 class CameraControl(QtCore.QThread):
-    idleCamera = QtCore.pyqtSignal()
+    reachedMaxFrames = QtCore.pyqtSignal()
     newData = QtCore.pyqtSignal(object, int)
 
     @hdebug.debug
@@ -58,29 +58,28 @@ class CameraControl(QtCore.QThread):
         p = parameters
 
         # other class initializations
-        self.daxfile = 0
-        self.filming = 0
-        self.forced_idle = False
+        self.daxfile = False
+        self.filming = False
+        #self.forced_idle = False
         self.frame_number = 0
-        self.have_paused = 1
         self.key = -1
         self.mode = "run_till_abort"
         self.mutex = QtCore.QMutex()
-        self.running = 1
-        self.should_acquire = 0
-        self.shutter = 0
+        self.running = True
+        self.should_acquire = False
+        self.shutter = False
 
         # camera initialization
-        self.camera = 0
-        self.got_camera = 0
-        self.reversed_shutter = 0
+        self.camera = False
+        self.got_camera = False
+        self.reversed_shutter = False
 
     def cameraInit(self):
         self.start(QtCore.QThread.NormalPriority)
 
     @hdebug.debug
     def closeShutter(self):
-        self.shutter = 0
+        self.shutter = False
 
     @hdebug.debug
     def getFilmSize(self):
@@ -96,7 +95,7 @@ class CameraControl(QtCore.QThread):
         return [50, "unstable"]
 
     @hdebug.debug
-    def newFilmSettings(self, parameters, filming = 0):
+    def newFilmSettings(self, parameters, filming = False):
         self.mutex.lock()
         self.parameters = parameters
         p = parameters
@@ -104,14 +103,13 @@ class CameraControl(QtCore.QThread):
             self.acq_mode = p.acq_mode
         else:
             self.acq_mode = "run_till_abort"
-        self.frames = []
         self.acquired = 0
         self.filming = filming
         self.mutex.unlock()
 
     @hdebug.debug
     def openShutter(self):
-        self.shutter = 1
+        self.shutter = True
 
     @hdebug.debug
     def quit(self):
@@ -127,40 +125,38 @@ class CameraControl(QtCore.QThread):
         self.mutex.lock()
         self.frame_number = 0
         self.key = key
-        self.should_acquire = 1
+        self.should_acquire = True
         self.mutex.unlock()
 
     @hdebug.debug
     def startFilm(self, daxfile):
         if daxfile:
             self.daxfile = daxfile
-            self.newFilmSettings(self.parameters, filming = 1)
-        else:
-            self.newFilmSettings(self.parameters)
+        self.newFilmSettings(self.parameters, filming = True)
 
     @hdebug.debug
     def stopCamera(self):
         self.mutex.lock()
-        self.should_acquire = 0
+        self.should_acquire = True
         self.mutex.unlock()
 
     @hdebug.debug
     def stopThread(self):
-        self.running = 0
+        self.running = False
 
     @hdebug.debug
     def stopFilm(self):
         self.newFilmSettings(self.parameters)
-        self.daxfile = 0
+        self.daxfile = False
 
     @hdebug.debug
     def toggleShutter(self):
         if self.shutter:
             self.closeShutter()
-            return 0
+            return False
         else:
             self.openShutter()
-            return 1
+            return True
 
 
         

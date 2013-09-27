@@ -1,8 +1,8 @@
 #!/usr/bin/python
 #
-# No camera.
+# Camera software emulation.
 #
-# Hazen 11/09
+# Hazen 09/13
 #
 
 import ctypes
@@ -46,7 +46,6 @@ class ACameraControl(cameraControl.CameraControl):
             self.acq_mode = p.acq_mode
         else:
             self.acq_mode = "run_till_abort"
-        self.frames = []
         self.acquired = 0
         self.filming = filming
         self.frames_to_take = p.frames
@@ -80,13 +79,13 @@ class ACameraControl(cameraControl.CameraControl):
                                      True)
                 self.newData.emit([aframe], self.key)
 
-                if self.filming:
+                if self.filming and self.daxfile:
                     self.daxfile.saveFrame(aframe)
 
                 if self.acq_mode == "fixed_length":
                     if (self.frame_number == (self.frames_to_take-1)):
                         self.should_acquire = 0
-                        self.idleCamera.emit()
+                        self.reachedMaxFrames.emit()
 
                 self.frame_number += 1
             self.mutex.unlock()
@@ -95,7 +94,7 @@ class ACameraControl(cameraControl.CameraControl):
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
