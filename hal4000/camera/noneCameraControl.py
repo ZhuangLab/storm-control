@@ -70,7 +70,7 @@ class ACameraControl(cameraControl.CameraControl):
     def run(self):
         while(self.running):
             self.mutex.lock()
-            if self.should_acquire and self.got_camera:
+            if self.acquire.amActive() and self.got_camera:
                 aframe = frame.Frame(self.fake_frame, 
                                      self.frame_number,
                                      self.fake_frame_size[0],
@@ -84,8 +84,8 @@ class ACameraControl(cameraControl.CameraControl):
 
                 if self.acq_mode == "fixed_length":
                     if (self.frame_number == (self.frames_to_take-1)):
-                        self.should_acquire = 0
-                        self.reachedMaxFrames.emit()
+                        self.should_acquire = False
+                        self.max_frames_sig.emit()
 
                 self.frame_number += 1
             self.mutex.unlock()

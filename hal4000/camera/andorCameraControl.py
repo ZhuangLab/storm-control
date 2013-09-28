@@ -20,8 +20,7 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         cameraControl.CameraControl.__init__(self, parameters, parent)
-
-        self.have_paused = True
+        
         self.stop_at_max = True
 
         if hasattr(parameters, "pci_card"):
@@ -226,7 +225,7 @@ class ACameraControl(cameraControl.CameraControl):
     def run(self):
         while(self.running):
             self.mutex.lock()
-            if self.should_acquire and self.got_camera:
+            if self.acquire.amActive() and self.got_camera:
 
                 # Get data from camera and create frame objects.
                 [frames, frame_size, state] = self.camera.getImages16()
@@ -245,7 +244,7 @@ class ACameraControl(cameraControl.CameraControl):
                                                       True))
                         self.frame_number += 1
                         if self.filming and self.stop_at_max and (self.frame_number == self.parameters.frames):
-                            self.reachedMaxFrames.emit()
+                            self.max_frames_sig.emit()
                             break
                             
                     # Save frames if we are filming.
@@ -257,7 +256,7 @@ class ACameraControl(cameraControl.CameraControl):
                     self.newData.emit(frame_data, self.key)
 
             else:
-                self.have_paused = True
+                self.acquire.idle()
 
             self.mutex.unlock()
             self.msleep(5)
@@ -270,27 +269,26 @@ class ACameraControl(cameraControl.CameraControl):
 
     @hdebug.debug        
     def startCamera(self, key):
-        if self.have_paused:
-            self.mutex.lock()
-            self.key = key
-            self.frame_number = 0
-            self.should_acquire = True
-            self.have_paused = False
-            if self.got_camera:
-                self.camera.startAcquisition()
-            self.mutex.unlock()
+        #if self.have_paused:
+        self.mutex.lock()
+        self.acquire.go()
+        self.key = key
+        self.frame_number = 0
+        self.max_frames_sig.reset()
+        if self.got_camera:
+            self.camera.startAcquisition()
+        self.mutex.unlock()
 
     @hdebug.debug
     def stopCamera(self):
-        if self.should_acquire:
+        if self.acquire.amActive():
             self.mutex.lock()
             if self.got_camera:
                 self.camera.stopAcquisition()
-            self.should_acquire = False
+            self.acquire.stop()
             self.mutex.unlock()
-            while not self.have_paused:
+            while not self.acquire.amIdle():
                 self.usleep(50)
-
         
 #
 # The MIT License

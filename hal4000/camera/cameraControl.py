@@ -6,7 +6,7 @@
 # is a generic class and should be specialized for control
 # of particular camera types.
 #
-# Hazen 12/12
+# Hazen 09/13
 #
 
 from PyQt4 import QtCore
@@ -58,15 +58,15 @@ class CameraControl(QtCore.QThread):
         p = parameters
 
         # other class initializations
+        self.acquire = IdleActive()
         self.daxfile = False
         self.filming = False
-        #self.forced_idle = False
         self.frame_number = 0
         self.key = -1
+        self.max_frames_sig = SingleShotSignal(self.reachedMaxFrames)
         self.mode = "run_till_abort"
         self.mutex = QtCore.QMutex()
         self.running = True
-        self.should_acquire = False
         self.shutter = False
 
         # camera initialization
@@ -123,9 +123,10 @@ class CameraControl(QtCore.QThread):
     @hdebug.debug        
     def startCamera(self, key):
         self.mutex.lock()
+        self.acquire.go()
         self.frame_number = 0
         self.key = key
-        self.should_acquire = True
+        self.max_frames_sig.reset()
         self.mutex.unlock()
 
     @hdebug.debug
@@ -137,7 +138,7 @@ class CameraControl(QtCore.QThread):
     @hdebug.debug
     def stopCamera(self):
         self.mutex.lock()
-        self.should_acquire = True
+        self.acquire.stop()
         self.mutex.unlock()
 
     @hdebug.debug
@@ -158,12 +159,59 @@ class CameraControl(QtCore.QThread):
             self.openShutter()
             return True
 
+#
+# A traffic light class.
+#
+# This class handles signaling between the thread run function and the
+# rest of the thread. If "go" then the run method performs the
+# requested operations. If "stop" then the run method acknowledges
+# that it is idling.
+#
+class IdleActive():
 
-        
+    def __init__(self):
+        self.idle = False
+        self.run = False
+
+    def amActive(self):
+        return self.run
+
+    def amIdle(self):
+        return self.idle
+
+    def go(self):
+        self.idle = False
+        self.run = True
+
+    def idle(self):
+        self.idle = True
+
+    def stop(self):
+        self.run = False
+
+#
+# Single shot signal class.
+#
+# This class creates a signal that needs to be reset each time it is emitted.
+#
+class SingleShotSignal():
+ 
+    def __init__(self, pyqt_signal):
+        self.emitted = False
+        self.pyqt_signal = pyqt_signal
+
+    def emit(self):
+        if not self.emitted:
+            self.pyqt_signal.emit()
+            self.emitted = True
+
+    def reset(self):
+        self.emitted = False
+
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
