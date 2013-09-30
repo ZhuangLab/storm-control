@@ -36,8 +36,8 @@
      </property>
      <property name="maximumSize">
       <size>
-       <width>586</width>
-       <height>586</height>
+       <width>16777215</width>
+       <height>16777215</height>
       </size>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -57,31 +57,20 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QFrame" name="cameraDisplayFrame">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+       <widget class="QScrollArea" name="cameraScrollArea">
+        <property name="widgetResizable">
+         <bool>true</bool>
         </property>
-        <property name="minimumSize">
-         <size>
-          <width>518</width>
-          <height>518</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>518</width>
-          <height>518</height>
-         </size>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::Box</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
+        <widget class="QWidget" name="scrollAreaWidgetContents">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>515</width>
+           <height>516</height>
+          </rect>
+         </property>
+        </widget>
        </widget>
       </item>
       <item>
@@ -95,7 +84,7 @@
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>512</height>
+          <height>16777215</height>
          </size>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -369,19 +358,6 @@
       </item>
      </layout>
     </widget>
-   </item>
-   <item>
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>0</height>
-      </size>
-     </property>
-    </spacer>
    </item>
   </layout>
  </widget>

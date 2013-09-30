@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>827</width>
-    <height>671</height>
+    <height>676</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -152,8 +152,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>223</width>
-                  <height>108</height>
+                  <width>225</width>
+                  <height>110</height>
                  </rect>
                 </property>
                </widget>
@@ -530,7 +530,7 @@
           <item>
            <widget class="QFrame" name="cameraFrame">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -543,8 +543,8 @@
             </property>
             <property name="maximumSize">
              <size>
-              <width>586</width>
-              <height>545</height>
+              <width>16777215</width>
+              <height>16777215</height>
              </size>
             </property>
             <property name="frameShape">
@@ -555,34 +555,8 @@
             </property>
            </widget>
           </item>
-          <item>
-           <spacer name="verticalSpacer">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>12</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
          </layout>
         </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>10</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
        </item>
       </layout>
      </widget>
@@ -668,7 +642,7 @@
      <x>0</x>
      <y>0</y>
      <width>827</width>
-     <height>18</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
