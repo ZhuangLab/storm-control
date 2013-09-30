@@ -170,24 +170,24 @@ class CameraControl(QtCore.QThread):
 class IdleActive():
 
     def __init__(self):
-        self.idle = False
-        self.run = False
+        self.idling = False
+        self.running = False
 
     def amActive(self):
-        return self.run
+        return self.running
 
     def amIdle(self):
-        return self.idle
+        return self.idling
 
     def go(self):
-        self.idle = False
-        self.run = True
+        self.idling = False
+        self.running = True
 
     def idle(self):
-        self.idle = True
+        self.idling = True
 
     def stop(self):
-        self.run = False
+        self.running = False
 
 #
 # Single shot signal class.

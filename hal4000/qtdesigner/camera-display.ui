@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>586</width>
-    <height>545</height>
+    <width>581</width>
+    <height>539</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -58,6 +58,12 @@
       </property>
       <item>
        <widget class="QScrollArea" name="cameraScrollArea">
+        <property name="minimumSize">
+         <size>
+          <width>512</width>
+          <height>512</height>
+         </size>
+        </property>
         <property name="widgetResizable">
          <bool>true</bool>
         </property>
@@ -66,8 +72,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>515</width>
-           <height>516</height>
+           <width>508</width>
+           <height>508</height>
           </rect>
          </property>
         </widget>

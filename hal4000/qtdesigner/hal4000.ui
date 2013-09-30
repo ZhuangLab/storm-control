@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>827</width>
-    <height>676</height>
+    <width>822</width>
+    <height>661</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -152,8 +152,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>225</width>
-                  <height>110</height>
+                  <width>223</width>
+                  <height>98</height>
                  </rect>
                 </property>
                </widget>
@@ -501,7 +501,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QWidget" name="cameraFrameWidget" native="true">
+        <widget class="QFrame" name="cameraFrame">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -510,52 +510,22 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>580</width>
-           <height>549</height>
+           <width>581</width>
+           <height>539</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>10000</width>
-           <height>10000</height>
+           <width>16777215</width>
+           <height>16777215</height>
           </size>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_3">
-          <property name="spacing">
-           <number>0</number>
-          </property>
-          <property name="margin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QFrame" name="cameraFrame">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>586</width>
-              <height>545</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="frameShape">
-             <enum>QFrame::NoFrame</enum>
-            </property>
-            <property name="frameShadow">
-             <enum>QFrame::Raised</enum>
-            </property>
-           </widget>
-          </item>
-         </layout>
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
         </widget>
        </item>
       </layout>
@@ -641,8 +611,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>827</width>
-     <height>21</height>
+     <width>822</width>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
