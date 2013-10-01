@@ -2,7 +2,7 @@
 #
 # Qt Widget for handling the display of camera data.
 #
-# Hazen 12/12
+# Hazen 09/13
 #
 
 from PyQt4 import QtCore, QtGui
@@ -15,29 +15,82 @@ class QCameraWidget(QtGui.QWidget):
 
     def __init__(self, parameters, parent = None):
         QtGui.QWidget.__init__(self, parent)
-        self.buffer = QtGui.QPixmap(512, 512)
+        #self.buffer = QtGui.QPixmap(512, 512)
+        self.buffer = False
         self.flip_horizontal = parameters.flip_horizontal
         self.flip_vertical = parameters.flip_vertical
-        self.image = 0
+        self.image = False
         self.image_min = 0
         self.image_max = 1
-        self.live = 0
-        self.show_grid = 0
-        self.show_info = 1
-        self.show_target = 0
-        self.x_click = 0
-        self.x_final = 512
-        self.x_size = 0
-        self.y_click = 0
-        self.y_final = 512
-        self.y_size = 0
+        self.live = False
 
+        # This is the amount of image magnification.
+        # Only integer values are allowed.
+        self.magnification = 1
+
+        self.show_grid = False
+        self.show_info = True
+        self.show_target = False
+ 
+        # This is the x location of the last mouse click.
+        self.x_click = 0
+
+        # This is the x size of the image buffer. Note that
+        # these are updated after initialization, when the 
+        # widget is properly sized by calling updateSize().
+        self.x_final = 10
+
+        # This is the x size of the current camera AOI
+        # (divided by binning) in pixels.
+        self.x_size = 0
+
+        # This the (minimum) x size of the widget. The image from 
+        # the camera cannot be rendered smaller than this value.
+        self.x_view = 10
+
+        # These are the same as for x.
+        self.y_click = 0
+        self.y_final = 10
+        self.y_size = 0
+        self.y_view = 10
+
+    # Initialize the buffer.
     def blank(self):
         painter = QtGui.QPainter(self.buffer)
         color = QtGui.QColor(0, 0, 0)
         painter.setPen(color)
         painter.setBrush(color)
-        painter.drawRect(0, 0, 512, 512)
+        painter.drawRect(0, 0, self.width(), self.height())
+
+    #
+    # "Final" is the size at which to draw the pixmap 
+    # that will actually be shown in the window.
+    #
+    def calcFinalSize(self):
+
+        self.x_final = self.x_view
+        self.y_final = self.y_view
+        if (self.x_size > self.y_size):
+            self.y_final = self.x_view * self.y_size / self.x_size
+        elif (self.x_size < self.y_size):
+            self.x_final = self.y_view * self.x_size / self.y_size
+
+        self.x_final = self.x_final * self.magnification
+        self.y_final = self.y_final * self.magnification
+
+        #
+        # Based on the final size, determine the size for a square window. 
+        # Set the widget size to this & create a buffer of this size. We'll
+        # draw in the buffer first, then copy to the window.
+        #
+        w_size = self.x_final
+        if (self.y_final > self.x_final):
+            w_size = self.y_final
+
+        self.setFixedSize(w_size, w_size)
+        self.buffer = QtGui.QPixmap(w_size, w_size)
+
+        self.blank()
 
     def getAutoScale(self):
         margin = int(0.1 * float(self.image_max - self.image_min))
@@ -54,43 +107,54 @@ class QCameraWidget(QtGui.QWidget):
         self.update()
 
     def newParameters(self, parameters, colortable, display_range):
-        self.live = 1
+        self.colortable = colortable
+        self.display_range = display_range
+        self.live = True
         self.flip_horizontal = parameters.flip_horizontal
         self.flip_vertical = parameters.flip_vertical
         self.x_size = parameters.x_pixels/parameters.x_bin
         self.y_size = parameters.y_pixels/parameters.y_bin
-        self.x_final = 512
-        self.y_final = 512
-        if self.x_size > self.y_size:
-            self.y_final = 512 * self.y_size / self.x_size
-        if self.x_size < self.y_size:
-            self.x_final = 512 * self.x_size / self.y_size
-        self.colortable = colortable
-        self.display_range = display_range
+
         self.image = QtGui.QImage(self.x_size, self.y_size, QtGui.QImage.Format_Indexed8)
+        self.calcFinalSize()
         self.setColorTable()
-        self.blank()
 
     def newRange(self, range):
         self.display_range = range
 
+    #
+    # self.image is the image from the camera at 1x resolution.
+    # self.buffer is where the image (appropriately scaled) is
+    #    temporarily re-drawn prior to final display. In theory
+    #    this reduces display flickering.
+    #
     def paintEvent(self, Event):
         if self.live:
             painter = QtGui.QPainter(self.buffer)
+
+            # Draw current image into the buffer, appropriately scaled.
             painter.drawImage(0, 0, self.image.scaled(self.x_final, self.y_final))
-            painter = QtGui.QPainter(self)
-            painter.drawPixmap(0, 0, self.buffer)
-            
+
+            # Draw the grid into the buffer.
             if self.show_grid:
+                x_step = self.width()/8
+                y_step = self.height()/8
                 painter.setPen(QtGui.QColor(255, 255, 255))
                 for i in range(7):
-                    painter.drawLine((i+1)*64, 0, (i+1)*64, 512)
-                    painter.drawLine(0, (i+1)*64, 512, (i+1)*64)
+                    painter.drawLine((i+1)*x_step, 0, (i+1)*x_step, self.height())
+                    painter.drawLine(0, (i+1)*y_step, self.width(), (i+1)*y_step)
 
+            # Draw the target into the buffer
             if self.show_target:
+                mid_x = self.width()/2 - 20
+                mid_y = self.height()/2 - 20
                 painter.setPen(QtGui.QColor(255, 255, 255))
-                painter.drawEllipse(236, 236, 40, 40)
-                
+                painter.drawEllipse(mid_x, mid_y, 40, 40)
+
+            # Transfer the buffer to the screen.
+            painter = QtGui.QPainter(self)
+            painter.drawPixmap(0, 0, self.buffer)
+
     def setColorTable(self):
         if self.colortable:
             for i in range(256):
@@ -103,27 +167,51 @@ class QCameraWidget(QtGui.QWidget):
 
     def setShowGrid(self, bool):
         if bool:
-            self.show_grid = 1
+            self.show_grid = True
         else:
-            self.show_grid = 0
+            self.show_grid = False
 
     def setShowInfo(self, bool):
         if bool:
-            self.show_info = 1
+            self.show_info = True
         else:
-            self.show_info = 0
+            self.show_info = False
 
     def setShowTarget(self, bool):
         if bool:
-            self.show_target = 1
+            self.show_target = True
         else:
-            self.show_target = 0
+            self.show_target = False
 
     def updateImageWithFrame(self, frame):
-        self.blank()
         self.update()
         if self.show_info:
             self.intensityInfo.emit(self.x_click, self.y_click, 0)
+
+    #
+    # This is called after initialization to get the correct 
+    # default size based on the size of the scroll area as 
+    # specified using QtDesigner.
+    #
+    def updateSize(self):
+        self.x_final = self.width()
+        self.x_view = self.width()
+        self.y_final = self.height()
+        self.y_view = self.height()
+
+    def wheelEvent(self, event):
+        if (event.delta() > 0):
+            self.magnification += 1
+        else:
+            self.magnification -= 1
+        
+        if (self.magnification < 1):
+            self.magnification = 1
+        if (self.magnification > 8):
+            self.magnification = 8
+
+        self.calcFinalSize()
+
 
 #
 # Testing
@@ -146,7 +234,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

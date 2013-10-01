@@ -2,7 +2,7 @@
 #
 # Camera control and display class.
 #
-# Hazen 12/12
+# Hazen 09/13
 #
 
 from PyQt4 import QtCore, QtGui
@@ -71,9 +71,9 @@ class CameraDisplay(QtGui.QFrame):
         camera_type = parameters.camera_type.lower()
         cameraWidget = __import__('camera.' + camera_type + 'CameraWidget', globals(), locals(), [camera_type], -1)
         self.camera_widget = cameraWidget.ACameraWidget(parameters, parent = self.ui.cameraScrollArea)
+        #self.ui.cameraScrollArea.setAlignment(QtCore.Qt.AlignCenter)
         self.ui.cameraScrollArea.setWidget(self.camera_widget)
-        #self.camera_widget.setGeometry(3, 3, 512, 512)
-        #self.camera_widget.show()
+        self.camera_widget.updateSize()
 
         # signals
         self.ui.rangeSlider.rangeChanged.connect(self.rangeChange)
@@ -241,10 +241,6 @@ class CameraDisplay(QtGui.QFrame):
         self.ui.syncLabel.hide()
         self.ui.syncSpinBox.hide()
 
-#    def updateImage(self, frame):
-#        if frame:
-#            self.camera_widget.updateImageWithFrame(frame)
-
     @hdebug.debug
     def updateRange(self):
         self.ui.scaleMax.setText(str(self.parameters.scalemax))
@@ -255,7 +251,7 @@ class CameraDisplay(QtGui.QFrame):
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
