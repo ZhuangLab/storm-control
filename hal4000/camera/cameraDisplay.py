@@ -17,13 +17,16 @@ import qtWidgets.qtRangeSlider as qtRangeSlider
 # Misc
 import colorTables.colorTables as colorTables
 
+#
+# The Camera display class.
+#
 class CameraDisplay(QtGui.QFrame):
 
     @hdebug.debug
     def __init__(self, parameters, camera_display_ui, which_camera, show_record_button = False, show_shutter_button = False, parent = None):
         QtGui.QFrame.__init__(self, parent)
 
-        # general (alphabetically ordered)
+        # General (alphabetically ordered).
         self.color_gradient = 0
         self.color_table = 0
         self.color_tables = colorTables.ColorTables("./colorTables/all_tables/")
@@ -38,24 +41,29 @@ class CameraDisplay(QtGui.QFrame):
         self.show_target = 0
         self.which_camera = which_camera
 
-        # ui setup
+        # UI setup.
         self.ui = camera_display_ui
         self.ui.setupUi(self)
+
+        self.ui.cameraScrollArea.setStyleSheet("QScrollArea { background-color: black } ")
         self.ui.rangeSlider = qtRangeSlider.QVRangeSlider(parent = self.ui.rangeSliderWidget)
         layout = QtGui.QGridLayout(self.ui.rangeSliderWidget)
         layout.addWidget(self.ui.rangeSlider)
         self.ui.rangeSlider.setGeometry(0, 0, self.ui.rangeSliderWidget.width(), self.ui.rangeSliderWidget.height())
         self.ui.rangeSlider.setRange([0.0, self.max_intensity, 1.0])
         self.ui.rangeSlider.setEmitWhileMoving(True)
+
         for color_name in self.color_tables.getColorTableNames():
             self.ui.colorComboBox.addItem(color_name[:-5])
+
         self.ui.gridAct = QtGui.QAction(self.tr("Show Grid"), self)
         self.ui.infoAct = QtGui.QAction(self.tr("Hide Info"), self)
         self.ui.targetAct = QtGui.QAction(self.tr("Show Target"), self)
+
         self.ui.syncLabel.hide()
         self.ui.syncSpinBox.hide()
 
-        # show/hide shutter and record button as appropriate
+        # Show/hide shutter and record button as appropriate.
         if show_record_button:
             self.ui.recordButton.show()
         else:
@@ -66,16 +74,14 @@ class CameraDisplay(QtGui.QFrame):
         else:
             self.ui.cameraShutterButton.hide()
 
-        # Camera display widget. Load as appropriate 
-        # based on the camera type.
+        # Camera display widget. Load as appropriate based on the camera type.
         camera_type = parameters.camera_type.lower()
         cameraWidget = __import__('camera.' + camera_type + 'CameraWidget', globals(), locals(), [camera_type], -1)
         self.camera_widget = cameraWidget.ACameraWidget(parameters, parent = self.ui.cameraScrollArea)
-        #self.ui.cameraScrollArea.setAlignment(QtCore.Qt.AlignCenter)
         self.ui.cameraScrollArea.setWidget(self.camera_widget)
         self.camera_widget.updateSize()
 
-        # signals
+        # Signals
         self.ui.rangeSlider.rangeChanged.connect(self.rangeChange)
         self.ui.rangeSlider.doubleClick.connect(self.autoScale)
         self.ui.autoScaleButton.clicked.connect(self.autoScale)
@@ -247,6 +253,13 @@ class CameraDisplay(QtGui.QFrame):
         self.ui.scaleMin.setText(str(self.parameters.scalemin))
         self.camera_widget.newRange([self.parameters.scalemin, self.parameters.scalemax])
 
+#
+# A slightly specialized QScrollArea.
+#
+class CameraScrollArea(QtGui.QScrollArea):
+
+    def wheelEvent(self, event):
+        self.widget().wheelEvent(event)
 
 #
 # The MIT License

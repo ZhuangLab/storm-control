@@ -166,8 +166,8 @@ class AMiscControl(miscControl.MiscControl):
 
     @hdebug.debug
     def handleMousePress(self, mouse_x, mouse_y):
-        mouse_x = mouse_x * self.camera_widget.image.width()/512
-        mouse_y = mouse_y * self.camera_widget.image.height()/512
+        #mouse_x = mouse_x * self.camera_widget.image.width()/512
+        #mouse_y = mouse_y * self.camera_widget.image.height()/512
         if (self.ie_setting_ROI == 1):
             self.start_x = mouse_x
             self.start_y = mouse_y

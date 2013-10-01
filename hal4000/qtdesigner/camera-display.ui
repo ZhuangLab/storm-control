@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>583</width>
-    <height>546</height>
+    <height>541</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -57,12 +57,15 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QScrollArea" name="cameraScrollArea">
+       <widget class="CameraScrollArea" name="cameraScrollArea">
         <property name="minimumSize">
          <size>
           <width>514</width>
           <height>514</height>
          </size>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
         </property>
         <property name="widgetResizable">
          <bool>true</bool>
@@ -379,6 +382,14 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CameraScrollArea</class>
+   <extends>QScrollArea</extends>
+   <header>camera.cameraDisplay</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

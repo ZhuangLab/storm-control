@@ -96,9 +96,20 @@ class QCameraWidget(QtGui.QWidget):
         margin = int(0.1 * float(self.image_max - self.image_min))
         return [self.image_min - margin, self.image_max + margin]
 
+    #
+    # Convert the mouse click location into camera pixels. The xy 
+    # coordinates of the event are correctly adjusted for the scroll 
+    # bar position, we just need to scale them correctly.
+    #
     def mousePressEvent(self, event):
-        self.x_click = event.x()
-        self.y_click = event.y()
+        self.x_click = event.x() * self.x_size / self.x_final
+        self.y_click = event.y() * self.y_size / self.y_final
+
+        if (self.x_click >= self.x_size):
+            self.x_click = self.x_size - 1
+        if (self.y_click >= self.y_size):
+            self.y_click = self.y_size - 1
+
         self.mousePress.emit(self.x_click, self.y_click)
 
     def newColorTable(self, colortable):
