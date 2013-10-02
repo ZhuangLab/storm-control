@@ -258,8 +258,57 @@ class CameraDisplay(QtGui.QFrame):
 #
 class CameraScrollArea(QtGui.QScrollArea):
 
+    def __init__(self, parent = None):
+        QtGui.QScrollArea.__init__(self, parent)
+
+        self.camera_widget = None
+        self.magnification = 1
+
+        self.h_scroll_bar = CameraScrollBar(self.horizontalScrollBar())
+        self.v_scroll_bar = CameraScrollBar(self.verticalScrollBar())
+
+    def setWidget(self, camera_widget):
+        QtGui.QScrollArea.setWidget(self, camera_widget)
+        self.camera_widget = camera_widget
+        
     def wheelEvent(self, event):
-        self.widget().wheelEvent(event)
+        if (event.delta() > 0):
+            self.magnification += 1
+        else:
+            self.magnification -= 1
+
+        if (self.magnification < 1):
+            self.magnification = 1
+        if (self.magnification > 8):
+            self.magnification = 8
+            
+        self.camera_widget.setMagnification(self.magnification)
+
+#
+# Wrap a scroll bar so that the camera display remains more 
+# or less centered as we zoom in and out.
+#
+class CameraScrollBar():
+
+    def __init__(self, scroll_bar):
+
+        self.cur_ratio = 0.5
+        self.scroll_bar = scroll_bar
+        if (self.scroll_bar.maximum() > 0):
+            self.cur_max = float(self.scroll_bar.maximum())
+        else:
+            self.cur_max = 1.0
+
+        self.scroll_bar.rangeChanged.connect(self.rangeChanged)
+
+    def rangeChanged(self, new_min, new_max):
+        if (new_max > 0):
+            self.cur_ratio = float(self.scroll_bar.value())/self.cur_max
+            self.scroll_bar.setValue(int(self.cur_ratio * float(new_max)))
+            self.cur_max = float(new_max)
+        else:
+            self.scroll_bar.setValue(0)
+            self.cur_max = 1.0
 
 #
 # The MIT License

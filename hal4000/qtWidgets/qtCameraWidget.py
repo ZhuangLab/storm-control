@@ -176,6 +176,10 @@ class QCameraWidget(QtGui.QWidget):
             for i in range(256):
                 self.image.setColor(i,QtGui.qRgb(i,i,i))
 
+    def setMagnification(self, new_magnification):
+        self.magnification = new_magnification
+        self.calcFinalSize()
+
     def setShowGrid(self, bool):
         if bool:
             self.show_grid = True
@@ -210,18 +214,18 @@ class QCameraWidget(QtGui.QWidget):
         self.y_final = self.height()
         self.y_view = self.height()
 
-    def wheelEvent(self, event):
-        if (event.delta() > 0):
-            self.magnification += 1
-        else:
-            self.magnification -= 1
-        
-        if (self.magnification < 1):
-            self.magnification = 1
-        if (self.magnification > 8):
-            self.magnification = 8
-
-        self.calcFinalSize()
+#    def wheelEvent(self, event):
+#        if (event.delta() > 0):
+#            self.magnification += 1
+#        else:
+#            self.magnification -= 1
+#        
+#        if (self.magnification < 1):
+#            self.magnification = 1
+#        if (self.magnification > 8):
+#            self.magnification = 8
+#
+#        self.calcFinalSize()
 
 
 #
