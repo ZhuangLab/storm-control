@@ -85,12 +85,6 @@ def checkStatus(fn_return, fn_name= "unknown"):
 #
 # Initialization
 #
-
-#clib = ctypes.cdll.LoadLibrary(ctypes.util.find_library("c"))
-#clib.free.argtypes = [ctypes.c_void_p]
-#clib.malloc.argtypes = [ctypes.c_long]
-#clib.malloc.restype = ctypes.c_void_p
-
 dcam = ctypes.windll.dcamapi
 temp = ctypes.c_int32(0)
 checkStatus(dcam.dcam_init(None, ctypes.byref(temp), None), 
@@ -101,7 +95,6 @@ n_cameras = temp.value
 #
 # Functions.
 #
-
 def convertPropertyName(p_name):
     return p_name.lower().replace(" ", "_")
 
@@ -119,29 +112,10 @@ def getModelInfo(camera_id):
 #
 # Hamamatsu camera data object.
 #
-# Why a custom object? In my first attempt I tried to use create_string_buffer()
-# to allocate storage for a camera frame. I found however that this was too 
-# slow, and the software did not appear to be able to keep up with a sCMOS 
-# Flash 4.0 camera when it was running at full frame, 100Hz.
-#
-#class HCamData():
-#
-#    def __init__(self, size):
-#        self.data_ptr = clib.malloc(size)
-#        self.size = size
-#
-#    def __del__(self):
-#        if clib:
-#            clib.free(self.data_ptr)
-#
-#    def copyData(self, address):
-#        ctypes.memmove(self.data_ptr, address, self.size)
-#
-#    def getDataPtr(self):
-#        return self.data_ptr
-
-#
-# Hamamatsu camera data object.
+# Initially I tried to use create_string_buffer() to allocate storage for the 
+# data from the camera but this turned out to be too slow. The software
+# kept falling behind the camera and create_string_buffer() seemed to be the
+# bottleneck.
 #
 class HCamData():
 
@@ -187,13 +161,6 @@ class HamamatsuCamera():
 
         # Get camera properties.
         self.properties = self.getCameraProperties()
-
-#    def getBinning(self):
-#        binning = ctypes.c_int32(0)
-#        checkStatus(dcam.dcam_getbinning(self.camera_handle,
-#                                         ctypes.byref(binning)),
-#                    "dcam_getbinning")
-#        return binning.value
 
     # Return the ids & names of all the properties that the camera supports.
     def getCameraProperties(self):
@@ -265,7 +232,7 @@ class HamamatsuCamera():
         cur_frame_number = f_count.value
         backlog = cur_frame_number - self.last_frame_number
         if (backlog > self.number_image_buffers):
-            print "warning: hamamatsu camera buffer overrun"
+            print "warning: hamamatsu camera frame buffer overrun detected!"
         if (backlog > self.max_backlog):
             self.max_backlog = backlog
         self.last_frame_number = cur_frame_number
@@ -484,13 +451,6 @@ class HamamatsuCamera():
                                          ctypes.c_int32(self.number_image_buffers)),
                     "dcam_allocframe")
 
-        #
-        # Allocate our frame buffers.
-        #
-        #self.frame_buffers = []
-        #for i in n_buffers:
-        #    a_frame = ctypes.create_string_buffer(self.frame_bytes)
-
         # Start acquisition.
         checkStatus(dcam.dcam_capture(self.camera_handle),
                     "dcam_capture")
@@ -507,6 +467,8 @@ class HamamatsuCamera():
         checkStatus(dcam.dcam_freeframe(self.camera_handle),
                     "dcam_freeframe")
 
+        print "max camera backlog was:", self.max_backlog
+
     # Close down the connection to the camera.
     def shutdown(self):
         checkStatus(dcam.dcam_close(self.camera_handle),
@@ -514,13 +476,10 @@ class HamamatsuCamera():
 
 
 #
-# Testing. 
-# 
-# This prints out all of the available properties of the camera.
+# Testing.
 #
 if __name__ == "__main__":
 
-    import numpy
     import time
 
     print "found:", n_cameras, "cameras"
