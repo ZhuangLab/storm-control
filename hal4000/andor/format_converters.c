@@ -23,7 +23,9 @@ int andorToBigEndian(unsigned char *, unsigned char *, int);
 /* functions */
 
 /* Converts to thresholded 8 bit for Qt */
-
+/*
+ * FIXME: do we still use this? I think is now done with numpy.
+ */
 int andorToQtImage(unsigned char *andor_data, int qt_data_ptr, int number_pixels, int min, int max, int *i_min, int *i_max){
   int i, range;
   long val;
