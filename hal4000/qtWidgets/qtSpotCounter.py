@@ -45,7 +45,7 @@ class QObjectCounterThread(QtCore.QThread):
          while (self.running):
              self.mutex.lock()
              if self.frame:
-                 [x_locs, y_locs, spots] = lmmObjectFinder.findObjects(self.frame.data,
+                 [x_locs, y_locs, spots] = lmmObjectFinder.findObjects(self.frame.getData(),
                                                                        self.frame.image_x,
                                                                        self.frame.image_y,
                                                                        self.threshold)

@@ -227,8 +227,10 @@ class AMiscControl(miscControl.MiscControl):
         if self.ie_capture and frame and not self.ie_setting_ROI:
 
             bg_term = self.ui.iEyesBackgroundSpinBox.value()
-            frame_data = numpy.fromstring(frame.data,dtype=numpy.uint16).reshape((self.camera_widget.image.height(),
-                                                                                  self.camera_widget.image.width()))
+            frame_data = frame.getData().copy()
+            frame_data = frame_data.reshape((frame.image_y, frame.image_x))
+            #frame_data = numpy.fromstring(frame.data,dtype=numpy.uint16).reshape((self.camera_widget.image.height(),
+            #                                                                      self.camera_widget.image.width()))
             frame_data[(frame_data<bg_term)] = bg_term
             frame_data = frame_data[self.start_y:self.stop_y,self.start_x:self.stop_x] - bg_term
 

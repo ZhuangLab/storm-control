@@ -28,11 +28,11 @@ def initialize():
     lmmoment = cdll.LoadLibrary(directory + "LMMoment.dll")
     lmmoment.initialize()
 
-def findObjects(image, image_x, image_y, threshold):
+def findObjects(np_image, image_x, image_y, threshold):
         x = loc_type()
         y = loc_type()
         n = c_int(max_locs)
-        lmmoment.numberAndLocObjects(image,
+        lmmoment.numberAndLocObjects(np_image.ctypes.data,
                                      c_int(image_x),
                                      c_int(image_y),
                                      c_int(threshold),
@@ -44,23 +44,24 @@ def findObjects(image, image_x, image_y, threshold):
 
 # testing
 if __name__ == "__main__":
+
+    import numpy
     import time
 
     initialize()
 
-    image_x = 512
-    image_y = 512
-    image_type = c_short * (image_x * image_y)
-    image = image_type()
+    image_x = 1024
+    image_y = 1024
+    image = numpy.ones((image_x, image_y), dtype = numpy.uint16)
 
     repeats = 100
     start = time.time()
     for i in range(repeats):
         [x, y, n] = findObjects(image, image_x, image_y, 100)
-        print i, n
+        if ((i % 10) == 0):
+            print i, n
     end = time.time()
     print "Time to process an image: ", ((end - start)/repeats), " seconds"
-
 
 #
 # The MIT License

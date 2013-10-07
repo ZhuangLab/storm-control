@@ -34,10 +34,9 @@
 
 (3) Compile C helper libraries:
  Instructions on how to compile the libraries are in the library headers.
- (a) andor/format_converters.c
- (b) objectFinder/LMMoment.c
- (c) phreshPhotonics/averager.c (only if you are using their QPD).
- (d) focusLock/focus_quality.c (for optimal focus lock mode)
+ (a) objectFinder/LMMoment.c (for the spot counter).
+ (b) phreshPhotonics/averager.c (only if you are using their QPD).
+ (c) focusLock/focus_quality.c (for optimal focus lock mode)
 
 
 (4) Create data & logs directories:

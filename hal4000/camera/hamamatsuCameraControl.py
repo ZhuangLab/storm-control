@@ -107,13 +107,12 @@ class ACameraControl(cameraControl.CameraControl):
                     # Create frame objects.
                     frame_data = []
                     for hc_data in frames:
-                        aframe = frame.Frame(hc_data.getDataPtr(),
+                        aframe = frame.Frame(hc_data.getData(),
                                              self.frame_number,
                                              frame_size[0],
                                              frame_size[1],
                                              "camera1",
                                              True)
-                        aframe.hc_data = hc_data
                         frame_data.append(aframe)
 
                         self.frame_number += 1

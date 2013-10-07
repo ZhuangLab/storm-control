@@ -6,6 +6,7 @@
 #
 
 import ctypes
+import numpy
 from PyQt4 import QtCore
 
 # Debugging
@@ -61,10 +62,11 @@ class ACameraControl(cameraControl.CameraControl):
         size_x = parameters.x_pixels
         size_y = parameters.y_pixels
         self.fake_frame_size = [size_x, size_y]
-        self.fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
+        fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
         for i in range(size_x):
             for j in range(size_y):
-                self.fake_frame[i*2*size_y + j*2] = chr(i % 128 + j % 128)
+                fake_frame[i*2*size_y + j*2] = chr(i % 128 + j % 128)
+        self.fake_frame = numpy.fromstring(fake_frame, dtype = numpy.uint16)
         self.newFilmSettings(parameters)
 
     def run(self):

@@ -2,25 +2,25 @@
 #
 # qtCameraWidget specialized for data for no camera.
 #
-# Hazen 05/12
+# Hazen 10/13
 #
 
 import numpy
 from PyQt4 import QtCore, QtGui
 
-import camera.andorCameraWidget as andorCameraWidget
+import qtWidgets.qtCameraWidget as qtCameraWidget
 
 #
-# None Camera widget. This is the same as the Andor widget.
+# None Camera widget.
 #
-class ACameraWidget(andorCameraWidget.ACameraWidget):
+class ACameraWidget(qtCameraWidget.QCameraWidget):
     def __init__(self, parameters, parent = None):
-        andorCameraWidget.ACameraWidget.__init__(self, parameters, parent)
+        qtCameraWidget.QCameraWidget.__init__(self, parameters, parent)
 
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

@@ -2,17 +2,17 @@
 #
 # Image file writers for various formats.
 #
-# Hazen 5/12
+# Hazen 10/13
 #
 
 import copy
 import struct
 import tiffwriter
 
-try:
-    import andor.formatconverters as fconv
-except:
-    print "failed to load andor.formatconverters."
+#try:
+#    import andor.formatconverters as fconv
+#except:
+#    print "failed to load andor.formatconverters."
 
 #
 # Return a list of the available movie formats.
@@ -179,10 +179,12 @@ class DaxFile(GenericFile):
     def saveFrame(self, frame):
         for i in range(len(self.cameras)):
             if (frame.which_camera == self.cameras[i]):
+                np_data = frame.getData()
                 if self.parameters.want_big_endian:
-                    self.file_ptrs[i].write(fconv.LEtoBE(frame.data))
+                    np_data = np_data.byteswap()
+                    np_data.tofile(self.file_ptrs[i])
                 else:
-                    self.file_ptrs[i].write(frame.data)
+                    np_data.tofile(self.file_ptrs[i])
 
                 self.number_frames[i] += 1
 
@@ -198,12 +200,16 @@ class DualCameraFormatFile(GenericFile):
         GenericFile.__init__(self, filename, parameters, cameras, "dax")
 
     def saveFrame(self, frame):
-        camera_int = int(frame.which_camera[6:])-1
-        temp = chr(camera_int) + chr(camera_int) + copy.copy(frame.data[2:])
+        #camera_int = int(frame.which_camera[6:])-1
+        np_data = frame.getData().copy()
+        np_data[0] = int(frame.which_camera[6:])-1
+        #temp = chr(camera_int) + chr(camera_int) + copy.copy(frame.data[2:])
         if self.parameters.want_big_endian:
-            self.file_ptrs[0].write(fconv.LEtoBE(temp))
+            np_data.tofile(self.file_ptrs[0]).byteswap()
+            #self.file_ptrs[0].write(fconv.LEtoBE(temp))
         else:
-            self.file_ptrs[0].write(temp)
+            np_data.tofile(self.file_ptrs[0])
+            #self.file_ptrs[0].write(temp)
         self.number_frames[0] += 1
 
 #
@@ -230,7 +236,9 @@ class SPEFile(GenericFile):
     def saveFrame(self, frame):
         for i in range(len(self.cameras)):
             if (frame.which_camera == self.cameras[i]):
-                self.file_ptrs[i].write(frame.data)
+                np_data = frame.getData()
+                np_data.tofile(self.file_ptrs[i])
+                #self.file_ptrs[i].write(frame.data)
                 
                 self.number_frames[i] += 1
  
@@ -259,7 +267,7 @@ class TIFFile(GenericFile):
         for i in range(len(self.cameras)):
             if (frame.which_camera == self.cameras[i]):
                 [x_pixels, y_pixels] = getCameraSize(self.parameters, self.cameras[i])
-                self.tif_writers[i].addFrame(frame.data, x_pixels, y_pixels)
+                self.tif_writers[i].addFrame(frame.getData(), x_pixels, y_pixels)
 
                 self.number_frames[i] += 1
  

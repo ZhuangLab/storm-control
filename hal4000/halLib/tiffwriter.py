@@ -4,7 +4,7 @@
 # is written as a single strip to make things a bit less 
 # of headache.
 #
-# Hazen 5/12
+# Hazen 10/13
 #
 
 import struct
@@ -53,8 +53,8 @@ class TiffWriter:
         self.fp.write(struct.pack("H", 42))
         self.fp.write(struct.pack("I", self.fp.tell()+4))
 
-    # Adds a frame to the tiff image
-    def addFrame(self, frame, x_size, y_size):
+    # Adds a frame (numpy.uint16 array) to the tiff image
+    def addFrame(self, np_frame, x_size, y_size):
         cur_loc = self.fp.tell()
         num_tags = 15
 
@@ -113,7 +113,8 @@ class TiffWriter:
         self.fp.write(struct.pack(str(len(self.date_time)) + "s", self.date_time))
 
         # Write the frame.
-        self.fp.write(frame)
+        np_frame.tofile(self.fp)
+        #self.fp.write(np_frame)
         self.frames += 1
 
     # Cleans up & closes the file
@@ -151,16 +152,17 @@ class TiffWriter:
     
 if __name__ == "__main__":
 
+    import numpy
     import sys
 
     im = TiffWriter(sys.argv[1])
 
     frame_x = 200
     frame_y = 200
-    frame = chr(10) * (frame_x * frame_y * 2)
+    frame = 10 * numpy.ones((frame_x, frame_y), dtype = numpy.uint16)
 
     for i in range(5):
-        frame = chr(i) * (frame_x * frame_y * 2)
+        frame = frame * (i + 2)
         im.addFrame(frame, frame_x, frame_y)
 
     im.close()
@@ -169,7 +171,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

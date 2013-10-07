@@ -2,7 +2,7 @@
 #
 # Python interface to the focus_quality library.
 #
-# Hazen 08/10
+# Hazen 10/13
 #
 
 from ctypes import *
@@ -27,7 +27,7 @@ c_imageGradient.restype = c_float
 #
 
 def imageGradient(frame):
-    return c_imageGradient(frame.data,
+    return c_imageGradient(frame.getDataPtr(),
                            c_int(frame.image_x),
                            c_int(frame.image_y))
 
@@ -37,25 +37,31 @@ def imageGradient(frame):
 # 
 
 if __name__ == "__main__":
+
+    import camera.frame as frame
+    import numpy
     import time
 
     image_x = 512
     image_y = 512
-    image_type = c_short * (image_x * image_y)
-    image = image_type()
+    aframe = frame.Frame(numpy.ones((image_x, image_y), dtype = numpy.uint16),
+                         0,
+                         image_x,
+                         image_y,
+                         "camera1",
+                         True)
 
     repeats = 200
     start = time.time()
     for i in range(repeats):
-        imageGradient(image, image_x, image_y)
+        imageGradient(aframe)
     end = time.time()
     print "Time to process an image: ", ((end - start)/repeats), " seconds"
-
 
 #
 # The MIT License
 #
-# Copyright (c) 2010 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
