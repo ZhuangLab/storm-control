@@ -8,6 +8,7 @@
 from PyQt4 import QtCore
 import os
 import platform
+import traceback
 
 # Debugging
 import halLib.hdebug as hdebug
@@ -28,40 +29,23 @@ class ACameraControl(cameraControl.CameraControl):
         else:
             self.camera = hcam.HamamatsuCamera(0)
 
-#    @hdebug.debug
-#    def closeShutter(self):
-#        self.shutter = False
-#        self.stopCamera()
-#        if self.got_camera:
-#            if self.reversed_shutter:
-#                self.camera.openShutter()
-#            else:
-#                self.camera.closeShutter()
+    @hdebug.debug
+    def closeShutter(self):
+        self.shutter = False
+        self.stopCamera()
 
     @hdebug.debug
     def getAcquisitionTimings(self):
-        return [1.0, 1.0, 1.0]
+        frame_rate = self.camera.getPropertyValue("internal_frame_rate")[0]
+        temp = 1.0/frame_rate
+        return [temp, temp, temp]
 
-#        self.stopCamera()
-#        if self.got_camera:
-#            return self.camera.getAcquisitionTimings()
-#        else:
-#            return [1.0, 1.0, 1.0]
-
-#    @hdebug.debug
+    @hdebug.debug
     def getTemperature(self):
-        return [0, "stable"]
-
-#        self.stopCamera()
-#        if self.got_camera:
-#            return self.camera.getTemperature()
-#        else:
-#            return [50, "unstable"]
+        return ["na", "stable"]
 
     @hdebug.debug
     def newFilmSettings(self, parameters, filming = False):
-        self.stopCamera()
-        self.mutex.lock()
         self.parameters = parameters
         p = parameters
         if filming:
@@ -70,22 +54,56 @@ class ACameraControl(cameraControl.CameraControl):
             else:
                 self.stop_at_max = False
         self.filming = filming
-        self.mutex.unlock()
 
     @hdebug.debug
     def newParameters(self, parameters):
+        self.stopCamera()
         p = parameters
         self.newFilmSettings(parameters)
 
-#    @hdebug.debug
-#    def openShutter(self):
-#        self.shutter = True
-#        self.stopCamera()
-#        if self.got_camera:
-#            if self.reversed_shutter:
-#                self.camera.closeShutter()
-#            else:
-#                self.camera.openShutter()
+        try:
+            # Set ROI location and size.
+            self.camera.setPropertyValue("subarray_hpos", p.x_start)
+            self.camera.setPropertyValue("subarray_hsize", p.x_pixels)
+            self.camera.setPropertyValue("subarray_vpos", p.y_start)
+            self.camera.setPropertyValue("subarray_vsize", p.y_pixels)
+
+            # Set binning.
+            if (p.x_bin != p.y_bin):
+                raise AssertionError("unequal binning is not supported.")
+            if (p.x_bin == 1):
+                self.camera.setPropertyValue("binning", "1x1")
+            elif (p.x_bin == 2):
+                self.camera.setPropertyValue("binning", "2x2")
+            elif (p.x_bin == 4):
+                self.camera.setPropertyValue("binning", "4x4")
+            else:
+                raise AssertionError("unsupported bin size", p.x_bin)
+
+            # Set the rest of the hamamatsu properties.
+            #
+            # Note: These could overwrite the above. For example, if you
+            #   have both "x_start" and "subarray_hpos" in the parameters
+            #   file then "subarray_hpos" will overwrite "x_start". Trouble
+            #   may follow if they are not set to the same value.
+            #
+            for key, value in p.__dict__.iteritems():
+                if (key == "binning"): # sigh..
+                    continue
+                if self.camera.isCameraProperty(key):
+                    self.camera.setPropertyValue(key, value)
+
+            self.got_camera = True
+
+        except:
+            print "QCameraThread: Bad camera settings"
+            print traceback.format_exc()
+            self.got_camera = False
+
+    @hdebug.debug
+    def openShutter(self):
+        self.shutter = True
+        self.stopCamera()
 
     @hdebug.debug
     def quit(self):
@@ -96,7 +114,7 @@ class ACameraControl(cameraControl.CameraControl):
     def run(self):
         while(self.running):
             self.mutex.lock()
-            if self.acquire.amActive():
+            if self.acquire.amActive() and self.got_camera:
 
                 # Get data from camera and create frame objects.
                 [frames, frame_size] = self.camera.getFrames()
@@ -134,28 +152,23 @@ class ACameraControl(cameraControl.CameraControl):
             self.mutex.unlock()
             self.msleep(5)
 
-#    @hdebug.debug
-#    def setEMCCDGain(self, gain):
-#        self.stopCamera()
-#        if self.got_camera:
-#            self.camera.setEMCCDGain(gain)
-
     @hdebug.debug        
     def startCamera(self, key):
-        #if self.have_paused:
         self.mutex.lock()
         self.acquire.go()
         self.key = key
         self.frame_number = 0
         self.max_frames_sig.reset()
-        self.camera.startAcquisition()
+        if self.got_camera:
+            self.camera.startAcquisition()
         self.mutex.unlock()
 
     @hdebug.debug
     def stopCamera(self):
         if self.acquire.amActive():
             self.mutex.lock()
-            self.camera.stopAcquisition()
+            if self.got_camera:
+                self.camera.stopAcquisition()
             self.acquire.stop()
             self.mutex.unlock()
             while not self.acquire.amIdle():

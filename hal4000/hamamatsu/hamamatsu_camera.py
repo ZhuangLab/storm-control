@@ -9,6 +9,9 @@
 # FIXME: I'm using the "old" functions because these are documented..
 #    Switch to the "new" functions at some point.
 #
+# FIXME: How to stream 2048 x 2048 at max frame rate to the flash disk?
+#    The Hamamatsu software can do this.
+#
 # Hazen 10/13
 #
 
@@ -22,6 +25,8 @@ DCAMCAP_EVENT_FRAMEREADY = int("0x0002", 0)
 DCAMERR_NOERROR = 1  # I made this one up. It seems to be the "good" result.
 
 DCAMPROP_ATTR_HASVALUETEXT = int("0x10000000", 0)
+DCAMPROP_ATTR_READABLE = int("0x00010000", 0)
+DCAMPROP_ATTR_WRITABLE = int("0x00020000", 0)
 
 DCAMPROP_OPTION_NEAREST = int("0x80000000", 0)
 DCAMPROP_OPTION_NEXT = int("0x01000000", 0)
@@ -77,8 +82,9 @@ class DCAM_PARAM_PROPERTYVALUETEXT(ctypes.Structure):
 # Throw an error if not as expected?
 #
 def checkStatus(fn_return, fn_name= "unknown"):
-    if (fn_return != DCAMERR_NOERROR):
-        print " dcam:", fn_name, "returned", fn_return
+    #if (fn_return != DCAMERR_NOERROR):
+    #    print " dcam:", fn_name, "returned", fn_return
+    assert (fn_return == DCAMERR_NOERROR), " dcam: " + fn_name + " returned " + str(fn_return)
     return fn_return
 
 
@@ -161,6 +167,10 @@ class HamamatsuCamera():
 
         # Get camera properties.
         self.properties = self.getCameraProperties()
+
+        # Get camera max width, height.
+        self.max_width = self.getPropertyValue("image_width")[0]
+        self.max_height = self.getPropertyValue("image_height")[0]
 
     # Return the ids & names of all the properties that the camera supports.
     def getCameraProperties(self):
@@ -353,6 +363,25 @@ class HamamatsuCamera():
         else:
             return [int(prop_attr.valuemin), int(prop_attr.valuemax)]
     
+    # Return if a property is readable / writeable.
+    def getPropertyRW(self, property_name):
+        prop_attr = self.getPropertyAttribute(property_name)
+        rw = []
+
+        # Check if the property is readable.
+        if (prop_attr.attribute & DCAMPROP_ATTR_READABLE):
+            rw.append(True)
+        else:
+            rw.append(False)
+
+        # Check if the property is writeable.
+        if (prop_attr.attribute & DCAMPROP_ATTR_WRITABLE):
+            rw.append(True)
+        else:
+            rw.append(False)
+
+        return rw
+
     # Return the current setting of a particular property.
     def getPropertyValue(self, property_name):
 
@@ -389,6 +418,13 @@ class HamamatsuCamera():
     
         return [prop_value, prop_type]
 
+    # Check if a property name is supported by the camera.
+    def isCameraProperty(self, property_name):
+        if (property_name in self.properties):
+            return True
+        else:
+            return False
+
     # Set the value of a property.
     def setPropertyValue(self, property_name, property_value):
 
@@ -410,10 +446,10 @@ class HamamatsuCamera():
         # Check that the property is within range.
         [pv_min, pv_max] = self.getPropertyRange(property_name)
         if (property_value < pv_min):
-            print " set property value", property_value, "is less than minimum of", pv_min
+            print " set property value", property_value, "is less than minimum of", pv_min, property_name
             property_value = pv_min
         if (property_value > pv_max):
-            print " set property value", property_value, "is greater than maximum of", pv_max
+            print " set property value", property_value, "is greater than maximum of", pv_max, property_name
             property_value = pv_max
         
         # Set the property value, return what it was set too.
@@ -431,10 +467,20 @@ class HamamatsuCamera():
         self.buffer_index = -1
         self.last_frame_number = 0
 
+        # Check ROI properties.
+        roi_w = self.getPropertyValue("subarray_hsize")[0]
+        roi_h = self.getPropertyValue("subarray_vsize")[0]
+
+        # If the ROI is smaller than the entire frame turn on subarray mode
+        if ((roi_w == self.max_width) and (roi_h == self.max_height)):
+            self.setPropertyValue("subarray_mode", "OFF")
+        else:
+            self.setPropertyValue("subarray_mode", "ON")
+
         # Get frame properties.
+        self.frame_x = self.getPropertyValue("image_width")[0]
+        self.frame_y = self.getPropertyValue("image_height")[0]
         self.frame_bytes = self.getPropertyValue("buffer_framebytes")[0]
-        self.frame_x = self.getPropertyValue("subarray_hsize")[0]
-        self.frame_y = self.getPropertyValue("subarray_vsize")[0]
 
         # Set capture mode.
         checkStatus(dcam.dcam_precapture(self.camera_handle,
@@ -494,34 +540,93 @@ if __name__ == "__main__":
             props = hcam.getProperties()
             for i, id_name in enumerate(sorted(props.keys())):
                 [p_value, p_type] = hcam.getPropertyValue(id_name)
-                print "  ", i, ")", id_name, " = ", p_value, " type is:", p_type
+                p_rw = hcam.getPropertyRW(id_name)
+                read_write = ""
+                if (p_rw[0]):
+                    read_write += "read"
+                if (p_rw[1]):
+                    read_write += ", write"
+                print "  ", i, ")", id_name, " = ", p_value, " type is:", p_type, ",", read_write
                 text_values = hcam.getPropertyText(id_name)
                 if (len(text_values) > 0):
                     print "          option / value"
-                    for t_val in text_values:
-                        print "         ", t_val[1], "/", t_val[0]
+                    for key in sorted(text_values, key = text_values.get):
+                        print "         ", key, "/", text_values[key]
 
-        # Test setting exposure time & getting frame rate.
-        if 0:
+        # Test setting & getting some parameters.
+        if 1:
             print hcam.setPropertyValue("exposure_time", 0.001)
-            print hcam.getPropertyValue("internal_frame_rate")[0]
+            print hcam.setPropertyValue("subarray_hsize", 2048)
+            print hcam.setPropertyValue("subarray_vsize", 2048)
+            print hcam.setPropertyValue("binning", "1x1")
+
+            params = ["internal_frame_rate",
+                      "image_height",
+                      "image_width",
+                      "image_framebytes",
+                      "buffer_framebytes",
+                      "buffer_rowbytes",
+                      "buffer_top_offset_bytes",
+                      "subarray_hsize",
+                      "subarray_vsize",
+                      "binning"]
+            for param in params:
+                print param, hcam.getPropertyValue(param)[0]
 
         # Test image capture (v1).
         if 0:
+            c_lib = ctypes.cdll.LoadLibrary(ctypes.util.find_library("c"))
+            
+            fopen = c_lib.fopen
+            fopen.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
+            fopen.restype = ctypes.c_void_p
+
+            fwrite = c_lib.fwrite
+            fwrite.argtypes = [ctypes.c_void_p,
+                               ctypes.c_int,
+                               ctypes.c_int,
+                               ctypes.c_void_p]
+            fwrite.restype = ctypes.c_int
+
+            fclose = c_lib.fclose
+            fclose.argtypes = [ctypes.c_void_p]
+            fclose.restype = ctypes.c_int
+
             max_len = 0
+            bin_fp = open("e:/zhuang/test.bin", "wb")
+            #bin_fp = fopen("e:\\zhuang\\test.bin", "wb")
             print hcam.setPropertyValue("defect_correct_mode", "OFF")
+            print hcam.setPropertyValue("subarray_hsize", 1024)
+            print hcam.setPropertyValue("subarray_vsize", 1024)
             hcam.startAcquisition()
-            for i in range(10000):
-                frames = hcam.getFrames()
+            for i in range(100):
+
+                # Get frames.
+                [frames, dims] = hcam.getFrames()
+
+                # Save frames.
+                for aframe in frames:
+                    np_data = aframe.getData()
+                #    print np_data[0:10]
+                #    fwrite(np_data.ctypes.data,
+                #           2,
+                #           np_data.size,
+                #           bin_fp)
+                    np_data.tofile(bin_fp)
+
+                # Record backlog.
                 cur_len = len(frames)
                 if (cur_len > max_len):
                     max_len = cur_len
                 print i, cur_len
+
             hcam.stopAcquisition()
+            #fclose(bin_fp)
+            bin_fp.close()
             print "Max backlog:", max_len
 
         # Test image capture (v2).
-        if 1:
+        if 0:
             print hcam.setPropertyValue("defect_correct_mode", "OFF")
             hcam.startAcquisition()
             frames = hcam.getFrames()

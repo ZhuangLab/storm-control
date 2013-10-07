@@ -16,7 +16,7 @@
 # gainChange(int gain)
 #
 #
-# Hazen 9/09
+# Hazen 10/13
 #
 
 from PyQt4 import QtCore, QtGui
@@ -29,7 +29,7 @@ class CameraParams(QtGui.QGroupBox):
 
     def __init__(self, camera_params_ui, parent = None):
         QtGui.QGroupBox.__init__(self, parent)
-        self.temperature = 0
+        self.temperature = False
 
         # UI setup
         self.ui = camera_params_ui
@@ -44,15 +44,37 @@ class CameraParams(QtGui.QGroupBox):
         
     def newParameters(self, parameters):
         p = parameters
-        self.temperature = p.temperature
-        if p.emgainmode == 0:
-            self.ui.EMCCDSlider.setMaximum(255)
+        if (hasattr(p, "temperature")):
+            self.temperature = p.temperature
+            self.ui.temperatureLabel.show()
+            self.ui.temperatureText.show()
         else:
-            self.ui.EMCCDSlider.setMaximum(100)
-        self.ui.EMCCDSlider.setValue(p.emccd_gain)
-        self.ui.preampGainText.setText("%.1f" % p.preampgain)
+            self.ui.temperatureLabel.hide()
+            self.ui.temperatureText.hide()
+
+        if (hasattr(p, "emgainmode")):
+            self.ui.EMCCDLabel.show()
+            self.ui.EMCCDSlider.show()
+            if p.emgainmode == 0:
+                self.ui.EMCCDSlider.setMaximum(255)
+            else:
+                self.ui.EMCCDSlider.setMaximum(100)
+            self.ui.EMCCDSlider.setValue(p.emccd_gain)
+        else:
+            self.ui.EMCCDLabel.hide()
+            self.ui.EMCCDSlider.hide()
+
+        if (hasattr(p, "preampgain")):
+            self.ui.preampGainLabel.show()
+            self.ui.preampGainText.show()
+            self.ui.preampGainText.setText("%.1f" % p.preampgain)
+        else:
+            self.ui.preampGainLabel.hide()
+            self.ui.preampGainText.hide()
+
         self.ui.pictureSizeText.setText(str(p.x_pixels) + " x " + str(p.y_pixels) +
                                         " (" + str(p.x_bin) + "," + str(p.y_bin) + ")")
+
         if p.external_trigger:
             self.ui.exposureTimeText.setText("External")
             self.ui.FPSText.setText("External")
@@ -61,17 +83,17 @@ class CameraParams(QtGui.QGroupBox):
             self.ui.FPSText.setText("%.4f" % (1.0/p.kinetic_value))
 
     def newTemperature(self, temp_data):
-        if temp_data[1] == "stable":
-            self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
-        else:
-            self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
-        self.ui.temperatureText.setText(str(temp_data[0]) + " (" + str(self.temperature) + ")")
+        if (self.ui.temperatureText.isVisible()):
+            if temp_data[1] == "stable":
+                self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
+            else:
+                self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
 
 
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
