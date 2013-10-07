@@ -6,6 +6,7 @@
 #
 
 from PyQt4 import QtCore
+import numpy
 import os
 
 # Debugging
@@ -52,6 +53,10 @@ class ACameraControl(cameraControl.CameraControl):
         else:
             return [50, "unstable"]
 
+    #
+    # FIXME:
+    #   Update to match andorCameraControl or change both to call the same function..
+    #
     @hdebug.debug
     def initCamera(self):
         if not self.cameras[0]:
@@ -230,7 +235,7 @@ class ACameraControl(cameraControl.CameraControl):
                             master = False
                         frame_data = []
                         for raw_frame in frames:
-                            frame_data.append(frame.Frame(raw_frame,
+                            frame_data.append(frame.Frame(numpy.fromstring(raw_frame, dtype = numpy.uint16),
                                                           self.frame_number[i],
                                                           frame_size[0],
                                                           frame_size[1],

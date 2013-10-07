@@ -2,10 +2,11 @@
 #
 # Camera control specialized for a Andor camera.
 #
-# Hazen 09/13
+# Hazen 10/13
 #
 
 from PyQt4 import QtCore
+import numpy
 import os
 import platform
 
@@ -236,7 +237,7 @@ class ACameraControl(cameraControl.CameraControl):
                     # Create frame objects.
                     frame_data = []
                     for raw_frame in frames:
-                        frame_data.append(frame.Frame(raw_frame,
+                        frame_data.append(frame.Frame(numpy.fromstring(raw_frame, dtype = numpy.uint16),
                                                       self.frame_number,
                                                       frame_size[0],
                                                       frame_size[1],
