@@ -7,6 +7,7 @@
 
 from ctypes import *
 import time
+import traceback
 
 # Load the NIDAQmx driver library.
 nidaqmx = windll.nicaiu
@@ -41,6 +42,8 @@ def checkStatus(status):
         buf = create_string_buffer(buf_size)
         nidaqmx.DAQmxGetErrorString(c_long(status), buf, buf_size)
         print "nidaq error:", status, buf.value
+        traceback.print_stack()
+        print " --"
         #raise RuntimeError('nidaq call failed with error %d: %s'%(status, buf.value))
 
 
@@ -100,6 +103,7 @@ class NIDAQTask():
     def stopTask(self):
         checkStatus(nidaqmx.DAQmxStopTask(self.taskHandle))
 
+    # FIXME: This doesn't look like it would work. Do we even use it?
     def taskIsDoneP(self):
         #done = c_long(0)
         checkStatus(nidaqmx.DAQmxIsTaskDone(self.taskHandle, None))
