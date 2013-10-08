@@ -555,10 +555,11 @@ if __name__ == "__main__":
 
         # Test setting & getting some parameters.
         if 1:
-            print hcam.setPropertyValue("exposure_time", 0.001)
+            print hcam.setPropertyValue("exposure_time", 0.01)
             print hcam.setPropertyValue("subarray_hsize", 2048)
             print hcam.setPropertyValue("subarray_vsize", 2048)
             print hcam.setPropertyValue("binning", "1x1")
+            print hcam.setPropertyValue("readout_speed", 1)
 
             params = ["internal_frame_rate",
                       "image_height",
@@ -572,69 +573,6 @@ if __name__ == "__main__":
                       "binning"]
             for param in params:
                 print param, hcam.getPropertyValue(param)[0]
-
-        # Test image capture (v1).
-        if 0:
-            c_lib = ctypes.cdll.LoadLibrary(ctypes.util.find_library("c"))
-            
-            fopen = c_lib.fopen
-            fopen.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
-            fopen.restype = ctypes.c_void_p
-
-            fwrite = c_lib.fwrite
-            fwrite.argtypes = [ctypes.c_void_p,
-                               ctypes.c_int,
-                               ctypes.c_int,
-                               ctypes.c_void_p]
-            fwrite.restype = ctypes.c_int
-
-            fclose = c_lib.fclose
-            fclose.argtypes = [ctypes.c_void_p]
-            fclose.restype = ctypes.c_int
-
-            max_len = 0
-            bin_fp = open("e:/zhuang/test.bin", "wb")
-            #bin_fp = fopen("e:\\zhuang\\test.bin", "wb")
-            print hcam.setPropertyValue("defect_correct_mode", "OFF")
-            print hcam.setPropertyValue("subarray_hsize", 1024)
-            print hcam.setPropertyValue("subarray_vsize", 1024)
-            hcam.startAcquisition()
-            for i in range(100):
-
-                # Get frames.
-                [frames, dims] = hcam.getFrames()
-
-                # Save frames.
-                for aframe in frames:
-                    np_data = aframe.getData()
-                #    print np_data[0:10]
-                #    fwrite(np_data.ctypes.data,
-                #           2,
-                #           np_data.size,
-                #           bin_fp)
-                    np_data.tofile(bin_fp)
-
-                # Record backlog.
-                cur_len = len(frames)
-                if (cur_len > max_len):
-                    max_len = cur_len
-                print i, cur_len
-
-            hcam.stopAcquisition()
-            #fclose(bin_fp)
-            bin_fp.close()
-            print "Max backlog:", max_len
-
-        # Test image capture (v2).
-        if 0:
-            print hcam.setPropertyValue("defect_correct_mode", "OFF")
-            hcam.startAcquisition()
-            frames = hcam.getFrames()
-            frame = frames[-1].getData()
-            print frame[0], frame[1], frame[2]
-            hcam.stopAcquisition()
-
-        hcam.shutdown()
 
 #
 # The MIT License
