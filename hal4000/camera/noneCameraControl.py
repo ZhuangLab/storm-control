@@ -34,8 +34,8 @@ class ACameraControl(cameraControl.CameraControl):
         if not self.camera:
             if hdebug.getDebug():
                 print " Initializing None Camera Type"
-            self.camera = 1
-        self.got_camera = 1
+            self.camera = True
+        self.got_camera = True
 
     @hdebug.debug
     def newFilmSettings(self, parameters, filming = 0):

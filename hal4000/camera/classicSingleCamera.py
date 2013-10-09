@@ -2,7 +2,7 @@
 #
 # Camera class for controlling a single (non-detached) camera.
 #
-# Hazen 11/12
+# Hazen 10/13
 #
 
 from PyQt4 import QtCore, QtGui
@@ -24,6 +24,7 @@ class ClassicSingleCamera(singleCamera.SingleCamera):
     def __init__(self, parameters, camera_frame, camera_params_frame, parent = None):
         singleCamera.SingleCamera.__init__(self, parameters, parent)
 
+        # Set up camera display.
         camera_display_ui = cameraDisplayUi.Ui_Frame()
         self.camera_display = cameraDisplay.CameraDisplay(parameters,
                                                           camera_display_ui,
@@ -32,10 +33,20 @@ class ClassicSingleCamera(singleCamera.SingleCamera):
                                                           show_shutter_button = True,
                                                           parent = camera_frame)
 
+        layout = QtGui.QGridLayout(camera_frame)
+        layout.setMargin(0)
+        layout.addWidget(self.camera_display)
+
+        # Set up camera parameters display.
         camera_params_ui = cameraParamsUi.Ui_GroupBox()
         self.camera_params = cameraParams.CameraParams(camera_params_ui,
                                                        parent = camera_params_frame)
-            
+
+        layout = QtGui.QGridLayout(camera_params_frame)
+        layout.setMargin(0)
+        layout.addWidget(self.camera_params)
+
+
         # Connect ui elements.
         self.camera_display.ui.cameraShutterButton.clicked.connect(self.toggleShutter)
         self.camera_params.gainChange.connect(self.handleGainChange)
@@ -43,7 +54,7 @@ class ClassicSingleCamera(singleCamera.SingleCamera):
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

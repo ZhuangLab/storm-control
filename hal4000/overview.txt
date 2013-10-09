@@ -22,6 +22,9 @@ HAL-4000 (QtGui.QMainWindow)
   
         dualCamera.DualCamera (genericCamera.Camera)
 
+    Camera control:
+      cameraControl.CameraControl(QtCore.QThread)
+
     Camera image display & display setting:
       cameraDisplay.CameraDisplay (QtGui.QFrame)
 

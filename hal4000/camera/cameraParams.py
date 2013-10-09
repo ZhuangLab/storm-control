@@ -88,6 +88,7 @@ class CameraParams(QtGui.QGroupBox):
                 self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
             else:
                 self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
+            self.ui.temperatureText.setText(str(temp_data[0]))
 
 
 #

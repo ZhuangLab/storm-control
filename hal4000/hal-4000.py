@@ -168,10 +168,8 @@ class Window(QtGui.QMainWindow):
                                              self.ui.cameraFrame,
                                              self.ui.cameraParamsFrame,
                                              parent = self)
-            layout = QtGui.QGridLayout(self.ui.cameraFrame)
-            layout.setMargin(0)
-            layout.addWidget(self.camera.getCameraDisplay())
             self.ui.recordButton = self.camera.getRecordButton()
+
         # Both detached and dual-modes have the proper separation of UI elements
         else:
             self.camera = the_camera.ACamera(parameters,
