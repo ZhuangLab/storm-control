@@ -14,10 +14,10 @@ import hamamatsu_camera as hc
 
 print "camera 0 model:", hc.getModelInfo(0)
 
-hcam = hc.HamamatsuCamera(0)
+hcam = hc.HamamatsuCameraMR(0)
 
 # Test image streaming using numpy.
-if 0:
+if 1:
     bin_fp = open("e:/zhuang/test.bin", "wb")
     print hcam.setPropertyValue("defect_correct_mode", "OFF")
     hcam.startAcquisition()
