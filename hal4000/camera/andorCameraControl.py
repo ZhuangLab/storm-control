@@ -9,6 +9,7 @@ from PyQt4 import QtCore
 import numpy
 import os
 import platform
+import traceback
 
 # Debugging
 import halLib.hdebug as hdebug
@@ -217,8 +218,8 @@ class ACameraControl(cameraControl.CameraControl):
                 print " Camera Initialized"
             self.got_camera = True
         except:
-            #if hdebug.getDebug():
             print "QCameraThread: Bad camera settings"
+            print traceback.format_exc()
             self.got_camera = False
         self.newFilmSettings(parameters)
 
