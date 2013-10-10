@@ -21,12 +21,16 @@
 
 from PyQt4 import QtCore, QtGui
 
+# Debugging
+import halLib.hdebug as hdebug
+
 #
 # Camera Params Group Box
 #
 class CameraParams(QtGui.QGroupBox):
     gainChange = QtCore.pyqtSignal(int)
 
+    @hdebug.debug
     def __init__(self, camera_params_ui, parent = None):
         QtGui.QGroupBox.__init__(self, parent)
         self.temperature = False
@@ -38,39 +42,26 @@ class CameraParams(QtGui.QGroupBox):
         # connect signals
         self.connect(self.ui.EMCCDSlider, QtCore.SIGNAL("valueChanged(int)"), self.cameraGainChange)
 
+    @hdebug.debug
     def cameraGainChange(self, new_gain):
         self.ui.EMCCDLabel.setText("EMCCD Gain: %d" % new_gain)
         self.gainChange.emit(new_gain)
-        
+
+    @hdebug.debug        
     def newParameters(self, parameters):
         p = parameters
         if (hasattr(p, "temperature")):
             self.temperature = p.temperature
-            self.ui.temperatureLabel.show()
-            self.ui.temperatureText.show()
-        else:
-            self.ui.temperatureLabel.hide()
-            self.ui.temperatureText.hide()
 
         if (hasattr(p, "emgainmode")):
-            self.ui.EMCCDLabel.show()
-            self.ui.EMCCDSlider.show()
             if p.emgainmode == 0:
                 self.ui.EMCCDSlider.setMaximum(255)
             else:
                 self.ui.EMCCDSlider.setMaximum(100)
             self.ui.EMCCDSlider.setValue(p.emccd_gain)
-        else:
-            self.ui.EMCCDLabel.hide()
-            self.ui.EMCCDSlider.hide()
 
         if (hasattr(p, "preampgain")):
-            self.ui.preampGainLabel.show()
-            self.ui.preampGainText.show()
             self.ui.preampGainText.setText("%.1f" % p.preampgain)
-        else:
-            self.ui.preampGainLabel.hide()
-            self.ui.preampGainText.hide()
 
         self.ui.pictureSizeText.setText(str(p.x_pixels) + " x " + str(p.y_pixels) +
                                         " (" + str(p.x_bin) + "," + str(p.y_bin) + ")")
@@ -82,13 +73,40 @@ class CameraParams(QtGui.QGroupBox):
             self.ui.exposureTimeText.setText("%.4f" % p.exposure_value)
             self.ui.FPSText.setText("%.4f" % (1.0/p.kinetic_value))
 
+    @hdebug.debug
     def newTemperature(self, temp_data):
-        if (self.ui.temperatureText.isVisible()):
-            if temp_data[1] == "stable":
-                self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
-            else:
-                self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
-            self.ui.temperatureText.setText(str(temp_data[0]))
+        if temp_data[1] == "stable":
+            self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
+        else:
+            self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
+        self.ui.temperatureText.setText(str(temp_data[0]) + " (" + str(self.temperature) + ")")
+
+    @hdebug.debug
+    def showEMCCD(self, visible):
+        if visible:
+            self.ui.EMCCDLabel.show()
+            self.ui.EMCCDSlider.show()
+        else:
+            self.ui.EMCCDLabel.hide()
+            self.ui.EMCCDSlider.hide()
+
+    @hdebug.debug
+    def showPreamp(self, visible):
+        if visible:
+            self.ui.preampGainLabel.show()
+            self.ui.preampGainText.show()
+        else:
+            self.ui.preampGainLabel.hide()
+            self.ui.preampGainText.hide()
+
+    @hdebug.debug
+    def showTemperature(self, visible):
+        if visible:
+            self.ui.temperatureLabel.show()
+            self.ui.temperatureText.show()
+        else:
+            self.ui.temperatureLabel.hide()
+            self.ui.temperatureText.hide()
 
 
 #

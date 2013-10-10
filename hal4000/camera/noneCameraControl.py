@@ -30,12 +30,29 @@ class ACameraControl(cameraControl.CameraControl):
         time = 0.001 * float(self.sleep_time)
         return [time, time, time]
 
+    @hdebug.debug
     def initCamera(self):
         if not self.camera:
             if hdebug.getDebug():
                 print " Initializing None Camera Type"
             self.camera = True
         self.got_camera = True
+
+    @hdebug.debug
+    def haveEMCCD(self):
+        return False
+
+    @hdebug.debug
+    def havePreamp(self):
+        return True
+
+    @hdebug.debug
+    def haveShutter(self):
+        return False
+
+    @hdebug.debug
+    def haveTemperature(self):
+        return False
 
     @hdebug.debug
     def newFilmSettings(self, parameters, filming = 0):

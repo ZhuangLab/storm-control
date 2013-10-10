@@ -2,7 +2,7 @@
 #
 # Dual camera control.
 #
-# Hazen 12/12
+# Hazen 10/13
 #
 
 from PyQt4 import QtCore, QtGui
@@ -32,6 +32,7 @@ class CameraDialog(QtGui.QDialog):
         self.ui.setupUi(self)
         self.setWindowTitle(name)
 
+        # Set up camera display.
         camera_display_ui = cameraDisplayUi.Ui_Frame()
         self.camera_display = cameraDisplay.CameraDisplay(parameters,
                                                           camera_display_ui,
@@ -40,6 +41,7 @@ class CameraDialog(QtGui.QDialog):
                                                           show_shutter_button = True,
                                                           parent = self.ui.cameraFrame)
 
+        # Set up camera parameters display.
         camera_params_ui = cameraParamsUi.Ui_GroupBox()
         self.camera_params = cameraParams.CameraParams(camera_params_ui,
                                                        parent = self.ui.cameraParamsFrame)
@@ -47,6 +49,10 @@ class CameraDialog(QtGui.QDialog):
         layout = QtGui.QGridLayout(self.ui.cameraParamsFrame)
         layout.setMargin(0)
         layout.addWidget(self.camera_params)
+
+        self.camera_params.showEMCCD(self.camera_control.haveEMCCD())
+        self.camera_params.showPreamp(self.camera_control.havePreamp())
+        self.camera_params.showTemperature(self.camera_control.haveTemperature())
             
         # Connect ui elements.
         self.ui.okButton.setText("Close")
@@ -239,7 +245,7 @@ class DualCamera(genericCamera.Camera):
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

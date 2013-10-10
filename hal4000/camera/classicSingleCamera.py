@@ -30,7 +30,7 @@ class ClassicSingleCamera(singleCamera.SingleCamera):
                                                           camera_display_ui,
                                                           "camera1",
                                                           show_record_button = True,
-                                                          show_shutter_button = True,
+                                                          show_shutter_button = self.camera_control.haveShutter(),
                                                           parent = camera_frame)
 
         layout = QtGui.QGridLayout(camera_frame)
@@ -46,6 +46,9 @@ class ClassicSingleCamera(singleCamera.SingleCamera):
         layout.setMargin(0)
         layout.addWidget(self.camera_params)
 
+        self.camera_params.showEMCCD(self.camera_control.haveEMCCD())
+        self.camera_params.showPreamp(self.camera_control.havePreamp())
+        self.camera_params.showTemperature(self.camera_control.haveTemperature())
 
         # Connect ui elements.
         self.camera_display.ui.cameraShutterButton.clicked.connect(self.toggleShutter)

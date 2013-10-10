@@ -56,6 +56,22 @@ class ACameraControl(cameraControl.CameraControl):
             return [50, "unstable"]
 
     @hdebug.debug
+    def haveEMCCD(self):
+        return True
+
+    @hdebug.debug
+    def havePreamp(self):
+        return True
+
+    @hdebug.debug
+    def haveShutter(self):
+        return True
+
+    @hdebug.debug
+    def haveTemperature(self):
+        return True
+
+    @hdebug.debug
     def initCamera(self, pci_card = 0):
         if not self.camera:
             if hdebug.getDebug():

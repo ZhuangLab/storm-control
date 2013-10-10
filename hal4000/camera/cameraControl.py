@@ -95,6 +95,22 @@ class CameraControl(QtCore.QThread):
         return [50, "unstable"]
 
     @hdebug.debug
+    def haveEMCCD(self):
+        return False
+
+    @hdebug.debug
+    def havePreamp(self):
+        return False
+
+    @hdebug.debug
+    def haveShutter(self):
+        return False
+
+    @hdebug.debug
+    def haveTemperature(self):
+        return False
+
+    @hdebug.debug
     def newFilmSettings(self, parameters, filming = False):
         self.mutex.lock()
         self.parameters = parameters
