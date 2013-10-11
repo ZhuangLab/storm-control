@@ -46,6 +46,13 @@ def getCameraSize(parameters, camera_name):
         y_pixels = parameters.y_pixels
     return [x_pixels, y_pixels]
 
+# Convert an attribute to a string, or "NA" if the attribute does not exist.
+def attrToString(obj, attr):
+    if hasattr(obj, attr):
+        return str(getattr(obj, attr))
+    else:
+        return "NA"
+
 #
 # Inf writing function. We save one of these regardless of the
 # output format of the data as it is a easy way to preserve
@@ -73,17 +80,17 @@ def writeInfFile(filename, filetype, number_frames, parameters, camera, stage_po
     fp.write("frame size = " + str(c.x_pixels * c.y_pixels) + nl)
     fp.write("frame dimensions = " + str(c.x_pixels) + " x " + str(c.y_pixels) + nl)
     fp.write("binning = " + str(c.x_bin) + " x " + str(c.y_bin) + nl)
-    if c.frame_transfer_mode:
+    if hasattr(c, "frame_transfer_mode") and c.frame_transfer_mode:
         fp.write("CCD mode = frame-transfer" + nl)
-    fp.write("horizontal shift speed = " + str(c.hsspeed) + nl)
-    fp.write("vertical shift speed = " + str(c.vsspeed) + nl)
-    fp.write("EMCCD Gain = " + str(c.emccd_gain) + nl)
-    fp.write("Preamp Gain = " + str(c.preampgain) + nl)
+    fp.write("horizontal shift speed = " + attrToString(c, "hsspeed") + nl)
+    fp.write("vertical shift speed = " + attrToString(c, "vsspeed") + nl)
+    fp.write("EMCCD Gain = " + attrToString(c, "emccd_gain") + nl)
+    fp.write("Preamp Gain = " + attrToString(c, "preampgain") + nl)
     fp.write("Exposure Time = " + str(c.exposure_value) + nl)
     fp.write("Frames Per Second = " + str(1.0/c.kinetic_value) + nl)
-    fp.write("camera temperature (deg. C) = " + str(c.actual_temperature) + nl)
-    fp.write("camera head = " + str(c.head_model) + nl)
-    fp.write("ADChannel = " + str(c.adchannel) + nl)
+    fp.write("camera temperature (deg. C) = " + attrToString(c, "actual_temperature") + nl)
+    fp.write("camera head = " + attrToString(c, "head_model") + nl)
+    fp.write("ADChannel = " + attrToString(c, "adchannel") + nl)
     fp.write("scalemax = " + str(c.scalemax) + nl)
     fp.write("scalemin = " + str(c.scalemin) + nl)
 

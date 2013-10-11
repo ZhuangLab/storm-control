@@ -18,14 +18,24 @@ hcam = hc.HamamatsuCameraMR(0)
 
 # Set camera parameters.
 cam_offset = 100
-cam_x = 2048
-cam_y = 2048
 hcam.setPropertyValue("defect_correct_mode", "OFF")
 hcam.setPropertyValue("exposure_time", 0.01)
-hcam.setPropertyValue("subarray_hsize", cam_x)
-hcam.setPropertyValue("subarray_vsize", cam_y)
 hcam.setPropertyValue("binning", "1x1")
 hcam.setPropertyValue("readout_speed", 2)
+
+if 1:
+    cam_x = 2048
+    cam_y = 2048
+    hcam.setPropertyValue("subarray_hsize", cam_x)
+    hcam.setPropertyValue("subarray_vsize", cam_y)
+
+if 0:
+    cam_x = 1024
+    cam_y = 1024
+    hcam.setPropertyValue("subarray_hpos", 512)
+    hcam.setPropertyValue("subarray_vpos", 512)
+    hcam.setPropertyValue("subarray_hsize", cam_x)
+    hcam.setPropertyValue("subarray_vsize", cam_y)
 
 print "integration time (seconds):", 1.0/hcam.getPropertyValue("internal_frame_rate")[0]
 
@@ -46,7 +56,7 @@ while (count < n_frames):
         print "Accumulated", count, "frames, current back log is", len(frames), "frames"
     
     if (len(frames) > 0):
-        aframe = frames[0].getData().astype(numpy.int16) - cam_offset
+        aframe = frames[0].getData().astype(numpy.int32) - cam_offset
         mean += aframe
         var += aframe * aframe
         count += 1

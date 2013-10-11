@@ -25,9 +25,9 @@ class ACameraControl(cameraControl.CameraControl):
         self.stop_at_max = True
 
         if hasattr(parameters, "camera_id"):
-            self.camera = hcam.HamamatsuCamera(parameters.camera_id)
+            self.camera = hcam.HamamatsuCameraMR(parameters.camera_id)
         else:
-            self.camera = hcam.HamamatsuCamera(0)
+            self.camera = hcam.HamamatsuCameraMR(0)
 
     @hdebug.debug
     def closeShutter(self):
@@ -46,6 +46,7 @@ class ACameraControl(cameraControl.CameraControl):
 
     @hdebug.debug
     def newFilmSettings(self, parameters, filming = False):
+        self.stopCamera()
         self.parameters = parameters
         p = parameters
         if filming:
@@ -57,7 +58,6 @@ class ACameraControl(cameraControl.CameraControl):
 
     @hdebug.debug
     def newParameters(self, parameters):
-        self.stopCamera()
         p = parameters
         self.newFilmSettings(parameters)
 

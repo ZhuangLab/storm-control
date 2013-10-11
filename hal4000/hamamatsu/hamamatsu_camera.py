@@ -479,7 +479,7 @@ class HamamatsuCamera():
             else:
                 print " unknown property text value:", property_value, "for", property_name
                 return False
-        
+
         # Check that the property is within range.
         [pv_min, pv_max] = self.getPropertyRange(property_name)
         if (property_value < pv_min):
@@ -587,18 +587,13 @@ class HamamatsuCameraMR(HamamatsuCamera):
         self.captureSetup()
 
         #
-        # Allocate & attach image buffers (if necessary).
+        # Allocate new image buffers if necessary.
         # Allocate as many frames as can fit in 2GB of memory.
         #
         if (self.old_frame_bytes != self.frame_bytes):
 
             n_buffers = int((2.0 * 1024 * 1024 * 1024)/self.frame_bytes)
             self.number_image_buffers = n_buffers
-
-            # Release old image buffers.
-            if (self.hcam_ptr):
-                checkStatus(dcam.dcam_releasebuffer(self.camera_handle),
-                            "dcam_releasebuffer")
 
             # Allocate new image buffers.
             ptr_array = ctypes.c_void_p * self.number_image_buffers
@@ -611,11 +606,15 @@ class HamamatsuCameraMR(HamamatsuCamera):
 
             self.old_frame_bytes = self.frame_bytes
 
-            # Attach image buffers.
-            checkStatus(dcam.dcam_attachbuffer(self.camera_handle,
-                                               self.hcam_ptr,
-                                               ctypes.sizeof(self.hcam_ptr)),
-                        "dcam_attachbuffer")
+        # Attach image buffers.
+        #
+        # We need to attach & release for each acquisition otherwise
+        # we'll get an error if we try to change the ROI in any way
+        # between acquisitions.
+        checkStatus(dcam.dcam_attachbuffer(self.camera_handle,
+                                           self.hcam_ptr,
+                                           ctypes.sizeof(self.hcam_ptr)),
+                    "dcam_attachbuffer")
 
         # Start acquisition.
         checkStatus(dcam.dcam_capture(self.camera_handle),
@@ -627,6 +626,11 @@ class HamamatsuCameraMR(HamamatsuCamera):
         # Stop acquisition.
         checkStatus(dcam.dcam_idle(self.camera_handle),
                     "dcam_idle")
+
+        # Release image buffers.
+        if (self.hcam_ptr):
+            checkStatus(dcam.dcam_releasebuffer(self.camera_handle),
+                        "dcam_releasebuffer")
 
         print "max camera backlog was:", self.max_backlog
         self.max_backlog = 0

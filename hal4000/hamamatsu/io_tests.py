@@ -16,12 +16,22 @@ print "camera 0 model:", hc.getModelInfo(0)
 
 hcam = hc.HamamatsuCameraMR(0)
 
+# Set camera parameters.
+cam_offset = 100
+cam_x = 2048
+cam_y = 2048
+hcam.setPropertyValue("defect_correct_mode", "OFF")
+hcam.setPropertyValue("exposure_time", 0.01)
+hcam.setPropertyValue("subarray_hsize", cam_x)
+hcam.setPropertyValue("subarray_vsize", cam_y)
+hcam.setPropertyValue("binning", "1x1")
+hcam.setPropertyValue("readout_speed", 2)
+
 # Test image streaming using numpy.
 if 1:
     bin_fp = open("e:/zhuang/test.bin", "wb")
-    print hcam.setPropertyValue("defect_correct_mode", "OFF")
     hcam.startAcquisition()
-    for i in range(100):
+    for i in range(1000):
 
         # Get frames.
         [frames, dims] = hcam.getFrames()
@@ -42,7 +52,6 @@ if 1:
 # Test writing images as separate files w/ numpy.
 if 0:
     cur_file = 0
-    print hcam.setPropertyValue("defect_correct_mode", "OFF")
     hcam.startAcquisition()
     for i in range(30):
 
@@ -68,7 +77,6 @@ if 0:
     fsize = 2048*2048
     max_frame = 1000
     mem_fp = numpy.memmap("e:/zhuang/test.bin", mode = "write", dtype = numpy.uint16, shape = fsize * max_frame)
-    print hcam.setPropertyValue("defect_correct_mode", "OFF")
     hcam.startAcquisition()
     cur_frame = 0
     for i in range(10):
@@ -108,7 +116,6 @@ if 0:
     fclose.restype = ctypes.c_int
 
     bin_fp = fopen("e:/zhuang/test.bin", "wb")
-    print hcam.setPropertyValue("defect_correct_mode", "OFF")
     hcam.startAcquisition()
     for i in range(30):
         
@@ -152,7 +159,6 @@ if 0:
     fclose.argtypes = [ctypes.c_int]
 
     bin_fd = fopen("e:/zhuang/test.bin", _O_WRONLY + _O_CREAT, _S_IWRITE)
-    print hcam.setPropertyValue("defect_correct_mode", "OFF")
     hcam.startAcquisition()
     for i in range(4):
 

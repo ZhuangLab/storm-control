@@ -162,8 +162,8 @@ class StormXMLObject:
                             setattr(self, slot, float_array)
                         elif type == "string-array":
                             setattr(self, slot, value.split(","))
-                        else: # everything else is assumed to be a string
-                            setattr(self, slot, value)
+                        else: # everything else is assumed to be a (non-unicode) string
+                            setattr(self, slot, str(value))
 
 
 #
