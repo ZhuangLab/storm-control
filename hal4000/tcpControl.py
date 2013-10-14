@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file 
+#
 # Handles remote control (via TCP/IP of the data collection program)
 #
 # Hazen 8/13
@@ -8,18 +10,25 @@
 import sys
 from PyQt4 import QtCore, QtNetwork
 
+## match
+#
+# Returns true if string2 is equal or longer than string1 and if 
+# the strings match where they overlap.
+#
+# @param string1 The first string.
+# @param string2 The second string.
+#
 def match(string1, string2):
     if len(string2) >= len(string1):
         if string1 == string2[0:len(string1)]:
-            return 1
+            return True
         else:
-            return 0
+            return False
     else:
-        return 0
+        return False
 
 
-#
-# TCP/IP Control Class
+## TCP/IP Control Class
 #
 # To allow only one connection at a time from the local computer
 # the server is closed once the connection is made. When the

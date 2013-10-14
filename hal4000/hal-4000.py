@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Heuristically programmed ALgorithmic STORM setup control.
 #
 # In its most basic form, this just runs a camera
@@ -41,7 +43,6 @@
 # AStageControl:
 #   Control of a motorized stage.
 #
-#
 # Hazen 07/13
 #
 
@@ -61,16 +62,33 @@ import halLib.imagewriters as writers
 import qtWidgets.qtAppIcon as qtAppIcon
 import qtWidgets.qtParametersBox as qtParametersBox
 
-# helper functions
+## trimString
+#
+# Trims string to max_len characters if string is longer than max_len.
+#
+# @param string The string to trim.
+# @param max_len The maximum string length.
+#
+# @return Returns the trimmed string.
+#
 def trimString(string, max_len):
     if len(string) > max_len:
         return "..." + string[-(max_len-3):]
     else:
         return string
 
+## getFileName
+#
+# Returns the filename given a path.
+#
+# @param path The full path with the file name.
+#
+# @return Returns the file name.
+#
 def getFileName(path):
     return os.path.splitext(os.path.basename(path))[0]
 
+## Window
 #
 # Main window
 #
