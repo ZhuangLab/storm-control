@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# qtCameraWidget specialized for data from a Andor camera.
+# qtCameraWidget specialized for data from a Hamamatsu camera.
 #
 # Hazen 10/13
 #
@@ -10,11 +10,42 @@ from PyQt4 import QtCore, QtGui
 
 import qtWidgets.qtCameraWidget as qtCameraWidget
 
+import hamamatsu.scmos_image_manipulation_c as scmos_im
+
 # Hamamatsu Camera Widget
 class ACameraWidget(qtCameraWidget.QCameraWidget):
 
     def __init__(self, parameters, parent = None):
         qtCameraWidget.QCameraWidget.__init__(self, parameters, parent)
+
+    # FIXME: Ignores image orientation settings.
+    def updateImageWithFrame(self, frame):
+        if frame:
+            w = frame.image_x
+            h = frame.image_y
+            image_data = frame.getData()
+            image_data = image_data.reshape((h,w))
+
+            # Use C library to scale image & also determine image min & max.
+            [temp, self.image_min, self.image_max] = scmos_im.rescaleImage(image_data,
+                                                                           self.display_range)
+
+            # Create QImage & draw at final magnification.
+            temp_image = QtGui.QImage(temp.data, w, h, QtGui.QImage.Format_Indexed8)
+            self.image = temp_image.scaled(self.x_final, self.y_final)
+            self.image.ndarray = temp
+
+            # Set the images color table.
+            self.setColorTable()
+            self.update()
+
+            if self.show_info:
+                x_loc = self.x_click
+                y_loc = self.y_click
+                value = 0
+                if ((x_loc >= 0) and (x_loc < w) and (y_loc >= 0) and (y_loc < h)):
+                    value = image_data[y_loc, x_loc]
+                    self.intensityInfo.emit(x_loc, y_loc, value)
 
 #
 # The MIT License

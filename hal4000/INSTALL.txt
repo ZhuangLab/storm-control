@@ -34,9 +34,10 @@
 
 (3) Compile C helper libraries:
  Instructions on how to compile the libraries are in the library headers.
- (a) objectFinder/LMMoment.c (for the spot counter).
- (b) phreshPhotonics/averager.c (only if you are using their QPD).
- (c) focusLock/focus_quality.c (for optimal focus lock mode)
+ (a) hamamatsu/scmos_image_manipulation.c (for Hamamatsu sCMOS camera).
+ (b) objectFinder/LMMoment.c (for the spot counter).
+ (c) phreshPhotonics/averager.c (only if you are using their QPD).
+ (d) focusLock/focus_quality.c (for optimal focus lock mode)
 
 
 (4) Create data & logs directories:
@@ -73,6 +74,8 @@
  (2) focuslock - Classes for focus lock control.
  (3) illumination - Classes for illumination & shuttering.
  (4) stagecontrol - Classes for controlling a motorized XY stage.
+ (5) miscControl - Classes for controlling various miscellaneous hardware
+        such as filter wheels.
 
  In these folders you will see files/Classes that start with a machine name, 
  e.g. storm3IlluminationControl or noneIlluminationControl. You will need to

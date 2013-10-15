@@ -79,7 +79,7 @@ class CameraDisplay(QtGui.QFrame):
         cameraWidget = __import__('camera.' + camera_type + 'CameraWidget', globals(), locals(), [camera_type], -1)
         self.camera_widget = cameraWidget.ACameraWidget(parameters, parent = self.ui.cameraScrollArea)
         self.ui.cameraScrollArea.setWidget(self.camera_widget)
-        self.camera_widget.updateSize()
+        #self.camera_widget.updateSize()
 
         # Signals
         self.ui.rangeSlider.rangeChanged.connect(self.rangeChange)

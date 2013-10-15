@@ -17,14 +17,12 @@ class QCameraWidget(QtGui.QWidget):
 
     def __init__(self, parameters, parent = None):
         QtGui.QWidget.__init__(self, parent)
-        #self.buffer = QtGui.QPixmap(512, 512)
         self.buffer = False
         self.flip_horizontal = parameters.flip_horizontal
         self.flip_vertical = parameters.flip_vertical
         self.image = False
         self.image_min = 0
         self.image_max = 1
-        self.live = False
 
         # This is the amount of image magnification.
         # Only integer values are allowed.
@@ -37,9 +35,7 @@ class QCameraWidget(QtGui.QWidget):
         # This is the x location of the last mouse click.
         self.x_click = 0
 
-        # This is the x size of the image buffer. Note that
-        # these are updated after initialization, when the 
-        # widget is properly sized by calling updateSize().
+        # This is the x size of the image buffer.
         self.x_final = 10
 
         # This is the x size of the current camera AOI
@@ -48,13 +44,13 @@ class QCameraWidget(QtGui.QWidget):
 
         # This the (minimum) x size of the widget. The image from 
         # the camera cannot be rendered smaller than this value.
-        self.x_view = 10
+        self.x_view = 512
 
         # These are the same as for x.
         self.y_click = 0
         self.y_final = 10
         self.y_size = 0
-        self.y_view = 10
+        self.y_view = 512
 
     # Initialize the buffer.
     def blank(self):
@@ -114,39 +110,41 @@ class QCameraWidget(QtGui.QWidget):
 
         self.mousePress.emit(self.x_click, self.y_click)
 
+    #
+    # Note that the color table of the image that is being displayed 
+    # will not actually change until updateImageWithFrame() is called.
+    #
     def newColorTable(self, colortable):
         self.colortable = colortable
-        self.setColorTable()
-        self.update()
 
     def newParameters(self, parameters, colortable, display_range):
         self.colortable = colortable
         self.display_range = display_range
-        self.live = True
         self.flip_horizontal = parameters.flip_horizontal
         self.flip_vertical = parameters.flip_vertical
         self.x_size = parameters.x_pixels/parameters.x_bin
         self.y_size = parameters.y_pixels/parameters.y_bin
 
-        self.image = QtGui.QImage(self.x_size, self.y_size, QtGui.QImage.Format_Indexed8)
         self.calcFinalSize()
-        self.setColorTable()
 
     def newRange(self, range):
         self.display_range = range
 
     #
-    # self.image is the image from the camera at 1x resolution.
-    # self.buffer is where the image (appropriately scaled) is
-    #    temporarily re-drawn prior to final display. In theory
-    #    this reduces display flickering.
+    # self.image is the image from the camera scaled to the buffer
+    #    size.
+    #
+    # self.buffer is where the image is temporarily re-drawn prior 
+    #    to final display. In theory this reduces display flickering.
     #
     def paintEvent(self, Event):
-        if self.live:
+        if self.image:
             painter = QtGui.QPainter(self.buffer)
 
             # Draw current image into the buffer, appropriately scaled.
-            painter.drawImage(0, 0, self.image.scaled(self.x_final, self.y_final))
+            # Only draw what is actually visible.
+            vr = self.visibleRegion().boundingRect()
+            painter.drawImage(vr, self.image, vr)
 
             # Draw the grid into the buffer.
             if self.show_grid:
@@ -178,6 +176,10 @@ class QCameraWidget(QtGui.QWidget):
             for i in range(256):
                 self.image.setColor(i,QtGui.qRgb(i,i,i))
 
+    #
+    # Note that the magnification of the image that is being displayed 
+    # will not actually change until updateImageWithFrame() is called.
+    #
     def setMagnification(self, new_magnification):
         self.magnification = new_magnification
         self.calcFinalSize()
@@ -221,9 +223,12 @@ class QCameraWidget(QtGui.QWidget):
             temp[(temp < 0.0)] = 0.0
             temp = temp.astype(numpy.uint8)
 
-            self.image = QtGui.QImage(temp.data, w, h, QtGui.QImage.Format_Indexed8)
+            # Create QImage & draw at final magnification.
+            temp_image = QtGui.QImage(temp.data, w, h, QtGui.QImage.Format_Indexed8)
+            self.image = temp_image.scaled(self.x_final, self.y_final)
             self.image.ndarray = temp
 
+            # Set the images color table.
             self.setColorTable()
             self.update()
 
@@ -235,16 +240,16 @@ class QCameraWidget(QtGui.QWidget):
                     value = image_data[y_loc, x_loc]
                     self.intensityInfo.emit(x_loc, y_loc, value)
 
-    #
-    # This is called after initialization to get the correct 
-    # default size based on the size of the scroll area as 
-    # specified using QtDesigner.
-    #
-    def updateSize(self):
-        self.x_final = self.width()
-        self.x_view = self.width()
-        self.y_final = self.height()
-        self.y_view = self.height()
+#    #
+#    # This is called after initialization to get the correct 
+#    # default size based on the size of the scroll area as 
+#    # specified using QtDesigner.
+#    #
+#    def updateSize(self):
+#        self.x_final = self.width()
+#        self.x_view = self.width()
+#        self.y_final = self.height()
+#        self.y_view = self.height()
 
 #    def wheelEvent(self, event):
 #        if (event.delta() > 0):
