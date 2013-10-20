@@ -90,10 +90,16 @@ def getFileName(path):
 
 ## Window
 #
-# Main window
+# The main window.
 #
 class Window(QtGui.QMainWindow):
 
+    ## __init__
+    #
+    # Set up the main window, connect and initialize all the hardware.
+    #
+    # @param parameters The initial (and default) parameters for the hardware.
+    #
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         QtGui.QMainWindow.__init__(self, parent)
@@ -348,28 +354,43 @@ class Window(QtGui.QMainWindow):
         self.camera.cameraInit()
 
     ########################################################
-    ##
-    ## Methods that handle external/remote commands.
-    ##
-    ## In keeping with the new tradition these should all
-    ## be renamed tcpXYZ
-    ##
+    #
+    # Methods that handle external/remote commands that come by TCP/IP.
+    #
+    # In keeping with the new tradition these should all
+    # be renamed tcpXYZ
+    #
 
+    ## handleCommAbortMovie
+    #
+    # This is called when the external program wants to stop a movie.
+    #
     @hdebug.debug
     def handleCommAbortMovie(self):
         if self.filming:
             self.stopFilm()
 
+    ## handleCommDisconnect
     #
     # This is useful for those occasions where things get
     # messed up by having two programs connected at once.
-    # Though this should not be possible?
+    # Hopefully this is no longer possible so this method
+    # is not needed.
     #
     @hdebug.debug
     def handleCommDisconnect(self):
         if self.tcp_control:
             self.tcp_control.disconnect()
 
+    ## handleCommMovie
+    #
+    # This called when the external program wants to take a movie.
+    # Note that this will overwrite existing movies of the same
+    # name without asking or warning.
+    #
+    # @param name The name of the movie.
+    # @param length The length of the movie in frames.
+    #
     @hdebug.debug
     def handleCommMovie(self, name, length):
 
@@ -393,16 +414,35 @@ class Window(QtGui.QMainWindow):
             self.ui.saveMovieCheckBox.setChecked(False)
         [p.acq_mode, p.frames] = old_settings
 
+    ## handleCommParameters
+    #
+    # This is called when the external program want to change
+    # the current parameters. It can only select a parameters
+    # file that has already been loaded.
+    #
+    # @param index The index of the desired parameter file.
+    #
     @hdebug.debug
     def handleCommParameters(self, index):
         self.parameters_box.setCurrentParameters(index)
 
+    ## handleCommSetDirectory
+    #
+    # This is called when the external program wants to change
+    # the current working directory.
+    #
+    # @param directory
+    #
     @hdebug.debug
     def handleCommSetDirectory(self, directory):
         if (not self.current_directory):
             self.current_directory = self.directory[:-1]
         self.newDirectory(directory)
 
+    ## handleCommStart
+    #
+    # This is called when a external program connects.
+    #
     @hdebug.debug
     def handleCommStart(self):
         print "commStart"
@@ -410,6 +450,10 @@ class Window(QtGui.QMainWindow):
         if self.stage_control:
             self.stage_control.startLockout()
 
+    ## handleCommStop
+    #
+    # This is called when a external program disconnects.
+    #
     @hdebug.debug
     def handleCommStop(self):
         print "commStop"
@@ -422,34 +466,63 @@ class Window(QtGui.QMainWindow):
 
 
     ########################################################
-    ##
-    ## Methods for joystick control.
-    ##
+    #
+    # Methods for joystick control.
+    #
 
+    ## jstickLockJump
+    #
+    # Jump the focus lock up or down by step_size.
+    #
+    # @param step_size Distance to jump the focus lock.
+    #
     @hdebug.debug
     def jstickLockJump(self, step_size):
         if self.focus_lock and (not self.filming):
             self.focus_lock.jump(step_size)
 
+    ## jstickMotion
+    #
+    # Move the XY stage at the given speed (um/s?)
+    #
+    # @param x_speed Speed at which to move the stage in x.
+    # @param y_speed Speed at which to move the stage in y.
+    #
     @hdebug.debug
     def jstickMotion(self, x_speed, y_speed):
         if self.stage_control and (not self.filming):
             self.stage_control.jog(x_speed, y_speed)
 
+    ## jstickStep
+    #
+    # Step the XY stage a fixed amount (um?)
+    #
+    # @param x_step Distance to step the stage in x.
+    # @param y_step Distance to step the stage in y.
+    #
     @hdebug.debug
     def jstickStep(self, x_step, y_step):
         if self.stage_control and (not self.filming):
             self.stage_control.step(x_step, y_step)
     
+    ## jstickToggleFilm
+    #
+    # Start/stop filming.
+    #
     @hdebug.debug
     def jstickToggleFilm(self):
         self.toggleFilm()
 
     ########################################################
-    ##
-    ## All other methods alphabetically ordered, for lack of a better system.
-    ##
+    #
+    # All other methods alphabetically ordered, for lack of a better system.
+    #
 
+    ## cleanUp
+    #
+    # This is called upon closing the program. It stops all of the various
+    # threads and disconnects from the hardware.
+    #
     @hdebug.debug
     def cleanUp(self):
         print " Dave? What are you doing Dave?"
@@ -500,10 +573,22 @@ class Window(QtGui.QMainWindow):
         if self.joystick_control:
             self.joystick_control.close()
 
+    ## closeEvent
+    #
+    # This called when the user wants to close the program.
+    #
+    # @param event A QEvent object.
+    #
     @hdebug.debug
     def closeEvent(self, event):
         self.cleanUp()
 
+    ## dragEnterEvent
+    #
+    # This is called when a file is dragged into the main window.
+    #
+    # @param event A QEvent object.
+    #
     @hdebug.debug
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
@@ -511,6 +596,14 @@ class Window(QtGui.QMainWindow):
         else:
             event.ignore()
 
+    ## dropEvent
+    #
+    # This is called when a file is dropped on the main window. It
+    # first tries to interpret the file as a parameters file, then
+    # as a shutters file.
+    #
+    # @param event A QEvent object containing the filenames.
+    #
     @hdebug.debug
     def dropEvent(self, event):
         filenames = []
@@ -526,29 +619,64 @@ class Window(QtGui.QMainWindow):
                 print " Not a settings file, trying as shutters file"
                 self.newShutters(filename)
 
+    ## handleAutoInc
+    #
+    # This is called when the auto-increment check box is clicked.
+    #
+    # @param flag True if the check box is checked, false otherwise.
+    #
     @hdebug.debug
     def handleAutoInc(self, flag):
         self.parameters.auto_increment = flag
 
+    ## handleAutoShutters
+    #
+    # This is called when the shutters check box is clicked.
+    #
+    # @param flag True if the check box is checked, false otherwise.
+    #
     @hdebug.debug
     def handleAutoShutters(self, flag):
         self.parameters.auto_shutters = flag
 
+    ## handleFocusLock
+    #
+    # This is called to make the focus lock GUI visible, if 
+    # there is a focus lock.
+    #
     @hdebug.debug
     def handleFocusLock(self):
         if self.focus_lock:
             self.focus_lock.show()
 
+    ## handleIllumination
+    #
+    # This is called to make the illumination GUI visible, if
+    # there is illumination control.
+    #
     @hdebug.debug
     def handleIllumination(self):
         if self.illumination_control:
             self.illumination_control.show()
 
+    ## handleMiscControls
+    #
+    # This is called to make the misc controls GUI visible, if
+    # there are misc controls.
+    #
     @hdebug.debug
     def handleMiscControls(self):
         if self.misc_control:
             self.misc_control.show()
 
+    ## handleModeComboBox
+    #
+    # This is called when the acquistion mode combo box is
+    # selected. There are only two modes, run_till_abort and
+    # fixed_length.
+    #
+    # @param mode The index of the mode the user selected.
+    #
     @hdebug.debug
     def handleModeComboBox(self, mode):
         if mode == 0:
@@ -557,35 +685,78 @@ class Window(QtGui.QMainWindow):
             self.parameters.acq_mode = "fixed_length"
         self.showHideLength()
 
+    ## handleProgIncPower
+    #
+    # This is called by the progression GUI to cause the illumination
+    # control to change the power of a particular channel.
+    #
+    # @param channel The channel (wavelength) to change.
+    # @param power_inc The amount to change the power by.
+    #
     @hdebug.debug
     def handleProgIncPower(self, channel, power_inc):
         if self.illumination_control:
             self.illumination_control.remoteIncPower(channel, power_inc)
 
+    ## handleProgressions
+    #
+    # This is called to show the progressions GUI.
+    #
     @hdebug.debug  
     def handleProgressions(self):
         if self.progression_control:
             self.progression_control.show()
 
+    ## handleProgSetPower
+    #
+    # This is called by the progression GUI to cause the illumination
+    # control to set the power of a channel to a particular value.
+    #
+    # @param channel The channel (wavelength) to set.
+    # @param power The power to set channel to.
+    #
     @hdebug.debug
     def handleProgSetPower(self, channel, power):
         if self.illumination_control:
             self.illumination_control.remoteSetPower(channel, power)
 
+    ## handleSpotCounter
+    #
+    # This is called to show the spot counter GUI.
+    #
     @hdebug.debug
     def handleSpotCounter(self):
         if self.spot_counter:
             self.spot_counter.show()
 
+    ## handleStage
+    #
+    # This is called to show the stage control GUI.
+    #
     @hdebug.debug
     def handleStage(self):
         if self.stage_control:
             self.stage_control.show()
 
+    ## handleSyncChange
+    #
+    # This is called by the camera display GUI to set sync parameter.
+    # Sync specifies which frame to show if we are taking a movie
+    # with a multi-frame shutter sequence.
+    #
+    # FIXME: Is this still used? I think it is all in the camera
+    #    display class now.
     @hdebug.debug
     def handleSyncChange(self, sync):
         self.parameters.sync = sync
 
+    ## newDirectory
+    #
+    # Show the new directory dialog box (if a directory is not specified.
+    # Change to the new directory (if it exists).
+    #
+    # @param directory The new directory name (optional).
+    #
     @hdebug.debug            
     def newDirectory(self, directory = False):
         self.stopCamera()
@@ -601,6 +772,12 @@ class Window(QtGui.QMainWindow):
         self.updateFilenameLabel("foo")
         self.startCamera()
 
+    ## newFrames
+    #
+    # This is called when there are new frames from the camera.
+    #
+    # @param frames A list of frame objects.
+    #
     def newFrames(self, frames):
         for frame in frames:
             if self.filming:
@@ -618,6 +795,12 @@ class Window(QtGui.QMainWindow):
             if self.temperature_logger:
                 self.temperature_logger.newFrame(frame)
 
+    ## newParameters
+    #
+    # This is called after new parameters are selected. It changes the
+    # film setting based on the new parameters and propogates the new
+    # parameters to all of the various pieces of hardware.
+    #
     @hdebug.debug
     def newParameters(self):
         # for conveniently accessing parameters
@@ -699,12 +882,25 @@ class Window(QtGui.QMainWindow):
         #        
         self.startCamera()
 
+    ## newSettings
+    #
+    # Parse a parameters file & add it to the parameters combo box. The names
+    # settings and parameters are used somewhat interchangeably.
+    #
+    # @param parameters_filename The name & path of the parameters file.
+    #
     @hdebug.debug
     def newSettings(self, parameters_filename):
         # parse parameters file
         parameters = params.Parameters(parameters_filename, is_HAL = True)
         self.parameters_box.addParameters(parameters)
 
+    ## newSettingsFile
+    #
+    # This is called when the user selects the new setting file menu option.
+    # It opens a dialog where the user can select a new parameters file, then
+    # tries to load the new parameter file.
+    #
     @hdebug.debug
     def newSettingsFile(self):
         self.stopCamera()
@@ -719,6 +915,14 @@ class Window(QtGui.QMainWindow):
         else:
             self.startCamera()
 
+    ## newShutters
+    #
+    # Parse a shutters file & if successful, update the main window UI,
+    # the camera (shutter sequence length) and the spot counter (frame
+    # colors and shutter sequence length).
+    #
+    # @param shutters_filename The name of the shutters file.
+    #
     @hdebug.debug
     def newShutters(self, shutters_filename):
         if self.shutter_control:
@@ -749,6 +953,12 @@ class Window(QtGui.QMainWindow):
             self.old_shutters_file = shutters_filename
             self.ui.shuttersText.setText(getFileName(self.parameters.shutters))
 
+    ## newShuttersFile
+    #
+    # This is called when the user select new shutter sequence from the file menu.
+    # It opens a GUI where the user can specify the new shutters file, then tries
+    # to open the shutter file.
+    #
     @hdebug.debug
     def newShuttersFile(self):
         self.stopCamera()
@@ -757,6 +967,11 @@ class Window(QtGui.QMainWindow):
             self.newShutters(str(shutters_filename))
         self.startCamera()
 
+    ## quit
+    #
+    # Called to quit the program. This saves the current GUI layout, i.e. the
+    # locations of the various windows and whether or not they are open.
+    #
     @hdebug.debugSlot
     def quit(self):
         # Save GUI settings
@@ -768,6 +983,11 @@ class Window(QtGui.QMainWindow):
 
         self.close()
 
+    ## showHideLength
+    #
+    # This is called show or hide movie length text box depending on whether
+    # or not the filming mode is fixed length or run till abort.
+    #
     @hdebug.debug
     def showHideLength(self):
         if self.ui.modeComboBox.currentIndex() == 0:
@@ -777,23 +997,25 @@ class Window(QtGui.QMainWindow):
             self.ui.lengthLabel.show()
             self.ui.lengthSpinBox.show()
 
+    ## startCamera
+    #
+    # Starts the camera.
+    #
     @hdebug.debug
     def startCamera(self):
         self.camera.startCamera()
 
+    ## startFilm
+    #
+    # Creates the film saving object, sets up all the hardware to take the 
+    # film and then starts the camera.
+    #
     @hdebug.debug
     def startFilm(self):
         self.filming = True
         save_film = self.ui.saveMovieCheckBox.isChecked()
         self.filename = self.parameters.directory + str(self.ui.filenameLabel.text())
         self.filename = self.filename[:-len(self.ui.filetypeComboBox.currentText())]
-
-        # If the user wants a really long fixed length film we go to a software
-        # stop mode to avoid problems with the Andor software trying to allocate
-        # enough memory to store the entire film.
-        #if (self.parameters.acq_mode == "fixed_length") and (self.parameters.frames > 1000):
-        #    self.software_max_frames = self.parameters.frames
-        #    self.parameters.acq_mode = "run_till_abort"
 
         # film file prep
         self.ui.recordButton.setText("Stop")
@@ -862,10 +1084,19 @@ class Window(QtGui.QMainWindow):
         # go...
         self.startCamera()
 
+    ## stopCamera
+    #
+    # Stop the camera.
+    #
     @hdebug.debug
     def stopCamera(self):
         self.camera.stopCamera()
 
+    ## stopFilm
+    #
+    # Stop the camera, finish up the file writer object, set all the hardware
+    # back to the non-filming mode.
+    #
     @hdebug.debug
     def stopFilm(self):
         self.filming = False
@@ -944,6 +1175,11 @@ class Window(QtGui.QMainWindow):
                 self.tcp_control.sendComplete()
             self.tcp_requested_movie = 0
 
+    ## toggleFilm
+    #
+    # Start/stop filming. If this file already exists this will warn that
+    # it is about to get overwritten.
+    #
     def toggleFilm(self):
         if self.filming:
             self.stopFilm()
@@ -966,12 +1202,27 @@ class Window(QtGui.QMainWindow):
             if reply == QtGui.QMessageBox.Yes:
                 self.startFilm()
 
+    ## toggleSettings
+    #
+    # This is called when the user changes the parameters in the parameters GUI.
+    # It stops the camera & switches to the new parameters.
+    #
     @hdebug.debug
     def toggleSettings(self):
         self.parameters = self.parameters_box.getCurrentParameters()
         self.stopCamera()
         self.newParameters()
 
+    ## updateFilenameLabel
+    #
+    # This is called when any of the various file name GUI boxes are modified
+    # to update what the final file name will be. If this is the name of a
+    # file that already exists the file name is displayed in red. The dummy
+    # parameter is so that argument list matches that expected by the
+    # PyQt signals that this handles.
+    #
+    # @param dummy This is not used.
+    #
     @hdebug.debug
     def updateFilenameLabel(self, dummy):
         name = str(self.ui.filenameEdit.displayText())
@@ -994,25 +1245,40 @@ class Window(QtGui.QMainWindow):
             self.will_overwrite = False
             self.ui.filenameLabel.setStyleSheet("QLabel { color: black}")
 
+    ## updateFramesForFilm
+    #
+    # When filming, this updates the main window UI that displays how many
+    # frames have been taken and how large the current film is.
+    #
+    # @param frame A frame object.
+    #
     def updateFramesForFilm(self, frame):
         if frame.master:
             # The first frame is numbered zero so we need to adjust for that.
             self.ui.framesText.setText("%d" % (frame.number+1))
             if self.writer: # The flag for whether or not we are actually saving anything.
                 size = self.camera.getFilmSize()
-                #if hasattr(self.parameters, "camera1"):
-                #    size = frame.number * self.parameters.camera1.bytesPerFrame * 0.000000953674
-                #else:
-                #    size = frame.number * self.parameters.bytesPerFrame * 0.000000953674
                 if size < 1000.0:
                     self.ui.sizeText.setText("%.1f MB" % size)
                 else:
                     self.ui.sizeText.setText("%.1f GB" % (size * 0.00097656))
 
+    ## updateLength
+    #
+    # This is called by the film length spin box to change how long a fixed
+    # length film will be.
+    #
+    # @param length The new film length.
+    #
     @hdebug.debug
     def updateLength(self, length):
         self.parameters.frames = length
 
+    ## updateNotes
+    #
+    # This is called when the notes box is editted. The notes are saved in
+    # the .inf file associated with the film.
+    #
     @hdebug.debug
     def updateNotes(self):
         self.parameters.notes = self.ui.notesEdit.toPlainText()

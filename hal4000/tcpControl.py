@@ -38,6 +38,15 @@ class TCPControl(QtNetwork.QTcpServer):
     commGotConnection = QtCore.pyqtSignal()
     commLostConnection = QtCore.pyqtSignal()
 
+    ## __init__
+    #
+    # Create the TCPControl object, listening on the port specified by 
+    # port. This is supposed to only accept connections from processes
+    # on the same computer.
+    #
+    # @param port The TCP/IP port number to listen on.
+    # @param parent (Optional) The PyQt parent.
+    #
     def __init__(self, port, parent = None):
         QtNetwork.QTcpServer.__init__(self, parent)
         self.debug = True
@@ -53,12 +62,22 @@ class TCPControl(QtNetwork.QTcpServer):
         # Configure to listen on the appropriate port.
         self.listen(QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost), self.port)
 
+    ## isConnected
+    #
+    # Return True if an external program is connected, False otherwise.
+    #
+    # @return True/False depending on the connection state.
+    #
     def isConnected(self):
         if self.socket and (self.socket.state() == QtNetwork.QAbstractSocket.ConnectedState):
             return True
         else:
             return False
 
+    ## disconnect
+    #
+    # Forcibly disconnect from an external program.
+    #
     def disconnect(self):
         if self.debug:
             print " TCPControl forced dis-connect.", self.isConnected()
@@ -70,6 +89,10 @@ class TCPControl(QtNetwork.QTcpServer):
             self.listen(QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost), self.port)
             self.commLostConnection.emit()
 
+    ## disconnected
+    #
+    # Called when the external program disconnects.
+    #
     def disconnected(self):
         if self.debug:
             print " TCPControl lost connection.", self.isConnected()
@@ -77,7 +100,12 @@ class TCPControl(QtNetwork.QTcpServer):
         self.socket.close()
         self.socket = None
         self.commLostConnection.emit()
-        
+
+    ## handleConnection
+    #
+    # Called when a external program attempts to connect. If another
+    # program is already connected then we tell the requestor that
+    # we are busy and hangup. Otherwise we accept the connection.
     def handleConnection(self):
         if self.debug:
             print " TCPControl got connection.", self.isConnected()
@@ -94,7 +122,14 @@ class TCPControl(QtNetwork.QTcpServer):
             self.socket.readyRead.connect(self.readyRead)
             self.socket.disconnected.connect(self.disconnected)
             self.commGotConnection.emit()
-            
+
+    ## readyRead
+    #
+    # Called when the external program sends a command. The command
+    # is parsed to generate a PyQy signal based on the data contained
+    # in the command. This also sends a response back to the external
+    # program to acknowledge receipt of the command.
+    #
     def readyRead(self):
         while self.socket.canReadLine():
             command = str(self.socket.readLine())[:-1]
@@ -142,6 +177,13 @@ class TCPControl(QtNetwork.QTcpServer):
             print signal
             self.emit(QtCore.SIGNAL(signal), *parsed_data)
 
+    ## sendComplete
+    #
+    # Called to send a complete message back to the external program. This
+    # is used by commands that may take a while to complete, such as taking
+    # a movie.
+    #
+    # @param a_string Additional data as a string to send with the complete message.
     def sendComplete(self, a_string = "NA"):
         if self.isConnected():
             print "sendComplete", a_string
@@ -150,14 +192,16 @@ class TCPControl(QtNetwork.QTcpServer):
         else:
             print "sendComplete: not connected"
 
-    def sendStatus(self, status):
-        if self.debug:
-            print "sendStatus"
-
-        if self.isConnected():
-            self.socket.write(QtCore.QByteArray("Status," + str(status)))
-        else:
-            print "sendStatus: not connected"
+#    ## sendStatus
+#    #
+#    def sendStatus(self, status):
+#        if self.debug:
+#            print "sendStatus"
+#
+#        if self.isConnected():
+#            self.socket.write(QtCore.QByteArray("Status," + str(status)))
+#        else:
+#            print "sendStatus: not connected"
 
 
 #

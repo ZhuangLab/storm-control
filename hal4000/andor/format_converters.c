@@ -1,6 +1,8 @@
 /*
+ * @file
  *
- * Convert Andor camera data into various other formats.
+ * Convert Andor camera data into various other formats. At
+ * present most of this is not used anymore.
  *
  * Hazen 2/09
  *

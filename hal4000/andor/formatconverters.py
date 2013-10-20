@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Python interface to the format_converter library.
 #
 # Hazen 2/09
@@ -10,6 +12,10 @@ import os
 
 formatconverter = 0
 
+## loadFormatConverterDLL
+#
+# Loads the C format converter DLL, but only once.
+#
 def loadFormatConverterDLL():
     global formatconverter
     if formatconverter == 0:
@@ -20,6 +26,7 @@ def loadFormatConverterDLL():
 
 loadFormatConverterDLL()
 
+## andorToQtImage
 #
 # Copies the image data from the AndorCamera class image buffer into
 # a 8bit qt_image buffer, rescaling the data as requested. This returns
@@ -30,7 +37,12 @@ loadFormatConverterDLL()
 # Usually this is not a problem, so we just print a warning and continue
 # as if we weren't struggling to deal with multi-threaded code.
 #
-
+# @param andor_data This is a ctypes string buffer.
+# @param qt_image_data_sip_ptr This a pointer to where the QImage will store its data.
+# @param qt_image_size The size of the QImage (total number of pixels).
+# @param min The value in andor_data that will be 0 in the QImage.
+# @param max Tha value in andor_data that will be 255 in the QImage.
+#
 def andorToQtImage(andor_data, qt_image_data_sip_ptr, qt_image_size, min, max):
     image_min = c_int(4096)
     image_max = c_int(0)
@@ -43,10 +55,12 @@ def andorToQtImage(andor_data, qt_image_data_sip_ptr, qt_image_size, min, max):
     return [image_min.value, image_max.value]
 
 
+## LEtoBE
 #
 # Converts from little to big endian.
 #
-
+# @param le_data ctypes string buffer containing the (16 bit) image data.
+#
 def LEtoBE(le_data):
     le_data_len = len(le_data)
     be_data = create_string_buffer(le_data_len)

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Run focus lock control only.
 #
 # Hazen 03/12

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # AA Opto-electronics AOTF control.
 #
 # This class saves the set frequency for each channel
@@ -12,7 +14,18 @@
 import halLib.RS232 as RS232
 import time
 
+## AOTF
+#
+# Class for controlling a AA Opto-electronics AOTF using RS-232 communication.
+#
 class AOTF(RS232.RS232):
+
+    ## __init__
+    #
+    # Create the control object, connect to the AOTF at the specified COM port.
+    #
+    # @param port The COM port that the AOTF is connected to.
+    #
     def __init__(self, port = "COM2"):
         self.channel = 1
         self.frequencies = []
@@ -33,12 +46,26 @@ class AOTF(RS232.RS232):
             self.live = 0
             print "Failed to connect to the AA AOTF at port", port
 
+    ## analogModulationOff
+    #
+    # Turns off analog modulation of the AOTF.
+    #
     def analogModulationOff(self):
         self.commWithResp("I0")
 
+    ## analogModulationOn
+    #
+    # Turns on analog modulation of the AOTF.
     def analogModulationOn(self):
         self.commWithResp("I1")
 
+    ## channelOnOff
+    #
+    # Turn the specified channel on or off.
+    #
+    # @param channel The channel to turn on or off.
+    # @param on True/False turn the channel on/off.
+    #
     def channelOnOff(self, channel, on):
         if on:
             if (not self.on_off[channel]):
@@ -51,18 +78,41 @@ class AOTF(RS232.RS232):
                 self.commWithResp(cmd)
                 self.on_off[channel] = False
 
+    ## getInfo
+    #
+    # Get info from the AOTF.
+    #
     def getInfo(self):
         print "type:", self.commWithResp("q")
         print "status:"
         print self.commWithResp("s")
 
+    ## getStatus
+    #
+    # Get whether or not the class is actually connected to the AOTF.
+    #
     def getStatus(self):
         return self.live
 
+    ## offsetFrequency
+    #
+    # Set the frequence offset of a channel. This was an attempt to get better
+    # modulation out of a AOTF that does not have very good modulation.
+    #
+    # @param channel The channel to offset the frequency of.
+    # @param freq_offset The amount of frequency offset.
+    #
     def offsetFrequency(self, channel, freq_offset):
         cmd = "L" + str(channel) + "F{0:.3f}".format(self.frequencies[channel] + freq_offset)
         self.commWithResp(cmd)
 
+    ## setAmplitude
+    #
+    # Set the amplitude of a channel of the AOTF.
+    #
+    # @param channel The channel to set amplitude of.
+    # @param amplitude The desired amplitude.
+    #
     def setAmplitude(self, channel, amplitude):
         assert channel > 0, "setAmplitude: channel out of range " + str(channel)
         assert channel <= 8, "setAmplitude: channel out of range " + str(channel)
@@ -70,6 +120,13 @@ class AOTF(RS232.RS232):
 #        cmd = "L" + str(channel) + "P" + str(amplitude)
         self.commWithResp(cmd)
 
+    ## setFrequency
+    #
+    # Set the frequencyt of a channel of the AOTF.
+    #
+    # @param channel The channel to set the frequency of.
+    # @param frequency The desired frequency.
+    #
     def setFrequency(self, channel, frequency):
         assert channel > 0, "setFrequency: channel out of range " + str(channel)
         assert channel <= 8, "setFrequency: channel out of range " + str(channel)
@@ -77,6 +134,10 @@ class AOTF(RS232.RS232):
         self.commWithResp(cmd)
         self.frequencies[channel] = frequency
 
+    ## shutDown
+    #
+    # Reset the AOTF frequencies and disconnect from the AOTF.
+    #
     def shutdown(self):
         # reset frequencies in case the next user is using the M. Bates Labview interface.
         for i, frequency in enumerate(self.frequencies):

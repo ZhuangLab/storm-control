@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # A ctypes based interface to Andor cameras.
 # (Andor Software Version 2.82).
 #
@@ -40,23 +42,42 @@ class AndorCapabilities(Structure):
                 ("ulEMGainCapability", c_ulong),
                 ("ulFTReadModes", c_ulong)]
 
+## loadAndorDLL
+#
 # Handles loading the library (only once).
-
+#
+# @param andor_dll The fullpath and filename of the Andor DLL
+#
 andor = 0
 def loadAndorDLL(andor_dll):
     global andor
     if(andor == 0):
         andor = oledll.LoadLibrary(andor_dll)
 
+## andorCheck
+#
+# Checks the return value of andor function call. Throws an error if the function
+# call was not successful.
+#
+# @param status The returned value of the function call.
+# @param message A string message, usually this is the name of the function call.
+#
 def andorCheck(status, message):
     assert status == drv_success, message + "failed with status = " + str(status)
 
+## getAvailableCameras
+#
 # Dealing with multiple cameras.
+#
 def getAvailableCameras():
     number_cameras = c_long()
     andorCheck(andor.GetAvailableCameras(byref(number_cameras)), "GetAvailableCameras")
     return number_cameras.value
 
+## getCameraHandles
+#
+# Get handles for the cameras that are available.
+#
 def getCameraHandles():
     number_cameras = getAvailableCameras()
     assert number_cameras > 0, "No Andor cameras detected!!"
@@ -67,6 +88,13 @@ def getCameraHandles():
         handles.append(temp.value)
     return handles
 
+## setCurrentCamera
+#
+# This sets which camera to talk to. This is called before pretty much all the
+# other calls to the Andor library to be sure of talking to the correct camera.
+#
+# @param camera_handle The handle of the camera to make active.
+#
 current_handle = -1
 def setCurrentCamera(camera_handle):
     global current_handle
@@ -75,13 +103,19 @@ def setCurrentCamera(camera_handle):
             current_handle = camera_handle
             andorCheck(andor.SetCurrentCamera(camera_handle), "SetCurrentCamera")
 
+## AndorCamera
 #
 # The camera control class.
 #
 class AndorCamera:
+
+    ## __init__
     #
     # Initializes the object by initializing the camera
     # then querying it to determine its various properties.
+    #
+    # @param andor_path The path to the Detector.ini file.
+    # @param camera_handle The handle to use for in this camera object.
     #
     def __init__(self, andor_path, camera_handle):
         self.camera_handle = camera_handle
@@ -191,11 +225,22 @@ class AndorCamera:
     #
     # Helper functions.
     #
+
+    ## _getStatus_
+    #
+    # Gets the camera status.
+    #
+    # @return Returns the camera status.
+    #
     def _getStatus_(self):
         i_state = c_int()
         andorCheck(andor.GetStatus(byref(i_state)), "GetStatus")
         return i_state.value
 
+    ## _abortIfAcquiring)
+    #
+    # Stops the camera if the camera is currently acquiring.
+    #
     def _abortIfAcquiring_(self):
         state = self._getStatus_()
         if state == drv_acquiring :
@@ -207,23 +252,48 @@ class AndorCamera:
     # Camera property queries
     #
 
+    ## getDimensions
+    #
     # Return the camera dimensions
+    #
+    # @return Returns the camera dimensions in pixels.
+    #
     def getDimensions(self):
         return [self._props_["XPixels"], self._props_["YPixels"]]
 
+    ## getHeadModel
+    #
     # Return the camera head model
+    #
+    # @return Returns the camera head model.
+    #
     def getHeadModel(self):
         return self._props_["HeadModel"]
 
+    ## getHSSpeeds
+    #
     # Return the camera horizontal speeds
+    #
+    # @return Returns the camera horizontal speeds.
+    #
     def getHSSpeeds(self):
         return self._props_["HSSpeeds"]
 
+    ## getProperties
+    #
     # Return all the known camera properties
+    #
+    # @return Returns the camera properties.
+    #
     def getProperties(self):
         return self._props_
 
+    ## getVSSpeeds
+    #
     # Return the camera vertical speeds
+    #
+    # @return Returns the camera vertical speeds.
+    #
     def getVSSpeeds(self):
         return self._props_["VSSpeeds"]
 
@@ -232,16 +302,28 @@ class AndorCamera:
     # Temperature Control
     #
 
-    # Cooler control
+    ## coolerOff
+    #
+    # Turn the camera cooling off.
+    #
     def coolerOff(self):
         setCurrentCamera(self.camera_handle)
         andorCheck(andor.CoolerOFF(), "CoolerOff")
 
+    ## coolerOn
+    #
+    # Turn the camera cooling on.
+    #
     def coolerOn(self):
         setCurrentCamera(self.camera_handle)
         andorCheck(andor.CoolerON(), "CoolerOn")
 
-    # Return the current camera temperature
+    ## getTemperature
+    #
+    # Return the current camera temperature.
+    #
+    # @return Return the camera temperature.
+    #
     def getTemperature(self):
         setCurrentCamera(self.camera_handle)
         temperature = c_int()
@@ -254,7 +336,12 @@ class AndorCamera:
             print "GetTemperature failed: ", status
             return [50, "unstable"]
 
-    # Loops until the camera stabilizes at the desired temperature
+    ## goToTemperature
+    #
+    # Loops until the camera stabilizes at the desired temperature.
+    #
+    # @param temperature The desired temperature.
+    #
     def goToTemperature(self, temperature):
         setCurrentCamera(self.camera_handle)
         self.setTemperature(temperature)
@@ -263,7 +350,12 @@ class AndorCamera:
             time.sleep(5)
             status = camera.getTemperature()
 
-    # Set the camera temperature
+    ## setTemperature
+    #
+    # Set the camera temperature.
+    #
+    # @param temperature The desired temperature.
+    #
     def setTemperature(self, temperature):
         setCurrentCamera(self.camera_handle)
         self.coolerOn()
@@ -283,6 +375,10 @@ class AndorCamera:
     # Calling either of these during acquisition will abort the acquisition
     #
 
+    ## openShutter
+    #
+    # Open the camera shutter. This will abort the current acquisition.
+    #
     def openShutter(self):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
@@ -290,6 +386,9 @@ class AndorCamera:
         if status != drv_success:
             print "SetShutter (open) failed: ", status
 
+    ## closeShutter
+    #
+    # Close the camera shutter. This will abort the current acquisition.
     def closeShutter(self):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
@@ -304,7 +403,12 @@ class AndorCamera:
     # Calling any of these functions will abort the current acquisition
     #
 
-    # Get the acquisition timings.
+    ## getAcquisitionTimings
+    #
+    # Get the acquisition timings. This will abort the current acquisition.
+    #
+    # @return Return the acquisition timings.
+    #
     def getAcquisitionTimings(self):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
@@ -315,7 +419,12 @@ class AndorCamera:
                    "GetAcqisitionTimings")
         return [exposure.value, accumulate.value, kinetic.value]
 
+    ## getCurrentSetup
+    #
     # Get the current camera setup.
+    #
+    # @return Return the current camera setup.
+    #
     def getCurrentSetup(self):
         try:
             return {'acqmode': self.acqmode,
@@ -330,9 +439,14 @@ class AndorCamera:
         except:
             print "getCurrentSetup: One or more parameters are not defined."
 
+    ## setACQMode
+    #
     # Sets up the camera in the appropriate acquisition mode &
-    # returns the acquisition timing.
-    # mode is one of "single_frame", "multiple_frame" or "free_running"    
+    # returns the acquisition timing. This will abort the current acquisition.
+    #
+    # @param mode Is one of "single_frame", "fixed_length" or "run_till_abort"
+    # @param number_frames (Optional) The number of frames. This must be specified for the "fixed_length" mode.
+    #
     def setACQMode(self, mode, number_frames = "undef"):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
@@ -350,7 +464,12 @@ class AndorCamera:
             return
         self.acqmode = mode
 
-    # ADChannel.
+    ## setADChannel
+    #
+    # Set which ADChannel the camera should use.
+    #
+    # @param channel The number of the channel to use.
+    #
     def setADChannel(self, channel):
         setCurrentCamera(self.camera_handle)
         if (channel >= 0) and (channel < self._props_["NumberADChannels"]):
@@ -361,7 +480,12 @@ class AndorCamera:
         else:
             print "Invalid channel: ", channel
 
-    # Baseline clamp.
+    ## setBaselineClamp
+    #
+    # Turn the baseline clamp on or off.
+    #
+    # @param active True/False baseline clamp on/off
+    #
     def setBaselineClamp(self, active):
         setCurrentCamera(self.camera_handle)
         if active:
@@ -370,42 +494,70 @@ class AndorCamera:
             active = 0
         andorCheck(andor.SetBaselineClamp(c_int(active)), "SetBaselineClamp")
 
-    # EM gain.
+    ## setEMCCDGain
+    #
+    # Set the camera EM gain.
+    #
+    # @param gain The camera gain value.
+    #
     def setEMCCDGain(self, gain):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
         andorCheck(andor.SetEMCCDGain(gain), "SetEMCCDGain")
 
-    # EM gain mode.
+    ## setEMGainMode
+    #
+    # Set the camera EM gain mode (i.e. linear, real, etc..)
+    #
+    # param mode The EM gain mode.
+    #
     def setEMGainMode(self, mode):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
         andorCheck(andor.SetEMGainMode(c_int(mode)), "SetEMGainMode")
 
-    # Exposure time.
+    ## setExposureTime
+    #
+    # Set the exposure time.
+    #
+    # @param exposure_time The exposure time.
+    #
     def setExposureTime(self, exposure_time):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
         andorCheck(andor.SetExposureTime(c_float(exposure_time)), "SetExposureTime")
         self.exposure_time = exposure_time
 
-    # Set the fan mode
-    # 0 = full, 1 = low, 2 = off
+    ## setFanMode
+    #
+    # Set the fan mode, 0 = full, 1 = low, 2 = off
+    #
+    # @param mode The fan mode.
+    #
     def setFanMode(self, mode):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
         andorCheck(andor.SetFanMode(c_int(mode)), "SetFanMode")
 
-    # Set frame transfer mode
-    # 0 is off, 1 is on
+    ## setFrameTransferMode
+    #
+    # Set frame transfer mode, 0 is off, 1 is on
+    #
+    # @param mode The frame transfer mode.
+    #
     def setFrameTransferMode(self, mode):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
         andorCheck(andor.SetFrameTransferMode(c_int(mode)), "SetFrameTransferMode")
         self.frame_transfer_mode = mode
 
+    ## setHSSpeed
+    #
     # Horizontal shift speed.
     # This will choose the nearest HSSpeed to the requested hsspeed.
+    #
+    # @param hsspeed The desired horizontal shift speed.
+    #
     def setHSSpeed(self, hsspeed):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
@@ -422,16 +574,25 @@ class AndorCamera:
         andorCheck(andor.SetHSSpeed(0, c_int(index)), "SetHSSpeed")
         self.hsspeed = speeds[index]
 
+    ## setKineticCycleTime
+    #
     # Set the kinetic cycle time.
     # This is the time between frames.
+    #
+    # @param kinetic_time The time between frames.
     def setKineticCycleTime(self, kinetic_time):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
         andorCheck(andor.SetKineticCycleTime(c_float(kinetic_time)), "SetKineticCycleTime")
         self.kinetic_cycle_time = kinetic_time
 
+    ## setPreAmpGain
+    #
     # Set the preamp gain.
     # This will choose the nearest available gain to the requested gain.
+    #
+    # @param setPreAmpGain The desired preamp gain.
+    #
     def setPreAmpGain(self, gain):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
@@ -444,17 +605,26 @@ class AndorCamera:
                 best = cur
                 index = i
         andorCheck(andor.SetPreAmpGain(c_int(index)), "SetPreAmpGain")
-        
+
+    ## setReadMode
+    #
     # Set the read mode.
     # mode is a integer 0-4, with meaning as specfied in the andor documentation
+    #
+    # @param mode The read mode.
+    #
     def setReadMode(self, mode):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
         andorCheck(andor.SetReadMode(c_int(mode)), "SetReadMode")
 
-    # ROI and Binning.
-    # binning is [bx, by] where bx > 0, by > 0
-    # ROI is [x1, x2, y1, y2] where x1 < x2 <= XPixels, y1 < y2 <= YPixels
+    ## setROIAndBinning
+    #
+    # Set the ROI and Binning.
+    #
+    # @param ROI [x1, x2, y1, y2] where x1 < x2 <= XPixels, y1 < y2 <= YPixels
+    # @param binning [bx, by] where bx > 0, by > 0
+    #
     def setROIAndBinning(self, ROI, binning):
         x_pixels = self._props_["XPixels"]
         y_pixels = self._props_["YPixels"]
@@ -476,26 +646,45 @@ class AndorCamera:
         self.pixels = self.x_pixels * self.y_pixels
         self.frame_size = [self.x_pixels, self.y_pixels]
 
+    ## setTriggerMode
+    #
     # Set the trigger mode.
+    #
+    # @param mode The trigger mode.
+    #
     def setTriggerMode(self, mode):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
         andorCheck(andor.SetTriggerMode(c_int(mode)), "SetTriggerMode")
 
+    ## setFastExternalTrigger
+    #
     # Set fast external trigger.
+    #
+    # @param mode The external trigger mode.
     def setFastExtTrigger(self, mode):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
         andorCheck(andor.SetFastExtTrigger(c_int(mode)), "SetFastTriggerMode")
 
+    ## setVSAmplitude
+    #
     # Vertical clock voltage.
+    #
+    # @param amplitude The vertical clock voltage.
+    #
     def setVSAmplitude(self, amplitude):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
         andorCheck(andor.SetVSAmplitude(c_int(amplitude)), "SetVSAmplitude")
 
+    ## setVSSpeed
+    #
     # Vertical shift speed.
     # This will choose the nearest VSSpeed to the requested vsspeed.
+    #
+    # @param vsspeed The desired vertical shift speed.
+    #
     def setVSSpeed(self, vsspeed):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
@@ -514,17 +703,25 @@ class AndorCamera:
     #
     # Acquisition
     #
-        
+
+    ## startAcquisition
+    #
     # Start the acquisition.
+    #
     def startAcquisition(self):
         setCurrentCamera(self.camera_handle)
         andorCheck(andor.StartAcquisition(), "StartAcquisition")
 
+    ## stopAcquisition
+    #
     # Stop the acquisition.
+    #
     def stopAcquisition(self):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
 
+    ## getOldestImage16
+    #
     # Returns the oldest image in the acquisition buffer. 
     # Call until there is no new data.
     #
@@ -534,6 +731,9 @@ class AndorCamera:
     # is it acquiring data? Or is it idle?
     #
     # Use this function with 16 bit cameras.
+    #
+    # @return Returns the oldest frame as a ctypes string buffer.
+    #
     def getOldestImage16(self, check = True):
         setCurrentCamera(self.camera_handle)
         if check:
@@ -556,11 +756,16 @@ class AndorCamera:
         else:
             raise AssertionError, "GetOldestImage16 failed: " + str(status)
 
+    ## getImages16
+    #
     # Returns all the new images in the acquisition buffer.
     #
     # Returns a 2 element array. The first element is an array
     # containing the frames acquired (possibly an empty array). The 
     # second is the current state of the camera.
+    #
+    # @return Returns the images as an array of ctypes string buffers each of which contains the frame data.
+    #
     def getImages16(self):
         setCurrentCamera(self.camera_handle)
         frames = []
@@ -620,10 +825,14 @@ class AndorCamera:
             raise AssertionError, "GetNumberNewImages failed: " + str(status)
 
 
-    #
-    # Shutdown
-    #
 
+    ## shutdown
+    #
+    # Abort the current acquisition (if acquiring), close the shutter and
+    # turn the cooler off.
+    #
+    # FIXME: Should we also be calling andor.ShutDown()?
+    #
     def shutdown(self):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()

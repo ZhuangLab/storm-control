@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Camera control specialized for a Andor camera.
 #
 # Hazen 10/13
@@ -18,7 +20,19 @@ import camera.frame as frame
 import camera.cameraControl as cameraControl
 import andor.andorcontroller as andor
 
+## ACameraControl
+#
+# The CameraControl class specialized to control a Andor camera.
+#
 class ACameraControl(cameraControl.CameraControl):
+
+    ## __init__
+    #
+    # Create the CameraControl class.
+    #
+    # @param parameters The initial parameters including camera settings.
+    # @param parents The PyQt parent of this object.
+    #
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         cameraControl.CameraControl.__init__(self, parameters, parent)
@@ -30,6 +44,10 @@ class ACameraControl(cameraControl.CameraControl):
         else:
             self.initCamera()
 
+    ## closeShutter
+    #
+    # Stop the camera and close the shutter.
+    #
     @hdebug.debug
     def closeShutter(self):
         self.shutter = False
@@ -40,6 +58,10 @@ class ACameraControl(cameraControl.CameraControl):
             else:
                 self.camera.closeShutter()
 
+    ## getAcquisitionTimings
+    #
+    # Stop the camera and get the acquisition timings (basically the frame rate)
+    #
     @hdebug.debug
     def getAcquisitionTimings(self):
         self.stopCamera()

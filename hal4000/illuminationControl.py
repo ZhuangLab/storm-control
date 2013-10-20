@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Run illumination control only
 #
 # Hazen 3/12

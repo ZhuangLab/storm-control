@@ -1,6 +1,16 @@
 #!/usr/bin/python
 #
-# Progression control dialog box.
+## @file
+#
+# The progression control dialog box.
+#
+# This dialog allows the user to configure an automatic
+# starting power and power increment to use while taking
+# STORM movies. This increases productivity & overall
+# quality of life as the user can focus on surfing
+# the internet while acquiring STORM movies without 
+# getting distracted by constantly having to adjust 
+# the laser powers.
 #
 # Hazen 11/09
 #
@@ -18,40 +28,64 @@ import halLib.hdebug as hdebug
 # UIs.
 import qtdesigner.progression_ui as progressionUi
 
-#
-# Progression control.
-#
-# This dialog allows the user to configure an automatic
-# starting power and power increment to use while taking
-# STORM movies. This increases productivity & overall
-# quality of life as the user can focus on surfing
-# the internet while acquiring STORM movies without 
-# getting distracted by constantly having to adjust 
-# the laser powers.
-#
-
+## Channels
 #
 # Channels class which is specialized for various
 # types of channel power progressions.
 #
 class Channels():
+
+    ## __init__
+    #
+    # Create a generic channel object.
+    #
+    # @param parent The parent of the channel.
+    #
+    # FIXME: What is the parent for? We don't seem to use it.
+    #
     def __init__(self, parent):
         self.height = 40
         self.powers = []
 
+    ## newFrame
+    #
+    # Called when we get a new frame from the camera.
+    #
+    # @param frame_number The frame number of the frame.
+    #
     def newFrame(self, frame_number):
         pass
 
+    ## startFilm
+    #
+    # Called at the start of a film.
+    #
     def startFilm(self):
         pass
 
+    ## stopFilm
+    #
+    # Called when the film is stopped.
+    #
     def stopFilm(self):
         pass
 
+## MathChannels
 #
 # Channels class for mathematical progressions (linear, exponential).
 #
 class MathChannels(Channels):
+
+    ## __init__
+    #
+    # Called to layout the GUI for math channels. These channels match
+    # the channels of the illumination.
+    #
+    # @param number_channels The total number of channels.
+    # @param x_positions The x positions at which to draw the GUI elements.
+    # @param parameters The initial values for the adjustable GUI elements.
+    # @param parent Not used?
+    #
     def __init__(self, number_channels, x_positions, parameters, parent):
         Channels.__init__(self, parent)
         y = 40
@@ -105,6 +139,16 @@ class MathChannels(Channels):
 
         self.height = y
 
+    ## remoteSetChannel
+    #
+    # This is called by an external program to specify the
+    # settings for a particular channel.
+    #
+    # @param which_channel The channel to set.
+    # @param initial The channels initial power value.
+    # @param inc The channels increment amount.
+    # @param time The number of frames between increments.
+    #
     def remoteSetChannel(self, which_channel, initial, inc, time):
         channel = self.channels[which_channel]
         channel[0].setChecked(True)
@@ -112,6 +156,13 @@ class MathChannels(Channels):
         channel[2].setValue(inc)
         channel[3].setValue(time)
 
+    ## startFilm
+    #
+    # This is called when the filming starts. It returns the
+    # desired initial powers for the various channels.
+    #
+    # @return Returns an array of arrays containing the active channels and their initial powers.
+    #
     def startFilm(self):
         for i, channel in enumerate(self.channels):
             self.which_checked[i] = False
@@ -120,20 +171,46 @@ class MathChannels(Channels):
                 self.which_checked[i] = True
         return [self.which_checked, self.powers]
 
+    ## stopFilm
+    #
+    # This is called when the film stops. It resets the powers
+    # to their initial values.
+    #
     def stopFilm(self):
         for i, channel in enumerate(self.channels):
             self.powers[i] = (float(channel[1].value()))
         return [self.which_checked, self.powers]
 
+## LinearChannels
 #
 # Channels class for linear progression.
 #
 class LinearChannels(MathChannels):
+
+    ## __init__
+    #
+    # This is basically the same as for MathChannels. It also specifies
+    # a maximum value for the increment spin box.
+    #
+    # @param number_channels The total number of channels.
+    # @param x_positions The x positions at which to draw the GUI elements.
+    # @param parameters The initial values for the adjustable GUI elements.
+    # @param parent Not used?
+    #
     def __init__(self, channels, x_positions, parameters, parent):
         MathChannels.__init__(self, channels, x_positions, parameters, parent)
         for channel in self.channels:
             channel[2].setMaximum(1.0)
 
+    ## newFrame
+    #
+    # Called when we get a new frame from the camera. Returns the which
+    # channels (if any) need to have their power adjusted.
+    #
+    # @param frame_number The frame number of the current frame.
+    #
+    # @return Returns an array of arrays containing the active channels and how much to increment their power by.
+    #
     def newFrame(self, frame_number):
         active = []
         increment = []
@@ -146,16 +223,37 @@ class LinearChannels(MathChannels):
                 increment.append(float(channel[2].value()))
         return [active, increment]
 
+## ExponentialChannels
 #
 # Channels class for exponential progression.
 #
 class ExponentialChannels(MathChannels):
+
+    ## __init__
+    #
+    # This is basically the same as for MathChannels. It also specifies
+    # the current and maximum value of the increment spin box.
+    #
+    # @param number_channels The total number of channels.
+    # @param x_positions The x positions at which to draw the GUI elements.
+    # @param parameters The initial values for the adjustable GUI elements.
+    # @param parent Not used?
+    #
     def __init__(self, channels, x_positions, parameters, parent):
         MathChannels.__init__(self, channels, x_positions, parameters, parent)
         for channel in self.channels:
             channel[2].setValue(1.05)
             channel[2].setMaximum(9.9)
 
+    ## newFrame
+    #
+    # Called when we get a new frame from the camera. Returns the which
+    # channels (if any) need to have their power adjusted.
+    #
+    # @param frame_number The frame number of the current frame.
+    #
+    # @return Returns an array of arrays containing the active channels and how much to increment their power by.
+    #
     def newFrame(self, frame_number):
         active = []
         increment = []
@@ -171,16 +269,30 @@ class ExponentialChannels(MathChannels):
                 increment.append(float(channel[2].value()))
         return [active, increment]
 
+## FileChannels
 #
-# Channels class for power file bases progression
+# Channels class for power file bases progression. This lets you
+# replay the power settings that you used in previous films.
 #
 class FileChannels(Channels):
+
+    ## __init__
+    #
+    # Initialize some file channel related variables.
+    #
     def __init__(self, parent):
         Channels.__init__(self, parent)
         self.active = []
         self.start_powers = []
         self.file_ptr = False
 
+    ## getNextPowers
+    #
+    # Read and parse the next line of the powers file, or False 
+    # if we have reached the end of the file.
+    #
+    # @return Return an array containing the powers, or False.
+    #
     def getNextPowers(self):
         line = self.file_ptr.readline()
         powers = False
@@ -191,6 +303,11 @@ class FileChannels(Channels):
                 powers.append(float(powers_text[i]))
         return powers
 
+    ## newFile
+    #
+    # Open a powers file & read the first line to get the initial
+    # power values.
+    #
     def newFile(self, filename):
         if os.path.exists(filename):
             self.file_ptr = open(filename, "r")
@@ -206,6 +323,15 @@ class FileChannels(Channels):
         else:
             self.file_ptr = False
 
+    ## newFrame
+    #
+    # Called when we get a new frame from the camera. Returns the which
+    # channels (if any) need to have their power adjusted.
+    #
+    # @param frame_number The frame number of the current frame.
+    #
+    # @return Returns an array of arrays containing the active channels and how much to increment their power by.
+    #
     def newFrame(self, frame_number):
         if self.file_ptr:
             powers = self.getNextPowers()
@@ -220,14 +346,18 @@ class FileChannels(Channels):
                     else:
                         active.append(False)
                         increment.append(False)
-#            print "newFrame:"
-#            print active
-#            print increment
-#            print ""
             return [active, increment]
         else:
             return [[], []]
 
+    ## startFilm
+    #
+    # This is called when the filming starts. It returns the
+    # desired initial powers for the various channels. It also
+    # rewinds the file pointer to beginning of the powers file.
+    #
+    # @return Returns an array of arrays containing the active channels and their initial powers.
+    #
     def startFilm(self):
         if self.file_ptr:
             # reset file ptr
@@ -236,24 +366,38 @@ class FileChannels(Channels):
             # reset internal power record
             for i in range(len(self.start_powers)):
                 self.powers[i] = self.start_powers[i]
-
-#            print "startFilm:", self.start_powers
             return [self.active, self.start_powers]
         else:
             return [[], []]
 
+    ## stopFilm
+    #
+    # This is called when the film stops. It resets the powers
+    # to their initial values.
+    #
     def stopFilm(self):
         if self.file_ptr:
-#            print "stopFilm:", self.start_powers
             return [self.active, self.start_powers]
         else:
             return [[], []]
 
 
+## ProgressionControl
 #
 # Progression control dialog box
 #
 class ProgressionControl(QtGui.QDialog):
+
+    ## __init__
+    #
+    # This initializes things and sets up the UI of the power control
+    # dialog box.
+    #
+    # @param parameters The initial parameters.
+    # @param tcp_control The TCP/IP control object.
+    # @param channels The number of illumination channels.
+    # @param parent The (PyQt) parent of the dialog.
+    #
     @hdebug.debug
     def __init__(self, parameters, tcp_control, channels = 3, parent = None):
         QtGui.QDialog.__init__(self, parent)
@@ -329,27 +473,60 @@ class ProgressionControl(QtGui.QDialog):
         # set modeless
         self.setModal(False)
 
+    ## closeEvent
+    #
+    # This is called when the dialog is closed. If the dialog
+    # has a parent then it ignores these events and hides itself instead.
+    #
+    # @param event A QEvent.
+    #
     @hdebug.debug
     def closeEvent(self, event):
         if self.have_parent:
             event.ignore()
             self.hide()
 
+    ## handleOk
+    #
+    # This is called when the user presses the close button. It hides
+    # the dialog.
+    #
     @hdebug.debug
     def handleOk(self):
         self.hide()
 
+    ## handleProgCheck
+    #
+    # This is called when the user clicks the progression check box.
+    #
+    # @param state The state of the progession check box.
+    #
     @hdebug.debug
     def handleProgCheck(self, state):
         if state:
-            self.parameters.use_progressions = 1
+            self.parameters.use_progressions = True
         else:
-            self.parameters.use_progressions = 0
+            self.parameters.use_progressions = False
 
+    ## handleQuit
+    #
+    # This is called when the user clicks the quit button.
+    #
     @hdebug.debug
     def handleQuit(self):
         self.close()
 
+    ## newFrame
+    #
+    # This is called when we get new frames from the camera. It
+    # calls the newFrame method of the active channels object.
+    # If this returns that power updates are necessary then it
+    # emits the appropriate progIncPower signals.
+    #
+    # FIXME: change progIncPower to new style signal/slot.
+    #
+    # @param frame The current frame object.
+    #
     def newFrame(self, frame):
         if self.channels and frame.master:
             [active, increment] = self.channels.newFrame(frame.number)
@@ -359,6 +536,14 @@ class ProgressionControl(QtGui.QDialog):
                               int(i),
                               increment[i])
 
+    ## newParameters
+    #
+    # This is called when there are new parameters. Note that there are
+    # no parameter specific settings for all the GUI elements. This
+    # just checks / unchecks the use progressions check box.
+    #
+    # @param parameters The new parameters.
+    #
     @hdebug.debug
     def newParameters(self, parameters):
         self.parameters = parameters
@@ -367,6 +552,10 @@ class ProgressionControl(QtGui.QDialog):
         else:
             self.ui.progressionsCheckBox.setChecked(False)
 
+    ## newPowerFile
+    #
+    # Opens a file dialog where the user can specifiy a new power file.
+    #
     def newPowerFile(self):
         power_filename = QtGui.QFileDialog.getOpenFileName(self,
                                                            "New Power File",
@@ -376,6 +565,14 @@ class ProgressionControl(QtGui.QDialog):
             self.ui.filenameLabel.setText(power_filename[-40:])
             self.file_channels.newFile(power_filename)
 
+    ## setPower
+    #
+    # This emits progSetPower signals to set the power. This is called
+    # at the start & end of filming.
+    #
+    # @param active Boolean array specifying whether or not a channel is active.
+    # @param power The power to set the channel too.
+    #
     def setPower(self, active, power):
         for i in range(len(active)):
             if active[i]:
@@ -383,6 +580,14 @@ class ProgressionControl(QtGui.QDialog):
                           int(i),
                           power[i])
 
+    ## startFilm
+    #
+    # Called at the start of filming. If the progression dialog is
+    # open and the use progressions check box is checked it figures 
+    # out which tab is visible to determine which is the active channel
+    # object. Then it sets the intial powers as specified by the
+    # active channel.
+    #
     def startFilm(self):
         self.channels = False
         if (self.isVisible() and self.parameters.use_progressions):
@@ -396,6 +601,11 @@ class ProgressionControl(QtGui.QDialog):
             [active, power] = self.channels.startFilm()
             self.setPower(active, power)
 
+    ## stopFilm
+    #
+    # Called when the film stops. This resets the powers to their
+    # initial values.
+    #
     def stopFilm(self):
         if self.channels:
             [active, power] = self.channels.stopFilm()
@@ -404,12 +614,28 @@ class ProgressionControl(QtGui.QDialog):
             self.use_was_checked = False
             self.ui.progressionsCheckBox.setChecked(True)
 
+    ## tcpHandleProgressionFile
+    #
+    # Handles TCP/IP signal to set the power
+    # file for file based power progressions.
+    #
+    # @param filename The filename of the power file.
+    #
     @hdebug.debug
     def tcpHandleProgressionFile(self, filename):
         if os.path.exists(filename):
             self.ui.filenameLabel.setText(filename[-40:])
             self.file_channels.newFile(filename)
 
+    ## tcpHandleProgressionSet
+    #
+    # Handles TCP/IP signal to set the values of a math channel.
+    #
+    # @param channel The channel number.
+    # @param start_power The starting power.
+    # @param frames The number of frames between increments.
+    # @param increment The amount to increments.
+    #
     @hdebug.debug
     def tcpHandleProgressionSet(self, channel, start_power, frames, increment):
         if self.ui.linearTab.isVisible():
@@ -417,10 +643,20 @@ class ProgressionControl(QtGui.QDialog):
         elif self.ui.expTab.isVisible():
             self.exp_channels.remoteSetChannel(channel, start_power, increment, frames)
 
+    ## tcpHandleProgressionLockout
+    #
+    # Handles TCP/IP signal to lockout progressions.
+    #
     def tcpHandleProgressionLockout(self):
         self.use_was_checked = self.ui.progressionsCheckBox.isChecked()
         self.ui.progressionsCheckBox.setChecked(False)
 
+    ## tcpHandleProgressionType
+    #
+    # Handles TCP/IP signal to set the progression type.
+    #
+    # @param type This is one of "linear", "exponential" or "file"
+    #
     @hdebug.debug
     def tcpHandleProgressionType(self, type):
         self.show()
@@ -432,16 +668,16 @@ class ProgressionControl(QtGui.QDialog):
         elif (type == "file"):
             self.ui.tabWidget.setCurrentWidget(self.ui.fileTab)
 
-    def updateSize(self):
-        pc_width = self.power_control.width()
-        pc_height = self.power_control.height()
-        self.ui.laserBox.setGeometry(10, 0, pc_width + 9, pc_height + 19)
-        self.power_control.setGeometry(4, 15, pc_width, pc_height)
-
-        lb_width = self.ui.laserBox.width()
-        lb_height = self.ui.laserBox.height()
-        self.ui.okButton.setGeometry(lb_width - 65, lb_height + 4, 75, 24)
-        self.setFixedSize(lb_width + 18, lb_height + 36)
+#    def updateSize(self):
+#        pc_width = self.power_control.width()
+#        pc_height = self.power_control.height()
+#        self.ui.laserBox.setGeometry(10, 0, pc_width + 9, pc_height + 19)
+#        self.power_control.setGeometry(4, 15, pc_width, pc_height)
+#
+#        lb_width = self.ui.laserBox.width()
+#        lb_height = self.ui.laserBox.height()
+#        self.ui.okButton.setGeometry(lb_width - 65, lb_height + 4, 75, 24)
+#        self.setFixedSize(lb_width + 18, lb_height + 36)
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
