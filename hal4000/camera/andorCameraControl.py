@@ -70,6 +70,10 @@ class ACameraControl(cameraControl.CameraControl):
         else:
             return [1.0, 1.0, 1.0]
 
+    ## getTemperature
+    #
+    # Stop the camera and get the camera temperature.
+    #
     @hdebug.debug
     def getTemperature(self):
         self.stopCamera()
@@ -78,22 +82,54 @@ class ACameraControl(cameraControl.CameraControl):
         else:
             return [50, "unstable"]
 
+    ## haveEMCCD
+    #
+    # Returns that this is a EMCCD camera.
+    #
+    # @return True, this is a EMCCD camera.
+    #
     @hdebug.debug
     def haveEMCCD(self):
         return True
 
+    ## havePreamp
+    #
+    # Returns that the camera has a pre-amplifier.
+    #
+    # @return True, this camera has a pre-amplifier.
+    #
     @hdebug.debug
     def havePreamp(self):
         return True
 
+    ## haveShutter
+    #
+    # Returns that the camera has a shutter.
+    #
+    # @return True, this camera has a shutter.
+    #
     @hdebug.debug
     def haveShutter(self):
         return True
 
+    ## haveTemperature
+    #
+    # Returns that this camera can measure its sensor temperature.
+    #
+    # @return True, this camera can measure its sensor temperature.
+    #
     @hdebug.debug
     def haveTemperature(self):
         return True
 
+    ## initCamera
+    #
+    # This tries to find the right driver file to operate the camera
+    # based on the OS type (32 or 64bit) and a search of the common
+    # Andor directory names.
+    #
+    # @param pci_card (Optional) The ID of the PC card to use.
+    #
     @hdebug.debug
     def initCamera(self, pci_card = 0):
         if not self.camera:
@@ -128,12 +164,32 @@ class ACameraControl(cameraControl.CameraControl):
 
             print "Can't find Andor Camera drivers"
 
+    ## initCameraHelperFn
+    #
+    # Given the path, driver and pci_card ID this creates a Andor
+    # camera controller class.
+    #
+    # @param path The path to the Andor camera DLL.
+    # @param driver The name of the Andor camera DLL.
+    # @param pci_card The ID of the PCI card.
+    #
     @hdebug.debug
     def initCameraHelperFn(self, path, driver, pci_card):
         andor.loadAndorDLL(path + driver)
         handle = andor.getCameraHandles()[pci_card]
         self.camera = andor.AndorCamera(path, handle)
 
+    ## newFilmSettings
+    #
+    # This is called at the start of a acquisition to get the camera
+    # running in the right mode (fixed length or run till abort) and
+    # to set the camera fan speed. Fixed length is only used for films
+    # that are less than 1000 frames in length, otherwise they are
+    # generally too large to easily store in RAM.
+    #
+    # @param parameters The current camera settings object.
+    # @param filming True/False is the data being saved.
+    #
     @hdebug.debug
     def newFilmSettings(self, parameters, filming = False):
         self.stopCamera()
@@ -181,6 +237,12 @@ class ACameraControl(cameraControl.CameraControl):
         self.filming = filming
         self.mutex.unlock()
 
+    ## newParameters
+    #
+    # Called when the user selects a new parameters file.
+    #
+    # @param parameters The new parameters object.
+    #
     @hdebug.debug
     def newParameters(self, parameters):
         self.initCamera()
@@ -245,6 +307,10 @@ class ACameraControl(cameraControl.CameraControl):
             self.got_camera = False
         self.newFilmSettings(parameters)
 
+    ## openShutter
+    #
+    # Stops the camera and opens the camera shutter.
+    #
     @hdebug.debug
     def openShutter(self):
         self.shutter = True
@@ -255,6 +321,10 @@ class ACameraControl(cameraControl.CameraControl):
             else:
                 self.camera.openShutter()
 
+    ## quit
+    #
+    # Stops the camera thread and closes the connection to the camera.
+    #
     @hdebug.debug
     def quit(self):
         self.stopThread()
@@ -262,6 +332,12 @@ class ACameraControl(cameraControl.CameraControl):
         if self.got_camera:
             self.camera.shutdown()
 
+    ## run
+    #
+    # This is the thread loop that handles getting the new frames from 
+    # the camera, saving them in filming mode and signaling that the
+    # camera has new data, or that the camera is idle.
+    #
     def run(self):
         while(self.running):
             self.mutex.lock()
@@ -301,12 +377,27 @@ class ACameraControl(cameraControl.CameraControl):
             self.mutex.unlock()
             self.msleep(5)
 
+    ## setEMCCDGain
+    #
+    # Set the EMCCD gain of the camera.
+    #
+    # @param gain The desired EMCCD gain value.
+    #
     @hdebug.debug
     def setEMCCDGain(self, gain):
         self.stopCamera()
         if self.got_camera:
             self.camera.setEMCCDGain(gain)
 
+    ## startCamera
+    #
+    # Start a new camera acquisition. The key parameter is to
+    # ensure that camera frames taken with older parameters
+    # are ignored. This can be a problem due to thread
+    # synchronization issues.
+    #
+    # @param key The ID to use for the frames from this acquisition series.
+    #
     @hdebug.debug        
     def startCamera(self, key):
         #if self.have_paused:
@@ -319,6 +410,10 @@ class ACameraControl(cameraControl.CameraControl):
             self.camera.startAcquisition()
         self.mutex.unlock()
 
+    ## stopCamera
+    #
+    # Stop the current acquisition series.
+    #
     @hdebug.debug
     def stopCamera(self):
         if self.acquire.amActive():
