@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # qtCameraWidget specialized for data from a Andor camera.
 #
 # Hazen 06/12
@@ -10,8 +12,17 @@ from PyQt4 import QtCore, QtGui
 
 import camera.andorCameraWidget as andorCameraWidget
 
-# Andor Camera Widget
+## ACameraWidget
+#
+# qtCameraWidget specialized for the display of data on setups that have
+# two Andor cameras. This is identical to the andorCameraWidget.
+#
 class ACameraWidget(andorCameraWidget.ACameraWidget):
+
+    ## __init__
+    #
+    # Create the object for the display of the camera widget.
+    #
     def __init__(self, parameters, parent = None):
         andorCameraWidget.ACameraWidget.__init__(self, parameters, parent)
 

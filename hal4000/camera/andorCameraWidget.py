@@ -1,4 +1,6 @@
-#!/usr/bin/python
+\#!/usr/bin/python
+#
+## @file
 #
 # qtCameraWidget specialized for data from a Andor camera.
 #
@@ -10,9 +12,19 @@ from PyQt4 import QtCore, QtGui
 
 import qtWidgets.qtCameraWidget as qtCameraWidget
 
-# Andor Camera Widget
+## ACameraWidget
+#
+# QCameraWidget specialized for to display data from a Andor camera.
+#
 class ACameraWidget(qtCameraWidget.QCameraWidget):
 
+    ## __init__
+    #
+    # Create the Andor camera display widget.
+    #
+    # @param parameters A parameters object.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     def __init__(self, parameters, parent = None):
         qtCameraWidget.QCameraWidget.__init__(self, parameters, parent)
 

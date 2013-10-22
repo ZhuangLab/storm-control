@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Camera control specialized for controlling two Andor cameras.
 #
 # Hazen 12/12
@@ -16,7 +18,19 @@ import camera.frame as frame
 import camera.cameraControl as cameraControl
 import andor.andorcontroller as andor
 
+## ACameraControl
+#
+# The CameraControl class specialized to control two Andor cameras at once.
+#
 class ACameraControl(cameraControl.CameraControl):
+
+    ## __init__
+    #
+    # Create a Andor dual camera control object.
+    #
+    # @param parameters A parameters object.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         cameraControl.CameraControl.__init__(self, parameters, parent)
@@ -27,6 +41,12 @@ class ACameraControl(cameraControl.CameraControl):
         self.shutter = [False, False]
         self.initCamera()
 
+    ## closeShutter
+    #
+    # Close the shutter of one of the Andor cameras.
+    #
+    # @param which_camera Which camera to close the shutter of.
+    #
     @hdebug.debug
     def closeShutter(self, which_camera):
         self.shutter[which_camera] = False
@@ -37,6 +57,12 @@ class ACameraControl(cameraControl.CameraControl):
             else:
                 self.cameras[which_camera].closeShutter()
 
+    ## getAcquisitionTimings
+    #
+    # Get the acquisition timings of one of the cameras.
+    #
+    # @param which_camera Which camera to get the acquisition timings from.
+    #
     @hdebug.debug
     def getAcquisitionTimings(self, which_camera):
         self.stopCamera()
@@ -45,6 +71,12 @@ class ACameraControl(cameraControl.CameraControl):
         else:
             return [1.0, 1.0, 1.0]
 
+    ## getTemperature
+    #
+    # Get the temperature of one of the cameras.
+    #
+    # @param which_camera Which camera to get the temperature of.
+    #
     @hdebug.debug
     def getTemperature(self, which_camera):
         self.stopCamera()
@@ -53,6 +85,9 @@ class ACameraControl(cameraControl.CameraControl):
         else:
             return [50, "unstable"]
 
+    ## initCamera
+    #
+    # Find the Andor DLL and open the connections to the cameras.
     #
     # FIXME:
     #   Update to match andorCameraControl or change both to call the same function..
@@ -83,6 +118,14 @@ class ACameraControl(cameraControl.CameraControl):
 
             print "Can't find Andor Camera drivers"
 
+    ## initCameraHelperFn
+    #
+    # Given the path to the Andor DLL and the name of the DLL, start
+    # communication with the two cameras.
+    #
+    # @param path The path to the Andor DLL.
+    # @param driver The name of the Andor DLL.
+    #
     @hdebug.debug
     def initCameraHelperFn(self, path, driver):
         andor.loadAndorDLL(path + driver)
@@ -90,6 +133,13 @@ class ACameraControl(cameraControl.CameraControl):
         for i in range(2):
             self.cameras[i] = andor.AndorCamera(path, handles[i])
 
+    ## newFilmSettings
+    #
+    # This is called at the start of acquisition to configure the cameras correctly.
+    #
+    # @param parameters The current parameters object.
+    # @param filming True/False, should the film be saved.
+    #
     @hdebug.debug
     def newFilmSettings(self, parameters, filming = 0):
         self.stopCamera()
@@ -126,6 +176,12 @@ class ACameraControl(cameraControl.CameraControl):
         self.filming = filming
         self.mutex.unlock()
 
+    ## newParameters
+    #
+    # Change the camera settings for both cameras.
+    #
+    # @param parameters A parameters object.
+    #
     @hdebug.debug
     def newParameters(self, parameters):
         self.initCamera()
@@ -195,6 +251,12 @@ class ACameraControl(cameraControl.CameraControl):
                 self.got_camera = False
         self.newFilmSettings(parameters)
 
+    ## openShutter
+    # 
+    # Open the shutter of the specified camera.
+    #
+    # @param which_camera Which camera to open the shutter of.
+    #
     @hdebug.debug
     def openShutter(self, which_camera):
         self.shutter[which_camera] = True
@@ -205,6 +267,10 @@ class ACameraControl(cameraControl.CameraControl):
             else:
                 self.cameras[which_camera].openShutter()
 
+    ## quit
+    #
+    # Stop the camera control thread and shutdown the cameras.
+    #
     @hdebug.debug
     def quit(self):
         self.stopThread()
@@ -213,6 +279,13 @@ class ACameraControl(cameraControl.CameraControl):
             for i in range(2):
                 self.cameras[i].shutdown()
 
+    ## run
+    #
+    # The camera control thread. This gets new frames from the camera,
+    # saves them if we are filming and signals the new data to the
+    # main process. It also signals if the camera is idle as it might
+    # be at the end of a fixed length acquisition.
+    #
     def run(self):
         while(self.running):
             self.mutex.lock()
@@ -263,12 +336,28 @@ class ACameraControl(cameraControl.CameraControl):
             self.mutex.unlock()
             self.msleep(5)
 
+    ## setEMCCDGain
+    #
+    # Set the EMCCDGain of one of the cameras.
+    #
+    # @param which_camera The camera to set the gain of.
+    # @param gain The desired EMCCD gain value for that camera.
+    #
     @hdebug.debug
     def setEMCCDGain(self, which_camera, gain):
         self.stopCamera()
         if self.got_camera:
             self.cameras[which_camera].setEMCCDGain(gain)
 
+    ## startCamera
+    #
+    # Tell the camera control thread to start the cameras. The key 
+    # parameter is used to identify frames that came from this acquisition. 
+    # This is way to handle thread synchronization issues, the main
+    # process ignores frames that do not have the correct key.
+    #
+    # @param key The ID to use for frames from the current acquisition sequence.
+    #
     @hdebug.debug        
     def startCamera(self, key):
         if self.have_paused:
@@ -283,6 +372,10 @@ class ACameraControl(cameraControl.CameraControl):
                 self.cameras[0].startAcquisition()
             self.mutex.unlock()
 
+    ## stopCamera
+    #
+    # Tells the camera control thread to stop the cameras.
+    #
     @hdebug.debug
     def stopCamera(self):
         if self.should_acquire:
@@ -296,6 +389,12 @@ class ACameraControl(cameraControl.CameraControl):
             while not self.have_paused:
                 self.usleep(50)
 
+    ## toggleShutter
+    #
+    # Open/close the shutter of the specified camera.
+    #
+    # @param which_camera The camera to open/close the shutter of.
+    #
     @hdebug.debug
     def toggleShutter(self, which_camera):
         if self.shutter[which_camera]:
