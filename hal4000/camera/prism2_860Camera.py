@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# Camera for the prism2 setup.
+## @file
+#
+# Camera for the Andor 860 prism2 setup.
 #
 # Hazen 03/13
 #

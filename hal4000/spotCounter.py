@@ -301,6 +301,7 @@ class QImageGraph(QtGui.QWidget):
     # @param y_size The y size of the widget in pixels.
     # @param flip_horizontal Flip the image horizontally.
     # @param flip_vertical Flip the image vertically.
+    # @param parent The PyQt parent of this widget.
     #
     def __init__(self, x_size, y_size, flip_horizontal, flip_vertical, parent = None):
         QtGui.QWidget.__init__(self, parent)
@@ -392,7 +393,7 @@ class QImageGraph(QtGui.QWidget):
     # @param index The frame number of the image.
     # @param x_locs The x locations of the objects.
     # @param y_locs The y locations of the objects.
-    # @param spot The number of objects.
+    # @param spots The number of objects.
     #
     def updateImage(self, index, x_locs, y_locs, spots):
         painter = QtGui.QPainter(self.buffer)

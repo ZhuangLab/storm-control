@@ -1,6 +1,9 @@
 #!/usr/bin/python
 #
-# Camera for generic dual andor camera setup.
+## @file
+#
+# Camera control and display for a generic dual andor camera setup.
+# FIXME: Is this used?
 #
 # Hazen 12/12
 #
@@ -12,8 +15,17 @@ import camera.dualCamera as dualCamera
 def getMode():
     return "dual"
 
+## ACamera
+#
+# A dual camera object.
+#
 class ACamera(dualCamera.DualCamera):
 
+    ## __init__
+    #
+    # @param parameters A parameters object.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         dualCamera.DualCamera.__init__(self, parameters, parent)

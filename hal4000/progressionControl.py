@@ -192,7 +192,7 @@ class LinearChannels(MathChannels):
     # This is basically the same as for MathChannels. It also specifies
     # a maximum value for the increment spin box.
     #
-    # @param number_channels The total number of channels.
+    # @param channels The total number of channels.
     # @param x_positions The x positions at which to draw the GUI elements.
     # @param parameters The initial values for the adjustable GUI elements.
     # @param parent Not used?
@@ -234,7 +234,7 @@ class ExponentialChannels(MathChannels):
     # This is basically the same as for MathChannels. It also specifies
     # the current and maximum value of the increment spin box.
     #
-    # @param number_channels The total number of channels.
+    # @param channels The total number of channels.
     # @param x_positions The x positions at which to draw the GUI elements.
     # @param parameters The initial values for the adjustable GUI elements.
     # @param parent Not used?

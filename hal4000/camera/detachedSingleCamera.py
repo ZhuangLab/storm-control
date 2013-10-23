@@ -1,6 +1,9 @@
 #!/usr/bin/python
 #
-# Camera class for controlling a single (non-detached) camera.
+## @file
+#
+# Camera class for controlling a single "detached" camera.
+# The camera has it's own window.
 #
 # Hazen 11/12
 #
@@ -19,8 +22,21 @@ import camera.singleCamera as singleCamera
 import camera.cameraDisplay as cameraDisplay
 import camera.cameraParams as cameraParams
 
+## DetachedSingleCamera
+#
+# Camera class for the UI of single "detached" camera.
+# The camera has it's own window with a shutter button
+# and camera parameters, but no record button.
+#
 class DetachedSingleCamera(singleCamera.SingleCamera):
 
+    ## __init__
+    #
+    # Create a detached single camera object.
+    #
+    # @param parameters A parameters object.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         singleCamera.SingleCamera.__init__(self, parameters, parent)
@@ -52,15 +68,31 @@ class DetachedSingleCamera(singleCamera.SingleCamera):
         self.camera_display.ui.cameraShutterButton.clicked.connect(self.toggleShutter)
         self.camera_params.gainChange.connect(self.handleGainChange)
 
+    ## closeEvent
+    #
+    # Handles hiding the window when the user presses the X in
+    # the upper right corner of the window.
+    #
+    # @param event The PyQt close event.
+    #
     @hdebug.debug
     def closeEvent(self, event):
         event.ignore()
         self.hide()
 
+    ## handleOk
+    #
+    # Handles when the user presses on the close button.
+    #
     @hdebug.debug
     def handleOk(self):
         self.hide()
 
+    ## showCamera1
+    #
+    # Handles displaying the UI when the user selects
+    # "camera" from the file menu.
+    #
     @hdebug.debug
     def showCamera1(self):
         self.show()

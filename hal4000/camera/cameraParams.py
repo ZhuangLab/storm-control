@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Handles the display of the current parameters for a given camera.
 #
 # Methods:
@@ -24,12 +26,21 @@ from PyQt4 import QtCore, QtGui
 # Debugging
 import halLib.hdebug as hdebug
 
+## CameraParams
 #
-# Camera Params Group Box
+# This class handles displaying (some of) the current camera parameters
+# in the UI. It also handles the EMCCD gain slider.
 #
 class CameraParams(QtGui.QGroupBox):
     gainChange = QtCore.pyqtSignal(int)
 
+    ## __init__
+    #
+    # Create a camera parameters object.
+    #
+    # @param camera_params_ui The UI object like what would be created from a .ui file.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     @hdebug.debug
     def __init__(self, camera_params_ui, parent = None):
         QtGui.QGroupBox.__init__(self, parent)
@@ -42,11 +53,24 @@ class CameraParams(QtGui.QGroupBox):
         # connect signals
         self.connect(self.ui.EMCCDSlider, QtCore.SIGNAL("valueChanged(int)"), self.cameraGainChange)
 
+    ## cameraGainChange
+    #
+    # Handles camera gain changes. Updates the display and emits a gainChange signal
+    # that is received by the camera control object.
+    #
+    # @param new_gain The new EMCCD gain value.
+    #
     @hdebug.debug
     def cameraGainChange(self, new_gain):
         self.ui.EMCCDLabel.setText("EMCCD Gain: %d" % new_gain)
         self.gainChange.emit(new_gain)
 
+    ## newParameters
+    #
+    # Update the displayed camera parameters based on the new parameters object.
+    #
+    # @param parameters A parameters object.
+    #
     @hdebug.debug        
     def newParameters(self, parameters):
         p = parameters
@@ -73,6 +97,12 @@ class CameraParams(QtGui.QGroupBox):
             self.ui.exposureTimeText.setText("%.4f" % p.exposure_value)
             self.ui.FPSText.setText("%.4f" % (1.0/p.kinetic_value))
 
+    ## newTemperature
+    #
+    # Updates the temperature display element of the UI.
+    #
+    # @param temp_data A two element array, [camera temperature, "stable" / "unstable"].
+    #
     @hdebug.debug
     def newTemperature(self, temp_data):
         if temp_data[1] == "stable":
@@ -81,6 +111,12 @@ class CameraParams(QtGui.QGroupBox):
             self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
         self.ui.temperatureText.setText(str(temp_data[0]) + " (" + str(self.temperature) + ")")
 
+    ## showEMCCD
+    #
+    # Show or hide the UI fields associated with EM gain.
+    #
+    # @param visible True/False.
+    #
     @hdebug.debug
     def showEMCCD(self, visible):
         if visible:
@@ -90,6 +126,12 @@ class CameraParams(QtGui.QGroupBox):
             self.ui.EMCCDLabel.hide()
             self.ui.EMCCDSlider.hide()
 
+    ## showPreamp
+    #
+    # Show or hide the UI fields associated with pre-amplifier gain.
+    #
+    # @param visible True/False.
+    #
     @hdebug.debug
     def showPreamp(self, visible):
         if visible:
@@ -99,6 +141,10 @@ class CameraParams(QtGui.QGroupBox):
             self.ui.preampGainLabel.hide()
             self.ui.preampGainText.hide()
 
+    ## showTemperature
+    #
+    # Show or hide the UI fields associated with camera sensor temperature.
+    #
     @hdebug.debug
     def showTemperature(self, visible):
         if visible:

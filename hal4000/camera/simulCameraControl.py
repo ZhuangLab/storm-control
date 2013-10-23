@@ -1,6 +1,9 @@
 #!/usr/bin/python
 #
-# Softare camera emulator.
+## @file
+#
+# Software camera emulator.
+# FIXME: Is this still used? Time to remove from the repo?
 #
 # Hazen 11/09
 #

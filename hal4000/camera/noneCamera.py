@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Camera for the none setup.
 #
 # Hazen 11/12

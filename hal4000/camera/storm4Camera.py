@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Camera for the storm4 setup.
 #
 # Hazen 12/12

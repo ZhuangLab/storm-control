@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# qtCameraWidget specialized for data from a Hamamatsu camera.
+## @file
+#
+# A qtCameraWidget specialized for displaying the data from a Hamamatsu camera.
 #
 # Hazen 10/13
 #
@@ -12,13 +14,34 @@ import qtWidgets.qtCameraWidget as qtCameraWidget
 
 import hamamatsu.scmos_image_manipulation_c as scmos_im
 
-# Hamamatsu Camera Widget
+## ACameraWidget
+#
+# Hamamatsu camera widget. This is used to display the frames
+# from a Hamamatsu camera.
+#
 class ACameraWidget(qtCameraWidget.QCameraWidget):
 
+    ## __init__
+    #
+    # Create a Hamamatsu camera widget.
+    #
+    # @param parameters A parameters object.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     def __init__(self, parameters, parent = None):
         qtCameraWidget.QCameraWidget.__init__(self, parameters, parent)
 
+    ## updateImageWithFrame
+    #
+    # This updates the displayed image with a frame from the camera. This
+    # version uses a C helper library to try and make things faster and
+    # less memory intensive so that we can more easily keep up with the
+    # high data rate of a sCMOS camera.
+    #
     # FIXME: Ignores image orientation settings.
+    #
+    # @param frame A frame object.
+    #
     def updateImageWithFrame(self, frame):
         if frame:
             w = frame.image_x

@@ -1,7 +1,9 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Class for storage of a single frame of camera data
-# and its meta-information.
+# and it's meta-information.
 #
 # Notes: 
 # 1) The which_camera field is expected to be
@@ -15,9 +17,25 @@
 # Hazen 10/13
 #
 
+## Frame
+#
+# Class for the storage of a single frame of camera data
+# and it's meta-information.
+#
 class Frame():
 
+    ## __init__
+    #
+    # Create a camera frame object.
     # FIXME: Are we consistent in the use of master vs. camera1?
+    #
+    # @param np_data A numpy.uint16 object containing the data for the frame.
+    # @param frame_number The frame number of this frame.
+    # @param image_x The size of the frame in pixels in x.
+    # @param image_y The size of the frame in pixels in y.
+    # @param which_camera Which camera the frame came from ("camera1" or "camera2").
+    # @param master True/False Is this frame from the "master" (as opposed to the "slave") camera.
+    #
     def __init__(self, np_data, frame_number, image_x, image_y, which_camera, master):
         self.image_x = image_x
         self.image_y = image_y
@@ -26,9 +44,18 @@ class Frame():
         self.number = frame_number
         self.which_camera = which_camera
 
+    ## getData
+    #
+    # Returns the numpy object that stores the camera frame data.
+    #
     def getData(self):
         return self.np_data
 
+    ## getDataPtr
+    #
+    # Returns a C style pointer to the physical address of the
+    # camera frame data in the computers memory.
+    #
     def getDataPtr(self):
         return self.np_data.ctypes.data
 

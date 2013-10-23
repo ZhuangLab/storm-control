@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# Camera software emulation.
+## @file
+#
+# This class provides software emulation of a camera for testing purposes.
 #
 # Hazen 09/13
 #
@@ -15,7 +17,19 @@ import halLib.hdebug as hdebug
 import camera.cameraControl as cameraControl
 import camera.frame as frame
 
+## ACameraControl
+#
+# A class the emulates the behaviour of a camera in software.
+#
 class ACameraControl(cameraControl.CameraControl):
+
+    ## __init__
+    #
+    # Create the camera control object.
+    #
+    # @param parameters A parameters object.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         cameraControl.CameraControl.__init__(self, parameters, parent)
@@ -25,11 +39,21 @@ class ACameraControl(cameraControl.CameraControl):
         self.sleep_time = 50
         self.initCamera()
 
+    ## getAcquisitionTimings
+    #
+    # Returns how fast the camera is running.
+    #
+    # @return A Python array containing the time it takes to take a frame.
+    #
     @hdebug.debug
     def getAcquisitionTimings(self):
         time = 0.001 * float(self.sleep_time)
         return [time, time, time]
 
+    ## initCamera
+    #
+    # Initializes the camera.
+    #
     @hdebug.debug
     def initCamera(self):
         if not self.camera:
@@ -38,22 +62,45 @@ class ACameraControl(cameraControl.CameraControl):
             self.camera = True
         self.got_camera = True
 
+    ## haveEMCCD
+    #
+    # @return False, the emulation camera does not have a EMCCD.
+    #
     @hdebug.debug
     def haveEMCCD(self):
         return False
 
+    ## havePreamp
+    #
+    # @return False, the emulation camera has a pre-amplifier.
+    #
     @hdebug.debug
     def havePreamp(self):
         return True
 
+    ## haveShutter
+    #
+    # @return False, the emulation camera does not have a shutter.
+    #
     @hdebug.debug
     def haveShutter(self):
         return False
 
+    ## haveTemperature
+    #
+    # @return False, the emulation camera does not have a temperature sensor.
+    #
     @hdebug.debug
     def haveTemperature(self):
         return False
 
+    ## newFilmSettings
+    #
+    # Prepare the camera for the next acquisition.
+    #
+    # @param parameters A parameters object.
+    # @param filming (Optional) A flag to indicate if the acquisition should be saved.
+    #
     @hdebug.debug
     def newFilmSettings(self, parameters, filming = 0):
         self.stopCamera()
@@ -69,6 +116,13 @@ class ACameraControl(cameraControl.CameraControl):
         self.frames_to_take = p.frames
         self.mutex.unlock()
 
+    ## newParameters
+    #
+    # Update the camera based on a new set of parameters. This creates
+    # a fake image that we recycle as the picture from the camera.
+    #
+    # @param parameters A parameters object.
+    #
     @hdebug.debug
     def newParameters(self, parameters):
         self.initCamera()
@@ -86,6 +140,12 @@ class ACameraControl(cameraControl.CameraControl):
         self.fake_frame = numpy.fromstring(fake_frame, dtype = numpy.uint16)
         self.newFilmSettings(parameters)
 
+    ## run
+    #
+    # This thread generates frame objects from the emulated image, saves
+    # them if requested and broadcast them using the newData signal. It
+    # also signals when the end of fixed length film has been reached.
+    #
     def run(self):
         while(self.running):
             self.mutex.lock()

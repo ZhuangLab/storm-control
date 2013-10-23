@@ -59,7 +59,7 @@ class CameraControl(QtCore.QThread):
     # Create a CameraControl object.
     #
     # @param parameters A parameters object.
-    # @param (Optional) The PyQt parent of this CameraControl object.
+    # @param parent (Optional) The PyQt parent of this CameraControl object.
     #
     @hdebug.debug
     def __init__(self, parameters, parent = None):

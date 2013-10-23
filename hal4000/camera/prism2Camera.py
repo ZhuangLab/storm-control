@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Camera for the prism2 setup.
 #
 # Hazen 03/13

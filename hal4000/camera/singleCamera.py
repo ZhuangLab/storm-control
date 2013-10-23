@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Base camera class for controlling a single camera,
 # detached or otherwise. This class is missing key
 # functionality that must be provided by a sub-class
@@ -23,8 +25,22 @@ import halLib.hdebug as hdebug
 
 import camera.genericCamera as genericCamera
 
+## SingleCamera
+#
+# This is the interface between HAL and (1) the camera control 
+# object that runs the camera (2) the UI window that display 
+# the data from the camera & (some of) the current camera 
+# parameters.
+#
 class SingleCamera(genericCamera.Camera):
 
+    ## __init__
+    #
+    # Create a single camera object.
+    #
+    # @param parameters A camera parameters object.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         genericCamera.Camera.__init__(self, parent)
@@ -44,26 +60,52 @@ class SingleCamera(genericCamera.Camera):
         self.camera_control.reachedMaxFrames.connect(self.handleMaxFrames)
         self.camera_control.newData.connect(self.handleNewFrames)
 
+    ## cameraInit
+    #
+    # Initialize the camera.
+    #
     @hdebug.debug
     def cameraInit(self):
         self.camera_control.cameraInit()
 
+    ## getCameraDisplay
+    #
+    # @return The camera display object.
+    #
     @hdebug.debug
     def getCameraDisplay(self):
         return self.camera_display
 
+    ## getCameraDisplayArea
+    #
+    # @return The UI widget where images from the camera are rendered.
+    #
     @hdebug.debug
     def getCameraDisplayArea(self):
         return self.camera_display.camera_widget
 
+    ## getFilmSize
+    #
+    # @return The size of the current film.
+    #
     @hdebug.debug
     def getFilmSize(self):
         return self.camera_control.getFilmSize()
-    
+
+    ## getRecordButton
+    #
+    # @return The record button of the camera display UI.
+    #
     @hdebug.debug
     def getRecordButton(self):
         return self.camera_display.getRecordButton()
 
+    ## handleGainChange
+    #
+    # Handles changing the EMCCD gain.
+    #
+    # @param gain The desired EMCCD gain.
+    #
     @hdebug.debug
     def handleGainChange(self, gain):
         self.stopCamera()
@@ -71,15 +113,36 @@ class SingleCamera(genericCamera.Camera):
         self.camera_control.setEMCCDGain(self.parameters.emccd_gain)
         self.startCamera()
 
+    ## handleMaxFrames
+    #
+    # Handles passing the reachedMaxFrames signal through from the
+    # camera control object to HAL.
+    #
     @hdebug.debug
     def handleMaxFrames(self):
         self.reachedMaxFrames.emit()
 
+    ## handleNewFrames
+    #
+    # Handles passing the newFrames from the camera control object
+    # to camera display object. It also signals the new frames
+    # to HAL if they are from the current acquisition.
+    #
+    # @param frames A python array of frame objects.
+    # @param key The ID of the frames from the camera control object.
+    #
     def handleNewFrames(self, frames, key):
         if (key == self.key):
             self.camera_display.newFrames(frames)
             self.newFrames.emit(frames)
 
+    ## newParameters
+    #
+    # Updates the setting of the camera control object, the camera
+    # display UI and the camera params UI.
+    #
+    # @param parameters A parameters object.
+    #
     @hdebug.debug
     def newParameters(self, parameters):
         self.parameters = parameters
@@ -89,37 +152,79 @@ class SingleCamera(genericCamera.Camera):
         self.camera_display.newParameters(parameters)
         self.camera_params.newParameters(parameters)
 
+    ## quit
+    #
+    # Tell the camera control object to shutdown the camera.
+    #
     @hdebug.debug
     def quit(self):
         self.camera_control.quit()
 
+    ## startCamera
+    #
+    # Tell the camera control thread to start the camera.
+    #
     @hdebug.debug
     def startCamera(self):
         self.key += 1
         self.updateTemperature()
         self.camera_control.startCamera(self.key)
 
+    ## setSyncMax
+    #
+    # Sets the max for the shutter synchronization spin box element of
+    # the camera display UI based the length of the shutter sequence.
+    #
+    # @param sync_max The maximum value of the synchronization spin box.
+    #
     @hdebug.debug
     def setSyncMax(self, sync_max):
         self.cycle_length = sync_max
         self.camera_display.setSyncMax(sync_max)
 
+    ## startFilm
+    #
+    # Tell the camera control object to start filming. Tell the
+    # camera display object to update the UI accordingly.
+    #
     @hdebug.debug
     def startFilm(self, writer):
         self.camera_control.startFilm(writer)
         self.camera_display.startFilm()
         self.filming = True
 
+    ## stopCamera
+    #
+    # Tell the camera control object to stop the camera. This is done
+    # by calling updateTemperature which has the side-effect of
+    # also stopping the camera.
+    #
+    # FIXME: Only the Andor cameras actually stop when this is called.
+    #    Is that a problem?
+    #
     @hdebug.debug
     def stopCamera(self):
         self.updateTemperature()
 
+    ## stopFilm
+    #
+    # Tell the camera control object to stop filming. Tell the
+    # camera display widget to update it's UI accordingly.
+    #
     @hdebug.debug
     def stopFilm(self):
         self.camera_control.stopFilm()
         self.camera_display.stopFilm()
         self.filming = False
 
+    ## toggleShutter
+    #
+    # Tell the camera control object to toggle the camera shutter. Update
+    # the camera_display UI accordingly.
+    #
+    # FIXME: Instead of updating the UI directly we should make this
+    #    a call to a method of the camera display widget.
+    #
     @hdebug.debug        
     def toggleShutter(self):
         open = self.camera_control.toggleShutter()
@@ -131,6 +236,11 @@ class SingleCamera(genericCamera.Camera):
             self.camera_display.ui.cameraShutterButton.setStyleSheet("QPushButton { color: black }")
         self.startCamera()
 
+    ## updateTemperature
+    #
+    # Get the current temperature from the camera control object. Update
+    # the parameters and camera parameters display with this object.
+    #
     @hdebug.debug
     def updateTemperature(self):
         cur_temp = self.camera_control.getTemperature()

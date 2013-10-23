@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Camera class for controlling a single (non-detached) camera.
 #
 # Hazen 10/13
@@ -18,6 +20,13 @@ import camera.singleCamera as singleCamera
 import camera.cameraDisplay as cameraDisplay
 import camera.cameraParams as cameraParams
 
+## ClassicSingleCamera
+#
+# This displays and control a single camera. The display is classic
+# in that it is the original HAL configuration, a single window that 
+# shows the picture from the camera, along with parameters, film 
+# settings, etc.
+#
 class ClassicSingleCamera(singleCamera.SingleCamera):
 
     @hdebug.debug

@@ -31,7 +31,7 @@ class ACameraControl(cameraControl.CameraControl):
     # Create the CameraControl class.
     #
     # @param parameters The initial parameters including camera settings.
-    # @param parents The PyQt parent of this object.
+    # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
     def __init__(self, parameters, parent = None):

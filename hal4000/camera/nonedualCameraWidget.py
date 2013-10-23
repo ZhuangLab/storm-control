@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# qtCameraWidget specialized for data for no camera (dual).
+## @file.
+#
+# qtCameraWidget specialized for data from the (dual) emulated camera.
 #
 # Hazen 12/12
 #
@@ -10,10 +12,19 @@ from PyQt4 import QtCore, QtGui
 
 import camera.andorCameraWidget as andorCameraWidget
 
+## ACameraWidget
 #
-# None Camera widget. This is the same as the Andor widget.
+# Dual emulated camera widget. This is the same as the Andor widget.
+# FIXME: The AndorWidget is no longer the right thing to sub-class.
 #
 class ACameraWidget(andorCameraWidget.ACameraWidget):
+
+    ## __init__
+    #
+    # Create the UI widget to display the data from the none dual camera.
+    #
+    # @param parent (Optional) The PyQt parent of this widget.
+    #
     def __init__(self, parent = None):
         andorCameraWidget.ACameraWidget.__init__(self, parent)
 

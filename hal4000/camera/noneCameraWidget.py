@@ -1,6 +1,9 @@
 #!/usr/bin/python
 #
-# qtCameraWidget specialized for data for no camera.
+## @file
+#
+# qtCameraWidget specialized for displaying data from the
+# emulated camera.
 #
 # Hazen 10/13
 #
@@ -10,10 +13,19 @@ from PyQt4 import QtCore, QtGui
 
 import qtWidgets.qtCameraWidget as qtCameraWidget
 
+## ACameraWidget
 #
-# None Camera widget.
+# The UI for displaying the "data" from the emulated camera.
 #
 class ACameraWidget(qtCameraWidget.QCameraWidget):
+
+    ## __init__
+    #
+    # Create a emulated camera widget.
+    #
+    # @param parameters A camera parameters object.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     def __init__(self, parameters, parent = None):
         qtCameraWidget.QCameraWidget.__init__(self, parameters, parent)
 
@@ -29,7 +41,7 @@ class ACameraWidget(qtCameraWidget.QCameraWidget):
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
 #
-# The above copyright notice and this permission notice shall be included in
+# The above copyright notice and this permission notice shall be included 
 # all copies or substantial portions of the Software.
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR

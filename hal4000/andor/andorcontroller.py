@@ -591,7 +591,7 @@ class AndorCamera:
     # Set the preamp gain.
     # This will choose the nearest available gain to the requested gain.
     #
-    # @param setPreAmpGain The desired preamp gain.
+    # @param gain The desired preamp gain.
     #
     def setPreAmpGain(self, gain):
         setCurrentCamera(self.camera_handle)

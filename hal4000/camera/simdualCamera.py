@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# Camera for the simulated dual camera setup.
+## @file
+#
+# Camera for the emulated dual camera setup.
 #
 # Hazen 12/12
 #

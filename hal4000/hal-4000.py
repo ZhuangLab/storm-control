@@ -99,6 +99,7 @@ class Window(QtGui.QMainWindow):
     # Set up the main window, connect and initialize all the hardware.
     #
     # @param parameters The initial (and default) parameters for the hardware.
+    # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
     def __init__(self, parameters, parent = None):

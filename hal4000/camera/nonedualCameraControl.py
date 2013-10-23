@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# No camera.
+## @file
+#
+# This emulates two cameras at once.
 #
 # Hazen 11/09
 #
@@ -14,7 +16,19 @@ import halLib.hdebug as hdebug
 import camera.cameraControl as cameraControl
 import camera.frame as frame
 
+## ACameraControl
+#
+# This emulates the control of two cameras at once.
+#
 class ACameraControl(cameraControl.CameraControl):
+
+    ## __init__
+    #
+    # Create the dual camera emulation object.
+    #
+    # @param parameters A parameters object.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         cameraControl.CameraControl.__init__(self, parameters, parent)
@@ -27,15 +41,32 @@ class ACameraControl(cameraControl.CameraControl):
         self.shutter2 = False
         self.sleep_time = 50
 
+    ## getAcquisitionTimings
+    #
+    # Returns how long it takes to take a frame.
+    #
+    # @return A python array containing the acquisition timings.
+    #
     @hdebug.debug
     def getAcquisitionTimings(self):
         time = 0.001 * float(self.sleep_time)
         return [time, time, time]
-
+    
+    ## getTemperature
+    #
+    # Returns a made up temperature from the indicated camera. Emulated cameras
+    # run hot & are unstable..
+    #
+    # @param camera Which camera to get the temperature of.
+    #
     @hdebug.debug
     def getTemperature(self, camera):
         return [40, "unstable"]
 
+    ## initCamera
+    #
+    # Initialize the camera.
+    #
     def initCamera(self):
         if not self.camera:
             if hdebug.getDebug():
@@ -43,6 +74,13 @@ class ACameraControl(cameraControl.CameraControl):
             self.camera = 1
         self.got_camera = 1
 
+    ## newFilmSettings
+    #
+    # Configure the current acquisition.
+    #
+    # @param parameters A parameters object.
+    # @param filming (Optional) A flag to indicate if the acquisition will be recorded.
+    #
     @hdebug.debug
     def newFilmSettings(self, parameters, filming = 0):
         self.stopCamera()
@@ -59,6 +97,14 @@ class ACameraControl(cameraControl.CameraControl):
         self.frames_to_take = p.frames
         self.mutex.unlock()
 
+    ## newParameters
+    #
+    # Configure the camera based on the new parameters. This creates fake
+    # data for each camera based on the parameters object. The data is
+    # recycled by the control thread to make camera frames.
+    #
+    # @param parameters A parameters object.
+    #
     @hdebug.debug
     def newParameters(self, parameters):
         self.initCamera()
@@ -93,6 +139,11 @@ class ACameraControl(cameraControl.CameraControl):
 
         self.newFilmSettings(parameters)
 
+    ## run
+    #
+    # This thread generates fake data from each camera and broadcasts 
+    # it using the newData signal. Saves the data if filming.
+    #
     def run(self):
         while(self.running):
             self.mutex.lock()
@@ -132,10 +183,23 @@ class ACameraControl(cameraControl.CameraControl):
             self.mutex.unlock()
             self.msleep(self.sleep_time)
 
+    ## setEMCCDGain
+    #
+    # Set the EMCCD gain of the indicated camera.
+    #
+    # @param camera Which camera to change the gain of.
+    # @param gain The desired gain value.
+    #
     @hdebug.debug
     def setEMCCDGain(self, camera, gain):
         pass
 
+    ## toggleShutter
+    #
+    # Toggles the shutter of the indicated camera.
+    #
+    # @param camera Which camera to toggle the shutter of.
+    #
     @hdebug.debug
     def toggleShutter(self, camera):
         if (camera == 1):

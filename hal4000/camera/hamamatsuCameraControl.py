@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Camera control specialized for a Hamamatsu camera.
 #
 # Hazen 10/13
@@ -17,7 +19,20 @@ import camera.frame as frame
 import camera.cameraControl as cameraControl
 import hamamatsu.hamamatsu_camera as hcam
 
+## ACameraControl
+#
+# This class is used to control a Hamamatsu (sCMOS) camera.
+#
 class ACameraControl(cameraControl.CameraControl):
+
+    ## __init__
+    #
+    # Create a Hamamatsu camera control object and initialize
+    # the camera.
+    #
+    # @param parameters A parameters object.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         cameraControl.CameraControl.__init__(self, parameters, parent)
@@ -29,21 +44,45 @@ class ACameraControl(cameraControl.CameraControl):
         else:
             self.camera = hcam.HamamatsuCameraMR(0)
 
+    ## closeShutter
+    #
+    # Just stops the camera. The camera does not have a shutter.
+    #
     @hdebug.debug
     def closeShutter(self):
         self.shutter = False
         self.stopCamera()
 
+    ## getAcquisitionTimings
+    #
+    # Returns the internal frame rate of the camera.
+    #
+    # @return A python array containing the inverse of the internal frame rate.
+    #
     @hdebug.debug
     def getAcquisitionTimings(self):
         frame_rate = self.camera.getPropertyValue("internal_frame_rate")[0]
         temp = 1.0/frame_rate
         return [temp, temp, temp]
 
+    ## getTemperature
+    #
+    # This camera does not have a temperature sensor so this returns
+    # a meaningless value.
+    #
+    # @return The python array ["na", "stable"].
+    #
     @hdebug.debug
     def getTemperature(self):
         return ["na", "stable"]
 
+    ## newFilmSettings
+    #
+    # Setup for new acquisition.
+    #
+    # @param parameters A parameters object.
+    # @param filming True/False should the acquisition be recorded.
+    #
     @hdebug.debug
     def newFilmSettings(self, parameters, filming = False):
         self.stopCamera()
@@ -56,6 +95,12 @@ class ACameraControl(cameraControl.CameraControl):
                 self.stop_at_max = False
         self.filming = filming
 
+    ## newParameters
+    #
+    # Update the camera parameters based on a new parameters object.
+    #
+    # @param parameters A parameters object.
+    #
     @hdebug.debug
     def newParameters(self, parameters):
         p = parameters
@@ -100,17 +145,33 @@ class ACameraControl(cameraControl.CameraControl):
             print traceback.format_exc()
             self.got_camera = False
 
+    ## openShutter
+    #
+    # Just stops the camera. The camera has no shutter.
+    #
     @hdebug.debug
     def openShutter(self):
         self.shutter = True
         self.stopCamera()
 
+    ## quit
+    #
+    # Stops the camera thread and shutsdown the camera.
+    #
     @hdebug.debug
     def quit(self):
         self.stopThread()
         self.wait()
         self.camera.shutdown()
 
+    ## run
+    #
+    # The camera thread. This gets images from the camera, turns
+    # them into frames and sends them out using the newData signal.
+    # If the acquisition is being recorded it saves the frame
+    # to disc. It also signals when max frames has been reached 
+    # for a fixed length  acquisition.
+    #
     def run(self):
         while(self.running):
             self.mutex.lock()
@@ -152,6 +213,13 @@ class ACameraControl(cameraControl.CameraControl):
             self.mutex.unlock()
             self.msleep(5)
 
+    ## startCamera
+    #
+    # Start the camera. The key parameter is for synchronizing the main
+    # process and the camera thread.
+    #
+    # @param key The ID value to use for frames from the current acquisition.
+    #
     @hdebug.debug        
     def startCamera(self, key):
         self.mutex.lock()
@@ -163,6 +231,10 @@ class ACameraControl(cameraControl.CameraControl):
             self.camera.startAcquisition()
         self.mutex.unlock()
 
+    ## stopCamera
+    #
+    # Stops the camera
+    #
     @hdebug.debug
     def stopCamera(self):
         if self.acquire.amActive():

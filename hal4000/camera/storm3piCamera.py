@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Camera for the storm3 dual objective setup.
 #
 # Hazen 07/13
