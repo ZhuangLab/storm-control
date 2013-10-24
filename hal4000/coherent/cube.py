@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Generic Coherent Cube laser control (via RS-232)
 #
 # Hazen 7/10
@@ -8,8 +10,18 @@
 import halLib.RS232 as RS232
 import time
 
-
+## Cube
+#
+# This class controls a Coherent cube laser using RS-232 communication.
+#
 class Cube(RS232.RS232):
+
+    ## __init__
+    #
+    # Connect to the laser by RS-232 and verify that the connection has been made.
+    #
+    # @param port The RS-232 port that the laser is on. This is a string like "COM9".
+    #
     def __init__(self, port):
         self.on = False
         try:
@@ -32,9 +44,24 @@ class Cube(RS232.RS232):
             print "Perhaps it is turned off or the COM ports have"
             print "been scrambled?"
 
+    ## respToFloat
+    #
+    # Convert a response from the laser to a floating point number.
+    #
+    # @param resp The response string from the laser.
+    # @param start The index of the first character in the number.
+    #
+    # @return A floating point number.
+    #
     def respToFloat(self, resp, start):
         return float(resp[start:-1])
 
+    ## getExtControl
+    #
+    # Checks if the laser is configured for external control.
+    #
+    # @return True/False
+    #
     def getExtControl(self):
         self.sendCommand("?EXT")
         response = self.waitResponse()
@@ -43,6 +70,12 @@ class Cube(RS232.RS232):
         else:
             return True
 
+    ## getLaserOnOff
+    #
+    # Checks if the laser is on or off.
+    #
+    # @return True/False
+    #
     def getLaserOnOff(self):
         self.sendCommand("?L")
         resp = self.waitResponse()
@@ -53,6 +86,12 @@ class Cube(RS232.RS232):
             self.on = False
             return False
 
+    ## getPowerRange
+    #
+    # Returns the laser power range (in mW?).
+    #
+    # @return [minimum power, maximum power]
+    #
     def getPowerRange(self):
         self.sendCommand("?MINLP")
         pmin = self.respToFloat(self.waitResponse(), 6)
@@ -60,11 +99,21 @@ class Cube(RS232.RS232):
         pmax = self.respToFloat(self.waitResponse(), 6)
         return [pmin, pmax]
 
+    ## getPower
+    #
+    # Return the current laser power (in mW?).
+    #
+    # @return The laser power as a float.
+    #
     def getPower(self):
         self.sendCommand("?SP")
         power_string = self.waitResponse()
         return float(power_string[3:-1])
 
+    ## setExtControl
+    #
+    # Set the laser to external control mode.
+    #
     def setExtControl(self, mode):
         if mode:
             self.sendCommand("EXT=1")
@@ -72,6 +121,12 @@ class Cube(RS232.RS232):
             self.sendCommand("EXT=0")
         self.waitResponse()
 
+    ## setLaserOnOff
+    #
+    # Turn the laser on or off.
+    #
+    # @param on True/False, turn the laser on/off
+    #
     def setLaserOnOff(self, on):
         if on and (not self.on):
             self.sendCommand("L=1")
@@ -82,12 +137,22 @@ class Cube(RS232.RS232):
             self.waitResponse()
             self.on = False
 
+    ## setPower
+    #
+    # Set the laser power (in mW).
+    #
+    # @param power_in_mw The desired laser power in mW.
+    #
     def setPower(self, power_in_mw):
         if power_in_mw > self.pmax:
             power_in_mw = self.pmax
         self.sendCommand("P=" + str(power_in_mw))
         self.waitResponse()
 
+    ## shutDown
+    #
+    # Turn the laser off & close the RS-232 connection.
+    #
     def shutDown(self):
         if self.live:
             self.setLaserOnOff(False)

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Coherent CUBE 445 laser control.
 #
 # Hazen 7/10
@@ -7,7 +9,18 @@
 
 import cube
 
+## Cube445
+#
+# Controls a Coherent Cube 445 laser. This is sub-class of cube.Cube.
+#
 class Cube445(cube.Cube):
+
+    ## __init__
+    #
+    # Initiate RS-232 communication, verify that the laser is responding.
+    #
+    # @param port (Optional) A string that specifies the port, the default is "COM1".
+    #
     def __init__(self, port = "COM1"):
         cube.Cube.__init__(self, port)
 

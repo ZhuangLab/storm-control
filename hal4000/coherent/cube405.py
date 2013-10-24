@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Coherent CUBE 405 laser control.
 #
 # Hazen 7/10 (com port modified Josh 6/26/13)
@@ -7,7 +9,18 @@
 
 import cube
 
+## Cube405
+#
+# Controls a Coherent Cube 405 laser. This is sub-class of cube.Cube.
+#
 class Cube405(cube.Cube):
+
+    ## __init__
+    #
+    # Initiate RS-232 communication, verify that the laser is responding.
+    #
+    # @param port (Optional) A string that specifies the port, the default is "COM13".
+    #
     def __init__(self, port = "COM13"):
         cube.Cube.__init__(self, port)
 

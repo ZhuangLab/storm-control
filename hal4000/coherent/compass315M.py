@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Compass 315M laser control. This is done via a
 # National Instruments card as this laser does
 # not come with any more sophisticated interface.
@@ -17,7 +19,19 @@ except:
     sys.path.append("..")
     import nationalInstruments.nicontrol as nicontrol
 
+## Compass315M
+#
+# This class encapsulates controlling a Coherent Compass315M
+# laser using a National Instruments DAQ board.
+#
 class Compass315M():
+
+    ## __init__
+    #
+    # Set up the necessary NI tasks to control the laser.
+    #
+    # @param board The name of the NI board to use.
+    #
     def __init__(self, board = "PCI-MIO-16E-4"):
         self.interlock = nicontrol.DigitalOutput(board, 0)
         self.laser_on_off = nicontrol.DigitalOutput(board, 1)
@@ -27,6 +41,12 @@ class Compass315M():
         self.enter = nicontrol.DigitalOutput(board, 3)
         self.laser_set_point = nicontrol.VoltageOutput(board, 0, min_val = 0.0, max_val = 5.0)
 
+    ## setPower
+    #
+    # Set the laser power.
+    #
+    # @param power The laser power (0.0 - 1.0).
+    #
     def setPower(self, power):
         if (power >= 0.0) and (power <= 1.0):
             self.laser_set_point.outputVoltage(5.0 * power)
@@ -36,7 +56,13 @@ class Compass315M():
             self.enter.output(1)
         else:
             print power, "out of range."
-    
+
+    ## start
+    #
+    # Turn the laser on at the specified power.
+    #
+    # @param power The initial laser power (0.0 - 1.0)
+    #
     def start(self, power):
         if self.laser_on_off_status.input():
             self.setPower(power)
@@ -49,6 +75,10 @@ class Compass315M():
             time.sleep(0.05)
             self.laser_on_off.output(1)
 
+    ## stop
+    #
+    # Turn the laser off.
+    #
     def stop(self):
         self.enter.output(0)
         self.laser_set_point.outputVoltage(0.0)
