@@ -1,10 +1,12 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Communicates with the Crystal Technologies AOTF (via USB).
 #
 # To work around the lack of a 64 bit version of the
 # AotfLibrary.dll file we handle a aotf communication
-# using the AOTF32Bit.py script which is need to be
+# using the AOTF32Bit.py script which needs to be
 # run in 32 bit Python. Then we communicate with it
 # using basic IPC.
 #
@@ -20,17 +22,32 @@ aotf = None
 response_time = 0.05
 instantiated = 0
 
+## AOTF
+#
+# This class handles communication with a Crystal Technologies AOTF.
+#
 # FIXME: I'd like for this class to make sure that the AOTF is closed
 # For now, you have to make sure shutdown is called or the process will
 # lock (or at least it will lock the DOS prompt).
+#
 class AOTF():
+
+    ## __init__
+    #
+    # Create a AOTF object, load the DLL that is used to control the AOTF
+    # and verify that we can talk to the AOTF.
+    #
+    # FIXME: Is the instantiated stuff necessary? It doesn't seem likely
+    #    that we'd ever make the mistake of trying to create two of
+    #    these classes in a single process.
+    #
     def __init__(self):
         self.live = 1
 
         global instantiated
         if instantiated:
             print "Attempt to instantiate two AOTF communication classes."
-            self.live = 0
+            self.live = False
         else:
             # Load the AOTF driver library library.
             global aotf
@@ -42,12 +59,18 @@ class AOTF():
                 print "Failed to load AotfLibrary.dll"
 
             if self._aotfOpen():
-                self.live = 1
-                instantiated = 1
+                self.live = True
+                instantiated = True
             else:
                 print "Failed to connect to the AOTF, perhaps it is turned off?"
-                self.live = 0
-            
+                self.live = False
+
+    ## _aotfGetResp
+    #
+    # This gets a response from the AOTF. If the AOTF does not respond with any data
+    # in response_time (50ms) then it assumes that there is no more data to get
+    # from the AOTF.
+    #
     def _aotfGetResp(self):
         if self.live:
             response = ""
@@ -66,19 +89,39 @@ class AOTF():
         else:
             return "Invalid"
 
+    ## _aotfOpen
+    #
+    # The checks whether the AOTF is "open", i.e. that we can talk to it.
+    #
+    # @return True/False, we can talk to the AOTF.
+    #
     def _aotfOpen(self):
         try:
             self.aotf_handle = aotf.AotfOpen(0)
             self._aotfSendCmd("dau en")
-            return 1
+            return True
         except:
-            return 0
+            return False
 
+    ## _aotfSendCmd
+    #
+    # Sends a command to the AOTF.
+    #
+    # @param cmd The command to send (as a string).
+    #
     def _aotfSendCmd(self, cmd):
         if self.live:
             cmd += "\n"
             assert aotf.AotfWrite(self.aotf_handle, c_uint(len(cmd)), c_char_p(cmd)) == 1, "aotfSendCMD failed!"
 
+    ## _sendCmd
+    #
+    # Sends a command to the AOTF and waits for a response.
+    #
+    # @param cmd The command to send (as a string).
+    #
+    # @return The response from the AOTF, or a warning message if the response was bad.
+    #
     def _sendCmd(self, cmd):
         self._aotfSendCmd(cmd)
         response = self._aotfGetResp()
@@ -88,34 +131,73 @@ class AOTF():
         else:
             return response
 
-    # If you don't call this then the program will lock on shutdown
-    # (at least when run from the DOS prompt).
+    ## _shutDown
+    #
+    # If you don't call this then the program will lock on shutdown. The only
+    # way to unlock it is to run the Crystal Technologies labview AOTF control
+    # program.
+    #
     def _shutDown(self):
         if self.live:
             self._aotfSendCmd("dds Reset")
             self._aotfGetResp()
             aotf.AotfClose(self.aotf_handle)
 
+    ## analogModulationOn
+    #
+    # Turn on analog modulation of the AOTF.
+    #
     def analogModulationOn(self):
         self._sendCmd("dau dis")
 
+    ## analogModulationOff
+    #
+    # Turn off analog modulation of the AOTF.
+    #
     def analogModulationOff(self):
         self._sendCmd("dau en")
 
+    ## fskOff
+    #
+    # Turn frequency shift key off for the specified channel.
+    #
+    # @param channel Turn FSK off for this channel.
+    #
     def fskOff(self, channel):
         cmd = "dds fsk " + str(channel) + " 0"
         self._sendCmd(cmd)
 
+    ## fskOn
+    #
+    # Turn frequency shift key on for the specified channel.
+    #
+    # @param channel Turn FSK on for this channel.
+    #
     def fskOn(self, channel):
         cmd = "dds fsk " + str(channel) + " 1"
         self._sendCmd(cmd)
 
+    ## getStatus
+    #
+    # @return True/False, we can talk to the AOTF.
+    #
     def getStatus(self):
         return self.live
 
+    ## reset
+    #
+    # Resets the AOTF.
+    #
     def reset(self):
         self._sendCmd("dds Reset")
 
+    ## setAmplitude
+    #
+    # Sets amplitude of the specified channel.
+    #
+    # @param channel The channel to set.
+    # @param amplitude The desired amplitude value.
+    #
     def setAmplitude(self, channel, amplitude):
         assert channel >= 0, "setAmplitude: channel out of range " + str(channel)
         assert channel < 8, "setAmplitude: channel out of range " + str(channel)
@@ -124,10 +206,25 @@ class AOTF():
         cmd = "dds a " + str(channel) + " " + str(amplitude)
         self._sendCmd(cmd)
 
+    ## setChannel
+    #
+    # Sets the frequency and the amplitude of the specified channel.
+    #
+    # @param channel The channel to set.
+    # @param frequency The desired frequency.
+    # @param amplitude The desired amplitude.
+    #
     def setChannel(self, channel, frequency, amplitude):
         self.setFrequency(channel, frequency)
         self.setAmplitude(channel, amplitude)
 
+    ## setFrequencies
+    #
+    # Sets the frequencies of the specified channel.
+    #
+    # @param channel The channel to set.
+    # @param frequencies A python array of frequencies.
+    #
     def setFrequencies(self, channel, frequencies):
         assert channel >= 0, "setFrequencies: channel out of range " + str(channel)
         assert channel < 8, "setFrequencies: channel out of range " + str(channel)
@@ -139,20 +236,44 @@ class AOTF():
         cmd = "dds f " + str(channel) + frequency_string
         self._sendCmd(cmd)
 
+    ## setFrequency
+    #
+    # Set the frequency of the specified channel. 
+    #
+    # @param channel The channel to set.
+    # @param frequency The desired frequency.
+    #
     def setFrequency(self, channel, frequency):
         self.setFrequencies(channel, [frequency])
 
+    ## shutDown
+    #
+    # Reset the AOTF and shutdown communication.
+    #
     def shutDown(self):
         global instantiated
-        instantiated = 0
+        instantiated = False
         self._shutDown()
-        self.aotf_handle = 0
+        self.aotf_handle = False
 
 #    def __del__(self):
 #        if self.aotf_handle:
 #            self.shutDown()
 
+## AOTF64Bit
+#
+# This class is for communication with a AOTF when running
+# 64 bit Python. Since the provided driver only works with
+# 32 bit processes we start a 32 bit Python process to
+# control the AOTF, then we talk to it via IPC.
+#
 class AOTF64Bit(AOTF):
+
+    ## __init__
+    #
+    # Create a 32 bit process for communication with the AOTF and
+    # verify that it can talk to the AOTF.
+    #
     def __init__(self):
         dir = os.path.dirname(__file__)
         if (len(dir) > 0):
@@ -166,10 +287,18 @@ class AOTF64Bit(AOTF):
                                           stdout = subprocess.PIPE)
         if not self._aotfOpen():
             self.live = False
-            
+
+    ## _aotfGetResp
+    #
+    # This is a noop when using IPC.
+    #
     def _aotfGetResp(self):
         pass
 
+    ## _aotfOpen
+    #
+    # @return True/False we can talk to the AOTF.
+    #
     def _aotfOpen(self):
         response = self._sendCmd("dau en")
         if ("Invalid" in response):
@@ -177,9 +306,21 @@ class AOTF64Bit(AOTF):
         else:
             return True
 
+    ## _aotfSendCmd
+    #
+    # This is a noop when using IPC.
+    #
     def _aotfSendCmd(self, cmd):
         pass
 
+    ## _sendCmd
+    #
+    # Send a command to the AOTF using IPC.
+    #
+    # @param cmd The command to send (a string).
+    #
+    # @return The response of "Invalid" if there was a problem.
+    #    
     def _sendCmd(self, cmd):
         if self.live:
             self.aotf_proc.stdin.write(cmd + "\n")
@@ -191,6 +332,10 @@ class AOTF64Bit(AOTF):
         else:
             return "Invalid"
 
+    ## shutDown
+    #
+    # Reset the AOTF and shutdown IPC.
+    #
     def shutDown(self):
         if self.live:
             self._sendCmd("dds Reset")

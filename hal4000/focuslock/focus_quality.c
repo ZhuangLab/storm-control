@@ -1,4 +1,5 @@
 /*
+ * @file
  *
  * Methods for calculating how well focused and image is.
  *
@@ -19,6 +20,8 @@ float imageGradient(short *, int, int);
 /* functions */
 
 /* 
+ * imageGradient
+ *
  * Compute the sum of the pixel by pixel difference along the "X" axis.
  * Normalize this value by the overall sum of the image. 
  */

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Python interface to the focus_quality library.
 #
 # Hazen 10/13
@@ -10,6 +12,10 @@ import os
 
 focus_quality = False
 
+## loadFocusQuality
+#
+# Loads the focus quality DLL, if it has not already been loaded.
+#
 def loadFocusQualityDLL():
     global focus_quality
     if not focus_quality:
@@ -22,10 +28,10 @@ loadFocusQualityDLL()
 c_imageGradient = focus_quality.imageGradient
 c_imageGradient.restype = c_float
 
+## imageGradient
 #
 # Returns the magnitude of the image gradient in the x direction.
 #
-
 def imageGradient(frame):
     return c_imageGradient(frame.getDataPtr(),
                            c_int(frame.image_x),
