@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # These widgets are used by the focusLockZ 
 # class to provide user feedback.
 #
@@ -8,12 +10,23 @@
 
 from PyQt4 import QtCore, QtGui
 
-#
-# Status display widgets
-#
 
-# Base class.
+## QStatusDisplay
+#
+# Base class class for the status display widgets.
+#
 class QStatusDisplay(QtGui.QWidget):
+
+    ## __init__
+    #
+    # Create a QStatusDisplay
+    #
+    # @param x_size The size of the widget in x in pixels.
+    # @param y_size The size of the widget in y in pixels.
+    # @param scale_min The minimum value of the display bar.
+    # @param scale_max The maximum value of the display bar.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     def __init__(self, x_size, y_size, scale_min, scale_max, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.x_size = x_size
@@ -24,6 +37,14 @@ class QStatusDisplay(QtGui.QWidget):
         self.value = 0
         self.warning = 0
 
+    ## convert
+    #
+    # Convert input value into pixels.
+    #
+    # @param value The input value.
+    #
+    # @return Value scaled to pixels.
+    #
     def convert(self, value):
         scaled = int((value - self.scale_min)/self.range * float(self.y_size))
         if scaled > self.y_size:
@@ -32,18 +53,44 @@ class QStatusDisplay(QtGui.QWidget):
             scaled = 0
         return scaled
 
+    ## paintBackground
+    #
+    # Paint the background of the widget.
+    #
+    # @param painter A PyQt painter object.
+    #
     def paintBackground(self, painter):
         color = QtGui.QColor(255, 255, 255)
         painter.setPen(color)
         painter.setBrush(color)
         painter.drawRect(0, 0, self.x_size, self.y_size)
 
+    ## updateValue
+    #
+    # Updates the widget display based on value.
+    #
+    # @param value The input value.
+    #
     def updateValue(self, value):
         self.value = self.convert(value)
         self.update()
 
-# Focus lock sum signal.
+## QSumDisplay
+#
+# Focus lock sum signal display.
+#
 class QSumDisplay(QStatusDisplay):
+    
+    ## __init__
+    #
+    # @param x_size The size of the widget in x in pixels.
+    # @param y_size The size of the widget in y in pixels.
+    # @param scale_min The minimum value of the display bar.
+    # @param scale_max The maximum value of the display bar.
+    # @param warning_low This specifies where to draw the red bar that indicate proximity to the end of the usable range on the low side.
+    # @param warning_high This specifies where to draw the red bar that indicate proximity to the end of the usable range on the high side.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     def __init__(self, x_size, y_size, scale_min, scale_max, warning_low, warning_high, parent = None):
         QStatusDisplay.__init__(self, x_size, y_size, scale_min, scale_max, parent = parent)
         self.warning_low = self.convert(float(warning_low))
@@ -52,6 +99,12 @@ class QSumDisplay(QStatusDisplay):
         else:
             self.warning_high = False
 
+    ## paintEvent
+    #
+    # Handles redrawing the widget.
+    #
+    # @param event A PyQt event.
+    #
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
         self.paintBackground(painter)
@@ -73,9 +126,24 @@ class QSumDisplay(QStatusDisplay):
         painter.setBrush(color)
         painter.drawRect(2, self.y_size - self.value, self.x_size - 5, self.value)
 
+## QOffsetDisplay
+#
 # Focus lock offset & stage position.
+#
 class QOffsetDisplay(QStatusDisplay):
-    def __init__(self, x_size, y_size, scale_min, scale_max, warning_low, warning_high, has_center_bar = 0, parent = None):
+
+    ## __init__
+    #
+    # @param x_size The size of the widget in x in pixels.
+    # @param y_size The size of the widget in y in pixels.
+    # @param scale_min The minimum value of the display bar.
+    # @param scale_max The maximum value of the display bar.
+    # @param warning_low This specifies where to draw the red bar that indicate proximity to the end of the usable range on the low side.
+    # @param warning_high This specifies where to draw the red bar that indicate proximity to the end of the usable range on the high side.
+    # @param has_center_bar This specifies whether or not to draw a line in the center to indicate the middle of the range.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
+    def __init__(self, x_size, y_size, scale_min, scale_max, warning_low, warning_high, has_center_bar = False, parent = None):
         QStatusDisplay.__init__(self, x_size, y_size, scale_min, scale_max, parent = parent)
         self.center_bar = 0
         if has_center_bar:
@@ -83,6 +151,12 @@ class QOffsetDisplay(QStatusDisplay):
         self.warning_low = self.convert(float(warning_low))
         self.warning_high = self.convert(float(warning_high))
 
+    ## paintEvent
+    #
+    # Handles redrawing the widget.
+    #
+    # @param event A PyQt event.
+    #
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
         self.paintBackground(painter)
@@ -109,6 +183,17 @@ class QOffsetDisplay(QStatusDisplay):
 class QStageDisplay(QOffsetDisplay):
     adjustStage = QtCore.pyqtSignal(int)
 
+    ## __init__
+    #
+    # @param x_size The size of the widget in x in pixels.
+    # @param y_size The size of the widget in y in pixels.
+    # @param scale_min The minimum value of the display bar.
+    # @param scale_max The maximum value of the display bar.
+    # @param warning_low This specifies where to draw the red bar that indicate proximity to the end of the usable range on the low side.
+    # @param warning_high This specifies where to draw the red bar that indicate proximity to the end of the usable range on the high side.
+    # @param has_center_bar This specifies whether or not to draw a line in the center to indicate the middle of the range.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     def __init__(self, x_size, y_size, scale_min, scale_max, warning_low, warning_high, has_center_bar = 0, parent = None):
         QOffsetDisplay.__init__(self,
                                 x_size,
@@ -126,6 +211,12 @@ class QStageDisplay(QOffsetDisplay):
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.setToolTip(self.tooltips[0])
 
+    ## paintBackground
+    #
+    # Paint the background of the widget.
+    #
+    # @param painter A PyQt painter object.
+    #
     def paintBackground(self, painter):
         if self.adjust_mode:
             color = QtGui.QColor(180, 180, 180)
@@ -135,6 +226,13 @@ class QStageDisplay(QOffsetDisplay):
         painter.setBrush(color)
         painter.drawRect(0, 0, self.x_size, self.y_size)
 
+    ## mousePressEvent
+    #
+    # Toggles between adjust and non-adjust mode. In adjust mode the piezo stage
+    # can be moved up and down with the mouse scroll wheel.
+    #
+    # @param event A PyQt event.
+    #
     def mousePressEvent(self, event):
         self.adjust_mode = not self.adjust_mode
         if self.adjust_mode:
@@ -143,6 +241,13 @@ class QStageDisplay(QOffsetDisplay):
             self.setToolTip(self.tooltips[0])
         self.update()
 
+    ## wheelEvent
+    #
+    # Handles mouse wheel events. Emits the adjustStage signal if the
+    # widget is in adjust mode.
+    #
+    # @param wheel_event A PyQt event.
+    #
     def wheelEvent(self, wheel_event):
         if self.adjust_mode:
             if (wheel_event.delta() > 0):
@@ -154,12 +259,26 @@ class QStageDisplay(QOffsetDisplay):
 
 # QPD XY position.
 class QQPDDisplay(QStatusDisplay):
+
+    ## __init__
+    #
+    # @param x_size The size of the widget in x in pixels.
+    # @param y_size The size of the widget in y in pixels.
+    # @param scale The 1/2 the size of the display in QPD units.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     def __init__(self, x_size, y_size, scale, parent = None):
         QStatusDisplay.__init__(self, x_size, y_size, (-1 * scale), scale, parent = parent)
         self.center = self.convert(0.0) - 4
         self.x_value = 0
         self.y_value = 0
 
+    ## paintEvent
+    #
+    # Handles redrawing the widget.
+    #
+    # @param event A PyQt event.
+    #
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
         self.paintBackground(painter)
@@ -176,17 +295,31 @@ class QQPDDisplay(QStatusDisplay):
         painter.setBrush(color)
         painter.drawEllipse(self.x_value - 7, self.y_value - 7, 6, 6)
 
+    ## updateValue
+    #
+    # Updates where the ellipse is drawn that indicates the current position of the QPD.
+    #
+    # @param x The x value from the QPD.
+    # @param y The y value from the QPD.
+    #
     def updateValue(self, x, y):
         self.x_value = self.convert(x)
         self.y_value = self.convert(y)
         self.update()
 
+## QCamDisplay
+#
 # USB camera image display.
+#
 class QCamDisplay(QtGui.QWidget):    
     adjustCamera = QtCore.pyqtSignal(int, int)
     adjustOffset = QtCore.pyqtSignal(float)
     changeFitMode = QtCore.pyqtSignal(int)
 
+    ## __init__
+    #
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.adjust_mode = False
@@ -216,9 +349,19 @@ class QCamDisplay(QtGui.QWidget):
         self.setMouseTracking(True)
         self.setToolTip(self.tooltips[0])
 
+    ## getImage
+    #
+    # @return A image from the focus lock camera.
+    #
     def getImage(self):
         return self.image
 
+    ## keyPressEvent
+    #
+    # Handles key press events.
+    #
+    # @param event A PyQt key press event.
+    #
     def keyPressEvent(self, event):
         if self.adjust_mode:
             which_key = event.key()
@@ -246,6 +389,12 @@ class QCamDisplay(QtGui.QWidget):
                 self.fit_mode = not self.fit_mode
                 self.changeFitMode.emit(int(self.fit_mode))
 
+    ## mouseMoveEvent
+    #
+    # Handles mouse movement events.
+    #
+    # @param event A PyQt event.
+    #
     def mouseMoveEvent(self, event):
         self.zoom_im_x = -1
         if self.image and self.adjust_mode:
@@ -258,6 +407,12 @@ class QCamDisplay(QtGui.QWidget):
                 self.zoom_x = event.x() - half_size
                 self.zoom_y = event.y() - half_size
 
+    ## mousePressEvent
+    #
+    # Handles mouse press events.
+    #
+    # @param event A PyQt event.
+    #
     def mousePressEvent(self, event):
         self.adjust_mode = not self.adjust_mode
         if self.adjust_mode:
@@ -266,6 +421,13 @@ class QCamDisplay(QtGui.QWidget):
             self.setToolTip(self.tooltips[0])
         self.update()
 
+    ## newImage
+    #
+    # Updates the image that will be shown in the widget given a new image from the focus lock camera.
+    #
+    # @param data A Python array containing the latest image from the camera and the calculated offset and sum signal.
+    # @param show_dot True/False draw the flashing red dot in the corner of the display that indicates if the camera is still live.
+    #    
     def newImage(self, data, show_dot):
         # Update image if data is good..
         if (type(data) == type([])):
@@ -308,6 +470,12 @@ class QCamDisplay(QtGui.QWidget):
 
             self.update()
 
+    ## paintEvent
+    #
+    # Handles redrawing the widget.
+    #
+    # @param event A PyQt event.
+    #
     def paintEvent(self, Event):
         painter = QtGui.QPainter(self)
         if self.image:
@@ -366,9 +534,18 @@ class QCamDisplay(QtGui.QWidget):
             painter.setBrush(self.background)
             painter.drawRect(0, 0, self.width(), self.height())
 
+    ## toggleCircles
+    #
+    # Show/hide the circles that are drawn to indicate where the fitting code
+    # thinks the two laser spots are in the camera field.
+    #
     def toggleCircles(self):
         self.display_circles = not self.display_circles
 
+    ## toggleLine
+    #
+    # Show/hide the alignment lines.
+    #
     def toggleLine(self):
         self.display_lines = not self.display_lines
 
