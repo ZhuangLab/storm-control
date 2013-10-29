@@ -476,7 +476,7 @@ class QCamDisplay(QtGui.QWidget):
     #
     # @param event A PyQt event.
     #
-    def paintEvent(self, Event):
+    def paintEvent(self, event):
         painter = QtGui.QPainter(self)
         if self.image:
             # Draw image.
