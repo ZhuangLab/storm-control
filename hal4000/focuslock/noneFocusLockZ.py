@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Pseudo focus lock for none setup.
 #
 # Hazen 11/09

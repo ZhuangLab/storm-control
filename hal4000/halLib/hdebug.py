@@ -1,6 +1,10 @@
 #!/usr/bin/python
 #
-# Debugging decorators & logging.
+## @file
+#
+# Debugging decorators & logging. This is still a work in progress
+# as my original concept for decorators has been broken by changes in
+# PyQt and my logging concept is also somewhat of a failure.
 #
 # Hazen 07/13
 #
@@ -14,6 +18,10 @@ from PyQt4 import QtCore
 
 want_debugging = False
 
+## debug
+#
+# Function decorator. This prints all the arguments to a function that it decorates.
+#
 def debug(fn):
     def debug_f(*args, **kw):
         if fn.__module__ == "__main__":
@@ -31,6 +39,10 @@ def debug(fn):
     else:
         return fn
 
+## debugSlot
+#
+# Slot decorator. This prints all the signal arguments to a slot.
+#
 def debugSlot(fn):
     def debug_f(*args):
         if fn.__module__ == "__main__":
@@ -48,10 +60,23 @@ def debugSlot(fn):
     else:
         return fn
 
+## getDebug
+#
+# @return True/False is debugging information desired.
+#
 def getDebug():
     return want_debugging
 
-# Needs to be set at compile time?
+## setDebugging
+#
+# Sets the debugging flag.
+# 
+# FIXME: This doesn't actually work as you
+# need to set the debugging flag at compile time, run time is
+# too late as all the decorators have already been created.
+#
+# @param state True/False the desired debugging state.
+#
 def setDebugging(state):
     global want_debugging
     if state:
@@ -59,8 +84,12 @@ def setDebugging(state):
     else:
         want_debugging = False
 
+## startLogging
 #
 # This should only be called once in "main".
+#
+# @param directory The directory to save the log files in.
+# @param program_name The name of the program that is doing the logging.
 #
 def startLogging(directory, program_name):
 
@@ -90,17 +119,34 @@ def startLogging(directory, program_name):
     # Set to capture stderr.
     sys.stderr = StreamToLogger(a_logger, logging.ERROR)
 
+## StreamToLogger
 #
 # This is basically a copy of the code from here:
 #  http://www.electricmonk.nl/log/2011/08/14/redirect-stdout-and-stderr-to-a-logger-in-python/
 #    
+# FIXME: The print command is thread safe, but this is not, so capturing print
+#   statements from a program with multiple threads like HAL will cause it to freeze.
+#
 class StreamToLogger(object):
 
+    ## __init__
+    #
+    # Create the stream logging object.
+    #
+    # @param logger A logging object.
+    # @param log_level What level logging to use (info, error, etc.).
+    #
     def __init__(self, logger, log_level):
         self.logger = logger
         self.log_level = log_level
         self.write_mutex = QtCore.QMutex()
-        
+
+    ## write
+    #
+    # Called when new text is sent to the stream.
+    #
+    # @param buf The text string.
+    #
     def write(self, buf):
         self.write_mutex.lock()
         for line in buf.rstrip().splitlines():

@@ -1,7 +1,9 @@
 #!/usr/bin/python
 #
-# QPD / Objective Z based focus lock 
-# control specialized for STORM4PI.
+## @file
+#
+# QPD / Objective Z based focus lock control specialized for STORM3 dual objective.
+# Does this work? I don't remember ever figuring out Thorlabs ActiveX control.
 #
 # Hazen 12/09
 #

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Handles parsing settings xml files and getting/setting 
 # the resulting settings. Primarily designed for use
 # by the hal acquisition program.
@@ -13,11 +15,29 @@ from xml.dom import minidom, Node
 
 default_params = 0
 
+## copyAttributes
+#
+# Copy the attributes from the original object to the duplicate
+# object, but only if the duplicate object does not already have
+# an attribute of the same name.
+#
+# @param original The original object.
+# @param duplicate The duplicate object.
+#
 def copyAttributes(original, duplicate):
     for k, v in original.__dict__.iteritems():
         if not hasattr(duplicate, k):
             setattr(duplicate, k, copy.copy(v))
 
+## Parameters
+#
+# Parses a parameters file to create a parameters object.
+#
+# @param parameters_file The name of the XML containing the parameter definitions.
+# @param is_HAL (Optional) True/False HAL specific processing needs to be done.
+#
+# @return A parameters object.
+#
 def Parameters(parameters_file, is_HAL = False):
     xml = minidom.parse(parameters_file)
 
@@ -82,6 +102,13 @@ def Parameters(parameters_file, is_HAL = False):
 
     return xml_object
 
+## setCameraParameters
+#
+# This sets some derived properties as well as some default properties of
+# the camera part of the parameters object.
+#
+# @param camera A camera XML object.
+#
 def setCameraParameters(camera):
     camera.x_pixels = camera.x_end - camera.x_start + 1
     camera.y_pixels = camera.y_end - camera.y_start + 1
@@ -94,20 +121,43 @@ def setCameraParameters(camera):
     camera.bytesPerFrame = 2 * camera.x_pixels * camera.y_pixels/(camera.x_bin * camera.y_bin)
     camera.actual_temperature = 0
 
+## setDefaultShutters
+#
+# This sets the shutter name parameter of the default parameters object.
+#
+# @param shutters_filename The name of the shutter file to use as the default.
+#
 def setDefaultShutter(shutters_filename):
     global default_params
     if default_params:
         default_params.shutters = shutters_filename
 
+## setSetupName
+#
+# This sets the setup name parameter of a parameters object and the default parameters object.
+#
+# @param parameters A parameters object.
+# @param setup_name The name of the setup, e.g. "none", "prism2".
+#
 def setSetupName(parameters, setup_name):
     parameters.setup_name = setup_name
     global default_params
     if default_params:
         default_params.setup_name = setup_name
 
+## StormXMLObject
+#
+# A parameters object whose attributes are created dynamically
+# by parsing an XML file.
+#
 class StormXMLObject:
 
-    # Dynamically create class based on xml data
+    ## __init__
+    #
+    # Dynamically create class based on xml data parsed with the minidom library.
+    #
+    # @param nodes A list of XML nodes.
+    #
     def __init__(self, nodes):
 
         # FIXME: someday this is going to cause a problem..

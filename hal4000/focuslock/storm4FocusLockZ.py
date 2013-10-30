@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Focus lock control specialized for STORM4.
 #
 # Hazen 03/12

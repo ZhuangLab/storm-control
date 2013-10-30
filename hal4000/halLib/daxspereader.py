@@ -1,6 +1,12 @@
 #!/usr/bin/python
 #
-# Classes that handles reading dax or spe movie files.
+## @file
+#
+# Classes that handles reading dax movie files. This is
+# used by the Steve program. A more sophisticated version
+# of this module is available in the Zhuang lab storm-analysis
+# project on github (sa_library/datareader.py). The duplication
+# here is to avoid the dependency.
 #
 # Hazen 12/09
 #
@@ -14,25 +20,48 @@ import re
 # Utility functions
 #
 
-
+## undoInsightTransformStorm2
+#
+# Not used?
+#
+# @return The original image rotated 90d and flipped horizontally.
+#
 def undoInsightTransformStorm2(original):
     return numpy.fliplr(numpy.rot90(original))
 
+## undoInsightTransformStorm3
+#
+# Not used?
+#
+# @return The original image rotated 180d.
+#
 def undoInsightTransformStorm3(original):
     return numpy.rot90(numpy.rot90(original))
 
-#
-# The superclass containing those functions that 
-# are common to both dax and spe processing.
-#
 
+## Reader
+#
+# The superclass containing those functions that are common to both dax 
+# and spe processing. However there is no spe processing implemented
+# as yet.
+#
 class Reader:
-    # close the file on cleanup
+
+    ## __del__
+    #
+    # Close the file on cleanup.
+    #
     def __del__(self):
         if self.fileptr:
             self.fileptr.close()
 
-    # average multiple frames in a movie
+    ## averageFrame
+    #
+    # average multiple frames in a movie.
+    #
+    # @param start (Optional) The starting frame for averaging.
+    # @param end (Optional) The ending frame for averaging.
+    #
     def averageFrames(self, start = False, end = False):
         if (not start):
             start = 0
@@ -47,29 +76,44 @@ class Reader:
         average = average/float(length)
         return average
 
-    # returns the film name
+    ## filmFileName
+    #
+    # @return The film name.
+    #
     def filmFilename(self):
         return self.filename
 
-    # returns the picture x,y location, if available
+    ## filmLocation
+    #
+    # @return The picture x,y location, if available.
+    #
     def filmLocation(self):
         if hasattr(self, "stage_x"):
             return [self.stage_x, self.stage_y]
         else:
             return ["NA", "NA"]
 
-    # returns the film parameters file, if available
+    ## filmParameters
+    #
+    # @return The film parameters file, if available.
+    #
     def filmParameters(self):
         if hasattr(self, "parameters"):
             return self.parameters
         else:
             return "NA"
 
-    # returns the film size
+    ## filmSize
+    #
+    # @return [image width, image height, number of frames].
+    #
     def filmSize(self):
         return [self.image_width, self.image_height, self.number_frames]
 
-    # returns the film focus lock target
+    ## lockTarget
+    #
+    # @return The film focus lock target.
+    #
     def lockTarget(self):
         if hasattr(self, "lock_target"):
             return self.lock_target
@@ -77,18 +121,32 @@ class Reader:
 #            return "NA"
             return 0.0
 
-    # returns the scale used to display the film when
-    # the picture was taken.
+    ## filmScale
+    #
+    # Returns the display scale used to display the film when the picture was taken.
+    #
+    # @return [display minimum, display maximum]
+    #
     def filmScale(self):
         if hasattr(self, "scalemin") and hasattr(self, "scalemax"):
             return [self.scalemin, self.scalemax]
         else:
             return [100, 2000]
 
-# Dax reader class
+## DaxReader
+#
+# The dax file reader class.
+#
 class DaxReader(Reader):
-    # dax specific initialization
-    def __init__(self, filename, verbose = 0):
+
+    ## __init__
+    #
+    # dax file specific initialization, mostly this is parsing the associated .inf file.
+    #
+    # @param filename The name of the dax file to load.
+    # @param verbose (Optional) True/False verbose mode.
+    #
+    def __init__(self, filename, verbose = False):
         # save the filenames
         self.filename = filename
         dirname = os.path.dirname(filename)
@@ -164,7 +222,12 @@ class DaxReader(Reader):
             if verbose:
                 print "dax data not found", filename
 
-    # load a frame & return it as a numpy array
+    ## loadAFrame
+    #
+    # Loads a frame and use it to create a numpy array. Return the transpose of this array.
+    #
+    # @param frame_number The frame number of the frame to load (zero indexed).
+    #
     def loadAFrame(self, frame_number):
         if self.fileptr:
             assert frame_number >= 0, "frame_number must be greater than or equal to 0"

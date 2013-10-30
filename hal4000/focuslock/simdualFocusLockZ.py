@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Pseudo focus lock for simulated dual-objective setup.
 #
 # Hazen 12/12

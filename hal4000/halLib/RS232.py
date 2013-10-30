@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Wraps the uspp library for RS232 communication.
 #
 # Hazen 3/09
@@ -8,18 +10,40 @@
 import uspp.uspp as uspp
 import time
 
+## RS232
+#
+# The basic RS-232 communication object which is used by all the objects
+# that communicate with their associated hardware using RS-232.
+#
 class RS232():
+
+    ## __init__
+    #
+    # @param port The port for RS-232 communication, e.g. "COM4".
+    # @param timeout The time out value for communication.
+    # @param baudrate The RS-232 communication speed, e.g. 9800.
+    # @param end_of_line What character(s) are used to indicate the end of a line.
+    # @param wait_time How long to wait between polling events before it is decided that there is no new data available on the port.
+    #
     def __init__(self, port, timeout, baudrate, end_of_line, wait_time):
         try:
             self.tty = uspp.SerialPort(port, timeout, baudrate)
             self.tty.flush()
             self.end_of_line = end_of_line
             self.wait_time = wait_time
-            self.live = 1
+            self.live = True
             time.sleep(self.wait_time)
         except:
-            self.live = 0
+            self.live = False
 
+    ## commWithResp
+    #
+    # Send a command and wait (a little) for a response.
+    #
+    # @param command The command to send (as a string).
+    #
+    # @return The response from the hardware (if any).
+    #
     def commWithResp(self, command):
         self.tty.flush()
         self.tty.write(command + self.end_of_line)
@@ -33,6 +57,12 @@ class RS232():
         if len(response) > 0:
             return response
 
+    ## getResponse
+    #
+    # Wait (a little) for a response.
+    #
+    # @return The response from the hardware (if any).
+    #
     def getResponse(self):
         response = ""
         response_len = self.tty.inWaiting()
@@ -43,18 +73,40 @@ class RS232():
         if len(response) > 0:
             return response
 
+    ## getStatus
+    #
+    # @return True/False is the port open and can we talk to the hardware.
+    #
     def getStatus(self):
         return self.live
 
+    ## sendCommand
+    #
+    # @param command The command to send to the hardware.
+    #
     def sendCommand(self, command):
         self.tty.flush()
         self.tty.write(command + self.end_of_line)
 
+    ## shutDown
+    #
+    # Closes the RS-232 port.
+    #
     def shutDown(self):
         if self.live:
             del(self.tty)
 
-    def waitResponse(self, end_of_response = 0, max_attempts = 200):
+    ## waitResponse
+    #
+    # Waits much longer for a response. This is the method to use if
+    # you are sure that the hardware will respond eventually.
+    #
+    # @param end_of_response (Optional) The expected character(s) at the end of the response string, defaults to end_of_line.
+    # @param max_attempts (Optional) How many cycles of polling to undertake before giving up, defaults to 200.
+    #
+    # @return The response from the hardware (if any).
+    #
+    def waitResponse(self, end_of_response = False, max_attempts = 200):
         if not end_of_response:
             end_of_response = str(self.end_of_line)
         attempts = 0

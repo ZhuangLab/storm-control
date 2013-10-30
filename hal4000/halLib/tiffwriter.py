@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Writing 16 bit multi-frame tiff files. The entire image 
 # is written as a single strip to make things a bit less 
 # of headache.
@@ -27,7 +29,18 @@ ResolutionUnit = 296
 Software = 305
 DateTime = 306
 
+## TiffWriter
+#
+# This class encapsulates writing 16 bit single channel tif movies to a file.
+#
 class TiffWriter:
+
+    ## __init__
+    #
+    # @param filename The name of the tif file to write.
+    # @param bytes_per_pixel (Optional) This is 2 bytes (16 bits) by default.
+    # @param software (Optional) The name of the program that is "creating" the tif file, defaults to "unknown".
+    #
     def __init__(self, filename, bytes_per_pixel = 2, software = "unknown"):
         self.bytes_per_pixel = 2
         self.fp = open(filename, "wb")
@@ -53,7 +66,14 @@ class TiffWriter:
         self.fp.write(struct.pack("H", 42))
         self.fp.write(struct.pack("I", self.fp.tell()+4))
 
-    # Adds a frame (numpy.uint16 array) to the tiff image
+    ## addFrame
+    #
+    # Adds a frame (numpy.uint16 array) to the tiff image.
+    #
+    # @param np_frame The image data as a numpy.uint16 array.
+    # @param x_size The size of the frame in x (in pixels).
+    # @param y_size The size of the frame in y (in pixels).
+    #
     def addFrame(self, np_frame, x_size, y_size):
         cur_loc = self.fp.tell()
         num_tags = 15
@@ -117,14 +137,25 @@ class TiffWriter:
         #self.fp.write(np_frame)
         self.frames += 1
 
-    # Cleans up & closes the file
+    ## close
+    #
+    # Cleans up & closes the file.
+    #
     def close(self):
         if (self.frames > 1):
             self.fp.seek(self.newsubfiletag_loc)
             self.writeTag(NewSubfileType, "long", 1, 2)
         self.fp.close()
 
-    # Write a single tiff tag at current fp location
+    ## writeTag
+    #
+    # Write a single tiff tag at current fp location.
+    #
+    # @param tag A tif tag (this is a integer, see tag definitions at the start of the file.
+    # @param tag_type The tag type, 2 = ascii, 3 = short, 4 = long, 5 = rational.
+    # @param count The number of elements in tag (this is usually 1, except for ascii where it is the length of the string).
+    # @param value The tag value.
+    #
     def writeTag(self, tag, tag_type, count, value):
         self.fp.write(struct.pack("H", tag))        # tag
 

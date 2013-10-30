@@ -1,44 +1,98 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Dummy classes for use when you have some but not all 
 # of the focus lock functionality.
 #
 # Hazen 12/09
 #
 
-# Fake QPD
+## QPD
+#
+# A fake QPD class.
+#
 class QPD():
+
+    ## __init__
+    #
+    # Creates the fake QPD object.
+    #
     def __init__(self):
         pass
 
+    ## qpdScan
+    #
+    # @return [1000.0, 0.0, 0.0]
+    #
     def qpdScan(self):
         return [1000.0, 0.0, 0.0]
 
+    ## shutDown
+    #
+    # NOP.
+    #
     def shutDown(self):
         pass
 
-# Fake nano-positioner
+## NanoP
+#
+# Fake nano-positioner class.
+#
 class NanoP():
+
+    ## __init__
+    #
+    # Create the fake nano-positioner object.
+    #
     def __init__(self):
         pass
 
+    ## zMoveTo
+    #
+    # @param position The position to move to.
+    #
     def zMoveTo(self, position):
         pass
 
+    ## shutDown
+    #
+    # NOP.
+    #
     def shutDown(self):
         pass
 
-# Fake IR laser
+## IrLaser
+#
+# Fake IR laser class.
+#
 class IRLaser():
+
+    ## __init__
+    #
+    # Create the fake IR laser object.
+    #
     def __init__(self):
         pass
 
+    ## havePowerControl
+    #
+    # @return False
+    #
     def havePowerControl(self):
         return False
 
+    ## on
+    #
+    # NOP
+    #
     def on(self, power):
         pass
 
+    ## off
+    #
+    # NOP
+    #
     def off(self):
         pass
     

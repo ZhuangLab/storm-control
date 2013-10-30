@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Image file writers for various formats.
 #
 # Hazen 10/13
@@ -14,8 +16,11 @@ import tiffwriter
 #except:
 #    print "failed to load andor.formatconverters."
 
+## availableFileFormats
 #
 # Return a list of the available movie formats.
+#
+# @return A python list of file extensions (".dax", ".spe", etc..).
 #
 def availableFileFormats(ui_mode):
     if (ui_mode == "dual"):
@@ -23,6 +28,18 @@ def availableFileFormats(ui_mode):
     else:
         return [".dax", ".spe", ".tif"]
 
+## createFileWriter
+#
+# This is convenience function which creates the appropriate file writer
+# based on the filetype.
+#
+# @param filetype A string specifying one of the available file formats, e.g. ".dax", ".spe", etc.
+# @param filename The name of the file.
+# @param parameters A parameters object.
+# @param cameras A array of camera names, such as ["camera1"].
+#
+# @return A file writer object.
+#
 def createFileWriter(filetype, filename, parameters, cameras):
     if (filetype == ".dax"):
         return DaxFile(filename, parameters, cameras)
@@ -36,6 +53,15 @@ def createFileWriter(filetype, filename, parameters, cameras):
         print "Unknown output file format, defaulting to .dax"
         return DaxFile(filename, parameters, cameras)
 
+## getCameraSize
+#
+# Returns the AOI of the camera specified by camera_name
+#
+# @param parameters A parameters object.
+# @param camera_name The name of the camera, e.g. "camera1".
+#
+# @return [x size (pixels), y size (pixels)]
+#
 def getCameraSize(parameters, camera_name):
     if (hasattr(parameters, camera_name)):
         camera_obj = getattr(parameters, camera_name)
@@ -46,17 +72,34 @@ def getCameraSize(parameters, camera_name):
         y_pixels = parameters.y_pixels
     return [x_pixels, y_pixels]
 
+## attrToString
+#
 # Convert an attribute to a string, or "NA" if the attribute does not exist.
+#
+# @param obj A Python object.
+# @param attr A attribute of the object as a string.
+#
+# @return The string form of the attribute if it exists, otherwise "NA".
+#
 def attrToString(obj, attr):
     if hasattr(obj, attr):
         return str(getattr(obj, attr))
     else:
         return "NA"
 
+## writeInfFile
 #
 # Inf writing function. We save one of these regardless of the
 # output format of the data as it is a easy way to preserve
 # the file meta-data.
+#
+# @param filename The name of the movie file.
+# @param filetype The type of the movie file, e.g. ".dax", ".spe", etc.
+# @param number_frames The number of frames in the movie.
+# @param parameters A parameters object.
+# @param camera The camera sub-object of a parameters object.
+# @param stage_position The stage position, [stage x, stage y, stage z].
+# @param lock_target The focus lock target.
 #
 def writeInfFile(filename, filetype, number_frames, parameters, camera, stage_position, lock_target):
     c = camera
@@ -112,11 +155,21 @@ def writeInfFile(filename, filetype, number_frames, parameters, camera, stage_po
 #        p = file_class.parameters
 #        nl =  "\n"
 
+
+## GenericFile
 #
 # Generic file writing class
 #
-
 class GenericFile:
+
+    ## __init__
+    #
+    # @param filename The name of the movie file (without an extension).
+    # @param parameters A parameters object.
+    # @param cameras A python array of camera names, e.g. ["camera1"].
+    # @param extension The movie file extension (".spe", ".dax", etc.).
+    # @param want_fp (Optional) Create file pointer(s) for saving the movie.
+    #
     def __init__(self, filename, parameters, cameras, extension, want_fp = True):
         self.cameras = cameras
         self.parameters = parameters
@@ -139,6 +192,13 @@ class GenericFile:
                 self.file_ptrs.append(open(fname, "wb"))
             self.number_frames.append(0)
 
+    ## closeFile
+    #
+    # Close the file pointers (if any) and write the .inf file.
+    #
+    # @param stage_position The position of the microscope stage.
+    # @param lock_target The lock target for the focus lock.
+    #
     def closeFile(self, stage_position, lock_target):
         
         # Close the files.
@@ -162,6 +222,10 @@ class GenericFile:
 
         self.open = False
 
+    ## totalFilmSize
+    #
+    # @return The total size of the film taken so far in mega-bytes.    
+    #
     def totalFilmSize(self):
         total_size = 0.0
         for i in range(len(self.filenames)):
@@ -172,17 +236,36 @@ class GenericFile:
             total_size += self.number_frames[i] * temp.bytesPerFrame * 0.000000953674
         return total_size
 
+    ## __del__
+    #
+    # Clean things up if this object is deleted.
+    #
     def __del__(self):
         if self.open:
             self.closeFile()
 
+## DaxFile
 #
-# Dax file writing class
+# Dax file writing class.
 #
 class DaxFile(GenericFile):
+
+    ## __init__
+    #
+    # @param filename The name of the movie file (without an extension).
+    # @param parameters A parameters object.
+    # @param cameras A python array of camera names, e.g. ["camera1"].
+    #
     def __init__(self, filename, parameters, cameras):
         GenericFile.__init__(self, filename, parameters, cameras, "dax")
 
+    ## saveFrame
+    #
+    # Saves a frame. If we have two cameras then this first figures
+    # out which of the two output files to save it to.
+    #
+    # @param frame A frame object.
+    #
     def saveFrame(self, frame):
         for i in range(len(self.cameras)):
             if (frame.which_camera == self.cameras[i]):
@@ -195,17 +278,32 @@ class DaxFile(GenericFile):
 
                 self.number_frames[i] += 1
 
+## DualCameraFormatFile
 #
-# Dual camera format writing class
+# Dual camera format writing class.
 #
 # This is just the dax format with the camera number encoded into the
 # first pixel of the image. It is useful because writing two files
 # at once at a high data rate can overwhelm a hard-drive.
 # 
 class DualCameraFormatFile(GenericFile):
+
+    ## __init__
+    #
+    # @param filename The name of the movie file (without an extension).
+    # @param parameters A parameters object.
+    # @param cameras A python array of camera names, e.g. ["camera1"].
+    #
     def __init__(self, filename, parameters, cameras):
         GenericFile.__init__(self, filename, parameters, cameras, "dax")
 
+    ## saveFrame
+    #
+    # Saves a frame. In this format the camera information (i.e. which
+    # camera the frame is from) is encoded into the first pixel of the picture.
+    #
+    # @param frame A frame object.
+    #
     def saveFrame(self, frame):
         #camera_int = int(frame.which_camera[6:])-1
         np_data = frame.getData().copy()
@@ -219,10 +317,18 @@ class DualCameraFormatFile(GenericFile):
             #self.file_ptrs[0].write(temp)
         self.number_frames[0] += 1
 
+## SPEFile
 #
-# SPE file writing class
+# SPE file writing class.
 #
 class SPEFile(GenericFile):
+
+    ## __init__
+    #
+    # @param filename The name of the movie file (without an extension).
+    # @param parameters A parameters object.
+    # @param cameras A python array of camera names, e.g. ["camera1"].
+    #
     def __init__(self, filename, parameters, cameras):
         GenericFile.__init__(self, filename, parameters, cameras, "spe")
         
@@ -240,6 +346,10 @@ class SPEFile(GenericFile):
             fp.write(struct.pack("h", 3))
             fp.seek(4100)
 
+    ## saveFrame
+    #
+    # @param frame A frame object.
+    #
     def saveFrame(self, frame):
         for i in range(len(self.cameras)):
             if (frame.which_camera == self.cameras[i]):
@@ -248,7 +358,15 @@ class SPEFile(GenericFile):
                 #self.file_ptrs[i].write(frame.data)
                 
                 self.number_frames[i] += 1
- 
+
+    ## closeFile
+    #
+    # Writes the file size into the header part of the spe file and
+    # then closes the file.
+    #
+    # @param stage_position The position of the microscope stage.
+    # @param lock_target The lock target for the focus lock.
+    #
     def closeFile(self, stage_position, lock_target):
         # write film length & close the file
         for i in range(len(self.file_ptrs)):
@@ -257,10 +375,22 @@ class SPEFile(GenericFile):
 
         GenericFile.closeFile(self, stage_position, lock_target)
 
+## TIFFile
 #
-# TIF file writing class
+# TIF file writing class. Note that this is a normal tif file format
+# and not a big tif format so the maximum size is limited to 4GB
+# more or less.
 #
 class TIFFile(GenericFile):
+
+    ## __init__
+    #
+    # Creates the tif writer(s) for saving in tif format.
+    #
+    # @param filename The name of the movie file (without an extension).
+    # @param parameters A parameters object.
+    # @param cameras A python array of camera names, e.g. ["camera1"].
+    #
     def __init__(self, filename, parameters, cameras):
         GenericFile.__init__(self, filename, parameters, cameras, "tif", want_fp = False)
 
@@ -270,6 +400,10 @@ class TIFFile(GenericFile):
                                                software = "hal4000")
             self.tif_writers.append(tif_writer)
 
+    ## saveFrame
+    #
+    # @param frame A frame object.
+    #
     def saveFrame(self, frame):
         for i in range(len(self.cameras)):
             if (frame.which_camera == self.cameras[i]):
@@ -277,7 +411,14 @@ class TIFFile(GenericFile):
                 self.tif_writers[i].addFrame(frame.getData(), x_pixels, y_pixels)
 
                 self.number_frames[i] += 1
- 
+
+    ## closeFile
+    #
+    # Closes the tif file writers.
+    #
+    # @param stage_position The position of the microscope stage.
+    # @param lock_target The lock target for the focus lock.
+    #
     def closeFile(self, stage_position, lock_target):
         for writer in self.tif_writers:
             writer.close()
