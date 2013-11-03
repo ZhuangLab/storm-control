@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Illumination control specialized for STORM2.
 #
 # Hazen 11/12

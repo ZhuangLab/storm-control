@@ -1,6 +1,11 @@
 #!/usr/bin/python
 #
-# Python interface to the sCMOS image manipulation library.
+## @file
+#
+# Python interface to the sCMOS image manipulation library. The library
+# is used to speed up the rendering of the image in the UI. My experience
+# was that for the largest images using numpy to do the image scaling
+# and typy conversion was not fast enough.
 #
 # Hazen 10/13
 # 
@@ -26,7 +31,17 @@ image_manip.rescaleImage.argtypes = [ndpointer(dtype=numpy.uint8),
                                      ctypes.c_void_p,
                                      ctypes.c_void_p]
 
-# Rescale image.
+## rescaleImage
+#
+# This converts a uint16 image into a uint8 image based on the display
+# range. As a side effect it also returns the minimum and maximum values
+# in the image.
+#
+# @param image The original image as numpy.uint16 array.
+# @param display_range [image value that equals 0, image value that equals 255].
+#
+# @return [numpy.uint8 image, original image minimum, original image maximum]
+#
 def rescaleImage(image, display_range):
     c_rescale = numpy.empty(image.shape, dtype = numpy.uint8)
     image_min = ctypes.c_int(0)

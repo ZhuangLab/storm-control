@@ -1,9 +1,8 @@
 #!/usr/bin/python
 #
-# Interface to Logitech gamepad 310 joystick.
+## @file
 #
-# The joystick needs to be in "direct input" mode.
-# This is done using the switch on the back of the joystick.
+# This is used to check the raw events that come from the joystick.
 #
 # Hazen 9/12
 # Jeff 9/12
@@ -11,7 +10,16 @@
 
 import pywinusb.hid as hid
 
+## Gamepad310
+#
+# Encapsulates the interface to a Logitech gamepad joystick.
+#
 class Gamepad310():
+
+    ## __init__
+    #
+    # Find the joystick in the list of HID devices.
+    #
     def __init__(self):        
         # initialize connection to joystick
         all_hids = hid.find_all_hid_devices()
@@ -23,13 +31,29 @@ class Gamepad310():
         if not self.jdev:
             print "Gamepad 310 joystick not found."
 
+    ## dataHandler
+    #
+    # Print the data from the joystick.
+    #
+    # @param data The joystick event data.
+    #
     def dataHandler(self, data):
         print data
-        
+
+    ## shutDown
+    #
+    # Close the connection to the joystick at program exit.
+    #
     def shutDown(self):
         if self.jdev:
             self.jdev.close()
 
+    ## start
+    #
+    # Open the connection to the joystick and set function to handle joystick events.
+    #
+    # @param handler A function the handles joystick events.
+    #
     def start(self, handler):
         if self.jdev:
             self.jdev.open()

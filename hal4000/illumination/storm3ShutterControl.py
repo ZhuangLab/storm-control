@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Storm3 shutter control.
 #
 # Channels 0-5 are controlled by the AOTF.

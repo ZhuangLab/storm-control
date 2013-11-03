@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # ctypes interace to a Mad City Labs piezo stage.
 #
 # Hazen 3/09
@@ -9,8 +11,10 @@ from ctypes import *
 import time
 
 
-# MCL structures
-
+## ProductInformation
+#
+# The Mad City Labs product information structure.
+#
 class ProductInformation(Structure):
     _fields_ = [("axis_bitmap", c_ubyte),
                 ("ADC_resolution", c_short),
@@ -20,28 +24,36 @@ class ProductInformation(Structure):
                 ("FirmwareProfile", c_short)]
 
 
+## loadMCLDLL
+#
 # Handles loading the library (only once)
-
-mcl = 0
+#
+mcl = False
 def loadMCLDLL(mcl_path):
     global mcl
-    if(mcl == 0):
+    if(mcl == False):
         mcl = cdll.LoadLibrary(mcl_path + "Madlib")
 
 
+## MCLStage
 #
-# The MCL control class.
+# The Mad City Labs piezo stage control class.
 #
-
 class MCLStage:
 
     # Class instance variables
     dll_loaded = False
     handles_grabbed = False
-    
+
+    ## __init__
     #
-    # Initializes the object by initializing the camera
-    # then querying it to determine its various properties.
+    # Initializes the object by initializing the DLL, opening
+    # a connection to requested stage, or the first the stage
+    # if none is specified. The stage is then queried to
+    # determine its various properties.
+    #
+    # @param mcl_path The path to the Mad City Labs stage control DLL.
+    # @param serial_number (Optional) The serial number of the stage to control. If False then the first available stage is chosen.
     #
     def __init__(self, mcl_path, serial_number = False):
 
@@ -101,29 +113,56 @@ class MCLStage:
                            self._getCalibration(2),
                            self._getCalibration(3)]
 
-    # Internal
+    ## _getCalibration
+    #
+    # (Internal)
+    #
+    # @param axis The axis to get the calibration from.
+    #
+    # @return The calibration information for the specified axis.
+    #
     def _getCalibration(self, axis):
         if self.handle and self.valid_axises[axis]:
             return mcl.MCL_GetCalibration(c_ulong(axis), self.handle)
         else:
             return 0
 
-    # API
+    ## getAxisRange
+    #
+    # @param axis (integer) The axis to get the range of.
+    #
+    # @return The axis range
+    #
     def getAxisRange(self, axis):
         if self.handle and self.valid_axises[axis]:
             return self.axis_range[axis]
         else:
             return 0
 
+    ## getPosition
+    #
+    # @param axis (integer) The axis to get the position of.
+    #
+    # @return The position of the axis.
+    #
     def getPosition(self, axis):
         if not(self.valid_axises[axis]):
             print "getPosition: invalid axis", axis
         if self.handle:
             return mcl.MCL_SingleReadN(c_ulong(axis), self.handle)
 
+    ## getProperties
+    #
+    # @return The stage properties.
+    #
     def getProperties(self):
         return self._props_
 
+    ## moveTo
+    #
+    # @param axis (integer) The axis to move.
+    # @param position The position to move to.
+    #
     def moveTo(self, axis, position):
 #        assert self.valid_axises[axis], "moveTo: invalid axis " + str(axis)
 #        assert position >= 0.0, "moveTo: position too small " + str(position)
@@ -136,12 +175,24 @@ class MCLStage:
             print "moveTo: position too large", position
         if self.handle:
             mcl.MCL_SingleWriteN(c_double(position), c_ulong(axis), self.handle)
-        
+
+    ## printDeviceInfo
+    #
+    # Print information about this device.
+    #
     def printDeviceInfo(self):
         if self.handle:
             mcl.MCL_PrintDeviceInfo(self.handle)
 
-    # reading (I think) occurs at a 500us rate.
+    ## readWaveForm
+    #
+    # Read the (position) wave form from an axis. Reading (I think) occurs at a 500us rate.
+    #
+    # @param axis (integer) The axis to read.
+    # @param points The number of points to acquire.
+    #
+    # @return The waveform data as a python array.
+    #
     def readWaveForm(self, axis, points):
         if self.handle:
             if points < 1000:
@@ -152,6 +203,10 @@ class MCLStage:
             else:
                 print "MCL stage can only acquire a maximum of 999 points"
 
+    ## shutDown
+    #
+    # Move the stage axises back to their zero positions and close the connection to the stage.
+    #
     def shutDown(self):
         for i in range(4):
             if self.valid_axises[i]:
@@ -159,8 +214,15 @@ class MCLStage:
         if self.handle:
             mcl.MCL_ReleaseHandle(self.handle)
 
+    ## zMoveTo
+    #
+    # Move the z axis to the specified position.
+    #
+    # @param position The new stage z axis position.
+    #
     def zMoveTo(self, position):
         self.moveTo(3, position)
+
 
 #
 # Testing section.

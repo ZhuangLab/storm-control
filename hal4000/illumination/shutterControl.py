@@ -1,6 +1,17 @@
 #!/usr/bin/python
 #
-# Master class for shutter control.
+## @file
+#
+# This file contains the base class for shutter control.
+#
+# Hazen 11/12
+#
+
+from xml.dom import minidom, Node
+
+## ShutterControl
+#
+# Base class for shutter control.
 #
 # This class handles parsing XML shutter files and turning
 # them into Python arrays that specify the different
@@ -31,6 +42,10 @@
 #      corresponding Pyhon arrays to be loaded to a National
 #      Instruments card (or equivalent).
 #
+#    prepare()
+#      This function is called to set the initial state of the
+#      hardware before filming. This is called before setup.
+#
 #    setup(kinetic_cycle_time)
 #      kinetic_cycle_time is the length of a frame in seconds.
 #      This function is called to load the waveforms into
@@ -46,29 +61,57 @@
 #    stopFilm()
 #      Called at the end of filming to tell the hardware to stop.
 #  
-# Hazen 11/12
-#
-
-from xml.dom import minidom, Node
-
 class ShutterControl():
+
+    ## __init__
+    #
+    # powerToVoltage is a function that takes two arguments, (1) the channel, (2) the power
+    # and returns what voltage corresponds to this power.
+    #
+    # @param powerToVoltage The function to use to convert (abstract) power to (real) voltage.
+    #
     def __init__(self, powerToVoltage):
         self.powerToVoltage = powerToVoltage
         self.oversampling_default = 1
         self.number_channels = 0
 
+    ## cleanup
+    #
+    # Cleanup after filming.
+    # This is usually replaced in a hardware specific sub-class.
+    #
     def cleanup(self):
         pass
 
+    ## getChannelsUsed
+    #
+    # Returns which channels are used in the current shutter sequence.
+    #
+    # @return A python array of channel indices.
+    #
     def getChannelsUsed(self):
         return self.channels_used
 
+    ## getColor
+    #
+    # @return A python array containing the RGB color values for each frame in the shutter sequence. This used by the spot counter.
+    #
     def getColors(self):
         return self.colors
 
+    ## getCycleLength
+    #
+    # @return The length of the shutter sequence in frames.
+    #
     def getCycleLength(self):
         return self.frames
 
+    ## parseXML
+    #
+    # This parses a XML file that defines a shutter sequence.
+    #
+    # @param illumination_file The name of the shutter sequence xml file.
+    #
     def parseXML(self, illumination_file):
         self.channels_used = []
         self.colors = []
@@ -162,18 +205,54 @@ class ShutterControl():
                         self.colors[i] = color
                         i += 1
 
+    ## prepare
+    #
+    # Called before setup to properly set the state of the hardware.
+    # Usually this means making sure that the DAQ output lines are
+    # set to the right initial values.
+    #
+    # This is usually replaced in a hardware specific sub-class.
+    #
     def prepare(self):
         pass
 
+    ## setup
+    #
+    # Called next to setup the hardware for filming. Usually this
+    # means loading the shutter waveforms into the DAQ card and
+    # configuring the timers of the DAQ card.
+    #
+    # This is usually replaced in a hardware specific sub-class.
+    #
     def setup(self, kinetic_cycle_time):
         pass
 
+    ## shutDown
+    #
+    # Called to shutdown the hardware prior to the program exitting.
+    #
+    # This is usually replaced in a hardware specific sub-class.
+    #
     def shutDown(self):
         pass
 
+    ## startFilm
+    #
+    # Called at the start of filming. Usually this starts the various
+    # tasks on the DAQ card.
+    #
+    # This is usually replaced in a hardware specific sub-class.
+    #
     def startFilm(self):
         pass
-    
+
+    ## stopFilm
+    #
+    # Called at the end of filming to reset the hardware. Usually
+    # this means configuring the DAQ card for non-shutter operation.
+    #
+    # This is usually replaced in a hardware specific sub-class.
+    #
     def stopFilm(self):
         pass
 

@@ -1,6 +1,9 @@
 #!/usr/bin/python
 #
-# For camera calibration.
+## @file
+#
+# This script is used for camera calibration. It records the sum of x and 
+# the sum of x*x for every pixel in every frame.
 #
 # Hazen 10/13
 #

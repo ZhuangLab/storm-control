@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Prism2 shutter control.
 #
 # Channels 0-3 are controlled by the AOTF.

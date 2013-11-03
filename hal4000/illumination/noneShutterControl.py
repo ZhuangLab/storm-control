@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# None shutter control.
+## @file
+#
+# None (emulation mode) shutter control.
 #
 # Hazen 11/09
 #

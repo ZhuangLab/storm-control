@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Illumination control specialized for the simulated dual-objective setup.
 #
 # Hazen 12/12

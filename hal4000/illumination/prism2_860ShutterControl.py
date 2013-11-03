@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# Prism2 shutter control.
+## @file
+#
+# Prism2 shutter control specialized for the 860 camera.
 #
 # Channels 0-3 are controlled by the AOTF.
 # Channel 4 is a Coherent 405 diode laser which is

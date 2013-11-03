@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Illumination control specialized for the dual objective scope.
 #
 # Hazen 9/12

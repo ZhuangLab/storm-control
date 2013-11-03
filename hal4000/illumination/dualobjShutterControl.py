@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # dual objective shutter control.
 #
 # Channel 0 : 750 laser, shutter only

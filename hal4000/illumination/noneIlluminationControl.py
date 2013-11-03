@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# Illumination control specialized for none.
+## @file
+#
+# Illumination control specialized for none (software emulation mode).
 #
 # Hazen 11/09
 #

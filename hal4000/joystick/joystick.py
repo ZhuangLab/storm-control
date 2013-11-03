@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Joystick monitoring class.
 #
 # Hazen 09/12
@@ -10,6 +12,7 @@ from PyQt4 import QtCore
 # Debugging
 import halLib.hdebug as hdebug
 
+## JoystickObject
 #
 # Joystick monitoring class.
 #
@@ -19,6 +22,12 @@ class JoystickObject(QtCore.QObject):
     step = QtCore.pyqtSignal(int, int)
     toggle_film = QtCore.pyqtSignal()
 
+    ## __init__
+    #
+    # @param parameters A parameters object.
+    # @param joystick A hardware specific joystick interface object similar to that defined in logitech\gamepad310.py.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     @hdebug.debug
     def __init__(self, parameters, joystick, parent = None):
         QtCore.QObject.__init__(self, parent)
@@ -37,15 +46,30 @@ class JoystickObject(QtCore.QObject):
         self.button_timer.setSingleShot(True)
         self.button_timer.timeout.connect(self.buttonDownHandler)
 
+    ## buttonDownHandler
+    #
+    # Not used?
+    #
     def buttonDownHandler(self):
         if self.to_emit:
             self.to_emit()
             self.button_timer.start()
 
+    ## close
+    #
+    # Shutdown the joystick hardware interface at program closing.
+    #
     @hdebug.debug
     def close(self):
         self.jstick.shutDown()
 
+    ## hatEvent
+    #
+    # Emit the appropriate XY stage step event based on sx, sy.
+    #
+    # @param sx One of -1.0, 0.0, 1.0
+    # @param sy One of -1.0, 0.0, 1.0
+    #
     def hatEvent(self, sx, sy):
         p = self.parameters
         sx = sx*p.hat_step*p.joystick_signx
@@ -56,10 +80,25 @@ class JoystickObject(QtCore.QObject):
         else:
             self.step.emit(sx,sy)
 
+    ## rightJoystickEvent
+    #
+    # Not used.
+    #
     def rightJoystickEvent(self, x_speed, y_speed):
         # the right joystick is not currently used
         pass
-        
+
+    ## leftJoystickEvent
+    #
+    # Emit the appropriate XY state motion event based on x_speed, y_speed.
+    # There is both a fixed gain value, which can be changed between pre-determined
+    # defaults specified in the initial parameters XML file by pressing on
+    # the left joystick and additional multiplier that can be turned on or off
+    # by holding down the "X" button on the joystick.
+    #
+    # @param x_speed The x displacement value from the joystick.
+    # @param y_speed The y displacement value from the joystick.
+    #
     def leftJoystickEvent(self, x_speed, y_speed):
         p = self.parameters
 
@@ -82,7 +121,23 @@ class JoystickObject(QtCore.QObject):
                     self.motion.emit(x_speed, y_speed)
         else:
             self.motion.emit(0.0, 0.0)
-        
+
+    ## joystickHandler
+    #
+    # This handles events that are created by the joystick hardware object.
+    # The following events are handled:
+    #  1. "left upper trigger" and "Press" - focus up.
+    #  2. "left lower trigger" and "Press" - focus down.
+    #  3. "right upper trigger" and "Press" - start/stop filming.
+    #  4. "back" and "Press" - emergency stage stop.
+    #  5. "left joystick press" and "Press" - toggle stage motion gain.
+    #  6. "X" and "Press" - add a additional multiplier to the XY stage motion.
+    #  7. "X" and "Release" - return to the default multiplier (1.0) for XY stage motion.
+    #  8. "up", "down", "left", "right" and "Press" - hat events for moving the XY stage.
+    #  9. "left joystick" - XY stage motion driven by the left joystick.
+    #
+    # @param data A python array of joystick events.
+    #
     def joystickHandler(self, data):
         p = self.parameters
         events = self.jstick.dataHandler(data)
@@ -105,7 +160,7 @@ class JoystickObject(QtCore.QObject):
                 if (e_data == "Press"):
                     p.multiplier = p.joystick_multiplier_value 
                 else: # "Release"
-                    p.multiplier = 1
+                    p.multiplier = 1.0
                 # Recall joystick event to reflect changes in gain
                 self.leftJoystickEvent(self.old_left_joystick[0], self.old_left_joystick[1])
 

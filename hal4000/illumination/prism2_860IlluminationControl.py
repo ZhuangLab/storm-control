@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# Illumination control specialized for Prism2.
+## @file
+#
+# Illumination control specialized for Prism2 w/ the 860 camera.
 #
 # Hazen 6/09
 #

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Interface to Logitech dual action joystick.
 #
 # Hazen 9/12
@@ -7,7 +9,19 @@
 
 import pywinusb.hid as hid
 
+## DualAction
+#
+# This class encapsulates the interface to a Logitech dual action 
+# joystick. It remains in the project for reference purposes
+# but it would not work correctly with HAL. See gamepad310.py for
+# an example of a joystick class that works with HAL.
+#
 class DualAction():
+
+    ## __init__
+    #
+    # Define arrays for translating joystick events and find the joystick HID.
+    #
     def __init__(self):
         self.buttons = [[1,24,0],  # 1
                         [2,40,0],  # 2
@@ -35,13 +49,29 @@ class DualAction():
         if not self.jdev:
             print "Logitech Dual Action joystick not found."
 
+    ## dataHandler
+    #
+    # Processes events from the joystick.
+    #
+    # @param data A joystick event.
+    #
     def dataHandler(self, data):
         print self.translate(data)
 
+    ## shutDown
+    #
+    # Close the connection to the joystick at program exit.
+    #
     def shutDown(self):
         if self.jdev:
             self.jdev.close()
 
+    ## start
+    #
+    # Open the connection to the joystick and set handler as the callback function.
+    #
+    # @param handler The function to use to process joystick events.
+    #
     def start(self, handler):
         if self.jdev:
             self.jdev.open()
@@ -49,6 +79,14 @@ class DualAction():
         else:
             print "dual action joystick not connected?"
 
+    ## translate
+    #
+    # Translate joystick events to our format.
+    #
+    # @param data A event from the joystick.
+    #
+    # @return The translated event.
+    #
     def translate(self, data):
         # check if it was a button event
         ##JRM If multiple joystick events are generated, this software can generate the wrong signal

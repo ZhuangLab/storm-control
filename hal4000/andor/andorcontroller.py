@@ -28,6 +28,10 @@ drv_temp_stabilized = 20036
 drv_temp_not_reached = 20037
 drv_temp_drift = 20040
 
+## AndorCapabilities
+#
+# The Andor camera capabilities structure.
+#
 class AndorCapabilities(Structure):
     _fields_ = [("ulSize", c_ulong),
                 ("ulAcqModes", c_ulong),

@@ -1,6 +1,9 @@
 #!/usr/bin/python
 #
-# Interface to Logitech gamepad 310 joystick.
+## @file
+#
+# Interface to a Logitech gamepad 310 joystick. This will also
+# work with some other Logitech joysticks.
 #
 # The joystick needs to be in "direct input" mode.
 # This is done using the switch on the back of the joystick.
@@ -11,7 +14,22 @@
 
 import pywinusb.hid as hid
 
+## Gamepad310
+#
+# This class encapsulates the interface to a Logitech joystick. It should
+# work with any joystick that appears in the HID list as "Logitech Dual Action".
+# It will also work with a Logitech 510 joystick, but the product name
+# will need to changed accordingly ("Rumble Pad2", or something like that).
+#
 class Gamepad310():
+
+    ## __init__
+    #
+    # Create the arrays for translating the joystick objects and try and
+    # find the joystick among the HID devices that are attached to the computer.
+    #
+    # @param verbose (Optional) Print diagnostic messages (default False, no messages).
+    #
     def __init__(self, verbose = False):
         # initialize internal variables
         self.buttons = [["A", False, 2], #[name, state bit]
@@ -60,6 +78,15 @@ class Gamepad310():
         if not self.jdev:
             print "Gamepad 310 joystick not found."
 
+    ## dataHandler
+    #
+    # Translates joystick events into our internal format, but
+    # only if they are different from previous events.
+    #
+    # @param data The joystick event data.
+    #
+    # @return An array containing the processed joystick events.
+    #
     def dataHandler(self, data):
         # delete previous events
         self.events_to_send = []
@@ -80,11 +107,21 @@ class Gamepad310():
         if self.verbose:
             print self.events_to_send
         return self.events_to_send
-        
+
+    ## shutDown
+    #
+    # Close the connection to the joystick at program exit.
+    #
     def shutDown(self):
         if self.jdev:
             self.jdev.close()
 
+    ## start
+    #
+    # Open the connection to the joystick and set the joystict event callback function.
+    #
+    # @param handler The function to use to process joystick events.
+    #
     def start(self, handler):
         if self.jdev:
             self.jdev.open()
@@ -92,6 +129,14 @@ class Gamepad310():
         else:
             print "dual action joystick not connected?"
 
+    ## translateAction
+    #
+    # Translates actions, these are things like pressing the trigger buttons
+    # or pressing down on the joystick levers, as well as the "back" and 
+    # "start" buttons.
+    #
+    # @param data The joystick event data.
+    #
     def translateAction(self, data):
         # translate action data
         for index, action in enumerate(self.actions):
@@ -108,7 +153,13 @@ class Gamepad310():
 
             # update self
             self.actions[index][1] = new_action_value
-            
+
+    ## translateHatAndButtons
+    #
+    # Translate hat presses as well as most of the buttons on the joystick.
+    #
+    # @param data The joystick event data.
+    #
     def translateHatAndButtons(self, data):        
         # translate button data
         for index, button in enumerate(self.buttons):
@@ -136,7 +187,14 @@ class Gamepad310():
                 self.events_to_send.append([old_hat[0], "Release"])
             # update hats
             self.hats[index][1] = hat_state[index]
-        
+
+    ## translateJoystick
+    #
+    # Translate joystick displacement events. The displacement value from the joystick is
+    # normalized to (-1.0 to 1.0).
+    #
+    # @param data The joystick event data.
+    #
     def translateJoystick(self, data):        
         # translate joystick data
         new_j_data = [data[3:5], data[1:3]] # deal data to each joystick

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Illumination control specialized for STORM3 dual objective.
 #
 # Hazen 07/13

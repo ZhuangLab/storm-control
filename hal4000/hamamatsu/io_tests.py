@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# For testing how to write 2048 x 2048 pixels at 100fps..
+## @file
+#
+# For testing how to write 2048 x 2048 pixels at 100fps.
 #
 # Hazen 10/13
 #

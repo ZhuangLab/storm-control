@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Labjack U3 Interface.
 # Everything happens on the FIO4 pin.
 #
@@ -9,7 +11,16 @@
 import u3
 import time
 
+## PWM
+#
+# This class encapsulates using a Labjack for PWM modulation on the FIO4 pin.
+#
 class PWM():
+
+    ## __init__
+    #
+    # Try to connect to the Labjack & configure the FIO4 pin.
+    #
     def __init__(self):
         self.live = True
         try:
@@ -22,10 +33,20 @@ class PWM():
             self.device.writeRegister(6004,0) # set FIO4 state to low.
             self.device.configTimerClock(TimerClockBase = 5, TimerClockDivisor = 1)
 
+    ## shutDown
+    #
+    # Close the connection to the Labjack when the program exits.
+    #
     def shutDown(self):
         if self.live:
             self.device.close()
 
+    ## startPWM
+    #
+    # Start PWM modulation of pin FIO4.
+    #
+    # @param duty_cycle The PWM duty cycle (0 - 100).
+    #
     def startPWM(self, duty_cycle):
         if self.live:
             temp = 65535 - 256*duty_cycle
@@ -35,6 +56,10 @@ class PWM():
         else:
             print "duty cycle:", duty_cycle
 
+    ## stopPWM
+    #
+    # Stop PWM modulation of pin FIO4.
+    #
     def stopPWM(self):
         if self.live:
             #self.device.getFeedback(u3.Timer0(Value = 65535, UpdateReset = True))

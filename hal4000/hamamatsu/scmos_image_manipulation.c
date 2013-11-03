@@ -1,4 +1,6 @@
 /*
+ * @file
+ *
  * Perform various manipulations on sCMOS image data. This is written
  * in C for performance reasons.
  *
@@ -14,16 +16,17 @@ void rescaleImage(unsigned char*, unsigned short *, int, int, int, int *, int *)
 
 /* functions */
 
-/* 
+/* rescaleImage
+ *
  * Converts to thresholded 8 bit for Qt.
  *
- * scaled_image - Storage for the scaled image.
- * image - The original image data from the camera, assumed to be 16 bit.
- * image_size - The number of pixels in the image.
- * display_min - The value in image that will be zero in the scaled image.
- * display_max - The value in image that will be 255 in the scaled image.
- * image_min - The minimum value in image.
- * image_max - The maxiumum value in image.
+ * @param scaled_image Storage for the scaled image.
+ * @param image The original image data from the camera, assumed to be 16 bit.
+ * @param image_size The number of pixels in the image.
+ * @param display_min The value in image that will be zero in the scaled image.
+ * @param display_max The value in image that will be 255 in the scaled image.
+ * @param image_min The minimum value in image.
+ * @param image_max The maxiumum value in image.
  */
 void rescaleImage(unsigned char * scaled_image, unsigned short *image, int image_size, int display_min, int display_max, int *image_min, int *image_max)
 {

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Simulated dual-objective shutter control.
 #
 # Hazen 12/12

@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# Joystick monitoring class specialized for prism2.
+## @file
+#
+# Joystick monitoring class specialized for prism2 with the 897 camera.
 #
 # Hazen 09/12
 #
