@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# The defualt miscControl class.
+## @file
+#
+# The default miscControl class.
 #
 # Hazen 06/12
 #
@@ -13,10 +15,19 @@ import qtWidgets.qtAppIcon as qtAppIcon
 # Debugging
 import halLib.hdebug as hdebug
 
+## MiscControl
 #
 # Misc Control Dialog Box
 #
 class MiscControl(QtGui.QDialog):
+
+    ## __init__
+    #
+    # @param parameters A parameters object.
+    # @param tcp_control A TCP control object.
+    # @param camera_widget A camera (display area) widget.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     @hdebug.debug
     def __init__(self, parameters, tcp_control, camera_widget, parent = None):
         QtGui.QDialog.__init__(self, parent)
@@ -26,12 +37,18 @@ class MiscControl(QtGui.QDialog):
         self.tcp_control = tcp_control
 
         if parent:
-            self.have_parent = 1
+            self.have_parent = True
         else:
-            self.have_parent = 0
+            self.have_parent = False
 
         self.setWindowIcon(qtAppIcon.QAppIcon())
 
+    ## closeEvent
+    #
+    # Close the window if it does not have a parent, otherwise just hide it.
+    #
+    # @param event A PyQt event.
+    #
     @hdebug.debug
     def closeEvent(self, event):
         if self.have_parent:
@@ -40,14 +57,26 @@ class MiscControl(QtGui.QDialog):
         else:
             self.quit()
 
+    ## handleQuit
+    #
+    # Close the window.
+    #
     @hdebug.debug
     def handleQuit(self):
         self.close()
 
+    ## newFrame
+    #
+    # Called when there is new data from the camera during film acquisition.
+    #
     @hdebug.debug
     def newFrame(self, frame):
         pass
-        
+
+    ## quit
+    #
+    # Cleans up when the progam exits.
+    #
     @hdebug.debug
     def quit(self):
         pass

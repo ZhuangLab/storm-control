@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Handle lamp/laser and filter wheel for STORM2.
 #
 # Hazen 11/11

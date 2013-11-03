@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Miscellaneous controls, such as the EPI/TIRF motor and
 # the various lasers for STORM3.
 #

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Handle the EPI/TIRF motor for Prism2.
 #
 # Hazen 11/11
