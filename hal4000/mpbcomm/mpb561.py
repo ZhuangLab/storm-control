@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # MPB 561 fiber laser control.
 #
 # Hazen 9/10
@@ -8,7 +10,20 @@
 import halLib.RS232 as RS232
 import time
 
+## MPB561
+#
+# RS-232 control of a MPB laser, nominally 561, but I think
+# this would work with any of their lasers.
+#
+# This is not actually used, we usually just use the interface
+# that MPB provides.
+#
 class MPB561(RS232.RS232):
+
+    ## __init__
+    #
+    # @param port A com port name such as "COM1"
+    #
     def __init__(self, port):
         try:
             # open port
@@ -21,6 +36,10 @@ class MPB561(RS232.RS232):
             print "Perhaps it is turned off or the COM ports have"
             print "been scrambled?"
 
+    ## getCurrent
+    #
+    # @return The laser current.
+    #
     def getCurrent(self):
         resp = self.commWithResp("ldcurrent 1")
         if resp:
@@ -28,6 +47,10 @@ class MPB561(RS232.RS232):
             return float(curr_as_text)
         return 0.0
 
+    ## getStatus
+    #
+    # @return True/False the laser is powered on.
+    #
     def getStatus(self):
         resp = self.commWithResp("shfault").split(self.end_of_line)
         for res in resp:
@@ -36,15 +59,29 @@ class MPB561(RS232.RS232):
                 return False
         return True
 
+    ## setPower
+    #
+    # @param power_in_mW The desired laser power in mW.
+    #
     def setPower(self, power_in_mW):
         comm = "setpower 0 " + str(round(power_in_mW))
         self.sendCommand(comm)
 
+    ## powerOn
+    #
+    # Turn on the laser and set the output power.
+    #
+    # @param power_in_mW The desired laser power in mW.
+    #
     def powerOn(self, power_in_mW):
         self.sendCommand("setldenable 1")
         self.sendCommand("powerenable 1")
         self.setPower(power_in_mW)
 
+    ## powerOff
+    #
+    # Turn off the laser.
+    #
     def powerOff(self):
         self.sendCommand("setldenable 0")
         # clear command buffer

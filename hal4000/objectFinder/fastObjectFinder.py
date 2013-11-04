@@ -1,8 +1,12 @@
 #!/usr/bin/python
 #
+## @file
+#
 # A fast spot counter based on subtracting the median value
 # in each cell, thresholding the image, and then computing
 # the center of mass of all the points above the threshold.
+#
+# This is not currently used.
 #
 # Hazen 10/09
 #

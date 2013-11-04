@@ -1,4 +1,6 @@
 /*
+ * @file
+ *
  * Laplacian of Gaussian based object finder.
  *
  * Hazen 3/09

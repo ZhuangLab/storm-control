@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Olympus IX2-UCB filter wheel control
 #
 # Hazen 09/13
@@ -8,7 +10,19 @@
 import halLib.RS232 as RS232
 import time
 
+## IX2UCB
+#
+# This class encapsulates control of a Olympus filter wheel that
+# is run by a IX2UCB controller. Communication is done via RS-232
+#
+#
 class IX2UCB(RS232.RS232):
+
+    ## __init__
+    #
+    # @param port (Optional) The com port, defaults to "COM4".
+    # @param baud (Optional) The baud rate, defaults to 9600.
+    #
     def __init__(self, port = "COM4", baud = 9600):
         self.position = 0
         try:
@@ -22,6 +36,10 @@ class IX2UCB(RS232.RS232):
             self.live = 0
             print "Failed to connect to the IX2-UCB controller at port", port
 
+    ## amMoving
+    #
+    # @return True/False if the stage is moving.
+    #
     def amMoving(self):
         resp = self.commWithResp("1MU?")
         if resp:
@@ -35,6 +53,10 @@ class IX2UCB(RS232.RS232):
             print "IX2-UCB: Failed query motion status"
             return False
 
+    ## getPosition
+    #
+    # @return The current position of the filter wheel.
+    #
     def getPosition(self):
         resp = self.commWithResp("1MU?")
         if resp:
@@ -54,6 +76,10 @@ class IX2UCB(RS232.RS232):
             print "IX2-UCB: Failed to get filter wheel position"
             return 1
 
+    ## setPosition
+    #
+    # @param position The desired filter wheel position (1-6).
+    #
     def setPosition(self, position):
         if (position < 1):
             position = 1

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Communicates with the National Instrument card(s).
 #
 # Hazen 3/12
@@ -36,6 +38,13 @@ TaskHandle = c_ulong
 # Utility functions
 #
 
+## checkStatus
+#
+# If status is an error code this prints the error code and
+# the corresponding text as well as the current call stack.
+#
+# @param status The return value from a NI library function call.
+#
 def checkStatus(status):
     if status < 0:
         buf_size = 1000
@@ -51,7 +60,10 @@ def checkStatus(status):
 # NIDAQ functions
 #
 
-# Return DAQ board info.
+## getDAQBoardInfo
+#
+# @return A array listing the NI devices that are currently attached to the computer.
+#
 def getDAQBoardInfo():
     daq_boards = []
     devices_len = 100
@@ -66,8 +78,15 @@ def getDAQBoardInfo():
         daq_boards.append([dev_data.value, dev[-1:]])
     return daq_boards
 
+## @getBoardDevNumber
+#
 # Return the device number that corresponds to a given board
 # This assumes that you do not have two identically named boards.
+#
+# @param board The board name as a string.
+#
+# @return The device number.
+#
 def getBoardDevNumber(board):
     available_boards = getDAQBoardInfo()
     index = 1
@@ -85,35 +104,67 @@ def getBoardDevNumber(board):
 # DAQ communication classes
 #
 
+## NIDAQTask
 #
-# NIDAQmx task class
+# NIDAQmx task base class
 #
 class NIDAQTask():
+
+    ## __init__
+    #
+    # @param board The board name as a string.
+    #
     def __init__(self, board):
         self.board_number = getBoardDevNumber(board)
         self.taskHandle = TaskHandle(0)
         checkStatus(nidaqmx.DAQmxCreateTask("", byref(self.taskHandle)))
 
+    ## clearTask
+    #
+    # Clears the task from the board.
+    #
     def clearTask(self):
         checkStatus(nidaqmx.DAQmxClearTask(self.taskHandle))
 
+    ## startTask
+    #
+    # Starts the task.
+    #
     def startTask(self):
         checkStatus(nidaqmx.DAQmxStartTask(self.taskHandle))
 
+    ## stopTask
+    #
+    # Stops the task.
+    #
     def stopTask(self):
         checkStatus(nidaqmx.DAQmxStopTask(self.taskHandle))
 
+    ## taskIsDoneP
+    #
     # FIXME: This doesn't look like it would work. Do we even use it?
+    #
+    # @return 1/0 The task is done.
+    #
     def taskIsDoneP(self):
         #done = c_long(0)
         checkStatus(nidaqmx.DAQmxIsTaskDone(self.taskHandle, None))
         return done.value
 
 
+## VoltageOutput
 #                    
 # Simple analog output class
 #
 class VoltageOutput(NIDAQTask):
+
+    ## __init__
+    #
+    # @param board The board name.
+    # @param channel The channel to use for output.
+    # @param min_val (Optional) Defaults to -10.0V.
+    # @param max_val (Optional) Defaults to 10.0V.
+    #
     def __init__(self, board, channel, min_val = -10.0, max_val = 10.0):
         NIDAQTask.__init__(self, board)
         self.channel = channel
@@ -126,8 +177,13 @@ class VoltageOutput(NIDAQTask):
                                                      c_int(DAQmx_Val_Volts), 
                                                      ""))
 
-    # output a single voltage more or less as soon as it is called, 
+    ## outputVoltage
+    #
+    # Output a single voltage more or less as soon as it is called, 
     # assuming that no other task is running.
+    #
+    # @param voltage The voltage to output.
+    #
     def outputVoltage(self, voltage):
         c_samples_written = c_long(0)
         c_voltage = c_double(voltage)
@@ -142,10 +198,19 @@ class VoltageOutput(NIDAQTask):
         assert c_samples_written.value == 1, "outputVoltage failed: " + str(c_samples_written.value) + " 1"
 
 
+## WaveformOutput
 #
 # Analog waveform output class
 #
 class WaveformOutput(NIDAQTask):
+
+    ## __init__
+    #
+    # @param board The board name.
+    # @param channel The channel to use for output.
+    # @param min_val (Optional) Defaults to -10.0V.
+    # @param max_val (Optional) Defaults to 10.0V.
+    #
     def __init__(self, board, channel, min_val = -10.0, max_val = 10.0):
         NIDAQTask.__init__(self, board)
         self.c_waveform = 0
@@ -161,6 +226,14 @@ class WaveformOutput(NIDAQTask):
                                                      c_int(DAQmx_Val_Volts), 
                                                      ""))
 
+    ## addChannel
+    #
+    # Add additional channels to the waveform task. Note that these have
+    # to be added sequentially with increasing channel number (I'm pretty sure).
+    #
+    # @param channel The channel to use for output.
+    # @param board (Optional) Defaults to the board specified when this object was created.
+    #
     def addChannel(self, channel, board = None):
         self.channels += 1
         board_number = self.board_number
@@ -175,14 +248,21 @@ class WaveformOutput(NIDAQTask):
                                                      c_int(DAQmx_Val_Volts), 
                                                      ""))
 
+    ## setWaveform
+    #
+    # The output waveforms for all the analog channels are stored in one 
+    # big array, so the per channel waveform length is the total length 
+    # divided by the number of channels.
+    #
+    # You need to add all your channels first before calling this.
+    #
+    # @param waveform A python array containing the wave form data.
+    # @param sample_rate The update frequency at which the wave form will be output.
+    # @param finite (Optional) Output the wave form repeatedly or just once, defaults to repeatedly.
+    # @param clock (Optional) The clock signal to use as a time base for the wave form, defaults to ctr0out.
+    # @param rising (Optional) Update on the rising or falling edge, defaults to rising.
+    #
     def setWaveform(self, waveform, sample_rate, finite = 0, clock = "ctr0out", rising = True):
-        #
-        # The output waveforms for all the analog channels are stored in one 
-        # big array, so the per channel waveform length is the total length 
-        # divided by the number of channels.
-        #
-        # You need to add all your channels first before calling this.
-        #
         waveform_len = len(waveform)/self.channels
 
         clock_source = ""
@@ -221,6 +301,7 @@ class WaveformOutput(NIDAQTask):
         assert c_samples_written.value == waveform_len, "Failed to write the right number of samples " + str(c_samples_written.value) + " " + str(waveform_len)
 
 
+## AnalogInput
 #
 # Analog input class
 #
@@ -228,6 +309,14 @@ class WaveformOutput(NIDAQTask):
 # asynchronously timed off the internal clock.
 #
 class AnalogInput(NIDAQTask):
+
+    ## __init__
+    #
+    # @param board The board name.
+    # @param channel The channel to use for input.
+    # @param min_val (Optional) Defaults to -10.0V.
+    # @param max_val (Optional) Defaults to 10.0V.
+    #
     def __init__(self, board, channel, min_val = -10.0, max_val = 10.0):
         NIDAQTask.__init__(self, board)
         self.c_waveform = 0
@@ -244,6 +333,13 @@ class AnalogInput(NIDAQTask):
                                                      c_int(DAQmx_Val_Volts),
                                                      None))
 
+    ## addChannel
+    #
+    # Add a channel to the task. I'm pretty sure they have to be added sequentially
+    # with increasing channel number.
+    #
+    # @param channel The channel to add.
+    #
     def addChannel(self, channel):
         self.channels += 1
         self.dev_and_channel = "Dev" + str(self.board_number) + "/ai" + str(channel)        
@@ -256,8 +352,14 @@ class AnalogInput(NIDAQTask):
                                                      c_int(DAQmx_Val_Volts),
                                                      None))
 
+    ## configureAcquisition
+    #
+    # Set the sample timing and buffer length.
+    #
+    # @param samples The number of samples to acquire.
+    # @param sample_rate_Hz The sampling rate (in Hz).
+    #
     def configureAcquisition(self, samples, sample_rate_Hz):
-        # set the sample timing and buffer length.
         self.samples = samples
         checkStatus(nidaqmx.DAQmxCfgSampClkTiming(self.taskHandle,
                                                   "",
@@ -266,6 +368,12 @@ class AnalogInput(NIDAQTask):
                                                   c_long(DAQmx_Val_FiniteSamps),
                                                   c_ulonglong(self.samples)))
 
+    ## getData
+    #
+    # Get the acquired data from the DAQ card.
+    #
+    # @return The data as a flat c-types array of size samples * channels.
+    #
     def getData(self):
         # allocate space to store the data.
         c_data_type = c_double * (self.samples * self.channels)
@@ -284,10 +392,20 @@ class AnalogInput(NIDAQTask):
         return data
 
 
+## CounterOutput
 #
-# Counter output class
+# Counter output class.
 #
 class CounterOutput(NIDAQTask):
+
+    ## __init__
+    #
+    # @param board The board name.
+    # @param channel The counter to use.
+    # @param frequency The frequency of the output square wave.
+    # @param duty_cycle The duty cycle of the square wave.
+    # @param initial_delay (Optional) The delay between the trigger signal and starting output, defaults to 0.0.
+    #
     def __init__(self, board, channel, frequency, duty_cycle, initial_delay = 0.0):
         NIDAQTask.__init__(self, board)
         self.channel = channel
@@ -301,6 +419,10 @@ class CounterOutput(NIDAQTask):
                                                        c_double(frequency),
                                                        c_double(duty_cycle)))
 
+    ## setCounter
+    #
+    # @param number_samples Number of waveform cycles to output, zero is continuous.
+    #
     def setCounter(self, number_samples):
         if (number_samples > 0):
             checkStatus(nidaqmx.DAQmxCfgImplicitTiming(self.taskHandle,
@@ -311,6 +433,12 @@ class CounterOutput(NIDAQTask):
                                                        c_long(DAQmx_Val_ContSamps),
                                                        c_ulonglong(1000)))
 
+    ## setTrigger
+    #
+    # @param trigger_source The pin to use as the trigger source.
+    # @param retriggerable (Optional) The task can be repeatedly triggered (or not), defaults to repeatedly.
+    # @param board (Optional) The board the trigger pin is located on, defaults to the board specified as object creation.
+    #
     def setTrigger(self, trigger_source, retriggerable = 1, board = None):
         if retriggerable:
             checkStatus(nidaqmx.DAQmxSetStartTrigRetriggerable(self.taskHandle, 
@@ -327,10 +455,17 @@ class CounterOutput(NIDAQTask):
                                                      c_long(DAQmx_Val_Rising)))
 
 
+## DigitalOutput
 #
-# Digital output task (for simple non-triggered digital output)
+# Digital output task (for simple non-triggered digital output).
 #
 class DigitalOutput(NIDAQTask):
+
+    ## __init__
+    #
+    # @param board The board name.
+    # @param channel The digital channel to use.
+    #
     def __init__(self, board, channel):
         NIDAQTask.__init__(self, board)
         self.channel = channel
@@ -340,6 +475,10 @@ class DigitalOutput(NIDAQTask):
                                               "",
                                               c_long(DAQmx_Val_ChanPerLine)))
 
+    ## output
+    #
+    # @param high True/False Output a high/low voltage.
+    #
     def output(self, high):
         if high:
             c_data = c_byte(1)
@@ -357,10 +496,17 @@ class DigitalOutput(NIDAQTask):
         assert c_written.value == 1, "Digital output failed"
 
 
+## DigitalInput
 #
-# Digital input task (for simple non-triggered digital input)
+# Digital input task (for simple non-triggered digital input).
 #
 class DigitalInput(NIDAQTask):
+
+    ## __init__
+    #
+    # @param board The board name.
+    # @param channel The digital channel to use for input.
+    #
     def __init__(self, board, channel):
         NIDAQTask.__init__(self, board)
         self.channel = channel
@@ -369,6 +515,11 @@ class DigitalInput(NIDAQTask):
                                               c_char_p(self.dev_and_channel),
                                               "",
                                               c_long(DAQmx_Val_ChanPerLine)))
+
+    ## input
+    #
+    # @return True/False the input line is high/low.
+    #
     def input(self):
         c_read = c_byte(0)
         c_samps_read = c_long(0)
@@ -389,10 +540,17 @@ class DigitalInput(NIDAQTask):
             return 0
 
 
+## DigitalWaveformOutput
 #
-# Digital waveform output class
+# Digital waveform output class.
 #
 class DigitalWaveformOutput(NIDAQTask):
+
+    ## __init__
+    #
+    # @param board The board name.
+    # @param line The digital line to use for wave form output.
+    #
     def __init__(self, board, line):
         NIDAQTask.__init__(self, board)
         self.dev_line = "Dev" + str(self.board_number) + "/port0/line" + str(line)
@@ -402,6 +560,14 @@ class DigitalWaveformOutput(NIDAQTask):
                                               "",
                                               c_int(DAQmx_Val_ChanPerLine)))
 
+    ## addChannel
+    #
+    # Add a channel to the task. I'm pretty sure that the channels have to be added
+    # sequentially in order of increasing line number (at least on the same board).
+    #
+    # @param board The board name.
+    # @param line The digital line.
+    #
     def addChannel(self, board, line):
         self.channels += 1
         self.dev_line = "Dev" + str(self.board_number) + "/port0/line" + str(line)
@@ -410,14 +576,21 @@ class DigitalWaveformOutput(NIDAQTask):
                                               "",
                                               c_int(DAQmx_Val_ChanPerLine)))
 
+    ## setWaveform
+    #
+    # The output waveforms for all the digital channels are stored in one 
+    # big array, so the per channel waveform length is the total length 
+    # divided by the number of channels.
+    #
+    # You need to add all your channels first before calling this.
+    #
+    # @param waveform A python array containing the wave form data.
+    # @param sample_rate The update rate for wave form output.
+    # @param finite (Optional) Output the wave form once or repeatedly, defaults to repeatedly.
+    # @param clock (Optional) The clock signal that will drive the wave form output, defaults to "ctr0out".
+    # @param rising (Optional) True/False update on the rising edge, defaults to True.
+    #
     def setWaveform(self, waveform, sample_rate, finite = 0, clock = "ctr0out", rising = True):
-        #
-        # The output waveforms for all the digital channels are stored in one 
-        # big array, so the per channel waveform length is the total length 
-        # divided by the number of channels.
-        #
-        # You need to add all your channels first before calling this.
-        #
         waveform_len = len(waveform)/self.channels
 
         clock_source = ""
@@ -462,12 +635,24 @@ class DigitalWaveformOutput(NIDAQTask):
 # Convenience functions.
 #
 
+## setAnalogLine
+#
+# @param board The board name.
+# @param line The analog output line.
+# @param voltage The desired voltage.
+#
 def setAnalogLine(board, line, voltage):
     task = VoltageOutput(board, line)
     task.outputVoltage(voltage)
     task.stopTask()
     task.clearTask()
 
+## setDigitalLine
+#
+# @param board The board name.
+# @param line The digital output line.
+# @param value True/False high/low.
+#
 def setDigitalLine(board, line, value):
     task = DigitalOutput(board, line)
     task.output(value)

@@ -1,4 +1,6 @@
 /*
+ * @file
+ *
  * Object finding code based on using the median background 
  * subtraction and threshold object detection.
  * 

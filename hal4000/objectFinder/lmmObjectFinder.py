@@ -1,6 +1,11 @@
 #!/usr/bin/python
 #
-# Python interface to the LMMoment object finder.
+## @file
+#
+# Python interface to the LMMoment object finder. This object finder
+# works by indentifying local maxima, then computing their first moment.
+#
+# Note that the maximum number of objects found per image is limited to 1000.
 #
 # Hazen 09/13
 #
@@ -15,9 +20,18 @@ max_locs = 1000
 loc_type = c_float * max_locs
 
 
+## cleanup
+#
+# Called at program shutdown to free arrays allocated in C.
+#
 def cleanup():
     lmmoment.cleanup()
 
+## initialize
+#
+# Called at program start up to allocate array and perform other
+# initialization in C.
+#
 def initialize():
     global lmmoment
 
@@ -28,6 +42,17 @@ def initialize():
     lmmoment = cdll.LoadLibrary(directory + "LMMoment.dll")
     lmmoment.initialize()
 
+## findObjects
+#
+# Find the objects in the image.
+#
+# @param np_image The image as a numpy.uint16 array.
+# @param image_x The size of the image in x in pixels.
+# @param image_y The size of the image in y in pixels.
+# @param threshold The minimum height difference between the local maxima and the pixels on the edge of the peak.
+#
+# @return [[peak x positions], [peak y positions], number of peaks.
+# 
 def findObjects(np_image, image_x, image_y, threshold):
         x = loc_type()
         y = loc_type()

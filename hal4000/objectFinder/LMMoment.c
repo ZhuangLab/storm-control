@@ -1,4 +1,6 @@
 /*
+ * @file
+ *
  * Object finding code that find peaks by identifying local maxima, 
  * checking if they have a peak like shape, then computing the
  * first moment to determine the peak center.
