@@ -1,5 +1,9 @@
 #!/usr/bin/python
 #
+## @file
+#
+# Deprecated!
+#
 # Qt Widget for handling "manual" laser power control and display.
 # This class also handles converting a power request (0.0 - 1.0)
 # into a voltage to be put out by the DAQ board for "automatic"

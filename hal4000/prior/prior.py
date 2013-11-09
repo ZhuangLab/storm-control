@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# Communicates with the Prior stages, typically on com2.
+## @file
+#
+# Prior stage communication.
 #
 # Hazen 5/11
 #
@@ -9,10 +11,20 @@ import halLib.RS232 as RS232
 import time
 
 
+## Prior
 #
-# XY Prior stage, possibly with piezo Z control & a filter wheel.
+# Encapsulates control of a XY Prior stage, possibly with piezo Z control & a filter wheel.
+# Communication occurs by RS-232.
 #
 class Prior(RS232.RS232):
+
+    ## __init__
+    #
+    # @param port (Optional) The RS-232 port to use, defaults to "COM2".
+    # @param timeout (Optional) The time out value for communication, defaults to None.
+    # @param baudrate (Optional) The communication baud rate, defaults to 9600.
+    # @param wait_time How long to wait between polling events before it is decided that there is no new data available on the port, defaults to 20ms.
+    #
     def __init__(self, port = "COM2", timeout = None, baudrate = 9600, wait_time = 0.02):
         self.unit_to_um = 1.0
         self.um_to_unit = 1.0/self.unit_to_um
@@ -31,11 +43,21 @@ class Prior(RS232.RS232):
         else:   # this turns off "drift correction".
             self.setServo(False)
 
+    ## _command
+    #
+    # @param command The command string to send.
+    #
+    # @return The response to the command.
+    #
     def _command(self, command):
         response = self.commWithResp(command)
         if response:
             return response.split("\r")
 
+    ## active
+    #
+    # @return True/False The stage is busy doing something.
+    #
     def active(self):
         state = self.state()
         try:
@@ -43,18 +65,30 @@ class Prior(RS232.RS232):
             return 1
         except:
             return 0
-        
+
+    ## backlashOnOff
+    #
+    # @param on True/False turn backlash compensation on/off.
+    #
     def backlashOnOff(self, on):
         if on:
             self._command("BLSH 1")
         else:
             self._command("BLSH 0")
 
+    ## changeFilter
+    #
+    # @param filter The filter index to change to.
+    #
     def changeFilter(self, filter):
         if not (filter == self.getFilter()):
             self.sendCommand("7,1," + str(filter))
             self.waitResponse()
 
+    ## getFilter
+    #
+    # @return The current filter position.
+    #
     def getFilter(self):
         try:
             return int(self._command("7,1,F")[0])
@@ -62,30 +96,63 @@ class Prior(RS232.RS232):
             print "Error reading filter position."
             return -1
 
+    ## getServo
+    #
+    # I don't remember what this is for or what it does..
+    #
+    # @return [servo x, servo y].
+    #
     def getServo(self):
         return [self._command("SERVO,X"), self._command("SERVO,Y")]
 
+    ## goAbsolute
+    #
+    # @param x X position in um.
+    # @param y Y position in um.
+    #
     def goAbsolute(self, x, y):
         self.sendCommand("G " + str(x * self.um_to_unit) + "," + str(y * self.um_to_unit))
         self.waitResponse()
 
+    ## goRelative
+    #
+    # @param dx Amount to move in x in um.
+    # @param dy Amount to move in y in um.
+    #
     def goRelative(self, dx, dy):
         self.sendCommand("GR " + str(dx * self.um_to_unit) + "," + str(dy * self.um_to_unit))
         self.waitResponse()
 
+    ## info
+    #
+    # @return Some information about the stage.
+    #
     def info(self):
         return self._command("?")
 
+    ## jog
+    #
+    # @param x_speed Speed the stage should be moving at in x in um/s.
+    # @param y_speed Speed the stage should be moving at in y in um/s.
+    #
     def jog(self, x_speed, y_speed):
         #print "VS {0:.1f},{1:.1f}".format(x_speed,y_speed)
         self._command("VS {0:.1f},{1:.1f}".format(x_speed,y_speed))
 
+    ## joystickOnOff
+    #
+    # @param on True/False enable/disable the stage joystick.
+    #
     def joystickOnOff(self, on):
         if on:
             self._command("J")
         else:
             self._command("H")
-        
+     
+    ## position
+    #
+    # @return [stage x (um), stage y (um), stage z (um)].
+    #
     def position(self):
         try:
             response = self._command("P")[0]
@@ -96,20 +163,39 @@ class Prior(RS232.RS232):
                 self.y * self.unit_to_um, 
                 self.z * self.unit_to_um]
 
+    ## setEncoderWindow
+    #
+    # Sets the amount of diplacement from the correct position that is allowed
+    # before the stage will attempt to correct by moving.
+    #
+    # @param axis The axis to set the window on.
+    # @param window The size of the window.
+    #
     def setEncoderWindow(self, axis, window):
-        assert window >= 0, "setEncoderWindow window is too smale " + str(window)
+        assert window >= 0, "setEncoderWindow window is too small " + str(window)
         assert window <= 4, "setEncoderWindow window is too large " + str(window)
         if axis == "X":
             self._command("ENCW X," + str(window))
         if axis == "Y":
             self._command("ENCW Y," + str(window))
 
+    ## setServo
+    #
+    # I think this is probably related to the encoder.
+    #
+    # @param servo True/False turn the servo on/off?
+    #
     def setServo(self, servo):
         if servo:
             self._command("SERVO,1")
         else:
             self._command("SERVO,0")
 
+    ## setVelocity
+    #
+    # @param x_vel The maximum stage velocity allowed in x.
+    # @param y_vel The maximum stage velocity allowed in y.
+    #
     def setVelocity(self, x_vel, y_vel):
         # FIXME: units are 1-100, but not exactly sure what..
         speed = x_vel * 10.0
@@ -117,6 +203,10 @@ class Prior(RS232.RS232):
             speed = 100.0
         self._command("SMS," + str(speed))
 
+    ## state
+    #
+    # @return An array containing the status of each axis ("busy" or "idle").
+    #
     def state(self):
         response = self._command("#")[0]
         state = []
@@ -126,33 +216,63 @@ class Prior(RS232.RS232):
             else:
                 state.append("idle")
         return state
-        
+
+    ## zero
+    #
+    # Set the current position as the stage zero position.
+    #
     def zero(self):
         self._command("P 0,0,0")
 
+    ## zMoveTo
+    #
+    # @param z The z value to move to the (piezo) stage to.
+    #
     def zMoveTo(self, z):
         self._command("<V " + str(z))
 
+    ## zPosition
+    #
+    # @return The current z position of the (piezo) stage.
     def zPosition(self):
         zpos = self._command("<PZ")
         return zpos[1:]
 
 
+## PriorFocus
 #
-# Focus drive only.
+# Encapsulates communication via RS-232 with a Prior focus drive motor.
 #
 class PriorFocus(Prior):
+
+    ## __init__
+    #
+    # @param port (Optional) The RS-232 port to use, defaults to "COM1".
+    # @param timeout (Optional) The time out value for communication, defaults to None.
+    # @param baudrate (Optional) The communication baud rate, defaults to 9600.
+    #
     def __init__(self, port = "COM1", timeout = None, baudrate = 9600):
         Prior.__init__(self, port = port, timeout = timeout, baudrate = baudrate)
         if not self.live:
             print "Failed to connect to Prior focus motor controller."
 
+    ## zMoveRelative
+    #
+    # @param dz Amount to move focus motor (in um?).
+    #
     def zMoveRelative(self, dz):
         self._command("U " + str(10.0 * dz))
 
+    ## zMoveTo
+    #
+    # @param z Position to move the focus motor to (in um?).
     def zMoveTo(self, z):
         self._command("V " + str(10.0 * z))
 
+    ## zPosition
+    #
+    # @return The current z position of the focus motor (in um?).
+    #
     def zPosition(self):
         zpos = self._command("PZ")[0]
         return float(zpos) * 0.1

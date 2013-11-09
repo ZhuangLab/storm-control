@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Qt Widget for displaying color scales
 #
 # Hazen 3/09
@@ -8,8 +10,17 @@
 from PyQt4 import QtGui
 import sys
 
-# Camera widget
+## QColorGradient
+#
+# This class handles displaying a color scale based on the current color table.
+#
 class QColorGradient(QtGui.QWidget):
+
+    ## __init__
+    #
+    # @param colortable (Optional) default is no color table.
+    # @param parent (Optional) the PyQt parent of this object.
+    #
     def __init__(self, colortable = 0, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.min = 0
@@ -33,6 +44,10 @@ class QColorGradient(QtGui.QWidget):
             i += 1
         self.image.invertPixels()
 
+    ## newColorTable
+    #
+    # @param colortable A color table Python array.
+    #
     def newColorTable(self, colortable):
         for i in range(256):
             self.image.setColor(i, QtGui.qRgb(colortable[i][0], 
@@ -40,6 +55,11 @@ class QColorGradient(QtGui.QWidget):
                                               colortable[i][2]))
         self.update()
 
+    ## paintEvent
+    #
+    # Draw the color table.
+    #
+    # @param event A PyQt paint event.
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
         painter.drawImage(0, 0, self.image.scaled(self.width(), self.height()))

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Deprecated! Use qtRangeSlider instead!
 #
 # Qt Widget Range slider widget.

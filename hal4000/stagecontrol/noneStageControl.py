@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Pseudo stage control for none setup.
 #
 # Hazen 11/09

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Qt Widget for handling the display of camera data.
 #
 # Hazen 09/13
@@ -10,11 +12,19 @@ from PyQt4 import QtCore, QtGui
 import numpy
 import sys
 
-# Camera widget
+## QCameraWidget
+#
+# The base class for displaying data from a camera.
+#
 class QCameraWidget(QtGui.QWidget):
     intensityInfo = QtCore.pyqtSignal(int, int, int)
     mousePress = QtCore.pyqtSignal(int, int)
 
+    ## __init__
+    #
+    # @param parameters A parameters object.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     def __init__(self, parameters, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.buffer = False
@@ -52,7 +62,10 @@ class QCameraWidget(QtGui.QWidget):
         self.y_size = 0
         self.y_view = 512
 
-    # Initialize the buffer.
+    ## blank
+    #
+    # Initialize the off-screen buffer for image renderin.
+    #
     def blank(self):
         painter = QtGui.QPainter(self.buffer)
         color = QtGui.QColor(0, 0, 0)
@@ -60,9 +73,14 @@ class QCameraWidget(QtGui.QWidget):
         painter.setBrush(color)
         painter.drawRect(0, 0, self.width(), self.height())
 
+    ## calcFinalSize
     #
-    # "Final" is the size at which to draw the pixmap 
-    # that will actually be shown in the window.
+    # "Final" is the size at which to draw the pixmap that will actually 
+    # be shown in the window.
+    #
+    # Based on the final size, determine the best size for a square window. 
+    # Set the widget size to this & create a buffer of this size. We'll
+    # draw in the buffer first, then copy to the window.
     #
     def calcFinalSize(self):
 
@@ -76,11 +94,6 @@ class QCameraWidget(QtGui.QWidget):
         self.x_final = self.x_final * self.magnification
         self.y_final = self.y_final * self.magnification
 
-        #
-        # Based on the final size, determine the size for a square window. 
-        # Set the widget size to this & create a buffer of this size. We'll
-        # draw in the buffer first, then copy to the window.
-        #
         w_size = self.x_final
         if (self.y_final > self.x_final):
             w_size = self.y_final
@@ -90,14 +103,25 @@ class QCameraWidget(QtGui.QWidget):
 
         self.blank()
 
+    ## getAutoScale
+    #
+    # This returns the minimum and maximum values to use for automatically
+    # re-scaling the image based on the most recent camera data.
+    #
+    # @return [camera data value to use as zero, camera data value to use as 255]
+    #
     def getAutoScale(self):
         margin = int(0.1 * float(self.image_max - self.image_min))
         return [self.image_min - margin, self.image_max + margin]
 
+    ## mousePressEvent
     #
     # Convert the mouse click location into camera pixels. The xy 
     # coordinates of the event are correctly adjusted for the scroll 
-    # bar position, we just need to scale them correctly.
+    # bar position, we just need to scale them correctly. This causes
+    # a mousePress event to be emitted.
+    #
+    # @param event A PyQt mouse press event.
     #
     def mousePressEvent(self, event):
         self.x_click = event.x() * self.x_size / self.x_final
@@ -110,13 +134,22 @@ class QCameraWidget(QtGui.QWidget):
 
         self.mousePress.emit(self.x_click, self.y_click)
 
+    ## newColorTable
     #
     # Note that the color table of the image that is being displayed 
     # will not actually change until updateImageWithFrame() is called.
     #
+    # @param colortable A python array of color table values.
+    #
     def newColorTable(self, colortable):
         self.colortable = colortable
 
+    ## newParameters
+    #
+    # @param parameters A parameters object.
+    # @param colortable A color table Python array.
+    # @param display_range [minimum, maximum]
+    #
     def newParameters(self, parameters, colortable, display_range):
         self.colortable = colortable
         self.display_range = display_range
@@ -127,9 +160,14 @@ class QCameraWidget(QtGui.QWidget):
 
         self.calcFinalSize()
 
+    ## newRange
+    #
+    # @param range [minimum, maximum]
+    #
     def newRange(self, range):
         self.display_range = range
 
+    ## paintEvent
     #
     # self.image is the image from the camera scaled to the buffer
     #    size.
@@ -137,7 +175,9 @@ class QCameraWidget(QtGui.QWidget):
     # self.buffer is where the image is temporarily re-drawn prior 
     #    to final display. In theory this reduces display flickering.
     #
-    def paintEvent(self, Event):
+    # @param event A PyQt paint event.
+    #
+    def paintEvent(self, event):
         if self.image:
             painter = QtGui.QPainter(self.buffer)
 
@@ -166,6 +206,10 @@ class QCameraWidget(QtGui.QWidget):
             painter = QtGui.QPainter(self)
             painter.drawPixmap(0, 0, self.buffer)
 
+    ## setColorTable
+    #
+    # Changes the color table of the current image.
+    #
     def setColorTable(self):
         if self.colortable:
             for i in range(256):
@@ -176,32 +220,55 @@ class QCameraWidget(QtGui.QWidget):
             for i in range(256):
                 self.image.setColor(i,QtGui.qRgb(i,i,i))
 
+    ## setMagnification
     #
     # Note that the magnification of the image that is being displayed 
     # will not actually change until updateImageWithFrame() is called.
+    #
+    # @param new_magnification The new magnification factor, an integer > 0.
     #
     def setMagnification(self, new_magnification):
         self.magnification = new_magnification
         self.calcFinalSize()
 
+    ## setShowGrid
+    #
+    # @param bool True/False Overlay a grid on the image from the camera.
+    #
     def setShowGrid(self, bool):
         if bool:
             self.show_grid = True
         else:
             self.show_grid = False
 
+    ## setShowInfo
+    #
+    # @param bool True/False Display intensity information for the last pixel that was clicked on.
+    #
     def setShowInfo(self, bool):
         if bool:
             self.show_info = True
         else:
             self.show_info = False
 
+    ## setShowTarget
+    #
+    # @param bool True/False Overlay a circle in the center of the image from the camera.
+    #
     def setShowTarget(self, bool):
         if bool:
             self.show_target = True
         else:
             self.show_target = False
 
+    ## updateImageWithFrame
+    #
+    # This takes the image from the camera, scales it, resizes it and converts it
+    # into a QImage that can be drawn in the display. It also emits the intensityInfo
+    # signal with the current intensity of the pixel of interest.
+    #
+    # @param frame A frame object.
+    #
     def updateImageWithFrame(self, frame):
         if frame:
             w = frame.image_x

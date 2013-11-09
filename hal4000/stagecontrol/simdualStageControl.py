@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Pseudo stage control for the simulated dual-objective setup.
 #
 # Hazen 12/12

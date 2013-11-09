@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Stage control for Prism2.
 #
 # Hazen 09/12

@@ -21,14 +21,25 @@ else:
     averager = ctypes.cdll.LoadLibrary("phreshPhotonics/averager")
 
 
+## PhreshQPD
 #
-# PhreshQPD interface class.
+# The base PhreshQPD interface class.
 #
 class PhreshQPD:
+
+    ## __init__
+    #
+    # @param samples (Optional) The number of samples to take and average for a single QPD reading, defaults to 5000.
+    # @param sample_rate_Hz (Optional) The sampling frequency, defaults to 100kHz.
+    #
     def __init__(self, samples = 5000, sample_rate_Hz = 100000):
         self.samples = samples
         self.sample_rate_Hz = sample_rate_Hz
 
+    ## collectData
+    #
+    # @return A ctypes array containing the readings from the National Instruments card.
+    #
     def collectData(self):
         # Collect the data.
         self.qpd_task.startTask()
@@ -37,10 +48,15 @@ class PhreshQPD:
 
         return data
 
+    ## shutDown
+    #
+    # Clear tasks on the National Instruments hardware.
+    #
     def shutDown(self):
         self.qpd_task.clearTask()
 
 
+## PhreshQPDSTORM3
 #
 # STORM3 QPD Class
 #
@@ -50,6 +66,12 @@ class PhreshQPD:
 #  Y diff - AI channel 2
 #
 class PhreshQPDSTORM3(PhreshQPD):
+    
+    ## __init__
+    #
+    # @param samples (Optional) The number of samples to take and average for a single QPD reading, defaults to 5000.
+    # @param sample_rate_Hz (Optional) The sampling frequency, defaults to 100kHz.
+    #
     def __init__(self, samples = 5000, sample_rate_Hz = 100000):
         PhreshQPD.__init__(self, samples = samples, sample_rate_Hz = sample_rate_Hz)
         self.qpd_task = nicontrol.AnalogInput("PCI-MIO-16E-4", 0)
@@ -57,6 +79,10 @@ class PhreshQPDSTORM3(PhreshQPD):
         self.qpd_task.addChannel(2)
         self.qpd_task.configureAcquisition(samples, sample_rate_Hz)
 
+    ## qpdScan
+    #
+    # @return [average sum voltage, average X voltage, average Y voltage]
+    #
     def qpdScan(self):
         data = self.collectData()
 
@@ -70,6 +96,7 @@ class PhreshQPDSTORM3(PhreshQPD):
         return [1000.0 * average[0], 1000.0 * average[1], 1000.0 * average[2]]
 
 
+## PhreshQPDPRISM2
 #
 # PRISM2 QPD Class
 #
@@ -78,6 +105,12 @@ class PhreshQPDSTORM3(PhreshQPD):
 #  X diff - AI channel 1
 #
 class PhreshQPDPRISM2(PhreshQPD):
+
+    ## __init__
+    #
+    # @param samples (Optional) The number of samples to take and average for a single QPD reading, defaults to 5000.
+    # @param sample_rate_Hz (Optional) The sampling frequency, defaults to 100kHz.
+    #
     def __init__(self, samples = 5000, sample_rate_Hz = 100000):
         PhreshQPD.__init__(self, samples = samples, sample_rate_Hz = sample_rate_Hz)
 #        self.qpd_task = nicontrol.AnalogInput("PCI-MIO-16E-4", 0)
@@ -85,6 +118,10 @@ class PhreshQPDPRISM2(PhreshQPD):
         self.qpd_task.addChannel(1)
         self.qpd_task.configureAcquisition(samples, sample_rate_Hz)
 
+    ## qpdScan
+    #
+    # @return [average sum voltage, average X voltage, 0.0]
+    #
     def qpdScan(self):
         data = self.collectData()
 
@@ -98,6 +135,8 @@ class PhreshQPDPRISM2(PhreshQPD):
                           ctypes.c_int(2))
         return [1000.0 * average[0] - 25.4, 1000.0 * average[1] - 40.8, 0.0]
 
+
+## PhreshQPDSTORM2
 #
 # STORM2 QPD Class
 #
@@ -107,16 +146,32 @@ class PhreshQPDPRISM2(PhreshQPD):
 #  Y diff - AI channel 2
 #
 class PhreshQPDSTORM2(PhreshQPD):
+
+    ## __init__
+    #
+    # @param samples (Optional) The number of samples to take and average for a single QPD reading, defaults to 5000.
+    # @param sample_rate_Hz (Optional) The sampling frequency, defaults to 100kHz.
+    #
     def __init__(self, samples = 5000, sample_rate_Hz = 100000):
         PhreshQPD.__init__(self, samples = samples, sample_rate_Hz = sample_rate_Hz)
         self.createTask()
 
+    ## createTask
+    #
+    # Creates the NI tasks. This is separate function because on this
+    # particular setup we seem to have trouble with NI card and so we
+    # need to restart things on occasion.
+    #
     def createTask(self):
         self.qpd_task = nicontrol.AnalogInput("PCIe-6259", 0)
         self.qpd_task.addChannel(1)
         self.qpd_task.addChannel(2)
         self.qpd_task.configureAcquisition(self.samples, self.sample_rate_Hz)
 
+    ## qpdScan
+    #
+    # @return [average sum voltage, average X voltage, average Y voltage]
+    #
     def qpdScan(self):
         good = True
         try:

@@ -51,7 +51,7 @@ def initialize():
 # @param image_y The size of the image in y in pixels.
 # @param threshold The minimum height difference between the local maxima and the pixels on the edge of the peak.
 #
-# @return [[peak x positions], [peak y positions], number of peaks.
+# @return [[peak x positions], [peak y positions], number of peaks].
 # 
 def findObjects(np_image, image_x, image_y, threshold):
         x = loc_type()

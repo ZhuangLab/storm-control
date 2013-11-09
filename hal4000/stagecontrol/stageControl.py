@@ -1,5 +1,26 @@
 #!/usr/bin/python
 #
+## @file
+#
+# The stage control UI.
+#
+# Hazen 9/12
+#
+
+from PyQt4 import QtCore, QtGui
+
+import qtWidgets.qtAppIcon as qtAppIcon
+
+# Debugging
+import halLib.hdebug as hdebug
+
+# UIs.
+import qtdesigner.stage_ui as stageUi
+
+## StageControl
+#
+# Stage Control Dialog Box
+#
 # This is the UI for stage control based on some sort 
 # of motorized stage.
 #
@@ -61,23 +82,14 @@
 # zero()
 #   Define the current position as zero.
 #
-# Hazen 9/12
-#
-
-from PyQt4 import QtCore, QtGui
-
-import qtWidgets.qtAppIcon as qtAppIcon
-
-# Debugging
-import halLib.hdebug as hdebug
-
-# UIs.
-import qtdesigner.stage_ui as stageUi
-
-#
-# Stage Control Dialog Box
-#
 class StageControl(QtGui.QDialog):
+
+    ## __init__
+    #
+    # @param parameters A parameters object.
+    # @param tcp_control A TCP/IP control object.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
     @hdebug.debug
     def __init__(self, parameters, tcp_control, parent):
         QtGui.QMainWindow.__init__(self, parent)
@@ -173,6 +185,12 @@ class StageControl(QtGui.QDialog):
         self.updatePosition()
         self.position_update_timer.start()
 
+    ## closeEvent
+    #
+    # If this window has parent, just hide the window, otherwise close it.
+    #
+    # @param event A PyQt event.
+    #
     @hdebug.debug
     def closeEvent(self, event):
         if self.have_parent:
@@ -181,40 +199,72 @@ class StageControl(QtGui.QDialog):
         else:
             self.quit()
 
+    ## downS
+    #
+    # Move down one small step.
+    #
     @hdebug.debug
     def downS(self):
         self.moveRelative(1, self.small_step_size)
 
+    ## downL
+    #
+    # Move down one large step.
+    #
     @hdebug.debug
     def downL(self):
         self.moveRelative(1, self.large_step_size)
 
+    ## getStagePosition
+    #
+    # @return [stage x, stage y, stage z]
+    #
     @hdebug.debug
     def getStagePosition(self):
         if self.stage:
             self.updatePosition()
         return [self.x, self.y, self.z]
 
+    ## handleAdd
+    #
+    # Add the current stage position to the saved positions combo box.
+    #
     @hdebug.debug
     def handleAdd(self):
         self.ui.saveComboBox.addItem("{0:.1f}, {1:.1f}".format(self.x, self.y),
                                      [self.x, self.y])
         self.ui.saveComboBox.setCurrentIndex(self.ui.saveComboBox.count()-1)
 
+    ## handleClear
+    #
+    # Remove all of the positions from the saved positions combo box.
+    #
     @hdebug.debug
     def handleClear(self):
         self.ui.saveComboBox.clear()
 
+    ## handleGo
+    #
+    # Move to the position specified by the x,y position spin boxes.
+    #
     @hdebug.debug
     def handleGo(self):
         x_target = self.ui.xmoveDoubleSpinBox.value()
         y_target = self.ui.ymoveDoubleSpinBox.value()
         self.moveAbsolute(x_target, y_target)
 
+    ## handleHome
+    #
+    # Move to the 0,0 position.
+    #
     @hdebug.debug
     def handleHome(self):
         self.moveAbsolute(0, 0)
 
+    ## handleLoad
+    #
+    # Load a positions file into the saved position combo box.
+    #
     @hdebug.debug
     def handleLoad(self):
         positions_filename = str(QtGui.QFileDialog.getOpenFileName(self,
@@ -232,6 +282,10 @@ class StageControl(QtGui.QDialog):
                                              [x, y])
             self.ui.saveComboBox.setCurrentIndex(self.ui.saveComboBox.count()-1)
 
+    ## handleLockout
+    #
+    # Handles locking out the (stage) joystick.
+    #
     @hdebug.debug
     def handleLockout(self):
         if self.locked_out:
@@ -243,14 +297,26 @@ class StageControl(QtGui.QDialog):
             self.locked_out = True
             self.ui.joystickLockoutButton.setStyleSheet("QPushButton { color: green }")        
 
+    ## handleOk
+    #
+    # Hide the window.
+    #
     @hdebug.debug
     def handleOk(self):
         self.hide()
 
+    ## handleQuit
+    #
+    # Close the window.
+    #
     @hdebug.debug
     def handleQuit(self):
         self.close()
 
+    ## handleSave
+    #
+    # Save the positions in the positions combo box into a file.
+    #
     @hdebug.debug
     def handleSave(self):
         positions_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
@@ -264,6 +330,11 @@ class StageControl(QtGui.QDialog):
                 fp.write("{0:.2f}, {1:.2f}\r\n".format(x.toDouble()[0], y.toDouble()[0]))
             fp.close()
 
+    ## handleSaveIndexChange
+    #
+    # When the saved positions combo box is changed this copies the current
+    # values into the x,y position spin boxes.
+    #
     @hdebug.debug
     def handleSaveIndexChange(self, index):
         data = self.ui.saveComboBox.itemData(index).toList()
@@ -272,10 +343,21 @@ class StageControl(QtGui.QDialog):
             self.ui.xmoveDoubleSpinBox.setValue(xvar.toDouble()[0])
             self.ui.ymoveDoubleSpinBox.setValue(yvar.toDouble()[0])
 
+    ## jog
+    #
+    # Tell the stage to move at a certain speed.
+    #
+    # @param x_speed The speed to move the stage in x.
+    # @param y_speed The speed to move the stage in y.
+    #
     @hdebug.debug
     def jog(self, x_speed, y_speed):
         self.stage.jog(x_speed, y_speed)
 
+    ## keyPressEvent
+    #
+    # @param event A PyQt key press event.
+    #
     @hdebug.debug
     def keyPressEvent(self, event):
         key = event.key()
@@ -288,14 +370,29 @@ class StageControl(QtGui.QDialog):
         elif key == 50:
             self.downS()
 
+    ## leftS
+    #
+    # Move left one small step.
+    #
     @hdebug.debug
     def leftS(self):
         self.moveRelative(0, self.small_step_size)
 
+    ## leftL
+    #
+    # Move left one large step.
+    #
     @hdebug.debug
     def leftL(self):
         self.moveRelative(0, self.large_step_size)
 
+    ## moveRelative
+    #
+    # Move relative to the current position.
+    #
+    # @param axis The axis to move.
+    # @param distance The distance to move in microns.
+    #
     @hdebug.debug        
     def moveRelative(self, axis, distance):
         if self.stage:
@@ -306,6 +403,13 @@ class StageControl(QtGui.QDialog):
 #            [self.x, self.y, self.z] = self.stage.position()
             self.updatePosition()
 
+    ## moveAbsolute
+    #
+    # Move to an absolute position.
+    #
+    # @param x The x position (in microns).
+    # @param y The y position (in microns).
+    #
     @hdebug.debug
     def moveAbsolute(self, x, y):
         if self.stage:
@@ -313,6 +417,10 @@ class StageControl(QtGui.QDialog):
 #            [self.x, self.y, self.z] = self.stage.position()
             self.updatePosition()
 
+    ## newParameters
+    #
+    # @param parameters A parameters object.
+    #
     @hdebug.debug    
     def newParameters(self, parameters):
         self.parameters = parameters
@@ -327,51 +435,101 @@ class StageControl(QtGui.QDialog):
         else:
             self.y_sign = -1
 
+    ## quit
+    #
+    # Shut down the stage hardware on program exit.
+    #
     @hdebug.debug
     def quit(self):
         if self.stage:
             self.stage.shutDown()
 
+    ## rightS
+    #
+    # Move right one small step.
+    #
     @hdebug.debug
     def rightS(self):
         self.moveRelative(0, -1 * self.small_step_size)
 
+    ## rightL
+    #
+    # Move right one large step.
+    #
     @hdebug.debug
     def rightL(self):
         self.moveRelative(0, -1 * self.large_step_size)
 
+    ## startLockout
+    #
+    # Lock out the stage control joystick.
+    #
     @hdebug.debug
     def startLockout(self):
         if self.stage:
             self.stage.lockout(True)
 
+    ## step
+    #
+    # Move a relative distance in x, y.
+    #
+    # @param x The x step in microns.
+    # @param y The y step in microns.
+    #
     @hdebug.debug
     def step(self, x, y):
         self.stage.goRelative(x, y)
 
+    ## stopLockout
+    #
+    # Turn off the lockout of the stage control joystick.
+    #
     @hdebug.debug
     def stopLockout(self):
         if self.stage:
             self.stage.lockout(False)
 
+    ## tcpHandleMoveTo
+    #
+    # Handle move requests from the tcp object.
+    #
+    # @param x The x position in um.
+    # @param y The y position in um.
+    #
     @hdebug.debug
     def tcpHandleMoveTo(self, x, y):
         self.moveAbsolute(x, y)
 
+    ## updatePosition
+    #
+    # This is called every 1/2 second to update the stage position display.
+    #
     def updatePosition(self):
         if self.stage:
             [self.x, self.y, self.z] = self.stage.position()
         self.ui.xposText.setText("%.3f" % self.x)
         self.ui.yposText.setText("%.3f" % self.y)
 
+    ## upS
+    #
+    # Move up one small step.
+    #
     @hdebug.debug
     def upS(self):
         self.moveRelative(1, -1 * self.small_step_size)
 
+    ## upL
+    #
+    # Move up one large step.
+    #
     @hdebug.debug
     def upL(self):
         self.moveRelative(1, -1 * self.large_step_size)
 
+    ## zero
+    #
+    # Zero the stage position.
+    #
     def zero(self):
         self.stage.zero()
         self.x = 0

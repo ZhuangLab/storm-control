@@ -1,8 +1,14 @@
 /*
+ * @file
  *
  * C helper for PhreshQPD class to do fast averaging of an array of numbers.
  *
  * Hazen 4/09
+ *
+ * FIXME: This should be replaced by with numpy. In retrospect I'm not
+ *   sure why I was concerned about adding external dependencies.
+ *
+ * Hazen 11/13
  *
  * compilation:
  * gcc -c averager.c

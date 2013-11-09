@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Load the appropriate application icon.
 #
 # Hazen 02/13
@@ -7,9 +9,16 @@
 
 from PyQt4 import QtCore, QtGui
 
+## QAppIcon
+#
 # HAL icon class.
+#
 class QAppIcon(QtGui.QIcon):
 
+    ## __init__
+    #
+    # Load the HAL-9000.ico file.
+    #
     def __init__(self):
         QtGui.QIcon.__init__(self, "icons/HAL-9000.ico")
 

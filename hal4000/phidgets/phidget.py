@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# ctypes interace to a phidgets control library
+## @file
+#
+# ctypes interace to a phidgets control library.
 #
 # Hazen 12/10
 #
@@ -25,11 +27,17 @@ def loadPhidgetsDLL(phlib_path):
         phlib = windll.LoadLibrary(phlib_path + "phidget21")
 
 
+## Phidget
 #
-# The phidget control class.
+# The phidget control class. This is (was ?) used to control a RC
+# type servo actuator that moved a mirror.
 #
-
 class Phidget:
+
+    ## __init__
+    #
+    # @param phlib_path The path to the phidgets DLL.
+    #
     def __init__(self, phlib_path):
 
         # load the phidgets DLL library.
@@ -51,6 +59,10 @@ class Phidget:
         phlib.CPhidgetAdvancedServo_setPositionMin(self.ph_handle, self.motor_index, c_double(self.min_pos))
         phlib.CPhidgetAdvancedServo_setEngaged(self.ph_handle, self.motor_index, c_int(1))
 
+    ## amMoving
+    #
+    # @return True/False if the servo is moving.
+    #
     def amMoving(self):
         c_stopped = c_int(-1)
         phlib.CPhidgetAdvancedServo_getStopped(self.ph_handle, self.motor_index, byref(c_stopped))
@@ -59,29 +71,55 @@ class Phidget:
         else:
             return False
 
+    ## atMinimum
+    #
+    # @return True/False the servo is at it's minimum position.
+    #
     def atMinimum(self):
         if (self.getPosition() == self.min_pos):
             return True
         else:
             return False
 
+    ## getPosition
+    #
+    # @return The position of the servo.
+    #
     def getPosition(self):
         c_pos = c_double(-1.0)
         phlib.CPhidgetAdvancedServo_getPosition(self.ph_handle, self.motor_index, byref(c_pos))
         self.position = c_pos.value
         return self.position
 
+    ## goToMax
+    #
+    # Tell the servo to go to it's maximum position.
+    #
     def goToMax(self):
         self.setPosition(self.max_pos)
 
+    ## goToMin
+    #
+    # Tell the servo to go to it's minimum position.
+    #
     def goToMin(self):
         self.setPosition(self.min_pos)
 
+    ## setPosition
+    #
+    # Tell the servo to go position.
+    #
+    # @param position The position to go to.
+    #
     def setPosition(self, position):
         self.position = position
         c_pos = c_double(self.position)
         phlib.CPhidgetAdvancedServo_setPosition(self.ph_handle, self.motor_index, c_pos)
-        
+
+    ## shutDown
+    #
+    # Close the connection to the servo.
+    #
     def shutDown(self):
         phlib.CPhidgetAdvancedServo_setEngaged(self.ph_handle, self.motor_index, c_int(0))
         phlib.CPhidget_close(self.ph_handle)

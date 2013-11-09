@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Widget containing variable number of radio buttons
 # representing all the currently available parameters
 # files.
@@ -14,6 +16,7 @@ from PyQt4 import QtCore, QtGui
 def getFileName(path):
     return os.path.splitext(os.path.basename(path))[0]
 
+## QParametersBox
 #
 # This class handles displaying and interacting with
 # the various parameter files that the user has loaded.
@@ -22,6 +25,10 @@ class QParametersBox(QtGui.QWidget):
 
     settings_toggled = QtCore.pyqtSignal(name = 'settingsToggled')
 
+    ## __init__
+    #
+    # @param parent (Optional) the PyQt parent of this object.
+    #
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.current_parameters = None
@@ -36,6 +43,12 @@ class QParametersBox(QtGui.QWidget):
                                                     QtGui.QSizePolicy.Minimum,
                                                     QtGui.QSizePolicy.Expanding))
 
+    ## addParameters
+    #
+    # Add a set of parameters to the parameters box.
+    #
+    # @param parameters A parameters object.
+    #
     def addParameters(self, parameters):
         self.current_parameters = parameters
         self.parameters.append(parameters)
@@ -46,15 +59,31 @@ class QParametersBox(QtGui.QWidget):
         if (len(self.radio_buttons) == 1):
             radio_button.click()
 
+    ## getCurrentParameters
+    #
+    # @return The current parameters object.
+    #
     def getCurrentParameters(self):
         return self.current_parameters
 
+    ## setCurrentParameters
+    #
+    # Select one of the parameter choices in the parameters box.
+    #
+    # @param index The index of the parameters to select, 0 <= x < number of parameters choices.
+    #
     def setCurrentParameters(self, index):
         if (index >= 0) and (index < len(self.radio_buttons)):
             self.radio_buttons[index].click()
         else:
             print "Requested parameter index not available", index
-        
+
+    ## toggleParameters
+    #
+    # This is called when one of the radio buttons is clicked to figure out
+    # which parameters were selected. It emits a settings_toggled signal to
+    # indicate that the settings have been changed.
+    #
     def toggleParameters(self):
         for i, button in enumerate(self.radio_buttons):
             if button.isChecked():
