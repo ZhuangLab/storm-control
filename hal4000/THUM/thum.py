@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Handles "communication" with the THUM temperature reader.
 #
 # Hazen 3/09
@@ -7,13 +9,34 @@
 
 import time
 
+## Thum
+#
+# "Communicates" with a THUM temperature reader. The THUM reader periodically
+# updates a file with the current temperature, etc. reading. This just reads
+# that file every 5 seconds and copies the result into a new file to keep a 
+# record of changes that occured during filming.
+#
 class Thum():
+
+    ## __init__
+    #
+    # Sets some object default variables.
+    #
     def __init__(self):
         self.reading = ""
         self.last_sample_time = 0
         self.fp = 0
         self.data = 0
 
+    ## newFrame
+    #
+    # Called when we get new frame data from the camera. If it has been
+    # 5 seconds since the last time we checked the data from the THUM
+    # then we update self.data. The current value of self.data is
+    # saved for every frame.
+    #
+    # @param frame A frame object.
+    #
     def newFrame(self, frame):
         if self.fp and frame.master:
             current_time = time.time()
@@ -29,9 +52,19 @@ class Thum():
                 self.data = self.data[:-1]
             self.fp.write(str(frame.number+1) + "," + self.data)
 
+    ## startThum
+    #
+    # Called at the start of filming.
+    #
+    # @param filename The name of the movie.
+    #
     def startThum(self, filename):
         self.fp = open(filename + ".log", "w")
 
+    ## stopThum
+    #
+    # Called at the end of filming.
+    #
     def stopThum(self):
         if self.fp:
             self.fp.close()

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Captures pictures from a Thorlabs uc480 (software) series cameras.
 #
 # Hazen 02/13
@@ -32,6 +34,10 @@ IS_SUCCESS = 0
 IS_TRIGGER_TIMEOUT = 0
 IS_WAIT = 1
 
+## CameraInfo
+#
+# The uc480 camera info structure.
+#
 class CameraInfo(ctypes.Structure):
     _fields_ = [("CameraID", ctypes.wintypes.DWORD),
                 ("DeviceID", ctypes.wintypes.DWORD),
@@ -41,6 +47,10 @@ class CameraInfo(ctypes.Structure):
                 ("Model", ctypes.c_char * 16),
                 ("Reserved", ctypes.wintypes.DWORD * 16)]
 
+## CameraProperties
+#
+# The uc480 camera properties structure.
+#
 class CameraProperties(ctypes.Structure):
     _fields_ = [("SensorID", ctypes.wintypes.WORD),
                 ("strSensorName", ctypes.c_char * 32),
@@ -54,6 +64,10 @@ class CameraProperties(ctypes.Structure):
                 ("bGlobShutter", ctypes.wintypes.BOOL),
                 ("Reserved", ctypes.c_char * 16)]
 
+## AOIRect
+#
+# The uc480 camera AOI structure.
+#
 class AOIRect(ctypes.Structure):
     _fields_ = [("s32X", ctypes.wintypes.INT),
                 ("s32Y", ctypes.wintypes.INT),
@@ -72,10 +86,24 @@ else:
 
 
 # Helper functions
+
+## check
+#
+# @param fn_return The uc480 function return code.
+# @param fn_name (Optional) The name of the function that was called, defaults to "".
+#
 def check(fn_return, fn_name = ""):
     if not (fn_return == IS_SUCCESS):
         print "uc480: Call failed with error", fn_return, fn_name
 
+## create_camera_list
+#
+# Creates a empty CameraList structure.
+#
+# @param num_cameras The number of cameras.
+#
+# @return A camera list structure.
+#
 def create_camera_list(num_cameras):
     class CameraList(ctypes.Structure):
         _fields_ = [("Count", ctypes.c_long),
@@ -85,7 +113,14 @@ def create_camera_list(num_cameras):
     return a_list
 
 
-# Least squares gaussian fitting functions
+## fitAFunctionLS
+#
+# Does least squares fitting of a function.
+#
+# @param data The data to fit.
+# @param params The initial values for the fit.
+# @param fn The function to fit.
+#
 def fitAFunctionLS(data, params, fn):
     result = params
     errorfunction = lambda p: numpy.ravel(fn(*p)(*numpy.indices(data.shape)) - data)
@@ -96,12 +131,47 @@ def fitAFunctionLS(data, params, fn):
         good = False
     return [result, good]
 
+## symmetricGaussian
+#
+# Returns a function that will return the amplitude of a symmetric 2D-gaussian at a given x, y point.
+#
+# @param background The gaussian's background.
+# @param height The gaussian's height.
+# @param center_x The gaussian's center in x.
+# @param center_y The gaussian's center in y.
+# @param width The gaussian's width.
+#
+# @return A function.
+#
 def symmetricGaussian(background, height, center_x, center_y, width):
     return lambda x,y: background + height*numpy.exp(-(((center_x-x)/width)**2 + ((center_y-y)/width)**2) * 2)
 
+## fixedEllipticalGaussian
+#
+# Returns a function that will return the amplitude of a elliptical gaussian (constrained to be oriented
+# along the XY axis) at a given x, y point.
+#
+# @param background The gaussian's background.
+# @param height The gaussian's height.
+# @param center_x The gaussian's center in x.
+# @param center_y The gaussian's center in y.
+# @param width_x The gaussian's width in x.
+# @param width_y The gaussian's width in y.
+#
+# @return A function.
+#
 def fixedEllipticalGaussian(background, height, center_x, center_y, width_x, width_y):
     return lambda x,y: background + height*numpy.exp(-(((center_x-x)/width_x)**2 + ((center_y-y)/width_y)**2) * 2)
 
+## fitSymmetricGaussian
+#
+# Fits a symmetric gaussian to the data.
+#
+# @param data The data to fit.
+# @param sigma An initial value for the sigma of the gaussian.
+#
+# @return [[fit results], good (True/False)]
+#
 def fitSymmetricGaussian(data, sigma):
     params = [numpy.min(data),
               numpy.max(data),
@@ -110,6 +180,15 @@ def fitSymmetricGaussian(data, sigma):
               2.0 * sigma]
     return fitAFunctionLS(data, params, symmetricGaussian)
 
+## fitFixedEllipticalGaussian
+#
+# Fits a fixed-axis elliptical gaussian to the data.
+#
+# @param data The data to fit.
+# @param sigma An initial value for the sigma of the gaussian.
+#
+# @return [[fit results], good (True/False)]
+#
 def fitFixedEllipticalGaussian(data, sigma):
     params = [numpy.min(data),
               numpy.max(data),
@@ -120,10 +199,16 @@ def fitFixedEllipticalGaussian(data, sigma):
     return fitAFunctionLS(data, params, fixedEllipticalGaussian)
 
 
+## Camera
 #
 # UC480 Camera Interface Class
 #
 class Camera(Handle):
+
+    ## __init__
+    #
+    # @param camera_id The identification number of the camera to connect to.
+    #
     def __init__(self, camera_id):
         Handle.__init__(self, camera_id)
 
@@ -157,20 +242,47 @@ class Camera(Handle):
         self.running = False
         self.setBuffers()
 
+    ## captureImage
+    #
+    # Wait for the next frame from the camera, then call self.getImage().
+    #
+    # @return An image (8 bit numpy array) from the camera.
+    #
     def captureImage(self):
         check(uc480.is_FreezeVideo(self, IS_WAIT), "is_FreezeVideo")
         return self.getImage()
 
+    ## captureImageTest
+    #
+    # For testing..
     def captureImageTest(self):
         check(uc480.is_FreezeVideo(self, IS_WAIT), "is_FreezeVideo")
 
+    ## getCameraStatus
+    #
+    # @param status_code A status code.
+    #
+    # @return The camera status based on the status code.
+    #
     def getCameraStatus(self, status_code):
         return uc480.is_CameraStatus(self, status_code, IS_GET_STATUS, "is_CameraStatus")
 
+    ## getImage
+    #
+    # Copy an image from the camera into self.data and return self.data
+    #
+    # @return A 8 bit numpy array containing the data from the camera.
+    #
     def getImage(self):
         check(uc480.is_CopyImageMem(self, self.image, self.id, self.data.ctypes.data), "is_CopyImageMem")
         return self.data
 
+    ## getNextImage
+    #
+    # Waits until an image is available from the camera, then call self.getImage() to return the new image.
+    #
+    # @return The new image from the camera (as a 8 bit numpy array).
+    #
     def getNextImage(self):
         print self.cur_frame, self.getCameraStatus(IS_SEQUENCE_CT)
         while (self.cur_frame == self.getCameraStatus(IS_SEQUENCE_CT)):
@@ -179,9 +291,17 @@ class Camera(Handle):
         self.cur_frame += 1
         return self.getImage()
 
+    ## getSensorInfo
+    #
+    # @return The camera properties structure for this camera.
+    #
     def getSensorInfo(self):
         return self.info
 
+    ## getTimeout
+    #
+    # @return The timeout value for the camera.
+    #
     def getTimeout(self):
         nMode = IS_TRIGGER_TIMEOUT
         pTimeout = ctypes.c_int(1)
@@ -191,10 +311,23 @@ class Camera(Handle):
               "is_GetTimeout")
         return pTimeout.value
 
+    ## saveParameters
+    #
+    # Save the current camera settings to a file.
+    #
+    # @param file The file name to save the settings in.
+    #
     def saveParameters(self, file):
         check(uc480.is_SaveParameters(self,
                                       ctypes.c_char_p(file)))
 
+    ## setAOI
+    #
+    # @param x_start The x pixel of the camera AOI.
+    # @param y_start The y pixel of the camera AOI.
+    # @param width The width in pixels of the AOI.
+    # @param height The height in pixels of the AOI.
+    #
     def setAOI(self, x_start, y_start, width, height):
         # x and y start have to be multiples of 2.
         x_start = int(x_start/2)*2
@@ -210,6 +343,11 @@ class Camera(Handle):
               "is_AOI")
         self.setBuffers()
 
+    ## setBuffers
+    #
+    # Based on the AOI, create the internal buffer that the camera will use and
+    # the intermediate buffer that we will copy the data from the camera into.
+    #
     def setBuffers(self):
         self.data = numpy.zeros((self.im_height, self.im_width), dtype = numpy.uint8)
         if self.image:
@@ -225,6 +363,11 @@ class Camera(Handle):
               "is_AllocImageMem")
         check(uc480.is_SetImageMem(self, self.image, self.id), "is_SetImageMem")
 
+    ## setFrameRate
+    #
+    # @param frame_rate (Optional) The desired frame rate in frames per second, defaults to 1000.
+    # @param verbose (Optional) True/False, print the actual frame rate, defaults to False.
+    #
     def setFrameRate(self, frame_rate = 1000, verbose = False):
         new_fps = ctypes.c_double()
         check(uc480.is_SetFrameRate(self,
@@ -234,11 +377,20 @@ class Camera(Handle):
         if verbose:
             print "uc480: Set frame rate to", new_fps.value, "FPS"
 
+    ## setPixelClock
+    #
     # 43MHz seems to be the max for this camera.
+    #
+    # @param pixel_clock_MHz (Optional) The desired pixel clock speed in MHz, defaults to 30.
+    #
     def setPixelClock(self, pixel_clock_MHz = 30):
         check(uc480.is_SetPixelClock(self,
                                      ctypes.c_int(pixel_clock_MHz)))
 
+    ## setTimeout
+    #
+    # @param timeout Set the camera time out.
+    #
     def setTimeout(self, timeout):
         nMode = IS_TRIGGER_TIMEOUT
         check(uc480.is_SetTimeout(self,
@@ -246,22 +398,43 @@ class Camera(Handle):
                                   ctypes.c_int(timeout)),
               "is_SetTimeout")
 
+    ## shutDown
+    #
+    # Shut down the camera.
+    #
     def shutDown(self):
         check(uc480.is_ExitCamera(self), "is_ExitCamera")
 
+    ## startCapture
+    #
+    # Start video capture (as opposed to single frame capture, which is done with self.captureImage().
+    #
     def startCapture(self):
         check(uc480.is_CaptureVideo(self, IS_DONT_WAIT), "is_CaptureVideo")
 
+    ## stopCapture
+    #
+    # Stop video capture
+    #
     def stopCapture(self):
         check(uc480.is_StopLiveVideo(self, IS_WAIT), "is_StopLiveVideo")
 
 
+## CameraQPD
 #
-# QPD emulation class.
-#
-# Default camera ROI of 200x200 pixels.
+# QPD emulation class. The default camera ROI of 200x200 pixels.
+# The focus lock is configured so that there are two laser spots on the camera.
+# The distance between these spots is fit and the difference between this distance and the
+# zero distance is returned as the focus lock offset. The maximum value of the camera
+# pixels is returned as the focus lock sum.
 #
 class CameraQPD():
+
+    ## __init__
+    #
+    # @param camera_id (Optional) The camera ID number, defaults to 1.
+    # @param fit_mutex (Optional) A QMutex to use for fitting (to avoid thread safety issues with numpy), defaults to False.
+    #
     def __init__(self, camera_id = 1, fit_mutex = False):
         self.file_name = "cam_offsets_" + str(camera_id) + ".txt"
         self.fit_mode = 1
@@ -305,6 +478,11 @@ class CameraQPD():
         self.half_y = self.y_width/2
         self.X = numpy.arange(self.y_width) - 0.5*float(self.y_width)
 
+    ## adjustAOI
+    #
+    # @param dx Amount to displace the AOI in pixels in x, needs to be a multiple of 2.
+    # @param dy Amount to displace the AOI in pixels in y, needs to be a multiple of 2.
+    #
     def adjustAOI(self, dx, dy):
         self.x_start += dx
         self.y_start += dy
@@ -318,16 +496,32 @@ class CameraQPD():
             self.y_start = self.cam.info.nMaxHeight - (self.y_width + 2)
         self.setAOI()
 
+    ## adjustZeroDist
+    #
+    # @param inc The amount to increment the zero distance value by.
+    #
     def adjustZeroDist(self, inc):
         self.zero_dist += inc
 
+    ## capture
+    #
+    # Get the next image from the camera.
+    #
     def capture(self):
         self.image = self.cam.captureImage()
         return self.image
 
+    ## changeFitMode
+    #
+    # @param mode 1 = gaussian fit, any other value = first moment calculation.
+    #
     def changeFitMode(self, mode):
         self.fit_mode = mode
 
+    ## fitGaussian
+    #
+    # @param data The data to fit a gaussian to.
+    #
     def fitGaussian(self, data):
         if (numpy.max(data) < 25):
             return [False, False, False, False]
@@ -349,12 +543,28 @@ class CameraQPD():
         else:
             return [False, False, False, False]
 
+    ## getImage
+    #
+    # @return [camera image, spot 1 x fit, spot 1 y fit, spot 2 x fit, spot 2 y fit]
+    #
     def getImage(self):
         return [self.image, self.x_off1, self.y_off1, self.x_off2, self.y_off2]
 
+    ## getZeroDist
+    #
+    # @return The distance between the spots that is considered to be zero offset.
+    #
     def getZeroDist(self):
         return self.zero_dist
 
+    ## qpdScan
+    #
+    # Returns sum and offset data from the camera in the same format as what would be measured using a QPD.
+    #
+    # @param reps (Optional) The number of measurements to average together, defaults to 4.
+    #
+    # @return [sum signal, x offset, 0].
+    #
     def qpdScan(self, reps = 4):
         power_total = 0.0
         offset_total = 0.0
@@ -371,18 +581,32 @@ class CameraQPD():
         else:
             return [0, 0, 0]
 
+    ## setAOI
+    #
+    # Set the camera AOI to current AOI.
+    #
     def setAOI(self):
         self.cam.setAOI(self.x_start,
                         self.y_start,
                         self.x_width,
                         self.y_width)
 
+    ## shutDown
+    #
+    # Save the current camere AOI location and offset. Shutdown the camera.
+    #
     def shutDown(self):
         fp = open(self.file_name, "w")
         fp.write(str(self.x_start) + "," + str(self.y_start) + "," + str(self.zero_dist))
         fp.close()
         self.cam.shutDown()
 
+    ## singleQpdScan
+    #
+    # Perform a single measurement of the focus lock offset and camera sum signal.
+    #
+    # @return [sum, x-offset, y-offset].
+    #
     def singleQpdScan(self):
         data = self.capture().copy()
         power = numpy.max(data)
@@ -478,10 +702,17 @@ class CameraQPD():
 
             return [power, offset, 0]
 
+## CameraQPD300
 #
 # QPD emulation class with a 300x300 pixel ROI.
 #
 class CameraQPD300(CameraQPD):
+
+    ## __init__
+    #
+    # @param camera_id (Optional) The camera id, defaults to 1.
+    # @param fit_mutex (Optional) A QMutex to use during fitting, defaults to False.
+    #
     def __init__(self, camera_id = 1, fit_mutex = False):
         CameraQPD.__init__(self, camera_id, fit_mutex)
 

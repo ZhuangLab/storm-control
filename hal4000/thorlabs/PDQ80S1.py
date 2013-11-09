@@ -1,7 +1,8 @@
 #!/usr/bin/python
 #
-# Communicates with Thorlabs PDQ80S1 quadrant
-# photodiode detector system.
+## @file
+#
+# Communicates with Thorlabs PDQ80S1 quadrant photodiode detector system.
 #
 # Hazen 3/09
 #
@@ -11,6 +12,10 @@ import time
 import os
 
 pdq = 0
+## loadPDQ
+#
+# Load the Thorlabs DLL for communicating with the quadrant photo-diode.
+#
 def loadPDQ():
     global pdq
     if (pdq == 0):
@@ -19,12 +24,17 @@ def loadPDQ():
         else:
             pdq = cdll.LoadLibrary("thorlabs/xUSB")
 
+instantiated = 0
+## PDQ80S1
 #
 # PDQ80S1 interface class.
 #
-
-instantiated = 0
 class PDQ80S1:
+
+    ## __init__
+    #
+    # @param interval The read rate in milliseconds?
+    #
     def __init__(self, interval = 5):
         global instantiated
         assert instantiated == 0, "Attempt to instantiate two PDQ80S1 qpd instances."
@@ -34,6 +44,10 @@ class PDQ80S1:
         self.interval = interval
         self.initialize()
 
+    ## doScan
+    #
+    # @param points The number of times to get a reading from the QPD.
+    #
     def doScan(self, points):
         assert points > 0, "qpdScan: points less than 1 " + str(points)
         assert points < 255, "qpdScan: points greater than 255 " + str(points)
@@ -74,10 +88,18 @@ class PDQ80S1:
                 
         return [x_diff/points, y_diff/points, sum/points]
 
+    ## initialize
+    #
+    # Initialize the QPD and set the scan interval.
+    #
     def initialize(self):
         assert pdq.USBinitPDQ80S1() == 0, "USBinitPDQ80S1 failed."
         self.setScanInterval(self.interval)
 
+    ## getScanParameters
+    #
+    # @return An array containing the scan parameters.
+    #
     def getScanParameters(self):
         # the default seems to be a 10ms scan time.
         scan_parameters_type = c_ubyte * 3
@@ -85,6 +107,10 @@ class PDQ80S1:
         assert pdq.PDQRetrieveScanParameters(scan_parameters) == 0, "PDQRetrieveScanParameters failed."
         return [scan_parameters[0], scan_parameters[1], scan_parameters[2]]
 
+    ## qpdScan
+    #
+    # @param points The number of readings to get from the QPD.
+    #
     def qpdScan(self, points):
         #
         # Originally I tried to scan for a fixed number of points
@@ -113,11 +139,19 @@ class PDQ80S1:
             resp = pdq.PDQStopScan()
         return scan_data
 
+    ## setScanInterval
+    #
+    # @param interval An integer time in milliseconds that is greater than zero.
+    #
     def setScanInterval(self, interval):
         # interval is a integer time in milliseconds > 0
         assert interval > 0, "setScanInterval: interval is too small " + str(interval)
         assert pdq.PDQSendScanInterval(c_uint(interval), 0) == 0, "PDQSendScanInterval failed."
 
+    ## shutDown
+    #
+    # Shut down the connection to the QPD.
+    #
     def shutDown(self):
         assert pdq.USBUninit() == 0, "USBUninit failed."
         global instantiated

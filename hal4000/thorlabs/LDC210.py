@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # LDC210 diode laser driver on/off control
 #
 # Hazen 04/12
@@ -14,31 +16,60 @@ except:
     sys.path.append("..")
     import nationalInstruments.nicontrol as nicontrol
 
+## LDC210
 #
 # Turn on/off with a digital line connected to the
 # TTL input of the laser diode controller.
 #
 class LDC210():
+    
+    ## __init__
+    #
+    # @param board The DAQ board name.
+    # @param line The DAQ board line.
+    #
     def __init__(self, board, line):
         self.board = board
         self.line = line
 
+    ## havePowerControl
+    #
+    # @return False
+    #
     def havePowerControl(self):
         return False
 
+    ## on
+    #
+    # Turn on the laser by setting the DAQ line high.
+    #
+    # @param dummy Not used.
+    #
     def on(self, dummy):
         nicontrol.setDigitalLine(self.board, self.line, True)
 
+    ## off
+    #
+    # Turn off the laser by setting the DAQ line low.
+    #
     def off(self):
         nicontrol.setDigitalLine(self.board, self.line, False)
 
+## LDC210PWMNI
 #
 # Turn on/off with a counter connected to the analog
 # modulation input. This also lets you control the power.
 #
-# National Instruments version
+# National Instruments version.
 #
 class LDC210PWMNI():
+
+    ## __init__
+    #
+    # @param board The DAQ board name.
+    # @param line The DAQ board line.
+    # @param frequency (Optional) The pulse width modulation wave form frequency, defaults to 50kHz.
+    #
     def __init__(self, board, line, frequency = 50000):
 
         self.am_on = False
@@ -47,10 +78,20 @@ class LDC210PWMNI():
         self.frequency = frequency
         self.line = line
 
+    ## havePowerControl
+    #
+    # @return True
+    #
     def havePowerControl(self):
         return True
 
-    # power is an integer between 0 and 100
+    ## on
+    #
+    # Turn on the laser by starting the counter that will generate the PWM wave form
+    # and setting the duty cycle to be > 0. 
+    #
+    # @param power An integer between 0 and 100.
+    #
     def on(self, power):
         duty_cycle = float(power)*0.01
         if (duty_cycle < 0.0):
@@ -65,6 +106,10 @@ class LDC210PWMNI():
         self.ct_task.startTask()
         self.am_on = True
 
+    ## off
+    #
+    # Stop the counter, turning off the laser.
+    #
     def off(self):
         if self.am_on:
             self.ct_task.stopTask()
@@ -72,6 +117,7 @@ class LDC210PWMNI():
             self.am_on = False
 
 
+## LDC210PWMLJ
 #
 # Turn on/off with a counter connected to the analog
 # modulation input. This also lets you control the power.
@@ -79,8 +125,12 @@ class LDC210PWMNI():
 # Labjack U3 version.
 #
 class LDC210PWMLJ():
-    def __init__(self):
 
+    ## __init__
+    #
+    # Connect to the labjack DAQ device.
+    #
+    def __init__(self):
         try:
             import labjack.labjack_u3 as labjack_u3
         except:
@@ -90,14 +140,27 @@ class LDC210PWMLJ():
         self.am_on = False
         self.dev = labjack_u3.PWM()
 
+    ## havePowerControl
+    #
+    # @return True
+    #
     def havePowerControl(self):
         return True
 
-    # power is an integer between 0 and 100
+    ## on
+    #
+    # Start generating a pulse width modulation square wave.
+    #
+    # param power An integer between 0 and 100.
+    #
     def on(self, power):
         self.dev.startPWM(power)
         self.am_on = True
 
+    ## off
+    #
+    # Stop generating the PWM square wave.
+    #
     def off(self):
         if self.am_on:
             self.dev.stopPWM()

@@ -206,7 +206,7 @@ class QRangeSlider(QtGui.QWidget):
 
     ## setValues
     #
-    # @param [position of minimum slider, position of maximum slider].
+    # @param values [position of minimum slider, position of maximum slider].
     #
     def setValues(self, values):
         self.scale_min = values[0]

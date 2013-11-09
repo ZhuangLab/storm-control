@@ -1,9 +1,11 @@
 #!/usr/bin/python
 #
-# Capture pictures from a USB camera (used as
-# the focus lock detector in some setups).
+## @file
 #
-# This requires the PIL and numpy libraries.
+# Capture pictures from a (generic) USB camera. This is not used as we typically
+# use the Thorlabs cameras instead.
+#
+# This requires the PIL and numpy libraries as well as VideoCapture.
 #
 # Hazen 03/12
 #
@@ -20,7 +22,20 @@ from VideoCapture import Device
 #pygame.init()
 #pygame.camera.init()
 
+## VCCamera
+#
+# USB capture using the VideoCapture library.
+#
 class VCCamera():
+
+    ## __init__
+    #
+    # @param camera_num (Optional) The camera number, defaults to 0.
+    # @param xmin (Optional) The x position of the start of the ROI, defaults to 0.
+    # @param xmax (Optional) The x position of the end of the ROI, defaults to 150.
+    # @param ymin (Optional) The y position of the start of the ROI, defaults to 0.
+    # @param ymax (Optional) The y position of the end of the ROI, defaults to 300.
+    #
     def __init__(self, camera_num = 0, xmin = 0, xmax = 150, ymin = 0, ymax = 300):
         self.xmin = xmin
         self.xmax = xmax
@@ -28,6 +43,10 @@ class VCCamera():
         self.ymax = ymax
         self.cam = Device(devnum = camera_num)
 
+    ## capture
+    #
+    # @return The current camera image as a numpy uint8 array.
+    #
     def capture(self):
         # These do the same thing, but the second one is much faster..
         if 0:
@@ -42,7 +61,20 @@ class VCCamera():
         data = numpy.average(data, 2)
         return data
 
+## openCvCamera
+#
+# USB capture using the openCV library.
+#
 class openCvCamera():
+
+    ## __init__
+    #
+    # @param camera_num (Optional) The camera number, defaults to 0.
+    # @param xmin (Optional) The x position of the start of the ROI, defaults to 0.
+    # @param xmax (Optional) The x position of the end of the ROI, defaults to 150.
+    # @param ymin (Optional) The y position of the start of the ROI, defaults to 0.
+    # @param ymax (Optional) The y position of the end of the ROI, defaults to 300.
+    #
     def __init__(self, camera_num = 0, xmin = 0, xmax = 300, ymin = 0, ymax = 300):
         self.xmin = xmin
         self.xmax = xmax
@@ -54,6 +86,10 @@ class openCvCamera():
         print "H:", cv.GetCaptureProperty(self.cam, cv.CV_CAP_PROP_FRAME_HEIGHT)
         print "M:", cv.GetCaptureProperty(self.cam, cv.CV_CAP_PROP_MODE)
 
+    ## capture
+    #
+    # Gets the current frame from the USB camera.
+    #
     def capture(self):
         frame = cv.QueryFrame(self.cam)
 
@@ -77,7 +113,24 @@ class openCvCamera():
 #        buf = self.cam.get_raw()
 #        print len(buf)
 
+## USBQPD
+#
+# A QPD like object based on the VideoCapture library.
+#
+# In this configuration the camera is being used to measure the location of a single
+# spot that occupies a significant percentage of the camera AOI.
+#
 class USBQPD(VCCamera):
+
+    ## __init__
+    #
+    # Except for camera_num, all of these parameters are ignored..
+    #
+    # @param camera_num (Optional) The camera number, defaults to 0.
+    # @param x_center (Optional) The x position of the start of the ROI, defaults to 150.
+    # @param y_center (Optional) The y position of the end of the ROI, defaults to 150.
+    # @param im_size (Optional) The y position of the start of the ROI, defaults to 300.
+    #
     def __init__(self, camera_num = 0, x_center = 150, y_center = 150, im_size = 300):
         VCCamera.__init__(self,
                           camera_num = camera_num)
@@ -89,6 +142,10 @@ class USBQPD(VCCamera):
         self.X = numpy.arange(150, 300) - float(im_size)*0.5
         self.last_sum = 0
 
+    ## capture
+    #
+    # @return A new image from the camera.
+    #
     def capture(self):
         # We check that the current image is not identical to the last image.
         self.image = VCCamera.capture(self)
@@ -100,9 +157,17 @@ class USBQPD(VCCamera):
         self.last_sum = cur_sum
         return self.image
 
+    ## getImage
+    #
+    # @return The most recently captured image.
+    #
     def getImage(self):
         return self.image
 
+    ## qpdScan
+    #
+    # @return [sum of the camera pixels, spot x offset, 0.0]
+    #
     def qpdScan(self):
         data = self.capture()
         data_ave = numpy.average(data, axis=1)
@@ -111,6 +176,10 @@ class USBQPD(VCCamera):
         y_offset = 0.0
         return [power, x_offset, y_offset]
 
+    ## shutDown
+    #
+    # This currently does not do anything.
+    #
     def shutDown(self):
         pass
 

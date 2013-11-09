@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Thorlabs FW102C control.
 #
 # Hazen 5/12 (Josh 6/26/2013)
@@ -7,8 +9,16 @@
 
 import halLib.RS232 as RS232
 
-
+## FW102C
+#
+# Encapsulates communication with a Thorlabs filter wheel that is connected via RS-232.
+#
 class FW102C(RS232.RS232):
+
+    ## __init__
+    #
+    # @param port The com port the filter wheel is connected to.
+    #
     def __init__(self, port = "COM14"): # changed to "COM14" (was "COM5" before), Josh 6/26/13"
         self.on = False
         try:
@@ -23,13 +33,24 @@ class FW102C(RS232.RS232):
             print "Failed to connect to the FW102C filter wheel at port", port
             print "Perhaps it is turned off or the COM ports have been scrambled?"
 
+    ## getID
+    #
+    # @return The filter wheel identification.
+    #
     def getID(self):
         return self.commWithResp("*idn?")
 
+    ## getPositionCount
+    #
+    # Queries the baud rate, does not actually return anything?
     def getPositionCount(self):
         print self.sendCommand("baud?")
         print self.waitResponse()
 
+    ## setHighSpeedMode
+    #
+    # @param on True/False change to/from high speed mode.
+    #
     def setHighSpeedMode(self, on):
         if on:
             self.sendCommand("speed=1")
@@ -37,6 +58,12 @@ class FW102C(RS232.RS232):
             self.sendCommand("speed=0")
         print self.waitResponse()
 
+    ## setPosition
+    #
+    # Set the filter position, this is limited to the range 1-6.
+    #
+    # @param position The position to move the filter wheel too.
+    #
     def setPosition(self, position):
         if (position < 1):
             position = 1
@@ -45,12 +72,20 @@ class FW102C(RS232.RS232):
         self.sendCommand("pos=" + str(position))
         self.waitResponse()
 
+    ## setSensorMode
+    #
+    # @param on True/False turn on/off the sensors..
+    #
     def setSensorMode(self, on):
         if on:
             self.sendCommand("sensors=0")
         else:
             self.sendCommand("sensors=1")
 
+    ## shutDown
+    #
+    # Stop communication with the filter wheel.
+    #
     def shutDown(self):
         RS232.RS232.shutDown(self)
 

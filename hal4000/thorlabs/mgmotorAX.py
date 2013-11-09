@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# Active X based APTUser control.
+## @file
+#
+# Active X based APTUser control. I never really got this to work.
 #
 # Hazen 8/09
 #

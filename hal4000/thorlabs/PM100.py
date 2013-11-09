@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Communicates with a Thorlabs PM-100 power 
 # meter attached to COM1.
 #
@@ -8,12 +10,27 @@
 
 import lib.RS232 as RS232
 
+## powerMeter
+#
+# Encapsulates RS-232 based communication with a Thorlabs power meter.
+#
 class powerMeter(RS232.RS232):
+
+    ## __init__
+    #
+    # @param port (Optional) the default is COM1.
+    # @param timeout (Optional) the default is none.
+    # @param baudrate (Optional) the default is 57600.
+    #
     def __init__(self, port = "COM1", timeout = None, baudrate = 57600):
         RS232.RS232.__init__(self, port, timeout, baudrate, "\r\n", 0.1)
         test = self.commWithResp("*IDN?")
         assert test, "Power meter is not connected? Not set to " + str(baudrate) + " baudrate?"
 
+    ## id
+    #
+    # @return The power meter id.
+    #
     def id(self):
         try:
             return self.commWithResp("*IDN?")
@@ -21,6 +38,10 @@ class powerMeter(RS232.RS232):
             print "powerMeter.id failed"
             return 0.0
 
+    ## power
+    #
+    # @return The current power reading.
+    #
     def power(self):
         try:
             self.sendCommand(":POWER?")
@@ -30,6 +51,10 @@ class powerMeter(RS232.RS232):
             print "powerMeter.power failed"
             return 0.0
 
+    ## wavelength
+    #
+    # @return The current power meter wavelength.
+    #
     def wavelength(self):
         try:
             self.sendCommand(":WAVELENGTH?")

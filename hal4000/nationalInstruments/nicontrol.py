@@ -78,7 +78,7 @@ def getDAQBoardInfo():
         daq_boards.append([dev_data.value, dev[-1:]])
     return daq_boards
 
-## @getBoardDevNumber
+## getBoardDevNumber
 #
 # Return the device number that corresponds to a given board
 # This assumes that you do not have two identically named boards.
