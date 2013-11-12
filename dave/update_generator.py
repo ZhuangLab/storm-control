@@ -1,10 +1,14 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Generate HTML for Dave web update & upload it to
 # a webserver using the the DAV protocol and the
 # tinydav library, available here:
 #
 # http://code.google.com/p/tinydav/
+#
+# This is not used.
 #
 # Hazen 08/11
 #

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Handles notifications (by e-mail) about the system status.
 #
 # Hazen 06/13
@@ -9,14 +11,29 @@ from email.mime.text import MIMEText
 import smtplib
 import traceback
 
+## Notifier
+#
+# The notification class.
+#
 class Notifier:
 
+    ## __init__
+    #
+    # @param smtp_server The SMTP server name.
+    # @param from_address The from address to use.
+    # @param from_password The password for this e-mail account.
+    # @param to_address The address to send notification e-mails to.
+    #
     def __init__(self, smtp_server, from_address, from_password, to_address):
         self.from_address = str(from_address)
         self.from_password = str(from_password)
         self.smtp_server = str(smtp_server)
         self.to_address = str(to_address)
 
+    ## checkNoEmptyField
+    #
+    # @return True/False all the necessary fields to send e-mail have been filled in.
+    #
     def checkNoEmptyField(self):
         if (self.from_address == ""):
             return False
@@ -28,6 +45,13 @@ class Notifier:
             return False
         return True
 
+    ## sendMessage
+    #
+    # Sends a e-mail message.
+    #
+    # @param subject_text The subject of the e-mail.
+    # @param message_text The message of the e-mail.
+    #
     def sendMessage(self, subject_text, message_text):
         if (self.checkNoEmptyField()):
             try:
@@ -48,6 +72,15 @@ class Notifier:
         else:
             print "One or more notification fields are empty."
 
+    ## setFields
+    #
+    # Sets the fields of the notifier.
+    #
+    # @param smtp_server The SMTP server name.
+    # @param from_address The from address to use.
+    # @param from_password The password for this e-mail account.
+    # @param to_address The address to send notification e-mails to.
+    #
     def setFields(self, smtp_server, from_address, from_password, to_address):
         self.from_address = str(from_address)
         self.from_password = str(from_password)

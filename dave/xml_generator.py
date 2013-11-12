@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Generate XML for Dave given a position list
 # and an experiment description file.
 #
@@ -13,9 +15,24 @@ from PyQt4 import QtCore, QtGui
 
 nl = "\n"
 
+## writeSingleMovie
+#
+# Writes the xml for a single movie to the XML file.
+#
+# @param fp The XML file pointer.
+# @param movie The XML describing a single movie.
+#
 def writeSingleMovie(fp, movie):
     movie.writexml(fp)
 
+## generateXML
+#
+# @param descriptor_file The XML experiment description file.
+# @param position_file A text file containing a list of positions to take the movies at.
+# @param output_file The file to save the movie XML to.
+# @param directory The working directory.
+# @param parent A PyQt object to use as the parent for dialog boxes.
+#
 def generateXML(descriptor_file, position_file, output_file, directory, parent):
     pause = 1
     pos_fp = open(position_file, "r")

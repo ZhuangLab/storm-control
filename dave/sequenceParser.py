@@ -1,20 +1,39 @@
 #!/usr/bin/python
 #
-# Handles parsing sequence xml files and
-# generating movie objects.
+## @file
+#
+# Handles parsing sequence xml files and generating movie objects.
 #
 # Hazen 12/10
 #
 
 from xml.dom import minidom, Node
 
+## parseText
+#
+# Parses text using the functions specified by func.
+#
+# @param text The text to parse.
+# @param func The function to parse the text with.
+#
 def parseText(text, func):
     if (len(text) > 0):
         return func(text)
     else:
         return None
 
+## Progression
+#
+# The progression object.
+#
 class Progression:
+
+    ## __init__
+    #
+    # Creates a progression object from the progression XML.
+    #
+    # @param progression_xml A xml node describing the progression.
+    #
     def __init__(self, progression_xml):
         self.channels = []
         self.type = "none"
@@ -33,8 +52,19 @@ class Progression:
                     elif node.nodeName == "filename":
                         self.filename = node.firstChild.nodeValue
 
+
+## Movie
+#
+# The movie object.
+#
 class Movie:
-    # Dynamically create the class by processing the movie xml object
+
+    ## __init__
+    #
+    # Dynamically create the class by processing the movie xml object.
+    #
+    # @param movie_xml A xml node describing the movie.
+    #
     def __init__(self, movie_xml):
 
         # default settings
@@ -80,6 +110,12 @@ class Movie:
         else:
             self.progression = Progression(None)
 
+## parseMovieXml
+#
+# Parses the XML file that describes the movies.
+#
+# @param movie_xml_filename The name of the XML file.
+#
 def parseMovieXml(movie_xml_filename):
     xml = minidom.parse(movie_xml_filename)
     sequence = xml.getElementsByTagName("sequence").item(0)
