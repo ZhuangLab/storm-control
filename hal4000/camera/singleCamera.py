@@ -195,15 +195,13 @@ class SingleCamera(genericCamera.Camera):
 
     ## stopCamera
     #
-    # Tell the camera control object to stop the camera. This is done
-    # by calling updateTemperature which has the side-effect of
-    # also stopping the camera.
-    #
-    # FIXME: Only the Andor cameras actually stop when this is called.
-    #    Is that a problem?
+    # Tell the camera control object to stop the camera. This is
+    # also updates the temperature for those microscopes that
+    # support this.
     #
     @hdebug.debug
     def stopCamera(self):
+        self.camera_control.stopCamera()
         self.updateTemperature()
 
     ## stopFilm
