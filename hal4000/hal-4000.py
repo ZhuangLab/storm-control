@@ -111,6 +111,7 @@ class Window(QtGui.QMainWindow):
         self.filename = ""
         self.filming = False
         self.logfile_fp = open(parameters.logfile, "a")
+        self.old_settings = []
         self.old_shutters_file = ""
         self.parameters = parameters
         self.running_shutters = False
@@ -398,7 +399,7 @@ class Window(QtGui.QMainWindow):
         # record old settings
         checked = self.ui.saveMovieCheckBox.isChecked()
         p = self.parameters
-        old_settings = [p.acq_mode, p.frames]
+        self.old_settings = [p.acq_mode, p.frames, checked]
 
         # set to new comm specific values
         self.ui.saveMovieCheckBox.setChecked(True)
@@ -409,11 +410,6 @@ class Window(QtGui.QMainWindow):
         # start the film
         self.tcp_requested_movie = 1
         self.startFilm()
-
-        # restore old settings
-        if not checked:
-            self.ui.saveMovieCheckBox.setChecked(False)
-        [p.acq_mode, p.frames] = old_settings
 
     ## handleCommParameters
     #
@@ -1167,6 +1163,12 @@ class Window(QtGui.QMainWindow):
         # notify tcp/ip client that the movie is finished
         # if the client requested the movie.
         if self.tcp_requested_movie:
+
+            # restore old settings
+            [self.parameters.acq_mode, self.parameters.frames, checked] = self.old_settings
+            if not checked:
+                self.ui.saveMovieCheckBox.setChecked(False)
+
             if (lock_target == "failed"):
                 print "QPD/Camera appears to have frozen.."
                 self.quit()
