@@ -255,20 +255,13 @@ class HamamatsuCamera():
         self.buffer_index = -1
         self.last_frame_number = 0
 
-        # Check ROI properties.
-        roi_w = self.getPropertyValue("subarray_hsize")[0]
-        roi_h = self.getPropertyValue("subarray_vsize")[0]
-
-        # If the ROI is smaller than the entire frame turn on subarray mode
-        if ((roi_w == self.max_width) and (roi_h == self.max_height)):
-            self.setPropertyValue("subarray_mode", "OFF")
-        else:
-            self.setPropertyValue("subarray_mode", "ON")
+        # Set sub array mode.
+        self.setSubArrayMode()
 
         # Get frame properties.
         self.frame_x = self.getPropertyValue("image_width")[0]
         self.frame_y = self.getPropertyValue("image_height")[0]
-        self.frame_bytes = self.getPropertyValue("buffer_framebytes")[0]
+        self.frame_bytes = self.getPropertyValue("image_framebytes")[0]
 
         # Set capture mode.
         checkStatus(dcam.dcam_precapture(self.camera_handle,
@@ -621,10 +614,10 @@ class HamamatsuCamera():
         # Check that the property is within range.
         [pv_min, pv_max] = self.getPropertyRange(property_name)
         if (property_value < pv_min):
-            print " set property value", property_value, "is less than minimum of", pv_min, property_name
+            print " set property value", property_value, "is less than minimum of", pv_min, property_name, "setting to minimum"
             property_value = pv_min
         if (property_value > pv_max):
-            print " set property value", property_value, "is greater than maximum of", pv_max, property_name
+            print " set property value", property_value, "is greater than maximum of", pv_max, property_name, "setting to maximum"
             property_value = pv_max
         
         # Set the property value, return what it was set too.
@@ -636,6 +629,22 @@ class HamamatsuCamera():
                                                   ctypes.c_int32(DCAM_DEFAULT_ARG)),
                     "dcam_setgetpropertyvalue")
         return p_value.value
+
+    ## setSubArrayMode
+    #
+    # This sets the sub-array mode as appropriate based on the current ROI.
+    #
+    def setSubArrayMode(self):
+
+        # Check ROI properties.
+        roi_w = self.getPropertyValue("subarray_hsize")[0]
+        roi_h = self.getPropertyValue("subarray_vsize")[0]
+
+        # If the ROI is smaller than the entire frame turn on subarray mode
+        if ((roi_w == self.max_width) and (roi_h == self.max_height)):
+            self.setPropertyValue("subarray_mode", "OFF")
+        else:
+            self.setPropertyValue("subarray_mode", "ON")
 
     ## startAcquisition
     #
@@ -812,7 +821,7 @@ if __name__ == "__main__":
         hcam = HamamatsuCamera(0)
 
         # List support properties.
-        if 0:
+        if 1:
             print "Supported properties:"
             props = hcam.getProperties()
             for i, id_name in enumerate(sorted(props.keys())):
@@ -833,8 +842,8 @@ if __name__ == "__main__":
         # Test setting & getting some parameters.
         if 0:
             print hcam.setPropertyValue("exposure_time", 0.01)
-            print hcam.setPropertyValue("subarray_hsize", 2048)
-            print hcam.setPropertyValue("subarray_vsize", 2048)
+            print hcam.setPropertyValue("subarray_hsize", 512)
+            print hcam.setPropertyValue("subarray_vsize", 512)
             print hcam.setPropertyValue("binning", "1x1")
             print hcam.setPropertyValue("readout_speed", 1)
 
@@ -842,9 +851,9 @@ if __name__ == "__main__":
                       "image_height",
                       "image_width",
                       "image_framebytes",
-                      "buffer_framebytes",
-                      "buffer_rowbytes",
-                      "buffer_top_offset_bytes",
+#                      "buffer_framebytes",
+#                      "buffer_rowbytes",
+#                      "buffer_top_offset_bytes",
                       "subarray_hsize",
                       "subarray_vsize",
                       "binning"]
@@ -852,7 +861,7 @@ if __name__ == "__main__":
                 print param, hcam.getPropertyValue(param)[0]
 
         # Test acquisition.
-        if 1:
+        if 0:
             hcam.startAcquisition()
             cnt = 1
             for i in range(300):

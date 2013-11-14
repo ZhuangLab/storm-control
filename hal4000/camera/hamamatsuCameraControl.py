@@ -138,6 +138,9 @@ class ACameraControl(cameraControl.CameraControl):
                 if self.camera.isCameraProperty(key):
                     self.camera.setPropertyValue(key, value)
 
+            # Set camera sub-array mode so that it will return the correct frame rate.
+            self.camera.setSubArrayMode()
+
             self.got_camera = True
 
         except:
