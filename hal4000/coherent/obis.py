@@ -9,6 +9,7 @@
 
 import halLib.RS232 as RS232
 import time
+import traceback
 
 ## Obis
 #
@@ -35,10 +36,11 @@ class Obis(RS232.RS232):
             self.pmin = 0.0
             self.pmax = 5.0
             [self.pmin, self.pmax] = self.getPowerRange()
-            self.setExtControl(0)
+            self.setExtControl(True)
             if (not self.getLaserOnOff()):
                 self.setLaserOnOff(True)
         except:
+            print traceback.format_exc()
             self.live = False
             print "Failed to connect to Obis Laser at port", port
             print "Perhaps it is turned off or the COM ports have"
@@ -79,9 +81,9 @@ class Obis(RS232.RS232):
     #
     def getPowerRange(self):
         self.sendCommand("SOURce:POWer:LIMit:LOW?")
-        pmin = 0.001 * float(self.waitResponse()[:-1])
+        pmin = 1000.0 * float(self.waitResponse()[:-6])
         self.sendCommand("SOURce:POWer:LIMit:HIGH?")
-        pmin = 0.001 * float(self.waitResponse()[:-1])
+        pmin = 1000.0 * float(self.waitResponse()[:-6])
         return [pmin, pmax]
 
     ## getPower
@@ -100,9 +102,9 @@ class Obis(RS232.RS232):
     #
     def setExtControl(self, mode):
         if mode:
-            self.sendCommand("SOURce:AM:INTernal")
+            self.sendCommand("SOURce:AM:EXTernal DIGital")
         else:
-            self.sendCommand("SOURce:AM:EXTernal")
+            self.sendCommand("SOURce:AM:INTernal CWP")
         self.waitResponse()
 
     ## setLaserOnOff
@@ -128,7 +130,7 @@ class Obis(RS232.RS232):
     def setPower(self, power_in_mw):
         if power_in_mw > self.pmax:
             power_in_mw = self.pmax
-        self.sendCommand("SOURce:POWer:LEVel:IMMediate:AMPLitude" + str(1000.0*power_in_mw))
+        self.sendCommand("SOURce:POWer:LEVel:IMMediate:AMPLitude" + str(0.001*power_in_mw))
         self.waitResponse()
 
     ## shutDown
