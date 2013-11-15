@@ -125,8 +125,10 @@ class CameraDisplay(QtGui.QFrame):
     # Set the image display range automatically based on the current frames
     # minimum and maximum intensity.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def autoScale(self):
+    def autoScale(self, bool):
         [scalemin, scalemax] = self.camera_widget.getAutoScale()
         if scalemin < 0:
             scalemin = 0

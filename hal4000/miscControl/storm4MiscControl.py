@@ -60,7 +60,7 @@ class AMiscControl(miscControl.MiscControl):
             self.filters[self.filter_wheel.getPosition()-1].click()
 
     @hdebug.debug
-    def handleFilter(self):
+    def handleFilter(self, bool):
         for i, filter in enumerate(self.filters):
             if filter.isChecked():
                 filter.setStyleSheet("QPushButton { color: red}")
@@ -71,7 +71,7 @@ class AMiscControl(miscControl.MiscControl):
                 filter.setStyleSheet("QPushButton { color: black}")
 
     @hdebug.debug
-    def handleOk(self):
+    def handleOk(self, bool):
         self.hide()
 
     @hdebug.debug

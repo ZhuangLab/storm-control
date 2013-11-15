@@ -155,15 +155,19 @@ class FocusLockZ(QtGui.QDialog):
     #
     # Handles the jump+ button.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleJumpPButton(self):
+    def handleJumpPButton(self, bool):
         self.lock_display1.jump(self.jumpsize)
 
     ## handleJumpNButton
     #
     # Handles the jump- button.
     #
-    def handleJumpNButton(self):
+    # @param bool Dummy parameter.
+    #
+    def handleJumpNButton(self, bool):
         self.lock_display1.jump(-self.jumpsize)
 
     ## handleJumpSpinBox
@@ -178,8 +182,10 @@ class FocusLockZ(QtGui.QDialog):
     #
     # Handles the lock button.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleLockButton(self):
+    def handleLockButton(self, bool):
         self.lock_display1.lockButtonToggle()
         self.toggleLockButtonText(self.lock_display1.amLocked())
         self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())
@@ -188,16 +194,20 @@ class FocusLockZ(QtGui.QDialog):
     #
     # Handles the close button.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleOk(self):
+    def handleOk(self, bool):
         self.hide()
 
     ## handleRadioButtons.
     #
     # Handles the lock mode radio buttons.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleRadioButtons(self):
+    def handleRadioButtons(self, bool):
         for i in range(len(self.buttons)):
             if self.buttons[i].isChecked():
                 if self.lock_display1.changeLockMode(i):
@@ -217,8 +227,10 @@ class FocusLockZ(QtGui.QDialog):
     #
     # Handles the quit button.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleQuit(self):
+    def handleQuit(self, bool):
         self.close()
 
     ## handleJump

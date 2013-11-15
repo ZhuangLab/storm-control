@@ -84,8 +84,10 @@ class DetachedSingleCamera(singleCamera.SingleCamera):
     #
     # Handles when the user presses on the close button.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleOk(self):
+    def handleOk(self, bool):
         self.hide()
 
     ## showCamera1

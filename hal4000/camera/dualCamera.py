@@ -87,8 +87,10 @@ class CameraDialog(QtGui.QDialog):
     #
     # Handles the user clicking on the close button.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleOk(self):
+    def handleOk(self, bool):
         self.hide()
 
 
@@ -325,8 +327,10 @@ class DualCamera(genericCamera.Camera):
     #
     # Toggles the shutter of camera 1.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug        
-    def toggleShutterCamera1(self):
+    def toggleShutterCamera1(self, bool):
         open = self.camera_control.toggleShutter(0)
         if open:
             self.camera1.camera_display.ui.cameraShutterButton.setText("Close Shutter")
@@ -340,8 +344,10 @@ class DualCamera(genericCamera.Camera):
     #
     # Toggles the shutter of camera 2.
     #
-    @hdebug.debug        
-    def toggleShutterCamera2(self):
+    # @param bool Dummy parameter.
+    #
+    @hdebug.debug
+    def toggleShutterCamera2(self, bool):
         open = self.camera_control.toggleShutter(1)
         if open:
             self.camera2.camera_display.ui.cameraShutterButton.setText("Close Shutter")

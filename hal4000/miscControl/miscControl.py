@@ -61,8 +61,10 @@ class MiscControl(QtGui.QDialog):
     #
     # Close the window.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleQuit(self):
+    def handleQuit(self, bool):
         self.close()
 
     ## newFrame

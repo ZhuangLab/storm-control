@@ -223,8 +223,10 @@ class SingleCamera(genericCamera.Camera):
     # FIXME: Instead of updating the UI directly we should make this
     #    a call to a method of the camera display widget.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug        
-    def toggleShutter(self):
+    def toggleShutter(self, bool):
         open = self.camera_control.toggleShutter()
         if open:
             self.camera_display.ui.cameraShutterButton.setText("Close Shutter")

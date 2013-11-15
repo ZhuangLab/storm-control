@@ -112,22 +112,22 @@ class AMiscControl(miscControl.MiscControl):
         return self.ie_basename + "{0:04d}.tif".format(self.ie_index)
 
     @hdebug.debug
-    def goToEPI(self):
+    def goToEPI(self, bool):
         self.position = self.epi_position
         self.moveStage()
 
     @hdebug.debug
-    def goToTIRF(self):
+    def goToTIRF(self, bool):
         self.position = self.tirf_position
         self.moveStage()
 
     @hdebug.debug
-    def goToX(self):
+    def goToX(self, bool):
         self.position = self.ui.tirSpinBox.value()
         self.moveStage()
 
     @hdebug.debug
-    def handleAutoSave(self):
+    def handleAutoSave(self, bool):
         if self.ie_autosave:
             self.ui.iEyesAutoSaveButton.setText("Auto Save")
             self.ui.iEyesAutoSaveButton.setStyleSheet("QPushButton { color: black }")
@@ -140,7 +140,7 @@ class AMiscControl(miscControl.MiscControl):
             self.ie_capture = True
             
     @hdebug.debug
-    def handleClearROI(self):
+    def handleClearROI(self, bool):
         self.start_x = 0
         self.stop_x = self.parameters.x_pixels
         self.start_y = 0
@@ -148,7 +148,7 @@ class AMiscControl(miscControl.MiscControl):
         self.updateROIText()
 
     @hdebug.debug
-    def handleFilter(self):
+    def handleFilter(self, bool):
         for i, filter in enumerate(self.filters):
             if filter.isChecked():
                 filter.setStyleSheet("QPushButton { color: red}")
@@ -163,7 +163,7 @@ class AMiscControl(miscControl.MiscControl):
         self.ui.iEyesLabel.setText(self.getIEName())
 
     @hdebug.debug
-    def handleOk(self):
+    def handleOk(self, bool):
         self.hide()
 
     @hdebug.debug
@@ -191,7 +191,7 @@ class AMiscControl(miscControl.MiscControl):
             self.updateROIText()
 
     @hdebug.debug
-    def handleReset(self):
+    def handleReset(self, bool):
         tif_files = glob.glob(self.ie_directory + "*.tif")
         for file in tif_files:
             os.remove(file)
@@ -199,22 +199,22 @@ class AMiscControl(miscControl.MiscControl):
         self.ui.iEyesLabel.setText(self.getIEName())     
 
     @hdebug.debug
-    def handleSave(self):
+    def handleSave(self, bool):
         self.ie_capture = True
 
     @hdebug.debug
-    def handleSetROI(self):
+    def handleSetROI(self, bool):
         self.ui.iEyesSetROIButton.setEnabled(False)
         self.ie_setting_ROI = 1
 
     @hdebug.debug
-    def largeLeft(self):
+    def largeLeft(self, bool):
         if self.position > 14.0:
             self.position -= 10.0 * self.jog_size
             self.moveStage()
 
     @hdebug.debug
-    def largeRight(self):
+    def largeRight(self, bool):
         if self.position < 23.0:
             self.position += 10.0 * self.jog_size
             self.moveStage()
@@ -275,13 +275,13 @@ class AMiscControl(miscControl.MiscControl):
         self.ui.positionText.setText("{0:.3f}".format(self.position))
 
     @hdebug.debug
-    def smallLeft(self):
+    def smallLeft(self, bool):
         if self.position > 14.0:
             self.position -= self.jog_size
             self.moveStage()
 
     @hdebug.debug
-    def smallRight(self):
+    def smallRight(self, bool):
         if self.position < 23.0:
             self.position += self.jog_size
             self.moveStage()

@@ -377,16 +377,20 @@ class IlluminationControl(QtGui.QDialog):
     #
     # Hide the dialog box.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleOk(self):
+    def handleOk(self, bool):
         self.hide()
 
     ## handleQuit
     #
     # Close the dialog box.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleQuit(self):
+    def handleQuit(self, bool):
         self.close()
 
     ## manualControl

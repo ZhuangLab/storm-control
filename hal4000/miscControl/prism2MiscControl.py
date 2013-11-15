@@ -56,17 +56,17 @@ class AMiscControl(miscControl.MiscControl):
         # epi/tir stage init
         self.mgmotor = mgmotor.APTUser(self.ui.motorWidget)
 
-    def goToEPI(self):
+    def goToEPI(self, bool):
         if self.debug:
             print " goToEPI"
         self.moveStage(self.epi_position)
 
-    def goToTIRF(self):
+    def goToTIRF(self, bool):
         if self.debug:
             print " goToTIRF"
         self.moveStage(self.tirf_position)
 
-    def handleOk(self):
+    def handleOk(self, bool):
         if self.debug:
             print " handleOk"
         self.hide()

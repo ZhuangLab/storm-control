@@ -203,16 +203,20 @@ class StageControl(QtGui.QDialog):
     #
     # Move down one small step.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def downS(self):
+    def downS(self, bool):
         self.moveRelative(1, self.small_step_size)
 
     ## downL
     #
     # Move down one large step.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def downL(self):
+    def downL(self, bool):
         self.moveRelative(1, self.large_step_size)
 
     ## getStagePosition
@@ -229,8 +233,10 @@ class StageControl(QtGui.QDialog):
     #
     # Add the current stage position to the saved positions combo box.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleAdd(self):
+    def handleAdd(self, bool):
         self.ui.saveComboBox.addItem("{0:.1f}, {1:.1f}".format(self.x, self.y),
                                      [self.x, self.y])
         self.ui.saveComboBox.setCurrentIndex(self.ui.saveComboBox.count()-1)
@@ -239,16 +245,20 @@ class StageControl(QtGui.QDialog):
     #
     # Remove all of the positions from the saved positions combo box.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleClear(self):
+    def handleClear(self, bool):
         self.ui.saveComboBox.clear()
 
     ## handleGo
     #
     # Move to the position specified by the x,y position spin boxes.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleGo(self):
+    def handleGo(self, bool):
         x_target = self.ui.xmoveDoubleSpinBox.value()
         y_target = self.ui.ymoveDoubleSpinBox.value()
         self.moveAbsolute(x_target, y_target)
@@ -257,16 +267,20 @@ class StageControl(QtGui.QDialog):
     #
     # Move to the 0,0 position.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleHome(self):
+    def handleHome(self, bool):
         self.moveAbsolute(0, 0)
 
     ## handleLoad
     #
     # Load a positions file into the saved position combo box.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleLoad(self):
+    def handleLoad(self, bool):
         positions_filename = str(QtGui.QFileDialog.getOpenFileName(self,
                                                                    "Load Positions",
                                                                    self.parameters.directory,
@@ -286,8 +300,10 @@ class StageControl(QtGui.QDialog):
     #
     # Handles locking out the (stage) joystick.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleLockout(self):
+    def handleLockout(self, bool):
         if self.locked_out:
             self.stopLockout()
             self.locked_out = False
@@ -301,24 +317,30 @@ class StageControl(QtGui.QDialog):
     #
     # Hide the window.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleOk(self):
+    def handleOk(self, bool):
         self.hide()
 
     ## handleQuit
     #
     # Close the window.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleQuit(self):
+    def handleQuit(self, bool):
         self.close()
 
     ## handleSave
     #
     # Save the positions in the positions combo box into a file.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleSave(self):
+    def handleSave(self, bool):
         positions_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
                                                                    "Save Positions", 
                                                                    self.parameters.directory, 
@@ -374,16 +396,20 @@ class StageControl(QtGui.QDialog):
     #
     # Move left one small step.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def leftS(self):
+    def leftS(self, bool):
         self.moveRelative(0, self.small_step_size)
 
     ## leftL
     #
     # Move left one large step.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def leftL(self):
+    def leftL(self, bool):
         self.moveRelative(0, self.large_step_size)
 
     ## moveRelative
@@ -448,16 +474,20 @@ class StageControl(QtGui.QDialog):
     #
     # Move right one small step.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def rightS(self):
+    def rightS(self, bool):
         self.moveRelative(0, -1 * self.small_step_size)
 
     ## rightL
     #
     # Move right one large step.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def rightL(self):
+    def rightL(self, bool):
         self.moveRelative(0, -1 * self.large_step_size)
 
     ## startLockout
@@ -514,23 +544,29 @@ class StageControl(QtGui.QDialog):
     #
     # Move up one small step.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def upS(self):
+    def upS(self, bool):
         self.moveRelative(1, -1 * self.small_step_size)
 
     ## upL
     #
     # Move up one large step.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def upL(self):
+    def upL(self, bool):
         self.moveRelative(1, -1 * self.large_step_size)
 
     ## zero
     #
     # Zero the stage position.
     #
-    def zero(self):
+    # @param bool Dummy parameter.
+    #
+    def zero(self, bool):
         self.stage.zero()
         self.x = 0
         self.y = 0

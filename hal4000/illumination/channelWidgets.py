@@ -150,7 +150,9 @@ class QChannel(QtGui.QWidget):
     #
     # Update the UI when the channel is turned on or off.
     #
-    def onOffChange(self):
+    # @param bool Dummy parameter.
+    #
+    def onOffChange(self, bool):
         self.uiUpdate()
 
     ## setCmdQueue

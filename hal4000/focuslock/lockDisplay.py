@@ -106,7 +106,7 @@ class LockDisplay(QtGui.QWidget):
         # connect to the ir laser & turn it off.
         if self.ir_laser:
             self.ir_state = True
-            self.handleIrButton()
+            self.handleIrButton(None)
             if self.ir_laser.havePowerControl():
                 self.ui.irSlider.setValue(parameters.ir_power)
 
@@ -209,8 +209,10 @@ class LockDisplay(QtGui.QWidget):
     # Handles the IR laser button. Turns the laser on/off and
     # updates the button accordingly.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleIrButton(self):
+    def handleIrButton(self, bool):
         if self.ir_state:
             self.ir_laser.off()
             self.ir_state = False

@@ -379,8 +379,10 @@ class Window(QtGui.QMainWindow):
     # Hopefully this is no longer possible so this method
     # is not needed.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleCommDisconnect(self):
+    def handleCommDisconnect(self, bool):
         if self.tcp_control:
             self.tcp_control.disconnect()
 
@@ -641,8 +643,10 @@ class Window(QtGui.QMainWindow):
     # This is called to make the focus lock GUI visible, if 
     # there is a focus lock.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleFocusLock(self):
+    def handleFocusLock(self, bool):
         if self.focus_lock:
             self.focus_lock.show()
 
@@ -651,8 +655,10 @@ class Window(QtGui.QMainWindow):
     # This is called to make the illumination GUI visible, if
     # there is illumination control.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleIllumination(self):
+    def handleIllumination(self, bool):
         if self.illumination_control:
             self.illumination_control.show()
 
@@ -661,8 +667,10 @@ class Window(QtGui.QMainWindow):
     # This is called to make the misc controls GUI visible, if
     # there are misc controls.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleMiscControls(self):
+    def handleMiscControls(self, bool):
         if self.misc_control:
             self.misc_control.show()
 
@@ -699,8 +707,10 @@ class Window(QtGui.QMainWindow):
     #
     # This is called to show the progressions GUI.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug  
-    def handleProgressions(self):
+    def handleProgressions(self, bool):
         if self.progression_control:
             self.progression_control.show()
 
@@ -721,8 +731,10 @@ class Window(QtGui.QMainWindow):
     #
     # This is called to show the spot counter GUI.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleSpotCounter(self):
+    def handleSpotCounter(self, bool):
         if self.spot_counter:
             self.spot_counter.show()
 
@@ -730,8 +742,10 @@ class Window(QtGui.QMainWindow):
     #
     # This is called to show the stage control GUI.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleStage(self):
+    def handleStage(self, bool):
         if self.stage_control:
             self.stage_control.show()
 
@@ -898,8 +912,10 @@ class Window(QtGui.QMainWindow):
     # It opens a dialog where the user can select a new parameters file, then
     # tries to load the new parameter file.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def newSettingsFile(self):
+    def newSettingsFile(self, bool):
         self.stopCamera()
         parameters_filename = QtGui.QFileDialog.getOpenFileName(self, "New Settings", "", "*.xml")
         if parameters_filename:
@@ -942,13 +958,19 @@ class Window(QtGui.QMainWindow):
                 self.ui.shuttersText.setText(getFileName(self.parameters.shutters))
                 self.camera.setSyncMax(self.shutter_control.getCycleLength())
                 params.setDefaultShutter(shutters_filename)
-            if self.spot_counter:
-                colors = self.shutter_control.getColors()
-                self.spot_counter.newParameters(self.parameters, colors)
         else:
             self.parameters.shutters = shutters_filename
             self.old_shutters_file = shutters_filename
             self.ui.shuttersText.setText(getFileName(self.parameters.shutters))
+
+        #
+        # setup the spot counter
+        #
+        if self.spot_counter:
+            colors = []
+            if self.shutter_control:
+                colors = self.shutter_control.getColors()
+            self.spot_counter.newParameters(self.parameters, colors)
 
     ## newShuttersFile
     #
@@ -956,8 +978,10 @@ class Window(QtGui.QMainWindow):
     # It opens a GUI where the user can specify the new shutters file, then tries
     # to open the shutter file.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def newShuttersFile(self):
+    def newShuttersFile(self, bool):
         self.stopCamera()
         shutters_filename = QtGui.QFileDialog.getOpenFileName(self, "New Shutter Sequence", "", "*.xml")
         if shutters_filename and self.shutter_control:
@@ -969,8 +993,10 @@ class Window(QtGui.QMainWindow):
     # Called to quit the program. This saves the current GUI layout, i.e. the
     # locations of the various windows and whether or not they are open.
     #
-    @hdebug.debugSlot
-    def quit(self):
+    # @param bool Dummy parameter.
+    #
+    @hdebug.debug
+    def quit(self, bool):
         # Save GUI settings
         self.settings.setValue("main_pos", self.pos())
         for [object, name] in self.gui_settings:
@@ -1183,7 +1209,10 @@ class Window(QtGui.QMainWindow):
     # Start/stop filming. If this file already exists this will warn that
     # it is about to get overwritten.
     #
-    def toggleFilm(self):
+    # @param bool Dummy parameter.
+    #
+    @hdebug.debug
+    def toggleFilm(self, bool):
         if self.filming:
             self.stopFilm()
         else:

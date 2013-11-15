@@ -76,7 +76,7 @@ class AMiscControl(miscControl.MiscControl):
             self.filters[self.filter_wheel.getPosition()-1].click()
 
     @hdebug.debug
-    def handleFilter(self):
+    def handleFilter(self, bool):
         for i, filter in enumerate(self.filters):
             if filter.isChecked():
                 filter.setStyleSheet("QPushButton { color: red}")
@@ -87,19 +87,19 @@ class AMiscControl(miscControl.MiscControl):
                 filter.setStyleSheet("QPushButton { color: black}")
 
     @hdebug.debug
-    def handleLamp(self):
+    def handleLamp(self, bool):
         self.ui.laserButton.setStyleSheet("QPushButton { color: black }")
         self.ui.lampButton.setStyleSheet("QPushButton { color: red }")
         self.lamp_servo.goToMax()
 
     @hdebug.debug
-    def handleLaser(self):
+    def handleLaser(self, bool):
         self.ui.laserButton.setStyleSheet("QPushButton { color: red }")
         self.ui.lampButton.setStyleSheet("QPushButton { color: black }")
         self.lamp_servo.goToMin()
         
     @hdebug.debug
-    def handleOk(self):
+    def handleOk(self, bool):
         self.hide()
 
     @hdebug.debug

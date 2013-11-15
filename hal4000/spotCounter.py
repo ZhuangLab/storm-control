@@ -432,6 +432,7 @@ class SpotCounter(QtGui.QDialog):
         self.filenames = [False, False]
         self.image_graphs = [False, False]
         self.number_cameras = 1
+        self.parameters = parameters
         self.spot_counter = False
         self.spot_graphs = [False, False]
 
@@ -572,16 +573,20 @@ class SpotCounter(QtGui.QDialog):
     #
     # Handles the close button, hides the dialog box.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleOk(self):
+    def handleOk(self, bool):
         self.hide()
 
     ## handleQuit
     #
     # Handles the quit button, closes the dialog box.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleQuit(self):
+    def handleQuit(self, bool):
         self.close()
 
     ## newFrame

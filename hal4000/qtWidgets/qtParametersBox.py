@@ -84,7 +84,9 @@ class QParametersBox(QtGui.QWidget):
     # which parameters were selected. It emits a settings_toggled signal to
     # indicate that the settings have been changed.
     #
-    def toggleParameters(self):
+    # @param bool Dummy parameter.
+    #
+    def toggleParameters(self, bool):
         for i, button in enumerate(self.radio_buttons):
             if button.isChecked():
                 self.current_parameters = self.parameters[i]

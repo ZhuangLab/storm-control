@@ -491,8 +491,10 @@ class ProgressionControl(QtGui.QDialog):
     # This is called when the user presses the close button. It hides
     # the dialog.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleOk(self):
+    def handleOk(self, bool):
         self.hide()
 
     ## handleProgCheck
@@ -512,8 +514,10 @@ class ProgressionControl(QtGui.QDialog):
     #
     # This is called when the user clicks the quit button.
     #
+    # @param bool Dummy parameter.
+    #
     @hdebug.debug
-    def handleQuit(self):
+    def handleQuit(self, bool):
         self.close()
 
     ## newFrame
@@ -556,7 +560,10 @@ class ProgressionControl(QtGui.QDialog):
     #
     # Opens a file dialog where the user can specifiy a new power file.
     #
-    def newPowerFile(self):
+    # @param bool Dummy parameter.
+    #
+    @hdebug.debug
+    def newPowerFile(self, bool):
         power_filename = QtGui.QFileDialog.getOpenFileName(self,
                                                            "New Power File",
                                                            str(self.parameters.directory),
