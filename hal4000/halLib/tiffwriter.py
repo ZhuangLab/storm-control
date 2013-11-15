@@ -57,8 +57,8 @@ class TiffWriter:
                                                                                   cur_time.tm_hour,
                                                                                   cur_time.tm_min,
                                                                                   cur_time.tm_sec) + chr(0)
-        print self.date_time
-                                                                                  
+        #print self.date_time
+
         #
         # write tiff header
         #

@@ -677,13 +677,13 @@ class HamamatsuCamera():
         checkStatus(dcam.dcam_idle(self.camera_handle),
                     "dcam_idle")
 
+        print "max camera backlog was", self.max_backlog, "of", self.number_image_buffers
+        self.max_backlog = 0
+
         # Free image buffers.
         self.number_image_buffers = 0
         checkStatus(dcam.dcam_freeframe(self.camera_handle),
                     "dcam_freeframe")
-
-        print "max camera backlog was:", self.max_backlog
-        self.max_backlog = 0
 
     ## shutdown
     #
