@@ -835,8 +835,6 @@ class AndorCamera:
     # Abort the current acquisition (if acquiring), close the shutter and
     # turn the cooler off.
     #
-    # FIXME: Should we also be calling andor.ShutDown()?
-    #
     def shutdown(self):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
@@ -851,7 +849,7 @@ class AndorCamera:
                 print "  Temperature:", current_temp
                 time.sleep(5.0)
                 current_temp = self.getTemperature()[0]
-            andor.ShutDown()
+        andor.ShutDown()
 
 
 #
