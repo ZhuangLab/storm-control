@@ -645,8 +645,10 @@ class Window(QtGui.QMainWindow):
     #
     # Tells the movie engine to abort the current movie. Resets everything to the initial movie.
     #
+    # @param boolean Dummy parameter.
+    #
     @hdebug.debug
-    def handleAbortButton(self):
+    def handleAbortButton(self, boolean):
         if (self.running):
             self.movie_engine.abort()
             self.movie_index = 0
@@ -685,8 +687,10 @@ class Window(QtGui.QMainWindow):
     #
     # Handles generating the XML that Dave uses from a positions text file and a experiment XML file.
     #
+    # @param boolean Dummy parameter.
+    #
     @hdebug.debug
-    def handleGenerate(self):
+    def handleGenerate(self, boolean):
         positions_filename = str(QtGui.QFileDialog.getOpenFileName(self, "Positions File", self.directory, "*.txt"))
         self.directory = os.path.dirname(positions_filename)
         experiment_filename = str(QtGui.QFileDialog.getOpenFileName(self, "Experiment File", self.directory, "*.xml"))
@@ -750,8 +754,10 @@ class Window(QtGui.QMainWindow):
     # Handles the run button. If we are running then the text is set to "Pausing.." and the movie engine is told to pause.
     # Otherwise the text is set to "Pause" and the movie engine is told to start.
     #
+    # @param boolean Dummy parameter.
+    #
     @hdebug.debug
-    def handleRunButton(self):
+    def handleRunButton(self, boolean):
         if (self.running):
             self.movie_engine.pause()
             self.ui.runButton.setText("Pausing..")
@@ -798,8 +804,10 @@ class Window(QtGui.QMainWindow):
     #
     # Opens the dialog box that lets the user specify a sequence file.
     #
+    # @param boolean Dummy parameter.
+    #
     @hdebug.debug
-    def newSequenceFile(self):
+    def newSequenceFile(self, boolean):
         sequence_filename = str(QtGui.QFileDialog.getOpenFileName(self, "New Sequence", self.directory, "*.xml"))
         if sequence_filename:
             self.directory = os.path.dirname(sequence_filename)
@@ -823,8 +831,10 @@ class Window(QtGui.QMainWindow):
     #
     # Handles the quit file action.
     #
+    # @param boolean Dummy parameter.
+    #
     @hdebug.debug
-    def quit(self):
+    def quit(self, boolean):
         self.close()
 
 
