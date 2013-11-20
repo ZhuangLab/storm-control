@@ -1,18 +1,29 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Handles coordinate manipulations, mostly converting back
 # and forth between pixels and microns.
 #
 # Hazen 02/13
 #
 
+## Point
 #
-# Point class.
+# There is a lot of conversion back and forth between real positions
+# (in microns) and display positions (in pixels). This class is
+# designed to make that easier.
 #
 class Point(object):
 
     pixels_to_um = 1.0
 
+    ## __init__
+    #
+    # @param xval The x location of the point.
+    # @param yval The y location of the point.
+    # @param valtype One of "um" or "pix".
+    #
     def __init__(self, xval, yval, valtype):
         if (valtype == "um"):
             self.x_um = xval
@@ -27,14 +38,27 @@ class Point(object):
         else:
             print "(Point) Unknown type:", valtype
 
+    ## getPix
+    #
+    # @return [x location in pixels, y location in pixels].
+    #
     def getPix(self):
         return [self.x_pix, self.y_pix]
 
+    ## getUm
+    #
+    # @return [x location in microns, y location in microns].
+    #
     def getUm(self):
         return [self.x_um, self.y_um]
 
+## umToPix
 #
-# Conversion functions.
+# Converts microns to pixels.
+#
+# @param um A value in microns.
+#
+# @return The value of um in pixels.
 #
 def umToPix(um):
     return um/Point.pixels_to_um

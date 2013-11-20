@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Handles telling the acquisition program to get
 # a picture & converts the captured image into a
 # QPixmap.
@@ -24,10 +26,20 @@ import halLib.daxspereader
 
 import coord
 
+## Image
 #
 # Image class for temporary storage of image data.
 #
 class Image():
+
+    ## __init__
+    #
+    # @param data The image data (a numpy array).
+    # @param size [image width, image height, number of frames].
+    # @param display_scale [image value that equals 0, image value that equals 255].
+    # @param location [stage x, stage y].
+    # @param params The HAL xml file that was used to acquire the image.
+    #
     def __init__(self, data, size, display_scale, location, params):
         self.data = data
         self.height = size[1]
@@ -45,10 +57,18 @@ class Image():
         self.x_pix = a_point.x_pix
         self.y_pix = a_point.y_pix
 
+## Movie
 #
 # Movie class for use w/ tcpClient
 #
 class Movie():
+
+    ## __init__
+    #
+    # @param name The name of the movie (specified in the xml file).
+    # @param stagex The x position at which to take the movie.
+    # @param stagey The y position at which to take the movie.
+    #
     def __init__(self, name, stagex, stagey):
         self.stage_x = float(stagex)
         self.stage_y = float(stagey)
@@ -57,13 +77,26 @@ class Movie():
         self.length = 1
         self.progressions = []
 
+## Capture
 #
-# Capture
+# Handles capturing images from HAL. Instructions to HAL about how
+# to take the image are sent by TCP/IP. Once the image is acquired
+# it is read from the disc (and not communicated directly back to
+# this program).
+#
+# The TCP/IP connection is made and broken for each request (take a
+# movie or move to a position). This is done for user convenience
+# because when the connection is active some features of HAL, such 
+# as movie acquisition, are locked out.
 #
 class Capture(QtCore.QObject):
     captureComplete = QtCore.pyqtSignal(object)
     disconnected = QtCore.pyqtSignal()
 
+    ## __init__
+    #
+    # @param parameters A parameters xml object.
+    #
     @hdebug.debug
     def __init__(self, parameters):
         QtCore.QObject.__init__(self)
@@ -88,6 +121,14 @@ class Capture(QtCore.QObject):
         self.tcp_client.disconnect.connect(self.handleDisconnect)
         self.connected = False
 
+    ## captureDone
+    #
+    # This is called when we get the (movie) completion method from HAL. It
+    # attempts to find the image that HAL just took on the disc, creates a
+    # Image object and emits the captureComplete signal.
+    #
+    # @param a_string Not used.
+    #
     @hdebug.debug
     def captureDone(self, a_string):
         print "captureDone"
@@ -124,6 +165,17 @@ class Capture(QtCore.QObject):
 
             self.captureComplete.emit(image)
 
+    ## captureStart
+    #
+    # Called to take a image at stagex, stagey. This tells HAL to move,
+    # then starts a timer. When the timer fires the image is taken. The
+    # delay time of the timer depends on the distance of the move.
+    #
+    # @param stagex The x position to take the image at.
+    # @param stagey The y position to take the image at.
+    #
+    # @return True/False if starting capture was successful.
+    #
     @hdebug.debug
     def captureStart(self, stagex, stagey):
         print "captureStart:", stagex, stagey
@@ -152,16 +204,33 @@ class Capture(QtCore.QObject):
             print "captureStage: not connected"
             return False
 
+    ## commConnect
+    #
+    # Initiate communication with HAL.
+    #
+    # @param set_directory (Optional) Tell HAL to change it's working directory, default is False.
+    #
     @hdebug.debug
     def commConnect(self, set_directory = False):
         self.tcp_client.startCommunication()
         if self.tcp_client.isConnected() and set_directory:
             self.tcp_client.sendSetDirectory(self.directory[:-1])
 
+    ## commDisconnect
+    #
+    # Stop communication with HAL.
+    #
     @hdebug.debug
     def commDisconnect(self):
         self.tcp_client.stopCommunication()
 
+    ## gotoPosition
+    #
+    # Called to move to stagex, stagey.
+    #
+    # @param stagex The x position to move to.
+    # @param stagey The y position to move to.
+    #
     @hdebug.debug
     def gotoPosition(self, stagex, stagey):
         print "gotoPosition:", stagex, stagey
@@ -176,14 +245,27 @@ class Capture(QtCore.QObject):
         else:
             print "gotoPosition: not connected"
 
+    ## handleAcknowledged
+    #
+    # Handles the acknowledged signal. If this was a simple stage
+    # move then we disconnect from HAL.
+    #
     def handleAcknowledged(self):
         if self.goto:
             self.commDisconnect()
             self.goto = False
 
+    ## handleDisconnect
+    #
+    # This does nothing.
+    #
     def handleDisconnect(self):
         pass
 
+    ## handleStartTimer
+    #
+    # Called when the movie timer fires to take the image.
+    #
     def handleStartTimer(self):
         if self.tcp_client.isConnected():
             self.tcp_client.startMovie(self.movie)
@@ -191,9 +273,19 @@ class Capture(QtCore.QObject):
             print "handleStartTimer: not connected"
             self.disconnected.emit()
 
+    ## setDirectory
+    #
+    # Sets self.directory to directory.
+    #
+    # @param directory The new working directory (as a string).
+    #
     def setDirectory(self, directory):
         self.directory = directory
 
+    ## shutDown
+    #
+    # Close the TCP/IP connection, if it is still open.
+    #
     def shutDown(self):
         if self.tcp_client.isConnected():
             self.commDisconnect()
