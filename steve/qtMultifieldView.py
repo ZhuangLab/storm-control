@@ -87,7 +87,7 @@ class MultifieldView(QtGui.QGraphicsView):
     def getImageItems(self):
         return self.image_items
 
-    def handleRemoveLastItem(self):
+    def handleRemoveLastItem(self, boolean):
         if(len(self.image_items) > 0):
             item = self.image_items.pop()
             self.scene.removeItem(item)

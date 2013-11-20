@@ -648,10 +648,10 @@ class SectionsView(QtGui.QWidget):
         self.foreground_opacity = foreground_opacity
         self.update()
 
-    def handlePict(self):
+    def handlePict(self, boolean):
         self.pictureEvent.emit(1)
 
-    def handlePos(self):
+    def handlePos(self, boolean):
         self.positionEvent.emit()
 
     def keyPressEvent(self, event):

@@ -144,7 +144,7 @@ class MosaicView(multiView.MultifieldView):
         self.number_x = xnum
         self.number_y = ynum
 
-    def handleExtrapolate(self):
+    def handleExtrapolate(self, boolean):
         self.extrapolate_start = self.pointf
 
     def handleExtrapolatePict(self):
@@ -155,10 +155,10 @@ class MosaicView(multiView.MultifieldView):
         pic_list.extend(createSpiral(self.extrapolate_count))
         self.takePictures.emit(pic_list)
 
-    def handleGoto(self):
+    def handleGoto(self, boolean):
         self.gotoPosition.emit(coord.Point(self.pointf.x(), self.pointf.y(), "pix"))
 
-    def handlePict(self):
+    def handlePict(self, boolean):
         self.handlePictures([])
 
     def handlePictures(self, positions):
@@ -166,10 +166,10 @@ class MosaicView(multiView.MultifieldView):
         pic_list.extend(positions)
         self.takePictures.emit(pic_list)
 
-    def handlePos(self):
+    def handlePos(self, boolean):
         self.addPosition.emit([coord.Point(self.pointf.x(), self.pointf.y(), "pix")])
 
-    def handleSec(self):
+    def handleSec(self, boolean):
         self.addSection.emit(coord.Point(self.pointf.x(), self.pointf.y(), "pix"))
 
     def keyPressEvent(self, event):

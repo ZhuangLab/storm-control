@@ -248,10 +248,10 @@ class Window(QtGui.QMainWindow):
         if not self.taking_pictures:
             self.comm.gotoPosition(point.x_um - self.current_offset.x_um, point.y_um - self.current_offset.y_um)
 
-    def handleAbort(self):
+    def handleAbort(self, boolean):
         self.picture_queue = []
 
-    def handleDeleteImages(self):
+    def handleDeleteImages(self, boolean):
         reply = QtGui.QMessageBox.question(self,
                                            "Warning!",
                                            "Delete Images?",
@@ -269,7 +269,7 @@ class Window(QtGui.QMainWindow):
         self.sections.gridChange(self.ui.xSpinBox.value(),
                                  self.ui.ySpinBox.value())
 
-    def handleLoadMosaic(self):
+    def handleLoadMosaic(self, boolean):
         mosaic_filename = str(QtGui.QFileDialog.getOpenFileName(self,
                                                                 "Load Mosaic",
                                                                 self.parameters.directory,
@@ -323,7 +323,7 @@ class Window(QtGui.QMainWindow):
                 # load older data formats here..
                 pass
 
-    def handleLoadPositions(self):
+    def handleLoadPositions(self, boolean):
         positions_filename = str(QtGui.QFileDialog.getOpenFileName(self,
                                                                    "Load Positions",
                                                                    self.parameters.directory,
@@ -364,7 +364,7 @@ class Window(QtGui.QMainWindow):
     def handleOpacityChange(self, value):
         self.sections.changeOpacity(0.01*float(value))
 
-    def handleSavePositions(self):
+    def handleSavePositions(self, boolean):
         positions_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
                                                                    "Save Positions", 
                                                                    self.parameters.directory, 
@@ -372,7 +372,7 @@ class Window(QtGui.QMainWindow):
         if positions_filename:
             self.positions.savePositions(positions_filename)
 
-    def handleSaveMosaic(self):
+    def handleSaveMosaic(self, boolean):
         mosaic_filename = str(QtGui.QFileDialog.getSaveFileName(self,
                                                                 "Save Mosaic", 
                                                                 self.parameters.directory,
@@ -383,7 +383,7 @@ class Window(QtGui.QMainWindow):
             self.positions.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
             self.sections.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
 
-    def handleSetWorkingDirectory(self):
+    def handleSetWorkingDirectory(self, boolean):
         directory = str(QtGui.QFileDialog.getExistingDirectory(self,
                                                                "New Directory",
                                                                str(self.parameters.directory),
@@ -393,7 +393,7 @@ class Window(QtGui.QMainWindow):
             self.comm.setDirectory(self.parameters.directory)
             print self.parameters.directory
 
-    def handleSnapshot(self):
+    def handleSnapshot(self, boolean):
         snapshot_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
                                                                   "Save Snapshot", 
                                                                   self.parameters.directory, 
@@ -431,7 +431,7 @@ class Window(QtGui.QMainWindow):
                 self.picture_queue = []
 
     @hdebug.debug
-    def quit(self):
+    def quit(self, boolean):
         self.close()
 
 if __name__ == "__main__":
