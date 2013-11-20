@@ -112,6 +112,9 @@ def Parameters(parameters_file, is_HAL = False):
 def setCameraParameters(camera):
     camera.x_pixels = camera.x_end - camera.x_start + 1
     camera.y_pixels = camera.y_end - camera.y_start + 1
+    if((camera.x_pixels % 4) != 0):
+        raise AssertionError, "The camera ROI must be a multiple of 4 in x!"
+
     camera.ROI = [camera.x_start, camera.x_end, camera.y_start, camera.y_end]
     camera.binning = [camera.x_bin, camera.y_bin]
 
