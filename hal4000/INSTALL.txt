@@ -8,6 +8,9 @@
  (f) scipy (for the optimal focus lock mode)
  (g) pywinusb (for the logitech joystick)
 
+(2-3) Note: You should be able to skip the next two steps if you
+ are running 64 bit windows as the compiled files are now included in
+ the project.
 
 (2) Compile UI elements (in the qtdesigner folder):
  With PyQt you should get a program installed called pyuic.py. Typically
