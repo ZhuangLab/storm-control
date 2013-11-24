@@ -117,14 +117,18 @@ class Camera(QtGui.QDialog):
     #
     # Show UI window for camera 1
     #
-    def showCamera1(self):
+    # @param boolean Dummy parameter.
+    #
+    def showCamera1(self, boolean):
         pass
 
     ## showCamera2
     #
     # Show UI window for camera 2
     #
-    def showCamera2(self):
+    # @param boolean Dummy parameter.
+    #
+    def showCamera2(self, boolean):
         pass
 
     ## startCamera

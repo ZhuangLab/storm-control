@@ -268,8 +268,10 @@ class DualCamera(genericCamera.Camera):
     # Show the UI for camera1. This is called when the user 
     # selects camera1 from the file menu.
     #
+    # @param boolean Dummy parameter.
+    #
     @hdebug.debug
-    def showCamera1(self):
+    def showCamera1(self, boolean):
         self.camera1.show()
 
     ## showCamera2
@@ -277,8 +279,10 @@ class DualCamera(genericCamera.Camera):
     # Show the UI for camera2. This is called when the user
     # selects camera2 from the file menu.
     #
+    # @param boolean Dummy parameter.
+    #
     @hdebug.debug
-    def showCamera2(self):
+    def showCamera2(self, boolean):
         self.camera2.show()
 
     ## startCamera

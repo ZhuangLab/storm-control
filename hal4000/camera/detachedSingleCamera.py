@@ -95,8 +95,9 @@ class DetachedSingleCamera(singleCamera.SingleCamera):
     # Handles displaying the UI when the user selects
     # "camera" from the file menu.
     #
+    # @param boolean Dummy parameter.
     @hdebug.debug
-    def showCamera1(self):
+    def showCamera1(self, boolean):
         self.show()
 
 #
