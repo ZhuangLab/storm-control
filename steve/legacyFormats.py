@@ -1,6 +1,9 @@
 #!/usr/bin/python
 #
-# Code for loading legacy mosaic file formats.
+## @file
+#
+# Code for loading legacy mosaic file formats. This is not currently used,
+# nor would it actually work. It is preserved here for reference purposes.
 #
 # Hazen 07/13
 #

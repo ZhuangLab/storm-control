@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+## @file
+#
 # Handles viewing the mosaic.
 #
 # Hazen 07/13
@@ -12,8 +14,14 @@ from PyQt4 import QtCore, QtGui
 import qtMultifieldView as multiView
 import coord
 
+## createGrid
 #
-# Create a grid position array
+# Create a grid position array.
+#
+# @param nx Size of the grid in x.
+# @param ny Size of the grid in y.
+#
+# @return An array of positions, [[0,1],[1,1],..]
 #
 def createGrid(nx, ny):
     direction = 0
@@ -31,9 +39,13 @@ def createGrid(nx, ny):
             direction += 1
     return positions
 
-
+## createSpiral
 #
-# Create a spiral position array
+# Create a spiral position array.
+#
+# @param number The number of images in the spiral.
+#
+# @return An array of positions, [[0,0],[0,1],[1,1]..]
 #
 def createSpiral(number):
     number = number * number
@@ -67,6 +79,7 @@ def createSpiral(number):
     return positions
 
 
+## MosaicView
 #
 # Handles user interaction with the mosaic.
 #
@@ -79,6 +92,11 @@ class MosaicView(multiView.MultifieldView):
     mouseMove = QtCore.pyqtSignal(object)
     takePictures = QtCore.pyqtSignal(object)
 
+    ## __init__
+    #
+    # @param parameters A parameters object.
+    # @param parent (Optional) The PyQy parent of this object, defaults to none.
+    #
     def __init__(self, parameters, parent = None):
         multiView.MultifieldView.__init__(self, parameters, parent)
 
@@ -115,6 +133,15 @@ class MosaicView(multiView.MultifieldView):
         self.removeAct.triggered.connect(self.handleRemoveLastItem)
         self.extrapolateAct.triggered.connect(self.handleExtrapolate)
 
+    ## addImage
+    #
+    # Add a capture.Image object to the graphics scene.
+    #
+    # @param image The capture.Image object.
+    # @param objective The name of the current objective (a string).
+    # @param magnification The magnification of the objective.
+    # @param offset The offset of the current objective to the reference objective (a coord.Point object).
+    #
     def addImage(self, image, objective, magnification, offset):
         x_pix = image.x_pix - (image.width * 0.5 / magnification)
         y_pix = image.y_pix - (image.height * 0.5 / magnification)
@@ -128,25 +155,72 @@ class MosaicView(multiView.MultifieldView):
                               self.currentz)
         self.currentz += 0.01
 
+    ## changeMagnification
+    #
+    # This changes the magnification of all the viewImageItems in the scene that are associated with a particular objective.
+    #
+    # @param objective The name of the objective (a string).
+    # @param new_magnification The magnification to use when rendering these images.
+    #
     def changeMagnification(self, objective, new_magnification):
         self.changeImageMagnifications(objective, new_magnification)
 
+    ## changeXOffset
+    #
+    # This changes the x offset of all the viewImageItems in the scene that are associated with a particular objective.
+    #
+    # @param objective The name of the objective (a string).
+    # @param x_offset_pix The new x offset (relative to the reference objective) to use when rendering these images.
+    #
     def changeXOffset(self, objective, x_offset_pix):
         self.changeImageXOffsets(objective, x_offset_pix)
 
+    ## changeYOffset
+    #
+    # This changes the y offset of all the viewImageItems in the scene that are associated with a particular objective.
+    #
+    # @param objective The name of the objective (a string).
+    # @param y_offset_pix The new y offset (relative to the reference objective) to use when rendering these images.
+    #
     def changeYOffset(self, objective, y_offset_pix):
         self.changeImageYOffsets(objective, y_offset_pix)
 
+    ## getScene
+    #
+    # @return The QGraphicsScene associated with this QGraphicsView.
+    #
     def getScene(self):
         return self.scene
 
+    ## gridChange
+    #
+    # Change the size of the grid to return when asked to generate a grid of positions.
+    #
+    # @param xnum The new size of the grid in x.
+    # @param ynum The new size of the grid in y.
+    #
     def gridChange(self, xnum, ynum):
         self.number_x = xnum
         self.number_y = ynum
 
+    ## handleExtrapolate
+    #
+    # Handles the extrapolate action. Records the current mouse position in the QGraphicsView
+    # when the action was generated in the class variable self.extrapolate_start
+    #
+    # @param boolean Dummy parameter.
+    #
     def handleExtrapolate(self, boolean):
         self.extrapolate_start = self.pointf
 
+    ## handleExtrapolatePict
+    #
+    # Takes a series of pictures at a location calculated from where the user clicked
+    # to start the extrapolation action and the next place the user clicked. The
+    # extrapolation is linear.
+    #
+    # Emits the takePictures signal.
+    #
     def handleExtrapolatePict(self):
         pict_x = self.pointf.x() + (self.pointf.x() - self.extrapolate_start.x())
         pict_y = self.pointf.y() + (self.pointf.y() - self.extrapolate_start.y())
@@ -155,23 +229,78 @@ class MosaicView(multiView.MultifieldView):
         pic_list.extend(createSpiral(self.extrapolate_count))
         self.takePictures.emit(pic_list)
 
+    ## handleGoto
+    #
+    # Handles the goto (i.e. move the stage) action.
+    #
+    # Emits the gotoPosition signal.
+    #
+    # @param boolean Dummy parameter.
+    #
     def handleGoto(self, boolean):
         self.gotoPosition.emit(coord.Point(self.pointf.x(), self.pointf.y(), "pix"))
 
+    ## handlePict
+    #
+    # Handles the take picture at a given location action.
+    #
+    # @param boolean Dummy parameter.
+    #
     def handlePict(self, boolean):
         self.handlePictures([])
 
+    ## handlePictures
+    #
+    # Handles taking pictures. This constructs an array structured like this:
+    # [coord.Point() from self.pointf, [offset x 1, offset y 1], [offset x 2, offset y 2], ..]
+    #
+    # Emits the takePictures signal.
+    #
+    # @param positions A array of position offsets to take the pictures at.
+    #
     def handlePictures(self, positions):
         pic_list = [coord.Point(self.pointf.x(), self.pointf.y(), "pix")]
         pic_list.extend(positions)
         self.takePictures.emit(pic_list)
 
+    ## handlePos
+    #
+    # Handles the add position action.
+    #
+    # Emits the addPosition signal.
+    #
+    # @param boolean Dummy parameter.
+    #
     def handlePos(self, boolean):
         self.addPosition.emit([coord.Point(self.pointf.x(), self.pointf.y(), "pix")])
 
+    ## handleSec
+    #
+    # Handles the add section action.
+    #
+    # Emits the addSection signal.
+    #
+    # @param boolean Dummy parameter.
+    #
     def handleSec(self, boolean):
         self.addSection.emit(coord.Point(self.pointf.x(), self.pointf.y(), "pix"))
 
+    ## keyPressEvent
+    #
+    # Handles key press events. Valid events are:
+    # <space> Take a picture.
+    # <3> Take a 3 picture spiral.
+    # <5> Take a 5 picture spiral.
+    # <7> Take a 7 picture spiral.
+    # <9> Take a 9 picture spiral.
+    # <g> Take a grid of pictures.
+    # <p> Add the current cursor position to the list of positions.
+    # <s> Add the current cursor position to the list of sections.
+    #
+    # Records the current cursor location in the scene in self.pointf.
+    #
+    # @param event A PyQt key press event.
+    #
     def keyPressEvent(self, event):
         event_pos = self.mapFromGlobal(QtGui.QCursor.pos())
         self.pointf = self.mapToScene(event_pos)
@@ -192,18 +321,35 @@ class MosaicView(multiView.MultifieldView):
 
         # record position
         elif (event.key() == QtCore.Qt.Key_P):
-            self.handlePos()
+            self.handlePos(False)
 
         # create section
         elif (event.key() == QtCore.Qt.Key_S):
-            self.handleSec()
+            self.handleSec(False)
 
         multiView.MultifieldView.keyPressEvent(self, event)
 
+    ## mouseMoveEvent
+    #
+    # Tracks mouse movements across the view.
+    #
+    # Emits the mouseMove signal.
+    #
+    # @param event A PyQt mouse move event.
+    #
     def mouseMoveEvent(self, event):
         pointf = self.mapToScene(event.pos())
         self.mouseMove.emit(coord.Point(pointf.x(), pointf.y(), "pix"))
 
+    ## mousePressEvent
+    #
+    # If the left mouse button is pressed then the view is centered on the current cursor position.
+    # If the right mouse button is pressed then the current location of the cursor in the scene
+    # is recorded. If self.extrapolate_start exists then self.handleExtrapolatePict() is called,
+    # otherwise the popup menu is displayed.
+    #
+    # @param event A PyQt mouse press event.
+    #
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             self.centerOn(self.mapToScene(event.pos()))

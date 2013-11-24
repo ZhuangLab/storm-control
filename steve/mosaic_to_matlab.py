@@ -1,7 +1,9 @@
 #!/usr/bin/python
 #
-# Convert .stv files to .mat files for those 
-# (fools) who persist in using Matlab.
+## @file
+#
+# Convert .stv files to .mat files for those who persist in using Matlab
+# and want to be able to manipulate image mosaics.
 #
 # Hazen 07/13
 #
