@@ -26,13 +26,15 @@ General notes:
  1. This software is written primarily in Python with a few
     C helper libraries.
 
- 2. The software is provided "as is" in the hope that others
+ 2. Doxygen documentation is available.
+
+ 3. The software is provided "as is" in the hope that others
     might find it useful. While it is fairly stable and has been 
     developed and used since 2009 in the Zhuang lab, we provide 
     no gaurantee that any future changes that are made will 
     maintain backwards compatibility with older versions.
 
- 3. We can only provide fairly limited support. You will
+ 4. We can only provide fairly limited support. You will
     probably have the most success adapting this software for
     your purposes if you are reasonably familiar with the Python 
     programming language.
