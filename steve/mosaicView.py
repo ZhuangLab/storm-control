@@ -288,14 +288,14 @@ class MosaicView(multiView.MultifieldView):
     ## keyPressEvent
     #
     # Handles key press events. Valid events are:
-    # <space> Take a picture.
-    # <3> Take a 3 picture spiral.
-    # <5> Take a 5 picture spiral.
-    # <7> Take a 7 picture spiral.
-    # <9> Take a 9 picture spiral.
-    # <g> Take a grid of pictures.
-    # <p> Add the current cursor position to the list of positions.
-    # <s> Add the current cursor position to the list of sections.
+    # 'space' Take a picture.
+    # '3' Take a 3 picture spiral.
+    # '5' Take a 5 picture spiral.
+    # '7' Take a 7 picture spiral.
+    # '9' Take a 9 picture spiral.
+    # 'g' Take a grid of pictures.
+    # 'p' Add the current cursor position to the list of positions.
+    # 's' Add the current cursor position to the list of sections.
     #
     # Records the current cursor location in the scene in self.pointf.
     #
