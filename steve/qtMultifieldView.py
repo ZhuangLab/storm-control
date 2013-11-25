@@ -1,9 +1,9 @@
 #!/usr/bin/python
 #
-# Class for rendering multiple images in taken
-# at different magnifications. This is used
-# by the steve software and others for image
-# display.
+## @file
+#
+# Class for rendering multiple images in taken at different magnifications. This is used
+# by the steve software and others for image display.
 #
 # Hazen 07/13
 #
@@ -17,6 +17,7 @@ from PyQt4 import QtCore, QtGui
 import halLib.daxspereader as datareader
 
 
+## MultifieldView
 #
 # Handles user interaction with the microscope images.
 #
@@ -26,6 +27,11 @@ import halLib.daxspereader as datareader
 #
 class MultifieldView(QtGui.QGraphicsView):
 
+    ## __init__
+    #
+    # @param parameters A parameters object.
+    # @param parent (Optional) The PyQt parent of this object.
+    # 
     def __init__(self, parameters, parent = None):
         QtGui.QGraphicsView.__init__(self, parent)
 
@@ -52,6 +58,22 @@ class MultifieldView(QtGui.QGraphicsView):
         self.setMouseTracking(True)
         self.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
 
+    ## addViewImageItem
+    #
+    # Adds a ViewImageItem to the QGraphicsScene.
+    #
+    # We don't use the image objects x and y fields for positioning the image as these give the location
+    # of the center of the image and the where as the QGraphicsScene uses the upper left corner of the image.
+    #
+    # @param image A capure.Image item.
+    # @param x_pix The x location of the left edge of the image.
+    # @param y_pix The y location of the top edge of the image.
+    # @param x_offset_pix The current x offset of this objective relative to the reference objective.
+    # @param y_offset_pix The current y offset of this objective relative to the reference objective.
+    # @param magnification The magnification of this objective.
+    # @param objective The name of the objective (a string).
+    # @param z_pos The z value to use for this image, this determines which images are in front of other images in the event of overlap.
+    #
     def addViewImageItem(self, image, x_pix, y_pix, x_offset_pix, y_offset_pix, magnification, objective, z_pos):
         a_image_item = viewImageItem(x_pix, y_pix, x_offset_pix, y_offset_pix, magnification, objective, z_pos)
         a_image_item.initializeWithImageObject(image)
@@ -62,21 +84,46 @@ class MultifieldView(QtGui.QGraphicsView):
         self.centerOn(x_pix, y_pix)
         self.updateSceneRect(x_pix, y_pix)
 
+    ## changeImageMagnifications
+    #
+    # Update the magnifications of the images taken with the specified objective.
+    #
+    # @param objective The objective (a string).
+    # @param new_magnification The new magnification to use when rendering images taken with this objective.
+    #
     def changeImageMagnifications(self, objective, new_magnification):
         for item in self.image_items:
             if (item.getObjective() == objective):
                 item.setMagnification(new_magnification)
 
+    ## changeImageXOffsets
+    #
+    # Update the x offset (relative to the reference objective) of all the images taken with the specified objective.
+    #
+    # @param objective The objective (a string).
+    # @param x_offset_pix The new x offset in pixels.
+    #
     def changeImageXOffsets(self, objective, x_offset_pix):
         for item in self.image_items:
             if (item.getObjective() == objective):
                 item.setXOffset(x_offset_pix)
 
+    ## changeImageYOffsets
+    #
+    # Update the y offset (relative to the reference objective) of all the images taken with the specified objective.
+    #
+    # @param objective The objective (a string).
+    # @param y_offset_pix The new y offset in pixels.
+    #
     def changeImageYOffsets(self, objective, y_offset_pix):
         for item in self.image_items:
             if (item.getObjective() == objective):
                 item.setYOffset(y_offset_pix)
 
+    ## clearMosaic
+    #
+    # Removes all the viewImageItems from the QGraphicsScene.
+    #
     def clearMosaic(self):
         for image_item in self.image_items:
             self.scene.removeItem(image_item)
@@ -84,9 +131,19 @@ class MultifieldView(QtGui.QGraphicsView):
         self.currentz = 0.0
         self.image_items = []
 
+    ## getImageItems
+    #
+    # @return An array containing all of the viewImageItems in the scene.
+    #
     def getImageItems(self):
         return self.image_items
 
+    ## handleRemoveLastItem
+    #
+    # Removes the last viewImageItem that was added to the scene.
+    #
+    # @param boolean Dummy parameter.
+    #
     def handleRemoveLastItem(self, boolean):
         if(len(self.image_items) > 0):
             item = self.image_items.pop()
@@ -96,10 +153,23 @@ class MultifieldView(QtGui.QGraphicsView):
 #        self.scene_rect = [-self.margin, -self.margin, self.margin, self.margin]
 #        self.setRect()
 
+    ## keyPressEvent
+    #
+    # @param event A PyQt key press event object.
+    #
     def keyPressEvent(self, event):
         # this allows keyboard scrolling to work
         QtGui.QGraphicsView.keyPressEvent(self, event)
 
+    ## loadFromMosaicFileData
+    #
+    # This is called when we are loading a previously saved mosaic.
+    #
+    # @param data A data element from the mosaic file.
+    # @param directory The directory in which the mosaic file is located.
+    #
+    # @return True/False if the data element described a viewImageItem.
+    #
     def loadFromMosaicFileData(self, data, directory):
         if (data[0] == "image"):
             image_dict = pickle.load(open(directory + "/" + data[1]))
@@ -115,10 +185,27 @@ class MultifieldView(QtGui.QGraphicsView):
         else:
             return False
 
+    ## mousePressEvent
+    #
+    # If the left mouse button was pressed, center the scene on the location where the button
+    # was pressed.
+    #
+    # @param event A PyQt mouse press event.
+    #
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             self.centerOn(self.mapToScene(event.pos()))
 
+    ## saveToMosaicFile
+    #
+    # Saves all the viewImageItems in the scene into the mosaic file. This adds a line
+    # to the mosaic file for each viewImageItem containing the file name where the
+    # viewImageItem was stored. Each viewImageItem is pickled and saved in it's own
+    # separate file.
+    #
+    # @param fileptr The mosaic file pointer.
+    # @param filename The name of the mosaic file.
+    #
     def saveToMosaicFile(self, fileptr, filename):
         progress_bar = QtGui.QProgressDialog("Saving Files...",
                                              "Abort Save",
@@ -141,6 +228,14 @@ class MultifieldView(QtGui.QGraphicsView):
 
         progress_bar.close()
 
+    ## updateSceneRect
+    #
+    # This updates the rectangle describing the overall size of the QGraphicsScene.
+    #
+    # @param x_pix A new location in pixels that needs to be visible in the scene.
+    # @param y_pix A new location in pixels that needs to be visible in the scene.
+    # @param update (Optional) True/False to force and update of the scene rectangle regardless of x_pix, y_pix.
+    #
     def updateSceneRect(self, x_pix, y_pix, update = False):
         needs_update = update
 
@@ -166,15 +261,29 @@ class MultifieldView(QtGui.QGraphicsView):
                                     w,
                                     h)
 
+    ## wheelEvent
+    #
+    # Handles mouse wheel events, changes the scale at which the scene is rendered
+    # to emulate zooming in / out.
+    #
+    # @param event A PyQt mouse wheel event.
+    #
     def wheelEvent(self, event):
         if event.delta() > 0:
             self.zoomIn()
         else:
             self.zoomOut()
 
+    ## zoomIn
+    #
+    # Scales the image by the variable self.zoom_in.
+    #
     def zoomIn(self):
         self.scale(self.zoom_in, self.zoom_in)
 
+    ## zoomOut
+    #
+    # Scales the image by the variable self.zoom_out.
     def zoomOut(self):
         self.scale(self.zoom_out, self.zoom_out)
 
