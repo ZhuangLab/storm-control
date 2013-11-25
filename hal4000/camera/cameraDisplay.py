@@ -193,8 +193,10 @@ class CameraDisplay(QtGui.QFrame):
     # This handles telling the xCameraWidget to show or hide the grid
     # that is drawn on top of the current picture from the camera.
     #
+    # @param boolean Dummy parameter.
+    #
     @hdebug.debug
-    def handleGrid(self):
+    def handleGrid(self, boolean):
         if self.show_grid:
             self.show_grid = 0
             self.ui.gridAct.setText("Show Grid")
@@ -209,8 +211,10 @@ class CameraDisplay(QtGui.QFrame):
     # information display, ie. the location of the last mouse
     # click in camera pixels & the intensity of that camera pixel.
     #
+    # @param boolean Dummy parameter.
+    #
     @hdebug.debug
-    def handleInfo(self):
+    def handleInfo(self, boolean):
         if self.show_info:
             self.show_info = 0
             self.ui.infoAct.setText("Show Info")
@@ -251,8 +255,10 @@ class CameraDisplay(QtGui.QFrame):
     # Handles telling the xCameraWidget to show or hide the target
     # circle that is drawn in the center of the camera frame.
     #
+    # @param boolean Dummy parameter.
+    #
     @hdebug.debug
-    def handleTarget(self):
+    def handleTarget(self, boolean):
         if self.show_target:
             self.show_target = 0
             self.ui.targetAct.setText("Show Target")
