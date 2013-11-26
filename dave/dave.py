@@ -18,6 +18,9 @@ from xml.dom import minidom, Node
 
 from PyQt4 import QtCore, QtGui
 
+# Add HAL to the python path so that we can find halLib.
+sys.path.append("../hal4000")
+
 # Debugging
 import halLib.hdebug as hdebug
 
