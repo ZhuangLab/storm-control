@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
-# Utility for imaging array tomography samples.
+## @file
+#
+# A utility for creating image mosaics and imaging array tomography type samples.
 #
 # Hazen 07/13
 #
@@ -31,8 +33,15 @@ import coord
 import halLib.parameters as params
 
 
+## findMO
+#
 # Find the magnification and offsets for the current objective.
-
+#
+# @param objective The microscope objective (a string).
+# @param spin_boxes A list of spin boxes.
+#
+# @return [magnification, offset in x, offset in y].
+#
 def findMO(objective, spin_boxes):
     magnification = 1.0
     x_offset = 0.0
@@ -48,6 +57,7 @@ def findMO(objective, spin_boxes):
 
     return [magnification, x_offset, y_offset]
 
+## MagOffsetSpinBox
 #
 # Spin boxes that are used to update magnification & offset.
 #
@@ -55,6 +65,13 @@ class MagOffsetSpinBox(QtGui.QDoubleSpinBox):
     
     moValueChange = QtCore.pyqtSignal(object, object, float)
 
+    ## __init__
+    #
+    # @param objective The objective the spin boxes are associated with.
+    # @param box_type What kind of spin box this is, one of "magnification", "xoffset" or "yoffset".
+    # @param initial_value The initial value for the spin box.
+    # @param parent (Optional) The PyQt parent of the spin box, default is None.
+    #
     def __init__(self, objective, box_type, initial_value, parent = None):
         QtGui.QDoubleSpinBox.__init__(self, parent)
 
@@ -80,15 +97,25 @@ class MagOffsetSpinBox(QtGui.QDoubleSpinBox):
 #        else:
 #            self.setReadOnly(False)
 
+    ## handleValueChange
+    #
+    # Emits the moValueChange signal.
+    #
     def handleValueChange(self, value):
         self.moValueChange.emit(self.objective, self.box_type, value)
 
 
+## Window
 #
-# Main window
+# The main window of the Steve program.
 #
 class Window(QtGui.QMainWindow):
 
+    ## __init__
+    #
+    # @param parameters A parameters object.
+    # @param parent (Optional) The PyQt parent of this object, default is None.
+    #
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         QtGui.QMainWindow.__init__(self, parent)
@@ -214,6 +241,13 @@ class Window(QtGui.QMainWindow):
 
         self.handleObjectiveChange(0)
 
+    ## addImage
+    #
+    # Adds a capture.Image object to the graphics scene. Checks self.picture_queue to see if there
+    # are more images to take. If there are then this starts taking the next image.
+    #
+    # @param image The capture.Image object.
+    #
     def addImage(self, image):
         self.view.addImage(image, self.current_objective, self.current_magnification, self.current_offset)
         if (len(self.picture_queue) > 0):
@@ -232,28 +266,64 @@ class Window(QtGui.QMainWindow):
             self.taking_pictures = False
             self.comm.commDisconnect()
 
+    ## addPositions
+    #
+    # @param points An array of coord.Point that specify the positions to add to the list of positions.
+    #
     def addPositions(self, points):
         for a_point in points:
             self.positions.addPosition(a_point)
 
+    ## addSection
+    #
+    # @param a_point A coord.Point object that specifies the location of the section to add.
+    #
     def addSection(self, a_point):
         self.sections.addSection(a_point)
 
+    ## cleanUp
+    #
+    # Called at closing, currently does nothing.
+    #
     @hdebug.debug
     def cleanUp(self):
         pass
 
+    ## closeEvent
+    #
+    # Called when the user clicks on the close box in the window.
+    #
+    # @param event A PyQt close event.
+    #
     @hdebug.debug
     def closeEvent(self, event):
         self.cleanUp()
 
+    ## gotoPosition
+    #
+    # Tell HAL to move to the specified position (if self.taking_pictures is False).
+    #
+    # @param point A coord.Point object specifying where to move to.
+    #
     def gotoPosition(self, point):
         if not self.taking_pictures:
             self.comm.gotoPosition(point.x_um - self.current_offset.x_um, point.y_um - self.current_offset.y_um)
 
+    ## handleAbort
+    #
+    # Handles the abort pictures button.
+    #
+    # @param boolean Dummy parameter.
+    #
     def handleAbort(self, boolean):
         self.picture_queue = []
 
+    ## handleDeleteImages
+    #
+    # Handles the delete images action.
+    #
+    # @param boolean Dummy parameter.
+    #
     def handleDeleteImages(self, boolean):
         reply = QtGui.QMessageBox.question(self,
                                            "Warning!",
@@ -263,15 +333,31 @@ class Window(QtGui.QMainWindow):
         if reply == QtGui.QMessageBox.Yes:
             self.view.clearMosaic()
 
+    ## handleDisconnected
+    #
+    # Handles the disconnected signal from the capture.Capture object.
+    #
     def handleDisconnected(self):
         self.taking_pictures = False
 
+    ## handleGridChange
+    #
+    # Handles a change in the size of the grid of images to take when asked to take a grid of images.
+    #
+    # @param num Dummy parameter.
+    #
     def handleGridChange(self, num):
         self.view.gridChange(self.ui.xSpinBox.value(),
                              self.ui.ySpinBox.value())
         self.sections.gridChange(self.ui.xSpinBox.value(),
                                  self.ui.ySpinBox.value())
 
+    ## handleLoadMosaic
+    #
+    # Handles the load mosaic action.
+    #
+    # @param boolean Dummy parameter.
+    #
     def handleLoadMosaic(self, boolean):
         mosaic_filename = str(QtGui.QFileDialog.getOpenFileName(self,
                                                                 "Load Mosaic",
@@ -326,6 +412,12 @@ class Window(QtGui.QMainWindow):
                 # load older data formats here..
                 pass
 
+    ## handleLoadPositions
+    #
+    # Handles the load positions action.
+    #
+    # @param boolean Dummy parameter.
+    #
     def handleLoadPositions(self, boolean):
         positions_filename = str(QtGui.QFileDialog.getOpenFileName(self,
                                                                    "Load Positions",
@@ -334,6 +426,14 @@ class Window(QtGui.QMainWindow):
         if positions_filename:
             self.positions.loadPositions(positions_filename)
 
+    ## handleMOValueChange
+    #
+    # Handles the moValueChange signal from the magnification and offset spin boxes.
+    #
+    # @param objective The objective associated with the spin box that was changed.
+    # @param box_type The box type of the spin box that was changed.
+    # @param value The new value of the spin box that was changed.
+    #
     def handleMOValueChange(self, objective, box_type, value):
         if (box_type == "magnification"):
             value = value/100.0
@@ -351,6 +451,12 @@ class Window(QtGui.QMainWindow):
         else:
             print "unknown box type:", box_type
 
+    ## handleObjectiveChange
+    #
+    # Handles the currentIndexChanged signal from the combo box that lists the objectives.
+    #
+    # @param mag_index The index of the newly selected objective.
+    #
     def handleObjectiveChange(self, mag_index):
         data = self.ui.magComboBox.itemData(mag_index).toString()
         if data:
@@ -364,9 +470,21 @@ class Window(QtGui.QMainWindow):
             self.current_magnification = mag
             self.current_offset = coord.Point(x_offset, y_offset, "um")
 
+    ## handleOpacityChange
+    #
+    # Handles the valueChanged signal from the foreground opacity slider.
+    #
+    # @param value The current value of the slider.
+    #
     def handleOpacityChange(self, value):
         self.sections.changeOpacity(0.01*float(value))
 
+    ## handleSavePositions
+    #
+    # Handles the save positions action.
+    #
+    # @param boolean Dummy parameter.
+    #
     def handleSavePositions(self, boolean):
         positions_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
                                                                    "Save Positions", 
@@ -375,6 +493,12 @@ class Window(QtGui.QMainWindow):
         if positions_filename:
             self.positions.savePositions(positions_filename)
 
+    ## handleSaveMosaic
+    #
+    # Handles the save mosaic action.
+    #
+    # @param boolean Dummy parameter.
+    #
     def handleSaveMosaic(self, boolean):
         mosaic_filename = str(QtGui.QFileDialog.getSaveFileName(self,
                                                                 "Save Mosaic", 
@@ -386,6 +510,12 @@ class Window(QtGui.QMainWindow):
             self.positions.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
             self.sections.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
 
+    ## handleSetWorkingDirectory
+    #
+    # Handles changing the current working directory.
+    #
+    # @param boolean Dummy parameter.
+    #
     def handleSetWorkingDirectory(self, boolean):
         directory = str(QtGui.QFileDialog.getExistingDirectory(self,
                                                                "New Directory",
@@ -396,6 +526,12 @@ class Window(QtGui.QMainWindow):
             self.comm.setDirectory(self.parameters.directory)
             print self.parameters.directory
 
+    ## handleSnapshot
+    #
+    # Handles the save snap shot action.
+    #
+    # @param boolean Dummy parameter.
+    #
     def handleSnapshot(self, boolean):
         snapshot_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
                                                                   "Save Snapshot", 
@@ -405,6 +541,16 @@ class Window(QtGui.QMainWindow):
             pixmap = QtGui.QPixmap.grabWidget(self.view.viewport())
             pixmap.save(snapshot_filename)
 
+    ## handleTabChange
+    #
+    # When the Mosiac tab is selected this shows the UI element where the current
+    # mouse position in microns is displayed. It also makes the section circles visible.
+    #
+    # When the Sections tab is selected the current mouse position display is hidden
+    # along with the section circles.
+    #
+    # @param value The index of currenty selected tab.
+    #
     def handleTabChange(self, value):
         if (value == 0):
             self.ui.mosaicLabel.show()
@@ -413,14 +559,34 @@ class Window(QtGui.QMainWindow):
             self.ui.mosaicLabel.hide()
             self.sections.setSceneItemsVisible(False)
 
+    ## updateMosaicLabel
+    #
+    # Updates the UI element that displays the current mouse position in microns.
+    #
+    # @param a_point A coord.Point object with current mouse position in microns.
+    #
     def updateMosaicLabel(self, a_point):
         self.ui.mosaicLabel.setText("{0:.2f}, {1:.2f}".format(a_point.x_um, a_point.y_um))
 
+    ## setCenter
+    #
+    # Sets the current center (for image acquisition). If an item in the picture_queue is not
+    # a coord.Point object then the picture for this item is taken relative to this center
+    # position.
+    #
+    # @param a_point A coord.Point object.
+    #
     def setCenter(self, a_point):
         x_um = a_point.x_um - self.current_offset.x_um
         y_um = a_point.y_um - self.current_offset.y_um
         self.current_center = coord.Point(x_um, y_um, "um")
 
+    ## takePictures
+    #
+    # Takes pictures at the specified absolute or relative positions.
+    #
+    # @param picture_list An array of positions to take the pictures at.
+    #
     def takePictures(self, picture_list):
         if self.taking_pictures:
             self.picture_queue = []
@@ -433,6 +599,12 @@ class Window(QtGui.QMainWindow):
                 self.taking_pictures = False
                 self.picture_queue = []
 
+    ## quit
+    #
+    # Handles the quit action, closes the window.
+    #
+    # @param boolean Dummy parameter.
+    #
     @hdebug.debug
     def quit(self, boolean):
         self.close()

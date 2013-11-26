@@ -998,6 +998,10 @@ class SectionsView(QtGui.QWidget):
     sizeEvent = QtCore.pyqtSignal(int, int)
     zoomEvent = QtCore.pyqtSignal(float)
 
+    ## __init__
+    #
+    # @param parent The PyQt parent of this object.
+    #
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
 
@@ -1019,16 +1023,45 @@ class SectionsView(QtGui.QWidget):
 
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
 
+    ## changeOpacity
+    #
+    # @param foreground_opacity The opacity of the foreground pixmap (0.0 - 1.0).
+    #
     def changeOpacity(self, foreground_opacity):
         self.foreground_opacity = foreground_opacity
         self.update()
 
+    ## handlePict
+    #
+    # Handles the take picture action. Emits the pictureEvent signal.
+    #
+    # @param boolean Dummy parameter.
+    #
     def handlePict(self, boolean):
         self.pictureEvent.emit(1)
 
+    ## handlePos
+    #
+    # Handles the record position action.
+    #
+    # @param boolean Dummy parameter.
+    #
     def handlePos(self, boolean):
         self.positionEvent.emit()
 
+    ## keyPressEvent
+    #
+    # Handles key press events, can emit a pictureEvent or a keyEvent.
+    #
+    # '1' Take a single picture at each section.
+    # '3' Take a 3 picture spiral at each section.
+    # '5' Take a 5 picture spiral at each section.
+    # 'g' Take a grid of pictures at each section.
+    #
+    # All other keys are emitted as a keyEvent.
+    #
+    # @param event A PyQt key press event.
+    #
     def keyPressEvent(self, event):
         # Picture taking.
         if (event.key() == QtCore.Qt.Key_Space):
@@ -1043,7 +1076,14 @@ class SectionsView(QtGui.QWidget):
         # Update section active section parameters.
         else:
             self.keyEvent.emit(event.key())
-        
+
+    ## paintEvent
+    #
+    # Draw a white background, the background pixmap (if it exists), the foreground
+    # pixmap (if it exists) and the white centering lines.
+    #
+    # @param event A PyQt paint event.
+    #
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
         color = QtGui.QColor(255,255,255)
@@ -1075,36 +1115,74 @@ class SectionsView(QtGui.QWidget):
         painter.drawLine(0, y_mid, self.width(), y_mid)
         painter.drawLine(x_mid, 0, x_mid, self.height())
 
+    ## mousePressEvent
+    #
+    # If the right button is pressed, bring up the pop-up menu.
+    #
+    # @param event A PyQt mouse press event.
+    #
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.RightButton:
             self.popup_menu.exec_(event.globalPos())
 
+    ## resizeEvent
+    #
+    # Called when the size of the window is changed.
+    #
+    # @param A PyQt resize event.
+    #
     def resizeEvent(self, event):
         if (self.old_height != self.height()) or (self.old_width != self.width()):
             self.old_height = self.height()
             self.old_width = self.width()
             self.sizeEvent.emit(self.width(), self.height())
-        
+
+    ## setBackgroundPixmap
+    #
+    # Set the background pixmap to display. This pixmap is the average of all the
+    # checked sections.
+    #
+    # @param pixmap A PyQt QPixmap item.
+    #
     def setBackgroundPixmap(self, pixmap):
         self.background_pixmap = pixmap
         self.update()
 
+    ## setForegroundPixmap
+    #
+    # Set the foreground pixmap to display. This is the active section.
+    #
+    # @param pixmap A PyQt pixmap item.
+    #
     def setForegroundPixmap(self, pixmap):
         self.foreground_pixmap = pixmap
         self.update()
 
+    ## wheelEvent
+    #
+    # Emits the zoomEvent.
+    #
+    # @param event A PyQt wheel event.
+    #
     def wheelEvent(self, event):
         if (event.delta() > 0):
             self.zoomEvent.emit(1.2)
         else:
             self.zoomEvent.emit(1.0/1.2)
 
+## SectionSpinBox
 #
 # Slightly specialized double spin box
 #
 class SectionSpinBox(QtGui.QDoubleSpinBox):
     spinBoxSelected = QtCore.pyqtSignal()
 
+    ## __init__
+    #
+    # @param min_value The spin box minimum value.
+    # @param max_value The spin box maximum value.
+    # @param parent The PyQt parent of the spin box.
+    #
     def __init__(self, min_value, max_value, cur_value, parent):
         QtGui.QDoubleSpinBox.__init__(self, parent)
 
@@ -1112,10 +1190,22 @@ class SectionSpinBox(QtGui.QDoubleSpinBox):
         self.setMaximum(max_value)
         self.setValue(cur_value)
 
+    ## focusInEvent
+    #
+    # Handles focus events. Emits the spinBoxSelected signal.
+    #
+    # @param event A PyQt focus event.
+    #
     def focusInEvent(self, event):
         QtGui.QDoubleSpinBox.focusInEvent(self, event)
         self.spinBoxSelected.emit()
 
+    ## mousePressEvent
+    #
+    # Handles mouse press events. Emits the spinBoxSelected signal.
+    #
+    # @param event A PyQt mouse press event.
+    #
     def mousePressEvent(self, event):
         QtGui.QDoubleSpinBox.mousePressEvent(self, event)
         self.spinBoxSelected.emit()
