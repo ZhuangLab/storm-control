@@ -288,6 +288,7 @@ class MultifieldView(QtGui.QGraphicsView):
         self.scale(self.zoom_out, self.zoom_out)
 
 
+## viewImageItem
 #
 # Image handling class.
 #
@@ -297,6 +298,17 @@ class MultifieldView(QtGui.QGraphicsView):
 #
 class viewImageItem(QtGui.QGraphicsItem):
     #def __init__(self, pixmap, x_pix, y_pix, x_um, y_um, magnification, name, params, zvalue):
+
+    ## __init__
+    #
+    # @param x_pix X location of the image in pixels.
+    # @param y_pix Y location of the image in pixels.
+    # @param x_offset_pix The offset for this objective in x relative to the reference objective in pixels.
+    # @param y_offset_pix The offset fot this objective in y relative to the reference objective in pixels.
+    # @param objective_name The name of the objective, a string.
+    # @param magnification The magnification of the objective.
+    # @param zvalue The z position of this image.
+    #
     def __init__(self, x_pix, y_pix, x_offset_pix, y_offset_pix, objective_name, magnification, zvalue):
         QtGui.QGraphicsItem.__init__(self, None)
 
@@ -318,9 +330,17 @@ class viewImageItem(QtGui.QGraphicsItem):
         self.y_um = 0
         self.zvalue = zvalue
 
+    ## boundingRect
+    #
+    # @return QtCore.QRectF containing the size of the image.
+    #
     def boundingRect(self):
         return QtCore.QRectF(0, 0, self.pixmap.width(), self.pixmap.height())
 
+    ## createPixmap
+    #
+    # Converts the numpy image from HAL to a QtGui.QPixmap.
+    #
     def createPixmap(self):
         frame = self.data.copy()
 
@@ -339,26 +359,60 @@ class viewImageItem(QtGui.QGraphicsItem):
             image.setColor(i, QtGui.QColor(i,i,i).rgb())
         self.pixmap = QtGui.QPixmap.fromImage(image)
 
+    ## getMagnification
+    #
+    # @return The magnification of the image.
+    #
     def getMagnification(self):
         return self.magnification
 
+    ## getObjective
+    #
+    # @return The objective the image was taken with.
+    #
     def getObjective(self):
         return self.objective_name
 
+    ## getParameters
+    #
+    # This is not used. self.parameters is also not defined..
+    #
+    # @return self.parameters.
+    #
     def getParameters(self):
         return self.parameters
 
+    ## getPixmap
+    #
+    # @return The image as a QtGui.QPixmap.
+    #
     def getPixmap(self):
         return self.pixmap
 
+    ## getPositionUm
+    #
+    # @return [x (um), y (um)]
+    #
     def getPositionUm(self):
         return [self.x_um, self.y_um]
 
+    ## getState
+    #
+    # This is used to pickle objects of this class.
+    #
+    # @return The dictionary for this object, with 'pixmap' element removed.
+    #
     def getState(self):
         odict = self.__dict__.copy()
         del odict['pixmap']
         return odict
 
+    ## initializeWithImageObject
+    #
+    # Set member variables from a capture.Image object.
+    #
+    # @param image A capture.Image object.
+    #
     def initializeWithImageObject(self, image):
         self.data = image.data
         self.height = image.height
@@ -372,36 +426,80 @@ class viewImageItem(QtGui.QGraphicsItem):
 
         self.setPixmapGeometry()
 
+    ## initializeWithLegacyMosaicFormat
+    #
+    # This is a place-holder, it currently does nothing.
+    #
+    # @param legacy_text The text that specifies some of the image properties.
+    #
     def initializeWithLegacyMosaicFormat(self, legacy_text):
         pass
 
-    def paint(self, painter, options, widget):
+    ## paint
+    #
+    # Called by PyQt to render the image.
+    #
+    # @param painter A QPainter object.
+    # @param option A QStyleOptionGraphicsItem object.
+    # @param widget A QWidget object.
+    #
+    def paint(self, painter, option, widget):
         painter.drawPixmap(0, 0, self.pixmap)
 
+    ## setPixmapGeometry
+    #
+    # Sets the position, scale and z value of the image.
+    #
     def setPixmapGeometry(self):
         self.setPos(self.x_pix + self.x_offset_pix, self.y_pix + self.y_offset_pix)
         self.setTransform(QtGui.QTransform().scale(1.0/self.magnification, 1.0/self.magnification))
         self.setZValue(self.zvalue)
 
+    ## setMagnification
+    #
     # FIXME: This also needs to change the x,y coordinates so the image expands/
     # contracts from its center, not the upper left hand corner.
+    #
+    # @param magnification The new magnification to use for this image.
+    #
     def setMagnification(self, magnification):
         self.magnification = magnification
         self.setTransform(QtGui.QTransform().scale(1.0/self.magnification, 1.0/self.magnification))
 
+    ## setRealPosition
+    #
+    # This is not used..
+    #
+    # @param rx The real position in x.
+    # @param ry The real position in y.
+    #
     def setRealPosition(self, rx, ry):
         self.real_x = rx
         self.real_y = ry
 
+    ## setState
+    #
+    # This is used to unpickle objects of this class.
+    #
+    # @param image_dict A dictionary that defines the object members.
+    #
     def setState(self, image_dict):
         self.__dict__.update(image_dict)
         self.createPixmap()
         self.setPixmapGeometry()
 
+    ## setXOffset
+    #
+    # @param x_offset The new x_offset to use for positioning this image.
+    #
     def setXOffset(self, x_offset):
         self.x_offset_pix = x_offset
         self.setPos(self.x_pix + self.x_offset_pix, self.y_pix + self.y_offset_pix)
 
+    ## setYOffset
+    #
+    # @param y_offset The new y_offset to use for positioning this image.
+    #
     def setYOffset(self, y_offset):
         self.y_offset_pix = y_offset
         self.setPos(self.x_pix + self.x_offset_pix, self.y_pix + self.y_offset_pix)
