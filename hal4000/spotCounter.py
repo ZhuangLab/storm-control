@@ -613,7 +613,12 @@ class SpotCounter(QtGui.QDialog):
 
         self.spot_counter.newParameters(parameters)
 
+        #
         # Update counters, count graph(s) & STORM image(s).
+        # If colors is an empty array then we use the default color (white).
+        #
+        if (len(colors) == 0):
+            colors = [[255, 255, 255]]
         points_per_cycle = len(colors)
         total_points = points_per_cycle
         while total_points < 100:

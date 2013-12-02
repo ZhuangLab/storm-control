@@ -830,13 +830,17 @@ class Window(QtGui.QMainWindow):
             self.directory = p.directory
 
         #
-        # setup the illumination control (and the spot counter)
+        # Setup the illumination control (and the spot counter).
         #
-        # note that the spot counter is also initialized by calling newShutters.
+        # If there is illumination control then the spot counter is initialized
+        # in the call to newShutters, otherwise it is initialized here.
         #
         if self.illumination_control:
             self.illumination_control.newParameters(p)
             self.newShutters(p.shutters)
+        else:
+            if self.spot_counter:
+                self.spot_counter.newParameters(p, [])
 
         #
         # setup the stage
@@ -964,7 +968,7 @@ class Window(QtGui.QMainWindow):
             self.ui.shuttersText.setText(getFileName(self.parameters.shutters))
 
         #
-        # setup the spot counter
+        # Setup the spot counter.
         #
         if self.spot_counter:
             colors = []
