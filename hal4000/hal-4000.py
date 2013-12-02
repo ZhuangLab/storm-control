@@ -1343,7 +1343,7 @@ if __name__ == "__main__":
     params.setSetupName(parameters, setup_name)
 
     # Start logger.
-    hdebug.startLogging(parameters.directory + "logs/", "hal4000")
+    #hdebug.startLogging(parameters.directory + "logs/", "hal4000")
 
     # Load app.
     window = Window(parameters)

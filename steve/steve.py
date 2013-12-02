@@ -614,7 +614,7 @@ if __name__ == "__main__":
     parameters = params.Parameters("settings_default.xml")
 
     # Start logger.
-    hdebug.startLogging(parameters.directory + "logs/", "steve")
+    #hdebug.startLogging(parameters.directory + "logs/", "steve")
 
     # Load app.
     window = Window(parameters)
