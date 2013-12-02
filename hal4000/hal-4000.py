@@ -520,13 +520,23 @@ class Window(QtGui.QMainWindow):
     ## cleanUp
     #
     # This is called upon closing the program. It stops all of the various
-    # threads and disconnects from the hardware.
+    # threads and disconnects from the hardware. This also saves the current 
+    # GUI layout, i.e. the locations of the various windows and whether or 
+    # not they are open.
     #
     @hdebug.debug
     def cleanUp(self):
         print " Dave? What are you doing Dave?"
         print "  ..."
 
+        # Save GUI settings.
+        self.settings.setValue("main_pos", self.pos())
+        for [object, name] in self.gui_settings:
+            if object:
+                self.settings.setValue(name + "_pos", object.pos())
+                self.settings.setValue(name + "_visible", object.isVisible())
+
+        # Close the film notes log file.
         self.logfile_fp.close()
 
         # stop the camera
@@ -1001,13 +1011,6 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def quit(self, bool):
-        # Save GUI settings
-        self.settings.setValue("main_pos", self.pos())
-        for [object, name] in self.gui_settings:
-            if object:
-                self.settings.setValue(name + "_pos", object.pos())
-                self.settings.setValue(name + "_visible", object.isVisible())
-
         self.close()
 
     ## showHideLength
