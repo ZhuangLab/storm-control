@@ -52,13 +52,23 @@ def getDebug():
 
 ## startLogging
 #
-# This should only be called once in "main".
+# This should only be called once in "main". It uses QSettings() to generate
+# a new index (1-10) each time that it is called so that (hopefully) we can
+# log from multiple programs with the same name.
 #
 # @param directory The directory to save the log files in.
 # @param program_name The name of the program that is doing the logging.
 #
 def startLogging(directory, program_name):
     global a_logger
+
+    # Get logger index (to allow logging from several programs with the same name).
+    settings = QtCore.QSettings("Zhuang Lab", "hdebug logger")
+    index = settings.value("current index", 1).toInt()[0]
+    new_index = index + 1
+    if (new_index > 10):
+        new_index = 1
+    settings.setValue("current index", new_index)
 
     # Initialize logger.
     a_logger = logging.getLogger(program_name)
@@ -68,7 +78,7 @@ def startLogging(directory, program_name):
     rt_formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s')
 
     # Rotating file handle for saving output.
-    rf_handler = logging.handlers.RotatingFileHandler(directory + program_name + ".out",
+    rf_handler = logging.handlers.RotatingFileHandler(directory + program_name + "_" + str(index) + ".out",
                                                       maxBytes = 20000,
                                                       backupCount = 5)
     rf_handler.setFormatter(rt_formatter)
