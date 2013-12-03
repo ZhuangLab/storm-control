@@ -1050,13 +1050,15 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def startFilm(self, film_settings = None):
         self.filming = True
-        save_film = self.ui.saveMovieCheckBox.isChecked()
         self.filename = self.parameters.directory + str(self.ui.filenameLabel.text())
         self.filename = self.filename[:-len(self.ui.filetypeComboBox.currentText())]
 
         if not film_settings:
             film_settings = filmSettings.FilmSettings(self.parameters.acq_mode,
                                                       self.parameters.frames)
+            save_film = self.ui.saveMovieCheckBox.isChecked()
+        else:
+            save_film = True
 
         # film file prep
         self.ui.recordButton.setText("Stop")
