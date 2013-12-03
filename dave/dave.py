@@ -382,7 +382,7 @@ class MovieEngine(QtGui.QWidget):
         if (self.current_action.shouldPause()) or self.should_pause:
             self.idle.emit()
             self.should_pause = False
-            self.comm.stopCommunication()
+            self.stopCommunication()
         else:
             self.nextAction()
 
@@ -405,7 +405,7 @@ class MovieEngine(QtGui.QWidget):
         if self.current_action.handleComplete(a_string):
             self.checkPause()
         else:
-            self.comm.stopCommunication()
+            self.stopCommunication()
             self.problem.emit(self.current_action.getMessage())
 
     ## newMovie
@@ -525,6 +525,13 @@ class MovieEngine(QtGui.QWidget):
     #
     def startCommunication(self):
         self.comm.startCommunication()
+
+    ## stopCommunication
+    #
+    # Stops communication with HAL.
+    #
+    def stopCommunication(self):
+        self.comm.stopCommunication()
 
 
 ## Window
@@ -660,14 +667,14 @@ class Window(QtGui.QMainWindow):
             self.ui.abortButton.hide()
             self.ui.runButton.setText("Start")
 
-    ## handleDisconnect
-    #
-    # Disconnects from HAL.
-    #
-    @hdebug.debug
-    def handleDisconnect(self):
-        if not self.comm.stopCommunication():
-            self.disconnect_timer.start()
+#    ## handleDisconnect
+#    #
+#    # Disconnects from HAL.
+#    #
+#    @hdebug.debug
+#    def handleDisconnect(self):
+#        if not self.comm.stopCommunication():
+#            self.disconnect_timer.start()
 
     ## handleDone
     #
@@ -685,6 +692,7 @@ class Window(QtGui.QMainWindow):
             self.ui.runButton.setText("Run")
             self.running = False
             self.movie_engine.newMovie(self.movies[self.movie_index], self.movie_index)
+            self.movie_engine.stopCommunication()
 
     ## handleGenerate
     #
