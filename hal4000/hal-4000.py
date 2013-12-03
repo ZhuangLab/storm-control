@@ -57,6 +57,7 @@ from PyQt4 import QtCore, QtGui
 import halLib.hdebug as hdebug
 
 # Misc.
+import camera.filmSettings as filmSettings
 import halLib.parameters as params
 import halLib.imagewriters as writers
 import qtWidgets.qtAppIcon as qtAppIcon
@@ -111,7 +112,7 @@ class Window(QtGui.QMainWindow):
         self.filename = ""
         self.filming = False
         self.logfile_fp = open(parameters.logfile, "a")
-        self.old_settings = []
+        #self.old_settings = []
         self.old_shutters_file = ""
         self.parameters = parameters
         self.running_shutters = False
@@ -389,8 +390,12 @@ class Window(QtGui.QMainWindow):
     ## handleCommMovie
     #
     # This called when the external program wants to take a movie.
-    # Note that this will overwrite existing movies of the same
-    # name without asking or warning.
+    #
+    # Notes:
+    # 1. This will overwrite existing movies of the same
+    #    name without asking or warning.
+    # 2. The movie name is specified by the external program
+    #    but the file type is still specified by HAL.
     #
     # @param name The name of the movie.
     # @param length The length of the movie in frames.
@@ -399,19 +404,19 @@ class Window(QtGui.QMainWindow):
     def handleCommMovie(self, name, length):
 
         # record old settings
-        checked = self.ui.saveMovieCheckBox.isChecked()
-        p = self.parameters
-        self.old_settings = [p.acq_mode, p.frames, checked]
+        #checked = self.ui.saveMovieCheckBox.isChecked()
+        #p = self.parameters
+        #self.old_settings = [p.acq_mode, p.frames, checked]
 
         # set to new comm specific values
-        self.ui.saveMovieCheckBox.setChecked(True)
-        self.ui.filenameLabel.setText(name + p.filetype)
-        p.acq_mode = "fixed_length"
-        p.frames = length
+        #self.ui.saveMovieCheckBox.setChecked(True)
+        self.ui.filenameLabel.setText(name + self.parameters.filetype)
+        #p.acq_mode = "fixed_length"
+        #p.frames = length
 
         # start the film
-        self.tcp_requested_movie = 1
-        self.startFilm()
+        self.tcp_requested_movie = True
+        self.startFilm(filmSettings.FilmSettings("fixed_length", length))
 
     ## handleCommParameters
     #
@@ -1040,12 +1045,18 @@ class Window(QtGui.QMainWindow):
     # Creates the film saving object, sets up all the hardware to take the 
     # film and then starts the camera.
     #
+    # @param film_settings (Optional) A film_setting object, default is none.
+    #
     @hdebug.debug
-    def startFilm(self):
+    def startFilm(self, film_settings = None):
         self.filming = True
         save_film = self.ui.saveMovieCheckBox.isChecked()
         self.filename = self.parameters.directory + str(self.ui.filenameLabel.text())
         self.filename = self.filename[:-len(self.ui.filetypeComboBox.currentText())]
+
+        if not film_settings:
+            film_settings = filmSettings.FilmSettings(self.parameters.acq_mode,
+                                                      self.parameters.frames)
 
         # film file prep
         self.ui.recordButton.setText("Stop")
@@ -1060,10 +1071,10 @@ class Window(QtGui.QMainWindow):
                                                        self.filename,
                                                        self.parameters,
                                                        ["camera1"])
-            self.camera.startFilm(self.writer)
+            self.camera.startFilm(self.writer, film_settings)
             self.ui.recordButton.setStyleSheet("QPushButton { color: red }")
         else:
-            self.camera.startFilm(None)
+            self.camera.startFilm(None, film_settings)
             self.ui.recordButton.setStyleSheet("QPushButton { color: orange }")
 
         # stage
@@ -1198,9 +1209,9 @@ class Window(QtGui.QMainWindow):
         if self.tcp_requested_movie:
 
             # restore old settings
-            [self.parameters.acq_mode, self.parameters.frames, checked] = self.old_settings
-            if not checked:
-                self.ui.saveMovieCheckBox.setChecked(False)
+            #[self.parameters.acq_mode, self.parameters.frames, checked] = self.old_settings
+            #if not checked:
+            #    self.ui.saveMovieCheckBox.setChecked(False)
 
             if (lock_target == "failed"):
                 print "QPD/Camera appears to have frozen.."
@@ -1209,7 +1220,7 @@ class Window(QtGui.QMainWindow):
                 self.tcp_control.sendComplete(str(self.spot_counter.getCounts()))
             else:
                 self.tcp_control.sendComplete()
-            self.tcp_requested_movie = 0
+            self.tcp_requested_movie = False
 
     ## toggleFilm
     #
@@ -1238,7 +1249,7 @@ class Window(QtGui.QMainWindow):
                                                    "Do you know that the movie will not be saved?",
                                                    QtGui.QMessageBox.Yes,
                                                    QtGui.QMessageBox.No)
-            if reply == QtGui.QMessageBox.Yes:
+            if (reply == QtGui.QMessageBox.Yes):
                 self.startFilm()
 
     ## toggleSettings

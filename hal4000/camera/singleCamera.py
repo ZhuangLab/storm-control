@@ -187,9 +187,12 @@ class SingleCamera(genericCamera.Camera):
     # Tell the camera control object to start filming. Tell the
     # camera display object to update the UI accordingly.
     #
+    # @param writer This is a image writing object (halLib/imagewriters).
+    # @param film_setting A film setting object.
+    #
     @hdebug.debug
-    def startFilm(self, writer):
-        self.camera_control.startFilm(writer)
+    def startFilm(self, writer, film_settings):
+        self.camera_control.startFilm(writer, film_settings)
         self.camera_display.startFilm()
         self.filming = True
 
