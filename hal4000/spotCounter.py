@@ -299,16 +299,15 @@ class QImageGraph(QtGui.QWidget):
     #
     # @param x_size The x size of the widget in pixels.
     # @param y_size The y size of the widget in pixels.
-    # @param flip_horizontal Flip the image horizontally.
-    # @param flip_vertical Flip the image vertically.
     # @param parent The PyQt parent of this widget.
     #
-    def __init__(self, x_size, y_size, flip_horizontal, flip_vertical, parent = None):
+    def __init__(self, x_size, y_size, parent = None):
         QtGui.QWidget.__init__(self, parent)
 
         self.buffer = QtGui.QPixmap(x_size, y_size)
-        self.flip_horizontal = flip_horizontal
-        self.flip_vertical = flip_vertical
+        self.flip_horizontal = False
+        self.flip_vertical = False
+        self.rotate90 = False
         self.x_size = x_size
         self.y_size = y_size
 
@@ -335,20 +334,18 @@ class QImageGraph(QtGui.QWidget):
     # Set new parameters.
     #
     # @param colors The colors to draw the pixels. This the same as for the image graph.
-    # @param flip_horizontal Flip the image horizontally.
-    # @param flip_vertical Flip the image vertically.
-    # @param scale_bar_len The length of the image scale bar in pixels.
-    # @param x_range The maximum x value of an object location.
-    # @param y_range The maximum y value of an object location.
+    # @param camera_params A parameters object.
+    # @param scale_bar_len The length of the scale bar (in pixels).
     #
-    def newParameters(self, colors, flip_horizontal, flip_vertical, scale_bar_len, x_range, y_range):
+    def newParameters(self, colors, camera_params, scale_bar_len):
         self.colors = colors
-        self.flip_horizontal = flip_horizontal
-        self.flip_vertical = flip_vertical
+        self.flip_horizontal = camera_params.flip_horizontal
+        self.flip_vertical = camera_params.flip_vertical
+        self.rotate90 = camera_params.rotate90
         self.points_per_cycle = len(colors)
         self.scale_bar_len = int(round(scale_bar_len))
-        self.x_scale = float(self.x_size)/float(x_range)
-        self.y_scale = float(self.y_size)/float(y_range)
+        self.x_scale = float(self.x_size)/float(camera_params.x_pixels / camera_params.x_bin)
+        self.y_scale = float(self.y_size)/float(camera_params.y_pixels / camera_params.y_bin)
 
         if (self.x_scale > self.y_scale):
             self.x_scale = self.y_scale
@@ -488,20 +485,20 @@ class SpotCounter(QtGui.QDialog):
             parents = [self.ui.imageFrame, self.ui.imageFrame2]
 
         for i in range(self.number_cameras):
-            camera_params = parameters
-            if hasattr(parameters, "camera" + str(i+1)):
-                camera_params = getattr(parameters, "camera" + str(i+1))
+            #camera_params = parameters
+            #if hasattr(parameters, "camera" + str(i+1)):
+            #    camera_params = getattr(parameters, "camera" + str(i+1))
 
             image_w = parents[i].width() - 4
             image_h = parents[i].height() - 4
-            scale_bar_len = (parameters.scale_bar_len / parameters.nm_per_pixel) * \
-                float(image_w) / float(camera_params.x_pixels * camera_params.x_bin)
+            #scale_bar_len = (parameters.scale_bar_len / parameters.nm_per_pixel) * \
+            #    float(image_w) / float(camera_params.x_pixels * camera_params.x_bin)
 
-            self.image_graphs[i] = QImageGraph(image_w,
-                                               image_h,
-                                               camera_params.flip_horizontal,
-                                               camera_params.flip_vertical,
-                                               parent = parents[i])
+            self.image_graphs[i] = QImageGraph(image_w, image_h, parent = parents[i])
+            #                                   image_h,
+            #                                   camera_params.flip_horizontal,
+            #                                   camera_params.flip_vertical,
+            #                                   parent = parents[i])
             self.image_graphs[i].setGeometry(2, 2, image_w, image_h)
             self.image_graphs[i].blank()
             self.image_graphs[i].show()
@@ -633,12 +630,12 @@ class SpotCounter(QtGui.QDialog):
                 camera_params = getattr(parameters, "camera" + str(i+1))
             scale_bar_len = (parameters.scale_bar_len / parameters.nm_per_pixel) * \
                 float(self.image_graphs[i].width()) / float(camera_params.x_pixels * camera_params.x_bin)
-            self.image_graphs[i].newParameters(colors,
-                                               camera_params.flip_horizontal,
-                                               camera_params.flip_vertical,
-                                               scale_bar_len,
-                                               camera_params.x_pixels / camera_params.x_bin,
-                                               camera_params.y_pixels / camera_params.y_bin)
+            self.image_graphs[i].newParameters(colors, camera_params, scale_bar_len)
+#                                               camera_params.flip_horizontal,
+#                                               camera_params.flip_vertical,
+#                                               scale_bar_len,
+#                                               camera_params.x_pixels / camera_params.x_bin,
+#                                               camera_params.y_pixels / camera_params.y_bin)
 
         # UI update.
         self.ui.maxSpinBox.setValue(parameters.max_spots)

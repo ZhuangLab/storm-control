@@ -155,6 +155,7 @@ class QCameraWidget(QtGui.QWidget):
         self.display_range = display_range
         self.flip_horizontal = parameters.flip_horizontal
         self.flip_vertical = parameters.flip_vertical
+        self.rotate90 = parameters.rotate90
         self.x_size = parameters.x_pixels/parameters.x_bin
         self.y_size = parameters.y_pixels/parameters.y_bin
 
@@ -278,11 +279,14 @@ class QCameraWidget(QtGui.QWidget):
             self.image_min = numpy.min(image_data)
             self.image_max = numpy.max(image_data)
 
+            if self.flip_horizontal:
+                image_data = numpy.fliplr(image_data)
+
             if self.flip_vertical:
                 image_data = numpy.flipud(image_data)
 
-            if self.flip_horizontal:
-                image_data = numpy.fliplr(image_data)
+            if self.rotate90:
+                image_data = numpy.rot90(image_data)
 
             temp = image_data.astype(numpy.float32)
             temp = 255.0*(temp - self.display_range[0])/(self.display_range[1] - self.display_range[0])
