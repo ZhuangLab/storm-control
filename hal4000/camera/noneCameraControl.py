@@ -154,20 +154,25 @@ class ACameraControl(cameraControl.CameraControl):
                                      self.fake_frame_size[1],
                                      "camera1", 
                                      True)
-                self.newData.emit([aframe], self.key)
+                self.frame_number += 1
 
                 if self.filming:
                     if self.daxfile:
                         if (self.acq_mode == "fixed_length"):
-                            if (self.frame_number < self.frames_to_take):
+                            if (self.frame_number <= self.frames_to_take):
                                 self.daxfile.saveFrame(aframe)
                         else:
                             self.daxfile.saveFrame(aframe)
 
-                    if (self.acq_mode == "fixed_length") and (self.frame_number == (self.frames_to_take-1)):
+                    if (self.acq_mode == "fixed_length") and (self.frame_number == self.frames_to_take):
                         self.max_frames_sig.emit()
+                        
+                # Emit new data signal.
+                self.newData.emit([aframe], self.key)
 
-                self.frame_number += 1
+            else:
+                self.acquire.idle()
+
             self.mutex.unlock()
             self.msleep(self.sleep_time)
 
