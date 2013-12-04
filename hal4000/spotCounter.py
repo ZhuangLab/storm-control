@@ -308,12 +308,15 @@ class QImageGraph(QtGui.QWidget):
         self.flip_horizontal = False
         self.flip_vertical = False
         self.transpose = False
+        self.x_end = x_size
+        self.y_end = y_size
         self.x_size = x_size
         self.y_size = y_size
 
         self.colors = [False]
         self.points_per_cycle = len(self.colors)
         self.scale_bar_len = 1
+        self.p_scale = 1.0
         self.x_scale = 1.0
         self.y_scale = 1.0
 
@@ -344,13 +347,21 @@ class QImageGraph(QtGui.QWidget):
         self.points_per_cycle = len(colors)
         self.scale_bar_len = int(round(scale_bar_len))
         self.transpose = camera_params.transpose
+
+        self.x_end = self.x_size
+        self.y_end = self.y_size
+
         self.x_scale = float(self.x_size)/float(camera_params.x_pixels / camera_params.x_bin)
         self.y_scale = float(self.y_size)/float(camera_params.y_pixels / camera_params.y_bin)
 
         if (self.x_scale > self.y_scale):
-            self.x_scale = self.y_scale
+            self.p_scale = self.y_scale
+            self.x_end = int(float(self.x_size) * self.y_scale/self.x_scale)
         else:
-            self.y_scale = self.x_scale
+            self.p_scale = self.x_scale
+            self.y_end = int(float(self.y_size) * self.x_scale/self.y_scale)
+
+        print self.x_end, self.y_end, self.x_scale, self.y_scale, self.p_scale
 
         self.blank()
 
@@ -399,12 +410,12 @@ class QImageGraph(QtGui.QWidget):
             qtcolor = QtGui.QColor(color[0], color[1], color[2], 5)
             painter.setPen(qtcolor)
             for i in range(spots):
-                ix = int(self.x_scale * x_locs[i])
-                iy = int(self.y_scale * y_locs[i])
+                ix = int(self.p_scale * x_locs[i])
+                iy = int(self.p_scale * y_locs[i])
                 if self.flip_horizontal:
-                    ix = self.x_size - ix
+                    ix = self.x_end - ix
                 if self.flip_vertical:
-                    iy = self.y_size - iy
+                    iy = self.y_end - iy
                 if self.transpose:
                     [ix, iy] = [iy, ix]
                 #print ix, x_locs[i], iy, y_locs[i]
