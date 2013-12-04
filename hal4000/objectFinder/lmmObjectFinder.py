@@ -58,8 +58,8 @@ def findObjects(np_image, image_x, image_y, threshold):
         y = loc_type()
         n = c_int(max_locs)
         lmmoment.numberAndLocObjects(np_image.ctypes.data,
-                                     c_int(image_x),
                                      c_int(image_y),
+                                     c_int(image_x),
                                      c_int(threshold),
                                      x,
                                      y,
