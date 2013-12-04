@@ -37,8 +37,6 @@ class ACameraControl(cameraControl.CameraControl):
     def __init__(self, parameters, parent = None):
         cameraControl.CameraControl.__init__(self, parameters, parent)
         
-        self.stop_at_max = True
-
         if hasattr(parameters, "pci_card"):
             self.initCamera(parameters.pci_card)
         else:
@@ -188,31 +186,35 @@ class ACameraControl(cameraControl.CameraControl):
     # generally too large to easily store in RAM.
     #
     # @param parameters The current camera settings object.
-    # @param filming True/False is the data being saved.
+    # @param film_settings A film settings object or None.
     #
     @hdebug.debug
-    def newFilmSettings(self, parameters, filming = False):
+    def newFilmSettings(self, parameters, film_settings):
         self.stopCamera()
         self.mutex.lock()
-        self.parameters = parameters
         p = parameters
         if self.got_camera:
 
-            if filming:
-                if (p.acq_mode == "fixed_length"):
-                    self.stop_at_max = True
+            if film_settings:
+                self.filming = True
+                self.acq_mode = film_settings.acq_mode
+                self.frames_to_take = film_settings.frames_to_take
+
+                if (self.acq_mode == "fixed_length"):
 
                     # If the film is really long then we use a software stop, otherwise 
                     # we tell the camera to take the number of frames that was requested.
-                    if (p.frames > 1000):
+                    if (self.frames_to_take > 1000):
                         self.camera.setACQMode("run_till_abort")
                     else:
-                        self.camera.setACQMode("fixed_length", number_frames = p.frames)
-                    #print p.frames, self.stop_at_max
+                        self.camera.setACQMode("fixed_length", number_frames = self.frames_to_take)
+
                 else:
-                    self.stop_at_max = False
                     self.camera.setACQMode("run_till_abort")
+
             else:
+                self.filming = False
+                self.acq_mode = "run_till_abort"
                 self.camera.setACQMode("run_till_abort")
 
             # Due to what I can only assume is a bug in some of the
@@ -222,7 +224,7 @@ class ACameraControl(cameraControl.CameraControl):
 
             # Set camera fan to low. This is overriden by the off option
             if p.low_during_filming:
-                if filming:
+                if self.filming:
                     self.camera.setFanMode(1) # fan on low
                 else:
                     self.camera.setFanMode(0) # fan on full
@@ -230,11 +232,11 @@ class ACameraControl(cameraControl.CameraControl):
             # This is for testing whether the camera fan is shaking the
             # the camera, adding noise to the images.
             if p.off_during_filming:
-                if filming:
+                if self.filming:
                     self.camera.setFanMode(2) # fan off
                 else:
                     self.camera.setFanMode(0) # fan on full
-        self.filming = filming
+
         self.mutex.unlock()
 
     ## newParameters
@@ -305,7 +307,8 @@ class ACameraControl(cameraControl.CameraControl):
             print "QCameraThread: Bad camera settings"
             print traceback.format_exc()
             self.got_camera = False
-        self.newFilmSettings(parameters)
+        self.newFilmSettings(parameters, None)
+        self.parameters = parameters
 
     ## openShutter
     #
@@ -352,23 +355,28 @@ class ACameraControl(cameraControl.CameraControl):
                     # Create frame objects.
                     frame_data = []
                     for raw_frame in frames:
-                        frame_data.append(frame.Frame(numpy.fromstring(raw_frame, dtype = numpy.uint16),
-                                                      self.frame_number,
-                                                      frame_size[0],
-                                                      frame_size[1],
-                                                      "camera1",
-                                                      True))
+                        aframe = frame.Frame(numpy.fromstring(raw_frame, dtype = numpy.uint16),
+                                             self.frame_number,
+                                             frame_size[0],
+                                             frame_size[1],
+                                             "camera1",
+                                             True)
+                        frame_data.append(aframe)
                         self.frame_number += 1
-                        if self.filming and self.stop_at_max and (self.frame_number == self.parameters.frames):
-                            self.max_frames_sig.emit()
-                            break
-                            
-                    # Save frames if we are filming.
-                    if self.filming and self.daxfile:
-                        for aframe in frame_data:
-                            self.daxfile.saveFrame(aframe)
 
-                    # Emit new data signal
+                        if self.filming:
+                            if self.daxfile:
+                                if (self.acq_mode == "fixed_length"):
+                                    if (self.frame_number <= self.frames_to_take):
+                                        self.daxfile.saveFrame(aframe)
+                                else:
+                                    self.daxfile.saveFrame(aframe)
+            
+                            if (self.acq_mode == "fixed_length") and (self.frame_number == self.frames_to_take):
+                                self.max_frames_sig.emit()
+                                break
+                            
+                    # Emit new data signal.
                     self.newData.emit(frame_data, self.key)
 
             else:
