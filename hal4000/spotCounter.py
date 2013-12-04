@@ -361,8 +361,6 @@ class QImageGraph(QtGui.QWidget):
             self.p_scale = self.x_scale
             self.y_end = int(float(self.y_size) * self.x_scale/self.y_scale)
 
-        print self.x_end, self.y_end, self.x_scale, self.y_scale, self.p_scale
-
         self.blank()
 
     ## paintEvent
