@@ -27,9 +27,13 @@ class QCameraWidget(QtGui.QWidget):
     #
     def __init__(self, parameters, parent = None):
         QtGui.QWidget.__init__(self, parent)
+
         self.buffer = False
+
         self.flip_horizontal = parameters.flip_horizontal
         self.flip_vertical = parameters.flip_vertical
+        self.transpose = parameters.transpose
+
         self.image = False
         self.image_min = 0
         self.image_max = 1
@@ -155,7 +159,7 @@ class QCameraWidget(QtGui.QWidget):
         self.display_range = display_range
         self.flip_horizontal = parameters.flip_horizontal
         self.flip_vertical = parameters.flip_vertical
-        self.rotate90 = parameters.rotate90
+        self.transpose = parameters.transpose
         self.x_size = parameters.x_pixels/parameters.x_bin
         self.y_size = parameters.y_pixels/parameters.y_bin
 
@@ -279,14 +283,21 @@ class QCameraWidget(QtGui.QWidget):
             self.image_min = numpy.min(image_data)
             self.image_max = numpy.max(image_data)
 
+            reoriented = False
             if self.flip_horizontal:
+                reoriented = True
                 image_data = numpy.fliplr(image_data)
 
             if self.flip_vertical:
+                reoriented = True
                 image_data = numpy.flipud(image_data)
 
-            if self.rotate90:
-                image_data = numpy.rot90(image_data)
+            if self.transpose:
+                reoriented = True
+                image_data = numpy.transpose(image_data)
+        
+            if reoriented:
+                image_data = numpy.ascontiguousarray(image_data)
 
             temp = image_data.astype(numpy.float32)
             temp = 255.0*(temp - self.display_range[0])/(self.display_range[1] - self.display_range[0])
@@ -295,8 +306,12 @@ class QCameraWidget(QtGui.QWidget):
             temp = temp.astype(numpy.uint8)
 
             # Create QImage & draw at final magnification.
-            temp_image = QtGui.QImage(temp.data, w, h, QtGui.QImage.Format_Indexed8)
-            self.image = temp_image.scaled(self.x_final, self.y_final)
+            if self.transpose:
+                temp_image = QtGui.QImage(temp.data, h, w, QtGui.QImage.Format_Indexed8)
+                self.image = temp_image.scaled(self.y_final, self.x_final)
+            else:
+                temp_image = QtGui.QImage(temp.data, w, h, QtGui.QImage.Format_Indexed8)
+                self.image = temp_image.scaled(self.x_final, self.y_final)
             self.image.ndarray = temp
 
             # Set the images color table.

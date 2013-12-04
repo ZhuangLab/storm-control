@@ -307,7 +307,7 @@ class QImageGraph(QtGui.QWidget):
         self.buffer = QtGui.QPixmap(x_size, y_size)
         self.flip_horizontal = False
         self.flip_vertical = False
-        self.rotate90 = False
+        self.transpose = False
         self.x_size = x_size
         self.y_size = y_size
 
@@ -341,9 +341,9 @@ class QImageGraph(QtGui.QWidget):
         self.colors = colors
         self.flip_horizontal = camera_params.flip_horizontal
         self.flip_vertical = camera_params.flip_vertical
-        self.rotate90 = camera_params.rotate90
         self.points_per_cycle = len(colors)
         self.scale_bar_len = int(round(scale_bar_len))
+        self.transpose = camera_params.transpose
         self.x_scale = float(self.x_size)/float(camera_params.x_pixels / camera_params.x_bin)
         self.y_scale = float(self.y_size)/float(camera_params.y_pixels / camera_params.y_bin)
 
@@ -405,10 +405,8 @@ class QImageGraph(QtGui.QWidget):
                     ix = self.x_size - ix
                 if self.flip_vertical:
                     iy = self.y_size - iy
-                if self.rotate90:
-                    ty = iy
-                    iy = ix
-                    ix = self.x_size - ty
+                if self.transpose:
+                    [ix, iy] = [iy, ix]
                 #print ix, x_locs[i], iy, y_locs[i]
                 painter.drawPoint(ix, iy)
             self.update()
