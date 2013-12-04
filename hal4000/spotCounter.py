@@ -401,6 +401,14 @@ class QImageGraph(QtGui.QWidget):
             for i in range(spots):
                 ix = int(self.x_scale * x_locs[i])
                 iy = int(self.y_scale * y_locs[i])
+                if self.flip_horizontal:
+                    ix = self.x_size - ix
+                if self.flip_vertical:
+                    iy = self.y_size - iy
+                if self.rotate90:
+                    ty = iy
+                    iy = ix
+                    ix = self.x_size - ty
                 #print ix, x_locs[i], iy, y_locs[i]
                 painter.drawPoint(ix, iy)
             self.update()
