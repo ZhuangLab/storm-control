@@ -10,11 +10,12 @@
 # run in 32 bit Python. Then we communicate with it
 # using basic IPC.
 #
-# Hazen 3/12
+# Hazen 12/13
 #
 
 from ctypes import *
 import os
+import socket
 import subprocess
 import time
 
@@ -265,7 +266,7 @@ class AOTF():
 # This class is for communication with a AOTF when running
 # 64 bit Python. Since the provided driver only works with
 # 32 bit processes we start a 32 bit Python process to
-# control the AOTF, then we talk to it via IPC.
+# control the AOTF, then we talk to it via IPC (port #9001).
 #
 class AOTF64Bit(AOTF):
 
@@ -275,6 +276,13 @@ class AOTF64Bit(AOTF):
     # verify that it can talk to the AOTF.
     #
     def __init__(self):
+
+        # Create socket.
+        self.aotf_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.aotf_socket.settimeout(1.0)
+        self.aotf_socket.bind(("127.0.0.1", 9001))
+
+        # Create sub-process to control the AOTF.
         dir = os.path.dirname(__file__)
         if (len(dir) > 0):
             self.aotf_cmd = dir + "\AOTF32Bit.py"
@@ -282,9 +290,15 @@ class AOTF64Bit(AOTF):
             self.aotf_cmd = "AOTF32Bit.py"
 
         self.live = True
-        self.aotf_proc = subprocess.Popen(["c:\python27_32bit\python", self.aotf_cmd],
-                                          stdin = subprocess.PIPE,
-                                          stdout = subprocess.PIPE)
+        self.aotf_proc = subprocess.Popen(["c:\python27_32bit\python", self.aotf_cmd], close_fds = True)
+#                                          stdin = subprocess.PIPE,
+#                                          stdout = subprocess.PIPE)
+
+        # Wait for connection from the sub-process.
+        self.aotf_socket.listen(1)
+        [self.aotf_conn, self.aotf_addr] = self.aotf_socket.accept()
+
+        # Verify that we can talk to the AOTF (through the sub-process).
         if not self._aotfOpen():
             self.live = False
 
@@ -292,8 +306,8 @@ class AOTF64Bit(AOTF):
     #
     # This is a noop when using IPC.
     #
-    def _aotfGetResp(self):
-        pass
+    #def _aotfGetResp(self):
+    #    pass
 
     ## _aotfOpen
     #
@@ -310,8 +324,8 @@ class AOTF64Bit(AOTF):
     #
     # This is a noop when using IPC.
     #
-    def _aotfSendCmd(self, cmd):
-        pass
+    #def _aotfSendCmd(self, cmd):
+    #    pass
 
     ## _sendCmd
     #
@@ -323,12 +337,16 @@ class AOTF64Bit(AOTF):
     #    
     def _sendCmd(self, cmd):
         if self.live:
-            self.aotf_proc.stdin.write(cmd + "\n")
-            self.aotf_proc.stdin.flush()
-            resp = self.aotf_proc.stdout.readline()
-            # This removes both \r and the \n.."
-            resp = resp[:-2] if resp.endswith('\n') else resp
+            self.aotf_conn.sendall(cmd)
+            resp = self.aotf_conn.recv(1024)
             return resp
+
+            #self.aotf_proc.stdin.write(cmd + "\n")
+            #self.aotf_proc.stdin.flush()
+            #resp = self.aotf_proc.stdout.readline()
+            # This removes both \r and the \n.."
+            #resp = resp[:-2] if resp.endswith('\n') else resp
+            #return resp
         else:
             return "Invalid"
 
@@ -337,9 +355,11 @@ class AOTF64Bit(AOTF):
     # Reset the AOTF and shutdown IPC.
     #
     def shutDown(self):
-        if self.live:
-            self._sendCmd("dds Reset")
-            self.aotf_proc.terminate()
+        self._sendCmd("shutdown")
+        #if self.live:
+        #    self._sendCmd("dds Reset")
+        self.aotf_conn.close()
+        self.aotf_proc.terminate()
         
 #
 # Testing.
@@ -356,7 +376,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
