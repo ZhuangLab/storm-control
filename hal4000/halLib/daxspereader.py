@@ -76,6 +76,14 @@ class Reader:
         average = average/float(length)
         return average
 
+    ## closeFilePtr
+    #
+    # Closes the (dax) file pointer.
+    #
+    def closeFilePtr(self):
+        if self.fileptr:
+            self.fileptr.close()
+
     ## filmFileName
     #
     # @return The film name.
