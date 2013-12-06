@@ -145,6 +145,7 @@ class Capture(QtCore.QObject):
             try:
                 self.dax = halLib.daxspereader.DaxReader(filename, verbose = 1)
                 frame = self.dax.loadAFrame(0).astype(numpy.float)
+                self.dax.closeFilePtr()
                 success = True
             except:
                 print "Failed to load:", filename
