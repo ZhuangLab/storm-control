@@ -120,7 +120,6 @@ class CameraControl(QtCore.QThread):
     #
     # @return The size of the film (in bytes?).
     #
-    @hdebug.debug
     def getFilmSize(self):
         film_size = 0
         if self.daxfile:

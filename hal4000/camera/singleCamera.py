@@ -88,7 +88,6 @@ class SingleCamera(genericCamera.Camera):
     #
     # @return The size of the current film.
     #
-    @hdebug.debug
     def getFilmSize(self):
         return self.camera_control.getFilmSize()
 
