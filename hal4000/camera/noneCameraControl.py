@@ -108,6 +108,7 @@ class ACameraControl(cameraControl.CameraControl):
             self.filming = True
             self.acq_mode = film_settings.acq_mode
             self.frames_to_take = film_settings.frames_to_take
+            self.reached_max_frames = False
         else:
             self.filming = False
             self.acq_mode = "run_till_abort"
@@ -165,10 +166,19 @@ class ACameraControl(cameraControl.CameraControl):
                             self.daxfile.saveFrame(aframe)
 
                     if (self.acq_mode == "fixed_length") and (self.frame_number == self.frames_to_take):
-                        self.max_frames_sig.emit()
+                        self.reached_max_frames = True
                         
                 # Emit new data signal.
                 self.newData.emit([aframe], self.key)
+
+                # Emit max frames signal.
+                #
+                # The signal is emitted here because if it is emitted before
+                # newData then you never see that last frame in the movie, which
+                # is particularly problematic for single frame movies.
+                #
+                if reached_max_frames:
+                    self.max_frames_sig.emit()
 
             else:
                 self.acquire.idle()

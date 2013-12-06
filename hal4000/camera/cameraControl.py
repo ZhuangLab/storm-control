@@ -80,6 +80,7 @@ class CameraControl(QtCore.QThread):
         self.key = -1
         self.max_frames_sig = SingleShotSignal(self.reachedMaxFrames)
         self.mutex = QtCore.QMutex()
+        self.reached_max_frames = False
         self.running = True
         self.shutter = False
 

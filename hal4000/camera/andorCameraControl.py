@@ -131,8 +131,7 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def initCamera(self, pci_card = 0):
         if not self.camera:
-            if hdebug.getDebug():
-                print " Initializing Andor Camera"
+            hdebug.logText("Initializing Andor Camera", False)
 
             if (platform.architecture()[0] == "32bit"):
                 path = "c:/Program Files/Andor iXon/Drivers/"
@@ -160,7 +159,7 @@ class ACameraControl(cameraControl.CameraControl):
                     self.initCameraHelperFn(path, driver, pci_card)
                     return
 
-            print "Can't find Andor Camera drivers"
+            hdebug.logText("Can't find Andor Camera drivers")
 
     ## initCameraHelperFn
     #
@@ -199,6 +198,7 @@ class ACameraControl(cameraControl.CameraControl):
                 self.filming = True
                 self.acq_mode = film_settings.acq_mode
                 self.frames_to_take = film_settings.frames_to_take
+                self.reached_max_frames = False
 
                 if (self.acq_mode == "fixed_length"):
 
@@ -251,60 +251,60 @@ class ACameraControl(cameraControl.CameraControl):
         p = parameters
         self.reversed_shutter = p.reversed_shutter
         try:
-            if hdebug.getDebug():
-                print "  Setting Read Mode"
+            hdebug.logText("Setting Read Mode", False)
             self.camera.setReadMode(4)
-            if hdebug.getDebug():
-                print "  Setting Temperature"
+
+            hdebug.logText("Setting Temperature", False)
             self.camera.setTemperature(p.temperature)
-            if hdebug.getDebug():
-                print "  Setting Trigger Mode"
+
+            hdebug.logText("Setting Trigger Mode", False)
             self.camera.setTriggerMode(0)
-            if hdebug.getDebug():
-                print "  Setting ROI and Binning"
+
+            hdebug.logText("Setting ROI and Binning", False)
             self.camera.setROIAndBinning(p.ROI, p.binning)
-            if hdebug.getDebug():
-                print "  Setting Horizontal Shift Speed"
+
+            hdebug.logText("Setting Horizontal Shift Speed", False)
             self.camera.setHSSpeed(p.hsspeed)
-            if hdebug.getDebug():
-                print "  Setting Vertical Shift Amplitude"
+
+            hdebug.logText("Setting Vertical Shift Amplitude", False)
             self.camera.setVSAmplitude(p.vsamplitude)
-            if hdebug.getDebug():
-                print "  Setting Vertical Shift Speed"
+
+            hdebug.logText("Setting Vertical Shift Speed", False)
             self.camera.setVSSpeed(p.vsspeed)
-            if hdebug.getDebug():
-                print "  Setting EM Gain Mode"
+
+            hdebug.logText("Setting EM Gain Mode", False)
             self.camera.setEMGainMode(p.emgainmode)
-            if hdebug.getDebug():
-                print "  Setting EM Gain"
+
+            hdebug.logText("Setting EM Gain", False)
             self.camera.setEMCCDGain(p.emccd_gain)
-            if hdebug.getDebug():
-                print "  Setting Baseline Clamp"
+
+            hdebug.logText("Setting Baseline Clamp", False)
             self.camera.setBaselineClamp(p.baselineclamp)
-            if hdebug.getDebug():
-                print "  Setting Preamp Gain"
+
+            hdebug.logText("Setting Preamp Gain", False)
             self.camera.setPreAmpGain(p.preampgain)
-            if hdebug.getDebug():
-                print "  Setting Acquisition Mode"
+
+            hdebug.logText("Setting Acquisition Mode", False)
             self.camera.setACQMode("run_till_abort")
-            if hdebug.getDebug():
-                print "  Setting Frame Transfer Mode"
+
+            hdebug.logText("Setting Frame Transfer Mode", False)
             self.camera.setFrameTransferMode(p.frame_transfer_mode)
-            if hdebug.getDebug():
-                print "  Setting Exposure Time"
+
+            hdebug.logText("Setting Exposure Time", False)
             self.camera.setExposureTime(p.exposure_time)
-            if hdebug.getDebug():
-                print "  Setting Kinetic Cycle Time"
+
+            hdebug.logText("Setting Kinetic Cycle Time", False)
             self.camera.setKineticCycleTime(p.kinetic_cycle_time)
-            if hdebug.getDebug():
-                print "  Setting ADChannel"
+
+            hdebug.logText("Setting ADChannel", False)
             self.camera.setADChannel(p.adchannel)
+
             p.head_model = self.camera.getHeadModel()
-            if hdebug.getDebug():
-                print " Camera Initialized"
+
+            hdebug.logText("Camera Initialized", False)
             self.got_camera = True
         except:
-            print "QCameraThread: Bad camera settings"
+            hdebug.logText("andorCameraControl: Bad camera settings")
             print traceback.format_exc()
             self.got_camera = False
         self.newFilmSettings(parameters, None)
@@ -373,11 +373,20 @@ class ACameraControl(cameraControl.CameraControl):
                                     self.daxfile.saveFrame(aframe)
             
                             if (self.acq_mode == "fixed_length") and (self.frame_number == self.frames_to_take):
-                                self.max_frames_sig.emit()
+                                self.reached_max_frames = True
                                 break
                             
                     # Emit new data signal.
                     self.newData.emit(frame_data, self.key)
+
+                    # Emit max frames signal.
+                    #
+                    # The signal is emitted here because if it is emitted before
+                    # newData then you never see that last frame in the movie, which
+                    # is particularly problematic for single frame movies.
+                    #
+                    if self.reached_max_frames:
+                        self.max_frames_sig.emit()
 
             else:
                 self.acquire.idle()
