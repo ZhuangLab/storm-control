@@ -30,17 +30,6 @@ while True:
       else:
          my_socket.sendall("Invalid")
 
-#   next_cmd = my_socket
-#   if not next_cmd:
-#      break
-#   next_cmd = next_cmd[:-1] if next_cmd.endswith('\n') else next_cmd
-#   response = my_aotf._sendCmd(next_cmd)
-#   if (not response) or ("Invalid" in response):
-#      sys.stdout.write("failed\n")
-#   else:
-#      sys.stdout.write(next_cmd + "\n")
-#   sys.stdout.flush()
-
 #
 # The MIT License
 #
