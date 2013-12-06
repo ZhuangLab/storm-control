@@ -193,12 +193,12 @@ class ACameraControl(cameraControl.CameraControl):
         self.mutex.lock()
         p = parameters
         if self.got_camera:
+            self.reached_max_frames = False
 
             if film_settings:
                 self.filming = True
                 self.acq_mode = film_settings.acq_mode
                 self.frames_to_take = film_settings.frames_to_take
-                self.reached_max_frames = False
 
                 if (self.acq_mode == "fixed_length"):
 

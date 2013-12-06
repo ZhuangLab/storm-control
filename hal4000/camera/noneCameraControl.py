@@ -104,11 +104,11 @@ class ACameraControl(cameraControl.CameraControl):
     def newFilmSettings(self, parameters, film_settings):
         self.stopCamera()
         self.mutex.lock()
+        self.reached_max_frames = False
         if film_settings:
             self.filming = True
             self.acq_mode = film_settings.acq_mode
             self.frames_to_take = film_settings.frames_to_take
-            self.reached_max_frames = False
         else:
             self.filming = False
             self.acq_mode = "run_till_abort"
