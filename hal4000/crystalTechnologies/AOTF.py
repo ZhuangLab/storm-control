@@ -268,6 +268,8 @@ class AOTF():
 # 32 bit processes we start a 32 bit Python process to
 # control the AOTF, then we talk to it via IPC (port #9001).
 #
+# FIXME: Should there be time-outs on the connection?
+#
 class AOTF64Bit(AOTF):
 
     ## __init__
@@ -279,7 +281,7 @@ class AOTF64Bit(AOTF):
 
         # Create socket.
         self.aotf_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.aotf_socket.settimeout(1.0)
+#        self.aotf_socket.settimeout(1.0)
         self.aotf_socket.bind(("127.0.0.1", 9001))
 
         # Create sub-process to control the AOTF.
@@ -291,8 +293,6 @@ class AOTF64Bit(AOTF):
 
         self.live = True
         self.aotf_proc = subprocess.Popen(["c:\python27_32bit\python", self.aotf_cmd], close_fds = True)
-#                                          stdin = subprocess.PIPE,
-#                                          stdout = subprocess.PIPE)
 
         # Wait for connection from the sub-process.
         self.aotf_socket.listen(1)
@@ -301,13 +301,6 @@ class AOTF64Bit(AOTF):
         # Verify that we can talk to the AOTF (through the sub-process).
         if not self._aotfOpen():
             self.live = False
-
-    ## _aotfGetResp
-    #
-    # This is a noop when using IPC.
-    #
-    #def _aotfGetResp(self):
-    #    pass
 
     ## _aotfOpen
     #
@@ -319,13 +312,6 @@ class AOTF64Bit(AOTF):
             return False
         else:
             return True
-
-    ## _aotfSendCmd
-    #
-    # This is a noop when using IPC.
-    #
-    #def _aotfSendCmd(self, cmd):
-    #    pass
 
     ## _sendCmd
     #
@@ -356,8 +342,6 @@ class AOTF64Bit(AOTF):
     #
     def shutDown(self):
         self._sendCmd("shutdown")
-        #if self.live:
-        #    self._sendCmd("dds Reset")
         self.aotf_conn.close()
         self.aotf_proc.terminate()
         
