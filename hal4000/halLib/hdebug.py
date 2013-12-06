@@ -50,6 +50,21 @@ def getDebug():
     else:
         return False
 
+## logText
+#
+# @param a_string The text string to add to the log file.
+#
+def logText(a_string, to_console = True):
+    global a_logger, logging_mutex
+    if a_logger:
+        logging_mutex.lock()
+        a_logger.info("message:")
+        a_logger.info("  " + a_string)
+        logging_mutex.unlock()
+
+    if to_console:
+        print a_string
+
 ## startLogging
 #
 # This should only be called once in "main". It uses QSettings() to generate
@@ -66,7 +81,7 @@ def startLogging(directory, program_name):
     settings = QtCore.QSettings("Zhuang Lab", "hdebug logger")
     index = settings.value("current index", 1).toInt()[0]
     new_index = index + 1
-    if (new_index > 10):
+    if (new_index > 100):
         new_index = 1
     settings.setValue("current index", new_index)
 
