@@ -11,9 +11,6 @@ import os
 import sys
 from PyQt4 import QtCore, QtGui
 
-# Add HAL to the python path so that we can find halLib.
-sys.path.append("../hal4000")
-
 # Debugging
 import halLib.hdebug as hdebug
 
@@ -248,6 +245,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param image The capture.Image object.
     #
+    @hdebug.debug
     def addImage(self, image):
         self.view.addImage(image, self.current_objective, self.current_magnification, self.current_offset)
         if (len(self.picture_queue) > 0):
@@ -270,6 +268,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param points An array of coord.Point that specify the positions to add to the list of positions.
     #
+    @hdebug.debug
     def addPositions(self, points):
         for a_point in points:
             self.positions.addPosition(a_point)
@@ -278,6 +277,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param a_point A coord.Point object that specifies the location of the section to add.
     #
+    @hdebug.debug
     def addSection(self, a_point):
         self.sections.addSection(a_point)
 
@@ -305,6 +305,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param point A coord.Point object specifying where to move to.
     #
+    @hdebug.debug
     def gotoPosition(self, point):
         if not self.taking_pictures:
             self.comm.gotoPosition(point.x_um - self.current_offset.x_um, point.y_um - self.current_offset.y_um)
@@ -315,6 +316,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param boolean Dummy parameter.
     #
+    @hdebug.debug
     def handleAbort(self, boolean):
         self.picture_queue = []
 
@@ -324,6 +326,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param boolean Dummy parameter.
     #
+    @hdebug.debug
     def handleDeleteImages(self, boolean):
         reply = QtGui.QMessageBox.question(self,
                                            "Warning!",
@@ -337,6 +340,7 @@ class Window(QtGui.QMainWindow):
     #
     # Handles the disconnected signal from the capture.Capture object.
     #
+    @hdebug.debug
     def handleDisconnected(self):
         self.taking_pictures = False
 
@@ -346,6 +350,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param num Dummy parameter.
     #
+    @hdebug.debug
     def handleGridChange(self, num):
         self.view.gridChange(self.ui.xSpinBox.value(),
                              self.ui.ySpinBox.value())
@@ -358,6 +363,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param boolean Dummy parameter.
     #
+    @hdebug.debug
     def handleLoadMosaic(self, boolean):
         mosaic_filename = str(QtGui.QFileDialog.getOpenFileName(self,
                                                                 "Load Mosaic",
@@ -418,6 +424,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param boolean Dummy parameter.
     #
+    @hdebug.debug
     def handleLoadPositions(self, boolean):
         positions_filename = str(QtGui.QFileDialog.getOpenFileName(self,
                                                                    "Load Positions",
@@ -434,6 +441,7 @@ class Window(QtGui.QMainWindow):
     # @param box_type The box type of the spin box that was changed.
     # @param value The new value of the spin box that was changed.
     #
+    @hdebug.debug
     def handleMOValueChange(self, objective, box_type, value):
         if (box_type == "magnification"):
             value = value/100.0
@@ -457,6 +465,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param mag_index The index of the newly selected objective.
     #
+    @hdebug.debug
     def handleObjectiveChange(self, mag_index):
         data = self.ui.magComboBox.itemData(mag_index).toString()
         if data:
@@ -476,6 +485,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param value The current value of the slider.
     #
+    @hdebug.debug
     def handleOpacityChange(self, value):
         self.sections.changeOpacity(0.01*float(value))
 
@@ -485,6 +495,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param boolean Dummy parameter.
     #
+    @hdebug.debug
     def handleSavePositions(self, boolean):
         positions_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
                                                                    "Save Positions", 
@@ -499,6 +510,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param boolean Dummy parameter.
     #
+    @hdebug.debug
     def handleSaveMosaic(self, boolean):
         mosaic_filename = str(QtGui.QFileDialog.getSaveFileName(self,
                                                                 "Save Mosaic", 
@@ -516,6 +528,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param boolean Dummy parameter.
     #
+    @hdebug.debug
     def handleSetWorkingDirectory(self, boolean):
         directory = str(QtGui.QFileDialog.getExistingDirectory(self,
                                                                "New Directory",
@@ -532,6 +545,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param boolean Dummy parameter.
     #
+    @hdebug.debug
     def handleSnapshot(self, boolean):
         snapshot_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
                                                                   "Save Snapshot", 
@@ -551,6 +565,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param value The index of currenty selected tab.
     #
+    @hdebug.debug
     def handleTabChange(self, value):
         if (value == 0):
             self.ui.mosaicLabel.show()
@@ -576,6 +591,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param a_point A coord.Point object.
     #
+    @hdebug.debug
     def setCenter(self, a_point):
         x_um = a_point.x_um - self.current_offset.x_um
         y_um = a_point.y_um - self.current_offset.y_um
@@ -587,6 +603,7 @@ class Window(QtGui.QMainWindow):
     #
     # @param picture_list An array of positions to take the pictures at.
     #
+    @hdebug.debug
     def takePictures(self, picture_list):
         if self.taking_pictures:
             self.picture_queue = []

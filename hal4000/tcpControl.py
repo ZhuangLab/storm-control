@@ -10,6 +10,8 @@
 import sys
 from PyQt4 import QtCore, QtNetwork
 
+import halLib.hdebug as hdebug
+
 ## match
 #
 # Returns true if string2 is equal or longer than string1 and if 
@@ -49,7 +51,6 @@ class TCPControl(QtNetwork.QTcpServer):
     #
     def __init__(self, port, parent = None):
         QtNetwork.QTcpServer.__init__(self, parent)
-        self.debug = True
         self.port = port
         self.socket = None
         if parent:
@@ -68,6 +69,7 @@ class TCPControl(QtNetwork.QTcpServer):
     #
     # @return True/False depending on the connection state.
     #
+    @hdebug.debug
     def isConnected(self):
         if self.socket and (self.socket.state() == QtNetwork.QAbstractSocket.ConnectedState):
             return True
@@ -78,9 +80,10 @@ class TCPControl(QtNetwork.QTcpServer):
     #
     # Forcibly disconnect from an external program.
     #
+    @hdebug.debug
     def disconnect(self):
-        if self.debug:
-            print " TCPControl forced dis-connect.", self.isConnected()
+        if hdebug.getDebug():
+            hdebug.logText(" TCPControl forced dis-connect. " + str(self.isConnected()))
         if self.isConnected():
             self.socket.disconnectFromHost()
             self.socket.waitForDisconnected()
@@ -93,9 +96,10 @@ class TCPControl(QtNetwork.QTcpServer):
     #
     # Called when the external program disconnects.
     #
+    @hdebug.debug
     def disconnected(self):
-        if self.debug:
-            print " TCPControl lost connection.", self.isConnected()
+        if hdebug.getDebug():
+            hdebug.logText(" TCPControl lost connection. " + str(self.isConnected()))
         self.socket.disconnectFromHost()
         self.socket.close()
         self.socket = None
@@ -106,9 +110,10 @@ class TCPControl(QtNetwork.QTcpServer):
     # Called when a external program attempts to connect. If another
     # program is already connected then we tell the requestor that
     # we are busy and hangup. Otherwise we accept the connection.
+    @hdebug.debug
     def handleConnection(self):
-        if self.debug:
-            print " TCPControl got connection.", self.isConnected()
+        if hdebug.getDebug():
+            hdebug.logText(" TCPControl got connection. " + str(self.isConnected()))
 
         socket = self.nextPendingConnection()        
         if self.isConnected():
@@ -130,11 +135,12 @@ class TCPControl(QtNetwork.QTcpServer):
     # in the command. This also sends a response back to the external
     # program to acknowledge receipt of the command.
     #
+    @hdebug.debug
     def readyRead(self):
         while self.socket.canReadLine():
             command = str(self.socket.readLine())[:-1]
-            if self.debug:
-                print "Got: ", command
+            if hdebug.getDebug():
+                hdebug.logText("Got: " + command)
 
             # Send an acknowledgement that the command was recieved.
             self.socket.write(QtCore.QByteArray("Ack\n"))
@@ -184,13 +190,14 @@ class TCPControl(QtNetwork.QTcpServer):
     # a movie.
     #
     # @param a_string Additional data as a string to send with the complete message.
+    @hdebug.debug
     def sendComplete(self, a_string = "NA"):
         if self.isConnected():
-            print "sendComplete", a_string
+            hdebug.logText("sendComplete " + a_string)
             self.socket.write(QtCore.QByteArray("Complete," + a_string + "\n"))
             self.socket.flush()
         else:
-            print "sendComplete: not connected"
+            hdebug.logText("sendComplete: not connected")
 
 #    ## sendStatus
 #    #

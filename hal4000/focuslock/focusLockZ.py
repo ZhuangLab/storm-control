@@ -155,19 +155,20 @@ class FocusLockZ(QtGui.QDialog):
     #
     # Handles the jump+ button.
     #
-    # @param bool Dummy parameter.
+    # @param boolean Dummy parameter.
     #
     @hdebug.debug
-    def handleJumpPButton(self, bool):
+    def handleJumpPButton(self, boolean):
         self.lock_display1.jump(self.jumpsize)
 
     ## handleJumpNButton
     #
     # Handles the jump- button.
     #
-    # @param bool Dummy parameter.
+    # @param boolean Dummy parameter.
     #
-    def handleJumpNButton(self, bool):
+    @hdebug.debug
+    def handleJumpNButton(self, boolean):
         self.lock_display1.jump(-self.jumpsize)
 
     ## handleJumpSpinBox
@@ -348,6 +349,7 @@ class FocusLockZ(QtGui.QDialog):
     #
     # @param show True/False show/hide the lock button.
     #
+    @hdebug.debug
     def toggleLockButtonDisplay(self, show):
         if show:
             self.ui.lockButton.show()
@@ -360,6 +362,7 @@ class FocusLockZ(QtGui.QDialog):
     #
     # @param show True/False show/hide the lock label.
     #
+    @hdebug.debug
     def toggleLockLabelDisplay(self, show):
         if show:
             self.ui.lockLabel.show()
@@ -372,6 +375,7 @@ class FocusLockZ(QtGui.QDialog):
     #
     # @param locked True/False is the focus locked.
     #
+    @hdebug.debug
     def toggleLockButtonText(self, locked):
         if locked:
             self.ui.lockButton.setText("Unlock")

@@ -566,6 +566,7 @@ class StageControl(QtGui.QDialog):
     #
     # @param bool Dummy parameter.
     #
+    @hdebug.debug
     def zero(self, bool):
         self.stage.zero()
         self.x = 0

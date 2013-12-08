@@ -630,7 +630,7 @@ class Window(QtGui.QMainWindow):
                 self.newSettings(filename)
             except:
                 print traceback.format_exc()
-                print " Not a settings file, trying as shutters file"
+                hdebug.logText(" Not a settings file, trying as shutters file")
                 self.newShutters(filename)
 
     ## handleAutoInc
@@ -968,7 +968,7 @@ class Window(QtGui.QMainWindow):
                 new_shutters = 1
             except:
                 print traceback.format_exc()
-                print "failed to parse shutter file."
+                hdebug.logText("failed to parse shutter file.")
                 self.shutter_control.parseXML(self.old_shutters_file)
                 self.parameters.shutters = self.old_shutters_file
             if new_shutters:
@@ -1216,7 +1216,7 @@ class Window(QtGui.QMainWindow):
             #    self.ui.saveMovieCheckBox.setChecked(False)
 
             if (lock_target == "failed"):
-                print "QPD/Camera appears to have frozen.."
+                hdebug.logText("QPD/Camera appears to have frozen..")
                 self.quit()
             if self.spot_counter:
                 self.tcp_control.sendComplete(str(self.spot_counter.getCounts()))

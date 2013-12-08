@@ -18,9 +18,6 @@ from xml.dom import minidom, Node
 
 from PyQt4 import QtCore, QtGui
 
-# Add HAL to the python path so that we can find halLib.
-sys.path.append("../hal4000")
-
 # Debugging
 import halLib.hdebug as hdebug
 
@@ -325,6 +322,7 @@ class MovieEngine(QtGui.QWidget):
     # @param details_table The PyQt QTableWidget that will be used for display of the movie details.
     # @param parent The PyQy parent of this widget.
     #
+    @hdebug.debug
     def __init__(self, details_table, parent):
         QtGui.QWidget.__init__(self, parent)
         self.actions = []
@@ -368,6 +366,7 @@ class MovieEngine(QtGui.QWidget):
     #
     # Aborts the current action (if any).
     #
+    @hdebug.debug
     def abort(self):
         if self.current_action:
             self.delay_timer.stop()
@@ -378,6 +377,7 @@ class MovieEngine(QtGui.QWidget):
     # Checks if we should stop acquisition because either the current action
     # of the user requested a pause.
     #
+    @hdebug.debug
     def checkPause(self):
         if (self.current_action.shouldPause()) or self.should_pause:
             self.idle.emit()
@@ -390,6 +390,7 @@ class MovieEngine(QtGui.QWidget):
     #
     # Handles the acknowledged signal from the tcpClient object.
     #
+    @hdebug.debug
     def handleAcknowledged(self):
         if (self.current_action.handleAcknowledged()):
             if (not self.current_action.startTimer(self.delay_timer)):
@@ -401,6 +402,7 @@ class MovieEngine(QtGui.QWidget):
     #
     # @param a_string The message from HAL.
     #
+    @hdebug.debug
     def handleComplete(self, a_string):
         if self.current_action.handleComplete(a_string):
             self.checkPause()
@@ -415,6 +417,7 @@ class MovieEngine(QtGui.QWidget):
     # @param movie A XML movie object.
     # @param index The index of the current movie. Confusingly this is also used a variable in this method for a different purpose..
     #
+    @hdebug.debug
     def newMovie(self, movie, index):
         self.details_table.setItem(0,0,createTableWidget("Movie {0:d} of {1:d}\n\n".format(index+1, self.number_movies)))
 
@@ -495,6 +498,7 @@ class MovieEngine(QtGui.QWidget):
     #
     # Performs the next action for the movie. If there are no actions remaining then the done signal is emitted.
     #
+    @hdebug.debug
     def nextAction(self):
         if (len(self.actions) > 0):
             self.current_action = self.actions[0]
@@ -507,6 +511,7 @@ class MovieEngine(QtGui.QWidget):
     #
     # Sets the pause flag so that we will pause as soon as the current action is finished.
     #
+    @hdebug.debug
     def pause(self):
         self.should_pause = True
 
@@ -516,6 +521,7 @@ class MovieEngine(QtGui.QWidget):
     #
     # @param number An integer specifying the total number of movies.
     #
+    @hdebug.debug
     def setNumberMovies(self, number):
         self.number_movies = number
 
@@ -523,6 +529,7 @@ class MovieEngine(QtGui.QWidget):
     #
     # Starts communication with HAL.
     #
+    @hdebug.debug
     def startCommunication(self):
         self.comm.startCommunication()
 
@@ -530,6 +537,7 @@ class MovieEngine(QtGui.QWidget):
     #
     # Stops communication with HAL.
     #
+    @hdebug.debug
     def stopCommunication(self):
         self.comm.stopCommunication()
 

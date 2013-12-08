@@ -251,6 +251,7 @@ class Capture(QtCore.QObject):
     # Handles the acknowledged signal. If this was a simple stage
     # move then we disconnect from HAL.
     #
+    @hdebug.debug
     def handleAcknowledged(self):
         if self.goto:
             self.commDisconnect()
@@ -260,6 +261,7 @@ class Capture(QtCore.QObject):
     #
     # This does nothing.
     #
+    @hdebug.debug
     def handleDisconnect(self):
         pass
 
@@ -267,6 +269,7 @@ class Capture(QtCore.QObject):
     #
     # Called when the movie timer fires to take the image.
     #
+    @hdebug.debug
     def handleStartTimer(self):
         if self.tcp_client.isConnected():
             self.tcp_client.startMovie(self.movie)
@@ -280,6 +283,7 @@ class Capture(QtCore.QObject):
     #
     # @param directory The new working directory (as a string).
     #
+    @hdebug.debug
     def setDirectory(self, directory):
         self.directory = directory
 
@@ -287,6 +291,7 @@ class Capture(QtCore.QObject):
     #
     # Close the TCP/IP connection, if it is still open.
     #
+    @hdebug.debug
     def shutDown(self):
         if self.tcp_client.isConnected():
             self.commDisconnect()
