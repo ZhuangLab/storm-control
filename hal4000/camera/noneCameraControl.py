@@ -177,7 +177,7 @@ class ACameraControl(cameraControl.CameraControl):
                 # newData then you never see that last frame in the movie, which
                 # is particularly problematic for single frame movies.
                 #
-                if reached_max_frames:
+                if self.reached_max_frames:
                     self.max_frames_sig.emit()
 
             else:
