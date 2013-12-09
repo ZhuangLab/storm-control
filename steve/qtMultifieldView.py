@@ -342,10 +342,14 @@ class viewImageItem(QtGui.QGraphicsItem):
     # Converts the numpy image from HAL to a QtGui.QPixmap.
     #
     def createPixmap(self):
-        frame = self.data.copy()
+        
+        # This just undoes the transpose that we applied when the image was loaded. It might
+        # make more sense not to transpose the image in the first place, but this is the standard
+        # for the storm-analysis project so we maintain that here.
+        frame = numpy.transpose(self.data.copy())
 
         # Rescale & convert to 8bit
-        frame = frame.astype(numpy.float)
+        frame = numpy.ascontiguousarray(frame, dtype = numpy.float32)
         frame = 255.0 * (frame - float(self.pixmap_min))/float(self.pixmap_max - self.pixmap_min)
         frame[(frame > 255.0)] = 255.0
         frame[(frame < 0.0)] = 0.0
@@ -353,7 +357,7 @@ class viewImageItem(QtGui.QGraphicsItem):
 
         # Create the pixmap
         w, h = frame.shape
-        image = QtGui.QImage(frame.data, w, h, QtGui.QImage.Format_Indexed8)
+        image = QtGui.QImage(frame.data, h, w, QtGui.QImage.Format_Indexed8)
         image.ndarray = frame
         for i in range(256):
             image.setColor(i, QtGui.QColor(i,i,i).rgb())

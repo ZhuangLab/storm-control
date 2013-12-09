@@ -42,11 +42,11 @@ class Image():
     #
     def __init__(self, data, size, display_scale, location, params):
         self.data = data
-        self.height = size[1]
+        self.height = size[0]
         self.image_min = display_scale[0]
         self.image_max = display_scale[1]
         self.parameters_file = params
-        self.width = size[0]
+        self.width = size[1]
 
         self.x_um = location[0]
         self.y_um = location[1]
@@ -153,7 +153,7 @@ class Capture(QtCore.QObject):
         while (not success) and (tries < 4):
             try:
                 self.dax = halLib.daxspereader.DaxReader(filename, verbose = 1)
-                frame = self.dax.loadAFrame(0).astype(numpy.float)
+                frame = self.dax.loadAFrame(0)
                 self.dax.closeFilePtr()
                 success = True
             except:
