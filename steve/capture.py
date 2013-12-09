@@ -48,7 +48,6 @@ class Image():
         self.parameters_file = params
         self.width = size[0]
 
-        # FIXME: Should we flip x and y?
         self.x_um = location[0]
         self.y_um = location[1]
 
@@ -56,6 +55,11 @@ class Image():
         a_point = coord.Point(self.x_um, self.y_um, "um")
         self.x_pix = a_point.x_pix
         self.y_pix = a_point.y_pix
+
+    ## __repr__
+    #
+    def __repr__(self):
+        return hdebug.objectToString(self, "capture.Image", ["height", "width", "x_um", "y_um"])
 
 ## Movie
 #
@@ -76,6 +80,11 @@ class Movie():
         self.name = name
         self.length = 1
         self.progressions = []
+
+    ## __repr__
+    #
+    def __repr__(self):
+        return hdebug.objectToString(self, "capture.Movie", ["stage_x", "stage_y"])
 
 ## Capture
 #

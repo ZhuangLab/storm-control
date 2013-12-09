@@ -8,6 +8,8 @@
 # Hazen 02/13
 #
 
+import halLib.hdebug as hdebug
+
 ## Point
 #
 # There is a lot of conversion back and forth between real positions
@@ -38,6 +40,11 @@ class Point(object):
         else:
             print "(Point) Unknown type:", valtype
 
+    ## __repr__
+    #
+    def __repr__(self):
+        return hdebug.objectToString(self, "coord.Point", ["x_um", "y_um"])
+    
     ## getPix
     #
     # @return [x location in pixels, y location in pixels].

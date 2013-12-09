@@ -9,6 +9,8 @@
 
 from xml.dom import minidom, Node
 
+import halLib.hdebug as hdebug
+
 ## parseText
 #
 # Parses text using the functions specified by func.
@@ -109,6 +111,11 @@ class Movie:
             self.progression = Progression(progression_xml[0])
         else:
             self.progression = Progression(None)
+
+    ## __repr__
+    #
+    def __repr__(self):
+        return hdebug.objectToString(self, "sequenceParser.Movie", ["name", "length", "stage_x", "stage_y"])
 
 ## parseMovieXml
 #

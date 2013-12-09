@@ -17,10 +17,23 @@ from PyQt4 import QtCore
 a_logger = False
 logging_mutex = QtCore.QMutex()
 
+
+def objectToString(a_object, a_name, a_attrs):
+    a_string = "<" + a_name
+    for a_attr in a_attrs:
+        if (hasattr(a_object, a_attr)):
+            a_string = a_string + "," + a_attr + "=" + str(getattr(a_object, a_attr))
+        else:
+            a_string = a_string + "," + a_attr + "=?"
+    a_string = a_string + ">"
+    return a_string
+
 ## debug
 #
 # Function decorator. This logs all the arguments to a function that it decorates
 # if logging has been started.
+#
+# @param fn The function to decorate.
 #
 def debug(fn):
     global a_logger, logging_mutex
@@ -53,6 +66,7 @@ def getDebug():
 ## logText
 #
 # @param a_string The text string to add to the log file.
+# @param to_console (Optional) print the string on stdout, defaults to True.
 #
 def logText(a_string, to_console = True):
     global a_logger, logging_mutex
