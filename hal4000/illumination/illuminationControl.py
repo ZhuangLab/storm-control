@@ -204,7 +204,6 @@ class QIlluminationControlWidget(QtGui.QWidget):
     #
     # @return The voltage value that corresponds to the power value.
     #
-    @hdebug.debug
     def powerToVoltage(self, channel, power):
         assert power >= 0.0, "power out of range: " + str(power) + " " + str(channel)
         assert power <= 1.0, "power out of range: " + str(power) + " " + str(channel)
