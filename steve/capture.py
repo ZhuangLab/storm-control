@@ -119,8 +119,9 @@ class Capture(QtCore.QObject):
         self.flip_vertical = parameters.flip_vertical
         self.movies_remaining = 0
         self.stage_speed = parameters.stage_speed
-        self.start_timer = QtCore.QTimer(self)
+        self.transpose = parameters.transpose
 
+        self.start_timer = QtCore.QTimer(self)
         self.start_timer.setSingleShot(True)
         self.start_timer.timeout.connect(self.handleStartTimer)
 
@@ -167,6 +168,8 @@ class Capture(QtCore.QObject):
                 frame = numpy.fliplr(frame)
             if self.flip_vertical:
                 frame = numpy.flipud(frame)
+            if self.transpose:
+                frame = numpy.transpose(frame)
             image = Image(frame,
                           self.dax.filmSize(),
                           self.dax.filmScale(),
