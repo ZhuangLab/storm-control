@@ -269,7 +269,7 @@ class AMiscControl(miscControl.MiscControl):
                 self.filters[i].setText(names[i])
         self.filters[self.parameters.filter_position].click()
 
-        self.handleClearROI()
+        self.handleClearROI(True)
 
     def setPositionText(self):
         self.ui.positionText.setText("{0:.3f}".format(self.position))
