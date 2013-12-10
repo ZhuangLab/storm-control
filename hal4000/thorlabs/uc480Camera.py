@@ -212,8 +212,9 @@ class Camera(Handle):
     ## __init__
     #
     # @param camera_id The identification number of the camera to connect to.
+    # @param ini_file (Optional) A settings file to use to configure the camera, defaults to uc480_settings.ini.
     #
-    def __init__(self, camera_id):
+    def __init__(self, camera_id, ini_file = "uc480_settings.ini"):
         Handle.__init__(self, camera_id)
 
         # Initialize camera.
@@ -227,15 +228,20 @@ class Camera(Handle):
         self.im_height = self.info.nMaxHeight
 
         # Initialize some general camera settings.
-        check(uc480.is_SetColorMode(self, IS_SET_CM_Y8), "is_SetColorMode")
-        check(uc480.is_SetGainBoost(self, IS_SET_GAINBOOST_OFF), "is_SetGainBoost")
-        check(uc480.is_SetGamma(self, 1), "is_SetGamma")
-        check(uc480.is_SetHardwareGain(self,
-                                       0,
-                                       IS_IGNORE_PARAMETER,
-                                       IS_IGNORE_PARAMETER,
-                                       IS_IGNORE_PARAMETER),
-              "is_SetHardwareGain")
+        if (os.path.exists(ini_file)):
+            self.loadParameters(ini_file)
+            hdebug.logText("uc480 loaded parameters file " + ini_file, to_console = False)
+        else:
+            check(uc480.is_SetColorMode(self, IS_SET_CM_Y8), "is_SetColorMode")
+            check(uc480.is_SetGainBoost(self, IS_SET_GAINBOOST_OFF), "is_SetGainBoost")
+            check(uc480.is_SetGamma(self, 1), "is_SetGamma")
+            check(uc480.is_SetHardwareGain(self,
+                                           0,
+                                           IS_IGNORE_PARAMETER,
+                                           IS_IGNORE_PARAMETER,
+                                           IS_IGNORE_PARAMETER),
+                  "is_SetHardwareGain")
+            hdebug.logText("uc480 used default settings.", to_console = False)
 
         # Setup capture parameters.
         self.bitpixel = 8     # This is correct for a BW camera anyway..
@@ -314,6 +320,14 @@ class Camera(Handle):
                                   ctypes.byref(pTimeout)),
               "is_GetTimeout")
         return pTimeout.value
+
+    ## loadParameters
+    #
+    # @param file The file name of the camera parameters file to load.
+    #
+    def loadParameters(self, file):
+        check(uc480.is_LoadParameters(self,
+                                      ctypes.c_char_p(file)))
 
     ## saveParameters
     #
@@ -449,6 +463,7 @@ class CameraQPD():
         self.y_off1 = 0.0
         self.x_off2 = 0.0
         self.y_off2 = 0.0
+        self.zero_dist = 100.0
 
         # Open camera
         self.cam = Camera(camera_id)
@@ -462,13 +477,11 @@ class CameraQPD():
             data = fp.readline().split(",")
             self.x_start = int(data[0])
             self.y_start = int(data[1])
-            self.zero_dist = float(data[2])
-            #[self.x_start, self.y_start, self.zero_dist] = map(int, fp.readline().split(","))
             fp.close()
         else:
-            self.x_start = 646
-            self.y_start = 216
-            self.zero_dist = 100.0
+            self.x_start = 0
+            self.y_start = 0
+
         self.x_width = 200
         self.y_width = 200
         self.setAOI()
@@ -601,7 +614,8 @@ class CameraQPD():
     #
     def shutDown(self):
         fp = open(self.file_name, "w")
-        fp.write(str(self.x_start) + "," + str(self.y_start) + "," + str(self.zero_dist))
+        #fp.write(str(self.x_start) + "," + str(self.y_start) + "," + str(self.zero_dist))
+        fp.write(str(self.x_start) + "," + str(self.y_start))
         fp.close()
         self.cam.shutDown()
 
@@ -719,6 +733,9 @@ class CameraQPD300(CameraQPD):
     #
     def __init__(self, camera_id = 1, fit_mutex = False):
         CameraQPD.__init__(self, camera_id, fit_mutex)
+
+        # Change initial zero distance to 150.0
+        self.zero_dist = 150.0
 
         # Change width to 300 x 300.
         self.x_width = 300
