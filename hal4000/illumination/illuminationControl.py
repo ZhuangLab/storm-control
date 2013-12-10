@@ -88,6 +88,7 @@ class QIlluminationControlWidget(QtGui.QWidget):
     # @param parameters A parameters object.
     # @param parent (Optional) The PyQt parent of this object.
     #
+    @hdebug.debug
     def __init__(self, settings_file_name, parameters, parent = None):
         QtGui.QWidget.__init__(self, parent)
 
@@ -115,6 +116,7 @@ class QIlluminationControlWidget(QtGui.QWidget):
     # Turn off all of the channels. This method is generally replaced with
     # a setup specific version.
     #
+    @hdebug.debug
     def allOff(self):
         for i in range(self.number_channels):
             if self.channels[i].amOn():
@@ -126,6 +128,7 @@ class QIlluminationControlWidget(QtGui.QWidget):
     #
     # @param channels A python array containing the indices of the active channels.
     #
+    @hdebug.debug
     def autoControl(self, channels):
         for channel in channels:
             for i in range(self.number_channels):
@@ -139,6 +142,7 @@ class QIlluminationControlWidget(QtGui.QWidget):
     #
     # @param event A PyQt event.
     #
+    @hdebug.debug
     def closeEvent(self, event):
         self.shutDown()
 
@@ -146,6 +150,7 @@ class QIlluminationControlWidget(QtGui.QWidget):
     #
     # @return The number of channels.
     #
+    @hdebug.debug
     def getNumberChannels(self):
         return self.number_channels
 
@@ -154,6 +159,7 @@ class QIlluminationControlWidget(QtGui.QWidget):
     # Configure all the channels for filming without a shutter sequence.
     # This method is generally replaced with a setup specific version.
     #
+    @hdebug.debug
     def manualControl(self):
         for channel in self.channels:
             channel.fskOnOff(0)
@@ -165,6 +171,7 @@ class QIlluminationControlWidget(QtGui.QWidget):
     #
     # @param parameters A parameters object.
     #
+    @hdebug.debug
     def newParameters(self, parameters):
         # Record the current state of all the old channels.
         if len(self.channels) > 0:
@@ -184,6 +191,7 @@ class QIlluminationControlWidget(QtGui.QWidget):
     # @param index The channel number.
     # @param on True/False.
     #
+    @hdebug.debug
     def onOff(self, index, on):
         self.channels[index].update(on)
 
@@ -196,6 +204,7 @@ class QIlluminationControlWidget(QtGui.QWidget):
     #
     # @return The voltage value that corresponds to the power value.
     #
+    @hdebug.debug
     def powerToVoltage(self, channel, power):
         assert power >= 0.0, "power out of range: " + str(power) + " " + str(channel)
         assert power <= 1.0, "power out of range: " + str(power) + " " + str(channel)
@@ -212,6 +221,7 @@ class QIlluminationControlWidget(QtGui.QWidget):
     # @param channel The channel index.
     # @param power_inc The amount to increment the power by.
     #
+    @hdebug.debug
     def remoteIncPower(self, channel, power_inc):
         for i in range(self.number_channels):
             if self.settings[i].channel == channel:
@@ -224,6 +234,7 @@ class QIlluminationControlWidget(QtGui.QWidget):
     # @param channel The channel index.
     # @param power The power value (0.0 - 1.0).
     #
+    @hdebug.debug
     def remoteSetPower(self, channel, power):
         for i in range(self.number_channels):
             if self.settings[i].channel == channel:
@@ -233,6 +244,7 @@ class QIlluminationControlWidget(QtGui.QWidget):
     #
     # FIXME: This appears to set all the channels that are already on to on..
     #
+    @hdebug.debug
     def reset(self):
         for i in range(self.number_channels):
             if self.channels[i].amOn():
@@ -268,6 +280,7 @@ class QIlluminationControlWidget(QtGui.QWidget):
     # Turn all the channels off. This method is usually replaced
     # with a setup specific version.
     #
+    @hdebug.debug
     def shutDown(self):
         self.allOff()
 
@@ -278,6 +291,7 @@ class QIlluminationControlWidget(QtGui.QWidget):
     # @param channels A python array of channel indices.
     # @param on True/False.
     #
+    @hdebug.debug
     def turnOnOff(self, channels, on):
         for channel in channels:
             for i in range(self.number_channels):
@@ -534,6 +548,7 @@ class IlluminationControl(QtGui.QDialog):
     # Resize the dialog based on the size of the power control section
     # (i.e. the sliders, buttons, etc.).
     #
+    @hdebug.debug
     def updateSize(self):
         pc_width = self.power_control.width()
         pc_height = self.power_control.height()

@@ -37,8 +37,6 @@ class ACameraControl(cameraControl.CameraControl):
     def __init__(self, parameters, parent = None):
         cameraControl.CameraControl.__init__(self, parameters, parent)
         
-        self.stop_at_max = True
-
         if hasattr(parameters, "pci_card"):
             self.initCamera(parameters.pci_card)
         else:
@@ -133,8 +131,7 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def initCamera(self, pci_card = 0):
         if not self.camera:
-            if hdebug.getDebug():
-                print " Initializing Andor Camera"
+            hdebug.logText("Initializing Andor Camera", False)
 
             if (platform.architecture()[0] == "32bit"):
                 path = "c:/Program Files/Andor iXon/Drivers/"
@@ -162,7 +159,7 @@ class ACameraControl(cameraControl.CameraControl):
                     self.initCameraHelperFn(path, driver, pci_card)
                     return
 
-            print "Can't find Andor Camera drivers"
+            hdebug.logText("Can't find Andor Camera drivers")
 
     ## initCameraHelperFn
     #
@@ -188,31 +185,36 @@ class ACameraControl(cameraControl.CameraControl):
     # generally too large to easily store in RAM.
     #
     # @param parameters The current camera settings object.
-    # @param filming True/False is the data being saved.
+    # @param film_settings A film settings object or None.
     #
     @hdebug.debug
-    def newFilmSettings(self, parameters, filming = False):
+    def newFilmSettings(self, parameters, film_settings):
         self.stopCamera()
         self.mutex.lock()
-        self.parameters = parameters
         p = parameters
         if self.got_camera:
+            self.reached_max_frames = False
 
-            if filming:
-                if (p.acq_mode == "fixed_length"):
-                    self.stop_at_max = True
+            if film_settings:
+                self.filming = True
+                self.acq_mode = film_settings.acq_mode
+                self.frames_to_take = film_settings.frames_to_take
+
+                if (self.acq_mode == "fixed_length"):
 
                     # If the film is really long then we use a software stop, otherwise 
                     # we tell the camera to take the number of frames that was requested.
-                    if (p.frames > 1000):
+                    if (self.frames_to_take > 1000):
                         self.camera.setACQMode("run_till_abort")
                     else:
-                        self.camera.setACQMode("fixed_length", number_frames = p.frames)
-                    #print p.frames, self.stop_at_max
+                        self.camera.setACQMode("fixed_length", number_frames = self.frames_to_take)
+
                 else:
-                    self.stop_at_max = False
                     self.camera.setACQMode("run_till_abort")
+
             else:
+                self.filming = False
+                self.acq_mode = "run_till_abort"
                 self.camera.setACQMode("run_till_abort")
 
             # Due to what I can only assume is a bug in some of the
@@ -222,7 +224,7 @@ class ACameraControl(cameraControl.CameraControl):
 
             # Set camera fan to low. This is overriden by the off option
             if p.low_during_filming:
-                if filming:
+                if self.filming:
                     self.camera.setFanMode(1) # fan on low
                 else:
                     self.camera.setFanMode(0) # fan on full
@@ -230,11 +232,11 @@ class ACameraControl(cameraControl.CameraControl):
             # This is for testing whether the camera fan is shaking the
             # the camera, adding noise to the images.
             if p.off_during_filming:
-                if filming:
+                if self.filming:
                     self.camera.setFanMode(2) # fan off
                 else:
                     self.camera.setFanMode(0) # fan on full
-        self.filming = filming
+
         self.mutex.unlock()
 
     ## newParameters
@@ -249,63 +251,64 @@ class ACameraControl(cameraControl.CameraControl):
         p = parameters
         self.reversed_shutter = p.reversed_shutter
         try:
-            if hdebug.getDebug():
-                print "  Setting Read Mode"
+            hdebug.logText("Setting Read Mode", False)
             self.camera.setReadMode(4)
-            if hdebug.getDebug():
-                print "  Setting Temperature"
+
+            hdebug.logText("Setting Temperature", False)
             self.camera.setTemperature(p.temperature)
-            if hdebug.getDebug():
-                print "  Setting Trigger Mode"
+
+            hdebug.logText("Setting Trigger Mode", False)
             self.camera.setTriggerMode(0)
-            if hdebug.getDebug():
-                print "  Setting ROI and Binning"
+
+            hdebug.logText("Setting ROI and Binning", False)
             self.camera.setROIAndBinning(p.ROI, p.binning)
-            if hdebug.getDebug():
-                print "  Setting Horizontal Shift Speed"
+
+            hdebug.logText("Setting Horizontal Shift Speed", False)
             self.camera.setHSSpeed(p.hsspeed)
-            if hdebug.getDebug():
-                print "  Setting Vertical Shift Amplitude"
+
+            hdebug.logText("Setting Vertical Shift Amplitude", False)
             self.camera.setVSAmplitude(p.vsamplitude)
-            if hdebug.getDebug():
-                print "  Setting Vertical Shift Speed"
+
+            hdebug.logText("Setting Vertical Shift Speed", False)
             self.camera.setVSSpeed(p.vsspeed)
-            if hdebug.getDebug():
-                print "  Setting EM Gain Mode"
+
+            hdebug.logText("Setting EM Gain Mode", False)
             self.camera.setEMGainMode(p.emgainmode)
-            if hdebug.getDebug():
-                print "  Setting EM Gain"
+
+            hdebug.logText("Setting EM Gain", False)
             self.camera.setEMCCDGain(p.emccd_gain)
-            if hdebug.getDebug():
-                print "  Setting Baseline Clamp"
+
+            hdebug.logText("Setting Baseline Clamp", False)
             self.camera.setBaselineClamp(p.baselineclamp)
-            if hdebug.getDebug():
-                print "  Setting Preamp Gain"
+
+            hdebug.logText("Setting Preamp Gain", False)
             self.camera.setPreAmpGain(p.preampgain)
-            if hdebug.getDebug():
-                print "  Setting Acquisition Mode"
+
+            hdebug.logText("Setting Acquisition Mode", False)
             self.camera.setACQMode("run_till_abort")
-            if hdebug.getDebug():
-                print "  Setting Frame Transfer Mode"
+
+            hdebug.logText("Setting Frame Transfer Mode", False)
             self.camera.setFrameTransferMode(p.frame_transfer_mode)
-            if hdebug.getDebug():
-                print "  Setting Exposure Time"
+
+            hdebug.logText("Setting Exposure Time", False)
             self.camera.setExposureTime(p.exposure_time)
-            if hdebug.getDebug():
-                print "  Setting Kinetic Cycle Time"
+
+            hdebug.logText("Setting Kinetic Cycle Time", False)
             self.camera.setKineticCycleTime(p.kinetic_cycle_time)
-            if hdebug.getDebug():
-                print "  Setting ADChannel"
+
+            hdebug.logText("Setting ADChannel", False)
             self.camera.setADChannel(p.adchannel)
+
             p.head_model = self.camera.getHeadModel()
-            if hdebug.getDebug():
-                print " Camera Initialized"
+
+            hdebug.logText("Camera Initialized", False)
             self.got_camera = True
         except:
-            print "QCameraThread: Bad camera settings"
+            hdebug.logText("andorCameraControl: Bad camera settings")
             print traceback.format_exc()
             self.got_camera = False
-        self.newFilmSettings(parameters)
+        self.newFilmSettings(parameters, None)
+        self.parameters = parameters
 
     ## openShutter
     #
@@ -352,24 +355,38 @@ class ACameraControl(cameraControl.CameraControl):
                     # Create frame objects.
                     frame_data = []
                     for raw_frame in frames:
-                        frame_data.append(frame.Frame(numpy.fromstring(raw_frame, dtype = numpy.uint16),
-                                                      self.frame_number,
-                                                      frame_size[0],
-                                                      frame_size[1],
-                                                      "camera1",
-                                                      True))
+                        aframe = frame.Frame(numpy.fromstring(raw_frame, dtype = numpy.uint16),
+                                             self.frame_number,
+                                             frame_size[0],
+                                             frame_size[1],
+                                             "camera1",
+                                             True)
+                        frame_data.append(aframe)
                         self.frame_number += 1
-                        if self.filming and self.stop_at_max and (self.frame_number == self.parameters.frames):
-                            self.max_frames_sig.emit()
-                            break
-                            
-                    # Save frames if we are filming.
-                    if self.filming and self.daxfile:
-                        for aframe in frame_data:
-                            self.daxfile.saveFrame(aframe)
 
-                    # Emit new data signal
+                        if self.filming:
+                            if self.daxfile:
+                                if (self.acq_mode == "fixed_length"):
+                                    if (self.frame_number <= self.frames_to_take):
+                                        self.daxfile.saveFrame(aframe)
+                                else:
+                                    self.daxfile.saveFrame(aframe)
+            
+                            if (self.acq_mode == "fixed_length") and (self.frame_number == self.frames_to_take):
+                                self.reached_max_frames = True
+                                break
+                            
+                    # Emit new data signal.
                     self.newData.emit(frame_data, self.key)
+
+                    # Emit max frames signal.
+                    #
+                    # The signal is emitted here because if it is emitted before
+                    # newData then you never see that last frame in the movie, which
+                    # is particularly problematic for single frame movies.
+                    #
+                    if self.reached_max_frames:
+                        self.max_frames_sig.emit()
 
             else:
                 self.acquire.idle()

@@ -12,6 +12,8 @@ import sys
 import time
 from PyQt4 import QtCore, QtGui, QtNetwork
 
+import halLib.hdebug as hdebug
+
 ## HALSocket
 #
 # The socket for communication with HAL-4000
@@ -24,6 +26,7 @@ class HALSocket(QtNetwork.QTcpSocket):
     #
     # @param port The TCP/IP port to communicate on. Usually this is 9000.
     #
+    @hdebug.debug
     def __init__(self, port):
         QtNetwork.QTcpSocket.__init__(self)
         self.port = port
@@ -35,6 +38,7 @@ class HALSocket(QtNetwork.QTcpSocket):
     #
     # Try to make a connection to the HAL software.
     #
+    @hdebug.debug
     def connectToHAL(self):
         # try to make connection
         addr = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost)
@@ -56,6 +60,7 @@ class HALSocket(QtNetwork.QTcpSocket):
     # This is called when there is new data available HAL on the TCP/IP connection.
     # Depending on the data it emits the appropriate signal.
     #
+    @hdebug.debug
     def handleReadyRead(self):
         while self.canReadLine():
             line = str(self.readLine()).strip()            
@@ -76,6 +81,7 @@ class HALSocket(QtNetwork.QTcpSocket):
     #
     # @param command The command to send (as a string).
     #
+    @hdebug.debug
     def sendCommand(self, command):
         self.write(QtCore.QByteArray(command + "\n"))
 
@@ -93,6 +99,7 @@ class TCPClient(QtGui.QWidget):
     #
     # Open a connection to HAL (A HALSocket) and connect the signals.
     #
+    @hdebug.debug
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.socket = HALSocket(9000)
@@ -108,26 +115,28 @@ class TCPClient(QtGui.QWidget):
     #
     # Handles the acknowledged signal from the HAL socket.
     #
+    @hdebug.debug
     def handleAcknowledged(self):
         self.unacknowledged -= 1
-        print "  got response", self.unacknowledged
+        hdebug.logText("  got response " + str(self.unacknowledged))
         if (self.unacknowledged == 0):
-            print " acknowledged"
+            hdebug.logText(" acknowledged")
             self.acknowledged.emit()
 
     ## handleComplete
     #
     # Handles the complete signal from the HAL socket.
     #
+    @hdebug.debug
     def handleComplete(self, a_string):
         if (self.state == "filming"):
-            print " movie complete", a_string
+            hdebug.logText(" movie complete " + a_string)
         elif (self.state == "finding_sum"):
-            print " finding sum complete", a_string
+            hdebug.logText(" finding sum complete " + a_string)
         elif (self.state == "recentering"):
-            print " recentering complete", a_string
+            hdebug.logText(" recentering complete " + a_string)
         else:
-            print " unknown state:", self.state
+            hdebug.logText(" unknown state: " + self.state)
         self.complete.emit(a_string)
         self.state = None
 
@@ -135,6 +144,7 @@ class TCPClient(QtGui.QWidget):
     #
     # Handles the disconnect signal from the HAL socket.
     #
+    @hdebug.debug
     def handleDisconnect(self):
         self.disconnect.emit()
 
@@ -142,6 +152,7 @@ class TCPClient(QtGui.QWidget):
     #
     # @return True/False is the HAL socket actually connected to HAL.
     #
+    @hdebug.debug
     def isConnected(self):
         if (self.socket.state() == QtNetwork.QAbstractSocket.ConnectedState):
             return True
@@ -154,15 +165,16 @@ class TCPClient(QtGui.QWidget):
     #
     # @param command The command to send (as a string).
     #
+    @hdebug.debug
     def sendCommand(self, command):
         if self.isConnected():
-            print "  sending:", command
+            hdebug.logText("  sending: " + command)
             self.unacknowledged += 1
             self.socket.sendCommand(command)
             self.socket.flush()
             time.sleep(0.05)
         else:
-            print " Not connected?!?"
+            hdebug.logText(" Not connected?!?")
 
     ## sendMovieParameters
     #
@@ -170,6 +182,7 @@ class TCPClient(QtGui.QWidget):
     #
     # @param movie A movie object.
     #
+    @hdebug.debug
     def sendMovieParameters(self, movie):
 
         # send parameters index.
@@ -190,6 +203,7 @@ class TCPClient(QtGui.QWidget):
     #
     # @param directory The new directory (as a string).
     #
+    @hdebug.debug
     def sendSetDirectory(self, directory):
         self.sendCommand("setDirectory,string,{0:s}".format(directory))
 
@@ -197,8 +211,9 @@ class TCPClient(QtGui.QWidget):
     #
     # This tells the HAL socket to make a connection to HAL.
     #
+    @hdebug.debug
     def startCommunication(self):
-        print " starting communications", self.isConnected()
+        hdebug.logText(" starting communications " + str(self.isConnected()))
         if not self.isConnected():
             self.socket.connectToHAL()
             self.unacknowledged = 0
@@ -207,8 +222,9 @@ class TCPClient(QtGui.QWidget):
     #
     # Tells HAL to start the focus lock find sum procedure.
     #
+    @hdebug.debug
     def startFindSum(self):
-        print " start find sum"
+        hdebug.logText(" start find sum")
         self.state = "finding_sum"
         self.sendCommand("findSum")
 
@@ -218,8 +234,9 @@ class TCPClient(QtGui.QWidget):
     #
     # @param movie A movie object.
     #
+    @hdebug.debug
     def startMovie(self, movie):
-        print " start movie"
+        hdebug.logText(" start movie")
         if hasattr(movie, "progression"):
             if (movie.progression.type == "lockedout"):
                 self.sendCommand("progressionLockout")
@@ -247,8 +264,9 @@ class TCPClient(QtGui.QWidget):
     # Tell HAL to recenter the focus lock piezo. This won't do anything if the
     # microscope does not have a motorized Z.
     #
+    @hdebug.debug
     def startRecenterPiezo(self):
-        print " start recenter piezo"
+        hdebug.logText(" start recenter piezo")
         self.state = "recentering"
         self.sendCommand("recenterPiezo")
 
@@ -256,19 +274,21 @@ class TCPClient(QtGui.QWidget):
     #
     # Tell the HAL socket to break the connection to HAL.
     #
+    @hdebug.debug
     def stopCommunication(self):
-        print " stopping communications", self.isConnected()
+        hdebug.logText(" stopping communications " + str(self.isConnected()))
         if self.isConnected():
             self.socket.disconnectFromHost()
             #self.socket.waitForDisconnected()
-            print "  ", self.isConnected()
+            hdebug.logText("  " + str(self.isConnected()))
 
     ## stopMovie
     #
     # Tell HAL to stop taking the current movie.
     #
+    @hdebug.debug
     def stopMovie(self):
-        print " stop movie"
+        hdebug.logText(" stop movie")
         self.sendCommand("abortMovie")
 
 #

@@ -71,7 +71,6 @@ class MiscControl(QtGui.QDialog):
     #
     # Called when there is new data from the camera during film acquisition.
     #
-    @hdebug.debug
     def newFrame(self, frame):
         pass
 

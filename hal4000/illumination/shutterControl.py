@@ -70,6 +70,7 @@ class ShutterControl():
     #
     # @param powerToVoltage The function to use to convert (abstract) power to (real) voltage.
     #
+    @hdebug.debug
     def __init__(self, powerToVoltage):
         self.powerToVoltage = powerToVoltage
         self.oversampling_default = 1
@@ -89,6 +90,7 @@ class ShutterControl():
     #
     # @return A python array of channel indices.
     #
+    @hdebug.debug
     def getChannelsUsed(self):
         return self.channels_used
 
@@ -96,6 +98,7 @@ class ShutterControl():
     #
     # @return A python array containing the RGB color values for each frame in the shutter sequence. This used by the spot counter.
     #
+    @hdebug.debug
     def getColors(self):
         return self.colors
 
@@ -103,6 +106,7 @@ class ShutterControl():
     #
     # @return The length of the shutter sequence in frames.
     #
+    @hdebug.debug
     def getCycleLength(self):
         return self.frames
 
@@ -112,6 +116,7 @@ class ShutterControl():
     #
     # @param illumination_file The name of the shutter sequence xml file.
     #
+    @hdebug.debug
     def parseXML(self, illumination_file):
         self.channels_used = []
         self.colors = []

@@ -35,7 +35,6 @@ class ACameraControl(cameraControl.CameraControl):
         cameraControl.CameraControl.__init__(self, parameters, parent)
         self.fake_frame = 0
         self.fake_frame_size = [0,0]
-        self.frames_to_take = 0
         self.sleep_time = 50
         self.initCamera()
 
@@ -99,21 +98,20 @@ class ACameraControl(cameraControl.CameraControl):
     # Prepare the camera for the next acquisition.
     #
     # @param parameters A parameters object.
-    # @param filming (Optional) A flag to indicate if the acquisition should be saved.
+    # @param film_settings A film settings object or None.
     #
     @hdebug.debug
-    def newFilmSettings(self, parameters, filming = 0):
+    def newFilmSettings(self, parameters, film_settings):
         self.stopCamera()
         self.mutex.lock()
-        self.parameters = parameters
-        p = parameters
-        if filming:
-            self.acq_mode = p.acq_mode
+        self.reached_max_frames = False
+        if film_settings:
+            self.filming = True
+            self.acq_mode = film_settings.acq_mode
+            self.frames_to_take = film_settings.frames_to_take
         else:
+            self.filming = False
             self.acq_mode = "run_till_abort"
-        self.acquired = 0
-        self.filming = filming
-        self.frames_to_take = p.frames
         self.mutex.unlock()
 
     ## newParameters
@@ -138,7 +136,8 @@ class ACameraControl(cameraControl.CameraControl):
             for j in range(size_y):
                 fake_frame[i*2*size_y + j*2] = chr(i % 128 + j % 128)
         self.fake_frame = numpy.fromstring(fake_frame, dtype = numpy.uint16)
-        self.newFilmSettings(parameters)
+        self.newFilmSettings(parameters, None)
+        self.parameters = parameters
 
     ## run
     #
@@ -156,17 +155,34 @@ class ACameraControl(cameraControl.CameraControl):
                                      self.fake_frame_size[1],
                                      "camera1", 
                                      True)
+                self.frame_number += 1
+
+                if self.filming:
+                    if self.daxfile:
+                        if (self.acq_mode == "fixed_length"):
+                            if (self.frame_number <= self.frames_to_take):
+                                self.daxfile.saveFrame(aframe)
+                        else:
+                            self.daxfile.saveFrame(aframe)
+
+                    if (self.acq_mode == "fixed_length") and (self.frame_number == self.frames_to_take):
+                        self.reached_max_frames = True
+                        
+                # Emit new data signal.
                 self.newData.emit([aframe], self.key)
 
-                if self.filming and self.daxfile:
-                    self.daxfile.saveFrame(aframe)
+                # Emit max frames signal.
+                #
+                # The signal is emitted here because if it is emitted before
+                # newData then you never see that last frame in the movie, which
+                # is particularly problematic for single frame movies.
+                #
+                if self.reached_max_frames:
+                    self.max_frames_sig.emit()
 
-                if self.acq_mode == "fixed_length":
-                    if (self.frame_number == (self.frames_to_take-1)):
-                        self.should_acquire = False
-                        self.max_frames_sig.emit()
+            else:
+                self.acquire.idle()
 
-                self.frame_number += 1
             self.mutex.unlock()
             self.msleep(self.sleep_time)
 

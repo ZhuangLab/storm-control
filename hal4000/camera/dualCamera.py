@@ -163,7 +163,6 @@ class DualCamera(genericCamera.Camera):
     #
     # @return The size of the current film (in bytes).
     #
-    @hdebug.debug
     def getFilmSize(self):
         return self.camera_control.getFilmSize()
 

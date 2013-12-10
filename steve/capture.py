@@ -42,13 +42,12 @@ class Image():
     #
     def __init__(self, data, size, display_scale, location, params):
         self.data = data
-        self.height = size[1]
+        self.height = size[0]
         self.image_min = display_scale[0]
         self.image_max = display_scale[1]
         self.parameters_file = params
-        self.width = size[0]
+        self.width = size[1]
 
-        # FIXME: Should we flip x and y?
         self.x_um = location[0]
         self.y_um = location[1]
 
@@ -56,6 +55,11 @@ class Image():
         a_point = coord.Point(self.x_um, self.y_um, "um")
         self.x_pix = a_point.x_pix
         self.y_pix = a_point.y_pix
+
+    ## __repr__
+    #
+    def __repr__(self):
+        return hdebug.objectToString(self, "capture.Image", ["height", "width", "x_um", "y_um"])
 
 ## Movie
 #
@@ -76,6 +80,11 @@ class Movie():
         self.name = name
         self.length = 1
         self.progressions = []
+
+    ## __repr__
+    #
+    def __repr__(self):
+        return hdebug.objectToString(self, "capture.Movie", ["stage_x", "stage_y"])
 
 ## Capture
 #
@@ -144,7 +153,8 @@ class Capture(QtCore.QObject):
         while (not success) and (tries < 4):
             try:
                 self.dax = halLib.daxspereader.DaxReader(filename, verbose = 1)
-                frame = self.dax.loadAFrame(0).astype(numpy.float)
+                frame = self.dax.loadAFrame(0)
+                self.dax.closeFilePtr()
                 success = True
             except:
                 print "Failed to load:", filename
@@ -250,6 +260,7 @@ class Capture(QtCore.QObject):
     # Handles the acknowledged signal. If this was a simple stage
     # move then we disconnect from HAL.
     #
+    @hdebug.debug
     def handleAcknowledged(self):
         if self.goto:
             self.commDisconnect()
@@ -259,6 +270,7 @@ class Capture(QtCore.QObject):
     #
     # This does nothing.
     #
+    @hdebug.debug
     def handleDisconnect(self):
         pass
 
@@ -266,6 +278,7 @@ class Capture(QtCore.QObject):
     #
     # Called when the movie timer fires to take the image.
     #
+    @hdebug.debug
     def handleStartTimer(self):
         if self.tcp_client.isConnected():
             self.tcp_client.startMovie(self.movie)
@@ -279,6 +292,7 @@ class Capture(QtCore.QObject):
     #
     # @param directory The new working directory (as a string).
     #
+    @hdebug.debug
     def setDirectory(self, directory):
         self.directory = directory
 
@@ -286,6 +300,7 @@ class Capture(QtCore.QObject):
     #
     # Close the TCP/IP connection, if it is still open.
     #
+    @hdebug.debug
     def shutDown(self):
         if self.tcp_client.isConnected():
             self.commDisconnect()

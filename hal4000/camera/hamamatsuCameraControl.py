@@ -144,7 +144,7 @@ class ACameraControl(cameraControl.CameraControl):
             self.got_camera = True
 
         except:
-            print "QCameraThread: Bad camera settings"
+            hdebug.logText("QCameraThread: Bad camera settings")
             print traceback.format_exc()
             self.got_camera = False
 

@@ -142,7 +142,10 @@ class Camera(QtGui.QDialog):
     #
     # Setup for recording data from the camera(s) to a file(s).
     #
-    def startFilm(self, writer):
+    # @param writer This is a image writing object (halLib/imagewriters).
+    # @param film_setting A film setting object.
+    #
+    def startFilm(self, writer, film_settings):
         pass
 
     ## stopCamera

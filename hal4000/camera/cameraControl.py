@@ -29,6 +29,9 @@ import halLib.hdebug as hdebug
 # initCamera()
 #    Initializes the camera.
 #
+# newFilmSettings()
+#    Setup the camera to take the appropriate type of film.
+#
 # newParameters()
 #    Setup the camera with the new acquisition parameters.
 #
@@ -68,14 +71,16 @@ class CameraControl(QtCore.QThread):
         p = parameters
 
         # other class initializations
+        self.acq_mode = "run_till_abort"
         self.acquire = IdleActive()
         self.daxfile = False
         self.filming = False
         self.frame_number = 0
+        self.frames_to_take = 0
         self.key = -1
         self.max_frames_sig = SingleShotSignal(self.reachedMaxFrames)
-        self.mode = "run_till_abort"
         self.mutex = QtCore.QMutex()
+        self.reached_max_frames = False
         self.running = True
         self.shutter = False
 
@@ -99,13 +104,22 @@ class CameraControl(QtCore.QThread):
     def closeShutter(self):
         self.shutter = False
 
+    ## getAcquisitionTimings
+    #
+    # Returns how fast the camera is running.
+    #
+    # @return A Python array containing the time it takes to take a frame.
+    #
+    @hdebug.debug
+    def getAcquisitionTimings(self):
+        return [0.1, 0.1, 0.1]
+    
     ## getFilmSize
     #
     # Returns the current size of the film that is being recorded.
     #
     # @return The size of the film (in bytes?).
     #
-    @hdebug.debug
     def getFilmSize(self):
         film_size = 0
         if self.daxfile:
@@ -162,25 +176,24 @@ class CameraControl(QtCore.QThread):
     def haveTemperature(self):
         return False
 
+    ## initCamera
+    #
+    # Initializes the camera.
+    #
+    @hdebug.debug
+    def initCamera(self):
+        pass
+
     ## newFilmSettings
     #
     # This is called at the start of a acquisition to get the camera configured properly.
     #
-    # @param parameters The current parameters object.
-    # @param filming (Optional) Are we recording the data?
+    # @param parameters A parameters object.
+    # @param film_settings A film settings object or None.
     #
     @hdebug.debug
-    def newFilmSettings(self, parameters, filming = False):
-        self.mutex.lock()
-        self.parameters = parameters
-        p = parameters
-        if filming:
-            self.acq_mode = p.acq_mode
-        else:
-            self.acq_mode = "run_till_abort"
-        self.acquired = 0
-        self.filming = filming
-        self.mutex.unlock()
+    def newFilmSettings(self, parameters, film_settings):
+        pass
 
     ## openShutter
     #
@@ -234,12 +247,13 @@ class CameraControl(QtCore.QThread):
     # requested to take the film but not to save it.
     #
     # @param daxfile This is a image writing object (halLib/imagewriters).
+    # @param film_setting A film setting object.
     #
     @hdebug.debug
-    def startFilm(self, daxfile):
+    def startFilm(self, daxfile, film_settings):
         if daxfile:
             self.daxfile = daxfile
-        self.newFilmSettings(self.parameters, filming = True)
+        self.newFilmSettings(self.parameters, film_settings)
 
     ## stopCamera
     #
@@ -265,7 +279,7 @@ class CameraControl(QtCore.QThread):
     #
     @hdebug.debug
     def stopFilm(self):
-        self.newFilmSettings(self.parameters)
+        self.newFilmSettings(self.parameters, None)
         self.daxfile = False
 
     ## toggleShutter

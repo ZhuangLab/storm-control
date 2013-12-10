@@ -18,6 +18,8 @@ import scipy
 import scipy.optimize
 import time
 
+import halLib.hdebug as hdebug
+
 Handle = ctypes.wintypes.HANDLE
 
 # some definitions
@@ -94,7 +96,8 @@ else:
 #
 def check(fn_return, fn_name = ""):
     if not (fn_return == IS_SUCCESS):
-        print "uc480: Call failed with error", fn_return, fn_name
+        hdebug.logText("uc480: Call failed with error " + str(fn_return) + " " + fn_name)
+        #print "uc480: Call failed with error", fn_return, fn_name
 
 ## create_camera_list
 #
@@ -127,7 +130,8 @@ def fitAFunctionLS(data, params, fn):
     good = True
     [result, cov_x, infodict, mesg, success] = scipy.optimize.leastsq(errorfunction, params, full_output = 1, maxfev = 500)
     if (success < 1) or (success > 4):
-        print "Fitting problem:", mesg
+        hdebug.logText("Fitting problem: " + mesg)
+        #print "Fitting problem:", mesg
         good = False
     return [result, good]
 

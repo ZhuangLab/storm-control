@@ -5,31 +5,35 @@
 # This is part of the work-around for the lack
 # of a 64 bit version of the AotfLibrary.dll file.
 #
-# Hazen 3/12
+# Hazen 12/13
 #
 
+import socket
 import sys
 
 import AOTF
 
 my_aotf = AOTF.AOTF()
-
+my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+my_socket.connect(("127.0.0.1", 9001))
+ 
 while True:
-   next_cmd = sys.stdin.readline()
-   if not next_cmd:
-      break
-   next_cmd = next_cmd[:-1] if next_cmd.endswith('\n') else next_cmd
-   response = my_aotf._sendCmd(next_cmd)
-   if (not response) or ("Invalid" in response):
-      sys.stdout.write("failed\n")
+   next_cmd = my_socket.recv(1024)
+   if (next_cmd == "shutdown"):
+      my_aotf.shutDown()
+      my_socket.sendall("done")
+      my_socket.close()
    else:
-      sys.stdout.write(next_cmd + "\n")
-   sys.stdout.flush()
+      if my_aotf.live:
+         response = my_aotf._sendCmd(next_cmd)
+         my_socket.sendall(response)
+      else:
+         my_socket.sendall("Invalid")
 
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

@@ -512,7 +512,6 @@ class StageCamThread(StageQPDThread):
     #
     # @return [image, xoff1, yoff1, xoff2, yoff2]
     #
-    @hdebug.debug
     def getImage(self):
         self.cam_mutex.lock()
         data = self.cam_data
