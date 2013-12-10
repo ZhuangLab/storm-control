@@ -9,6 +9,8 @@
 
 from xml.dom import minidom, Node
 
+import halLib.hdebug as hdebug
+
 ## ShutterControl
 #
 # Base class for shutter control.
