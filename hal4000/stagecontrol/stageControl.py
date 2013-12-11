@@ -372,7 +372,6 @@ class StageControl(QtGui.QDialog):
     # @param x_speed The speed to move the stage in x.
     # @param y_speed The speed to move the stage in y.
     #
-    @hdebug.debug
     def jog(self, x_speed, y_speed):
         self.stage.jog(x_speed, y_speed)
 
