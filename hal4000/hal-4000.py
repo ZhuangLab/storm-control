@@ -492,7 +492,6 @@ class Window(QtGui.QMainWindow):
     # @param x_speed Speed at which to move the stage in x.
     # @param y_speed Speed at which to move the stage in y.
     #
-    @hdebug.debug
     def jstickMotion(self, x_speed, y_speed):
         if self.stage_control and (not self.filming):
             self.stage_control.jog(x_speed, y_speed)
@@ -504,7 +503,6 @@ class Window(QtGui.QMainWindow):
     # @param x_step Distance to step the stage in x.
     # @param y_step Distance to step the stage in y.
     #
-    @hdebug.debug
     def jstickStep(self, x_step, y_step):
         if self.stage_control and (not self.filming):
             self.stage_control.step(x_step, y_step)
