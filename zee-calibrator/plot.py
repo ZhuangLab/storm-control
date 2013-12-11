@@ -7,40 +7,11 @@
 
 from PyQt4 import QtCore, QtGui
 import pyqtgraph
-#import PyQt4.Qwt5 as Qwt
 
 import numpy
 
 pyqtgraph.setConfigOption('background', 'w')
 pyqtgraph.setConfigOption('foreground', 'k')
-
-def createCurve(pen, brush, symbol_size):
-    pass
-#    curve = Qwt.QwtPlotCurve('')
-#    curve.setRenderHint(Qwt.QwtPlotItem.RenderAntialiased)
-#    curve.setPen(pen)
-#    if (symbol_size > 0):
-#        curve.setSymbol(Qwt.QwtSymbol(Qwt.QwtSymbol.Ellipse,
-#                                      brush,
-#                                      pen,
-#                                      QtCore.QSize(symbol_size, symbol_size)))
-#        curve.setStyle(Qwt.QwtPlotCurve.NoCurve)
-#    return curve
-
-#class ZeePlot(pyqtgraph.ViewBox):
-#
-#    def __init__(self, parent, x_range, y_range):
-#        pyqtgraph.ViewBox.__init__(self, parent)
-#        self.static_text = False
-#
-#    def drawCanvas (self, p):
-#        Qwt.QwtPlot.drawCanvas(self, p)
-#
-#        if self.static_text:
-#            p.drawStaticText(10, 10, self.static_text)
-#
-#    def setStaticText(self, text):
-#        self.static_text = text
 
 class PlotWindow(pyqtgraph.PlotWidget):
 
@@ -56,10 +27,14 @@ class PlotWindow(pyqtgraph.PlotWidget):
         self.setLabel('left', y_label)
         self.setLabel('bottom', x_label)
 
-#    def clear(self):
-#        pass
-#        for curve in self.curves:
-#            curve.detach()
+        self.static_text = False
+
+    def paintEvent(self, event):
+        pyqtgraph.PlotWidget.paintEvent(self, event)
+        
+        if self.static_text:
+            painter = QtGui.QPainter(self.viewport())
+            painter.drawStaticText(70, 10, self.static_text)
 
     def plotBinnedData(self, b_sz, b_wx, b_wy):
         a_pen = QtGui.QPen(QtCore.Qt.black)
@@ -114,32 +89,7 @@ class PlotWindow(pyqtgraph.PlotWidget):
         y_vals = (x_vals - offset)/slope
         self.plot(x_vals, y_vals, pen = QtGui.QPen(QtCore.Qt.black))
 
-#
-#        self.plot.setAxisScale(Qwt.QwtPlot.yLeft, 1.1*qpd_min, 1.1*qpd_max)
-#
-#        curve = createCurve(QtGui.QPen(QtCore.Qt.black),
-#                            QtGui.QBrush(),
-#                            7)
-#        curve.setData(stage, qpd)
-#        curve.attach(self.plot)
-#        self.curves.append(curve)
-#        self.plot.replot()
-#
-#        x_vals = numpy.array([-1.0, 1.0])
-#        y_vals = (x_vals - offset)/slope
-#
-#        pen = QtGui.QPen(QtCore.Qt.black)
-#        pen.setWidth(2)
-#        curve = createCurve(pen,
-#                            QtGui.QBrush(),
-#                            0)
-#        curve.setData(x_vals, y_vals)
-#        curve.attach(self.plot)
-#        self.curves.append(curve)
-#
-#        self.plot.setStaticText(QtGui.QStaticText("slope = {0:.3f} au/um".format(-1.0/slope)))
-#
-#        self.plot.replot()
+        self.static_text = QtGui.QStaticText("slope = {0:.3f} au/um".format(-1.0/slope))
 
     def plotWxWyData(self, wx, wy, cat):
         self.plot(wx, wy,
@@ -151,7 +101,6 @@ class PlotWindow(pyqtgraph.PlotWidget):
 
     def plotWxWyFit(self, wxfit, wyfit):
         a_pen = QtGui.QPen(QtCore.Qt.black)
-        #a_pen.setWidth(2)
         self.plot(wxfit, wyfit, pen = a_pen)
 
 class SquarePlotWindow(PlotWindow):
@@ -165,7 +114,7 @@ class SquarePlotWindow(PlotWindow):
         self.setSizePolicy(policy)
 
     def heightForWidth(self, w):
-        print "hFW:", w
+        #print "hFW:", w
         return w
 
 #
