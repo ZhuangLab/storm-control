@@ -4,12 +4,14 @@
 #
 # Camera control specialized for controlling two Andor cameras.
 #
-# Hazen 12/12
+# Hazen 12/13
 #
 
 from PyQt4 import QtCore
 import numpy
 import os
+import platform
+import traceback
 
 # Debugging
 import halLib.hdebug as hdebug
@@ -85,6 +87,46 @@ class ACameraControl(cameraControl.CameraControl):
         else:
             return [50, "unstable"]
 
+    ## haveEMCCD
+    #
+    # Returns that these are EMCCD cameras.
+    #
+    # @return True, these are EMCCD cameras.
+    #
+    @hdebug.debug
+    def haveEMCCD(self):
+        return True
+
+    ## havePreamp
+    #
+    # Returns that these cameras have a pre-amplifier.
+    #
+    # @return True, these cameras have a pre-amplifier.
+    #
+    @hdebug.debug
+    def havePreamp(self):
+        return True
+
+    ## haveShutter
+    #
+    # Returns that these cameras have a shutter.
+    #
+    # @return True, these cameras have a shutter.
+    #
+    @hdebug.debug
+    def haveShutter(self):
+        return True
+
+    ## haveTemperature
+    #
+    # Returns that these cameras can measure their sensor temperature.
+    #
+    # @return True, these cameras can measure their sensor temperature.
+    #
+    @hdebug.debug
+    def haveTemperature(self):
+        return True
+
     ## initCamera
     #
     # Find the Andor DLL and open the connections to the cameras.
@@ -95,26 +137,33 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def initCamera(self):
         if not self.cameras[0]:
-            if hdebug.getDebug():
-                print " Initializing Andor Camera"
+            hdebug.logText(" Initializing Andor Cameras", False)
 
-            path = "c:/Program Files/Andor iXon/Drivers/"
-            driver = "atmcd32d.dll"
-            if os.path.exists(path + driver):
-                self.initCameraHelperFn(path, driver)
-                return
+            if (platform.architecture()[0] == "32bit"):
+                path = "c:/Program Files/Andor iXon/Drivers/"
+                driver = "atmcd32d.dll"
+                if os.path.exists(path + driver):
+                    self.initCameraHelperFn(path, driver)
+                    return
 
-            path = "c:/Program Files/Andor Solis/"
-            driver = "atmcd32d.dll"
-            if os.path.exists(path + driver):
-                self.initCameraHelperFn(path, driver)
-                return
+                path = "c:/Program Files/Andor Solis/"
+                driver = "atmcd32d.dll"
+                if os.path.exists(path + driver):
+                    self.initCameraHelperFn(path, driver)
+                    return
+                
+            else:
+                path = "c:/Program Files/Andor Solis/Drivers/"
+                driver = "atmcd64d.dll"
+                if os.path.exists(path + driver):
+                    self.initCameraHelperFn(path, driver)
+                    return
 
-            path = "c:/Program Files (x86)/Andor Solis/Drivers/"
-            driver = "atmcd64d.dll"
-            if os.path.exists(path + driver):
-                self.initCameraHelperFn(path, driver)
-                return
+                path = "c:/Program Files (x86)/Andor Solis/Drivers/"
+                driver = "atmcd64d.dll"
+                if os.path.exists(path + driver):
+                    self.initCameraHelperFn(path, driver)
+                    return
 
             print "Can't find Andor Camera drivers"
 
@@ -138,18 +187,33 @@ class ACameraControl(cameraControl.CameraControl):
     # This is called at the start of acquisition to configure the cameras correctly.
     #
     # @param parameters The current parameters object.
-    # @param filming True/False, should the film be saved.
+    # @param film_settings A film settings object or False.
     #
     @hdebug.debug
-    def newFilmSettings(self, parameters, filming = 0):
+    def newFilmSettings(self, parameters, film_settings):
         self.stopCamera()
         self.mutex.lock()
-        self.parameters = parameters
         if self.got_camera:
-            if filming:
-                self.cameras[0].setACQMode(parameters.acq_mode, number_frames = parameters.frames)
+            self.reached_max_frames = False
+
+            if film_settings:
+                self.filming = True
+                self.acq_mode = film_settings.acq_mode
+                self.frames_to_take = film_settings.frames_to_take
+
+                if (self.acq_mode == "fixed_length"):
+                    if (self.frames_to_take > 1000):
+                        self.cameras[0].setACQMode("run_till_abort")
+                    else:
+                        self.cameras[0].setACQMode("fixed_length", number_frames = self.frames_to_take)
+                else:
+                    self.cameras[0].setACQMode("run_till_abort")
+
                 self.cameras[1].setACQMode("run_till_abort")
+
             else:
+                self.filming = False
+                self.acq_mode = "run_till_abort"
                 for i in range(2):
                     self.cameras[i].setACQMode("run_till_abort")
 
@@ -173,7 +237,6 @@ class ACameraControl(cameraControl.CameraControl):
                     else:
                         self.cameras[i].setFanMode(0) # fan on full
 
-        self.filming = filming
         self.mutex.unlock()
 
     ## newParameters
@@ -190,66 +253,66 @@ class ACameraControl(cameraControl.CameraControl):
             p = getattr(parameters, "camera" + str(i+1))
             self.reversed_shutter[i] = p.reversed_shutter
             try:
-                if hdebug.getDebug():
-                    print "  Setting Read Mode"
+                hdebug.logText("Setting Read Mode", False)
                 self.cameras[i].setReadMode(4)
-                if hdebug.getDebug():
-                    print "  Setting Temperature"
+
+                hdebug.logText("Setting Temperature", False)
                 self.cameras[i].setTemperature(p.temperature)
-                if hdebug.getDebug():
-                    print "  Setting Trigger Mode"
+                
+                hdebug.logText("Setting Trigger Mode", False)
                 if p.external_trigger:
                     self.cameras[i].setTriggerMode(p.external_trigger)
-                    #self.cameras[1].setFastExtTrigger(1)
                 else:
                     self.cameras[i].setTriggerMode(0)
-                if hdebug.getDebug():
-                    print "  Setting ROI and Binning"
+
+                hdebug.logText("Setting ROI and Binning", False)
                 self.cameras[i].setROIAndBinning(p.ROI, p.binning)
-                if hdebug.getDebug():
-                    print "  Setting Horizontal Shift Speed"
+
+                hdebug.logText("Setting Horizontal Shift Speed", False)
                 self.cameras[i].setHSSpeed(p.hsspeed)
-                if hdebug.getDebug():
-                    print "  Setting Vertical Shift Amplitude"
+
+                hdebug.logText("Setting Vertical Shift Amplitude", False)
                 self.cameras[i].setVSAmplitude(p.vsamplitude)
-                if hdebug.getDebug():
-                    print "  Setting Vertical Shift Speed"
+
+                hdebug.logText("Setting Vertical Shift Speed", False)
                 self.cameras[i].setVSSpeed(p.vsspeed)
-                if hdebug.getDebug():
-                    print "  Setting EM Gain Mode"
+
+                hdebug.logText("Setting EM Gain Mode", False)
                 self.cameras[i].setEMGainMode(p.emgainmode)
-                if hdebug.getDebug():
-                    print "  Setting EM Gain"
+
+                hdebug.logText("Setting EM Gain", False)
                 self.cameras[i].setEMCCDGain(p.emccd_gain)
-                if hdebug.getDebug():
-                    print "  Setting Baseline Clamp"
+
+                hdebug.logText("Setting Baseline Clamp", False)
                 self.cameras[i].setBaselineClamp(p.baselineclamp)
-                if hdebug.getDebug():
-                    print "  Setting Preamp Gain"
+
+                hdebug.logText("Setting Preamp Gain", False)
                 self.cameras[i].setPreAmpGain(p.preampgain)
-                if hdebug.getDebug():
-                    print "  Setting Acquisition Mode"
+
+                hdebug.logText("Setting Acquisition Mode", False)
                 self.cameras[i].setACQMode("run_till_abort")
-                if hdebug.getDebug():
-                    print "  Setting Frame Transfer Mode"
+
+                hdebug.logText("Setting Frame Transfer Mode", False)
                 self.cameras[i].setFrameTransferMode(p.frame_transfer_mode)
-                if hdebug.getDebug():
-                    print "  Setting Exposure Time"
+
+                hdebug.logText("Setting Exposure Time", False)
                 self.cameras[i].setExposureTime(p.exposure_time)
-                if hdebug.getDebug():
-                    print "  Setting Kinetic Cycle Time"
+
+                hdebug.logText("Setting Kinetic Cycle Time", False)
                 self.cameras[i].setKineticCycleTime(p.kinetic_cycle_time)
-                if hdebug.getDebug():
-                    print "  Setting ADChannel"
+
+                hdebug.logText("Setting ADChannel", False)
                 self.cameras[i].setADChannel(p.adchannel)
+
                 p.head_model = self.cameras[i].getHeadModel()
-                if hdebug.getDebug():
-                    print " Camera Initialized"
+
+                hdebug.logText("Camera Initialized", False)
             except:
-                #if hdebug.getDebug():
-                print "QCameraThread: Bad camera settings"
+                hdebug.logText("andordualCameraControl: Bad camera settings")
+                print traceback.format_exc()
                 self.got_camera = False
-        self.newFilmSettings(parameters)
+        self.newFilmSettings(parameters, False)
+        self.parameters = parameters
 
     ## openShutter
     # 
@@ -289,7 +352,7 @@ class ACameraControl(cameraControl.CameraControl):
     def run(self):
         while(self.running):
             self.mutex.lock()
-            if self.should_acquire and self.got_camera:
+            if self.acquire.amActive() and self.got_camera:
 
                 for i in range(2):
                     # Get data from camera and create frame objects.
@@ -298,41 +361,46 @@ class ACameraControl(cameraControl.CameraControl):
                     # Check if we got new frame data.
                     if (len(frames) > 0):
 
-                        #
                         # Create frame objects.
                         # The first camera is considered to be the master camera.
-                        #
                         if (i==0):
                             master = True
                         else:
                             master = False
+
                         frame_data = []
                         for raw_frame in frames:
-                            frame_data.append(frame.Frame(numpy.fromstring(raw_frame, dtype = numpy.uint16),
-                                                          self.frame_number[i],
-                                                          frame_size[0],
-                                                          frame_size[1],
-                                                          "camera" + str(i+1),
-                                                          master))
+                            aframe = frame.Frame(numpy.fromstring(raw_frame, dtype = numpy.uint16),
+                                                 self.frame_number[i],
+                                                 frame_size[0],
+                                                 frame_size[1],
+                                                 "camera" + str(i+1),
+                                                 master)
+                            frame_data.append(aframe)
                             self.frame_number[i] += 1
 
-                        # Save frames if we are filming.
-                        if self.filming:
-                            for aframe in frame_data:
-                                self.daxfile.saveFrame(aframe)
+                            if self.filming:
+                                if self.daxfile:
+                                    if (self.acq_mode == "fixed_length"):
+                                        if (self.frame_number[i] <= self.frames_to_take):
+                                            self.daxfile.saveFrame(aframe)
+                                    else:
+                                        self.daxfile.saveFrame(aframe)
+            
+                                if (self.acq_mode == "fixed_length") and (self.frame_number[0] == self.frames_to_take):
+                                    self.reached_max_frames = True
+                                    break
 
-                        # Emit new data signal
+                        # Emit new data signal.
                         self.newData.emit(frame_data, self.key)
 
-                    # Emit idle signal if camera 0 is idle.
-                    if (i == 0) and (state == "idle"):
-                        # Signal that camera 0 is idle, but only once.
-                        if not(self.forced_idle):
-                            self.idleCamera.emit()
-                            self.forced_idle = True
+                        # Emit max frames signal.
+                        if self.reached_max_frames:
+                            self.max_frames_sig.emit()
 
             else:
-                self.have_paused = 1
+                self.acquire.idle()
+
             self.mutex.unlock()
             self.msleep(5)
 
@@ -360,17 +428,15 @@ class ACameraControl(cameraControl.CameraControl):
     #
     @hdebug.debug        
     def startCamera(self, key):
-        if self.have_paused:
-            self.mutex.lock()
-            self.key = key
-            self.forced_idle = False
-            self.frame_number = [0, 0]
-            self.should_acquire = 1
-            self.have_paused = 0
-            if self.got_camera:
-                self.cameras[1].startAcquisition()
-                self.cameras[0].startAcquisition()
-            self.mutex.unlock()
+        self.mutex.lock()
+        self.acquire.go()
+        self.key = key
+        self.frame_number = [0, 0]
+        self.max_frames_sig.reset()
+        if self.got_camera:
+            self.cameras[1].startAcquisition()
+            self.cameras[0].startAcquisition()
+        self.mutex.unlock()
 
     ## stopCamera
     #
@@ -378,15 +444,14 @@ class ACameraControl(cameraControl.CameraControl):
     #
     @hdebug.debug
     def stopCamera(self):
-        if self.should_acquire:
+        if self.acquire.amActive():
             self.mutex.lock()
-            self.forced_idle = True
             if self.got_camera:
                 self.cameras[0].stopAcquisition()
                 self.cameras[1].stopAcquisition()
-            self.should_acquire = 0
+            self.acquire.stop()
             self.mutex.unlock()
-            while not self.have_paused:
+            while not self.acquire.amIdle():
                 self.usleep(50)
 
     ## toggleShutter
@@ -407,7 +472,7 @@ class ACameraControl(cameraControl.CameraControl):
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
