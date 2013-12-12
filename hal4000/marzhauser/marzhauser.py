@@ -11,6 +11,8 @@ from ctypes import *
 import sys
 import time
 
+import halLib.hdebug as hdebug
+
 try:
     import halLib.RS232 as RS232
 except:
@@ -123,7 +125,7 @@ class MarzhauserRS232(RS232.RS232):
                 [self.x, self.y] = map(lambda x: float(x)*self.unit_to_um, 
                                        self.commWithResp("?pos")[:-2].split(" "))
             except:
-                print "  Warning: Bad position from Marzhauser stage."
+                hdebug.logText("  Warning: Bad position from Marzhauser stage.")
             return [self.x, self.y, 0.0]
         else:
             return [0.0, 0.0, 0.0]
