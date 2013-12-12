@@ -64,10 +64,6 @@ class CameraDialog(QtGui.QDialog):
         layout.setMargin(0)
         layout.addWidget(self.camera_params)
 
-        self.camera_params.showEMCCD(self.camera_control.haveEMCCD())
-        self.camera_params.showPreamp(self.camera_control.havePreamp())
-        self.camera_params.showTemperature(self.camera_control.haveTemperature())
-            
         # Connect ui elements.
         self.ui.okButton.setText("Close")
         self.ui.okButton.clicked.connect(self.handleOk)
@@ -141,6 +137,16 @@ class DualCamera(genericCamera.Camera):
 
         self.camera_control.reachedMaxFrames.connect(self.handleMaxFrames)
         self.camera_control.newData.connect(self.handleNewFrames)
+
+        # Setup what is displayed in the parameters. This assumes that the
+        # two cameras are more or less identical.
+        self.camera1.camera_params.showEMCCD(self.camera_control.haveEMCCD())
+        self.camera1.camera_params.showPreamp(self.camera_control.havePreamp())
+        self.camera1.camera_params.showTemperature(self.camera_control.haveTemperature())
+
+        self.camera2.camera_params.showEMCCD(self.camera_control.haveEMCCD())
+        self.camera2.camera_params.showPreamp(self.camera_control.havePreamp())
+        self.camera2.camera_params.showTemperature(self.camera_control.haveTemperature())
 
         # Connect ui elements.
         self.camera1.camera_display.ui.cameraShutterButton.clicked.connect(self.toggleShutterCamera1)
@@ -299,9 +305,12 @@ class DualCamera(genericCamera.Camera):
     # Tells the camera control object to start filming &
     # tells the UIs to update themselves accordingly.
     #
+    # @param writer This is a image writing object (halLib/imagewriters).
+    # @param film_setting A film setting object.
+    #
     @hdebug.debug
-    def startFilm(self, writer):
-        self.camera_control.startFilm(writer)
+    def startFilm(self, writer, film_settings):
+        self.camera_control.startFilm(writer, film_settings)
         self.camera1.camera_display.startFilm()
         self.camera2.camera_display.startFilm()
         self.filming = True
