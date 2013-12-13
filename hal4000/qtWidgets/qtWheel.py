@@ -19,19 +19,17 @@ class QAbstractWheel(QtGui.QWidget):
 
     ## __init__
     #
-    # @param current_pos The starting position of the wheel.
-    # @param wheel_range [min, max, single step, multiple step].
     # @param parent (Optional) The PyQt parent of this widget.
     #
-    def __init__(self, current_pos, wheel_range, parent = None):
+    def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
 
-        self.current_pos = current_pos
+        self.current_pos = 0.0
         self.display_pos = 0
-        self.maximum = wheel_range[1]
-        self.minimum = wheel_range[0]
-        self.multiple_step = wheel_range[3]
-        self.single_step = wheel_range[2]
+        self.maximum = 100.0
+        self.minimum = 0.0
+        self.multiple_step = 10.0
+        self.single_step = 1.0
         self.spacing = 20
 
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
@@ -50,7 +48,7 @@ class QAbstractWheel(QtGui.QWidget):
 
         self.display_pos = int(self.current_pos/self.single_step) % self.spacing
 
-        if 1:
+        if 0:
             print self.current_pos, self.display_pos
 
         self.valueChanged.emit(self.current_pos)
@@ -75,6 +73,23 @@ class QAbstractWheel(QtGui.QWidget):
             self.current_pos -= self.multiple_step
 
         self.changed()
+
+    ## setPosition
+    #
+    def setPosition(self, current_pos):
+        if (current_pos != self.current_pos):
+            self.current_pos = current_pos
+            self.display_pos = int(self.current_pos/self.single_step) % self.spacing
+
+            self.changed()
+
+    ## setRange
+    #
+    def setRange(self, wheel_range):
+        self.maximum = wheel_range[1]
+        self.minimum = wheel_range[0]
+        self.multiple_step = wheel_range[3]
+        self.single_step = wheel_range[2]
 
     ## wheelEvent
     #
@@ -103,8 +118,8 @@ class QVWheel(QAbstractWheel):
     # @param wheel_range [min, max, single step, multiple step].
     # @param parent (Optional) The PyQt parent of this widget.
     #
-    def __init__(self, current_pos, wheel_range, parent = None):
-        QAbstractWheel.__init__(self, current_pos, wheel_range, parent)
+    def __init__(self, parent = None):
+        QAbstractWheel.__init__(self, parent)
 
         self.wheel_pixmap = None
 
@@ -154,10 +169,11 @@ class QVWheel(QAbstractWheel):
 #
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
-    vwheel = QVWheel(0.0, [0.0, 6000.0, 0.01, 0.1])
+    vwheel = QVWheel()
+    vwheel.setRange([0.0, 6000.0, 0.01, 0.1])
+    vwheel.setPosition(0.0)
     vwheel.show()
     sys.exit(app.exec_())
-
 
 #
 # The MIT License
