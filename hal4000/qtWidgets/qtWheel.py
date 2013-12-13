@@ -76,6 +76,8 @@ class QAbstractWheel(QtGui.QWidget):
 
     ## setPosition
     #
+    # @param current_pos The new current position for the wheel.
+    #
     def setPosition(self, current_pos):
         if (current_pos != self.current_pos):
             self.current_pos = current_pos
@@ -84,6 +86,8 @@ class QAbstractWheel(QtGui.QWidget):
             self.changed()
 
     ## setRange
+    #
+    # @param wheel_range A python array of [maximum, minimum, multi-step, single-step].
     #
     def setRange(self, wheel_range):
         self.maximum = wheel_range[1]
