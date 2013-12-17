@@ -5,9 +5,6 @@ determining how your sample is laid out on a coverslip.
 The "settings_default.xml" is used to define the setup
 (which objectives are available, camera orientations).
 
-The "Connected" radio button is used to connect to Hal in
-order to take pictures.
-
 "File" -> "Save Positions" will create a list of positions
 that you can use with the Dave program.
 
