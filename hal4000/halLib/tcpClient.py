@@ -102,8 +102,8 @@ class TCPClient(QtGui.QWidget):
     @hdebug.debug
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
+        self.comm_state = None
         self.socket = HALSocket(9000)
-        self.state = None
         self.testing = False
         self.unacknowledged = 0
 
@@ -129,16 +129,16 @@ class TCPClient(QtGui.QWidget):
     #
     @hdebug.debug
     def handleComplete(self, a_string):
-        if (self.state == "filming"):
+        if (self.comm_state == "filming"):
             hdebug.logText(" movie complete " + a_string)
-        elif (self.state == "finding_sum"):
+        elif (self.comm_state == "finding_sum"):
             hdebug.logText(" finding sum complete " + a_string)
-        elif (self.state == "recentering"):
+        elif (self.comm_state == "recentering"):
             hdebug.logText(" recentering complete " + a_string)
         else:
-            hdebug.logText(" unknown state: " + str(self.state))
+            hdebug.logText(" unknown state: " + str(self.comm_state))
+        self.comm_state = None
         self.complete.emit(a_string)
-        self.state = None
 
     ## handleDisconnect
     #
@@ -225,7 +225,7 @@ class TCPClient(QtGui.QWidget):
     @hdebug.debug
     def startFindSum(self):
         hdebug.logText(" start find sum")
-        self.state = "finding_sum"
+        self.comm_state = "finding_sum"
         self.sendCommand("findSum")
 
     ## startMovie
@@ -256,7 +256,7 @@ class TCPClient(QtGui.QWidget):
                         # Fixed power.
                         else:
                             self.sendCommand("setPower,int,{0:d},float,{1:.4f}".format(channel[0], channel[1]))
-        self.state = "filming"
+        self.comm_state = "filming"
         self.sendCommand("movie,string,{0:s},int,{1:d}".format(movie.name, movie.length))
 
     ## startRecenterPiezo
@@ -267,7 +267,7 @@ class TCPClient(QtGui.QWidget):
     @hdebug.debug
     def startRecenterPiezo(self):
         hdebug.logText(" start recenter piezo")
-        self.state = "recentering"
+        self.comm_state = "recentering"
         self.sendCommand("recenterPiezo")
 
     ## stopCommunication
