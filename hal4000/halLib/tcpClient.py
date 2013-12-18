@@ -136,7 +136,7 @@ class TCPClient(QtGui.QWidget):
         elif (self.state == "recentering"):
             hdebug.logText(" recentering complete " + a_string)
         else:
-            hdebug.logText(" unknown state: " + self.state)
+            hdebug.logText(" unknown state: " + str(self.state))
         self.complete.emit(a_string)
         self.state = None
 
