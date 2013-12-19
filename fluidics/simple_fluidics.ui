@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>149</width>
-    <height>143</height>
+    <width>300</width>
+    <height>199</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -21,7 +21,20 @@
     </sizepolicy>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <item row="4" column="0">
+    <item row="5" column="2">
+     <spacer name="horizontalSpacer">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="8" column="0">
      <spacer name="verticalSpacer">
       <property name="orientation">
        <enum>Qt::Vertical</enum>
@@ -29,27 +42,25 @@
       <property name="sizeHint" stdset="0">
        <size>
         <width>20</width>
-        <height>0</height>
+        <height>20</height>
        </size>
       </property>
      </spacer>
     </item>
     <item row="0" column="0">
-     <widget class="QLabel" name="label">
+     <widget class="QLabel" name="currentValveStatus">
+      <property name="font">
+       <font>
+        <pointsize>20</pointsize>
+       </font>
+      </property>
       <property name="text">
        <string>Valve Position</string>
       </property>
      </widget>
     </item>
-    <item row="1" column="0">
-     <widget class="QPushButton" name="pushButton">
-      <property name="text">
-       <string>Change Position</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="0">
-     <widget class="QComboBox" name="comboBox">
+    <item row="5" column="0">
+     <widget class="QComboBox" name="desiredValvePosition">
       <item>
        <property name="text">
         <string>Position 1</string>
@@ -92,18 +103,46 @@
       </item>
      </widget>
     </item>
-    <item row="2" column="1">
-     <spacer name="horizontalSpacer">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+    <item row="6" column="0">
+     <widget class="QComboBox" name="desiredRotationDirection">
+      <item>
+       <property name="text">
+        <string>Clockwise</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Counter Clockwise</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QLabel" name="label_2">
+      <property name="text">
+       <string>New Valve Position</string>
       </property>
-      <property name="sizeHint" stdset="0">
+     </widget>
+    </item>
+    <item row="6" column="1">
+     <widget class="QLabel" name="label_3">
+      <property name="text">
+       <string>Direction</string>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="0">
+     <widget class="QPushButton" name="changeValvePosition">
+      <property name="minimumSize">
        <size>
-        <width>40</width>
-        <height>20</height>
+        <width>100</width>
+        <height>0</height>
        </size>
       </property>
-     </spacer>
+      <property name="text">
+       <string>Change Position</string>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -112,7 +151,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>149</width>
+     <width>300</width>
      <height>21</height>
     </rect>
    </property>
@@ -121,8 +160,7 @@
      <string>File</string>
     </property>
     <addaction name="actionQuit"/>
-    <addaction name="actionInitialize_Hamilton"/>
-    <addaction name="actionReaddress_Hamilton"/>
+    <addaction name="actionInitializeHamilton"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -132,12 +170,12 @@
     <string>Quit</string>
    </property>
   </action>
-  <action name="actionInitialize_Hamilton">
+  <action name="actionInitializeHamilton">
    <property name="text">
     <string>Initialize Hamilton</string>
    </property>
   </action>
-  <action name="actionReaddress_Hamilton">
+  <action name="actionReaddressHamilton">
    <property name="text">
     <string>Readdress Hamilton</string>
    </property>

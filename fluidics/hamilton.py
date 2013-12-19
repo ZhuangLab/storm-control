@@ -1,29 +1,32 @@
 #!/usr/bin/python
-#
-## @file
-#
-# Test of serial interface to Hamilton MVP in Din mode
-#
+# ----------------------------------------------------------------------------------------
+# A basic class for serial interface with a series of daisy chained Hamilton MVP devices
+# ----------------------------------------------------------------------------------------
 # Jeff Moffitt
 # 12/17/13
 # jeffmoffitt@gmail.com
-#
+# ----------------------------------------------------------------------------------------
 
+# ----------------------------------------------------------------------------------------
+# Import
+# ----------------------------------------------------------------------------------------
 import serial
 import sys
 import time
 
+# ----------------------------------------------------------------------------------------
+# Class Definition
+# ----------------------------------------------------------------------------------------
 class HamiltonClass:
-    def __init__(self):
+    def __init__(self, verbose = True, deviceNames = ("a", "b", "c")):
         self.serial = serial.Serial(port = 2, 
                              baudrate = 9600, 
                              bytesize = serial.SEVENBITS, 
                              parity = serial.PARITY_ODD, 
                              stopbits = serial.STOPBITS_ONE, 
-                             timeout = 1)
+                             timeout = 0.1)
         # Define display options
-        self.verbose = True
-        self.asciiVerbose = False
+        self.verbose = verbose
 
         # Define important characters
         self.acknowledge = "\x06"
@@ -32,10 +35,13 @@ class HamiltonClass:
         self.readLength = 64
 
         # Define current valve
-        self.currentDevice = "a"
+        self.currentDevice = deviceNames[0]
+        self.numDevices = len(deviceNames)
+        print "Configured New Hamilton Valves"
         
-        print "Configured new Hamilton Valves"
-
+    # ------------------------------------------------------------------------------------
+    # Basic I/O with Serial Port
+    # ------------------------------------------------------------------------------------
     def InquireAndRespond(self, message, dictionary = {}, default = "Unknown"):
         # Add on current device
         message = self.currentDevice + message
@@ -62,7 +68,10 @@ class HamiltonClass:
             return (default, False, response)
         else:
             return (returnValue, True, response)
-  
+
+    # ------------------------------------------------------------------------------------
+    # Define Device Addresses: Must be First Command Issued
+    # ------------------------------------------------------------------------------------  
     def AutoAddress(self):
         autoAddressString = "1a\r"
         if self.verbose:
@@ -70,12 +79,18 @@ class HamiltonClass:
         x = self.Write(autoAddressString)
         response = self.Read() # Clear buffer
 
+    # ------------------------------------------------------------------------------------
+    # Initialize Position of Device
+    # ------------------------------------------------------------------------------------ 
     def InitializePosition(self):
         return self.InquireAndRespond(message ="LXR\r",
                               dictionary = {},
                               default = "Unknown response")
 
-    def MoveValve(self, portNumber=1, direction = 0, waitUntilDone = True):
+    # ------------------------------------------------------------------------------------
+    # Move Valve
+    # ------------------------------------------------------------------------------------ 
+    def MoveValve(self, portNumber=1, direction = 0, waitUntilDone = False):
         message = "LP" + str(direction) + str(portNumber) + "R\r"
 
         response = self.InquireAndRespond(message)        
@@ -84,20 +99,30 @@ class HamiltonClass:
 
         if waitUntilDone:
             self.WaitUntilNotMoving()
-        
+            
+    # ------------------------------------------------------------------------------------
+    # Poll Movement of Valve
+    # ------------------------------------------------------------------------------------         
     def IsMovementFinished(self):
         return self.InquireAndRespond(message ="F\r",
                               dictionary = {"*": False,
                                             "N": False,
                                             "Y": True},
                               default = "Unknown response")
-    
+
+    # ------------------------------------------------------------------------------------
+    # Poll Overload Status of Valve
+    # ------------------------------------------------------------------------------------       
     def IsValveOverloaded(self):
         return self.InquireAndRespond(message ="G\r",
                                       dictionary = {"*": False,
                                                     "N": False,
                                                     "Y": True},
                                       default = "Unknown response")
+
+    # ------------------------------------------------------------------------------------
+    # Poll Valve Configuration
+    # ------------------------------------------------------------------------------------  
     def HowIsValveConfigured(self):
         return self.InquireAndRespond(message ="LQT\r",
                                       dictionary = {"2": "8 ports",
@@ -107,6 +132,10 @@ class HamiltonClass:
                                                     "6": "2 ports @90",
                                                     "7": "4 ports"},
                                       default = "Unknown response")
+
+    # ------------------------------------------------------------------------------------
+    # Poll Valve Location
+    # ------------------------------------------------------------------------------------    
     def WhereIsValve(self):
         return self.InquireAndRespond(message ="LQP\r",
                               dictionary = {"1": "Position 1",
@@ -119,6 +148,9 @@ class HamiltonClass:
                                             "8": "Position 8"},
                               default = "Unknown response")
 
+    # ------------------------------------------------------------------------------------
+    # Halt Hamilton Class Until Movement is Finished
+    # ------------------------------------------------------------------------------------
     def WaitUntilNotMoving(self, pauseTime = 1):
         doneMoving = False
         while not doneMoving:
@@ -126,31 +158,34 @@ class HamiltonClass:
             doneMoving = response[0]
             time.sleep(pauseTime)
 
+    # ------------------------------------------------------------------------------------
+    # Read from Serial Port
+    # ------------------------------------------------------------------------------------
     def Read(self):
         response = self.serial.read(self.readLength)
         if self.verbose:
             print "Received: " + str((response, ""))
-        if self.asciiVerbose:
-           print "Ascii response: " + str(self.StringToAsciiArray(response))
         return response
-    
+
+    # ------------------------------------------------------------------------------------
+    # Write to Serial Port
+    # ------------------------------------------------------------------------------------    
     def Write(self, message):
         self.serial.write(message)
         if self.verbose:
             print "Wrote: " + message[:-1] # Display all but final carriage return
 
-    def StringToAsciiArray(self, string):
-        asciiCharArray = ""
-        for letter in string:
-            asciiCharArray += str(ord(letter)) + " "
-
-        return asciiCharArray
-
+    # ------------------------------------------------------------------------------------
+    # Close Serial Port
+    # ------------------------------------------------------------------------------------ 
     def Close(self):
         self.serial.close()
         if self.verbose:
             print "Closed serial port"
-        
+
+# ----------------------------------------------------------------------------------------
+# Test/Demo of Classs
+# ----------------------------------------------------------------------------------------
 if __name__ == '__main__':
     hamilton = HamiltonClass()
     hamilton.AutoAddress()
