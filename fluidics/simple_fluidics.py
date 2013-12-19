@@ -24,15 +24,13 @@ class Window(QtGui.QMainWindow):
         self.ui.setupUi(self)
 
         # Initialize hamilton class
-        self.hamilton = hamilton.HamiltonClass(verbose = False, deviceNames = "a")
-        self.hamilton.AutoAddress()
-        self.hamilton.InitializePosition()
+        self.hamilton = hamilton.HamiltonMVP(verbose = False)
         
-        self.isMoving = not self.hamilton.IsMovementFinished()[0]
         self.currentValvePosition = "Initializing"
-
         self.ui.currentValveStatus.setText(self.currentValvePosition)
 
+        self.PollValveStatus()
+        
         # Connect File Pull Down Signals
         self.ui.actionQuit.triggered.connect(self.Quit)
         self.ui.actionInitializeHamilton.triggered.connect(self.hamilton.InitializePosition)
