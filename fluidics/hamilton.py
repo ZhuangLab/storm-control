@@ -22,35 +22,38 @@ class HamiltonClass:
                              stopbits = serial.STOPBITS_ONE, 
                              timeout = 1)
         # Define display options
-        self.verbose = True
-        self.asciiVerbose = True
+        self.verbose = False
+        self.asciiVerbose = False
 
         # Define important characters
         self.acknowledge = "\x06"
         self.carriageReturn = "\x13"
         self.negativeAcknowledge = "\x21"
+        self.readLength = 64
         
-        print "Configured new Hamilton Valve"
+        print "Configured new Hamilton Valves"
 
-    def InquireAndRespond(self, message, dictionary, default):
+    def InquireAndRespond(self, message, dictionary = {}, default = "Unknown"):
         self.Write(message = message)
         response = self.Read()
-
+        
         # Parse response into sent message and response
         if len(response) >= len(message):
-            repeatedMessage = response[:response.find(self.carriageReturn)]
-            actualResponse = response[response.find(self.carriageReturn):
-                                      response.rfind(self.carriageReturn)]
-            actualResponse = actualResponse[1:-1] # remove carriage returns
+            repeatedMessage = response[:(response.find(self.carriageReturn)-1)]
+            actualResponse = response[(response.find(self.carriageReturn)-1):
+                                      (response.rfind(self.carriageReturn))]
+            actualResponse = actualResponse # remove carriage returns
         else:
             return ("Short response", False, response)
                 
-        # Check for negative awcknowledge
+        # Check for negative acknowledge
         if actualResponse == self.negativeAcknowledge:
             return ("Negative Acknowledge", False, response)
 
         # Parse dictionary with response
         returnValue = dictionary.get(actualResponse, default)
+        if self.verbose:
+            print "Parsed: " + str(actualResponse)
         if returnValue == default:
             return (default, False, response)
         else:
@@ -64,7 +67,7 @@ class HamiltonClass:
         x = self.serial.write(autoAddressString)
         if self.verbose:
             print "Wrote " + str(x) + " bytes" 
-        returnString = self.serial.read(64);
+        returnString = self.serial.read(self.readLength);
 
         if self.verbose:
             print "Hamilton Responded: " + returnString
@@ -77,48 +80,31 @@ class HamiltonClass:
         x = self.serial.write(initializePosition)
         if self.verbose:
             print "Wrote " + str(x) + " bytes" 
-        returnString = self.serial.read(64);
+        returnString = self.serial.read(self.readLength);
 
         if self.verbose:
             print "Hamilton Responded: " + returnString
 
-    def MoveToPort(self, portNumber):
-        moveToString = "aLP1" + str(portNumber) + "R\r"
-        if self.verbose:
-            print "Moving to port " + str(portNumber)
-            print "Issuing: " + moveToString
+    def MoveValve(self, portNumber=1, direction = 0, waitUntilDone = True):
+        message = "aLP" + str(direction) + str(portNumber) + "R\r"
 
-        x = self.serial.write(moveToString)
-        if self.verbose:
-            print "Wrote " + str(x) + " bytes" 
-        returnString = self.serial.read(64)
-        if self.verbose:
-            print "Hamilton Responded: " + returnString
-                        
-    def WhatIsValvePosition(self):
-        inquiryString = "aLPQR\r"
-        if self.verbose:
-            print "Valve location inquiry"
-            print "Issuing: " + inquiryString
+        response = self.InquireAndRespond(message)        
+        if response[0] == "Negative Acknowledge":
+            print "Move failed: " + str(response)
 
-        x = self.serial.write(inquiryString)
-        if self.verbose:
-            print "Wrote " + str(x) + " bytes" 
-        returnString = self.serial.read(64)
-        if self.verbose:
-            print "Hamilton Responded: " + returnString
+        while waitUntilDone:
+            print str(waitUntilDone)
 
-    def WhatIsStatus(self):
-        inquiryString = "aE1R\r"
-        if self.verbose:
-            print "Status inquiry"
-            print "Issuing: " + inquiryString
-        x = self.serial.write(inquiryString)
-        if self.verbose:
-            print "Wrote " + str(x) + " bytes"
-        returnString = self.serial.read(64)
-        if self.verbose:
-            print "Hamilton Responded: " + returnString
+            response = self.IsMovementFinished()
+            print "Is done: " + str(response)
+            waitUntilDone = ~response[0]
+        
+##    def WhatIsStatus(self):
+##        return self.InquireAndRespond(message ="aE1\r",
+##                              dictionary = {"*": False,
+##                                            "N": False,
+##                                            "Y": True},
+##                              default = "Unknown response")
 
     def IsMovementFinished(self):
         return self.InquireAndRespond(message ="aF\r",
@@ -128,7 +114,7 @@ class HamiltonClass:
                               default = "Unknown response")
     
     def IsValveOverloaded(self):
-        return self.InquireAndRespond(message ="aLQT\r",
+        return self.InquireAndRespond(message ="aG\r",
                                       dictionary = {"*": False,
                                                     "N": False,
                                                     "Y": True},
@@ -142,13 +128,23 @@ class HamiltonClass:
                                                     "6": "2 ports @90",
                                                     "7": "4 ports"},
                                       default = "Unknown response")
-
+    def WhereIsValve(self):
+        return self.InquireAndRespond(message ="aLQP\r",
+                              dictionary = {"1": "Position 1",
+                                            "2": "Position 2",
+                                            "3": "Position 3",
+                                            "4": "Position 4",
+                                            "5": "Position 5",
+                                            "6": "Position 6",
+                                            "7": "Position 7",
+                                            "8": "Position 8"},
+                              default = "Unknown response")
     def Read(self):
-        response = self.serial.read(64)
-##        if self.verbose:
-##            print "Received: " + str(response)
-##        if self.asciiVerbose:
-##            print "Ascii response: " + str(self.StringToAsciiArray(response))
+        response = self.serial.read(self.readLength)
+        if self.verbose:
+            print "Received: " + str(response)
+        if self.asciiVerbose:
+           print "Ascii response: " + str(self.StringToAsciiArray(response))
         return response
     
     def Write(self, message):
@@ -168,21 +164,27 @@ class HamiltonClass:
             print "Closed serial port"
         
 if __name__ == '__main__':
-
     hamilton = HamiltonClass()
-    hamilton.AutoAddress()
-    hamilton.InitializePosition()
-    #hamilton.WhatIsStatus()
-    print hamilton.IsMovementFinished()
-    time.sleep(5)
-    print hamilton.IsMovementFinished()
-    print "Is valve overloaded: " + str(hamilton.IsValveOverloaded())
+    #hamilton.AutoAddress()
     print "How is valve configured:" + str(hamilton.HowIsValveConfigured())
+    hamilton.InitializePosition()
+    print "Is movement finished: " + str(hamilton.IsMovementFinished())
+    time.sleep(5)
+    print "Is movement finished: " + str(hamilton.IsMovementFinished())
+    print "Valve Position: " + str(hamilton.WhereIsValve())
+    print "Moving Valve to 3"
+    hamilton.MoveValve(portNumber = 3, direction = 0)
+    print "Is movement finished: " + str(hamilton.IsMovementFinished())
+    time.sleep(5)
+    
+
+    #print hamilton.IsMovementFinished()
+    #time.sleep(5)
+    #print hamilton.IsMovementFinished()
+    #print "Is valve overloaded: " + str(hamilton.IsValveOverloaded())
     #time.sleep(5)
     #hamilton.WhatIsValvePosition()
     hamilton.Close()
-
-
 
 #
 # The MIT License
