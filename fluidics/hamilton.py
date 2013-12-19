@@ -22,7 +22,7 @@ class HamiltonClass:
                              stopbits = serial.STOPBITS_ONE, 
                              timeout = 1)
         # Define display options
-        self.verbose = False
+        self.verbose = True
         self.asciiVerbose = False
 
         # Define important characters
@@ -30,10 +30,16 @@ class HamiltonClass:
         self.carriageReturn = "\x13"
         self.negativeAcknowledge = "\x21"
         self.readLength = 64
+
+        # Define current valve
+        self.currentDevice = "a"
         
         print "Configured new Hamilton Valves"
 
     def InquireAndRespond(self, message, dictionary = {}, default = "Unknown"):
+        # Add on current device
+        message = self.currentDevice + message
+        
         self.Write(message = message)
         response = self.Read()
         
@@ -49,11 +55,9 @@ class HamiltonClass:
         # Check for negative acknowledge
         if actualResponse == self.negativeAcknowledge:
             return ("Negative Acknowledge", False, response)
-
+        
         # Parse dictionary with response
         returnValue = dictionary.get(actualResponse, default)
-        if self.verbose:
-            print "Parsed: " + str(actualResponse)
         if returnValue == default:
             return (default, False, response)
         else:
@@ -63,64 +67,39 @@ class HamiltonClass:
         autoAddressString = "1a\r"
         if self.verbose:
             print "Autoaddressing Hamilton Valves"
-            print "Sending: " + autoAddressString
-        x = self.serial.write(autoAddressString)
-        if self.verbose:
-            print "Wrote " + str(x) + " bytes" 
-        returnString = self.serial.read(self.readLength);
-
-        if self.verbose:
-            print "Hamilton Responded: " + returnString
+        x = self.Write(autoAddressString)
+        response = self.Read() # Clear buffer
 
     def InitializePosition(self):
-        initializePosition = "aLXR\r"
-        if self.verbose:
-            print "Initializing Position"
-            print "Sending: " + initializePosition
-        x = self.serial.write(initializePosition)
-        if self.verbose:
-            print "Wrote " + str(x) + " bytes" 
-        returnString = self.serial.read(self.readLength);
-
-        if self.verbose:
-            print "Hamilton Responded: " + returnString
+        return self.InquireAndRespond(message ="LXR\r",
+                              dictionary = {},
+                              default = "Unknown response")
 
     def MoveValve(self, portNumber=1, direction = 0, waitUntilDone = True):
-        message = "aLP" + str(direction) + str(portNumber) + "R\r"
+        message = "LP" + str(direction) + str(portNumber) + "R\r"
 
         response = self.InquireAndRespond(message)        
         if response[0] == "Negative Acknowledge":
             print "Move failed: " + str(response)
 
-        while waitUntilDone:
-            print str(waitUntilDone)
-
-            response = self.IsMovementFinished()
-            print "Is done: " + str(response)
-            waitUntilDone = ~response[0]
+        if waitUntilDone:
+            self.WaitUntilNotMoving()
         
-##    def WhatIsStatus(self):
-##        return self.InquireAndRespond(message ="aE1\r",
-##                              dictionary = {"*": False,
-##                                            "N": False,
-##                                            "Y": True},
-##                              default = "Unknown response")
-
     def IsMovementFinished(self):
-        return self.InquireAndRespond(message ="aF\r",
+        return self.InquireAndRespond(message ="F\r",
                               dictionary = {"*": False,
                                             "N": False,
                                             "Y": True},
                               default = "Unknown response")
     
     def IsValveOverloaded(self):
-        return self.InquireAndRespond(message ="aG\r",
+        return self.InquireAndRespond(message ="G\r",
                                       dictionary = {"*": False,
                                                     "N": False,
                                                     "Y": True},
                                       default = "Unknown response")
     def HowIsValveConfigured(self):
-        return self.InquireAndRespond(message ="aLQT\r",
+        return self.InquireAndRespond(message ="LQT\r",
                                       dictionary = {"2": "8 ports",
                                                     "3": "6 ports",
                                                     "4": "3 ports",
@@ -129,7 +108,7 @@ class HamiltonClass:
                                                     "7": "4 ports"},
                                       default = "Unknown response")
     def WhereIsValve(self):
-        return self.InquireAndRespond(message ="aLQP\r",
+        return self.InquireAndRespond(message ="LQP\r",
                               dictionary = {"1": "Position 1",
                                             "2": "Position 2",
                                             "3": "Position 3",
@@ -139,17 +118,26 @@ class HamiltonClass:
                                             "7": "Position 7",
                                             "8": "Position 8"},
                               default = "Unknown response")
+
+    def WaitUntilNotMoving(self, pauseTime = 1):
+        doneMoving = False
+        while not doneMoving:
+            response = self.IsMovementFinished()
+            doneMoving = response[0]
+            time.sleep(pauseTime)
+
     def Read(self):
         response = self.serial.read(self.readLength)
         if self.verbose:
-            print "Received: " + str(response)
+            print "Received: " + str((response, ""))
         if self.asciiVerbose:
            print "Ascii response: " + str(self.StringToAsciiArray(response))
         return response
     
     def Write(self, message):
         self.serial.write(message)
-        print "Wrote: " + message[:-1] # Display all but final carriage return
+        if self.verbose:
+            print "Wrote: " + message[:-1] # Display all but final carriage return
 
     def StringToAsciiArray(self, string):
         asciiCharArray = ""
@@ -165,7 +153,7 @@ class HamiltonClass:
         
 if __name__ == '__main__':
     hamilton = HamiltonClass()
-    #hamilton.AutoAddress()
+    hamilton.AutoAddress()
     print "How is valve configured:" + str(hamilton.HowIsValveConfigured())
     hamilton.InitializePosition()
     print "Is movement finished: " + str(hamilton.IsMovementFinished())
@@ -174,16 +162,8 @@ if __name__ == '__main__':
     print "Valve Position: " + str(hamilton.WhereIsValve())
     print "Moving Valve to 3"
     hamilton.MoveValve(portNumber = 3, direction = 0)
-    print "Is movement finished: " + str(hamilton.IsMovementFinished())
-    time.sleep(5)
-    
+    print "Where is valve: " + str(hamilton.WhereIsValve())
 
-    #print hamilton.IsMovementFinished()
-    #time.sleep(5)
-    #print hamilton.IsMovementFinished()
-    #print "Is valve overloaded: " + str(hamilton.IsValveOverloaded())
-    #time.sleep(5)
-    #hamilton.WhatIsValvePosition()
     hamilton.Close()
 
 #
