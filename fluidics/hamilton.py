@@ -41,6 +41,9 @@ class HamiltonMVP:
         self.currentDevice = ""
         self.numDevices = 0
         self.valveConfigurations = []
+
+        # Configure Device
+        self.AutoAddress()
         self.AutoDetectValves()        
 
     # ------------------------------------------------------------------------------------
@@ -75,6 +78,10 @@ class HamiltonMVP:
         for deviceID in range(self.numDevices):
             print "Device " + self.deviceNames[deviceID] + " is configured with " + self.valveConfigurations[deviceID]
 
+        # Wait for initialization movement to finish before progressing
+        self.currentDevice = self.deviceNames[-1]
+        self.WaitUntilNotMoving()
+        self.currentDevice = self.deviceNames[0]
         
     # ------------------------------------------------------------------------------------
     # Basic I/O with Serial Port
@@ -242,7 +249,6 @@ if __name__ == '__main__':
     #print "Moving Valve to 3"
     #hamilton.MoveValve(portNumber = 3, direction = 0)
     #print "Where is valve: " + str(hamilton.WhereIsValve())
-
     hamilton.Close()
 
 #
