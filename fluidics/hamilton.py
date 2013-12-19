@@ -17,14 +17,15 @@ import time
 # ----------------------------------------------------------------------------------------
 # Class Definition
 # ----------------------------------------------------------------------------------------
-class HamiltonClass:
-    def __init__(self, verbose = True, deviceNames = ("a", "b", "c")):
+class HamiltonMVP:
+    def __init__(self, verbose = True):
         self.serial = serial.Serial(port = 2, 
                              baudrate = 9600, 
                              bytesize = serial.SEVENBITS, 
                              parity = serial.PARITY_ODD, 
                              stopbits = serial.STOPBITS_ONE, 
                              timeout = 0.1)
+
         # Define display options
         self.verbose = verbose
 
@@ -34,10 +35,46 @@ class HamiltonClass:
         self.negativeAcknowledge = "\x21"
         self.readLength = 64
 
-        # Define current valve
-        self.currentDevice = deviceNames[0]
-        self.numDevices = len(deviceNames)
-        print "Configured New Hamilton Valves"
+        # Define default valve
+        self.maxDevices = 16
+        self.deviceNames = []
+        self.currentDevice = ""
+        self.numDevices = 0
+        self.valveConfigurations = []
+        self.AutoDetectValves()        
+
+    # ------------------------------------------------------------------------------------
+    # Auto Detect and Configure Valves
+    # ------------------------------------------------------------------------------------
+    def AutoDetectValves(self):
+        charOffset = 97;
+        for deviceID in range(self.maxDevices):
+            deviceAddressCharacter = chr(deviceID + charOffset)  
+            self.currentDevice = deviceAddressCharacter
+            if self.verbose:
+                print "Detecting device with address: " + self.currentDevice
+
+            response = self.InitializePosition()
+            if response[0] == "Acknowledge":
+                response = self.HowIsValveConfigured()
+                if response[1]:
+                    self.deviceNames.append(self.currentDevice)
+                    self.valveConfigurations.append(response[0])
+                    if self.verbose:
+                        print "Found " + response[0] + " device at address " + self.currentDevice
+
+        self.numDevices = len(self.deviceNames)
+
+        if self.numDevices == 0:
+            self.deviceNames = "0"
+            print "Error: no valves discovered"
+        else:
+            self.currentDevice = self.deviceNames[0]
+
+        print "Found " + str(self.numDevices) + " MVP Units"
+        for deviceID in range(self.numDevices):
+            print "Device " + self.deviceNames[deviceID] + " is configured with " + self.valveConfigurations[deviceID]
+
         
     # ------------------------------------------------------------------------------------
     # Basic I/O with Serial Port
@@ -61,6 +98,10 @@ class HamiltonClass:
         # Check for negative acknowledge
         if actualResponse == self.negativeAcknowledge:
             return ("Negative Acknowledge", False, response)
+
+        # Check for acknowledge only
+        if actualResponse == self.acknowledge:
+            return ("Acknowledge", True, response)
         
         # Parse dictionary with response
         returnValue = dictionary.get(actualResponse, default)
@@ -83,10 +124,13 @@ class HamiltonClass:
     # Initialize Position of Device
     # ------------------------------------------------------------------------------------ 
     def InitializePosition(self):
-        return self.InquireAndRespond(message ="LXR\r",
-                              dictionary = {},
-                              default = "Unknown response")
+        responseTuple = self.InquireAndRespond(message ="LXR\r",
+                                               dictionary = {},
+                                               default = "Unknown response")
+        if self.verbose:
+            print "Initialization Response:" + str(responseTuple)
 
+        return responseTuple
     # ------------------------------------------------------------------------------------
     # Move Valve
     # ------------------------------------------------------------------------------------ 
@@ -187,17 +231,17 @@ class HamiltonClass:
 # Test/Demo of Classs
 # ----------------------------------------------------------------------------------------
 if __name__ == '__main__':
-    hamilton = HamiltonClass()
-    hamilton.AutoAddress()
-    print "How is valve configured:" + str(hamilton.HowIsValveConfigured())
-    hamilton.InitializePosition()
-    print "Is movement finished: " + str(hamilton.IsMovementFinished())
-    time.sleep(5)
-    print "Is movement finished: " + str(hamilton.IsMovementFinished())
-    print "Valve Position: " + str(hamilton.WhereIsValve())
-    print "Moving Valve to 3"
-    hamilton.MoveValve(portNumber = 3, direction = 0)
-    print "Where is valve: " + str(hamilton.WhereIsValve())
+    hamilton = HamiltonMVP()
+    #hamilton.AutoAddress()
+    #print "How is valve configured:" + str(hamilton.HowIsValveConfigured())
+    #hamilton.InitializePosition()
+    #print "Is movement finished: " + str(hamilton.IsMovementFinished())
+    #time.sleep(5)
+    #print "Is movement finished: " + str(hamilton.IsMovementFinished())
+    #print "Valve Position: " + str(hamilton.WhereIsValve())
+    #print "Moving Valve to 3"
+    #hamilton.MoveValve(portNumber = 3, direction = 0)
+    #print "Where is valve: " + str(hamilton.WhereIsValve())
 
     hamilton.Close()
 
