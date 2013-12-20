@@ -18,10 +18,6 @@ class Main(QtGui.QMainWindow):
     def __init__(self, parent = None):
         super(Main, self).__init__(parent)
 
-        # main button
-        self.addButton = QtGui.QPushButton('button to add other widgets')
-        self.addButton.clicked.connect(self.addValveControl)
-
         # scroll area widget contents - layout
         self.scrollLayout = QtGui.QFormLayout()
 
@@ -38,17 +34,19 @@ class Main(QtGui.QMainWindow):
         self.mainLayout = QtGui.QVBoxLayout()
 
         # add all main to the main vLayout
-        self.mainLayout.addWidget(self.addButton)
         self.mainLayout.addWidget(self.scrollArea)
 
+        self.valveCount = 1
+
+        for i in range(3):
+            self.addValveControl()
+        
         # central widget
         self.centralWidget = QtGui.QWidget()
         self.centralWidget.setLayout(self.mainLayout)
 
         # set central widget
         self.setCentralWidget(self.centralWidget)
-
-        self.valveCount = 1
         
     def addValveControl(self):
         
@@ -77,9 +75,12 @@ class Main(QtGui.QMainWindow):
 
         # Define Push Button
         self.valveMoveButton = QtGui.QPushButton("Move Valve")
-        self.valveMoveButton.clicked.connect(self.IssueMoveCommand)
+        self.valveMoveButton.clicked.connect(self.valveMoveButtonCurrentIndex)
 
-        layout = QtGui.QVBoxLayout()
+        slotLambda = lambda: self.valveMoveButtonCurrentIndex_lambda("some_value")
+        self.valveMoveButton.clicked.connect(slotLambda)
+
+        layout = QtGui.QHBoxLayout()
         layout.addWidget(self.valveStatusLabel)
         layout.addWidget(self.desiredValvePosition)
         layout.addWidget(self.desiredRotationDirection)
@@ -89,6 +90,14 @@ class Main(QtGui.QMainWindow):
         self.scrollLayout.addRow(layout)
         self.valveCount += 1
 
+    @QtCore.pyqtSlot(int)
+    def valveMoveButtonCurrentIndex(self, value):
+        print "Issued Move from Index" + str(value)
+
+    @QtCore.pyqtSlot(str)
+    def valveMoveButtonCurrentIndex_lambda(self, string):
+        print "Issued Move from Index" + string
+    
     def IssueMoveCommand(self):
         print "Issued Move Command From: " + str(self.sender())
         
