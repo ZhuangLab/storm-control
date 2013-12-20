@@ -17,7 +17,7 @@ import time
 # ----------------------------------------------------------------------------------------
 # Class Definition
 # ----------------------------------------------------------------------------------------
-class HamiltonMVP:
+class HamiltonMVP():
     def __init__(self, verbose = True):
         self.serial = serial.Serial(port = 2, 
                              baudrate = 9600, 
@@ -43,23 +43,23 @@ class HamiltonMVP:
         self.valveConfigurations = []
 
         # Configure Device
-        self.AutoAddress()
-        self.AutoDetectValves()
+        self.autoAddress()
+        self.autoDetectValves()
         
     # ------------------------------------------------------------------------------------
     # Define Device Addresses: Must be First Command Issued
     # ------------------------------------------------------------------------------------  
-    def AutoAddress(self):
+    def autoAddress(self):
         autoAddressString = "1a\r"
         if self.verbose:
             print "Autoaddressing Hamilton Valves"
-        x = self.Write(autoAddressString)
-        response = self.Read() # Clear buffer
+        x = self.write(autoAddressString)
+        response = self.read() # Clear buffer
 
     # ------------------------------------------------------------------------------------
     # Auto Detect and Configure Valves
     # ------------------------------------------------------------------------------------
-    def AutoDetectValves(self):
+    def autoDetectValves(self):
         charOffset = 97;
         for deviceID in range(self.maxDevices):
             deviceAddressCharacter = chr(deviceID + charOffset)  
@@ -67,9 +67,9 @@ class HamiltonMVP:
             if self.verbose:
                 print "Detecting device with address: " + self.currentDevice
 
-            response = self.InitializePosition()
+            response = self.initializePosition()
             if response[0] == "Acknowledge":
-                response = self.HowIsValveConfigured()
+                response = self.howIsValveConfigured()
                 if response[1]:
                     self.deviceNames.append(self.currentDevice)
                     self.valveConfigurations.append(response[0])
@@ -90,18 +90,18 @@ class HamiltonMVP:
 
         # Wait for initialization movement to finish before progressing
         self.currentDevice = self.deviceNames[-1]
-        self.WaitUntilNotMoving()
+        self.waitUntilNotMoving()
         self.currentDevice = self.deviceNames[0]
         
     # ------------------------------------------------------------------------------------
     # Basic I/O with Serial Port
     # ------------------------------------------------------------------------------------
-    def InquireAndRespond(self, message, dictionary = {}, default = "Unknown"):
+    def inquireAndRespond(self, message, dictionary = {}, default = "Unknown"):
         # Add on current device
         message = self.currentDevice + message
         
-        self.Write(message = message)
-        response = self.Read()
+        self.write(message = message)
+        response = self.read()
         
         # Parse response into sent message and response
         if len(response) >= len(message):
@@ -130,8 +130,8 @@ class HamiltonMVP:
     # ------------------------------------------------------------------------------------
     # Initialize Position of Device
     # ------------------------------------------------------------------------------------ 
-    def InitializePosition(self):
-        responseTuple = self.InquireAndRespond(message ="LXR\r",
+    def initializePosition(self):
+        responseTuple = self.inquireAndRespond(message ="LXR\r",
                                                dictionary = {},
                                                default = "Unknown response")
         if self.verbose:
@@ -141,21 +141,21 @@ class HamiltonMVP:
     # ------------------------------------------------------------------------------------
     # Move Valve
     # ------------------------------------------------------------------------------------ 
-    def MoveValve(self, portNumber=1, direction = 0, waitUntilDone = False):
+    def moveValve(self, portNumber=1, direction = 0, waitUntilDone = False):
         message = "LP" + str(direction) + str(portNumber) + "R\r"
 
-        response = self.InquireAndRespond(message)        
+        response = self.inquireAndRespond(message)        
         if response[0] == "Negative Acknowledge":
             print "Move failed: " + str(response)
 
         if waitUntilDone:
-            self.WaitUntilNotMoving()
+            self.waitUntilNotMoving()
             
     # ------------------------------------------------------------------------------------
     # Poll Movement of Valve
     # ------------------------------------------------------------------------------------         
-    def IsMovementFinished(self):
-        return self.InquireAndRespond(message ="F\r",
+    def isMovementFinished(self):
+        return self.inquireAndRespond(message ="F\r",
                               dictionary = {"*": False,
                                             "N": False,
                                             "Y": True},
@@ -164,8 +164,8 @@ class HamiltonMVP:
     # ------------------------------------------------------------------------------------
     # Poll Overload Status of Valve
     # ------------------------------------------------------------------------------------       
-    def IsValveOverloaded(self):
-        return self.InquireAndRespond(message ="G\r",
+    def isValveOverloaded(self):
+        return self.inquireAndRespond(message ="G\r",
                                       dictionary = {"*": False,
                                                     "N": False,
                                                     "Y": True},
@@ -174,8 +174,8 @@ class HamiltonMVP:
     # ------------------------------------------------------------------------------------
     # Poll Valve Configuration
     # ------------------------------------------------------------------------------------  
-    def HowIsValveConfigured(self):
-        return self.InquireAndRespond(message ="LQT\r",
+    def howIsValveConfigured(self):
+        return self.inquireAndRespond(message ="LQT\r",
                                       dictionary = {"2": "8 ports",
                                                     "3": "6 ports",
                                                     "4": "3 ports",
@@ -185,10 +185,26 @@ class HamiltonMVP:
                                       default = "Unknown response")
 
     # ------------------------------------------------------------------------------------
+    # Poll Valve Configuration
+    # ------------------------------------------------------------------------------------  
+    def whatIsValveConfiguration(self):
+        return self.valveConfigurations[self.currentDevice]
+
+    # ------------------------------------------------------------------------------------
+    # Set Current Valve
+    # ------------------------------------------------------------------------------------  
+    def setCurrentValve(self, valve_ID=0):
+        if valve_ID > (self.numDevices - 1):
+            print "Requested valve does not exist"
+            return False
+        else:
+            self.currentDevice = valve_ID
+
+    # ------------------------------------------------------------------------------------
     # Poll Valve Location
     # ------------------------------------------------------------------------------------    
-    def WhereIsValve(self):
-        return self.InquireAndRespond(message ="LQP\r",
+    def whereIsValve(self):
+        return self.inquireAndRespond(message ="LQP\r",
                               dictionary = {"1": "Position 1",
                                             "2": "Position 2",
                                             "3": "Position 3",
@@ -202,17 +218,23 @@ class HamiltonMVP:
     # ------------------------------------------------------------------------------------
     # Halt Hamilton Class Until Movement is Finished
     # ------------------------------------------------------------------------------------
-    def WaitUntilNotMoving(self, pauseTime = 1):
+    def waitUntilNotMoving(self, pauseTime = 1):
         doneMoving = False
         while not doneMoving:
-            response = self.IsMovementFinished()
+            response = self.isMovementFinished()
             doneMoving = response[0]
             time.sleep(pauseTime)
 
     # ------------------------------------------------------------------------------------
+    # Determine number of active valves
+    # ------------------------------------------------------------------------------------
+    def howManyValves(self):
+        return self.numDevices
+
+    # ------------------------------------------------------------------------------------
     # Read from Serial Port
     # ------------------------------------------------------------------------------------
-    def Read(self):
+    def read(self):
         response = self.serial.read(self.readLength)
         if self.verbose:
             print "Received: " + str((response, ""))
@@ -221,7 +243,7 @@ class HamiltonMVP:
     # ------------------------------------------------------------------------------------
     # Write to Serial Port
     # ------------------------------------------------------------------------------------    
-    def Write(self, message):
+    def write(self, message):
         self.serial.write(message)
         if self.verbose:
             print "Wrote: " + message[:-1] # Display all but final carriage return
@@ -229,7 +251,7 @@ class HamiltonMVP:
     # ------------------------------------------------------------------------------------
     # Close Serial Port
     # ------------------------------------------------------------------------------------ 
-    def Close(self):
+    def close(self):
         self.serial.close()
         if self.verbose:
             print "Closed serial port"
@@ -237,7 +259,7 @@ class HamiltonMVP:
     # ------------------------------------------------------------------------------------
     # Reset Hamilton: Readdress and redetect valves
     # ------------------------------------------------------------------------------------  
-    def ResetHamilton(self):
+    def resetHamilton(self):
         # Reset device configuration
         self.deviceNames = []
         self.currentDevice = ""
@@ -264,7 +286,7 @@ if __name__ == '__main__':
     #print "Moving Valve to 3"
     #hamilton.MoveValve(portNumber = 3, direction = 0)
     #print "Where is valve: " + str(hamilton.WhereIsValve())
-    hamilton.Close()
+    hamilton.close()
 
 #
 # The MIT License
