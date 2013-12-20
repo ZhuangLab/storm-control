@@ -3,9 +3,10 @@
 import os
 import sys
 import time
+import hamilton
 from PyQt4 import QtCore, QtGui
 
-import fluidics_ui as fluidicsUi
+import ui_fluidics as fluidicsUi
 
 #
 # Main window
@@ -13,35 +14,76 @@ import fluidics_ui as fluidicsUi
 class Window(QtGui.QMainWindow):
     def __init__(self, parent = None):
         QtGui.QMainWindow.__init__(self, parent)
-        self.current_position = 0
-        self.valve_timer = QtCore.QTimer()
-        self.valve_pos = 0
 
-        self.valve_timer.setInterval(100)
-        self.valve_timer.timeout.connect(self.handleValveTimer)
+        # Define timer for periodic polling of valve status
+        self.valve_poll_timer = QtCore.QTimer()        
+        self.valve_poll_timer.setInterval(1000)
+        #self.valve_poll_timer.timeout.connect(self.PollValveStatus)
 
-        # ui setup
+         # ui setup
         self.ui = fluidicsUi.Ui_MainWindow()
         self.ui.setupUi(self)
 
-        self.buttons = [self.ui.pos1RadioButton,
-                        self.ui.pos2RadioButton,
-                        self.ui.pos3RadioButton,
-                        self.ui.pos4RadioButton,
-                        self.ui.pos5RadioButton,
-                        self.ui.pos6RadioButton,
-                        self.ui.pos7RadioButton,
-                        self.ui.pos8RadioButton]
+        # Initialize hamilton class
+        self.hamilton = hamilton.HamiltonMVP(verbose = False)
 
-        #self.buttons[self.hamilton.getCurrentPosition()].setChecked()
+        # Add valve widgets based on the number of valves
+        self.ui.statusLabels = []
+        self.ui.desiredPositions = []
+        self.ui.desiredRotations = []
+        self.ui.valveButtons = []
+        self.ui.valveControlIDs = []
+        for i in range(self.hamilton.numDevices):
+            self.addValveControl(i)
 
-        # connect signals
-        self.ui.actionQuit.triggered.connect(self.quit)
-        for button in self.buttons:
-            button.clicked.connect(self.handleRadioButton)
+        # Connect Pull Down Menu Items: File
+        self.ui.actionQuit.triggered.connect(self.Quit)
+        
+    def addValveControl(self, ID):
+        # Archive Control ID
+        self.ui.valveControlIDs.append(ID)
+        
+        # Define Status Label
+        self.ui.statusLabels.append(QtGui.QLabel())
+        self.ui.statusLabels[-1].setObjectName("valveStatusLabel_" + str(ID))
+        self.ui.statusLabels[-1].setText("Position " + str(ID))
+        font = QtGui.QFont()
+        font.setPointSize(20)
+        self.ui.statusLabels[-1].setFont(font)
 
-        self.valve_timer.start()
+        # Define Valve Position Combo Box
+        self.ui.desiredPositions.append(QtGui.QComboBox())
+        self.ui.desiredPositions[-1].addItem("Position 1")
+        self.ui.desiredPositions[-1].setObjectName("desiredValvePosition_" + str(ID))
+        
+        # Define Rotation Direction Combo Box
+        self.ui.desiredRotations.append(QtGui.QComboBox())
+        self.ui.desiredRotations[-1].setObjectName("desiredRotationDirection_" + str(ID))
+        self.ui.desiredRotations[-1].addItem("Clockwise")
+        self.ui.desiredRotations[-1].addItem("Counter Clockwise")
 
+        # Define Push Button
+        self.ui.valveButtons.append(QtGui.QPushButton("Move Valve"))
+        self.ui.valveButtons[-1].setObjectName("valveMoveButton_" + str(ID))
+
+        slotLambda = lambda: self.ui.valveMoveButtonCurrentIndex_lambda(ID)
+        self.ui.valveButtons[-1].clicked.connect(slotLambda)
+
+        layout = QtGui.QHBoxLayout()
+        layout.addWidget(self.ui.statusLabels[-1])
+        layout.addWidget(self.ui.desiredPositions[-1])
+        layout.addWidget(self.ui.desiredRotations[-1])
+        layout.addWidget(self.ui.valveButtons[-1])
+        layout.addStretch(1)
+        
+        self.ui.valveScrollArea.addRow(layout)
+
+    @QtCore.pyqtSlot(int)
+    def valveMoveButtonCurrentIndex_lambda(self, int):
+        print "Issued Move from Index: " + str(int)
+        currentRotationIndex = self.desiredRotations[int].currentIndex()
+        print "Found Rotation Index: " + str(currentRotationIndex)
+        
     def closeEvent(self, event):
         pass
 
