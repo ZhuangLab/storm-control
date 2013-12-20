@@ -38,6 +38,10 @@ class Window(QtGui.QMainWindow):
 
         # Connect Pull Down Menu Items: File
         self.ui.actionQuit.triggered.connect(self.Quit)
+
+        # Create Layout for scroll widget
+        self.ui.scrollLayout = QtGui.QFormLayout()
+        self.valveScrollArea.setLayout(self.ui.scrollLayout)
         
     def addValveControl(self, ID):
         # Archive Control ID
@@ -76,7 +80,7 @@ class Window(QtGui.QMainWindow):
         layout.addWidget(self.ui.valveButtons[-1])
         layout.addStretch(1)
         
-        self.ui.valveScrollArea.addRow(layout)
+        self.ui.scrollLayout.addRow(layout)
 
     @QtCore.pyqtSlot(int)
     def valveMoveButtonCurrentIndex_lambda(self, int):
