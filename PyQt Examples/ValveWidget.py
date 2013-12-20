@@ -48,15 +48,19 @@ class Main(QtGui.QMainWindow):
         # set central widget
         self.setCentralWidget(self.centralWidget)
 
+        self.counter = 1
+        
     def addWidget(self):
+        valveString = "Valve " + str(self.counter) 
         self.scrollLayout.addRow(ValveControl())
-
+        self.counter = self.counter + 1
+                                 
 class ValveControl(QtGui.QWidget):
     def __init__(self, parent=None):
         super(ValveControl, self).__init__(parent)
 
         # Create Box
-        self.widgetBox = QtGui.QGroupBox()
+        self.widgetBox = QtGui.QGroupBox("Valve Box")
         self.widgetBox.setObjectName("valve1Box")
         self.widgetBox.setGeometry(QtCore.QRect(10, 360, 163, 185) )
 
@@ -86,6 +90,7 @@ class ValveControl(QtGui.QWidget):
         layout.addWidget(self.desiredValvePosition)
         layout.addWidget(self.desiredRotationDirection)
         layout.addWidget(self.valveMoveButton)
+        layout.addStretch(1)
         
         self.setLayout(layout)
         
