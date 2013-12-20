@@ -189,7 +189,10 @@ class HamiltonMVP():
     # Poll Valve Configuration
     # ------------------------------------------------------------------------------------  
     def whatIsValveConfiguration(self, valve_ID):
-        return self.valveConfigurations[self.currentDevice]
+        if valve_ID > (self.num_valves-1):
+            return ""
+        else:
+            return self.valve_configs[valve_ID]
 
     # ------------------------------------------------------------------------------------
     # Poll Valve Location
@@ -221,7 +224,7 @@ class HamiltonMVP():
     # Determine number of active valves
     # ------------------------------------------------------------------------------------
     def howManyValves(self):
-        return self.numDevices
+        return self.num_valves
 
     # ------------------------------------------------------------------------------------
     # Read from Serial Port

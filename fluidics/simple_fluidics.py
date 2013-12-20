@@ -51,14 +51,14 @@ class Window(QtGui.QMainWindow):
         self.PollValveStatus()
         
     def PollValveStatus(self):
-        self.isMoving = not self.hamilton.IsMovementFinished()[0]
+        self.isMoving = not self.hamilton.isMovementFinished()[0]
 
         if self.isMoving:
             self.ui.currentValveStatus.setStyleSheet("QLabel { color: red}")
         else:
             self.ui.currentValveStatus.setStyleSheet("QLabel { color: black}")
         
-        self.currentValvePosition = self.hamilton.WhereIsValve()[0]
+        self.currentValvePosition = self.hamilton.whereIsValve()[0]
         self.ui.currentValveStatus.setText(self.currentValvePosition)
 
     def ReinitializeHamilton(self):
