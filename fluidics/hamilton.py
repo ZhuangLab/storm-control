@@ -34,13 +34,13 @@ class HamiltonMVP():
         self.carriageReturn = "\x13"
         self.negativeAcknowledge = "\x21"
         self.readLength = 64
+        self.char_offset = 97 # offset to convert int current_device to ascii addresses (0=a, 1=b, ...)
 
         # Define default valve
-        self.maxDevices = 16
-        self.deviceNames = []
-        self.currentDevice = ""
-        self.numDevices = 0
-        self.valveConfigurations = []
+        self.max_valves = 16
+        self.valve_names = []
+        self.num_valves = 0
+        self.valve_configs = []
 
         # Configure Device
         self.autoAddress()
@@ -50,101 +50,99 @@ class HamiltonMVP():
     # Define Device Addresses: Must be First Command Issued
     # ------------------------------------------------------------------------------------  
     def autoAddress(self):
-        autoAddressString = "1a\r"
+        auto_address_cmd = "1a\r"
         if self.verbose:
             print "Autoaddressing Hamilton Valves"
-        x = self.write(autoAddressString)
+        x = self.write(auto_address_cmd)
         response = self.read() # Clear buffer
 
     # ------------------------------------------------------------------------------------
     # Auto Detect and Configure Valves
     # ------------------------------------------------------------------------------------
     def autoDetectValves(self):
-        charOffset = 97;
-        for deviceID in range(self.maxDevices):
-            deviceAddressCharacter = chr(deviceID + charOffset)  
-            self.currentDevice = deviceAddressCharacter
+        found_valves = 0
+        for valve_ID in range(self.max_valves):
+            device_address_character = chr(valve_ID + self.char_offset)  
             if self.verbose:
-                print "Detecting device with address: " + self.currentDevice
-
-            response = self.initializePosition()
+                print "Detecting device with address: " + str(valve_ID)
+            self.valve_names.append(device_address_character)
+            
+            response = self.initializePosition(valve_ID)
             if response[0] == "Acknowledge":
-                response = self.howIsValveConfigured()
+                response = self.howIsValveConfigured(valve_ID)
                 if response[1]:
-                    self.deviceNames.append(self.currentDevice)
-                    self.valveConfigurations.append(response[0])
+                    self.valve_configs.append(response[0])
+                    found_valves += 1
                     if self.verbose:
-                        print "Found " + response[0] + " device at address " + self.currentDevice
+                        print "Found " + response[0] + " device at address " + str(valve_ID)
+                
+        self.num_valves = found_valves
 
-        self.numDevices = len(self.deviceNames)
-
-        if self.numDevices == 0:
-            self.deviceNames = "0"
+        if self.num_valves == 0:
+            self.valve_names = "0"
             print "Error: no valves discovered"
-        else:
-            self.currentDevice = self.deviceNames[0]
 
-        print "Found " + str(self.numDevices) + " MVP Units"
-        for deviceID in range(self.numDevices):
-            print "Device " + self.deviceNames[deviceID] + " is configured with " + self.valveConfigurations[deviceID]
+        print "Found " + str(self.num_valves) + " MVP Units"
+        for valve_ID in range(self.num_valves):
+            print "Device " + self.valve_names[valve_ID] + " is configured with " + self.valve_configs[valve_ID]
 
-        # Wait for initialization movement to finish before progressing
-        self.currentDevice = self.deviceNames[-1]
-        self.waitUntilNotMoving()
-        self.currentDevice = self.deviceNames[0]
+        # Wait for final device to stop moving
+        self.waitUntilNotMoving(self.num_valves-1)
         
     # ------------------------------------------------------------------------------------
     # Basic I/O with Serial Port
     # ------------------------------------------------------------------------------------
-    def inquireAndRespond(self, message, dictionary = {}, default = "Unknown"):
+    def inquireAndRespond(self, valve_ID, message, dictionary = {}, default = "Unknown"):
         # Add on current device
-        message = self.currentDevice + message
+        message = self.valve_names[valve_ID] + message
         
-        self.write(message = message)
+        self.write(message)
         response = self.read()
         
         # Parse response into sent message and response
         if len(response) >= len(message):
-            repeatedMessage = response[:(response.find(self.carriageReturn)-1)]
-            actualResponse = response[(response.find(self.carriageReturn)-1):
+            repeated_message = response[:(response.find(self.carriageReturn)-1)]
+            actual_response = response[(response.find(self.carriageReturn)-1):
                                       (response.rfind(self.carriageReturn))]
-            actualResponse = actualResponse # remove carriage returns
+            actual_response = actual_response # remove carriage returns
         else:
             return ("Short response", False, response)
                 
         # Check for negative acknowledge
-        if actualResponse == self.negativeAcknowledge:
+        if actual_response == self.negativeAcknowledge:
             return ("Negative Acknowledge", False, response)
 
         # Check for acknowledge only
-        if actualResponse == self.acknowledge:
+        if actual_response == self.acknowledge:
             return ("Acknowledge", True, response)
         
         # Parse dictionary with response
-        returnValue = dictionary.get(actualResponse, default)
-        if returnValue == default:
+        return_value = dictionary.get(actual_response, default)
+        if return_value == default:
             return (default, False, response)
         else:
-            return (returnValue, True, response)
+            return (return_value, True, response)
 
     # ------------------------------------------------------------------------------------
     # Initialize Position of Device
     # ------------------------------------------------------------------------------------ 
-    def initializePosition(self):
-        responseTuple = self.inquireAndRespond(message ="LXR\r",
+    def initializePosition(self, valve_ID):
+        response = self.inquireAndRespond(valve_ID,
+                                               message ="LXR\r",
                                                dictionary = {},
                                                default = "Unknown response")
         if self.verbose:
-            print "Initialization Response:" + str(responseTuple)
+            print "Initialization Response:" + str(response)
 
-        return responseTuple
+        return response
+                                
     # ------------------------------------------------------------------------------------
     # Move Valve
     # ------------------------------------------------------------------------------------ 
-    def moveValve(self, portNumber=1, direction = 0, waitUntilDone = False):
+    def moveValve(self, valve_ID, portNumber=1, direction = 0, waitUntilDone = False):
         message = "LP" + str(direction) + str(portNumber) + "R\r"
 
-        response = self.inquireAndRespond(message)        
+        response = self.inquireAndRespond(valve_ID, message)        
         if response[0] == "Negative Acknowledge":
             print "Move failed: " + str(response)
 
@@ -154,18 +152,20 @@ class HamiltonMVP():
     # ------------------------------------------------------------------------------------
     # Poll Movement of Valve
     # ------------------------------------------------------------------------------------         
-    def isMovementFinished(self):
-        return self.inquireAndRespond(message ="F\r",
-                              dictionary = {"*": False,
-                                            "N": False,
-                                            "Y": True},
-                              default = "Unknown response")
+    def isMovementFinished(self, valve_ID):
+        return self.inquireAndRespond(valve_ID,
+                                      message ="F\r",
+                                      dictionary = {"*": False,
+                                                    "N": False,
+                                                    "Y": True},
+                                      default = "Unknown response")
 
     # ------------------------------------------------------------------------------------
     # Poll Overload Status of Valve
     # ------------------------------------------------------------------------------------       
-    def isValveOverloaded(self):
-        return self.inquireAndRespond(message ="G\r",
+    def isValveOverloaded(self, valve_ID):
+        return self.inquireAndRespond(valve_ID,
+                                      message ="G\r",
                                       dictionary = {"*": False,
                                                     "N": False,
                                                     "Y": True},
@@ -174,8 +174,9 @@ class HamiltonMVP():
     # ------------------------------------------------------------------------------------
     # Poll Valve Configuration
     # ------------------------------------------------------------------------------------  
-    def howIsValveConfigured(self):
-        return self.inquireAndRespond(message ="LQT\r",
+    def howIsValveConfigured(self, valve_ID):
+        return self.inquireAndRespond(valve_ID,
+                                      message ="LQT\r",
                                       dictionary = {"2": "8 ports",
                                                     "3": "6 ports",
                                                     "4": "3 ports",
@@ -187,41 +188,32 @@ class HamiltonMVP():
     # ------------------------------------------------------------------------------------
     # Poll Valve Configuration
     # ------------------------------------------------------------------------------------  
-    def whatIsValveConfiguration(self):
+    def whatIsValveConfiguration(self, valve_ID):
         return self.valveConfigurations[self.currentDevice]
-
-    # ------------------------------------------------------------------------------------
-    # Set Current Valve
-    # ------------------------------------------------------------------------------------  
-    def setCurrentValve(self, valve_ID=0):
-        if valve_ID > (self.numDevices - 1):
-            print "Requested valve does not exist"
-            return False
-        else:
-            self.currentDevice = valve_ID
 
     # ------------------------------------------------------------------------------------
     # Poll Valve Location
     # ------------------------------------------------------------------------------------    
-    def whereIsValve(self):
-        return self.inquireAndRespond(message ="LQP\r",
-                              dictionary = {"1": "Position 1",
-                                            "2": "Position 2",
-                                            "3": "Position 3",
-                                            "4": "Position 4",
-                                            "5": "Position 5",
-                                            "6": "Position 6",
-                                            "7": "Position 7",
-                                            "8": "Position 8"},
-                              default = "Unknown response")
+    def whereIsValve(self, valve_ID):
+        return self.inquireAndRespond(valve_ID,
+                                      message ="LQP\r",
+                                      dictionary = {"1": "Position 1",
+                                                    "2": "Position 2",
+                                                    "3": "Position 3",
+                                                    "4": "Position 4",
+                                                    "5": "Position 5",
+                                                    "6": "Position 6",
+                                                    "7": "Position 7",
+                                                    "8": "Position 8"},
+                                      default = "Unknown response")
 
     # ------------------------------------------------------------------------------------
     # Halt Hamilton Class Until Movement is Finished
     # ------------------------------------------------------------------------------------
-    def waitUntilNotMoving(self, pauseTime = 1):
+    def waitUntilNotMoving(self, valve_ID, pauseTime = 1):
         doneMoving = False
         while not doneMoving:
-            response = self.isMovementFinished()
+            response = self.isMovementFinished(valve_ID)
             doneMoving = response[0]
             time.sleep(pauseTime)
 
@@ -267,15 +259,14 @@ class HamiltonMVP():
         self.valveConfigurations = []
 
         # Reconfigure
-        self.AutoAddress()
-        self.AutoDetectValves()
-
+        self.autoAddress()
+        self.autoDetectValves()
 
 # ----------------------------------------------------------------------------------------
 # Test/Demo of Classs
 # ----------------------------------------------------------------------------------------
 if __name__ == '__main__':
-    hamilton = HamiltonMVP()
+    hamilton = HamiltonMVP(verbose = True)
     #hamilton.AutoAddress()
     #print "How is valve configured:" + str(hamilton.HowIsValveConfigured())
     #hamilton.InitializePosition()
