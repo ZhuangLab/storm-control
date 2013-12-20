@@ -20,7 +20,7 @@ class Main(QtGui.QMainWindow):
 
         # main button
         self.addButton = QtGui.QPushButton('button to add other widgets')
-        self.addButton.clicked.connect(self.addWidget)
+        self.addButton.clicked.connect(self.addValveControl)
 
         # scroll area widget contents - layout
         self.scrollLayout = QtGui.QFormLayout()
@@ -48,29 +48,19 @@ class Main(QtGui.QMainWindow):
         # set central widget
         self.setCentralWidget(self.centralWidget)
 
-        global valveCount
-        valveCount = 1
+        self.valveCount = 1
         
-    def addWidget(self):
-        self.scrollLayout.addRow(ValveControl())
-
-    
-        
-class ValveControl(QtGui.QWidget):
-    def __init__(self, parent=None):
-        super(ValveControl, self).__init__(parent)
-
-        global valveCount
+    def addValveControl(self):
         
         # Create Box
-        self.widgetBox = QtGui.QGroupBox("Valve Box" + str(valveCount))
-        self.widgetBox.setObjectName("valveBox" + str(valveCount))
+        self.widgetBox = QtGui.QGroupBox("Valve Box" + str(self.valveCount))
+        self.widgetBox.setObjectName("valveBox" + str(self.valveCount))
         self.widgetBox.setGeometry(QtCore.QRect(10, 360, 163, 185) )
 
         # Define Status Label
         self.valveStatusLabel = QtGui.QLabel()
-        self.valveStatusLabel.setObjectName("valveStatusLabel" + str(valveCount))
-        self.valveStatusLabel.setText("Position " + str(valveCount))
+        self.valveStatusLabel.setObjectName("valveStatusLabel" + str(self.valveCount))
+        self.valveStatusLabel.setText("Position " + str(self.valveCount))
         font = QtGui.QFont()
         font.setPointSize(20)
         self.valveStatusLabel.setFont(font)
@@ -87,7 +77,7 @@ class ValveControl(QtGui.QWidget):
 
         # Define Push Button
         self.valveMoveButton = QtGui.QPushButton("Move Valve")
-        self.valveMoveButton.clicked.connect(self.IssueMoveCommand())
+        self.valveMoveButton.clicked.connect(self.IssueMoveCommand)
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.valveStatusLabel)
@@ -96,11 +86,11 @@ class ValveControl(QtGui.QWidget):
         layout.addWidget(self.valveMoveButton)
         layout.addStretch(1)
         
-        self.setLayout(layout)
+        self.scrollLayout.addRow(layout)
+        self.valveCount += 1
 
-        valveCount += 1
     def IssueMoveCommand(self):
-        print "Issued Move Command"
+        print "Issued Move Command From: " + str(self.sender())
         
 class MultiplePushButton(QtGui.QWidget):
     def __init__(self, parent=None):

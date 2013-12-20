@@ -44,7 +44,17 @@ class HamiltonMVP:
 
         # Configure Device
         self.AutoAddress()
-        self.AutoDetectValves()        
+        self.AutoDetectValves()
+        
+    # ------------------------------------------------------------------------------------
+    # Define Device Addresses: Must be First Command Issued
+    # ------------------------------------------------------------------------------------  
+    def AutoAddress(self):
+        autoAddressString = "1a\r"
+        if self.verbose:
+            print "Autoaddressing Hamilton Valves"
+        x = self.Write(autoAddressString)
+        response = self.Read() # Clear buffer
 
     # ------------------------------------------------------------------------------------
     # Auto Detect and Configure Valves
@@ -116,16 +126,6 @@ class HamiltonMVP:
             return (default, False, response)
         else:
             return (returnValue, True, response)
-
-    # ------------------------------------------------------------------------------------
-    # Define Device Addresses: Must be First Command Issued
-    # ------------------------------------------------------------------------------------  
-    def AutoAddress(self):
-        autoAddressString = "1a\r"
-        if self.verbose:
-            print "Autoaddressing Hamilton Valves"
-        x = self.Write(autoAddressString)
-        response = self.Read() # Clear buffer
 
     # ------------------------------------------------------------------------------------
     # Initialize Position of Device
@@ -233,6 +233,21 @@ class HamiltonMVP:
         self.serial.close()
         if self.verbose:
             print "Closed serial port"
+        
+    # ------------------------------------------------------------------------------------
+    # Reset Hamilton: Readdress and redetect valves
+    # ------------------------------------------------------------------------------------  
+    def ResetHamilton(self):
+        # Reset device configuration
+        self.deviceNames = []
+        self.currentDevice = ""
+        self.numDevices = 0
+        self.valveConfigurations = []
+
+        # Reconfigure
+        self.AutoAddress()
+        self.AutoDetectValves()
+
 
 # ----------------------------------------------------------------------------------------
 # Test/Demo of Classs

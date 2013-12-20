@@ -33,7 +33,7 @@ class Window(QtGui.QMainWindow):
         
         # Connect File Pull Down Signals
         self.ui.actionQuit.triggered.connect(self.Quit)
-        self.ui.actionInitializeHamilton.triggered.connect(self.hamilton.InitializePosition)
+        self.ui.actionInitializeHamilton.triggered.connect(self.ReinitializeHamilton)
 
         # Connect Button Pushes
         self.ui.changeValvePosition.released.connect(self.SendValveChangeCommand)
@@ -41,6 +41,7 @@ class Window(QtGui.QMainWindow):
         self.valve_poll_timer.start()
 
     def closeEvent(self, event):
+        self.valve_poll_timer.stop()
         self.hamilton.Close()
     
     def SendValveChangeCommand(self):
@@ -60,6 +61,9 @@ class Window(QtGui.QMainWindow):
         self.currentValvePosition = self.hamilton.WhereIsValve()[0]
         self.ui.currentValveStatus.setText(self.currentValvePosition)
 
+    def ReinitializeHamilton(self):
+        self.hamilton.ResetHamilton()
+    
     def Quit(self, boolean):
         self.close()
 
