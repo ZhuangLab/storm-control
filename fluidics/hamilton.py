@@ -120,7 +120,7 @@ class HamiltonMVP():
                 self.max_ports_per_valve.append(self.numPortsPerConfiguration(self.howIsValveConfigured(valve_ID)[0]))
                 self.current_port.append(0)
             self.num_valves = self.num_simulated_valves
-
+            print "Created " + str(self.num_simulated_valves) + " simulated valves"
             return True
     # ------------------------------------------------------------------------------------
     # Basic I/O with Serial Port
@@ -294,7 +294,7 @@ class HamiltonMVP():
     # Generate Default Port Names
     # ------------------------------------------------------------------------------------  
     def getDefaultPortNames(self, valve_ID):
-        if not self.isValidValve():
+        if not self.isValidValve(valve_ID):
             return ("")
         default_names = []
         for port_num in range(self.max_ports_per_valve[valve_ID]):
@@ -305,7 +305,7 @@ class HamiltonMVP():
     # Generate Rotation Direction Labels
     # ------------------------------------------------------------------------------------  
     def getRotationDirections(self, valve_ID):
-        if not self.isValidValve():
+        if not self.isValidValve(valve_ID):
             return ("")
         return ("Clockwise", "Counter Clockwise")
     
@@ -350,7 +350,7 @@ class HamiltonMVP():
     # Get Valve Status
     # ------------------------------------------------------------------------------------    
     def getStatus(self, valve_ID):
-        return (self.whereIsValve(valve_ID),
+        return (self.whereIsValve(valve_ID)[0],
                 not self.isMovementFinished(valve_ID))
 
     # ------------------------------------------------------------------------------------
