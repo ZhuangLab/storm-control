@@ -84,6 +84,7 @@ class QtValveControl(QtValveControlWidget):
 
     def setStatus(self, status):
         # Set Label Text
+        print "Status: " + str(status)
         self.valveStatusLabel.setText(status[0])
 
         if status[1] == True:
