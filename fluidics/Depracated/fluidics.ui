@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1283</width>
+    <height>961</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QGroupBox" name="valveGroupBox">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>10</y>
+      <width>461</width>
+      <height>511</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Valve Control and Status</string>
+    </property>
+    <layout class="QGridLayout" name="gridLayout_2">
+     <item row="0" column="0">
+      <widget class="QScrollArea" name="valveScrollArea">
+       <property name="widgetResizable">
+        <bool>true</bool>
+       </property>
+       <widget class="QWidget" name="valveScrollAreaContents">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>439</width>
+          <height>476</height>
+         </rect>
+        </property>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QGroupBox" name="configurationBox">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>276</width>
+      <height>181</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Defined Configurations</string>
+    </property>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="1" column="0">
+      <widget class="QPushButton" name="executeConfigurationButton">
+       <property name="text">
+        <string>Execute</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QPushButton" name="loadConfigurationButton">
+       <property name="text">
+        <string>Load</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0" colspan="2">
+      <widget class="QListWidget" name="configurationList"/>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QGroupBox" name="recipeBox">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>200</y>
+      <width>276</width>
+      <height>321</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Recipe Books</string>
+    </property>
+    <widget class="QListWidget" name="recipeListBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>256</width>
+       <height>91</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="loadRecipeButton">
+     <property name="geometry">
+      <rect>
+       <x>190</x>
+       <y>120</y>
+       <width>75</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Load</string>
+     </property>
+    </widget>
+    <widget class="QTableWidget" name="tableWidget">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>150</y>
+       <width>256</width>
+       <height>111</height>
+      </rect>
+     </property>
+     <column>
+      <property name="text">
+       <string>Configuration</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Duration (s)</string>
+      </property>
+     </column>
+    </widget>
+    <widget class="QPushButton" name="executeRecipeButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>120</y>
+       <width>75</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Execute</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="elapsedTimeLabel">
+     <property name="geometry">
+      <rect>
+       <x>180</x>
+       <y>260</y>
+       <width>78</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Elapsed Time (s)</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="targetTimeLabel">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>260</y>
+       <width>72</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Target Time (s)</string>
+     </property>
+    </widget>
+    <widget class="QLCDNumber" name="elaspedTimeLCD">
+     <property name="geometry">
+      <rect>
+       <x>180</x>
+       <y>280</y>
+       <width>64</width>
+       <height>23</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLCDNumber" name="targetTimeLCD">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>280</y>
+       <width>64</width>
+       <height>23</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="stopRecipeButton">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>120</y>
+       <width>75</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Stop</string>
+     </property>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1283</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionQuit"/>
+    <addaction name="separator"/>
+    <addaction name="actionLoadConfigurationXML"/>
+    <addaction name="actionLoadRecipesXML"/>
+    <addaction name="actionLoad_Recipe_Book"/>
+   </widget>
+   <addaction name="menuFile"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionLoadConfigurationXML">
+   <property name="text">
+    <string>Load Valve Configuration</string>
+   </property>
+  </action>
+  <action name="actionLoadRecipesXML">
+   <property name="text">
+    <string>Load Configurations</string>
+   </property>
+  </action>
+  <action name="actionLoad_Recipe_Book">
+   <property name="text">
+    <string>Load Recipe Book</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
