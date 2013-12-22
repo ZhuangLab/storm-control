@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import sys
 from PyQt4 import QtCore, QtGui
-from ui_qt_valve import QtValveControlWidget
+from ui_layouts.ui_qt_valve import QtValveControlWidget
 
 class QtValveControl(QtValveControlWidget):
 
