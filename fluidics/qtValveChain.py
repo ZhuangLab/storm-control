@@ -9,6 +9,7 @@ class QtValveChain(QtGui.QWidget):
                  parent = None,
                  COM_port = 2,
                  verbose = True,
+                 num_simulated_valves = 0,
                  ):
 
         ## Is this necessary?
@@ -23,13 +24,18 @@ class QtValveChain(QtGui.QWidget):
         self.scrollWidget = QtGui.QWidget()
         self.scrollWidget.setLayout(self.scrollLayout)
         self.scrollArea = QtGui.QScrollArea()
-        self.scrollArea.setWdigetResizable(True)
+        self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setWidget(self.scrollWidget)
-        
+
         # Create Valve Chain
-        self.valve_chain = HamiltonMVP(COM_port = self.COM_port,
-                                       verbose = self.verbose)
-        
+        if num_simulated_valves > 0:
+            self.valve_chain = HamiltonMVP(COM_port = 0,
+                                           simulate = True,
+                                           num_simulated_valves = num_simulated_valves)
+        else:
+            self.valve_chain = HamiltonMVP(COM_port = self.COM_port,
+                                           verbose = self.verbose)
+            
         # Create Valve Controls for Each Valve in the Chain
         self.num_valves = self.valve_chain.howManyValves()
 
@@ -37,14 +43,20 @@ class QtValveChain(QtGui.QWidget):
         for valve_ID in range(self.num_valves):
             valve_widget = QtValveControl(self,
                                          ID = valve_ID)
-            valve_widget.setValveName("Valve " + str(ID))
-            valve_widget.setValveConfiguration(self.valve_chain.howIsValveConfigured(valve_ID))
-            valve_widget.setPortNames(self.valve_chain.getDefaultPortNames)
+            valve_widget.setValveName("Valve " + str(valve_ID))
+            valve_widget.setValveConfiguration(self.valve_chain.howIsValveConfigured(valve_ID)[0])
+            valve_widget.setPortNames(self.valve_chain.getDefaultPortNames(valve_ID))
             valve_widget.setRotationDirections(self.valve_chain.getRotationDirections(valve_ID))
             valve_widget.setStatus(self.valve_chain.getStatus(valve_ID))
 
             valve_widget.changePortButton.clicked.connect(self.changeValvePosition)
-            
+
+            self.valve_widgets.append(valve_widget)
+
+            self.scrollLayout.addWidget(valve_widget)
+
+        self.scrollLayout.addStretch(1)
+        
         # Define timer for periodic polling of valve status
         self.valve_poll_timer = QtCore.QTimer()        
         self.valve_poll_timer.setInterval(1000)
@@ -54,7 +66,8 @@ class QtValveChain(QtGui.QWidget):
         pass
 
     def pollValveStatus(self):
-        pass
+        for valve_ID in range(self.num_valves):
+            self.valve_widgets[valve_ID].setStatus(self.valve_chain.getStatus(valve_ID))
                        
 ### Stand alone code
 class Window(QtGui.QMainWindow):
@@ -62,31 +75,15 @@ class Window(QtGui.QMainWindow):
         super(Window, self).__init__(parent)
 
         # scroll area widget contents - layout
-        self.scrollLayout = QtGui.QVBoxLayout()
-
-        # scroll area widget contents
-        self.scrollWidget = QtGui.QWidget()
-        self.scrollWidget.setLayout(self.scrollLayout)
-
-        # scroll area
-        self.scrollArea = QtGui.QScrollArea()
-        self.scrollArea.setWidgetResizable(True)
-        self.scrollArea.setWidget(self.scrollWidget)
-
+        self.valve_chain_widget = QtValveChain(COM_port = 2,
+                                               verbose = True,
+                                               num_simulated_valves = 3)
+        
         # main layout
         self.mainLayout = QtGui.QVBoxLayout()
 
         # add all main to the main vLayout
-        self.mainLayout.addWidget(self.scrollArea)
-
-        self.valve_widgets = []
-        for ID in range(3):
-            wid = QtValveControl(self, ID = ID, valve_name = "Valve " + str(ID))
-            wid.change_port_signal.connect(self.detectEmittedSignal)
-            self.valve_widgets.append(wid)
-            self.scrollLayout.addWidget(self.valve_widgets[-1])
-
-        self.scrollLayout.addStretch(1)
+        self.mainLayout.addWidget(self.valve_chain_widget.scrollArea)
         
         # central widget
         self.centralWidget = QtGui.QWidget()
@@ -94,10 +91,6 @@ class Window(QtGui.QMainWindow):
 
         # set central widget
         self.setCentralWidget(self.centralWidget)
-
-    def detectEmittedSignal(self, valve_ID):
-        print "Detected signal from valve index: " + str(valve_ID)
-        print "Found port index: " + str(self.valve_widgets[valve_ID].getPortIndex())
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
