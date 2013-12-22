@@ -23,9 +23,6 @@ class QtValveControl(QtValveControlWidget):
                  ):
         
         QtValveControlWidget.__init__(self, parent)
-            
-        # create widget
-        #self.valve_widget = QtValveControlWidget()
         
         # Set internal variables
         self.valve_ID = ID
