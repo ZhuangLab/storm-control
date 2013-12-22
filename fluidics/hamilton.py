@@ -18,17 +18,21 @@ import time
 # Class Definition
 # ----------------------------------------------------------------------------------------
 class HamiltonMVP():
-    def __init__(self, verbose = True):
-        self.serial = serial.Serial(port = 2, 
-                             baudrate = 9600, 
-                             bytesize = serial.SEVENBITS, 
-                             parity = serial.PARITY_ODD, 
-                             stopbits = serial.STOPBITS_ONE, 
-                             timeout = 0.1)
+    def __init__(self, COM_port = 2, verbose = True, simulate = False):
 
-        # Define display options
+        # Define attributes
         self.verbose = verbose
+        self.simulate = simulate
 
+        # Create serial port
+        if not self.simulate:
+            self.serial = serial.Serial(port = COM_port, 
+                                 baudrate = 9600, 
+                                 bytesize = serial.SEVENBITS, 
+                                 parity = serial.PARITY_ODD, 
+                                 stopbits = serial.STOPBITS_ONE, 
+                                 timeout = 0.1)
+        
         # Define important characters
         self.acknowledge = "\x06"
         self.carriage_return = "\x13"
@@ -42,6 +46,7 @@ class HamiltonMVP():
         self.num_valves = 0
         self.valve_configs = []
         self.max_ports_per_valve = []
+        self.current_port = []
 
         # Configure Device
         self.autoAddress()
@@ -73,12 +78,17 @@ class HamiltonMVP():
             response = self.initializeValve(valve_ID) 
             if response[0] == "Acknowledge":
                 response = self.howIsValveConfigured(valve_ID)
-                if response[1]:
+
+                if response[1]: # Indicates successful response
                     self.valve_configs.append(response[0])
                     self.max_ports_per_valve.append(self.numPortsPerConfiguration(response[0]))
+                    self.current_port.append(0)
+
                     found_valves += 1
+                    
                     if self.verbose:
                         print "Found " + response[0] + " device at address " + str(valve_ID)
+
             elif response[0] == "Negative Acknowledge": # Final device found
                 break
             
@@ -144,14 +154,20 @@ class HamiltonMVP():
     # Initialize Position of Valve
     # ------------------------------------------------------------------------------------ 
     def initializeValve(self, valve_ID):
-        response = self.inquireAndRespond(valve_ID,
-                                          message ="LXR\r",
-                                          dictionary = {},
-                                          default = "")
-        if self.verbose:
-            print "Initialization Response:" + str(response)
+        if not self.simulate:
+            response = self.inquireAndRespond(valve_ID,
+                                              message ="LXR\r",
+                                              dictionary = {},
+                                              default = "")
+            if self.verbose:
+                print "Initialization Response:" + str(response)
+
+            if response[1]: # Acknowledged response
+                self.current_port[valve_ID] = 0 # Reset position
             
-        return response[1]
+            return response[1]
+        else:
+            return True
                                 
     # ------------------------------------------------------------------------------------
     # Move Valve
@@ -173,6 +189,9 @@ class HamiltonMVP():
         if waitUntilDone:
             self.waitUntilNotMoving()
 
+        if response[1]: #Acknowledged move
+            self.current_port[valve_ID] = port_ID
+            
         return response[1]
 
     # ------------------------------------------------------------------------------------
@@ -247,6 +266,25 @@ class HamiltonMVP():
                 "4 ports": 2}.get(configuration_string, 0)
 
     # ------------------------------------------------------------------------------------
+    # Generate Default Port Names
+    # ------------------------------------------------------------------------------------  
+    def getDefaultPortNames(self, valve_ID):
+        if not self.isValidValve():
+            return ("")
+        default_names = []
+        for port_num in range(self.max_ports_per_valve[valve_ID]):
+            default_names.append("Port " + str(port_num))
+        return default_names
+
+    # ------------------------------------------------------------------------------------
+    # Generate Rotation Direction Labels
+    # ------------------------------------------------------------------------------------  
+    def getRotationDirections(self, valve_ID):
+        if not self.isValidValve():
+            return ("")
+        return ("Clockwise", "Counter Clockwise")
+    
+    # ------------------------------------------------------------------------------------
     # Poll Valve Configuration
     # ------------------------------------------------------------------------------------  
     def whatIsValveConfiguration(self, valve_ID):
@@ -261,15 +299,22 @@ class HamiltonMVP():
     def whereIsValve(self, valve_ID):
         return self.inquireAndRespond(valve_ID,
                                       message ="LQP\r",
-                                      dictionary = {"1": "Position 1",
-                                                    "2": "Position 2",
-                                                    "3": "Position 3",
-                                                    "4": "Position 4",
-                                                    "5": "Position 5",
-                                                    "6": "Position 6",
-                                                    "7": "Position 7",
-                                                    "8": "Position 8"},
-                                      default = "Unknown response")
+                                      dictionary = {"1": "Port 1",
+                                                    "2": "Port 2",
+                                                    "3": "Port 3",
+                                                    "4": "Port 4",
+                                                    "5": "Port 5",
+                                                    "6": "Port 6",
+                                                    "7": "Port 7",
+                                                    "8": "Port 8"},
+                                      default = "Unknown Port")
+
+    # ------------------------------------------------------------------------------------
+    # Get Valve Status
+    # ------------------------------------------------------------------------------------    
+    def getStatus(self, valve_ID):
+        return (self.whereIsValve(valve_ID),
+                not self.isMovementFinished(valve_ID))
 
     # ------------------------------------------------------------------------------------
     # Halt Hamilton Class Until Movement is Finished
