@@ -58,7 +58,7 @@ class QValveControl(QtGui.QWidget):
         self.moveValveButton.setObjectName("Move_Valve_Button")
 
         # Connect Move Valve Button
-        self.moveValveButton.clicked.connect(self.MoveValvePressed)
+        self.moveValveButton.clicked.connect(self.moveValveButtonPressed)
 
         # Add widgets
         self.layout.addWidget(self.statusLabel)
@@ -99,7 +99,7 @@ class QValveControl(QtGui.QWidget):
 
     ## Move Valve Pressed
     def moveValveButtonPressed(self):
-        self.move_valve_signal.emit(self.valveID) # Send PyQt Signal
+        self.move_valve_signal.emit(self.valve_ID) # Send PyQt Signal
     
     ## UpdateStatus
     def updateValveStatus(self, valveStatusTuple = (0, False)):
