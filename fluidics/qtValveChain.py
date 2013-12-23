@@ -36,12 +36,14 @@ class QtValveChain(QtGui.QWidget):
             
         # Create Valve Controls for Each Valve in the Chain
         self.num_valves = self.valve_chain.howManyValves()
-
+        self.valve_names = []
         self.valve_widgets = []
+        
         for valve_ID in range(self.num_valves):
             valve_widget = QtValveControl(self,
                                          ID = valve_ID)
-            valve_widget.setValveName("Valve " + str(valve_ID))
+            self.valve_names.append(str(valve_ID + 1)) # Save valve name
+            valve_widget.setValveName("Valve " + str(valve_ID+1)) # Valve names are +1 valve IDs
             valve_widget.setValveConfiguration(self.valve_chain.howIsValveConfigured(valve_ID)[0])
             valve_widget.setPortNames(self.valve_chain.getDefaultPortNames(valve_ID))
             valve_widget.setRotationDirections(self.valve_chain.getRotationDirections(valve_ID))

@@ -288,7 +288,7 @@ class HamiltonMVP():
                 "3 ports": 3,
                 "2 ports @180": 2,
                 "2 ports @90": 2,
-                "4 ports": 2}.get(configuration_string, 0)
+                "4 ports": 4}.get(configuration_string, 0)
 
     # ------------------------------------------------------------------------------------
     # Generate Default Port Names
