@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<valve_configurations>
+  <default_configuration name = "Default" num_valves = "2">
+     <valve_pos valve_ID = "1" port_ID = "8"></valve_pos>
+     <valve_pos valve_ID = "2" port_ID = "1"></valve_pos>
+     <valve_pos valve_ID = "3" port_ID = "5"></valve_pos>
+  </default_configuration>
+  <configuration name = "Wash">
+     <valve_pos valve_ID = "1" port_ID = "1"></valve_pos>
+     <valve_pos valve_ID = "2" port_ID = "2"></valve_pos>
+  </configuration>
+  <configuration name = "Hybridize">
+     <valve_pos valve_ID = "1" port_ID = "2"></valve_pos>
+     <valve_pos valve_ID = "2" port_ID = "1"></valve_pos>
+  </configuration>
+  <configuration name = "STORM Buffer">
+     <valve_pos valve_ID = "2" port_ID = "1"></valve_pos>
+     <valve_pos valve_ID = "1" port_ID = "7"></valve_pos>
+     <valve_pos valve_ID = "10" port_ID = "3"></valve_pos>
+  </configuration>
+</valve_configurations>
+
