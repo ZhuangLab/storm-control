@@ -103,9 +103,9 @@ class QtValveControl(QtValveControlWidget):
         self.change_port_signal.emit(self.valve_ID)
                        
 ### Stand alone code
-class Window(QtGui.QMainWindow):
+class StandAlone(QtGui.QMainWindow):
     def __init__(self, parent = None):
-        super(Window, self).__init__(parent)
+        super(StandAlone, self).__init__(parent)
 
         # scroll area widget contents - layout
         self.scrollLayout = QtGui.QVBoxLayout()
@@ -147,6 +147,6 @@ class Window(QtGui.QMainWindow):
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
-    window = Window()
+    window = StandAlone()
     window.show()
     app.exec_()                              

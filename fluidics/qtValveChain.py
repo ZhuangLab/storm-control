@@ -86,9 +86,9 @@ class QtValveChain(QtGui.QWidget):
         self.valve_poll_timer.stop()
                        
 ### Stand alone code
-class Window(QtGui.QMainWindow):
+class StandAlone(QtGui.QMainWindow):
     def __init__(self, parent = None):
-        super(Window, self).__init__(parent)
+        super(StandAlone, self).__init__(parent)
 
         # scroll area widget contents - layout
         self.valve_chain_widget = QtValveChain(COM_port = 2,
@@ -124,13 +124,12 @@ class Window(QtGui.QMainWindow):
 
         file_menu.addAction(exit_action)
 
-
     def closeEvent(self, event):
         self.valve_chain_widget.close()
         self.close()
         
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
-    window = Window()
+    window = StandAlone()
     window.show()
     app.exec_()                              
