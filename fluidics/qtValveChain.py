@@ -21,14 +21,15 @@ class QtValveChain(QtGui.QWidget):
 
         # Define display widget
         self.valveChainGroupBox = QtGui.QGroupBox()
-        self.valveChainGroupBox.setTitle("Valve Control")
+        self.valveChainGroupBox.setTitle("Valve Controls")
         self.valveChainGroupBoxLayout = QtGui.QVBoxLayout(self.valveChainGroupBox)
 
         # Create Valve Chain
         if num_simulated_valves > 0:
             self.valve_chain = HamiltonMVP(COM_port = 0,
                                            simulate = True,
-                                           num_simulated_valves = num_simulated_valves)
+                                           num_simulated_valves = num_simulated_valves,
+                                           verbose = self.verbose)
         else:
             self.valve_chain = HamiltonMVP(COM_port = self.COM_port,
                                            verbose = self.verbose)
@@ -76,6 +77,13 @@ class QtValveChain(QtGui.QWidget):
     def pollValveStatus(self):
         for valve_ID in range(self.num_valves):
             self.valve_widgets[valve_ID].setStatus(self.valve_chain.getStatus(valve_ID))
+
+    def howManyValves(self):
+        return self.valve_chain.howManyValves
+
+    def close(self):
+        self.valve_chain.close()
+        self.valve_poll_timer.stop()
                        
 ### Stand alone code
 class Window(QtGui.QMainWindow):
@@ -85,7 +93,7 @@ class Window(QtGui.QMainWindow):
         # scroll area widget contents - layout
         self.valve_chain_widget = QtValveChain(COM_port = 2,
                                                verbose = True,
-                                               num_simulated_valves = 3)
+                                               num_simulated_valves = 4)
         
         # main layout
         self.mainLayout = QtGui.QVBoxLayout()
@@ -100,6 +108,27 @@ class Window(QtGui.QMainWindow):
         # set central widget
         self.setCentralWidget(self.centralWidget)
 
+        # set window title
+        self.setWindowTitle("Valve Chain Control")
+
+        # set window geometry
+        self.setGeometry(50, 50, 500, 100 + 100*self.valve_chain_widget.num_valves)
+
+        # Create file menu
+        menubar = self.menuBar()
+        file_menu = menubar.addMenu("File")
+
+        exit_action = QtGui.QAction("Exit", self)
+        exit_action.setShortcut("Ctrl+Q")
+        exit_action.triggered.connect(self.closeEvent)
+
+        file_menu.addAction(exit_action)
+
+
+    def closeEvent(self, event):
+        self.valve_chain_widget.close()
+        self.close()
+        
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     window = Window()
