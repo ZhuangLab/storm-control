@@ -46,7 +46,7 @@ class QtValveChain(QtGui.QWidget):
             valve_widget.setRotationDirections(self.valve_chain.getRotationDirections(valve_ID))
             valve_widget.setStatus(self.valve_chain.getStatus(valve_ID))
 
-            valve_widget.changePortButton.clicked.connect(self.changeValvePosition)
+            valve_widget.change_port_signal.connect(self.changeValvePosition)
 
             self.valve_widgets.append(valve_widget)
 
@@ -59,8 +59,19 @@ class QtValveChain(QtGui.QWidget):
         self.valve_poll_timer.setInterval(1000)
         self.valve_poll_timer.timeout.connect(self.pollValveStatus)
 
+        self.valve_poll_timer.start()
+        
     def changeValvePosition(self, valve_ID):
-        pass
+        port_ID = self.valve_widgets[valve_ID].getPortIndex()
+        rotation_direction = self.valve_widgets[valve_ID].getDesiredRotationIndex()
+
+        print ("Changing Valve " + str(valve_ID) + " Port " + str(port_ID) +
+               " Direction " + str(rotation_direction) )
+        
+        self.valve_chain.changePort(valve_ID = valve_ID,
+                                    port_ID = port_ID,
+                                    direction = rotation_direction)
+        self.pollValveStatus()
 
     def pollValveStatus(self):
         for valve_ID in range(self.num_valves):
