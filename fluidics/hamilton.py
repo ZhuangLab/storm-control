@@ -183,9 +183,9 @@ class HamiltonMVP():
             return True
                                 
     # ------------------------------------------------------------------------------------
-    # Move Valve
+    # Change Port Position
     # ------------------------------------------------------------------------------------ 
-    def moveValve(self, valve_ID, port_ID, direction = 0, waitUntilDone = False):
+    def changePort(self, valve_ID, port_ID, direction = 0, waitUntilDone = False):
         # Check validity if valve and port IDs
         if not self.isValidValve(valve_ID):
             return False
@@ -242,7 +242,7 @@ class HamiltonMVP():
     # Check if Valve is Valid
     # ------------------------------------------------------------------------------------       
     def isValidValve(self, valve_ID):
-        if not (valve_ID < (self.max_valves - 1)):
+        if not (valve_ID < self.max_valves):
             if self.verbose:
                 print str(valve_ID) + " is not a valid valve"
             return False
@@ -255,7 +255,7 @@ class HamiltonMVP():
     def isValidPort(self, valve_ID, port_ID):
         if not self.isValidValve(valve_ID):
             return False
-        elif not (port-ID < (self.max_ports_per_valve[valve_ID] - 1)):
+        elif not (port_ID < self.max_ports_per_valve[valve_ID]):
             if self.verbose:
                 print str(port_ID) + " is not a valid port on valve " + str(valve_ID)
             return False
@@ -298,7 +298,7 @@ class HamiltonMVP():
             return ("")
         default_names = []
         for port_num in range(self.max_ports_per_valve[valve_ID]):
-            default_names.append("Port " + str(port_num))
+            default_names.append("Port " + str(port_num+1))
         return default_names
 
     # ------------------------------------------------------------------------------------
