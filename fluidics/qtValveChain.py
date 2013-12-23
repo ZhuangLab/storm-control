@@ -20,12 +20,9 @@ class QtValveChain(QtGui.QWidget):
         self.verbose = verbose
 
         # Define display widget
-        self.scrollLayout = QtGui.QVBoxLayout()
-        self.scrollWidget = QtGui.QWidget()
-        self.scrollWidget.setLayout(self.scrollLayout)
-        self.scrollArea = QtGui.QScrollArea()
-        self.scrollArea.setWidgetResizable(True)
-        self.scrollArea.setWidget(self.scrollWidget)
+        self.valveChainGroupBox = QtGui.QGroupBox()
+        self.valveChainGroupBox.setTitle("Valve Control")
+        self.valveChainGroupBoxLayout = QtGui.QVBoxLayout(self.valveChainGroupBox)
 
         # Create Valve Chain
         if num_simulated_valves > 0:
@@ -53,9 +50,9 @@ class QtValveChain(QtGui.QWidget):
 
             self.valve_widgets.append(valve_widget)
 
-            self.scrollLayout.addWidget(valve_widget)
+            self.valveChainGroupBoxLayout.addWidget(valve_widget)
 
-        self.scrollLayout.addStretch(1)
+        self.valveChainGroupBoxLayout.addStretch(1)
         
         # Define timer for periodic polling of valve status
         self.valve_poll_timer = QtCore.QTimer()        
@@ -83,7 +80,7 @@ class Window(QtGui.QMainWindow):
         self.mainLayout = QtGui.QVBoxLayout()
 
         # add all main to the main vLayout
-        self.mainLayout.addWidget(self.valve_chain_widget.scrollArea)
+        self.mainLayout.addWidget(self.valve_chain_widget.valveChainGroupBox)
         
         # central widget
         self.centralWidget = QtGui.QWidget()
