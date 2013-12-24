@@ -19,10 +19,9 @@ class ValveChainConfiguration(QtGui.QMainWindow):
         self.num_configs = 0
         self.default_num_valves = 0
         self.default_config = []
-        
-        if self.file_name == "":
-            print self.file_name
-            self.file_name = self.getFilePath()
+
+        # Initialize file path
+        self.setConfigXML(xml_file_path)
 
         # Parse XML
         self.parseConfigXML()
@@ -31,12 +30,31 @@ class ValveChainConfiguration(QtGui.QMainWindow):
         if self.verbose:
             self.printConfigurations()
 
-    def getFilePath(self, path = "\home"):
-        xml_file_name = QtGui.QFileDialog.getOpenFileName(self, "Open File", path)
+    def setConfigXML(self, xml_file_path):
+        if xml_file_path == "":
+            xml_file_name = QtGui.QFileDialog.getOpenFileName(self, "Open File", path)
+        else:
+            self.file_name = xml_file_path
+            
+    def setConfigXML(self, xml_file_path):
+        self.file_name = xml_file_path
 
-        if self.verbose:
-            print "Opening: " + xml_file_name
-        return str(xml_file_name)        
+    def getConfigNames(self):
+        return self.config_names
+
+    def getNumConfigs(self):
+        return self.num_configs
+
+    def getConfigByName(self, config_name):
+        try:
+            if config_name == "Default":
+                return self.default_config
+            else:
+                config_ID = self.config_names.index(config_name)
+                return self.configs[config_ID]
+        except:
+            print "Did not find " + config_name
+            return []
 
     def parseConfigXML(self):
         try:
