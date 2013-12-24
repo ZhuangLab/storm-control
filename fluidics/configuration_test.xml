@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<valve_configurations>
+  <default_configuration>
+     <valve_pos valve_ID = "1" port_ID = "8"></valve_pos>
+     <valve_pos valve_ID = "2" port_ID = "1"></valve_pos>
+     <valve_pos valve_ID = "3" port_ID = "5"></valve_pos>
+     <valve_pos valve_ID = "4" port_ID = "1"></valve_pos>
+  </default_configuration>
+  <configuration name = "Wash 2">
+     <valve_pos valve_ID = "1" port_ID = "1"></valve_pos>
+     <valve_pos valve_ID = "2" port_ID = "2"></valve_pos>
+  </configuration>
+  <configuration name = "Hybridize 2">
+     <valve_pos valve_ID = "1" port_ID = "2"></valve_pos>
+     <valve_pos valve_ID = "2" port_ID = "1"></valve_pos>
+  </configuration>
+  <configuration name = "STORM Buffer 1">
+     <valve_pos valve_ID = "2" port_ID = "1"></valve_pos>
+     <valve_pos valve_ID = "1" port_ID = "7"></valve_pos>
+     <valve_pos valve_ID = "4" port_ID = "3"></valve_pos>
+  </configuration>
+  <configuration name = "STORM Buffer 2">
+     <valve_pos valve_ID = "2" port_ID = "1"></valve_pos>
+     <valve_pos valve_ID = "1" port_ID = "7"></valve_pos>
+     <valve_pos valve_ID = "4" port_ID = "3"></valve_pos>
+  </configuration>
+  <configuration name = "STORM Buffer 3">
+     <valve_pos valve_ID = "2" port_ID = "1"></valve_pos>
+     <valve_pos valve_ID = "1" port_ID = "7"></valve_pos>
+     <valve_pos valve_ID = "4" port_ID = "3"></valve_pos>
+  </configuration>
+  <configuration name = "STORM Buffer 4">
+     <valve_pos valve_ID = "2" port_ID = "1"></valve_pos>
+     <valve_pos valve_ID = "1" port_ID = "7"></valve_pos>
+     <valve_pos valve_ID = "4" port_ID = "3"></valve_pos>
+  </configuration>
+</valve_configurations>
+
