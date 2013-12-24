@@ -202,7 +202,10 @@ class ValveChainConfiguration(QtGui.QMainWindow):
         text_string = current_config_name + "\n"
         for valve_ID, port_ID in enumerate(current_config):
             text_string += "Valve " + str(valve_ID+1)
-            text_string += ": Port " + str(port_ID+1)
+            if port_ID == -1:
+                text_string += ": N/A "
+            else:
+                text_string += ": Port " + str(port_ID+1)
             text_string += "\n"
 
         self.currentConfigLabel.setText(text_string)
