@@ -4,174 +4,154 @@ import os
 import xml.etree.ElementTree as elementTree
 from PyQt4 import QtCore, QtGui
 
-class ValveChainConfiguration(QtGui.QMainWindow):
+class ValveCommands(QtGui.QMainWindow):
 
-    change_configuration_signal = QtCore.pyqtSignal(int)
+    change_command_signal = QtCore.pyqtSignal(int)
     
     def __init__(self,
-                 xml_file_path="configuration_default.xml",
+                 xml_file_path="default_config.xml",
                  verbose = False):
-        super(ValveChainConfiguration, self).__init__()
+        super(ValveCommands, self).__init__()
 
         # Initialize internal attributes
-        self.num_configurations = 0
         self.verbose = verbose
         self.file_name = xml_file_path
-        self.config_names = []
-        self.configs = []
-        self.num_configs = 0
+        self.command_names = []
+        self.commands = []
+        self.num_commands = 0
         self.num_valves = 0
-
+        
         # Create GUI
         self.createGUI()
 
         # Load Configurations
-        self.loadConfigurations(xml_file_path = self.file_name)
+        self.loadCommands(xml_file_path = self.file_name)
 
-    def loadConfigurations(self, xml_file_path = ""):
+    def loadCommands(self, xml_file_path = ""):
         # Set Configuration XML (load if needed)
-        print "Provided file path: " + str(xml_file_path)
         if not xml_file_path:
             xml_file_path = QtGui.QFileDialog.getOpenFileName(self, "Open File", "\home")
         self.file_name = xml_file_path
         
         # Parse XML
-        self.parseConfigXML()
+        self.parseCommandXML()
 
         # Update GUI
         self.updateGUI()
 
         # Display if desired
         if self.verbose:
-            self.printConfigurations()
+            self.printCommands()
         
-    def setConfigXML(self, xml_file_path):
-        self.file_name = xml_file_path
-
-    def getConfigNames(self):
-        return self.config_names
+    def getCommandNames(self):
+        return self.command_names
 
     def getNumberOfValves(self):
         return self.default_num_valves
 
-    def getNumConfigs(self):
-        return self.num_configs
+    def getNumCommands(self):
+        return self.num_commands
 
-    def getConfigByName(self, config_name):
+    def getCommandByName(self, command_name):
         try:
-            config_ID = self.config_names.index(config_name)
-            return self.configs[config_ID]
+            command_ID = self.command_names.index(command_name)
+            return self.commands[command_ID]
         except:
-            print "Did not find " + config_name
-            return []
+            print "Did not find " + command_name
+            return [-1]*self.num_valves # Return no change command
 
-    def getConfigByIndex(self, config_ID):
+    def getCommandByIndex(self, command_ID):
         try:
-            return self.configs[config_ID]
+            return self.commands[command_ID]
         except:
-            print "Invalvid config index: " + config_ID
-            return self.configs[0] # return default
+            print "Invalvid command index: " + command_ID
+            return [-1]*self.num_valves # return default
 
-    def parseConfigXML(self):
+    def parseCommandXML(self):
         try:
-            self.config_data = elementTree.parse(self.file_name)
-            self.config_data.getroot()
-            self.valve_configs = self.config_data.getroot()
+            print "Loading: " + self.file_name
+            self.xml_tree = elementTree.parse(self.file_name)
+            self.valve_configuration = self.xml_tree.getroot()
         except:
             print "Valid xml file not loaded"
             return
         else:
             print "Loaded: " + self.file_name
 
-        # Clear previous configurations
-        self.config_names = []
-        self.configs = []
-        self.num_configs = 0
-        self.num_valves = 0
+        # Clear previous commands
+        self.command_names = []
+        self.commands = []
+        self.num_commands = 0
 
-        # Confirm 1 and only 1 <default_configurations>
-        num_default = len(list(self.config_data.findall("default_configuration")))
-
-        if not num_default == 1:
-            print "Incorrect number of <default_configuration> elements"
-            return
-
-        # Load default setting
-        for settings in self.config_data.findall("default_configuration"):
-            self.num_valves = len(list(settings.findall("valve_pos")))
-            temp_config = [-2]*self.num_valves  # initialize port positions, -2 = uninitialized
-            for valve_pos in settings.findall("valve_pos"):
-                valve_ID = int(valve_pos.get("valve_ID")) - 1
-                port_ID = int(valve_pos.get("port_ID")) - 1
-                temp_config[valve_ID] = port_ID
-        # Confirm and display default settings
-        for valve_ID in range(len(temp_config)):
-            port_ID = temp_config[valve_ID]
-            if port_ID == -1:
-                print "Warning missing valve_ID in default configuration"
-
-        # Add Default Configuration: Always the first
-        self.configs.append(temp_config)
-        self.config_names.append("Default")
+        # Load number of valves
+        self.num_valves = int(self.valve_configuration.get("num_valves"))
+        if not (self.num_valves>0):
+            print "Number of valves not specified"
         
-        # Load different configurations
-        num_custom_configs = len(list(self.config_data.findall("configuration")))
-        if self.verbose:
-            print "Loading " + str(num_custom_configs) + " configurations"
-        
-        for config in self.config_data.findall("configuration"):
-            new_config = [-1]*self.num_valves # make copy to initialize config with default
-            print new_config
-            for valve_pos in config.findall("valve_pos"):
-                valve_ID = int(valve_pos.get("valve_ID")) - 1
-                port_ID = int(valve_pos.get("port_ID")) - 1
-                print config.get("name"), valve_ID, port_ID
-                if valve_ID < self.num_valves:
-                    new_config[valve_ID] = port_ID
-                else:
-                    print "Valve out of range on configuration: " + config.get("name")
-            # Add custom config
-            self.configs.append(new_config)
-            self.config_names.append(config.get("name"))
+        # Load commands
+        for valve_command in self.valve_configuration.findall("valve_commands"):
+            print valve_command
+            command_list = valve_command.findall("valve_cmd")
+            for command in command_list:
+                new_command = [-1]*self.num_valves # make copy to initialize config with default
+                for valve_pos in command.findall("valve_pos"):
+                    valve_ID = int(valve_pos.get("valve_ID")) - 1
+                    port_ID = int(valve_pos.get("port_ID")) - 1
+                    if valve_ID < self.num_valves:
+                        new_command[valve_ID] = port_ID
+                    else:
+                        print "Valve out of range on command: " + command.get("name")
+
+                # Add command
+                self.commands.append(new_command)
+                self.command_names.append(command.get("name"))
 
         # Record number of configs
-        self.num_configs = len(self.config_names)
+        self.num_commands = len(self.command_names)
         
-    def printConfigurations(self):
-        print "Current  configurations:"
-        for config_ID in range(self.num_configs):
-            print self.config_names[config_ID]
+    def printCommands(self):
+        print "Current commands:"
+        for command_ID in range(self.num_commands):
+            print self.command_names[command_ID]
             for valve_ID in range(self.num_valves):
-                port_ID = self.configs[config_ID][valve_ID]
-                print ("   " + "Valve " + str(valve_ID+1)
-                       + " configured to port " + str(port_ID+1) )
+                port_ID = self.commands[command_ID][valve_ID]
+                textString = "    " + "Valve " + str(valve_ID + 1)
+                if port_ID >= 0:
+                    textString += " configured to port " + str(port_ID+1)
+                else:
+                    textString += " configured to not change"
 
+    def setActiveCommand(self, command_name):
+        command_ID = self.command_names.index(command_name)
+        self.commandListWidget.setCurrentRow(command_ID)
+        self.updateCommandDisplay()
+    
     def createGUI(self):
         self.groupBox = QtGui.QGroupBox()
-        self.groupBox.setTitle("Valve Configurations")
+        self.groupBox.setTitle("Valve Commands")
         self.groupBoxLayout = QtGui.QVBoxLayout(self.groupBox)
 
         self.fileLabel = QtGui.QLabel()
         self.fileLabel.setText("")
 
-        self.configListWidget = QtGui.QListWidget()
-        self.configListWidget.currentItemChanged.connect(self.updateConfigurationDisplay)
+        self.commandListWidget = QtGui.QListWidget()
+        self.commandListWidget.currentItemChanged.connect(self.updateCommandDisplay)
         
-        self.sendConfigurationButton = QtGui.QPushButton("Set Configuration")
-        self.sendConfigurationButton.clicked.connect(self.transmitConfigIndex)
+        self.sendCommandButton = QtGui.QPushButton("Send Command")
+        self.sendCommandButton.clicked.connect(self.transmitCommandIndex)
 
-        self.currentConfigGroupBox = QtGui.QGroupBox()
-        self.currentConfigGroupBox.setTitle("Current Configuration")
-        self.currentConfigGroupBoxLayout = QtGui.QVBoxLayout(self.currentConfigGroupBox)
+        self.currentCommandGroupBox = QtGui.QGroupBox()
+        self.currentCommandGroupBox.setTitle("Current Command")
+        self.currentCommandGroupBoxLayout = QtGui.QVBoxLayout(self.currentCommandGroupBox)
 
-        self.currentConfigLabel = QtGui.QLabel()
-        self.currentConfigLabel.setText("")
-        self.currentConfigGroupBoxLayout.addWidget(self.currentConfigLabel)
+        self.currentCommandLabel = QtGui.QLabel()
+        self.currentCommandLabel.setText("")
+        self.currentCommandGroupBoxLayout.addWidget(self.currentCommandLabel)
 
         self.groupBoxLayout.addWidget(self.fileLabel)
-        self.groupBoxLayout.addWidget(self.configListWidget)
-        self.groupBoxLayout.addWidget(self.sendConfigurationButton)
-        self.groupBoxLayout.addWidget(self.currentConfigGroupBox)
+        self.groupBoxLayout.addWidget(self.commandListWidget)
+        self.groupBoxLayout.addWidget(self.sendCommandButton)
+        self.groupBoxLayout.addWidget(self.currentCommandGroupBox)
 
         self.groupBoxLayout.addStretch(1)
 
@@ -180,54 +160,54 @@ class ValveChainConfiguration(QtGui.QMainWindow):
         self.exit_action.setShortcut("Ctrl+Q")
         self.exit_action.triggered.connect(self.closeEvent)
 
-        self.load_config_action = QtGui.QAction("Load configuration", self)
-        self.load_config_action.setShortcut("Ctrl+O")
-        self.load_config_action.triggered.connect(self.loadConfigurations)
-        self.load_config_action_menu_name = "File"
+        self.load_commands_action = QtGui.QAction("Load new commands", self)
+        self.load_commands_action.setShortcut("Ctrl+O")
+        self.load_commands_action.triggered.connect(self.loadCommands)
+        self.load_commands_action_menu_name = "File"
         
     def updateGUI(self):
-        self.configListWidget.clear() # Remove previous items
-        for name in self.config_names:
-            self.configListWidget.addItem(name)
+        self.commandListWidget.clear() # Remove previous items
+        for name in self.command_names:
+            self.commandListWidget.addItem(name)
 
-        if len(self.config_names) > 0:
-            self.configListWidget.setCurrentRow(0) # Set to default
+        if len(self.command_names) > 0:
+            self.commandListWidget.setCurrentRow(0) # Set to default
         self.fileLabel.setText(self.file_name)
 
-    def updateConfigurationDisplay(self):
-        current_ID = self.configListWidget.currentRow()
-        current_config_name = self.config_names[current_ID]
-        current_config = self.configs[current_ID]
+    def updateCommandDisplay(self):
+        current_ID = self.commandListWidget.currentRow()
+        current_command_name = self.command_names[current_ID]
+        current_command = self.commands[current_ID]
 
-        text_string = current_config_name + "\n"
-        for valve_ID, port_ID in enumerate(current_config):
+        text_string = current_command_name + "\n"
+        for valve_ID, port_ID in enumerate(current_command):
             text_string += "Valve " + str(valve_ID+1)
             if port_ID == -1:
-                text_string += ": N/A "
+                text_string += ": No Change "
             else:
                 text_string += ": Port " + str(port_ID+1)
             text_string += "\n"
 
-        self.currentConfigLabel.setText(text_string)
+        self.currentCommandLabel.setText(text_string)
 
-    def transmitConfigIndex(self):
-        current_ID = self.configListWidget.currentRow()
-        self.change_configuration_signal.emit(current_ID)
+    def transmitCommandIndex(self):
+        current_ID = self.commandListWidget.currentRow()
+        self.change_command_signal.emit(current_ID)
         if self.verbose:
-            print "Emit: " + str(current_ID) + " " + self.config_names[current_ID]
+            print "Emit: " + str(current_ID) + " " + self.command_names[current_ID]
 
 class StandAlone(QtGui.QMainWindow):
     def __init__(self, parent = None):
         super(StandAlone, self).__init__(parent)
 
         # scroll area widget contents - layout
-        self.valve_chain_config = ValveChainConfiguration(verbose = True)
+        self.valve_chain_commands = ValveCommands(verbose = True)
         
         # main layout
         self.mainLayout = QtGui.QVBoxLayout()
 
         # add all main to the main vLayout
-        self.mainLayout.addWidget(self.valve_chain_config.groupBox)
+        self.mainLayout.addWidget(self.valve_chain_commands.groupBox)
         
         # central widget
         self.centralWidget = QtGui.QWidget()
@@ -237,7 +217,7 @@ class StandAlone(QtGui.QMainWindow):
         self.setCentralWidget(self.centralWidget)
 
         # set window title
-        self.setWindowTitle("Valve Chain Configuration")
+        self.setWindowTitle("Valve Chain Commands")
 
         # set window geometry
         self.setGeometry(50, 50, 500, 400)
@@ -251,10 +231,10 @@ class StandAlone(QtGui.QMainWindow):
         exit_action.triggered.connect(self.closeEvent)
 
         file_menu.addAction(exit_action)
-        file_menu.addAction(self.valve_chain_config.load_config_action)
+        file_menu.addAction(self.valve_chain_commands.load_commands_action)
 
     def closeEvent(self, event):
-        self.valve_chain_config.close()
+        self.valve_chain_commands.close()
         self.close()
         
 if __name__ == "__main__":
