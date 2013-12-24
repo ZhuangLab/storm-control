@@ -44,7 +44,6 @@ class ValveChainConfiguration(QtGui.QMainWindow):
         # Display if desired
         if self.verbose:
             self.printConfigurations()
-
         
     def setConfigXML(self, xml_file_path):
         self.file_name = xml_file_path
@@ -100,7 +99,7 @@ class ValveChainConfiguration(QtGui.QMainWindow):
         # Load default setting
         for settings in self.config_data.findall("default_configuration"):
             self.num_valves = len(list(settings.findall("valve_pos")))
-            temp_config = [-1]*self.num_valves              # initialize port positions
+            temp_config = [-2]*self.num_valves  # initialize port positions, -2 = uninitialized
             for valve_pos in settings.findall("valve_pos"):
                 valve_ID = int(valve_pos.get("valve_ID")) - 1
                 port_ID = int(valve_pos.get("port_ID")) - 1
@@ -111,7 +110,7 @@ class ValveChainConfiguration(QtGui.QMainWindow):
             if port_ID == -1:
                 print "Warning missing valve_ID in default configuration"
 
-        # Add Default Configuration (the first)
+        # Add Default Configuration: Always the first
         self.configs.append(temp_config)
         self.config_names.append("Default")
         
@@ -121,7 +120,7 @@ class ValveChainConfiguration(QtGui.QMainWindow):
             print "Loading " + str(num_custom_configs) + " configurations"
         
         for config in self.config_data.findall("configuration"):
-            new_config = self.configs[0][:] # make copy to initialize config with default
+            new_config = [-1]*self.num_valves # make copy to initialize config with default
             print new_config
             for valve_pos in config.findall("valve_pos"):
                 valve_ID = int(valve_pos.get("valve_ID")) - 1
