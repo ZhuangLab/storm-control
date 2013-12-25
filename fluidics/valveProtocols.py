@@ -101,7 +101,9 @@ class ValveProtocols(QtGui.QMainWindow):
         # Display if desired
         if self.verbose:
             self.printProtocols()
-        
+    def getCurrentCommand(self):
+        return self.issued_command
+    
     def getProtocolNames(self):
         return self.protocol_names
 
@@ -199,6 +201,14 @@ class ValveProtocols(QtGui.QMainWindow):
         self.groupBoxLayout.addWidget(self.protocolStatusText)
         self.groupBoxLayout.addStretch(1)
 
+        # add all main to the main vLayout
+        self.mainLayout = QtGui.QVBoxLayout()
+        self.mainLayout.addWidget(self.groupBox)
+        self.mainLayout.addWidget(self.valveCommands.groupBox)
+
+        self.mainWidget = QtGui.QGroupBox()
+        self.mainWidget.setLayout(self.mainLayout)
+        
         # Menu items (may not be used)
         self.exit_action = QtGui.QAction("Exit", self)
         self.exit_action.setShortcut("Ctrl+Q")
@@ -213,7 +223,6 @@ class ValveProtocols(QtGui.QMainWindow):
             self.protocolListWidget.setCurrentRow(0) # Set to default
 
         self.fileLabel.setText(self.protocol_xml_path)
-
         
     def updateProtocolDescriptor(self):
         protocol_ID = self.protocolListWidget.currentRow()
@@ -236,17 +245,10 @@ class StandAlone(QtGui.QMainWindow):
 
         # scroll area widget contents - layout
         self.valveProtocols = ValveProtocols(verbose = True)
-        
-        # main layout
-        self.mainLayout = QtGui.QVBoxLayout()
-
-        # add all main to the main vLayout
-        self.mainLayout.addWidget(self.valveProtocols.groupBox)
-        self.mainLayout.addWidget(self.valveProtocols.valveCommands.groupBox)
                                   
         # central widget
         self.centralWidget = QtGui.QWidget()
-        self.centralWidget.setLayout(self.mainLayout)
+        self.centralWidget.setLayout(self.valveProtocols.mainLayout)
 
         # set central widget
         self.setCentralWidget(self.centralWidget)
@@ -256,21 +258,6 @@ class StandAlone(QtGui.QMainWindow):
 
         # set window geometry
         self.setGeometry(50, 50, 500, 400)
-
-        # Create file menu
-##        menubar = self.menuBar()
-##        file_menu = menubar.addMenu("File")
-##
-##        exit_action = QtGui.QAction("Exit", self)
-##        exit_action.setShortcut("Ctrl+Q")
-##        exit_action.triggered.connect(self.closeEvent)
-##
-##        file_menu.addAction(exit_action)
-##        file_menu.addAction(self.valve_chain_commands.load_commands_action)
-
-##    def closeEvent(self, event):
-##        self.valve_chain_commands.close()
-##        self.close()
         
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
