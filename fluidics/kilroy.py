@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import sys
 import os
+import time
 from PyQt4 import QtCore, QtGui
 from valveChain import ValveChain
 from valveProtocols import ValveProtocols
@@ -73,6 +74,21 @@ class StandAlone(QtGui.QMainWindow):
         
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
+
+     # Splash Screen.
+
+    splash_pix = QtGui.QPixmap("kilroy_splash.jpg")
+    splash = QtGui.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
+    splash.setMask(splash_pix.mask())
+    splash.show()
+    app.processEvents()
+    
+    time.sleep(2)
+    
+    app.setWindowIcon(QtGui.QIcon('kilroy.jpg'))
     window = StandAlone()
+    window.setWindowIcon(QtGui.QIcon('kilroy.jpg'))
+
+    splash.hide()
     window.show()
     sys.exit(app.exec_())
