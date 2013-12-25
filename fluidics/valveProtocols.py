@@ -60,6 +60,8 @@ class ValveProtocols(QtGui.QMainWindow):
         self.issueCommand(command_name, command_duration)
 
         self.startProtocolButton.setEnabled(False)
+        self.protocolListWidget.setEnabled(False)
+        self.protocolDetailsList.setCurrentRow(0)
         
     def advanceProtocol(self):
         status = self.status
@@ -70,6 +72,8 @@ class ValveProtocols(QtGui.QMainWindow):
             command_duration = self.protocol_durations[protocol_ID][command_ID]
             self.status = [protocol_ID, command_ID]
             self.issueCommand(command_name, command_duration)
+
+            self.protocolDetailsList.setCurrentRow(command_ID)
         else:
             self.stopProtocol()
         
@@ -80,6 +84,11 @@ class ValveProtocols(QtGui.QMainWindow):
             print "Stopped Protocol"
 
         self.startProtocolButton.setEnabled(True)
+        self.protocolListWidget.setEnabled(True)
+        
+        # Unselect all
+        self.protocolDetailsList.setCurrentRow(0)
+        self.protocolDetailsList.item(0).setSelected(False)
 
     def issueCommand(self, command_name, command_duration=-1):
         self.issued_command = self.valveCommands.getCommandByName(command_name)
@@ -105,6 +114,7 @@ class ValveProtocols(QtGui.QMainWindow):
         # Display if desired
         if self.verbose:
             self.printProtocols()
+            
     def getCurrentCommand(self):
         return self.issued_command
     
@@ -175,14 +185,8 @@ class ValveProtocols(QtGui.QMainWindow):
 
         self.protocolListWidget = QtGui.QListWidget()
         self.protocolListWidget.currentItemChanged.connect(self.updateProtocolDescriptor)
-        
-        self.currentProtocolGroupBox = QtGui.QGroupBox()
-        self.currentProtocolGroupBox.setTitle("Current Protocol")
-        self.currentProtocolGroupBoxLayout = QtGui.QVBoxLayout(self.currentProtocolGroupBox)
 
-        self.currentProtocolDescription = QtGui.QLabel()
-        self.currentProtocolDescription.setText("")
-        self.currentProtocolGroupBoxLayout.addWidget(self.currentProtocolDescription)
+        self.protocolDetailsList =  QtGui.QListWidget()
         
         self.startProtocolButton = QtGui.QPushButton("Start Protocol")
         self.startProtocolButton.clicked.connect(self.startProtocol)
@@ -199,7 +203,7 @@ class ValveProtocols(QtGui.QMainWindow):
 
         self.mainWidgetLayout.addWidget(self.fileLabel)
         self.mainWidgetLayout.addWidget(self.protocolListWidget)
-        self.mainWidgetLayout.addWidget(self.currentProtocolGroupBox)
+        self.mainWidgetLayout.addWidget(self.protocolDetailsList)
         self.mainWidgetLayout.addWidget(self.startProtocolButton)
         self.mainWidgetLayout.addWidget(self.stopProtocolButton)
         self.mainWidgetLayout.addWidget(self.protocolStatusText)
@@ -225,16 +229,17 @@ class ValveProtocols(QtGui.QMainWindow):
         current_protocol_name = self.protocol_names[protocol_ID]
         current_protocol_commands = self.protocol_commands[protocol_ID]
         current_protocol_durations = self.protocol_durations[protocol_ID]
-        
-        text_string = current_protocol_name + "\n"
+
+        self.protocolDetailsList.clear()
         for ID in range(len(current_protocol_commands)):
-            text_string += current_protocol_commands[ID]
+            text_string = current_protocol_commands[ID]
             text_string += ": "
             text_string += str(current_protocol_durations[ID]) + " s"
-            text_string += "\n"
 
-        self.currentProtocolDescription.setText(text_string)
-        
+            wid = QtGui.QListWidgetItem(text_string)
+            wid.setFlags(wid.flags() & QtCore.Qt.ItemIsSelectable)
+            self.protocolDetailsList.insertItem(ID, wid)
+                                                                
 class StandAlone(QtGui.QMainWindow):
     def __init__(self, parent = None):
         super(StandAlone, self).__init__(parent)
