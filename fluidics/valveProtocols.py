@@ -58,6 +58,8 @@ class ValveProtocols(QtGui.QMainWindow):
             print "Starting " + self.protocol_names[protocol_ID]
         
         self.issueCommand(command_name, command_duration)
+
+        self.startProtocolButton.setEnabled(False)
         
     def advanceProtocol(self):
         status = self.status
@@ -76,6 +78,8 @@ class ValveProtocols(QtGui.QMainWindow):
         self.protocol_timer.stop()
         if self.verbose:
             print "Stopped Protocol"
+
+        self.startProtocolButton.setEnabled(True)
 
     def issueCommand(self, command_name, command_duration=-1):
         self.issued_command = self.valveCommands.getCommandByName(command_name)
