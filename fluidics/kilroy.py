@@ -27,9 +27,10 @@ class Kilroy(QtGui.QMainWindow):
         self.createGUI()
 
     def createGUI(self):
-        self.mainLayout = QtGui.QHBoxLayout()
-        self.mainLayout.addWidget(self.valveProtocols.mainWidget)
-        self.mainLayout.addWidget(self.valveChain.mainWidget)
+        self.mainLayout = QtGui.QGridLayout()
+        self.mainLayout.addWidget(self.valveProtocols.mainWidget, 0, 0, 1, 3)
+        self.mainLayout.addWidget(self.valveProtocols.valveCommands.mainWidget, 2, 0, 1, 3) 
+        self.mainLayout.addWidget(self.valveChain.mainWidget, 0, 4, 1, 1)
 
     def sendCommand(self):
         command = self.valveProtocols.getCurrentCommand()

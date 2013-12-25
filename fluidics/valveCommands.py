@@ -127,9 +127,9 @@ class ValveCommands(QtGui.QMainWindow):
         self.updateCommandDisplay()
     
     def createGUI(self):
-        self.groupBox = QtGui.QGroupBox()
-        self.groupBox.setTitle("Valve Commands")
-        self.groupBoxLayout = QtGui.QVBoxLayout(self.groupBox)
+        self.mainWidget = QtGui.QGroupBox()
+        self.mainWidget.setTitle("Valve Commands")
+        self.mainWidgetLayout = QtGui.QVBoxLayout(self.mainWidget)
 
         self.fileLabel = QtGui.QLabel()
         self.fileLabel.setText("")
@@ -148,12 +148,12 @@ class ValveCommands(QtGui.QMainWindow):
         self.currentCommandLabel.setText("")
         self.currentCommandGroupBoxLayout.addWidget(self.currentCommandLabel)
 
-        self.groupBoxLayout.addWidget(self.fileLabel)
-        self.groupBoxLayout.addWidget(self.commandListWidget)
-        self.groupBoxLayout.addWidget(self.sendCommandButton)
-        self.groupBoxLayout.addWidget(self.currentCommandGroupBox)
+        self.mainWidgetLayout.addWidget(self.fileLabel)
+        self.mainWidgetLayout.addWidget(self.commandListWidget)
+        self.mainWidgetLayout.addWidget(self.sendCommandButton)
+        self.mainWidgetLayout.addWidget(self.currentCommandGroupBox)
 
-        self.groupBoxLayout.addStretch(1)
+        self.mainWidgetLayout.addStretch(1)
 
         # Menu items (may not be used)
         self.exit_action = QtGui.QAction("Exit", self)
@@ -205,14 +205,13 @@ class StandAlone(QtGui.QMainWindow):
         self.valve_chain_commands = ValveCommands(verbose = True)
         
         # main layout
-        self.mainLayout = QtGui.QVBoxLayout()
 
         # add all main to the main vLayout
-        self.mainLayout.addWidget(self.valve_chain_commands.groupBox)
         
         # central widget
         self.centralWidget = QtGui.QWidget()
-        self.centralWidget.setLayout(self.mainLayout)
+        self.mainLayout = QtGui.QVBoxLayout(self.centralWidget)
+        self.mainLayout.addWidget(self.valve_chain_commands.mainWidget)
 
         # set central widget
         self.setCentralWidget(self.centralWidget)

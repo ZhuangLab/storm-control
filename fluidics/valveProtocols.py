@@ -162,9 +162,9 @@ class ValveProtocols(QtGui.QMainWindow):
                 print textString
 
     def createGUI(self):
-        self.groupBox = QtGui.QGroupBox()
-        self.groupBox.setTitle("Valve Protocols")
-        self.groupBoxLayout = QtGui.QVBoxLayout(self.groupBox)
+        self.mainWidget = QtGui.QGroupBox()
+        self.mainWidget.setTitle("Valve Protocols")
+        self.mainWidgetLayout = QtGui.QVBoxLayout(self.mainWidget)
 
         self.fileLabel = QtGui.QLabel()
         self.fileLabel.setText("")
@@ -193,21 +193,13 @@ class ValveProtocols(QtGui.QMainWindow):
         self.protocolStatusText.setText("")
         self.protocolStatusGroupBoxLayout.addWidget(self.protocolStatusText)
 
-        self.groupBoxLayout.addWidget(self.fileLabel)
-        self.groupBoxLayout.addWidget(self.protocolListWidget)
-        self.groupBoxLayout.addWidget(self.currentProtocolGroupBox)
-        self.groupBoxLayout.addWidget(self.startProtocolButton)
-        self.groupBoxLayout.addWidget(self.stopProtocolButton)
-        self.groupBoxLayout.addWidget(self.protocolStatusText)
-        self.groupBoxLayout.addStretch(1)
-
-        # add all main to the main vLayout
-        self.mainLayout = QtGui.QVBoxLayout()
-        self.mainLayout.addWidget(self.groupBox)
-        self.mainLayout.addWidget(self.valveCommands.groupBox)
-
-        self.mainWidget = QtGui.QGroupBox()
-        self.mainWidget.setLayout(self.mainLayout)
+        self.mainWidgetLayout.addWidget(self.fileLabel)
+        self.mainWidgetLayout.addWidget(self.protocolListWidget)
+        self.mainWidgetLayout.addWidget(self.currentProtocolGroupBox)
+        self.mainWidgetLayout.addWidget(self.startProtocolButton)
+        self.mainWidgetLayout.addWidget(self.stopProtocolButton)
+        self.mainWidgetLayout.addWidget(self.protocolStatusText)
+        self.mainWidgetLayout.addStretch(1)
         
         # Menu items (may not be used)
         self.exit_action = QtGui.QAction("Exit", self)
@@ -248,7 +240,11 @@ class StandAlone(QtGui.QMainWindow):
                                   
         # central widget
         self.centralWidget = QtGui.QWidget()
-        self.centralWidget.setLayout(self.valveProtocols.mainLayout)
+        self.mainLayout = QtGui.QVBoxLayout(self.centralWidget)
+        self.mainLayout.addWidget(self.valveProtocols.mainWidget)
+        self.mainLayout.addWidget(self.valveProtocols.valveCommands.mainWidget)
+
+        self.centralWidget.setLayout(self.mainLayout)
 
         # set central widget
         self.setCentralWidget(self.centralWidget)

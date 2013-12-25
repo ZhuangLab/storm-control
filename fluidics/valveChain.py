@@ -68,12 +68,8 @@ class ValveChain(QtGui.QWidget):
 
         self.valveChainGroupBoxLayout.addStretch(1)
 
-        # add all main to the main vLayout
-        self.mainLayout = QtGui.QVBoxLayout()
-        self.mainLayout.addWidget(self.valveChainGroupBox)
-
-        self.mainWidget = QtGui.QGroupBox()
-        self.mainWidget.setLayout(self.mainLayout)
+        # Define main widget
+        self.mainWidget = self.valveChainGroupBox
         
     def receiveCommand(self, command):
         for valve_ID, port_ID in enumerate(command):
@@ -116,14 +112,15 @@ class StandAlone(QtGui.QMainWindow):
         super(StandAlone, self).__init__(parent)
 
         # scroll area widget contents - layout
-        self.valve_chain_widget = ValveChain(COM_port = 2,
+        self.valve_chain = ValveChain(COM_port = 2,
                                                verbose = True,
                                                num_simulated_valves = 2)
         
         # central widget
         self.centralWidget = QtGui.QWidget()
-        self.centralWidget.setLayout(self.valve_chain_widget.mainLayout)
-
+        self.mainLayout = QtGui.QVBoxLayout(self.centralWidget)
+        self.mainLayout.addWidget(self.valve_chain.mainWidget)
+        
         # set central widget
         self.setCentralWidget(self.centralWidget)
 
@@ -131,7 +128,7 @@ class StandAlone(QtGui.QMainWindow):
         self.setWindowTitle("Valve Chain Control")
 
         # set window geometry
-        self.setGeometry(50, 50, 500, 100 + 100*self.valve_chain_widget.num_valves)
+        self.setGeometry(50, 50, 500, 100 + 100*self.valve_chain.num_valves)
 
         # Create file menu
         menubar = self.menuBar()
@@ -144,7 +141,7 @@ class StandAlone(QtGui.QMainWindow):
         file_menu.addAction(exit_action)
 
     def closeEvent(self, event):
-        self.valve_chain_widget.close()
+        self.valve_chain.close()
         self.close()
         
 if __name__ == "__main__":
