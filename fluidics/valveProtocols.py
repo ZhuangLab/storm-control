@@ -6,6 +6,9 @@ from PyQt4 import QtCore, QtGui
 from valveCommands import ValveCommands
 
 class ValveProtocols(QtGui.QMainWindow):
+
+    command_ready_signal = QtCore.pyqtSignal()
+    
     def __init__(self,
                  protocol_xml_path = "default_config.xml",
                  command_xml_path = "default_config.xml",
@@ -20,16 +23,66 @@ class ValveProtocols(QtGui.QMainWindow):
         self.protocol_commands = []
         self.protocol_durations = []
         self.num_protocols = 0
+        self.status = [-1, -1] # Protocol ID, command ID within protocol
+        self.issued_command = []
         
         # Create Valve Commands
         self.valveCommands = ValveCommands(xml_file_path = self.command_xml_path,
                                            verbose = self.verbose)
+
+        # Connect valve command issue signal
+        self.valveCommands.change_command_signal.connect(self.issueCommand)
+        
         # Create GUI
         self.createGUI()
 
         # Load Configurations
         self.loadProtocols(xml_file_path = self.protocol_xml_path)
 
+        # Create timer
+        self.protocol_timer = QtCore.QTimer()
+        self.protocol_timer.setSingleShot(True)
+        self.protocol_timer.timeout.connect(self.advanceProtocol)
+
+    def startProtocol(self):
+        print "Starting protocol"
+        protocol_ID = self.protocolListWidget.currentRow()
+        command_name = self.protocol_commands[protocol_ID][0]
+        command_duration = self.protocol_durations[protocol_ID][0]
+        self.status = [protocol_ID, 0]
+
+        if self.verbose:
+            print "Starting " + self.protocol_names[protocol_ID]
+        
+        self.issueCommand(command_name, command_duration)
+        
+    def advanceProtocol(self):
+        status = self.status
+        protocol_ID = self.status[0]
+        command_ID = self.status[1] + 1
+        if command_ID < len(self.protocol_commands[protocol_ID]):
+            command_name = self.protocol_commands[protocol_ID][command_ID]
+            command_duration = self.protocol_durations[protocol_ID][command_ID]
+            self.status = [protocol_ID, command_ID]
+            self.issueCommand(command_name, command_duration)
+        else:
+            self.stopProtocol()
+        
+    def stopProtocol(self):
+        self.status = [-1,-1]
+        self.protocol_timer.stop()
+        if self.verbose:
+            print "Stopped Protocol"
+
+    def issueCommand(self, command_name, command_duration=0):
+        self.issued_command = self.valveCommands.getCommandByName(command_name)
+        self.command_ready_signal.emit()
+        if self.verbose:
+            print "Issued: " + command_name + ": " + str(command_duration) + " s"
+            print self.issued_command
+
+        self.protocol_timer.start(command_duration*1000)
+ 
     def loadProtocols(self, xml_file_path = ""):
         # Set Configuration XML (load if needed)
         if not xml_file_path:
@@ -60,13 +113,6 @@ class ValveProtocols(QtGui.QMainWindow):
             print "Did not find " + command_name
             return [-1]*self.num_valves # Return no change command
 
-##    def getCommandByIndex(self, command_ID):
-##        try:
-##            return self.commands[command_ID]
-##        except:
-##            print "Invalvid command index: " + command_ID
-##            return [-1]*self.num_valves # return default
-##
     def parseProtocolXML(self):
         try:
             print "Loading: " + self.protocol_xml_path
@@ -129,9 +175,14 @@ class ValveProtocols(QtGui.QMainWindow):
         self.currentProtocolDescription.setText("")
         self.currentProtocolGroupBoxLayout.addWidget(self.currentProtocolDescription)
         
-        self.sendProtocolButton = QtGui.QPushButton("Execute Protocol")
-        #self.sendCommandButton.clicked.connect()
-
+        self.startProtocolButton = QtGui.QPushButton("Start Protocol")
+        self.startProtocolButton.clicked.connect(self.startProtocol)
+        self.stopProtocolButton = QtGui.QPushButton("Stop Protocol")
+        self.stopProtocolButton.clicked.connect(self.stopProtocol)
+        self.protocolButtonLayout = QtGui.QHBoxLayout()
+        self.protocolButtonLayout.addWidget(self.startProtocolButton)
+        self.protocolButtonLayout.addWidget(self.stopProtocolButton)
+        
         self.protocolStatusGroupBox = QtGui.QGroupBox()
         self.protocolStatusGroupBox.setTitle("Command In Progress")
         self.protocolStatusGroupBoxLayout = QtGui.QVBoxLayout(self.protocolStatusGroupBox)
@@ -143,7 +194,7 @@ class ValveProtocols(QtGui.QMainWindow):
         self.groupBoxLayout.addWidget(self.fileLabel)
         self.groupBoxLayout.addWidget(self.protocolListWidget)
         self.groupBoxLayout.addWidget(self.currentProtocolGroupBox)
-        self.groupBoxLayout.addWidget(self.sendProtocolButton)
+        self.groupBoxLayout.addWidget(self.protocolButtonLayout)
         self.groupBoxLayout.addWidget(self.protocolStatusText)
         self.groupBoxLayout.addStretch(1)
 
@@ -162,11 +213,12 @@ class ValveProtocols(QtGui.QMainWindow):
 
         self.fileLabel.setText(self.protocol_xml_path)
 
+        
     def updateProtocolDescriptor(self):
-        current_ID = self.protocolListWidget.currentRow()
-        current_protocol_name = self.protocol_names[current_ID]
-        current_protocol_commands = self.protocol_commands[current_ID]
-        current_protocol_durations = self.protocol_durations[current_ID]
+        protocol_ID = self.protocolListWidget.currentRow()
+        current_protocol_name = self.protocol_names[protocol_ID]
+        current_protocol_commands = self.protocol_commands[protocol_ID]
+        current_protocol_durations = self.protocol_durations[protocol_ID]
         
         text_string = current_protocol_name + "\n"
         for ID in range(len(current_protocol_commands)):
@@ -176,13 +228,7 @@ class ValveProtocols(QtGui.QMainWindow):
             text_string += "\n"
 
         self.currentProtocolDescription.setText(text_string)
-##
-##    def transmitCommandIndex(self):
-##        current_ID = self.commandListWidget.currentRow()
-##        self.change_command_signal.emit(current_ID)
-##        if self.verbose:
-##            print "Emit: " + str(current_ID) + " " + self.command_names[current_ID]
-
+        
 class StandAlone(QtGui.QMainWindow):
     def __init__(self, parent = None):
         super(StandAlone, self).__init__(parent)
