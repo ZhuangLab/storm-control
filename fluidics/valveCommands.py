@@ -6,7 +6,7 @@ from PyQt4 import QtCore, QtGui
 
 class ValveCommands(QtGui.QMainWindow):
 
-    change_command_signal = QtCore.pyqtSignal(int)
+    change_command_signal = QtCore.pyqtSignal(str)
     
     def __init__(self,
                  xml_file_path="default_config.xml",
@@ -192,9 +192,10 @@ class ValveCommands(QtGui.QMainWindow):
 
     def transmitCommandIndex(self):
         current_ID = self.commandListWidget.currentRow()
-        self.change_command_signal.emit(current_ID)
         if self.verbose:
             print "Emit: " + str(current_ID) + " " + self.command_names[current_ID]
+
+        self.change_command_signal.emit(self.command_names[current_ID])
 
 class StandAlone(QtGui.QMainWindow):
     def __init__(self, parent = None):

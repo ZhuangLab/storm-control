@@ -26,6 +26,9 @@
     <valve_cmd name = "Set Hyb 4">
       <valve_pos valve_ID = "2" port_ID = "4"></valve_pos>
     </valve_cmd>
+    <valve_cmd name = "Set Hyb 5">
+      <valve_pos valve_ID = "2" port_ID = "5"></valve_pos>
+    </valve_cmd>
   </valve_commands>
 
   <valve_protocols>
@@ -44,6 +47,14 @@
      <protocol name = "Hybridize 2">
         <command duration = "0">Stop Flow</command>
         <command duration = "0">Set Hyb 2</command>
+	<command duration = "10">Flow Hybridization</command>
+	<command duration = "10">Flow Wash</command>
+	<command duration = "10">Flow STORM Buffer</command>
+	<command duration = "0">Stop Flow</command>
+     </protocol>
+     <protocol name = "Hybridize 3">
+        <command duration = "0">Stop Flow</command>
+        <command duration = "0">Set Hyb 3</command>
 	<command duration = "10">Flow Hybridization</command>
 	<command duration = "10">Flow Wash</command>
 	<command duration = "10">Flow STORM Buffer</command>

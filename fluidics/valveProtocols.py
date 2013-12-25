@@ -44,6 +44,9 @@ class ValveProtocols(QtGui.QMainWindow):
         self.protocol_timer.setSingleShot(True)
         self.protocol_timer.timeout.connect(self.advanceProtocol)
 
+        # Create elapsed time timer
+        self.elapsed_timer = QtCore.QElapsedTimer()
+        
     def startProtocol(self):
         print "Starting protocol"
         protocol_ID = self.protocolListWidget.currentRow()
@@ -74,14 +77,14 @@ class ValveProtocols(QtGui.QMainWindow):
         if self.verbose:
             print "Stopped Protocol"
 
-    def issueCommand(self, command_name, command_duration=0):
+    def issueCommand(self, command_name, command_duration=-1):
         self.issued_command = self.valveCommands.getCommandByName(command_name)
         self.command_ready_signal.emit()
         if self.verbose:
             print "Issued: " + command_name + ": " + str(command_duration) + " s"
             print self.issued_command
-
-        self.protocol_timer.start(command_duration*1000)
+        if command_duration >= 0:
+            self.protocol_timer.start(command_duration*1000)
  
     def loadProtocols(self, xml_file_path = ""):
         # Set Configuration XML (load if needed)
@@ -179,9 +182,6 @@ class ValveProtocols(QtGui.QMainWindow):
         self.startProtocolButton.clicked.connect(self.startProtocol)
         self.stopProtocolButton = QtGui.QPushButton("Stop Protocol")
         self.stopProtocolButton.clicked.connect(self.stopProtocol)
-        self.protocolButtonLayout = QtGui.QHBoxLayout()
-        self.protocolButtonLayout.addWidget(self.startProtocolButton)
-        self.protocolButtonLayout.addWidget(self.stopProtocolButton)
         
         self.protocolStatusGroupBox = QtGui.QGroupBox()
         self.protocolStatusGroupBox.setTitle("Command In Progress")
@@ -194,7 +194,8 @@ class ValveProtocols(QtGui.QMainWindow):
         self.groupBoxLayout.addWidget(self.fileLabel)
         self.groupBoxLayout.addWidget(self.protocolListWidget)
         self.groupBoxLayout.addWidget(self.currentProtocolGroupBox)
-        self.groupBoxLayout.addWidget(self.protocolButtonLayout)
+        self.groupBoxLayout.addWidget(self.startProtocolButton)
+        self.groupBoxLayout.addWidget(self.stopProtocolButton)
         self.groupBoxLayout.addWidget(self.protocolStatusText)
         self.groupBoxLayout.addStretch(1)
 
