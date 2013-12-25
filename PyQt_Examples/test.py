@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'MultiComponentWidget.ui'
 #
-# Created: Tue Dec 24 21:42:39 2013
+# Created: Wed Dec 25 06:08:31 2013
 #      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -28,9 +28,10 @@ class Ui_Form(object):
         Form.setObjectName(_fromUtf8("Form"))
         Form.resize(400, 300)
         self.widget = QtGui.QWidget(Form)
-        self.widget.setGeometry(QtCore.QRect(50, 40, 113, 132))
+        self.widget.setGeometry(QtCore.QRect(50, 40, 261, 231))
         self.widget.setObjectName(_fromUtf8("widget"))
         self.verticalLayout = QtGui.QVBoxLayout(self.widget)
+        self.verticalLayout.setSpacing(0)
         self.verticalLayout.setMargin(0)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.groupBox = QtGui.QGroupBox(self.widget)
