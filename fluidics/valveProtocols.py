@@ -46,6 +46,10 @@ class ValveProtocols(QtGui.QMainWindow):
 
         # Create elapsed time timer
         self.elapsed_timer = QtCore.QElapsedTimer()
+
+        self.poll_elapsed_time_timer = QtCore.QTimer()
+        self.poll_elapsed_time_timer.setInterval(1000)
+        self.poll_elapsed_time_timer.timeout.connect(self.updateElapsedTime)
         
     def startProtocol(self):
         print "Starting protocol"
@@ -59,9 +63,13 @@ class ValveProtocols(QtGui.QMainWindow):
         
         self.issueCommand(command_name, command_duration)
 
+        self.elapsed_timer.start()
+        
         self.startProtocolButton.setEnabled(False)
         self.protocolListWidget.setEnabled(False)
         self.protocolDetailsList.setCurrentRow(0)
+
+        self.poll_elapsed_time_timer.start()
         
     def advanceProtocol(self):
         status = self.status
@@ -72,6 +80,8 @@ class ValveProtocols(QtGui.QMainWindow):
             command_duration = self.protocol_durations[protocol_ID][command_ID]
             self.status = [protocol_ID, command_ID]
             self.issueCommand(command_name, command_duration)
+
+            self.elapsed_timer.start()
 
             self.protocolDetailsList.setCurrentRow(command_ID)
         else:
@@ -89,6 +99,19 @@ class ValveProtocols(QtGui.QMainWindow):
         # Unselect all
         self.protocolDetailsList.setCurrentRow(0)
         self.protocolDetailsList.item(0).setSelected(False)
+
+        # Stop timers
+        self.poll_elapsed_time_timer.stop()
+        self.elapsedTimeLabel.setText("Elapsed Time:")
+        
+    def updateElapsedTime(self):
+        ms_count = self.elapsed_timer.elapsed()
+        elapsed_seconds = int ( float(ms_count) / float(1000) )
+        
+        text_string = "Elapsed Time: "
+        text_string += str(elapsed_seconds)
+        text_string += " s"
+        self.elapsedTimeLabel.setText(text_string)
 
     def issueCommand(self, command_name, command_duration=-1):
         self.issued_command = self.valveCommands.getCommandByName(command_name)
@@ -186,6 +209,9 @@ class ValveProtocols(QtGui.QMainWindow):
         self.protocolListWidget = QtGui.QListWidget()
         self.protocolListWidget.currentItemChanged.connect(self.updateProtocolDescriptor)
 
+        self.elapsedTimeLabel = QtGui.QLabel()
+        self.elapsedTimeLabel.setText("Elapsed Time: ")
+
         self.protocolDetailsList =  QtGui.QListWidget()
         
         self.startProtocolButton = QtGui.QPushButton("Start Protocol")
@@ -197,16 +223,12 @@ class ValveProtocols(QtGui.QMainWindow):
         self.protocolStatusGroupBox.setTitle("Command In Progress")
         self.protocolStatusGroupBoxLayout = QtGui.QVBoxLayout(self.protocolStatusGroupBox)
         
-        self.protocolStatusText = QtGui.QLabel()
-        self.protocolStatusText.setText("")
-        self.protocolStatusGroupBoxLayout.addWidget(self.protocolStatusText)
-
         self.mainWidgetLayout.addWidget(self.fileLabel)
         self.mainWidgetLayout.addWidget(self.protocolListWidget)
+        self.mainWidgetLayout.addWidget(self.elapsedTimeLabel)
         self.mainWidgetLayout.addWidget(self.protocolDetailsList)
         self.mainWidgetLayout.addWidget(self.startProtocolButton)
         self.mainWidgetLayout.addWidget(self.stopProtocolButton)
-        self.mainWidgetLayout.addWidget(self.protocolStatusText)
         self.mainWidgetLayout.addStretch(1)
         
         # Menu items (may not be used)
