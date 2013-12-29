@@ -1,11 +1,27 @@
 #!/usr/bin/python
+# ----------------------------------------------------------------------------------------
+# A class to load, parse, and control predefined valve commands, i.e predefined
+# changes to the port configurations of a valve chain. 
+# ----------------------------------------------------------------------------------------
+# Jeff Moffitt
+# 12/28/13
+# jeffmoffitt@gmail.com
+# ----------------------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------------------
+# Import
+# ----------------------------------------------------------------------------------------
 import sys
 import os
 import xml.etree.ElementTree as elementTree
 from PyQt4 import QtCore, QtGui
 
+# ----------------------------------------------------------------------------------------
+# ValveCommands Class Definition
+# ----------------------------------------------------------------------------------------
 class ValveCommands(QtGui.QMainWindow):
 
+    # Define custom signal
     change_command_signal = QtCore.pyqtSignal(str)
     
     def __init__(self,
@@ -27,105 +43,9 @@ class ValveCommands(QtGui.QMainWindow):
         # Load Configurations
         self.loadCommands(xml_file_path = self.file_name)
 
-    def loadCommands(self, xml_file_path = ""):
-        # Set Configuration XML (load if needed)
-        if not xml_file_path:
-            xml_file_path = QtGui.QFileDialog.getOpenFileName(self, "Open File", "\home")
-        self.file_name = xml_file_path
-        
-        # Parse XML
-        self.parseCommandXML()
-
-        # Update GUI
-        self.updateGUI()
-
-        # Display if desired
-        if self.verbose:
-            self.printCommands()
-        
-    def getCommandNames(self):
-        return self.command_names
-
-    def getNumberOfValves(self):
-        return self.default_num_valves
-
-    def getNumCommands(self):
-        return self.num_commands
-
-    def getCommandByName(self, command_name):
-        try:
-            command_ID = self.command_names.index(command_name)
-            return self.commands[command_ID]
-        except:
-            print "Did not find " + command_name
-            return [-1]*self.num_valves # Return no change command
-
-    def getCommandByIndex(self, command_ID):
-        try:
-            return self.commands[command_ID]
-        except:
-            print "Invalvid command index: " + command_ID
-            return [-1]*self.num_valves # return default
-
-    def parseCommandXML(self):
-        try:
-            print "Loading: " + self.file_name
-            self.xml_tree = elementTree.parse(self.file_name)
-            self.valve_configuration = self.xml_tree.getroot()
-        except:
-            print "Valid xml file not loaded"
-            return
-        else:
-            print "Loaded: " + self.file_name
-
-        # Clear previous commands
-        self.command_names = []
-        self.commands = []
-        self.num_commands = 0
-
-        # Load number of valves
-        self.num_valves = int(self.valve_configuration.get("num_valves"))
-        if not (self.num_valves>0):
-            print "Number of valves not specified"
-        
-        # Load commands
-        for valve_command in self.valve_configuration.findall("valve_commands"):
-            print valve_command
-            command_list = valve_command.findall("valve_cmd")
-            for command in command_list:
-                new_command = [-1]*self.num_valves # make copy to initialize config with default
-                for valve_pos in command.findall("valve_pos"):
-                    valve_ID = int(valve_pos.get("valve_ID")) - 1
-                    port_ID = int(valve_pos.get("port_ID")) - 1
-                    if valve_ID < self.num_valves:
-                        new_command[valve_ID] = port_ID
-                    else:
-                        print "Valve out of range on command: " + command.get("name")
-
-                # Add command
-                self.commands.append(new_command)
-                self.command_names.append(command.get("name"))
-
-        # Record number of configs
-        self.num_commands = len(self.command_names)
-        
-    def printCommands(self):
-        print "Current commands:"
-        for command_ID in range(self.num_commands):
-            print self.command_names[command_ID]
-            for valve_ID in range(self.num_valves):
-                port_ID = self.commands[command_ID][valve_ID]
-                textString = "    " + "Valve " + str(valve_ID + 1)
-                if port_ID >= 0:
-                    textString += " configured to port " + str(port_ID+1)
-                else:
-                    textString += " configured to not change"
-
-    def setActiveCommand(self, command_name):
-        command_ID = self.command_names.index(command_name)
-        self.commandListWidget.setCurrentRow(command_ID)
-        self.updateCommandDisplay()
-    
+    # ------------------------------------------------------------------------------------
+    # Create display and control widgets
+    # ------------------------------------------------------------------------------------
     def createGUI(self):
         self.mainWidget = QtGui.QGroupBox()
         self.mainWidget.setTitle("Valve Commands")
@@ -164,16 +84,147 @@ class ValveCommands(QtGui.QMainWindow):
         self.load_commands_action.setShortcut("Ctrl+O")
         self.load_commands_action.triggered.connect(self.loadCommands)
         self.load_commands_action_menu_name = "File"
+
+    # ------------------------------------------------------------------------------------
+    # Return a command indexed with its ID (0,1,2,...)
+    # ------------------------------------------------------------------------------------        
+    def getCommandByIndex(self, command_ID):
+        try:
+            return self.commands[command_ID]
+        except:
+            print "Invalvid command index: " + command_ID
+            return [-1]*self.num_valves # return default
+
+    # ------------------------------------------------------------------------------------
+    # Return a command indexed by its name
+    # ------------------------------------------------------------------------------------        
+    def getCommandByName(self, command_name):
+        try:
+            command_ID = self.command_names.index(command_name)
+            return self.commands[command_ID]
+        except:
+            print "Did not find " + command_name
+            return [-1]*self.num_valves # Return no change command
+
+    # ------------------------------------------------------------------------------------
+    # Return the names of the current defined commands
+    # ------------------------------------------------------------------------------------        
+    def getCommandNames(self):
+        return self.command_names
+
+    # ------------------------------------------------------------------------------------
+    # Return the number of defined commands
+    # ------------------------------------------------------------------------------------        
+    def getNumCommands(self):
+        return self.num_commands
+
+    # ------------------------------------------------------------------------------------
+    # Return the number of valves in the defined commands:
+    #   could be different than in the chain
+    # ------------------------------------------------------------------------------------        
+    def getNumberOfValves(self):
+        return self.default_num_valves
+
+    # ------------------------------------------------------------------------------------
+    # Load and parse a XML file with defined commands
+    # ------------------------------------------------------------------------------------
+    def loadCommands(self, xml_file_path = ""):
+        # Set Configuration XML (load if needed)
+        if not xml_file_path:
+            xml_file_path = QtGui.QFileDialog.getOpenFileName(self, "Open File", "\home")
+        self.file_name = xml_file_path
         
-    def updateGUI(self):
-        self.commandListWidget.clear() # Remove previous items
-        for name in self.command_names:
-            self.commandListWidget.addItem(name)
+        # Parse XML
+        self.parseCommandXML()
 
-        if len(self.command_names) > 0:
-            self.commandListWidget.setCurrentRow(0) # Set to default
-        self.fileLabel.setText(self.file_name)
+        # Update GUI
+        self.updateGUI()
 
+        # Display if desired
+        if self.verbose:
+            self.printCommands()
+
+    # ------------------------------------------------------------------------------------
+    # Parse the command xml file
+    # ------------------------------------------------------------------------------------        
+    def parseCommandXML(self):
+        # Try loading file
+        try:
+            print "Loading: " + self.file_name
+            self.xml_tree = elementTree.parse(self.file_name)
+            self.valve_configuration = self.xml_tree.getroot()
+        except:
+            print "Valid xml file not loaded"
+            return
+        else:
+            print "Loaded: " + self.file_name
+
+        # Clear previous commands
+        self.command_names = []
+        self.commands = []
+        self.num_commands = 0
+
+        # Load number of valves
+        self.num_valves = int(self.valve_configuration.get("num_valves"))
+        if not (self.num_valves>0):
+            print "Number of valves not specified"
+        
+        # Load commands
+        for valve_command in self.valve_configuration.findall("valve_commands"):
+            command_list = valve_command.findall("valve_cmd")
+            for command in command_list:
+                new_command = [-1]*self.num_valves # make copy to initialize config with default
+                for valve_pos in command.findall("valve_pos"):
+                    valve_ID = int(valve_pos.get("valve_ID")) - 1
+                    port_ID = int(valve_pos.get("port_ID")) - 1
+                    if valve_ID < self.num_valves:
+                        new_command[valve_ID] = port_ID
+                    else:
+                        print "Valve out of range on command: " + command.get("name")
+
+                # Add command
+                self.commands.append(new_command)
+                self.command_names.append(command.get("name"))
+
+        # Record number of configs
+        self.num_commands = len(self.command_names)
+
+    # ------------------------------------------------------------------------------------
+    # Display loaded commands
+    # ------------------------------------------------------------------------------------                
+    def printCommands(self):
+        print "Current commands:"
+        for command_ID in range(self.num_commands):
+            print self.command_names[command_ID]
+            for valve_ID in range(self.num_valves):
+                port_ID = self.commands[command_ID][valve_ID]
+                textString = "    " + "Valve " + str(valve_ID + 1)
+                if port_ID >= 0:
+                    textString += " configured to port " + str(port_ID+1)
+                else:
+                    textString += " configured to not change"
+
+    # ------------------------------------------------------------------------------------
+    # Update active command on GUI
+    # ------------------------------------------------------------------------------------                
+    def setActiveCommand(self, command_name):
+        command_ID = self.command_names.index(command_name)
+        self.commandListWidget.setCurrentRow(command_ID)
+        self.updateCommandDisplay()
+
+    # ------------------------------------------------------------------------------------
+    # Transmit the index of the desired command to send (if triggered)
+    # ------------------------------------------------------------------------------------
+    def transmitCommandIndex(self):
+        current_ID = self.commandListWidget.currentRow()
+        if self.verbose:
+            print "Emit: " + str(current_ID) + " " + self.command_names[current_ID]
+
+        self.change_command_signal.emit(self.command_names[current_ID])
+
+    # ------------------------------------------------------------------------------------
+    # Display specifics of selected command
+    # ------------------------------------------------------------------------------------
     def updateCommandDisplay(self):
         current_ID = self.commandListWidget.currentRow()
         current_command_name = self.command_names[current_ID]
@@ -190,13 +241,21 @@ class ValveCommands(QtGui.QMainWindow):
 
         self.currentCommandLabel.setText(text_string)
 
-    def transmitCommandIndex(self):
-        current_ID = self.commandListWidget.currentRow()
-        if self.verbose:
-            print "Emit: " + str(current_ID) + " " + self.command_names[current_ID]
+    # ------------------------------------------------------------------------------------
+    # Update GUI
+    # ------------------------------------------------------------------------------------        
+    def updateGUI(self):
+        self.commandListWidget.clear() # Remove previous items
+        for name in self.command_names:
+            self.commandListWidget.addItem(name)
 
-        self.change_command_signal.emit(self.command_names[current_ID])
+        if len(self.command_names) > 0:
+            self.commandListWidget.setCurrentRow(0) # Set to default
+        self.fileLabel.setText(self.file_name)
 
+# ----------------------------------------------------------------------------------------
+# Stand Alone Test Class
+# ----------------------------------------------------------------------------------------
 class StandAlone(QtGui.QMainWindow):
     def __init__(self, parent = None):
         super(StandAlone, self).__init__(parent)
@@ -232,13 +291,43 @@ class StandAlone(QtGui.QMainWindow):
 
         file_menu.addAction(exit_action)
         file_menu.addAction(self.valve_chain_commands.load_commands_action)
-
+        
+    # ------------------------------------------------------------------------------------
+    # Detect close event
+    # ------------------------------------------------------------------------------------    
     def closeEvent(self, event):
         self.valve_chain_commands.close()
         self.close()
-        
+
+# ----------------------------------------------------------------------------------------
+# Test/Demo of Classs
+# ----------------------------------------------------------------------------------------                
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     window = StandAlone()
     window.show()
     sys.exit(app.exec_())
+
+#
+# The MIT License
+#
+# Copyright (c) 2013 Zhuang Lab, Harvard University
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
