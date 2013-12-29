@@ -1,11 +1,27 @@
 #!/usr/bin/python
+# ----------------------------------------------------------------------------------------
+# A wrapper class for the custom valve widget defined in ui_layouts/ui_qt_valve.
+# This class provides the basic I/O required to set and read various valve
+# properties. 
+# ----------------------------------------------------------------------------------------
+# Jeff Moffitt
+# 12/28/13
+# jeffmoffitt@gmail.com
+# ----------------------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------------------
+# Import
+# ----------------------------------------------------------------------------------------
 import sys
 from PyQt4 import QtCore, QtGui
 from ui_layouts.ui_qt_valve import QtValveControlWidget
 
+# ----------------------------------------------------------------------------------------
+# QtValveControl Class Definition
+# ----------------------------------------------------------------------------------------
 class QtValveControl(QtValveControlWidget):
 
-    # signals
+    # Define custom signals
     change_port_signal = QtCore.pyqtSignal(int)
     
     def __init__(self,
@@ -21,7 +37,8 @@ class QtValveControl(QtValveControlWidget):
                  error = ("None", False),
                  verbose = True,
                  ):
-        
+
+        # Initialize parent
         QtValveControlWidget.__init__(self, parent)
         
         # Set internal variables
@@ -43,57 +60,9 @@ class QtValveControl(QtValveControlWidget):
         # Connect signal to change port button
         self.changePortButton.clicked.connect(self.changePortSignal)
 
-    def setValveName(self, name):
-        self.valveGroupBox.setTitle(name)
-
-    def getValveName(self):
-        return self.valveGroupBox.title()
-
-    def setValveConfiguration(self, configuration):
-        self.valveConfigurationLabel.setText(configuration)
-
-    def getValveConfiguration(self):
-        return self.valveConfigurationLabel.text()
-    
-    def setPortNames(self, port_names):
-        self.desiredPortComboBox.clear()
-
-        for name in port_names:
-            self.desiredPortComboBox.addItem(name)
-
-    def setCurrentDesiredPort(self, desired_port):
-        if (desired_port > (self.max_ports -1 )):
-            desired_port = 0
-        self.desiredPortComboBox.setCurrentIndex(desired_port)
-
-    def getPortIndex(self):
-        return self.desiredPortComboBox.currentIndex()
-
-    def setRotationDirections(self, rotation_directions):
-        self.desiredRotationComboBox.clear()
-        for name in rotation_directions:
-            self.desiredRotationComboBox.addItem(name)
-
-    def setCurrentDesiredRotation(self, desired_rotation):
-        if (desired_rotation > (self.max_rotation -1 )):
-            desired_rotation = 0
-        self.desiredRotationComboBox.setCurrentIndex(desired_rotation) 
-
-    def getDesiredRotationIndex(self):
-        return self.desiredRotationComboBox.currentIndex()
-
-    def setStatus(self, status):
-        # Set Label Text
-        self.valveStatusLabel.setText(status[0])
-
-        if status[1] == True:
-            self.valveStatusLabel.setStyleSheet("QLabel { color: red}")
-        if status[1] == False:
-            self.valveStatusLabel.setStyleSheet("QLabel { color: black}")                
-
-    def setError(self, error):
-        pass
-
+    # ------------------------------------------------------------------------------------
+    # Emit custom signal when a change port command is issued
+    # ------------------------------------------------------------------------------------  
     def changePortSignal(self):
         if self.verbose:
             print ("Emitting signal from " + self.getValveName() +
@@ -101,28 +70,122 @@ class QtValveControl(QtValveControlWidget):
                    " and direction index " + str(self.getDesiredRotationIndex())
                    )
         self.change_port_signal.emit(self.valve_ID)
+
+    # ------------------------------------------------------------------------------------
+    # Return selected rotation index
+    # ------------------------------------------------------------------------------------  
+    def getDesiredRotationIndex(self):
+        return self.desiredRotationComboBox.currentIndex()
+
+    # ------------------------------------------------------------------------------------
+    # Return current valve error: Reserved for future use
+    # ------------------------------------------------------------------------------------  
+    def getError(self, error):
+        pass  
+
+    # ------------------------------------------------------------------------------------
+    # Set the current port ID
+    # ------------------------------------------------------------------------------------  
+    def getPortIndex(self):
+        return self.desiredPortComboBox.currentIndex()
+
+    # ------------------------------------------------------------------------------------
+    # Return displayed valve configuration
+    # ------------------------------------------------------------------------------------  
+    def getValveConfiguration(self):
+        return self.valveConfigurationLabel.text()
+
+    # ------------------------------------------------------------------------------------
+    # Return displayed valve name
+    # ------------------------------------------------------------------------------------  
+    def getValveName(self):
+        return self.valveGroupBox.title()
+
+    # ------------------------------------------------------------------------------------
+    # Set the desired port
+    # ------------------------------------------------------------------------------------  
+    def setCurrentDesiredPort(self, desired_port):
+        if (desired_port > (self.max_ports -1 )):
+            desired_port = 0
+        self.desiredPortComboBox.setCurrentIndex(desired_port)
+
+    # ------------------------------------------------------------------------------------
+    # Set current rotation direction
+    # ------------------------------------------------------------------------------------  
+    def setCurrentDesiredRotation(self, desired_rotation):
+        if (desired_rotation > (self.max_rotation -1 )):
+            desired_rotation = 0
+        self.desiredRotationComboBox.setCurrentIndex(desired_rotation) 
+
+    # ------------------------------------------------------------------------------------
+    # Set current valve error: Reserved for future use
+    # ------------------------------------------------------------------------------------  
+    def setError(self, error):
+        pass
+
+    # ------------------------------------------------------------------------------------
+    # Set port names for display
+    # ------------------------------------------------------------------------------------  
+    def setPortNames(self, port_names):
+        self.desiredPortComboBox.clear()
+        for name in port_names:
+            self.desiredPortComboBox.addItem(name)
+
+    # ------------------------------------------------------------------------------------
+    # Set possible rotation directions
+    # ------------------------------------------------------------------------------------  
+    def setRotationDirections(self, rotation_directions):
+        self.desiredRotationComboBox.clear()
+        for name in rotation_directions:
+            self.desiredRotationComboBox.addItem(name)
+
+    # ------------------------------------------------------------------------------------
+    # Set current valve status
+    # ------------------------------------------------------------------------------------  
+    def setStatus(self, status):
+        # Set Label Text
+        self.valveStatusLabel.setText(status[0])
+
+        if status[1] == True:
+            self.valveStatusLabel.setStyleSheet("QLabel { color: red}")
+        if status[1] == False:
+            self.valveStatusLabel.setStyleSheet("QLabel { color: black}")     
+
+    # ------------------------------------------------------------------------------------
+    # Set valve configuration for display
+    # ------------------------------------------------------------------------------------  
+    def setValveConfiguration(self, configuration):
+        self.valveConfigurationLabel.setText(configuration)
+
+    # ------------------------------------------------------------------------------------
+    # Set valve name for display
+    # ------------------------------------------------------------------------------------  
+    def setValveName(self, name):
+        self.valveGroupBox.setTitle(name)
                        
-### Stand alone code
+# ----------------------------------------------------------------------------------------
+# Stand Alone Test Class
+# ----------------------------------------------------------------------------------------
 class StandAlone(QtGui.QMainWindow):
     def __init__(self, parent = None):
         super(StandAlone, self).__init__(parent)
 
-        # scroll area widget contents - layout
+        # Scroll area widget contents - layout
         self.scrollLayout = QtGui.QVBoxLayout()
 
-        # scroll area widget contents
+        # Scroll area widget contents
         self.scrollWidget = QtGui.QWidget()
         self.scrollWidget.setLayout(self.scrollLayout)
 
-        # scroll area
+        # Scroll area
         self.scrollArea = QtGui.QScrollArea()
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setWidget(self.scrollWidget)
 
-        # main layout
+        # Main layout
         self.mainLayout = QtGui.QVBoxLayout()
 
-        # add all main to the main vLayout
+        # Add all main to the main vLayout
         self.mainLayout.addWidget(self.scrollArea)
 
         self.valve_widgets = []
@@ -134,19 +197,52 @@ class StandAlone(QtGui.QMainWindow):
 
         self.scrollLayout.addStretch(1)
         
-        # central widget
+        # Central widget
         self.centralWidget = QtGui.QWidget()
         self.centralWidget.setLayout(self.mainLayout)
 
-        # set central widget
+        # Set central widget
         self.setCentralWidget(self.centralWidget)
-
+        
+    # ------------------------------------------------------------------------------------
+    # Detect custom signal
+    # ------------------------------------------------------------------------------------    
     def detectEmittedSignal(self, valve_ID):
         print "Detected signal from valve index: " + str(valve_ID)
         print "Found port index: " + str(self.valve_widgets[valve_ID].getPortIndex())
 
+# ----------------------------------------------------------------------------------------
+# Test/Demo of Classs
+# ----------------------------------------------------------------------------------------
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     window = StandAlone()
     window.show()
     app.exec_()                              
+
+
+#
+# The MIT License
+#
+# Copyright (c) 2013 Zhuang Lab, Harvard University
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
+
