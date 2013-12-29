@@ -1,84 +1,66 @@
 #!/usr/bin/python
+# ----------------------------------------------------------------------------------------
+# A wrapper class for the Hamilton MVP valve chain and the Widgets that display
+# their status.  All interactions with the valve chain should go through this
+# class.
+# ----------------------------------------------------------------------------------------
+# Jeff Moffitt
+# 12/28/13
+# jeffmoffitt@gmail.com
+# ----------------------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------------------
+# Import
+# ----------------------------------------------------------------------------------------
 import sys
 from PyQt4 import QtCore, QtGui
 from qtValveControl import QtValveControl
 from hamilton import HamiltonMVP
 
+# ----------------------------------------------------------------------------------------
+# ValveChain Class Definition
+# ----------------------------------------------------------------------------------------
 class ValveChain(QtGui.QWidget):
     def __init__(self,
                  parent = None,
                  COM_port = 2,
-                 verbose = True,
                  num_simulated_valves = 0,
+                 verbose = True
                  ):
 
-        ## Is this necessary?
+        # Initialize parent class
         QtGui.QWidget.__init__(self, parent)
 
         # Define local attributes
         self.COM_port = COM_port
         self.verbose = verbose
 
-        # Create Valve Chain
+        # Create instance of Hamilton class
         if num_simulated_valves > 0:
             self.valve_chain = HamiltonMVP(COM_port = 0,
-                                           simulate = True,
                                            num_simulated_valves = num_simulated_valves,
                                            verbose = self.verbose)
         else:
             self.valve_chain = HamiltonMVP(COM_port = self.COM_port,
                                            verbose = self.verbose)
 
-        # Create Valve Controls for Each Valve in the Chain
+        # Create QtValveControl widgets for each valve in the chain
         self.num_valves = self.valve_chain.howManyValves()
         self.valve_names = []
         self.valve_widgets = []
-
+        
         # Create GUI
-        self.createGUI()
+        self.createGUI() # Widgets created here
 
         # Define timer for periodic polling of valve status
         self.valve_poll_timer = QtCore.QTimer()        
         self.valve_poll_timer.setInterval(1000)
         self.valve_poll_timer.timeout.connect(self.pollValveStatus)
-
         self.valve_poll_timer.start()
 
-    def createGUI(self):
-        # Define display widget
-        self.valveChainGroupBox = QtGui.QGroupBox()
-        self.valveChainGroupBox.setTitle("Valve Controls")
-        self.valveChainGroupBoxLayout = QtGui.QVBoxLayout(self.valveChainGroupBox)
-
-        for valve_ID in range(self.num_valves):
-            valve_widget = QtValveControl(self,
-                                         ID = valve_ID)
-            self.valve_names.append(str(valve_ID + 1)) # Save valve name
-            valve_widget.setValveName("Valve " + str(valve_ID+1)) # Valve names are +1 valve IDs
-            valve_widget.setValveConfiguration(self.valve_chain.howIsValveConfigured(valve_ID)[0])
-            valve_widget.setPortNames(self.valve_chain.getDefaultPortNames(valve_ID))
-            valve_widget.setRotationDirections(self.valve_chain.getRotationDirections(valve_ID))
-            valve_widget.setStatus(self.valve_chain.getStatus(valve_ID))
-
-            valve_widget.change_port_signal.connect(self.changeValvePosition)
-
-            self.valve_widgets.append(valve_widget)
-
-            self.valveChainGroupBoxLayout.addWidget(valve_widget)
-
-        self.valveChainGroupBoxLayout.addStretch(1)
-
-        # Define main widget
-        self.mainWidget = self.valveChainGroupBox
-        
-    def receiveCommand(self, command):
-        for valve_ID, port_ID in enumerate(command):
-            print valve_ID, port_ID
-            if port_ID >= 0:
-                self.changeValvePosition(valve_ID, port_ID)
-            else:
-                print "Skipped Valve " + str(valve_ID + 1)
-        
+    # ------------------------------------------------------------------------------------
+    # Change specified valve position
+    # ------------------------------------------------------------------------------------
     def changeValvePosition(self, valve_ID, port_ID = None):
         if port_ID == None:
             port_ID = self.valve_widgets[valve_ID].getPortIndex()
@@ -93,28 +75,82 @@ class ValveChain(QtGui.QWidget):
         self.valve_chain.changePort(valve_ID = valve_ID,
                                     port_ID = port_ID,
                                     direction = rotation_direction)
+        # Update valve display
         self.pollValveStatus()
 
+    # ------------------------------------------------------------------------------------
+    # Close class
+    # ------------------------------------------------------------------------------------
+    def close(self):
+        self.valve_chain.close()
+        self.valve_poll_timer.stop()
+
+    # ------------------------------------------------------------------------------------
+    # Create the Qt widgets for display
+    # ------------------------------------------------------------------------------------  
+    def createGUI(self):
+        # Define display widget
+        self.valveChainGroupBox = QtGui.QGroupBox()
+        self.valveChainGroupBox.setTitle("Valve Controls")
+        self.valveChainGroupBoxLayout = QtGui.QVBoxLayout(self.valveChainGroupBox)
+
+        for valve_ID in range(self.num_valves):
+            valve_widget = QtValveControl(self,
+                                         ID = valve_ID)
+            self.valve_names.append(str(valve_ID + 1)) # Save valve name
+            valve_widget.setValveName("Valve " + str(valve_ID+1)) # Valve names are +1 valve IDs
+            valve_widget.setValveConfiguration(self.valve_chain.howIsValveConfigured(valve_ID))
+            valve_widget.setPortNames(self.valve_chain.getDefaultPortNames(valve_ID))
+            valve_widget.setRotationDirections(self.valve_chain.getRotationDirections(valve_ID))
+            valve_widget.setStatus(self.valve_chain.getStatus(valve_ID))
+
+            valve_widget.change_port_signal.connect(self.changeValvePosition)
+
+            self.valve_widgets.append(valve_widget)
+
+            self.valveChainGroupBoxLayout.addWidget(valve_widget)
+
+        self.valveChainGroupBoxLayout.addStretch(1)
+
+        # Define main widget
+        self.mainWidget = self.valveChainGroupBox
+
+    # ------------------------------------------------------------------------------------
+    # Determine number of valves
+    # ------------------------------------------------------------------------------------
+    def howManyValves(self):
+        return self.valve_chain.howManyValves
+
+    # ------------------------------------------------------------------------------------
+    # Update valve status display with the current status each valve in the chain
+    # ------------------------------------------------------------------------------------
     def pollValveStatus(self):
         for valve_ID in range(self.num_valves):
             self.valve_widgets[valve_ID].setStatus(self.valve_chain.getStatus(valve_ID))
 
-    def howManyValves(self):
-        return self.valve_chain.howManyValves
-
-    def close(self):
-        self.valve_chain.close()
-        self.valve_poll_timer.stop()
+    # ------------------------------------------------------------------------------------
+    # Change port status based on external command
+    # ------------------------------------------------------------------------------------          
+    def receiveCommand(self, command):
+        for valve_ID, port_ID in enumerate(command):
+            print valve_ID, port_ID
+            if port_ID >= 0: # -1 is a flag for 'do not change port'
+                self.changeValvePosition(valve_ID, port_ID)
+            else:
+                if self.verbose:
+                    print "Skipped Valve " + str(valve_ID + 1)
                        
-### Stand alone code
+# ----------------------------------------------------------------------------------------
+# Stand Alone Test Class
+# ----------------------------------------------------------------------------------------
 class StandAlone(QtGui.QMainWindow):
     def __init__(self, parent = None):
         super(StandAlone, self).__init__(parent)
 
         # scroll area widget contents - layout
         self.valve_chain = ValveChain(COM_port = 2,
-                                               verbose = True,
-                                               num_simulated_valves = 2)
+                                      verbose = True,
+                                      num_simulated_valves = 2)
         
         # central widget
         self.centralWidget = QtGui.QWidget()
@@ -140,12 +176,43 @@ class StandAlone(QtGui.QMainWindow):
 
         file_menu.addAction(exit_action)
 
+    # ------------------------------------------------------------------------------------
+    # Detect close event
+    # ------------------------------------------------------------------------------------    
     def closeEvent(self, event):
         self.valve_chain.close()
         self.close()
-        
+
+# ----------------------------------------------------------------------------------------
+# Test/Demo of Classs
+# ----------------------------------------------------------------------------------------        
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     window = StandAlone()
     window.show()
     app.exec_()                              
+
+#
+# The MIT License
+#
+# Copyright (c) 2013 Zhuang Lab, Harvard University
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
