@@ -96,13 +96,13 @@ class HamiltonMVP():
                     valve_config = self.howIsValveConfigured(valve_ID)
 
                     if valve_config[1]: # Indicates successful response
-                        self.valve_configs.append(valve_config[0])
-                        self.max_ports_per_valve.append(self.numPortsPerConfiguration(valve_config[0]))
+                        self.valve_configs.append(valve_config)
+                        self.max_ports_per_valve.append(self.numPortsPerConfiguration(valve_config))
                         self.current_port.append(0)
                         found_valves += 1
                         
                         if self.verbose:
-                            print "Found " + valve_config[0] + " device at address " + str(valve_ID)
+                            print "Found " + valve_config + " device at address " + str(valve_ID)
 
                 elif response[0] == "Negative Acknowledge": # Final device found
                     break
@@ -126,8 +126,8 @@ class HamiltonMVP():
         
         else: # Simulation code
             for valve_ID in range(self.num_simulated_valves):
-                self.valve_configs.append(self.howIsValveConfigured(valve_ID)[0])
-                self.max_ports_per_valve.append(self.numPortsPerConfiguration(self.howIsValveConfigured(valve_ID)[0]))
+                self.valve_configs.append(self.howIsValveConfigured(valve_ID))
+                self.max_ports_per_valve.append(self.numPortsPerConfiguration(self.howIsValveConfigured(valve_ID)))
                 self.current_port.append(0)
             self.num_valves = self.num_simulated_valves
             print "Created " + str(self.num_simulated_valves) + " simulated valves"
@@ -241,8 +241,8 @@ class HamiltonMVP():
         if not self.isValidValve(valve_ID):
             return ("")
         default_names = []
-        for port_num in range(self.max_ports_per_valve[valve_ID]):
-            default_names.append("Port " + str(port_num+1))
+        for port_ID in range(self.max_ports_per_valve[valve_ID]):
+            default_names.append("Port " + str(port_ID+1))
         return default_names
 
     # ------------------------------------------------------------------------------------
@@ -414,7 +414,7 @@ class HamiltonMVP():
                     "5": "Port 5",
                     "6": "Port 6",
                     "7": "Port 7",
-                    "8": "Port 8"}.get(str(self.current_port[valve_ID]+1)),
+                    "8": "Port 8"}.get(str(self.current_port[valve_ID]+1))
 
 
     # ------------------------------------------------------------------------------------
