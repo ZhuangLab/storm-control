@@ -39,6 +39,9 @@ class Kilroy(QtGui.QMainWindow):
         # Connect command ready signal
         self.valveProtocols.command_ready_signal.connect(self.sendCommand)
 
+        # Connect protocol status change signal
+        self.valveProtocols.status_change_signal.connect(self.handleProtocolStatus)
+
         # Create GUI
         self.createGUI()
 
@@ -51,6 +54,17 @@ class Kilroy(QtGui.QMainWindow):
         self.mainLayout.addWidget(self.valveProtocols.valveCommands.mainWidget, 2, 0, 1, 3) 
         self.mainLayout.addWidget(self.valveChain.mainWidget, 0, 4, 1, 1)
 
+    # ----------------------------------------------------------------------------------------
+    # Redirect protocol status change from valveProtocols to valveChain
+    # ----------------------------------------------------------------------------------------
+    def handleProtocolStatus(self):
+        status = self.valveProtocols.getStatus()
+        if status[0] > 0: # Protocol is running
+            self.valveChain.setEnabled(False)
+        else:
+            self.valveChain.setEnabled(True)
+        print "Protocol Status Change: " + str(status)
+        
     # ----------------------------------------------------------------------------------------
     # Redirect commands from valve protocol class to valve chain class
     # ----------------------------------------------------------------------------------------
@@ -80,6 +94,22 @@ class StandAlone(QtGui.QMainWindow):
 
         # set window geometry
         self.setGeometry(50, 50, 500, 400)
+
+        # Define close menu item
+        exit_action = QtGui.QAction("Exit", self)
+        exit_action.setShortcut("Ctrl+Q")
+        exit_action.triggered.connect(self.close)
+
+        # Add menu items
+        menubar = self.menuBar()
+        file_menu = menubar.addMenu("&File")
+        for menu_item in self.kilroy.valveProtocols.menu_items[0]:
+            file_menu.addAction(menu_item)
+        file_menu.addAction(exit_action)
+
+        valve_menu = menubar.addMenu("&Valves")
+        for menu_item in self.kilroy.valveChain.menu_items[0]:
+            valve_menu.addAction(menu_item)
 
 # ----------------------------------------------------------------------------------------
 # Runtime code: Kilroy is meant to be run as a stand alone

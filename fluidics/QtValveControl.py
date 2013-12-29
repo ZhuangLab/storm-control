@@ -118,6 +118,14 @@ class QtValveControl(QtValveControlWidget):
         self.desiredRotationComboBox.setCurrentIndex(desired_rotation) 
 
     # ------------------------------------------------------------------------------------
+    # Set enabled status for display items
+    # ------------------------------------------------------------------------------------          
+    def setEnabled(self, is_enabled):
+        self.desiredPortComboBox.setEnabled(is_enabled)
+        self.changePortButton.setEnabled(is_enabled)
+        self.desiredRotationComboBox.setEnabled(is_enabled)
+
+    # ------------------------------------------------------------------------------------
     # Set current valve error: Reserved for future use
     # ------------------------------------------------------------------------------------  
     def setError(self, error):

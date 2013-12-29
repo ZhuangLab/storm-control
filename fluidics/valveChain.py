@@ -115,6 +115,13 @@ class ValveChain(QtGui.QWidget):
         # Define main widget
         self.mainWidget = self.valveChainGroupBox
 
+        # Define menu items
+        self.valve_reset_action = QtGui.QAction("Valve Chain Reset", self)
+        self.valve_reset_action.triggered.connect(self.reinitializeChain)
+
+        self.menu_names = ["Valve"]
+        self.menu_items = [[self.valve_reset_action]]
+
     # ------------------------------------------------------------------------------------
     # Determine number of valves
     # ------------------------------------------------------------------------------------
@@ -139,7 +146,20 @@ class ValveChain(QtGui.QWidget):
             else:
                 if self.verbose:
                     print "Skipped Valve " + str(valve_ID + 1)
-                       
+
+    # ------------------------------------------------------------------------------------
+    # Reinitialize the valve chain
+    # ------------------------------------------------------------------------------------          
+    def reinitializeChain(self):
+        self.valve_chain.resetChain()
+
+    # ------------------------------------------------------------------------------------
+    # Set enabled status for display items
+    # ------------------------------------------------------------------------------------          
+    def setEnabled(self, is_enabled):
+        for valve_ID in range(self.num_valves):
+            self.valve_widgets[valve_ID].setEnabled(is_enabled)
+    
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
 # ----------------------------------------------------------------------------------------

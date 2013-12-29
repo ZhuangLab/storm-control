@@ -357,9 +357,9 @@ class HamiltonMVP():
         return response
 
     # ------------------------------------------------------------------------------------
-    # Reset Hamilton: Readdress and redetect valves
+    # Reset Chain: Readdress and redetect valves
     # ------------------------------------------------------------------------------------  
-    def resetHamilton(self):
+    def resetChain(self):
         # Reset device configuration
         self.valve_names = []
         self.num_valves = 0

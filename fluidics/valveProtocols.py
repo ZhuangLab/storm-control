@@ -86,7 +86,7 @@ class ValveProtocols(QtGui.QMainWindow):
             self.protocolDetailsList.setCurrentRow(command_ID)
         else:
             self.stopProtocol()
-
+        
     # ------------------------------------------------------------------------------------
     # Create display and control widgets
     # ------------------------------------------------------------------------------------                                                
@@ -124,10 +124,6 @@ class ValveProtocols(QtGui.QMainWindow):
         self.mainWidgetLayout.addStretch(1)
 
         # Configure menu items
-        self.exit_action = QtGui.QAction("Exit", self)
-        self.exit_action.setShortcut("Ctrl+Q")
-        self.exit_action.triggered.connect(self.closeEvent)
-
         self.load_fullconfig_action = QtGui.QAction("Load Full Configuration", self)
         self.load_fullconfig_action.triggered.connect(self.loadFullConfiguration)
         
@@ -415,6 +411,11 @@ class StandAlone(QtGui.QMainWindow):
         # set window geometry
         self.setGeometry(50, 50, 500, 400)
 
+        # Define close menu item
+        self.exit_action = QtGui.QAction("Exit", self)
+        self.exit_action.setShortcut("Ctrl+Q")
+        self.exit_action.triggered.connect(self.close)
+
         # Add menu items
         menubar = self.menuBar()
         for [menu_ID, menu_name] in enumerate(self.valveProtocols.menu_names):
@@ -425,7 +426,7 @@ class StandAlone(QtGui.QMainWindow):
 
             # Add quit option to file menu
             if menu_name == "File":
-                new_menu.addAction(self.valveProtocols.exit_action)
+                new_menu.addAction(self.exit_action)
             
 # ----------------------------------------------------------------------------------------
 # Test/Demo of Class
