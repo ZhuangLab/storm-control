@@ -24,9 +24,9 @@ from valveCommands import ValveCommands
 class ValveProtocols(QtGui.QMainWindow):
 
     # Define custom command ready signal
-    # --determines when a command is ready to be read
-    command_ready_signal = QtCore.pyqtSignal()
-    
+    command_ready_signal = QtCore.pyqtSignal() # A command is ready to be issued
+    status_change_signal = QtCore.pyqtSignal() # A protocol status change occured
+        
     def __init__(self,
                  protocol_xml_path = "default_config.xml",
                  command_xml_path = "default_config.xml",
@@ -122,11 +122,24 @@ class ValveProtocols(QtGui.QMainWindow):
         self.mainWidgetLayout.addWidget(self.startProtocolButton)
         self.mainWidgetLayout.addWidget(self.stopProtocolButton)
         self.mainWidgetLayout.addStretch(1)
-        
-        # Menu items (may not be used)
+
+        # Configure menu items
         self.exit_action = QtGui.QAction("Exit", self)
         self.exit_action.setShortcut("Ctrl+Q")
         self.exit_action.triggered.connect(self.closeEvent)
+
+        self.load_fullconfig_action = QtGui.QAction("Load Full Configuration", self)
+        self.load_fullconfig_action.triggered.connect(self.loadFullConfiguration)
+        
+        self.load_protocols_action = QtGui.QAction("Load New Protocols", self)
+        self.load_protocols_action.triggered.connect(self.loadProtocols)
+
+        self.load_commands_action = self.valveCommands.load_commands_action
+        
+        self.menu_names = ["File"]
+        self.menu_items = [[self.load_fullconfig_action,
+                            self.load_protocols_action,
+                            self.load_commands_action]]
 
     # ------------------------------------------------------------------------------------
     # Return current command
@@ -139,6 +152,12 @@ class ValveProtocols(QtGui.QMainWindow):
     # ------------------------------------------------------------------------------------                                        
     def getNumProtocols(self):
         return self.num_protocols
+
+    # ------------------------------------------------------------------------------------
+    # Return protocol status
+    # ------------------------------------------------------------------------------------                                        
+    def getStatus(self):
+        return self.status # [protocol_ID, command_ID] -1 = no active protocol
 
     # ------------------------------------------------------------------------------------
     # Return a protocol index by name
@@ -176,8 +195,39 @@ class ValveProtocols(QtGui.QMainWindow):
         # Set Configuration XML (load if needed)
         if not xml_file_path:
             xml_file_path = QtGui.QFileDialog.getOpenFileName(self, "Open File", "\home")
+            if not os.path.isfile(xml_file_path):
+                xml_file_path = "default_config.xml"
+                print "Not a valid path. Restoring: " + xml_file_path
+                
         self.protocol_xml_path = xml_file_path
         
+        # Parse XML
+        self.parseProtocolXML()
+
+        # Update GUI
+        self.updateGUI()
+
+        # Display if desired
+        if self.verbose:
+            self.printProtocols()
+            
+    # ------------------------------------------------------------------------------------
+    # Short function to load both commands and protocols in a single file
+    # ------------------------------------------------------------------------------------                        
+    def loadFullConfiguration(self, xml_file_path = ""):
+        # Set Configuration XML (load if needed)
+        if not xml_file_path:
+            xml_file_path = QtGui.QFileDialog.getOpenFileName(self, "Open File", "\home")
+            if not os.path.isfile(xml_file_path):
+                xml_file_path = "default_config.xml"
+                print "Not a valid path. Restoring: " + xml_file_path
+
+        self.protocol_xml_path = xml_file_path
+        self.command_xml_path = xml_file_path
+
+        # Update valveCommands
+        self.valveCommands.loadCommands(xml_file_path = self.command_xml_path)
+      
         # Parse XML
         self.parseProtocolXML()
 
@@ -193,14 +243,12 @@ class ValveProtocols(QtGui.QMainWindow):
     # ------------------------------------------------------------------------------------                                        
     def parseProtocolXML(self):
         try:
-            print "Loading: " + self.protocol_xml_path
+            print "Parsing for protocols: " + self.protocol_xml_path
             self.xml_tree = elementTree.parse(self.protocol_xml_path)
             self.valve_configuration = self.xml_tree.getroot()
         except:
             print "Valid xml file not loaded"
             return
-        else:
-            print "Loaded: " + self.protocol_xml_path
 
         # Clear previous commands
         self.protocol_names = []
@@ -249,13 +297,14 @@ class ValveProtocols(QtGui.QMainWindow):
 
         # Set protocol status: [protocol_ID, command_ID]
         self.status = [protocol_ID, 0]
+        self.status_change_signal.emit() # emit status change signal
 
         if self.verbose:
             print "Starting " + self.protocol_names[protocol_ID]
 
         # Issue command signal
         self.issueCommand(command_name, command_duration)
-
+        
         # Start elapsed time timer
         self.elapsed_timer.start()
         self.poll_elapsed_time_timer.start()
@@ -264,25 +313,30 @@ class ValveProtocols(QtGui.QMainWindow):
         self.startProtocolButton.setEnabled(False)
         self.protocolListWidget.setEnabled(False)
         self.protocolDetailsList.setCurrentRow(0)
-
-        ### ADD CODE TO DISABLE WIDGETS FROM OTHER CLASSES
-    
+        self.valveCommands.setEnabled(False)
+        
     # ------------------------------------------------------------------------------------
     # Stop a running protocol either on completion or early
     # ------------------------------------------------------------------------------------               
     def stopProtocol(self):
+        # Reset status and emit status change signal
         self.status = [-1,-1]
+        self.status_change_signal.emit()
+
+        # Stop timer
         self.protocol_timer.stop()
         if self.verbose:
             print "Stopped Protocol"
 
+        # Re-enable GUI
         self.startProtocolButton.setEnabled(True)
         self.protocolListWidget.setEnabled(True)
+        self.valveCommands.setEnabled(True)
         
         # Unselect all
         self.protocolDetailsList.setCurrentRow(0)
         self.protocolDetailsList.item(0).setSelected(False)
-
+    
         # Stop timers
         self.poll_elapsed_time_timer.stop()
         self.elapsedTimeLabel.setText("Elapsed Time:")
@@ -310,8 +364,11 @@ class ValveProtocols(QtGui.QMainWindow):
         if len(self.protocol_names) > 0:
             self.protocolListWidget.setCurrentRow(0) # Set to default
 
-        self.fileLabel.setText(self.protocol_xml_path)
-
+        drive, path_and_file = os.path.splitdrive(str(self.protocol_xml_path))
+        path_name, file_name = os.path.split(str(path_and_file))
+        self.fileLabel.setText(file_name)
+        self.fileLabel.setToolTip(self.protocol_xml_path)
+        
     # ------------------------------------------------------------------------------------
     # Update protocol description widget
     # ------------------------------------------------------------------------------------                                                        
@@ -358,6 +415,18 @@ class StandAlone(QtGui.QMainWindow):
         # set window geometry
         self.setGeometry(50, 50, 500, 400)
 
+        # Add menu items
+        menubar = self.menuBar()
+        for [menu_ID, menu_name] in enumerate(self.valveProtocols.menu_names):
+            new_menu = menubar.addMenu("&" + menu_name)
+            
+            for menu_item in self.valveProtocols.menu_items[menu_ID]:
+                new_menu.addAction(menu_item)
+
+            # Add quit option to file menu
+            if menu_name == "File":
+                new_menu.addAction(self.valveProtocols.exit_action)
+            
 # ----------------------------------------------------------------------------------------
 # Test/Demo of Class
 # ----------------------------------------------------------------------------------------                        

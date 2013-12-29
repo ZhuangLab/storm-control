@@ -80,8 +80,7 @@ class ValveCommands(QtGui.QMainWindow):
         self.exit_action.setShortcut("Ctrl+Q")
         self.exit_action.triggered.connect(self.closeEvent)
 
-        self.load_commands_action = QtGui.QAction("Load new commands", self)
-        self.load_commands_action.setShortcut("Ctrl+O")
+        self.load_commands_action = QtGui.QAction("Load New Commands", self)
         self.load_commands_action.triggered.connect(self.loadCommands)
         self.load_commands_action_menu_name = "File"
 
@@ -132,6 +131,9 @@ class ValveCommands(QtGui.QMainWindow):
         # Set Configuration XML (load if needed)
         if not xml_file_path:
             xml_file_path = QtGui.QFileDialog.getOpenFileName(self, "Open File", "\home")
+            if not os.path.isfile(xml_file_path):
+                xml_file_path = "default_config.xml"
+                print "Not a valid path. Restoring: " + xml_file_path
         self.file_name = xml_file_path
         
         # Parse XML
@@ -150,14 +152,12 @@ class ValveCommands(QtGui.QMainWindow):
     def parseCommandXML(self):
         # Try loading file
         try:
-            print "Loading: " + self.file_name
+            print "Parsing for commands: " + self.file_name
             self.xml_tree = elementTree.parse(self.file_name)
             self.valve_configuration = self.xml_tree.getroot()
         except:
             print "Valid xml file not loaded"
             return
-        else:
-            print "Loaded: " + self.file_name
 
         # Clear previous commands
         self.command_names = []
@@ -213,6 +213,12 @@ class ValveCommands(QtGui.QMainWindow):
         self.updateCommandDisplay()
 
     # ------------------------------------------------------------------------------------
+    # Control active state of GUI elements
+    # ------------------------------------------------------------------------------------                
+    def setEnabled(self, is_enabled):
+        self.sendCommandButton.setEnabled(is_enabled)
+
+    # ------------------------------------------------------------------------------------
     # Transmit the index of the desired command to send (if triggered)
     # ------------------------------------------------------------------------------------
     def transmitCommandIndex(self):
@@ -251,7 +257,11 @@ class ValveCommands(QtGui.QMainWindow):
 
         if len(self.command_names) > 0:
             self.commandListWidget.setCurrentRow(0) # Set to default
-        self.fileLabel.setText(self.file_name)
+
+        drive, path_and_file = os.path.splitdrive(str(self.file_name)) # Kludge to convert QString to str
+        path_name, file_name = os.path.split(str(path_and_file))
+        self.fileLabel.setText(file_name)
+        self.fileLabel.setToolTip(self.file_name) 
 
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
