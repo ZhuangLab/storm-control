@@ -52,14 +52,21 @@ class KilroySocket(QtNetwork.QTcpSocket):
     # ------------------------------------------------------------------------------------
     # Connect to Kilroy Server 
     # ------------------------------------------------------------------------------------       
-    def connectToKilroy(self):
+    def connectToServer(self):
+        if self.verbose:
+            string = "Looking for kilroy server at: \n"
+            string += "    Address: " + self.address.toString() + "\n"
+            string += "    Port: " + str(self.port)
+            print string
+
         self.connectToHost(self.address, self.port)
         tries = 0
         while (not self.waitForConnected() and (tries < 5)):
             print "Could not find Kilroy server. Attempt: " + str(tries)
             time.sleep(1)
             self.connectToHost(self.address, self.port)
-
+            tries += 1
+            
         if tries==5:
             print "No Kilroy server found"
         else:
@@ -246,6 +253,24 @@ class KilroyClient(QtGui.QWidget):
         self.sendProtocol(protocol_name)
 
         self.protocolToSend.clear()
+
+    # ------------------------------------------------------------------------------------
+    # Disconnect the Kilroy socket from the host
+    # ------------------------------------------------------------------------------------       
+    def stopCommunication(self):
+        if self.isConnected():
+            self.socket.disconnectFromHost()
+            if self.verbose:
+                print "Disconnected Kilroy Client from Kilroy Server"
+
+    # ------------------------------------------------------------------------------------
+    # Attempt to connect socket
+    # ------------------------------------------------------------------------------------       
+    def startCommunication(self):
+        if not self.isConnected():
+            self.socket.connectToServer()
+            self.unacknowledged_messages = 0
+    
     
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
@@ -255,13 +280,13 @@ class StandAlone(QtGui.QMainWindow):
         super(StandAlone, self).__init__(parent)
 
         # scroll area widget contents - layout
-        self.tcpServer = KilroyClient(port = 9000,
-                                        verbose = True)
+        self.tcpClient = KilroyClient(port = 9500,
+                                      verbose = True)
                                   
         # central widget
         self.centralWidget = QtGui.QWidget()
         self.mainLayout = QtGui.QVBoxLayout(self.centralWidget)
-        self.mainLayout.addWidget(self.tcpServer.mainWidget)
+        self.mainLayout.addWidget(self.tcpClient.mainWidget)
 
         self.centralWidget.setLayout(self.mainLayout)
 
@@ -272,7 +297,7 @@ class StandAlone(QtGui.QMainWindow):
         self.setWindowTitle("TCP Client")
 
         # set window geometry
-        self.setGeometry(50, 50, 500, 400)
+        self.setGeometry(50, 50, 500, 200)
 
         # Define close menu item
         self.exit_action = QtGui.QAction("Exit", self)
@@ -281,16 +306,19 @@ class StandAlone(QtGui.QMainWindow):
 
         # Add menu items
         menubar = self.menuBar()
-        for [menu_ID, menu_name] in enumerate(self.tcpServer.menu_names):
+        for [menu_ID, menu_name] in enumerate(self.tcpClient.menu_names):
             new_menu = menubar.addMenu("&" + menu_name)
             
-            for menu_item in self.tcpServer.menu_items[menu_ID]:
+            for menu_item in self.tcpClient.menu_items[menu_ID]:
                 new_menu.addAction(menu_item)
 
             # Add quit option to file menu
             if menu_name == "File":
                 new_menu.addAction(self.exit_action)
-            
+
+        # Open the Kilroy Socket and Connect to Server
+        self.tcpClient.startCommunication()
+        
 # ----------------------------------------------------------------------------------------
 # Test/Demo of Class
 # ----------------------------------------------------------------------------------------                        

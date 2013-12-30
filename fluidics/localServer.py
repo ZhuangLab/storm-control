@@ -70,7 +70,7 @@ class KilroyServer(QtNetwork.QTcpServer):
 
         self.portLabel = QtGui.QLabel()
         
-        self.isPortConnected = QtGui.QLabel()
+        self.isSocketConnected = QtGui.QLabel()
 
         self.writtenData = QtGui.QLabel()
         self.writtenData.setText("Written Data: ")
@@ -82,7 +82,7 @@ class KilroyServer(QtNetwork.QTcpServer):
         
         self.mainWidgetLayout.addWidget(self.addressLabel)
         self.mainWidgetLayout.addWidget(self.portLabel)
-        self.mainWidgetLayout.addWidget(self.isPortConnected)
+        self.mainWidgetLayout.addWidget(self.isSocketConnected)
         self.mainWidgetLayout.addWidget(self.writtenData)
         self.mainWidgetLayout.addWidget(self.dataBufferLabel)
         self.mainWidgetLayout.addWidget(self.dataBuffer)
@@ -97,7 +97,11 @@ class KilroyServer(QtNetwork.QTcpServer):
     # Listen for new clients 
     # ------------------------------------------------------------------------------------       
     def connectToNewClients(self):
-        if self.verbose: print "Listening for new clients"
+        if self.verbose:
+            string = "Listening for new clients at: \n"
+            string += "    Address: " + self.address.toString() + "\n"
+            string += "    Port: " + str(self.port)
+            print string
         self.listen(self.address, self.port)
         self.com_got_connection.emit()
         
@@ -148,7 +152,9 @@ class KilroyServer(QtNetwork.QTcpServer):
             socket.write(data)
             socket.disconnectFromHost()
             socket.close()
-    
+
+        self.updateGUI()
+        
     # ------------------------------------------------------------------------------------
     # Handle client disconnect 
     # ------------------------------------------------------------------------------------       
@@ -159,7 +165,9 @@ class KilroyServer(QtNetwork.QTcpServer):
         self.com_lost_connection.emit()
         if self.verbose:
             print "Client disconnected"
-    
+
+        self.updateGUI()
+        
     # ------------------------------------------------------------------------------------
     # Handles new data on the socket (receives the readyRead signal from the socket)
     # ------------------------------------------------------------------------------------       
@@ -220,10 +228,10 @@ class KilroyServer(QtNetwork.QTcpServer):
         self.addressLabel.setText("Address: " + self.address.toString())
         self.portLabel.setText("Port: " + str(self.port))
 
-        num_clients = 0
         if self.isConnected():
-            num_clients += 1
-        self.isPortConnected.setText("Clients: " + str(num_clients))
+            self.isSocketConnected.setText("Connection Status: Found Client")
+        else:
+            self.isSocketConnected.setText("Connection Status: No Client")
 
         self.dataBuffer.clear()
         for data in self.data_buffer:
@@ -238,7 +246,7 @@ class StandAlone(QtGui.QMainWindow):
 
         # scroll area widget contents - layout
         self.tcpServer = KilroyServer(port = 9500,
-                                        verbose = True)
+                                      verbose = True)
                                   
         # central widget
         self.centralWidget = QtGui.QWidget()
@@ -254,7 +262,7 @@ class StandAlone(QtGui.QMainWindow):
         self.setWindowTitle("TCP Server")
 
         # set window geometry
-        self.setGeometry(50, 50, 500, 400)
+        self.setGeometry(50, 200, 500, 200)
 
         # Define close menu item
         self.exit_action = QtGui.QAction("Exit", self)
