@@ -132,8 +132,21 @@ class KilroyServer(QtNetwork.QTcpServer):
 
         if self.verbose:
             print "Returning: " + data_packet
-
+        
         return data_packet
+
+    # ------------------------------------------------------------------------------------
+    # Parse data in buffer into protocol name 
+    # ------------------------------------------------------------------------------------       
+    def getProtocol(self):
+        data = self.getLastDataElement()
+
+        data_list = data.split(self.delimiter)
+        if len(data_list) > 1:
+            if data_list[0] == "Protocol":
+                return data_list[1]
+
+        return None
 
     # ------------------------------------------------------------------------------------
     # Handle connection of a new client 
@@ -181,9 +194,6 @@ class KilroyServer(QtNetwork.QTcpServer):
             self.data_buffer.append(data)
             self.num_data += 1
 
-            # Emit data ready signal
-            self.data_ready.emit()
-
             # Display data
             if self.verbose:
                 print "Received: " + data
@@ -191,7 +201,11 @@ class KilroyServer(QtNetwork.QTcpServer):
             # Acknowledge data
             self.send(self.acknowledge)
 
-        self.updateGUI()
+            # Update GUI
+            self.updateGUI()
+
+            # Emit data ready signal
+            self.data_ready.emit()
 
     # ------------------------------------------------------------------------------------
     # Return true if connected 
@@ -216,11 +230,8 @@ class KilroyServer(QtNetwork.QTcpServer):
     # ------------------------------------------------------------------------------------
     # Send a completed protocol command 
     # ------------------------------------------------------------------------------------       
-    def sendProtocolComplete(self, command_str):
-        if command_str == "":
-            command_str = "NA"
-        self.send(self.command_complete + self.delimiter + command_str)
-        self.updateGUI()
+    def sendProtocolComplete(self,protocol_name):
+        self.send(self.command_complete + self.delimiter + protocol_name)
 
     # ------------------------------------------------------------------------------------
     # Update GUI based on protocols
@@ -236,7 +247,8 @@ class KilroyServer(QtNetwork.QTcpServer):
 
         self.dataBuffer.clear()
         for data in self.data_buffer:
-            data += ": " + time.strftime("%X")
+            time_now = time.strftime("%X")
+            data += ": " + time_now[:]
             self.dataBuffer.addItem(data)
 
 # ----------------------------------------------------------------------------------------

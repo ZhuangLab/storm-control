@@ -26,6 +26,7 @@ class ValveProtocols(QtGui.QMainWindow):
     # Define custom command ready signal
     command_ready_signal = QtCore.pyqtSignal() # A command is ready to be issued
     status_change_signal = QtCore.pyqtSignal() # A protocol status change occured
+    completed_protocol_signal = QtCore.pyqtSignal(str) # Name of completed protocol
         
     def __init__(self,
                  protocol_xml_path = "default_config.xml",
@@ -185,6 +186,24 @@ class ValveProtocols(QtGui.QMainWindow):
             self.protocol_timer.start(command_duration*1000)
 
     # ------------------------------------------------------------------------------------
+    # Check to see if protocol name is in the list of protocols
+    # ------------------------------------------------------------------------------------                       
+    def isValidProtocol(self, protocol_name):
+        try:
+            self.protocol_names.index(protocol_name)
+            return True
+        except ValueError:
+            if self.verbose:
+                print protocol_name + " is not a valid protocol"
+            return False
+
+    # ------------------------------------------------------------------------------------
+    # Check to see if protocol name is in the list of protocols
+    # ------------------------------------------------------------------------------------                       
+    def isRunningProtocol(self):
+        return self.status[0] >= 0
+
+    # ------------------------------------------------------------------------------------
     # Load a protocol xml file
     # ------------------------------------------------------------------------------------                        
     def loadProtocols(self, xml_file_path = ""):
@@ -293,6 +312,7 @@ class ValveProtocols(QtGui.QMainWindow):
 
         # Set protocol status: [protocol_ID, command_ID]
         self.status = [protocol_ID, 0]
+        print "Status: " + str(self.status)
         self.status_change_signal.emit() # emit status change signal
 
         if self.verbose:
@@ -310,11 +330,35 @@ class ValveProtocols(QtGui.QMainWindow):
         self.protocolListWidget.setEnabled(False)
         self.protocolDetailsList.setCurrentRow(0)
         self.valveCommands.setEnabled(False)
-        
+
+    # ------------------------------------------------------------------------------------
+    # Initialize and start a protocol specified by name
+    # ------------------------------------------------------------------------------------
+    def startProtocolByName(self, protocol_name):
+        if self.isValidProtocol(protocol_name):
+            print "Here"
+            if self.isRunningProtocol():
+                print "And Here"
+                if self.verbose:
+                    print "Stopped In Progress: " + self.protocol_names[self.status[0]]
+                self.stopProtocol() # Abort protocol in progress
+
+            # Find protocol and set as active element 
+            protocol_ID = self.protocol_names.index(protocol_name)
+            self.protocolListWidget.setCurrentRow(protocol_ID)
+
+            # Run protocol
+            self.startProtocol()
+            
     # ------------------------------------------------------------------------------------
     # Stop a running protocol either on completion or early
     # ------------------------------------------------------------------------------------               
     def stopProtocol(self):
+        # Get name of current protocol
+        if self.status[0] >= 0:
+            protocol_name = self.protocol_names[self.status[0]]
+            self.completed_protocol_signal.emit(protocol_name)
+        
         # Reset status and emit status change signal
         self.status = [-1,-1]
         self.status_change_signal.emit()

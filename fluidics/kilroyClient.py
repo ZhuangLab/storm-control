@@ -41,7 +41,7 @@ class KilroySocket(QtNetwork.QTcpSocket):
          # Define custom response strings
         self.acknowledge = "Ack"
         self.already_connected = "Busy"
-        self.command_complete = "Complete,"
+        self.command_complete = "Complete"
         self.no_command = "NA"
         self.new_line = "\n"
         self.delimiter = ","
@@ -94,7 +94,6 @@ class KilroySocket(QtNetwork.QTcpSocket):
     def sendCommand(self, command):
         if self.verbose:
             print "Kilroy Socket: Sending: " + command
-#        self.write(QtCore.QByteArray(str(command + "\n")))
         self.write(str(command + "\n"))
 
         #####self.flush() #Is this needed?

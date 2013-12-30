@@ -28,7 +28,8 @@ class Kilroy(QtGui.QMainWindow):
 
         # Initialize internal attributes
         self.verbose = verbose
-
+        self.sent_protocol_names = []
+        
         # Create ValveChain instance
         self.valveChain = ValveChain(COM_port = 2,
                                      num_simulated_valves = 2,
@@ -37,11 +38,12 @@ class Kilroy(QtGui.QMainWindow):
         # Create ValveProtocols instance and connect signals
         self.valveProtocols = ValveProtocols(verbose = self.verbose)
         self.valveProtocols.command_ready_signal.connect(self.sendCommand)
-        self.valveProtocols.status_change_signal.connect(self.handleProtocolStatus)
+        self.valveProtocols.status_change_signal.connect(self.handleProtocolStatusChange)
+        self.valveProtocols.completed_protocol_signal.connect(self.handleProtocolComplete)
 
         # Create Kilroy TCP Server and connect signals
         self.tcpServer = KilroyServer(verbose = self.verbose)
-        self.tcpServer.data_ready.connect(self.handleTCPProtocol)
+        self.tcpServer.data_ready.connect(self.handleTCPData)
 
         # Create GUI
         self.createGUI()
@@ -54,25 +56,44 @@ class Kilroy(QtGui.QMainWindow):
         self.mainLayout.addWidget(self.valveProtocols.mainWidget, 0, 0, 1, 3)
         self.mainLayout.addWidget(self.valveProtocols.valveCommands.mainWidget, 2, 0, 1, 3) 
         self.mainLayout.addWidget(self.valveChain.mainWidget, 0, 4, 1, 1)
+        self.mainLayout.addWidget(self.tcpServer.mainWidget, 2, 4, 1, 1)
 
     # ----------------------------------------------------------------------------------------
     # Redirect protocol status change from valveProtocols to valveChain
     # ----------------------------------------------------------------------------------------
-    def handleProtocolStatus(self):
+    def handleProtocolStatusChange(self):
         status = self.valveProtocols.getStatus()
-        if status[0] > 0: # Protocol is running
+        if status[0] >= 0: # Protocol is running
             self.valveChain.setEnabled(False)
         else:
             self.valveChain.setEnabled(True)
-        print "Protocol Status Change: " + str(status)
 
     # ----------------------------------------------------------------------------------------
-    # Handle TCP Protocol 
+    # Handle a protocol complete signal from the valve chain
     # ----------------------------------------------------------------------------------------
-    def handleTCPProtocol(self):
+    def handleProtocolComplete(self, protocol_name):
+        # If the protocol was sent by TCP pass on the complete signal
+        if protocol_name in self.sent_protocol_names:
+            self.sent_protocol_names.remove(protocol_name)
+            self.tcpServer.sendProtocolComplete(protocol_name)
+
+    # ----------------------------------------------------------------------------------------
+    # Handle protocol request sent via TCP server
+    # ----------------------------------------------------------------------------------------
+    def handleTCPData(self):
         # Get protocol from tcpServer
-
+        protocol_name = self.tcpServer.getProtocol()
         
+        if self.verbose:
+            print "Running Protocol from Kilroy Client: " + protocol_name
+
+        if self.valveProtocols.isValidProtocol(protocol_name):
+            # Keep track of protocols issued via TCP 
+            self.sent_protocol_names.append(protocol_name)
+
+            # Start the protocol
+            self.valveProtocols.startProtocolByName(protocol_name)
+
     # ----------------------------------------------------------------------------------------
     # Redirect commands from valve protocol class to valve chain class
     # ----------------------------------------------------------------------------------------
