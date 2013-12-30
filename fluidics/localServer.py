@@ -15,31 +15,38 @@ import sys
 from PyQt4 import QtCore, QtGui, QtNetwork
 
 # ----------------------------------------------------------------------------------------
-# ValveProtocols Class Definition
+# Kilroy Server Class Definition
 # ----------------------------------------------------------------------------------------
-class TCPLocalServer(QtNetwork.QTcpServer):
+class KilroyServer(QtNetwork.QTcpServer):
 
     # Define custom command ready signal
     com_got_connection = QtCore.pyqtSignal()
     com_lost_connection = QtCore.pyqtSignal()
     data_ready = QtCore.pyqtSignal() # Data added to buffer
 
-    def __init__(self, port, parent = None, verbose = False):
+    def __init__(self,
+                 port=9500,
+                 address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
+                 parent = None,
+                 verbose = False):
         QtNetwork.QTcpServer.__init__(self, parent)
 
         # Initialize internal variables
         self.verbose = verbose
-        self.address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost);
-        self.port = port
+        self.address = address; # Default is local address
+        self.port = port # 9500 is default Kilroy port
         self.socket = None
         self.data_buffer = []
         self.num_data = 0
         self.last_command_written = []
 
         # Define custom response strings
-        self.acknowledge = QtCore.QByteArray("Ack")
-        self.command_complete = QtCore.QByteArray("Complete,")
-        self.new_line = QtCore.QByteArray("\n")
+        self.acknowledge = "Ack"
+        self.already_connected = "Busy"
+        self.command_complete = "Complete"
+        self.no_command = "NA"
+        self.new_line = "\n"
+        self.delimiter = ","
         
         # Connect new connection signal
         self.newConnection.connect(self.handleClientConnection)
@@ -92,7 +99,6 @@ class TCPLocalServer(QtNetwork.QTcpServer):
     def connectToNewClients(self):
         if self.verbose: print "Listening for new clients"
         self.listen(self.address, self.port)
-        if self.verbose: print "Found client"
         self.com_got_connection.emit()
         
     # ------------------------------------------------------------------------------------
@@ -137,6 +143,11 @@ class TCPLocalServer(QtNetwork.QTcpServer):
             self.com_got_connection.emit()
             if self.verbose:
                 print "Connected new client"
+        else: # Refuse new socket if one already exists
+            data = QtCore.QByteArray(self.already_connected + self.new_line)
+            socket.write(data)
+            socket.disconnectFromHost()
+            socket.close()
     
     # ------------------------------------------------------------------------------------
     # Handle client disconnect 
@@ -150,7 +161,7 @@ class TCPLocalServer(QtNetwork.QTcpServer):
             print "Client disconnected"
     
     # ------------------------------------------------------------------------------------
-    # Handle client disconnect 
+    # Handles new data on the socket (receives the readyRead signal from the socket)
     # ------------------------------------------------------------------------------------       
     def handleNewData(self):
         while self.socket.canReadLine():
@@ -168,10 +179,8 @@ class TCPLocalServer(QtNetwork.QTcpServer):
             if self.verbose:
                 print "Received: " + data
             
-            # Acknowledge data 
-            self.socket.write(self.acknowledge + self.new_line)
-            self.socket.flush()
-            self.last_command_written = self.acknowledge 
+            # Acknowledge data
+            self.send(self.acknowledge)
 
         self.updateGUI()
 
@@ -183,18 +192,26 @@ class TCPLocalServer(QtNetwork.QTcpServer):
             return True
         else:
             return False
+
+    # ------------------------------------------------------------------------------------
+    # Translate command and send as byteArray 
+    # ------------------------------------------------------------------------------------       
+    def send(self, command_str):
+        if self.isConnected():
+            self.last_command_written = command_str
+            command_str += self.new_line
+            self.socket.write(QtCore.QtByteArray(command_str))
+            self.socket.flush()
+            if self.verbose: print "Sent: " + command_str
         
     # ------------------------------------------------------------------------------------
-    # Handle client disconnect 
+    # Send a completed protocol command 
     # ------------------------------------------------------------------------------------       
-    def sendCompleteCommand(self, command_str):
-        if self.isConnected():
-            command_to_send = self.command_complete + command_str
-            self.socket.write(command_to_send + self.new_line)
-            self.socket.flush()
-            self.last_command_written = command_to_send
-
-            self.updateGUI()
+    def sendProtocolComplete(self, command_str):
+        if command_str == "":
+            command_str = "NA"
+        self.send(self.command_complete + self.delimiter + command_str)
+        self.updateGUI()
 
     # ------------------------------------------------------------------------------------
     # Update GUI based on protocols
@@ -220,7 +237,7 @@ class StandAlone(QtGui.QMainWindow):
         super(StandAlone, self).__init__(parent)
 
         # scroll area widget contents - layout
-        self.tcpServer = TCPLocalServer(port = 9000,
+        self.tcpServer = KilroyServer(port = 9500,
                                         verbose = True)
                                   
         # central widget
