@@ -94,7 +94,8 @@ class KilroySocket(QtNetwork.QTcpSocket):
     def sendCommand(self, command):
         if self.verbose:
             print "Kilroy Socket: Sending: " + command
-        self.write(QtCore.QByteArray(command + "\n"))
+#        self.write(QtCore.QByteArray(str(command + "\n")))
+        self.write(str(command + "\n"))
 
         #####self.flush() #Is this needed?
 
@@ -270,7 +271,6 @@ class KilroyClient(QtGui.QWidget):
         if not self.isConnected():
             self.socket.connectToServer()
             self.unacknowledged_messages = 0
-    
     
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class

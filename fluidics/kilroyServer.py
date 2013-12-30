@@ -148,8 +148,8 @@ class KilroyServer(QtNetwork.QTcpServer):
             if self.verbose:
                 print "Connected new client"
         else: # Refuse new socket if one already exists
-            data = QtCore.QByteArray(self.already_connected + self.new_line)
-            socket.write(data)
+            data = self.already_connected + self.new_line
+            socket.write(str(data))
             socket.disconnectFromHost()
             socket.close()
 
@@ -208,7 +208,7 @@ class KilroyServer(QtNetwork.QTcpServer):
         if self.isConnected():
             self.last_command_written = command_str
             command_str += self.new_line
-            self.socket.write(QtCore.QtByteArray(command_str))
+            self.socket.write(str(command_str))
             self.socket.flush()
             if self.verbose: print "Sent: " + command_str
         
