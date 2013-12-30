@@ -17,6 +17,7 @@ import time
 from PyQt4 import QtCore, QtGui
 from valveChain import ValveChain
 from valveProtocols import ValveProtocols
+from kilroyServer import KilroyServer
 
 # ----------------------------------------------------------------------------------------
 # Kilroy Class Definition
@@ -33,14 +34,14 @@ class Kilroy(QtGui.QMainWindow):
                                      num_simulated_valves = 2,
                                      verbose = self.verbose)
 
-        # Create ValveChain instance
+        # Create ValveProtocols instance and connect signals
         self.valveProtocols = ValveProtocols(verbose = self.verbose)
-
-        # Connect command ready signal
         self.valveProtocols.command_ready_signal.connect(self.sendCommand)
-
-        # Connect protocol status change signal
         self.valveProtocols.status_change_signal.connect(self.handleProtocolStatus)
+
+        # Create Kilroy TCP Server and connect signals
+        self.tcpServer = KilroyServer(verbose = self.verbose)
+        self.tcpServer.data_ready.connect(self.handleTCPProtocol)
 
         # Create GUI
         self.createGUI()
@@ -64,6 +65,13 @@ class Kilroy(QtGui.QMainWindow):
         else:
             self.valveChain.setEnabled(True)
         print "Protocol Status Change: " + str(status)
+
+    # ----------------------------------------------------------------------------------------
+    # Handle TCP Protocol 
+    # ----------------------------------------------------------------------------------------
+    def handleTCPProtocol(self):
+        # Get protocol from tcpServer
+
         
     # ----------------------------------------------------------------------------------------
     # Redirect commands from valve protocol class to valve chain class

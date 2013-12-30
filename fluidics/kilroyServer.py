@@ -12,6 +12,7 @@
 # Import
 # ----------------------------------------------------------------------------------------
 import sys
+import time
 from PyQt4 import QtCore, QtGui, QtNetwork
 
 # ----------------------------------------------------------------------------------------
@@ -76,7 +77,7 @@ class KilroyServer(QtNetwork.QTcpServer):
         self.writtenData.setText("Written Data: ")
 
         self.dataBufferLabel = QtGui.QLabel()
-        self.dataBufferLabel.setText("Data Buffer")
+        self.dataBufferLabel.setText("Received Protocols")
 
         self.dataBuffer = QtGui.QListWidget()
         
@@ -235,6 +236,7 @@ class KilroyServer(QtNetwork.QTcpServer):
 
         self.dataBuffer.clear()
         for data in self.data_buffer:
+            data += ": " + time.strftime("%X")
             self.dataBuffer.addItem(data)
 
 # ----------------------------------------------------------------------------------------
