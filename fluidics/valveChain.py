@@ -140,12 +140,8 @@ class ValveChain(QtGui.QWidget):
     # ------------------------------------------------------------------------------------          
     def receiveCommand(self, command):
         for valve_ID, port_ID in enumerate(command):
-            print valve_ID, port_ID
             if port_ID >= 0: # -1 is a flag for 'do not change port'
                 self.changeValvePosition(valve_ID, port_ID)
-            else:
-                if self.verbose:
-                    print "Skipped Valve " + str(valve_ID + 1)
 
     # ------------------------------------------------------------------------------------
     # Reinitialize the valve chain

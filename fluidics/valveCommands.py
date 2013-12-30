@@ -223,9 +223,6 @@ class ValveCommands(QtGui.QMainWindow):
     # ------------------------------------------------------------------------------------
     def transmitCommandIndex(self):
         current_ID = self.commandListWidget.currentRow()
-        if self.verbose:
-            print "Emit: " + str(current_ID) + " " + self.command_names[current_ID]
-
         self.change_command_signal.emit(self.command_names[current_ID])
 
     # ------------------------------------------------------------------------------------

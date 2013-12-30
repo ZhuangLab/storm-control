@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # ----------------------------------------------------------------------------------------
-# A TCP/IP communication class that can be incorporated into Kilroy
+# A TCP communication class that can be incorporated into Kilroy
 #   Based on tcpClient from HAL-4000 by Hazen Babcock
 # ----------------------------------------------------------------------------------------
 # Jeff Moffitt
@@ -225,7 +225,7 @@ class KilroyServer(QtNetwork.QTcpServer):
             command_str += self.new_line
             self.socket.write(str(command_str))
             self.socket.flush()
-            if self.verbose: print "Sent: " + command_str
+            if self.verbose: print "Sent: " + command_str[:-1]
         
     # ------------------------------------------------------------------------------------
     # Send a completed protocol command 

@@ -178,13 +178,17 @@ class ValveProtocols(QtGui.QMainWindow):
     # ------------------------------------------------------------------------------------                       
     def issueCommand(self, command_name, command_duration=-1):
         self.issued_command = self.valveCommands.getCommandByName(command_name)
-        self.command_ready_signal.emit()
         if self.verbose:
-            print "Issued: " + command_name + ": " + str(command_duration) + " s"
-            print self.issued_command
+            text = "Issued: " + command_name
+            if command_duration > 0:
+                text += ": " + str(command_duration) + " s"
+            print text
+            
+        self.command_ready_signal.emit()
+
         if command_duration >= 0:
             self.protocol_timer.start(command_duration*1000)
-
+        
     # ------------------------------------------------------------------------------------
     # Check to see if protocol name is in the list of protocols
     # ------------------------------------------------------------------------------------                       
@@ -286,7 +290,6 @@ class ValveProtocols(QtGui.QMainWindow):
 
         # Record number of configs
         self.num_protocols = len(self.protocol_names)
-        print self.protocol_names
 
     # ------------------------------------------------------------------------------------
     # Display loaded protocols
@@ -312,7 +315,6 @@ class ValveProtocols(QtGui.QMainWindow):
 
         # Set protocol status: [protocol_ID, command_ID]
         self.status = [protocol_ID, 0]
-        print "Status: " + str(self.status)
         self.status_change_signal.emit() # emit status change signal
 
         if self.verbose:
@@ -336,9 +338,7 @@ class ValveProtocols(QtGui.QMainWindow):
     # ------------------------------------------------------------------------------------
     def startProtocolByName(self, protocol_name):
         if self.isValidProtocol(protocol_name):
-            print "Here"
             if self.isRunningProtocol():
-                print "And Here"
                 if self.verbose:
                     print "Stopped In Progress: " + self.protocol_names[self.status[0]]
                 self.stopProtocol() # Abort protocol in progress
