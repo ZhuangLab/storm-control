@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <hardware>
   <camera>
+    <!-- <module type="string">detachedSingleCamera</module> -->
     <module type="string">classicSingleCamera</module>
     <!-- <module type="string">noneCamera</module> -->
     <parameters>

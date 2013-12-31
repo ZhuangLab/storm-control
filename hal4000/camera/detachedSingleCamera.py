@@ -34,19 +34,21 @@ class DetachedSingleCamera(singleCamera.SingleCamera):
     #
     # Create a detached single camera object.
     #
+    # @param hardware A hardware object.
     # @param parameters A parameters object.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, parent = None):
-        singleCamera.SingleCamera.__init__(self, parameters, parent)
+    def __init__(self, hardware, parameters, parent = None):
+        singleCamera.SingleCamera.__init__(self, hardware, parameters, parent)
 
         self.ui = cameraDetachedUi.Ui_Dialog()
         self.ui.setupUi(self)
         self.setWindowTitle(parameters.setup_name + " Camera")
 
         camera_display_ui = cameraDisplayUi.Ui_Frame()
-        self.camera_display = cameraDisplay.CameraDisplay(parameters,
+        self.camera_display = cameraDisplay.CameraDisplay(hardware.display,
+                                                          parameters,
                                                           camera_display_ui,
                                                           "camera1",
                                                           show_record_button = False,
@@ -99,6 +101,25 @@ class DetachedSingleCamera(singleCamera.SingleCamera):
     @hdebug.debug
     def showCamera1(self, boolean):
         self.show()
+
+
+## ACamera
+#
+# This is just DetachedSingleCamera in a form so that it can used 
+# directly by HAL without needing to be wrapped.
+#
+class ACamera(DetachedSingleCamera):
+    @hdebug.debug
+    def __init__(self, hardware, parameters, parent = None):
+        DetachedSingleCamera.__init__(self, hardware, parameters, parent)
+
+
+## getMode
+#
+# @return The UI mode to use with this camera.
+#
+def getMode():
+    return "detached"
 
 #
 # The MIT License

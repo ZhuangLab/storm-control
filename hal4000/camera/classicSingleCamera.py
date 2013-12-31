@@ -80,6 +80,7 @@ class ACamera(ClassicSingleCamera):
 ## getMode
 #
 # @return The UI mode to use with this camera.
+#
 def getMode():
     return "single"
 
