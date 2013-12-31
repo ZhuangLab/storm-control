@@ -22,10 +22,13 @@ from PyQt4 import QtCore, QtGui
 import halLib.hdebug as hdebug
 
 # General
-import halLib.tcpClient
 import notifications
 import sequenceParser
 import xml_generator
+
+# Communication
+import fluidics.kilroyClient
+import halLib.tcpClient
 
 # UIs.
 import qtdesigner.dave_ui as daveUi
@@ -60,7 +63,8 @@ class DaveAction():
     def __init__(self):
         self.delay = 0
         self.message = ""
-
+        self.comm_type = "HAL" # The default TCP Client to use
+        
     ## abort
     #
     # The default behaviour is not to do anything.
@@ -69,6 +73,13 @@ class DaveAction():
     #
     def abort(self, comm):
         pass
+
+    ## getCommType
+    #
+    # @return The client to use for TCP/IP communication with this action.
+    #
+    def getCommType(self):
+        return self.comm_type
 
     ## getMessage
     #
@@ -303,6 +314,70 @@ class DaveActionRecenter(DaveAction):
     def start(self, comm):
         comm.startRecenterPiezo()
 
+## DaveActionValveProtocol
+#
+# The fluidics protocol action. Send commands to Kilroy.
+#
+class DaveActionValveProtocol(DaveAction):
+
+    ## __init__
+    #
+    # Initialize the valve protocol action
+    #
+    # @param protocols A valve protocols xml object
+    #
+    def __init__(self, protocol_xml):
+        DaveAction.__init__(self)
+        self.comm_type = "Kilroy"
+        self.protocol_name = protocol_xml.protocol_name
+        self.protocol_is_running = False
+        self.delay = 10
+        
+    ## abort
+    #
+    # Does nothing for now
+    #
+    # @param comm A kilroy client object.
+    #
+    def abort(self, comm):
+        pass
+
+    ## handleAcknowledged
+    #
+    # Proceed to the next action when command is acknowledged?
+    #
+    def handleAcknowledged(self):
+        return False
+
+    ## handleComplete
+    #
+    # Handle a complete message from the kilroyClient. Does nothing for now.
+    #
+    # @param a_string The complete message from kilroy
+    #
+    # @return True
+    #
+    def handleComplete(self, a_string):
+        print "Received Complete from Kilroy " + a_string
+        self.protocol_is_running = True
+        return True
+
+    ## shouldPause
+    #
+    # @return True/False if movie acquisition should pause after taking this movie, the default is False.
+    #
+    def shouldPause(self):
+        return False
+        
+    ## start
+    #
+    # Start sending protocols to kilroy
+    #
+    # @param comm A kilroy client object.
+    #
+    def start(self, comm):
+        self.protocol_is_running = True
+        comm.sendProtocol(self.protocol_name)
 
 ## MovieEngine
 #
@@ -343,7 +418,9 @@ class MovieEngine(QtGui.QWidget):
                   "Pause",
                   "Progression",
                   "Recenter Piezo",
-                  "Stage Position"]
+                  "Stage Position",
+                  "Valve Protocol"]
+        self.fields = fields
 
         self.details_table.setRowCount(len(fields)+1)
         self.details_table.setColumnCount(3)
@@ -357,11 +434,24 @@ class MovieEngine(QtGui.QWidget):
         self.delay_timer.setSingleShot(True)
         self.delay_timer.timeout.connect(self.checkPause)
 
-        # TCP communications.
-        self.comm = halLib.tcpClient.TCPClient(self)
-        self.comm.acknowledged.connect(self.handleAcknowledged)
-        self.comm.complete.connect(self.handleComplete)
+        # HAL Client
+        self.HALClient = halLib.tcpClient.TCPClient(self)
+        self.HALClient.acknowledged.connect(self.handleAcknowledged)
+        self.HALClient.complete.connect(self.handleComplete)
 
+        self.HALClient.startCommunication()
+        self.has_HAL = self.HALClient.isConnected()
+        if self.has_HAL: self.HALClient.stopCommunication()
+        
+        # Kilroy Client
+        self.kilroyClient = fluidics.kilroyClient.KilroyClient(verbose = True)
+        self.kilroyClient.acknowledged.connect(self.handleAcknowledged)
+        self.kilroyClient.complete.connect(self.handleComplete)
+
+        self.kilroyClient.startCommunication()
+        self.has_kilroy = self.kilroyClient.isConnected()
+        if self.has_kilroy: self.kilroyClient.stopCommunication()
+        
     ## abort
     #
     # Aborts the current action (if any).
@@ -370,8 +460,8 @@ class MovieEngine(QtGui.QWidget):
     def abort(self):
         if self.current_action:
             self.delay_timer.stop()
-            self.current_action.abort(self.comm)
-
+            self.current_action.abort(self.getClient(self.current_action))
+                
     ## checkPause
     #
     # Checks if we should stop acquisition because either the current action
@@ -385,6 +475,22 @@ class MovieEngine(QtGui.QWidget):
             self.stopCommunication()
         else:
             self.nextAction()
+
+    ## getClient
+    #
+    # Returns the appropriate comm port for the action
+    #
+    # @current_action An action class for which the appropriate TCP/IP client will be determined
+    #
+    @hdebug.debug
+    def getClient(self, current_action):
+        if current_action.getCommType() == "HAL":
+            return self.HALClient
+        elif current_action.getCommType() == "Kilroy":
+            return self.kilroyClient
+        else:
+            print "Unknown action type: " + current_action.getCommType()
+            return None
 
     ## handleAcknowledged
     #
@@ -419,80 +525,92 @@ class MovieEngine(QtGui.QWidget):
     #
     @hdebug.debug
     def newMovie(self, movie, index):
-        self.details_table.setItem(0,0,createTableWidget("Movie {0:d} of {1:d}\n\n".format(index+1, self.number_movies)))
+        movie_type = movie.getType()
+        if movie_type == "movie":
+            self.details_table.setItem(0,0,createTableWidget("Movie {0:d} of {1:d}\n\n".format(index+1, self.number_movies)))
 
-        # Update movie details display.
-        # delay
-        index = 1
-        self.details_table.setItem(index,2,createTableWidget("{0:d}".format(movie.delay)))
+            # Update movie details display.
+            # delay
+            index = 1
+            self.details_table.setItem(index,2,createTableWidget("{0:d}".format(movie.delay)))
 
-        # find sum
-        index += 1
-        if (movie.find_sum > 0.0):
-            self.details_table.setItem(index,2,createTableWidget("{0:.1f}".format(movie.find_sum)))
-        else:
-            self.details_table.setItem(index,2,createTableWidget("No"))
+            # find sum
+            index += 1
+            if (movie.find_sum > 0.0):
+                self.details_table.setItem(index,2,createTableWidget("{0:.1f}".format(movie.find_sum)))
+            else:
+                self.details_table.setItem(index,2,createTableWidget("No"))
 
-        # length
-        index += 1
-        self.details_table.setItem(index,2,createTableWidget("{0:d}".format(movie.length)))
+            # length
+            index += 1
+            self.details_table.setItem(index,2,createTableWidget("{0:d}".format(movie.length)))
 
-        # lock target
-        index += 1
-        if hasattr(movie, "lock_target"):
-            self.details_table.setItem(index,2,createTableWidget("{0:.1f}".format(movie.lock_target)))
-        else:
-            self.details_table.setItem(index,2,createTableWidget("None"))
+            # lock target
+            index += 1
+            if hasattr(movie, "lock_target"):
+                self.details_table.setItem(index,2,createTableWidget("{0:.1f}".format(movie.lock_target)))
+            else:
+                self.details_table.setItem(index,2,createTableWidget("None"))
 
-        # minimum spots
-        index += 1
-        self.details_table.setItem(index,2,createTableWidget("{0:d}".format(movie.min_spots)))
+            # minimum spots
+            index += 1
+            self.details_table.setItem(index,2,createTableWidget("{0:d}".format(movie.min_spots)))
 
-        # name
-        index += 1
-        self.details_table.setItem(index,2,createTableWidget("{0:s}".format(movie.name)))
+            # name
+            index += 1
+            self.details_table.setItem(index,2,createTableWidget("{0:s}".format(movie.name)))
 
-        # parameters
-        index += 1
-        if hasattr(movie, "parameters"):
-            self.details_table.setItem(index,2,createTableWidget("{0:d}".format(movie.parameters)))
-        else:
-            self.details_table.setItem(index,2,createTableWidget("None"))
+            # parameters
+            index += 1
+            if hasattr(movie, "parameters"):
+                self.details_table.setItem(index,2,createTableWidget("{0:d}".format(movie.parameters)))
+            else:
+                self.details_table.setItem(index,2,createTableWidget("None"))
 
-        # pause
-        index += 1
-        if movie.pause:
-            self.details_table.setItem(index,2,createTableWidget("Yes"))
-        else:
-            self.details_table.setItem(index,2,createTableWidget("No"))
+            # pause
+            index += 1
+            if movie.pause:
+                self.details_table.setItem(index,2,createTableWidget("Yes"))
+            else:
+                self.details_table.setItem(index,2,createTableWidget("No"))
 
-        # progression
-        index += 1
-        self.details_table.setItem(index,2,createTableWidget(movie.progression.type))
+            # progression
+            index += 1
+            self.details_table.setItem(index,2,createTableWidget(movie.progression.type))
 
-        # recenter
-        index += 1
-        if movie.recenter:
-            self.details_table.setItem(index,2,createTableWidget("Yes"))
-        else:
-            self.details_table.setItem(index,2,createTableWidget("No"))
+            # recenter
+            index += 1
+            if movie.recenter:
+                self.details_table.setItem(index,2,createTableWidget("Yes"))
+            else:
+                self.details_table.setItem(index,2,createTableWidget("No"))
 
-        # stage position
-        index += 1
-        if hasattr(movie, "stage_x") and hasattr(movie, "stage_y"):
-            self.details_table.setItem(index,2,createTableWidget("{0:.2f}, {1:.2f}".format(movie.stage_x, movie.stage_y)))
-        else:
-            self.details_table.setItem(index,2,createTableWidget("NA,NA"))
+            # stage position
+            index += 1
+            if hasattr(movie, "stage_x") and hasattr(movie, "stage_y"):
+                self.details_table.setItem(index,2,createTableWidget("{0:.2f}, {1:.2f}".format(movie.stage_x, movie.stage_y)))
+            else:
+                self.details_table.setItem(index,2,createTableWidget("NA,NA"))
 
-        # Generate actions for taking the movie.
-        self.actions = []
-        self.actions.append(DaveActionMovieParameters(movie))
-        if movie.recenter:
-            self.actions.append(DaveActionRecenter())
-        if (movie.find_sum > 0.0):
-            self.actions.append(DaveActionFindSum(movie.find_sum))
-        if (movie.length > 0):
-            self.actions.append(DaveActionMovie(movie))
+            # Clear valve protocol
+            index += 1
+            self.details_table.setItem(index, 2, createTableWidget(""))
+            
+            # Generate actions for taking the movie.
+            self.actions = []
+            self.actions.append(DaveActionMovieParameters(movie))
+            if movie.recenter:
+                self.actions.append(DaveActionRecenter())
+            if (movie.find_sum > 0.0):
+                self.actions.append(DaveActionFindSum(movie.find_sum))
+            if (movie.length > 0):
+                self.actions.append(DaveActionMovie(movie))
+
+        elif movie_type == "fluidics":
+            index = self.fields.index("Valve Protocol") + 1
+            self.details_table.setItem(index,2,createTableWidget(movie.protocol_name))
+            self.actions = []
+            self.actions.append(DaveActionValveProtocol(movie))
 
     ## nextAction
     #
@@ -503,7 +621,7 @@ class MovieEngine(QtGui.QWidget):
         if (len(self.actions) > 0):
             self.current_action = self.actions[0]
             self.actions = self.actions[1:]
-            self.current_action.start(self.comm)
+            self.current_action.start(self.getClient(self.current_action))
         else:
             self.done.emit()
 
@@ -527,11 +645,12 @@ class MovieEngine(QtGui.QWidget):
 
     ## startCommunication
     #
-    # Starts communication with HAL.
+    # Starts communication with HAL and kilroy
     #
     @hdebug.debug
     def startCommunication(self):
-        self.comm.startCommunication()
+        if self.has_HAL: self.HALClient.startCommunication()
+        if self.has_kilroy: self.kilroyClient.startCommunication()
 
     ## stopCommunication
     #
@@ -539,8 +658,8 @@ class MovieEngine(QtGui.QWidget):
     #
     @hdebug.debug
     def stopCommunication(self):
-        self.comm.stopCommunication()
-
+        if self.has_HAL: self.HALClient.stopCommunication()
+        if self.has_kilroy: self.kilroyClient.stopCommunication()
 
 ## Window
 #
@@ -840,7 +959,8 @@ class Window(QtGui.QMainWindow):
     def updateEstimates(self):
         total_frames = 0
         for movie in self.movies:
-            total_frames += movie.length
+            if movie.getType() == "movie":
+                total_frames += movie.length
         est_time = float(total_frames)/(57.3 * 60.0 * 60.0) + len(self.movies) * 10.0/(60.0 * 60.0)
         est_space = float(256 * 256 * 2 * total_frames)/(1000.0 * 1000.0 * 1000.0)
         self.ui.timeLabel.setText("Run Length: {0:.1f} hours (57Hz)".format(est_time))
@@ -860,9 +980,9 @@ class Window(QtGui.QMainWindow):
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     parameters = params.Parameters("settings_default.xml")
-
+    
     # Start logger.
-    hdebug.startLogging(parameters.directory + "logs/", "dave")
+    #hdebug.startLogging(parameters.directory + "logs/", "dave")
 
     # Load app.
     window = Window(parameters)
