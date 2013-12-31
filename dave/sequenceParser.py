@@ -145,7 +145,7 @@ class ValveProtocol:
 
         # default settings
         self.protocol_name = []
-
+        
         # passed single node
         node = fluidics_xml
         
