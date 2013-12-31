@@ -73,9 +73,6 @@ class KilroyServer(QtNetwork.QTcpServer):
         
         self.isSocketConnected = QtGui.QLabel()
 
-        self.writtenData = QtGui.QLabel()
-        self.writtenData.setText("Written Data: ")
-
         self.dataBufferLabel = QtGui.QLabel()
         self.dataBufferLabel.setText("Received Protocols")
 
@@ -84,7 +81,6 @@ class KilroyServer(QtNetwork.QTcpServer):
         self.mainWidgetLayout.addWidget(self.addressLabel)
         self.mainWidgetLayout.addWidget(self.portLabel)
         self.mainWidgetLayout.addWidget(self.isSocketConnected)
-        self.mainWidgetLayout.addWidget(self.writtenData)
         self.mainWidgetLayout.addWidget(self.dataBufferLabel)
         self.mainWidgetLayout.addWidget(self.dataBuffer)
         
@@ -144,8 +140,15 @@ class KilroyServer(QtNetwork.QTcpServer):
         data_list = data.split(self.delimiter)
         if len(data_list) > 1:
             if data_list[0] == "Protocol":
-                return data_list[1]
 
+                # Update GUI received protocol list
+                protocol_name = data_list[1]
+                time_now = time.strftime("%X")
+                self.dataBuffer.addItem(protocol_name + ": " + time_now)
+                last_element_ID = self.dataBuffer.count() - 1
+                self.dataBuffer.setCurrentRow(last_element_ID)
+                
+                return data_list[1]
         return None
 
     # ------------------------------------------------------------------------------------
@@ -244,12 +247,6 @@ class KilroyServer(QtNetwork.QTcpServer):
             self.isSocketConnected.setText("Connection Status: Found Client")
         else:
             self.isSocketConnected.setText("Connection Status: No Client")
-
-        self.dataBuffer.clear()
-        for data in self.data_buffer:
-            time_now = time.strftime("%X")
-            data += ": " + time_now[:]
-            self.dataBuffer.addItem(data)
 
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
