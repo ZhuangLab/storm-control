@@ -117,6 +117,33 @@ class Movie:
     def __repr__(self):
         return hdebug.objectToString(self, "sequenceParser.Movie", ["name", "length", "stage_x", "stage_y"])
 
+## FluidicsProtocol
+#
+# The fluidics protocol object.  This class controls communication with a valve chain
+#
+class FluidicsProtocol:
+    ## __init__
+    #
+    # Dynamically create the class by processing the fluidics xml object.
+    #
+    # @param fluidics_xml A xml node describing the fluidics command.
+    #
+    def __init__(self, fluidics_xml):
+
+        # default settings
+        self.protocol_names = []
+
+        # parse settings
+        for node in fluidics_xml.childNodes:
+            if node.nodeType == Node.ELEMENT_NODE:
+                if (node.nodeName == "protocol"):
+                    self.protocol_names.append(node.firstChild.nodeValue)
+
+    ## __repr__
+    #
+    def __repr__(self):
+        return hdebug.objectToString(self, "sequenceParser.Fluidics", ["protocol_names"])
+
 ## parseMovieXml
 #
 # Parses the XML file that describes the movies.
@@ -127,12 +154,17 @@ def parseMovieXml(movie_xml_filename):
     xml = minidom.parse(movie_xml_filename)
     sequence = xml.getElementsByTagName("sequence").item(0)
     movies_xml = sequence.getElementsByTagName("movie")
+    fluidics_xml = sequence.getElementsByTagName("fluidics")
+    
     movies = []
     for movie_xml in movies_xml:
         movies.append(Movie(movie_xml))
 
-    return movies
+    fluidics = []
+    for flow_xml in fluidics_xml:
+        fluidics.append(FluidicsProtocol(flow_xml))
 
+    return movies, fluidics
 
 #
 # Testing
@@ -140,8 +172,6 @@ def parseMovieXml(movie_xml_filename):
 
 if __name__ == "__main__":
     print parseMovieXml("sequence.xml")
-
-
 
 #
 # The MIT License

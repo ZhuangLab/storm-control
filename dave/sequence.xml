@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <sequence>
+<fluidics><protocol>Wash 1</protocol><protocol>Wash 2</protocol></fluidics>
 <movie>
       <name>bleach_0_0</name>
       <length>20</length>
@@ -19,6 +20,7 @@
       </progression>
     <delay>200</delay><pause>0</pause><stage_x>-41.55</stage_x><stage_y>-141.29</stage_y></movie>
 
+<fluidics><protocol>Wash 1</protocol><protocol>Wash 2</protocol></fluidics>
 <movie>
       <name>bleach_0_1</name>
       <length>20</length>
@@ -27,6 +29,7 @@
 	<type>lockedout</type>
       </progression>
     <delay>811</delay><pause>0</pause><stage_x>576.92</stage_x><stage_y>-208.81</stage_y></movie>
+
 <movie>
       <name>movie1_0_1</name>
       <length>200</length>
@@ -38,6 +41,7 @@
       </progression>
     <delay>200</delay><pause>0</pause><stage_x>576.92</stage_x><stage_y>-208.81</stage_y></movie>
 
+<fluidics><protocol>Wash 1</protocol><protocol>Wash 2</protocol></fluidics>
 <movie>
       <name>bleach_0_2</name>
       <length>20</length>
@@ -46,6 +50,7 @@
 	<type>lockedout</type>
       </progression>
     <delay>819</delay><pause>0</pause><stage_x>1213.4</stage_x><stage_y>-262.49</stage_y></movie>
+
 <movie>
       <name>movie1_0_2</name>
       <length>200</length>
@@ -57,6 +62,7 @@
       </progression>
     <delay>200</delay><pause>0</pause><stage_x>1213.4</stage_x><stage_y>-262.49</stage_y></movie>
 
+<fluidics><protocol>Wash 1</protocol><protocol>Wash 2</protocol></fluidics>
 <movie>
       <name>bleach_0_3</name>
       <length>20</length>
@@ -65,6 +71,7 @@
 	<type>lockedout</type>
       </progression>
     <delay>819</delay><pause>0</pause><stage_x>1850.93</stage_x><stage_y>-304.74</stage_y></movie>
+
 <movie>
       <name>movie1_0_3</name>
       <length>200</length>
@@ -76,6 +83,7 @@
       </progression>
     <delay>200</delay><pause>0</pause><stage_x>1850.93</stage_x><stage_y>-304.74</stage_y></movie>
 
+<fluidics><protocol>Wash 1</protocol><protocol>Wash 2</protocol></fluidics>
 <movie>
       <name>bleach_0_4</name>
       <length>20</length>
@@ -84,6 +92,7 @@
 	<type>lockedout</type>
       </progression>
     <delay>818</delay><pause>0</pause><stage_x>2486.37</stage_x><stage_y>-341.79</stage_y></movie>
+
 <movie>
       <name>movie1_0_4</name>
       <length>200</length>
@@ -95,6 +104,7 @@
       </progression>
     <delay>200</delay><pause>0</pause><stage_x>2486.37</stage_x><stage_y>-341.79</stage_y></movie>
 
+<fluidics><protocol>Wash 1</protocol><protocol>Wash 2</protocol></fluidics>
 <movie>
       <name>bleach_0_5</name>
       <length>20</length>
@@ -103,6 +113,7 @@
 	<type>lockedout</type>
       </progression>
     <delay>817</delay><pause>0</pause><stage_x>3121.82</stage_x><stage_y>-367.41</stage_y></movie>
+
 <movie>
       <name>movie1_0_5</name>
       <length>200</length>
@@ -114,6 +125,7 @@
       </progression>
     <delay>200</delay><pause>0</pause><stage_x>3121.82</stage_x><stage_y>-367.41</stage_y></movie>
 
+<fluidics><protocol>Wash 1</protocol><protocol>Wash 2</protocol></fluidics>
 <movie>
       <name>bleach_0_6</name>
       <length>20</length>
@@ -122,6 +134,7 @@
 	<type>lockedout</type>
       </progression>
     <delay>816</delay><pause>0</pause><stage_x>3755.53</stage_x><stage_y>-382.31</stage_y></movie>
+
 <movie>
       <name>movie1_0_6</name>
       <length>200</length>
@@ -133,6 +146,7 @@
       </progression>
     <delay>200</delay><pause>0</pause><stage_x>3755.53</stage_x><stage_y>-382.31</stage_y></movie>
 
+<fluidics><protocol>Wash 1</protocol><protocol>Wash 2</protocol></fluidics>
 <movie>
       <name>bleach_0_7</name>
       <length>20</length>
@@ -141,6 +155,7 @@
 	<type>lockedout</type>
       </progression>
     <delay>817</delay><pause>0</pause><stage_x>4389.93</stage_x><stage_y>-387.5</stage_y></movie>
+
 <movie>
       <name>movie1_0_7</name>
       <length>200</length>
@@ -152,6 +167,7 @@
       </progression>
     <delay>200</delay><pause>0</pause><stage_x>4389.93</stage_x><stage_y>-387.5</stage_y></movie>
 
+<fluidics><protocol>Wash 1</protocol><protocol>Wash 2</protocol></fluidics>
 <movie>
       <name>bleach_0_8</name>
       <length>20</length>
@@ -160,6 +176,7 @@
 	<type>lockedout</type>
       </progression>
     <delay>817</delay><pause>0</pause><stage_x>5024.69</stage_x><stage_y>-383.34</stage_y></movie>
+
 <movie>
       <name>movie1_0_8</name>
       <length>200</length>
@@ -170,6 +187,5 @@
 	<channel frames="100" inc="0.1" start="0.1">3</channel>
       </progression>
     <delay>200</delay><pause>0</pause><stage_x>5024.69</stage_x><stage_y>-383.34</stage_y></movie>
-
 
 </sequence>
