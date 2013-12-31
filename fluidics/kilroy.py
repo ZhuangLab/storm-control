@@ -51,6 +51,15 @@ class Kilroy(QtGui.QMainWindow):
     # ----------------------------------------------------------------------------------------
     # Create master GUI
     # ----------------------------------------------------------------------------------------
+    def close(self):
+        self.valveProtocols.close()
+        self.tcpServer.close()
+        self.valveChain.close()
+        print "\nKilroy was here!"
+
+    # ----------------------------------------------------------------------------------------
+    # Create master GUI
+    # ----------------------------------------------------------------------------------------
     def createGUI(self):
         self.mainLayout = QtGui.QGridLayout()
         self.mainLayout.addWidget(self.valveProtocols.mainWidget, 0, 0, 1, 3)
@@ -139,6 +148,13 @@ class StandAlone(QtGui.QMainWindow):
         valve_menu = menubar.addMenu("&Valves")
         for menu_item in self.kilroy.valveChain.menu_items[0]:
             valve_menu.addAction(menu_item)
+
+    # ----------------------------------------------------------------------------------------
+    # Handle close event
+    # ----------------------------------------------------------------------------------------
+    def closeEvent(self, event):
+        self.kilroy.close()
+        self.close()
 
 # ----------------------------------------------------------------------------------------
 # Runtime code: Kilroy is meant to be run as a stand alone

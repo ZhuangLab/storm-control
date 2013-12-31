@@ -87,6 +87,14 @@ class ValveProtocols(QtGui.QMainWindow):
             self.protocolDetailsList.setCurrentRow(command_ID)
         else:
             self.stopProtocol()
+
+    # ------------------------------------------------------------------------------------
+    # Close
+    # ------------------------------------------------------------------------------------                                                
+    def close(self):
+        self.stopProtocol()
+        if self.verbose: print "Closing valve protocols"
+        self.valveCommands.close()
         
     # ------------------------------------------------------------------------------------
     # Create display and control widgets
@@ -357,6 +365,7 @@ class ValveProtocols(QtGui.QMainWindow):
         # Get name of current protocol
         if self.status[0] >= 0:
             protocol_name = self.protocol_names[self.status[0]]
+            if self.verbose: print "Stopped Protocol"
             self.completed_protocol_signal.emit(protocol_name)
         
         # Reset status and emit status change signal
@@ -365,8 +374,6 @@ class ValveProtocols(QtGui.QMainWindow):
 
         # Stop timer
         self.protocol_timer.stop()
-        if self.verbose:
-            print "Stopped Protocol"
 
         # Re-enable GUI
         self.startProtocolButton.setEnabled(True)
@@ -471,7 +478,14 @@ class StandAlone(QtGui.QMainWindow):
             # Add quit option to file menu
             if menu_name == "File":
                 new_menu.addAction(self.exit_action)
-            
+
+    # ----------------------------------------------------------------------------------------
+    # Handle close event
+    # ----------------------------------------------------------------------------------------
+    def closeEvent(self, event):
+        self.valveProtocols.close()
+        self.close()
+  
 # ----------------------------------------------------------------------------------------
 # Test/Demo of Class
 # ----------------------------------------------------------------------------------------                        

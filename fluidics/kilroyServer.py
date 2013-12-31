@@ -60,6 +60,13 @@ class KilroyServer(QtNetwork.QTcpServer):
         self.connectToNewClients()
 
     # ------------------------------------------------------------------------------------
+    # Close 
+    # ------------------------------------------------------------------------------------       
+    def close(self):
+        if self.verbose: print "Closing kilroy server"
+        if self.socket: self.socket.close()
+        
+    # ------------------------------------------------------------------------------------
     # Create GUI elements 
     # ------------------------------------------------------------------------------------       
     def createGUI(self):
@@ -291,6 +298,13 @@ class StandAlone(QtGui.QMainWindow):
             # Add quit option to file menu
             if menu_name == "File":
                 new_menu.addAction(self.exit_action)
+
+    # ----------------------------------------------------------------------------------------
+    # Handle close event
+    # ----------------------------------------------------------------------------------------
+    def closeEvent(self, event):
+        self.tcpServer.close()
+        self.close()
             
 # ----------------------------------------------------------------------------------------
 # Test/Demo of Class

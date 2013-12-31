@@ -46,6 +46,12 @@ class ValveCommands(QtGui.QMainWindow):
     # ------------------------------------------------------------------------------------
     # Create display and control widgets
     # ------------------------------------------------------------------------------------
+    def close(self):
+        if self.verbose: print "Closing valve commands"
+
+    # ------------------------------------------------------------------------------------
+    # Create display and control widgets
+    # ------------------------------------------------------------------------------------
     def createGUI(self):
         self.mainWidget = QtGui.QGroupBox()
         self.mainWidget.setTitle("Valve Commands")

@@ -50,6 +50,12 @@ class KilroySocket(QtNetwork.QTcpSocket):
         self.readyRead.connect(self.handleReadyRead)
 
     # ------------------------------------------------------------------------------------
+    # Close 
+    # ------------------------------------------------------------------------------------       
+    def close(self):
+        if self.verbose: print "Closing kilroy socket"
+
+    # ------------------------------------------------------------------------------------
     # Connect to Kilroy Server 
     # ------------------------------------------------------------------------------------       
     def connectToServer(self):
@@ -136,6 +142,13 @@ class KilroyClient(QtGui.QWidget):
         # Create GUI
         self.createGUI()
         self.updateGUI()
+
+    # ------------------------------------------------------------------------------------
+    # Close 
+    # ------------------------------------------------------------------------------------       
+    def close(self):
+        if self.verbose: print "Closing kilroy client"
+        if self.isConnected(): self.socket.close()
         
     # ------------------------------------------------------------------------------------
     # Create GUI 
@@ -317,6 +330,12 @@ class StandAlone(QtGui.QMainWindow):
 
         # Open the Kilroy Socket and Connect to Server
         self.tcpClient.startCommunication()
+    # ----------------------------------------------------------------------------------------
+    # Handle close event
+    # ----------------------------------------------------------------------------------------
+    def closeEvent(self, event):
+        self.tcpClient.close()
+        self.close()
         
 # ----------------------------------------------------------------------------------------
 # Test/Demo of Class

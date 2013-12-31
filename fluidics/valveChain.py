@@ -82,8 +82,8 @@ class ValveChain(QtGui.QWidget):
     # Close class
     # ------------------------------------------------------------------------------------
     def close(self):
+        if self.verbose: "Print closing valve chain"
         self.valve_chain.close()
-        self.valve_poll_timer.stop()
 
     # ------------------------------------------------------------------------------------
     # Create the Qt widgets for display

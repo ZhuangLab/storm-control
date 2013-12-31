@@ -167,10 +167,9 @@ class HamiltonMVP():
     def close(self):
         if not self.simulate:
             self.serial.close()
-            if self.verbose:
-                print "Closed serial port"
+            if self.verbose: print "Closed hamilton valves"
         else: ## simulation code
-            print "Closed simulated class"
+            if self.verbose: print "Closed simulated hamilton valves"
      
     # ------------------------------------------------------------------------------------
     # Initialize Port Position of Given Valve
@@ -416,7 +415,6 @@ class HamiltonMVP():
                     "7": "Port 7",
                     "8": "Port 8"}.get(str(self.current_port[valve_ID]+1))
 
-
     # ------------------------------------------------------------------------------------
     # Write to Serial Port
     # ------------------------------------------------------------------------------------    
@@ -424,8 +422,6 @@ class HamiltonMVP():
         self.serial.write(message)
         if self.verbose:
             print "Wrote: " + message[:-1] # Display all but final carriage return
-   
-
 
 # ----------------------------------------------------------------------------------------
 # Test/Demo of Classs
@@ -439,7 +435,6 @@ if __name__ == '__main__':
         text = " is configured with " + hamilton.howIsValveConfigured(valve_ID)
     
     hamilton.close()
-
 
 #
 # The MIT License
