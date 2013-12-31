@@ -361,10 +361,13 @@ class Window(QtGui.QMainWindow):
                              [self.misc_control, "misc"],
                              [self.progression_control, "progression"]]
 
-        if (self.ui_mode == "detached"):
+        if (self.ui_mode == "single"):
+            self.resize(self.settings.value("main_size", QtCore.QSize(self.width(), self.height())).toSize())
+
+        elif (self.ui_mode == "detached"):
             self.gui_settings.append([self.camera, "camera1"])
 
-        if (self.ui_mode == "dual"):
+        elif (self.ui_mode == "dual"):
             self.gui_settings.append([self.camera.camera1, "camera1"])
             self.gui_settings.append([self.camera.camera2, "camera2"])
 
@@ -549,6 +552,9 @@ class Window(QtGui.QMainWindow):
 
         # Save GUI settings.
         self.settings.setValue("main_pos", self.pos())
+        if (self.ui_mode == "single"):
+            self.settings.setValue("main_size", self.size())
+
         for [object, name] in self.gui_settings:
             if object:
                 self.settings.setValue(name + "_pos", object.pos())
