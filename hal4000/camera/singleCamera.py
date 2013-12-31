@@ -38,11 +38,12 @@ class SingleCamera(genericCamera.Camera):
     #
     # Create a single camera object.
     #
+    # @param hardware A camera hardware object
     # @param parameters A camera parameters object.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, parent = None):
+    def __init__(self, hardware, parameters, parent = None):
         genericCamera.Camera.__init__(self, parent)
 
         # Class variables
@@ -52,9 +53,7 @@ class SingleCamera(genericCamera.Camera):
         self.parameters = parameters
 
         # Setup camera control.
-        camera_type = parameters.camera_type.lower()
-
-        cameraControl = __import__('camera.' + camera_type + 'CameraControl', globals(), locals(), [camera_type], -1)
+        cameraControl = __import__('camera.' + hardware.control, globals(), locals(), [hardware.control], -1)
         self.camera_control = cameraControl.ACameraControl(parameters, parent = self)
 
         self.camera_control.reachedMaxFrames.connect(self.handleMaxFrames)

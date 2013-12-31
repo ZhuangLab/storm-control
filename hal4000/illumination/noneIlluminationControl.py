@@ -68,7 +68,7 @@ class NONEQIlluminationControlWidget(illuminationControl.QIlluminationControlWid
 # Illumination power control dialog box specialized for none.
 #
 class AIlluminationControl(illuminationControl.IlluminationControl):
-    def __init__(self, parameters, tcp_control, parent = None):
+    def __init__(self, hardware, parameters, tcp_control, parent = None):
         illuminationControl.IlluminationControl.__init__(self, parameters, tcp_control, parent)
         self.power_control = NONEQIlluminationControlWidget("illumination/none_illumination_control_settings.xml",
                                                             parameters,

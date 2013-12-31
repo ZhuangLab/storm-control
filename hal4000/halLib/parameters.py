@@ -29,11 +29,46 @@ def copyAttributes(original, duplicate):
         if not hasattr(duplicate, k):
             setattr(duplicate, k, copy.copy(v))
 
+## Hardware
+#
+# Parses a hardware file to create a hardware object.
+#
+# @param hardware_file The name of the XML file containing the hardware definitions.
+#
+# @return A hardware object.
+#
+def Hardware(hardware_file):
+    xml = minidom.parse(hardware_file)
+
+    # Create the hardware object.
+    xml_object = StormXMLObject([])
+
+    hardware_types = ["camera",
+                      "focuslock",
+                      "illumination",
+                      "joystick",
+                      "misc_control",
+                      "shutters",
+                      "stage",
+                      "temperature_logger"]
+    for h_type in hardware_types:
+        h_xml = xml.getElementsByTagName(h_type).item(0)
+        if h_xml:
+            h_object = StormXMLObject(h_xml.childNodes)
+            h_params_xml = h_xml.getElementsByTagName("parameters").item(0)
+            if h_params_xml:
+                h_object.parameters = StormXMLObject(h_params_xml.childNodes)
+            else:
+                h_object.parameters = False
+            setattr(xml_object, h_type, h_object)
+
+    return xml_object
+
 ## Parameters
 #
 # Parses a parameters file to create a parameters object.
 #
-# @param parameters_file The name of the XML containing the parameter definitions.
+# @param parameters_file The name of the XML file containing the parameter definitions.
 # @param is_HAL (Optional) True/False HAL specific processing needs to be done.
 #
 # @return A parameters object.
@@ -226,21 +261,20 @@ class StormXMLObject:
 if __name__ == "__main__":
     import sys
 
-    test = Parameters(sys.argv[1], True)
-    if hasattr(test, "x_start"):
-        print test.x_start, test.x_end, test.x_pixels, test.frames
-    else:
-        print test.camera1.x_start, test.camera1.x_end
-    print test.default_power, len(test.default_power)
-    print test.power_buttons, len(test.power_buttons)
-#    print dir(test)
-#    for k,v in test.__dict__.iteritems():
-#        print k
-    
+    if 1:
+        test = Hardware(sys.argv[1])
+        print dir(test)
+        for k,v in test.__dict__.iteritems():
+            print k
 
-#    test = Parameters("settings_test_2.xml")
-#    print test.x_start, test.x_end, test.x_pixels, test.frames
-#    test = Parameters("shutters.xml")
+    if 0:
+        test = Parameters(sys.argv[1], True)
+        if hasattr(test, "x_start"):
+            print test.x_start, test.x_end, test.x_pixels, test.frames
+        else:
+            print test.camera1.x_start, test.camera1.x_end
+        print test.default_power, len(test.default_power)
+        print test.power_buttons, len(test.power_buttons)
 
 
 #

@@ -4,7 +4,7 @@
 #
 # Camera for the none setup.
 #
-# Hazen 11/12
+# Hazen 12/13
 #
 
 import halLib.hdebug as hdebug
@@ -12,25 +12,24 @@ import halLib.hdebug as hdebug
 import camera.classicSingleCamera as classicSingleCamera
 #import camera.detachedSingleCamera as detachedSingleCamera
 
-def getMode():
-    return "single"
-#    return "detached"
-
 class ACamera(classicSingleCamera.ClassicSingleCamera):
 #class ACamera(detachedSingleCamera.DetachedSingleCamera):
 
     @hdebug.debug
-    def __init__(self, parameters, camera_frame, camera_params_frame, parent = None):
-        classicSingleCamera.ClassicSingleCamera.__init__(self, parameters, camera_frame, camera_params_frame, parent)
+    def __init__(self, hardware, parameters, camera_frame, camera_params_frame, parent = None):
+        classicSingleCamera.ClassicSingleCamera.__init__(self, hardware, parameters, camera_frame, camera_params_frame, parent)
 
 #    @hdebug.debug
 #    def __init__(self, parameters, parent = None):
 #        detachedSingleCamera.DetachedSingleCamera.__init__(self, parameters, parent)
 
+def getMode():
+    return "single"
+
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

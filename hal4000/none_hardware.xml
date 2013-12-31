@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<hardware>
+  <camera>
+    <module type="string">classicSingleCamera</module>
+    <!-- <module type="string">noneCamera</module> -->
+    <parameters>
+      <control type="string">noneCameraControl</control>
+      <display type="string">noneCameraWidget</display>
+    </parameters>
+  </camera>
+
+  <focuslock>
+    <module type="string">noneFocusLockZ</module>
+  </focuslock>
+
+  <illumination>
+    <module type="string">noneIlluminationControl</module>
+  </illumination>
+
+  <shutters>
+    <module type="string">noneShutterControl</module>
+  </shutters>
+
+  <stage>
+    <module type="string">noneStageControl</module>
+  </stage>
+</hardware>
