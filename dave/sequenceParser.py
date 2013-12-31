@@ -127,11 +127,11 @@ class Movie:
     def __repr__(self):
         return hdebug.objectToString(self, "sequenceParser.Movie", ["name", "length", "stage_x", "stage_y"])
 
-## FluidicsProtocol
+## ValveProtocol
 #
 # The fluidics protocol object.  This class controls communication with a valve chain
 #
-class FluidicsProtocol:
+class ValveProtocol:
     ## __init__
     #
     # Dynamically create the class by processing the fluidics xml object.
@@ -144,16 +144,15 @@ class FluidicsProtocol:
         self.type = "fluidics"
 
         # default settings
-        self.valve_protocol_names = []
-        self.syringe_protocol_names = []
+        self.protocol_name = []
+
+        # passed single node
+        node = fluidics_xml
         
         # parse settings
-        for node in fluidics_xml.childNodes:
-            if node.nodeType == Node.ELEMENT_NODE:
-                if (node.nodeName == "valve_protocol"):
-                    self.valve_protocol_names.append(node.firstChild.nodeValue)
-                elif (node.nodeName == "syringe_protocol"):
-                    self.syringe_protocol_names.append(node.firstChild.nodeValue) # For future use
+        if node.nodeType == Node.ELEMENT_NODE:
+            if (node.nodeName == "valve_protocol"):
+                self.protocol_name = node.firstChild.nodeValue
 
     ## getNodeType
     #
@@ -165,7 +164,7 @@ class FluidicsProtocol:
     ## __repr__
     #
     def __repr__(self):
-        return hdebug.objectToString(self, "sequenceParser.Fluidics", ["valve_protocol_names"])
+        return hdebug.objectToString(self, "sequenceParser.ValveProtocol", ["protocol_name"])
 
 ## parseMovieXml
 #
@@ -183,8 +182,8 @@ def parseMovieXml(movie_xml_filename):
         if child.nodeType == Node.ELEMENT_NODE:
             if child.tagName == "movie":
                 commands.append(Movie(child))
-            elif child.tagName == "fluidics":
-                commands.append(FluidicsProtocol(child))
+            elif child.tagName == "valve_protocol":
+                commands.append(ValveProtocol(child))
 
     return commands
 
