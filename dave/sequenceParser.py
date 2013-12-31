@@ -69,6 +69,9 @@ class Movie:
     #
     def __init__(self, movie_xml):
 
+        # Node type
+        self.type = "movie"
+
         # default settings
         self.delay = 0
         self.find_sum = 0.0
@@ -112,6 +115,13 @@ class Movie:
         else:
             self.progression = Progression(None)
 
+    ## getNodeType
+    #
+    # Return the type of node so that other classes can determine how to process the xml command
+    #
+    def getType(self):
+        return self.type
+
     ## __repr__
     #
     def __repr__(self):
@@ -130,19 +140,32 @@ class FluidicsProtocol:
     #
     def __init__(self, fluidics_xml):
 
-        # default settings
-        self.protocol_names = []
+        # node type
+        self.type = "fluidics"
 
+        # default settings
+        self.valve_protocol_names = []
+        self.syringe_protocol_names = []
+        
         # parse settings
         for node in fluidics_xml.childNodes:
             if node.nodeType == Node.ELEMENT_NODE:
-                if (node.nodeName == "protocol"):
-                    self.protocol_names.append(node.firstChild.nodeValue)
+                if (node.nodeName == "valve_protocol"):
+                    self.valve_protocol_names.append(node.firstChild.nodeValue)
+                elif (node.nodeName == "syringe_protocol"):
+                    self.syringe_protocol_names.append(node.firstChild.nodeValue) # For future use
 
+    ## getNodeType
+    #
+    # Return the type of node so that other classes can determine how to process the xml command
+    #
+    def getType(self):
+        return self.type
+    
     ## __repr__
     #
     def __repr__(self):
-        return hdebug.objectToString(self, "sequenceParser.Fluidics", ["protocol_names"])
+        return hdebug.objectToString(self, "sequenceParser.Fluidics", ["valve_protocol_names"])
 
 ## parseMovieXml
 #
@@ -153,26 +176,27 @@ class FluidicsProtocol:
 def parseMovieXml(movie_xml_filename):
     xml = minidom.parse(movie_xml_filename)
     sequence = xml.getElementsByTagName("sequence").item(0)
-    movies_xml = sequence.getElementsByTagName("movie")
-    fluidics_xml = sequence.getElementsByTagName("fluidics")
-    
-    movies = []
-    for movie_xml in movies_xml:
-        movies.append(Movie(movie_xml))
 
-    fluidics = []
-    for flow_xml in fluidics_xml:
-        fluidics.append(FluidicsProtocol(flow_xml))
+    commands = []
+    children = sequence.childNodes
+    for child in children:
+        if child.nodeType == Node.ELEMENT_NODE:
+            if child.tagName == "movie":
+                commands.append(Movie(child))
+            elif child.tagName == "fluidics":
+                commands.append(FluidicsProtocol(child))
 
-    return movies, fluidics
+    return commands
 
 #
 # Testing
 # 
-
 if __name__ == "__main__":
-    print parseMovieXml("sequence.xml")
-
+    parsed_commands = parseMovieXml("sequence.xml")
+    print "Parsed the following commands: "
+    for command in parsed_commands:
+        print "   " + command.getType() + ": " + str(command)
+    
 #
 # The MIT License
 #
