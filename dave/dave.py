@@ -331,7 +331,6 @@ class DaveActionValveProtocol(DaveAction):
         self.comm_type = "Kilroy"
         self.protocol_name = protocol_xml.protocol_name
         self.protocol_is_running = False
-        self.delay = 10
         
     ## abort
     #
