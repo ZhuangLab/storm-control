@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<valve_configuration num_valves = "2">
+
+  <valve_commands>
+    <valve_cmd name = "Stop Flow">
+       <valve_pos valve_ID = "1" port_ID = "1"></valve_pos>
+    </valve_cmd>
+    <valve_cmd name = "Flow Hybridization">
+      <valve_pos valve_ID = "1" port_ID = "2"></valve_pos>
+    </valve_cmd>
+    <valve_cmd name = "Flow Wash">
+      <valve_pos valve_ID = "1" port_ID = "3"></valve_pos>
+    </valve_cmd>
+    <valve_cmd name = "Flow STORM Buffer">
+      <valve_pos valve_ID = "1" port_ID = "4"></valve_pos>
+    </valve_cmd>
+    <valve_cmd name = "Set Hyb 1">
+      <valve_pos valve_ID = "2" port_ID = "1"></valve_pos>
+    </valve_cmd>
+    <valve_cmd name = "Set Hyb 2">
+      <valve_pos valve_ID = "2" port_ID = "2"></valve_pos>
+    </valve_cmd>
+    <valve_cmd name = "Set Hyb 3">
+      <valve_pos valve_ID = "2" port_ID = "3"></valve_pos>
+    </valve_cmd>
+    <valve_cmd name = "Set Hyb 4">
+      <valve_pos valve_ID = "2" port_ID = "4"></valve_pos>
+    </valve_cmd>
+  </valve_commands>
+
+  <valve_protocols>
+     <protocol name = "Extra Wash">
+	<command duration = "200">Flow Wash</command>
+	<command duration = "0">Stop Flow</command>
+     </protocol>
+     <protocol name = "Hybridize 1">
+        <command duration = "2">Stop Flow</command>
+        <command duration = "2">Set Hyb 1</command>
+	<command duration = "10">Flow Hybridization</command>
+	<command duration = "10">Flow Wash</command>
+	<command duration = "10">Flow STORM Buffer</command>
+	<command duration = "0">Stop Flow</command>
+     </protocol>
+     <protocol name = "Hybridize 2">
+        <command duration = "2">Stop Flow</command>
+        <command duration = "2">Set Hyb 2</command>
+	<command duration = "10">Flow Hybridization</command>
+	<command duration = "10">Flow Wash</command>
+	<command duration = "10">Flow STORM Buffer</command>
+	<command duration = "0">Stop Flow</command>
+     </protocol>
+   </valve_protocols>
+</valve_configuration>
