@@ -89,6 +89,14 @@ class AbstractCommand():
     def getDescriptor(self):
         return self.name + ": " + self.type
 
+    ## getDetails
+    #
+    # Return a a list with details for display in a descriptor table
+    #
+    def getDetails(self):
+        return [ [self.type, ""],
+                 ["Name", self.name] ] 
+
 ## Movie
 #
 # The movie object.
@@ -157,6 +165,66 @@ class Movie(AbstractCommand):
     def getDescriptor(self):
         return self.name + " ({0:.1f}, {0:.1f})".format(self.stage_x, self.stage_y)
 
+    ## getDetails
+    #
+    # Return a a list with details for display in a descriptor table
+    #
+    def getDetails(self):
+        details = []
+        # Movie header and name
+        details.append(["Movie Command", ""])
+        details.append(["Name", self.name])
+
+        # Parameters
+        if hasattr(self, "parameters"):
+            details.append(["Parameters", "{0:d}".format(self.parameters)])
+        else:
+            details.append(["Parameters", "None"])
+
+        # Length
+        details.append(["Frames", "{0:d}".format(self.length)])
+
+        # Position
+        if hasattr(self, "stage_x") and hasattr(self, "stage_y"):
+            details.append(["Position", "({0:.2f}, {1:.2f})".format(self.stage_x, self.stage_y)])
+        else:
+            details.append(["Position", "Current"])
+
+        # Delay
+        details.append(["Delay", "{0:d}".format(self.delay)])
+
+        # Sum
+        if self.find_sum > 0.0:
+            details.append(["Sum Target", "{0:.1f}".format(self.find_sum)])
+        else:
+            details.append(["Sum Target", "None"]);
+
+        # Lock Target
+        if hasattr(self, "lock_target"):
+            details.append(["Lock Target", "{0:.1f}".format(self.lock_target)])
+        else:
+            details.append(["Lock Target", "None"])
+
+        # Min Spots
+        details.append(["Min Spots", "{0:d}".format(self.min_spots)])
+
+        # Pause
+        if self.pause:
+            details.append(["Pause", "Yes"])
+        else:
+            details.append(["Pause", "No"])
+
+        # Progression
+        details.append(["Progression", self.progression.type])
+
+        # Recenter
+        if self.recenter:
+            details.append(["Recenter", "Yes"])
+        else:
+            details.append(["Recenter", "No"])
+
+        return details
+        
     ## __repr__
     #
     def __repr__(self):
@@ -197,6 +265,14 @@ class ValveProtocol(AbstractCommand):
     #
     def getDescriptor(self):
         return self.name
+
+    ## getDetails
+    #
+    # Return a a list with details for display in a descriptor table
+    #
+    def getDetails(self):
+        return [ ["Valve Command", ""],
+                 ["Name", self.name] ] 
     
     ## __repr__
     #
