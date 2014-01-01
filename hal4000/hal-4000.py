@@ -111,7 +111,7 @@ class Window(QtGui.QMainWindow):
         self.directory = False
         self.filename = ""
         self.filming = False
-        self.logfile_fp = open(parameters.logfile, "a")
+        #self.logfile_fp = open(parameters.logfile, "a")
         #self.old_settings = []
         self.old_shutters_file = ""
         self.parameters = parameters
@@ -122,8 +122,8 @@ class Window(QtGui.QMainWindow):
         self.writer = False
 
         # Logfile setup
-        self.logfile_fp.write("\r\n")
-        self.logfile_fp.flush()
+        #self.logfile_fp.write("\r\n")
+        #self.logfile_fp.flush()
 
         #
         # Load the camera module
