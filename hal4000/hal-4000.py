@@ -243,6 +243,8 @@ class Window(QtGui.QMainWindow):
                                                                                  parent = self)
             shutterControl = halImport('illumination.' + hardware.shutters.module)
             self.shutter_control = shutterControl.AShutterControl(self.illumination_control.power_control.powerToVoltage)
+        else:
+            self.ui.actionIllumination.setEnabled(False)
 
         # XY motorized stage control
         self.stage_control = False
@@ -252,6 +254,8 @@ class Window(QtGui.QMainWindow):
                                                             parameters, 
                                                             self.tcp_control, 
                                                             parent = self)
+        else:
+            self.ui.actionStage.setEnabled(False)
 
         # Piezo Z stage with feedback control
         self.focus_lock = False
@@ -261,6 +265,8 @@ class Window(QtGui.QMainWindow):
                                                     parameters,
                                                     self.tcp_control,
                                                     parent = self)
+        else:
+            self.ui.actionFocus_Lock.setEnabled(False)
 
         # Spot counter
         single_camera = True
@@ -272,6 +278,8 @@ class Window(QtGui.QMainWindow):
             self.spot_counter = spotCounter.SpotCounter(parameters,
                                                         single_camera,
                                                         parent = self)
+        else:
+            self.ui.actionSpot_Counter.setEnabled(False)
 
         # Misc control
         #  This needs the camera display area for the purpose of capturing mouse events
@@ -283,6 +291,8 @@ class Window(QtGui.QMainWindow):
                                                          self.tcp_control,
                                                          self.camera.getCameraDisplayArea(),
                                                          parent = self)
+        else:
+            self.ui.actionMisc_Controls.setEnabled(False)
 
         # Temperature logger
         self.temperature_logger = False
@@ -300,6 +310,8 @@ class Window(QtGui.QMainWindow):
                                                                              parent = self)
             self.connect(self.progression_control, QtCore.SIGNAL("progSetPower(int, float)"), self.handleProgSetPower)
             self.connect(self.progression_control, QtCore.SIGNAL("progIncPower(int, float)"), self.handleProgIncPower)
+        else:
+            self.ui.actionProgression.setEnabled(False)
 
         # Joystick
         self.joystick_control = False
