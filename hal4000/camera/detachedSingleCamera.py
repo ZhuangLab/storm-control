@@ -46,6 +46,7 @@ class DetachedSingleCamera(singleCamera.SingleCamera):
         self.ui.setupUi(self)
         self.setWindowTitle(parameters.setup_name + " Camera")
 
+        # Set up camera display.
         camera_display_ui = cameraDisplayUi.Ui_Frame()
         self.camera_display = cameraDisplay.CameraDisplay(hardware.display,
                                                           parameters,
@@ -54,7 +55,11 @@ class DetachedSingleCamera(singleCamera.SingleCamera):
                                                           show_record_button = False,
                                                           show_shutter_button = True,
                                                           parent = self.ui.cameraFrame)
+        layout = QtGui.QGridLayout(self.ui.cameraFrame)
+        layout.setMargin(0)
+        layout.addWidget(self.camera_display)
 
+        # Set up camera parameters display.
         camera_params_ui = cameraParamsUi.Ui_GroupBox()
         self.camera_params = cameraParams.CameraParams(camera_params_ui,
                                                        parent = self.ui.cameraParamsFrame)

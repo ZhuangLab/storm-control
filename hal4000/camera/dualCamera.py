@@ -58,6 +58,10 @@ class CameraDialog(QtGui.QDialog):
                                                           show_shutter_button = True,
                                                           parent = self.ui.cameraFrame)
 
+        layout = QtGui.QGridLayout(self.ui.cameraFrame)
+        layout.setMargin(0)
+        layout.addWidget(self.camera_display)
+
         # Set up camera parameters display.
         camera_params_ui = cameraParamsUi.Ui_GroupBox()
         self.camera_params = cameraParams.CameraParams(camera_params_ui,

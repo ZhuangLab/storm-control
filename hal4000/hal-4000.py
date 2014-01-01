@@ -374,12 +374,15 @@ class Window(QtGui.QMainWindow):
                              [self.progression_control, "progression"]]
 
         if (self.ui_mode == "single"):
-            self.resize(self.settings.value("main_size", QtCore.QSize(self.width(), self.height())).toSize())
+            self.resize(self.settings.value("main_size", self.size()).toSize())
 
         elif (self.ui_mode == "detached"):
+            self.camera.resize(self.settings.value("camera_size", self.camera.size()).toSize())
             self.gui_settings.append([self.camera, "camera1"])
 
         elif (self.ui_mode == "dual"):
+            self.camera.camera1.resize(self.settings.value("camera1_size", self.camera.camera1.size()).toSize())
+            self.camera.camera2.resize(self.settings.value("camera2_size", self.camera.camera2.size()).toSize())
             self.gui_settings.append([self.camera.camera1, "camera1"])
             self.gui_settings.append([self.camera.camera2, "camera2"])
 
@@ -566,6 +569,13 @@ class Window(QtGui.QMainWindow):
         self.settings.setValue("main_pos", self.pos())
         if (self.ui_mode == "single"):
             self.settings.setValue("main_size", self.size())
+
+        elif (self.ui_mode == "detached"):
+            self.settings.setValue("camera_size", self.camera.size())
+
+        elif (self.ui_mode == "dual"):
+            self.settings.setValue("camera1_size", self.camera.camera1.size())
+            self.settings.setValue("camera2_size", self.camera.camera2.size())
 
         for [object, name] in self.gui_settings:
             if object:
