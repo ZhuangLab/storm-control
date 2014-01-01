@@ -61,37 +61,13 @@ class ACameraControl(cameraControl.CameraControl):
             self.camera = True
         self.got_camera = True
 
-    ## haveEMCCD
-    #
-    # @return False, the emulation camera does not have a EMCCD.
-    #
-    @hdebug.debug
-    def haveEMCCD(self):
-        return False
-
     ## havePreamp
     #
-    # @return False, the emulation camera has a pre-amplifier.
+    # @return True, the emulation camera has a pre-amplifier.
     #
     @hdebug.debug
     def havePreamp(self):
         return True
-
-    ## haveShutter
-    #
-    # @return False, the emulation camera does not have a shutter.
-    #
-    @hdebug.debug
-    def haveShutter(self):
-        return False
-
-    ## haveTemperature
-    #
-    # @return False, the emulation camera does not have a temperature sensor.
-    #
-    @hdebug.debug
-    def haveTemperature(self):
-        return False
 
     ## newFilmSettings
     #
@@ -123,7 +99,7 @@ class ACameraControl(cameraControl.CameraControl):
     #
     @hdebug.debug
     def newParameters(self, parameters):
-        self.initCamera()
+        #self.initCamera()
         if (parameters.exposure_time > 0.010):
             self.sleep_time = int(1000.0 * parameters.exposure_time)
         else:

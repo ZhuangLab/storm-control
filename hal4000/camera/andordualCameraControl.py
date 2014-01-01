@@ -65,6 +65,8 @@ class ACameraControl(cameraControl.CameraControl):
     #
     # @param which_camera Which camera to get the acquisition timings from.
     #
+    # @return A python array containing the acquisition timings.
+    #
     @hdebug.debug
     def getAcquisitionTimings(self, which_camera):
         self.stopCamera()

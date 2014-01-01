@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<hardware>
+  <!-- Defines all the hardware.
+       
+       Note that if you don't have a particular piece of hardware
+       it needs to be commented out in this file.
+    -->
+
+  <camera>
+    <module type="string">dualCamera</module>
+    <!-- <module type="string">detachedSingleCamera</module> -->
+    <!-- <module type="string">classicSingleCamera</module> -->
+    <!-- <module type="string">noneCamera</module> -->
+    <parameters>
+      <control type="string">nonedualCameraControl</control>
+      <display type="string">noneCameraWidget</display>
+    </parameters>
+  </camera>
+
+  <focuslock>
+    <module type="string">noneFocusLockZ</module>
+  </focuslock>
+
+  <illumination>
+    <module type="string">noneIlluminationControl</module>
+  </illumination>
+
+  <!--
+  <joystick>
+    <module type="string">NA</module>
+  </joystick>
+  -->
+  
+  <!--
+  <misc_control>
+    <module type="string">NA</module>
+  </misc_control>
+  -->
+	
+  <shutters>
+    <module type="string">noneShutterControl</module>
+  </shutters>
+
+  <stage>
+    <module type="string">noneStageControl</module>
+  </stage>
+
+  <!--
+  <temperature_logger>
+    <module type="string">NA</module>
+  </temperature_logger>
+  -->
+  
+</hardware>

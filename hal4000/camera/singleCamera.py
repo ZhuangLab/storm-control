@@ -244,9 +244,10 @@ class SingleCamera(genericCamera.Camera):
     #
     @hdebug.debug
     def updateTemperature(self):
-        cur_temp = self.camera_control.getTemperature()
-        self.parameters.actual_temperature = cur_temp[0]
-        self.camera_params.newTemperature(cur_temp)
+        if self.camera_control.haveTemperature():
+            cur_temp = self.camera_control.getTemperature()
+            self.parameters.actual_temperature = cur_temp[0]
+            self.camera_params.newTemperature(cur_temp)
 
 #
 # The MIT License
