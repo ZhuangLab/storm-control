@@ -43,7 +43,6 @@ from daveActions import *
 # Parameter loading
 import halLib.parameters as params
 
-
 ## createTableWidget
 #
 # Creates a PyQt table widget item with our default flags.
@@ -521,7 +520,6 @@ class Window(QtGui.QMainWindow):
                 QtGui.QMessageBox.information(self,
                                               "XML Generation Error",
                                               traceback.format_exc())
-                #str(sys.exc_info()[0]))
             else:
                 self.commands = commands
                 self.command_index = 0
@@ -602,8 +600,13 @@ class Window(QtGui.QMainWindow):
             ## Make table for movie
             pass
         elif command_type == "fluidics":
-            pass
+            # Header
+            self.ui.commandDetailsTable.setItem(0,0, createTableWidget("Valve Protocol"))
 
+            # Name Entry
+            self.ui.commandDetailsTable.setItem(2,0, createTableWidget("Name"))
+            self.ui.commandDetailsTable.setItem(2,0, createTableWidget(current_command.getName()))
+            
     ## updateCommandList
     #
     # Update the command list
