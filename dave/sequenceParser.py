@@ -54,12 +54,46 @@ class Progression:
                     elif node.nodeName == "filename":
                         self.filename = node.firstChild.nodeValue
 
+## AbstractCommand
+#
+# The base class for dave commands
+#
+class AbstractCommand():
+
+    ## __init__
+    #
+    # Create default values
+    #
+    def __init__(self):
+        self.name = "None"
+        self.type = "None"
+
+    ## getName
+    #
+    # Return the name of the command
+    #
+    def getName(self):
+        return self.name
+
+    ## getType
+    #
+    # Return the type of the command
+    #
+    def getType(self):
+        return self.type
+
+    ## getDescriptor
+    #
+    # Return a string that describes the command
+    #
+    def getDescriptor(self):
+        return self.name + ": " + self.type
 
 ## Movie
 #
 # The movie object.
 #
-class Movie:
+class Movie(AbstractCommand):
 
     ## __init__
     #
@@ -68,7 +102,8 @@ class Movie:
     # @param movie_xml A xml node describing the movie.
     #
     def __init__(self, movie_xml):
-
+        AbstractCommand.__init__(self)
+        
         # Node type
         self.type = "movie"
 
@@ -115,12 +150,12 @@ class Movie:
         else:
             self.progression = Progression(None)
 
-    ## getNodeType
+    ## getDescriptor
     #
-    # Return the type of node so that other classes can determine how to process the xml command
+    # Return a string that describes the command
     #
-    def getType(self):
-        return self.type
+    def getDescriptor(self):
+        return self.name + " ({0:.1f}, {0:.1f})".format(self.stage_x, self.stage_y)
 
     ## __repr__
     #
@@ -131,7 +166,7 @@ class Movie:
 #
 # The fluidics protocol object.  This class controls communication with a valve chain
 #
-class ValveProtocol:
+class ValveProtocol(AbstractCommand):
     ## __init__
     #
     # Dynamically create the class by processing the fluidics xml object.
@@ -139,10 +174,11 @@ class ValveProtocol:
     # @param fluidics_xml A xml node describing the fluidics command.
     #
     def __init__(self, fluidics_xml):
-
+        AbstractCommand.__init__(self)
+        
         # node type
         self.type = "fluidics"
-
+        
         # default settings
         self.protocol_name = []
         
@@ -153,13 +189,14 @@ class ValveProtocol:
         if node.nodeType == Node.ELEMENT_NODE:
             if (node.nodeName == "valve_protocol"):
                 self.protocol_name = node.firstChild.nodeValue
+        self.name = self.protocol_name
 
-    ## getNodeType
+    ## getDescriptor
     #
-    # Return the type of node so that other classes can determine how to process the xml command
+    # Return a string that describes the command
     #
-    def getType(self):
-        return self.type
+    def getDescriptor(self):
+        return self.name
     
     ## __repr__
     #
@@ -194,8 +231,8 @@ if __name__ == "__main__":
     parsed_commands = parseMovieXml("sequence.xml")
     print "Parsed the following commands: "
     for command in parsed_commands:
-        print "   " + command.getType() + ": " + str(command)
-    
+        print command
+
 #
 # The MIT License
 #
