@@ -68,6 +68,10 @@ class DetachedSingleCamera(singleCamera.SingleCamera):
         layout.setMargin(0)
         layout.addWidget(self.camera_params)
             
+        self.camera_params.showEMCCD(self.camera_control.haveEMCCD())
+        self.camera_params.showPreamp(self.camera_control.havePreamp())
+        self.camera_params.showTemperature(self.camera_control.haveTemperature())
+
         # Connect ui elements.
         self.ui.okButton.setText("Close")
         self.ui.okButton.clicked.connect(self.handleOk)

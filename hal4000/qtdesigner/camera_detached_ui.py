@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'camera-detached.ui'
 #
-# Created: Wed Jan 01 09:37:35 2014
+# Created: Wed Jan 01 10:56:40 2014
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
