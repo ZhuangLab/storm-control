@@ -337,8 +337,9 @@ class Window(QtGui.QMainWindow):
             object.setText(self.settings.value(name, "").toString())
 
         # Initialize command descriptor table
-        self.ui.commandDetailsTable.setRowCount(12)
-        self.ui.commandDetailsTable.setColumnCount(3)
+        self.command_details_table_size = [12, 2]
+        self.ui.commandDetailsTable.setRowCount(self.command_details_table_size[0])
+        self.ui.commandDetailsTable.setColumnCount(self.command_details_table_size[1])
 
         # Set active status
 ##        self.ui.commandSequenceList.setEnabled(False)
@@ -348,7 +349,7 @@ class Window(QtGui.QMainWindow):
         # Enable mouse over updates of command descriptor
         self.ui.commandSequenceList.setMouseTracking(True)
         self.ui.commandSequenceList.itemEntered.connect(self.updateCommandDescriptorTable)
-
+        self.ui.commandSequenceList.clicked.connect(self.handleCommandListClick)
 
     ## dragEnterEvent
     #
@@ -390,6 +391,14 @@ class Window(QtGui.QMainWindow):
             self.running = False
             self.ui.abortButton.setEnabled(False)
             self.ui.runButton.setText("Start")
+
+    ## handleCommandListClick
+    #
+    # Reset command sequence list to the current command
+    #
+    #
+    def handleCommandListClick(self):
+        self.ui.commandSequenceList.setCurrentRow(self.command_index)
 
 #    ## handleDisconnect
 #    #
@@ -509,6 +518,11 @@ class Window(QtGui.QMainWindow):
     #  Send current command to command engine and update GUI
     #
     def issueCommand(self):
+        # disable selectability of all other elements
+        for widget in self.command_widgets:
+            widget.setFlags(QtCore.Qt.ItemIsEnabled)
+
+        self.command_widgets[self.command_index].setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
         self.ui.commandSequenceList.setCurrentRow(self.command_index)
         self.updateCommandDescriptorTable(self.command_widgets[self.command_index])
         self.command_engine.executeCommand(self.commands[self.command_index])
@@ -539,7 +553,7 @@ class Window(QtGui.QMainWindow):
                 self.ui.abortButton.show()
                 self.ui.runButton.setText("Run")
                 self.ui.runButton.show()
-                self.updateCommandList()
+                self.createCommandList()
                 self.issueCommand()
                 
     ## newSequenceFile
@@ -606,25 +620,29 @@ class Window(QtGui.QMainWindow):
 
         command_details = current_command.getDetails()
 
+        self.ui.commandDetailsTable.clear()
+        
         for [line_num, line] in enumerate(command_details):
             for [entry_pos, entry] in enumerate(line):
                 self.ui.commandDetailsTable.setItem(line_num, entry_pos, createTableWidget(entry))
             
-    ## updateCommandList
+    ## createCommandList
     #
-    # Update the command list
+    # create the command list
     #
     @hdebug.debug
-    def updateCommandList(self):
+    def createCommandList(self):
         self.ui.commandSequenceList.clear()
         self.command_widgets = []
         
         for command in self.commands:
             widget = QtGui.QListWidgetItem(command.getDescriptor())
+            widget.setFlags(QtCore.Qt.ItemIsEnabled)
             self.ui.commandSequenceList.addItem(widget)
             self.command_widgets.append(widget)
         
         if len(self.commands) > 0:
+            self.command_widgets[0].setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
             self.ui.commandSequenceList.setCurrentRow(0)
 
         self.updateCommandDescriptorTable(self.command_widgets[0])
