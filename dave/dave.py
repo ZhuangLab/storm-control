@@ -326,7 +326,7 @@ class Window(QtGui.QMainWindow):
         self.ui.runButton.clicked.connect(self.handleRunButton)
         self.ui.smtpServerLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.toAddressLineEdit.textChanged.connect(self.handleNotifierChange)
-
+                                                        
         # Load saved notifications settings.
         self.noti_settings = [[self.ui.fromAddressLineEdit, "from_address"],
                               [self.ui.fromPasswordLineEdit, "from_password"],
@@ -336,11 +336,20 @@ class Window(QtGui.QMainWindow):
         for [object, name] in self.noti_settings:
             object.setText(self.settings.value(name, "").toString())
 
+        # Initialize command descriptor table
+        self.ui.commandDetailsTable.setRowCount(12)
+        self.ui.commandDetailsTable.setColumnCount(3)
+
         # Set active status
-        self.ui.commandSequenceList.setEnabled(False)
-        self.ui.commandDetailsTable.setEnabled(False)
+##        self.ui.commandSequenceList.setEnabled(False)
+##        self.ui.commandDetailsTable.setEnabled(False)
         self.command_widgets = []
-        
+
+        # Enable mouse over updates of command descriptor
+        self.ui.commandSequenceList.setMouseTracking(True)
+        self.ui.commandSequenceList.itemEntered.connect(self.updateCommandDescriptorTable)
+
+
     ## dragEnterEvent
     #
     # Handles a PyQt (file) drag enter event.
@@ -379,7 +388,7 @@ class Window(QtGui.QMainWindow):
             self.issueCommand()
             
             self.running = False
-            self.ui.abortButton.setEnable(False)
+            self.ui.abortButton.setEnabled(False)
             self.ui.runButton.setText("Start")
 
 #    ## handleDisconnect
@@ -594,18 +603,12 @@ class Window(QtGui.QMainWindow):
         # Find widget
         command_index = self.command_widgets.index(list_widget)
         current_command = self.commands[command_index]
-        
-        command_type = current_command.getType()
-        if command_type == "movie":
-            ## Make table for movie
-            pass
-        elif command_type == "fluidics":
-            # Header
-            self.ui.commandDetailsTable.setItem(0,0, createTableWidget("Valve Protocol"))
 
-            # Name Entry
-            self.ui.commandDetailsTable.setItem(2,0, createTableWidget("Name"))
-            self.ui.commandDetailsTable.setItem(2,0, createTableWidget(current_command.getName()))
+        command_details = current_command.getDetails()
+
+        for [line_num, line] in enumerate(command_details):
+            for [entry_pos, entry] in enumerate(line):
+                self.ui.commandDetailsTable.setItem(line_num, entry_pos, createTableWidget(entry))
             
     ## updateCommandList
     #
