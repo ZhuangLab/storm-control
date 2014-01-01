@@ -38,7 +38,7 @@ import halLib.tcpClient
 import qtdesigner.dave_ui as daveUi
 
 # Dave Actions
-import daveActions
+from daveActions import *
 
 # Parameter loading
 import halLib.parameters as params
@@ -124,6 +124,7 @@ class CommandEngine(QtGui.QWidget):
             self.should_pause = False
             self.stopCommunication()
         else:
+            print "Next action in checkPause"
             self.nextAction()
 
     ## execute Command
@@ -336,6 +337,11 @@ class Window(QtGui.QMainWindow):
         for [object, name] in self.noti_settings:
             object.setText(self.settings.value(name, "").toString())
 
+        # Set active status
+        self.ui.commandSequenceList.setEnabled(False)
+        self.ui.commandDetailsTable.setEnabled(False)
+        self.command_widgets = []
+        
     ## dragEnterEvent
     #
     # Handles a PyQt (file) drag enter event.
@@ -371,9 +377,10 @@ class Window(QtGui.QMainWindow):
         if (self.running):
             self.command_engine.abort()
             self.command_index = 0
-            self.command_engine.executeCommand(self.commands[self.command_index])
+            self.issueCommand()
+            
             self.running = False
-            self.ui.abortButton.hide()
+            self.ui.abortButton.setEnable(False)
             self.ui.runButton.setText("Start")
 
 #    ## handleDisconnect
@@ -393,13 +400,13 @@ class Window(QtGui.QMainWindow):
     def handleDone(self):
         if (self.command_index < (self.sequence_length-1)):
             self.command_index += 1
-            self.command_engine.executeCommand(self.commands[self.command_index])
+            self.issueCommand()
             self.command_engine.nextAction()
         else:
             self.command_index = 0
             self.ui.runButton.setText("Run")
             self.running = False
-            self.command_engine.executeCommand(self.commands[self.command_index])
+            self.issueCommand()
             self.command_engine.stopCommunication()
 
     ## handleGenerate
@@ -489,6 +496,15 @@ class Window(QtGui.QMainWindow):
             self.ui.runButton.setText("Pause")
             self.running = True
 
+    ## issueCommand
+    #
+    #  Send current command to command engine and update GUI
+    #
+    def issueCommand(self):
+        self.ui.commandSequenceList.setCurrentRow(self.command_index)
+        self.updateCommandDescriptorTable(self.command_widgets[self.command_index])
+        self.command_engine.executeCommand(self.commands[self.command_index])
+        
     ## newSequence
     #
     # Parses a XML file describing the list of movies to take.
@@ -510,14 +526,14 @@ class Window(QtGui.QMainWindow):
                 self.commands = commands
                 self.command_index = 0
                 self.sequence_length = len(self.commands)
-                self.sequence_filename
+                self.sequence_filename = sequence_filename
+                self.updateGUI()
                 
                 self.ui.abortButton.show()
                 self.ui.runButton.setText("Run")
                 self.ui.runButton.show()
-                self.command_engine.executeCommand(self.commands[self.command_index])
-
                 self.updateCommandList()
+                self.issueCommand()
                 
     ## newSequenceFile
     #
@@ -555,7 +571,7 @@ class Window(QtGui.QMainWindow):
     def updateGUI(self):
         # Current sequence xml file
         self.ui.sequenceLabel.setText(self.sequence_filename)
-
+        print self.sequence_filename
         # Update TCP/IP client status
         client_status = self.command_engine.getClientStatus()
         if client_status[0]: # HAL status
@@ -571,17 +587,16 @@ class Window(QtGui.QMainWindow):
         # Update time estimates 
         self.updateEstimates()
 
-    ## updateGUI
+    ## updateCommandDescriptorTable
     #
-    # Update the GUI elements
+    # Display the details of the current command
     #
     @hdebug.debug
-    def updateCommandDescriptorTable(self):
-        # Get current command
-        command_index = self.ui.commandSequenceList.currentRow()
-
+    def updateCommandDescriptorTable(self, list_widget):
+        # Find widget
+        command_index = self.command_widgets.index(list_widget)
         current_command = self.commands[command_index]
-
+        
         command_type = current_command.getType()
         if command_type == "movie":
             ## Make table for movie
@@ -596,13 +611,18 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def updateCommandList(self):
         self.ui.commandSequenceList.clear()
+        self.command_widgets = []
+        
         for command in self.commands:
-            self.ui.commandSequenceList.addItem(command.getDescriptor())
-
+            widget = QtGui.QListWidgetItem(command.getDescriptor())
+            self.ui.commandSequenceList.addItem(widget)
+            self.command_widgets.append(widget)
+        
         if len(self.commands) > 0:
             self.ui.commandSequenceList.setCurrentRow(0)
-    
-    
+
+        self.updateCommandDescriptorTable(self.command_widgets[0])
+        
     ## quit
     #
     # Handles the quit file action.
