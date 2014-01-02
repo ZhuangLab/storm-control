@@ -27,4 +27,14 @@ to use when the program starts. Finally, to get HAL to load your
 setup instead of the default "none" setup you can change the
 setup_name field in the settings_default.xml file. Alternatively
 you can specify a setup name, hardware and parameters file at
-the command prompt.
+the command prompt as explained below.
+
+Option 1: This will look in the file settings_default.xml to
+  determine which setup (hardware) configuration to use.
+
+> python hal-4000.py
+
+Option 2: Specify everything at the command line.
+
+> python hal-4000.py storm3 storm3_hardware.xml storm3_default.xml
+
