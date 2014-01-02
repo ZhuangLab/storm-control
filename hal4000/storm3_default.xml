@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <settings>
   <!-- general -->
-  <camera_type type="string">andor</camera_type>
   <debug type="int">1</debug>
   <use_as_default type="int">1</use_as_default>
 
@@ -57,7 +56,6 @@
   <sync type="int">0</sync>
 
   <!-- illumination settings -->
-  <have_illumination type="int">1</have_illumination>
   <shutters type="string">shutters_default.xml</shutters>
   <default_power channel="0">1.0</default_power>
   <default_power channel="1">1.0</default_power>
@@ -82,7 +80,6 @@
   <button channel="6" power="0.1">Low</button>
 
   <!-- stage settings -->
-  <have_stage type="int">1</have_stage>
   <small_step_size type="float">5.0</small_step_size>
   <large_step_size type="float">25.0</large_step_size>
   <x_sign type="int">-1</x_sign>
@@ -90,7 +87,6 @@
   <stage_speed type="float">5.0</stage_speed>
 
   <!-- focus lock settings -->
-  <have_focus_lock type="int">1</have_focus_lock>
   <ir_power type="int">6</ir_power>
   <qpd_mode type="int">0</qpd_mode>
   <qpd_zcenter type="float">50.0</qpd_zcenter>
@@ -120,10 +116,8 @@
   <nm_per_pixel type="float">164</nm_per_pixel>
 
   <!-- temperature logger settings -->
-  <have_temperature_logger type="int">0</have_temperature_logger>
 
   <!-- misc control -->
-  <have_misc_control type="int">1</have_misc_control>
   <jog_size type="float">0.01</jog_size>
   <epi_position type="float">17.92</epi_position>
   <tirf_position type="float">20.36</tirf_position>
@@ -142,7 +136,6 @@
   <pframe_value type="int">1000</pframe_value>
 
   <!-- joystick setting -->
-  <have_joystick type="int">1</have_joystick>
   <hat_step type="float">1.0</hat_step> <!-- step size in um for hat button press -->
   <joystick_gain type="float-array">25, 250, 2500</joystick_gain>   <!-- max velocity in um/s: valid range 100 -> 1000 -->
   <!-- <joystick_gain_index type = "int">0</joystick_gain_index> -->
