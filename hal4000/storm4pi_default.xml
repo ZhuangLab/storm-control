@@ -5,8 +5,6 @@
 
   <!-- camera settings -->
   <camera1>
-    <camera_type type="string">andordual</camera_type>
-
     <emccd_gain type="int">0</emccd_gain>
     <x_start type="int">1</x_start>
     <x_end type="int">512</x_end>
@@ -45,8 +43,6 @@
   </camera1>
 
   <camera2>
-    <camera_type type="string">andordual</camera_type>
-
     <emccd_gain type="int">0</emccd_gain>
     <x_start type="int">1</x_start>
     <x_end type="int">512</x_end>
@@ -107,7 +103,6 @@
   <filetype type="string">.dax</filetype>
 
   <!-- illumination settings -->
-  <have_illumination type="int">1</have_illumination>
   <shutters type="string">shutters_default.xml</shutters>
   <default_power channel="0">1.0</default_power>
   <default_power channel="1">1.0</default_power>
@@ -132,7 +127,6 @@
   <button channel="6" power="0.1">Low</button>
 
   <!-- stage settings -->
-  <have_stage type="int">1</have_stage>
   <small_step_size type="float">5.0</small_step_size>
   <large_step_size type="float">25.0</large_step_size>
   <x_sign type="int">-1</x_sign>
@@ -140,7 +134,6 @@
   <stage_speed type="float">2.0</stage_speed>
 
   <!-- focus lock settings -->
-  <have_focus_lock type="int">1</have_focus_lock>
   <ir_power type="int">15</ir_power>
   <qpd_mode type="int">0</qpd_mode>
   <qpd_zcenter type="float">50.0</qpd_zcenter>
@@ -170,10 +163,8 @@
   <nm_per_pixel type="float">164</nm_per_pixel>
 
   <!-- temperature logger settings -->
-  <have_temperature_logger type="int">0</have_temperature_logger>
 
   <!-- misc control -->
-  <have_misc_control type="int">0</have_misc_control>
   <filter_names type="string-array">1,2,3,4,5,6</filter_names>
   <filter_position type="int">0</filter_position>
 
@@ -189,7 +180,6 @@
   <pframe_value type="int">1000</pframe_value>
 
   <!-- joystick setting -->
-  <have_joystick type="int">1</have_joystick>
   <hat_step type="float">1.0</hat_step> <!-- step size in um for hat button press -->
   <joystick_gain type="float-array">25, 2500</joystick_gain>   <!-- max velocity in um/s: valid range 1 to max stage speed -->
   <joystick_multiplier_value type="float">5</joystick_multiplier_value> <!-- X button multiplier for joystick and focus lock -->
