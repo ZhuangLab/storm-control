@@ -23,7 +23,7 @@ import stagecontrol.stageControl as stageControl
 # with RS232 Marzhauser motorized stage.
 #
 class AStageControl(stageControl.StageControl):
-    def __init__(self, parameters, tcp_control, parent = None):
+    def __init__(self, hardware, parameters, tcp_control, parent = None):
         self.stage = stageThread.QStageThread(marzhauser.MarzhauserRS232("COM6", wait_time = 1.0e-3))
         self.stage.start(QtCore.QThread.NormalPriority)
         stageControl.StageControl.__init__(self, 
