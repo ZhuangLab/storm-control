@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <hardware>
-  <!-- Defines all the hardware (for storm4pi).
+  <!-- Defines all the hardware (for storm4).
        
        Note that if you don't have a particular piece of hardware
        it needs to be commented out in this file.
     -->
 
   <camera>
-    <module type="string">dualCamera</module>
+    <module type="string">classicSingleCamera</module>
     <parameters>
-      <control type="string">andordualCameraControl</control>
+      <control type="string">andorCameraControl</control>
       <display type="string">andorCameraWidget</display>
     </parameters>
   </camera>
 
   <focuslock>
-    <module type="string">storm4piFocusLockZ</module>
+    <module type="string">storm4FocusLockZ</module>
   </focuslock>
 
   <illumination>
@@ -25,12 +25,10 @@
   <joystick>
     <module type="string">gamepad310JoystickControl</module>
   </joystick>
-
-  <!--
+  
   <misc_control>
     <module type="string">storm4MiscControl</module>
   </misc_control>
-  -->
 
   <shutters>
     <module type="string">storm4ShutterControl</module>
