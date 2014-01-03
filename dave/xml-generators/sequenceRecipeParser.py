@@ -7,7 +7,7 @@
 # Jeff 1/14
 #
 
-from xml.dom import minidom, Node, getDomImplementation
+from xml.dom import minidom, Node
 import halLib.hdebug as hdebug
 
 ## parseMovieXml
@@ -16,14 +16,17 @@ import halLib.hdebug as hdebug
 #
 # @param movie_xml_filename The name of the XML file.
 #
-def parseMovieXml(movie_xml_filename):
+def parseXMLRecipe(movie_xml_filename):
     xml = minidom.parse(movie_xml_filename)
-    print xml
+
     # Parse main element
     main_element = xml.documentElement
     command_sequence = []
     items = []
     loop_variables = []
+
+    loop_numbers = []
+    loop_number_names = []
     
     for child in main_element.childNodes:
         if child.nodeType == Node.ELEMENT_NODE:
@@ -34,19 +37,45 @@ def parseMovieXml(movie_xml_filename):
             if child.tagName == "loop_variable":
                 loop_variables.append(child)
 
-    impl = getDomImplementation()
-    new_xml = impl.createDocument(None, "sequence", None)
-    top_element = new_xml.documentElement
-    top_element.appendChild(stuff)
-    print new_xml
-    print command_sequence, items, loop_variables
+    # Create new xml object
+    new_xml = minidom.Document()
+
+    # Create root element
+    root_element = new_xml.createElement("sequence")
+    
+    # Parse command_sequence    
+    loop_elements = command_sequence.getElementsByTagName("loop")
+    for loop_element in loop_elements:
+        for child in loop_element.childNodes:
+            if child.nodeType == Node.ELEMENT_NODE:
+                if child.tagName == "item":
+                    item_name = child.getAttribute("name")
+                    print "Found Item: " + item_name
+                    found_item = getChildByAttribute("name", item_name, items)
+                    if not found_item == None:
+                        for item_child in found_item.childNodes:
+                            if item_child.nodeType == Node.ELEMENT_NODE:
+                                root_element.appendChild(item_child)
+                                print "   " + item_child.tagName
+                    else:
+                        print "Item did not contain any children!"
+                else:
+                    root_element.appendChild(child)
+    print root_element.toxml()
+
+def getChildByAttribute(attr_name, attr_value, children):
+    for child in children:
+        if child.hasAttribute(attr_name):
+            if child.getAttribute(attr_name) == attr_value:
+                return child
+    return None
+
 #
 # Testing
 # 
 if __name__ == "__main__":
-    parsed_commands = parseMovieXml("sequence_recipe_example.xml")
+    parsed_commands = parseXMLRecipe("sequence_recipe_example.xml")
 
-    
 #
 # The MIT License
 #
