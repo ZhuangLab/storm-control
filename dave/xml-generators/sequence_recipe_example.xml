@@ -12,7 +12,6 @@
   </loop>
 </command_sequence>
 
-
 <item name = "Movie 1">
   <movie>
     <name>bleach</name>
@@ -52,7 +51,7 @@
 </loop_variable>
 
 <loop_variable name = "j">
-   <file_path></file_path>
+   <file_path>stage_position_example.xml</file_path>
 </loop_variable>
 
 </recipe>
