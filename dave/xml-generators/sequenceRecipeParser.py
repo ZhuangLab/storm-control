@@ -1,34 +1,67 @@
 #!/usr/bin/python
-#
-## @file
-#
-# Creates command sequence xml from recipe xml files.
-#
-# Jeff 1/14
-#
+# ----------------------------------------------------------------------------------------
+# An xml parser class that takes a sequence recipe xml file and converts it to
+# a flat sequence file that can be read by Dave
+# ----------------------------------------------------------------------------------------
+# Jeff Moffitt
+# 12/28/13
+# jeffmoffitt@gmail.com
+# ----------------------------------------------------------------------------------------
 
+# ----------------------------------------------------------------------------------------
+# Import
+# ----------------------------------------------------------------------------------------
+import os, sys
 from xml.dom import minidom, Node
-import halLib.hdebug as hdebug
+from PyQt4 import QtCore, QtGui
 
-class XMLRecipeParser():
-    def __init__(self, xml_filename, verbose = True):
-
+# ----------------------------------------------------------------------------------------
+# XML Recipe Parser Class
+# ----------------------------------------------------------------------------------------
+class XMLRecipeParser(QtGui.QWidget):
+    def __init__(self, xml_filename = "", verbose = True, parent = None):
+        QtGui.QWidget.__init__(self, parent)
+        
+        # Initialize local attributes
         self.xml_filename = xml_filename
         self.verbose = verbose
-        
         self.main_element = []
         self.command_sequence = []
         self.items = []
         self.loop_variables = []
+        self.flat_sequence = []
 
+        # Parse XML
         self.parseXML()
 
-    def parseXML(self):
+    # ------------------------------------------------------------------------------------
+    # Create display and control widgets
+    # ------------------------------------------------------------------------------------
+    def close(self):
+        if self.verbose: print "Closing valve commands"
+
+    # ------------------------------------------------------------------------------------
+    # Load and parse a XML file with defined sequence recipe
+    # ------------------------------------------------------------------------------------
+    def parseXML(self, xml_file_path = ""):
+        # Handle passed file name
+        if not xml_file_path == "":
+            self.xml_filename = xml_file_path
+
+        # Open a file dialog if no path is provided
+        if self.xml_filename == "":
+            temp_file_path = QtGui.QFileDialog.getOpenFileName(self,
+                                                               "Open XML Recipe",
+                                                               "*.xml")
+            if os.path.isfile(temp_file_path):
+                self.xml_filename = temp_file_path
+        
         try:
             xml = minidom.parse(self.xml_filename)
             print "Parsing: " + self.xml_filename
         except:
             print "Invalid file: " + self.xml_filename
+            return None
 
         # Extract main element
         self.main_element = xml.documentElement
@@ -37,7 +70,7 @@ class XMLRecipeParser():
         for child in self.main_element.childNodes:
             if child.nodeType == Node.ELEMENT_NODE:
                 if child.tagName == "command_sequence":
-                    self.command_sequence = child
+                    self.command_sequence.append(child)
                 if child.tagName == "item":
                     self.items.append(child)
                 if child.tagName == "loop_variable":
@@ -45,28 +78,74 @@ class XMLRecipeParser():
 
         # Expand Loop Variables from File
         self.extractLoopVariablesFromFile()
-        
-    def extractLoopVariablesFromFile(self):
-                        
+
+        # Display parsing results
+        if self.verbose:
+            print self.command_sequence
+            self.printRecipeElements(self.command_sequence)
+            print self.items
+            self.printRecipeElements(self.items)
+            print self.loop_variables
+            self.printRecipeElements(self.loop_variables)
+
+        return True
+
+    # ------------------------------------------------------------------------------------
+    # Parse loop variables and extract from file as needed
+    # ------------------------------------------------------------------------------------        
+    def extractLoopVariablesFromFile(self):     
         # Expand out loop variables
         for loop in self.loop_variables:
-            path_to_xml = None
-            for child in loop.childNodes:
-                if child.nodeType == Node.ELEMENT_NODE:
-                    if child.tagName == "file_path":
-                        for grand_child in child.childNodes:
-                            if grand_child.nodeType == Node.TEXT_NODE:
-                                path_to_xml = grand_child.nodeValue
-                        if not path_to_xml == None:
-                            loop_variable_contents_xml = minidom.parse(path_to_xml)
-                            for element in loop_variable_contents_xml.getElementsByTagName("value"):
-                                loop.appendChild(element)
-                            if self.verbose:
-                                print "Extracted loop variables from " + path_to_xml
-                        else:
-                            if self.verbose:
-                                print "Found empty <file_path> tag"
-            
+            path_to_xml = ""
+            file_path_elements = loop.getElementsByTagName("file_path")
+            print file_path_elements
+            for file_path_element in file_path_elements:
+                text_nodes = self.findNodesByNodeType(file_path_element.childNodes,
+                                                         node_type = Node.TEXT_NODE)
+
+                print text_nodes
+                # There should only be one, but if there are more concatenate the results
+                for text_node in text_nodes: 
+                    path_to_xml += text_node.nodeValue
+                if not path_to_xml == "":
+                    loop_variable_contents_xml = minidom.parse(path_to_xml)
+                    for element in loop_variable_contents_xml.getElementsByTagName("value"):
+                        loop.appendChild(element)
+                    if self.verbose:
+                        print "Extracted loop variables from " + path_to_xml
+                else:
+                    if self.verbose:
+                        print "Found empty <file_path> tag"
+
+    # ------------------------------------------------------------------------------------
+    # Parse nodes by type (default is element nodes) 
+    # ------------------------------------------------------------------------------------        
+    def findNodesByNodeType(self, children, node_type = Node.ELEMENT_NODE):
+        found_children = []
+        for child in children:
+            if child.nodeType == node_type:
+                found_children.append(child)
+
+        return found_children
+
+    # ------------------------------------------------------------------------------------
+    # Print elements 
+    # ------------------------------------------------------------------------------------        
+    def printRecipeElements(self, elements):
+        for element in elements:
+            xml_text = element.toxml()
+            print xml_text
+
+# ----------------------------------------------------------------------------------------
+# Stand Alone Test Class
+# ----------------------------------------------------------------------------------------
+class StandAlone(QtGui.QMainWindow):
+    def __init__(self, parent = None):
+        super(StandAlone, self).__init__(parent)
+
+        self.sequence_parser = XMLRecipeParser(xml_filename = "sequence_recipe_example.xml",
+                                               verbose = True)
+    
 ##    # Parse loops
 ##    current_node = command_sequence
 ##    found_all_nodes = False
@@ -132,9 +211,10 @@ class XMLRecipeParser():
 # Testing
 # 
 if __name__ == "__main__":
-    xml_recipe_parser = XMLRecipeParser("sequence_recipe_example.xml", verbose = True)
-    #parsed_commands = parseXMLRecipe("stage_position_example.xml")
-
+    app = QtGui.QApplication(sys.argv)
+    window = StandAlone()
+    window.show()
+    app.exec_()  
 #
 # The MIT License
 #
