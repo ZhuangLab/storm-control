@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <recipe>
 
-<command_sequence><junk></junk>
+<command_sequence>
   <loop name = "Valve Loop">
     <variable_entry name = "Valve Loop"></variable_entry>
-    <loop name = "Movie Loop" variable_name = "j">	
+    <loop name = "Movie Loop" increment = "name">	
  	<item name = "Movie 1"></item>
 	<item name = "Movie 2"></item>
         <item name = "Movie 3"></item>
@@ -13,13 +13,13 @@
 </command_sequence>
 
 <item name = "Movie 1">
-	<movie>
-		<name>bleach</name>
-		<length>20</length>
-		<lock_target>0.0</lock_target>
-		<progression><type>lockedout</type></progression>
-		<variable_entry name = "Movie Loop"></variable_entry>
-	</movie>
+  <movie>
+    <name>bleach</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <variable_entry name = "Movie Loop"></variable_entry>
+  </movie>
 </item>
 
 <item name = "Movie 2">
