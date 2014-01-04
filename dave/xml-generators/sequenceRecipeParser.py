@@ -11,7 +11,7 @@
 # ----------------------------------------------------------------------------------------
 # Import
 # ----------------------------------------------------------------------------------------
-import os, sys
+import os, sys, time
 from xml.dom import minidom, Node
 from PyQt4 import QtCore, QtGui
 
@@ -26,13 +26,100 @@ class XMLRecipeParser(QtGui.QWidget):
         self.xml_filename = xml_filename
         self.verbose = verbose
         self.main_element = []
-        self.command_sequence = []
+        self.command_sequences = []
         self.items = []
+        self.loop_names = []
         self.loop_variables = []
+        self.loop_iterator = []
+        self.num_loop_elements = []
         self.flat_sequence = []
-
+        self.root_element = []
+        self.item_names = []
+        
         # Parse XML
         self.parseXML()
+
+        # Create flat command sequence
+        self.createFlatSequence()
+        print "Flat Sequence:"
+        xml_text = self.flat_sequence.toxml()
+        print xml_text
+
+    # ------------------------------------------------------------------------------------
+    # Create the flat sequence 
+    # ------------------------------------------------------------------------------------        
+    def createFlatSequence(self):
+        if self.verbose: print "Creating flat sequence"
+        self.flat_sequence = minidom.Document()
+        self.root_element = self.flat_sequence.createElement("sequence")
+
+        for command_sequence in self.command_sequences:
+            print command_sequence
+            print command_sequence.toxml()
+            print command_sequence.lastChild
+            self.addToFlatSequence(command_sequence)
+
+        self.flat_sequence.appendChild(self.root_element)
+
+    def addToFlatSequence(self, commands_to_add):
+        for child in commands_to_add.childNodes:
+            if child.nodeType == Node.ELEMENT_NODE:
+                print "Element node: " + child.tagName
+                if child.tagName == "loop":
+                    self.processLoopElement(child)
+                else:
+                    self.root_element.appendChild(child)
+            elif child.nodeType == Node.TEXT_NODE:
+                self.root_element.appendChild(child)
+                print "Text node"
+    
+    # ------------------------------------------------------------------------------------
+    # Process a loop element in the command sequence 
+    # ------------------------------------------------------------------------------------        
+    def processLoopElement(self, loop):
+        # Find loop_variable(s) with the same name
+        loop_name = loop.getAttribute("name")
+        local_loop_variables = self.getElementsByAttribute(self.loop_variables, "name", loop_name)
+
+        # Find entries for the loop variable
+        variable_entries = []
+        for local_loop_variable in local_loop_variables:
+            for child in self.findNodesByNodeType(local_loop_variable.childNodes,
+                                                  node_type = Node.ELEMENT_NODE):
+                if child.tagName == "value":
+                    variable_entries.append(child)
+
+        # Record loop parameters and properties
+        num_loop_elements = len(variable_entries)
+        local_loop_ID = len(self.num_loop_elements) - 1
+        self.current_loop_iterator.append(0)
+        
+        # Parse and insert loop
+        for local_loop_iterator in range(num_loop_elements):
+            self.current_loop_iterator[local_loop_ID] = local_loop_iterator
+            for child in loop.childNodes:
+                if child.nodeType == Node.TEXT_NODE:
+                    self.root_element.appendChild(child)
+                    print "Text node"
+                elif child.nodeType == Node.ELEMENT_NODE:
+                    if child.tagName == "loop":
+                        self.processLoopElement(child)
+                    elif child.tagName == "item":
+                        pass
+                    elif child.tagName == "variable_entry":
+                        self.root_element.appendChild(variable_entries[local_loop_iterator])
+                        
+    # ------------------------------------------------------------------------------------
+    # Return elements by name 
+    # ------------------------------------------------------------------------------------        
+    def getElementsByAttribute(self, nodes, attribute_name, attribute_value):
+        found_nodes = []
+        for node in nodes:
+            if node.hasAttribute(attribute_name):
+                if node.getAttribute(attribute_name) == attribute_value:
+                    found_nodes.append(node)
+
+        return found_nodes
 
     # ------------------------------------------------------------------------------------
     # Create display and control widgets
@@ -49,19 +136,7 @@ class XMLRecipeParser(QtGui.QWidget):
             self.xml_filename = xml_file_path
 
         # Open a file dialog if no path is provided
-        if self.xml_filename == "":
-            temp_file_path = QtGui.QFileDialog.getOpenFileName(self,
-                                                               "Open XML Recipe",
-                                                               "*.xml")
-            if os.path.isfile(temp_file_path):
-                self.xml_filename = temp_file_path
-        
-        try:
-            xml = minidom.parse(self.xml_filename)
-            print "Parsing: " + self.xml_filename
-        except:
-            print "Invalid file: " + self.xml_filename
-            return None
+        xml, self.xml_filename = self.loadXML(self.xml_filename, header = "Open Sequence Recipe File")
 
         # Extract main element
         self.main_element = xml.documentElement
@@ -70,25 +145,73 @@ class XMLRecipeParser(QtGui.QWidget):
         for child in self.main_element.childNodes:
             if child.nodeType == Node.ELEMENT_NODE:
                 if child.tagName == "command_sequence":
-                    self.command_sequence.append(child)
+                    self.command_sequences.append(child)
                 if child.tagName == "item":
                     self.items.append(child)
+                    self.item_names.append(child.getAttribute("name"))
                 if child.tagName == "loop_variable":
                     self.loop_variables.append(child)        
 
         # Expand Loop Variables from File
         self.extractLoopVariablesFromFile()
 
+        # Replace items in command_sequence
+        for i, command_sequence in enumerate(self.command_sequences):
+            self.command_sequences[i] = self.findAndReplaceItemsInNode(self.command_sequences[i])
+
         # Display parsing results
         if self.verbose:
-            print self.command_sequence
-            self.printRecipeElements(self.command_sequence)
+            print self.command_sequences
+            self.printRecipeElements(self.command_sequences)
             print self.items
             self.printRecipeElements(self.items)
             print self.loop_variables
             self.printRecipeElements(self.loop_variables)
 
         return True
+
+    # ------------------------------------------------------------------------------------
+    # Find and replace items in command sequence
+    # ------------------------------------------------------------------------------------        
+    def findAndReplaceItemsInNode(self, node):
+        print "Parsing: " + str(node)
+        for child in node.childNodes:
+            time.sleep(0.1)
+            print "Child: " + str(child)
+            if child.nodeType == Node.ELEMENT_NODE:
+                if child.tagName == "item":
+                    item_name = child.getAttribute("name")
+                    print "Found item " + item_name
+                    child_ID = self.item_names.index(item_name)
+                    found_item = self.items[child_ID]
+                    print found_item
+                    # Parse item children for <item> elements and append to current node
+                    for item_child in found_item.childNodes:
+                        print "Item Item: " + str(item_child)
+                        item_child = self.findAndReplaceItemsInNode(item_child) # See if there are nest items
+                        node.insertBefore(item_child, child)
+                    # Remove the item element
+                    node.removeChild(child)
+                else: # See if the nodes children have an item
+                    node.replaceChild(self.findAndReplaceItemsInNode(child), child)
+        print "Done parsing:" + str(node)
+        return node
+
+    # ------------------------------------------------------------------------------------
+    # Create and XML dialog for loading xml file and return parsed xml
+    # ------------------------------------------------------------------------------------        
+    def loadXML(self, xml_file_path, header = "Open XML File"):
+        if xml_file_path == "":
+            temp_file_path = QtGui.QFileDialog.getOpenFileName(self, header, "*.xml")
+            if os.path.isfile(temp_file_path):
+                xml_file_path = temp_file_path
+        try:
+            xml = minidom.parse(xml_file_path)
+            if self.verbose: print "Parsing: " + xml_file_path
+            return (xml, xml_file_path)
+        except:
+            print "Invalid file: " + xml_file_path
+            return (None, "")
 
     # ------------------------------------------------------------------------------------
     # Parse loop variables and extract from file as needed
@@ -98,21 +221,23 @@ class XMLRecipeParser(QtGui.QWidget):
         for loop in self.loop_variables:
             path_to_xml = ""
             file_path_elements = loop.getElementsByTagName("file_path")
-            print file_path_elements
             for file_path_element in file_path_elements:
-                text_nodes = self.findNodesByNodeType(file_path_element.childNodes,
-                                                         node_type = Node.TEXT_NODE)
+                # Remove file path element from loop element
+                loop.removeChild(file_path_element)
 
-                print text_nodes
+                # Find text nodes within file_path element and load file
+                text_nodes = self.findNodesByNodeType(file_path_element.childNodes,
+                                                      node_type = Node.TEXT_NODE)
                 # There should only be one, but if there are more concatenate the results
                 for text_node in text_nodes: 
                     path_to_xml += text_node.nodeValue
-                if not path_to_xml == "":
-                    loop_variable_contents_xml = minidom.parse(path_to_xml)
-                    for element in loop_variable_contents_xml.getElementsByTagName("value"):
-                        loop.appendChild(element)
-                    if self.verbose:
-                        print "Extracted loop variables from " + path_to_xml
+
+                loop_variable_xml, path_to_loop_variable_xml = self.loadXML(path_to_xml,
+                                                                            header = "Open Loop Variable XML")
+                for child in loop_variable_xml.childNodes:
+                    loop.appendChild(child)
+                if self.verbose:
+                    print "Extracted loop variables from " + path_to_loop_variable_xml
                 else:
                     if self.verbose:
                         print "Found empty <file_path> tag"
