@@ -142,6 +142,9 @@ class XMLRecipeParser(QtGui.QWidget):
                 
                 loop_variable_xml, path_to_loop_variable_xml = self.loadXML(path_to_xml,
                                                                             header = "Open Loop Variable XML")
+                if loop_variable_xml == None:
+                    loop_variable_xml, path_to_loop_variable_xml = self.loadXML("",
+                                                                                header = "Open Loop Variable XML")
                 loop_variables = loop_variable_xml.getroot()
                 for loop_variable in loop_variables:
                     loop.append(loop_variable)
@@ -161,6 +164,9 @@ class XMLRecipeParser(QtGui.QWidget):
 
         # Open a file dialog if no path is provided
         xml, self.xml_filename = self.loadXML(self.xml_filename, header = "Open Sequence Recipe File")
+
+        if xml == None:
+            return None
 
         # Extract main element
         self.main_element = xml.getroot()
