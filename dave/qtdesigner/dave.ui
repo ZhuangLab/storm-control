@@ -29,7 +29,7 @@
    <string>Dave</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="mainGridLayout" rowstretch="0,0,0,0,0,0,0,0,0,0">
+   <layout class="QGridLayout" name="mainGridLayout" rowstretch="0,0,0,0,0,0,0,0,0">
     <item row="0" column="1" colspan="5">
      <widget class="QGroupBox" name="sequenceGroupBox">
       <property name="title">
@@ -41,6 +41,167 @@
          <property name="text">
           <string>NA</string>
          </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="3" column="5">
+     <widget class="QGroupBox" name="connectionStatusGroupBox">
+      <property name="title">
+       <string>Connection Status</string>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QLabel" name="HALConnectionLabel">
+         <property name="text">
+          <string>TextLabel</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="kilroyConnectionLabel">
+         <property name="text">
+          <string>TextLabel</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="8" column="1">
+     <widget class="QPushButton" name="runButton">
+      <property name="text">
+       <string>Run</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="5">
+     <spacer name="verticalSpacer1">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>40</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="2" column="5">
+     <spacer name="verticalSpacer2">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>40</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="5" column="5">
+     <widget class="QGroupBox" name="estimatesGroupBox">
+      <property name="title">
+       <string>Estimates</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QLabel" name="spaceLabel">
+         <property name="text">
+          <string>TextLabel</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="timeLabel">
+         <property name="text">
+          <string>TextLabel</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="8" column="2">
+     <widget class="QPushButton" name="abortButton">
+      <property name="text">
+       <string>Abort</string>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="3">
+     <spacer name="horizontalSpacer">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>40</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="1" column="1" rowspan="5" colspan="4">
+     <widget class="QGroupBox" name="commandGroupBox">
+      <property name="title">
+       <string>Sequence Details</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QLabel" name="commandSequenceLabel">
+         <property name="text">
+          <string>Command Sequence</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QListWidget" name="commandSequenceList"/>
+       </item>
+       <item>
+        <widget class="QLabel" name="commandDetailLabel">
+         <property name="text">
+          <string>Command Details</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="commandDetailsTable">
+         <property name="font">
+          <font>
+           <pointsize>8</pointsize>
+          </font>
+         </property>
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::NoSelection</enum>
+         </property>
+         <property name="showGrid">
+          <bool>false</bool>
+         </property>
+         <property name="wordWrap">
+          <bool>false</bool>
+         </property>
+         <attribute name="horizontalHeaderVisible">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="horizontalHeaderMinimumSectionSize">
+          <number>18</number>
+         </attribute>
+         <attribute name="verticalHeaderVisible">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="verticalHeaderDefaultSectionSize">
+          <number>18</number>
+         </attribute>
+         <attribute name="verticalHeaderMinimumSectionSize">
+          <number>18</number>
+         </attribute>
         </widget>
        </item>
       </layout>
@@ -140,167 +301,6 @@
       </layout>
      </widget>
     </item>
-    <item row="3" column="5">
-     <widget class="QGroupBox" name="connectionStatusGroupBox">
-      <property name="title">
-       <string>Connection Status</string>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <item>
-        <widget class="QLabel" name="HALConnectionLabel">
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="kilroyConnectionLabel">
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item row="8" column="1">
-     <widget class="QPushButton" name="runButton">
-      <property name="text">
-       <string>Run</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="1" rowspan="5" colspan="3">
-     <widget class="QGroupBox" name="commandGroupBox">
-      <property name="title">
-       <string>Sequence Details</string>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_3">
-       <item>
-        <widget class="QLabel" name="commandSequenceLabel">
-         <property name="text">
-          <string>Command Sequence</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QListWidget" name="commandSequenceList"/>
-       </item>
-       <item>
-        <widget class="QLabel" name="commandDetailLabel">
-         <property name="text">
-          <string>Command Details</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QTableWidget" name="commandDetailsTable">
-         <property name="font">
-          <font>
-           <pointsize>8</pointsize>
-          </font>
-         </property>
-         <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
-         </property>
-         <property name="selectionMode">
-          <enum>QAbstractItemView::NoSelection</enum>
-         </property>
-         <property name="showGrid">
-          <bool>false</bool>
-         </property>
-         <property name="wordWrap">
-          <bool>false</bool>
-         </property>
-         <attribute name="horizontalHeaderVisible">
-          <bool>false</bool>
-         </attribute>
-         <attribute name="horizontalHeaderMinimumSectionSize">
-          <number>18</number>
-         </attribute>
-         <attribute name="verticalHeaderVisible">
-          <bool>false</bool>
-         </attribute>
-         <attribute name="verticalHeaderDefaultSectionSize">
-          <number>18</number>
-         </attribute>
-         <attribute name="verticalHeaderMinimumSectionSize">
-          <number>18</number>
-         </attribute>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item row="4" column="5">
-     <spacer name="verticalSpacer1">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>40</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="2" column="5">
-     <spacer name="verticalSpacer2">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>40</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="5" column="5">
-     <widget class="QGroupBox" name="estimatesGroupBox">
-      <property name="title">
-       <string>Estimates</string>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <item>
-        <widget class="QLabel" name="spaceLabel">
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="timeLabel">
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item row="8" column="2">
-     <widget class="QPushButton" name="abortButton">
-      <property name="text">
-       <string>Abort</string>
-      </property>
-     </widget>
-    </item>
-    <item row="8" column="3">
-     <spacer name="horizontalSpacer">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>40</width>
-        <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -325,6 +325,7 @@
      <string>XML</string>
     </property>
     <addaction name="actionGenerate"/>
+    <addaction name="actionGenerate_from_Recipe"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuXML"/>
@@ -342,7 +343,12 @@
   </action>
   <action name="actionGenerate">
    <property name="text">
-    <string>Generate</string>
+    <string>Generate (Version 1.0)</string>
+   </property>
+  </action>
+  <action name="actionGenerate_from_Recipe">
+   <property name="text">
+    <string>Generate from Recipe</string>
    </property>
   </action>
  </widget>

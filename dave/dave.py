@@ -17,7 +17,7 @@ import sys
 import traceback
 
 # XML parsing
-from xml.dom import minidom, Node
+from xml.dom import minidom, Node 
 
 # PyQt
 from PyQt4 import QtCore, QtGui
@@ -28,17 +28,17 @@ import halLib.hdebug as hdebug
 # General
 import notifications
 import sequenceParser
-import xml_generator
+from xml_generators import xml_generator, recipeParser
 
 # Communication
 import fluidics.kilroyClient
 import halLib.tcpClient
 
-# UIs.
+# UI
 import qtdesigner.dave_ui as daveUi
 
-# Dave Actions
-from daveActions import *
+# Dave actions
+import daveActions
 
 # Parameter loading
 import halLib.parameters as params
@@ -137,12 +137,12 @@ class CommandEngine(QtGui.QWidget):
         self.actions = []
         command_type = command.getType()
         if command_type == "movie":
-            self.actions.append(DaveActionMovieParameters(command))
-            if command.recenter:            self.actions.append(DaveActionRecenter())
-            if (command.find_sum > 0.0):    self.actions.append(DaveActionFindSum(command.find_sum))
-            if (command.length > 0):        self.actions.append(DaveActionMovie(command))
+            self.actions.append(daveActions.DaveActionMovieParameters(command))
+            if command.recenter:            self.actions.append(daveActions.DaveActionRecenter())
+            if (command.find_sum > 0.0):    self.actions.append(daveActions.DaveActionFindSum(command.find_sum))
+            if (command.length > 0):        self.actions.append(daveActions.DaveActionMovie(command))
         elif command_type == "fluidics":
-            self.actions.append(DaveActionValveProtocol(command))
+            self.actions.append(daveActions.DaveActionValveProtocol(command))
 
     ## getClient
     #
@@ -321,6 +321,7 @@ class Window(QtGui.QMainWindow):
         self.ui.actionNew_Sequence.triggered.connect(self.newSequenceFile)
         self.ui.actionQuit.triggered.connect(self.quit)
         self.ui.actionGenerate.triggered.connect(self.handleGenerate)
+        self.ui.actionGenerate_from_Recipe.triggered.connect(self.handleGenerateFromRecipe)
         self.ui.fromAddressLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.fromPasswordLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.runButton.clicked.connect(self.handleRunButton)
@@ -448,6 +449,19 @@ class Window(QtGui.QMainWindow):
                                           traceback.format_exc())
                                           #str(sys.exc_info()[0]))
         else:
+            self.newSequence(output_filename)
+
+    ## handleGenerateFromRecipe
+    #
+    # Handles Generate from Recipe XML
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def handleGenerateFromRecipe(self, boolean):
+        recipe_parser = recipeParser.XMLRecipeParser(verbose = True)
+        output_filename = recipe_parser.parseXML()
+        if os.path.isfile(output_filename):
             self.newSequence(output_filename)
 
     ## handleIdle
