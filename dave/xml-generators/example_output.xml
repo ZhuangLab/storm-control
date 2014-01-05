@@ -1,0 +1,428 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<sequence>
+<valve_protocol>Hybridize 1</valve_protocol>
+<movie>
+    <name>bleach_0_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>405_0_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>647_0_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>bleach_0_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>405_0_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>647_0_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>bleach_0_2</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>405_0_2</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>647_0_2</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>bleach_0_3</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>405_0_3</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>647_0_3</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<valve_protocol>Hybridize 2</valve_protocol>
+<movie>
+    <name>bleach_1_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>405_1_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>647_1_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>bleach_1_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>405_1_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>647_1_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>bleach_1_2</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>405_1_2</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>647_1_2</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>bleach_1_3</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>405_1_3</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>647_1_3</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<valve_protocol>Hybridize 3</valve_protocol>
+<movie>
+    <name>bleach_2_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>405_2_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>647_2_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>bleach_2_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>405_2_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>647_2_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>bleach_2_2</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>405_2_2</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>647_2_2</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>bleach_2_3</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>405_2_3</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>647_2_3</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<valve_protocol>Hybridize 4</valve_protocol>
+<movie>
+    <name>bleach_3_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>405_3_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>647_3_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>bleach_3_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>405_3_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>647_3_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>bleach_3_2</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>405_3_2</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>647_3_2</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>bleach_3_3</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>405_3_3</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>647_3_3</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<valve_protocol>Hybridize 5</valve_protocol>
+<movie>
+    <name>bleach_4_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>405_4_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>647_4_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>bleach_4_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>405_4_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>647_4_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+<movie>
+    <name>bleach_4_2</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>405_4_2</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>647_4_2</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>bleach_4_3</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>405_4_3</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+<movie>
+    <name>647_4_3</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+</sequence>

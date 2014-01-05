@@ -51,7 +51,7 @@
 </loop_variable>
 
 <loop_variable name = "Movie Loop">
-   <file_path>stage_position_example.xml</file_path>
+   <file_path>example_stage_position.xml</file_path>
 </loop_variable>
 
 </recipe>
