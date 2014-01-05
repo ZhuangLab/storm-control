@@ -46,24 +46,6 @@ class XMLRecipeParser(QtGui.QWidget):
         self.flat_sequence_xml = []
         self.flat_sequence_file_path = output_filename
 
-        # Parse XML
-        self.parseXML()
-
-    # ------------------------------------------------------------------------------------
-    # Create a flat sequence from the command sequences
-    # ------------------------------------------------------------------------------------        
-    def createFlatSequence(self):
-        # Create Sequence Element
-        self.flat_sequence = ElementTree.Element("sequence")
-        self.flat_sequence.text = "\n" # Clean up display
-
-        # Fill sequence from command sequence elements
-        for command_sequence in self.command_sequences:
-            self.copyElementWithLoop(command_sequence, self.flat_sequence)
-
-        # Create element tree and insert sequence
-        self.flat_sequence_xml = ElementTree.ElementTree(self.flat_sequence)
-
     # ------------------------------------------------------------------------------------
     # Make a copy of an etree 
     # ------------------------------------------------------------------------------------        
@@ -202,7 +184,20 @@ class XMLRecipeParser(QtGui.QWidget):
             command_sequence = self.replaceItems(command_sequence)
 
         # Create flat command sequence and convert to new xml element tree
-        self.createFlatSequence()
+        self.flat_sequence = ElementTree.Element("sequence")
+        self.flat_sequence.text = "\n" # Clean up display
+
+        # Fill sequence from command sequence elements
+        for command_sequence in self.command_sequences:
+            self.copyElementWithLoop(command_sequence, self.flat_sequence)
+
+        # Create element tree and insert sequence
+        self.flat_sequence_xml = ElementTree.ElementTree(self.flat_sequence)
+
+        # Save flat sequence
+        self.saveFlatSequence()
+
+        return self.flat_sequence_file_path
 
     # ------------------------------------------------------------------------------------
     # Find and replace items in command sequence
@@ -230,22 +225,19 @@ class XMLRecipeParser(QtGui.QWidget):
     # ------------------------------------------------------------------------------------
     # Save flat sequence
     # ------------------------------------------------------------------------------------
-    def saveFlatSequence(self, output_filename = ""):
-        if output_filename == "":
-            output_filename = self.flat_sequence_file_path
-
-        if output_filename == "":
-            output_filename = str(QtGui.QFileDialog.getSaveFileName(self,
+    def saveFlatSequence(self):
+        if self.flat_sequence_file_path == "":
+            self.flat_sequence_file_path = str(QtGui.QFileDialog.getSaveFileName(self,
                                                                     "Save XML Sequence",
                                                                     "*.xml"))
         try:
-            self.flat_sequence_xml.write(output_filename,
+            self.flat_sequence_xml.write(self.flat_sequence_file_path,
                                          encoding = 'ISO-8859-1',
                                          xml_declaration = True)
-            self.flat_sequence_file_path = output_filename
         except:
             QtGui.QMessageBox.information(self,"Error",
                                           "Error saving xml file")
+            self.flat_sequence_file_path = ""
 
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
@@ -256,7 +248,7 @@ class StandAlone(QtGui.QMainWindow):
 
         self.sequence_parser = XMLRecipeParser(xml_filename = "example_recipe.xml",
                                                verbose = True)
-        self.sequence_parser.saveFlatSequence()
+        self.sequence_parser.parseXML()
 
 # ----------------------------------------------------------------------------------------
 # Test Code
