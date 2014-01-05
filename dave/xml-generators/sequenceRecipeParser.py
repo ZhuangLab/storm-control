@@ -91,76 +91,10 @@ class XMLRecipeParser(QtGui.QWidget):
     # Find and replace items in command sequence
     # ------------------------------------------------------------------------------------        
     def createFlatSequence(self):
-        self.flat_sequence = ElementTree.Element("sequence")
-        self.flat_sequence_xml = ElementTree.ElementTree(element = self.flat_sequence)
-
-        for command_sequence in self.command_sequences:
-            for element in command_sequence:
-                if element.tag == "loop":
-                    self.appendElementsFromLoop(element)
-                else:
-                    print element
-                    self.flat_sequence.append(element)
-
-        print self.flat_sequence
-        print ElementTree.tostring(self.flat_sequence)
-
-    # ------------------------------------------------------------------------------------
-    # Handle a loop
-    # ------------------------------------------------------------------------------------        
-    def appendElementsFromLoop(self, loop):
-        # Initialize loop
-        loop_name = loop.attrib["name"]
-        print "starting: " + loop_name
-        loop_ID = self.loop_variable_names.index(loop_name)
-        variables = self.loop_variables[loop_ID]
-                
-        for local_iterator in range(len(variables)):
-            self.loop_iterator[loop_ID] = local_iterator
-            print self.loop_iterator
-            for element in loop:
-                if element.tag == "loop":
-                    self.appendElementsFromLoop(element)
-                elif element.tag == "variable_entry":
-                    variable_name = element.attrib["name"]
-                    variable_ID = self.loop_variable_names.index(variable_name)
-                    loop_iterator = self.loop_iterator[variable_ID]
-                    if loop_iterator >= 0:
-                        variable_entry = self.loop_variables[variable_ID][loop_iterator]
-                        for entry in variable_entry:
-                            self.flat_sequence.append(entry)
-                            print entry
-                    else:
-                        print "Bad iterator"
-                
-                else: # Check for internal variable_entry (slicing is crucial otherwise python replaces!)
-                    self.flat_sequence.append(self.replaceInternalVariableEntries(element))
-        self.loop_iterator[loop_ID] = -1 # Reset not running flag
-        
-    # ------------------------------------------------------------------------------------
-    # Handle a loop
-    # ------------------------------------------------------------------------------------        
-    def replaceInternalVariableEntries(self, elements):
-        element_count = 0
-        for [element_ID, element] in enumerate(elements):
-            if element.tag == "variable_entry":
-                variable_name = element.attrib["name"]
-                loop_ID = self.loop_variable_names.index(variable_name)
-                loop_iterator = self.loop_iterator[loop_ID]
-                elements.remove(element)
-                variable_entry = self.loop_variables[loop_ID][loop_iterator]
-                print variable_entry
-                for entry in variable_entry:
-                    elements.insert(element_count, entry)
-                    print "Internal variable Entry", entry
-                    element_count += 1
-            else:
-                revised_element = self.replaceInternalVariableEntries(element)
-                elements.remove(element)
-                elements.insert(element_count, revised_element)
-                print "Revision Elements", revised_element
-                element_count += 1
-        return elements
+        new_command_sequence = ElementTree.Element("sequence")
+        self.copyElementWithLoop(self.command_sequences[0],
+                                 new_command_sequence)
+        print ElementTree.tostring(new_command_sequence)
     
     # ------------------------------------------------------------------------------------
     # Find and replace items in command sequence
@@ -235,6 +169,66 @@ class XMLRecipeParser(QtGui.QWidget):
             xml_text = ElementTree.tostring(element)
             print xml_text
 
+    # ------------------------------------------------------------------------------------
+    # Make a copy of an etree 
+    # ------------------------------------------------------------------------------------        
+    def copyElementWithLoop(self, parent, new_parent):
+        for child in parent:
+            if child.tag == "loop":
+                self.handleLoop(child, new_parent)
+            elif child.tag == "variable_entry":
+                self.handleVariableEntry(child, new_parent)
+            elif child.attrib.get("increment_name") == "Yes":
+                pass
+            else:
+                new_child = ElementTree.SubElement(new_parent, child.tag, child.attrib)
+                if child.text == None: new_child.text = ""
+                else: new_child.text = str(child.text)
+                if child.tail == None: new_child.tail = ""
+                else: new_child.tail = str(child.tail)
+                self.copyElementWithLoop(child, new_child)
+
+        return new_parent
+
+    # ------------------------------------------------------------------------------------
+    # Handle a loop element 
+    # ------------------------------------------------------------------------------------        
+    def handleLoop(self, loop, new_parent):
+        loop_name = loop.attrib["name"]
+        loop_ID = self.loop_variable_names.index(loop_name)
+
+        for local_iterator in range(len(self.loop_variables[loop_ID])):
+            self.loop_iterator[loop_ID] = local_iterator
+            self.copyElementWithLoop(loop, new_parent)
+        self.loop_iterator[loop_ID] = -1
+
+    # ------------------------------------------------------------------------------------
+    # Handle a variable entry element 
+    # ------------------------------------------------------------------------------------        
+    def handleVariableEntry(self,child, new_parent):
+        variable_name = child.attrib["name"]
+        loop_ID = self.loop_variable_names.index(variable_name)
+
+        variable_entry = self.loop_variables[loop_ID][self.loop_iterator[loop_ID]]
+        self.copyElementWithLoop(variable_entry, new_parent)
+
+    # ------------------------------------------------------------------------------------
+    # Make a replicate of an Element 
+    # ------------------------------------------------------------------------------------        
+    def replicateElement(parent, new_parent = None):
+        if new_parent == None:
+            new_parent = ElementTree.Element(parent.tag, parent.attrib)
+            new_parent.text = str(parent.text)
+            new_parent.tail = str(parent.tail)
+            
+        for child in parent:
+            new_child = ElementTree.SubElement(new_parent, child.tag, child.attrib)
+            new_child.text = str(child.text)
+            new_child.tail = str(child.tail)
+            replicateETree(child, new_child)
+
+        return new_parent
+
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
 # ----------------------------------------------------------------------------------------
@@ -244,67 +238,6 @@ class StandAlone(QtGui.QMainWindow):
 
         self.sequence_parser = XMLRecipeParser(xml_filename = "sequence_recipe_example.xml",
                                                verbose = True)
-    
-##    # Parse loops
-##    current_node = command_sequence
-##    found_all_nodes = False
-##    while not found_all_nodes:
-##        for child in current_node.childNodes:
-##            print child
-##            if child.nodeType == Node.ELEMENT_NODE:
-##                if len(child.getElementsByTagName("loop")) == 0:
-##                    found_all_nodes = True
-##                else:
-##                    if child.tagName == "loop":
-##                        loop_names.append(child.getAttribute("name"))
-##                        value_number = getValueNumber(loop_names[-1], loop_variables)
-##                        response_string = "Found Loop: " + loop_names[-1]
-##                        response_string += " with " + str(value_number) + " elements"
-##                        print response_string
-##                        current_node = child
-
-##    # Create new xml object
-##    new_xml = minidom.Document()
-##
-##    # Create root element
-##    root_element = new_xml.createElement("sequence")
-##    
-##    # Parse command_sequence    
-##    loop_elements = command_sequence.getElementsByTagName("loop")
-##    for loop_element in loop_elements:
-##        for child in loop_element.childNodes:
-##            if child.nodeType == Node.ELEMENT_NODE:
-##                if child.tagName == "item":
-##                    item_name = child.getAttribute("name")
-##                    print "Found Item: " + item_name
-##                    found_item = getChildByAttribute("name", item_name, items)
-##                    if not found_item == None:
-##                        for item_child in found_item.childNodes:
-##                            if item_child.nodeType == Node.ELEMENT_NODE:
-##                                root_element.appendChild(item_child)
-##                                print "   " + item_child.tagName
-##                    else:
-##                        print "Item did not contain any children!"
-##                else:
-##                    root_element.appendChild(child)
-##    print root_element.toxml()
-
-##def getChildByAttribute(attr_name, attr_value, children):
-##    for child in children:
-##        if child.hasAttribute(attr_name):
-##            if child.getAttribute(attr_name) == attr_value:
-##                return child
-##    return None
-##
-##def getValueNumber(loop_name, loop_variables):
-##    for loop in loop_variables:
-##        if loop.getAttribute("name") == loop_name:
-##            return len(loop.getElementsByTagName("value"))
-##
-#### Recursive function to handle adding elements to new xml based on loop
-##def parseLoop(loop, new_xml_sequence):
-##    getChildBy
-##    for child
 
 #
 # Testing
