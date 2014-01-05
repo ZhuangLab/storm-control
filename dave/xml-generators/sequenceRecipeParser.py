@@ -35,6 +35,7 @@ class XMLRecipeParser(QtGui.QWidget):
         self.num_loop_elements = []
         self.flat_sequence = []
         self.item_names = []
+        self.sequence_xml = []
         
         # Parse XML
         self.parseXML()
@@ -77,23 +78,19 @@ class XMLRecipeParser(QtGui.QWidget):
         # Find and replace items in command_sequence
         for command_sequence in self.command_sequences:
             command_sequence = self.findAndReplaceItemsInElement(command_sequence)
-        
-        # Display parsing results
-##        if self.verbose:
-##            print self.command_sequences
-##            self.printRecipeElements(self.command_sequences)
-##            print self.items
-##            self.printRecipeElements(self.items)
-##            print self.loop_variables
-##            self.printRecipeElements(self.loop_variables)
 
     # ------------------------------------------------------------------------------------
     # Find and replace items in command sequence
     # ------------------------------------------------------------------------------------        
     def createFlatSequence(self):
+        # Create Sequence Element
         new_command_sequence = ElementTree.Element("sequence")
-        self.copyElementWithLoop(self.command_sequences[0],
-                                 new_command_sequence)
+
+        # Fill sequence from command sequence elements
+        for command_sequence in self.command_sequences:
+            self.copyElementWithLoop(command_sequence, new_command_sequence)
+
+        # Ha
         print ElementTree.tostring(new_command_sequence)
     
     # ------------------------------------------------------------------------------------
@@ -178,8 +175,18 @@ class XMLRecipeParser(QtGui.QWidget):
                 self.handleLoop(child, new_parent)
             elif child.tag == "variable_entry":
                 self.handleVariableEntry(child, new_parent)
-            elif child.attrib.get("increment_name") == "Yes":
-                pass
+            elif child.attrib.get("increment") == "Yes":
+                new_child = ElementTree.SubElement(new_parent, child.tag, child.attrib)
+                if child.text == None: new_child.text = ""
+                else:
+                    new_child.text = str(child.text)
+                    for loop_iterator in self.loop_iterator:
+                        if loop_iterator >= 0:
+                            new_child.text += "_" + str(loop_iterator)
+                
+                if child.tail == None: new_child.tail = ""
+                else: new_child.tail = str(child.tail)
+                self.copyElementWithLoop(child, new_child)
             else:
                 new_child = ElementTree.SubElement(new_parent, child.tag, child.attrib)
                 if child.text == None: new_child.text = ""
@@ -215,19 +222,19 @@ class XMLRecipeParser(QtGui.QWidget):
     # ------------------------------------------------------------------------------------
     # Make a replicate of an Element 
     # ------------------------------------------------------------------------------------        
-    def replicateElement(parent, new_parent = None):
-        if new_parent == None:
-            new_parent = ElementTree.Element(parent.tag, parent.attrib)
-            new_parent.text = str(parent.text)
-            new_parent.tail = str(parent.tail)
-            
-        for child in parent:
-            new_child = ElementTree.SubElement(new_parent, child.tag, child.attrib)
-            new_child.text = str(child.text)
-            new_child.tail = str(child.tail)
-            replicateETree(child, new_child)
-
-        return new_parent
+##    def replicateElement(parent, new_parent = None):
+##        if new_parent == None:
+##            new_parent = ElementTree.Element(parent.tag, parent.attrib)
+##            new_parent.text = str(parent.text)
+##            new_parent.tail = str(parent.tail)
+##            
+##        for child in parent:
+##            new_child = ElementTree.SubElement(new_parent, child.tag, child.attrib)
+##            new_child.text = str(child.text)
+##            new_child.tail = str(child.tail)
+##            replicateETree(child, new_child)
+##
+##        return new_parent
 
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class

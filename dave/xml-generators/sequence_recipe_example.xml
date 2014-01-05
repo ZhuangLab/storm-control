@@ -14,7 +14,7 @@
 
 <item name = "Movie 1">
   <movie>
-    <name>bleach</name>
+    <name increment = "Yes">bleach</name>
     <length>20</length>
     <lock_target>0.0</lock_target>
     <progression><type>lockedout</type></progression>
@@ -24,7 +24,7 @@
 
 <item name = "Movie 2">
   <movie>
-    <name>405</name>
+    <name increment = "Yes">405</name>
     <length>20</length>
     <lock_target>0.0</lock_target>
     <progression><type>lockedout</type></progression>
@@ -34,7 +34,7 @@
 
 <item name = "Movie 3">
   <movie>
-    <name>647</name>
+    <name increment = "Yes">647</name>
     <length>20</length>
     <lock_target>0.0</lock_target>
     <progression><type>lockedout</type></progression>
