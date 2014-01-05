@@ -125,12 +125,16 @@ class XMLRecipeParser(QtGui.QWidget):
                     variable_name = element.attrib["name"]
                     variable_ID = self.loop_variable_names.index(variable_name)
                     loop_iterator = self.loop_iterator[variable_ID]
-                    variable_entry = self.loop_variables[variable_ID][loop_iterator]
-                    for entry in variable_entry:
-                        self.flat_sequence.append(entry)
+                    if loop_iterator >= 0:
+                        variable_entry = self.loop_variables[variable_ID][loop_iterator]
+                        for entry in variable_entry:
+                            self.flat_sequence.append(entry)
+                            print entry
+                    else:
+                        print "Bad iterator"
                 
                 else: # Check for internal variable_entry (slicing is crucial otherwise python replaces!)
-                    self.flat_sequence.append(self.replaceInternalVariableEntries(element[:]))
+                    self.flat_sequence.append(self.replaceInternalVariableEntries(element))
         self.loop_iterator[loop_ID] = -1 # Reset not running flag
         
     # ------------------------------------------------------------------------------------
@@ -148,11 +152,13 @@ class XMLRecipeParser(QtGui.QWidget):
                 print variable_entry
                 for entry in variable_entry:
                     elements.insert(element_count, entry)
+                    print "Internal variable Entry", entry
                     element_count += 1
             else:
                 revised_element = self.replaceInternalVariableEntries(element)
                 elements.remove(element)
                 elements.insert(element_count, revised_element)
+                print "Revision Elements", revised_element
                 element_count += 1
         return elements
     
