@@ -332,8 +332,6 @@ class Window(QtGui.QMainWindow):
         self.ui.commandDetailsTable.setColumnCount(self.command_details_table_size[1])
 
         # Set active status
-##        self.ui.commandSequenceList.setEnabled(False)
-##        self.ui.commandDetailsTable.setEnabled(False)
         self.command_widgets = []
 
         # Enable mouse over updates of command descriptor
@@ -380,7 +378,7 @@ class Window(QtGui.QMainWindow):
             
             self.running = False
             self.ui.abortButton.setEnabled(False)
-            self.ui.runButton.setText("Start")
+            self.ui.runButton.setText("Run")
 
     ## handleCommandListClick
     #
@@ -389,7 +387,8 @@ class Window(QtGui.QMainWindow):
     #
     def handleCommandListClick(self):
         self.ui.commandSequenceList.setCurrentRow(self.command_index)
-
+        self.updateCommandDescriptorTable(self.command_widgets[self.command_index])
+        
 #    ## handleDisconnect
 #    #
 #    # Disconnects from HAL.
@@ -411,7 +410,9 @@ class Window(QtGui.QMainWindow):
             self.command_engine.nextAction()
         else:
             self.command_index = 0
+            self.ui.runButton.setEnabled(True)
             self.ui.runButton.setText("Run")
+            self.ui.abortButton.setEnabled(False)
             self.running = False
             self.issueCommand()
             #self.command_engine.stopCommunication()
@@ -462,7 +463,12 @@ class Window(QtGui.QMainWindow):
     def handleIdle(self):
         self.ui.abortButton.hide()
         self.ui.runButton.setText("Start")
+        self.ui.runButton.setEnabled(True)
         self.running = False
+
+        # Update command sequence display
+        self.ui.commandSequenceList.setCurrentRow(self.command_index)
+        self.updateCommandDescriptorTable(self.command_widgets[self.command_index])
 
     ## handleNotifierChange
     #
@@ -507,13 +513,13 @@ class Window(QtGui.QMainWindow):
         if (self.running):
             self.command_engine.pause()
             self.ui.runButton.setText("Pausing..")
-            self.ui.runButton.setDown(True)
+            self.ui.runButton.setEnabled(False) #Inactivate button until current action is complete
             self.running = False
         else:
-            #self.command_engine.startCommunication()
-            self.command_engine.nextAction() #Communication now started in nextAction if needed
+            self.command_engine.nextAction()
             self.ui.abortButton.show()
             self.ui.runButton.setText("Pause")
+            self.ui.abortButton.setEnabled(True)
             self.running = True
 
     ## issueCommand
@@ -554,6 +560,7 @@ class Window(QtGui.QMainWindow):
                 self.updateGUI()
                 
                 self.ui.abortButton.show()
+                self.ui.abortButton.setEnabled(False)
                 self.ui.runButton.setText("Run")
                 self.ui.runButton.show()
                 self.createCommandList()
@@ -595,18 +602,6 @@ class Window(QtGui.QMainWindow):
     def updateGUI(self):
         # Current sequence xml file
         self.ui.sequenceLabel.setText(self.sequence_filename)
-        print self.sequence_filename
-##        # Update TCP/IP client status
-##        client_status = self.command_engine.getClientStatus()
-##        if client_status[0]: # HAL status
-##            self.ui.HALConnectionLabel.setText("HAL Client: Connected")
-##        else:
-##            self.ui.HALConnectionLabel.setText("HAL Client: Not connected")
-##
-##        if client_status[1]: # Kilroy status
-##            self.ui.kilroyConnectionLabel.setText("Kilroy Client: Connected")
-##        else:
-##            self.ui.kilroyConnectionLabel.setText("Kilroy Client: Not connected")
 
         # Update time estimates 
         self.updateEstimates()
