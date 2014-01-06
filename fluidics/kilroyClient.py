@@ -104,7 +104,6 @@ class KilroySocket(QtNetwork.QTcpSocket):
 
         #####self.flush() #Is this needed?
 
-        
 # ----------------------------------------------------------------------------------------
 # Kilroy Client Class
 # ----------------------------------------------------------------------------------------                                                                
@@ -128,7 +127,8 @@ class KilroyClient(QtGui.QWidget):
         self.unacknowledged_messages = 0
         self.command_pause_time = 0.05
         self.kilroy_state = None # Keep track of what kilroy is doing
-        self.protocol_header = "Protocol,"
+        self.protocol_header = "Protocol"
+        self.delimiter = ","
         
         # Create instance of KilroySocket
         self.socket = KilroySocket(port = self.port,
@@ -210,13 +210,12 @@ class KilroyClient(QtGui.QWidget):
     # Handle completion of signal command 
     # ------------------------------------------------------------------------------------       
     def handleComplete(self, command_string):
-        if self.kilroy_state == "Running Protocol":
+        if self.kilroy_state == command_string:
             print "Completed Protocol: " + command_string
+            self.complete.emit(command_string)
+            self.kilroy_state = None
         else:
             print "Completed unknown function: " + command_string
-
-        self.complete.emit(command_string)
-        self.kilroy_state = None
 
     # ------------------------------------------------------------------------------------
     # Pass server disconnect signal 
@@ -253,9 +252,9 @@ class KilroyClient(QtGui.QWidget):
     def sendProtocol(self, protocol_name):
         if self.verbose:
             print "Sending protocol request: " + protocol_name
-        was_command_sent = self.sendCommand(self.protocol_header + protocol_name)
+        was_command_sent = self.sendCommand(self.protocol_header + self.delimiter + protocol_name)
         if was_command_sent:
-            self.kilroy_state = "Running Protocol"
+            self.kilroy_state = protocol_name
 
     # ------------------------------------------------------------------------------------
     # Send protocol command to Kilroy via GUI (Testing purposes only)
