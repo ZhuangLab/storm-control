@@ -50,7 +50,7 @@ class Stage():
 # with Prior motorized stage.
 #
 class AStageControl(stageControl.StageControl):
-    def __init__(self, parameters, tcp_control, parent = None):
+    def __init__(self, hardware, parameters, tcp_control, parent = None):
         self.stage = Stage()
         stageControl.StageControl.__init__(self, 
                                            parameters,

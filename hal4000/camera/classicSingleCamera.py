@@ -4,7 +4,7 @@
 #
 # Camera class for controlling a single (non-detached) camera.
 #
-# Hazen 10/13
+# Hazen 12/13
 #
 
 from PyQt4 import QtCore, QtGui
@@ -20,6 +20,7 @@ import camera.singleCamera as singleCamera
 import camera.cameraDisplay as cameraDisplay
 import camera.cameraParams as cameraParams
 
+
 ## ClassicSingleCamera
 #
 # This displays and control a single camera. The display is classic
@@ -30,12 +31,13 @@ import camera.cameraParams as cameraParams
 class ClassicSingleCamera(singleCamera.SingleCamera):
 
     @hdebug.debug
-    def __init__(self, parameters, camera_frame, camera_params_frame, parent = None):
-        singleCamera.SingleCamera.__init__(self, parameters, parent)
+    def __init__(self, hardware, parameters, camera_frame, camera_params_frame, parent = None):
+        singleCamera.SingleCamera.__init__(self, hardware, parameters, parent)
 
         # Set up camera display.
         camera_display_ui = cameraDisplayUi.Ui_Frame()
-        self.camera_display = cameraDisplay.CameraDisplay(parameters,
+        self.camera_display = cameraDisplay.CameraDisplay(hardware.display,
+                                                          parameters,
                                                           camera_display_ui,
                                                           "camera1",
                                                           show_record_button = True,
@@ -62,6 +64,25 @@ class ClassicSingleCamera(singleCamera.SingleCamera):
         # Connect ui elements.
         self.camera_display.ui.cameraShutterButton.clicked.connect(self.toggleShutter)
         self.camera_params.gainChange.connect(self.handleGainChange)
+
+
+## ACamera
+#
+# This is just ClassicSingleCamera in a form so that it can used 
+# directly by HAL without needing to be wrapped.
+#
+class ACamera(ClassicSingleCamera):
+    @hdebug.debug
+    def __init__(self, hardware, parameters, camera_frame, camera_params_frame, parent = None):
+        ClassicSingleCamera.__init__(self, hardware, parameters, camera_frame, camera_params_frame, parent)
+
+
+## getMode
+#
+# @return The UI mode to use with this camera.
+#
+def getMode():
+    return "single"
 
 #
 # The MIT License

@@ -30,12 +30,12 @@ class ACameraControl(cameraControl.CameraControl):
     #
     # Create a Andor dual camera control object.
     #
-    # @param parameters A parameters object.
+    # @param hardware A hardware object.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, parent = None):
-        cameraControl.CameraControl.__init__(self, parameters, parent)
+    def __init__(self, hardware, parent = None):
+        cameraControl.CameraControl.__init__(self, hardware, parent)
 
         self.cameras = [False, False]
         self.frame_number = [0, 0]
@@ -64,6 +64,8 @@ class ACameraControl(cameraControl.CameraControl):
     # Get the acquisition timings of one of the cameras.
     #
     # @param which_camera Which camera to get the acquisition timings from.
+    #
+    # @return A python array containing the acquisition timings.
     #
     @hdebug.debug
     def getAcquisitionTimings(self, which_camera):

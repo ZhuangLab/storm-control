@@ -134,7 +134,7 @@ class STORM4QIlluminationControlWidget(illuminationControl.QIlluminationControlW
 # Illumination power control dialog box specialized for STORM3.
 #
 class AIlluminationControl(illuminationControl.IlluminationControl):
-    def __init__(self, parameters, tcp_control, parent = None):
+    def __init__(self, hardware, parameters, tcp_control, parent = None):
         illuminationControl.IlluminationControl.__init__(self, parameters, tcp_control, parent)
         self.power_control = STORM4QIlluminationControlWidget("illumination/storm4_illumination_control_settings.xml",
                                                               parameters,

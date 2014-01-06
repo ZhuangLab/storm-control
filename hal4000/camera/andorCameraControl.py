@@ -30,15 +30,15 @@ class ACameraControl(cameraControl.CameraControl):
     #
     # Create the CameraControl class.
     #
-    # @param parameters The initial parameters including camera settings.
+    # @param hardware Camera hardware settings.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, parent = None):
-        cameraControl.CameraControl.__init__(self, parameters, parent)
+    def __init__(self, hardware, parent = None):
+        cameraControl.CameraControl.__init__(self, hardware, parent)
         
-        if hasattr(parameters, "pci_card"):
-            self.initCamera(parameters.pci_card)
+        if hasattr(hardware, "pci_card"):
+            self.initCamera(hardware.pci_card)
         else:
             self.initCamera()
 
