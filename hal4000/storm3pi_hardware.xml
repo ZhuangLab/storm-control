@@ -33,10 +33,12 @@
     <module type="string">storm3MiscControl</module>
   </misc_control>
 
+  -->
   <shutters>
     <module type="string">storm3ShutterControl</module>
   </shutters>
 
+  <!--
   <stage>
     <module type="string">storm3StageControl</module>
   </stage>
