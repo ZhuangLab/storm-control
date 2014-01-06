@@ -87,19 +87,11 @@ class CommandEngine(QtGui.QWidget):
         self.HALClient = halLib.tcpClient.TCPClient(self)
         self.HALClient.acknowledged.connect(self.handleAcknowledged)
         self.HALClient.complete.connect(self.handleComplete)
-
-        self.HALClient.startCommunication()
-        self.has_HAL = self.HALClient.isConnected()
-        if self.has_HAL: self.HALClient.stopCommunication()
         
         # Kilroy Client
         self.kilroyClient = fluidics.kilroyClient.KilroyClient(verbose = True)
         self.kilroyClient.acknowledged.connect(self.handleAcknowledged)
         self.kilroyClient.complete.connect(self.handleComplete)
-
-        self.kilroyClient.startCommunication()
-        self.has_kilroy = self.kilroyClient.isConnected()
-        if self.has_kilroy: self.kilroyClient.stopCommunication()
     
     ## abort
     #
@@ -123,26 +115,7 @@ class CommandEngine(QtGui.QWidget):
             self.should_pause = False
             self.stopCommunication()
         else:
-            print "Next action in checkPause"
             self.nextAction()
-
-    ## execute Command
-    #
-    # Decompose a dave command into the necessary actions and run them
-    #
-    # @param command A XML command object from sequenceParser
-    #
-    @hdebug.debug
-    def executeCommand(self, command):
-        self.actions = []
-        command_type = command.getType()
-        if command_type == "movie":
-            self.actions.append(daveActions.DaveActionMovieParameters(command))
-            if command.recenter:            self.actions.append(daveActions.DaveActionRecenter())
-            if (command.find_sum > 0.0):    self.actions.append(daveActions.DaveActionFindSum(command.find_sum))
-            if (command.length > 0):        self.actions.append(daveActions.DaveActionMovie(command))
-        elif command_type == "fluidics":
-            self.actions.append(daveActions.DaveActionValveProtocol(command))
 
     ## getClient
     #
@@ -157,18 +130,8 @@ class CommandEngine(QtGui.QWidget):
         elif current_action.getCommType() == "Kilroy":
             return self.kilroyClient
         else:
-            print "Unknown action type: " + current_action.getCommType()
+            print "Unknown client type: " + current_action.getCommType()
             return None
-
-    ## getClientStatus
-    #
-    # Returns the status of the TCP Clients
-    #
-    # @return (have HAL Client, have Kilroy Client)
-    #
-    @hdebug.debug
-    def getClientStatus(self):
-        return [self.has_HAL, self.has_kilroy]
 
     ## handleAcknowledged
     #
@@ -194,6 +157,24 @@ class CommandEngine(QtGui.QWidget):
             self.stopCommunication()
             self.problem.emit(self.current_action.getMessage())
 
+    ## loadCommand
+    #
+    # Decompose a dave command into the necessary actions and run them
+    #
+    # @param command A XML command object from sequenceParser
+    #
+    @hdebug.debug
+    def loadCommand(self, command):
+        self.actions = []
+        command_type = command.getType()
+        if command_type == "movie":
+            self.actions.append(daveActions.DaveActionMovieParameters(command))
+            if command.recenter:            self.actions.append(daveActions.DaveActionRecenter())
+            if (command.find_sum > 0.0):    self.actions.append(daveActions.DaveActionFindSum(command.find_sum))
+            if (command.length > 0):        self.actions.append(daveActions.DaveActionMovie(command))
+        elif command_type == "fluidics":
+            self.actions.append(daveActions.DaveActionValveProtocol(command))
+
     ## nextAction
     #
     # Performs the next action for the movie. If there are no actions remaining then the done signal is emitted.
@@ -202,9 +183,13 @@ class CommandEngine(QtGui.QWidget):
     def nextAction(self):
         if (len(self.actions) > 0):
             self.current_action = self.actions[0]
+            if not self.getClient(self.current_action).isConnected():
+                self.startCommunication()
             self.actions = self.actions[1:]
             self.current_action.start(self.getClient(self.current_action))
         else:
+            if self.getClient(self.current_action).isConnected():
+                self.stopCommunication()
             self.done.emit()
 
     ## pause
@@ -221,8 +206,10 @@ class CommandEngine(QtGui.QWidget):
     #
     @hdebug.debug
     def startCommunication(self):
-        if self.has_HAL: self.HALClient.startCommunication()
-        if self.has_kilroy: self.kilroyClient.startCommunication()
+        if self.current_action.getCommType() == "HAL":
+            self.HALClient.startCommunication()
+        elif self.current_action.getCommType() == "Kilroy":
+            self.kilroyClient.startCommunication()
 
     ## stopCommunication
     #
@@ -230,8 +217,10 @@ class CommandEngine(QtGui.QWidget):
     #
     @hdebug.debug
     def stopCommunication(self):
-        if self.has_HAL: self.HALClient.stopCommunication()
-        if self.has_kilroy: self.kilroyClient.stopCommunication()
+        if self.current_action.getCommType() == "HAL":
+            self.HALClient.stopCommunication()
+        elif self.current_action.getCommType() == "Kilroy":
+            self.kilroyClient.stopCommunication()
 
 ## Window
 #
@@ -425,7 +414,7 @@ class Window(QtGui.QMainWindow):
             self.ui.runButton.setText("Run")
             self.running = False
             self.issueCommand()
-            self.command_engine.stopCommunication()
+            #self.command_engine.stopCommunication()
 
     ## handleGenerate
     #
@@ -521,8 +510,8 @@ class Window(QtGui.QMainWindow):
             self.ui.runButton.setDown(True)
             self.running = False
         else:
-            self.command_engine.startCommunication()
-            self.command_engine.nextAction()
+            #self.command_engine.startCommunication()
+            self.command_engine.nextAction() #Communication now started in nextAction if needed
             self.ui.abortButton.show()
             self.ui.runButton.setText("Pause")
             self.running = True
@@ -539,7 +528,7 @@ class Window(QtGui.QMainWindow):
         self.command_widgets[self.command_index].setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
         self.ui.commandSequenceList.setCurrentRow(self.command_index)
         self.updateCommandDescriptorTable(self.command_widgets[self.command_index])
-        self.command_engine.executeCommand(self.commands[self.command_index])
+        self.command_engine.loadCommand(self.commands[self.command_index])
         
     ## newSequence
     #
@@ -607,17 +596,17 @@ class Window(QtGui.QMainWindow):
         # Current sequence xml file
         self.ui.sequenceLabel.setText(self.sequence_filename)
         print self.sequence_filename
-        # Update TCP/IP client status
-        client_status = self.command_engine.getClientStatus()
-        if client_status[0]: # HAL status
-            self.ui.HALConnectionLabel.setText("HAL Client: Connected")
-        else:
-            self.ui.HALConnectionLabel.setText("HAL Client: Not connected")
-
-        if client_status[1]: # Kilroy status
-            self.ui.kilroyConnectionLabel.setText("Kilroy Client: Connected")
-        else:
-            self.ui.kilroyConnectionLabel.setText("Kilroy Client: Not connected")
+##        # Update TCP/IP client status
+##        client_status = self.command_engine.getClientStatus()
+##        if client_status[0]: # HAL status
+##            self.ui.HALConnectionLabel.setText("HAL Client: Connected")
+##        else:
+##            self.ui.HALConnectionLabel.setText("HAL Client: Not connected")
+##
+##        if client_status[1]: # Kilroy status
+##            self.ui.kilroyConnectionLabel.setText("Kilroy Client: Connected")
+##        else:
+##            self.ui.kilroyConnectionLabel.setText("Kilroy Client: Not connected")
 
         # Update time estimates 
         self.updateEstimates()
