@@ -29,7 +29,8 @@ class XMLRecipeParser(QtGui.QWidget):
         # Initialize local attributes
         self.xml_filename = xml_filename
         self.verbose = verbose
-
+        self.directory = []
+        
         self.main_element = []
         self.sequence_xml = []
 
@@ -139,12 +140,19 @@ class XMLRecipeParser(QtGui.QWidget):
                 if path_to_xml == None: path_to_xml = ""
                 # Remove file path element from loop element
                 loop.remove(file_path_element)
-                
+                window_header = "Open Variable for " + loop.attrib["name"]
+
+                local_directory = os.path.dirname(path_to_xml)
+                if local_directory == "":
+                    path_to_xml = os.path.join(self.directory, path_to_xml)
+                    path_to_xml = os.path.normpath(path_to_xml)
                 loop_variable_xml, path_to_loop_variable_xml = self.loadXML(path_to_xml,
-                                                                            header = "Open Loop Variable XML")
+                                                                            header = window_header)
+
                 if loop_variable_xml == None:
                     loop_variable_xml, path_to_loop_variable_xml = self.loadXML("",
-                                                                                header = "Open Loop Variable XML")
+                                                                                header = window_header)
+
                 loop_variables = loop_variable_xml.getroot()
                 for loop_variable in loop_variables:
                     loop.append(loop_variable)
@@ -167,6 +175,8 @@ class XMLRecipeParser(QtGui.QWidget):
 
         if xml == None:
             return None
+
+        self.directory = os.path.dirname(os.path.abspath(self.xml_filename))
 
         # Extract main element
         self.main_element = xml.getroot()
