@@ -27,7 +27,7 @@ import focuslock.focusLockZ as focusLockZ
 # scope with two USB cameras and two MCL objective Z positioners.
 #
 class AFocusLockZ(focusLockZ.FocusLockZDualCam):
-    def __init__(self, parameters, tcp_control, parent = None):
+    def __init__(self, hardware, parameters, tcp_control, parent = None):
         lock_fn = lambda(x): 0.05*x
 
         # The numpy fitting routine is apparently not thread safe.

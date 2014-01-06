@@ -43,7 +43,7 @@
 # AStageControl:
 #   Control of a motorized stage.
 #
-# Hazen 07/13
+# Hazen 12/13
 #
 
 import os
@@ -63,6 +63,28 @@ import halLib.imagewriters as writers
 import qtWidgets.qtAppIcon as qtAppIcon
 import qtWidgets.qtParametersBox as qtParametersBox
 
+## getFileName
+#
+# Returns the filename given a path.
+#
+# @param path The full path with the file name.
+#
+# @return Returns the file name.
+#
+def getFileName(path):
+    return os.path.splitext(os.path.basename(path))[0]
+
+## halImport
+#
+# Wrap __import__ to make dynamic import a little simpler.
+#
+# @param module_name The name of the module to import.
+#
+# @return Returns the module
+#
+def halImport(module_name):
+    return __import__(module_name, globals(), locals(), [module_name], -1)
+
 ## trimString
 #
 # Trims string to max_len characters if string is longer than max_len.
@@ -78,17 +100,6 @@ def trimString(string, max_len):
     else:
         return string
 
-## getFileName
-#
-# Returns the filename given a path.
-#
-# @param path The full path with the file name.
-#
-# @return Returns the file name.
-#
-def getFileName(path):
-    return os.path.splitext(os.path.basename(path))[0]
-
 ## Window
 #
 # The main window.
@@ -99,11 +110,12 @@ class Window(QtGui.QMainWindow):
     #
     # Set up the main window, connect and initialize all the hardware.
     #
+    # @param hardware The hardware associated with this setup.
     # @param parameters The initial (and default) parameters for the hardware.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, parent = None):
+    def __init__(self, hardware, parameters, parent = None):
         QtGui.QMainWindow.__init__(self, parent)
 
         # General (alphabetically ordered)
@@ -112,7 +124,6 @@ class Window(QtGui.QMainWindow):
         self.filename = ""
         self.filming = False
         self.logfile_fp = open(parameters.logfile, "a")
-        #self.old_settings = []
         self.old_shutters_file = ""
         self.parameters = parameters
         self.running_shutters = False
@@ -125,14 +136,16 @@ class Window(QtGui.QMainWindow):
         self.logfile_fp.write("\r\n")
         self.logfile_fp.flush()
 
+        
+        setup_name = parameters.setup_name.lower()
+
         #
         # Load the camera module
         #
         # The camera module defines (to some extent) what the HAL UI
         # will look like.
         #
-        setup_name = parameters.setup_name.lower()
-        the_camera = __import__('camera.' + setup_name + 'Camera', globals(), locals(), [setup_name], -1)
+        the_camera = halImport('camera.' + hardware.camera.module)
         self.ui_mode = the_camera.getMode()
 
         #
@@ -191,7 +204,8 @@ class Window(QtGui.QMainWindow):
         # This is the classic single-window HAL display. To work properly, the camera 
         # controls UI elements that "belong" to the main window and vice-versa.
         if (self.ui_mode == "single"):
-            self.camera = the_camera.ACamera(parameters,
+            self.camera = the_camera.ACamera(hardware.camera.parameters,
+                                             parameters,
                                              self.ui.cameraFrame,
                                              self.ui.cameraParamsFrame,
                                              parent = self)
@@ -199,7 +213,8 @@ class Window(QtGui.QMainWindow):
 
         # Both detached and dual-modes have the proper separation of UI elements
         else:
-            self.camera = the_camera.ACamera(parameters,
+            self.camera = the_camera.ACamera(hardware.camera.parameters,
+                                             parameters,
                                              parent = self)
 
         # Insert additional menu items for the camera(s) as necessary
@@ -220,27 +235,38 @@ class Window(QtGui.QMainWindow):
         # AOTF / DAQ illumination control
         self.shutter_control = False
         self.illumination_control = False
-        if parameters.have_illumination:
-            illuminationControl = __import__('illumination.' + setup_name + 'IlluminationControl', globals(), locals(), [setup_name], -1)
-            self.illumination_control = illuminationControl.AIlluminationControl(parameters,
+        if hasattr(hardware, "illumination"):
+            illuminationControl = halImport('illumination.' + hardware.illumination.module)
+            self.illumination_control = illuminationControl.AIlluminationControl(hardware.illumination.parameters,
+                                                                                 parameters,
                                                                                  self.tcp_control,
                                                                                  parent = self)
-            shutterControl = __import__('illumination.' + setup_name + 'ShutterControl', globals(), locals(), [setup_name], -1)
+            shutterControl = halImport('illumination.' + hardware.shutters.module)
             self.shutter_control = shutterControl.AShutterControl(self.illumination_control.power_control.powerToVoltage)
+        else:
+            self.ui.actionIllumination.setEnabled(False)
 
-        # Motorized stage control
+        # XY motorized stage control
         self.stage_control = False
-        if parameters.have_stage:
-            stagecontrol = __import__('stagecontrol.' + setup_name + 'StageControl', globals(), locals(), [setup_name], -1)
-            self.stage_control = stagecontrol.AStageControl(parameters, self.tcp_control, parent = self)
+        if hasattr(hardware, "stage"):
+            stagecontrol = halImport('stagecontrol.' + hardware.stage.module)
+            self.stage_control = stagecontrol.AStageControl(hardware.stage.parameters,
+                                                            parameters, 
+                                                            self.tcp_control, 
+                                                            parent = self)
+        else:
+            self.ui.actionStage.setEnabled(False)
 
         # Piezo Z stage with feedback control
         self.focus_lock = False
-        if parameters.have_focus_lock:
-            focusLock = __import__('focuslock.' + setup_name + 'FocusLockZ', globals(), locals(), [setup_name], -1)
-            self.focus_lock = focusLock.AFocusLockZ(parameters,
+        if hasattr(hardware, "focuslock"):
+            focusLock = halImport('focuslock.' + hardware.focuslock.module)
+            self.focus_lock = focusLock.AFocusLockZ(hardware.focuslock.parameters,
+                                                    parameters,
                                                     self.tcp_control,
                                                     parent = self)
+        else:
+            self.ui.actionFocus_Lock.setEnabled(False)
 
         # Spot counter
         single_camera = True
@@ -252,26 +278,31 @@ class Window(QtGui.QMainWindow):
             self.spot_counter = spotCounter.SpotCounter(parameters,
                                                         single_camera,
                                                         parent = self)
+        else:
+            self.ui.actionSpot_Counter.setEnabled(False)
 
         # Misc control
         #  This needs the camera display area for the purpose of capturing mouse events
         self.misc_control = False
-        if parameters.have_misc_control:
-            misccontrol = __import__('miscControl.' + setup_name + 'MiscControl', globals(), locals(), [setup_name], -1)
-            self.misc_control = misccontrol.AMiscControl(parameters,
+        if hasattr(hardware, "misc_control"):
+            misccontrol = halImport('miscControl.' + hardware.misc_control.module)
+            self.misc_control = misccontrol.AMiscControl(hardware.misc_control.parameters,
+                                                         parameters,
                                                          self.tcp_control,
                                                          self.camera.getCameraDisplayArea(),
                                                          parent = self)
+        else:
+            self.ui.actionMisc_Controls.setEnabled(False)
 
         # Temperature logger
         self.temperature_logger = False
-        if parameters.have_temperature_logger:
-            import THUM.thum as thum
-            self.temperature_logger = thum.Thum()
+        if hasattr(hardware, "temperature_logger"):
+            temp_logger = halImport(hardware.temperature_logger.module)
+            self.temperature_logger = temp_logger.ATemperatureLogger(hardware.temperature_logger.parameters)
 
         # Progression control
         self.progression_control = False
-        if parameters.have_progressions and parameters.have_illumination:
+        if parameters.have_progressions and self.illumination_control:
             import progressionControl
             self.progression_control = progressionControl.ProgressionControl(parameters,
                                                                              self.tcp_control,
@@ -279,12 +310,16 @@ class Window(QtGui.QMainWindow):
                                                                              parent = self)
             self.connect(self.progression_control, QtCore.SIGNAL("progSetPower(int, float)"), self.handleProgSetPower)
             self.connect(self.progression_control, QtCore.SIGNAL("progIncPower(int, float)"), self.handleProgIncPower)
+        else:
+            self.ui.actionProgression.setEnabled(False)
 
         # Joystick
         self.joystick_control = False
-        if parameters.have_joystick:
-            joystick = __import__('joystick.' + setup_name + 'JoystickControl', globals(), locals(), [setup_name], -1)
-            self.joystick_control = joystick.AJoystick(parameters, parent = self)
+        if hasattr(hardware, "joystick"):
+            joystick = halImport('joystick.' + hardware.joystick.module)
+            self.joystick_control = joystick.AJoystick(hardware.joystick.parameters,
+                                                       parameters,
+                                                       parent = self)
             self.joystick_control.lock_jump.connect(self.jstickLockJump)
             self.joystick_control.motion.connect(self.jstickMotion)
             self.joystick_control.step.connect(self.jstickStep)
@@ -338,10 +373,16 @@ class Window(QtGui.QMainWindow):
                              [self.misc_control, "misc"],
                              [self.progression_control, "progression"]]
 
-        if (self.ui_mode == "detached"):
+        if (self.ui_mode == "single"):
+            self.resize(self.settings.value("main_size", self.size()).toSize())
+
+        elif (self.ui_mode == "detached"):
+            self.camera.resize(self.settings.value("camera_size", self.camera.size()).toSize())
             self.gui_settings.append([self.camera, "camera1"])
 
-        if (self.ui_mode == "dual"):
+        elif (self.ui_mode == "dual"):
+            self.camera.camera1.resize(self.settings.value("camera1_size", self.camera.camera1.size()).toSize())
+            self.camera.camera2.resize(self.settings.value("camera2_size", self.camera.camera2.size()).toSize())
             self.gui_settings.append([self.camera.camera1, "camera1"])
             self.gui_settings.append([self.camera.camera2, "camera2"])
 
@@ -403,16 +444,8 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleCommMovie(self, name, length):
 
-        # record old settings
-        #checked = self.ui.saveMovieCheckBox.isChecked()
-        #p = self.parameters
-        #self.old_settings = [p.acq_mode, p.frames, checked]
-
         # set to new comm specific values
-        #self.ui.saveMovieCheckBox.setChecked(True)
         self.ui.filenameLabel.setText(name + self.parameters.filetype)
-        #p.acq_mode = "fixed_length"
-        #p.frames = length
 
         # start the film
         self.tcp_requested_movie = True
@@ -534,6 +567,16 @@ class Window(QtGui.QMainWindow):
 
         # Save GUI settings.
         self.settings.setValue("main_pos", self.pos())
+        if (self.ui_mode == "single"):
+            self.settings.setValue("main_size", self.size())
+
+        elif (self.ui_mode == "detached"):
+            self.settings.setValue("camera_size", self.camera.size())
+
+        elif (self.ui_mode == "dual"):
+            self.settings.setValue("camera1_size", self.camera.camera1.size())
+            self.settings.setValue("camera2_size", self.camera.camera2.size())
+
         for [object, name] in self.gui_settings:
             if object:
                 self.settings.setValue(name + "_pos", object.pos())
@@ -1208,11 +1251,6 @@ class Window(QtGui.QMainWindow):
         # if the client requested the movie.
         if self.tcp_requested_movie:
 
-            # restore old settings
-            #[self.parameters.acq_mode, self.parameters.frames, checked] = self.old_settings
-            #if not checked:
-            #    self.ui.saveMovieCheckBox.setChecked(False)
-
             if (lock_target == "failed"):
                 hdebug.logText("QPD/Camera appears to have frozen..")
                 self.quit()
@@ -1344,12 +1382,14 @@ if __name__ == "__main__":
     app.processEvents()
 
     # Load settings.
-    if (len(sys.argv) == 3):
+    if (len(sys.argv) == 4):
         setup_name = sys.argv[1]
-        parameters = params.Parameters(sys.argv[2], is_HAL = True)
+        hardware = params.Hardware(sys.argv[2])
+        parameters = params.Parameters(sys.argv[3], is_HAL = True)
     else:
         parameters = params.Parameters("settings_default.xml")
         setup_name = parameters.setup_name
+        hardware = params.Hardware(setup_name + "_hardware.xml")
         parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
     params.setSetupName(parameters, setup_name)
 
@@ -1357,7 +1397,7 @@ if __name__ == "__main__":
 #    hdebug.startLogging(parameters.directory + "logs/", "hal4000")
 
     # Load app.
-    window = Window(parameters)
+    window = Window(hardware, parameters)
     window.newParameters()
     splash.hide()
     window.show()

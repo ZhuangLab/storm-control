@@ -4,7 +4,7 @@
 #
 # Basic dual camera control.
 #
-# Hazen 10/13
+# Hazen 01/14
 #
 
 from PyQt4 import QtCore, QtGui
@@ -21,6 +21,7 @@ import camera.genericCamera as genericCamera
 import camera.cameraDisplay as cameraDisplay
 import camera.cameraParams as cameraParams
 
+
 ## CameraDialog
 #
 # Dialog that displays data from camera1 or 2 and the associated controls
@@ -33,13 +34,14 @@ class CameraDialog(QtGui.QDialog):
     #
     # Create a camera dialog object.
     #
+    # @param display_module The python module that implements the camera display widget.
     # @param parameters A parameters object.
     # @param name The name of to use on the UI window.
     # @param which_camera The camera this window is associated with ("camera1" or "camera2")
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, name, which_camera, parent = None):
+    def __init__(self, display_module, parameters, name, which_camera, parent = None):
         QtGui.QDialog.__init__(self, parent)
 
         self.ui = cameraDetachedUi.Ui_Dialog()
@@ -48,12 +50,17 @@ class CameraDialog(QtGui.QDialog):
 
         # Set up camera display.
         camera_display_ui = cameraDisplayUi.Ui_Frame()
-        self.camera_display = cameraDisplay.CameraDisplay(parameters,
+        self.camera_display = cameraDisplay.CameraDisplay(display_module,
+                                                          parameters,
                                                           camera_display_ui,
                                                           which_camera,
                                                           show_record_button = False,
                                                           show_shutter_button = True,
                                                           parent = self.ui.cameraFrame)
+
+        layout = QtGui.QGridLayout(self.ui.cameraFrame)
+        layout.setMargin(0)
+        layout.addWidget(self.camera_display)
 
         # Set up camera parameters display.
         camera_params_ui = cameraParamsUi.Ui_GroupBox()
@@ -102,11 +109,12 @@ class DualCamera(genericCamera.Camera):
     #
     # Create a DualCamera object.
     #
+    # @param hardware A hardware object.
     # @param parameters A parameters object.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, parent = None):
+    def __init__(self, hardware, parameters, parent = None):
         genericCamera.Camera.__init__(self, parent)
         self.hide()
 
@@ -119,21 +127,21 @@ class DualCamera(genericCamera.Camera):
         self.parameters = parameters
 
         # Setup UI
-        self.camera1 = CameraDialog(parameters.camera1,
+        self.camera1 = CameraDialog(hardware.display,
+                                    parameters.camera1,
                                     parameters.setup_name + " Camera1",
                                     "camera1",
                                     parent)
 
-        self.camera2 = CameraDialog(parameters.camera1,
+        self.camera2 = CameraDialog(hardware.display,
+                                    parameters.camera1,
                                     parameters.setup_name + " Camera2",
                                     "camera2",
                                     parent)
 
         # Setup camera control.
-        camera_type = parameters.camera1.camera_type.lower()
-
-        cameraControl = __import__('camera.' + camera_type + 'CameraControl', globals(), locals(), [camera_type], -1)
-        self.camera_control = cameraControl.ACameraControl(parameters, parent = self)
+        cameraControl = __import__('camera.' + hardware.control, globals(), locals(), [hardware.control], -1)
+        self.camera_control = cameraControl.ACameraControl(hardware, parent = self)
 
         self.camera_control.reachedMaxFrames.connect(self.handleMaxFrames)
         self.camera_control.newData.connect(self.handleNewFrames)
@@ -376,21 +384,41 @@ class DualCamera(genericCamera.Camera):
     #
     @hdebug.debug
     def updateTemperature(self):
+        if self.camera_control.haveTemperature():
 
-        # Get camera1 temperature
-        cur_temp = self.camera_control.getTemperature(0)
-        self.parameters.camera1.actual_temperature = cur_temp[0]
-        self.camera1.camera_params.newTemperature(cur_temp)
+            # Get camera1 temperature
+            cur_temp = self.camera_control.getTemperature(0)
+            self.parameters.camera1.actual_temperature = cur_temp[0]
+            self.camera1.camera_params.newTemperature(cur_temp)
 
-        # Get camera2 temperature
-        cur_temp = self.camera_control.getTemperature(1)
-        self.parameters.camera2.actual_temperature = cur_temp[0]
-        self.camera2.camera_params.newTemperature(cur_temp)
+            # Get camera2 temperature
+            cur_temp = self.camera_control.getTemperature(1)
+            self.parameters.camera2.actual_temperature = cur_temp[0]
+            self.camera2.camera_params.newTemperature(cur_temp)
+
+
+## ACamera
+#
+# This is just DualCamera in a form so that it can used 
+# directly by HAL without needing to be wrapped.
+#
+class ACamera(DualCamera):
+    @hdebug.debug
+    def __init__(self, hardware, parameters, parent = None):
+        DualCamera.__init__(self, hardware, parameters, parent)
+
+
+## getMode
+#
+# @return The UI mode to use with this camera.
+#
+def getMode():
+    return "dual"
 
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

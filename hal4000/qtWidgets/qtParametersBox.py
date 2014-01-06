@@ -6,7 +6,7 @@
 # representing all the currently available parameters
 # files.
 #
-# Hazen 5/12
+# Hazen 01/14
 #
 
 import os
@@ -15,6 +15,57 @@ from PyQt4 import QtCore, QtGui
 
 def getFileName(path):
     return os.path.splitext(os.path.basename(path))[0]
+
+
+## Parameters
+#
+# This class encapsulates a set of parameters and their
+# associated radio button.
+#
+class ParametersRadioButton(QtGui.QRadioButton):
+
+    deleteSelected = QtCore.pyqtSignal()
+
+    ## __init__
+    #
+    # @param parameters The parameters object to associate with this radio button.
+    # @param parent (Optional) the PyQt parent of this object.
+    #
+    def __init__(self, parameters, parent = None):
+        QtGui.QRadioButton.__init__(self, getFileName(parameters.parameters_file), parent)
+        self.delete_desired = False
+        self.parameters = parameters
+
+        self.delAct = QtGui.QAction(self.tr("Delete"), self)
+        self.delAct.triggered.connect(self.handleDelete)
+
+    ## contextMenuEvent
+    #
+    # This is called to create the popup menu when the use right click on the parameters box.
+    #
+    # @param event A PyQt event object.
+    #
+    def contextMenuEvent(self, event):
+        if not self.isChecked():
+            menu = QtGui.QMenu(self)
+            menu.addAction(self.delAct)
+            menu.exec_(event.globalPos())
+
+    ## getParameters
+    #
+    # @return The parameters associated with this radio button.
+    #
+    def getParameters(self):
+        return self.parameters
+
+    ## handleDelete
+    #
+    # Handles the delete action.
+    #
+    def handleDelete(self):
+        self.delete_desired = True
+        self.deleteSelected.emit()
+
 
 ## QParametersBox
 #
@@ -32,7 +83,7 @@ class QParametersBox(QtGui.QWidget):
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.current_parameters = None
-        self.parameters = []
+        self.current_button = False
         self.radio_buttons = []
 
         self.layout = QtGui.QVBoxLayout(self)
@@ -43,6 +94,7 @@ class QParametersBox(QtGui.QWidget):
                                                     QtGui.QSizePolicy.Minimum,
                                                     QtGui.QSizePolicy.Expanding))
 
+
     ## addParameters
     #
     # Add a set of parameters to the parameters box.
@@ -51,11 +103,11 @@ class QParametersBox(QtGui.QWidget):
     #
     def addParameters(self, parameters):
         self.current_parameters = parameters
-        self.parameters.append(parameters)
-        radio_button = QtGui.QRadioButton(getFileName(parameters.parameters_file), self)
+        radio_button = ParametersRadioButton(parameters)
         self.radio_buttons.append(radio_button)
         self.layout.insertWidget(0, radio_button)
         radio_button.clicked.connect(self.toggleParameters)
+        radio_button.deleteSelected.connect(self.handleDeleteSelected)
         if (len(self.radio_buttons) == 1):
             radio_button.click()
 
@@ -65,6 +117,17 @@ class QParametersBox(QtGui.QWidget):
     #
     def getCurrentParameters(self):
         return self.current_parameters
+
+    ## handleDeleteSelected
+    #
+    # Handles the deleteSelected action from a parameters radio button.
+    #
+    def handleDeleteSelected(self):
+        for button in self.radio_buttons:
+            if button.delete_desired:
+                self.layout.removeWidget(button)
+                self.radio_buttons.remove(button)
+                button.close()
 
     ## setCurrentParameters
     #
@@ -87,16 +150,17 @@ class QParametersBox(QtGui.QWidget):
     # @param bool Dummy parameter.
     #
     def toggleParameters(self, bool):
-        for i, button in enumerate(self.radio_buttons):
-            if button.isChecked():
-                self.current_parameters = self.parameters[i]
+        for button in self.radio_buttons:
+            if button.isChecked() and (button != self.current_button):
+                self.current_button = button
+                self.current_parameters = button.getParameters()
                 self.settings_toggled.emit()
 
 
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

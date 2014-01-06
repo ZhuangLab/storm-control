@@ -81,7 +81,7 @@
         such as filter wheels.
 
  In these folders you will see files/Classes that start with a machine name, 
- e.g. storm3IlluminationControl or noneIlluminationControl. You will need to
- create your own version of the files specialized to interface with your
- specific hardware.
+ e.g. storm3IlluminationControl or noneIlluminationControl. You will probably
+ need to create your own version of the files specialized to interface with 
+ your specific hardware.
 

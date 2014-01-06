@@ -34,25 +34,32 @@ class DetachedSingleCamera(singleCamera.SingleCamera):
     #
     # Create a detached single camera object.
     #
+    # @param hardware A hardware object.
     # @param parameters A parameters object.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, parent = None):
-        singleCamera.SingleCamera.__init__(self, parameters, parent)
+    def __init__(self, hardware, parameters, parent = None):
+        singleCamera.SingleCamera.__init__(self, hardware, parameters, parent)
 
         self.ui = cameraDetachedUi.Ui_Dialog()
         self.ui.setupUi(self)
         self.setWindowTitle(parameters.setup_name + " Camera")
 
+        # Set up camera display.
         camera_display_ui = cameraDisplayUi.Ui_Frame()
-        self.camera_display = cameraDisplay.CameraDisplay(parameters,
+        self.camera_display = cameraDisplay.CameraDisplay(hardware.display,
+                                                          parameters,
                                                           camera_display_ui,
                                                           "camera1",
                                                           show_record_button = False,
                                                           show_shutter_button = True,
                                                           parent = self.ui.cameraFrame)
+        layout = QtGui.QGridLayout(self.ui.cameraFrame)
+        layout.setMargin(0)
+        layout.addWidget(self.camera_display)
 
+        # Set up camera parameters display.
         camera_params_ui = cameraParamsUi.Ui_GroupBox()
         self.camera_params = cameraParams.CameraParams(camera_params_ui,
                                                        parent = self.ui.cameraParamsFrame)
@@ -61,6 +68,10 @@ class DetachedSingleCamera(singleCamera.SingleCamera):
         layout.setMargin(0)
         layout.addWidget(self.camera_params)
             
+        self.camera_params.showEMCCD(self.camera_control.haveEMCCD())
+        self.camera_params.showPreamp(self.camera_control.havePreamp())
+        self.camera_params.showTemperature(self.camera_control.haveTemperature())
+
         # Connect ui elements.
         self.ui.okButton.setText("Close")
         self.ui.okButton.clicked.connect(self.handleOk)
@@ -99,6 +110,25 @@ class DetachedSingleCamera(singleCamera.SingleCamera):
     @hdebug.debug
     def showCamera1(self, boolean):
         self.show()
+
+
+## ACamera
+#
+# This is just DetachedSingleCamera in a form so that it can used 
+# directly by HAL without needing to be wrapped.
+#
+class ACamera(DetachedSingleCamera):
+    @hdebug.debug
+    def __init__(self, hardware, parameters, parent = None):
+        DetachedSingleCamera.__init__(self, hardware, parameters, parent)
+
+
+## getMode
+#
+# @return The UI mode to use with this camera.
+#
+def getMode():
+    return "detached"
 
 #
 # The MIT License

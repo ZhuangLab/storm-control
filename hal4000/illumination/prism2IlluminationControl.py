@@ -9,6 +9,9 @@
 
 from PyQt4 import QtCore
 
+import coherent.cube405 as cube405
+import coherent.cube445 as cube445
+
 import illumination.channelWidgets as channelWidgets
 import illumination.commandQueues as commandQueues
 import illumination.illuminationControl as illuminationControl
@@ -24,9 +27,9 @@ class Prism2QIlluminationControlWidget(illuminationControl.QIlluminationControlW
         self.aotf_queue.analogModulationOn()
 
         # setup the Cube communication threads
-        self.cube405_queue = commandQueues.QCubeThread("COM4")
+        self.cube405_queue = commandQueues.QSerialLaserComm(cube405.Cube405("COM4"))
         self.cube405_queue.start(QtCore.QThread.NormalPriority)
-        self.cube445_queue = commandQueues.QCubeThread("COM3")
+        self.cube445_queue = commandQueues.QSerialLaserComm(cube445.Cube445("COM3"))
         self.cube445_queue.start(QtCore.QThread.NormalPriority)
 
         # setup for NI communication (analog, camera synced)
@@ -145,7 +148,7 @@ class Prism2QIlluminationControlWidget(illuminationControl.QIlluminationControlW
 # Illumination power control dialog box specialized for Prism2.
 #
 class AIlluminationControl(illuminationControl.IlluminationControl):
-    def __init__(self, parameters, tcp_control, parent = None):
+    def __init__(self, hardware, parameters, tcp_control, parent = None):
         illuminationControl.IlluminationControl.__init__(self, parameters, tcp_control, parent)
         self.power_control = Prism2QIlluminationControlWidget("illumination/prism2_illumination_control_settings.xml",
                                                               parameters,
