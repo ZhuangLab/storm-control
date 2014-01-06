@@ -210,12 +210,13 @@ class KilroyClient(QtGui.QWidget):
     # Handle completion of signal command 
     # ------------------------------------------------------------------------------------       
     def handleComplete(self, command_string):
+        print self.kilroy_state
         if self.kilroy_state == command_string:
             print "Completed Protocol: " + command_string
-            self.complete.emit(command_string)
             self.kilroy_state = None
+            self.complete.emit(command_string)
         else:
-            print "Completed unknown function: " + command_string
+            print "Completed unexpected function: " + command_string
 
     # ------------------------------------------------------------------------------------
     # Pass server disconnect signal 
@@ -252,9 +253,10 @@ class KilroyClient(QtGui.QWidget):
     def sendProtocol(self, protocol_name):
         if self.verbose:
             print "Sending protocol request: " + protocol_name
+        self.kilroy_state = protocol_name
         was_command_sent = self.sendCommand(self.protocol_header + self.delimiter + protocol_name)
-        if was_command_sent:
-            self.kilroy_state = protocol_name
+        if not was_command_sent:
+            self.kilroy_state = None
 
     # ------------------------------------------------------------------------------------
     # Send protocol command to Kilroy via GUI (Testing purposes only)
