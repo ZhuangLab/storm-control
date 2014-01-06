@@ -102,7 +102,7 @@ class CommandEngine(QtGui.QWidget):
         if self.current_action:
             self.delay_timer.stop()
             self.current_action.abort(self.getClient(self.current_action))
-                
+            
     ## checkPause
     #
     # Checks if we should stop acquisition because either the current action
