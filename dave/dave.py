@@ -99,6 +99,7 @@ class CommandEngine(QtGui.QWidget):
     #
     @hdebug.debug
     def abort(self):
+        self.actions = []
         if self.current_action:
             self.delay_timer.stop()
             self.current_action.abort(self.getClient(self.current_action))
