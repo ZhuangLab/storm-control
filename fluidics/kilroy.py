@@ -78,7 +78,7 @@ class Kilroy(QtGui.QMainWindow):
             self.valveChain.setEnabled(True)
 
     # ----------------------------------------------------------------------------------------
-    # Handle a protocol complete signal from the valve chain
+    # Handle a protocol complete signal from the valve protocols
     # ----------------------------------------------------------------------------------------
     def handleProtocolComplete(self, protocol_name):
         # If the protocol was sent by TCP pass on the complete signal
@@ -102,7 +102,9 @@ class Kilroy(QtGui.QMainWindow):
 
             # Start the protocol
             self.valveProtocols.startProtocolByName(protocol_name)
-
+        else: # Respond with a protocol complete
+            self.tcpServer.sendProtocolComplete(protocol_name)
+            
     # ----------------------------------------------------------------------------------------
     # Redirect commands from valve protocol class to valve chain class
     # ----------------------------------------------------------------------------------------
