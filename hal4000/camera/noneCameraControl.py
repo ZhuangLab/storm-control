@@ -27,12 +27,12 @@ class ACameraControl(cameraControl.CameraControl):
     #
     # Create the camera control object.
     #
-    # @param parameters A parameters object.
+    # @param hardware A hardware object.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, parent = None):
-        cameraControl.CameraControl.__init__(self, parameters, parent)
+    def __init__(self, hardware, parent = None):
+        cameraControl.CameraControl.__init__(self, hardware, parent)
         self.fake_frame = 0
         self.fake_frame_size = [0,0]
         self.sleep_time = 50

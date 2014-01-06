@@ -30,12 +30,12 @@ class ACameraControl(cameraControl.CameraControl):
     #
     # Create a Andor dual camera control object.
     #
-    # @param parameters A parameters object.
+    # @param hardware A hardware object.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, parent = None):
-        cameraControl.CameraControl.__init__(self, parameters, parent)
+    def __init__(self, hardware, parent = None):
+        cameraControl.CameraControl.__init__(self, hardware, parent)
 
         self.cameras = [False, False]
         self.frame_number = [0, 0]

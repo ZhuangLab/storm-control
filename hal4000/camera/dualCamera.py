@@ -141,7 +141,7 @@ class DualCamera(genericCamera.Camera):
 
         # Setup camera control.
         cameraControl = __import__('camera.' + hardware.control, globals(), locals(), [hardware.control], -1)
-        self.camera_control = cameraControl.ACameraControl(parameters, parent = self)
+        self.camera_control = cameraControl.ACameraControl(hardware, parent = self)
 
         self.camera_control.reachedMaxFrames.connect(self.handleMaxFrames)
         self.camera_control.newData.connect(self.handleNewFrames)
