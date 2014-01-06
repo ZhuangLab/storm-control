@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<hardware>
+  <!-- Defines all the hardware (for storm3pi).
+       
+       Note that if you don't have a particular piece of hardware
+       it needs to be commented out in this file.
+    -->
+
+  <camera>
+    <module type="string">classicSingleCamera</module>
+    <parameters>
+      <control type="string">andorCameraControl</control>
+      <display type="string">andorCameraWidget</display>
+    </parameters>
+  </camera>
+
+  <!--
+  <focuslock>
+    <module type="string">storm3FocusLockZ</module>
+  </focuslock>
+  -->
+
+  <illumination>
+    <module type="string">storm3IlluminationControl</module>
+  </illumination>
+
+  <!--
+  <joystick>
+    <module type="string">gamepad310JoystickControl</module>
+  </joystick>
+  
+  <misc_control>
+    <module type="string">storm3MiscControl</module>
+  </misc_control>
+
+  -->
+  <shutters>
+    <module type="string">storm3ShutterControl</module>
+  </shutters>
+
+  <!--
+  <stage>
+    <module type="string">storm3StageControl</module>
+  </stage>
+  -->
+
+  <!--
+  <temperature_logger>
+    <module type="string">NA</module>
+  </temperature_logger>
+  -->
+  
+</hardware>

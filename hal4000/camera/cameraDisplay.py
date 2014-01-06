@@ -34,6 +34,7 @@ class CameraDisplay(QtGui.QFrame):
     # Create a CameraDisplay object. This object updates the image that it
     # displays at 10Hz.
     #
+    # @param display_module The python module that implements the camera display widget.
     # @param parameters A parameters object.
     # @param camera_display_ui A camera UI object as defined by a .ui file.
     # @param which_camera Which camera this is a display for ("camera1" or "camera2").
@@ -42,7 +43,7 @@ class CameraDisplay(QtGui.QFrame):
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, camera_display_ui, which_camera, show_record_button = False, show_shutter_button = False, parent = None):
+    def __init__(self, display_module, parameters, camera_display_ui, which_camera, show_record_button = False, show_shutter_button = False, parent = None):
         QtGui.QFrame.__init__(self, parent)
 
         # General (alphabetically ordered).
@@ -93,12 +94,10 @@ class CameraDisplay(QtGui.QFrame):
         else:
             self.ui.cameraShutterButton.hide()
 
-        # Camera display widget. Load as appropriate based on the camera type.
-        camera_type = parameters.camera_type.lower()
-        cameraWidget = __import__('camera.' + camera_type + 'CameraWidget', globals(), locals(), [camera_type], -1)
+        # Camera display widget.
+        cameraWidget = __import__('camera.' + display_module, globals(), locals(), [display_module], -1)
         self.camera_widget = cameraWidget.ACameraWidget(parameters, parent = self.ui.cameraScrollArea)
         self.ui.cameraScrollArea.setWidget(self.camera_widget)
-        #self.camera_widget.updateSize()
 
         # Signals
         self.ui.rangeSlider.rangeChanged.connect(self.rangeChange)
