@@ -62,7 +62,7 @@ def createTableWidget(text):
 #
 class CommandEngine(QtGui.QWidget):
     done = QtCore.pyqtSignal()
-    idle = QtCore.pyqtSignal()
+    idle = QtCore.pyqtSignal(bool)
     problem = QtCore.pyqtSignal(str)
 
     ## __init__
@@ -111,7 +111,14 @@ class CommandEngine(QtGui.QWidget):
     @hdebug.debug
     def checkPause(self):
         if (self.current_action.shouldPause()) or self.should_pause:
-            self.idle.emit()
+            # Determine if there are still more actions to complete in this command
+            is_last_action = True
+            if (len(self.actions) > 0): #
+                is_last_action = False
+
+            # Emit idle signal to Dave
+            self.idle.emit(is_last_action)
+        
             self.should_pause = False
             self.stopCommunication()
         else:
@@ -378,7 +385,7 @@ class Window(QtGui.QMainWindow):
             
             self.running = False
             self.ui.abortButton.setEnabled(False)
-            self.ui.runButton.setText("Run")
+            self.ui.runButton.setText("Start")
 
     ## handleCommandListClick
     #
@@ -386,8 +393,7 @@ class Window(QtGui.QMainWindow):
     #
     #
     def handleCommandListClick(self):
-        self.ui.commandSequenceList.setCurrentRow(self.command_index)
-        self.updateCommandDescriptorTable(self.command_widgets[self.command_index])
+        self.updateCommandSequenceDisplay(self.command_index)
         
 #    ## handleDisconnect
 #    #
@@ -411,11 +417,10 @@ class Window(QtGui.QMainWindow):
         else:
             self.command_index = 0
             self.ui.runButton.setEnabled(True)
-            self.ui.runButton.setText("Run")
+            self.ui.runButton.setText("Start")
             self.ui.abortButton.setEnabled(False)
             self.running = False
             self.issueCommand()
-            #self.command_engine.stopCommunication()
 
     ## handleGenerate
     #
@@ -456,19 +461,28 @@ class Window(QtGui.QMainWindow):
 
     ## handleIdle
     #
-    # Handles the idle signal from the movie engine. Hides the abort button, changes the text of the run button
-    # from "Pause" to "Start".
+    # Handles the idle signal from the command engine. Hides the abort button, changes the text of the run button
+    # from "Pause"/"Pausing..." to "Start".
     #
+    # @param boolean is_last_action indicates whether the current command has remaining actions
     @hdebug.debug
-    def handleIdle(self):
+    def handleIdle(self, is_last_action):
         self.ui.abortButton.hide()
-        self.ui.runButton.setText("Start")
+        self.ui.runButton.setText("Restart")
         self.ui.runButton.setEnabled(True)
         self.running = False
+        
+        # Update command sequence display to the command that will run on resumption of sequence
+        next_command_index = self.command_index
+        if is_last_action:
+            next_command_index += 1
 
-        # Update command sequence display
-        self.ui.commandSequenceList.setCurrentRow(self.command_index)
-        self.updateCommandDescriptorTable(self.command_widgets[self.command_index])
+        # Confirm it is not the larger than the list
+        if next_command_index >= len(self.commands):
+            next_command_index = 0
+            self.ui.runButton.setText("Start")
+            
+        self.updateCommandSequenceDisplay(next_command_index)
 
     ## handleNotifierChange
     #
@@ -527,14 +541,17 @@ class Window(QtGui.QMainWindow):
     #  Send current command to command engine and update GUI
     #
     def issueCommand(self):
+        self.updateCommandSequenceDisplay(self.command_index)
+        self.command_engine.loadCommand(self.commands[self.command_index])
+
+    def updateCommandSequenceDisplay(self, command_index):
         # disable selectability of all other elements
         for widget in self.command_widgets:
             widget.setFlags(QtCore.Qt.ItemIsEnabled)
 
-        self.command_widgets[self.command_index].setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
-        self.ui.commandSequenceList.setCurrentRow(self.command_index)
-        self.updateCommandDescriptorTable(self.command_widgets[self.command_index])
-        self.command_engine.loadCommand(self.commands[self.command_index])
+        self.command_widgets[command_index].setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
+        self.ui.commandSequenceList.setCurrentRow(command_index)
+        self.updateCommandDescriptorTable(self.command_widgets[command_index])
         
     ## newSequence
     #
@@ -561,7 +578,7 @@ class Window(QtGui.QMainWindow):
                 
                 self.ui.abortButton.show()
                 self.ui.abortButton.setEnabled(False)
-                self.ui.runButton.setText("Run")
+                self.ui.runButton.setText("Start")
                 self.ui.runButton.show()
                 self.createCommandList()
                 self.issueCommand()
