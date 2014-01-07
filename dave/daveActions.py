@@ -30,11 +30,10 @@ class DaveActionFindSum(DaveAction):
     #
     def handleComplete(self, a_string):
         if (a_string == "NA") or (float(a_string) > self.min_sum):
-            self_error_message == ""
+            self.completeAction()
         else:
             self.error_message = "Sum signal " + a_string + " is below threshold value of " + str(self.min_sum)
-
-        self.completeAction()
+            self.completeActionWithError()
 
     ## start
     #
@@ -78,11 +77,10 @@ class DaveActionMovie(DaveAction):
     def handleComplete(self, a_string):
         self.acquiring = False
         if (a_string == "NA") or (int(a_string) >= self.movie.min_spots):
-            self.error_message = ""
+            self.completeAction()
         else:
             self.error_message = "Spot finder counts " + a_string + " is below threshold value of " + str(self.movie.min_spots)
-
-        self.completeAction()
+            self.completeActionWithError()
 
     ## start
     #
@@ -167,7 +165,6 @@ class DaveActionValveProtocol(DaveAction):
     def handleComplete(self, a_string):
         print "Received Complete from Kilroy " + a_string
         self.protocol_is_running = False
-
         self.completeAction()
 
     ## start

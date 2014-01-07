@@ -16,7 +16,7 @@ from PyQt4 import QtCore
 class DaveAction(QtCore.QObject):
 
     # Define custom signal
-    complete_signal = QtCore.pyqtSignal(str)
+    complete_signal = QtCore.pyqtSignal()
     error_signal = QtCore.pyqtSignal(str)
     
     ## __init__
@@ -35,6 +35,7 @@ class DaveAction(QtCore.QObject):
 
         # Initialize error message
         self.error_message = ""
+        self.should_pause_after_error = True
 
         # Initialize internal timer
         self.delay_timer = QtCore.QTimer(self)
@@ -48,7 +49,7 @@ class DaveAction(QtCore.QObject):
 
         # Define pause after completion state
         self.should_pause = False
-        
+
     ## abort
     #
     # Handle an external abort call
@@ -70,7 +71,7 @@ class DaveAction(QtCore.QObject):
     #
     def completeAction(self):
         self.tcp_client.stopCommunication()
-        self.complete_signal.emit(self.error_message)
+        self.complete_signal.emit()
 
     ## getError
     #
@@ -93,11 +94,18 @@ class DaveAction(QtCore.QObject):
     #
     # handle the com port complete signal
     #
-    # @param a_string The complete message from the comp port (as a string).
-    #
-    def handleComplete(self, a_string):
-        self.error_message = ""
+    def handleComplete(self):
         self.completeAction()
+
+    ## completeActionWithError
+    #
+    # Send an error message if needed
+    #
+    def completeActionWithError(self):
+        if self.should_pause_after_error == True:
+            self.should_pause = True
+        self.tcp_client.stopCommunication()
+        self.error_signal.emit(self.error_message)
 
     ## handleTimerDone
     #
