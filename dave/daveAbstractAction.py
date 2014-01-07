@@ -30,7 +30,7 @@ class DaveAction(QtCore.QObject):
 
         # Connect com port
         self.tcp_client = tcp_client
-        self.tcp_client.acknowledged.connect(self.handleAcknowledge)
+        self.tcp_client.acknowledged.connect(self.handleAcknowledged)
         self.tcp_client.complete.connect(self.handleComplete)
 
         # Initialize error message
@@ -120,7 +120,7 @@ class DaveAction(QtCore.QObject):
     # Determine if the command engine should pause after this action
     #
     def shouldPause(self):
-        return self.should_pause:
+        return self.should_pause
 
     ## start
     #

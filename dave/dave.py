@@ -80,13 +80,9 @@ class CommandEngine(QtGui.QWidget):
 
         # HAL Client
         self.HALClient = halLib.tcpClient.TCPClient(self)
-        self.HALClient.acknowledged.connect(self.handleAcknowledged)
-        self.HALClient.complete.connect(self.handleComplete)
         
         # Kilroy Client
         self.kilroyClient = fluidics.kilroyClient.KilroyClient(verbose = True)
-        self.kilroyClient.acknowledged.connect(self.handleAcknowledged)
-        self.kilroyClient.complete.connect(self.handleComplete)
     
     ## abort
     #
@@ -128,7 +124,7 @@ class CommandEngine(QtGui.QWidget):
     # Start a command or command sequence
     #
     def startCommand(self):
-        if not self.should_pause and len(self.actions) > 0
+        if not self.should_pause and len(self.actions) > 0:
             # Extract next action from list
             self.current_action = self.actions.pop(0)
 
@@ -148,7 +144,7 @@ class CommandEngine(QtGui.QWidget):
     def handleActionComplete(self):  
         if self.current_action.shouldPause() or self.should_pause:
             self.idle.emit()
-        elif len(self.actions) > 0
+        elif len(self.actions) > 0:
             self.startCommand()
         else:
             self.done.emit()
@@ -312,7 +308,7 @@ class Window(QtGui.QMainWindow):
     def handleAbortButton(self, boolean):
         if (self.running):
             self.command_engine.abort()
-            self.command_index = 0
+            self.command_index = len(self.commands) + 1 #Set flag to reset to trigger done
             self.issueCommand()
             
             self.running = False
@@ -342,10 +338,10 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleDone(self):
-        if (self.command_index < (self.sequence_length-1)):
+        if (self.command_index < (len(self.commands)-1)):
             self.command_index += 1
             self.issueCommand()
-            self.command_engine.nextAction()
+            self.command_engine.startCommand()
         else:
             self.command_index = 0
             self.ui.runButton.setEnabled(True)
@@ -457,12 +453,13 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleRunButton(self, boolean):
         if (self.running):
-            self.command_engine.pause()
+            self.command_engine.setPause(True)
             self.ui.runButton.setText("Pausing..")
             self.ui.runButton.setEnabled(False) #Inactivate button until current action is complete
             self.running = False
         else:
-            self.command_engine.nextAction()
+            self.command_engine.setPause(False)
+            self.command_engine.startCommand()
             self.ui.abortButton.show()
             self.ui.runButton.setText("Pause")
             self.ui.abortButton.setEnabled(True)

@@ -8,7 +8,7 @@
 # Hazen 06/13; Jeff 1/14
 #
 
-from daveActionsAbstract import DaveAction
+from daveAbstractAction import DaveAction
 
 ## DaveActionFindSum
 #
