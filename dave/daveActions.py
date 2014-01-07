@@ -5,104 +5,10 @@
 # Collection of classes that control the establish the basic operation of dave
 # as it issues various types of commands to HAL and Kilroy
 #
-# Hazen 06/13; Jeff 12/13
+# Hazen 06/13; Jeff 1/14
 #
 
-## DaveAction
-#
-# The base class for actions that can be performed as part of taking a movie.
-#
-class DaveAction():
-
-    ## __init__
-    #
-    # Default initialization.
-    #
-    def __init__(self):
-        self.delay = 0
-        self.message = ""
-        self.comm_type = "HAL" # The default TCP Client to use
-        
-    ## abort
-    #
-    # The default behaviour is not to do anything.
-    #
-    # @param comm A tcpClient object.
-    #
-    def abort(self, comm):
-        pass
-
-    ## getCommType
-    #
-    # @return The client to use for TCP/IP communication with this action.
-    #
-    def getCommType(self):
-        return self.comm_type
-
-    ## getMessage
-    #
-    # @return The error message if there a problem occured during this action.
-    #
-    def getMessage(self):
-        return self.message
-
-    ## handleAcknowledged
-    #
-    # This is called when we get command acknowledgement from HAL. If this
-    # returns true and the delay time is greater than zero then the delay
-    # timer is started.
-    #
-    # @return True.
-    #
-    def handleAcknowledged(self):
-        return True
-
-    ## handleComplete
-    #
-    # This is called when we get a complete message from HAL with a_string
-    # containing the contents of the complete message. If it returns true
-    # then we continue to the next action, otherwise we stop taking movies.
-    #
-    # @param a_string The complete message from HAL (as a string).
-    #
-    # @return True
-    #
-    def handleComplete(self, a_string):
-        return True
-
-    ## shouldPause
-    #
-    # @return True/False if movie acquisition should pause after taking this movie, the default is False.
-    #
-    def shouldPause(self):
-        return False
-
-    ## start
-    #
-    # The default behaviour is not do anything.
-    #
-    # @param comm A tcpClient object.
-    #
-    def start(self, comm):
-        pass
-
-    ## startTimer
-    #
-    # If there is a delay time for this action then set the interval of the provided timer, start it
-    # and return True, otherwise return False.
-    #
-    # @param timer A PyQt timer.
-    #
-    # @return True/False if we started timer.
-    #
-    def startTimer(self, timer):
-        if (self.delay > 0):
-            timer.setInterval(self.delay)
-            timer.start()
-            return True
-        else:
-            return False
-
+from daveActionsAbstract import DaveAction
 
 ## DaveActionFindSum
 #
@@ -114,39 +20,29 @@ class DaveActionFindSum(DaveAction):
     #
     # @param min_sum The minimum sum that we should get from HAL upon completion of this action.
     #
-    def __init__(self, min_sum):
-        DaveAction.__init__(self)
+    def __init__(self, tcp_client, min_sum):
+        DaveAction.__init__(self, tcp_client)
         self.min_sum = min_sum
-
-    ## handleAcknowledged
-    #
-    # @return False.
-    #
-    def handleAcknowledged(self):
-        return False
 
     ## handleComplete
     #
     # @param a_string The sum signal message from HAL.
     #
-    # @return True/False if float(a_string) is greater than min_sum.
-    #
     def handleComplete(self, a_string):
         if (a_string == "NA") or (float(a_string) > self.min_sum):
-            return True
+            self_error_message == ""
         else:
-            self.message = "Sum signal " + a_string + " is below threshold value of " + str(self.min_sum)
-            return False
+            self.error_message = "Sum signal " + a_string + " is below threshold value of " + str(self.min_sum)
+
+        self.completeAction()
 
     ## start
     #
     # Send the startFindSum message to HAL.
     #
-    # @param comm A tcpClient object.
-    #
-    def start(self, comm):
-        comm.startFindSum()
-
+    def start(self):
+        self.tcp_client.startCommunication()
+        self.tcp_client.startFindSum()
 
 ## DaveActionMovie
 #
@@ -158,8 +54,8 @@ class DaveActionMovie(DaveAction):
     #
     # @param movie A movie XML object.
     #
-    def __init__(self, movie):
-        DaveAction.__init__(self)
+    def __init__(self, tcp_client, movie):
+        DaveAction.__init__(self, tcp_client)
         self.acquiring = False
         self.movie = movie
 
@@ -167,36 +63,26 @@ class DaveActionMovie(DaveAction):
     #
     # Aborts the movie (if we are current acquiring).
     #
-    # @param comm A tcpClient object.
-    #
-    def abort(self, comm):
+    def abort(self):
         if self.acquiring:
-            comm.stopMovie()
-
-    ## handleAcknowledged
-    #
-    # @return True.
-    #
-    def handleAcknowledged(self):
-        return False
+            self.tcp_client.stopMovie()
 
     ## handleComplete
     #
-    # Returns false if a_string is "NA" or int(a_string) is greater than the
+    # Returns no error if a_string is "NA" or int(a_string) is greater than the
     # minimum number of spots that the movie should have (as specified by
     # the movie XML object).
     #
     # @param a_string The response from HAL.
     #
-    # @return True/False if the movie was good.
-    #
     def handleComplete(self, a_string):
         self.acquiring = False
         if (a_string == "NA") or (int(a_string) >= self.movie.min_spots):
-            return True
+            self.error_message = ""
         else:
-            self.message = "Spot finder counts " + a_string + " is below threshold value of " + str(self.movie.min_spots)
-            return False
+            self.error_message = "Spot finder counts " + a_string + " is below threshold value of " + str(self.movie.min_spots)
+
+        self.completeAction()
 
     ## start
     #
@@ -204,10 +90,9 @@ class DaveActionMovie(DaveAction):
     #
     # @param comm A tcpClient object.
     #
-    def start(self, comm):
+    def start(self):
         self.acquiring = True
-        comm.startMovie(self.movie)
-
+        self.tcp_client.startMovie(self.movie)
 
 ## DaveActionMovieParameters
 #
@@ -219,27 +104,19 @@ class DaveActionMovieParameters(DaveAction):
     #
     # @param movie A XML movie object.
     #
-    def __init__(self, movie):
-        DaveAction.__init__(self)
+    def __init__(self, tcp_client, movie):
+        DaveAction.__init__(self, tcp_client)
         self.delay = movie.delay
         self.movie = movie
-
-    ## shouldPause
-    #
-    # @return The pause time specified by the movie object.
-    #
-    def shouldPause(self):
-        return self.movie.pause
+        self.should_pause = self.movie.pause
 
     ## start
     #
     # Send  the movie parameters command to HAL.
     #
-    # @param comm A tcpClient object.
-    #
-    def start(self, comm):
-        comm.sendMovieParameters(self.movie)
-
+    def start(self):
+        self.tcp_client.startCommunication()
+        self.tcp_client.sendMovieParameters(self.movie)
 
 ## DaveActionRecenter
 #
@@ -252,25 +129,17 @@ class DaveActionRecenter(DaveAction):
     #
     # Create the object, set the delay time to 200 milliseconds.
     #
-    def __init__(self):
-        DaveAction.__init__(self)
+    def __init__(self, tcp_client):
+        DaveAction.__init__(self, tcp_client)
         self.delay = 200
-
-    ## handleAcknowledged
-    #
-    # @return False
-    #
-    def handleAcknowledged(self):
-        return False
 
     ## start
     #
     # Send the recenter piezo command to HAL.
     #
-    # @param comm A tcpClient object.
-    #
-    def start(self, comm):
-        comm.startRecenterPiezo()
+    def start(self):
+        self.tcp_client.startCommunication()
+        self.tcp_client.startRecenterPiezo()
 
 ## DaveActionValveProtocol
 #
@@ -284,54 +153,29 @@ class DaveActionValveProtocol(DaveAction):
     #
     # @param protocols A valve protocols xml object
     #
-    def __init__(self, protocol_xml):
-        DaveAction.__init__(self)
-        self.comm_type = "Kilroy"
+    def __init__(self, tcp_client, protocol_xml):
+        DaveAction.__init__(self, tcp_client)
         self.protocol_name = protocol_xml.protocol_name
         self.protocol_is_running = False
-        
-    ## abort
-    #
-    # Does nothing for now
-    #
-    # @param comm A kilroy client object.
-    #
-    def abort(self, comm):
-        pass
-
-    ## handleAcknowledged
-    #
-    # Proceed to the next action when command is acknowledged?
-    #
-    def handleAcknowledged(self):
-        return False
 
     ## handleComplete
     #
-    # Handle a complete message from the kilroyClient. Does nothing for now.
+    # Handle a complete message from the kilroyClient.
     #
     # @param a_string The complete message from kilroy
     #
-    # @return True
-    #
     def handleComplete(self, a_string):
         print "Received Complete from Kilroy " + a_string
-        self.protocol_is_running = True
-        return True
+        self.protocol_is_running = False
 
-    ## shouldPause
-    #
-    # @return True/False if movie acquisition should pause after taking this movie, the default is False.
-    #
-    def shouldPause(self):
-        return False
-        
+        self.completeAction()
+
     ## start
     #
     # Start sending protocols to kilroy
     #
     # @param comm A kilroy client object.
     #
-    def start(self, comm):
+    def start(self):
         self.protocol_is_running = True
-        comm.sendProtocol(self.protocol_name)
+        self.tcp_client.sendProtocol(self.protocol_name)

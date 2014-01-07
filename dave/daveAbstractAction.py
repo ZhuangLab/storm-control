@@ -23,15 +23,15 @@ class DaveAction(QtCore.QObject):
     #
     # Default initialization.
     #
-    def __init__(self, com_port, parent = None):
+    def __init__(self, tcp_client, parent = None):
 
         # Initialize parent class
         QtCore.QObject.__init__(self, parent)
 
         # Connect com port
-        self.com_port = com_port
-        self.com_port.acknowledged.connect(self.handleAcknowledge)
-        self.com_port.complete.connect(self.handleComplete)
+        self.tcp_client = tcp_client
+        self.tcp_client.acknowledged.connect(self.handleAcknowledge)
+        self.tcp_client.complete.connect(self.handleComplete)
 
         # Initialize error message
         self.error_message = ""
@@ -45,6 +45,9 @@ class DaveAction(QtCore.QObject):
         # Define complete requirements
         self.complete_on_acknowledge = False
         self.complete_on_timer = False
+
+        # Define pause after completion state
+        self.should_pause = False
         
     ## abort
     #
@@ -58,15 +61,15 @@ class DaveAction(QtCore.QObject):
     # Handle clean up of the action
     #
     def cleanUp(self):
-        self.com_port.acknowledged.disconnect()
-        self.com_port.complete.disconnect()
+        self.tcp_client.acknowledged.disconnect()
+        self.tcp_client.complete.disconnect()
 
     ## completeAction
     #
     # Handle the completion of an action
     #
     def completeAction(self):
-        self.com_port.stopCommunication()
+        self.tcp_client.stopCommunication()
         self.complete_signal.emit(self.error_message)
 
     ## getError
@@ -104,10 +107,17 @@ class DaveAction(QtCore.QObject):
         if self.complete_on_timer:
             self.completeAction()
 
+    ## shouldPause
+    #
+    # Determine if the command engine should pause after this action
+    #
+    def shouldPause(self):
+        return self.should_pause:
+
     ## start
     #
     # Start the desired action. Must be overloaded. 
     #
     def start(self):
-        self.com_port.startCommunication()
+        self.tcp_client.startCommunication()
 
