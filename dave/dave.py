@@ -77,11 +77,6 @@ class CommandEngine(QtGui.QWidget):
         self.current_action = None
         self.command = None
         self.should_pause = False
-        
-        # Setup delay timer
-        self.delay_timer = QtCore.QTimer(self)
-        self.delay_timer.setSingleShot(True)
-        self.delay_timer.timeout.connect(self.checkPause)
 
         # HAL Client
         self.HALClient = halLib.tcpClient.TCPClient(self)
@@ -101,69 +96,7 @@ class CommandEngine(QtGui.QWidget):
     def abort(self):
         self.actions = []
         if self.current_action:
-            self.delay_timer.stop()
-            self.current_action.abort(self.getClient(self.current_action))
-            
-    ## checkPause
-    #
-    # Checks if we should stop acquisition because either the current action
-    # of the user requested a pause.
-    #
-    @hdebug.debug
-    def checkPause(self):
-        if (self.current_action.shouldPause()) or self.should_pause:
-            # Determine if there are still more actions to complete in this command
-            is_last_action = True
-            if (len(self.actions) > 0): #
-                is_last_action = False
-
-            # Emit idle signal to Dave
-            self.idle.emit(is_last_action)
-        
-            self.should_pause = False
-            self.stopCommunication()
-        else:
-            self.nextAction()
-
-    ## getClient
-    #
-    # Returns the appropriate comm port for the action
-    #
-    # @current_action An action class for which the appropriate TCP/IP client will be determined
-    #
-    @hdebug.debug
-    def getClient(self, current_action):
-        if current_action.getCommType() == "HAL":
-            return self.HALClient
-        elif current_action.getCommType() == "Kilroy":
-            return self.kilroyClient
-        else:
-            print "Unknown client type: " + current_action.getCommType()
-            return None
-
-    ## handleAcknowledged
-    #
-    # Handles the acknowledged signal from the tcpClient object.
-    #
-    @hdebug.debug
-    def handleAcknowledged(self):
-        if (self.current_action.handleAcknowledged()):
-            if (not self.current_action.startTimer(self.delay_timer)):
-                self.checkPause()
-
-    ## handleComplete
-    #
-    # Handles the complete signal from the tcpClient object.
-    #
-    # @param a_string The message from HAL.
-    #
-    @hdebug.debug
-    def handleComplete(self, a_string):
-        if self.current_action.handleComplete(a_string):
-            self.checkPause()
-        else:
-            self.stopCommunication()
-            self.problem.emit(self.current_action.getMessage())
+            self.current_action.abort()
 
     ## loadCommand
     #
@@ -176,60 +109,58 @@ class CommandEngine(QtGui.QWidget):
         self.actions = []
         command_type = command.getType()
         if command_type == "movie":
-            self.actions.append(daveActions.DaveActionMovieParameters(command))
-            if command.recenter:            self.actions.append(daveActions.DaveActionRecenter())
-            if (command.find_sum > 0.0):    self.actions.append(daveActions.DaveActionFindSum(command.find_sum))
-            if (command.length > 0):        self.actions.append(daveActions.DaveActionMovie(command))
+            self.actions.append(daveActions.DaveActionMovieParameters(self.HALClient, command))
+            if command.recenter:            self.actions.append(daveActions.DaveActionRecenter(self.HALClient))
+            if (command.find_sum > 0.0):    self.actions.append(daveActions.DaveActionFindSum(self.HALClient, command.find_sum))
+            if (command.length > 0):        self.actions.append(daveActions.DaveActionMovie(self.HALClient, command))
         elif command_type == "fluidics":
-            self.actions.append(daveActions.DaveActionValveProtocol(command))
+            self.actions.append(daveActions.DaveActionValveProtocol(self.kilroyClient, command))
 
-    ## nextAction
+    ## setPause
     #
-    # Performs the next action for the movie. If there are no actions remaining then the done signal is emitted.
+    # Changes the state of the should_pause attribute
     #
-    @hdebug.debug
-    def nextAction(self):
-        if (len(self.actions) > 0):
-            self.current_action = self.actions[0]
-            if not self.getClient(self.current_action).isConnected():
-                self.startCommunication()
-            self.actions = self.actions[1:]
-            self.current_action.start(self.getClient(self.current_action))
+    def setPause(self, a_boolean):
+        self.should_pause = a_boolean
+        
+    ## startCommand
+    #
+    # Start a command or command sequence
+    #
+    def startCommand(self):
+        if not self.should_pause and len(self.actions) > 0
+            # Extract next action from list
+            self.current_action = self.actions.pop(0)
+
+            # Disconnect previous signals and connect new ones
+            self.current_action.complete_signal.disconnect()
+            self.current_action.error_signal.disconnect()
+            self.current_action.complete_signal.connect(self.handleActionComplete)
+            self.current_action.error_signal.connect(self.handleErrorSignal)
+
+            # Start current action
+            self.current_action.start()
+
+    ## handleActionComplete
+    #
+    # Handle the completion of the previous action
+    #
+    def handleActionComplete(self):  
+        if self.current_action.shouldPause() or self.should_pause:
+            self.idle.emit()
+        elif len(self.actions) > 0
+            self.startCommand()
         else:
-            if self.getClient(self.current_action).isConnected():
-                self.stopCommunication()
             self.done.emit()
+        self.current_action.cleanUp()
 
-    ## pause
+    ## handleErrorSignal
     #
-    # Sets the pause flag so that we will pause as soon as the current action is finished.
+    # Handle an error signal: Reserved for future use
     #
-    @hdebug.debug
-    def pause(self):
-        self.should_pause = True
-
-    ## startCommunication
-    #
-    # Starts communication with HAL and kilroy
-    #
-    @hdebug.debug
-    def startCommunication(self):
-        if self.current_action.getCommType() == "HAL":
-            self.HALClient.startCommunication()
-        elif self.current_action.getCommType() == "Kilroy":
-            self.kilroyClient.startCommunication()
-
-    ## stopCommunication
-    #
-    # Stops communication with HAL.
-    #
-    @hdebug.debug
-    def stopCommunication(self):
-        if self.current_action.getCommType() == "HAL":
-            self.HALClient.stopCommunication()
-        elif self.current_action.getCommType() == "Kilroy":
-            self.kilroyClient.stopCommunication()
-
+    def handleErrorSignal(self, error_message):
+        self.problem.emit(error_message)
+        
 ## Window
 #
 # The main window
