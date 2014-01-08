@@ -129,8 +129,6 @@ class CommandEngine(QtGui.QWidget):
             self.current_action = self.actions.pop(0)
 
             # Disconnect previous signals and connect new ones
-            self.current_action.complete_signal.disconnect()
-            self.current_action.error_signal.disconnect()
             self.current_action.complete_signal.connect(self.handleActionComplete)
             self.current_action.error_signal.connect(self.handleErrorSignal)
 
@@ -142,14 +140,18 @@ class CommandEngine(QtGui.QWidget):
     # Handle the completion of the previous action
     #
     def handleActionComplete(self):  
+        self.current_action.cleanUp()
+        self.current_action.complete_signal.disconnect()
+        self.current_action.error_signal.disconnect()
+
         if self.current_action.shouldPause() or self.should_pause:
-            self.idle.emit()
+            is_last_action = not (len(self.actions) > 0)
+            self.idle.emit(is_last_action)
         elif len(self.actions) > 0:
             self.startCommand()
         else:
             self.done.emit()
-        self.current_action.cleanUp()
-
+        
     ## handleErrorSignal
     #
     # Handle an error signal: Reserved for future use
@@ -307,13 +309,10 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleAbortButton(self, boolean):
         if (self.running):
+            #Set flag to signal reset to handleDone when called
+            self.command_index = len(self.commands) + 1
             self.command_engine.abort()
-            self.command_index = len(self.commands) + 1 #Set flag to reset to trigger done
-            self.issueCommand()
             
-            self.running = False
-            self.ui.abortButton.setEnabled(False)
-            self.ui.runButton.setText("Start")
 
     ## handleCommandListClick
     #
@@ -401,17 +400,15 @@ class Window(QtGui.QMainWindow):
         self.running = False
         
         # Update command sequence display to the command that will run on resumption of sequence
-        next_command_index = self.command_index
         if is_last_action:
-            next_command_index += 1
+            self.command_index += 1
 
-        # Confirm it is not the larger than the list
-        if next_command_index >= len(self.commands):
-            next_command_index = 0
-            self.ui.runButton.setText("Start")
+            if self.command_index >= len(self.commands):
+                self.command_index = 0
+                self.ui.runButton.setText("Start")
+
+            self.issueCommand()
             
-        self.updateCommandSequenceDisplay(next_command_index)
-
     ## handleNotifierChange
     #
     # Handles changes to any of the notification fields of the UI.
@@ -459,11 +456,11 @@ class Window(QtGui.QMainWindow):
             self.running = False
         else:
             self.command_engine.setPause(False)
-            self.command_engine.startCommand()
             self.ui.abortButton.show()
             self.ui.runButton.setText("Pause")
             self.ui.abortButton.setEnabled(True)
             self.running = True
+            self.command_engine.startCommand()
 
     ## issueCommand
     #

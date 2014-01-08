@@ -55,7 +55,7 @@ class DaveAction(QtCore.QObject):
     # Handle an external abort call
     #
     def abort(self):
-        self.sendComplete()
+        self.completeAction()
 
     ## cleanUp
     #

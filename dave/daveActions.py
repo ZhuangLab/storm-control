@@ -174,5 +174,6 @@ class DaveActionValveProtocol(DaveAction):
     # @param comm A kilroy client object.
     #
     def start(self):
+        self.tcp_client.startCommunication()
         self.protocol_is_running = True
         self.tcp_client.sendProtocol(self.protocol_name)
