@@ -321,15 +321,6 @@ class Window(QtGui.QMainWindow):
     #
     def handleCommandListClick(self):
         self.updateCommandSequenceDisplay(self.command_index)
-        
-#    ## handleDisconnect
-#    #
-#    # Disconnects from HAL.
-#    #
-#    @hdebug.debug
-#    def handleDisconnect(self):
-#        if not self.comm.stopCommunication():
-#            self.disconnect_timer.start()
 
     ## handleDone
     #
