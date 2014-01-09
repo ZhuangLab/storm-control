@@ -2,13 +2,12 @@
 #
 ## @file
 #
-# Debugging decorators & logging. This is still a work in progress
-# as my original concept for decorators has been broken by changes in
-# PyQt and my logging concept is also somewhat of a failure.
+# Debugging decorators & logging.
 #
-# Hazen 07/13
+# Hazen 01/14
 #
 
+import functools
 import logging
 import logging.handlers
 
@@ -37,7 +36,8 @@ def objectToString(a_object, a_name, a_attrs):
 #
 def debug(fn):
     global a_logger, logging_mutex
-    def wrap(*args, **kw):
+    @functools.wraps(fn)
+    def __wrapper(*args, **kw):
         if a_logger:
             logging_mutex.lock()
             if fn.__module__ == "__main__":
@@ -50,7 +50,7 @@ def debug(fn):
                     a_logger.info("      " + str(i) + " " + str(arg))
             logging_mutex.unlock()
         return fn(*args, **kw)
-    return wrap
+    return __wrapper
 
 ## getDebug
 #
@@ -116,7 +116,7 @@ def startLogging(directory, program_name):
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
