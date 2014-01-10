@@ -248,8 +248,7 @@ class HamiltonMVP():
     # Get Valve Status
     # ------------------------------------------------------------------------------------    
     def getStatus(self, valve_ID):
-        return (self.whereIsValve(valve_ID),
-                not self.isMovementFinished(valve_ID))
+        return (self.whereIsValve(valve_ID), not self.isMovementFinished(valve_ID))
 
     # ------------------------------------------------------------------------------------
     # Poll Valve Configuration
@@ -280,12 +279,13 @@ class HamiltonMVP():
     # ------------------------------------------------------------------------------------         
     def isMovementFinished(self, valve_ID):
         if not self.simulate:
-            return self.inquireAndRespond(valve_ID,
-                                          message ="F\r",
-                                          dictionary = {"*": False,
-                                                        "N": False,
-                                                        "Y": True},
-                                          default = "Unknown response")
+            response = self.inquireAndRespond(valve_ID,
+                                              message ="F\r",
+                                              dictionary = {"*": False,
+                                                            "N": False,
+                                                            "Y": True},
+                                              default = "Unknown response")
+            return response[0]
         else: ## simulation code
             return ("Y", True, "Simulation")
 
@@ -367,8 +367,7 @@ class HamiltonMVP():
     def waitUntilNotMoving(self, valve_ID, pause_time = 1):
         doneMoving = False
         while not doneMoving:
-            response = self.isMovementFinished(valve_ID)
-            doneMoving = response[0]
+            doneMoving = self.isMovementFinished(valve_ID)
             time.sleep(pause_time)
     
     # ------------------------------------------------------------------------------------

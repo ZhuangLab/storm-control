@@ -64,11 +64,6 @@ class QtValveControl(QtValveControlWidget):
     # Emit custom signal when a change port command is issued
     # ------------------------------------------------------------------------------------  
     def changePortSignal(self):
-##        if self.verbose:
-##            print ("Emitting signal from " + self.getValveName() +
-##                   ": Desired port index " + str(self.getPortIndex()) +
-##                   " and direction index " + str(self.getDesiredRotationIndex())
-##                   )
         self.change_port_signal.emit(self.valve_ID)
 
     # ------------------------------------------------------------------------------------
@@ -153,7 +148,6 @@ class QtValveControl(QtValveControlWidget):
     def setStatus(self, status):
         # Set Label Text
         self.valveStatusLabel.setText(status[0])
-
         if status[1] == True:
             self.valveStatusLabel.setStyleSheet("QLabel { color: red}")
         if status[1] == False:
