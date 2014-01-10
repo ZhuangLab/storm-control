@@ -122,8 +122,8 @@ class XMLRecipeParser(QtGui.QWidget):
             if self.verbose: print "Parsing: " + xml_file_path
             return (xml, xml_file_path)
         except:
-            print "Invalid file: " + xml_file_path
-            return (None, "")
+            print "Invalid xml file: " + xml_file_path
+            return (None, xml_file_path)
 
     # ------------------------------------------------------------------------------------
     # Parse loop variables and extract from file as needed
@@ -140,6 +140,7 @@ class XMLRecipeParser(QtGui.QWidget):
             for file_path_element in file_path_elements:
                 path_to_xml = file_path_element.text
                 if path_to_xml == None: path_to_xml = ""
+
                 # Remove file path element from loop element
                 loop.remove(file_path_element)
                 window_header = "Open Variable for " + loop.attrib["name"]
@@ -148,21 +149,35 @@ class XMLRecipeParser(QtGui.QWidget):
                 if local_directory == "":
                     path_to_xml = os.path.join(self.directory, path_to_xml)
                     path_to_xml = os.path.normpath(path_to_xml)
+
                 loop_variable_xml, path_to_loop_variable_xml = self.loadXML(path_to_xml,
                                                                             header = window_header)
 
-                if loop_variable_xml == None:
-                    loop_variable_xml, path_to_loop_variable_xml = self.loadXML("",
-                                                                                header = window_header)
+                # Check if the file contains flat position data
+                if loop_variable_xml == None and os.path.isfile(path_to_loop_variable_xml):
+                    new_loop_variable = ElementTree.Element("variable_entry")
+                    loop_variable_xml = ElementTree.ElementTree(new_loop_variable)
+                    pos_fp = open(position_file, "r")
+                    # Convert position data to elements
+                    while True:
+                        line = pos_fp.readline()
+                        if not line: break
+                        [x, y] = line.split(",")
+                        new_value = ElementTree.SubElement(new_loop_variable, "value")
+                        new_value.text = "\n"
+
+                        x_child = ElementTree.SubElement(new_value, "stage_x")
+                        x_child.text = x
+
+                        y_child = ElementTree.SubElement(new_value, "stage_y")
+                        y_child.text = y
 
                 loop_variables = loop_variable_xml.getroot()
+
                 for loop_variable in loop_variables:
                     loop.append(loop_variable)
                 if self.verbose:
                     print "Extracted loop variables from " + path_to_loop_variable_xml
-                else:
-                    if self.verbose:
-                        print "Found empty <file_path> tag"
 
     # ------------------------------------------------------------------------------------
     # Load and parse a XML file with defined sequence recipe
