@@ -118,7 +118,7 @@ class StandAlone(QtGui.QMainWindow):
         super(StandAlone, self).__init__(parent)
 
         # scroll area widget contents - layout
-        self.kilroy = Kilroy(verbose = True)
+        self.kilroy = Kilroy(verbose = False)
                                           
         # central widget
         self.centralWidget = QtGui.QWidget()
