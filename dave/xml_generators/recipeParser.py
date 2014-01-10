@@ -14,6 +14,8 @@
 import os, sys
 from xml.etree import ElementTree
 from PyQt4 import QtCore, QtGui
+import xml_generator
+import traceback
 
 # ----------------------------------------------------------------------------------------
 # XML Recipe Parser Class
@@ -29,7 +31,7 @@ class XMLRecipeParser(QtGui.QWidget):
         # Initialize local attributes
         self.xml_filename = xml_filename
         self.verbose = verbose
-        self.directory = []
+        self.directory = ""
         
         self.main_element = []
         self.sequence_xml = []
@@ -109,9 +111,9 @@ class XMLRecipeParser(QtGui.QWidget):
     # ------------------------------------------------------------------------------------
     # Create XML dialog for loading xml file and return parsed xml
     # ------------------------------------------------------------------------------------        
-    def loadXML(self, xml_file_path, header = "Open XML File"):
+    def loadXML(self, xml_file_path, header = "Open XML File", file_types = "XML (*.xml)"):
         if xml_file_path == "":
-            temp_file_path = QtGui.QFileDialog.getOpenFileName(self, header, "*.xml")
+            temp_file_path = str(QtGui.QFileDialog.getOpenFileName(self, header, self.directory, file_types))
             if os.path.isfile(temp_file_path):
                 xml_file_path = temp_file_path
         try:
@@ -120,8 +122,8 @@ class XMLRecipeParser(QtGui.QWidget):
             if self.verbose: print "Parsing: " + xml_file_path
             return (xml, xml_file_path)
         except:
-            print "Invalid file: " + xml_file_path
-            return (None, "")
+            print "Invalid xml file: " + xml_file_path
+            return (None, xml_file_path)
 
     # ------------------------------------------------------------------------------------
     # Parse loop variables and extract from file as needed
@@ -138,29 +140,45 @@ class XMLRecipeParser(QtGui.QWidget):
             for file_path_element in file_path_elements:
                 path_to_xml = file_path_element.text
                 if path_to_xml == None: path_to_xml = ""
+
                 # Remove file path element from loop element
                 loop.remove(file_path_element)
                 window_header = "Open Variable for " + loop.attrib["name"]
 
                 local_directory = os.path.dirname(path_to_xml)
-                if local_directory == "":
+                if local_directory == "" and not path_to_xml == "":
                     path_to_xml = os.path.join(self.directory, path_to_xml)
                     path_to_xml = os.path.normpath(path_to_xml)
-                loop_variable_xml, path_to_loop_variable_xml = self.loadXML(path_to_xml,
-                                                                            header = window_header)
 
-                if loop_variable_xml == None:
-                    loop_variable_xml, path_to_loop_variable_xml = self.loadXML("",
-                                                                                header = window_header)
+                loop_variable_xml, path_to_loop_variable_xml = self.loadXML(path_to_xml,
+                                                                            header = window_header,
+                                                                            file_types = "Position Files (*.xml *.txt)")
+
+                # Check if the file contains flat position data
+                if loop_variable_xml == None and os.path.isfile(path_to_loop_variable_xml):
+                    new_loop_variable = ElementTree.Element("variable_entry")
+                    loop_variable_xml = ElementTree.ElementTree(new_loop_variable)
+                    pos_fp = open(path_to_loop_variable_xml, "r")
+                    # Convert position data to elements
+                    while True:
+                        line = pos_fp.readline()
+                        if not line: break
+                        [x, y] = line.split(",")
+                        new_value = ElementTree.SubElement(new_loop_variable, "value")
+                        new_value.text = "\n"
+
+                        x_child = ElementTree.SubElement(new_value, "stage_x")
+                        x_child.text = x
+
+                        y_child = ElementTree.SubElement(new_value, "stage_y")
+                        y_child.text = y
 
                 loop_variables = loop_variable_xml.getroot()
+
                 for loop_variable in loop_variables:
                     loop.append(loop_variable)
                 if self.verbose:
                     print "Extracted loop variables from " + path_to_loop_variable_xml
-                else:
-                    if self.verbose:
-                        print "Found empty <file_path> tag"
 
     # ------------------------------------------------------------------------------------
     # Load and parse a XML file with defined sequence recipe
@@ -181,6 +199,22 @@ class XMLRecipeParser(QtGui.QWidget):
         # Extract main element
         self.main_element = xml.getroot()
 
+        # Handle different xml formats
+        if self.main_element.tag == "recipe":
+            self.parseXMLRecipe()
+        elif self.main_element.tag == "experiment": # old version
+            self.parseXMLExperiment()
+        else:
+            print "Unexpected contents: " + self.xml_filename
+            return ""
+
+        return self.flat_sequence_file_path
+
+
+    # ------------------------------------------------------------------------------------
+    # Parse the recipe format
+    # ------------------------------------------------------------------------------------
+    def parseXMLRecipe(self):
         # Parse major components of recipe file
         for child in self.main_element:
             if child.tag == "command_sequence":
@@ -213,8 +247,23 @@ class XMLRecipeParser(QtGui.QWidget):
         # Save flat sequence
         self.saveFlatSequence()
 
-        return self.flat_sequence_file_path
-
+    # ------------------------------------------------------------------------------------
+    # Parse the experiment format
+    # ------------------------------------------------------------------------------------
+    def parseXMLExperiment(self):
+        # Get additional file paths
+        positions_filename = str(QtGui.QFileDialog.getOpenFileName(self, "Positions File", self.directory, "*.txt"))
+        self.directory = os.path.dirname(positions_filename)
+        output_filename = str(QtGui.QFileDialog.getSaveFileName(self, "Generated File", self.directory, "*.xml"))
+        try:
+            xml_generator.generateXML(self.xml_filename, positions_filename, output_filename, self.directory, self)
+            self.flat_sequence_file_path = output_filename
+        except:
+            QtGui.QMessageBox.information(self,
+                                          "XML Generation Error",
+                                          traceback.format_exc())
+            self.flat_sequence_file_path = ""
+    
     # ------------------------------------------------------------------------------------
     # Find and replace items in command sequence
     # ------------------------------------------------------------------------------------        
@@ -262,7 +311,7 @@ class StandAlone(QtGui.QMainWindow):
     def __init__(self, parent = None):
         super(StandAlone, self).__init__(parent)
 
-        self.sequence_parser = XMLRecipeParser(xml_filename = "example_recipe.xml",
+        self.sequence_parser = XMLRecipeParser(xml_filename = "",
                                                verbose = True)
         self.sequence_parser.parseXML()
 
