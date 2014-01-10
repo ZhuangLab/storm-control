@@ -246,7 +246,8 @@ class Window(QtGui.QMainWindow):
         self.ui.abortButton.clicked.connect(self.handleAbortButton)
         self.ui.actionNew_Sequence.triggered.connect(self.newSequenceFile)
         self.ui.actionQuit.triggered.connect(self.quit)
-        self.ui.actionGenerateXML.triggered.connect(self.handleGenerateXML)
+        self.ui.actionGenerate.triggered.connect(self.handleGenerate)
+        self.ui.actionGenerate_from_Recipe.triggered.connect(self.handleGenerateFromRecipe)
         self.ui.fromAddressLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.fromPasswordLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.runButton.clicked.connect(self.handleRunButton)
@@ -339,14 +340,38 @@ class Window(QtGui.QMainWindow):
             self.running = False
             self.issueCommand()
 
-    ## handleGenerateXML
+    ## handleGenerate
+    #
+    # Handles generating the XML that Dave uses from a positions text file and a experiment XML file.
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def handleGenerate(self, boolean):
+        positions_filename = str(QtGui.QFileDialog.getOpenFileName(self, "Positions File", self.directory, "*.txt"))
+        self.directory = os.path.dirname(positions_filename)
+        experiment_filename = str(QtGui.QFileDialog.getOpenFileName(self, "Experiment File", self.directory, "*.xml"))
+        self.directory = os.path.dirname(experiment_filename)
+        output_filename = str(QtGui.QFileDialog.getSaveFileName(self, "Generated File", self.directory, "*.xml"))
+        tb = "No Error"
+        try:
+            xml_generator.generateXML(experiment_filename, positions_filename, output_filename, self.directory, self)
+        except:
+            QtGui.QMessageBox.information(self,
+                                          "XML Generation Error",
+                                          traceback.format_exc())
+                                          #str(sys.exc_info()[0]))
+        else:
+            self.newSequence(output_filename)
+
+    ## handleGenerateFromRecipe
     #
     # Handles Generate from Recipe XML
     #
     # @param boolean Dummy parameter.
     #
     @hdebug.debug
-    def handleGenerateXML(self, boolean):
+    def handleGenerateFromRecipe(self, boolean):
         recipe_parser = recipeParser.XMLRecipeParser(verbose = True)
         output_filename = recipe_parser.parseXML()
         if os.path.isfile(output_filename):
