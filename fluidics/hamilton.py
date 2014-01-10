@@ -142,7 +142,8 @@ class HamiltonMVP():
             return False
         
         if not self.simulate:
-            message = "LP" + str(direction) + str(port_ID) + "R\r"
+            # Compose message and increment port_ID (starts at 1)
+            message = "LP" + str(direction) + str(port_ID+1) + "R\r"
 
             response = self.inquireAndRespond(valve_ID, message)        
             if response[0] == "Negative Acknowledge":
