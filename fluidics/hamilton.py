@@ -91,21 +91,21 @@ class HamiltonMVP():
 
                 # Send initialization command to valve: if it acknowledges, then it exists
                 found_valve = self.initializeValve(valve_ID)
-##                if found_valve:
-##                    # Determine valve configuration
-##                    valve_config = self.howIsValveConfigured(valve_ID)
-##
-##                    if valve_config[1]: # Indicates successful response
-##                        self.valve_configs.append(valve_config)
-##                        self.max_ports_per_valve.append(self.numPortsPerConfiguration(valve_config))
-##                        self.current_port.append(0)
-##                        
-##                        if self.verbose:
-##                            print "Found " + valve_config + " device at address " + str(valve_ID)
-##                else:
-##                    break
+                if found_valve:
+                    # Determine valve configuration
+                    valve_config = self.howIsValveConfigured(valve_ID)
+
+                    if valve_config[1]: # Indicates successful response
+                        self.valve_configs.append(valve_config)
+                        self.max_ports_per_valve.append(self.numPortsPerConfiguration(valve_config))
+                        self.current_port.append(0)
+                        
+                        if self.verbose:
+                            print "Found " + valve_config + " device at address " + str(valve_ID)
+                else:
+                    break
                 
-            #self.num_valves = len(self.valve_configs)
+            self.num_valves = len(self.valve_configs)
 
             if self.num_valves == 0:
                 self.valve_names = "0"

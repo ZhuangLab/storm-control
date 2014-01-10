@@ -273,6 +273,7 @@ class KilroyClient(QtGui.QWidget):
     # ------------------------------------------------------------------------------------       
     def stopCommunication(self):
         if self.isConnected():
+            self.kilroy_state = None
             self.socket.disconnectFromHost()
             if self.verbose:
                 print "Disconnected Kilroy Client from Kilroy Server"
