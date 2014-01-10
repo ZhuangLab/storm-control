@@ -31,8 +31,7 @@ class Kilroy(QtGui.QMainWindow):
         self.sent_protocol_names = []
         
         # Create ValveChain instance
-        self.valveChain = ValveChain(COM_port = 2,
-                                     verbose = self.verbose)
+        self.valveChain = ValveChain(COM_port = 2)
 
         # Create ValveProtocols instance and connect signals
         self.valveProtocols = ValveProtocols(verbose = self.verbose)

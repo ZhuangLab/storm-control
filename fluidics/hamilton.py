@@ -21,7 +21,7 @@ class HamiltonMVP():
     def __init__(self,
                  COM_port = 2,
                  num_simulated_valves = 0,
-                 verbose = True):
+                 verbose = False):
 
         # Define attributes
         self.COM_port = COM_port
@@ -142,7 +142,7 @@ class HamiltonMVP():
             return False
         
         if not self.simulate:
-            message = "LP" + str(direction) + str(portNumber) + "R\r"
+            message = "LP" + str(direction) + str(port_ID) + "R\r"
 
             response = self.inquireAndRespond(valve_ID, message)        
             if response[0] == "Negative Acknowledge":
@@ -178,7 +178,6 @@ class HamiltonMVP():
                                               message ="LXR\r",
                                               dictionary = {},
                                               default = "")
-            print response
             if self.verbose:
                 if response[1]: print "Initialized Valve: " + str(valve_ID+1)
                 else: print "Did not find valve: " + str(valve_ID+1)

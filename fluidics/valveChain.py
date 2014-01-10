@@ -25,7 +25,7 @@ class ValveChain(QtGui.QWidget):
                  parent = None,
                  COM_port = 2,
                  num_simulated_valves = 0,
-                 verbose = True
+                 verbose = False
                  ):
 
         # Initialize parent class
