@@ -34,6 +34,7 @@ class ValveChain(QtGui.QWidget):
         # Define local attributes
         self.COM_port = COM_port
         self.verbose = verbose
+        self.poll_time = 2000
 
         # Create instance of Hamilton class
         if num_simulated_valves > 0:
@@ -54,7 +55,7 @@ class ValveChain(QtGui.QWidget):
 
         # Define timer for periodic polling of valve status
         self.valve_poll_timer = QtCore.QTimer()        
-        self.valve_poll_timer.setInterval(1000)
+        self.valve_poll_timer.setInterval(self.poll_time)
         self.valve_poll_timer.timeout.connect(self.pollValveStatus)
         self.valve_poll_timer.start()
 
