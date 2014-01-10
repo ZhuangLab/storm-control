@@ -31,7 +31,7 @@ class XMLRecipeParser(QtGui.QWidget):
         # Initialize local attributes
         self.xml_filename = xml_filename
         self.verbose = verbose
-        self.directory = []
+        self.directory = ""
         
         self.main_element = []
         self.sequence_xml = []
@@ -111,9 +111,9 @@ class XMLRecipeParser(QtGui.QWidget):
     # ------------------------------------------------------------------------------------
     # Create XML dialog for loading xml file and return parsed xml
     # ------------------------------------------------------------------------------------        
-    def loadXML(self, xml_file_path, header = "Open XML File"):
+    def loadXML(self, xml_file_path, header = "Open XML File", file_types = "XML (*.xml)"):
         if xml_file_path == "":
-            temp_file_path = str(QtGui.QFileDialog.getOpenFileName(self, header, "*.xml"))
+            temp_file_path = str(QtGui.QFileDialog.getOpenFileName(self, header, self.directory, file_types))
             if os.path.isfile(temp_file_path):
                 xml_file_path = temp_file_path
         try:
@@ -146,18 +146,19 @@ class XMLRecipeParser(QtGui.QWidget):
                 window_header = "Open Variable for " + loop.attrib["name"]
 
                 local_directory = os.path.dirname(path_to_xml)
-                if local_directory == "":
+                if local_directory == "" and not path_to_xml == "":
                     path_to_xml = os.path.join(self.directory, path_to_xml)
                     path_to_xml = os.path.normpath(path_to_xml)
 
                 loop_variable_xml, path_to_loop_variable_xml = self.loadXML(path_to_xml,
-                                                                            header = window_header)
+                                                                            header = window_header,
+                                                                            file_types = "Position Files (*.xml *.txt)")
 
                 # Check if the file contains flat position data
                 if loop_variable_xml == None and os.path.isfile(path_to_loop_variable_xml):
                     new_loop_variable = ElementTree.Element("variable_entry")
                     loop_variable_xml = ElementTree.ElementTree(new_loop_variable)
-                    pos_fp = open(position_file, "r")
+                    pos_fp = open(path_to_loop_variable_xml, "r")
                     # Convert position data to elements
                     while True:
                         line = pos_fp.readline()
@@ -310,7 +311,7 @@ class StandAlone(QtGui.QMainWindow):
     def __init__(self, parent = None):
         super(StandAlone, self).__init__(parent)
 
-        self.sequence_parser = XMLRecipeParser(xml_filename = "example_recipe.xml",
+        self.sequence_parser = XMLRecipeParser(xml_filename = "",
                                                verbose = True)
         self.sequence_parser.parseXML()
 
