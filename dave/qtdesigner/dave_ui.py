@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dave.ui'
 #
-# Created: Mon Jan 06 09:34:39 2014
+# Created: Thu Jan 09 21:15:50 2014
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -161,13 +161,12 @@ class Ui_MainWindow(object):
         self.actionQuit.setObjectName(_fromUtf8("actionQuit"))
         self.actionGenerate = QtGui.QAction(MainWindow)
         self.actionGenerate.setObjectName(_fromUtf8("actionGenerate"))
-        self.actionGenerate_from_Recipe = QtGui.QAction(MainWindow)
-        self.actionGenerate_from_Recipe.setObjectName(_fromUtf8("actionGenerate_from_Recipe"))
+        self.actionGenerateXML = QtGui.QAction(MainWindow)
+        self.actionGenerateXML.setObjectName(_fromUtf8("actionGenerateXML"))
         self.menuFile.addAction(self.actionNew_Sequence)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionQuit)
-        self.menuXML.addAction(self.actionGenerate)
-        self.menuXML.addAction(self.actionGenerate_from_Recipe)
+        self.menuXML.addAction(self.actionGenerateXML)
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuXML.menuAction())
 
@@ -199,5 +198,5 @@ class Ui_MainWindow(object):
         self.actionNew_Sequence.setText(_translate("MainWindow", "New Sequence", None))
         self.actionQuit.setText(_translate("MainWindow", "Quit", None))
         self.actionGenerate.setText(_translate("MainWindow", "Generate (Version 1.0)", None))
-        self.actionGenerate_from_Recipe.setText(_translate("MainWindow", "Generate from Recipe", None))
+        self.actionGenerateXML.setText(_translate("MainWindow", "Generate XML", None))
 

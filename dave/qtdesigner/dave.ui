@@ -70,45 +70,6 @@
       </property>
      </spacer>
     </item>
-    <item row="0" column="1" colspan="5">
-     <widget class="QGroupBox" name="sequenceGroupBox">
-      <property name="title">
-       <string>Sequence File</string>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <widget class="QLabel" name="sequenceLabel">
-         <property name="text">
-          <string>NA</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item row="2" column="5">
-     <widget class="QGroupBox" name="estimatesGroupBox">
-      <property name="title">
-       <string>Estimates</string>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <item>
-        <widget class="QLabel" name="spaceLabel">
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="timeLabel">
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
     <item row="1" column="5">
      <widget class="QGroupBox" name="notificationGroupBox">
       <property name="title">
@@ -265,6 +226,45 @@
       </layout>
      </widget>
     </item>
+    <item row="0" column="1" colspan="5">
+     <widget class="QGroupBox" name="sequenceGroupBox">
+      <property name="title">
+       <string>Sequence File</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="QLabel" name="sequenceLabel">
+         <property name="text">
+          <string>NA</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="2" column="5">
+     <widget class="QGroupBox" name="estimatesGroupBox">
+      <property name="title">
+       <string>Estimates</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QLabel" name="spaceLabel">
+         <property name="text">
+          <string>TextLabel</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="timeLabel">
+         <property name="text">
+          <string>TextLabel</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -288,8 +288,7 @@
     <property name="title">
      <string>XML</string>
     </property>
-    <addaction name="actionGenerate"/>
-    <addaction name="actionGenerate_from_Recipe"/>
+    <addaction name="actionGenerateXML"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuXML"/>
@@ -310,9 +309,9 @@
     <string>Generate (Version 1.0)</string>
    </property>
   </action>
-  <action name="actionGenerate_from_Recipe">
+  <action name="actionGenerateXML">
    <property name="text">
-    <string>Generate from Recipe</string>
+    <string>Generate XML</string>
    </property>
   </action>
  </widget>
