@@ -14,6 +14,8 @@
 import os, sys
 from xml.etree import ElementTree
 from PyQt4 import QtCore, QtGui
+import xml_generator
+import traceback
 
 # ----------------------------------------------------------------------------------------
 # XML Recipe Parser Class
@@ -111,7 +113,7 @@ class XMLRecipeParser(QtGui.QWidget):
     # ------------------------------------------------------------------------------------        
     def loadXML(self, xml_file_path, header = "Open XML File"):
         if xml_file_path == "":
-            temp_file_path = QtGui.QFileDialog.getOpenFileName(self, header, "*.xml")
+            temp_file_path = str(QtGui.QFileDialog.getOpenFileName(self, header, "*.xml"))
             if os.path.isfile(temp_file_path):
                 xml_file_path = temp_file_path
         try:
@@ -181,6 +183,22 @@ class XMLRecipeParser(QtGui.QWidget):
         # Extract main element
         self.main_element = xml.getroot()
 
+        # Handle different xml formats
+        if self.main_element.tag == "recipe":
+            self.parseXMLRecipe()
+        elif self.main_element.tag == "experiment": # old version
+            self.parseXMLExperiment()
+        else:
+            print "Unexpected contents: " + self.xml_filename
+            return ""
+
+        return self.flat_sequence_file_path
+
+
+    # ------------------------------------------------------------------------------------
+    # Parse the recipe format
+    # ------------------------------------------------------------------------------------
+    def parseXMLRecipe(self):
         # Parse major components of recipe file
         for child in self.main_element:
             if child.tag == "command_sequence":
@@ -213,8 +231,23 @@ class XMLRecipeParser(QtGui.QWidget):
         # Save flat sequence
         self.saveFlatSequence()
 
-        return self.flat_sequence_file_path
-
+    # ------------------------------------------------------------------------------------
+    # Parse the experiment format
+    # ------------------------------------------------------------------------------------
+    def parseXMLExperiment(self):
+        # Get additional file paths
+        positions_filename = str(QtGui.QFileDialog.getOpenFileName(self, "Positions File", self.directory, "*.txt"))
+        self.directory = os.path.dirname(positions_filename)
+        output_filename = str(QtGui.QFileDialog.getSaveFileName(self, "Generated File", self.directory, "*.xml"))
+        try:
+            xml_generator.generateXML(self.xml_filename, positions_filename, output_filename, self.directory, self)
+            self.flat_sequence_file_path = output_filename
+        except:
+            QtGui.QMessageBox.information(self,
+                                          "XML Generation Error",
+                                          traceback.format_exc())
+            self.flat_sequence_file_path = ""
+    
     # ------------------------------------------------------------------------------------
     # Find and replace items in command sequence
     # ------------------------------------------------------------------------------------        
