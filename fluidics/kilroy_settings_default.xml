@@ -12,7 +12,7 @@
   <num_simulated_valves type="int">2</num_simulated_valves>
 
   <!-- Sets verbosity of kilroy and the classes it owns. Useful for debug -->
-  <verbose type="boolean">False</verbose>
+  <verbose type="boolean">True</verbose>
 
   <!-- Define location of valve commands and protocols -->
   <valve_protocols_file type = "">default_config.xml</valve_protocols_file>
