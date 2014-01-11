@@ -23,7 +23,7 @@ from hamilton import HamiltonMVP
 class ValveChain(QtGui.QWidget):
     def __init__(self,
                  parent = None,
-                 COM_port = 2,
+                 com_port = 2,
                  num_simulated_valves = 0,
                  verbose = False
                  ):
@@ -32,7 +32,7 @@ class ValveChain(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
 
         # Define local attributes
-        self.COM_port = COM_port
+        self.COM_port = com_port
         self.verbose = verbose
         self.poll_time = 2000
 
