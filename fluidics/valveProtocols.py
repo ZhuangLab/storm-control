@@ -14,6 +14,7 @@
 # ----------------------------------------------------------------------------------------
 import sys
 import os
+import uuid
 import xml.etree.ElementTree as elementTree
 from PyQt4 import QtCore, QtGui
 from valveCommands import ValveCommands
@@ -44,6 +45,7 @@ class ValveProtocols(QtGui.QMainWindow):
         self.num_protocols = 0
         self.status = [-1, -1] # Protocol ID, command ID within protocol
         self.issued_command = []
+        self.protocol_UID = None
         
         # Create instance of ValveCommands class
         self.valveCommands = ValveCommands(xml_file_path = self.command_xml_path,
@@ -116,7 +118,7 @@ class ValveProtocols(QtGui.QMainWindow):
         self.protocolDetailsList =  QtGui.QListWidget()
         
         self.startProtocolButton = QtGui.QPushButton("Start Protocol")
-        self.startProtocolButton.clicked.connect(self.startProtocol)
+        self.startProtocolButton.clicked.connect(self.startProtocolLocally)
         self.stopProtocolButton = QtGui.QPushButton("Stop Protocol")
         self.stopProtocolButton.clicked.connect(self.stopProtocol)
         
@@ -324,7 +326,7 @@ class ValveProtocols(QtGui.QMainWindow):
         # Set protocol status: [protocol_ID, command_ID]
         self.status = [protocol_ID, 0]
         self.status_change_signal.emit() # emit status change signal
-
+        
         if self.verbose:
             print "Starting " + self.protocol_names[protocol_ID]
 
@@ -344,7 +346,7 @@ class ValveProtocols(QtGui.QMainWindow):
     # ------------------------------------------------------------------------------------
     # Initialize and start a protocol specified by name
     # ------------------------------------------------------------------------------------
-    def startProtocolByName(self, protocol_name):
+    def startProtocolByName(self, protocol_name, protocol_UID):
         if self.isValidProtocol(protocol_name):
             if self.isRunningProtocol():
                 if self.verbose:
@@ -357,6 +359,32 @@ class ValveProtocols(QtGui.QMainWindow):
 
             # Run protocol
             self.startProtocol()
+
+    # ------------------------------------------------------------------------------------
+    # Handle the local start button
+    # ------------------------------------------------------------------------------------
+    def startProtocolLocally(self):
+        # Run protocol
+        self.protocol_UID = str(uuid.uuid1()) # Create a unique idea for this protocol
+        self.startProtocol()
+
+    # ------------------------------------------------------------------------------------
+    # Initialize and start a protocol specified by name
+    # ------------------------------------------------------------------------------------
+    def startProtocolRemotely(self, protocol_name, protocol_UID):
+        if self.isValidProtocol(protocol_name):
+            if self.isRunningProtocol():
+                if self.verbose:
+                    print "Stopped In Progress: " + self.protocol_names[self.status[0]]
+                self.stopProtocol() # Abort protocol in progress
+
+            # Find protocol and set as active element 
+            protocol_ID = self.protocol_names.index(protocol_name)
+            self.protocolListWidget.setCurrentRow(protocol_ID)
+
+            # Run protocol
+            self.protocol_UID = protocol_UID
+            self.startProtocol()
             
     # ------------------------------------------------------------------------------------
     # Stop a running protocol either on completion or early
@@ -364,14 +392,14 @@ class ValveProtocols(QtGui.QMainWindow):
     def stopProtocol(self):
         # Get name of current protocol
         if self.status[0] >= 0:
-            protocol_name = self.protocol_names[self.status[0]]
             if self.verbose: print "Stopped Protocol"
-            self.completed_protocol_signal.emit(protocol_name)
+            self.completed_protocol_signal.emit(self.protocol_UID)
         
         # Reset status and emit status change signal
         self.status = [-1,-1]
         self.status_change_signal.emit()
-
+        self.protocol_UID = None
+        
         # Stop timer
         self.protocol_timer.stop()
 

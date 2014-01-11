@@ -14,6 +14,7 @@
 # ----------------------------------------------------------------------------------------
 import sys
 import time
+import uuid
 from PyQt4 import QtCore, QtGui, QtNetwork
 
 # ----------------------------------------------------------------------------------------
@@ -84,7 +85,7 @@ class KilroySocket(QtNetwork.QTcpSocket):
     def handleReadyRead(self):
         while self.canReadLine():
             line = str(self.readLine()).strip()
-            parsed_line = line.split(',') # Split on delimiter
+            parsed_line = line.split(self.delimiter, 1) # Split on first delimiter
             if len(parsed_line) == 1: #Signal command 
                 if (parsed_line[0] == self.acknowledge): # Acknowledgement
                     self.acknowledged.emit()
@@ -210,13 +211,13 @@ class KilroyClient(QtGui.QWidget):
     # Handle completion of signal command 
     # ------------------------------------------------------------------------------------       
     def handleComplete(self, command_string):
-        print self.kilroy_state
-        if self.kilroy_state == command_string:
-            print "Completed Protocol: " + command_string
+        protocol_name, protocol_UID = command_string.split(self.delimiter)
+        if self.kilroy_state == protocol_UID:
+            print "Completed Protocol: " + protocol_name
             self.kilroy_state = None
             self.complete.emit(command_string)
         else:
-            print "Completed unexpected function: " + command_string
+            print "Completed protocol with unknown UID: " + command_string
 
     # ------------------------------------------------------------------------------------
     # Pass server disconnect signal 
@@ -253,8 +254,14 @@ class KilroyClient(QtGui.QWidget):
     def sendProtocol(self, protocol_name):
         if self.verbose:
             print "Sending protocol request: " + protocol_name
-        self.kilroy_state = protocol_name
-        was_command_sent = self.sendCommand(self.protocol_header + self.delimiter + protocol_name)
+        # Generate unique protocol ID
+        protocol_UID = str(uuid.uuid1())
+        self.kilroy_state = protocol_UID
+        # Create and send command
+        command = self.protocol_header + self.delimiter
+        command += protocol_name + self.delimiter
+        command += protocol_UID
+        was_command_sent = self.sendCommand(command)
         if not was_command_sent:
             self.kilroy_state = None
 

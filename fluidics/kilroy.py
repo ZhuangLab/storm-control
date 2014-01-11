@@ -46,7 +46,8 @@ class Kilroy(QtGui.QMainWindow):
 
         # Define additional internal attributes
         self.sent_protocol_names = []
-
+        self.sent_protocol_UIDs = []
+        
         # Create ValveChain instance
         self.valveChain = ValveChain(com_port = self.com_port,
                                      num_simulated_valves = self.num_simulated_valves,
@@ -101,30 +102,35 @@ class Kilroy(QtGui.QMainWindow):
     # ----------------------------------------------------------------------------------------
     # Handle a protocol complete signal from the valve protocols
     # ----------------------------------------------------------------------------------------
-    def handleProtocolComplete(self, protocol_name):
+    def handleProtocolComplete(self, protocol_UID):
         # If the protocol was sent by TCP pass on the complete signal
-        if protocol_name in self.sent_protocol_names:
-            self.sent_protocol_names.remove(protocol_name)
-            self.tcpServer.sendProtocolComplete(protocol_name)
+        if protocol_UID in self.sent_protocol_UIDs:
+            list_ID = self.sent_protocol_UIDs.index(protocol_UID)
+            protocol_name = self.sent_protocol_names.pop(list_ID)
+            protocol_UID = self.sent_protocol_UIDs.pop(list_ID)
+            self.tcpServer.sendProtocolComplete(protocol_name, protocol_UID)
 
     # ----------------------------------------------------------------------------------------
     # Handle protocol request sent via TCP server
     # ----------------------------------------------------------------------------------------
     def handleTCPData(self):
         # Get protocol from tcpServer
-        protocol_name = self.tcpServer.getProtocol()
+        [protocol_name, protocol_UID] = self.tcpServer.getProtocol()
         
         if self.verbose:
-            print "Running Protocol from Kilroy Client: " + protocol_name
-
+            print "Received Protocol from Kilroy Client: " + protocol_name
+            print " with unique ID: " + protocol_UID
+            
         if self.valveProtocols.isValidProtocol(protocol_name):
             # Keep track of protocols issued via TCP 
             self.sent_protocol_names.append(protocol_name)
-
+            self.sent_protocol_UIDs.append(protocol_UID)
+            
             # Start the protocol
-            self.valveProtocols.startProtocolByName(protocol_name)
-        else: # Respond with a protocol complete
-            self.tcpServer.sendProtocolComplete(protocol_name)
+            self.valveProtocols.startProtocolRemotely(protocol_name, protocol_UID)
+
+        else: # Respond with a protocol complete to cancel the invalid protocol
+            self.tcpServer.sendProtocolComplete(protocol_name, protocol_UID)
             
     # ----------------------------------------------------------------------------------------
     # Redirect commands from valve protocol class to valve chain class
