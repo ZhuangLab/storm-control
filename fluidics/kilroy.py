@@ -18,30 +18,52 @@ from PyQt4 import QtCore, QtGui
 from valveChain import ValveChain
 from valveProtocols import ValveProtocols
 from kilroyServer import KilroyServer
+import halLib.parameters as params
 
 # ----------------------------------------------------------------------------------------
 # Kilroy Class Definition
 # ----------------------------------------------------------------------------------------
 class Kilroy(QtGui.QMainWindow):
-    def __init__(self, verbose = False):
+    def __init__(self, parameters):
         super(Kilroy, self).__init__()
 
-        # Initialize internal attributes
-        self.verbose = verbose
+        # Parse parameters into internal attributes
+        self.verbose = parameters.verbose
+        self.com_port = parameters.com_port
+        self.tcp_port = parameters.tcp_port
+        if not hasattr(parameters, "num_simulated_valves"):
+            self.num_simulated_valves = 0
+        else:
+            self.num_simulated_valves = parameters.num_simulated_valves
+        if not hasattr(parameters, "valve_protocols_file"):
+            self.valve_protocols_file = "default_config.xml"
+        else:
+            self.valve_protocols_file = parameters.valve_protocols_file
+        if not hasattr(parameters, "valve_commands_file"):
+            self.valve_commands_file = "default_config.xml"
+        else:
+            self.valve_commands_file = parameters.valve_commands_file
+
+        # Define additional internal attributes
         self.sent_protocol_names = []
-        
+
         # Create ValveChain instance
-        self.valveChain = ValveChain(COM_port = 2,
+        self.valveChain = ValveChain(com_port = self.com_port,
+                                     num_simulated_valves = self.num_simulated_valves,
                                      verbose = self.verbose)
 
         # Create ValveProtocols instance and connect signals
-        self.valveProtocols = ValveProtocols(verbose = self.verbose)
+        self.valveProtocols = ValveProtocols(protocol_xml_path = self.valve_protocols_file,
+                                             command_xml_path = self.valve_commands_file,
+                                             verbose = self.verbose)
+
         self.valveProtocols.command_ready_signal.connect(self.sendCommand)
         self.valveProtocols.status_change_signal.connect(self.handleProtocolStatusChange)
         self.valveProtocols.completed_protocol_signal.connect(self.handleProtocolComplete)
 
         # Create Kilroy TCP Server and connect signals
-        self.tcpServer = KilroyServer(verbose = self.verbose)
+        self.tcpServer = KilroyServer(port = self.tcp_port,
+                                      verbose = self.verbose)
         self.tcpServer.data_ready.connect(self.handleTCPData)
 
         # Create GUI
@@ -115,11 +137,11 @@ class Kilroy(QtGui.QMainWindow):
 # Stand Alone Kilroy Class
 # ----------------------------------------------------------------------------------------                                                                   
 class StandAlone(QtGui.QMainWindow):
-    def __init__(self, parent = None):
+    def __init__(self, parameters, parent = None):
         super(StandAlone, self).__init__(parent)
 
-        # scroll area widget contents - layout
-        self.kilroy = Kilroy(verbose = True)
+        # Create kilroy
+        self.kilroy = Kilroy(parameters)
                                           
         # central widget
         self.centralWidget = QtGui.QWidget()
@@ -169,10 +191,16 @@ if __name__ == "__main__":
     splash.setMask(splash_pix.mask())
     splash.show()
     app.processEvents()
-    time.sleep(2) # Define minimum startup time
+    time.sleep(.1) # Define minimum startup time
+
+    # Load parameters
+    if len(sys.argv) == 2:
+        parameters = params.Parameters(sys.argv[1])
+    else:
+        parameters = params.Parameters("kilroy_settings_default.xml")
 
     # Create instance of StandAlone class
-    window = StandAlone()
+    window = StandAlone(parameters)
 
     # Remove splash screen
     splash.hide()

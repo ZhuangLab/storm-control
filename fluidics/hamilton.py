@@ -21,7 +21,7 @@ class HamiltonMVP():
     def __init__(self,
                  COM_port = 2,
                  num_simulated_valves = 0,
-                 verbose = True):
+                 verbose = False):
 
         # Define attributes
         self.COM_port = COM_port
@@ -142,7 +142,8 @@ class HamiltonMVP():
             return False
         
         if not self.simulate:
-            message = "LP" + str(direction) + str(portNumber) + "R\r"
+            # Compose message and increment port_ID (starts at 1)
+            message = "LP" + str(direction) + str(port_ID+1) + "R\r"
 
             response = self.inquireAndRespond(valve_ID, message)        
             if response[0] == "Negative Acknowledge":
@@ -178,7 +179,6 @@ class HamiltonMVP():
                                               message ="LXR\r",
                                               dictionary = {},
                                               default = "")
-            print response
             if self.verbose:
                 if response[1]: print "Initialized Valve: " + str(valve_ID+1)
                 else: print "Did not find valve: " + str(valve_ID+1)
@@ -248,8 +248,7 @@ class HamiltonMVP():
     # Get Valve Status
     # ------------------------------------------------------------------------------------    
     def getStatus(self, valve_ID):
-        return (self.whereIsValve(valve_ID),
-                not self.isMovementFinished(valve_ID))
+        return (self.whereIsValve(valve_ID), not self.isMovementFinished(valve_ID))
 
     # ------------------------------------------------------------------------------------
     # Poll Valve Configuration
@@ -280,12 +279,13 @@ class HamiltonMVP():
     # ------------------------------------------------------------------------------------         
     def isMovementFinished(self, valve_ID):
         if not self.simulate:
-            return self.inquireAndRespond(valve_ID,
-                                          message ="F\r",
-                                          dictionary = {"*": False,
-                                                        "N": False,
-                                                        "Y": True},
-                                          default = "Unknown response")
+            response = self.inquireAndRespond(valve_ID,
+                                              message ="F\r",
+                                              dictionary = {"*": False,
+                                                            "N": False,
+                                                            "Y": True},
+                                              default = "Unknown response")
+            return response[0]
         else: ## simulation code
             return ("Y", True, "Simulation")
 
@@ -367,8 +367,7 @@ class HamiltonMVP():
     def waitUntilNotMoving(self, valve_ID, pause_time = 1):
         doneMoving = False
         while not doneMoving:
-            response = self.isMovementFinished(valve_ID)
-            doneMoving = response[0]
+            doneMoving = self.isMovementFinished(valve_ID)
             time.sleep(pause_time)
     
     # ------------------------------------------------------------------------------------
