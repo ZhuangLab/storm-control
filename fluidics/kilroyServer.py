@@ -40,7 +40,8 @@ class KilroyServer(QtNetwork.QTcpServer):
         self.data_buffer = []
         self.num_data = 0
         self.last_command_written = []
-
+        self.kilroy_state = None
+        
         # Define custom response strings
         self.acknowledge = "Ack"
         self.already_connected = "Busy"
@@ -143,11 +144,10 @@ class KilroyServer(QtNetwork.QTcpServer):
     # ------------------------------------------------------------------------------------       
     def getProtocol(self):
         data = self.getLastDataElement()
-
         data_list = data.split(self.delimiter)
         if len(data_list) > 1:
+            print data_list
             if data_list[0] == "Protocol":
-
                 # Update GUI received protocol list
                 protocol_name = data_list[1]
                 time_now = time.strftime("%X")
@@ -155,7 +155,7 @@ class KilroyServer(QtNetwork.QTcpServer):
                 last_element_ID = self.dataBuffer.count() - 1
                 self.dataBuffer.setCurrentRow(last_element_ID)
                 
-                return data_list[1]
+                return data_list[1], data_list[2]
         return None
 
     # ------------------------------------------------------------------------------------
@@ -240,8 +240,11 @@ class KilroyServer(QtNetwork.QTcpServer):
     # ------------------------------------------------------------------------------------
     # Send a completed protocol command 
     # ------------------------------------------------------------------------------------       
-    def sendProtocolComplete(self,protocol_name):
-        self.send(self.command_complete + self.delimiter + protocol_name)
+    def sendProtocolComplete(self,protocol_name, protocol_UID):
+        command = self.command_complete + self.delimiter
+        command += protocol_name + self.delimiter
+        command += protocol_UID
+        self.send(command)
 
     # ------------------------------------------------------------------------------------
     # Update GUI based on protocols

@@ -18,31 +18,53 @@ from PyQt4 import QtCore, QtGui
 from valveChain import ValveChain
 from valveProtocols import ValveProtocols
 from kilroyServer import KilroyServer
+import halLib.parameters as params
 
 # ----------------------------------------------------------------------------------------
 # Kilroy Class Definition
 # ----------------------------------------------------------------------------------------
 class Kilroy(QtGui.QMainWindow):
-    def __init__(self, verbose = False):
+    def __init__(self, parameters):
         super(Kilroy, self).__init__()
 
-        # Initialize internal attributes
-        self.verbose = verbose
+        # Parse parameters into internal attributes
+        self.verbose = parameters.verbose
+        self.com_port = parameters.com_port
+        self.tcp_port = parameters.tcp_port
+        if not hasattr(parameters, "num_simulated_valves"):
+            self.num_simulated_valves = 0
+        else:
+            self.num_simulated_valves = parameters.num_simulated_valves
+        if not hasattr(parameters, "valve_protocols_file"):
+            self.valve_protocols_file = "default_config.xml"
+        else:
+            self.valve_protocols_file = parameters.valve_protocols_file
+        if not hasattr(parameters, "valve_commands_file"):
+            self.valve_commands_file = "default_config.xml"
+        else:
+            self.valve_commands_file = parameters.valve_commands_file
+
+        # Define additional internal attributes
         self.sent_protocol_names = []
+        self.sent_protocol_UIDs = []
         
         # Create ValveChain instance
-        self.valveChain = ValveChain(COM_port = 2,
-                                     num_simulated_valves = 2,
+        self.valveChain = ValveChain(com_port = self.com_port,
+                                     num_simulated_valves = self.num_simulated_valves,
                                      verbose = self.verbose)
 
         # Create ValveProtocols instance and connect signals
-        self.valveProtocols = ValveProtocols(verbose = self.verbose)
+        self.valveProtocols = ValveProtocols(protocol_xml_path = self.valve_protocols_file,
+                                             command_xml_path = self.valve_commands_file,
+                                             verbose = self.verbose)
+
         self.valveProtocols.command_ready_signal.connect(self.sendCommand)
         self.valveProtocols.status_change_signal.connect(self.handleProtocolStatusChange)
         self.valveProtocols.completed_protocol_signal.connect(self.handleProtocolComplete)
 
         # Create Kilroy TCP Server and connect signals
-        self.tcpServer = KilroyServer(verbose = self.verbose)
+        self.tcpServer = KilroyServer(port = self.tcp_port,
+                                      verbose = self.verbose)
         self.tcpServer.data_ready.connect(self.handleTCPData)
 
         # Create GUI
@@ -78,31 +100,38 @@ class Kilroy(QtGui.QMainWindow):
             self.valveChain.setEnabled(True)
 
     # ----------------------------------------------------------------------------------------
-    # Handle a protocol complete signal from the valve chain
+    # Handle a protocol complete signal from the valve protocols
     # ----------------------------------------------------------------------------------------
-    def handleProtocolComplete(self, protocol_name):
+    def handleProtocolComplete(self, protocol_UID):
         # If the protocol was sent by TCP pass on the complete signal
-        if protocol_name in self.sent_protocol_names:
-            self.sent_protocol_names.remove(protocol_name)
-            self.tcpServer.sendProtocolComplete(protocol_name)
+        if protocol_UID in self.sent_protocol_UIDs:
+            list_ID = self.sent_protocol_UIDs.index(protocol_UID)
+            protocol_name = self.sent_protocol_names.pop(list_ID)
+            protocol_UID = self.sent_protocol_UIDs.pop(list_ID)
+            self.tcpServer.sendProtocolComplete(protocol_name, protocol_UID)
 
     # ----------------------------------------------------------------------------------------
     # Handle protocol request sent via TCP server
     # ----------------------------------------------------------------------------------------
     def handleTCPData(self):
         # Get protocol from tcpServer
-        protocol_name = self.tcpServer.getProtocol()
+        [protocol_name, protocol_UID] = self.tcpServer.getProtocol()
         
         if self.verbose:
-            print "Running Protocol from Kilroy Client: " + protocol_name
-
+            print "Received Protocol from Kilroy Client: " + protocol_name
+            print " with unique ID: " + protocol_UID
+            
         if self.valveProtocols.isValidProtocol(protocol_name):
             # Keep track of protocols issued via TCP 
             self.sent_protocol_names.append(protocol_name)
-
+            self.sent_protocol_UIDs.append(protocol_UID)
+            
             # Start the protocol
-            self.valveProtocols.startProtocolByName(protocol_name)
+            self.valveProtocols.startProtocolRemotely(protocol_name, protocol_UID)
 
+        else: # Respond with a protocol complete to cancel the invalid protocol
+            self.tcpServer.sendProtocolComplete(protocol_name, protocol_UID)
+            
     # ----------------------------------------------------------------------------------------
     # Redirect commands from valve protocol class to valve chain class
     # ----------------------------------------------------------------------------------------
@@ -114,11 +143,11 @@ class Kilroy(QtGui.QMainWindow):
 # Stand Alone Kilroy Class
 # ----------------------------------------------------------------------------------------                                                                   
 class StandAlone(QtGui.QMainWindow):
-    def __init__(self, parent = None):
+    def __init__(self, parameters, parent = None):
         super(StandAlone, self).__init__(parent)
 
-        # scroll area widget contents - layout
-        self.kilroy = Kilroy(verbose = True)
+        # Create kilroy
+        self.kilroy = Kilroy(parameters)
                                           
         # central widget
         self.centralWidget = QtGui.QWidget()
@@ -168,10 +197,16 @@ if __name__ == "__main__":
     splash.setMask(splash_pix.mask())
     splash.show()
     app.processEvents()
-    time.sleep(2) # Define minimum startup time
+    time.sleep(.1) # Define minimum startup time
+
+    # Load parameters
+    if len(sys.argv) == 2:
+        parameters = params.Parameters(sys.argv[1])
+    else:
+        parameters = params.Parameters("kilroy_settings_default.xml")
 
     # Create instance of StandAlone class
-    window = StandAlone()
+    window = StandAlone(parameters)
 
     # Remove splash screen
     splash.hide()

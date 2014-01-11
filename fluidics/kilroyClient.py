@@ -14,6 +14,7 @@
 # ----------------------------------------------------------------------------------------
 import sys
 import time
+import uuid
 from PyQt4 import QtCore, QtGui, QtNetwork
 
 # ----------------------------------------------------------------------------------------
@@ -84,7 +85,7 @@ class KilroySocket(QtNetwork.QTcpSocket):
     def handleReadyRead(self):
         while self.canReadLine():
             line = str(self.readLine()).strip()
-            parsed_line = line.split(',') # Split on delimiter
+            parsed_line = line.split(self.delimiter, 1) # Split on first delimiter
             if len(parsed_line) == 1: #Signal command 
                 if (parsed_line[0] == self.acknowledge): # Acknowledgement
                     self.acknowledged.emit()
@@ -104,7 +105,6 @@ class KilroySocket(QtNetwork.QTcpSocket):
 
         #####self.flush() #Is this needed?
 
-        
 # ----------------------------------------------------------------------------------------
 # Kilroy Client Class
 # ----------------------------------------------------------------------------------------                                                                
@@ -128,7 +128,8 @@ class KilroyClient(QtGui.QWidget):
         self.unacknowledged_messages = 0
         self.command_pause_time = 0.05
         self.kilroy_state = None # Keep track of what kilroy is doing
-        self.protocol_header = "Protocol,"
+        self.protocol_header = "Protocol"
+        self.delimiter = ","
         
         # Create instance of KilroySocket
         self.socket = KilroySocket(port = self.port,
@@ -210,13 +211,13 @@ class KilroyClient(QtGui.QWidget):
     # Handle completion of signal command 
     # ------------------------------------------------------------------------------------       
     def handleComplete(self, command_string):
-        if self.kilroy_state == "Running Protocol":
-            print "Completed Protocol: " + command_string
+        protocol_name, protocol_UID = command_string.split(self.delimiter)
+        if self.kilroy_state == protocol_UID:
+            print "Completed Protocol: " + protocol_name
+            self.kilroy_state = None
+            self.complete.emit(command_string)
         else:
-            print "Completed unknown function: " + command_string
-
-        self.complete.emit(command_string)
-        self.kilroy_state = None
+            print "Completed protocol with unknown UID: " + command_string
 
     # ------------------------------------------------------------------------------------
     # Pass server disconnect signal 
@@ -253,9 +254,16 @@ class KilroyClient(QtGui.QWidget):
     def sendProtocol(self, protocol_name):
         if self.verbose:
             print "Sending protocol request: " + protocol_name
-        was_command_sent = self.sendCommand(self.protocol_header + protocol_name)
-        if was_command_sent:
-            self.kilroy_state = "Running Protocol"
+        # Generate unique protocol ID
+        protocol_UID = str(uuid.uuid1())
+        self.kilroy_state = protocol_UID
+        # Create and send command
+        command = self.protocol_header + self.delimiter
+        command += protocol_name + self.delimiter
+        command += protocol_UID
+        was_command_sent = self.sendCommand(command)
+        if not was_command_sent:
+            self.kilroy_state = None
 
     # ------------------------------------------------------------------------------------
     # Send protocol command to Kilroy via GUI (Testing purposes only)
@@ -272,6 +280,7 @@ class KilroyClient(QtGui.QWidget):
     # ------------------------------------------------------------------------------------       
     def stopCommunication(self):
         if self.isConnected():
+            self.kilroy_state = None
             self.socket.disconnectFromHost()
             if self.verbose:
                 print "Disconnected Kilroy Client from Kilroy Server"

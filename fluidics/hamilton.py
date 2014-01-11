@@ -21,7 +21,7 @@ class HamiltonMVP():
     def __init__(self,
                  COM_port = 2,
                  num_simulated_valves = 0,
-                 verbose = True):
+                 verbose = False):
 
         # Define attributes
         self.COM_port = COM_port
@@ -90,8 +90,8 @@ class HamiltonMVP():
                 self.valve_names.append(device_address_character) # Save device characters
 
                 # Send initialization command to valve: if it acknowledges, then it exists
-                response = self.initializeValve(valve_ID) 
-                if response[0] == "Acknowledge":
+                found_valve = self.initializeValve(valve_ID)
+                if found_valve:
                     # Determine valve configuration
                     valve_config = self.howIsValveConfigured(valve_ID)
 
@@ -99,15 +99,13 @@ class HamiltonMVP():
                         self.valve_configs.append(valve_config)
                         self.max_ports_per_valve.append(self.numPortsPerConfiguration(valve_config))
                         self.current_port.append(0)
-                        found_valves += 1
                         
                         if self.verbose:
                             print "Found " + valve_config + " device at address " + str(valve_ID)
-
-                elif response[0] == "Negative Acknowledge": # Final device found
+                else:
                     break
                 
-            self.num_valves = found_valves
+            self.num_valves = len(self.valve_configs)
 
             if self.num_valves == 0:
                 self.valve_names = "0"
@@ -144,7 +142,8 @@ class HamiltonMVP():
             return False
         
         if not self.simulate:
-            message = "LP" + str(direction) + str(portNumber) + "R\r"
+            # Compose message and increment port_ID (starts at 1)
+            message = "LP" + str(direction) + str(port_ID+1) + "R\r"
 
             response = self.inquireAndRespond(valve_ID, message)        
             if response[0] == "Negative Acknowledge":
@@ -180,13 +179,9 @@ class HamiltonMVP():
                                               message ="LXR\r",
                                               dictionary = {},
                                               default = "")
-    
-            if response[1]: # Command was successful
-                self.current_port[valve_ID] = 0 # Reset position
-
             if self.verbose:
-                print "Initialized Valve: " + str(valve_ID+1)
-            
+                if response[1]: print "Initialized Valve: " + str(valve_ID+1)
+                else: print "Did not find valve: " + str(valve_ID+1)
             return response[1]
         else:
             return True
@@ -210,13 +205,10 @@ class HamiltonMVP():
         response = self.read()
         
         # Parse response into sent message and response
-        if len(response) >= len(message):
-            repeated_message = response[:(response.find(self.carriage_return)-1)]
-            actual_response = response[(response.find(self.carriage_return)-1):
-                                      (response.rfind(self.carriage_return))]
-            #actual_response = actual_response # remove carriage returns
-        else:
-            return ("Short response", False, response)
+        repeated_message = response[:(response.find(self.carriage_return)-1)]
+        actual_response = response[(response.find(self.carriage_return)-1):
+                                  (response.rfind(self.carriage_return))]
+        #actual_response = actual_response # remove carriage returns
                 
         # Check for negative acknowledge
         if actual_response == self.negative_acknowledge:
@@ -256,8 +248,7 @@ class HamiltonMVP():
     # Get Valve Status
     # ------------------------------------------------------------------------------------    
     def getStatus(self, valve_ID):
-        return (self.whereIsValve(valve_ID),
-                not self.isMovementFinished(valve_ID))
+        return (self.whereIsValve(valve_ID), not self.isMovementFinished(valve_ID))
 
     # ------------------------------------------------------------------------------------
     # Poll Valve Configuration
@@ -288,12 +279,13 @@ class HamiltonMVP():
     # ------------------------------------------------------------------------------------         
     def isMovementFinished(self, valve_ID):
         if not self.simulate:
-            return self.inquireAndRespond(valve_ID,
-                                          message ="F\r",
-                                          dictionary = {"*": False,
-                                                        "N": False,
-                                                        "Y": True},
-                                          default = "Unknown response")
+            response = self.inquireAndRespond(valve_ID,
+                                              message ="F\r",
+                                              dictionary = {"*": False,
+                                                            "N": False,
+                                                            "Y": True},
+                                              default = "Unknown response")
+            return response[0]
         else: ## simulation code
             return ("Y", True, "Simulation")
 
@@ -375,8 +367,7 @@ class HamiltonMVP():
     def waitUntilNotMoving(self, valve_ID, pause_time = 1):
         doneMoving = False
         while not doneMoving:
-            response = self.isMovementFinished(valve_ID)
-            doneMoving = response[0]
+            doneMoving = self.isMovementFinished(valve_ID)
             time.sleep(pause_time)
     
     # ------------------------------------------------------------------------------------
@@ -427,8 +418,7 @@ class HamiltonMVP():
 # Test/Demo of Classs
 # ----------------------------------------------------------------------------------------
 if __name__ == '__main__':
-    hamilton = HamiltonMVP(verbose = True,
-                           num_simulated_valves = 3)
+    hamilton = HamiltonMVP(verbose = True)
 
     for valve_ID in range(hamilton.howManyValves()):
         text = "Valve " + str(valve_ID+1)
