@@ -274,8 +274,7 @@ class StormXMLObject(object):
     ## __setattr__
     #
     # This method is over-written for the purpose of logging which
-    # attributes were added to the class after. This could also be
-    # determined by the class dictionary?
+    # attributes were added to the class after instantiation.
     #
     # @param name The name of attribute to set the value of.
     # @param value The value to set the attribute to.
