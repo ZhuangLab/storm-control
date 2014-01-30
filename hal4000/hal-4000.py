@@ -953,6 +953,16 @@ class Window(QtGui.QMainWindow):
         #        
         self.startCamera()
 
+        #
+        # Print a list of unused parameters.
+        #
+        unused = p.unused()
+        if (len(unused) > 0):
+            print "The following parameters in", p.parameters_file, "were not used."
+            for param in sorted(unused):
+                print "  ", param
+            print ""
+
     ## newSettings
     #
     # Parse a parameters file & add it to the parameters combo box. The names

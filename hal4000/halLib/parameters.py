@@ -188,7 +188,7 @@ def setSetupName(parameters, setup_name):
 # A parameters object whose attributes are created dynamically
 # by parsing an XML file.
 #
-class StormXMLObject:
+class StormXMLObject(object):
 
     ## __init__
     #
@@ -197,6 +197,9 @@ class StormXMLObject:
     # @param nodes A list of XML nodes.
     #
     def __init__(self, nodes):
+
+        self.attributes = {}
+        self.warned = False
 
         # FIXME: someday this is going to cause a problem..
         max_channels = 8
@@ -253,6 +256,50 @@ class StormXMLObject:
                         else: # everything else is assumed to be a (non-unicode) string
                             setattr(self, slot, str(value))
 
+    ## __getattribute__
+    #
+    # This method is over-written for the purpose of logging which
+    # attributes of an instance are actually used.
+    #
+    # @param name The name of the attribute to return the value of.
+    #
+    # @return The value of the requested attribute.
+    #
+    def __getattribute__(self, name):
+        if hasattr(self, "attributes") and (name != "attributes"):
+            if (name in self.attributes):
+                self.attributes[name] += 1
+        return object.__getattribute__(self, name)
+
+    ## __setattr__
+    #
+    # This method is over-written for the purpose of logging which
+    # attributes were added to the class after. This could also be
+    # determined by the class dictionary?
+    #
+    # @param name The name of attribute to set the value of.
+    # @param value The value to set the attribute to.
+    #
+    def __setattr__(self, name, value):
+        object.__setattr__(self, name, value)
+        if (name != "attributes"):
+            self.attributes[name] = 0
+
+    ## unused
+    #
+    # @return A list of the attributes in the instance that were never used.
+    # 
+    def unused(self):
+        if not self.warned:
+            self.warned = True
+            not_used = []
+            for key, value in self.attributes.iteritems():
+                if (value == 0):
+                    not_used.append(key)
+            return not_used
+        else:
+            return []
+
 
 #
 # Testing
@@ -262,6 +309,12 @@ if __name__ == "__main__":
     import sys
 
     if 1:
+        test = Parameters(sys.argv[1])
+        print test.setup_name
+        print "1:", test.unused()
+        print "2:", test.unused()
+
+    if 0:
         test = Hardware(sys.argv[1])
         print dir(test)
         for k,v in test.__dict__.iteritems():
