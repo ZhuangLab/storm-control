@@ -30,6 +30,7 @@ class Window(QtGui.QMainWindow):
         self.fit_values = []
         self.minimum_intensity = 10
         self.points = []
+        self.settings = QtCore.QSettings("Zhuang Lab", "zee-calibrator")
         self.stage_fit = []
         self.stage_qpd = []
         self.wx_wy_cat = []
@@ -81,6 +82,11 @@ class Window(QtGui.QMainWindow):
 
         #self.ui.plotTabWidget.currentChanged.connect(self.handleTabChanges)
         #self.handleTabChanges(0)
+
+        # load settings.
+        self.directory = str(self.settings.value("directory", "").toString())
+        self.move(self.settings.value("position", QtCore.QPoint(100, 100)).toPoint())
+        self.resize(self.settings.value("size", self.size()).toSize())
 
     def analyzeData(self, filename):
         self.ui.plotTabWidget.setCurrentIndex(0)
@@ -171,6 +177,11 @@ class Window(QtGui.QMainWindow):
         # print & save coefficients
         #z_calib.printWxWyCoeff()
         #z_calib.saveZCal()
+
+    def closeEvent(self, event):
+        self.settings.setValue("directory", self.directory)
+        self.settings.setValue("position", self.pos())
+        self.settings.setValue("size", self.size())
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
