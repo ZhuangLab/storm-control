@@ -43,7 +43,6 @@ class Window(QtGui.QMainWindow):
         self.setWindowIcon(QtGui.QIcon("leifeng.ico"))
 
         # set ui defaults
-        self.ui.pixelSpinBox.setValue(167.0)
         self.ui.powerComboBox.addItems(["0","1","2","3","4"])
         self.ui.powerComboBox.setCurrentIndex(2)
 
@@ -87,6 +86,8 @@ class Window(QtGui.QMainWindow):
         self.directory = str(self.settings.value("directory", "").toString())
         self.move(self.settings.value("position", QtCore.QPoint(100, 100)).toPoint())
         self.resize(self.settings.value("size", self.size()).toSize())
+        self.ui.pixelSpinBox.setValue(self.settings.value("pix_per_nm", 160.0).toFloat()[0])
+
 
     def analyzeData(self, filename):
         self.ui.plotTabWidget.setCurrentIndex(0)
@@ -182,6 +183,7 @@ class Window(QtGui.QMainWindow):
         self.settings.setValue("directory", self.directory)
         self.settings.setValue("position", self.pos())
         self.settings.setValue("size", self.size())
+        self.settings.setValue("pix_per_nm", self.ui.pixelSpinBox.value())
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
