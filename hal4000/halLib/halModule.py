@@ -51,7 +51,6 @@ class HalModule():
     #
     # @param frame A camera.Frame object
     #
-    @hdebug.debug
     def newFrame(self, frame):
         pass
 
