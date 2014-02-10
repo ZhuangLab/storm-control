@@ -82,7 +82,7 @@
 # startFilm(filename)
 #   Start filming, results saved in filename.
 #
-#   filename - The name of the film with out any extensions.
+#   filename - The name of the film without any extensions.
 #
 # stopFilm()
 #   Stop filming.
@@ -283,7 +283,7 @@ class Window(QtGui.QMainWindow):
                 a_action.triggered.connect(instance.show)
             self.modules.append(instance)
             
-        # Connect signals between modules and to HAL.
+        # Connect signals between modules, HAL and the camera.
         for from_module in self.modules:
             signals = from_module.getSignals()
 
