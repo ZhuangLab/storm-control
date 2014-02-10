@@ -10,8 +10,8 @@
 import sys
 from PyQt4 import QtCore, QtNetwork
 
-import halLib.hdebug as hdebug
 import halLib.halModule as halModule
+import halLib.hdebug as hdebug
 
 ## match
 #
@@ -31,22 +31,32 @@ def match(string1, string2):
         return False
 
 
-## TCPCommand
+## TCPMessage
 #
 # Contains the contents of a TCP command.
 #
-# @param command_type The type of the command.
-# @param command_data The data in the command.
-#
 class TCPMessage():
 
+    ## __init__
+    #
+    # @param command_type The type of the command.
+    # @param command_data The data in the command.
+    #
     def __init__(self, command_type, command_data):
         self.command_data = command_data
         self.command_type = command_type
 
+    ## getType
+    #
+    # @return The command type.
+    #
     def getType(self):
         return self.command_type
 
+    ## getData
+    #
+    # @return The command data (as a list of values).
+    #
     def getData(self):
         return self.command_data
 
@@ -86,6 +96,16 @@ class TCPControl(QtNetwork.QTcpServer, halModule.HalModule):
 
         # Configure to listen on the appropriate port.
         self.listen(QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost), self.port)
+
+    ## connectSignals
+    #
+    # @param signals An array of signals that we might be interested in connecting to.
+    #
+    @hdebug.debug
+    def connectSignals(self, signals):
+        for signal in signals:
+            if (signal[1] == "tcpComplete"):
+                signal[2].connect(self.sendComplete)
 
     ## disconnect
     #
@@ -162,14 +182,6 @@ class TCPControl(QtNetwork.QTcpServer, halModule.HalModule):
         else:
             return False
 
-    ## loadGUISettings
-    #
-    # @param settings A QtCore.QSettings object.
-    #
-    @hdebug.debug
-    def loadGUISettings(self):
-        pass
-
     ## readyRead
     #
     # Called when the external program sends a command. The command
@@ -207,13 +219,13 @@ class TCPControl(QtNetwork.QTcpServer, halModule.HalModule):
                 elif (m_type == "int"):
                     command_data.append(int(m_value))
                 elif (m_type == "float"):
-                    comamnd_data.append(float(m_value))
+                    command_data.append(float(m_value))
                 else:
                     print "Unknown type:", m_type
                 i += 2
 
-            self.commMessage.emit(TCPCommand(command_type, command_data))
-
+            self.commMessage.emit(TCPMessage(command_type, command_data))
+     
     ## sendComplete
     #
     # Called to send a complete message back to the external program. This
@@ -221,15 +233,15 @@ class TCPControl(QtNetwork.QTcpServer, halModule.HalModule):
     # a movie.
     #
     # @param a_string Additional data as a string to send with the complete message.
+    #
     @hdebug.debug
-    def sendComplete(self, a_string = "NA"):
+    def sendComplete(self, a_string):
         if self.isConnected():
             hdebug.logText("sendComplete " + a_string)
             self.socket.write(QtCore.QByteArray("Complete," + a_string + "\n"))
             self.socket.flush()
         else:
             hdebug.logText("sendComplete: not connected")
-
 
 
 #
