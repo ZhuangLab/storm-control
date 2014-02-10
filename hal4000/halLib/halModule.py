@@ -13,7 +13,7 @@ import halLib.hdebug as hdebug
 #
 # Provides the default functionality for a HAL module
 #
-class HalModule():
+class HalModule(object):
 
     ## close
     #
@@ -24,6 +24,12 @@ class HalModule():
         print "close error!"
 
     ## connectSignals
+    #
+    # The signals is an array of arrays in this form:
+    #  [[A string containing the module type,
+    #   [A string containing the name of the signal,
+    #   [The signal object],
+    #  ...]
     #
     # @param signals An array of signals that we might be interested in connecting to.
     #
@@ -44,14 +50,15 @@ class HalModule():
     # @param settings A QtCore.QSettings object.
     #
     @hdebug.debug
-    def loadGUISettings(self):
+    def loadGUISettings(self, settings):
         pass
 
     ## newFrame
     #
     # @param frame A camera.Frame object
+    # @param filming True/False if we are currently filming.
     #
-    def newFrame(self, frame):
+    def newFrame(self, frame, filming):
         pass
 
     ## newParameters
@@ -64,10 +71,10 @@ class HalModule():
 
     ## newShutters
     #
-    # @param filename The name of a shutters file.
+    # @param shutters_filename The name of a shutters XML file.
     #
     @hdebug.debug
-    def newShutters(self, filename):
+    def newShutters(self, shutters_filename):
         pass
 
     ## saveGUISettings
@@ -88,16 +95,23 @@ class HalModule():
 
     ## startFilm
     #
-    # @param filename The name of the film without any extensions.
+    # @param film_name The name of the film without any extensions, or False if the film is not being saved.
+    # @param tcp_requested True/False the film was requested via TCP/IP.
     #
     @hdebug.debug
-    def startFilm(self, filename):
+    def startFilm(self, film_name, tcp_requested):
         pass
 
     ## stopFilm
     #
+    # Called at when filming is complete. The writer is passed to the modules
+    # so that they can (optionally) add any module specific data to the film's
+    # meta-data (the .inf file).
+    #
+    # @param film_writer The film writer object.
+    #
     @hdebug.debug
-    def stopFilm(self):
+    def stopFilm(self, film_writer):
         pass
 
 
