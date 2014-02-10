@@ -12,6 +12,7 @@
 import copy
 import os
 from xml.dom import minidom, Node
+import xml.etree.ElementTree as ElementTree
 
 default_params = 0
 
@@ -38,29 +39,43 @@ def copyAttributes(original, duplicate):
 # @return A hardware object.
 #
 def Hardware(hardware_file):
-    xml = minidom.parse(hardware_file)
+    xml = ElementTree.parse(hardware_file).getroot()
 
     # Create the hardware object.
     xml_object = StormXMLObject([])
 
-    hardware_types = ["camera",
-                      "focuslock",
-                      "illumination",
-                      "joystick",
-                      "misc_control",
-                      "shutters",
-                      "stage",
-                      "temperature_logger"]
-    for h_type in hardware_types:
-        h_xml = xml.getElementsByTagName(h_type).item(0)
-        if h_xml:
-            h_object = StormXMLObject(h_xml.childNodes)
-            h_params_xml = h_xml.getElementsByTagName("parameters").item(0)
-            if h_params_xml:
-                h_object.parameters = StormXMLObject(h_params_xml.childNodes)
-            else:
-                h_object.parameters = False
-            setattr(xml_object, h_type, h_object)
+    # Load camera information.
+    camera_xml = xml.find("camera")
+    xml_object.camera.module = camera_xml.find("module").text
+    xml_object.camera.parameters = StormXMLObject(camera_xml.find("parameters"))
+
+    # Load modules.
+    xml_object.modules = []
+    for xml_module in xml.find("modules"):
+        module = StormXMLObject(xml_module)
+        module.parameters = StormXMLObject(xml_module.find("parameters"))
+        module.hal_type = xml_module.tag
+
+        xml_object.modules.append(module)
+
+#    hardware_types = ["camera",
+#                      "focuslock",
+#                      "illumination",
+#                      "joystick",
+#                      "misc_control",
+#                      "shutters",
+#                      "stage",
+#                      "temperature_logger"]
+#    for h_type in hardware_types:
+#        h_xml = xml.getElementsByTagName(h_type).item(0)
+#        if h_xml:
+#            h_object = StormXMLObject(h_xml.childNodes)
+#            h_params_xml = h_xml.getElementsByTagName("parameters").item(0)
+#            if h_params_xml:
+#                h_object.parameters = StormXMLObject(h_params_xml.childNodes)
+#            else:
+#                h_object.parameters = False
+#            setattr(xml_object, h_type, h_object)
 
     return xml_object
 
