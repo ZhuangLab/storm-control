@@ -150,6 +150,7 @@ def trimString(string, max_len):
 # The main window.
 #
 class Window(QtGui.QMainWindow):
+    tcpComplete = QtCore.pyqtSignal(object)
 
     ## __init__
     #
@@ -174,6 +175,7 @@ class Window(QtGui.QMainWindow):
         self.parameters = parameters
         self.running_shutters = False
         self.settings = QtCore.QSettings("Zhuang Lab", "hal-4000_" + parameters.setup_name.lower())
+        self.tcp_requested_movie = False
         self.ui_mode = ""
         self.will_overwrite = False
         self.writer = False
@@ -249,18 +251,17 @@ class Window(QtGui.QMainWindow):
                                              parent = self)
 
         # Insert additional menu items for the camera(s) as necessary
-        if ((self.ui_mode == "single") or (self.ui_mode == "detached")):
+        if (self.ui_mode == "detached"):
             self.ui.actionCamera1 = QtGui.QAction(self.tr("Camera"), self)
-            self.ui.menuFile.insertAction(self.ui.separator2, self.ui.actionCamera1)
+            self.ui.menuFile.insertAction(self.ui.actionQuit, self.ui.actionCamera1)
             self.ui.actionCamera1.triggered.connect(self.camera.showCamera1)
-
-        else:
+        elif (self.ui_mode == "dual"):
             self.ui.actionCamera1 = QtGui.QAction(self.tr("Camera1"), self)
-            self.ui.menuFile.insertAction(self.ui.separator2, self.ui.actionCamera1)
+            self.ui.menuFile.insertAction(self.ui.actionQuit, self.ui.actionCamera1)
             self.ui.actionCamera1.triggered.connect(self.camera.showCamera1)
 
             self.ui.actionCamera2 = QtGui.QAction(self.tr("Camera2"), self)
-            self.ui.menuFile.insertAction(self.ui.separator2, self.ui.actionCamera2)
+            self.ui.menuFile.insertAction(self.ui.actionQuit, self.ui.actionCamera2)
             self.ui.actionCamera2.triggered.connect(self.camera.showCamera2)
 
         # camera signals
@@ -272,27 +273,30 @@ class Window(QtGui.QMainWindow):
         #
 
         # Load the requested modules.
+        add_separator = False
         for module in hardware.modules:
-            a_module = __import__(module.module_name)
+            a_module = halImport(module.module_name)
             a_class = getattr(a_module, module.class_name)
             instance = a_class(module.parameters, parameters, self)
             instance.hal_type = module.hal_type
             if (hasattr(module, "menu_item")):
+                add_separator = True
                 a_action = QtGui.QAction(self.tr(module.menu_item), self)
-                self.ui.menuFile.insertAction(self.ui.separator2, a_action)
+                self.ui.menuFile.insertAction(self.ui.actionQuit, a_action)
                 a_action.triggered.connect(instance.show)
             self.modules.append(instance)
-            
+
+        # Insert a separator into the file menu if necessary.
+        if add_separator:
+            self.ui.menuFile.insertSeparator(self.ui.actionQuit)
+
         # Connect signals between modules, HAL and the camera.
-        for from_module in self.modules:
+        everything = self.modules + [self] + [self.camera]
+        for from_module in everything:
             signals = from_module.getSignals()
 
-            # between modules.
-            for to_module in self.modules:
+            for to_module in everything:
                 to_module.connectSignals(signals)
-
-            # to HAL.
-            self.connectSignals(signals)
 
         #
         # More ui stuff
@@ -324,7 +328,7 @@ class Window(QtGui.QMainWindow):
         # Load GUI settings
         #
 
-        # HAL
+        # HAL GUI settings.
         self.gui_settings = []
         self.move(self.settings.value("main_pos", QtCore.QPoint(100, 100)).toPoint())
 
@@ -347,7 +351,7 @@ class Window(QtGui.QMainWindow):
                 if self.settings.value(name + "_visible", False).toBool():
                     object.show()
 
-        # Modules
+        # Module GUI settings.
         for module in self.modules:
             module.loadGUISettings(self.settings)
 
@@ -356,163 +360,6 @@ class Window(QtGui.QMainWindow):
         #
         self.camera.cameraInit()
 
-    ########################################################
-    #
-    # Methods that handle external/remote commands that come by TCP/IP.
-    #
-    # In keeping with the new tradition these should all
-    # be renamed tcpXYZ
-    #
-
-    handleTCPMessage(self):
-            
-    ## handleCommAbortMovie
-    #
-    # This is called when the external program wants to stop a movie.
-    #
-    @hdebug.debug
-    def handleCommAbortMovie(self):
-        if self.filming:
-            self.stopFilm()
-
-    ## handleCommDisconnect
-    #
-    # This is useful for those occasions where things get
-    # messed up by having two programs connected at once.
-    # Hopefully this is no longer possible so this method
-    # is not needed.
-    #
-    # @param bool Dummy parameter.
-    #
-    @hdebug.debug
-    def handleCommDisconnect(self, bool):
-        if self.tcp_control:
-            self.tcp_control.disconnect()
-
-    ## handleCommMovie
-    #
-    # This called when the external program wants to take a movie.
-    #
-    # Notes:
-    # 1. This will overwrite existing movies of the same
-    #    name without asking or warning.
-    # 2. The movie name is specified by the external program
-    #    but the file type is still specified by HAL.
-    #
-    # @param name The name of the movie.
-    # @param length The length of the movie in frames.
-    #
-    @hdebug.debug
-    def handleCommMovie(self, name, length):
-
-        # set to new comm specific values
-        self.ui.filenameLabel.setText(name + self.parameters.filetype)
-
-        # start the film
-        self.tcp_requested_movie = True
-        self.startFilm(filmSettings.FilmSettings("fixed_length", length))
-
-    ## handleCommParameters
-    #
-    # This is called when the external program want to change
-    # the current parameters. It can only select a parameters
-    # file that has already been loaded.
-    #
-    # @param index The index of the desired parameter file.
-    #
-    @hdebug.debug
-    def handleCommParameters(self, index):
-        self.parameters_box.setCurrentParameters(index)
-
-    ## handleCommSetDirectory
-    #
-    # This is called when the external program wants to change
-    # the current working directory.
-    #
-    # @param directory
-    #
-    @hdebug.debug
-    def handleCommSetDirectory(self, directory):
-        if (not self.current_directory):
-            self.current_directory = self.directory[:-1]
-        self.newDirectory(directory)
-
-    ## handleCommStart
-    #
-    # This is called when a external program connects.
-    #
-    @hdebug.debug
-    def handleCommStart(self):
-        print "commStart"
-        self.ui.recordButton.setEnabled(False)
-        if self.stage_control:
-            self.stage_control.startLockout()
-
-    ## handleCommStop
-    #
-    # This is called when a external program disconnects.
-    #
-    @hdebug.debug
-    def handleCommStop(self):
-        print "commStop"
-        self.ui.recordButton.setEnabled(True)
-        if self.current_directory:
-            self.newDirectory(self.current_directory)
-            self.current_directory = False
-        if self.stage_control:
-            self.stage_control.stopLockout()
-
-
-    ########################################################
-    #
-    # Methods for joystick control.
-    #
-
-    ## jstickLockJump
-    #
-    # Jump the focus lock up or down by step_size.
-    #
-    # @param step_size Distance to jump the focus lock.
-    #
-    @hdebug.debug
-    def jstickLockJump(self, step_size):
-        if self.focus_lock and (not self.filming):
-            self.focus_lock.jump(step_size)
-
-    ## jstickMotion
-    #
-    # Move the XY stage at the given speed (um/s?)
-    #
-    # @param x_speed Speed at which to move the stage in x.
-    # @param y_speed Speed at which to move the stage in y.
-    #
-    def jstickMotion(self, x_speed, y_speed):
-        if self.stage_control and (not self.filming):
-            self.stage_control.jog(x_speed, y_speed)
-
-    ## jstickStep
-    #
-    # Step the XY stage a fixed amount (um?)
-    #
-    # @param x_step Distance to step the stage in x.
-    # @param y_step Distance to step the stage in y.
-    #
-    def jstickStep(self, x_step, y_step):
-        if self.stage_control and (not self.filming):
-            self.stage_control.step(x_step, y_step)
-    
-    ## jstickToggleFilm
-    #
-    # Start/stop filming.
-    #
-    @hdebug.debug
-    def jstickToggleFilm(self):
-        self.toggleFilm()
-
-    ########################################################
-    #
-    # All other methods alphabetically ordered, for lack of a better system.
-    #
 
     ## cleanUp
     #
@@ -526,7 +373,7 @@ class Window(QtGui.QMainWindow):
         print " Dave? What are you doing Dave?"
         print "  ..."
 
-        # Save GUI settings.
+        # Save HAL GUI settings.
         self.settings.setValue("main_pos", self.pos())
         if (self.ui_mode == "single"):
             self.settings.setValue("main_size", self.size())
@@ -543,51 +390,19 @@ class Window(QtGui.QMainWindow):
                 self.settings.setValue(name + "_pos", object.pos())
                 self.settings.setValue(name + "_visible", object.isVisible())
 
+        # Save module GUI settings.
+        for module in self.modules:
+            module.saveGUISettings(self.settings)
+
         # Close the film notes log file.
         self.logfile_fp.close()
 
         # stop the camera
         self.camera.quit()
 
-        # stop the spot counter
-        if self.spot_counter:
-            try:
-                self.spot_counter.shutDown()
-            except:
-                print traceback.format_exc()
-                print "problem stopping the spot counter."
-
-        if self.illumination_control:
-            # stop talking to the AOTF
-            self.illumination_control.quit()
-
-            # shutdown the national instruments stuff
-            self.shutter_control.cleanup()
-            self.shutter_control.shutDown()
-
-        # shutdown the stage
-        if self.stage_control:
-            self.stage_control.quit()
-
-        # shutdown the focus lock
-        if self.focus_lock:
-            self.focus_lock.quit()
-
-        # shutdown the misc controls
-        if self.misc_control:
-            self.misc_control.quit()
-
-        # shutdown the tcp/ip control
-        if self.tcp_control:
-            self.tcp_control.close()
-
-        # shutdown the progression control
-        if self.progression_control:
-            self.progression_control.close()
-
-        # shutdown joystick
-        if self.joystick_control:
-            self.joystick_control.close()
+        # stop the modules.
+        for module in self.modules:
+            module.close()
 
     ## closeEvent
     #
@@ -598,6 +413,22 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def closeEvent(self, event):
         self.cleanUp()
+
+    ## connectSignals
+    #
+    # @param signals An array of signals that we might be interested in connecting to.
+    #
+    @hdebug.debug
+    def connectSignals(self, signals):
+        for signal in signals:
+            if (signal[1] == "commGotConnection"):
+                signal[2].connect(self.handleCommStart)
+            elif (signal[1] == "commLostConnection"):
+                signal[2].connect(self.handleCommStop)
+            elif (signal[1] == "commMessage"):
+                signal[2].connect(self.handleCommMessage)
+            elif (signal[1] == "jstickToggleFilm"):
+                signal[2].connect(self.handleJoystickToggleFilm)
 
     ## dragEnterEvent
     #
@@ -635,6 +466,14 @@ class Window(QtGui.QMainWindow):
                 hdebug.logText(" Not a settings file, trying as shutters file")
                 self.newShutters(filename)
 
+    ## getSignals
+    #
+    # @return The signals this module provides.
+    #
+    @hdebug.debug
+    def getSignals(self):
+        return [["hal", "tcpComplete", self.tcpComplete]]
+
     ## handleAutoInc
     #
     # This is called when the auto-increment check box is clicked.
@@ -644,6 +483,38 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleAutoInc(self, flag):
         self.parameters.auto_increment = flag
+
+    ## handleCommMessage
+    #
+    # Handles all the message from tcpControl.
+    #
+    # @param message A tcpControl.TCPMessage object.
+    #
+    @hdebug.debug
+    def handleCommMessage(self, message):
+
+        m_type = message.getType()
+        m_data = message.getData()
+
+        if (m_type == "abortMovie"):
+            if self.filming:
+                self.stopFilm()
+
+        elif (m_type == "parameters"):
+            self.parameters_box.setCurrentParameters(m_data[0])
+
+        elif (m_type == "movie"):
+            # set to new comm specific values
+            self.ui.filenameLabel.setText(m_data[0] + self.parameters.filetype)
+
+            # start the film
+            self.tcp_requested_movie = True
+            self.startFilm(filmSettings.FilmSettings("fixed_length", m_data[1]))
+
+        elif (m_type == "setDirectory"):
+            if (not self.current_directory):
+                self.current_directory = self.directory[:-1]
+            self.newDirectory(m_data[0])
 
     ## handleAutoShutters
     #
@@ -655,41 +526,34 @@ class Window(QtGui.QMainWindow):
     def handleAutoShutters(self, flag):
         self.parameters.auto_shutters = flag
 
-    ## handleFocusLock
+    ## handleCommStart
     #
-    # This is called to make the focus lock GUI visible, if 
-    # there is a focus lock.
-    #
-    # @param bool Dummy parameter.
+    # This is called when a external program connects.
     #
     @hdebug.debug
-    def handleFocusLock(self, bool):
-        if self.focus_lock:
-            self.focus_lock.show()
+    def handleCommStart(self):
+        print "commStart"
+        self.ui.recordButton.setEnabled(False)
 
-    ## handleIllumination
+    ## handleCommStop
     #
-    # This is called to make the illumination GUI visible, if
-    # there is illumination control.
-    #
-    # @param bool Dummy parameter.
+    # This is called when a external program disconnects.
     #
     @hdebug.debug
-    def handleIllumination(self, bool):
-        if self.illumination_control:
-            self.illumination_control.show()
+    def handleCommStop(self):
+        print "commStop"
+        self.ui.recordButton.setEnabled(True)
+        if self.current_directory:
+            self.newDirectory(self.current_directory)
+            self.current_directory = False
 
-    ## handleMiscControls
+    ## handleJoystickToggleFilm
     #
-    # This is called to make the misc controls GUI visible, if
-    # there are misc controls.
-    #
-    # @param bool Dummy parameter.
+    # Start/stop filming.
     #
     @hdebug.debug
-    def handleMiscControls(self, bool):
-        if self.misc_control:
-            self.misc_control.show()
+    def handleJoystickToggleFilm(self):
+        self.toggleFilm()
 
     ## handleModeComboBox
     #
@@ -707,65 +571,6 @@ class Window(QtGui.QMainWindow):
             self.parameters.acq_mode = "fixed_length"
         self.showHideLength()
 
-    ## handleProgIncPower
-    #
-    # This is called by the progression GUI to cause the illumination
-    # control to change the power of a particular channel.
-    #
-    # @param channel The channel (wavelength) to change.
-    # @param power_inc The amount to change the power by.
-    #
-    @hdebug.debug
-    def handleProgIncPower(self, channel, power_inc):
-        if self.illumination_control:
-            self.illumination_control.remoteIncPower(channel, power_inc)
-
-    ## handleProgressions
-    #
-    # This is called to show the progressions GUI.
-    #
-    # @param bool Dummy parameter.
-    #
-    @hdebug.debug  
-    def handleProgressions(self, bool):
-        if self.progression_control:
-            self.progression_control.show()
-
-    ## handleProgSetPower
-    #
-    # This is called by the progression GUI to cause the illumination
-    # control to set the power of a channel to a particular value.
-    #
-    # @param channel The channel (wavelength) to set.
-    # @param power The power to set channel to.
-    #
-    @hdebug.debug
-    def handleProgSetPower(self, channel, power):
-        if self.illumination_control:
-            self.illumination_control.remoteSetPower(channel, power)
-
-    ## handleSpotCounter
-    #
-    # This is called to show the spot counter GUI.
-    #
-    # @param bool Dummy parameter.
-    #
-    @hdebug.debug
-    def handleSpotCounter(self, bool):
-        if self.spot_counter:
-            self.spot_counter.show()
-
-    ## handleStage
-    #
-    # This is called to show the stage control GUI.
-    #
-    # @param bool Dummy parameter.
-    #
-    @hdebug.debug
-    def handleStage(self, bool):
-        if self.stage_control:
-            self.stage_control.show()
-
     ## handleSyncChange
     #
     # This is called by the camera display GUI to set sync parameter.
@@ -774,9 +579,9 @@ class Window(QtGui.QMainWindow):
     #
     # FIXME: Is this still used? I think it is all in the camera
     #    display class now.
-    @hdebug.debug
-    def handleSyncChange(self, sync):
-        self.parameters.sync = sync
+    #@hdebug.debug
+    #def handleSyncChange(self, sync):
+    #    self.parameters.sync = sync
 
     ## newDirectory
     #
@@ -810,18 +615,9 @@ class Window(QtGui.QMainWindow):
         for frame in frames:
             if self.filming:
                 self.updateFramesForFilm(frame)
-                if self.focus_lock:
-                    self.focus_lock.newFrame(frame)
-                if self.illumination_control:
-                    self.illumination_control.newFrame(frame)
-                if self.progression_control:
-                    self.progression_control.newFrame(frame)
-            if self.spot_counter:
-                self.spot_counter.newFrame(frame)
-            if self.misc_control:
-                self.misc_control.newFrame(frame)
-            if self.temperature_logger:
-                self.temperature_logger.newFrame(frame)
+
+            for module in self.modules:
+                module.newFrame(frame, self.filming)
 
     ## newParameters
     #
@@ -847,43 +643,14 @@ class Window(QtGui.QMainWindow):
             self.directory = p.directory
 
         #
-        # Setup the illumination control (and the spot counter).
+        # Setup the modules.
         #
-        # If there is illumination control then the spot counter is initialized
-        # in the call to newShutters, otherwise it is initialized here.
-        #
-        if self.illumination_control:
-            self.illumination_control.newParameters(p)
-            self.newShutters(p.shutters)
-        else:
-            if self.spot_counter:
-                self.spot_counter.newParameters(p, [])
+        for module in self.modules:
+            module.newParameters(p)
 
         #
-        # setup the stage
+        # Film settings.
         #
-        if self.stage_control:
-            self.stage_control.newParameters(p)
-
-        #
-        # setup the focus lock
-        #
-        if self.focus_lock:
-            self.focus_lock.newParameters(p)
-
-        #
-        # setup the misc controls
-        #
-        if self.misc_control:
-            self.misc_control.newParameters(p)
-
-        #
-        # setup the progressions
-        #
-        if self.progression_control:
-            self.progression_control.newParameters(p)
-
-        # film settings
         extension = p.extension # Save a temporary copy as the original will get wiped out when we set the filename, etc.
         filetype = p.filetype
         self.ui.directoryText.setText(trimString(p.directory, 31))
@@ -917,12 +684,12 @@ class Window(QtGui.QMainWindow):
         #
         # Print a list of unused parameters.
         #
-        unused = p.unused()
-        if (len(unused) > 0):
-            print "The following parameters in", p.parameters_file, "were not used."
-            for param in sorted(unused):
-                print "  ", param
-            print ""
+        #unused = p.unused()
+        #if (len(unused) > 0):
+        #    print "The following parameters in", p.parameters_file, "were not used."
+        #    for param in sorted(unused):
+        #        print "  ", param
+        #    print ""
 
     ## newSettings
     #
@@ -969,40 +736,25 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def newShutters(self, shutters_filename):
-        if self.shutter_control:
-            self.shutter_control.stopFilm()
-            self.shutter_control.cleanup()
-        new_shutters = 0
-        shutters_filename = str(shutters_filename)
-        if self.shutter_control:
-            try:
-                self.shutter_control.parseXML(shutters_filename)
-                new_shutters = 1
-            except:
-                print traceback.format_exc()
-                hdebug.logText("failed to parse shutter file.")
-                self.shutter_control.parseXML(self.old_shutters_file)
-                self.parameters.shutters = self.old_shutters_file
-            if new_shutters:
-                self.parameters.shutters = shutters_filename
-                self.old_shutters_file = shutters_filename
-                self.ui.shuttersText.setText(getFileName(self.parameters.shutters))
-                self.camera.setSyncMax(self.shutter_control.getCycleLength())
-                params.setDefaultShutter(shutters_filename)
-        else:
+        new_shutters = False
+        try:
+            for module in self.modules:
+                module.newShutters(shutters_filename)
+            new_shutters = True
+        except:
+            print traceback.format_exc()
+            hdebug.logText("failed to parse shutter file.")
+            for module in self.modules:
+                module.newShutters(self.old_shutters_file)
+            self.parameters.shutters = self.old_shutters_file
+        if new_shutters:
             self.parameters.shutters = shutters_filename
             self.old_shutters_file = shutters_filename
             self.ui.shuttersText.setText(getFileName(self.parameters.shutters))
-
-        #
-        # Setup the spot counter.
-        #
-        if self.spot_counter:
-            colors = []
-            if self.shutter_control:
-                colors = self.shutter_control.getColors()
-            self.spot_counter.newParameters(self.parameters, colors)
-
+            #self.camera.setSyncMax(self.shutter_control.getCycleLength())
+            params.setDefaultShutter(shutters_filename)
+            #self.spot_counter.newParameters(self.parameters, colors)
+            
     ## newShuttersFile
     #
     # This is called when the user select new shutter sequence from the file menu.
@@ -1062,8 +814,8 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def startFilm(self, film_settings = None):
         self.filming = True
-        self.filename = self.parameters.directory + str(self.ui.filenameLabel.text())
-        self.filename = self.filename[:-len(self.ui.filetypeComboBox.currentText())]
+        self.film_name = self.parameters.directory + str(self.ui.filenameLabel.text())
+        self.film_name = self.film_name[:-len(self.ui.filetypeComboBox.currentText())]
 
         if not film_settings:
             film_settings = filmSettings.FilmSettings(self.parameters.acq_mode,
@@ -1073,16 +825,17 @@ class Window(QtGui.QMainWindow):
             save_film = True
 
         # film file prep
+        self.writer = False
         self.ui.recordButton.setText("Stop")
         if save_film:
             if (self.ui_mode == "dual"):
                 self.writer = writers.createFileWriter(self.ui.filetypeComboBox.currentText(),
-                                                       self.filename,
+                                                       self.film_name,
                                                        self.parameters,
                                                        ["camera1", "camera2"])
             else:
                 self.writer = writers.createFileWriter(self.ui.filetypeComboBox.currentText(),
-                                                       self.filename,
+                                                       self.film_name,
                                                        self.parameters,
                                                        ["camera1"])
             self.camera.startFilm(self.writer, film_settings)
@@ -1090,51 +843,11 @@ class Window(QtGui.QMainWindow):
         else:
             self.camera.startFilm(None, film_settings)
             self.ui.recordButton.setStyleSheet("QPushButton { color: orange }")
+            self.film_name = False
 
-        # stage
-        if self.stage_control and (not self.tcp_requested_movie):
-            self.stage_control.startLockout()
-
-        # temperature / humidity logging
-        if self.temperature_logger and save_film:
-            self.temperature_logger.startThum(self.filename)
-
-        # focus lock
-        if self.focus_lock:
-            if save_film:
-                self.focus_lock.startLock(self.filename)
-            else:
-                self.focus_lock.startLock(0)
-
-        # shutters
-        self.running_shutters = 0 # This is necessary because if the user unchecks the shutters box
-                                  # during a film and we looked at parameters.auto_shutters the
-                                  # shutters would not get stopped at the end of the film.
-        if self.illumination_control:
-            if save_film:
-                self.illumination_control.openFile(self.filename)
-            if self.parameters.auto_shutters:
-                self.running_shutters = 1
-
-                # aotf prep
-                channels_used = self.shutter_control.getChannelsUsed()
-                self.shutter_control.prepare()
-                self.illumination_control.startFilm(channels_used)
-                
-                # ni prep
-                self.shutter_control.setup(self.parameters.kinetic_value)
-                self.shutter_control.startFilm()
-                    
-        # spot counter
-        if self.spot_counter:
-            if save_film:
-                self.spot_counter.startCounter(self.filename)
-            else:
-                self.spot_counter.startCounter(0)
-
-        # progression control
-        if self.progression_control:
-            self.progression_control.startFilm()
+        # modules
+        for module in self.modules:
+            module.startFilm(self.film_name, self.tcp_requested_movie)
 
         # go...
         self.startCamera()
@@ -1156,62 +869,35 @@ class Window(QtGui.QMainWindow):
     def stopFilm(self):
         self.filming = False
 
-        # beep to warn the user that the film is done in the case of longer 
+        # Beep to warn the user that the film is done in the case of longer 
         # fixed length films during which they might have passed out.
         if self.parameters.want_bell and (self.parameters.acq_mode == "fixed_length"):
             if (self.parameters.frames > 1000):
                 print "\7\7"
 
-        # film file finishing up
+        # Stop the camera.
+        self.camera.stopFilm()
+
+        # Film file finishing up.
         if self.writer:
-            self.camera.stopFilm()
-            stage_position = [0.0, 0.0, 0.0]
-            if self.stage_control:
-                stage_position = self.stage_control.getStagePosition()
-            lock_target = 0.0
-            if self.focus_lock:
-                lock_target = self.focus_lock.getLockTarget()
+
+            # Stop modules.
+            for module in self.modules:
+                module.stopFilm(self.writer)
+
+            self.writer.closeFile()
+
             self.updateNotes() # Get any changes to the notes made during filming.
-            self.logfile_fp.write(str(datetime.datetime.now()) + "," + self.filename + "," + str(self.parameters.notes) + "\r\n")
+            self.logfile_fp.write(str(datetime.datetime.now()) + "," + self.film_name + "," + str(self.parameters.notes) + "\r\n")
             self.logfile_fp.flush()
-            self.writer.closeFile(stage_position, lock_target)
-            self.writer = False
+
             if self.ui.autoIncCheckBox.isChecked() and (not self.tcp_requested_movie):
                 self.ui.indexSpinBox.setValue(self.ui.indexSpinBox.value() + 1)
             self.updateFilenameLabel("foo")
         else:
-            self.camera.stopFilm()
-
-        # shutters
-        if self.illumination_control:
-            self.illumination_control.closeFile()
-            if self.running_shutters:
-                # ni cleanup
-                self.shutter_control.stopFilm()
-
-                # aotf cleanup
-                channels_used = self.shutter_control.getChannelsUsed()
-                self.illumination_control.stopFilm(channels_used)
-
-        # focus lock
-        if self.focus_lock:
-            self.focus_lock.stopLock()
-
-        # stage
-        if self.stage_control and (not self.tcp_requested_movie):
-            self.stage_control.stopLockout()
-
-        # temperature / humidity logging
-        if self.temperature_logger:
-            self.temperature_logger.stopThum()
-
-        # spot counter
-        if self.spot_counter:
-            self.spot_counter.stopCounter()
-
-        # progression control
-        if self.progression_control:
-            self.progression_control.stopFilm()
+            # Stop modules.
+            for module in self.modules:
+                module.stopFilm(False)
 
         # restart the camera
         self.startCamera()
@@ -1222,13 +908,10 @@ class Window(QtGui.QMainWindow):
         # if the client requested the movie.
         if self.tcp_requested_movie:
 
-            if (lock_target == "failed"):
+            if (self.writer.getLockTarget() == "failed"):
                 hdebug.logText("QPD/Camera appears to have frozen..")
                 self.quit()
-            if self.spot_counter:
-                self.tcp_control.sendComplete(str(self.spot_counter.getCounts()))
-            else:
-                self.tcp_control.sendComplete()
+            self.tcpComplete.emit(self.writer.getSpotCounts())
             self.tcp_requested_movie = False
 
     ## toggleFilm
