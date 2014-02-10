@@ -153,7 +153,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>225</width>
-                  <height>200</height>
+                  <height>213</height>
                  </rect>
                 </property>
                </widget>
@@ -618,7 +618,7 @@
      <x>0</x>
      <y>0</y>
      <width>824</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -628,14 +628,7 @@
     <addaction name="actionSettings"/>
     <addaction name="actionShutter"/>
     <addaction name="actionDirectory"/>
-    <addaction name="actionDisconnect"/>
     <addaction name="separator"/>
-    <addaction name="actionFocus_Lock"/>
-    <addaction name="actionIllumination"/>
-    <addaction name="actionMisc_Controls"/>
-    <addaction name="actionProgression"/>
-    <addaction name="actionSpot_Counter"/>
-    <addaction name="actionStage"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
