@@ -47,6 +47,14 @@ class Camera(QtGui.QDialog):
     def cameraInit(self):
         pass
 
+    ## connectSignals
+    #
+    # @param signals An array of signals that we might be interested in connecting to.
+    #
+    @hdebug.debug
+    def connectSignals(self, signals):
+        pass
+
     ## getCameraDisplay
     #
     # Return the camera display frame for the purposes of
@@ -89,6 +97,14 @@ class Camera(QtGui.QDialog):
     #
     def getRecordButton(self):
         return False
+
+    ## getSignals
+    #
+    # @return The signals this module provides.
+    #
+    @hdebug.debug
+    def getSignals(self):
+        return []
 
     ## newParameters
     #
