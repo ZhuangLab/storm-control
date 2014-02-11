@@ -173,7 +173,6 @@ class Window(QtGui.QMainWindow):
         self.modules = []
         self.old_shutters_file = ""
         self.parameters = parameters
-        self.running_shutters = False
         self.settings = QtCore.QSettings("Zhuang Lab", "hal-4000_" + parameters.setup_name.lower())
         self.tcp_requested_movie = False
         self.ui_mode = ""
@@ -312,7 +311,6 @@ class Window(QtGui.QMainWindow):
         self.ui.actionSettings.triggered.connect(self.newSettingsFile)
         self.ui.actionQuit.triggered.connect(self.handleClose)
         self.ui.autoIncCheckBox.stateChanged.connect(self.handleAutoInc)
-        self.ui.autoShuttersCheckBox.stateChanged.connect(self.handleAutoShutters)
         self.ui.extensionComboBox.currentIndexChanged.connect(self.updateFilenameLabel)
         self.ui.filenameEdit.textChanged.connect(self.updateFilenameLabel)
         self.ui.filetypeComboBox.currentIndexChanged.connect(self.updateFilenameLabel)
@@ -527,16 +525,6 @@ class Window(QtGui.QMainWindow):
                 self.current_directory = self.directory[:-1]
             self.newDirectory(m_data[0])
 
-    ## handleAutoShutters
-    #
-    # This is called when the shutters check box is clicked.
-    #
-    # @param flag True if the check box is checked, false otherwise.
-    #
-    @hdebug.debug
-    def handleAutoShutters(self, flag):
-        self.parameters.auto_shutters = flag
-
     ## handleCommStart
     #
     # This is called when a external program connects.
@@ -638,11 +626,13 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def newParameters(self):
-        # for conveniently accessing parameters
+        # For conveniently accessing parameters
         p = self.parameters
 
+        # Camera
         #
-        # setup camera
+        # Note that the camera also modifies the parameters file, adding
+        # some information about the frame rate, etc..
         #
         self.camera.newParameters(p)
 
@@ -653,15 +643,14 @@ class Window(QtGui.QMainWindow):
         else:
             self.directory = p.directory
 
-        #
-        # Setup the modules.
-        #
+        # Modules.
         for module in self.modules:
             module.newParameters(p)
 
-        #
+        # Update shutters file based on the shutter file specified by the parameters file.
+        self.newShutters(p.shutters)
+
         # Film settings.
-        #
         extension = p.extension # Save a temporary copy as the original will get wiped out when we set the filename, etc.
         filetype = p.filetype
         self.ui.directoryText.setText(trimString(p.directory, 31))
@@ -687,9 +676,7 @@ class Window(QtGui.QMainWindow):
             self.ui.autoShuttersCheckBox.setChecked(False)
         self.updateFilenameLabel("foo")
 
-        #
-        # start the camera
-        #        
+        # Start the camera
         self.startCamera()
 
         #
@@ -741,7 +728,9 @@ class Window(QtGui.QMainWindow):
     #
     # Parse a shutters file & if successful, update the main window UI,
     # the camera (shutter sequence length) and the spot counter (frame
-    # colors and shutter sequence length).
+    # colors and shutter sequence length). If a module handles shutter
+    # file parsing & it does not like the shutters file then it should
+    # throw some kind of error.
     #
     # @param shutters_filename The name of the shutters file.
     #
@@ -847,7 +836,7 @@ class Window(QtGui.QMainWindow):
 
         # modules
         for module in self.modules:
-            module.startFilm(self.film_name, self.tcp_requested_movie)
+            module.startFilm(self.film_name, self.ui.autoShuttersCheckBox.isChecked())
 
         # go...
         self.startCamera()
