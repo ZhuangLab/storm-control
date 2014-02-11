@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <hardware>
-  <!-- Defines all the hardware.
-       
-       Note that if you don't have a particular piece of hardware
-       it needs to be commented out in this file.
-    -->
 
+  <!-- Define the camera. -->
   <camera>
     <!-- <module type="string">detachedSingleCamera</module> -->
     <module type="string">classicSingleCamera</module>
@@ -16,6 +12,7 @@
     </parameters>
   </camera>
 
+  <!-- Define the other modules to use for this setup. -->
   <modules>
 
     <!-- The focus lock -->
@@ -26,13 +23,11 @@
     </focuslock>
 
     <!-- Illumination (lasers, shutters, etc) control -->
-    <!--
     <illumination>
       <class_name type="string">AIlluminationControl</class_name>
       <menu_item type="string">Illumination</menu_item>
       <module_name type="string">illumination.noneIlluminationControl</module_name>
     </illumination>
-    -->
 
     <!-- Automatic illumination power adjustment -->
     <!--
