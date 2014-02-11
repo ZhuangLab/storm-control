@@ -7,6 +7,8 @@
 # Hazen 02/14
 #
 
+from PyQt4 import QtCore
+
 import halLib.hdebug as hdebug
 
 ## HalModule class.
@@ -51,7 +53,10 @@ class HalModule(object):
     #
     @hdebug.debug
     def loadGUISettings(self, settings):
-        pass
+        if self.hal_gui:
+            self.move(settings.value(self.hal_type + "_pos", QtCore.QPoint(200, 200)).toPoint())
+            if settings.value(self.hal_type + "_visible", False).toBool():
+                self.show()
 
     ## newFrame
     #
@@ -83,7 +88,9 @@ class HalModule(object):
     #
     @hdebug.debug
     def saveGUISettings(self, settings):
-        pass
+        if self.hal_gui:
+            settings.setValue(self.hal_type + "_pos", self.pos())
+            settings.setValue(self.hal_type + "_visible", self.isVisible())
 
     ## show
     #
