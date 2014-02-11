@@ -48,13 +48,16 @@ class QIlluminationControlWidget(QtGui.QWidget):
     @hdebug.debug
     def __init__(self, settings_file_name, parameters, parent = None):
         QtGui.QWidget.__init__(self, parent)
+        self.channel_names = []
 
         # parse the settings file
         xml = minidom.parse(settings_file_name)
         blocks = xml.getElementsByTagName("block")
         self.settings = []
         for i in range(blocks.length):
-            self.settings.append(channelWidgets.XMLToChannelObject(blocks[i].childNodes))
+            setting = channelWidgets.XMLToChannelObject(blocks[i].childNodes)
+            self.channel_names.append(setting.description)
+            self.settings.append(setting)
         self.number_channels = blocks.length
 
         # layout the widget
@@ -102,6 +105,14 @@ class QIlluminationControlWidget(QtGui.QWidget):
     @hdebug.debug
     def closeEvent(self, event):
         self.shutDown()
+
+    ## getChannelNames
+    #
+    # @return The names of the channels as list.
+    #
+    @hdebug.debug
+    def getChannelNames(self):
+        return self.channel_names
 
     ## getNumberChannels
     #
@@ -262,6 +273,7 @@ class QIlluminationControlWidget(QtGui.QWidget):
 # as the shutter control.
 #
 class IlluminationControl(QtGui.QDialog, halModule.HalModule):
+    channelNames = QtCore.pyqtSignal(object)
 
     ## __init__
     #
@@ -355,7 +367,8 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def getSignals(self):
-        return [[self.hal_type, "newColors", self.shutter_control.newColors],
+        return [[self.hal_type, "channelNames", self.channelNames],
+                [self.hal_type, "newColors", self.shutter_control.newColors],
                 [self.hal_type, "newCycleLength", self.shutter_control.newCycleLength]]
 
     ## handleCommMessage
@@ -402,6 +415,12 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def manualControl(self):
         self.power_control.manualControl()
+
+    ## moduleInit
+    #
+    @hdebug.debug
+    def moduleInit(self):
+        self.channelNames.emit(self.power_control.getChannelNames())
 
     ## newFrame
     #
