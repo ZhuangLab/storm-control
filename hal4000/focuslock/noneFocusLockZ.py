@@ -20,7 +20,7 @@ import focuslock.focusLockZ as focusLockZ
 # Focus Lock Dialog Box specialized for pseudo setup.
 #
 class AFocusLockZ(focusLockZ.FocusLockZQPD):
-    def __init__(self, hardware, parameters, tcp_control, parent = None):
+    def __init__(self, hardware, parameters, parent = None):
         qpd = noneWidgets.QPD()
         stage = noneWidgets.NanoP()
         lock_fn = lambda (x): 0.0 * x
@@ -32,7 +32,6 @@ class AFocusLockZ(focusLockZ.FocusLockZQPD):
         ir_laser = noneWidgets.IRLaser()
         focusLockZ.FocusLockZQPD.__init__(self,
                                           parameters,
-                                          tcp_control,
                                           control_thread,
                                           ir_laser,
                                           parent)
