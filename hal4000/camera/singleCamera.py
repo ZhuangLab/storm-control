@@ -67,6 +67,16 @@ class SingleCamera(genericCamera.Camera):
     def cameraInit(self):
         self.camera_control.cameraInit()
 
+    ## closeEvent
+    #
+    # Shut down communication with the camera.
+    #
+    # @param event A QEvent object.
+    #
+    @hdebug.debug
+    def closeEvent(self, event):
+        self.camera_control.quit()
+
     ## getCameraDisplay
     #
     # @return The camera display object.
@@ -149,14 +159,6 @@ class SingleCamera(genericCamera.Camera):
         [p.exposure_value, p.accumulate_value, p.kinetic_value] = self.camera_control.getAcquisitionTimings()        
         self.camera_display.newParameters(parameters)
         self.camera_params.newParameters(parameters)
-
-    ## quit
-    #
-    # Tell the camera control object to shutdown the camera.
-    #
-    @hdebug.debug
-    def quit(self):
-        self.camera_control.quit()
 
     ## startCamera
     #
