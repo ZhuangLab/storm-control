@@ -445,7 +445,6 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     # @param channels A list containing the names of the channels.
     #
     def addChannels(self, channels):
-        print "addChannels:", channels
 
         self.which_checked = []
         for i in range(len(channels)):
