@@ -20,6 +20,7 @@ class HalModule(object):
     ## close
     #
     # This should always be overridden and/or provided by a different base class.
+    # This will be called when HAL closes to perform any module specific clean-up.
     #
     @hdebug.debug
     def close(self):
@@ -41,6 +42,9 @@ class HalModule(object):
 
     ## getSignals
     #
+    # This returns the (PyQt) signals that this module provides
+    # as part of it's interface.
+    #
     # @return An array of signals provided by the module.
     #
     @hdebug.debug
@@ -48,6 +52,10 @@ class HalModule(object):
         return []
 
     ## loadGUISettings
+    #
+    # Called after initialization so that module can
+    # access any settings (such as visible, position, etc..)
+    # that it wanted to maintain across sessions.
     #
     # @param settings A QtCore.QSettings object.
     #
@@ -58,7 +66,21 @@ class HalModule(object):
             if settings.value(self.hal_type + "_visible", False).toBool():
                 self.show()
 
+    ## moduleInit
+    #
+    # Called only once after all the modules are instantiated and 
+    # have had a chance to connect signals. This exists so that 
+    # modules can exchange information that other modules might need
+    # to configure themselves properly.
+    #
+    @hdebug.debug
+    def moduleInit(self):
+        pass
+
     ## newFrame
+    #
+    # Called whenever a new frame of data is available
+    # from the camera.
     #
     # @param frame A camera.Frame object
     # @param filming True/False if we are currently filming.
@@ -68,6 +90,8 @@ class HalModule(object):
 
     ## newParameters
     #
+    # Called when a new set of parameters is chosen.
+    #
     # @param parameters A parameters object.
     #
     @hdebug.debug
@@ -76,6 +100,8 @@ class HalModule(object):
 
     ## newShutters
     #
+    # Called when a new shutters file is selected.
+    #
     # @param shutters_filename The name of a shutters XML file.
     #
     @hdebug.debug
@@ -83,6 +109,10 @@ class HalModule(object):
         pass
 
     ## saveGUISettings
+    #
+    # Called when HAL closes so that the module can save any
+    # settings that it wants to maintain across multiple
+    # sessions.
     #
     # @param settings A QtCore.QSettings object.
     #
@@ -102,6 +132,8 @@ class HalModule(object):
 
     ## startFilm
     #
+    # Called at the start of film acquisition.
+    #
     # @param film_name The name of the film without any extensions, or False if the film is not being saved.
     # @param run_shutters True/False the shutters should be run or not.
     #
@@ -115,7 +147,7 @@ class HalModule(object):
     # so that they can (optionally) add any module specific data to the film's
     # meta-data (the .inf file).
     #
-    # @param film_writer The film writer object.
+    # @param film_writer The film writer object, or False if the film was not saved.
     #
     @hdebug.debug
     def stopFilm(self, film_writer):
