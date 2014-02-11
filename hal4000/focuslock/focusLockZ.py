@@ -294,7 +294,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     # @param filming True/False if we are currently filming.
     #
     def newFrame(self, frame, filming):
-        if frame.master:
+        if filming and frame.master:
             if self.offset_file:
                 [offset, power, stage_z] = self.lock_display1.getOffsetPowerStage()
                 self.offset_file.write("{0:d} {1:.6f} {2:.6f} {3:.6f}\n".format(frame.number, offset, power, stage_z))
@@ -354,7 +354,8 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
         self.toggleLockButtonText(self.lock_display1.amLocked())
         self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())
         self.closeOffsetFile()
-        film_writer.setLockTarget(self.lock_display1.getLockTarget())
+        if film_writer:
+            film_writer.setLockTarget(self.lock_display1.getLockTarget())
 
     ## tcpHandleFindSum
     #
