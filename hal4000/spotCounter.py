@@ -733,7 +733,8 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
         if self.filenames[0]:
             for i in range(self.number_cameras):
                 self.image_graphs[i].saveImage(self.filenames[i])
-        film_writer.setSpotCounts(self.counters[0].getCounts())
+        if film_writer:
+            film_writer.setSpotCounts(self.counters[0].getCounts())
 
 
 ## SingleSpotCounter

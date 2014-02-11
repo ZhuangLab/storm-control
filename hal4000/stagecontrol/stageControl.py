@@ -530,7 +530,8 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def stopFilm(self, film_writer):
         self.stopLockout()
-        film_writer.setStagePosition(self.getStagePosition())
+        if film_writer:
+            film_writer.setStagePosition(self.getStagePosition())
 
     ## stopLockout
     #
