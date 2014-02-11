@@ -20,72 +20,13 @@
 #
 # More advanced functionality is provided by various modules.
 # These are loaded dynamically in the __init__ based on
-# the contents of the hardware.xml file.
+# the contents of the hardware.xml file. Examples of modules
+# include spotCounter.py, illumination/illuminationControl.py
+# and tcpControl.py
 #
-# Each module must have the following methods:
-#
-# __init__(hardware.parameters, parameters, parent)
-#   Called at start-up to create the module.
-#
-#   hardware.parameters - The parameters for this module
-#      from the hardware.xml file.
-#   parameters - The parameters for this module from the
-#      parameters.xml file.
-#   parent - The PyQt parent of the module.
-#
-#   Nominally hardware.parameters contains the fixed settings
-#   for the module and parameters contains the setting that
-#   can be changed.
-#
-# close()
-#   Called when HAL is closed.
-#
-# connectSignals(signals)
-#   Connects external signals to methods in the module.
-#
-#   signals - An array containing signals that this
-#      module has the option to connect to.
-#
-# getSignals()
-#   Returns a list of the signals the module provides.
-#
-# loadGUISettings(settings)
-#   Called with the initial GUI settings for the module.
-#
-#   settings - A QtCore.QSettings object.
-#
-# newFrame(frame)
-#   A new frame (or image) from the camera.
-#
-#   frame - A camera.Frame object.
-#
-# newParameters(parameters)
-#   Called when new parameters are selected.
-#
-#   parameters - A parameters object.
-#
-# newShutters(filename)
-#   Called when a new shutters file is selected.
-#
-#   filename - The name of the shutters file.
-#
-# saveGUISettings(settings)
-#   Save the GUI settings that the module wants to maintain
-#   across multiple sessions.
-#
-#   settings - A QtCore.QSettings object.
-#
-# show()
-#   Display the module on the screen. This will only get
-#   called if the module appears in the menu.
-#
-# startFilm(filename)
-#   Start filming, results saved in filename.
-#
-#   filename - The name of the film without any extensions.
-#
-# stopFilm()
-#   Stop filming.
+# Each module must implement the methods described in the
+# HalModule class in halLib.halModule, or be a sub-class
+# of this class.
 #
 #
 # Hazen 02/14
@@ -297,6 +238,10 @@ class Window(QtGui.QMainWindow):
 
             for to_module in everything:
                 to_module.connectSignals(signals)
+
+        # Finish module initialization
+        for module in self.modules:
+            module.moduleInit()
 
         #
         # More ui stuff
