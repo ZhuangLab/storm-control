@@ -53,11 +53,21 @@ def Hardware(hardware_file):
     # Load modules.
     xml_object.modules = []
     for xml_module in xml.find("modules"):
+
+        # Create module based on XML
         module = StormXMLObject(xml_module)
         xml_parameters = xml_module.find("parameters")
         if xml_parameters is not None:
             module.parameters = StormXMLObject(xml_parameters)
+        else:
+            module.parameters = None
+
+        # Add addition properties
         module.hal_type = xml_module.tag
+        if (hasattr(module, "menu_item")):
+            module.hal_gui = True
+        else:
+            module.hal_gui = False
 
         xml_object.modules.append(module)
 
