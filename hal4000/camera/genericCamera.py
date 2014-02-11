@@ -53,7 +53,9 @@ class Camera(QtGui.QDialog):
     #
     @hdebug.debug
     def connectSignals(self, signals):
-        pass
+        for signal in signals:
+            if (signal[1] == "newCycleLength"):
+                signal[2].connect(self.setSyncMax)
 
     ## getCameraDisplay
     #
