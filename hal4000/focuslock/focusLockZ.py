@@ -329,10 +329,10 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     # to store the offset data in during filming.
     #
     # @param filename The name of the file to save the offset data in.
-    # @param tcp_requested True/False the film was requested by TCP/IP
+    # @param run_shutters True/False the shutters should be run or not.
     #
     @hdebug.debug
-    def startFilm(self, filename, tcp_requested):
+    def startFilm(self, filename, run_shutters):
         self.counter = 0
         self.error = 0.0
         self.error_counts = 0
@@ -639,10 +639,10 @@ class FocusLockZDualCam(FocusLockZ):
     # will be saved in this file.
     #
     # @param filename The name of the file to save the offset information in.
-    # @param tcp_requested True/False the film was requested by TCP/IP
+    # @param run_shutters True/False the shutters should be run or not.
     #        
     @hdebug.debug
-    def startFilm(self, filename, tcp_requested):
+    def startFilm(self, filename, run_shutters):
         FocusLockZ.startFilm(self, filename, tcp_requested)
         self.lock_display2.startLock(False)
 

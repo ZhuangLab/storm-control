@@ -490,10 +490,10 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
     ## startFilm
     #
     # @param film_name The name of the film without any extensions, or False if the film is not being saved.
-    # @param tcp_requested True/False the film was requested via TCP/IP.
+    # @param run_shutters True/False the shutters should be run or not.
     #
     @hdebug.debug
-    def startFilm(self, film_name, tcp_requested):
+    def startFilm(self, film_name, run_shutters):
         self.startLockout()
 
     ## startLockout

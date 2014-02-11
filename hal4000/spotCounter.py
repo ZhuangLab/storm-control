@@ -705,10 +705,10 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
     # filename to save the spot counter images in when filming is finished.
     #
     # @param film_name The name of the film without any extensions, or False if the film is not being saved.
-    # @param tcp_requested True/False the film was requested via TCP/IP.
+    # @param run_shutters True/False the shutters should be run or not.
     #
     @hdebug.debug
-    def startFilm(self, film_name, tcp_requested):
+    def startFilm(self, film_name, run_shutters):
         for i in range(self.number_cameras):
             self.counters[i].reset()
             self.image_graphs[i].blank()
