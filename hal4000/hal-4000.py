@@ -279,7 +279,8 @@ class Window(QtGui.QMainWindow):
             a_class = getattr(a_module, module.class_name)
             instance = a_class(module.parameters, parameters, self)
             instance.hal_type = module.hal_type
-            if (hasattr(module, "menu_item")):
+            instance.hal_gui = module.hal_gui
+            if module.hal_gui:
                 add_separator = True
                 a_action = QtGui.QAction(self.tr(module.menu_item), self)
                 self.ui.menuFile.insertAction(self.ui.actionQuit, a_action)
@@ -309,7 +310,7 @@ class Window(QtGui.QMainWindow):
         # ui signals
         self.ui.actionDirectory.triggered.connect(self.newDirectory)
         self.ui.actionSettings.triggered.connect(self.newSettingsFile)
-        self.ui.actionQuit.triggered.connect(self.quit)
+        self.ui.actionQuit.triggered.connect(self.handleClose)
         self.ui.autoIncCheckBox.stateChanged.connect(self.handleAutoInc)
         self.ui.autoShuttersCheckBox.stateChanged.connect(self.handleAutoShutters)
         self.ui.extensionComboBox.currentIndexChanged.connect(self.updateFilenameLabel)
@@ -345,11 +346,11 @@ class Window(QtGui.QMainWindow):
             self.gui_settings.append([self.camera.camera1, "camera1"])
             self.gui_settings.append([self.camera.camera2, "camera2"])
 
-        for [object, name] in self.gui_settings:
-            if object:
-                object.move(self.settings.value(name + "_pos", QtCore.QPoint(200, 200)).toPoint())
+        for [an_object, name] in self.gui_settings:
+            if an_object:
+                an_object.move(self.settings.value(name + "_pos", QtCore.QPoint(200, 200)).toPoint())
                 if self.settings.value(name + "_visible", False).toBool():
-                    object.show()
+                    ab_object.show()
 
         # Module GUI settings.
         for module in self.modules:
@@ -385,10 +386,10 @@ class Window(QtGui.QMainWindow):
             self.settings.setValue("camera1_size", self.camera.camera1.size())
             self.settings.setValue("camera2_size", self.camera.camera2.size())
 
-        for [object, name] in self.gui_settings:
+        for [an_object, name] in self.gui_settings:
             if object:
-                self.settings.setValue(name + "_pos", object.pos())
-                self.settings.setValue(name + "_visible", object.isVisible())
+                self.settings.setValue(name + "_pos", an_object.pos())
+                self.settings.setValue(name + "_visible", an_object.isVisible())
 
         # Save module GUI settings.
         for module in self.modules:
@@ -398,7 +399,7 @@ class Window(QtGui.QMainWindow):
         self.logfile_fp.close()
 
         # stop the camera
-        self.camera.quit()
+        self.camera.close()
 
         # stop the modules.
         for module in self.modules:
@@ -483,6 +484,16 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleAutoInc(self, flag):
         self.parameters.auto_increment = flag
+
+    ## handleClose
+    #
+    # Called to quit the program.
+    #
+    # @param bool Dummy parameter.
+    #
+    @hdebug.debug
+    def handleClose(self, bool):
+        self.close()
 
     ## handleCommMessage
     #
@@ -770,17 +781,6 @@ class Window(QtGui.QMainWindow):
         if shutters_filename and self.shutter_control:
             self.newShutters(str(shutters_filename))
         self.startCamera()
-
-    ## quit
-    #
-    # Called to quit the program. This saves the current GUI layout, i.e. the
-    # locations of the various windows and whether or not they are open.
-    #
-    # @param bool Dummy parameter.
-    #
-    @hdebug.debug
-    def quit(self, bool):
-        self.close()
 
     ## showHideLength
     #
