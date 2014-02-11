@@ -4,7 +4,7 @@
 #
 # Illumination control specialized for none (software emulation mode).
 #
-# Hazen 11/09
+# Hazen 02/14
 #
 
 from PyQt4 import QtCore
@@ -12,12 +12,13 @@ from PyQt4 import QtCore
 import illumination.channelWidgets as channelWidgets
 import illumination.commandQueues as commandQueues
 import illumination.illuminationControl as illuminationControl
+import illumination.shutterControl as shutterControl
 
 #
 # Illumination power control specialized for none.
 #
 class NONEQIlluminationControlWidget(illuminationControl.QIlluminationControlWidget):
-    def __init__(self, settings_file_name, parameters, parent = None):
+    def __init__(self, settings_file_name, parameters, parent):
         illuminationControl.QIlluminationControlWidget.__init__(self, settings_file_name, parameters, parent)
 
     def newParameters(self, parameters):
@@ -65,20 +66,32 @@ class NONEQIlluminationControlWidget(illuminationControl.QIlluminationControlWid
 
 
 #
+# Illumination shutter control specialized for none.
+#
+class NONEShutterControl(shutterControl.ShutterControl):
+    def __init__(self, powerToVoltage, parent):
+        shutterControl.ShutterControl.__init__(self, powerToVoltage, parent)
+        self.number_channels = 7
+        self.oversampling_default = 100
+
+
+#
 # Illumination power control dialog box specialized for none.
 #
 class AIlluminationControl(illuminationControl.IlluminationControl):
-    def __init__(self, hardware, parameters, tcp_control, parent = None):
-        illuminationControl.IlluminationControl.__init__(self, parameters, tcp_control, parent)
+    def __init__(self, hardware, parameters, parent = None):
+        illuminationControl.IlluminationControl.__init__(self, parameters, parent)
         self.power_control = NONEQIlluminationControlWidget("illumination/none_illumination_control_settings.xml",
                                                             parameters,
-                                                            parent = self.ui.laserBox)
+                                                            self.ui.laserBox)
+        self.shutter_control = NONEShutterControl(self.power_control.powerToVoltage,
+                                                  self.ui.laserBox)
         self.updateSize()
 
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
