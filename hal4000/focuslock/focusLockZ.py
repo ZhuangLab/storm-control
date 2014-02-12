@@ -183,10 +183,10 @@ class FocusLockZ(QtGui.QDialog):
     #
     # Handles the lock button.
     #
-    # @param bool Dummy parameter.
+    # @param boolean Dummy parameter.
     #
     @hdebug.debug
-    def handleLockButton(self, bool):
+    def handleLockButton(self, boolean):
         self.lock_display1.lockButtonToggle()
         self.toggleLockButtonText(self.lock_display1.amLocked())
         self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())
@@ -195,20 +195,20 @@ class FocusLockZ(QtGui.QDialog):
     #
     # Handles the close button.
     #
-    # @param bool Dummy parameter.
+    # @param boolean Dummy parameter.
     #
     @hdebug.debug
-    def handleOk(self, bool):
+    def handleOk(self, boolean):
         self.hide()
 
     ## handleRadioButtons.
     #
     # Handles the lock mode radio buttons.
     #
-    # @param bool Dummy parameter.
+    # @param boolean Dummy parameter.
     #
     @hdebug.debug
-    def handleRadioButtons(self, bool):
+    def handleRadioButtons(self, boolean):
         for i in range(len(self.buttons)):
             if self.buttons[i].isChecked():
                 if self.lock_display1.changeLockMode(i):
@@ -499,30 +499,47 @@ class FocusLockZDualCam(FocusLockZ):
 
         FocusLockZ.configureUI(self)
 
-    ## handleJumpButton
+    ## handleJumpPButton
     #
-    # Handles the jump button. This moves both piezos at once in opposite directions.
+    # Handles the jump+ button.
+    #
+    # @param boolean Dummy parameter.
     #
     @hdebug.debug
-    def handleJumpButton(self):
-        FocusLockZ.handleJumpButton(self)
+    def handleJumpPButton(self, boolean):
+        self.lock_display1.jump(self.jumpsize)
         self.lock_display2.jump(-self.jumpsize)
+
+    ## handleJumpNButton
+    #
+    # Handles the jump- button.
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def handleJumpNButton(self, boolean):
+        self.lock_display1.jump(-self.jumpsize)
+        self.lock_display2.jump(self.jumpsize)
 
     ## handleLockButton
     #
     # Handles the lock button. This locks both focus locks.
     #
+    # @param boolean Dummy parameter.
+    #
     @hdebug.debug
-    def handleLockButton(self):
-        FocusLockZ.handleLockButton(self)
+    def handleLockButton(self, boolean):
+        FocusLockZ.handleLockButton(self, False)
         self.lock_display2.lockButtonToggle()
 
     ## handleRadioButtons
     #
     # This handles the focus lock radio buttons.
     #
+    # @param boolean Dummy parameter.
+    #
     @hdebug.debug
-    def handleRadioButtons(self):
+    def handleRadioButtons(self, boolean):
         for i in range(len(self.buttons)):
             if self.buttons[i].isChecked():
                 if self.lock_display1.changeLockMode(i):
