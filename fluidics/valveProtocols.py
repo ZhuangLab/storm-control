@@ -119,6 +119,8 @@ class ValveProtocols(QtGui.QMainWindow):
         
         self.startProtocolButton = QtGui.QPushButton("Start Protocol")
         self.startProtocolButton.clicked.connect(self.startProtocolLocally)
+        self.skipCommandButton = QtGui.QPushButton("Skip Command")
+        self.skipCommandButton.clicked.connect(self.skipCommand)
         self.stopProtocolButton = QtGui.QPushButton("Stop Protocol")
         self.stopProtocolButton.clicked.connect(self.stopProtocol)
         
@@ -131,6 +133,7 @@ class ValveProtocols(QtGui.QMainWindow):
         self.mainWidgetLayout.addWidget(self.elapsedTimeLabel)
         self.mainWidgetLayout.addWidget(self.protocolDetailsList)
         self.mainWidgetLayout.addWidget(self.startProtocolButton)
+        self.mainWidgetLayout.addWidget(self.skipCommandButton)
         self.mainWidgetLayout.addWidget(self.stopProtocolButton)
         self.mainWidgetLayout.addStretch(1)
 
@@ -147,6 +150,10 @@ class ValveProtocols(QtGui.QMainWindow):
         self.menu_items = [[self.load_fullconfig_action,
                             self.load_protocols_action,
                             self.load_commands_action]]
+
+        # Disable buttons
+        self.skipCommandButton.setEnabled(False)
+        self.stopProtocolButton.setEnabled(False)
 
     # ------------------------------------------------------------------------------------
     # Return current command
@@ -316,6 +323,14 @@ class ValveProtocols(QtGui.QMainWindow):
     # ------------------------------------------------------------------------------------
     # Initialize and start a protocol and issue first command
     # ------------------------------------------------------------------------------------
+    def skipCommand(self):
+        self.protocol_timer.stop()
+        self.advanceProtocol()
+        print "Here"
+
+    # ------------------------------------------------------------------------------------
+    # Initialize and start a protocol and issue first command
+    # ------------------------------------------------------------------------------------
     def startProtocol(self):
         protocol_ID = self.protocolListWidget.currentRow()
         
@@ -339,6 +354,8 @@ class ValveProtocols(QtGui.QMainWindow):
 
         # Change enable status of GUI items
         self.startProtocolButton.setEnabled(False)
+        self.skipCommandButton.setEnabled(True)
+        self.stopProtocolButton.setEnabled(True)
         self.protocolListWidget.setEnabled(False)
         self.protocolDetailsList.setCurrentRow(0)
         self.valveCommands.setEnabled(False)
@@ -407,6 +424,9 @@ class ValveProtocols(QtGui.QMainWindow):
         self.startProtocolButton.setEnabled(True)
         self.protocolListWidget.setEnabled(True)
         self.valveCommands.setEnabled(True)
+        self.skipCommandButton.setEnabled(False)
+        self.stopProtocolButton.setEnabled(False)
+
         
         # Unselect all
         self.protocolDetailsList.setCurrentRow(0)
