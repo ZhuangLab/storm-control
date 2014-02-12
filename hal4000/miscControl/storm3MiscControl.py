@@ -100,13 +100,11 @@ class AMiscControl(miscControl.MiscControl):
         self.ui.iEyesLineEdit.textChanged.connect(self.handleLineEdit)
         self.ui.iEyesResetButton.clicked.connect(self.handleReset)
         self.ui.iEyesSaveButton.clicked.connect(self.handleSave)
-        self.ui.iEyesSetROIButton.clicked.connect(self.handleSetROI)
-
-        if self.camera_widget:
-            self.camera_widget.mousePress.connect(self.handleMousePress)
 
         self.newParameters(self.parameters)
 
+    ## cleanup
+    #
     @hdebug.debug
     def cleanup(self):
         self.smc100.shutDown()

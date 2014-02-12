@@ -31,7 +31,7 @@
 
     <!-- Joystick controller. -->
     <joystick>
-      <class_name type="string">AJoystickControl</class_name>
+      <class_name type="string">AJoystick</class_name>
       <module_name type="string">joystick.gamepad310JoystickControl</module_name>
     </joystick>
   

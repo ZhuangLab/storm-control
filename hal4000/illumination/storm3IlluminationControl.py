@@ -120,8 +120,8 @@ class STORM3QIlluminationControlWidget(illuminationControl.QIlluminationControlW
 # National Instruments PCI-6722 card.
 #
 class STORM3ShutterControl(shutterControl.ShutterControl):
-    def __init__(self, powerToVoltage):
-        shutterControl.ShutterControl.__init__(self, powerToVoltage)
+    def __init__(self, powerToVoltage, parent):
+        shutterControl.ShutterControl.__init__(self, powerToVoltage, parent)
         self.oversampling_default = 100
         self.number_channels = 7
 
@@ -149,13 +149,13 @@ class STORM3ShutterControl(shutterControl.ShutterControl):
         for i in range(self.number_channels):
             nicontrol.setAnalogLine(self.board, i, 0.0)
 
-    def setup(self, kinetic_cycle_time):
+    def setup(self):
         assert self.ct_task == 0, "Attempt to call setup without first calling cleanup."
         #
         # the counter runs slightly faster than the camera so that it is ready
         # to catch the next camera "fire" immediately after the end of the cycle.
         #
-        frequency = (1.001/kinetic_cycle_time) * float(self.oversampling)
+        frequency = (1.001/self.kinetic_value) * float(self.oversampling)
 
         # set up the analog channels
         self.wv_task = nicontrol.WaveformOutput(self.board, 0)
