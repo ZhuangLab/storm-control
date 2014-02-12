@@ -84,6 +84,7 @@ def Hardware(hardware_file):
 #
 def Parameters(parameters_file, is_HAL = False):
     xml = ElementTree.parse(parameters_file).getroot()
+    assert xml.tag == "settings", parameters_file + " is not a setting file."
 
     # Read general settings
     xml_object = StormXMLObject(xml)
