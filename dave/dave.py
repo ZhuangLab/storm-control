@@ -11,28 +11,37 @@
 # Hazen 06/13
 #
 
+# Common
 import os
 import sys
 import traceback
-from xml.dom import minidom, Node
 
+# XML parsing
+from xml.dom import minidom, Node 
+
+# PyQt
 from PyQt4 import QtCore, QtGui
 
 # Debugging
 import halLib.hdebug as hdebug
 
 # General
-import halLib.tcpClient
 import notifications
 import sequenceParser
-import xml_generator
+from xml_generators import xml_generator, recipeParser
 
-# UIs.
+# Communication
+import fluidics.kilroyClient
+import halLib.tcpClient
+
+# UI
 import qtdesigner.dave_ui as daveUi
 
-# Misc
-import halLib.parameters as params
+# Dave actions
+import daveActions
 
+# Parameter loading
+import halLib.parameters as params
 
 ## createTableWidget
 #
@@ -47,501 +56,109 @@ def createTableWidget(text):
     widget.setFlags(QtCore.Qt.ItemIsEnabled)
     return widget
 
-## DaveAction
+## CommandEngine
 #
-# The base class for actions that can be performed as part of taking a movie.
+# This class handles the execution of commands that can be given to Dave
 #
-class DaveAction():
-
-    ## __init__
-    #
-    # Default initialization.
-    #
-    def __init__(self):
-        self.delay = 0
-        self.message = ""
-
-    ## abort
-    #
-    # The default behaviour is not to do anything.
-    #
-    # @param comm A tcpClient object.
-    #
-    def abort(self, comm):
-        pass
-
-    ## getMessage
-    #
-    # @return The error message if there a problem occured during this action.
-    #
-    def getMessage(self):
-        return self.message
-
-    ## handleAcknowledged
-    #
-    # This is called when we get command acknowledgement from HAL. If this
-    # returns true and the delay time is greater than zero then the delay
-    # timer is started.
-    #
-    # @return True.
-    #
-    def handleAcknowledged(self):
-        return True
-
-    ## handleComplete
-    #
-    # This is called when we get a complete message from HAL with a_string
-    # containing the contents of the complete message. If it returns true
-    # then we continue to the next action, otherwise we stop taking movies.
-    #
-    # @param a_string The complete message from HAL (as a string).
-    #
-    # @return True
-    #
-    def handleComplete(self, a_string):
-        return True
-
-    ## shouldPause
-    #
-    # @return True/False if movie acquisition should pause after taking this movie, the default is False.
-    #
-    def shouldPause(self):
-        return False
-
-    ## start
-    #
-    # The default behaviour is not do anything.
-    #
-    # @param comm A tcpClient object.
-    #
-    def start(self, comm):
-        pass
-
-    ## startTimer
-    #
-    # If there is a delay time for this action then set the interval of the provided timer, start it
-    # and return True, otherwise return False.
-    #
-    # @param timer A PyQt timer.
-    #
-    # @return True/False if we started timer.
-    #
-    def startTimer(self, timer):
-        if (self.delay > 0):
-            timer.setInterval(self.delay)
-            timer.start()
-            return True
-        else:
-            return False
-
-
-## DaveActionFindSum
-#
-# The find sum action.
-#
-class DaveActionFindSum(DaveAction):
-
-    ## __init__
-    #
-    # @param min_sum The minimum sum that we should get from HAL upon completion of this action.
-    #
-    def __init__(self, min_sum):
-        DaveAction.__init__(self)
-        self.min_sum = min_sum
-
-    ## handleAcknowledged
-    #
-    # @return False.
-    #
-    def handleAcknowledged(self):
-        return False
-
-    ## handleComplete
-    #
-    # @param a_string The sum signal message from HAL.
-    #
-    # @return True/False if float(a_string) is greater than min_sum.
-    #
-    def handleComplete(self, a_string):
-        if (a_string == "NA") or (float(a_string) > self.min_sum):
-            return True
-        else:
-            self.message = "Sum signal " + a_string + " is below threshold value of " + str(self.min_sum)
-            return False
-
-    ## start
-    #
-    # Send the startFindSum message to HAL.
-    #
-    # @param comm A tcpClient object.
-    #
-    def start(self, comm):
-        comm.startFindSum()
-
-
-## DaveActionMovie
-#
-# The movie acquisition action.
-#
-class DaveActionMovie(DaveAction):
-
-    ## __init__
-    #
-    # @param movie A movie XML object.
-    #
-    def __init__(self, movie):
-        DaveAction.__init__(self)
-        self.acquiring = False
-        self.movie = movie
-
-    ## abort
-    #
-    # Aborts the movie (if we are current acquiring).
-    #
-    # @param comm A tcpClient object.
-    #
-    def abort(self, comm):
-        if self.acquiring:
-            comm.stopMovie()
-
-    ## handleAcknowledged
-    #
-    # @return True.
-    #
-    def handleAcknowledged(self):
-        return False
-
-    ## handleComplete
-    #
-    # Returns false if a_string is "NA" or int(a_string) is greater than the
-    # minimum number of spots that the movie should have (as specified by
-    # the movie XML object).
-    #
-    # @param a_string The response from HAL.
-    #
-    # @return True/False if the movie was good.
-    #
-    def handleComplete(self, a_string):
-        self.acquiring = False
-        if (a_string == "NA") or (int(a_string) >= self.movie.min_spots):
-            return True
-        else:
-            self.message = "Spot finder counts " + a_string + " is below threshold value of " + str(self.movie.min_spots)
-            return False
-
-    ## start
-    #
-    # Send the startMovie command to HAL.
-    #
-    # @param comm A tcpClient object.
-    #
-    def start(self, comm):
-        self.acquiring = True
-        comm.startMovie(self.movie)
-
-
-## DaveActionMovieParameters
-#
-# The movie parameters action.
-#
-class DaveActionMovieParameters(DaveAction):
-
-    ## __init__
-    #
-    # @param movie A XML movie object.
-    #
-    def __init__(self, movie):
-        DaveAction.__init__(self)
-        self.delay = movie.delay
-        self.movie = movie
-
-    ## shouldPause
-    #
-    # @return The pause time specified by the movie object.
-    #
-    def shouldPause(self):
-        return self.movie.pause
-
-    ## start
-    #
-    # Send  the movie parameters command to HAL.
-    #
-    # @param comm A tcpClient object.
-    #
-    def start(self, comm):
-        comm.sendMovieParameters(self.movie)
-
-
-## DaveActionRecenter
-#
-# The piezo recentering action. Note that this is only useful if the microscope
-# has a motorized Z.
-#
-class DaveActionRecenter(DaveAction):
-
-    ## __init__
-    #
-    # Create the object, set the delay time to 200 milliseconds.
-    #
-    def __init__(self):
-        DaveAction.__init__(self)
-        self.delay = 200
-
-    ## handleAcknowledged
-    #
-    # @return False
-    #
-    def handleAcknowledged(self):
-        return False
-
-    ## start
-    #
-    # Send the recenter piezo command to HAL.
-    #
-    # @param comm A tcpClient object.
-    #
-    def start(self, comm):
-        comm.startRecenterPiezo()
-
-
-## MovieEngine
-#
-# This handles taking a movie & updating the movie details.
-#
-class MovieEngine(QtGui.QWidget):
+class CommandEngine(QtGui.QWidget):
     done = QtCore.pyqtSignal()
-    idle = QtCore.pyqtSignal()
+    idle = QtCore.pyqtSignal(bool)
     problem = QtCore.pyqtSignal(str)
 
     ## __init__
     #
-    # This sets the size of the QTableWidget (in rows and columns) that will be used to
-    # to display the movie details. It fills in the fields of the table that do not change.
-    # It creates the timer that we will use as needed for actions that specify a delay time.
-    #
-    # @param details_table The PyQt QTableWidget that will be used for display of the movie details.
-    # @param parent The PyQy parent of this widget.
     #
     @hdebug.debug
-    def __init__(self, details_table, parent):
+    def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
+
+        # Set defaults
         self.actions = []
-        self.current_action = False
-        self.details_table = details_table
-        self.movie = False
-        self.number_movies = 0
+        self.current_action = None
+        self.command = None
         self.should_pause = False
 
-        # Setup Info Table.
-        fields = ["Delay",
-                  "Find Sum",
-                  "Length",
-                  "Lock Target",
-                  "Minimum Spots",
-                  "Name",
-                  "Parameters",
-                  "Pause",
-                  "Progression",
-                  "Recenter Piezo",
-                  "Stage Position"]
-
-        self.details_table.setRowCount(len(fields)+1)
-        self.details_table.setColumnCount(3)
-        for i, field in enumerate(fields):
-            self.details_table.setItem(i+1,0,createTableWidget(" "))
-            self.details_table.setItem(i+1,1,createTableWidget(field))
-        self.details_table.resizeColumnToContents(0)
-        self.details_table.setSpan(0,0,1,3)
-
-        self.delay_timer = QtCore.QTimer(self)
-        self.delay_timer.setSingleShot(True)
-        self.delay_timer.timeout.connect(self.checkPause)
-
-        # TCP communications.
-        self.comm = halLib.tcpClient.TCPClient(self)
-        self.comm.acknowledged.connect(self.handleAcknowledged)
-        self.comm.complete.connect(self.handleComplete)
-
+        # HAL Client
+        self.HALClient = halLib.tcpClient.TCPClient(self)
+        
+        # Kilroy Client
+        self.kilroyClient = fluidics.kilroyClient.KilroyClient(verbose = True)
+    
     ## abort
     #
     # Aborts the current action (if any).
     #
     @hdebug.debug
     def abort(self):
-        if self.current_action:
-            self.delay_timer.stop()
-            self.current_action.abort(self.comm)
-
-    ## checkPause
-    #
-    # Checks if we should stop acquisition because either the current action
-    # of the user requested a pause.
-    #
-    @hdebug.debug
-    def checkPause(self):
-        if (self.current_action.shouldPause()) or self.should_pause:
-            self.idle.emit()
-            self.should_pause = False
-            self.stopCommunication()
-        else:
-            self.nextAction()
-
-    ## handleAcknowledged
-    #
-    # Handles the acknowledged signal from the tcpClient object.
-    #
-    @hdebug.debug
-    def handleAcknowledged(self):
-        if (self.current_action.handleAcknowledged()):
-            if (not self.current_action.startTimer(self.delay_timer)):
-                self.checkPause()
-
-    ## handleComplete
-    #
-    # Handles the complete signal from the tcpClient object.
-    #
-    # @param a_string The message from HAL.
-    #
-    @hdebug.debug
-    def handleComplete(self, a_string):
-        if self.current_action.handleComplete(a_string):
-            self.checkPause()
-        else:
-            self.stopCommunication()
-            self.problem.emit(self.current_action.getMessage())
-
-    ## newMovie
-    #
-    # Fills in the appropriate fields of the details table and creates the actions necessary to take a movie.
-    #
-    # @param movie A XML movie object.
-    # @param index The index of the current movie. Confusingly this is also used a variable in this method for a different purpose..
-    #
-    @hdebug.debug
-    def newMovie(self, movie, index):
-        self.details_table.setItem(0,0,createTableWidget("Movie {0:d} of {1:d}\n\n".format(index+1, self.number_movies)))
-
-        # Update movie details display.
-        # delay
-        index = 1
-        self.details_table.setItem(index,2,createTableWidget("{0:d}".format(movie.delay)))
-
-        # find sum
-        index += 1
-        if (movie.find_sum > 0.0):
-            self.details_table.setItem(index,2,createTableWidget("{0:.1f}".format(movie.find_sum)))
-        else:
-            self.details_table.setItem(index,2,createTableWidget("No"))
-
-        # length
-        index += 1
-        self.details_table.setItem(index,2,createTableWidget("{0:d}".format(movie.length)))
-
-        # lock target
-        index += 1
-        if hasattr(movie, "lock_target"):
-            self.details_table.setItem(index,2,createTableWidget("{0:.1f}".format(movie.lock_target)))
-        else:
-            self.details_table.setItem(index,2,createTableWidget("None"))
-
-        # minimum spots
-        index += 1
-        self.details_table.setItem(index,2,createTableWidget("{0:d}".format(movie.min_spots)))
-
-        # name
-        index += 1
-        self.details_table.setItem(index,2,createTableWidget("{0:s}".format(movie.name)))
-
-        # parameters
-        index += 1
-        if hasattr(movie, "parameters"):
-            self.details_table.setItem(index,2,createTableWidget("{0:d}".format(movie.parameters)))
-        else:
-            self.details_table.setItem(index,2,createTableWidget("None"))
-
-        # pause
-        index += 1
-        if movie.pause:
-            self.details_table.setItem(index,2,createTableWidget("Yes"))
-        else:
-            self.details_table.setItem(index,2,createTableWidget("No"))
-
-        # progression
-        index += 1
-        self.details_table.setItem(index,2,createTableWidget(movie.progression.type))
-
-        # recenter
-        index += 1
-        if movie.recenter:
-            self.details_table.setItem(index,2,createTableWidget("Yes"))
-        else:
-            self.details_table.setItem(index,2,createTableWidget("No"))
-
-        # stage position
-        index += 1
-        if hasattr(movie, "stage_x") and hasattr(movie, "stage_y"):
-            self.details_table.setItem(index,2,createTableWidget("{0:.2f}, {1:.2f}".format(movie.stage_x, movie.stage_y)))
-        else:
-            self.details_table.setItem(index,2,createTableWidget("NA,NA"))
-
-        # Generate actions for taking the movie.
         self.actions = []
-        self.actions.append(DaveActionMovieParameters(movie))
-        if movie.recenter:
-            self.actions.append(DaveActionRecenter())
-        if (movie.find_sum > 0.0):
-            self.actions.append(DaveActionFindSum(movie.find_sum))
-        if (movie.length > 0):
-            self.actions.append(DaveActionMovie(movie))
+        if self.current_action:
+            self.current_action.abort()
 
-    ## nextAction
+    ## loadCommand
     #
-    # Performs the next action for the movie. If there are no actions remaining then the done signal is emitted.
+    # Decompose a dave command into the necessary actions and run them
+    #
+    # @param command A XML command object from sequenceParser
     #
     @hdebug.debug
-    def nextAction(self):
-        if (len(self.actions) > 0):
-            self.current_action = self.actions[0]
-            self.actions = self.actions[1:]
-            self.current_action.start(self.comm)
+    def loadCommand(self, command):
+        self.actions = []
+        command_type = command.getType()
+        if command_type == "movie":
+            self.actions.append(daveActions.DaveActionMovieParameters(self.HALClient, command))
+            if command.recenter:            self.actions.append(daveActions.DaveActionRecenter(self.HALClient))
+            if (command.find_sum > 0.0):    self.actions.append(daveActions.DaveActionFindSum(self.HALClient, command.find_sum))
+            if (command.length > 0):        self.actions.append(daveActions.DaveActionMovie(self.HALClient, command))
+        elif command_type == "fluidics":
+            self.actions.append(daveActions.DaveActionValveProtocol(self.kilroyClient, command))
+
+    ## setPause
+    #
+    # Changes the state of the should_pause attribute
+    #
+    def setPause(self, a_boolean):
+        self.should_pause = a_boolean
+        
+    ## startCommand
+    #
+    # Start a command or command sequence
+    #
+    def startCommand(self):
+        if not self.should_pause and len(self.actions) > 0:
+            # Extract next action from list
+            self.current_action = self.actions.pop(0)
+
+            # Disconnect previous signals and connect new ones
+            self.current_action.complete_signal.connect(self.handleActionComplete)
+            self.current_action.error_signal.connect(self.handleErrorSignal)
+
+            # Start current action
+            self.current_action.start()
+
+    ## handleActionComplete
+    #
+    # Handle the completion of the previous action
+    #
+    def handleActionComplete(self):  
+        self.current_action.cleanUp()
+        self.current_action.complete_signal.disconnect()
+        self.current_action.error_signal.disconnect()
+
+        if self.current_action.shouldPause() or self.should_pause:
+            is_last_action = not (len(self.actions) > 0)
+            self.idle.emit(is_last_action)
+        elif len(self.actions) > 0:
+            self.startCommand()
         else:
             self.done.emit()
-
-    ## pause
+        
+    ## handleErrorSignal
     #
-    # Sets the pause flag so that we will pause as soon as the current action is finished.
+    # Handle an error signal: Reserved for future use
     #
-    @hdebug.debug
-    def pause(self):
-        self.should_pause = True
-
-    ## setNumberMovies
-    #
-    # Sets the total number of movies. This value is also included in the details table.
-    #
-    # @param number An integer specifying the total number of movies.
-    #
-    @hdebug.debug
-    def setNumberMovies(self, number):
-        self.number_movies = number
-
-    ## startCommunication
-    #
-    # Starts communication with HAL.
-    #
-    @hdebug.debug
-    def startCommunication(self):
-        self.comm.startCommunication()
-
-    ## stopCommunication
-    #
-    # Stops communication with HAL.
-    #
-    @hdebug.debug
-    def stopCommunication(self):
-        self.comm.stopCommunication()
-
-
+    def handleErrorSignal(self, error_message):
+        self.problem.emit(error_message)
+        
 ## Window
 #
 # The main window
@@ -562,58 +179,22 @@ class Window(QtGui.QMainWindow):
         # General.
         self.directory = ""
         self.parameters = parameters
-        self.movie_index = 0
-        self.movies = []
+        self.command_index = 0
+        self.commands = []
         self.notifier = notifications.Notifier("", "", "", "")
         self.running = False
         self.settings = QtCore.QSettings("Zhuang Lab", "dave")
+        self.sequence_filename = ""
 
-        # UI setup.
-        self.ui = daveUi.Ui_MainWindow()
-        self.ui.setupUi(self)
-        self.ui.spaceLabel.setText("")
-        self.ui.timeLabel.setText("")
-
-        self.ui.abortButton.hide()
-        #self.ui.backButton.hide()
-        #self.ui.forwardButton.hide()
-        self.ui.frequencyLabel.hide()
-        self.ui.frequencySpinBox.hide()
-        self.ui.movieTableWidget.hide()
-        self.ui.runButton.hide()
-        self.ui.statusMsgCheckBox.hide()
-
-        self.setWindowIcon(QtGui.QIcon("dave.ico"))
-
-        # This is for handling file drops.
-        self.ui.centralwidget.__class__.dragEnterEvent = self.dragEnterEvent
-        self.ui.centralwidget.__class__.dropEvent = self.dropEvent
-
-        # Connect UI signals.
-        self.ui.abortButton.clicked.connect(self.handleAbortButton)
-        self.ui.actionNew_Sequence.triggered.connect(self.newSequenceFile)
-        self.ui.actionQuit.triggered.connect(self.quit)
-        self.ui.actionGenerate.triggered.connect(self.handleGenerate)
-        self.ui.fromAddressLineEdit.textChanged.connect(self.handleNotifierChange)
-        self.ui.fromPasswordLineEdit.textChanged.connect(self.handleNotifierChange)
-        self.ui.runButton.clicked.connect(self.handleRunButton)
-        self.ui.smtpServerLineEdit.textChanged.connect(self.handleNotifierChange)
-        self.ui.toAddressLineEdit.textChanged.connect(self.handleNotifierChange)
+        self.createGUI()
 
         # Movie engine.
-        self.movie_engine = MovieEngine(self.ui.movieTableWidget, self.ui.movieGroupBox)
-        self.movie_engine.done.connect(self.handleDone)
-        self.movie_engine.idle.connect(self.handleIdle)
-        self.movie_engine.problem.connect(self.handleProblem)
+        self.command_engine = CommandEngine()
+        self.command_engine.done.connect(self.handleDone)
+        self.command_engine.idle.connect(self.handleIdle)
+        self.command_engine.problem.connect(self.handleProblem)
 
-        # Load saved notifications settings.
-        self.noti_settings = [[self.ui.fromAddressLineEdit, "from_address"],
-                              [self.ui.fromPasswordLineEdit, "from_password"],
-                              [self.ui.smtpServerLineEdit, "smtp_server"]]
-#                              [self.ui.toAddressLineEdit, "to_address"]]
-
-        for [object, name] in self.noti_settings:
-            object.setText(self.settings.value(name, "").toString())
+        self.updateGUI()
 
     ## cleanUp
     #
@@ -634,6 +215,70 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def closeEvent(self, event):
         self.cleanUp()
+
+    ## createGUI
+    #
+    # Creates the GUI elements
+    #
+    @hdebug.debug
+    def createGUI(self):
+        # UI setup.
+        self.ui = daveUi.Ui_MainWindow()
+        self.ui.setupUi(self)
+        self.ui.spaceLabel.setText("")
+        self.ui.timeLabel.setText("")
+
+        # Hide widgets
+        self.ui.abortButton.hide()
+        self.ui.frequencyLabel.hide()
+        self.ui.frequencySpinBox.hide()
+        self.ui.runButton.hide()
+        self.ui.statusMsgCheckBox.hide()
+
+        # Set icon.
+        self.setWindowIcon(QtGui.QIcon("dave.ico"))
+
+        # This is for handling file drops.
+        self.ui.centralwidget.__class__.dragEnterEvent = self.dragEnterEvent
+        self.ui.centralwidget.__class__.dropEvent = self.dropEvent
+
+        # Connect UI signals.
+        self.ui.abortButton.clicked.connect(self.handleAbortButton)
+        self.ui.actionNew_Sequence.triggered.connect(self.newSequenceFile)
+        self.ui.actionQuit.triggered.connect(self.quit)
+        self.ui.actionGenerateXML.triggered.connect(self.handleGenerateXML)
+        self.ui.fromAddressLineEdit.textChanged.connect(self.handleNotifierChange)
+        self.ui.fromPasswordLineEdit.textChanged.connect(self.handleNotifierChange)
+        self.ui.runButton.clicked.connect(self.handleRunButton)
+        self.ui.smtpServerLineEdit.textChanged.connect(self.handleNotifierChange)
+        self.ui.toAddressLineEdit.textChanged.connect(self.handleNotifierChange)
+                                                        
+        # Load saved notifications settings.
+        self.noti_settings = [[self.ui.fromAddressLineEdit, "from_address"],
+                              [self.ui.fromPasswordLineEdit, "from_password"],
+                              [self.ui.smtpServerLineEdit, "smtp_server"]]
+#                              [self.ui.toAddressLineEdit, "to_address"]]
+
+        for [object, name] in self.noti_settings:
+            object.setText(self.settings.value(name, "").toString())
+
+        # Initialize command descriptor table
+        self.command_details_table_size = [12, 2]
+        self.ui.commandDetailsTable.setRowCount(self.command_details_table_size[0])
+        self.ui.commandDetailsTable.setColumnCount(self.command_details_table_size[1])
+
+        # Set active status
+        self.command_widgets = []
+
+        # Enable mouse over updates of command descriptor
+        self.ui.commandSequenceList.setMouseTracking(True)
+        self.ui.commandSequenceList.itemEntered.connect(self.updateCommandDescriptorTable)
+        self.ui.commandSequenceList.clicked.connect(self.handleCommandListClick)
+
+        # Initialize progress bar
+        self.ui.progressBar.setValue(0)
+        self.ui.progressBar.setMinimum(0)
+        self.ui.progressBar.setMaximum(1)
 
     ## dragEnterEvent
     #
@@ -668,21 +313,17 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleAbortButton(self, boolean):
         if (self.running):
-            self.movie_engine.abort()
-            self.movie_index = 0
-            self.movie_engine.newMovie(self.movies[self.movie_index], self.movie_index)
-            self.running = False
-            self.ui.abortButton.hide()
-            self.ui.runButton.setText("Start")
+            #Set flag to signal reset to handleDone when called
+            self.command_index = len(self.commands) + 1
+            self.command_engine.abort()
 
-#    ## handleDisconnect
-#    #
-#    # Disconnects from HAL.
-#    #
-#    @hdebug.debug
-#    def handleDisconnect(self):
-#        if not self.comm.stopCommunication():
-#            self.disconnect_timer.start()
+    ## handleCommandListClick
+    #
+    # Reset command sequence list to the current command
+    #
+    #
+    def handleCommandListClick(self):
+        self.updateCommandSequenceDisplay(self.command_index)
 
     ## handleDone
     #
@@ -690,53 +331,54 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleDone(self):
-        if (self.movie_index < (self.number_movies-1)):
-            self.movie_index += 1
-            self.movie_engine.newMovie(self.movies[self.movie_index], self.movie_index)
-            self.movie_engine.nextAction()
+        if (self.command_index < (len(self.commands)-1)):
+            self.command_index += 1
+            self.issueCommand()
+            self.command_engine.startCommand()
         else:
-            self.movie_index = 0
-            #self.movies[self.movie_index].pause = True # This keeps us from looping forever.
-            self.ui.runButton.setText("Run")
+            self.command_index = 0
+            self.ui.runButton.setEnabled(True)
+            self.ui.runButton.setText("Start")
+            self.ui.abortButton.setEnabled(False)
             self.running = False
-            self.movie_engine.newMovie(self.movies[self.movie_index], self.movie_index)
-            self.movie_engine.stopCommunication()
+            self.issueCommand()
 
-    ## handleGenerate
+    ## handleGenerateXML
     #
-    # Handles generating the XML that Dave uses from a positions text file and a experiment XML file.
+    # Handles Generate from Recipe XML
     #
     # @param boolean Dummy parameter.
     #
     @hdebug.debug
-    def handleGenerate(self, boolean):
-        positions_filename = str(QtGui.QFileDialog.getOpenFileName(self, "Positions File", self.directory, "*.txt"))
-        self.directory = os.path.dirname(positions_filename)
-        experiment_filename = str(QtGui.QFileDialog.getOpenFileName(self, "Experiment File", self.directory, "*.xml"))
-        self.directory = os.path.dirname(experiment_filename)
-        output_filename = str(QtGui.QFileDialog.getSaveFileName(self, "Generated File", self.directory, "*.xml"))
-        tb = "No Error"
-        try:
-            xml_generator.generateXML(experiment_filename, positions_filename, output_filename, self.directory, self)
-        except:
-            QtGui.QMessageBox.information(self,
-                                          "XML Generation Error",
-                                          traceback.format_exc())
-                                          #str(sys.exc_info()[0]))
-        else:
+    def handleGenerateXML(self, boolean):
+        recipe_parser = recipeParser.XMLRecipeParser(verbose = True)
+        output_filename = recipe_parser.parseXML()
+        if os.path.isfile(output_filename):
             self.newSequence(output_filename)
 
     ## handleIdle
     #
-    # Handles the idle signal from the movie engine. Hides the abort button, changes the text of the run button
-    # from "Pause" to "Start".
+    # Handles the idle signal from the command engine. Hides the abort button, changes the text of the run button
+    # from "Pause"/"Pausing..." to "Start".
     #
+    # @param boolean is_last_action indicates whether the current command has remaining actions
     @hdebug.debug
-    def handleIdle(self):
+    def handleIdle(self, is_last_action):
         self.ui.abortButton.hide()
-        self.ui.runButton.setText("Start")
+        self.ui.runButton.setText("Restart")
+        self.ui.runButton.setEnabled(True)
         self.running = False
+        
+        # Update command sequence display to the command that will run on resumption of sequence
+        if is_last_action:
+            self.command_index += 1
 
+            if self.command_index >= len(self.commands):
+                self.command_index = 0
+                self.ui.runButton.setText("Start")
+
+            self.issueCommand()
+            
     ## handleNotifierChange
     #
     # Handles changes to any of the notification fields of the UI.
@@ -778,17 +420,36 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleRunButton(self, boolean):
         if (self.running):
-            self.movie_engine.pause()
+            self.command_engine.setPause(True)
             self.ui.runButton.setText("Pausing..")
-            self.ui.runButton.setDown(True)
+            self.ui.runButton.setEnabled(False) #Inactivate button until current action is complete
             self.running = False
         else:
-            self.movie_engine.startCommunication()
-            self.movie_engine.nextAction()
+            self.command_engine.setPause(False)
             self.ui.abortButton.show()
             self.ui.runButton.setText("Pause")
+            self.ui.abortButton.setEnabled(True)
             self.running = True
+            self.command_engine.startCommand()
 
+    ## issueCommand
+    #
+    #  Send current command to command engine and update GUI
+    #
+    def issueCommand(self):
+        self.updateCommandSequenceDisplay(self.command_index)
+        self.ui.progressBar.setValue(self.command_index)
+        self.command_engine.loadCommand(self.commands[self.command_index])
+
+    def updateCommandSequenceDisplay(self, command_index):
+        # disable selectability of all other elements
+        for widget in self.command_widgets:
+            widget.setFlags(QtCore.Qt.ItemIsEnabled)
+
+        self.command_widgets[command_index].setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
+        self.ui.commandSequenceList.setCurrentRow(command_index)
+        self.updateCommandDescriptorTable(self.command_widgets[command_index])
+        
     ## newSequence
     #
     # Parses a XML file describing the list of movies to take.
@@ -798,27 +459,27 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def newSequence(self, sequence_filename):
         if (not self.running):
-            new_movies = []
+            commands = []
             try:
-                new_movies = sequenceParser.parseMovieXml(sequence_filename)
+                commands = sequenceParser.parseMovieXml(sequence_filename)
             except:
                 QtGui.QMessageBox.information(self,
                                               "XML Generation Error",
                                               traceback.format_exc())
-                #str(sys.exc_info()[0]))
             else:
-                self.movies = new_movies
-                self.movie_index = 0
-                self.number_movies = len(self.movies)
-                self.updateEstimates()
+                self.commands = commands
+                self.command_index = 0
+                self.sequence_length = len(self.commands)
+                self.sequence_filename = sequence_filename
+                self.updateGUI()
+                
                 self.ui.abortButton.show()
-                self.ui.movieTableWidget.show()
-                self.ui.runButton.setText("Run")
+                self.ui.abortButton.setEnabled(False)
+                self.ui.runButton.setText("Start")
                 self.ui.runButton.show()
-                self.ui.sequenceLabel.setText(sequence_filename)
-                self.movie_engine.setNumberMovies(self.number_movies)
-                self.movie_engine.newMovie(self.movies[self.movie_index], self.movie_index)
-
+                self.createCommandList()
+                self.issueCommand()
+                
     ## newSequenceFile
     #
     # Opens the dialog box that lets the user specify a sequence file.
@@ -839,13 +500,67 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def updateEstimates(self):
         total_frames = 0
-        for movie in self.movies:
-            total_frames += movie.length
-        est_time = float(total_frames)/(57.3 * 60.0 * 60.0) + len(self.movies) * 10.0/(60.0 * 60.0)
+        for command in self.commands:
+            if command.getType() == "movie":
+                total_frames += command.length
+        est_time = float(total_frames)/(57.3 * 60.0 * 60.0) + len(self.commands) * 10.0/(60.0 * 60.0)
         est_space = float(256 * 256 * 2 * total_frames)/(1000.0 * 1000.0 * 1000.0)
         self.ui.timeLabel.setText("Run Length: {0:.1f} hours (57Hz)".format(est_time))
         self.ui.spaceLabel.setText("Run Size: {0:.1f} GB (256x256)".format(est_space))
 
+    ## updateGUI
+    #
+    # Update the GUI elements
+    #
+    @hdebug.debug
+    def updateGUI(self):
+        # Current sequence xml file
+        self.ui.sequenceLabel.setText(self.sequence_filename)
+
+        # Update time estimates 
+        self.updateEstimates()
+
+    ## updateCommandDescriptorTable
+    #
+    # Display the details of the current command
+    #
+    @hdebug.debug
+    def updateCommandDescriptorTable(self, list_widget):
+        # Find widget
+        command_index = self.command_widgets.index(list_widget)
+        current_command = self.commands[command_index]
+
+        command_details = current_command.getDetails()
+
+        self.ui.commandDetailsTable.clear()
+        
+        for [line_num, line] in enumerate(command_details):
+            for [entry_pos, entry] in enumerate(line):
+                self.ui.commandDetailsTable.setItem(line_num, entry_pos, createTableWidget(entry))
+            
+    ## createCommandList
+    #
+    # create the command list
+    #
+    @hdebug.debug
+    def createCommandList(self):
+        self.ui.commandSequenceList.clear()
+        self.command_widgets = []
+        
+        for command in self.commands:
+            widget = QtGui.QListWidgetItem(command.getDescriptor())
+            widget.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.commandSequenceList.addItem(widget)
+            self.command_widgets.append(widget)
+        
+        if len(self.commands) > 0:
+            self.command_widgets[0].setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
+            self.ui.commandSequenceList.setCurrentRow(0)
+
+        self.updateCommandDescriptorTable(self.command_widgets[0])
+
+        self.ui.progressBar.setMaximum(len(self.commands))
+        
     ## quit
     #
     # Handles the quit file action.
@@ -856,13 +571,12 @@ class Window(QtGui.QMainWindow):
     def quit(self, boolean):
         self.close()
 
-
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     parameters = params.Parameters("settings_default.xml")
-
+    
     # Start logger.
-    hdebug.startLogging(parameters.directory + "logs/", "dave")
+    #hdebug.startLogging(parameters.directory + "logs/", "dave")
 
     # Load app.
     window = Window(parameters)

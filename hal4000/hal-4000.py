@@ -123,7 +123,9 @@ class Window(QtGui.QMainWindow):
         self.directory = False
         self.filename = ""
         self.filming = False
-        self.logfile_fp = open(parameters.logfile, "a")
+        #self.logfile_fp = open(parameters.logfile, "a")
+        #self.old_settings = []
+
         self.old_shutters_file = ""
         self.parameters = parameters
         self.running_shutters = False
@@ -133,8 +135,8 @@ class Window(QtGui.QMainWindow):
         self.writer = False
 
         # Logfile setup
-        self.logfile_fp.write("\r\n")
-        self.logfile_fp.flush()
+        #self.logfile_fp.write("\r\n")
+        #self.logfile_fp.flush()
 
         
         setup_name = parameters.setup_name.lower()
@@ -1394,7 +1396,7 @@ if __name__ == "__main__":
     params.setSetupName(parameters, setup_name)
 
     # Start logger.
-    hdebug.startLogging(parameters.directory + "logs/", "hal4000")
+#    hdebug.startLogging(parameters.directory + "logs/", "hal4000")
 
     # Load app.
     window = Window(hardware, parameters)

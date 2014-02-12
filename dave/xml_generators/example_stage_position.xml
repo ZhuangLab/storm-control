@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<variable_entry>
+   <value><stage_x>0.0</stage_x><stage_y>0.0</stage_y></value>
+   <value><stage_x>10.0</stage_x><stage_y>0.0</stage_y></value>
+   <value><stage_x>10.0</stage_x><stage_y>10.0</stage_y></value>
+   <value><stage_x>0.0</stage_x><stage_y>10.0</stage_y></value>
+</variable_entry>
