@@ -12,6 +12,8 @@ from PyQt4 import QtCore, QtGui
 
 import qtWidgets.qtAppIcon as qtAppIcon
 
+import halLib.halModule as halModule
+
 # Debugging
 import halLib.hdebug as hdebug
 
@@ -19,18 +21,17 @@ import halLib.hdebug as hdebug
 #
 # Misc Control Dialog Box
 #
-class MiscControl(QtGui.QDialog):
+class MiscControl(QtGui.QDialog, halModule.HalModule):
 
     ## __init__
     #
     # @param parameters A parameters object.
-    # @param tcp_control A TCP control object.
-    # @param camera_widget A camera (display area) widget.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, tcp_control, camera_widget, parent = None):
+    def __init__(self, parameters, parent = None):
         QtGui.QDialog.__init__(self, parent)
+        halModule.HalModule.__init__(self)
         
         self.camera_widget = camera_widget
         self.parameters = parameters
@@ -42,6 +43,15 @@ class MiscControl(QtGui.QDialog):
             self.have_parent = False
 
         self.setWindowIcon(qtAppIcon.QAppIcon())
+
+    ## cleanup()
+    #
+    # Called when the window is closed. Sub-classes should override
+    # this method for class specific cleanup.
+    #
+    @hdebug.debug
+    def cleanup(self):
+        pass
 
     ## closeEvent
     #
@@ -55,7 +65,7 @@ class MiscControl(QtGui.QDialog):
             event.ignore()
             self.hide()
         else:
-            self.quit()
+            self.cleanup()
 
     ## handleQuit
     #
@@ -74,18 +84,11 @@ class MiscControl(QtGui.QDialog):
     def newFrame(self, frame):
         pass
 
-    ## quit
-    #
-    # Cleans up when the progam exits.
-    #
-    @hdebug.debug
-    def quit(self):
-        pass
 
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
