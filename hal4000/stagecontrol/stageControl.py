@@ -155,6 +155,14 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
         self.updatePosition()
         self.position_update_timer.start()
 
+
+    ## cleanup
+    #
+    @hdebug.debug
+    def cleanup(self):
+        if self.stage:
+            self.stage.shutDown()
+
     ## closeEvent
     #
     # If this window has parent, just hide the window, otherwise close it.
@@ -166,9 +174,6 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
         if self.have_parent:
             event.ignore()
             self.hide()
-        else:
-            if self.stage:
-                self.stage.shutDown()
 
     ## connectSignals
     #

@@ -17,14 +17,13 @@ import halLib.hdebug as hdebug
 #
 class HalModule(object):
 
-    ## close
+    ## cleanup
     #
-    # This should always be overridden and/or provided by a different base class.
     # This will be called when HAL closes to perform any module specific clean-up.
     #
     @hdebug.debug
-    def close(self):
-        print "close error!"
+    def cleanup(self):
+        pass
 
     ## connectSignals
     #

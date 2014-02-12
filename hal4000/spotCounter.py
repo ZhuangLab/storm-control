@@ -532,6 +532,13 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
         # Set modeless.
         self.setModal(False)
 
+        
+    ## cleanup
+    #
+    @hdebug.debug
+    def cleanup(self):
+        self.spot_counter.shutDown()
+
     ## closeEvent
     #
     # Handle close events. The event is ignored and the dialog box is simply
@@ -544,8 +551,6 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
         if self.have_parent:
             event.ignore()
             self.hide()
-        else:
-            self.spot_counter.shutDown()
 
     ## connectSignals
     #

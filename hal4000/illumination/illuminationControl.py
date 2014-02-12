@@ -320,6 +320,14 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     def autoControl(self, channels_used):
         self.power_control.autoControl(channels_used)
 
+    ## cleanup
+    #
+    @hdebug.debug
+    def cleanup(self):
+        self.power_control.shutDown()
+        self.shutter_control.cleanup()
+        self.shutter_control.shutDown()
+
     ## closeEvent
     #
     # Close the dialog if it has no parent, otherwise just hide it.
@@ -331,10 +339,6 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         if self.have_parent:
             event.ignore()
             self.hide()
-        else:
-            self.power_control.shutDown()
-            self.shutter_control.cleanup()
-            self.shutter_control.shutDown()
 
     ## connectSignals
     #

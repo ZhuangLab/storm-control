@@ -346,7 +346,7 @@ class Window(QtGui.QMainWindow):
 
         # stop the modules.
         for module in self.modules:
-            module.close()
+            module.cleanup()
 
     ## closeEvent
     #
@@ -497,7 +497,7 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleJoystickToggleFilm(self):
-        self.toggleFilm()
+        self.toggleFilm(False)
 
     ## handleModeComboBox
     #
@@ -853,10 +853,10 @@ class Window(QtGui.QMainWindow):
     # Start/stop filming. If this file already exists this will warn that
     # it is about to get overwritten.
     #
-    # @param bool Dummy parameter.
+    # @param boolean Dummy parameter.
     #
     @hdebug.debug
-    def toggleFilm(self, bool):
+    def toggleFilm(self, boolean):
         if self.filming:
             self.stopFilm()
         else:

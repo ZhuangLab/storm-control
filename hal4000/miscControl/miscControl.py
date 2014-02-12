@@ -33,9 +33,7 @@ class MiscControl(QtGui.QDialog, halModule.HalModule):
         QtGui.QDialog.__init__(self, parent)
         halModule.HalModule.__init__(self)
         
-        self.camera_widget = camera_widget
         self.parameters = parameters
-        self.tcp_control = tcp_control
 
         if parent:
             self.have_parent = True

@@ -60,6 +60,13 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
         self.parameters = parameters
         self.jumpsize = 0.0
 
+    ## cleanup
+    #
+    @hdebug.debug
+    def cleanup(self):
+        self.lock_display1.quit()
+        self.closeOffsetFile()
+
     ## closeEvent
     #
     # Handles user clicking on the X in the upper right hand corner.
@@ -73,10 +80,6 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
         if self.have_parent:
             event.ignore()
             self.hide()
-        else:
-            self.lock_display1.quit()
-            self.closeOffsetFile()
-            self.close()
 
     ## closeOffsetFile
     #
@@ -536,15 +539,12 @@ class FocusLockZDualCam(FocusLockZ):
 
         FocusLockZ.configureUI(self)
 
-    ## closeEvent
-    #
-    # Handles shutting things down when the program quits.
+    ## cleanup
     #
     @hdebug.debug
-    def closeEvent(self, event):
-        if (not self.have_parent):
-            self.lock_display2.quit()
-            self.FocusLockZ.closeEvent(self, event)
+    def cleanup(self):
+        self.lock_display2.quit()
+        FocusLockZ.cleanup(self)
 
     ## handleJumpPButton
     #

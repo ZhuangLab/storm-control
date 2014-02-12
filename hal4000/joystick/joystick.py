@@ -59,12 +59,12 @@ class JoystickObject(QtCore.QObject, halModule.HalModule):
             self.to_emit()
             self.button_timer.start()
 
-    ## close
+    ## cleanup
     #
     # Shutdown the joystick hardware interface at program closing.
     #
     @hdebug.debug
-    def close(self):
+    def cleanup(self):
         self.jstick.shutDown()
 
     ## getSignals
