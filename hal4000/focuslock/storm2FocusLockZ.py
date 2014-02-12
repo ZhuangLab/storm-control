@@ -26,7 +26,7 @@ import focuslock.focusLockZ as focusLockZ
 # with Phresh QPD and MCL objective Z positioner.
 #
 class AFocusLockZ(focusLockZ.FocusLockZQPD):
-    def __init__(self, parameters, tcp_control, parent = None):
+    def __init__(self, hardware, parameters, tcp_control, parent = None):
         qpd = phreshQPD.PhreshQPDSTORM2()
         stage = zstage.QPriorZ()
 #        lock_fn = lambda (x): -1.75 * x
