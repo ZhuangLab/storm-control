@@ -174,10 +174,6 @@ class AMiscControl(miscControl.MiscControl):
         self.ui.iEyesLabel.setText(self.getIEName())
 
     @hdebug.debug
-    def handleOk(self, bool):
-        self.hide()
-
-    @hdebug.debug
     def handleReset(self, bool):
         tif_files = glob.glob(self.ie_directory + "*.tif")
         for file in tif_files:
