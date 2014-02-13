@@ -12,7 +12,7 @@ import sys
 from PyQt4 import QtCore, QtGui
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.steve_ui as steveUi
@@ -27,7 +27,7 @@ import capture
 
 # Misc
 import coord
-import halLib.parameters as params
+import sc_library.parameters as params
 
 
 ## findMO

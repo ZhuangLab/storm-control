@@ -19,10 +19,10 @@ from xml.dom import minidom, Node
 from PyQt4 import QtCore, QtGui
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # General
-import halLib.tcpClient
+import sc_library.tcpClient as tcpClient
 import notifications
 import sequenceParser
 import xml_generator
@@ -31,7 +31,7 @@ import xml_generator
 import qtdesigner.dave_ui as daveUi
 
 # Misc
-import halLib.parameters as params
+import sc_library.parameters as params
 
 
 ## createTableWidget
@@ -358,7 +358,7 @@ class MovieEngine(QtGui.QWidget):
         self.delay_timer.timeout.connect(self.checkPause)
 
         # TCP communications.
-        self.comm = halLib.tcpClient.TCPClient(self)
+        self.comm = tcpClient.TCPClient(self)
         self.comm.acknowledged.connect(self.handleAcknowledged)
         self.comm.complete.connect(self.handleComplete)
 

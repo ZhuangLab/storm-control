@@ -40,14 +40,15 @@ import traceback
 from PyQt4 import QtCore, QtGui
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # Misc.
 import camera.filmSettings as filmSettings
-import halLib.parameters as params
 import halLib.imagewriters as writers
 import qtWidgets.qtAppIcon as qtAppIcon
 import qtWidgets.qtParametersBox as qtParametersBox
+
+import sc_library.parameters as params
 
 ## getFileName
 #

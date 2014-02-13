@@ -11,7 +11,7 @@ from ctypes import *
 import sys
 import time
 
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 try:
     import halLib.RS232 as RS232

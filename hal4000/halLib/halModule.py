@@ -9,7 +9,7 @@
 
 from PyQt4 import QtCore
 
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 ## HalModule class.
 #

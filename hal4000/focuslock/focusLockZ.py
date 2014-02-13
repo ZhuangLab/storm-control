@@ -26,7 +26,7 @@ import qtWidgets.qtAppIcon as qtAppIcon
 import halLib.halModule as halModule
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # Widgets
 import focuslock.lockDisplay as lockDisplay

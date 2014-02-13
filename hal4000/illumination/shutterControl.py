@@ -11,7 +11,7 @@ from PyQt4 import QtCore
 
 from xml.dom import minidom, Node
 
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 ## ShutterControl
 #

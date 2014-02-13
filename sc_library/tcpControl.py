@@ -11,7 +11,7 @@ import sys
 from PyQt4 import QtCore, QtNetwork
 
 import halLib.halModule as halModule
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 ## match
 #

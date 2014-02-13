@@ -23,7 +23,7 @@ import halLib.halModule as halModule
 import qtWidgets.qtAppIcon as qtAppIcon
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.progression_ui as progressionUi

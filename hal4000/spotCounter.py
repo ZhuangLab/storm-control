@@ -20,7 +20,7 @@ import halLib.halModule as halModule
 import halLib.parameters as params
 
 # Debugging.
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # The module that actually does the analysis.
 import qtWidgets.qtSpotCounter as qtSpotCounter

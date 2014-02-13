@@ -18,7 +18,7 @@ import illumination.channelWidgets as channelWidgets
 import illumination.shutterControl as shutterControl
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.illumination_ui as illuminationUi
