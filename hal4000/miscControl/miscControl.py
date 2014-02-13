@@ -42,15 +42,6 @@ class MiscControl(QtGui.QDialog, halModule.HalModule):
 
         self.setWindowIcon(qtAppIcon.QAppIcon())
 
-    ## cleanup()
-    #
-    # Called when the window is closed. Sub-classes should override
-    # this method for class specific cleanup.
-    #
-    @hdebug.debug
-    def cleanup(self):
-        pass
-
     ## closeEvent
     #
     # Close the window if it does not have a parent, otherwise just hide it.
@@ -65,22 +56,25 @@ class MiscControl(QtGui.QDialog, halModule.HalModule):
         else:
             self.cleanup()
 
+    ## handleOk
+    #
+    # Hide the window.
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def handleOk(self, bool):
+        self.hide()
+
     ## handleQuit
     #
     # Close the window.
     #
-    # @param bool Dummy parameter.
+    # @param boolean Dummy parameter.
     #
     @hdebug.debug
-    def handleQuit(self, bool):
+    def handleQuit(self, boolean):
         self.close()
-
-    ## newFrame
-    #
-    # Called when there is new data from the camera during film acquisition.
-    #
-    def newFrame(self, frame):
-        pass
 
 
 #
