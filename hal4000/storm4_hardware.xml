@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <hardware>
-  <!-- Defines the camera for storm4 -->
+  <!-- Defines the camera for storm4 -->.
 
   <camera>
     <module type="string">classicSingleCamera</module>
@@ -24,11 +24,14 @@
       <class_name type="string">AIlluminationControl</class_name>
       <menu_item type="string">Illumination</menu_item>
       <module_name type="string">illumination.storm4IlluminationControl</module_name>
+      <parameters>
+	<settings_xml type="string">storm4_illumination_control_settings.xml</settings_xml>
+      </parameters>
     </illumination>
 
     <!-- Joystick controller. -->
     <joystick>
-      <class_name type="string">AJoystickControl</class_name>
+      <class_name type="string">AJoystick</class_name>
       <module_name type="string">joystick.gamepad310JoystickControl</module_name>
     </joystick>
   
@@ -70,5 +73,5 @@
     </tcpip>
 
   </modules>
-  
+
 </hardware>
