@@ -845,7 +845,7 @@ class Window(QtGui.QMainWindow):
             if (self.writer.getLockTarget() == "failed"):
                 hdebug.logText("QPD/Camera appears to have frozen..")
                 self.quit()
-            self.tcpComplete.emit(self.writer.getSpotCounts())
+            self.tcpComplete.emit(str(self.writer.getSpotCounts()))
             self.tcp_requested_movie = False
 
     ## toggleFilm
