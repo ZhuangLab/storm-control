@@ -326,7 +326,6 @@ class ValveProtocols(QtGui.QMainWindow):
     def skipCommand(self):
         self.protocol_timer.stop()
         self.advanceProtocol()
-        print "Here"
 
     # ------------------------------------------------------------------------------------
     # Initialize and start a protocol and issue first command
