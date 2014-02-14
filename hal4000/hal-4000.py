@@ -216,6 +216,7 @@ class Window(QtGui.QMainWindow):
         # Load the requested modules.
         add_separator = False
         for module in hardware.modules:
+            hdebug.logText("Loading: " + module.hal_type)
             a_module = halImport(module.module_name)
             a_class = getattr(a_module, module.class_name)
             instance = a_class(module.parameters, parameters, self)
