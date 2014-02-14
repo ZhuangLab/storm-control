@@ -212,7 +212,7 @@ class AMiscControl(miscControl.MiscControl):
         self.setPositionText()
 
     def newFrame(self, frame, filming):
-        if self.ie_capture and frame and not self.ie_setting_ROI:
+        if self.ie_capture and frame:
 
             bg_term = self.ui.iEyesBackgroundSpinBox.value()
             frame_data = frame.getData().copy()
