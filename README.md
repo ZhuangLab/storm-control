@@ -9,6 +9,8 @@ dave - This folder contains software (dave.py) that is used to control hal for a
 
 hal4000 - This folder contains the hal-4000 microscope control and image acquisition software (hal-4000.py).
 
+sc_library - This folder contains the modules that are used in multiple different programs.
+
 steve - This folder contains software (steve.py) that is used to take and assemble image mosaics. This is useful for array tomography experiments, among other things. Steve also controls Hal via TCP/IP.
 
 zee-calibrator - This folder contains software (main.py) that is used to generate calibration curves for astigmatism based 3D STORM imaging. Calibration data acquired using Hal needs to be analyzed by STORM image analysis software like Insight3 (available by request from the Zhuang Lab) or 3D-DAOSTORM before it can be processed using zee-calibrator.
