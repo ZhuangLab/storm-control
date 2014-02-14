@@ -22,7 +22,7 @@ import sc_library.hdebug as hdebug
 import sc_library.tcpClient as tcpClient
 
 # Reading DAX files
-import sc_library.daxspereader
+import sc_library.daxspereader as daxspereader
 
 import coord
 
@@ -153,7 +153,7 @@ class Capture(QtCore.QObject):
         tries = 0
         while (not success) and (tries < 4):
             try:
-                self.dax = halLib.daxspereader.DaxReader(filename, verbose = 1)
+                self.dax = daxspereader.DaxReader(filename, verbose = 1)
                 frame = self.dax.loadAFrame(0)
                 self.dax.closeFilePtr()
                 success = True
