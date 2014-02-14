@@ -17,6 +17,7 @@ import sys
 # The base class for displaying data from a camera.
 #
 class QCameraWidget(QtGui.QWidget):
+    roiSelection = QtCore.pyqtSignal(object)
     intensityInfo = QtCore.pyqtSignal(int, int, int)
     mousePress = QtCore.pyqtSignal(int, int)
 
@@ -41,6 +42,8 @@ class QCameraWidget(QtGui.QWidget):
         # This is the amount of image magnification.
         # Only integer values are allowed.
         self.magnification = 1
+
+        self.roi_rubber_band = False
 
         self.show_grid = False
         self.show_info = True
@@ -118,6 +121,14 @@ class QCameraWidget(QtGui.QWidget):
         margin = int(0.1 * float(self.image_max - self.image_min))
         return [self.image_min - margin, self.image_max + margin]
 
+    ## mouseMoveEvent
+    #
+    # @param event A PyQt mouse move event.
+    #
+    def mouseMoveEvent(self, event):
+        if self.roi_rubber_band:
+            self.roi_rubber_band.setGeometry(QtCore.QRect(self.roi_rubber_band.pos(), event.pos()).normalized())
+            
     ## mousePressEvent
     #
     # Convert the mouse click location into camera pixels. The xy 
@@ -128,16 +139,38 @@ class QCameraWidget(QtGui.QWidget):
     # @param event A PyQt mouse press event.
     #
     def mousePressEvent(self, event):
+
+        # Point/pixel selection.
         self.x_click = event.x() * self.x_size / self.x_final
         self.y_click = event.y() * self.y_size / self.y_final
-
+        
         if (self.x_click >= self.x_size):
             self.x_click = self.x_size - 1
         if (self.y_click >= self.y_size):
             self.y_click = self.y_size - 1
-
+        
         self.mousePress.emit(self.x_click, self.y_click)
 
+        # ROI selection rubber band.
+        if not self.roi_rubber_band:
+            self.roi_rubber_band = QtGui.QRubberBand(QtGui.QRubberBand.Rectangle, self)
+        self.roi_rubber_band.setGeometry(QtCore.QRect(event.pos(), QtCore.QSize()))
+        self.roi_rubber_band.show()
+
+    ## mouseReleaseEvent
+    #
+    # @param event A PyQt mouse move event.
+    #
+    def mouseReleaseEvent(self, event):
+        self.roi_rubber_band.hide()
+        rect = self.roi_rubber_band.geometry()
+        if (rect.width() > 1) and (rect.height() > 1):
+            left = rect.left() * self.x_size / self.x_final
+            top = rect.top() * self.y_size / self.y_final
+            width = rect.width() * self.x_size / self.x_final
+            height = rect.height() * self.y_size / self.y_final
+            self.roiSelection.emit(QtCore.QRect(left, top, width, height))
+        
     ## newColorTable
     #
     # Note that the color table of the image that is being displayed 
@@ -325,30 +358,6 @@ class QCameraWidget(QtGui.QWidget):
                 if ((x_loc >= 0) and (x_loc < w) and (y_loc >= 0) and (y_loc < h)):
                     value = image_data[y_loc, x_loc]
                     self.intensityInfo.emit(x_loc, y_loc, value)
-
-#    #
-#    # This is called after initialization to get the correct 
-#    # default size based on the size of the scroll area as 
-#    # specified using QtDesigner.
-#    #
-#    def updateSize(self):
-#        self.x_final = self.width()
-#        self.x_view = self.width()
-#        self.y_final = self.height()
-#        self.y_view = self.height()
-
-#    def wheelEvent(self, event):
-#        if (event.delta() > 0):
-#            self.magnification += 1
-#        else:
-#            self.magnification -= 1
-#        
-#        if (self.magnification < 1):
-#            self.magnification = 1
-#        if (self.magnification > 8):
-#            self.magnification = 8
-#
-#        self.calcFinalSize()
 
 
 #
