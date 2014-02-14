@@ -10,7 +10,6 @@
 import sys
 from PyQt4 import QtCore, QtNetwork
 
-import halLib.halModule as halModule
 import sc_library.hdebug as hdebug
 
 ## match
@@ -67,7 +66,7 @@ class TCPMessage():
 # the server is closed once the connection is made. When the
 # connection is broken the server is opened again.
 #
-class TCPControl(QtNetwork.QTcpServer, halModule.HalModule):
+class TCPControl(QtNetwork.QTcpServer):
     commGotConnection = QtCore.pyqtSignal()
     commLostConnection = QtCore.pyqtSignal()
     commMessage = QtCore.pyqtSignal(object)
@@ -84,7 +83,6 @@ class TCPControl(QtNetwork.QTcpServer, halModule.HalModule):
     #
     def __init__(self, hardware, parameters, parent):
         QtNetwork.QTcpServer.__init__(self, parent)
-        halModule.HalModule.__init__(self)
         self.port = hardware.tcp_port
         self.socket = None
         if parent:
@@ -96,16 +94,6 @@ class TCPControl(QtNetwork.QTcpServer, halModule.HalModule):
 
         # Configure to listen on the appropriate port.
         self.listen(QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost), self.port)
-
-    ## connectSignals
-    #
-    # @param signals An array of signals that we might be interested in connecting to.
-    #
-    @hdebug.debug
-    def connectSignals(self, signals):
-        for signal in signals:
-            if (signal[1] == "tcpComplete"):
-                signal[2].connect(self.sendComplete)
 
     ## disconnect
     #
@@ -135,16 +123,6 @@ class TCPControl(QtNetwork.QTcpServer, halModule.HalModule):
         self.socket.close()
         self.socket = None
         self.commLostConnection.emit()
-
-    ## getSignals
-    #
-    # @return The signals this module provides.
-    #
-    @hdebug.debug
-    def getSignals(self):
-        return [[self.hal_type, "commGotConnection", self.commGotConnection],
-                [self.hal_type, "commLostConnection", self.commLostConnection],
-                [self.hal_type, "commMessage", self.commMessage]]
 
     ## handleConnection
     #
