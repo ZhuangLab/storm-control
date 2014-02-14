@@ -45,6 +45,7 @@
 
 (4) Add the storm_control directory to your Python path.
 
+
 (5) Create data & logs directories:
  The default directory for saving data is "c:\users\data\". You can change
  this is in settings xml file. You will also need to create a sub-directory
