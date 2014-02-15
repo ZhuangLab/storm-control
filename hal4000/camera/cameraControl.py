@@ -14,7 +14,7 @@
 from PyQt4 import QtCore
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 ## CameraControl
 #

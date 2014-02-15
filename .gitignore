@@ -17,4 +17,4 @@ Desktop.ini
 ## Python
 #############
 *.py[co]
-
+*.py~

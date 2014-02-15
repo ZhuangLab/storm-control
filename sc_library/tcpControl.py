@@ -4,13 +4,13 @@
 #
 # Handles remote control (via TCP/IP of the data collection program)
 #
-# Hazen 8/13
+# Hazen 02/14
 #
 
 import sys
 from PyQt4 import QtCore, QtNetwork
 
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 ## match
 #
@@ -30,6 +30,36 @@ def match(string1, string2):
         return False
 
 
+## TCPMessage
+#
+# Contains the contents of a TCP command.
+#
+class TCPMessage():
+
+    ## __init__
+    #
+    # @param command_type The type of the command.
+    # @param command_data The data in the command.
+    #
+    def __init__(self, command_type, command_data):
+        self.command_data = command_data
+        self.command_type = command_type
+
+    ## getType
+    #
+    # @return The command type.
+    #
+    def getType(self):
+        return self.command_type
+
+    ## getData
+    #
+    # @return The command data (as a list of values).
+    #
+    def getData(self):
+        return self.command_data
+
+
 ## TCP/IP Control Class
 #
 # To allow only one connection at a time from the local computer
@@ -39,6 +69,7 @@ def match(string1, string2):
 class TCPControl(QtNetwork.QTcpServer):
     commGotConnection = QtCore.pyqtSignal()
     commLostConnection = QtCore.pyqtSignal()
+    commMessage = QtCore.pyqtSignal(object)
 
     ## __init__
     #
@@ -46,12 +77,13 @@ class TCPControl(QtNetwork.QTcpServer):
     # port. This is supposed to only accept connections from processes
     # on the same computer.
     #
-    # @param port The TCP/IP port number to listen on.
-    # @param parent (Optional) The PyQt parent.
+    # @param hardware A hardware object.
+    # @param parameters A parameters object.
+    # @param parent The PyQt parent.
     #
-    def __init__(self, port, parent = None):
+    def __init__(self, hardware, parameters, parent):
         QtNetwork.QTcpServer.__init__(self, parent)
-        self.port = port
+        self.port = hardware.tcp_port
         self.socket = None
         if parent:
             self.have_parent = 1
@@ -62,19 +94,6 @@ class TCPControl(QtNetwork.QTcpServer):
 
         # Configure to listen on the appropriate port.
         self.listen(QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost), self.port)
-
-    ## isConnected
-    #
-    # Return True if an external program is connected, False otherwise.
-    #
-    # @return True/False depending on the connection state.
-    #
-    @hdebug.debug
-    def isConnected(self):
-        if self.socket and (self.socket.state() == QtNetwork.QAbstractSocket.ConnectedState):
-            return True
-        else:
-            return False
 
     ## disconnect
     #
@@ -128,6 +147,19 @@ class TCPControl(QtNetwork.QTcpServer):
             self.socket.disconnected.connect(self.disconnected)
             self.commGotConnection.emit()
 
+    ## isConnected
+    #
+    # Return True if an external program is connected, False otherwise.
+    #
+    # @return True/False depending on the connection state.
+    #
+    @hdebug.debug
+    def isConnected(self):
+        if self.socket and (self.socket.state() == QtNetwork.QAbstractSocket.ConnectedState):
+            return True
+        else:
+            return False
+
     ## readyRead
     #
     # Called when the external program sends a command. The command
@@ -138,51 +170,40 @@ class TCPControl(QtNetwork.QTcpServer):
     @hdebug.debug
     def readyRead(self):
         while self.socket.canReadLine():
-            command = str(self.socket.readLine())[:-1]
+            message = str(self.socket.readLine())[:-1]
             if hdebug.getDebug():
-                hdebug.logText("Got: " + command)
+                hdebug.logText("Got: " + message)
 
             # Send an acknowledgement that the command was recieved.
             self.socket.write(QtCore.QByteArray("Ack\n"))
             self.socket.flush()
 
-            #
-            # Parse the command to dynamically generate a PyQt signal.
-            #
-            # The idea is that this will eliminate this class as the
-            # middleman. The sender can send arbitrary commands, this
-            # class will generate the appropriate signal, and hopefully
-            # it will be recognized by the appropriate recipient.
-            #
+            # Parse the message to generate the command.
+            message_split = message.split(",")
 
-            command_split = command.split(",")
-            command_data = command_split[1:]
-            signal = command_split[0] + "("
+            # Get command type.
+            command_type = message_split[0]
+
+            # Parse command data.
             i = 0
-            parsed_data = []
-            while(i < len(command_data)):
-                type = command_data[i]
-                value = command_data[i+1]
-                if (type == "string"):
-                    signal += "PyQt_PyObject,"
-                    parsed_data.append(value)
-                elif (type == "int"):
-                    signal += "int,"
-                    parsed_data.append(int(value))
-                elif (type == "float"):
-                    signal += "float,"
-                    parsed_data.append(float(value))
+            command_data = []
+            message_data = message_split[1:]
+            while(i < len(message_data)):
+                m_type = message_data[i]
+                m_value = message_data[i+1]
+
+                if (m_type == "string"):
+                    command_data.append(m_value)
+                elif (m_type == "int"):
+                    command_data.append(int(m_value))
+                elif (m_type == "float"):
+                    command_data.append(float(m_value))
                 else:
-                    print "Unknown type:", type
+                    print "Unknown type:", m_type
                 i += 2
 
-            if (len(signal) == len(command_split[0])+1):
-                signal += ")"
-            else:
-                signal = signal[:-1] + ")"
-            print signal
-            self.emit(QtCore.SIGNAL(signal), *parsed_data)
-
+            self.commMessage.emit(TCPMessage(command_type, command_data))
+     
     ## sendComplete
     #
     # Called to send a complete message back to the external program. This
@@ -190,25 +211,15 @@ class TCPControl(QtNetwork.QTcpServer):
     # a movie.
     #
     # @param a_string Additional data as a string to send with the complete message.
+    #
     @hdebug.debug
-    def sendComplete(self, a_string = "NA"):
+    def sendComplete(self, a_string):
         if self.isConnected():
             hdebug.logText("sendComplete " + a_string)
             self.socket.write(QtCore.QByteArray("Complete," + a_string + "\n"))
             self.socket.flush()
         else:
             hdebug.logText("sendComplete: not connected")
-
-#    ## sendStatus
-#    #
-#    def sendStatus(self, status):
-#        if self.debug:
-#            print "sendStatus"
-#
-#        if self.isConnected():
-#            self.socket.write(QtCore.QByteArray("Status," + str(status)))
-#        else:
-#            print "sendStatus: not connected"
 
 
 #
@@ -225,7 +236,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

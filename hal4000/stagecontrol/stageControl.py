@@ -4,15 +4,17 @@
 #
 # The stage control UI.
 #
-# Hazen 9/12
+# Hazen 02/14
 #
 
 from PyQt4 import QtCore, QtGui
 
 import qtWidgets.qtAppIcon as qtAppIcon
 
+import halLib.halModule as halModule
+
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.stage_ui as stageUi
@@ -23,34 +25,6 @@ import qtdesigner.stage_ui as stageUi
 #
 # This is the UI for stage control based on some sort 
 # of motorized stage.
-#
-#  Methods called by HAL:
-#
-#    getStagePosition()
-#      Return the current stage position.
-#
-#    jog(x_speed, y_speed)
-#      Move stage at the velocity given by x_speed and
-#      y_speed (microns / second).
-#
-#    newParameters(parameters)
-#      Update stage settings with the new parameters.
-#
-#    quit()
-#      Cleanup and shutdown prior to the program ending.
-#
-#    show()
-#      Display the stage control dialog box.
-#
-#    startLockout()
-#      Lockout the joystick.
-#
-#    step(x_step, y_step)
-#      Move the stage by x_step in x, y_step in y (in microns).
-#
-#    stopLockout()
-#      Turn off joystick lockout
-#
 #
 # The motorized stage class must provide the following methods:
 #
@@ -82,22 +56,22 @@ import qtdesigner.stage_ui as stageUi
 # zero()
 #   Define the current position as zero.
 #
-class StageControl(QtGui.QDialog):
+class StageControl(QtGui.QDialog, halModule.HalModule):
 
     ## __init__
     #
     # @param parameters A parameters object.
-    # @param tcp_control A TCP/IP control object.
-    # @param parent (Optional) The PyQt parent of this object.
+    # @param parent The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, tcp_control, parent):
+    def __init__(self, parameters, parent):
         QtGui.QMainWindow.__init__(self, parent)
-        self.locked_out = False
+        halModule.HalModule.__init__(self)
+
+        self.joystick_lockout = False
         self.parameters = parameters
         self.position_update_timer = QtCore.QTimer(self)
         self.position_update_timer.setInterval(500)
-        self.tcp_control = tcp_control
 
         if parent:
             self.have_parent = 1
@@ -158,10 +132,6 @@ class StageControl(QtGui.QDialog):
         self.ui.saveButton.clicked.connect(self.handleSave)
         self.ui.saveComboBox.activated.connect(self.handleSaveIndexChange)
 
-        # tcp signals
-        if self.tcp_control:
-            self.connect(self.tcp_control, QtCore.SIGNAL("moveTo(float, float)"), self.tcpHandleMoveTo)
-
         # set modeless
         self.setModal(False)
 
@@ -179,11 +149,19 @@ class StageControl(QtGui.QDialog):
         if not(self.stage.getStatus()):
             print "Failed to connect to the microscope stage. Perhaps it is turned off?"
             self.stage.shutDown()
-            self.stage = 0
+            self.stage = False
         else:
             self.stage.setVelocity(parameters.stage_speed, parameters.stage_speed)
         self.updatePosition()
         self.position_update_timer.start()
+
+
+    ## cleanup
+    #
+    @hdebug.debug
+    def cleanup(self):
+        if self.stage:
+            self.stage.shutDown()
 
     ## closeEvent
     #
@@ -196,8 +174,28 @@ class StageControl(QtGui.QDialog):
         if self.have_parent:
             event.ignore()
             self.hide()
-        else:
-            self.quit()
+
+    ## connectSignals
+    #
+    # @param signals An array of signals that we might be interested in connecting to.
+    #
+    @hdebug.debug
+    def connectSignals(self, signals):
+        for signal in signals:
+            
+            # Comm signals
+            if (signal[1] == "commGotConnection"):
+                signal[2].connect(self.startLockout)
+            elif (signal[1] == "commLostConnection"):
+                signal[2].connect(self.stopLockout)
+            if (signal[1] == "commMessage"):
+                signal[2].connect(self.handleCommMessage)
+
+            # Joystick signals
+            elif (signal[1] == "jstickMotion"):
+                signal[2].connect(self.jog)
+            elif (signal[1] == "jstickStep"):
+                signal[2].connect(self.step)
 
     ## downS
     #
@@ -250,6 +248,21 @@ class StageControl(QtGui.QDialog):
     @hdebug.debug
     def handleClear(self, bool):
         self.ui.saveComboBox.clear()
+
+    ## handleCommMessage
+    #
+    # Handles all the message from tcpControl.
+    #
+    # @param message A tcpControl.TCPMessage object.
+    #
+    @hdebug.debug
+    def handleCommMessage(self, message):
+
+        m_type = message.getType()
+        m_data = message.getData()
+
+        if (m_type == "moveTo"):
+            self.tcpHandleMoveTo(m_data[0], m_data[1])
 
     ## handleGo
     #
@@ -304,13 +317,11 @@ class StageControl(QtGui.QDialog):
     #
     @hdebug.debug
     def handleLockout(self, bool):
-        if self.locked_out:
+        if self.joystick_lockout:
             self.stopLockout()
-            self.locked_out = False
             self.ui.joystickLockoutButton.setStyleSheet("QPushButton { color: red }")
         else:
             self.startLockout()
-            self.locked_out = True
             self.ui.joystickLockoutButton.setStyleSheet("QPushButton { color: green }")        
 
     ## handleOk
@@ -373,7 +384,8 @@ class StageControl(QtGui.QDialog):
     # @param y_speed The speed to move the stage in y.
     #
     def jog(self, x_speed, y_speed):
-        self.stage.jog(x_speed, y_speed)
+        if self.stage:
+            self.stage.jog(x_speed, y_speed)
 
     ## keyPressEvent
     #
@@ -460,15 +472,6 @@ class StageControl(QtGui.QDialog):
         else:
             self.y_sign = -1
 
-    ## quit
-    #
-    # Shut down the stage hardware on program exit.
-    #
-    @hdebug.debug
-    def quit(self):
-        if self.stage:
-            self.stage.shutDown()
-
     ## rightS
     #
     # Move right one small step.
@@ -489,14 +492,25 @@ class StageControl(QtGui.QDialog):
     def rightL(self, bool):
         self.moveRelative(0, -1 * self.large_step_size)
 
+    ## startFilm
+    #
+    # @param film_name The name of the film without any extensions, or False if the film is not being saved.
+    # @param run_shutters True/False the shutters should be run or not.
+    #
+    @hdebug.debug
+    def startFilm(self, film_name, run_shutters):
+        self.startLockout()
+
     ## startLockout
     #
     # Lock out the stage control joystick.
     #
     @hdebug.debug
     def startLockout(self):
-        if self.stage:
-            self.stage.lockout(True)
+        if not self.joystick_lockout:
+            if self.stage:
+                self.stage.lockout(True)
+            self.joystick_lockout = True
 
     ## step
     #
@@ -507,7 +521,22 @@ class StageControl(QtGui.QDialog):
     #
     @hdebug.debug
     def step(self, x, y):
-        self.stage.goRelative(x, y)
+        if self.stage:
+            self.stage.goRelative(x, y)
+
+    ## stopFilm
+    #
+    # Called at when filming is complete. The writer is passed to the modules
+    # so that they can (optionally) add any module specific data to the film's
+    # meta-data (the .inf file).
+    #
+    # @param film_writer The film writer object.
+    #
+    @hdebug.debug
+    def stopFilm(self, film_writer):
+        self.stopLockout()
+        if film_writer:
+            film_writer.setStagePosition(self.getStagePosition())
 
     ## stopLockout
     #
@@ -515,8 +544,10 @@ class StageControl(QtGui.QDialog):
     #
     @hdebug.debug
     def stopLockout(self):
-        if self.stage:
-            self.stage.lockout(False)
+        if self.joystick_lockout:
+            if self.stage:
+                self.stage.lockout(False)
+            self.joystick_lockout = False
 
     ## tcpHandleMoveTo
     #
@@ -576,7 +607,7 @@ class StageControl(QtGui.QDialog):
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

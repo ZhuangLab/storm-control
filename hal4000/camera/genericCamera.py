@@ -21,7 +21,7 @@
 from PyQt4 import QtCore, QtGui
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 ## Camera
 #
@@ -46,6 +46,16 @@ class Camera(QtGui.QDialog):
     #
     def cameraInit(self):
         pass
+
+    ## connectSignals
+    #
+    # @param signals An array of signals that we might be interested in connecting to.
+    #
+    @hdebug.debug
+    def connectSignals(self, signals):
+        for signal in signals:
+            if (signal[1] == "newCycleLength"):
+                signal[2].connect(self.setSyncMax)
 
     ## getCameraDisplay
     #
@@ -89,6 +99,14 @@ class Camera(QtGui.QDialog):
     #
     def getRecordButton(self):
         return False
+
+    ## getSignals
+    #
+    # @return The signals this module provides.
+    #
+    @hdebug.debug
+    def getSignals(self):
+        return []
 
     ## newParameters
     #

@@ -114,9 +114,7 @@
   <min_spots type="int">0</min_spots>
   <max_spots type="int">500</max_spots>
   <scale_bar_len type="float">1000</scale_bar_len>
-  <nm_per_pixel type="float">164</nm_per_pixel>
-
-  <!-- temperature logger settings -->
+  <nm_per_pixel type="float">160</nm_per_pixel>
 
   <!-- misc control -->
   <jog_size type="float">0.01</jog_size>
@@ -124,10 +122,6 @@
   <tirf_position type="float">20.36</tirf_position>
   <filter_names type="string-array">1,2,3,4,5,6</filter_names>
   <filter_position type="int">0</filter_position>
-
-  <!-- TCP/IP control -->
-  <have_tcp_control type="int">1</have_tcp_control>
-  <tcp_port type="int">9000</tcp_port>
 
   <!-- power progression settings -->
   <have_progressions type="int">1</have_progressions>

@@ -6,12 +6,13 @@
 # the resulting settings. Primarily designed for use
 # by the hal acquisition program.
 #
-# Hazen 12/12
+# Hazen 02/14
 #
 
 import copy
 import os
-from xml.dom import minidom, Node
+#from xml.dom import minidom, Node
+import xml.etree.ElementTree as ElementTree
 
 default_params = 0
 
@@ -38,29 +39,37 @@ def copyAttributes(original, duplicate):
 # @return A hardware object.
 #
 def Hardware(hardware_file):
-    xml = minidom.parse(hardware_file)
+    xml = ElementTree.parse(hardware_file).getroot()
 
     # Create the hardware object.
     xml_object = StormXMLObject([])
 
-    hardware_types = ["camera",
-                      "focuslock",
-                      "illumination",
-                      "joystick",
-                      "misc_control",
-                      "shutters",
-                      "stage",
-                      "temperature_logger"]
-    for h_type in hardware_types:
-        h_xml = xml.getElementsByTagName(h_type).item(0)
-        if h_xml:
-            h_object = StormXMLObject(h_xml.childNodes)
-            h_params_xml = h_xml.getElementsByTagName("parameters").item(0)
-            if h_params_xml:
-                h_object.parameters = StormXMLObject(h_params_xml.childNodes)
-            else:
-                h_object.parameters = False
-            setattr(xml_object, h_type, h_object)
+    # Load camera information.
+    camera_xml = xml.find("camera")
+    xml_object.camera = StormXMLObject([])
+    xml_object.camera.module = camera_xml.find("module").text
+    xml_object.camera.parameters = StormXMLObject(camera_xml.find("parameters"))
+
+    # Load modules.
+    xml_object.modules = []
+    for xml_module in xml.find("modules"):
+
+        # Create module based on XML
+        module = StormXMLObject(xml_module)
+        xml_parameters = xml_module.find("parameters")
+        if xml_parameters is not None:
+            module.parameters = StormXMLObject(xml_parameters)
+        else:
+            module.parameters = None
+
+        # Add addition properties
+        module.hal_type = xml_module.tag
+        if (hasattr(module, "menu_item")):
+            module.hal_gui = True
+        else:
+            module.hal_gui = False
+
+        xml_object.modules.append(module)
 
     return xml_object
 
@@ -74,20 +83,20 @@ def Hardware(hardware_file):
 # @return A parameters object.
 #
 def Parameters(parameters_file, is_HAL = False):
-    xml = minidom.parse(parameters_file)
+    xml = ElementTree.parse(parameters_file).getroot()
+    assert xml.tag == "settings", parameters_file + " is not a setting file."
 
     # Read general settings
-    settings = xml.getElementsByTagName("settings").item(0)
-    xml_object = StormXMLObject(settings.childNodes)
+    xml_object = StormXMLObject(xml)
 
     # Read camera1/camera2 settings (only used with dual camera setups).
-    camera1 = xml.getElementsByTagName("camera1").item(0)
+    camera1 = xml.find("camera1")
     if camera1:
-        xml_object.camera1 = StormXMLObject(camera1.childNodes)
+        xml_object.camera1 = StormXMLObject(camera1)
 
-    camera2 = xml.getElementsByTagName("camera2").item(0)
+    camera2 = xml.find("camera2")
     if camera2:
-        xml_object.camera2 = StormXMLObject(camera2.childNodes)
+        xml_object.camera2 = StormXMLObject(camera2)
 
     xml_object.parameters_file = parameters_file
 
@@ -188,7 +197,7 @@ def setSetupName(parameters, setup_name):
 # A parameters object whose attributes are created dynamically
 # by parsing an XML file.
 #
-class StormXMLObject:
+class StormXMLObject(object):
 
     ## __init__
     #
@@ -198,61 +207,109 @@ class StormXMLObject:
     #
     def __init__(self, nodes):
 
+#        self.attributes = {}
+        self.warned = False
+
         # FIXME: someday this is going to cause a problem..
         max_channels = 8
 
         for node in nodes:
-            if (node.nodeType == Node.ELEMENT_NODE):
-                slot = node.nodeName
+            #print node.tag, node.text
+            slot = node.tag
 
-                # single parameter setting
-                if len(node.childNodes) == 1:
-                    # default power settings
-                    if slot == "default_power":
-                        if not hasattr(self, "default_power"):
-                            self.on_off_state = []
-                            self.default_power = []
-                            for i in range(max_channels):
-                                self.default_power.append(1.0)
-                                self.on_off_state.append(0)
-                        power = float(node.firstChild.nodeValue)
-                        channel = int(node.attributes.item(0).value)
-                        self.default_power[channel] = power
-                    # power buttons
-                    elif slot == "button":
-                        if not hasattr(self, "power_buttons"):
-                            self.power_buttons = []
-                            for i in range(max_channels):
-                                self.power_buttons.append([])
-                        name = node.firstChild.nodeValue
-                        channel = int(node.attributes.item(1).value)
-                        power = float(node.attributes.item(0).value)
-                        self.power_buttons[channel].append([name, power])
-                    # all the other settings
-                    else:
-                        value = node.firstChild.nodeValue
-                        type = node.attributes.item(0).value
-                        if type == "int":
-                            setattr(self, slot, int(value))
-                        elif type == "int-array":
-                            text_array = value.split(",")
-                            int_array = []
-                            for elt in text_array:
-                                int_array.append(int(elt))
-                            setattr(self, slot, int_array)
-                        elif type == "float":
-                            setattr(self, slot, float(value))
-                        elif type == "float-array":
-                            text_array = value.split(",")
-                            float_array = []
-                            for elt in text_array:
-                                float_array.append(float(elt))
-                            setattr(self, slot, float_array)
-                        elif type == "string-array":
-                            setattr(self, slot, value.split(","))
-                        else: # everything else is assumed to be a (non-unicode) string
-                            setattr(self, slot, str(value))
+            # Parse default power setting.
+            if (slot == "default_power"):
+                if not hasattr(self, "default_power"):
+                    self.on_off_state = []
+                    self.default_power = []
+                    for i in range(max_channels):
+                        self.default_power.append(1.0)
+                        self.on_off_state.append(0)
+                power = float(node.text)
+                channel = int(node.attrib["channel"])
+                self.default_power[channel] = power
 
+            # power buttons
+            elif (slot == "button"):
+                if not hasattr(self, "power_buttons"):
+                    self.power_buttons = []
+                    for i in range(max_channels):
+                        self.power_buttons.append([])
+                channel = int(node.attrib["channel"])
+                name = node.text
+                power = float(node.attrib["power"])
+                self.power_buttons[channel].append([name, power])
+
+            # all the other settings
+            elif node.attrib.get("type", 0):
+                node_type = node.attrib["type"]
+                node_value = node.text
+                if (node_type == "int"):
+                    setattr(self, slot, int(node_value))
+                elif (node_type == "int-array"):
+                    text_array = node_value.split(",")
+                    int_array = []
+                    for elt in text_array:
+                        int_array.append(int(elt))
+                    setattr(self, slot, int_array)
+                elif (node_type == "float"):
+                    setattr(self, slot, float(node_value))
+                elif (node_type == "float-array"):
+                    text_array = node_value.split(",")
+                    float_array = []
+                    for elt in text_array:
+                        float_array.append(float(elt))
+                    setattr(self, slot, float_array)
+                elif (node_type == "string-array"):
+                    setattr(self, slot, node_value.split(","))
+                # everything else is assumed to be a (non-unicode) string
+                else: 
+                    setattr(self, slot, str(node_value))
+
+    ## __getattribute__
+    #
+    # This method is over-written for the purpose of logging which
+    # attributes of an instance are actually used.
+    #
+    # @param name The name of the attribute to return the value of.
+    #
+    # @return The value of the requested attribute.
+    #
+#    def __getattribute__(self, name):
+#        if hasattr(self, "attributes") and (name != "attributes"):
+#            if (name in self.attributes):
+#                self.attributes[name] += 1
+#        return object.__getattribute__(self, name)
+
+    ## __setattr__
+    #
+    # This method is over-written for the purpose of logging which
+    # attributes were added to the class after instantiation.
+    #
+    # @param name The name of attribute to set the value of.
+    # @param value The value to set the attribute to.
+    #
+#    def __setattr__(self, name, value):
+#        object.__setattr__(self, name, value)
+#        if (name != "attributes"):
+#            self.attributes[name] = 0
+
+    ## unused
+    #
+    # @return A list of the attributes in the instance that were never used.
+    # 
+#    def unused(self):
+#        if not self.warned:
+#            self.warned = True
+#            not_used = []
+#            for key, value in self.attributes.iteritems():
+#                if (value == 0):
+#                    not_used.append(key)
+#            return not_used
+#        else:
+#            return []
+    def unused(self):
+        return []
 
 #
 # Testing
@@ -261,13 +318,23 @@ class StormXMLObject:
 if __name__ == "__main__":
     import sys
 
-    if 1:
+    if 0:
+        test = Parameters(sys.argv[1])
+        print test.setup_name
+        print "1:", test.unused()
+        print "2:", test.unused()
+
+    if 0:
         test = Hardware(sys.argv[1])
-        print dir(test)
         for k,v in test.__dict__.iteritems():
             print k
 
-    if 0:
+        for module in test.modules:
+            for k,v in module.__dict__.iteritems():
+                print k,v
+            print ""
+
+    if 1:
         test = Parameters(sys.argv[1], True)
         if hasattr(test, "x_start"):
             print test.x_start, test.x_end, test.x_pixels, test.frames
@@ -280,7 +347,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <hardware>
-  <!-- Defines all the hardware (for storm4).
-       
-       Note that if you don't have a particular piece of hardware
-       it needs to be commented out in this file.
-    -->
+  <!-- Defines the camera for storm4 -->.
 
   <camera>
     <module type="string">classicSingleCamera</module>
@@ -14,34 +10,68 @@
     </parameters>
   </camera>
 
-  <focuslock>
-    <module type="string">storm4FocusLockZ</module>
-  </focuslock>
+  <!-- Define the other modules to use for this setup. -->
+  <modules>
+    <!-- The focus lock -->
+    <focuslock>
+      <class_name type="string">AFocusLockZ</class_name>
+      <menu_item type="string">Focus Lock</menu_item>
+      <module_name type="string">focuslock.storm4FocusLockZ</module_name>
+    </focuslock>
 
-  <illumination>
-    <module type="string">storm4IlluminationControl</module>
-  </illumination>
+    <!-- Illumination (lasers, shutters, etc) control. -->
+    <illumination>
+      <class_name type="string">AIlluminationControl</class_name>
+      <menu_item type="string">Illumination</menu_item>
+      <module_name type="string">illumination.storm4IlluminationControl</module_name>
+      <parameters>
+	<settings_xml type="string">storm4_illumination_control_settings.xml</settings_xml>
+      </parameters>
+    </illumination>
 
-  <joystick>
-    <module type="string">gamepad310JoystickControl</module>
-  </joystick>
+    <!-- Joystick controller. -->
+    <joystick>
+      <class_name type="string">AJoystick</class_name>
+      <module_name type="string">joystick.gamepad310JoystickControl</module_name>
+    </joystick>
   
-  <misc_control>
-    <module type="string">storm4MiscControl</module>
-  </misc_control>
+    <!-- Control of miscellaneous hardware. -->
+    <misc_control>
+      <class_name type="string">AMiscControl</class_name>
+      <menu_item type="string">Misc. Control</menu_item>
+      <module_name type="string">miscControl.storm4MiscControl</module_name>
+    </misc_control>
 
-  <shutters>
-    <module type="string">storm4ShutterControl</module>
-  </shutters>
+    <!-- Automatic illumination power adjustment. -->
+    <progressions>
+      <class_name type="string">ProgressionControl</class_name>
+      <menu_item type="string">Progressions</menu_item>
+      <module_name type="string">progressionControl</module_name>
+    </progressions>
 
-  <stage>
-    <module type="string">storm4StageControl</module>
-  </stage>
+    <!-- The live STORM analysis and display. -->
+    <spotcounter>
+      <class_name type="string">SingleSpotCounter</class_name>
+      <menu_item type="string">Spot Counter</menu_item>
+      <module_name type="string">spotCounter</module_name>
+    </spotcounter>
 
-  <!--
-  <temperature_logger>
-    <module type="string">NA</module>
-  </temperature_logger>
-  -->
-  
+    <!-- Motorized XY stage. -->
+    <stage>
+      <class_name type="string">AStageControl</class_name>
+      <menu_item type="string">Stage Control</menu_item>
+      <module_name type="string">stagecontrol.storm4StageControl</module_name>
+    </stage>
+
+    <!-- Remote control of HAL via TCP/IP. -->
+    <tcpip>
+      <class_name type="string">TCPControl</class_name>
+      <module_name type="string">tcpControl</module_name>
+      <parameters>
+	<tcp_port type="int">9000</tcp_port>
+      </parameters>
+    </tcpip>
+
+  </modules>
+
 </hardware>

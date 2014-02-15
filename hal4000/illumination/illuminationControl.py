@@ -4,53 +4,7 @@
 #
 # Illumination control master classes.
 #
-#  Methods called by HAL:
-#
-#    closeFile()
-#      Called after filming ends to close the power log file.
-#
-#    getNumberChannels()
-#      Returns the number of channels that are controlled.
-#
-#    newFrame()
-#      Called when a new frame of data is available. This
-#      causes illuminationControl to write the current
-#      power settings into the power log file.
-#
-#    newParameters(parameters)
-#      Update sliders, buttons, etc. on the dialog box with
-#      new settings.
-#
-#    openFile(filename)
-#      Called before filming starts with the filename for
-#      logging the power setting during filming. This function
-#      appends ".power" to the filename & opens the file.
-#
-#    powerToVoltage(channel, power)
-#      Returns what voltage corresponds to what power
-#      (0.0 - 1.0).
-#
-#    quit()
-#      Cleanup and shutdown prior to the program ending.
-#
-#    remoteIncPower(channel, power_inc)
-#      Increment power of channel about amount power_inc
-#
-#    remoteSetPower(channel, power)
-#      Set power of channel about to power
-#
-#    show()
-#      Display the illumination control dialog box.
-#
-#    startFilm(channels_used)
-#      Setup for filming. Prepare the specified channels
-#      for automatic control via the shutterControl class.
-#
-#    stopFilm(channels_used)
-#      Cleanup from filming. Close the power log file. Revert
-#      the specified channels to manual control mode.
-#
-# Hazen 11/12
+# Hazen 02/14
 #
 
 from PyQt4 import QtCore, QtGui
@@ -58,10 +12,13 @@ import sip
 from xml.dom import minidom, Node
 
 import qtWidgets.qtAppIcon as qtAppIcon
+
+import halLib.halModule as halModule
 import illumination.channelWidgets as channelWidgets
+import illumination.shutterControl as shutterControl
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.illumination_ui as illuminationUi
@@ -91,13 +48,16 @@ class QIlluminationControlWidget(QtGui.QWidget):
     @hdebug.debug
     def __init__(self, settings_file_name, parameters, parent = None):
         QtGui.QWidget.__init__(self, parent)
+        self.channel_names = []
 
         # parse the settings file
         xml = minidom.parse(settings_file_name)
         blocks = xml.getElementsByTagName("block")
         self.settings = []
         for i in range(blocks.length):
-            self.settings.append(channelWidgets.XMLToChannelObject(blocks[i].childNodes))
+            setting = channelWidgets.XMLToChannelObject(blocks[i].childNodes)
+            self.channel_names.append(setting.description)
+            self.settings.append(setting)
         self.number_channels = blocks.length
 
         # layout the widget
@@ -145,6 +105,14 @@ class QIlluminationControlWidget(QtGui.QWidget):
     @hdebug.debug
     def closeEvent(self, event):
         self.shutDown()
+
+    ## getChannelNames
+    #
+    # @return The names of the channels as list.
+    #
+    @hdebug.debug
+    def getChannelNames(self):
+        return self.channel_names
 
     ## getNumberChannels
     #
@@ -301,25 +269,29 @@ class QIlluminationControlWidget(QtGui.QWidget):
 ## IlluminationControl
 #
 # Illumination power control dialog box. This is handles the dialog
-# box that contains the above illumination control widget.
+# box that contains the above illumination control widget as well
+# as the shutter control.
 #
-class IlluminationControl(QtGui.QDialog):
+class IlluminationControl(QtGui.QDialog, halModule.HalModule):
+    channelNames = QtCore.pyqtSignal(object)
 
     ## __init__
     #
     # @param parameters A parameters object.
-    # @param tcp_control A TCP/IP control object.
     # @param parent (Optional) The PyQt parent of this dialog box.
     #
     @hdebug.debug
-    def __init__(self, parameters, tcp_control, parent = None):
+    def __init__(self, parameters, parent = None):
         QtGui.QDialog.__init__(self, parent)
-        self.fp = 0
+        halModule.HalModule.__init__(self)
+
         if parent:
-            self.have_parent = 1
+            self.have_parent = True
         else:
-            self.have_parent = 0
-        self.tcp_control = tcp_control
+            self.have_parent = False
+
+        self.fp = False
+        self.running_shutters = False
 
         # UI setup
         self.ui = illuminationUi.Ui_Dialog()
@@ -335,10 +307,6 @@ class IlluminationControl(QtGui.QDialog):
             self.ui.okButton.setText("Quit")
             self.ui.okButton.clicked.connect(self.handleQuit)
 
-        if self.tcp_control:
-            self.connect(self.tcp_control, QtCore.SIGNAL("setPower(int, float)"), self.tcpHandleSetPower)
-            self.connect(self.tcp_control, QtCore.SIGNAL("incPower(int, float)"), self.tcpHandleIncPower)
-
         # set modeless
         self.setModal(False)
 
@@ -352,6 +320,14 @@ class IlluminationControl(QtGui.QDialog):
     def autoControl(self, channels_used):
         self.power_control.autoControl(channels_used)
 
+    ## cleanup
+    #
+    @hdebug.debug
+    def cleanup(self):
+        self.power_control.shutDown()
+        self.shutter_control.cleanup()
+        self.shutter_control.shutDown()
+
     ## closeEvent
     #
     # Close the dialog if it has no parent, otherwise just hide it.
@@ -363,18 +339,21 @@ class IlluminationControl(QtGui.QDialog):
         if self.have_parent:
             event.ignore()
             self.hide()
-        else:
-            self.quit()
 
-    ## closeFile
+    ## connectSignals
     #
-    # Close the .power file at the end of filming.
+    # @param signals An array of signals that we might be interested in connecting to.
     #
     @hdebug.debug
-    def closeFile(self):
-        if self.fp:
-            self.fp.close()
-            self.fp = 0
+    def connectSignals(self, signals):
+        for signal in signals:
+            if (signal[1] == "setPower"):
+                signal[2].connect(self.remoteSetPower)
+            elif (signal[1] == "incPower"):
+                signal[2].connect(self.remoteIncPower)
+
+            elif (signal[1] == "commMessage"):
+                signal[2].connect(self.handleCommMessage)
 
     ## getNumberChannels
     #
@@ -385,6 +364,33 @@ class IlluminationControl(QtGui.QDialog):
     @hdebug.debug
     def getNumberChannels(self):
         return self.power_control.getNumberChannels()
+
+    ## getSignals
+    #
+    # @return The signals this module provides.
+    #
+    @hdebug.debug
+    def getSignals(self):
+        return [[self.hal_type, "channelNames", self.channelNames],
+                [self.hal_type, "newColors", self.shutter_control.newColors],
+                [self.hal_type, "newCycleLength", self.shutter_control.newCycleLength]]
+
+    ## handleCommMessage
+    #
+    # Handles all the message from tcpControl.
+    #
+    # @param message A tcpControl.TCPMessage object.
+    #
+    @hdebug.debug
+    def handleCommMessage(self, message):
+
+        m_type = message.getType()
+        m_data = message.getData()
+
+        if (m_type == "setPower"):
+            self.remoteSetPower(m_data[0], m_data[1])
+        elif (m_type == "incPower"):
+            self.remoteIncPower(m_data[0], m_data[1])
 
     ## handleOk
     #
@@ -414,13 +420,22 @@ class IlluminationControl(QtGui.QDialog):
     def manualControl(self):
         self.power_control.manualControl()
 
+    ## moduleInit
+    #
+    @hdebug.debug
+    def moduleInit(self):
+        self.channelNames.emit(self.power_control.getChannelNames())
+
     ## newFrame
     #
     # Handles new frames. If there is a open file and the frame
     # is a master frame then this calls QIlluminationControl's
     # savePowers method.
     #
-    def newFrame(self, frame):
+    # @param frame A camera.Frame object
+    # @param filming True/False if we are currently filming.
+    #
+    def newFrame(self, frame, filming):
         if self.fp and frame.master:
             self.power_control.savePowers(self.fp, frame.number)
 
@@ -429,33 +444,23 @@ class IlluminationControl(QtGui.QDialog):
     # Calls QIlluminationControl's newParameters method, then updates
     # the size of the dialog as appropriate to fit all of the controls.
     #
+    # Note that the camera updates the kinetic_
+    #
     # @param parameters A parameters object.
     #
     @hdebug.debug
     def newParameters(self, parameters):
         self.power_control.newParameters(parameters)
+        self.shutter_control.newParameters(parameters)
         self.updateSize()
 
-    ## openFile
+    ## newShutters
     #
-    # Called at the start of filming to open a file to save the
-    # channel power values in.
-    #
-    # @param name The name of the file to save powers in.
+    # @param shutters_filename The name of a shutters XML file.
     #
     @hdebug.debug
-    def openFile(self, name):
-        self.fp = open(name + ".power", "w")
-        self.power_control.saveHeader(self.fp)
-        self.frame = 1
-
-    ## quit
-    #
-    # Calls QIlluminationControl's shutDown method.
-    #
-    @hdebug.debug
-    def quit(self):
-        self.power_control.shutDown()
+    def newShutters(self, shutters_filename):
+        self.shutter_control.parseXML(shutters_filename)
 
     ## remoteIncPower
     #
@@ -489,44 +494,49 @@ class IlluminationControl(QtGui.QDialog):
 
     ## startFilm
     #
-    # Called at the start of filming.
+    # @param film_name The name of the film without any extensions, or False if the film is not being saved.
+    # @param run_shutters True/False the shutters should be run or not.
     #
     @hdebug.debug
-    def startFilm(self, channels_used):
-        self.autoControl(channels_used)
-        self.turnOnOff(channels_used, 1)
+    def startFilm(self, film_name, run_shutters):
+
+        # Recording the power.
+        if film_name:
+            self.fp = open(film_name + ".power", "w")
+            self.power_control.saveHeader(self.fp)
+
+        # Running the shutters.
+        if run_shutters:
+            self.running_shutters = True
+            channels_used = self.shutter_control.getChannelsUsed()
+            self.shutter_control.prepare()
+            self.autoControl(channels_used)
+            self.turnOnOff(channels_used, 1)
+            self.shutter_control.setup()
+            self.shutter_control.startFilm()
 
     ## stopFilm
     #
     # Called at the end of filming.
     #
+    # @param film_writer The film writer object.
+    #
     @hdebug.debug
-    def stopFilm(self, channels_used):
-        self.turnOnOff(channels_used, 0)
-        self.manualControl()
-        self.reset()
+    def stopFilm(self, film_writer):
+        if self.fp:
+            self.fp.close()
+            self.fp = False
 
-    ## tcpHandleIncPower
-    #
-    # Handles TCP/IP increment power requests.
-    #
-    # @param channel The channel index.
-    # @param power_inc The amount to increment the power by.
-    #
-    @hdebug.debug
-    def tcpHandleIncPower(self, channel, power_inc):
-        self.remoteIncPower(channel, power_inc)
+        if self.running_shutters:
+            self.shutter_control.stopFilm()
 
-    ## tcpHandleSetPower
-    #
-    # Handles TCP/IP set power requests.
-    #
-    # @param channel The channel index.
-    # @param power The value to set the power to.
-    #
-    @hdebug.debug
-    def tcpHandleSetPower(self, channel, power):
-        self.remoteSetPower(channel, power)
+            # aotf cleanup
+            channels_used = self.shutter_control.getChannelsUsed()
+            self.turnOnOff(channels_used, 0)
+            self.manualControl()
+            self.reset()
+
+            self.running_shutters = False
 
     ## turnOnOff
     #
@@ -563,7 +573,7 @@ class IlluminationControl(QtGui.QDialog):
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
