@@ -17,7 +17,7 @@ import os
 import uuid
 import xml.etree.ElementTree as elementTree
 from PyQt4 import QtCore, QtGui
-from valveCommands import ValveCommands
+from valves.valveCommands import ValveCommands
 
 # ----------------------------------------------------------------------------------------
 # ValveProtocols Class Definition
