@@ -18,7 +18,7 @@ from PyQt4 import QtCore, QtGui
 from valveChain import ValveChain
 from valveProtocols import ValveProtocols
 from kilroyServer import KilroyServer
-import halLib.parameters as params
+import sc_library.parameters as params
 
 # ----------------------------------------------------------------------------------------
 # Kilroy Class Definition
