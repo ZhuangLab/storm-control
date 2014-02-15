@@ -10,7 +10,7 @@
 from PyQt4 import QtCore, QtGui
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # UIs
 import qtdesigner.camera_detached_ui as cameraDetachedUi
@@ -171,6 +171,16 @@ class DualCamera(genericCamera.Camera):
     def cameraInit(self):
         self.camera_control.cameraInit()
 
+    ## closeEvent
+    #
+    # Shut down communication with the cameras.
+    #
+    # @param event A QEvent object.
+    #
+    @hdebug.debug
+    def closeEvent(self, event):
+        self.camera_control.quit()
+
     ## getFilmSize
     #
     # Returns the size of the current film.
@@ -254,14 +264,6 @@ class DualCamera(genericCamera.Camera):
         [p.camera2.exposure_value, p.camera2.accumulate_value, p.camera2.kinetic_value] = self.camera_control.getAcquisitionTimings(1)
         self.camera2.camera_display.newParameters(parameters.camera2)
         self.camera2.camera_params.newParameters(parameters.camera2)
-
-    ## quit
-    #
-    # Shut down communication with the cameras.
-    #
-    @hdebug.debug
-    def quit(self):
-        self.camera_control.quit()
 
     ## setSyncMax
     #

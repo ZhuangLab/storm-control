@@ -175,6 +175,10 @@ class GenericFile:
         self.parameters = parameters
         self.open = True
 
+        self.lock_target = 0.0
+        self.spot_counts = "NA"
+        self.stage_position = [0.0, 0.0, 0.0]
+
         self.filenames = []
         self.file_ptrs = []
         self.number_frames = []
@@ -196,10 +200,7 @@ class GenericFile:
     #
     # Close the file pointers (if any) and write the .inf file.
     #
-    # @param stage_position The position of the microscope stage.
-    # @param lock_target The lock target for the focus lock.
-    #
-    def closeFile(self, stage_position, lock_target):
+    def closeFile(self):
         
         # Close the files.
         if (len(self.file_ptrs)>0):
@@ -217,10 +218,45 @@ class GenericFile:
                          self.number_frames[i],
                          self.parameters,
                          camera,
-                         stage_position,
-                         lock_target)
+                         self.stage_position,
+                         self.lock_target)
 
         self.open = False
+
+    ## getLockTarget()
+    #
+    # @return The film's lock target.
+    #
+    def getLockTarget(self):
+        return self.lock_target
+
+    ## getSpotCounts()
+    #
+    # @return The film's spot counts.
+    #
+    def getSpotCounts(self):
+        return self.spot_counts
+
+    ## setLockTarget()
+    #
+    # @param lock_target The film's lock target.
+    #
+    def setLockTarget(self, lock_target):
+        self.lock_target = lock_target
+
+    ## setSpotCounts()
+    #
+    # @param spot_counts The film's spot counts (this is saved as a string).
+    #
+    def setSpotCounts(self, spot_counts):
+        self.spot_counts = spot_counts
+
+    ## setStagePosition()
+    #
+    # @param stage_position The new stage position.
+    #
+    def setStagePosition(self, stage_position):
+        self.stage_position = stage_position
 
     ## totalFilmSize
     #

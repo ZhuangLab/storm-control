@@ -1,5 +1,5 @@
 
-A brief overview of the classes.
+A brief overview of the classes / modules.
 
 HAL-4000 (QtGui.QMainWindow)
   

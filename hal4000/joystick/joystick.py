@@ -9,14 +9,16 @@
 
 from PyQt4 import QtCore
 
+import halLib.halModule as halModule
+
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 ## JoystickObject
 #
 # Joystick monitoring class.
 #
-class JoystickObject(QtCore.QObject):
+class JoystickObject(QtCore.QObject, halModule.HalModule):
     lock_jump = QtCore.pyqtSignal(float)
     motion = QtCore.pyqtSignal(float, float)
     step = QtCore.pyqtSignal(int, int)
@@ -31,6 +33,8 @@ class JoystickObject(QtCore.QObject):
     @hdebug.debug
     def __init__(self, parameters, joystick, parent = None):
         QtCore.QObject.__init__(self, parent)
+        halModule.HalModule.__init__(self, parent)
+
         self.button_timer = QtCore.QTimer(self)
         self.jstick = joystick
         self.parameters = parameters
@@ -55,13 +59,24 @@ class JoystickObject(QtCore.QObject):
             self.to_emit()
             self.button_timer.start()
 
-    ## close
+    ## cleanup
     #
     # Shutdown the joystick hardware interface at program closing.
     #
     @hdebug.debug
-    def close(self):
+    def cleanup(self):
         self.jstick.shutDown()
+
+    ## getSignals
+    #
+    # @return An array of signals provided by the module.
+    #
+    @hdebug.debug
+    def getSignals(self):
+        return [[self.hal_type, "jstickLockJump", self.lock_jump],
+                [self.hal_type, "jstickMotion", self.motion],
+                [self.hal_type, "jstickStep", self.step],
+                [self.hal_type, "jstickToggleFilm", self.toggle_film]]
 
     ## hatEvent
     #

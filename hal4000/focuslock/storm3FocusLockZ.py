@@ -28,7 +28,7 @@ import focuslock.focusLockZ as focusLockZ
 # with Phresh QPD and MCL objective Z positioner.
 #
 class AFocusLockZ(focusLockZ.FocusLockZCam):
-    def __init__(self, hardware, parameters, tcp_control, parent = None):
+    def __init__(self, hardware, parameters, parent = None):
         cam = uc480Cam.CameraQPD(camera_id = 1)
         stage = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/")
         lock_fn = lambda (x): -0.035 * x
@@ -41,7 +41,6 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
         ir_laser = LDC210.LDC210PWMNI("PCI-MIO-16E-4", 0)
         focusLockZ.FocusLockZCam.__init__(self,
                                           parameters,
-                                          tcp_control,
                                           control_thread,
                                           ir_laser,
                                           parent)

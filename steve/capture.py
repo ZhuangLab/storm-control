@@ -16,13 +16,13 @@ import time
 from PyQt4 import QtCore, QtGui
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # Communication with the acquisition software
-import halLib.tcpClient
+import sc_library.tcpClient as tcpClient
 
 # Reading DAX files
-import halLib.daxspereader
+import sc_library.daxspereader as daxspereader
 
 import coord
 
@@ -125,7 +125,7 @@ class Capture(QtCore.QObject):
         self.start_timer.setSingleShot(True)
         self.start_timer.timeout.connect(self.handleStartTimer)
 
-        self.tcp_client = halLib.tcpClient.TCPClient()
+        self.tcp_client = tcpClient.TCPClient()
         self.tcp_client.acknowledged.connect(self.handleAcknowledged)
         self.tcp_client.complete.connect(self.captureDone)
         self.tcp_client.disconnect.connect(self.handleDisconnect)
@@ -153,7 +153,7 @@ class Capture(QtCore.QObject):
         tries = 0
         while (not success) and (tries < 4):
             try:
-                self.dax = halLib.daxspereader.DaxReader(filename, verbose = 1)
+                self.dax = daxspereader.DaxReader(filename, verbose = 1)
                 frame = self.dax.loadAFrame(0)
                 self.dax.closeFilePtr()
                 success = True

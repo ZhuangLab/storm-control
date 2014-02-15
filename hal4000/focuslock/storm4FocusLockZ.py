@@ -25,7 +25,7 @@ import focuslock.focusLockZ as focusLockZ
 # USB offset detector and MCL objective Z positioner.
 #
 class AFocusLockZ(focusLockZ.FocusLockZCam):
-    def __init__(self, hardware, parameters, tcp_control, parent = None):
+    def __init__(self, hardware, parameters, parent = None):
         cam = uc480Cam.CameraQPD300(camera_id = 1)
         stage = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/")
         lock_fn = lambda (x): 0.09 * x
@@ -37,7 +37,6 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
         ir_laser = LDC210.LDC210PWMLJ()
         focusLockZ.FocusLockZCam.__init__(self,
                                           parameters,
-                                          tcp_control,
                                           control_thread,
                                           ir_laser,
                                           parent)

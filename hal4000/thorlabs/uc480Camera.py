@@ -18,7 +18,7 @@ import scipy
 import scipy.optimize
 import time
 
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 Handle = ctypes.wintypes.HANDLE
 

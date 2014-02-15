@@ -19,9 +19,10 @@ from xml.dom import minidom, Node
 from PyQt4 import QtCore, QtGui
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # General
+import sc_library.tcpClient as tcpClient
 import notifications
 import sequenceParser
 import xml_generator
@@ -34,7 +35,7 @@ import halLib.tcpClient
 import qtdesigner.dave_ui as daveUi
 
 # Misc
-import halLib.parameters as params
+import sc_library.parameters as params
 
 
 ## createTableWidget

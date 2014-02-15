@@ -23,8 +23,10 @@ from PyQt4 import QtCore, QtGui
 
 import qtWidgets.qtAppIcon as qtAppIcon
 
+import halLib.halModule as halModule
+
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # Widgets
 import focuslock.lockDisplay as lockDisplay
@@ -33,19 +35,21 @@ import focuslock.lockDisplay as lockDisplay
 #
 # This class controls the focus lock GUI.
 #
-class FocusLockZ(QtGui.QDialog):
+class FocusLockZ(QtGui.QDialog, halModule.HalModule):
+    tcpComplete = QtCore.pyqtSignal(object)
 
     ## __init__
     #
     # Create the focus lock object. This does not create the UI.
     #
     # @param parameters A parameters object.
-    # @param tcp_control The tcp_control object.
     # @param parent The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, tcp_control, parent):
+    def __init__(self, parameters, parent):
         QtGui.QDialog.__init__(self, parent)
+        halModule.HalModule.__init__(self)
+
         if parent:
             self.have_parent = True
         else:
@@ -55,7 +59,13 @@ class FocusLockZ(QtGui.QDialog):
         self.offset_file = 0
         self.parameters = parameters
         self.jumpsize = 0.0
-        self.tcp_control = tcp_control
+
+    ## cleanup
+    #
+    @hdebug.debug
+    def cleanup(self):
+        self.lock_display1.quit()
+        self.closeOffsetFile()
 
     ## closeEvent
     #
@@ -70,8 +80,6 @@ class FocusLockZ(QtGui.QDialog):
         if self.have_parent:
             event.ignore()
             self.hide()
-        else:
-            self.quit()
 
     ## closeOffsetFile
     #
@@ -126,14 +134,21 @@ class FocusLockZ(QtGui.QDialog):
         self.ui.jumpNButton.clicked.connect(self.handleJumpNButton)
         self.ui.jumpSpinBox.valueChanged.connect(self.handleJumpSpinBox)
 
-        # tcp signals
-        if self.tcp_control:
-            self.connect(self.tcp_control, QtCore.SIGNAL("findSum()"), self.tcpHandleFindSum)
-            self.connect(self.tcp_control, QtCore.SIGNAL("recenterPiezo()"), self.tcpHandleRecenterPiezo)
-            self.connect(self.tcp_control, QtCore.SIGNAL("setLockTarget(float)"), self.tcpHandleSetLockTarget)
-
         # set modeless
         self.setModal(False)
+
+    ## connectSignals
+    #
+    # @param signals An array of signals that we might be interested in connecting to.
+    #
+    @hdebug.debug
+    def connectSignals(self, signals):
+        for signal in signals:
+            if (signal[1] == "commMessage"):
+                signal[2].connect(self.handleCommMessage)
+
+            if (signal[1] == "jstickLockJump"):
+                signal[2].connect(self.jump)
 
     ## getLockTarget
     #
@@ -143,13 +158,44 @@ class FocusLockZ(QtGui.QDialog):
     def getLockTarget(self):
         return self.lock_display1.getLockTarget()
 
+    ## getSignals
+    #
+    # @return The signals this module provides.
+    #
+    @hdebug.debug
+    def getSignals(self):
+        return [[self.hal_type, "tcpComplete", self.tcpComplete]]
+
+    ## handleCommMessage
+    #
+    # Handles all the message from tcpControl.
+    #
+    # @param message A tcpControl.TCPMessage object.
+    #
+    @hdebug.debug
+    def handleCommMessage(self, message):
+
+        m_type = message.getType()
+        m_data = message.getData()
+
+        if (m_type == "findSum"):
+            self.tcpHandleFindSum()
+
+        elif (m_type == "recenterPiezo"):
+            self.tcpHandleRecenterPiezo
+
+        elif (m_type == "setLockTarget"):
+            self.tcpHandleSetLockTarget(m_data[0])
+
     ## handleFoundSum
     #
     # Notify external program (via TCP/IP) that the sum signal has been found.
     #
+    # @param lock_sum The lock sum signal.
+    #
     @hdebug.debug
-    def handleFoundSum(self,sum):
-        self.tcp_control.sendComplete(str(sum))
+    def handleFoundSum(self, lock_sum):
+        self.tcpComplete.emit(str(lock_sum))
 
     ## handleJumpPButton
     #
@@ -222,19 +268,19 @@ class FocusLockZ(QtGui.QDialog):
     #
     @hdebug.debug
     def handleRecenteredPiezo(self):
-        self.tcp_control.sendComplete()
+        self.tcpComplete.emit("NA")
 
     ## handleQuit
     #
     # Handles the quit button.
     #
-    # @param bool Dummy parameter.
+    # @param boolean Dummy parameter.
     #
     @hdebug.debug
-    def handleQuit(self, bool):
+    def handleQuit(self, boolean):
         self.close()
 
-    ## handleJump
+    ## jump
     #
     # Handles jump requests (these usually come from the joystick).
     #
@@ -248,9 +294,10 @@ class FocusLockZ(QtGui.QDialog):
     # this writes the current offset information into the offset file.
     #
     # @param frame A frame object.
+    # @param filming True/False if we are currently filming.
     #
-    def newFrame(self, frame):
-        if frame.master:
+    def newFrame(self, frame, filming):
+        if filming and frame.master:
             if self.offset_file:
                 [offset, power, stage_z] = self.lock_display1.getOffsetPowerStage()
                 self.offset_file.write("{0:d} {1:.6f} {2:.6f} {3:.6f}\n".format(frame.number, offset, power, stage_z))
@@ -278,25 +325,17 @@ class FocusLockZ(QtGui.QDialog):
         self.offset_file = open(filename + ".off", "w")
         self.offset_file.write("frame offset power stage-z\n")
 
-    ## quit
-    #
-    # Handles shutting things down when the program quits.
-    #
-    @hdebug.debug
-    def quit(self):
-        self.lock_display1.quit()
-        self.closeOffsetFile()
-
-    ## startLock
+    ## startFilm
     #
     # Start the focus lock. This is called at the start of an acquisition.
     # If filename is not False then a file of the same name is opened
     # to store the offset data in during filming.
     #
     # @param filename The name of the file to save the offset data in.
+    # @param run_shutters True/False the shutters should be run or not.
     #
     @hdebug.debug
-    def startLock(self, filename):
+    def startFilm(self, filename, run_shutters):
         self.counter = 0
         self.error = 0.0
         self.error_counts = 0
@@ -306,16 +345,20 @@ class FocusLockZ(QtGui.QDialog):
         self.toggleLockButtonText(self.lock_display1.amLocked())
         self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())
 
-    ## stopLock
+    ## stopFilm
     #
     # Stop the focus lock and close the offset file (if it is open).
     #
+    # @param film_writer A film writer object.
+    #
     @hdebug.debug
-    def stopLock(self):
+    def stopFilm(self, film_writer):
         self.lock_display1.stopLock()
         self.toggleLockButtonText(self.lock_display1.amLocked())
         self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())
         self.closeOffsetFile()
+        if film_writer:
+            film_writer.setLockTarget(self.lock_display1.getLockTarget())
 
     ## tcpHandleFindSum
     #
@@ -395,14 +438,13 @@ class FocusLockZQPD(FocusLockZ):
     # Initialize the UI for a QPD based focus lock.
     #
     # @param parameters A parameters object.
-    # @param tcp_control A tcp control object.
     # @param control_thread A focus lock control thread.
     # @param ir_laser A IR laser control object.
     # @param parent The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, tcp_control, control_thread, ir_laser, parent):
-        FocusLockZ.__init__(self, parameters, tcp_control, parent)
+    def __init__(self, parameters, control_thread, ir_laser, parent):
+        FocusLockZ.__init__(self, parameters, parent)
 
         # Setup UI.
         import qtdesigner.focuslock_ui as focuslockUi
@@ -431,14 +473,13 @@ class FocusLockZCam(FocusLockZ):
     # Initialize the UI for a USB camera based focus lock.
     #
     # @param parameters A parameters object.
-    # @param tcp_control A tcp control object.
     # @param control_thread A focus lock control thread.
     # @param ir_laser A IR laser control object.
     # @param parent The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, tcp_control, control_thread, ir_laser, parent):
-        FocusLockZ.__init__(self, parameters, tcp_control, parent)
+    def __init__(self, parameters, control_thread, ir_laser, parent):
+        FocusLockZ.__init__(self, parameters, parent)
 
         # Setup UI.
         import qtdesigner.focuslock_ui as focuslockUi
@@ -466,14 +507,13 @@ class FocusLockZDualCam(FocusLockZ):
     # Initialize the UI for a dual USB camera based focus lock.
     #
     # @param parameters A parameters object.
-    # @param tcp_control A tcp control object.
     # @param control_threads A python array of focus lock control threads.
     # @param ir_lasers A python array of IR laser control objects.
     # @param parent The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, tcp_control, control_threads, ir_lasers, parent):
-        FocusLockZ.__init__(self, parameters, tcp_control, parent)
+    def __init__(self, parameters, control_threads, ir_lasers, parent):
+        FocusLockZ.__init__(self, parameters, parent)
 
         # Setup UI.
         import qtdesigner.dualfocuslock_ui as dualfocuslockUi
@@ -498,6 +538,13 @@ class FocusLockZDualCam(FocusLockZ):
         self.lock_display2.ui.statusBox.setTitle("Lock2 Status")
 
         FocusLockZ.configureUI(self)
+
+    ## cleanup
+    #
+    @hdebug.debug
+    def cleanup(self):
+        self.lock_display2.quit()
+        FocusLockZ.cleanup(self)
 
     ## handleJumpPButton
     #
@@ -564,8 +611,9 @@ class FocusLockZDualCam(FocusLockZ):
     # offset data from both cameras into a file.
     #
     # @param frame A frame object.
+    # @param filming True/False if we are currently filming.
     #
-    def newFrame(self, frame):
+    def newFrame(self, frame, filming):
         if frame.master:
             if self.offset_file:
                 [offset1, power1, stage_z1] = self.lock_display1.getOffsetPowerStage()
@@ -585,36 +633,29 @@ class FocusLockZDualCam(FocusLockZ):
         self.offset_file = open(filename + ".off", "w")
         self.offset_file.write("frame offset1 power1 stage-z1 offset2 power2 stage-z2\n")
 
-    ## quit
-    #
-    # Shutdown the two focus locks and close the offset file (if it is open).
-    #
-    @hdebug.debug
-    def quit(self):
-        self.lock_display1.quit()
-        self.lock_display2.quit()
-        self.closeOffsetFile()
-
-    ## startLock
+    ## startFilm
     #
     # Start the focus locks at the start of an acquisition. If filename
     # is not False the offset information acquired during this film
     # will be saved in this file.
     #
     # @param filename The name of the file to save the offset information in.
+    # @param run_shutters True/False the shutters should be run or not.
     #        
     @hdebug.debug
-    def startLock(self, filename):
-        FocusLockZ.startLock(self, filename)
+    def startFilm(self, filename, run_shutters):
+        FocusLockZ.startFilm(self, filename, tcp_requested)
         self.lock_display2.startLock(False)
 
-    ## stopLock
+    ## stopFilm
     #
     # Stop the focus locks.
     #
+    # @param film_writer A film writer object.
+    #
     @hdebug.debug
-    def stopLock(self):
-        FocusLockZ.stopLock(self)
+    def stopFilm(self, film_writer):
+        FocusLockZ.stopFilm(self, film_writer)
         self.lock_display2.stopLock()
 
     ## tcpHandleFindSum

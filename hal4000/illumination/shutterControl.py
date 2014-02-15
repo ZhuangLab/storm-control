@@ -4,12 +4,14 @@
 #
 # This file contains the base class for shutter control.
 #
-# Hazen 11/12
+# Hazen 02/14
 #
+
+from PyQt4 import QtCore
 
 from xml.dom import minidom, Node
 
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 ## ShutterControl
 #
@@ -21,49 +23,9 @@ import halLib.hdebug as hdebug
 # The user should subclass this class and add specialized setup, startFilm,
 # stopFilm and cleanup methods following eg. storm3ShutterControl.
 #
-#  Methods called by HAL:
-#
-#    cleanup()
-#      Clean up at the end of a film.
-#
-#    getChannelsUsed()
-#      Returns an array containing which channels are actually
-#      used in the shutter sequence (as opposed to being always
-#      off).
-# 
-#    getColors()
-#      Returns the colors that the user specified in the shutter
-#      file for the rendering of that particular frame by the
-#      real time spot counter.
-#
-#    getCycleLength()
-#      Returns the length of the shutter sequence in frames.
-#
-#    parseXML(illumination_file)
-#      Parses the XML illumination file and generates the
-#      corresponding Pyhon arrays to be loaded to a National
-#      Instruments card (or equivalent).
-#
-#    prepare()
-#      This function is called to set the initial state of the
-#      hardware before filming. This is called before setup.
-#
-#    setup(kinetic_cycle_time)
-#      kinetic_cycle_time is the length of a frame in seconds.
-#      This function is called to load the waveforms into
-#      whatever hardware is going output them.
-#
-#    shutDown()
-#      Reset everything prior to HAL closing.
-#     
-#    startFilm()
-#      Called at the start of filming to tell get the hardware
-#      prepared.
-#
-#    stopFilm()
-#      Called at the end of filming to tell the hardware to stop.
-#  
-class ShutterControl():
+class ShutterControl(QtCore.QObject):
+    newColors = QtCore.pyqtSignal(object)
+    newCycleLength = QtCore.pyqtSignal(int)
 
     ## __init__
     #
@@ -73,8 +35,11 @@ class ShutterControl():
     # @param powerToVoltage The function to use to convert (abstract) power to (real) voltage.
     #
     @hdebug.debug
-    def __init__(self, powerToVoltage):
+    def __init__(self, powerToVoltage, parent):
+        QtCore.QObject.__init__(self, parent)
         self.powerToVoltage = powerToVoltage
+
+        self.kinetic_value = 1.0
         self.oversampling_default = 1
         self.number_channels = 0
 
@@ -96,21 +61,13 @@ class ShutterControl():
     def getChannelsUsed(self):
         return self.channels_used
 
-    ## getColor
+    ## newParameters
     #
-    # @return A python array containing the RGB color values for each frame in the shutter sequence. This used by the spot counter.
-    #
-    @hdebug.debug
-    def getColors(self):
-        return self.colors
-
-    ## getCycleLength
-    #
-    # @return The length of the shutter sequence in frames.
+    # @param parameters A parameters object.
     #
     @hdebug.debug
-    def getCycleLength(self):
-        return self.frames
+    def newParameters(self, parameters):
+        self.kinetic_value = parameters.kinetic_value
 
     ## parseXML
     #
@@ -139,8 +96,7 @@ class ShutterControl():
         # option of having some sort of initialization block.
         #
         xml_repeat = self.xml.getElementsByTagName("repeat").item(0)
-        frames = int(xml_repeat.getElementsByTagName("frames").item(0).firstChild.nodeValue)
-        self.frames = frames
+        self.frames = int(xml_repeat.getElementsByTagName("frames").item(0).firstChild.nodeValue)
         events = xml_repeat.getElementsByTagName("event")
 
         #
@@ -157,9 +113,9 @@ class ShutterControl():
         # Blank waveforms are created for all channels, even those that are not used.
         #
         for i in range(self.number_channels):
-            for j in range(frames * self.oversampling):
+            for j in range(self.frames * self.oversampling):
                 self.waveforms.append(self.powerToVoltage(i, 0.0))
-        self.waveform_len = frames * self.oversampling
+        self.waveform_len = self.frames * self.oversampling
 
         # Add in the events.
         for event in events:
@@ -190,9 +146,9 @@ class ShutterControl():
                             color.append(x)
             if (channel != -1) and (channel < self.number_channels):
                 assert on >= 0, "on out of range: " + str(on) + " " + str(channel)
-                assert on <= frames * self.oversampling, "on out of range: " + str(on) + " " + str(channel)
+                assert on <= self.frames * self.oversampling, "on out of range: " + str(on) + " " + str(channel)
                 assert off >= 0, "off out of range: " + str(on) + " " + str(channel)
-                assert off <= frames * self.oversampling, "off out of range: " + str(on) + " " + str(channel)
+                assert off <= self.frames * self.oversampling, "off out of range: " + str(on) + " " + str(channel)
 
                 # Channel waveform setup.
                 if channel not in self.channels_used:
@@ -200,7 +156,7 @@ class ShutterControl():
                 i = on
                 voltage = self.powerToVoltage(channel, power)
                 while i < off:
-                    self.waveforms[channel * frames * self.oversampling + i] = voltage
+                    self.waveforms[channel * self.frames * self.oversampling + i] = voltage
                     i += 1
 
                 # Color information setup.
@@ -211,6 +167,9 @@ class ShutterControl():
                     while i < color_end:
                         self.colors[i] = color
                         i += 1
+
+        self.newColors.emit(self.colors)
+        self.newCycleLength.emit(self.frames)
 
     ## prepare
     #
@@ -231,7 +190,7 @@ class ShutterControl():
     #
     # This is usually replaced in a hardware specific sub-class.
     #
-    def setup(self, kinetic_cycle_time):
+    def setup(self):
         pass
 
     ## shutDown
@@ -266,7 +225,7 @@ class ShutterControl():
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

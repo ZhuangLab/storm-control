@@ -330,7 +330,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>43</y>
+      <y>45</y>
       <width>77</width>
       <height>25</height>
      </rect>
@@ -349,7 +349,7 @@
     <property name="geometry">
      <rect>
       <x>150</x>
-      <y>20</y>
+      <y>22</y>
       <width>141</width>
       <height>16</height>
      </rect>
@@ -362,7 +362,7 @@
     <property name="geometry">
      <rect>
       <x>90</x>
-      <y>43</y>
+      <y>45</y>
       <width>77</width>
       <height>25</height>
      </rect>
@@ -381,7 +381,7 @@
     <property name="geometry">
      <rect>
       <x>220</x>
-      <y>43</y>
+      <y>45</y>
       <width>77</width>
       <height>25</height>
      </rect>
@@ -399,60 +399,22 @@
    <widget class="QLabel" name="iEyesROILabel">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>73</y>
+      <x>12</x>
+      <y>74</y>
       <width>281</width>
-      <height>16</height>
+      <height>20</height>
      </rect>
     </property>
     <property name="text">
      <string>TextLabel</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="iEyesSetROIButton">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>93</y>
-      <width>77</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <property name="sizePolicy">
-     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-      <horstretch>0</horstretch>
-      <verstretch>0</verstretch>
-     </sizepolicy>
-    </property>
-    <property name="text">
-     <string>Set ROI</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="iEyesClearROIButton">
-    <property name="geometry">
-     <rect>
-      <x>90</x>
-      <y>93</y>
-      <width>77</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <property name="sizePolicy">
-     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-      <horstretch>0</horstretch>
-      <verstretch>0</verstretch>
-     </sizepolicy>
-    </property>
-    <property name="text">
-     <string>Clear ROI</string>
-    </property>
-   </widget>
    <widget class="QSpinBox" name="iEyesBackgroundSpinBox">
     <property name="geometry">
      <rect>
-      <x>77</x>
-      <y>128</y>
-      <width>71</width>
+      <x>90</x>
+      <y>131</y>
+      <width>61</width>
       <height>22</height>
      </rect>
     </property>
@@ -467,7 +429,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>130</y>
+      <y>133</y>
       <width>71</width>
       <height>16</height>
      </rect>
@@ -479,9 +441,9 @@
    <widget class="QLabel" name="iEyesAccumulateLabel">
     <property name="geometry">
      <rect>
-      <x>168</x>
-      <y>130</y>
-      <width>61</width>
+      <x>159</x>
+      <y>133</y>
+      <width>81</width>
       <height>16</height>
      </rect>
     </property>
@@ -493,7 +455,7 @@
     <property name="geometry">
      <rect>
       <x>234</x>
-      <y>128</y>
+      <y>131</y>
       <width>61</width>
       <height>22</height>
      </rect>
@@ -506,13 +468,32 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>18</y>
+      <y>20</y>
       <width>111</width>
       <height>20</height>
      </rect>
     </property>
     <property name="text">
      <string>img.ch00</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="iEyesClearROIButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>99</y>
+      <width>77</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="text">
+     <string>Reset ROI</string>
     </property>
    </widget>
   </widget>

@@ -11,7 +11,7 @@
 from PyQt4 import QtCore, QtGui
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # UIs
 import qtdesigner.camera_detached_ui as cameraDetachedUi
