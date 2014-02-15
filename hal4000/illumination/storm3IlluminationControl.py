@@ -4,14 +4,17 @@
 #
 # Illumination control specialized for STORM3.
 #
-# Hazen 08/13
+# Hazen 02/14
 #
 
 from PyQt4 import QtCore
 
+import nationalInstruments.nicontrol as nicontrol
+
 import illumination.channelWidgets as channelWidgets
 import illumination.commandQueues as commandQueues
 import illumination.illuminationControl as illuminationControl
+import illumination.shutterControl as shutterControl
 
 import coherent.cube405 as cube405
 
@@ -108,26 +111,100 @@ class STORM3QIlluminationControlWidget(illuminationControl.QIlluminationControlW
 
 
 #
+# Storm3 shutter control.
+#
+# Channels 0-5 are controlled by the AOTF.
+# Channel 6 is a Coherent 405 diode laser.
+#
+# These are driven by the analog out lines of a
+# National Instruments PCI-6722 card.
+#
+class STORM3ShutterControl(shutterControl.ShutterControl):
+    def __init__(self, powerToVoltage, parent):
+        shutterControl.ShutterControl.__init__(self, powerToVoltage, parent)
+        self.oversampling_default = 100
+        self.number_channels = 7
+
+        self.board = "PCI-6722"
+        self.ct_task = False
+        self.wv_task = False
+
+        self.defaultAOTFLines()
+
+    def cleanup(self):
+        if self.ct_task:
+            self.ct_task.clearTask()
+            self.wv_task.clearTask()
+            self.ct_task = 0
+            self.wv_task = 0
+
+    def defaultAOTFLines(self):
+        for i in range(self.number_channels):
+            # set analog lines to default (max).
+            nicontrol.setAnalogLine(self.board, i, self.powerToVoltage(i, 1.0))
+
+    def prepare(self):
+        # This sets things so we don't get a burst of light at the
+        # begining with all the lasers coming on.
+        for i in range(self.number_channels):
+            nicontrol.setAnalogLine(self.board, i, 0.0)
+
+    def setup(self):
+        assert self.ct_task == 0, "Attempt to call setup without first calling cleanup."
+        #
+        # the counter runs slightly faster than the camera so that it is ready
+        # to catch the next camera "fire" immediately after the end of the cycle.
+        #
+        frequency = (1.001/self.kinetic_value) * float(self.oversampling)
+
+        # set up the analog channels
+        self.wv_task = nicontrol.WaveformOutput(self.board, 0)
+        for i in range(self.number_channels - 1):
+            self.wv_task.addChannel(i + 1)
+
+        # set up the waveform
+        self.wv_task.setWaveform(self.waveforms, frequency)
+
+        # set up the counter
+        self.ct_task = nicontrol.CounterOutput(self.board, 0, frequency, 0.5)
+        self.ct_task.setCounter(self.waveform_len)
+        self.ct_task.setTrigger(0)
+
+    def startFilm(self):
+        self.wv_task.startTask()
+        self.ct_task.startTask()
+
+    def stopFilm(self):
+        # stop the tasks
+        if self.ct_task:
+            self.ct_task.stopTask()
+            self.wv_task.stopTask()
+            self.ct_task.clearTask()
+            self.wv_task.clearTask()
+            self.ct_task = 0
+            self.wv_task = 0
+
+        # reset all the analog signals.
+        self.defaultAOTFLines()
+
+
+#
 # Illumination power control dialog box specialized for STORM3.
 #
 class AIlluminationControl(illuminationControl.IlluminationControl):
-    def __init__(self, hardware, parameters, tcp_control, parent = None):
-        illuminationControl.IlluminationControl.__init__(self, parameters, tcp_control, parent)
-        if (hasattr(parameters, "use_647") and (parameters.use_647 != 0)):
-            self.power_control = STORM3QIlluminationControlWidget("illumination/storm3_illumination_control_settings_647.xml",
-                                                                  parameters,
-                                                                  parent = self.ui.laserBox)
-        else:
-            self.power_control = STORM3QIlluminationControlWidget("illumination/storm3_illumination_control_settings.xml",
-                                                                  parameters,
-                                                                  parent = self.ui.laserBox)
-
+    def __init__(self, hardware, parameters, parent = None):
+        illuminationControl.IlluminationControl.__init__(self, parameters, parent)
+        self.power_control = STORM3QIlluminationControlWidget("illumination/" + hardware.settings_xml,
+                                                              parameters,
+                                                              parent = self.ui.laserBox)
+        self.shutter_control = STORM3ShutterControl(self.power_control.powerToVoltage,
+                                                    self.ui.laserBox)
         self.updateSize()
 
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

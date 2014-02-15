@@ -43,7 +43,10 @@
  (d) focusLock/focus_quality.c (for optimal focus lock mode)
 
 
-(4) Create data & logs directories:
+(4) Add the storm_control directory to your Python path.
+
+
+(5) Create data & logs directories:
  The default directory for saving data is "c:\users\data\". You can change
  this is in settings xml file. You will also need to create a sub-directory
  of the default directory called "logs", which is where hal (and the other
@@ -51,7 +54,7 @@
  directory the full path for the log files is "c:\users\data\logs\".
 
 
-(5) Verify that the software works:
+(6) Verify that the software works:
  The settings_default.xml file contains all the options related to program
  setup and etc. As a first step to verify that the software runs absent
  any hardware issues do the following:
@@ -67,7 +70,7 @@
  parameter files are labeled prism2_default.xml storm3_default.xml, etc..
 
 
-(6) Modifying to work with your hardware:
+(7) Modifying to work with your hardware:
  This is the hard part as it is of course hardware dependent. Python classes
  for control of the hardware that is available in our lab can be found in
  folders that are named (more or less) by the manufacturer of the hardware.

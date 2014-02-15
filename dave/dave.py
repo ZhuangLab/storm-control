@@ -23,7 +23,7 @@ from xml.dom import minidom, Node
 from PyQt4 import QtCore, QtGui
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # General
 import notifications
@@ -32,7 +32,7 @@ from xml_generators import xml_generator, recipeParser
 
 # Communication
 import fluidics.kilroyClient
-import halLib.tcpClient
+import sc_library.tcpClient as tcpClient
 
 # UI
 import qtdesigner.dave_ui as daveUi
@@ -41,7 +41,8 @@ import qtdesigner.dave_ui as daveUi
 import daveActions
 
 # Parameter loading
-import halLib.parameters as params
+import sc_library.parameters as params
+
 
 ## createTableWidget
 #

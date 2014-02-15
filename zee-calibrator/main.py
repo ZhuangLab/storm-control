@@ -30,6 +30,7 @@ class Window(QtGui.QMainWindow):
         self.fit_values = []
         self.minimum_intensity = 10
         self.points = []
+        self.settings = QtCore.QSettings("Zhuang Lab", "zee-calibrator")
         self.stage_fit = []
         self.stage_qpd = []
         self.wx_wy_cat = []
@@ -42,7 +43,6 @@ class Window(QtGui.QMainWindow):
         self.setWindowIcon(QtGui.QIcon("leifeng.ico"))
 
         # set ui defaults
-        self.ui.pixelSpinBox.setValue(167.0)
         self.ui.powerComboBox.addItems(["0","1","2","3","4"])
         self.ui.powerComboBox.setCurrentIndex(2)
 
@@ -81,6 +81,13 @@ class Window(QtGui.QMainWindow):
 
         #self.ui.plotTabWidget.currentChanged.connect(self.handleTabChanges)
         #self.handleTabChanges(0)
+
+        # load settings.
+        self.directory = str(self.settings.value("directory", "").toString())
+        self.move(self.settings.value("position", QtCore.QPoint(100, 100)).toPoint())
+        self.resize(self.settings.value("size", self.size()).toSize())
+        self.ui.pixelSpinBox.setValue(self.settings.value("pix_per_nm", 160.0).toFloat()[0])
+
 
     def analyzeData(self, filename):
         self.ui.plotTabWidget.setCurrentIndex(0)
@@ -171,6 +178,12 @@ class Window(QtGui.QMainWindow):
         # print & save coefficients
         #z_calib.printWxWyCoeff()
         #z_calib.saveZCal()
+
+    def closeEvent(self, event):
+        self.settings.setValue("directory", self.directory)
+        self.settings.setValue("position", self.pos())
+        self.settings.setValue("size", self.size())
+        self.settings.setValue("pix_per_nm", self.ui.pixelSpinBox.value())
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():

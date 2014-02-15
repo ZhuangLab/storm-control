@@ -628,14 +628,6 @@
     <addaction name="actionSettings"/>
     <addaction name="actionShutter"/>
     <addaction name="actionDirectory"/>
-    <addaction name="actionDisconnect"/>
-    <addaction name="separator"/>
-    <addaction name="actionFocus_Lock"/>
-    <addaction name="actionIllumination"/>
-    <addaction name="actionMisc_Controls"/>
-    <addaction name="actionProgression"/>
-    <addaction name="actionSpot_Counter"/>
-    <addaction name="actionStage"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>

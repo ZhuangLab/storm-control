@@ -13,6 +13,9 @@ import numpy
 pyqtgraph.setConfigOption('background', 'w')
 pyqtgraph.setConfigOption('foreground', 'k')
 
+def saveData(filename, x, y, z):
+    numpy.savetxt(filename, numpy.concatenate((x[:,None], y[:,None], z[:,None]), axis = 1))
+
 class PlotWindow(pyqtgraph.PlotWidget):
 
     def __init__(self, x_label, x_range, y_label, y_range, qt_parent):
@@ -53,6 +56,7 @@ class PlotWindow(pyqtgraph.PlotWidget):
                   symbolPen = a_pen,
                   symbolBrush = a_brush,
                   symbolSize = 9)
+        saveData("binned.txt", b_sz, b_wx, b_wy)
 
     def plotData(self, sz, wx, wy):
         self.plot(sz, wx, 
@@ -73,6 +77,7 @@ class PlotWindow(pyqtgraph.PlotWidget):
         a_pen = QtGui.QPen(QtCore.Qt.black)
         self.plot(sz, xfit, pen = a_pen)
         self.plot(sz, yfit, pen = a_pen)
+        saveData("fit.txt", sz, xfit, yfit)
 
     def plotStageQPD(self, stage, qpd, slope, offset):
         qpd_min = numpy.min(qpd)

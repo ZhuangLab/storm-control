@@ -14,7 +14,7 @@
 from PyQt4 import QtCore, QtGui
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # Camera Helper Modules
 import qtWidgets.qtColorGradient as qtColorGradient
@@ -28,6 +28,7 @@ import colorTables.colorTables as colorTables
 # The Camera display class.
 #
 class CameraDisplay(QtGui.QFrame):
+    cameraROISelection = QtCore.pyqtSignal(object, object)
 
     ## __init__
     #
@@ -106,6 +107,7 @@ class CameraDisplay(QtGui.QFrame):
         self.ui.colorComboBox.currentIndexChanged.connect(self.colorTableChange)
         self.ui.syncSpinBox.valueChanged.connect(self.handleSync)
         self.camera_widget.intensityInfo.connect(self.handleIntensityInfo)
+        self.camera_widget.roiSelection.connect(self.handleROISelection)
         self.ui.gridAct.triggered.connect(self.handleGrid)
         self.ui.infoAct.triggered.connect(self.handleInfo)
         self.ui.targetAct.triggered.connect(self.handleTarget)
@@ -229,7 +231,7 @@ class CameraDisplay(QtGui.QFrame):
     ## handleIntensityInfo
     #
     # Handles displaying the intensity information that is 
-    # recieved from the the xCameraWidget.
+    # received from the the xCameraWidget.
     #
     # @param x The x value of the pixel.
     # @param y The y value of the pixel.
@@ -238,6 +240,16 @@ class CameraDisplay(QtGui.QFrame):
     def handleIntensityInfo(self, x, y, i):
         self.ui.intensityPosLabel.setText("({0:d},{1:d})".format(x, y, i))
         self.ui.intensityIntLabel.setText("{0:d}".format(i))
+
+    ## handleROISelection
+    #
+    # Handles roi selection from the xCameraWidget. Basically
+    # this is a pass through that add camera information.
+    #
+    # @param select_rect The selection rectangle (QRect).
+    #
+    def handleROISelection(self, select_rect):
+        self.cameraROISelection.emit(self.which_camera, select_rect)
 
     ## handleSync
     #
