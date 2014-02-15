@@ -80,7 +80,7 @@ class CommandEngine(QtGui.QWidget):
         self.should_pause = False
 
         # HAL Client
-        self.HALClient = halLib.tcpClient.TCPClient(self)
+        self.HALClient = tcpClient.TCPClient(self)
         
         # Kilroy Client
         self.kilroyClient = fluidics.kilroyClient.KilroyClient(verbose = True)
