@@ -16,7 +16,7 @@ import os
 import time
 from PyQt4 import QtCore, QtGui
 from valves.valveChain import ValveChain
-from valveProtocols import ValveProtocols
+from kilroyProtocols import KilroyProtocols
 from kilroyServer import KilroyServer
 import sc_library.parameters as params
 
@@ -53,14 +53,14 @@ class Kilroy(QtGui.QMainWindow):
                                      num_simulated_valves = self.num_simulated_valves,
                                      verbose = self.verbose)
 
-        # Create ValveProtocols instance and connect signals
-        self.valveProtocols = ValveProtocols(protocol_xml_path = self.valve_protocols_file,
+        # Create KilroyProtocols instance and connect signals
+        self.kilroyProtocols = KilroyProtocols(protocol_xml_path = self.valve_protocols_file,
                                              command_xml_path = self.valve_commands_file,
                                              verbose = self.verbose)
 
-        self.valveProtocols.command_ready_signal.connect(self.sendCommand)
-        self.valveProtocols.status_change_signal.connect(self.handleProtocolStatusChange)
-        self.valveProtocols.completed_protocol_signal.connect(self.handleProtocolComplete)
+        self.kilroyProtocols.command_ready_signal.connect(self.sendCommand)
+        self.kilroyProtocols.status_change_signal.connect(self.handleProtocolStatusChange)
+        self.kilroyProtocols.completed_protocol_signal.connect(self.handleProtocolComplete)
 
         # Create Kilroy TCP Server and connect signals
         self.tcpServer = KilroyServer(port = self.tcp_port,
@@ -74,7 +74,7 @@ class Kilroy(QtGui.QMainWindow):
     # Create master GUI
     # ----------------------------------------------------------------------------------------
     def close(self):
-        self.valveProtocols.close()
+        self.kilroyProtocols.close()
         self.tcpServer.close()
         self.valveChain.close()
         print "\nKilroy was here!"
@@ -84,16 +84,16 @@ class Kilroy(QtGui.QMainWindow):
     # ----------------------------------------------------------------------------------------
     def createGUI(self):
         self.mainLayout = QtGui.QGridLayout()
-        self.mainLayout.addWidget(self.valveProtocols.mainWidget, 0, 0, 1, 3)
-        self.mainLayout.addWidget(self.valveProtocols.valveCommands.mainWidget, 2, 0, 1, 3) 
+        self.mainLayout.addWidget(self.kilroyProtocols.mainWidget, 0, 0, 1, 3)
+        self.mainLayout.addWidget(self.kilroyProtocols.valveCommands.mainWidget, 2, 0, 1, 3) 
         self.mainLayout.addWidget(self.valveChain.mainWidget, 0, 4, 1, 1)
         self.mainLayout.addWidget(self.tcpServer.mainWidget, 2, 4, 1, 1)
 
     # ----------------------------------------------------------------------------------------
-    # Redirect protocol status change from valveProtocols to valveChain
+    # Redirect protocol status change from kilroyProtocols to valveChain
     # ----------------------------------------------------------------------------------------
     def handleProtocolStatusChange(self):
-        status = self.valveProtocols.getStatus()
+        status = self.kilroyProtocols.getStatus()
         if status[0] >= 0: # Protocol is running
             self.valveChain.setEnabled(False)
         else:
@@ -121,13 +121,13 @@ class Kilroy(QtGui.QMainWindow):
             print "Received Protocol from Kilroy Client: " + protocol_name
             print " with unique ID: " + protocol_UID
             
-        if self.valveProtocols.isValidProtocol(protocol_name):
+        if self.kilroyProtocols.isValidProtocol(protocol_name):
             # Keep track of protocols issued via TCP 
             self.sent_protocol_names.append(protocol_name)
             self.sent_protocol_UIDs.append(protocol_UID)
             
             # Start the protocol
-            self.valveProtocols.startProtocolRemotely(protocol_name, protocol_UID)
+            self.kilroyProtocols.startProtocolRemotely(protocol_name, protocol_UID)
 
         else: # Respond with a protocol complete to cancel the invalid protocol
             self.tcpServer.sendProtocolComplete(protocol_name, protocol_UID)
@@ -136,7 +136,7 @@ class Kilroy(QtGui.QMainWindow):
     # Redirect commands from valve protocol class to valve chain class
     # ----------------------------------------------------------------------------------------
     def sendCommand(self):
-        command = self.valveProtocols.getCurrentCommand()
+        command = self.kilroyProtocols.getCurrentCommand()
         self.valveChain.receiveCommand(command)
 
 # ----------------------------------------------------------------------------------------
@@ -170,7 +170,7 @@ class StandAlone(QtGui.QMainWindow):
         # Add menu items
         menubar = self.menuBar()
         file_menu = menubar.addMenu("&File")
-        for menu_item in self.kilroy.valveProtocols.menu_items[0]:
+        for menu_item in self.kilroy.kilroyProtocols.menu_items[0]:
             file_menu.addAction(menu_item)
         file_menu.addAction(exit_action)
 

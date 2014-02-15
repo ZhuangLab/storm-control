@@ -1,11 +1,12 @@
 #!/usr/bin/python
 # ----------------------------------------------------------------------------------------
-# A class to load, parse, and control predefined valve protocols, i.e.
-# collections of predefined valve commands and durations. This class also
+# A class to load, parse, and control predefined kilroy protocols, i.e.
+# collections of predefined valve or pump configurations and a defined
+# duration to wait before setting the next configuration. This class also
 # provides a basic I/O GUI to interface with protocols. 
 # ----------------------------------------------------------------------------------------
 # Jeff Moffitt
-# 12/28/13
+# 2/15/14
 # jeffmoffitt@gmail.com
 # ----------------------------------------------------------------------------------------
 
@@ -20,9 +21,9 @@ from PyQt4 import QtCore, QtGui
 from valves.valveCommands import ValveCommands
 
 # ----------------------------------------------------------------------------------------
-# ValveProtocols Class Definition
+# KilroyProtocols Class Definition
 # ----------------------------------------------------------------------------------------
-class ValveProtocols(QtGui.QMainWindow):
+class KilroyProtocols(QtGui.QMainWindow):
 
     # Define custom command ready signal
     command_ready_signal = QtCore.pyqtSignal() # A command is ready to be issued
@@ -33,7 +34,7 @@ class ValveProtocols(QtGui.QMainWindow):
                  protocol_xml_path = "default_config.xml",
                  command_xml_path = "default_config.xml",
                  verbose = False):
-        super(ValveProtocols, self).__init__()
+        super(KilroyProtocols, self).__init__()
 
         # Initialize internal attributes
         self.verbose = verbose
@@ -103,7 +104,7 @@ class ValveProtocols(QtGui.QMainWindow):
     # ------------------------------------------------------------------------------------                                                
     def createGUI(self):
         self.mainWidget = QtGui.QGroupBox()
-        self.mainWidget.setTitle("Valve Protocols")
+        self.mainWidget.setTitle("Protocols")
         self.mainWidgetLayout = QtGui.QVBoxLayout(self.mainWidget)
 
         self.fileLabel = QtGui.QLabel()
@@ -491,13 +492,13 @@ class StandAlone(QtGui.QMainWindow):
         super(StandAlone, self).__init__(parent)
 
         # scroll area widget contents - layout
-        self.valveProtocols = ValveProtocols(verbose = True)
+        self.kilroyProtocols = KilroyProtocols(verbose = True)
                                   
         # central widget
         self.centralWidget = QtGui.QWidget()
         self.mainLayout = QtGui.QVBoxLayout(self.centralWidget)
-        self.mainLayout.addWidget(self.valveProtocols.mainWidget)
-        self.mainLayout.addWidget(self.valveProtocols.valveCommands.mainWidget)
+        self.mainLayout.addWidget(self.kilroyProtocols.mainWidget)
+        self.mainLayout.addWidget(self.kilroyProtocols.valveCommands.mainWidget)
 
         self.centralWidget.setLayout(self.mainLayout)
 
@@ -531,7 +532,7 @@ class StandAlone(QtGui.QMainWindow):
     # Handle close event
     # ----------------------------------------------------------------------------------------
     def closeEvent(self, event):
-        self.valveProtocols.close()
+        self.kilroyProtocols.close()
         self.close()
   
 # ----------------------------------------------------------------------------------------
