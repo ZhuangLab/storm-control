@@ -82,8 +82,8 @@ class RaininRP1():
 
         # Determine Initial Pump Status
         self.pump_identification = self.getPumpIdentification()
-        response = self.getStatus()
-        response = self.getMode()
+        self.requestStatus()
+        self.readDisplay()
             
     # ------------------------------------------------------------------------------------
     # Disconnect Pump
@@ -115,9 +115,9 @@ class RaininRP1():
         return self.pump_identification
     
     # ------------------------------------------------------------------------------------
-    # Get Rainin Mode Status
+    # Determine the Rainin Status
     # ------------------------------------------------------------------------------------ 
-    def getMode(self):
+    def requestStatus(self):
         message = []
         if not self.simulate:
             message = self.sendImmediateCommand("I")
@@ -133,8 +133,18 @@ class RaininRP1():
 
             # Parse Flow
             self.flow_status = {"S": "Stopped", "F": "Flowing"}.get(message[3], "Unknown")
-            
-        return (self.control_status, self.error_status, self.direction, self.flow_status, message)
+
+    # ------------------------------------------------------------------------------------
+    # Return the status of the pump
+    # ------------------------------------------------------------------------------------ 
+    def getStatus(self):
+        # Update the status from the current display
+        self.readDisplay()
+        # Update the status from a status inquiry
+        self.requestStatus()
+
+        return (self.flow_status, self.speed, self.direction,
+                self.control_status, self.auto_start, self.error_status)
 
     # ------------------------------------------------------------------------------------
     # Read buffer
@@ -154,9 +164,9 @@ class RaininRP1():
         return message
 
     # ------------------------------------------------------------------------------------
-    # Get Rainin Status
+    # Get Rainin Status from Current Display
     # ------------------------------------------------------------------------------------ 
-    def getStatus(self):
+    def readDisplay(self):
         message = []
         if not self.simulate:
             message = self.sendImmediateCommand("R")
@@ -180,8 +190,6 @@ class RaininRP1():
 
             # Parse speed
             self.speed = float(message[1:5])
-
-        return (self.direction, self.speed, self.control_status, self.auto_start, message)
 
     # ------------------------------------------------------------------------------------
     # Overload String Representation Conversion
@@ -314,7 +322,6 @@ if __name__ == '__main__':
     rainin.setFlowDirection(False)
     rainin.setRemoteControl(True)
     print rainin.getStatus()
-    print rainin.getMode()
     print rainin
     rainin.close()
     
