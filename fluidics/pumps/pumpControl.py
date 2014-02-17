@@ -22,7 +22,7 @@ from rainin_rp1 import RaininRP1
 class PumpControl(QtGui.QWidget):
     def __init__(self,
                  parent = None,
-                 COM_port = 3,
+                 com_port = 3,
                  pump_ID = 30,
                  simulate = False,
                  verbose = True):
@@ -31,14 +31,14 @@ class PumpControl(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
 
         # Define internal attributes
-        self.COM_port = COM_port
+        self.com_port = com_port
         self.pump_ID = pump_ID
         self.simulate = simulate
         self.verbose = verbose
         self.status_repeat_time = 2000
         
         # Create Instance of Pump
-        self.pump = RaininRP1(COM_port = self.COM_port,
+        self.pump = RaininRP1(com_port = self.com_port,
                               pump_ID = self.pump_ID,
                               simulate = self.simulate,
                               verbose = self.verbose)
@@ -172,21 +172,11 @@ class PumpControl(QtGui.QWidget):
         self.pump.stopFlow()
         time.sleep(0.1)
         self.pollPumpStatus()
-        
-    # ----------------------------------------------------------------------------------------
-    # setPumpConfiguration
-    # ----------------------------------------------------------------------------------------
-    # Populate the configratuion display
 
     # ----------------------------------------------------------------------------------------
-    # setPumpDirection
+    # Receive Command
     # ----------------------------------------------------------------------------------------
-    # Set the pump direction widget
-
-    # ----------------------------------------------------------------------------------------
-    # setStatus
-    # ----------------------------------------------------------------------------------------
-    # Set the pump status display
+    
 
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
@@ -196,7 +186,7 @@ class StandAlone(QtGui.QMainWindow):
         super(StandAlone, self).__init__(parent)
 
         # scroll area widget contents - layout
-        self.pump = PumpControl(COM_port = 2,
+        self.pump = PumpControl(com_port = 2,
                                 pump_ID = 30,
                                 simulate = True,
                                 verbose = True)

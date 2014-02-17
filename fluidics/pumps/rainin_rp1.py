@@ -19,13 +19,13 @@ import time
 # ----------------------------------------------------------------------------------------
 class RaininRP1():
     def __init__(self,
-                 COM_port = 3,
+                 com_port = 3,
                  pump_ID = 30,
                  simulate = False,
                  verbose = True):
 
         # Define attributes
-        self.COM_port = COM_port
+        self.com_port = com_port
         self.pump_ID = pump_ID
         self.verbose = verbose
         self.simulate = simulate
@@ -33,7 +33,7 @@ class RaininRP1():
         # Create serial port
         if not self.simulate:
             print self.simulate
-            self.serial = serial.Serial(port = self.COM_port,
+            self.serial = serial.Serial(port = self.com_port,
                                         baudrate = 19200,
                                         bytesize = serial.EIGHTBITS,
                                         parity = serial.PARITY_EVEN,
@@ -77,7 +77,7 @@ class RaininRP1():
         else:
             print "Simulating a Rainin RP1 Pump"
 
-        print "   " + "COM Port: " + str(self.COM_port)
+        print "   " + "COM Port: " + str(self.com_port)
         print "   " + "Pump ID: " + str(self.pump_ID)
 
         # Place pump in remote control
@@ -216,7 +216,7 @@ class RaininRP1():
         base_string = "Rainin RP1 Class: \n"
         base_string += "    " + "Pump Information: " + self.identification + "\n"
         base_string += "    " + "PortID: " + str(self.pump_ID) + "\n"
-        base_string += "    " + "COM Port: " + str(self.COM_port) + "\n"
+        base_string += "    " + "COM Port: " + str(self.com_port) + "\n"
         base_string += "    " + "Flow Status: " + self.flow_status + "\n"
         base_string += "    " + "Flow Speed: " + str(self.speed) + "\n"
         base_string += "    " + "Flow Direction: " + self.direction + "\n"
