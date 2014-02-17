@@ -108,6 +108,14 @@ class SingleCamera(genericCamera.Camera):
     def getRecordButton(self):
         return self.camera_display.getRecordButton()
 
+    ## getSignals
+    #
+    # @return The signals this module provides.
+    #
+    @hdebug.debug
+    def getSignals(self):
+        return [["camera", "cameraROISelection", self.camera_display.cameraROISelection]]
+
     ## handleGainChange
     #
     # Handles changing the EMCCD gain.

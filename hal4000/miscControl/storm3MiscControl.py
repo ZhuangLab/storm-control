@@ -185,8 +185,8 @@ class AMiscControl(miscControl.MiscControl):
     def handleROISelection(self, which_camera, select_rect):
         self.start_x = select_rect.left()
         self.start_y = select_rect.top()
-        self.stop_x = self.start_x + select_rect.width()
-        self.stop_y = self.start_y + select_rect.height()
+        self.stop_x = select_rect.right()
+        self.stop_y = select_rect.bottom()
         self.updateROIText()
 
     @hdebug.debug
@@ -212,7 +212,7 @@ class AMiscControl(miscControl.MiscControl):
         self.setPositionText()
 
     def newFrame(self, frame, filming):
-        if self.ie_capture and frame and not self.ie_setting_ROI:
+        if self.ie_capture and frame:
 
             bg_term = self.ui.iEyesBackgroundSpinBox.value()
             frame_data = frame.getData().copy()
