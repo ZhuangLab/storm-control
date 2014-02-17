@@ -30,7 +30,7 @@ class Kilroy(QtGui.QMainWindow):
 
         # Parse parameters into internal attributes
         self.verbose = parameters.verbose
-        self.valve_com_port = parameters.com_port
+        self.valve_com_port = parameters.valves_com_port
         self.tcp_port = parameters.tcp_port
         self.pump_com_port = parameters.pump_com_port
         self.pump_ID = parameters.pump_ID
@@ -67,8 +67,8 @@ class Kilroy(QtGui.QMainWindow):
                                        verbose = self.verbose)
                                        
         # Create KilroyProtocols instance and connect signals
-        self.kilroyProtocols = KilroyProtocols(protocol_xml_path = self.valve_protocols_file,
-                                               command_xml_path = self.valve_commands_file,
+        self.kilroyProtocols = KilroyProtocols(protocol_xml_path = self.protocols_file,
+                                               command_xml_path = self.commands_file,
                                                verbose = self.verbose)
 
         self.kilroyProtocols.command_ready_signal.connect(self.sendCommand)
@@ -99,10 +99,12 @@ class Kilroy(QtGui.QMainWindow):
     # ----------------------------------------------------------------------------------------
     def createGUI(self):
         self.mainLayout = QtGui.QGridLayout()
-        self.mainLayout.addWidget(self.kilroyProtocols.mainWidget, 0, 0, 1, 3)
-        self.mainLayout.addWidget(self.kilroyProtocols.valveCommands.mainWidget, 2, 0, 1, 3) 
-        self.mainLayout.addWidget(self.valveChain.mainWidget, 0, 4, 1, 1)
-        self.mainLayout.addWidget(self.tcpServer.mainWidget, 2, 4, 1, 1)
+        self.mainLayout.addWidget(self.kilroyProtocols.mainWidget, 0, 0, 2, 2)
+        self.mainLayout.addWidget(self.kilroyProtocols.valveCommands.mainWidget, 2, 0, 1, 1)
+        self.mainLayout.addWidget(self.kilroyProtocols.pumpCommands.mainWidget, 2, 1, 1, 1)
+        self.mainLayout.addWidget(self.pumpControl.mainWidget, 0, 2, 2, 1)
+        self.mainLayout.addWidget(self.valveChain.mainWidget, 0, 3, 2, 2)
+        self.mainLayout.addWidget(self.tcpServer.mainWidget, 2, 2, 1, 4)
 
     # ----------------------------------------------------------------------------------------
     # Redirect protocol status change from kilroyProtocols to valveChain
@@ -111,8 +113,10 @@ class Kilroy(QtGui.QMainWindow):
         status = self.kilroyProtocols.getStatus()
         if status[0] >= 0: # Protocol is running
             self.valveChain.setEnabled(False)
+            self.pumpControl.setEnabled(False)
         else:
             self.valveChain.setEnabled(True)
+            self.pumpControl.setEnabled(True)
 
     # ----------------------------------------------------------------------------------------
     # Handle a protocol complete signal from the valve protocols
@@ -148,11 +152,17 @@ class Kilroy(QtGui.QMainWindow):
             self.tcpServer.sendProtocolComplete(protocol_name, protocol_UID)
             
     # ----------------------------------------------------------------------------------------
-    # Redirect commands from valve protocol class to valve chain class
+    # Redirect commands from kilroy protocol class to valves or pump
     # ----------------------------------------------------------------------------------------
     def sendCommand(self):
-        command = self.kilroyProtocols.getCurrentCommand()
-        self.valveChain.receiveCommand(command)
+        command_data = self.kilroyProtocols.getCurrentCommand()
+        print command_data
+        if command_data[0] == "valve":
+            self.valveChain.receiveCommand(command_data[1])
+        elif command_data[0] == "pump":
+            self.pumpControl.receiveCommand(command_data[1])
+        else:
+            print "Received command of unknown type: " + str(command_data[0])
 
 # ----------------------------------------------------------------------------------------
 # Stand Alone Kilroy Class

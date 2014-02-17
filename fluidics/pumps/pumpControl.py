@@ -173,10 +173,24 @@ class PumpControl(QtGui.QWidget):
         time.sleep(0.1)
         self.pollPumpStatus()
 
-    # ----------------------------------------------------------------------------------------
-    # Receive Command
-    # ----------------------------------------------------------------------------------------
-    
+    # ------------------------------------------------------------------------------------
+    # Change pump based on sent command: [direction, speed]
+    # ------------------------------------------------------------------------------------          
+    def receiveCommand(self, command):
+        speed = command[1]
+        direction = command[0]
+        if speed < 0.01:
+            self.pump.stopFlow()
+        else:
+            self.pump.startFlow(speed, direction)
+
+    # ------------------------------------------------------------------------------------
+    # Determine Enabled State
+    # ------------------------------------------------------------------------------------          
+    def setEnabled(self, enabled):
+        # This control is always enabled to allow emergency control over the flow
+        pass
+        
 
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class

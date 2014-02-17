@@ -204,9 +204,9 @@ class KilroyProtocols(QtGui.QMainWindow):
     # ------------------------------------------------------------------------------------                       
     def issueCommand(self, command_data, command_duration=-1):
         if command_data[0] == "pump":
-            self.issued_command = self.pumpCommands.getCommandByName(command_data[1])
+            self.issued_command = ["pump", self.pumpCommands.getCommandByName(command_data[1])]
         elif command_data[0] == "valve":
-            self.issued_command = self.valveCommands.getCommandByName(command_data[1])
+            self.issued_command = ["valve", self.valveCommands.getCommandByName(command_data[1])]
         if self.verbose:
             text = "Issued " + command_data[0] + ": " + command_data[1]
             if command_duration > 0:
@@ -350,7 +350,7 @@ class KilroyProtocols(QtGui.QMainWindow):
         protocol_ID = self.protocolListWidget.currentRow()
         
         # Get first command in protocol
-        command_name = self.protocol_commands[protocol_ID][0]
+        command_data = self.protocol_commands[protocol_ID][0]
         command_duration = self.protocol_durations[protocol_ID][0]
 
         # Set protocol status: [protocol_ID, command_ID]
@@ -361,7 +361,7 @@ class KilroyProtocols(QtGui.QMainWindow):
             print "Starting " + self.protocol_names[protocol_ID]
 
         # Issue command signal
-        self.issueCommand(command_name, command_duration)
+        self.issueCommand(command_data, command_duration)
         
         # Start elapsed time timer
         self.elapsed_timer.start()
