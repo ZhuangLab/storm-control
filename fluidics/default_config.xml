@@ -38,17 +38,17 @@
 
   <kilroy_protocols>
      <protocol name = "Extra Wash">
-	<valve_command duration = "0">Flow Wash</valve_command>
-        <pump_command duration = "200">Normal Flow</pump_command>
-	<pump_command duration = "0">Stop Flow</pump_command>
+	<valve duration = "0">Flow Wash</valve>
+        <pump duration = "200">Normal Flow</pump>
+	<pump duration = "0">Stop Flow</pump>
      </protocol>
      <protocol name = "Hybridize 1">
-        <pump_command duration = "0">Normal Flow</pump_command>
-        <valve_command duration = "20">Set Hyb 1</valve_command>
-	<valve_command duration = "10">Flow Hybridization</valve_command>
-	<valve_command duration = "10">Flow Wash</valve_command>
-	<valve_command duration = "10">Flow STORM Buffer</valve_command>
-	<pump_command duration = "0">Stop Flow</pump_command>
+        <pump duration = "0">Normal Flow</pump>
+        <valve duration = "20">Set Hyb 1</valve>
+	<valve duration = "10">Flow Hybridization</valve>
+	<valve duration = "10">Flow Wash</valve>
+	<valve duration = "10">Flow STORM Buffer</valve>
+	<pump duration = "0">Stop Flow</pump>
      </protocol>
    </kilroy_protocols>
 </kilroy_configuration>

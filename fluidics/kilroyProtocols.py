@@ -42,7 +42,7 @@ class KilroyProtocols(QtGui.QMainWindow):
         self.protocol_xml_path = protocol_xml_path
         self.command_xml_path = command_xml_path
         self.protocol_names = []
-        self.protocol_commands = []
+        self.protocol_commands = [] # [Instrument Type, command_info]
         self.protocol_durations = []
         self.num_protocols = 0
         self.status = [-1, -1] # Protocol ID, command ID within protocol
@@ -59,6 +59,9 @@ class KilroyProtocols(QtGui.QMainWindow):
         # Create instance of PumpCommands class
         self.pumpCommands = PumpCommands(xml_file_path = self.command_xml_path,
                                          verbose = self.verbose)
+
+        # Connect pump commands issue signal
+        self.pumpCommands.change_command_signal.connect(self.issueCommand)
         
         # Create GUI
         self.createGUI()
@@ -199,10 +202,13 @@ class KilroyProtocols(QtGui.QMainWindow):
     # ------------------------------------------------------------------------------------
     # Issue a command: load current command, send command ready signal
     # ------------------------------------------------------------------------------------                       
-    def issueCommand(self, command_name, command_duration=-1):
-        self.issued_command = self.valveCommands.getCommandByName(command_name)
+    def issueCommand(self, command_data, command_duration=-1):
+        if command_data[0] == "pump":
+            self.issued_command = self.pumpCommands.getCommandByName(command_data[1])
+        elif command_data[0] == "valve":
+            self.issued_command = self.valveCommands.getCommandByName(command_data[1])
         if self.verbose:
-            text = "Issued: " + command_name
+            text = "Issued " + command_data[0] + ": " + command_data[1]
             if command_duration > 0:
                 text += ": " + str(command_duration) + " s"
             print text
@@ -308,9 +314,9 @@ class KilroyProtocols(QtGui.QMainWindow):
                 self.protocol_names.append(protocol.get("name"))
                 new_protocol_commands = []
                 new_protocol_durations = []
-                for command in protocol.findall("command"):
+                for command in protocol: # Get all children
                     new_protocol_durations.append(int(command.get("duration")))
-                    new_protocol_commands.append(command.text)
+                    new_protocol_commands.append([command.tag,command.text]) # [Instrument Type, Command Name]       
                 self.protocol_commands.append(new_protocol_commands)
                 self.protocol_durations.append(new_protocol_durations)
 
@@ -325,7 +331,7 @@ class KilroyProtocols(QtGui.QMainWindow):
         for protocol_ID in range(self.num_protocols):
             print self.protocol_names[protocol_ID]
             for command_ID, command in enumerate(self.protocol_commands[protocol_ID]):
-                textString = "    " + command + ": "
+                textString = "    " + command[0] + ": " + command[1] + ": "
                 textString += str(self.protocol_durations[protocol_ID][command_ID]) + " s"
                 print textString
 
@@ -484,7 +490,9 @@ class KilroyProtocols(QtGui.QMainWindow):
 
         self.protocolDetailsList.clear()
         for ID in range(len(current_protocol_commands)):
-            text_string = current_protocol_commands[ID]
+            text_string = current_protocol_commands[ID][0]
+            text_string += ": "
+            text_string += current_protocol_commands[ID][1]
             text_string += ": "
             text_string += str(current_protocol_durations[ID]) + " s"
 
