@@ -160,7 +160,7 @@ class ValveCommands(QtGui.QMainWindow):
         try:
             print "Parsing for commands: " + self.file_name
             self.xml_tree = elementTree.parse(self.file_name)
-            self.valve_configuration = self.xml_tree.getroot()
+            self.kilroy_configuration = self.xml_tree.getroot()
         except:
             print "Valid xml file not loaded"
             return
@@ -171,12 +171,12 @@ class ValveCommands(QtGui.QMainWindow):
         self.num_commands = 0
 
         # Load number of valves
-        self.num_valves = int(self.valve_configuration.get("num_valves"))
+        self.num_valves = int(self.kilroy_configuration.get("num_valves"))
         if not (self.num_valves>0):
             print "Number of valves not specified"
         
         # Load commands
-        for valve_command in self.valve_configuration.findall("valve_commands"):
+        for valve_command in self.kilroy_configuration.findall("valve_commands"):
             command_list = valve_command.findall("valve_cmd")
             for command in command_list:
                 new_command = [-1]*self.num_valves # make copy to initialize config with default

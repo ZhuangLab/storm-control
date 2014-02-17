@@ -19,6 +19,7 @@ import uuid
 import xml.etree.ElementTree as elementTree
 from PyQt4 import QtCore, QtGui
 from valves.valveCommands import ValveCommands
+from pumps.pumpCommands import pumpCommands
 
 # ----------------------------------------------------------------------------------------
 # KilroyProtocols Class Definition
