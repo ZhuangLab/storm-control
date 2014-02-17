@@ -102,8 +102,8 @@ class Kilroy(QtGui.QMainWindow):
         self.mainLayout.addWidget(self.kilroyProtocols.mainWidget, 0, 0, 2, 2)
         self.mainLayout.addWidget(self.kilroyProtocols.valveCommands.mainWidget, 2, 0, 1, 1)
         self.mainLayout.addWidget(self.kilroyProtocols.pumpCommands.mainWidget, 2, 1, 1, 1)
-        self.mainLayout.addWidget(self.pumpControl.mainWidget, 0, 2, 2, 1)
-        self.mainLayout.addWidget(self.valveChain.mainWidget, 0, 3, 2, 2)
+        self.mainLayout.addWidget(self.valveChain.mainWidget, 0, 2, 2, 2)
+        self.mainLayout.addWidget(self.pumpControl.mainWidget, 0, 4, 2, 1)
         self.mainLayout.addWidget(self.tcpServer.mainWidget, 2, 2, 1, 4)
 
     # ----------------------------------------------------------------------------------------
