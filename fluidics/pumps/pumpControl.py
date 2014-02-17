@@ -36,6 +36,7 @@ class PumpControl(QtGui.QWidget):
         self.simulate = simulate
         self.verbose = verbose
         self.status_repeat_time = 2000
+        self.speed_units = "rpm"
         
         # Create Instance of Pump
         self.pump = RaininRP1(com_port = self.com_port,
@@ -89,11 +90,21 @@ class PumpControl(QtGui.QWidget):
         self.pump_identification_label = QtGui.QLabel()
         self.pump_identification_label.setText("No Pump Attached")
 
+        self.flow_status_label= QtGui.QLabel()
+        self.flow_status_label.setText("Flow Status:")
         self.flow_status_display = QtGui.QLabel()
-        self.flow_status_display.setText("Flow Status: Unknown")
-        
+        self.flow_status_display.setText("Unknown")
+        font = QtGui.QFont()
+        font.setPointSize(20)
+        self.flow_status_display.setFont(font)
+
+        self.speed_label = QtGui.QLabel()
+        self.speed_label.setText("Flow Rate:")
         self.speed_display = QtGui.QLabel()
-        self.speed_display.setText("Flow Rate: 0.0")
+        self.speed_display.setText("Unknown")
+        font = QtGui.QFont()
+        font.setPointSize(20)
+        self.speed_display.setFont(font)
 
         self.speed_control_label = QtGui.QLabel()
         self.speed_control_label.setText("Desired Speed")
@@ -115,8 +126,10 @@ class PumpControl(QtGui.QWidget):
         self.stop_flow_button.setText("Stop Flow")
         self.stop_flow_button.clicked.connect(self.handleStopFlow)
         
-        self.mainWidgetLayout.addWidget(self.pump_identification_label)
+        #self.mainWidgetLayout.addWidget(self.pump_identification_label)
+        #self.mainWidgetLayout.addWidget(self.flow_status_label)
         self.mainWidgetLayout.addWidget(self.flow_status_display)
+        #self.mainWidgetLayout.addWidget(self.speed_label)
         self.mainWidgetLayout.addWidget(self.speed_display)
         self.mainWidgetLayout.addWidget(self.speed_control_label)
         self.mainWidgetLayout.addWidget(self.speed_control_entry_box)
@@ -135,20 +148,23 @@ class PumpControl(QtGui.QWidget):
         
         # Flow status
         if status[0] == "Flowing":
-            self.flow_status_display.setText("Flow Status: " + status[2])
+            self.flow_status_display.setText(status[2])
+            self.flow_status_display.setStyleSheet("QLabel { color: green}")
             self.stop_flow_button.setEnabled(True)
             self.start_flow_button.setText("Change Flow")
         elif status[0] == "Stopped":
-            self.flow_status_display.setText("Flow Status: " + status[0])
+            self.flow_status_display.setText(status[0])
+            self.flow_status_display.setStyleSheet("QLabel { color: red}")
             self.stop_flow_button.setEnabled(False)
             self.start_flow_button.setText("Start Flow")
         else: # Unknown status
-            self.flow_status_display.setText("Flow Status: " + status[0])
+            self.flow_status_display.setText(status[0])
+            self.flow_status_display.setStyleSheet("QLabel { color: red}")
             self.stop_flow_button.setEnabled(False)
             self.start_flow_button.setEnabled(False)
 
         # Speed
-        self.speed_display.setText("Flow Rate: " + "%0.2f" % status[1])
+        self.speed_display.setText("%0.2f" % status[1] + " " + self.speed_units)
             
     # ----------------------------------------------------------------------------------------
     # Poll Pump Status
