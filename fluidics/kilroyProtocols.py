@@ -19,7 +19,7 @@ import uuid
 import xml.etree.ElementTree as elementTree
 from PyQt4 import QtCore, QtGui
 from valves.valveCommands import ValveCommands
-from pumps.pumpCommands import pumpCommands
+from pumps.pumpCommands import PumpCommands
 
 # ----------------------------------------------------------------------------------------
 # KilroyProtocols Class Definition
@@ -55,6 +55,10 @@ class KilroyProtocols(QtGui.QMainWindow):
 
         # Connect valve command issue signal
         self.valveCommands.change_command_signal.connect(self.issueCommand)
+
+        # Create instance of PumpCommands class
+        self.pumpCommands = PumpCommands(xml_file_path = self.command_xml_path,
+                                         verbose = self.verbose)
         
         # Create GUI
         self.createGUI()
@@ -265,6 +269,9 @@ class KilroyProtocols(QtGui.QMainWindow):
 
         # Update valveCommands
         self.valveCommands.loadCommands(xml_file_path = self.command_xml_path)
+
+        # Update pumpCommands
+        self.pumpCommands.loadCommands(xml_file_path = self.command_xml_path)
       
         # Parse XML
         self.parseProtocolXML()
@@ -283,7 +290,7 @@ class KilroyProtocols(QtGui.QMainWindow):
         try:
             print "Parsing for protocols: " + self.protocol_xml_path
             self.xml_tree = elementTree.parse(self.protocol_xml_path)
-            self.valve_configuration = self.xml_tree.getroot()
+            self.kilroy_configuration = self.xml_tree.getroot()
         except:
             print "Valid xml file not loaded"
             return
@@ -295,8 +302,8 @@ class KilroyProtocols(QtGui.QMainWindow):
         self.num_protocols = 0
         
         # Load commands
-        for valve_protocols in self.valve_configuration.findall("valve_protocols"):
-            protocol_list = valve_protocols.findall("protocol")
+        for kilroy_protocols in self.kilroy_configuration.findall("kilroy_protocols"):
+            protocol_list = kilroy_protocols.findall("protocol")
             for protocol in protocol_list:
                 self.protocol_names.append(protocol.get("name"))
                 new_protocol_commands = []
@@ -497,9 +504,10 @@ class StandAlone(QtGui.QMainWindow):
                                   
         # central widget
         self.centralWidget = QtGui.QWidget()
-        self.mainLayout = QtGui.QVBoxLayout(self.centralWidget)
-        self.mainLayout.addWidget(self.kilroyProtocols.mainWidget)
-        self.mainLayout.addWidget(self.kilroyProtocols.valveCommands.mainWidget)
+        self.mainLayout = QtGui.QGridLayout(self.centralWidget)
+        self.mainLayout.addWidget(self.kilroyProtocols.mainWidget,0,0,1,2)
+        self.mainLayout.addWidget(self.kilroyProtocols.valveCommands.mainWidget, 1,0,1,1)
+        self.mainLayout.addWidget(self.kilroyProtocols.pumpCommands.mainWidget, 1,1,1,1)
 
         self.centralWidget.setLayout(self.mainLayout)
 
@@ -519,10 +527,10 @@ class StandAlone(QtGui.QMainWindow):
 
         # Add menu items
         menubar = self.menuBar()
-        for [menu_ID, menu_name] in enumerate(self.valveProtocols.menu_names):
+        for [menu_ID, menu_name] in enumerate(self.kilroyProtocols.menu_names):
             new_menu = menubar.addMenu("&" + menu_name)
             
-            for menu_item in self.valveProtocols.menu_items[menu_ID]:
+            for menu_item in self.kilroyProtocols.menu_items[menu_ID]:
                 new_menu.addAction(menu_item)
 
             # Add quit option to file menu

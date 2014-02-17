@@ -16,6 +16,7 @@ import os
 import time
 from PyQt4 import QtCore, QtGui
 from valves.valveChain import ValveChain
+from pumps.pumpControl import PumpControl
 from kilroyProtocols import KilroyProtocols
 from kilroyServer import KilroyServer
 import sc_library.parameters as params
@@ -29,34 +30,46 @@ class Kilroy(QtGui.QMainWindow):
 
         # Parse parameters into internal attributes
         self.verbose = parameters.verbose
-        self.com_port = parameters.com_port
+        self.valve_com_port = parameters.com_port
         self.tcp_port = parameters.tcp_port
+        self.pump_com_port = parameters.pump_com_port
+        self.pump_ID = parameters.pump_ID
         if not hasattr(parameters, "num_simulated_valves"):
             self.num_simulated_valves = 0
         else:
             self.num_simulated_valves = parameters.num_simulated_valves
-        if not hasattr(parameters, "valve_protocols_file"):
-            self.valve_protocols_file = "default_config.xml"
+        if not hasattr(parameters, "protocols_file"):
+            self.protocols_file = "default_config.xml"
         else:
-            self.valve_protocols_file = parameters.valve_protocols_file
-        if not hasattr(parameters, "valve_commands_file"):
-            self.valve_commands_file = "default_config.xml"
+            self.protocols_file = parameters.protocols_file
+        if not hasattr(parameters, "commands_file"):
+            self.commands_file = "default_config.xml"
         else:
-            self.valve_commands_file = parameters.valve_commands_file
+            self.commands_file = parameters.commands_file
+        if not hasattr(parameters, "simulate_pump"):
+            self.simulate_pump = False
+        else:
+            self.simulate_pump = parameters.simulate_pump
 
         # Define additional internal attributes
         self.sent_protocol_names = []
         self.sent_protocol_UIDs = []
         
         # Create ValveChain instance
-        self.valveChain = ValveChain(com_port = self.com_port,
+        self.valveChain = ValveChain(com_port = self.valve_com_port,
                                      num_simulated_valves = self.num_simulated_valves,
                                      verbose = self.verbose)
 
+        # Create PumpControl instance
+        self.pumpControl = PumpControl(com_port = self.pump_com_port,
+                                       pump_ID = self.pump_ID,
+                                       simulate = self.simulate_pump,
+                                       verbose = self.verbose)
+                                       
         # Create KilroyProtocols instance and connect signals
         self.kilroyProtocols = KilroyProtocols(protocol_xml_path = self.valve_protocols_file,
-                                             command_xml_path = self.valve_commands_file,
-                                             verbose = self.verbose)
+                                               command_xml_path = self.valve_commands_file,
+                                               verbose = self.verbose)
 
         self.kilroyProtocols.command_ready_signal.connect(self.sendCommand)
         self.kilroyProtocols.status_change_signal.connect(self.handleProtocolStatusChange)
@@ -65,18 +78,20 @@ class Kilroy(QtGui.QMainWindow):
         # Create Kilroy TCP Server and connect signals
         self.tcpServer = KilroyServer(port = self.tcp_port,
                                       verbose = self.verbose)
+        
         self.tcpServer.data_ready.connect(self.handleTCPData)
 
         # Create GUI
         self.createGUI()
 
     # ----------------------------------------------------------------------------------------
-    # Create master GUI
+    # Close
     # ----------------------------------------------------------------------------------------
     def close(self):
         self.kilroyProtocols.close()
         self.tcpServer.close()
         self.valveChain.close()
+        self.pumpControl.close()
         print "\nKilroy was here!"
 
     # ----------------------------------------------------------------------------------------
