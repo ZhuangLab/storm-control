@@ -57,7 +57,7 @@ class RaininRP1():
         self.control_status = "Keyboard"
         self.auto_start = "Disabled"
         self.error_status = "No Error"
-        self.pump_identification = ""
+        self.identification = ""
         
         # Configure device
         self.disconnectPump()
@@ -80,8 +80,11 @@ class RaininRP1():
         print "   " + "COM Port: " + str(self.COM_port)
         print "   " + "Pump ID: " + str(self.pump_ID)
 
+        # Place pump in remote control
+        self.enableRemoteControl(True)
+        
         # Determine Initial Pump Status
-        self.pump_identification = self.getPumpIdentification()
+        self.identification = self.getPumpIdentification()
         self.requestStatus()
         self.readDisplay()
             
@@ -91,6 +94,8 @@ class RaininRP1():
     def disconnectPump(self):
         if not self.simulate:
             self.serial.write(self.disconnect_signal)
+        if self.control_status == "Remote":
+            self.enableRemoteControl(False)
  
     # ------------------------------------------------------------------------------------
     # Close Serial Port
@@ -102,38 +107,31 @@ class RaininRP1():
             print "Closed Rainin RP1 communication"
         else: ## simulation code
             print "Closed Simulated Raining RP1"
-
+            
+    # ------------------------------------------------------------------------------------
+    # Toggle Remote Control Status
+    # ------------------------------------------------------------------------------------ 
+    def enableRemoteControl(self, remote_control):
+        if not self.simulate:
+            if remote_control:
+                self.sendBufferedCommand("L")
+            else:
+                self.sendBufferedCommand("U")
+        else:
+            if remote_control: self.control_status = "Remote"
+            else: self.control_status = "Keyboard"
+        
     # ------------------------------------------------------------------------------------
     # Get Pump Identification
     # ------------------------------------------------------------------------------------ 
     def getPumpIdentification(self):
         if not self.simulate:
             message = self.sendImmediateCommand("%")
-            self.pump_identification = message
+            self.identification = message
         else:
-            self.pump_identification = "Simulated"
-        return self.pump_identification
+            self.identification = "Simulated"
+        return self.identification
     
-    # ------------------------------------------------------------------------------------
-    # Determine the Rainin Status
-    # ------------------------------------------------------------------------------------ 
-    def requestStatus(self):
-        message = []
-        if not self.simulate:
-            message = self.sendImmediateCommand("I")
-
-            # Parse Control Status
-            self.control_status = {"K": "Keypad", "R": "Remote"}.get(message[0], "Unknown")
-
-            # Parse Error Status
-            self.error_status = {" ": "No Error", "S": "Stop Issued"}.get(message[1], "Unknown")
-
-            # Parse Direction
-            self.direction = {"F": "Forward", "B": "Backwards"}.get(message[2], "Unknown")
-
-            # Parse Flow
-            self.flow_status = {"S": "Stopped", "F": "Flowing"}.get(message[3], "Unknown")
-
     # ------------------------------------------------------------------------------------
     # Return the status of the pump
     # ------------------------------------------------------------------------------------ 
@@ -192,11 +190,31 @@ class RaininRP1():
             self.speed = float(message[1:5])
 
     # ------------------------------------------------------------------------------------
+    # Determine the Rainin Status
+    # ------------------------------------------------------------------------------------ 
+    def requestStatus(self):
+        message = []
+        if not self.simulate:
+            message = self.sendImmediateCommand("I")
+
+            # Parse Control Status
+            self.control_status = {"K": "Keypad", "R": "Remote"}.get(message[0], "Unknown")
+
+            # Parse Error Status
+            self.error_status = {" ": "No Error", "S": "Stop Issued"}.get(message[1], "Unknown")
+
+            # Parse Direction
+            self.direction = {"F": "Forward", "B": "Reverse"}.get(message[2], "Unknown")
+
+            # Parse Flow
+            self.flow_status = {"S": "Stopped", "F": "Flowing"}.get(message[3], "Unknown")
+
+    # ------------------------------------------------------------------------------------
     # Overload String Representation Conversion
     # ------------------------------------------------------------------------------------ 
     def __str__(self):
         base_string = "Rainin RP1 Class: \n"
-        base_string += "    " + "Pump Information: " + self.pump_identification + "\n"
+        base_string += "    " + "Pump Information: " + self.identification + "\n"
         base_string += "    " + "PortID: " + str(self.pump_ID) + "\n"
         base_string += "    " + "COM Port: " + str(self.COM_port) + "\n"
         base_string += "    " + "Flow Status: " + self.flow_status + "\n"
@@ -213,7 +231,7 @@ class RaininRP1():
     # ------------------------------------------------------------------------------------ 
     def sendBufferedCommand(self, command_string):
         # Compose command message
-        command_message = self.line_feed + command_string + self.carraige_return;
+        command_message = self.line_feed + command_string + self.carriage_return;
 
         # Write message
         attempt_number = 0
@@ -286,8 +304,10 @@ class RaininRP1():
             
         if forward: self.direction = "Forward"
         else: self.direction = "Reverse"
-
+        if self.verbose:
+            print "   " + "Set Direction: " + str(self.direction)
         return True
+    
     # ------------------------------------------------------------------------------------
     # Set Speed in Rotations per Minute
     # ------------------------------------------------------------------------------------ 
@@ -310,8 +330,37 @@ class RaininRP1():
 
         if rotation_speed > 0 and rotation_speed <= 48:
             self.speed = rotation_speed
-
+            if self.verbose:
+                print "   " + "Set Speed: " + str(self.speed)
         return True
+
+    # ------------------------------------------------------------------------------------
+    # Start pump
+    # ------------------------------------------------------------------------------------ 
+    def startFlow(self, speed, direction = "Forward"):
+        if self.verbose: print "Starting pump"
+        # Set speed
+        self.setSpeed(speed)
+        # Set direction (and start pump if stopped)
+        if direction == "Forward": self.setFlowDirection(True)
+        elif direction == "Reverse": self.setFlowDirection(False)
+        else: return False
+
+        if self.simulate:
+            self.flow_status = "Flowing"
+        return True
+
+    # ------------------------------------------------------------------------------------
+    # Stop Pump
+    # ------------------------------------------------------------------------------------ 
+    def stopFlow(self):
+        if self.verbose: print "Stopping pump"
+        # Unclear how to stop this pump
+        # self.sendBufferedCommand()
+        if self.simulate:
+            self.flow_status = "Stopped"
+        return True
+    
 # ----------------------------------------------------------------------------------------
 # Test/Demo of Classs
 # ----------------------------------------------------------------------------------------
