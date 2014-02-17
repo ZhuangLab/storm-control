@@ -1,10 +1,9 @@
 #!/usr/bin/python
 # ----------------------------------------------------------------------------------------
-# A class to load, parse, and control predefined valve commands, i.e predefined
-# changes to the port configurations of a valve chain. 
+# A class to load and parse predefined pump commands. 
 # ----------------------------------------------------------------------------------------
 # Jeff Moffitt
-# 12/28/13
+# 2/16/14
 # jeffmoffitt@gmail.com
 # ----------------------------------------------------------------------------------------
 
@@ -17,9 +16,9 @@ import xml.etree.ElementTree as elementTree
 from PyQt4 import QtCore, QtGui
 
 # ----------------------------------------------------------------------------------------
-# ValveCommands Class Definition
+# PumpCommands Class Definition
 # ----------------------------------------------------------------------------------------
-class ValveCommands(QtGui.QMainWindow):
+class PumpCommands(QtGui.QMainWindow):
 
     # Define custom signal
     change_command_signal = QtCore.pyqtSignal(str)
@@ -27,7 +26,7 @@ class ValveCommands(QtGui.QMainWindow):
     def __init__(self,
                  xml_file_path="default_config.xml",
                  verbose = False):
-        super(ValveCommands, self).__init__()
+        super(PumpCommands, self).__init__()
 
         # Initialize internal attributes
         self.verbose = verbose
@@ -35,7 +34,7 @@ class ValveCommands(QtGui.QMainWindow):
         self.command_names = []
         self.commands = []
         self.num_commands = 0
-        self.num_valves = 0
+        self.num_pumps = 0
         
         # Create GUI
         self.createGUI()
@@ -47,14 +46,14 @@ class ValveCommands(QtGui.QMainWindow):
     # Create display and control widgets
     # ------------------------------------------------------------------------------------
     def close(self):
-        if self.verbose: print "Closing valve commands"
+        if self.verbose: print "Closing pump commands"
 
     # ------------------------------------------------------------------------------------
     # Create display and control widgets
     # ------------------------------------------------------------------------------------
     def createGUI(self):
         self.mainWidget = QtGui.QGroupBox()
-        self.mainWidget.setTitle("Valve Commands")
+        self.mainWidget.setTitle("Pump Commands")
         self.mainWidgetLayout = QtGui.QVBoxLayout(self.mainWidget)
 
         self.fileLabel = QtGui.QLabel()
@@ -124,13 +123,6 @@ class ValveCommands(QtGui.QMainWindow):
         return self.num_commands
 
     # ------------------------------------------------------------------------------------
-    # Return the number of valves in the defined commands:
-    #   could be different than in the chain
-    # ------------------------------------------------------------------------------------        
-    def getNumberOfValves(self):
-        return self.default_num_valves
-
-    # ------------------------------------------------------------------------------------
     # Load and parse a XML file with defined commands
     # ------------------------------------------------------------------------------------
     def loadCommands(self, xml_file_path = ""):
@@ -160,7 +152,7 @@ class ValveCommands(QtGui.QMainWindow):
         try:
             print "Parsing for commands: " + self.file_name
             self.xml_tree = elementTree.parse(self.file_name)
-            self.valve_configuration = self.xml_tree.getroot()
+            self.kilroy_configuration = self.xml_tree.getroot()
         except:
             print "Valid xml file not loaded"
             return
@@ -171,25 +163,24 @@ class ValveCommands(QtGui.QMainWindow):
         self.num_commands = 0
 
         # Load number of valves
-        self.num_valves = int(self.valve_configuration.get("num_valves"))
-        if not (self.num_valves>0):
-            print "Number of valves not specified"
+        self.num_pumps = int(self.kilroy_configuration.get("num_pumps"))
+        if not (self.num_pumps>0):
+            print "Number of pumps not specified"
         
         # Load commands
-        for valve_command in self.valve_configuration.findall("valve_commands"):
-            command_list = valve_command.findall("valve_cmd")
+        for pump_command in self.kilroy_configuration.findall("pump_commands"):
+            command_list = pump_command.findall("pump_cmd")
             for command in command_list:
-                new_command = [-1]*self.num_valves # make copy to initialize config with default
-                for valve_pos in command.findall("valve_pos"):
-                    valve_ID = int(valve_pos.get("valve_ID")) - 1
-                    port_ID = int(valve_pos.get("port_ID")) - 1
-                    if valve_ID < self.num_valves:
-                        new_command[valve_ID] = port_ID
-                    else:
-                        print "Valve out of range on command: " + command.get("name")
-
+                for pump_config in command.findall("pump_config"):
+                    speed = float(pump_config.get("speed"))
+                    direction = pump_config.get("direction")
+                    if speed < 0.00 or speed > 48.0:
+                        speed = 0.0
+                        direction = "Stopped" # Flag for stopped flow
+                    direction = {"Forward": "Forward", "Reverse": "Reverse"}.get(direction, "Stopped")
+                    
                 # Add command
-                self.commands.append(new_command)
+                self.commands.append([direction, speed])
                 self.command_names.append(command.get("name"))
 
         # Record number of configs
@@ -202,13 +193,11 @@ class ValveCommands(QtGui.QMainWindow):
         print "Current commands:"
         for command_ID in range(self.num_commands):
             print self.command_names[command_ID]
-            for valve_ID in range(self.num_valves):
-                port_ID = self.commands[command_ID][valve_ID]
-                textString = "    " + "Valve " + str(valve_ID + 1)
-                if port_ID >= 0:
-                    textString += " configured to port " + str(port_ID+1)
-                else:
-                    textString += " configured to not change"
+            direction = self.commands[command_ID][0]
+            speed = self.commands[command_ID][1]
+            text_string = "    " + "Flow Direction: " + direction + "\n"
+            text_string += "    " + "Speed: " + str(speed) +"\n"
+            print text_string
 
     # ------------------------------------------------------------------------------------
     # Update active command on GUI
@@ -240,14 +229,8 @@ class ValveCommands(QtGui.QMainWindow):
         current_command = self.commands[current_ID]
 
         text_string = current_command_name + "\n"
-        for valve_ID, port_ID in enumerate(current_command):
-            text_string += "Valve " + str(valve_ID+1)
-            if port_ID == -1:
-                text_string += ": No Change "
-            else:
-                text_string += ": Port " + str(port_ID+1)
-            text_string += "\n"
-
+        text_string += "Flow Direction: " + current_command[0] + "\n"
+        text_string += "Flow Speed: " + str(current_command[1]) + "\n"
         self.currentCommandLabel.setText(text_string)
 
     # ------------------------------------------------------------------------------------
@@ -274,7 +257,7 @@ class StandAlone(QtGui.QMainWindow):
         super(StandAlone, self).__init__(parent)
 
         # scroll area widget contents - layout
-        self.valve_chain_commands = ValveCommands(verbose = True)
+        self.pump_commands = PumpCommands(verbose = True)
         
         # main layout
 
@@ -283,13 +266,13 @@ class StandAlone(QtGui.QMainWindow):
         # central widget
         self.centralWidget = QtGui.QWidget()
         self.mainLayout = QtGui.QVBoxLayout(self.centralWidget)
-        self.mainLayout.addWidget(self.valve_chain_commands.mainWidget)
+        self.mainLayout.addWidget(self.pump_commands.mainWidget)
 
         # set central widget
         self.setCentralWidget(self.centralWidget)
 
         # set window title
-        self.setWindowTitle("Valve Chain Commands")
+        self.setWindowTitle("Pump Commands")
 
         # set window geometry
         self.setGeometry(50, 50, 500, 400)
@@ -303,13 +286,13 @@ class StandAlone(QtGui.QMainWindow):
         exit_action.triggered.connect(self.closeEvent)
 
         file_menu.addAction(exit_action)
-        file_menu.addAction(self.valve_chain_commands.load_commands_action)
+        file_menu.addAction(self.pump_commands.load_commands_action)
         
     # ------------------------------------------------------------------------------------
     # Detect close event
     # ------------------------------------------------------------------------------------    
     def closeEvent(self, event):
-        self.valve_chain_commands.close()
+        self.pump_commands.close()
         self.close()
 
 # ----------------------------------------------------------------------------------------

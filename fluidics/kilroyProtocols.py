@@ -1,11 +1,12 @@
 #!/usr/bin/python
 # ----------------------------------------------------------------------------------------
-# A class to load, parse, and control predefined valve protocols, i.e.
-# collections of predefined valve commands and durations. This class also
+# A class to load, parse, and control predefined kilroy protocols, i.e.
+# collections of predefined valve or pump configurations and a defined
+# duration to wait before setting the next configuration. This class also
 # provides a basic I/O GUI to interface with protocols. 
 # ----------------------------------------------------------------------------------------
 # Jeff Moffitt
-# 12/28/13
+# 2/15/14
 # jeffmoffitt@gmail.com
 # ----------------------------------------------------------------------------------------
 
@@ -17,12 +18,13 @@ import os
 import uuid
 import xml.etree.ElementTree as elementTree
 from PyQt4 import QtCore, QtGui
-from valveCommands import ValveCommands
+from valves.valveCommands import ValveCommands
+from pumps.pumpCommands import PumpCommands
 
 # ----------------------------------------------------------------------------------------
-# ValveProtocols Class Definition
+# KilroyProtocols Class Definition
 # ----------------------------------------------------------------------------------------
-class ValveProtocols(QtGui.QMainWindow):
+class KilroyProtocols(QtGui.QMainWindow):
 
     # Define custom command ready signal
     command_ready_signal = QtCore.pyqtSignal() # A command is ready to be issued
@@ -33,14 +35,14 @@ class ValveProtocols(QtGui.QMainWindow):
                  protocol_xml_path = "default_config.xml",
                  command_xml_path = "default_config.xml",
                  verbose = False):
-        super(ValveProtocols, self).__init__()
+        super(KilroyProtocols, self).__init__()
 
         # Initialize internal attributes
         self.verbose = verbose
         self.protocol_xml_path = protocol_xml_path
         self.command_xml_path = command_xml_path
         self.protocol_names = []
-        self.protocol_commands = []
+        self.protocol_commands = [] # [Instrument Type, command_info]
         self.protocol_durations = []
         self.num_protocols = 0
         self.status = [-1, -1] # Protocol ID, command ID within protocol
@@ -52,7 +54,14 @@ class ValveProtocols(QtGui.QMainWindow):
                                            verbose = self.verbose)
 
         # Connect valve command issue signal
-        self.valveCommands.change_command_signal.connect(self.issueCommand)
+        self.valveCommands.change_command_signal.connect(self.issueValveCommand)
+
+        # Create instance of PumpCommands class
+        self.pumpCommands = PumpCommands(xml_file_path = self.command_xml_path,
+                                         verbose = self.verbose)
+
+        # Connect pump commands issue signal
+        self.pumpCommands.change_command_signal.connect(self.issuePumpCommand)
         
         # Create GUI
         self.createGUI()
@@ -103,7 +112,7 @@ class ValveProtocols(QtGui.QMainWindow):
     # ------------------------------------------------------------------------------------                                                
     def createGUI(self):
         self.mainWidget = QtGui.QGroupBox()
-        self.mainWidget.setTitle("Valve Protocols")
+        self.mainWidget.setTitle("Protocols")
         self.mainWidgetLayout = QtGui.QVBoxLayout(self.mainWidget)
 
         self.fileLabel = QtGui.QLabel()
@@ -193,10 +202,13 @@ class ValveProtocols(QtGui.QMainWindow):
     # ------------------------------------------------------------------------------------
     # Issue a command: load current command, send command ready signal
     # ------------------------------------------------------------------------------------                       
-    def issueCommand(self, command_name, command_duration=-1):
-        self.issued_command = self.valveCommands.getCommandByName(command_name)
+    def issueCommand(self, command_data, command_duration=-1):
+        if command_data[0] == "pump":
+            self.issued_command = ["pump", self.pumpCommands.getCommandByName(command_data[1])]
+        elif command_data[0] == "valve":
+            self.issued_command = ["valve", self.valveCommands.getCommandByName(command_data[1])]
         if self.verbose:
-            text = "Issued: " + command_name
+            text = "Issued " + command_data[0] + ": " + command_data[1]
             if command_duration > 0:
                 text += ": " + str(command_duration) + " s"
             print text
@@ -205,6 +217,19 @@ class ValveProtocols(QtGui.QMainWindow):
 
         if command_duration >= 0:
             self.protocol_timer.start(command_duration*1000)
+
+    # ------------------------------------------------------------------------------------
+    # Handle Issue Command Request from Pump Commands
+    # ------------------------------------------------------------------------------------                       
+    def issuePumpCommand(self, command_name):
+        self.issueCommand(["pump", command_name])
+
+    # ------------------------------------------------------------------------------------
+    # Handle Issue Command Request from Valve Commands
+    # ------------------------------------------------------------------------------------                       
+    def issueValveCommand(self, command_name):
+        self.issueCommand(["valve", command_name])
+
         
     # ------------------------------------------------------------------------------------
     # Check to see if protocol name is in the list of protocols
@@ -263,6 +288,9 @@ class ValveProtocols(QtGui.QMainWindow):
 
         # Update valveCommands
         self.valveCommands.loadCommands(xml_file_path = self.command_xml_path)
+
+        # Update pumpCommands
+        self.pumpCommands.loadCommands(xml_file_path = self.command_xml_path)
       
         # Parse XML
         self.parseProtocolXML()
@@ -281,7 +309,7 @@ class ValveProtocols(QtGui.QMainWindow):
         try:
             print "Parsing for protocols: " + self.protocol_xml_path
             self.xml_tree = elementTree.parse(self.protocol_xml_path)
-            self.valve_configuration = self.xml_tree.getroot()
+            self.kilroy_configuration = self.xml_tree.getroot()
         except:
             print "Valid xml file not loaded"
             return
@@ -293,15 +321,15 @@ class ValveProtocols(QtGui.QMainWindow):
         self.num_protocols = 0
         
         # Load commands
-        for valve_protocols in self.valve_configuration.findall("valve_protocols"):
-            protocol_list = valve_protocols.findall("protocol")
+        for kilroy_protocols in self.kilroy_configuration.findall("kilroy_protocols"):
+            protocol_list = kilroy_protocols.findall("protocol")
             for protocol in protocol_list:
                 self.protocol_names.append(protocol.get("name"))
                 new_protocol_commands = []
                 new_protocol_durations = []
-                for command in protocol.findall("command"):
+                for command in protocol: # Get all children
                     new_protocol_durations.append(int(command.get("duration")))
-                    new_protocol_commands.append(command.text)
+                    new_protocol_commands.append([command.tag,command.text]) # [Instrument Type, Command Name]       
                 self.protocol_commands.append(new_protocol_commands)
                 self.protocol_durations.append(new_protocol_durations)
 
@@ -316,7 +344,7 @@ class ValveProtocols(QtGui.QMainWindow):
         for protocol_ID in range(self.num_protocols):
             print self.protocol_names[protocol_ID]
             for command_ID, command in enumerate(self.protocol_commands[protocol_ID]):
-                textString = "    " + command + ": "
+                textString = "    " + command[0] + ": " + command[1] + ": "
                 textString += str(self.protocol_durations[protocol_ID][command_ID]) + " s"
                 print textString
 
@@ -334,7 +362,7 @@ class ValveProtocols(QtGui.QMainWindow):
         protocol_ID = self.protocolListWidget.currentRow()
         
         # Get first command in protocol
-        command_name = self.protocol_commands[protocol_ID][0]
+        command_data = self.protocol_commands[protocol_ID][0]
         command_duration = self.protocol_durations[protocol_ID][0]
 
         # Set protocol status: [protocol_ID, command_ID]
@@ -345,7 +373,7 @@ class ValveProtocols(QtGui.QMainWindow):
             print "Starting " + self.protocol_names[protocol_ID]
 
         # Issue command signal
-        self.issueCommand(command_name, command_duration)
+        self.issueCommand(command_data, command_duration)
         
         # Start elapsed time timer
         self.elapsed_timer.start()
@@ -358,7 +386,8 @@ class ValveProtocols(QtGui.QMainWindow):
         self.protocolListWidget.setEnabled(False)
         self.protocolDetailsList.setCurrentRow(0)
         self.valveCommands.setEnabled(False)
-
+        self.pumpCommands.setEnabled(False)
+        
     # ------------------------------------------------------------------------------------
     # Initialize and start a protocol specified by name
     # ------------------------------------------------------------------------------------
@@ -422,10 +451,10 @@ class ValveProtocols(QtGui.QMainWindow):
         # Re-enable GUI
         self.startProtocolButton.setEnabled(True)
         self.protocolListWidget.setEnabled(True)
-        self.valveCommands.setEnabled(True)
         self.skipCommandButton.setEnabled(False)
         self.stopProtocolButton.setEnabled(False)
-
+        self.valveCommands.setEnabled(True)
+        self.pumpCommands.setEnabled(True)
         
         # Unselect all
         self.protocolDetailsList.setCurrentRow(0)
@@ -474,7 +503,9 @@ class ValveProtocols(QtGui.QMainWindow):
 
         self.protocolDetailsList.clear()
         for ID in range(len(current_protocol_commands)):
-            text_string = current_protocol_commands[ID]
+            text_string = current_protocol_commands[ID][0]
+            text_string += ": "
+            text_string += current_protocol_commands[ID][1]
             text_string += ": "
             text_string += str(current_protocol_durations[ID]) + " s"
 
@@ -490,13 +521,14 @@ class StandAlone(QtGui.QMainWindow):
         super(StandAlone, self).__init__(parent)
 
         # scroll area widget contents - layout
-        self.valveProtocols = ValveProtocols(verbose = True)
+        self.kilroyProtocols = KilroyProtocols(verbose = True)
                                   
         # central widget
         self.centralWidget = QtGui.QWidget()
-        self.mainLayout = QtGui.QVBoxLayout(self.centralWidget)
-        self.mainLayout.addWidget(self.valveProtocols.mainWidget)
-        self.mainLayout.addWidget(self.valveProtocols.valveCommands.mainWidget)
+        self.mainLayout = QtGui.QGridLayout(self.centralWidget)
+        self.mainLayout.addWidget(self.kilroyProtocols.mainWidget,0,0,1,2)
+        self.mainLayout.addWidget(self.kilroyProtocols.valveCommands.mainWidget, 1,0,1,1)
+        self.mainLayout.addWidget(self.kilroyProtocols.pumpCommands.mainWidget, 1,1,1,1)
 
         self.centralWidget.setLayout(self.mainLayout)
 
@@ -516,10 +548,10 @@ class StandAlone(QtGui.QMainWindow):
 
         # Add menu items
         menubar = self.menuBar()
-        for [menu_ID, menu_name] in enumerate(self.valveProtocols.menu_names):
+        for [menu_ID, menu_name] in enumerate(self.kilroyProtocols.menu_names):
             new_menu = menubar.addMenu("&" + menu_name)
             
-            for menu_item in self.valveProtocols.menu_items[menu_ID]:
+            for menu_item in self.kilroyProtocols.menu_items[menu_ID]:
                 new_menu.addAction(menu_item)
 
             # Add quit option to file menu
@@ -530,7 +562,7 @@ class StandAlone(QtGui.QMainWindow):
     # Handle close event
     # ----------------------------------------------------------------------------------------
     def closeEvent(self, event):
-        self.valveProtocols.close()
+        self.kilroyProtocols.close()
         self.close()
   
 # ----------------------------------------------------------------------------------------
