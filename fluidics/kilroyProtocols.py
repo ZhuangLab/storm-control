@@ -54,14 +54,14 @@ class KilroyProtocols(QtGui.QMainWindow):
                                            verbose = self.verbose)
 
         # Connect valve command issue signal
-        self.valveCommands.change_command_signal.connect(self.issueCommand)
+        self.valveCommands.change_command_signal.connect(self.issueValveCommand)
 
         # Create instance of PumpCommands class
         self.pumpCommands = PumpCommands(xml_file_path = self.command_xml_path,
                                          verbose = self.verbose)
 
         # Connect pump commands issue signal
-        self.pumpCommands.change_command_signal.connect(self.issueCommand)
+        self.pumpCommands.change_command_signal.connect(self.issuePumpCommand)
         
         # Create GUI
         self.createGUI()
@@ -217,6 +217,19 @@ class KilroyProtocols(QtGui.QMainWindow):
 
         if command_duration >= 0:
             self.protocol_timer.start(command_duration*1000)
+
+    # ------------------------------------------------------------------------------------
+    # Handle Issue Command Request from Pump Commands
+    # ------------------------------------------------------------------------------------                       
+    def issuePumpCommand(self, command_name):
+        self.issueCommand(["pump", command_name])
+
+    # ------------------------------------------------------------------------------------
+    # Handle Issue Command Request from Valve Commands
+    # ------------------------------------------------------------------------------------                       
+    def issueValveCommand(self, command_name):
+        self.issueCommand(["valve", command_name])
+
         
     # ------------------------------------------------------------------------------------
     # Check to see if protocol name is in the list of protocols
@@ -374,7 +387,8 @@ class KilroyProtocols(QtGui.QMainWindow):
         self.protocolListWidget.setEnabled(False)
         self.protocolDetailsList.setCurrentRow(0)
         self.valveCommands.setEnabled(False)
-
+        self.pumpCommands.setEnabled(False)
+        
     # ------------------------------------------------------------------------------------
     # Initialize and start a protocol specified by name
     # ------------------------------------------------------------------------------------
@@ -438,10 +452,10 @@ class KilroyProtocols(QtGui.QMainWindow):
         # Re-enable GUI
         self.startProtocolButton.setEnabled(True)
         self.protocolListWidget.setEnabled(True)
-        self.valveCommands.setEnabled(True)
         self.skipCommandButton.setEnabled(False)
         self.stopProtocolButton.setEnabled(False)
-
+        self.valveCommands.setEnabled(True)
+        self.pumpCommands.setEnabled(True)
         
         # Unselect all
         self.protocolDetailsList.setCurrentRow(0)
