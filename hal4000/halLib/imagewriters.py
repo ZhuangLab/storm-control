@@ -400,16 +400,13 @@ class SPEFile(GenericFile):
     # Writes the file size into the header part of the spe file and
     # then closes the file.
     #
-    # @param stage_position The position of the microscope stage.
-    # @param lock_target The lock target for the focus lock.
-    #
-    def closeFile(self, stage_position, lock_target):
+    def closeFile(self):
         # write film length & close the file
         for i in range(len(self.file_ptrs)):
             self.file_ptrs[i].seek(1446)
             self.file_ptrs[i].write(struct.pack("i", self.number_frames[i]))
 
-        GenericFile.closeFile(self, stage_position, lock_target)
+        GenericFile.closeFile(self)
 
 ## TIFFile
 #
@@ -452,13 +449,10 @@ class TIFFile(GenericFile):
     #
     # Closes the tif file writers.
     #
-    # @param stage_position The position of the microscope stage.
-    # @param lock_target The lock target for the focus lock.
-    #
-    def closeFile(self, stage_position, lock_target):
+    def closeFile(self):
         for writer in self.tif_writers:
             writer.close()
-        GenericFile.closeFile(self, stage_position, lock_target)
+        GenericFile.closeFile(self)
 
 #
 # Testing
