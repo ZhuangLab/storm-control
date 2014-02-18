@@ -40,7 +40,7 @@ class DaveActionFindSum(DaveAction):
     # Send the startFindSum message to HAL.
     #
     def start(self):
-        self.tcp_client.startCommunication()
+        DaveAction.start()
         self.tcp_client.startFindSum()
 
 ## DaveActionMovie
@@ -89,6 +89,7 @@ class DaveActionMovie(DaveAction):
     # @param comm A tcpClient object.
     #
     def start(self):
+        DaveAction.start()
         self.acquiring = True
         self.tcp_client.startMovie(self.movie)
 
@@ -114,7 +115,7 @@ class DaveActionMovieParameters(DaveAction):
     # Send  the movie parameters command to HAL.
     #
     def start(self):
-        self.tcp_client.startCommunication()
+        DaveAction.start()
         self.tcp_client.sendMovieParameters(self.movie)
 
 ## DaveActionRecenter
@@ -137,7 +138,7 @@ class DaveActionRecenter(DaveAction):
     # Send the recenter piezo command to HAL.
     #
     def start(self):
-        self.tcp_client.startCommunication()
+        DaveAction.start()
         self.tcp_client.startRecenterPiezo()
 
 ## DaveActionValveProtocol
@@ -175,6 +176,6 @@ class DaveActionValveProtocol(DaveAction):
     # @param comm A kilroy client object.
     #
     def start(self):
-        self.tcp_client.startCommunication()
+        DaveAction.start()
         self.protocol_is_running = True
         self.tcp_client.sendProtocol(self.protocol_name)

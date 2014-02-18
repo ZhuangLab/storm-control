@@ -30,8 +30,6 @@ class DaveAction(QtCore.QObject):
 
         # Connect com port
         self.tcp_client = tcp_client
-        self.tcp_client.acknowledged.connect(self.handleAcknowledged)
-        self.tcp_client.complete.connect(self.handleComplete)
 
         # Initialize error message
         self.error_message = ""
@@ -128,5 +126,7 @@ class DaveAction(QtCore.QObject):
     # Start the desired action. Must be overloaded. 
     #
     def start(self):
+        self.tcp_client.acknowledged.connect(self.handleAcknowledged)
+        self.tcp_client.complete.connect(self.handleComplete)
         self.tcp_client.startCommunication()
 
