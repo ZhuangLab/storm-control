@@ -399,6 +399,75 @@ class QCT64BitAOTFThread(QCTAOTFThread):
         if not(self.aotf.getStatus()):
             self.aotf = 0
 
+## QGHAOTFThread
+#
+# Gooch and Housego AOTF communication thread.
+#
+class QGHAOTFThread(QAOTFThread):
+
+    def __init__(self, parent = None):
+        QAOTFThread.__init__(self, parent)
+
+        import goochAndHousego.AOTF as AOTF
+        self.aotf = AOTF.AOTF()
+        if not(self.aotf.getStatus()):
+            self.aotf = 0
+
+    ## analogModulationOff
+    #
+    # Turn off analog modulation.
+    #
+    def analogModulationOff(self):
+        self.aotf_mutex.lock()
+        if self.aotf:
+            self.aotf.analogModulationOff()
+        self.aotf_mutex.unlock()
+
+    ## analogModulationOn
+    #
+    # Turn on analog modulation.
+    #
+    def analogModulationOn(self):
+        self.aotf_mutex.lock()
+        if self.aotf:
+            self.aotf.analogModulationOn()
+        self.aotf_mutex.unlock()
+
+    ## setAmplitude
+    #
+    # Set the amplitude of a channel of the AOTF.
+    #
+    # @param on True/False.
+    # @param channel The channel.
+    # @param amplitude The amplitude setting.
+    #
+    def setAmplitude(self, on, channel, amplitude):
+        self.aotf_mutex.lock()
+        if self.aotf:
+            if on:
+                self.aotf.setAmplitude(channel, amplitude)
+            else:
+                self.aotf.setAmplitude(channel, 0)
+        else:
+            print "AOTF:"
+            if on:
+                print "\t", channel, amplitude
+            else:
+                print "\t", channel, 0
+        self.aotf_mutex.unlock()
+
+    ## setFrequency
+    #
+    # @param channel The channel.
+    # @param frequency A frequency.
+    #
+    def setFrequency(self, channel, frequency):
+        self.aotf_mutex.lock()
+        if self.aotf:
+            self.aotf.setFrequency(channel, frequency)
+        self.aotf_mutex.unlock()
+
+
 ## QNiDigitalComm
 #
 # National Instruments digital communication. This is also
