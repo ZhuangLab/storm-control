@@ -17,7 +17,7 @@ import sip
 import qtWidgets.qtAppIcon as qtAppIcon
 
 import halLib.halModule as halModule
-import halLib.parameters as params
+import sc_library.parameters as params
 
 # Debugging.
 import sc_library.hdebug as hdebug

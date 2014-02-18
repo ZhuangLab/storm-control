@@ -295,7 +295,7 @@ class Window(QtGui.QMainWindow):
             if an_object:
                 an_object.move(self.settings.value(name + "_pos", QtCore.QPoint(200, 200)).toPoint())
                 if self.settings.value(name + "_visible", False).toBool():
-                    ab_object.show()
+                    an_object.show()
 
         # Module GUI settings.
         for module in self.modules:
