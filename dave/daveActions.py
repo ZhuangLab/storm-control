@@ -107,6 +107,7 @@ class DaveActionMovieParameters(DaveAction):
         self.delay = movie.delay
         self.movie = movie
         self.should_pause = self.movie.pause
+        self.complete_on_timer = True
         
     ## start
     #

@@ -41,12 +41,13 @@ class DaveAction(QtCore.QObject):
         self.delay_timer = QtCore.QTimer(self)
         self.delay_timer.setSingleShot(True)
         self.delay_timer.timeout.connect(self.handleTimerDone)
-        self.delay = 0
+        self.delay = 100 # Default delay
 
         # Define complete requirements
-        self.complete_on_acknowledge = False
-        self.complete_on_timer = True
-
+        self.complete_on_acknowledge = False # Complete after acknowledgement of command received
+        self.complete_on_timer = False # Complete self.delay ms after acknowledgement of command received
+        # If both attributes are false, then the command completes only on the complete signal
+            
         # Define pause after completion state
         self.should_pause = False
 
@@ -87,7 +88,7 @@ class DaveAction(QtCore.QObject):
     def handleAcknowledged(self):
         if self.complete_on_acknowledge:
             self.completeAction()
-        elif self.delay > 0:
+        elif self.complete_on_timer:
             self.delay_timer.start(self.delay)
 
     ## handleComplete
