@@ -9,7 +9,8 @@
 
 from PyQt4 import QtCore
 
-from xml.dom import minidom, Node
+#from xml.dom import minidom, Node
+import xml.etree.ElementTree as ElementTree
 
 import sc_library.hdebug as hdebug
 
@@ -73,10 +74,10 @@ class ShutterControl(QtCore.QObject):
     #
     # This parses a XML file that defines a shutter sequence.
     #
-    # @param illumination_file The name of the shutter sequence xml file.
+    # @param shutters_file The name of the shutter sequence xml file.
     #
     @hdebug.debug
-    def parseXML(self, illumination_file):
+    def parseXML(self, shutters_file):
         self.channels_used = []
         self.colors = []
         self.frames = 0
@@ -84,20 +85,16 @@ class ShutterControl(QtCore.QObject):
         self.waveform_len = 0
 
         # Load XML shutters file.
-        self.xml = minidom.parse(illumination_file)
+        xml = ElementTree.parse(shutters_file).getroot()
+        assert xml.tag == "repeat", shutters_file + " is not a shutters file."
 
         # Use user-specified oversampling (if requested)
         self.oversampling = self.oversampling_default
-        if self.xml.getElementsByTagName("oversampling"):
-            self.oversampling = int(self.xml.getElementsByTagName("oversampling").item(0).firstChild.nodeValue)
+        if xml.find("oversampling") is not None:
+            self.oversampling = int(xml.find("oversampling").text)
 
-        #
-        # For now we only look at the repeat block, leaving the
-        # option of having some sort of initialization block.
-        #
-        xml_repeat = self.xml.getElementsByTagName("repeat").item(0)
-        self.frames = int(xml_repeat.getElementsByTagName("frames").item(0).firstChild.nodeValue)
-        events = xml_repeat.getElementsByTagName("event")
+        # The length of the sequence.
+        self.frames = int(xml.find("frames").text)
 
         #
         # We store a color to associate with each frame. This can be accessed by
@@ -118,32 +115,31 @@ class ShutterControl(QtCore.QObject):
         self.waveform_len = self.frames * self.oversampling
 
         # Add in the events.
-        for event in events:
+        for event in xml.findall("event"):
             channel = -1
             power = 0
             on = 0
             off = 0
             color = 0
-            for node in event.childNodes:
-                if node.nodeType == Node.ELEMENT_NODE:
-                    if node.nodeName == "channel":
-                        channel = int(node.firstChild.nodeValue)
-                    elif node.nodeName == "power":
-                        power = float(node.firstChild.nodeValue)
-                    elif node.nodeName == "on":
-                        on = int(float(node.firstChild.nodeValue) * float(self.oversampling))
-                    elif node.nodeName == "off":
-                        off = int(float(node.firstChild.nodeValue) * float(self.oversampling))
-                    elif node.nodeName == "color":
-                        color = []
-                        colors = node.firstChild.nodeValue.split(",")
-                        for c in colors:
-                            x = int(c)
-                            if x < 0:
-                                x = 0
-                            if x > 255:
-                                x = 255
-                            color.append(x)
+            for node in event:
+                if (node.tag == "channel"):
+                    channel = int(node.text)
+                elif (node.tag == "power"):
+                    power = float(node.text)
+                elif (node.tag == "on"):
+                    on = int(float(node.text) * float(self.oversampling))
+                elif (node.tag == "off"):
+                    off = int(float(node.text) * float(self.oversampling))
+                elif (node.tag == "color"):
+                    color = []
+                    colors = node.text.split(",")
+                    for c in colors:
+                        x = int(c)
+                        if x < 0:
+                            x = 0
+                        if x > 255:
+                            x = 255
+                        color.append(x)
             if (channel != -1) and (channel < self.number_channels):
                 assert on >= 0, "on out of range: " + str(on) + " " + str(channel)
                 assert on <= self.frames * self.oversampling, "on out of range: " + str(on) + " " + str(channel)
