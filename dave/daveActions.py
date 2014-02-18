@@ -107,7 +107,7 @@ class DaveActionMovieParameters(DaveAction):
         self.delay = movie.delay
         self.movie = movie
         self.should_pause = self.movie.pause
-
+        
     ## start
     #
     # Send  the movie parameters command to HAL.

@@ -45,7 +45,7 @@ class DaveAction(QtCore.QObject):
 
         # Define complete requirements
         self.complete_on_acknowledge = False
-        self.complete_on_timer = False
+        self.complete_on_timer = True
 
         # Define pause after completion state
         self.should_pause = False
