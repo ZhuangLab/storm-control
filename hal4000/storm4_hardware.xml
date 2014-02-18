@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <hardware>
-  <!-- Defines the camera for storm4 -->.
+  <!-- Defines the camera for storm4. -->
 
   <camera>
     <module type="string">classicSingleCamera</module>
