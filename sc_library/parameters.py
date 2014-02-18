@@ -40,6 +40,7 @@ def copyAttributes(original, duplicate):
 #
 def Hardware(hardware_file):
     xml = ElementTree.parse(hardware_file).getroot()
+    assert xml.tag == "hardware", hardware_file + " is not a hardware file."
 
     # Create the hardware object.
     xml_object = StormXMLObject([])

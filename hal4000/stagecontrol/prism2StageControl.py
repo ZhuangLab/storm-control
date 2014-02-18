@@ -23,12 +23,11 @@ import stagecontrol.stageControl as stageControl
 # with marzhauser motorized stage.
 #
 class AStageControl(stageControl.StageControl):
-    def __init__(self, hardware, parameters, tcp_control, parent = None):
+    def __init__(self, hardware, parameters, parent = None):
         self.stage = stageThread.QStageThread(marzhauser.MarzhauserDLL("COM5"))
         self.stage.start(QtCore.QThread.NormalPriority)
         stageControl.StageControl.__init__(self, 
                                            parameters,
-                                           tcp_control,
                                            parent)
 
 #
