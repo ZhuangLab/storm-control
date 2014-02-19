@@ -440,7 +440,7 @@ class Dave(QtGui.QMainWindow):
             self.ui.runButton.setText("Pause")
             self.ui.abortButton.setEnabled(True)
             self.running = True
-            self.command_engine.startCommand(
+            self.command_engine.startCommand()
 
     ## issueCommand
     #
