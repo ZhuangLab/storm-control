@@ -106,7 +106,7 @@ class CommandEngine(QtGui.QWidget):
         # Re-Initialize state of command_engine
         self.actions = []
         self.current_action = None
-        self.command = None
+        self.command = command
         self.should_pause = False
 
         # Load and parse command 
@@ -337,23 +337,29 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleDone(self):
+        # Increment command
+        self.command_index += 1
+
+        # Handle last command in list
+        if self.command_index >= len(self.commands):
+            self.command_index = 0
+            self.ui.runButton.setText("Start")
+            self.ui.runButton.setEnabled(True)
+            self.ui.abortButton.setEnabled(False)
+            self.running = False
+
+        # Issue the command
+        self.issueCommand()
+
+        # Check whether to proceed with the next command or pause
         if self.command_engine.getPause():
             self.running = False
-        
         if self.running: #Proceed to next command
-            if (self.command_index < (len(self.commands)-1)):
-                self.command_index += 1
-                self.issueCommand()
                 self.command_engine.startCommand()
-            else: # Finish sequence
-                self.command_index = 0
+        else: # Handle pause state (not running with an intermediate command_index)
+            if self.command_index > 0 and self.command_index < len(self.commands):
+                self.ui.runButton.setText("Restart")
                 self.ui.runButton.setEnabled(True)
-                self.ui.runButton.setText("Start")
-                self.ui.abortButton.setEnabled(False)
-                self.running = False
-                self.issueCommand()
-        else: # Pause called by command or by user
-            self.handlePause()
 
     ## handleGenerateXML
     #
@@ -367,26 +373,6 @@ class Dave(QtGui.QMainWindow):
         output_filename = recipe_parser.parseXML()
         if os.path.isfile(output_filename):
             self.newSequence(output_filename)
-
-    ## handlePause
-    #
-    # Handles the a pause request. Changes the text of the run button
-    # from "Pause"/"Pausing..." to "Start".
-    #
-    # @param boolean is_last_action indicates whether the current command has remaining actions
-    @hdebug.debug
-    def handlePause(self):
-        self.ui.runButton.setText("Restart")
-        self.ui.runButton.setEnabled(True)
-        self.running = False
-        self.command_index += 1
-
-        # Handle last command in list
-        if self.command_index >= len(self.commands):
-            self.command_index = 0
-            self.ui.runButton.setText("Start")
-
-        self.issueCommand()
             
     ## handleNotifierChange
     #
