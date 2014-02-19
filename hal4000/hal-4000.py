@@ -122,8 +122,8 @@ class Window(QtGui.QMainWindow):
         self.writer = False
 
         # Logfile setup
-        #self.logfile_fp.write("\r\n")
-        #self.logfile_fp.flush()
+        self.logfile_fp.write("\r\n")
+        self.logfile_fp.flush()
 
         
         setup_name = parameters.setup_name.lower()
