@@ -65,7 +65,7 @@ class CommandEngine(QtGui.QWidget):
     done = QtCore.pyqtSignal()
     idle = QtCore.pyqtSignal(bool)
     problem = QtCore.pyqtSignal(str)
-
+    
     ## __init__
     #
     #
@@ -103,7 +103,13 @@ class CommandEngine(QtGui.QWidget):
     #
     @hdebug.debug
     def loadCommand(self, command):
+        # Re-Initialize state of command_engine
         self.actions = []
+        self.current_action = None
+        self.command = None
+        self.should_pause = False
+
+        # Load and parse command 
         command_type = command.getType()
         if command_type == "movie":
             self.actions.append(daveActions.DaveActionMovieParameters(self.HALClient, command))
@@ -113,12 +119,12 @@ class CommandEngine(QtGui.QWidget):
         elif command_type == "fluidics":
             self.actions.append(daveActions.DaveActionValveProtocol(self.kilroyClient, command))
 
-    ## setPause
+    ## getPause
     #
-    # Changes the state of the should_pause attribute
+    # Returns the current pause request state of the command engine
     #
-    def setPause(self, a_boolean):
-        self.should_pause = a_boolean
+    def getPause(self):
+        return self.should_pause
         
     ## startCommand
     #
@@ -145,10 +151,11 @@ class CommandEngine(QtGui.QWidget):
         self.current_action.complete_signal.disconnect()
         self.current_action.error_signal.disconnect()
 
-        if self.current_action.shouldPause() or self.should_pause:
-            is_last_action = not (len(self.actions) > 0)
-            self.idle.emit(is_last_action)
-        elif len(self.actions) > 0:
+        # Configure the command engine to pause after completion of the command sequence
+        if self.current_action.shouldPause():
+            self.should_pause = True
+        
+        if len(self.actions) > 0:
             self.startCommand()
         else:
             self.done.emit()
@@ -258,7 +265,6 @@ class Dave(QtGui.QMainWindow):
         self.noti_settings = [[self.ui.fromAddressLineEdit, "from_address"],
                               [self.ui.fromPasswordLineEdit, "from_password"],
                               [self.ui.smtpServerLineEdit, "smtp_server"]]
-#                              [self.ui.toAddressLineEdit, "to_address"]]
 
         for [object, name] in self.noti_settings:
             object.setText(self.settings.value(name, "").toString())
@@ -328,14 +334,17 @@ class Dave(QtGui.QMainWindow):
 
     ## handleDone
     #
-    # Handles starting the next movie (if we are done with the current movie).
+    # Handles completion of the current command engine.  
     #
     @hdebug.debug
     def handleDone(self):
         if (self.command_index < (len(self.commands)-1)):
             self.command_index += 1
-            self.issueCommand()
-            self.command_engine.startCommand()
+            if not self.command_engine.getPause():
+                self.issueCommand()
+                self.command_engine.startCommand()
+            else:
+                self.handleIdle(self, self.command_index == (len(self.commands) - 1))
         else:
             self.command_index = 0
             self.ui.runButton.setEnabled(True)
@@ -431,7 +440,7 @@ class Dave(QtGui.QMainWindow):
             self.ui.runButton.setText("Pause")
             self.ui.abortButton.setEnabled(True)
             self.running = True
-            self.command_engine.startCommand()
+            self.command_engine.startCommand(
 
     ## issueCommand
     #
@@ -441,15 +450,6 @@ class Dave(QtGui.QMainWindow):
         self.updateCommandSequenceDisplay(self.command_index)
         self.ui.progressBar.setValue(self.command_index)
         self.command_engine.loadCommand(self.commands[self.command_index])
-
-    def updateCommandSequenceDisplay(self, command_index):
-        # disable selectability of all other elements
-        for widget in self.command_widgets:
-            widget.setFlags(QtCore.Qt.ItemIsEnabled)
-
-        self.command_widgets[command_index].setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
-        self.ui.commandSequenceList.setCurrentRow(command_index)
-        self.updateCommandDescriptorTable(self.command_widgets[command_index])
         
     ## newSequence
     #
@@ -493,6 +493,19 @@ class Dave(QtGui.QMainWindow):
         if sequence_filename:
             self.directory = os.path.dirname(sequence_filename)
             self.newSequence(sequence_filename)
+
+    ## updateCommandSequenceDisplay
+    #
+    #  Update the GUI display of the current command details
+    #
+    def updateCommandSequenceDisplay(self, command_index):
+        # disable selectability of all other elements
+        for widget in self.command_widgets:
+            widget.setFlags(QtCore.Qt.ItemIsEnabled)
+
+        self.command_widgets[command_index].setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
+        self.ui.commandSequenceList.setCurrentRow(command_index)
+        self.updateCommandDescriptorTable(self.command_widgets[command_index])
 
     ## updateEstimates
     #
