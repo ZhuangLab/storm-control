@@ -8,7 +8,7 @@
 # Hazen 02/13
 #
 
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 ## Point
 #

@@ -14,7 +14,7 @@ from PyQt4 import QtCore, QtGui
 import miscControl
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.storm2_misc_ui as miscControlsUi

@@ -16,10 +16,11 @@ import sip
 
 import qtWidgets.qtAppIcon as qtAppIcon
 
-import halLib.parameters as params
+import halLib.halModule as halModule
+import sc_library.parameters as params
 
 # Debugging.
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # The module that actually does the analysis.
 import qtWidgets.qtSpotCounter as qtSpotCounter
@@ -190,12 +191,12 @@ class QSpotGraph(QtGui.QWidget):
             self.y_max = y_max
         self.range = self.y_max - self.y_min
 
-    ## newParameters
+    ## newColors
     #
     # @param colors The colors to use for the points in the graph. This is based on the values specified in the shutter file.
     # @param total_points The total number of points in x.
     #
-    def newParameters(self, colors, total_points):
+    def newColors(self, colors, total_points):
         self.colors = colors
         self.points_per_cycle = len(colors)
         self.x_points = total_points
@@ -332,19 +333,26 @@ class QImageGraph(QtGui.QWidget):
         painter.drawRect(0, 0, self.x_size, self.y_size)
         self.update()
 
+    ## newColors
+    #
+    # Set new colors
+    #
+    # @param colors The colors to draw the pixels. This the same as for the spot graph.
+    #
+    def newColors(self, colors):
+        self.colors = colors
+        self.points_per_cycle = len(colors)
+
     ## newParameters
     #
     # Set new parameters.
     #
-    # @param colors The colors to draw the pixels. This the same as for the image graph.
     # @param camera_params A parameters object.
     # @param scale_bar_len The length of the scale bar (in pixels).
     #
-    def newParameters(self, colors, camera_params, scale_bar_len):
-        self.colors = colors
+    def newParameters(self, camera_params, scale_bar_len):
         self.flip_horizontal = camera_params.flip_horizontal
         self.flip_vertical = camera_params.flip_vertical
-        self.points_per_cycle = len(colors)
         self.scale_bar_len = int(round(scale_bar_len))
         self.transpose = camera_params.transpose
 
@@ -424,7 +432,7 @@ class QImageGraph(QtGui.QWidget):
 #
 # Spot Counter Dialog Box
 #
-class SpotCounter(QtGui.QDialog):
+class SpotCounter(QtGui.QDialog, halModule.HalModule):
     imageProcessed = QtCore.pyqtSignal()
 
     ## __init__
@@ -432,12 +440,12 @@ class SpotCounter(QtGui.QDialog):
     # Create the spot counter dialog box.
     #
     # @param parameters The initial parameters.
-    # @param single_camera Single camera setup or dual camera setup.
     # @param parent The PyQt parent of this dialog box.
     #
     @hdebug.debug
-    def __init__(self, parameters, single_camera, parent = None):
+    def __init__(self, parameters, parent = None):
         QtGui.QMainWindow.__init__(self, parent)
+        halModule.HalModule.__init__(self)
 
         self.counters = [False, False]
         self.filming = 0
@@ -454,19 +462,12 @@ class SpotCounter(QtGui.QDialog):
             self.have_parent = False
 
         # UI setup.
-        if single_camera:
-            import qtdesigner.spotcounter_ui as spotCounterUi
-        else:
-            import qtdesigner.dualspotcounter_ui as spotCounterUi
-            self.number_cameras = 2
-
-        self.ui = spotCounterUi.Ui_Dialog()
         self.ui.setupUi(self)
         self.setWindowTitle(parameters.setup_name + " Spot Counter")
         self.setWindowIcon(qtAppIcon.QAppIcon())
 
         # Setup Counter objects.
-        if single_camera:
+        if (self.number_cameras == 1):
             self.counters = [Counter(self.ui.countsLabel1, self.ui.countsLabel2)]
         else:
             self.counters = [Counter(self.ui.countsLabel1, self.ui.countsLabel2),
@@ -531,6 +532,13 @@ class SpotCounter(QtGui.QDialog):
         # Set modeless.
         self.setModal(False)
 
+        
+    ## cleanup
+    #
+    @hdebug.debug
+    def cleanup(self):
+        self.spot_counter.shutDown()
+
     ## closeEvent
     #
     # Handle close events. The event is ignored and the dialog box is simply
@@ -543,17 +551,26 @@ class SpotCounter(QtGui.QDialog):
         if self.have_parent:
             event.ignore()
             self.hide()
-        else:
-            self.quit()
+
+    ## connectSignals
+    #
+    # @param signals An array of signals that we might be interested in connecting to.
+    #
+    @hdebug.debug
+    def connectSignals(self, signals):
+        for signal in signals:
+
+            if (signal[1] == "newColors"):
+                signal[2].connect(self.newColors)
 
     ## getCounts
     #
     # Returns the number of objects detected. If the movie is requested
     # by TCP/IP this number is passed back to the calling program.
     #
-    @hdebug.debug
-    def getCounts(self):
-        return self.counters[0].getCounts()
+    #@hdebug.debug
+    #def getCounts(self):
+    #    return self.counters[0].getCounts()
 
     ## handleMaxChange
     #
@@ -601,13 +618,35 @@ class SpotCounter(QtGui.QDialog):
     def handleQuit(self, bool):
         self.close()
 
+    ## newColors
+    #
+    # Called when the spot colors need to be changed, as for example
+    # when a new shutters file is selected.
+    #
+    # @param colors A colors array.
+    #
+    def newColors(self, colors):
+
+        # If colors is an empty array then we use the default color (white).
+        if (len(colors) == 0):
+            colors = [[255, 255, 255]]
+        points_per_cycle = len(colors)
+        total_points = points_per_cycle
+        while total_points < 100:
+            total_points += points_per_cycle
+
+        for i in range(self.number_cameras):
+            self.spot_graphs[i].newColors(colors, total_points)
+            self.image_graphs[i].newColors(colors)
+
     ## newFrame
     #
     # Called when there is a new frame from the camera.
     #
     # @param frame A frame object.
+    # @param filming True/False if we are currently filming.
     #
-    def newFrame(self, frame):
+    def newFrame(self, frame, filming):
         if self.spot_counter:
             self.spot_counter.newImageToCount(frame)
 
@@ -617,40 +656,23 @@ class SpotCounter(QtGui.QDialog):
     # and image display with the new parameters.
     #
     # @param parameters A parameters object.
-    # @param colors The colors to use for the different frames as specified by the shutter file.
     #
     @hdebug.debug
-    def newParameters(self, parameters, colors):
+    def newParameters(self, parameters):
         self.parameters = parameters
 
         self.spot_counter.newParameters(parameters)
 
-        #
         # Update counters, count graph(s) & STORM image(s).
-        # If colors is an empty array then we use the default color (white).
-        #
-        if (len(colors) == 0):
-            colors = [[255, 255, 255]]
-        points_per_cycle = len(colors)
-        total_points = points_per_cycle
-        while total_points < 100:
-            total_points += points_per_cycle
-
         for i in range(self.number_cameras):
             self.counters[i].reset()
-            self.spot_graphs[i].newParameters(colors, total_points)
 
             camera_params = parameters
             if hasattr(parameters, "camera" + str(i+1)):
                 camera_params = getattr(parameters, "camera" + str(i+1))
             scale_bar_len = (parameters.scale_bar_len / parameters.nm_per_pixel) * \
                 float(self.image_graphs[i].width()) / float(camera_params.x_pixels * camera_params.x_bin)
-            self.image_graphs[i].newParameters(colors, camera_params, scale_bar_len)
-#                                               camera_params.flip_horizontal,
-#                                               camera_params.flip_vertical,
-#                                               scale_bar_len,
-#                                               camera_params.x_pixels / camera_params.x_bin,
-#                                               camera_params.y_pixels / camera_params.y_bin)
+            self.image_graphs[i].newParameters(camera_params, scale_bar_len)
 
         # UI update.
         self.ui.maxSpinBox.setValue(parameters.max_spots)
@@ -681,58 +703,86 @@ class SpotCounter(QtGui.QDialog):
             print "spotCounter.update Unknown camera:", which_camera
         self.imageProcessed.emit()
 
-    ## quit
-    #
-    # This does not do anything.
-    #
-    @hdebug.debug        
-    def quit(self):
-        pass
-
-    ## shutDown
-    #
-    # Called when the program exits to stop the spot counter threads.
-    #
-    @hdebug.debug
-    def shutDown(self):
-        if self.spot_counter:
-            self.spot_counter.shutDown()
-
     ## startCounter
     #
     # Called at the start of filming to reset the spot graphs and the
     # images. If name is not False then this is assumed to be root
     # filename to save the spot counter images in when filming is finished.
     #
-    # @param name The root filename to save the images.
+    # @param film_name The name of the film without any extensions, or False if the film is not being saved.
+    # @param run_shutters True/False the shutters should be run or not.
     #
     @hdebug.debug
-    def startCounter(self, name):
-        if self.spot_counter:
-            for i in range(self.number_cameras):
-                self.counters[i].reset()
-                self.image_graphs[i].blank()
-            self.filming = True
-            self.filenames = [False, False]
-            if name:
-                if (self.number_cameras == 1):
-                    self.filenames[0] = name + ".png"
-                else:
-                    self.filenames[0] = name + "_cam1.png"
-                    self.filenames[1] = name + "_cam2.png"
+    def startFilm(self, film_name, run_shutters):
+        for i in range(self.number_cameras):
+            self.counters[i].reset()
+            self.image_graphs[i].blank()
+        self.filming = True
+        self.filenames = [False, False]
+        if film_name:
+            if (self.number_cameras == 1):
+                self.filenames[0] = film_name + ".png"
+            else:
+                self.filenames[0] = film_name + "_cam1.png"
+                self.filenames[1] = film_name + "_cam2.png"
 
-    ## stopCounter
+    ## stopFilm
     #
     # Called at the end of filming.
+    #
+    # @param film_writer The film writer object.
+    #
     @hdebug.debug
-    def stopCounter(self):
+    def stopFilm(self, film_writer):
         self.filming = False
         if self.filenames[0]:
             for i in range(self.number_cameras):
                 self.image_graphs[i].saveImage(self.filenames[i])
+        if film_writer:
+            film_writer.setSpotCounts(self.counters[0].getCounts())
 
 
+## SingleSpotCounter
 #
+# Spot counter dialog box for a single camera.
+#
+class SingleSpotCounter(SpotCounter):
+
+    ## __init__
+    #
+    # @param hardware A hardware parameters object.
+    # @param parameters A parameters object.
+    # @param parent (Optional) The PyQt parent of this dialog box.
+    #
+    def __init__(self, hardware, parameters, parent = None):
+        self.cameras = 1
+        
+        import qtdesigner.spotcounter_ui as spotCounterUi
+        self.ui = spotCounterUi.Ui_Dialog()
+        
+        SpotCounter.__init__(self, parameters, parent)
+
+## DualSpotCounter
+#
+# Spot counter dialog box for a two camera setup.
+#
+class DualSpotCounter(SpotCounter):
+
+    ## __init__
+    #
+    # @param hardware A hardware parameters object.
+    # @param parameters A parameters object.
+    # @param parent (Optional) The PyQt parent of this dialog box.
+    #
+    def __init__(self, hardware, parameters, parent = None):
+        self.cameras = 2
+        
+        import qtdesigner.dualspotcounter_ui as spotCounterUi
+        self.ui = spotCounterUi.Ui_Dialog()
+        
+        SpotCounter.__init__(self, parameters, parent)
+
+
 # Testing.
 #
 #   Load a movie file, analyze it & save the result.
@@ -764,7 +814,7 @@ if __name__ == "__main__":
     parameters.x_bin = 1
     parameters.y_bin = 1
 
-    spotCounter = SpotCounter(parameters, True)
+    spotCounter = SingleSpotCounter(parameters)
     spotCounter.newParameters(parameters, [[255,255,255]])
 
     # Start driver.

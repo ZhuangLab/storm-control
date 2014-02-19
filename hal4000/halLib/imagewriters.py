@@ -4,17 +4,45 @@
 #
 # Image file writers for various formats.
 #
-# Hazen 10/13
+# Hazen 02/14
 #
 
 import copy
 import struct
 import tiffwriter
 
-#try:
-#    import andor.formatconverters as fconv
-#except:
-#    print "failed to load andor.formatconverters."
+
+# Figure out the version of the software, if possible.
+have_git = True
+try:
+    import git
+except:
+    print "GitPython is not installed, software version information will not be recorded."
+    have_git = False
+
+software_version = "NA"
+if have_git:
+    try:
+        repo = git.Repo(".")
+        software_version = str(repo.commit('HEAD'))
+    except:
+        print "Cannot determine software version."
+
+
+## attrToString
+#
+# Convert an attribute to a string, or "NA" if the attribute does not exist.
+#
+# @param obj A Python object.
+# @param attr A attribute of the object as a string.
+#
+# @return The string form of the attribute if it exists, otherwise "NA".
+#
+def attrToString(obj, attr):
+    if hasattr(obj, attr):
+        return str(getattr(obj, attr))
+    else:
+        return "NA"
 
 ## availableFileFormats
 #
@@ -72,21 +100,6 @@ def getCameraSize(parameters, camera_name):
         y_pixels = parameters.y_pixels
     return [x_pixels, y_pixels]
 
-## attrToString
-#
-# Convert an attribute to a string, or "NA" if the attribute does not exist.
-#
-# @param obj A Python object.
-# @param attr A attribute of the object as a string.
-#
-# @return The string form of the attribute if it exists, otherwise "NA".
-#
-def attrToString(obj, attr):
-    if hasattr(obj, attr):
-        return str(getattr(obj, attr))
-    else:
-        return "NA"
-
 ## writeInfFile
 #
 # Inf writing function. We save one of these regardless of the
@@ -110,6 +123,7 @@ def writeInfFile(filename, filetype, number_frames, parameters, camera, stage_po
     # General info
     fp.write("information file for" + nl)
     fp.write(filename + nl)
+    fp.write("software version = " + software_version + nl)
     fp.write("machine name = " + p.setup_name + nl)
     fp.write("parameters file = " + p.parameters_file + nl)
     fp.write("shutters file = " + p.shutters + nl)
@@ -175,6 +189,10 @@ class GenericFile:
         self.parameters = parameters
         self.open = True
 
+        self.lock_target = 0.0
+        self.spot_counts = "NA"
+        self.stage_position = [0.0, 0.0, 0.0]
+
         self.filenames = []
         self.file_ptrs = []
         self.number_frames = []
@@ -196,10 +214,7 @@ class GenericFile:
     #
     # Close the file pointers (if any) and write the .inf file.
     #
-    # @param stage_position The position of the microscope stage.
-    # @param lock_target The lock target for the focus lock.
-    #
-    def closeFile(self, stage_position, lock_target):
+    def closeFile(self):
         
         # Close the files.
         if (len(self.file_ptrs)>0):
@@ -217,10 +232,45 @@ class GenericFile:
                          self.number_frames[i],
                          self.parameters,
                          camera,
-                         stage_position,
-                         lock_target)
+                         self.stage_position,
+                         self.lock_target)
 
         self.open = False
+
+    ## getLockTarget()
+    #
+    # @return The film's lock target.
+    #
+    def getLockTarget(self):
+        return self.lock_target
+
+    ## getSpotCounts()
+    #
+    # @return The film's spot counts.
+    #
+    def getSpotCounts(self):
+        return self.spot_counts
+
+    ## setLockTarget()
+    #
+    # @param lock_target The film's lock target.
+    #
+    def setLockTarget(self, lock_target):
+        self.lock_target = lock_target
+
+    ## setSpotCounts()
+    #
+    # @param spot_counts The film's spot counts (this is saved as a string).
+    #
+    def setSpotCounts(self, spot_counts):
+        self.spot_counts = spot_counts
+
+    ## setStagePosition()
+    #
+    # @param stage_position The new stage position.
+    #
+    def setStagePosition(self, stage_position):
+        self.stage_position = stage_position
 
     ## totalFilmSize
     #
@@ -364,16 +414,13 @@ class SPEFile(GenericFile):
     # Writes the file size into the header part of the spe file and
     # then closes the file.
     #
-    # @param stage_position The position of the microscope stage.
-    # @param lock_target The lock target for the focus lock.
-    #
-    def closeFile(self, stage_position, lock_target):
+    def closeFile(self):
         # write film length & close the file
         for i in range(len(self.file_ptrs)):
             self.file_ptrs[i].seek(1446)
             self.file_ptrs[i].write(struct.pack("i", self.number_frames[i]))
 
-        GenericFile.closeFile(self, stage_position, lock_target)
+        GenericFile.closeFile(self)
 
 ## TIFFile
 #
@@ -416,13 +463,10 @@ class TIFFile(GenericFile):
     #
     # Closes the tif file writers.
     #
-    # @param stage_position The position of the microscope stage.
-    # @param lock_target The lock target for the focus lock.
-    #
-    def closeFile(self, stage_position, lock_target):
+    def closeFile(self):
         for writer in self.tif_writers:
             writer.close()
-        GenericFile.closeFile(self, stage_position, lock_target)
+        GenericFile.closeFile(self)
 
 #
 # Testing
@@ -448,7 +492,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

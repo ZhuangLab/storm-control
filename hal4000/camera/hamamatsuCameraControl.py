@@ -13,7 +13,7 @@ import platform
 import traceback
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 import camera.frame as frame
 import camera.cameraControl as cameraControl
@@ -81,19 +81,28 @@ class ACameraControl(cameraControl.CameraControl):
     # Setup for new acquisition.
     #
     # @param parameters A parameters object.
-    # @param filming True/False should the acquisition be recorded.
+    # @param film_settings A film settings object or None.
     #
     @hdebug.debug
-    def newFilmSettings(self, parameters, filming = False):
+    def newFilmSettings(self, parameters, film_settings):
         self.stopCamera()
-        self.parameters = parameters
+        self.mutex.lock()
         p = parameters
-        if filming:
-            if (p.acq_mode == "fixed_length"):
+        self.reached_max_frames = False
+        if film_settings:
+            self.filming = True
+            self.acq_mode = film_settings.acq_mode
+            self.frames_to_take = film_settings.frames_to_take
+
+            if (self.acq_mode == "fixed_length"):
                 self.stop_at_max = True
             else:
                 self.stop_at_max = False
-        self.filming = filming
+        else:
+            self.filming = False
+            self.acq_mode = "run_till_abort"
+
+        self.mutex.unlock()
 
     ## newParameters
     #
@@ -104,7 +113,6 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def newParameters(self, parameters):
         p = parameters
-        self.newFilmSettings(parameters)
 
         try:
             # Set ROI location and size.
@@ -147,6 +155,10 @@ class ACameraControl(cameraControl.CameraControl):
             hdebug.logText("QCameraThread: Bad camera settings")
             print traceback.format_exc()
             self.got_camera = False
+
+        self.newFilmSettings(parameters, None)
+        self.parameters = parameters
+
 
     ## openShutter
     #
@@ -196,19 +208,31 @@ class ACameraControl(cameraControl.CameraControl):
                                              "camera1",
                                              True)
                         frame_data.append(aframe)
-
                         self.frame_number += 1
-                        if self.filming and self.stop_at_max and (self.frame_number == self.parameters.frames):
-                            self.max_frames_sig.emit()
-                            break
 
-                    # Save frames if we are filming.
-                    if self.filming and self.daxfile:
-                        for aframe in frame_data:
-                            self.daxfile.saveFrame(aframe)
-
-                    # Emit new data signal
+                        if self.filming:
+                            if self.daxfile:
+                                if (self.acq_mode == "fixed_length"):
+                                    if (self.frame_number <= self.frames_to_take):
+                                        self.daxfile.saveFrame(aframe)
+                                else:
+                                    self.daxfile.saveFrame(aframe)
+            
+                            if (self.acq_mode == "fixed_length") and (self.frame_number == self.frames_to_take):
+                                self.reached_max_frames = True
+                                break
+                            
+                    # Emit new data signal.
                     self.newData.emit(frame_data, self.key)
+
+                    # Emit max frames signal.
+                    #
+                    # The signal is emitted here because if it is emitted before
+                    # newData then you never see that last frame in the movie, which
+                    # is particularly problematic for single frame movies.
+                    #
+                    if self.reached_max_frames:
+                        self.max_frames_sig.emit()
 
             else:
                 self.acquire.idle()

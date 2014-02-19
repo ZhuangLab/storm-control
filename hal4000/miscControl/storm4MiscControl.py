@@ -14,7 +14,7 @@ from PyQt4 import QtCore, QtGui
 import miscControl
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.storm4_misc_ui as miscControlsUi
@@ -27,8 +27,8 @@ import olympus.ix2ucb as ix2ucb
 #
 class AMiscControl(miscControl.MiscControl):
     @hdebug.debug
-    def __init__(self, hardware, parameters, tcp_control, camera_widget, parent = None):
-        miscControl.MiscControl.__init__(self, parameters, tcp_control, camera_widget, parent)
+    def __init__(self, hardware, parameters, parent = None):
+        miscControl.MiscControl.__init__(self, parameters, parent)
 
         self.filter_wheel = ix2ucb.IX2UCB(port = "COM4")
         if (not self.filter_wheel.getStatus()):
@@ -60,6 +60,11 @@ class AMiscControl(miscControl.MiscControl):
             self.filters[self.filter_wheel.getPosition()-1].click()
 
     @hdebug.debug
+    def cleanup(self):
+        if self.filter_wheel:
+            self.filter_wheel.shutDown()
+
+    @hdebug.debug
     def handleFilter(self, bool):
         for i, filter in enumerate(self.filters):
             if filter.isChecked():
@@ -71,10 +76,6 @@ class AMiscControl(miscControl.MiscControl):
                 filter.setStyleSheet("QPushButton { color: black}")
 
     @hdebug.debug
-    def handleOk(self, bool):
-        self.hide()
-
-    @hdebug.debug
     def newParameters(self, parameters):
         self.parameters = parameters
         names = parameters.filter_names
@@ -83,10 +84,6 @@ class AMiscControl(miscControl.MiscControl):
                 self.filters[i].setText(names[i])
         self.filters[self.parameters.filter_position].click()
 
-    @hdebug.debug
-    def quit(self):
-        if self.filter_wheel:
-            self.filter_wheel.shutDown()
 
 #
 # The MIT License

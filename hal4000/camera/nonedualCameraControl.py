@@ -12,7 +12,7 @@ import numpy
 from PyQt4 import QtCore
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 import camera.cameraControl as cameraControl
 import camera.frame as frame

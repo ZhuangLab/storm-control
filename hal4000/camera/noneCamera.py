@@ -7,7 +7,7 @@
 # Hazen 12/13
 #
 
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 import camera.classicSingleCamera as classicSingleCamera
 #import camera.detachedSingleCamera as detachedSingleCamera

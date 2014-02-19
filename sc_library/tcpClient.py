@@ -12,7 +12,7 @@ import sys
 import time
 from PyQt4 import QtCore, QtGui, QtNetwork
 
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 ## HALSocket
 #

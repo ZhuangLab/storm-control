@@ -13,7 +13,7 @@ import joystick
 import logitech.gamepad310 as gamepad310
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 class AJoystick(joystick.JoystickObject):
     @hdebug.debug

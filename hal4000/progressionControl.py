@@ -12,18 +12,18 @@
 # getting distracted by constantly having to adjust 
 # the laser powers.
 #
-# Hazen 11/09
+# Hazen 02/14
 #
 
 import os
 import sys
 from PyQt4 import QtCore, QtGui
 
-import halLib.parameters as params
+import halLib.halModule as halModule
 import qtWidgets.qtAppIcon as qtAppIcon
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.progression_ui as progressionUi
@@ -81,18 +81,18 @@ class MathChannels(Channels):
     # Called to layout the GUI for math channels. These channels match
     # the channels of the illumination.
     #
-    # @param number_channels The total number of channels.
+    # @param channels The names of the channels.
     # @param x_positions The x positions at which to draw the GUI elements.
     # @param parameters The initial values for the adjustable GUI elements.
     # @param parent Not used?
     #
-    def __init__(self, number_channels, x_positions, parameters, parent):
+    def __init__(self, channels, x_positions, parameters, parent):
         Channels.__init__(self, parent)
         y = 40
         dy = 26
         self.channels = []
         self.which_checked = []
-        for i in range(number_channels):
+        for channel in channels:
             self.powers.append(0.0)
             self.which_checked.append(False)
             channel_frame = QtGui.QFrame(parent)
@@ -100,8 +100,8 @@ class MathChannels(Channels):
 
             # channel number
             channel_text = QtGui.QLabel(channel_frame)
-            channel_text.setGeometry(x_positions[0], 2, 20, 18)
-            channel_text.setText(str(i))
+            channel_text.setGeometry(x_positions[0], 2, 25, 18)
+            channel_text.setText(channel)
 
             # check box
             channel_active_check_box = QtGui.QCheckBox(channel_frame)
@@ -192,7 +192,7 @@ class LinearChannels(MathChannels):
     # This is basically the same as for MathChannels. It also specifies
     # a maximum value for the increment spin box.
     #
-    # @param channels The total number of channels.
+    # @param channels The names of the channels.
     # @param x_positions The x positions at which to draw the GUI elements.
     # @param parameters The initial values for the adjustable GUI elements.
     # @param parent Not used?
@@ -234,7 +234,7 @@ class ExponentialChannels(MathChannels):
     # This is basically the same as for MathChannels. It also specifies
     # the current and maximum value of the increment spin box.
     #
-    # @param channels The total number of channels.
+    # @param channels The names of the channels.
     # @param x_positions The x positions at which to draw the GUI elements.
     # @param parameters The initial values for the adjustable GUI elements.
     # @param parent Not used?
@@ -386,24 +386,28 @@ class FileChannels(Channels):
 #
 # Progression control dialog box
 #
-class ProgressionControl(QtGui.QDialog):
+class ProgressionControl(QtGui.QDialog, halModule.HalModule):
+    incPower = QtCore.pyqtSignal(int, float)
+    setPower = QtCore.pyqtSignal(int, float)
 
     ## __init__
     #
     # This initializes things and sets up the UI of the power control
     # dialog box.
     #
-    # @param parameters The initial parameters.
-    # @param tcp_control The TCP/IP control object.
-    # @param channels The number of illumination channels.
+    # @param hardware A hardware object.
+    # @param parameters A parameters object.
     # @param parent The (PyQt) parent of the dialog.
     #
     @hdebug.debug
-    def __init__(self, parameters, tcp_control, channels = 3, parent = None):
+    def __init__(self, hardware, parameters, parent):
         QtGui.QDialog.__init__(self, parent)
+        halModule.HalModule.__init__(self)
         self.channels = False
+        self.exp_channels = False
+        self.linear_channels = False
+        self.file_channels = False
         self.parameters = parameters
-        self.tcp_control = tcp_control
         self.use_was_checked = False
         self.which_checked = []
 
@@ -412,14 +416,39 @@ class ProgressionControl(QtGui.QDialog):
         else:
             self.have_parent = 0
 
-        for i in range(channels):
-            self.which_checked.append(False)
-
         # UI setup
         self.ui = progressionUi.Ui_Dialog()
         self.ui.setupUi(self)
         self.setWindowTitle(parameters.setup_name + " Progression Control")
         self.setWindowIcon(qtAppIcon.QAppIcon())
+
+        # connect signals
+        if self.have_parent:
+            self.ui.okButton.setText("Close")
+            self.ui.okButton.clicked.connect(self.handleOk)
+        else:
+            self.ui.okButton.setText("Quit")
+            self.ui.okButton.clicked.connect(self.handleQuit)
+        self.ui.progressionsCheckBox.stateChanged.connect(self.handleProgCheck)
+        self.ui.loadFileButton.clicked.connect(self.newPowerFile)
+
+        # set modeless
+        self.setModal(False)
+
+    ## addChannels
+    #
+    # Called to add the controls for the channels. The channel
+    # information comes from the illuminationControl module.
+    # This is called once after initialization and before the
+    # dialog is displayed.
+    #
+    # @param channels A list containing the names of the channels.
+    #
+    def addChannels(self, channels):
+
+        self.which_checked = []
+        for i in range(len(channels)):
+            self.which_checked.append(False)
 
         # linear increasing power tab setup
         self.linear_channels = LinearChannels(channels,
@@ -454,25 +483,6 @@ class ProgressionControl(QtGui.QDialog):
 
         self.setFixedSize(self.width(), y + 36)
 
-        # connect signals
-        if self.have_parent:
-            self.ui.okButton.setText("Close")
-            self.ui.okButton.clicked.connect(self.handleOk)
-        else:
-            self.ui.okButton.setText("Quit")
-            self.ui.okButton.clicked.connect(self.handleQuit)
-        self.ui.progressionsCheckBox.stateChanged.connect(self.handleProgCheck)
-        self.ui.loadFileButton.clicked.connect(self.newPowerFile)
-
-        if self.tcp_control:
-            self.connect(self.tcp_control, QtCore.SIGNAL("progressionLockout()"), self.tcpHandleProgressionLockout)
-            self.connect(self.tcp_control, QtCore.SIGNAL("progressionFile(PyQt_PyObject)"), self.tcpHandleProgressionFile)
-            self.connect(self.tcp_control, QtCore.SIGNAL("progressionSet(int, float, int, float)"), self.tcpHandleProgressionSet)
-            self.connect(self.tcp_control, QtCore.SIGNAL("progressionType(PyQt_PyObject)"), self.tcpHandleProgressionType)
-
-        # set modeless
-        self.setModal(False)
-
     ## closeEvent
     #
     # This is called when the dialog is closed. If the dialog
@@ -485,6 +495,48 @@ class ProgressionControl(QtGui.QDialog):
         if self.have_parent:
             event.ignore()
             self.hide()
+
+    ## connectSignals
+    #
+    # @param signals An array of signals that we might be interested in connecting to.
+    #
+    @hdebug.debug
+    def connectSignals(self, signals):
+        for signal in signals:
+            if (signal[1] == "commMessage"):
+                signal[2].connect(self.handleCommMessage)
+            elif (signal[1] == "channelNames"):
+                signal[2].connect(self.addChannels)
+
+    ## getSignals
+    #
+    # @return The signals this module provides.
+    #
+    @hdebug.debug
+    def getSignals(self):
+        return [[self.hal_type, "incPower", self.incPower],
+                [self.hal_type, "setPower", self.setPower]]
+
+    ## handleCommMessage
+    #
+    # Handles all the message from tcpControl.
+    #
+    # @param message A tcpControl.TCPMessage object.
+    #
+    @hdebug.debug
+    def handleCommMessage(self, message):
+
+        m_type = message.getType()
+        m_data = message.getData()
+
+        if (m_type == "progressionLockout"):
+            self.tcpHandleProgressionLockout()
+        elif (m_type == "progressionFile"):
+            self.tcpHandleProgressionFile(m_data[0])
+        elif (m_type == "progressionSet"):
+            self.tcpHandleProgressionSet(m_data[0], m_data[1], m_data[2], m_data[3])
+        elif (m_type == "progressionType"):
+            self.tcpHandleProgressionType(m_data[0])
 
     ## handleOk
     #
@@ -527,18 +579,15 @@ class ProgressionControl(QtGui.QDialog):
     # If this returns that power updates are necessary then it
     # emits the appropriate progIncPower signals.
     #
-    # FIXME: change progIncPower to new style signal/slot.
-    #
     # @param frame The current frame object.
+    # @param filming True/False if we are currently filming.
     #
-    def newFrame(self, frame):
-        if self.channels and frame.master:
+    def newFrame(self, frame, filming):
+        if filming and self.channels and frame.master:
             [active, increment] = self.channels.newFrame(frame.number)
             for i in range(len(active)):
                 if active[i]:
-                    self.emit(QtCore.SIGNAL("progIncPower(int, float)"), 
-                              int(i),
-                              increment[i])
+                    self.incPower.emit(int(i), increment[i])
 
     ## newParameters
     #
@@ -558,7 +607,7 @@ class ProgressionControl(QtGui.QDialog):
 
     ## newPowerFile
     #
-    # Opens a file dialog where the user can specifiy a new power file.
+    # Opens a file dialog where the user can specify a new power file.
     #
     # @param bool Dummy parameter.
     #
@@ -572,7 +621,7 @@ class ProgressionControl(QtGui.QDialog):
             self.ui.filenameLabel.setText(power_filename[-40:])
             self.file_channels.newFile(power_filename)
 
-    ## setPower
+    ## setInitialPower
     #
     # This emits progSetPower signals to set the power. This is called
     # at the start & end of filming.
@@ -580,12 +629,10 @@ class ProgressionControl(QtGui.QDialog):
     # @param active Boolean array specifying whether or not a channel is active.
     # @param power The power to set the channel too.
     #
-    def setPower(self, active, power):
+    def setInitialPower(self, active, power):
         for i in range(len(active)):
             if active[i]:
-                self.emit(QtCore.SIGNAL("progSetPower(int, float)"), 
-                          int(i),
-                          power[i])
+                self.setPower.emit(int(i), power[i])
 
     ## startFilm
     #
@@ -595,7 +642,10 @@ class ProgressionControl(QtGui.QDialog):
     # object. Then it sets the intial powers as specified by the
     # active channel.
     #
-    def startFilm(self):
+    # @param film_name The name of the film without any extensions, or False if the film is not being saved.
+    # @param run_shutters True/False the shutters should be run or not.
+    #
+    def startFilm(self, film_name, run_shutters):
         self.channels = False
         if (self.isVisible() and self.parameters.use_progressions):
             # determine which tab is active.
@@ -606,17 +656,19 @@ class ProgressionControl(QtGui.QDialog):
             elif self.ui.fileTab.isVisible():
                 self.channels = self.file_channels
             [active, power] = self.channels.startFilm()
-            self.setPower(active, power)
+            self.setInitialPower(active, power)
 
     ## stopFilm
     #
     # Called when the film stops. This resets the powers to their
     # initial values.
     #
-    def stopFilm(self):
+    # @param film_writer The film writer object.
+    #
+    def stopFilm(self, film_writer):
         if self.channels:
             [active, power] = self.channels.stopFilm()
-            self.setPower(active, power)
+            self.setInitialPower(active, power)
         if self.use_was_checked:
             self.use_was_checked = False
             self.ui.progressionsCheckBox.setChecked(True)
@@ -675,28 +727,11 @@ class ProgressionControl(QtGui.QDialog):
         elif (type == "file"):
             self.ui.tabWidget.setCurrentWidget(self.ui.fileTab)
 
-#    def updateSize(self):
-#        pc_width = self.power_control.width()
-#        pc_height = self.power_control.height()
-#        self.ui.laserBox.setGeometry(10, 0, pc_width + 9, pc_height + 19)
-#        self.power_control.setGeometry(4, 15, pc_width, pc_height)
-#
-#        lb_width = self.ui.laserBox.width()
-#        lb_height = self.ui.laserBox.height()
-#        self.ui.okButton.setGeometry(lb_width - 65, lb_height + 4, 75, 24)
-#        self.setFixedSize(lb_width + 18, lb_height + 36)
-
-if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
-    parameters = params.Parameters("settings_default.xml")
-    progression = ProgressionControl(parameters, None)
-    progression.show()
-    app.exec_()
 
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

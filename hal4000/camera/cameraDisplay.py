@@ -8,13 +8,13 @@
 # appropriate xCameraWidget class. It is also responsible for 
 # displaying the camera record and shutter buttons.
 #
-# Hazen 09/13
+# Hazen 02/14
 #
 
 from PyQt4 import QtCore, QtGui
 
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 # Camera Helper Modules
 import qtWidgets.qtColorGradient as qtColorGradient
@@ -28,6 +28,7 @@ import colorTables.colorTables as colorTables
 # The Camera display class.
 #
 class CameraDisplay(QtGui.QFrame):
+    cameraROISelection = QtCore.pyqtSignal(object, object)
 
     ## __init__
     #
@@ -106,6 +107,7 @@ class CameraDisplay(QtGui.QFrame):
         self.ui.colorComboBox.currentIndexChanged.connect(self.colorTableChange)
         self.ui.syncSpinBox.valueChanged.connect(self.handleSync)
         self.camera_widget.intensityInfo.connect(self.handleIntensityInfo)
+        self.camera_widget.roiSelection.connect(self.handleROISelection)
         self.ui.gridAct.triggered.connect(self.handleGrid)
         self.ui.infoAct.triggered.connect(self.handleInfo)
         self.ui.targetAct.triggered.connect(self.handleTarget)
@@ -229,7 +231,7 @@ class CameraDisplay(QtGui.QFrame):
     ## handleIntensityInfo
     #
     # Handles displaying the intensity information that is 
-    # recieved from the the xCameraWidget.
+    # received from the the xCameraWidget.
     #
     # @param x The x value of the pixel.
     # @param y The y value of the pixel.
@@ -238,6 +240,16 @@ class CameraDisplay(QtGui.QFrame):
     def handleIntensityInfo(self, x, y, i):
         self.ui.intensityPosLabel.setText("({0:d},{1:d})".format(x, y, i))
         self.ui.intensityIntLabel.setText("{0:d}".format(i))
+
+    ## handleROISelection
+    #
+    # Handles roi selection from the xCameraWidget. Basically
+    # this is a pass through that add camera information.
+    #
+    # @param select_rect The selection rectangle (QRect).
+    #
+    def handleROISelection(self, select_rect):
+        self.cameraROISelection.emit(self.which_camera, select_rect)
 
     ## handleSync
     #
@@ -434,13 +446,16 @@ class CameraScrollArea(QtGui.QScrollArea):
             self.magnification = 1
         if (self.magnification > 8):
             self.magnification = 8
-            
+    
+        [ev_x, ev_y] = self.camera_widget.getEventLocation(event)
+        self.h_scroll_bar.setCurRatio(ev_x)
+        self.v_scroll_bar.setCurRatio(ev_y)
         self.camera_widget.setMagnification(self.magnification)
 
 ## CameraSrollBar
 #
 # Wrap a scroll bar so that the camera display remains more 
-# or less centered as we zoom in and out.
+# or less centered on the wheel events as we zoom in and out.
 #
 class CameraScrollBar():
 
@@ -454,34 +469,31 @@ class CameraScrollBar():
 
         self.cur_ratio = 0.5
         self.scroll_bar = scroll_bar
-        if (self.scroll_bar.maximum() > 0):
-            self.cur_max = float(self.scroll_bar.maximum())
-        else:
-            self.cur_max = 1.0
 
         self.scroll_bar.rangeChanged.connect(self.rangeChanged)
 
     ## rangeChanged
     #
-    # Handle scroll bar range changes. The idea is that this figures out
-    # fractionally where the scroll bar was prior to the range change.
-    # It then moves the scroll bar to the same fractional position after
-    # the range change. This is in contrast to the default behavior
-    # which is that the scroll bar has the same absolute value.
+    # Handle scroll bar range changes.
+    #
+    # @param new_min The new minimum value for the scroll bar.
+    # @param new_max The new maximum value for the scroll bar.
     #
     def rangeChanged(self, new_min, new_max):
         if (new_max > 0):
-            self.cur_ratio = float(self.scroll_bar.value())/self.cur_max
             self.scroll_bar.setValue(int(self.cur_ratio * float(new_max)))
-            self.cur_max = float(new_max)
-        else:
-            self.scroll_bar.setValue(0)
-            self.cur_max = 1.0
+
+    ## setCurRatio
+    #
+    # @param new_ratio The new ratio (or center position) for the scroll bar.
+    #
+    def setCurRatio(self, new_ratio):
+        self.cur_ratio = new_ratio
 
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

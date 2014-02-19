@@ -12,29 +12,28 @@ from PyQt4 import QtCore, QtGui
 
 import qtWidgets.qtAppIcon as qtAppIcon
 
+import halLib.halModule as halModule
+
 # Debugging
-import halLib.hdebug as hdebug
+import sc_library.hdebug as hdebug
 
 ## MiscControl
 #
 # Misc Control Dialog Box
 #
-class MiscControl(QtGui.QDialog):
+class MiscControl(QtGui.QDialog, halModule.HalModule):
 
     ## __init__
     #
     # @param parameters A parameters object.
-    # @param tcp_control A TCP control object.
-    # @param camera_widget A camera (display area) widget.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, tcp_control, camera_widget, parent = None):
+    def __init__(self, parameters, parent = None):
         QtGui.QDialog.__init__(self, parent)
+        halModule.HalModule.__init__(self)
         
-        self.camera_widget = camera_widget
         self.parameters = parameters
-        self.tcp_control = tcp_control
 
         if parent:
             self.have_parent = True
@@ -55,37 +54,33 @@ class MiscControl(QtGui.QDialog):
             event.ignore()
             self.hide()
         else:
-            self.quit()
+            self.cleanup()
+
+    ## handleOk
+    #
+    # Hide the window.
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def handleOk(self, bool):
+        self.hide()
 
     ## handleQuit
     #
     # Close the window.
     #
-    # @param bool Dummy parameter.
+    # @param boolean Dummy parameter.
     #
     @hdebug.debug
-    def handleQuit(self, bool):
+    def handleQuit(self, boolean):
         self.close()
 
-    ## newFrame
-    #
-    # Called when there is new data from the camera during film acquisition.
-    #
-    def newFrame(self, frame):
-        pass
-
-    ## quit
-    #
-    # Cleans up when the progam exits.
-    #
-    @hdebug.debug
-    def quit(self):
-        pass
 
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
