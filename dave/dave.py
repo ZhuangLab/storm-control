@@ -338,20 +338,23 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleDone(self):
-        if (self.command_index < (len(self.commands)-1)):
-            self.command_index += 1
-            if not self.command_engine.getPause():
+        if self.command_engine.getPause():
+            self.running = False
+        
+        if self.running: #Proceed to next command
+            if (self.command_index < (len(self.commands)-1)):
+                self.command_index += 1
                 self.issueCommand()
                 self.command_engine.startCommand()
-            else:
-                self.handleIdle(self, self.command_index == (len(self.commands) - 1))
-        else:
-            self.command_index = 0
-            self.ui.runButton.setEnabled(True)
-            self.ui.runButton.setText("Start")
-            self.ui.abortButton.setEnabled(False)
-            self.running = False
-            self.issueCommand()
+            else: # Finish sequence
+                self.command_index = 0
+                self.ui.runButton.setEnabled(True)
+                self.ui.runButton.setText("Start")
+                self.ui.abortButton.setEnabled(False)
+                self.running = False
+                self.issueCommand()
+        else: # Pause called by command or by user
+            self.handleIdle(self.command_index == (len(self.commands) - 1))
 
     ## handleGenerateXML
     #
