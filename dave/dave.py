@@ -322,7 +322,10 @@ class Dave(QtGui.QMainWindow):
             #Set flag to signal reset to handleDone when called
             self.command_index = len(self.commands) + 1
             self.command_engine.abort()
-
+        else: # Paused
+            self.command_index = len(self.commands) + 1
+            self.handleDone()
+            
     ## handleCommandListClick
     #
     # Reset command sequence list to the current command
