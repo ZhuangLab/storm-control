@@ -258,6 +258,7 @@ class Window(QtGui.QMainWindow):
         self.ui.actionSettings.triggered.connect(self.newSettingsFile)
         self.ui.actionQuit.triggered.connect(self.handleClose)
         self.ui.autoIncCheckBox.stateChanged.connect(self.handleAutoInc)
+        self.ui.autoShuttersCheckBox.stateChanged.connect(self.handleAutoShutters)
         self.ui.extensionComboBox.currentIndexChanged.connect(self.updateFilenameLabel)
         self.ui.filenameEdit.textChanged.connect(self.updateFilenameLabel)
         self.ui.filetypeComboBox.currentIndexChanged.connect(self.updateFilenameLabel)
@@ -429,6 +430,16 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleAutoInc(self, flag):
         self.parameters.auto_increment = flag
+
+    ## handleAutoShutters
+    #
+    # This is called when the run shutters check box is clicked.
+    #
+    # @param flag True if the check box is checked, false otherwise.
+    #
+    @hdebug.debug
+    def handleAutoShutters(self, flag):
+        self.parameters.auto_shutters = flag
 
     ## handleClose
     #
