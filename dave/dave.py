@@ -430,12 +430,10 @@ class Dave(QtGui.QMainWindow):
     @hdebug.debug
     def handleRunButton(self, boolean):
         if (self.running):
-            self.command_engine.setPause(True)
             self.ui.runButton.setText("Pausing..")
             self.ui.runButton.setEnabled(False) #Inactivate button until current action is complete
             self.running = False
         else:
-            self.command_engine.setPause(False)
             self.ui.abortButton.show()
             self.ui.runButton.setText("Pause")
             self.ui.abortButton.setEnabled(True)
