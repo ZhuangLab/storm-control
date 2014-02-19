@@ -160,11 +160,11 @@ class CommandEngine(QtGui.QWidget):
     def handleErrorSignal(self, error_message):
         self.problem.emit(error_message)
         
-## Window
+## Dave Main Window Function
 #
 # The main window
 #
-class Window(QtGui.QMainWindow):
+class Dave(QtGui.QMainWindow):
 
     ## __init__
     #
@@ -359,13 +359,13 @@ class Window(QtGui.QMainWindow):
 
     ## handleIdle
     #
-    # Handles the idle signal from the command engine. Hides the abort button, changes the text of the run button
+    # Handles the idle signal from the command engine. Changes the text of the run button
     # from "Pause"/"Pausing..." to "Start".
     #
     # @param boolean is_last_action indicates whether the current command has remaining actions
     @hdebug.debug
     def handleIdle(self, is_last_action):
-        self.ui.abortButton.hide()
+        #self.ui.abortButton.hide()
         self.ui.runButton.setText("Restart")
         self.ui.runButton.setEnabled(True)
         self.running = False
@@ -580,10 +580,9 @@ if __name__ == "__main__":
     #hdebug.startLogging(parameters.directory + "logs/", "dave")
 
     # Load app.
-    window = Window(parameters)
+    window = Dave(parameters)
     window.show()
     app.exec_()
-
 
 #
 # The MIT License
