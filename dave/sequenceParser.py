@@ -121,7 +121,7 @@ class Movie(AbstractCommand):
         self.length = 1
         self.min_spots = 0
         self.name = "default"
-        self.pause = 1
+        self.pause = False
         self.progression = None
         self.recenter = 0
 
