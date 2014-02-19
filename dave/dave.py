@@ -199,7 +199,6 @@ class Dave(QtGui.QMainWindow):
         # Movie engine.
         self.command_engine = CommandEngine()
         self.command_engine.done.connect(self.handleDone)
-        self.command_engine.idle.connect(self.handleIdle)
         self.command_engine.problem.connect(self.handleProblem)
 
         self.updateGUI()
@@ -237,7 +236,7 @@ class Dave(QtGui.QMainWindow):
         self.ui.timeLabel.setText("")
 
         # Hide widgets
-        self.ui.abortButton.hide()
+        self.ui.abortButton.setEnabled(False)
         self.ui.frequencyLabel.hide()
         self.ui.frequencySpinBox.hide()
         self.ui.runButton.hide()
@@ -354,7 +353,7 @@ class Dave(QtGui.QMainWindow):
                 self.running = False
                 self.issueCommand()
         else: # Pause called by command or by user
-            self.handleIdle(self.command_index == (len(self.commands) - 1))
+            self.handlePause()
 
     ## handleGenerateXML
     #
@@ -369,28 +368,25 @@ class Dave(QtGui.QMainWindow):
         if os.path.isfile(output_filename):
             self.newSequence(output_filename)
 
-    ## handleIdle
+    ## handlePause
     #
-    # Handles the idle signal from the command engine. Changes the text of the run button
+    # Handles the a pause request. Changes the text of the run button
     # from "Pause"/"Pausing..." to "Start".
     #
     # @param boolean is_last_action indicates whether the current command has remaining actions
     @hdebug.debug
-    def handleIdle(self, is_last_action):
-        #self.ui.abortButton.hide()
+    def handlePause(self):
         self.ui.runButton.setText("Restart")
         self.ui.runButton.setEnabled(True)
         self.running = False
-        
-        # Update command sequence display to the command that will run on resumption of sequence
-        if is_last_action:
-            self.command_index += 1
+        self.command_index += 1
 
-            if self.command_index >= len(self.commands):
-                self.command_index = 0
-                self.ui.runButton.setText("Start")
+        # Handle last command in list
+        if self.command_index >= len(self.commands):
+            self.command_index = 0
+            self.ui.runButton.setText("Start")
 
-            self.issueCommand()
+        self.issueCommand()
             
     ## handleNotifierChange
     #
@@ -432,15 +428,16 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleRunButton(self, boolean):
-        if (self.running):
+        if (self.running): # Pause
+            self.handlePause()
             self.ui.runButton.setText("Pausing..")
             self.ui.runButton.setEnabled(False) #Inactivate button until current action is complete
             self.running = False
-        else:
-            self.ui.abortButton.show()
+        else: # Start
             self.ui.runButton.setText("Pause")
             self.ui.abortButton.setEnabled(True)
             self.running = True
+            self.issueCommand()
             self.command_engine.startCommand()
 
     ## issueCommand
