@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <hardware>
-  <!-- Defines the camera for storm4 -->.
+  <!-- Defines the camera for storm4. -->
 
   <camera>
     <module type="string">classicSingleCamera</module>
@@ -65,8 +65,8 @@
 
     <!-- Remote control of HAL via TCP/IP. -->
     <tcpip>
-      <class_name type="string">TCPControl</class_name>
-      <module_name type="string">tcpControl</module_name>
+      <class_name type="string">HalTCPControl</class_name>
+      <module_name type="string">halTcpControl</module_name>
       <parameters>
 	<tcp_port type="int">9000</tcp_port>
       </parameters>
