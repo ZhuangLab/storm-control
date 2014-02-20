@@ -120,6 +120,7 @@ class Window(QtGui.QMainWindow):
         self.ui_mode = ""
         self.will_overwrite = False
         self.writer = False
+        self.xml_directory = ""
 
         # Logfile setup
         self.logfile_fp.write("\r\n")
@@ -256,6 +257,7 @@ class Window(QtGui.QMainWindow):
         # ui signals
         self.ui.actionDirectory.triggered.connect(self.newDirectory)
         self.ui.actionSettings.triggered.connect(self.newSettingsFile)
+        self.ui.actionShutter.triggered.connect(self.newShuttersFile)
         self.ui.actionQuit.triggered.connect(self.handleClose)
         self.ui.autoIncCheckBox.stateChanged.connect(self.handleAutoInc)
         self.ui.extensionComboBox.currentIndexChanged.connect(self.updateFilenameLabel)
@@ -277,6 +279,7 @@ class Window(QtGui.QMainWindow):
         # HAL GUI settings.
         self.gui_settings = []
         self.move(self.settings.value("main_pos", QtCore.QPoint(100, 100)).toPoint())
+        self.xml_directory = str(self.settings.value("xml_directory", "").toString())
 
         if (self.ui_mode == "single"):
             self.resize(self.settings.value("main_size", self.size()).toSize())
@@ -321,6 +324,7 @@ class Window(QtGui.QMainWindow):
 
         # Save HAL GUI settings.
         self.settings.setValue("main_pos", self.pos())
+        self.settings.setValue("xml_directory", self.xml_directory)
         if (self.ui_mode == "single"):
             self.settings.setValue("main_size", self.size())
 
@@ -392,25 +396,30 @@ class Window(QtGui.QMainWindow):
     ## dropEvent
     #
     # This is called when a file is dropped on the main window. It
-    # first tries to interpret the file as a parameters file, then
-    # as a shutters file.
+    # calls parameters.fileType() to figure out the type of the file.
     #
     # @param event A QEvent object containing the filenames.
     #
     @hdebug.debug
     def dropEvent(self, event):
+        if self.filming:
+            return
         filenames = []
         for url in event.mimeData().urls():
             #filenames.append(str(url.encodedPath())[1:])
             filenames.append(str(url.toLocalFile()))
         for filename in sorted(filenames):
-            try:
-                params.Parameters(filename)
-                self.newSettings(filename)
-            except:
-                print traceback.format_exc()
-                hdebug.logText(" Not a settings file, trying as shutters file")
+            file_type = params.fileType(filename)
+            if (file_type == "parameters"):
+                try:
+                    self.newSettings(filename)
+                except:
+                    print traceback.format_exc()
+                    hdebug.logText(" " + filename + " is not a valid settings file")
+            elif (file_type == "shutters"):
                 self.newShutters(filename)
+            else:
+                hdebug.logText(" " + filename + " is of unknown type.")
 
     ## getSignals
     #
@@ -655,21 +664,23 @@ class Window(QtGui.QMainWindow):
     # It opens a dialog where the user can select a new parameters file, then
     # tries to load the new parameter file.
     #
-    # @param bool Dummy parameter.
+    # @param boolean Dummy parameter.
     #
     @hdebug.debug
-    def newSettingsFile(self, bool):
-        self.stopCamera()
-        parameters_filename = QtGui.QFileDialog.getOpenFileName(self, "New Settings", "", "*.xml")
+    def newSettingsFile(self, boolean):
+        if self.filming:
+            return
+        parameters_filename = str(QtGui.QFileDialog.getOpenFileName(self, 
+                                                                    "New Settings",
+                                                                    self.xml_directory, 
+                                                                    "*.xml"))
         if parameters_filename:
+            self.xml_directory = os.path.dirname(parameters_filename)
             try:
-                params.Parameters(str(parameters_filename), is_HAL = True)
-                self.newSettings(str(parameters_filename))
+                self.newSettings(parameters_filename)
             except:
                 print traceback.format_exc()
-                print "failed to parse settings file"
-        else:
-            self.startCamera()
+                hdebug.logText(" " + parameters_filename + " is not a valid settings file")
 
     ## newShutters
     #
@@ -683,6 +694,8 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def newShutters(self, shutters_filename):
+        if self.filming:
+            return
         new_shutters = False
         try:
             for module in self.modules:
@@ -698,9 +711,7 @@ class Window(QtGui.QMainWindow):
             self.parameters.shutters = shutters_filename
             self.old_shutters_file = shutters_filename
             self.ui.shuttersText.setText(getFileName(self.parameters.shutters))
-            #self.camera.setSyncMax(self.shutter_control.getCycleLength())
             params.setDefaultShutter(shutters_filename)
-            #self.spot_counter.newParameters(self.parameters, colors)
             
     ## newShuttersFile
     #
@@ -712,11 +723,15 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def newShuttersFile(self, bool):
-        self.stopCamera()
-        shutters_filename = QtGui.QFileDialog.getOpenFileName(self, "New Shutter Sequence", "", "*.xml")
-        if shutters_filename and self.shutter_control:
-            self.newShutters(str(shutters_filename))
-        self.startCamera()
+        if self.filming:
+            return
+        shutters_filename = str(QtGui.QFileDialog.getOpenFileName(self, 
+                                                                  "New Shutter Sequence", 
+                                                                  self.xml_directory, 
+                                                                  "*.xml"))
+        if shutters_filename:
+            self.xml_directory = os.path.dirname(shutters_filename)
+            self.newShutters(shutters_filename)
 
     ## showHideLength
     #
