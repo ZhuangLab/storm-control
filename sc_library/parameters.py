@@ -30,6 +30,27 @@ def copyAttributes(original, duplicate):
         if not hasattr(duplicate, k):
             setattr(duplicate, k, copy.copy(v))
 
+## fileType
+#
+# Based on the root tag, returns the XML file type.
+#
+# @param xml_file An XML file.
+# 
+# @returns One of "parameters", "shutters" or "unknown"
+#
+def fileType(xml_file):
+    try:
+        xml = ElementTree.parse(xml_file).getroot()
+        if (xml.tag == "settings"):
+            return "parameters"
+        elif (xml.tag == "repeat"):
+            return "shutters"
+        else:
+            return "unknown"
+    except:
+        print xml_file, "is not an xml file."
+        return "unknown"
+
 ## Hardware
 #
 # Parses a hardware file to create a hardware object.
