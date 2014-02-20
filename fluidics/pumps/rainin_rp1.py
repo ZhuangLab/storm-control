@@ -70,9 +70,9 @@ class RaininRP1():
         # Connect (or simulate) Serial Connection
         if not self.simulate:
             print "Opening a Rainin RP1 Pump"
-            self.serial.write(self.disconnect_signal)
+            self.write(self.disconnect_signal)
             time.sleep(0.1)
-            self.serial.write(str(self.pump_ID))
+            self.write(str(self.pump_ID))
             
         else:
             print "Simulating a Rainin RP1 Pump"
@@ -93,7 +93,7 @@ class RaininRP1():
     # ------------------------------------------------------------------------------------ 
     def disconnectPump(self):
         if not self.simulate:
-            self.serial.write(self.disconnect_signal)
+            self.write(self.disconnect_signal)
         if self.control_status == "Remote":
             self.enableRemoteControl(False)
  
@@ -112,6 +112,7 @@ class RaininRP1():
     # Toggle Remote Control Status
     # ------------------------------------------------------------------------------------ 
     def enableRemoteControl(self, remote_control):
+        print "Enable Remote Control"
         if not self.simulate:
             if remote_control:
                 self.sendBufferedCommand("L")
@@ -125,6 +126,7 @@ class RaininRP1():
     # Get Pump Identification
     # ------------------------------------------------------------------------------------ 
     def getPumpIdentification(self):
+        print "Requesting Pump ID"
         if not self.simulate:
             message = self.sendImmediateCommand("%")
             self.identification = message
@@ -150,13 +152,16 @@ class RaininRP1():
     def getResponse(self):
         message = []
         done = False
+        count = 0
+        max_count = 10
         while not done:
-            response = self.serial.read(1)
+            response = self.read(1)
             done = ord(response) and self.message_complete_flag
+            done = done or count > max_count
             if not done:
                 message.append(response)
                 # Request next message
-                self.serial.wite(self.acknowledge)
+                self.write(self.acknowledge)
             else:
                 message.append(chr(ord(response) - self.message_complete_flag))
         return message
@@ -193,6 +198,7 @@ class RaininRP1():
     # Determine the Rainin Status
     # ------------------------------------------------------------------------------------ 
     def requestStatus(self):
+        print "Requesting status"
         message = []
         if not self.simulate:
             message = self.sendImmediateCommand("I")
@@ -237,10 +243,10 @@ class RaininRP1():
         attempt_number = 0
         done = False
         while not done:
-            self.serial.write(command_message)
+            self.write(command_message)
             time.sleep(0.1)
-            response = self.serial.read(1)
-
+            response = self.read(1)
+            time.sleep(10)
             if response == self.line_feed:
                 done = True
             elif response == self.pound_sign:
@@ -261,7 +267,7 @@ class RaininRP1():
     # ------------------------------------------------------------------------------------ 
     def sendImmediateCommand(self, command_letter):
         # Write single letter command
-        self.serial.write(command_letter)
+        self.write(command_letter)
         # Wait >20 ms
         time.sleep(0.1)
         # Read response
@@ -360,16 +366,31 @@ class RaininRP1():
         if self.simulate:
             self.flow_status = "Stopped"
         return True
-    
+
+    # ------------------------------------------------------------------------------------
+    # Write to Serial Port
+    # ------------------------------------------------------------------------------------ 
+    def write(self, message):
+        self.serial.write(message)
+
+        print "Wrote " + message + ": " + str(("", message))
+
+    # ------------------------------------------------------------------------------------
+    # Read from Serial Port
+    # ------------------------------------------------------------------------------------ 
+    def read(self, num_signal):
+        response = self.serial.read(num_signal)
+        print "Read " + response + ": " + str(("", response))
+        return response
 # ----------------------------------------------------------------------------------------
 # Test/Demo of Classs
 # ----------------------------------------------------------------------------------------
 if __name__ == '__main__':
-    rainin = RaininRP1(COM_port = 3, pump_ID = 30 ,simulate = True, verbose = True)
+    rainin = RaininRP1(com_port = 3, pump_ID = 30 ,simulate = False, verbose = True)
     print rainin
-    rainin.setSpeed(10.00)
-    rainin.setFlowDirection(False)
-    rainin.setRemoteControl(True)
+##    rainin.setSpeed(10.00)
+##    rainin.setFlowDirection(False)
+##    rainin.setRemoteControl(True)
     print rainin.getStatus()
     print rainin
     rainin.close()
