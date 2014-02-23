@@ -386,7 +386,7 @@ class RaininRP1():
 # Test/Demo of Classs
 # ----------------------------------------------------------------------------------------
 if __name__ == '__main__':
-    rainin = RaininRP1(com_port = 3, pump_ID = 30 ,simulate = False, verbose = True)
+    rainin = RaininRP1(com_port = 4, pump_ID = 30 ,simulate = False, verbose = True)
     print rainin
 ##    rainin.setSpeed(10.00)
 ##    rainin.setFlowDirection(False)
