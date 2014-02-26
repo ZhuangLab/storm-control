@@ -31,7 +31,7 @@ import qtdesigner.stage_ui as stageUi
 # getStatus()
 #   Returns True if the stage is alive and running, False otherwise.
 #
-# goAbsolution(x, y)
+# goAbsolute(x, y)
 #   Go to position x, y (in um)
 #
 # goRelative(dx, dy)
