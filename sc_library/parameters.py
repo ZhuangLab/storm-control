@@ -11,7 +11,7 @@
 
 import copy
 import os
-#from xml.dom import minidom, Node
+import traceback
 import xml.etree.ElementTree as ElementTree
 
 default_params = 0
@@ -30,6 +30,26 @@ def copyAttributes(original, duplicate):
         if not hasattr(duplicate, k):
             setattr(duplicate, k, copy.copy(v))
 
+## fileType
+#
+# Based on the root tag, returns the XML file type.
+#
+# @param xml_file An XML file.
+# 
+# @returns An array containing "parameters", "shutters" or "unknown" as the first element and XML parsing errors (if any) as the second element.
+#
+def fileType(xml_file):
+    try:
+        xml = ElementTree.parse(xml_file).getroot()
+        if (xml.tag == "settings"):
+            return ["parameters", False]
+        elif (xml.tag == "repeat"):
+            return ["shutters", False]
+        else:
+            return ["unknown", False]
+    except:
+        return ["unknown", traceback.format_exc()]
+
 ## Hardware
 #
 # Parses a hardware file to create a hardware object.
@@ -40,6 +60,7 @@ def copyAttributes(original, duplicate):
 #
 def Hardware(hardware_file):
     xml = ElementTree.parse(hardware_file).getroot()
+    assert xml.tag == "hardware", hardware_file + " is not a hardware file."
 
     # Create the hardware object.
     xml_object = StormXMLObject([])

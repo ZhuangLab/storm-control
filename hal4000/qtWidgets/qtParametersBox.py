@@ -141,6 +141,22 @@ class QParametersBox(QtGui.QWidget):
         else:
             print "Requested parameter index not available", index
 
+    ## startFilm
+    #
+    # Called at the start of filming to disable the radio buttons.
+    #
+    def startFilm(self):
+        for button in self.radio_buttons:
+            button.setEnabled(False)
+
+    ## stopFilm
+    #
+    # Called at the end of filming to enable the radio buttons.
+    #
+    def stopFilm(self):
+        for button in self.radio_buttons:
+            button.setEnabled(True)
+            
     ## toggleParameters
     #
     # This is called when one of the radio buttons is clicked to figure out

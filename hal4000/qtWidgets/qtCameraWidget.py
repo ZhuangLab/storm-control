@@ -121,6 +121,20 @@ class QCameraWidget(QtGui.QWidget):
         margin = int(0.1 * float(self.image_max - self.image_min))
         return [self.image_min - margin, self.image_max + margin]
 
+    ## getEventLocation
+    #
+    # Returns the location of an external event in the window, normalized
+    # to 0.0 - 1.0.
+    #
+    # @param event A PyQt event object.
+    #
+    # @return [event x (0.0 - 1.0), event y (0.0 - 1.0)]
+    #
+    def getEventLocation(self, event):
+        event_pos = self.mapFromGlobal(event.globalPos())
+        return [float(event_pos.x())/float(self.x_final),
+                float(event_pos.y())/float(self.y_final)]
+
     ## mouseMoveEvent
     #
     # @param event A PyQt mouse move event.
