@@ -17,9 +17,11 @@ import sys
 # The base class for displaying data from a camera.
 #
 class QCameraWidget(QtGui.QWidget):
-    roiSelection = QtCore.pyqtSignal(object)
+    dragStart = QtCore.pyqtSignal()
+    dragMove = QtCore.pyqtSignal(float, float)
     intensityInfo = QtCore.pyqtSignal(int, int, int)
     mousePress = QtCore.pyqtSignal(int, int)
+    roiSelection = QtCore.pyqtSignal(object)
 
     ## __init__
     #
@@ -28,8 +30,14 @@ class QCameraWidget(QtGui.QWidget):
     #
     def __init__(self, parameters, parent = None):
         QtGui.QWidget.__init__(self, parent)
+        self.setFocusPolicy(QtCore.Qt.ClickFocus)
 
         self.buffer = False
+
+        # These are for dragging (to move the stage).
+        self.drag_mode = False
+        self.drag_x = 0
+        self.drag_y = 0
 
         self.flip_horizontal = parameters.flip_horizontal
         self.flip_vertical = parameters.flip_vertical
@@ -42,6 +50,9 @@ class QCameraWidget(QtGui.QWidget):
         # This is the amount of image magnification.
         # Only integer values are allowed.
         self.magnification = 1
+        
+        self.mouse_x = 0
+        self.mouse_y = 0
 
         self.roi_rubber_band = False
 
@@ -135,13 +146,40 @@ class QCameraWidget(QtGui.QWidget):
         return [float(event_pos.x())/float(self.x_final),
                 float(event_pos.y())/float(self.y_final)]
 
+    ## keyPressEvent
+    #
+    # @param event A PyQt key press event.
+    #
+    def keyPressEvent(self, event):
+        if (event.key() == QtCore.Qt.Key_Control):
+            self.drag_mode = True
+            self.dragStart.emit()
+            self.drag_x = self.mouse_x
+            self.drag_y = self.mouse_y
+            QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
+
+    ## keyReleaseEvent
+    #
+    # @param event A PyQt key release event
+    #
+    def keyReleaseEvent(self, event):
+        if self.drag_mode:
+            self.drag_mode = False
+            QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+
     ## mouseMoveEvent
     #
     # @param event A PyQt mouse move event.
     #
     def mouseMoveEvent(self, event):
+        self.mouse_x = event.x()
+        self.mouse_y = event.y()
+
         if self.roi_rubber_band:
             self.roi_rubber_band.setGeometry(QtCore.QRect(self.roi_rubber_band.pos(), event.pos()).normalized())
+
+        if self.drag_mode:
+            self.dragMove.emit(self.drag_x - self.mouse_x, self.drag_y - self.mouse_y)
             
     ## mousePressEvent
     #

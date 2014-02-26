@@ -114,7 +114,9 @@ class SingleCamera(genericCamera.Camera):
     #
     @hdebug.debug
     def getSignals(self):
-        return [["camera", "cameraROISelection", self.camera_display.cameraROISelection]]
+        return [["camera", "cameraROISelection", self.camera_display.cameraROISelection],
+                ["camera", "dragStart", self.camera_display.cameraDragStart],
+                ["camera", "dragMove", self.camera_display.cameraDragMove]]
 
     ## handleGainChange
     #

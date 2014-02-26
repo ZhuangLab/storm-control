@@ -67,16 +67,27 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
     def __init__(self, parameters, parent):
         QtGui.QMainWindow.__init__(self, parent)
         halModule.HalModule.__init__(self)
+        #self.setFocusPolicy(QtCore.Qt.ClickFocus)
 
+        self.drag_start_x = 0
+        self.drag_start_y = 0
         self.joystick_lockout = False
+        self.large_step_size = 50.0
         self.parameters = parameters
         self.position_update_timer = QtCore.QTimer(self)
         self.position_update_timer.setInterval(500)
+        self.small_step_size = 10.0
+        self.x = 0
+        self.x_axis = 1
+        self.x_sign = -1
+        self.y = 0
+        self.y_sign = 1
+        self.z = 0
 
         if parent:
-            self.have_parent = 1
+            self.have_parent = True
         else:
-            self.have_parent = 0
+            self.have_parent = False
 
         # UI setup
         self.ui = stageUi.Ui_Dialog()
@@ -136,16 +147,10 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
         self.setModal(False)
 
         # open connection to the stage
-        self.small_step_size = 10.0
-        self.large_step_size = 50.0
-        self.x_sign = -1
-        self.y_sign = 1
+
         if parameters:
             self.newParameters(parameters)
-        self.x_axis = 1
-        self.x = 0
-        self.y = 0
-        self.z = 0
+
         if not(self.stage.getStatus()):
             print "Failed to connect to the microscope stage. Perhaps it is turned off?"
             self.stage.shutDown()
@@ -196,6 +201,12 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
                 signal[2].connect(self.jog)
             elif (signal[1] == "jstickStep"):
                 signal[2].connect(self.step)
+
+            # Drag signals
+            elif (signal[1] == "dragStart"):
+                signal[2].connect(self.handleDragStart)
+            elif (signal[1] == "dragMove"):
+                signal[2].connect(self.handleDragMove)
 
     ## downS
     #
@@ -263,6 +274,29 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
 
         if (m_type == "moveTo"):
             self.tcpHandleMoveTo(m_data[0], m_data[1])
+
+    ## handleDragMove
+    #
+    # This is motion relative to a fixed point. The expected inputs are
+    # displacements (in um) from the fixed point (previously recorded
+    # with handleDragStart().
+    #
+    # @param drag_x_disp Offset distance in x in microns.
+    # @param drag_y_disp Offset distance in y in microns.
+    #
+    @hdebug.debug
+    def handleDragMove(self, drag_x_disp, drag_y_disp):
+        self.moveAbsolute(self.x + drag_x_disp,
+                          self.y + drag_y_disp)
+
+    ## handleDragStart
+    #
+    # Record the current stage position for drag events.
+    #
+    @hdebug.debug
+    def handleDragStart(self):
+        self.drag_x_start = self.x
+        self.drag_y_start = self.y
 
     ## handleGo
     #
@@ -391,17 +425,17 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
     #
     # @param event A PyQt key press event.
     #
-    @hdebug.debug
-    def keyPressEvent(self, event):
-        key = event.key()
-        if key == 52:
-            self.leftS()
-        elif key == 56:
-            self.upS()
-        elif key == 54:
-            self.rightS()
-        elif key == 50:
-            self.downS()
+#    @hdebug.debug
+#    def keyPressEvent(self, event):
+#        key = event.key()
+#        if key == QtCore.Qt.Key_Left:
+#            self.leftS(False)
+#        elif key == QtCore.Qt.Key_Up:
+#            self.upS(False)
+#        elif key == QtCore.Qt.Key_Right:
+#            self.rightS(False)
+#        elif key == QtCore.Qt.Key_Down:
+#            self.downS(False)
 
     ## leftS
     #
