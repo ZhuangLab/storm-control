@@ -55,9 +55,8 @@ while not done:
         complete_message.append( chr(ord(response)-128))
     else:
         complete_message.append(response)
-    serial.write(chr(6))
+        serial.write(chr(6))
 
-response = serial.read(10) # Clear buffer
 print "Received: " + str(complete_message)
 
 # Get Pump ID
@@ -75,9 +74,8 @@ while not done:
         complete_message.append( chr(ord(response)-128))
     else:
         complete_message.append(response)
-    serial.write(chr(6))
+        serial.write(chr(6))
 
-response = serial.read(10) # Clear buffer
 print "Received: " + str(complete_message)
 
 # Get Pump Status
@@ -95,15 +93,13 @@ while not done:
         complete_message.append( chr(ord(response)-128))
     else:
         complete_message.append(response)
-    serial.write(chr(6))
+        serial.write(chr(6))
 
-response = serial.read(10) # Clear buffer
 print "Received: " + str(complete_message)
 
 #----------------------------------------------------------------------------------
-# Testing Immediate Commands
+# Testing Buffered Commands
 #----------------------------------------------------------------------------------
-
 
 # Change pump speed
 ready_signal = '\n'
