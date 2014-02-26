@@ -100,18 +100,37 @@ print "Received: " + str(complete_message)
 #----------------------------------------------------------------------------------
 # Testing Buffered Commands
 #----------------------------------------------------------------------------------
+print "----------------------------------------------------------------------------"
+print "Testing Buffered Commands"
+print '\n'
 
-# Change pump speed
-ready_signal = '\n'
-not_ready_signal = chr(ord('#'))
+# Check initial Pump Status
+print "Getting Pump Status"
+serial.write(chr( ord('?')))
+print "Write: " + "?"
+done = False
+complete_message = []
+while not done:
+    response = serial.read(1)
+    #print (response, ord(response))
+    if ord(response) > 128:
+        done = True
+        print "Triggered complete"
+        complete_message.append( chr(ord(response)-128))
+    else:
+        complete_message.append(response)
+        serial.write(chr(6))
+
+print "Received: " + str(complete_message)
 
 # Poll pump for ready signal
 ready = False
+ready_signal = '\n'
+not_ready_signal = chr(ord('#'))
+print "Is pump ready for buffered command?"
 while not ready:
     serial.write('\x0A')
-    print "Writing: " + "\x0A"
     response = serial.read(1)
-    print "Response: " + str((response, ''))
     if response == ready_signal:
         ready = True
         print "Pump is ready to received buffered command"
@@ -119,7 +138,7 @@ while not ready:
         response = serial.read(10)
 
 # Enter lock mode
-message_to_write = ['\x0A', chr(ord('L')), '\x0D']
+message_to_write = [chr(ord('L')), '\x0D']
 
 print "Writing: " + str(message_to_write)
 
@@ -136,17 +155,37 @@ for message in message_to_write:
         else:
             print "Error in transmission of " + str((message, ''))
 
-
-# Poll pump for ready signal
-ready = False
-while not ready:
-    serial.write('\x0A')
-    print "Writing: " + '\x0A'
+# See if status has changed
+print "Getting Pump Status"
+serial.write(chr( ord('?')))
+print "Write: " + "?"
+done = False
+complete_message = []
+while not done:
     response = serial.read(1)
-    print "Response: " + str((response, ''))
-    if response == ready_signal:
-        ready = True
-        print "Pump is ready to received buffered command"
+    #print (response, ord(response))
+    if ord(response) > 128:
+        done = True
+        print "Triggered complete"
+        complete_message.append( chr(ord(response)-128))
+    else:
+        complete_message.append(response)
+        serial.write(chr(6))
+
+print "Received: " + str(complete_message)
+
+
+
+### Poll pump for ready signal
+##ready = False
+##while not ready:
+##    serial.write('\x0A')
+##    print "Writing: " + '\x0A'
+##    response = serial.read(1)
+##    print "Response: " + str((response, ''))
+##    if response == ready_signal:
+##        ready = True
+##        print "Pump is ready to received buffered command"
 
 ##
 ### Change pump speed
