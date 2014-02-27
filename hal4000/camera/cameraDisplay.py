@@ -28,6 +28,8 @@ import colorTables.colorTables as colorTables
 # The Camera display class.
 #
 class CameraDisplay(QtGui.QFrame):
+    cameraDragStart = QtCore.pyqtSignal()
+    cameraDragMove = QtCore.pyqtSignal(float, float)
     cameraROISelection = QtCore.pyqtSignal(object, object)
 
     ## __init__
@@ -106,6 +108,8 @@ class CameraDisplay(QtGui.QFrame):
         self.ui.autoScaleButton.clicked.connect(self.autoScale)
         self.ui.colorComboBox.currentIndexChanged.connect(self.colorTableChange)
         self.ui.syncSpinBox.valueChanged.connect(self.handleSync)
+        self.camera_widget.dragStart.connect(self.handleDragStart)
+        self.camera_widget.dragMove.connect(self.handleDragMove)
         self.camera_widget.intensityInfo.connect(self.handleIntensityInfo)
         self.camera_widget.roiSelection.connect(self.handleROISelection)
         self.ui.gridAct.triggered.connect(self.handleGrid)
@@ -189,6 +193,21 @@ class CameraDisplay(QtGui.QFrame):
     def getRecordButton(self):
         return self.ui.recordButton
 
+    ## handleDragStart
+    #
+    def handleDragStart(self):
+        self.cameraDragStart.emit()
+
+    ## handleDragMove
+    #
+    # This is just a pass-through for now. It might need to be buffered?
+    #
+    # @param x_disp x displacement in pixels.
+    # @param y_disp y displacement in pixels.
+    #
+    def handleDragMove(self, x_disp, y_disp):
+        self.cameraDragMove.emit(x_disp, y_disp)
+        
     ## handleGrid
     #
     # This handles telling the xCameraWidget to show or hide the grid

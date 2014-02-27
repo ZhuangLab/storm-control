@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'stage.ui'
 #
-# Created: Fri Nov 22 08:34:09 2013
+# Created: Thu Feb 27 11:24:34 2014
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -118,9 +118,6 @@ class Ui_Dialog(object):
         self.ymoveDoubleSpinBox.setMinimum(-100000.0)
         self.ymoveDoubleSpinBox.setMaximum(100000.0)
         self.ymoveDoubleSpinBox.setObjectName(_fromUtf8("ymoveDoubleSpinBox"))
-        self.joystickLockoutButton = QtGui.QPushButton(Dialog)
-        self.joystickLockoutButton.setGeometry(QtCore.QRect(330, 210, 101, 24))
-        self.joystickLockoutButton.setObjectName(_fromUtf8("joystickLockoutButton"))
         self.saveGroupBox = QtGui.QGroupBox(Dialog)
         self.saveGroupBox.setGeometry(QtCore.QRect(10, 10, 171, 111))
         self.saveGroupBox.setObjectName(_fromUtf8("saveGroupBox"))
@@ -155,7 +152,6 @@ class Ui_Dialog(object):
         self.ymoveLabel.setText(_translate("Dialog", "Y (um):", None))
         self.xmoveLabel.setText(_translate("Dialog", "X (um):", None))
         self.goButton.setText(_translate("Dialog", "Go", None))
-        self.joystickLockoutButton.setText(_translate("Dialog", "Joystick Lockout", None))
         self.saveGroupBox.setTitle(_translate("Dialog", "Saved Positions", None))
         self.addButton.setText(_translate("Dialog", "Add", None))
         self.clearButton.setText(_translate("Dialog", "Clear", None))

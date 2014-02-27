@@ -134,7 +134,7 @@ class Capture(QtCore.QObject):
     ## captureDone
     #
     # This is called when we get the (movie) completion method from HAL. It
-    # attempts to find the image that HAL just took on the disc, creates a
+    # attempts to find the image that HAL just took on the disk, creates a
     # Image object and emits the captureComplete signal.
     #
     # @param a_string Not used.
@@ -143,40 +143,11 @@ class Capture(QtCore.QObject):
     def captureDone(self, a_string):
         print "captureDone"
 
-        # load the first frame of the dax file
+        # determine filename
         filename = self.directory + self.filename + ".dax"
-        success = False
 
-        # Deals with a file system race condition?
-        # Or is it a acquisition software problem?
-        time.sleep(0.05)
-        tries = 0
-        while (not success) and (tries < 4):
-            try:
-                self.dax = daxspereader.DaxReader(filename, verbose = 1)
-                frame = self.dax.loadAFrame(0)
-                self.dax.closeFilePtr()
-                success = True
-            except:
-                print "Failed to load:", filename
-                frame = None
-                time.sleep(0.05)
-            tries += 1
-
-        if type(frame) == type(numpy.array([])):
-            if self.flip_horizontal:
-                frame = numpy.fliplr(frame)
-            if self.flip_vertical:
-                frame = numpy.flipud(frame)
-            if self.transpose:
-                frame = numpy.transpose(frame)
-            image = Image(frame,
-                          self.dax.filmSize(),
-                          self.dax.filmScale(),
-                          self.dax.filmLocation(),
-                          self.dax.filmParameters())
-
-            self.captureComplete.emit(image)
+        # load image
+        self.loadImage(filename)
 
     ## captureStart
     #
@@ -289,6 +260,47 @@ class Capture(QtCore.QObject):
             print "handleStartTimer: not connected"
             self.disconnected.emit()
 
+    ## loadImage
+    #
+    # Load a dax image. This is called by captureDone to
+    # load the image. It is also called directly by Steve
+    # to load images chosen by the user.
+    #
+    @hdebug.debug
+    def loadImage(self, filename):
+        success = False
+
+        # Deals with a file system race condition?
+        # Or is it a acquisition software problem?
+        time.sleep(0.05)
+        tries = 0
+        while (not success) and (tries < 4):
+            try:
+                self.dax = daxspereader.DaxReader(filename, verbose = 1)
+                frame = self.dax.loadAFrame(0)
+                self.dax.closeFilePtr()
+                success = True
+            except:
+                print "Failed to load:", filename
+                frame = None
+                time.sleep(0.05)
+            tries += 1
+
+        if type(frame) == type(numpy.array([])):
+            if self.flip_horizontal:
+                frame = numpy.fliplr(frame)
+            if self.flip_vertical:
+                frame = numpy.flipud(frame)
+            if self.transpose:
+                frame = numpy.transpose(frame)
+            image = Image(frame,
+                          self.dax.filmSize(),
+                          self.dax.filmScale(),
+                          self.dax.filmLocation(),
+                          self.dax.filmParameters())
+
+            self.captureComplete.emit(image)
+    
     ## setDirectory
     #
     # Sets self.directory to directory.

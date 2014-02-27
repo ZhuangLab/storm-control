@@ -84,6 +84,7 @@
   <large_step_size type="float">25.0</large_step_size>
   <x_sign type="int">-1</x_sign>
   <y_sign type="int">1</y_sign>
+  <flip_axis type="int">0</flip_axis>
   <stage_speed type="float">2.0</stage_speed>
 
   <!-- focus lock settings -->
