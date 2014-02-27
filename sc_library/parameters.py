@@ -11,7 +11,7 @@
 
 import copy
 import os
-#from xml.dom import minidom, Node
+import traceback
 import xml.etree.ElementTree as ElementTree
 
 default_params = 0
@@ -29,6 +29,26 @@ def copyAttributes(original, duplicate):
     for k, v in original.__dict__.iteritems():
         if not hasattr(duplicate, k):
             setattr(duplicate, k, copy.copy(v))
+
+## fileType
+#
+# Based on the root tag, returns the XML file type.
+#
+# @param xml_file An XML file.
+# 
+# @returns An array containing "parameters", "shutters" or "unknown" as the first element and XML parsing errors (if any) as the second element.
+#
+def fileType(xml_file):
+    try:
+        xml = ElementTree.parse(xml_file).getroot()
+        if (xml.tag == "settings"):
+            return ["parameters", False]
+        elif (xml.tag == "repeat"):
+            return ["shutters", False]
+        else:
+            return ["unknown", False]
+    except:
+        return ["unknown", traceback.format_exc()]
 
 ## Hardware
 #

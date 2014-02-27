@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'steve.ui'
 #
-# Created: Fri Nov 22 08:40:58 2013
+# Created: Tue Feb 25 10:27:03 2014
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -218,7 +218,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.addLayout(self.horizontalLayout)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 937, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 937, 26))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -246,9 +246,12 @@ class Ui_MainWindow(object):
         self.actionLoad_Positions.setObjectName(_fromUtf8("actionLoad_Positions"))
         self.actionSave_Snapshot = QtGui.QAction(MainWindow)
         self.actionSave_Snapshot.setObjectName(_fromUtf8("actionSave_Snapshot"))
+        self.actionLoad_Dax = QtGui.QAction(MainWindow)
+        self.actionLoad_Dax.setObjectName(_fromUtf8("actionLoad_Dax"))
         self.menuFile.addAction(self.actionSet_Working_Directory)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionDelete_Images)
+        self.menuFile.addAction(self.actionLoad_Dax)
         self.menuFile.addAction(self.actionLoad_Mosaic)
         self.menuFile.addAction(self.actionLoad_Positions)
         self.menuFile.addAction(self.actionSave_Mosaic)
@@ -292,4 +295,5 @@ class Ui_MainWindow(object):
         self.actionDelete_Images.setText(_translate("MainWindow", "Delete Images", None))
         self.actionLoad_Positions.setText(_translate("MainWindow", "Load Positions", None))
         self.actionSave_Snapshot.setText(_translate("MainWindow", "Save Snapshot", None))
+        self.actionLoad_Dax.setText(_translate("MainWindow", "Load Dax", None))
 
