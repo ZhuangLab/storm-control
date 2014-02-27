@@ -22,17 +22,18 @@ class RaininRP1():
                  com_port = 3,
                  pump_ID = 30,
                  simulate = False,
-                 verbose = True):
+                 verbose = True,
+                 serial_verbose = False):
 
         # Define attributes
         self.com_port = com_port
         self.pump_ID = pump_ID
         self.verbose = verbose
         self.simulate = simulate
+        self.serial_verbose = serial_verbose
         
         # Create serial port
         if not self.simulate:
-            print self.simulate
             self.serial = serial.Serial(port = self.com_port,
                                         baudrate = 19200,
                                         bytesize = serial.EIGHTBITS,
@@ -41,12 +42,13 @@ class RaininRP1():
                                         timeout = 0.1)
 
         # Define important serial characters
-        self.acknowledge = "\x06"
-        self.carriage_return = "\x13"
-        self.negative_acknowledge = "\x21"
-        self.line_feed = '\x12'
-        self.pound_sign = '\x35'
-        self.disconnect_signal = '\x255'
+        self.acknowledge = '\x06'
+        self.carriage_return = '\x0D'
+        self.ready_signal = '\x0A'
+        self.negative_acknowledge = '\x15'
+        self.line_feed = '\x0A'
+        self.pound_sign = '\x23'
+        self.disconnect_signal = '\xFF'
         self.message_complete_flag = 128
         self.max_attempt_number = 10
 
@@ -54,13 +56,12 @@ class RaininRP1():
         self.flow_status = "Stopped"
         self.speed = 0.0
         self.direction = "Forward"
-        self.control_status = "Keyboard"
+        self.control_status = "Keypad"
         self.auto_start = "Disabled"
         self.error_status = "No Error"
         self.identification = ""
         
         # Configure device
-        self.disconnectPump()
         self.connectPump()
 
     # ------------------------------------------------------------------------------------
@@ -70,10 +71,11 @@ class RaininRP1():
         # Connect (or simulate) Serial Connection
         if not self.simulate:
             print "Opening a Rainin RP1 Pump"
-            self.serial.write(self.disconnect_signal)
+            self.write(self.disconnect_signal)
             time.sleep(0.1)
-            self.serial.write(str(self.pump_ID))
-            
+            self.read(1)
+            self.write(chr(self.pump_ID + 128))
+            self.read(1)
         else:
             print "Simulating a Rainin RP1 Pump"
 
@@ -93,9 +95,8 @@ class RaininRP1():
     # ------------------------------------------------------------------------------------ 
     def disconnectPump(self):
         if not self.simulate:
-            self.serial.write(self.disconnect_signal)
-        if self.control_status == "Remote":
-            self.enableRemoteControl(False)
+            if self.control_status == "Remote": self.enableRemoteControl(False)
+            self.write(self.disconnect_signal)
  
     # ------------------------------------------------------------------------------------
     # Close Serial Port
@@ -118,13 +119,21 @@ class RaininRP1():
             else:
                 self.sendBufferedCommand("U")
         else:
-            if remote_control: self.control_status = "Remote"
-            else: self.control_status = "Keyboard"
-        
+            if remote_control: self.control_status == "Remote"
+            else: self.control_status == "Keypad"
+        if self.verbose:
+            if self.control_status == "Remote":
+                print "Enabled Remote Control"
+            elif self.control_status == "Keypad":
+                print "Disabled Remote Control"
+            else:
+                print "Unknown Status"
+            
     # ------------------------------------------------------------------------------------
     # Get Pump Identification
     # ------------------------------------------------------------------------------------ 
     def getPumpIdentification(self):
+        if self.verbose: print "Requesting Pump ID"
         if not self.simulate:
             message = self.sendImmediateCommand("%")
             self.identification = message
@@ -145,23 +154,6 @@ class RaininRP1():
                 self.control_status, self.auto_start, self.error_status)
 
     # ------------------------------------------------------------------------------------
-    # Read buffer
-    # ------------------------------------------------------------------------------------ 
-    def getResponse(self):
-        message = []
-        done = False
-        while not done:
-            response = self.serial.read(1)
-            done = ord(response) and self.message_complete_flag
-            if not done:
-                message.append(response)
-                # Request next message
-                self.serial.wite(self.acknowledge)
-            else:
-                message.append(chr(ord(response) - self.message_complete_flag))
-        return message
-
-    # ------------------------------------------------------------------------------------
     # Get Rainin Status from Current Display
     # ------------------------------------------------------------------------------------ 
     def readDisplay(self):
@@ -171,9 +163,9 @@ class RaininRP1():
 
             # Parse direction and movement
             direction = {" ": "Not Running", "+": "Forward", "-": "Reverse"}.get(message[0], "Unknown")
-            if directon == "Not Running":
+            if direction == "Not Running":
                 self.flow_status = "Stopped"
-            elif directon == "Forward":
+            elif direction == "Forward":
                 self.flow_status = "Flowing"
                 self.direction = "Forward"
             elif direction == "Reverse":
@@ -193,10 +185,12 @@ class RaininRP1():
     # Determine the Rainin Status
     # ------------------------------------------------------------------------------------ 
     def requestStatus(self):
+        if self.verbose: print "Requesting status"
         message = []
         if not self.simulate:
-            message = self.sendImmediateCommand("I")
-
+            message = self.sendImmediateCommand("?")
+            print message
+            
             # Parse Control Status
             self.control_status = {"K": "Keypad", "R": "Remote"}.get(message[0], "Unknown")
 
@@ -214,15 +208,15 @@ class RaininRP1():
     # ------------------------------------------------------------------------------------ 
     def __str__(self):
         base_string = "Rainin RP1 Class: \n"
-        base_string += "    " + "Pump Information: " + self.identification + "\n"
+        base_string += "    " + "Pump Information: " + str(self.identification) + "\n"
         base_string += "    " + "PortID: " + str(self.pump_ID) + "\n"
         base_string += "    " + "COM Port: " + str(self.com_port) + "\n"
-        base_string += "    " + "Flow Status: " + self.flow_status + "\n"
+        base_string += "    " + "Flow Status: " + str(self.flow_status) + "\n"
         base_string += "    " + "Flow Speed: " + str(self.speed) + "\n"
-        base_string += "    " + "Flow Direction: " + self.direction + "\n"
-        base_string += "    " + "Control Status: " + self.control_status + "\n"
-        base_string += "    " + "Auto Start: " + self.auto_start + "\n"
-        base_string += "    " + "Error: " + self.error_status + "\n"
+        base_string += "    " + "Flow Direction: " + str(self.direction) + "\n"
+        base_string += "    " + "Control Status: " + str(self.control_status) + "\n"
+        base_string += "    " + "Auto Start: " + str(self.auto_start) + "\n"
+        base_string += "    " + "Error: " + str(self.error_status) + "\n"
 
         return base_string
 
@@ -231,62 +225,63 @@ class RaininRP1():
     # ------------------------------------------------------------------------------------ 
     def sendBufferedCommand(self, command_string):
         # Compose command message
-        command_message = self.line_feed + command_string + self.carriage_return;
+        command_message = command_string + self.carriage_return;
 
-        # Write message
+        # Poll pump to determine if ready for buffered command
+        ready = False
         attempt_number = 0
-        done = False
-        while not done:
-            self.serial.write(command_message)
-            time.sleep(0.1)
-            response = self.serial.read(1)
-
-            if response == self.line_feed:
-                done = True
-            elif response == self.pound_sign:
-                attempt_number += 1
+        while not ready:
+            self.write(self.line_feed)
+            response = self.read(1)
+            if response == self.ready_signal:
+                ready = True
+                self.read(10) # Clear buffer
+                if self.serial_verbose: print "Received Ready Signal"
             else:
-                if self.verbose:
-                    print "Unexpected response when submitting message: " + command_string
-
+                attempt_number += 1
+                if self.serial_verbose: print "Received Busy Signal"
             if attempt_number > self.max_attempt_number:
-                done = True
+                ready = True
+                print "Error in sending buffered command: Pump not ready"
         
-        # Read response
-        message = self.getResponse()
-        return message
-    
+        # Write buffered command
+        attempt_number = 0
+        for character in command_message:
+            received = False
+            while not received:
+                self.write(chr(ord(character)))
+                response = self.read(1)
+                if response == character:
+                    received = True
+                else:
+                    if self.verbose: print "Error in transmission of " + str((character, ''))
+
+        # Update the pump status after a buffered command
+        self.getStatus()
+        
     # ------------------------------------------------------------------------------------
     # Send Immediate Command
     # ------------------------------------------------------------------------------------ 
     def sendImmediateCommand(self, command_letter):
         # Write single letter command
-        self.serial.write(command_letter)
-        # Wait >20 ms
-        time.sleep(0.1)
-        # Read response
-        message = self.getResponse()
-        return message
+        self.write(chr(ord(command_letter)))
 
-    # ------------------------------------------------------------------------------------
-    # Set remote control: remote_control = True/Falses toggles between remote/keyboard
-    # ------------------------------------------------------------------------------------ 
-    def setRemoteControl(self, remote_control):
-        if not self.simulate:
-            if remote_control: control_string = "SR"
-            else: control_string = "SK"
+        # Get response
+        message = []
+        done = False
+        attempt_number = 0
+        while not done:
+            response = self.read(1)
             
-            response = sendBufferedCommand(rotation_message)
-
-            if not (response == rotation_message):
-                self.control_status = "Unknown"
-                print "Error setting control status"
-                return False
-
-        if remote_control: self.control_status = "Remote"
-        else: self.control_status = "Keyboard"
-
-        return True
+            if ord(response) > 128:
+                done = True
+                message.append( chr(ord(response)-128))
+            else:
+                message.append(response)
+                self.write(chr(ord(self.acknowledge)))
+                   
+        return ''.join(message) # Convert list of char to string
+    
     # ------------------------------------------------------------------------------------
     # Set Flow Direction: True = Forward; False = Backward
     # ------------------------------------------------------------------------------------ 
@@ -295,12 +290,10 @@ class RaininRP1():
             if forward: direction_message = "jF"
             else: direction_message = "jB"
 
-            response = sendBufferedCommand(direction_message)
+            self.sendBufferedCommand(direction_message)
 
-            if not (response == direction_message):
-                self.direction = "Unknown"
-                print "Error setting flow direction"
-                return False
+            # Check status to see if the desired change was made
+            ## NEED CODE HERE
             
         if forward: self.direction = "Forward"
         else: self.direction = "Reverse"
@@ -314,22 +307,20 @@ class RaininRP1():
     def setSpeed(self, rotation_speed):
         if not self.simulate:
             # Check bounds
-            if rotation_speed > 0 and rotation_speed <= 48:
+            if rotation_speed >= 0 and rotation_speed <= 48:
                 # Convert rotation speed to the rotation integer that will be sent
                 rotation_int = int(rotation_speed*100)
                 rotation_message = "R" + ("%04d" % rotation_int)
-                response = sendBufferedCommand(rotation_message)
+                self.sendBufferedCommand(rotation_message)
 
-                if not (response == rotation_message):
-                    print "Error setting rotation speed"
-                    self.speed = -1
-                    return False
+                # Check status to see if the desired change was made
+                ## NEED CODE HERE
+
             else:
                 print "The provided speed, " + rotation_speed + ", is too large"
                 return False
 
-        if rotation_speed > 0 and rotation_speed <= 48:
-            self.speed = rotation_speed
+        if rotation_speed >= 0 and rotation_speed <= 48:
             if self.verbose:
                 print "   " + "Set Speed: " + str(self.speed)
         return True
@@ -339,6 +330,13 @@ class RaininRP1():
     # ------------------------------------------------------------------------------------ 
     def startFlow(self, speed, direction = "Forward"):
         if self.verbose: print "Starting pump"
+
+        # Handle the reverse direction case
+        if not (self.direction == direction):
+            self.setSpeed(0.0) # Stop pump then set direction
+            if direction == "Forward": self.setFlowDirection(True)
+            else: self.setFlowDirection(False)
+        
         # Set speed
         self.setSpeed(speed)
         # Set direction (and start pump if stopped)
@@ -355,23 +353,60 @@ class RaininRP1():
     # ------------------------------------------------------------------------------------ 
     def stopFlow(self):
         if self.verbose: print "Stopping pump"
-        # Unclear how to stop this pump
-        # self.sendBufferedCommand()
+        self.setSpeed(0.0)
         if self.simulate:
             self.flow_status = "Stopped"
         return True
+
+    # ------------------------------------------------------------------------------------
+    # Write to Serial Port
+    # ------------------------------------------------------------------------------------ 
+    def write(self, message):
+        self.serial.write(message)
+        if self.serial_verbose: print "Wrote: " + str(("", message))
+
+    # ------------------------------------------------------------------------------------
+    # Read from Serial Port
+    # ------------------------------------------------------------------------------------ 
+    def read(self, num_char):
+        response = self.serial.read(num_char)
+        if self.serial_verbose: print "Read: " + str(("", response))
+        return response
     
 # ----------------------------------------------------------------------------------------
 # Test/Demo of Classs
 # ----------------------------------------------------------------------------------------
 if __name__ == '__main__':
-    rainin = RaininRP1(COM_port = 3, pump_ID = 30 ,simulate = True, verbose = True)
+
+    rainin = RaininRP1(com_port = 4, pump_ID = 30 ,simulate = False, verbose = True, serial_verbose = False)
     print rainin
-    rainin.setSpeed(10.00)
-    rainin.setFlowDirection(False)
-    rainin.setRemoteControl(True)
-    print rainin.getStatus()
+
+    rainin.stopFlow()
+    time.sleep(5)
     print rainin
+    rainin.startFlow(10.00, direction = "Forward")
+    time.sleep(5)
+    print rainin
+
+    rainin.stopFlow()
+    time.sleep(5)
+    print rainin
+
+    rainin.startFlow(5.00, direction = "Reverse")
+    time.sleep(5)
+    print rainin
+
+    rainin.startFlow(10.00, direction = "Reverse")
+    time.sleep(5)
+    print rainin
+
+    rainin.startFlow(10.00, direction = "Forward")
+    time.sleep(5)
+    print rainin
+
+    rainin.stopFlow()
+    print rainin    
+
     rainin.close()
     
 #
