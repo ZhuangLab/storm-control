@@ -31,6 +31,7 @@ class QCameraWidget(QtGui.QWidget):
     def __init__(self, parameters, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.setMouseTracking(True)
 
         self.buffer = False
 
@@ -53,6 +54,8 @@ class QCameraWidget(QtGui.QWidget):
         
         self.mouse_x = 0
         self.mouse_y = 0
+
+        self.pixel_size_in_um = 1.0
 
         self.roi_rubber_band = False
 
@@ -178,9 +181,14 @@ class QCameraWidget(QtGui.QWidget):
         if self.roi_rubber_band:
             self.roi_rubber_band.setGeometry(QtCore.QRect(self.roi_rubber_band.pos(), event.pos()).normalized())
 
+        #
+        # FIXME: Need to also adjust for binning, current magnification..
+        #
         if self.drag_mode:
-            self.dragMove.emit(self.drag_x - self.mouse_x, self.drag_y - self.mouse_y)
-            
+            dx = self.pixel_size_in_um * (self.mouse_x - self.drag_x)
+            dy = self.pixel_size_in_um * (self.mouse_y - self.drag_y)
+            self.dragMove.emit(dx, dy)
+
     ## mousePressEvent
     #
     # Convert the mouse click location into camera pixels. The xy 
@@ -204,10 +212,11 @@ class QCameraWidget(QtGui.QWidget):
         self.mousePress.emit(self.x_click, self.y_click)
 
         # ROI selection rubber band.
-        if not self.roi_rubber_band:
-            self.roi_rubber_band = QtGui.QRubberBand(QtGui.QRubberBand.Rectangle, self)
-        self.roi_rubber_band.setGeometry(QtCore.QRect(event.pos(), QtCore.QSize()))
-        self.roi_rubber_band.show()
+        if not self.drag_mode:
+            if not self.roi_rubber_band:
+                self.roi_rubber_band = QtGui.QRubberBand(QtGui.QRubberBand.Rectangle, self)
+            self.roi_rubber_band.setGeometry(QtCore.QRect(event.pos(), QtCore.QSize()))
+            self.roi_rubber_band.show()
 
     ## mouseReleaseEvent
     #
@@ -244,6 +253,7 @@ class QCameraWidget(QtGui.QWidget):
         self.display_range = display_range
         self.flip_horizontal = parameters.flip_horizontal
         self.flip_vertical = parameters.flip_vertical
+        self.pixel_size_in_um = 0.001 * parameters.nm_per_pixel
         self.transpose = parameters.transpose
         self.x_size = parameters.x_pixels/parameters.x_bin
         self.y_size = parameters.y_pixels/parameters.y_bin
