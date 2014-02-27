@@ -189,7 +189,6 @@ class RaininRP1():
         message = []
         if not self.simulate:
             message = self.sendImmediateCommand("?")
-            print message
             
             # Parse Control Status
             self.control_status = {"K": "Keypad", "R": "Remote"}.get(message[0], "Unknown")
