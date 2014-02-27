@@ -37,6 +37,7 @@ class QCameraWidget(QtGui.QWidget):
 
         # These are for dragging (to move the stage).
         self.drag_mode = False
+        self.drag_mouse_down = False
         self.drag_x = 0
         self.drag_y = 0
 
@@ -156,20 +157,15 @@ class QCameraWidget(QtGui.QWidget):
     def keyPressEvent(self, event):
         if (event.key() == QtCore.Qt.Key_Control):
             self.drag_mode = True
-            self.dragStart.emit()
-            self.drag_x = self.mouse_x
-            self.drag_y = self.mouse_y
-            QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
 
     ## keyReleaseEvent
     #
     # @param event A PyQt key release event
     #
     def keyReleaseEvent(self, event):
-        if self.drag_mode:
+        if (not self.drag_mouse_down):
             self.drag_mode = False
-            QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-
+        
     ## mouseMoveEvent
     #
     # @param event A PyQt mouse move event.
@@ -211,8 +207,15 @@ class QCameraWidget(QtGui.QWidget):
         
         self.mousePress.emit(self.x_click, self.y_click)
 
+        if self.drag_mode:
+            self.drag_mouse_down = True
+            self.dragStart.emit()
+            self.drag_x = event.x()
+            self.drag_y = event.y()
+            QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
+
         # ROI selection rubber band.
-        if not self.drag_mode:
+        else:
             if not self.roi_rubber_band:
                 self.roi_rubber_band = QtGui.QRubberBand(QtGui.QRubberBand.Rectangle, self)
             self.roi_rubber_band.setGeometry(QtCore.QRect(event.pos(), QtCore.QSize()))
@@ -223,14 +226,21 @@ class QCameraWidget(QtGui.QWidget):
     # @param event A PyQt mouse move event.
     #
     def mouseReleaseEvent(self, event):
-        self.roi_rubber_band.hide()
-        rect = self.roi_rubber_band.geometry()
-        if (rect.width() > 1) and (rect.height() > 1):
-            left = rect.left() * self.x_size / self.x_final
-            top = rect.top() * self.y_size / self.y_final
-            width = rect.width() * self.x_size / self.x_final
-            height = rect.height() * self.y_size / self.y_final
-            self.roiSelection.emit(QtCore.QRect(left, top, width, height))
+
+        if self.drag_mode:
+            self.drag_mouse_down = False
+            self.drag_mode = False
+            QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+
+        else:
+            self.roi_rubber_band.hide()
+            rect = self.roi_rubber_band.geometry()
+            if (rect.width() > 1) and (rect.height() > 1):
+                left = rect.left() * self.x_size / self.x_final
+                top = rect.top() * self.y_size / self.y_final
+                width = rect.width() * self.x_size / self.x_final
+                height = rect.height() * self.y_size / self.y_final
+                self.roiSelection.emit(QtCore.QRect(left, top, width, height))
         
     ## newColorTable
     #
