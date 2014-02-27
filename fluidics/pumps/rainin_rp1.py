@@ -33,9 +33,7 @@ class RaininRP1():
         self.serial_verbose = serial_verbose
         
         # Create serial port
-        print self.simulate
         if not self.simulate:
-            print "HERE"
             self.serial = serial.Serial(port = self.com_port,
                                         baudrate = 19200,
                                         bytesize = serial.EIGHTBITS,
