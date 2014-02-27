@@ -50,6 +50,7 @@ class AOTF(RS232.RS232):
     ## analogModulationOn
     #
     # Turns on analog modulation of the AOTF.
+    #
     def analogModulationOn(self):
         for i in range(self.number_channels):
             self.setActiveChannel(i+1)
@@ -115,9 +116,6 @@ class AOTF(RS232.RS232):
     # Reset the AOTF frequencies and disconnect from the AOTF.
     #
     def shutdown(self):
-        # reset frequencies in case the next user is using the M. Bates Labview interface.
-        for i, frequency in enumerate(self.frequencies):
-            self.setFrequency(i, frequency)
         RS232.RS232.shutdown()
 
 #
@@ -126,8 +124,9 @@ class AOTF(RS232.RS232):
 
 if __name__ == "__main__":
     aotf = AOTF()
-    aotf.setAmplitude(1, 100)
-    aotf.setFrequency(1, 62.0)
+    aotf.setActiveChannel(5)
+    #aotf.setAmplitude(1, 100)
+    #aotf.setFrequency(1, 62.0)
     print aotf.commWithResp("st")
     aotf.shutDown()
 
