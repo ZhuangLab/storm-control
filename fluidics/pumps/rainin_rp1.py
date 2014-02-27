@@ -33,7 +33,9 @@ class RaininRP1():
         self.serial_verbose = serial_verbose
         
         # Create serial port
+        print self.simulate
         if not self.simulate:
+            print "HERE"
             self.serial = serial.Serial(port = self.com_port,
                                         baudrate = 19200,
                                         bytesize = serial.EIGHTBITS,
@@ -68,7 +70,6 @@ class RaininRP1():
     # Connect Pump
     # ------------------------------------------------------------------------------------ 
     def connectPump(self):
-        # Connect (or simulate) Serial Connection
         if not self.simulate:
             print "Opening a Rainin RP1 Pump"
             self.write(self.disconnect_signal)
@@ -189,7 +190,6 @@ class RaininRP1():
         message = []
         if not self.simulate:
             message = self.sendImmediateCommand("?")
-            print message
             
             # Parse Control Status
             self.control_status = {"K": "Keypad", "R": "Remote"}.get(message[0], "Unknown")
@@ -378,7 +378,7 @@ class RaininRP1():
 # ----------------------------------------------------------------------------------------
 if __name__ == '__main__':
 
-    rainin = RaininRP1(com_port = 4, pump_ID = 30 ,simulate = False, verbose = True, serial_verbose = False)
+    rainin = RaininRP1(com_port = 4, pump_ID = 30, simulate = False, verbose = True, serial_verbose = False)
     print rainin
 
     rainin.stopFlow()
