@@ -126,10 +126,7 @@ class PumpControl(QtGui.QWidget):
         self.stop_flow_button.setText("Stop Flow")
         self.stop_flow_button.clicked.connect(self.handleStopFlow)
         
-        #self.mainWidgetLayout.addWidget(self.pump_identification_label)
-        #self.mainWidgetLayout.addWidget(self.flow_status_label)
         self.mainWidgetLayout.addWidget(self.flow_status_display)
-        #self.mainWidgetLayout.addWidget(self.speed_label)
         self.mainWidgetLayout.addWidget(self.speed_display)
         self.mainWidgetLayout.addWidget(self.speed_control_label)
         self.mainWidgetLayout.addWidget(self.speed_control_entry_box)
@@ -206,7 +203,6 @@ class PumpControl(QtGui.QWidget):
     def setEnabled(self, enabled):
         # This control is always enabled to allow emergency control over the flow
         pass
-        
 
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
@@ -216,10 +212,10 @@ class StandAlone(QtGui.QMainWindow):
         super(StandAlone, self).__init__(parent)
 
         # scroll area widget contents - layout
-        self.pump = PumpControl(com_port = 2,
+        self.pump = PumpControl(com_port = 4,
                                 pump_ID = 30,
-                                simulate = True,
-                                verbose = True)
+                                simulate = False,
+                                verbose = False)
 
         # central widget
         self.centralWidget = QtGui.QWidget()
