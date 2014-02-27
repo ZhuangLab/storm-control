@@ -399,7 +399,7 @@
      <x>0</x>
      <y>0</y>
      <width>937</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -409,6 +409,7 @@
     <addaction name="actionSet_Working_Directory"/>
     <addaction name="separator"/>
     <addaction name="actionDelete_Images"/>
+    <addaction name="actionLoad_Dax"/>
     <addaction name="actionLoad_Mosaic"/>
     <addaction name="actionLoad_Positions"/>
     <addaction name="actionSave_Mosaic"/>
@@ -468,6 +469,11 @@
   <action name="actionSave_Snapshot">
    <property name="text">
     <string>Save Snapshot</string>
+   </property>
+  </action>
+  <action name="actionLoad_Dax">
+   <property name="text">
+    <string>Load Dax</string>
    </property>
   </action>
  </widget>

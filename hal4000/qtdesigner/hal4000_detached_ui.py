@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'hal4000-detached.ui'
 #
-# Created: Fri Nov 22 08:34:10 2013
-#      by: PyQt4 UI code generator 4.9.6
+# Created: Wed Feb 26 13:55:06 2014
+#      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -250,13 +250,6 @@ class Ui_MainWindow(object):
         self.menuFile.addAction(self.actionShutter)
         self.menuFile.addAction(self.actionDirectory)
         self.menuFile.addAction(self.actionDisconnect)
-        self.menuFile.addSeparator()
-        self.menuFile.addAction(self.actionFocus_Lock)
-        self.menuFile.addAction(self.actionIllumination)
-        self.menuFile.addAction(self.actionMisc_Controls)
-        self.menuFile.addAction(self.actionProgression)
-        self.menuFile.addAction(self.actionSpot_Counter)
-        self.menuFile.addAction(self.actionStage)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionQuit)
         self.menubar.addAction(self.menuFile.menuAction())

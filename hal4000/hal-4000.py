@@ -120,6 +120,7 @@ class Window(QtGui.QMainWindow):
         self.ui_mode = ""
         self.will_overwrite = False
         self.writer = False
+        self.xml_directory = ""
 
         # Logfile setup
         self.logfile_fp.write("\r\n")
@@ -256,8 +257,10 @@ class Window(QtGui.QMainWindow):
         # ui signals
         self.ui.actionDirectory.triggered.connect(self.newDirectory)
         self.ui.actionSettings.triggered.connect(self.newSettingsFile)
+        self.ui.actionShutter.triggered.connect(self.newShuttersFile)
         self.ui.actionQuit.triggered.connect(self.handleClose)
         self.ui.autoIncCheckBox.stateChanged.connect(self.handleAutoInc)
+        self.ui.autoShuttersCheckBox.stateChanged.connect(self.handleAutoShutters)
         self.ui.extensionComboBox.currentIndexChanged.connect(self.updateFilenameLabel)
         self.ui.filenameEdit.textChanged.connect(self.updateFilenameLabel)
         self.ui.filetypeComboBox.currentIndexChanged.connect(self.updateFilenameLabel)
@@ -277,6 +280,7 @@ class Window(QtGui.QMainWindow):
         # HAL GUI settings.
         self.gui_settings = []
         self.move(self.settings.value("main_pos", QtCore.QPoint(100, 100)).toPoint())
+        self.xml_directory = str(self.settings.value("xml_directory", "").toString())
 
         if (self.ui_mode == "single"):
             self.resize(self.settings.value("main_size", self.size()).toSize())
@@ -321,6 +325,7 @@ class Window(QtGui.QMainWindow):
 
         # Save HAL GUI settings.
         self.settings.setValue("main_pos", self.pos())
+        self.settings.setValue("xml_directory", self.xml_directory)
         if (self.ui_mode == "single"):
             self.settings.setValue("main_size", self.size())
 
@@ -392,25 +397,35 @@ class Window(QtGui.QMainWindow):
     ## dropEvent
     #
     # This is called when a file is dropped on the main window. It
-    # first tries to interpret the file as a parameters file, then
-    # as a shutters file.
+    # calls parameters.fileType() to figure out the type of the file.
     #
     # @param event A QEvent object containing the filenames.
     #
     @hdebug.debug
     def dropEvent(self, event):
+        if self.filming:
+            return
         filenames = []
         for url in event.mimeData().urls():
             #filenames.append(str(url.encodedPath())[1:])
             filenames.append(str(url.toLocalFile()))
         for filename in sorted(filenames):
-            try:
-                params.Parameters(filename)
+            [file_type, error_text] = params.fileType(filename)
+            if (file_type == "parameters"):
                 self.newSettings(filename)
-            except:
-                print traceback.format_exc()
-                hdebug.logText(" Not a settings file, trying as shutters file")
+            elif (file_type == "shutters"):
                 self.newShutters(filename)
+            else:
+                if error_text:
+                    hdebug.logText(" " + filename + " is not a valid XML file.")
+                    QtGui.QMessageBox.information(self,
+                                                  "XML file parsing error",
+                                                  error_text)
+                else:
+                    hdebug.logText(" " + filename + " is of unknown type")
+                    QtGui.QMessageBox.information(self,
+                                                  "File type not recognized",
+                                                  "")
 
     ## getSignals
     #
@@ -429,6 +444,16 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleAutoInc(self, flag):
         self.parameters.auto_increment = flag
+
+    ## handleAutoShutters
+    #
+    # This is called when the run shutters check box is clicked.
+    #
+    # @param flag True if the check box is checked, false otherwise.
+    #
+    @hdebug.debug
+    def handleAutoShutters(self, flag):
+        self.parameters.auto_shutters = flag
 
     ## handleClose
     #
@@ -517,18 +542,6 @@ class Window(QtGui.QMainWindow):
             self.parameters.acq_mode = "fixed_length"
         self.showHideLength()
 
-    ## handleSyncChange
-    #
-    # This is called by the camera display GUI to set sync parameter.
-    # Sync specifies which frame to show if we are taking a movie
-    # with a multi-frame shutter sequence.
-    #
-    # FIXME: Is this still used? I think it is all in the camera
-    #    display class now.
-    #@hdebug.debug
-    #def handleSyncChange(self, sync):
-    #    self.parameters.sync = sync
-
     ## newDirectory
     #
     # Show the new directory dialog box (if a directory is not specified.
@@ -538,7 +551,6 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug            
     def newDirectory(self, directory = False):
-        self.stopCamera()
         if (not directory):
             directory = str(QtGui.QFileDialog.getExistingDirectory(self, 
                                                                    "New Directory", 
@@ -549,7 +561,6 @@ class Window(QtGui.QMainWindow):
             self.parameters.directory = self.directory
             self.ui.directoryText.setText(trimString(self.parameters.directory, 31))
         self.updateFilenameLabel("foo")
-        self.startCamera()
 
     ## newFrames
     #
@@ -624,17 +635,7 @@ class Window(QtGui.QMainWindow):
         self.updateFilenameLabel("foo")
 
         # Start the camera
-        self.startCamera()
-
-        #
-        # Print a list of unused parameters.
-        #
-        #unused = p.unused()
-        #if (len(unused) > 0):
-        #    print "The following parameters in", p.parameters_file, "were not used."
-        #    for param in sorted(unused):
-        #        print "  ", param
-        #    print ""
+        #self.startCamera()
 
     ## newSettings
     #
@@ -646,8 +647,17 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def newSettings(self, parameters_filename):
         # parse parameters file
-        parameters = params.Parameters(parameters_filename, is_HAL = True)
-        self.parameters_box.addParameters(parameters)
+        is_valid_xml = True
+        try:
+            parameters = params.Parameters(parameters_filename, is_HAL = True)
+        except:
+            is_valid_xml = False
+            hdebug.logText("failed to parse parameters file " + parameters_filename)
+            QtGui.QMessageBox.information(self,
+                                          "Parameter file parsing error",
+                                          traceback.format_exc())
+        if is_valid_xml:
+            self.parameters_box.addParameters(parameters)
 
     ## newSettingsFile
     #
@@ -655,21 +665,19 @@ class Window(QtGui.QMainWindow):
     # It opens a dialog where the user can select a new parameters file, then
     # tries to load the new parameter file.
     #
-    # @param bool Dummy parameter.
+    # @param boolean Dummy parameter.
     #
     @hdebug.debug
-    def newSettingsFile(self, bool):
-        self.stopCamera()
-        parameters_filename = QtGui.QFileDialog.getOpenFileName(self, "New Settings", "", "*.xml")
+    def newSettingsFile(self, boolean):
+        if self.filming:
+            return
+        parameters_filename = str(QtGui.QFileDialog.getOpenFileName(self, 
+                                                                    "New Settings",
+                                                                    self.xml_directory, 
+                                                                    "*.xml"))
         if parameters_filename:
-            try:
-                params.Parameters(str(parameters_filename), is_HAL = True)
-                self.newSettings(str(parameters_filename))
-            except:
-                print traceback.format_exc()
-                print "failed to parse settings file"
-        else:
-            self.startCamera()
+            self.xml_directory = os.path.dirname(parameters_filename)
+            self.newSettings(parameters_filename)
 
     ## newShutters
     #
@@ -683,14 +691,18 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def newShutters(self, shutters_filename):
+        if self.filming:
+            return
         new_shutters = False
         try:
             for module in self.modules:
                 module.newShutters(shutters_filename)
             new_shutters = True
         except:
-            print traceback.format_exc()
-            hdebug.logText("failed to parse shutter file.")
+            QtGui.QMessageBox.information(self,
+                                          "Shutter file parsing error",
+                                          traceback.format_exc())
+            hdebug.logText("failed to parse shutter file " + shutters_filename)
             for module in self.modules:
                 module.newShutters(self.old_shutters_file)
             self.parameters.shutters = self.old_shutters_file
@@ -698,9 +710,7 @@ class Window(QtGui.QMainWindow):
             self.parameters.shutters = shutters_filename
             self.old_shutters_file = shutters_filename
             self.ui.shuttersText.setText(getFileName(self.parameters.shutters))
-            #self.camera.setSyncMax(self.shutter_control.getCycleLength())
             params.setDefaultShutter(shutters_filename)
-            #self.spot_counter.newParameters(self.parameters, colors)
             
     ## newShuttersFile
     #
@@ -712,11 +722,15 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def newShuttersFile(self, bool):
-        self.stopCamera()
-        shutters_filename = QtGui.QFileDialog.getOpenFileName(self, "New Shutter Sequence", "", "*.xml")
-        if shutters_filename and self.shutter_control:
-            self.newShutters(str(shutters_filename))
-        self.startCamera()
+        if self.filming:
+            return
+        shutters_filename = str(QtGui.QFileDialog.getOpenFileName(self, 
+                                                                  "New Shutter Sequence", 
+                                                                  self.xml_directory, 
+                                                                  "*.xml"))
+        if shutters_filename:
+            self.xml_directory = os.path.dirname(shutters_filename)
+            self.newShutters(shutters_filename)
 
     ## showHideLength
     #
@@ -760,7 +774,7 @@ class Window(QtGui.QMainWindow):
         else:
             save_film = True
 
-        # film file prep
+        # Film file prep.
         self.writer = False
         self.ui.recordButton.setText("Stop")
         if save_film:
@@ -781,9 +795,16 @@ class Window(QtGui.QMainWindow):
             self.ui.recordButton.setStyleSheet("QPushButton { color: orange }")
             self.film_name = False
 
-        # modules
+        # Modules.
         for module in self.modules:
             module.startFilm(self.film_name, self.ui.autoShuttersCheckBox.isChecked())
+
+        # Disable parameters radio buttons.
+        self.parameters_box.startFilm()
+
+        # Enable record button so that TCP requested films can be stopped.
+        if self.tcp_requested_movie:
+            self.ui.recordButton.setEnabled(True)
 
         # go...
         self.startCamera()
@@ -835,14 +856,20 @@ class Window(QtGui.QMainWindow):
             for module in self.modules:
                 module.stopFilm(False)
 
-        # restart the camera
+        # Enable parameters radio buttons.
+        self.parameters_box.stopFilm()
+
+        # Restart the camera.
         self.startCamera()
         self.ui.recordButton.setText("Record")
         self.ui.recordButton.setStyleSheet("QPushButton { color: black }")
 
-        # notify tcp/ip client that the movie is finished
+        # Notify tcp/ip client that the movie is finished
         # if the client requested the movie.
         if self.tcp_requested_movie:
+
+            # Disable record button so that user can't take movies in HAL.
+            self.ui.recordButton.setEnabled(False)
 
             if (self.writer.getLockTarget() == "failed"):
                 hdebug.logText("QPD/Camera appears to have frozen..")
@@ -889,7 +916,15 @@ class Window(QtGui.QMainWindow):
     def toggleSettings(self):
         self.parameters = self.parameters_box.getCurrentParameters()
         self.stopCamera()
-        self.newParameters()
+        try:
+            self.newParameters()
+        except:
+            hdebug.logText("bad parameters")
+            QtGui.QMessageBox.information(self,
+                                          "Bad parameters",
+                                          traceback.format_exc())
+        self.startCamera()
+
 
     ## updateFilenameLabel
     #
@@ -988,7 +1023,7 @@ if __name__ == "__main__":
 
     # Load app.
     window = Window(hardware, parameters)
-    window.newParameters()
+    window.toggleSettings()
     splash.hide()
     window.show()
 

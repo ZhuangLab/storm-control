@@ -7,6 +7,11 @@
 # Hazen 11/09
 #
 
+from PyQt4 import QtCore
+
+# stage control thread
+import stagecontrol.stageThread as stageThread
+
 # stage control dialog.
 import stagecontrol.stageControl as stageControl
 
@@ -26,6 +31,7 @@ class Stage():
         self.y = y
 
     def goRelative(self, dx, dy):
+        print "stage gr"
         self.x += dx
         self.y += dy
         
@@ -51,7 +57,8 @@ class Stage():
 #
 class AStageControl(stageControl.StageControl):
     def __init__(self, hardware, parameters, parent = None):
-        self.stage = Stage()
+        self.stage = stageThread.QStageThread(Stage())
+        self.stage.start(QtCore.QThread.NormalPriority)
         stageControl.StageControl.__init__(self, 
                                            parameters,
                                            parent)

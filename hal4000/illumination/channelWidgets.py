@@ -624,7 +624,8 @@ class QBasicChannel(QChannel):
     # @param on True/False open/close the shutter.
     #
     def update(self, on):
-        self.shutter(on)
+        if (not self.filming_on):
+            self.shutter(on)
 
 
 ## QFilterWheelChannel
