@@ -189,7 +189,8 @@ class RaininRP1():
         message = []
         if not self.simulate:
             message = self.sendImmediateCommand("?")
-
+            print message
+            
             # Parse Control Status
             self.control_status = {"K": "Keypad", "R": "Remote"}.get(message[0], "Unknown")
 
@@ -329,6 +330,13 @@ class RaininRP1():
     # ------------------------------------------------------------------------------------ 
     def startFlow(self, speed, direction = "Forward"):
         if self.verbose: print "Starting pump"
+
+        # Handle the reverse direction case
+        if not (self.direction == direction):
+            self.setSpeed(0.0) # Stop pump then set direction
+            if direction == "Forward": self.setFlowDirection(True)
+            else: self.setFlowDirection(False)
+        
         # Set speed
         self.setSpeed(speed)
         # Set direction (and start pump if stopped)
@@ -372,6 +380,7 @@ if __name__ == '__main__':
 
     rainin = RaininRP1(com_port = 4, pump_ID = 30 ,simulate = False, verbose = True, serial_verbose = False)
     print rainin
+
     rainin.stopFlow()
     time.sleep(5)
     print rainin
@@ -391,8 +400,13 @@ if __name__ == '__main__':
     time.sleep(5)
     print rainin
 
-    rainin.stopFlow()
+    rainin.startFlow(10.00, direction = "Forward")
+    time.sleep(5)
     print rainin
+
+    rainin.stopFlow()
+    print rainin    
+
     rainin.close()
     
 #
