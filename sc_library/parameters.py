@@ -287,7 +287,7 @@ class StormXMLObject(object):
                     if node_value == "True":
                         setattr(self, slot, True)
                     else:
-                        setatrr(self, slot, False)
+                        setattr(self, slot, False)
                 # everything else is assumed to be a (non-unicode) string
                 else: 
                     setattr(self, slot, str(node_value))
