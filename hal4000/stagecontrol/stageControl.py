@@ -115,8 +115,6 @@ class Translator():
             self.camera_x_sign = -1 * self.camera_x_sign
             self.camera_y_sign = -1 * self.camera_y_sign
 
-        print self.camera_x_sign, self.camera_y_sign, self.camera_flip_axis
-
     ## translate
     #
     # @param x The input x value
@@ -281,8 +279,8 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleAdd(self, bool):
-        self.ui.saveComboBox.addItem("{0:.1f}, {1:.1f}".format(self.x, self.y),
-                                     [self.x, self.y])
+        self.ui.saveComboBox.addItem("{0:.1f}, {1:.1f}".format(self.stage_x, self.stage_y),
+                                     [self.stage_x, self.stage_y])
         self.ui.saveComboBox.setCurrentIndex(self.ui.saveComboBox.count()-1)
 
     ## handleClear
