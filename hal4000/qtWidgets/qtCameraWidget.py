@@ -36,8 +36,8 @@ class QCameraWidget(QtGui.QWidget):
         self.buffer = False
 
         # These are for dragging (to move the stage).
+        self.ctrl_key_down = False
         self.drag_mode = False
-        self.drag_mouse_down = False
         self.drag_x = 0
         self.drag_y = 0
 
@@ -156,15 +156,15 @@ class QCameraWidget(QtGui.QWidget):
     #
     def keyPressEvent(self, event):
         if (event.key() == QtCore.Qt.Key_Control):
-            self.drag_mode = True
+            self.ctrl_key_down = True
 
     ## keyReleaseEvent
     #
     # @param event A PyQt key release event
     #
     def keyReleaseEvent(self, event):
-        if (not self.drag_mouse_down):
-            self.drag_mode = False
+        if (event.key() == QtCore.Qt.Key_Control):
+            self.ctrl_key_down = False
         
     ## mouseMoveEvent
     #
@@ -207,8 +207,8 @@ class QCameraWidget(QtGui.QWidget):
         
         self.mousePress.emit(self.x_click, self.y_click)
 
-        if self.drag_mode:
-            self.drag_mouse_down = True
+        if self.ctrl_key_down:
+            self.drag_mode = True
             self.dragStart.emit()
             self.drag_x = event.x()
             self.drag_y = event.y()
@@ -228,7 +228,6 @@ class QCameraWidget(QtGui.QWidget):
     def mouseReleaseEvent(self, event):
 
         if self.drag_mode:
-            self.drag_mouse_down = False
             self.drag_mode = False
             QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
