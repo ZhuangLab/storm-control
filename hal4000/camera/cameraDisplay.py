@@ -206,7 +206,6 @@ class CameraDisplay(QtGui.QFrame):
     # @param y_disp y displacement in pixels.
     #
     def handleDragMove(self, x_disp, y_disp):
-        print x_disp, y_disp
         self.cameraDragMove.emit(x_disp, y_disp)
         
     ## handleGrid
