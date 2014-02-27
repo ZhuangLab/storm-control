@@ -335,19 +335,6 @@
     </property>
    </widget>
   </widget>
-  <widget class="QPushButton" name="joystickLockoutButton">
-   <property name="geometry">
-    <rect>
-     <x>330</x>
-     <y>210</y>
-     <width>101</width>
-     <height>24</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Joystick Lockout</string>
-   </property>
-  </widget>
   <widget class="QGroupBox" name="saveGroupBox">
    <property name="geometry">
     <rect>
