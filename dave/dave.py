@@ -399,7 +399,7 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleProblem(self, message):
-        self.ui.runButton.setText("Start")
+        self.ui.runButton.setText("Restart")
         self.running = False
         if (self.ui.errorMsgCheckBox.isChecked()):
             self.notifier.sendMessage("Acquisition Problem",
