@@ -184,7 +184,7 @@ class StandAlone(QtGui.QMainWindow):
         self.setWindowTitle("Kilroy")
 
         # set window geometry
-        self.setGeometry(50, 50, 500, 400)
+        self.setGeometry(50, 50, 1200, 800)
 
         # Define close menu item
         exit_action = QtGui.QAction("Exit", self)

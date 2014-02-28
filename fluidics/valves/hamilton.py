@@ -19,12 +19,12 @@ import time
 # ----------------------------------------------------------------------------------------
 class HamiltonMVP():
     def __init__(self,
-                 COM_port = 2,
+                 com_port = 2,
                  num_simulated_valves = 0,
                  verbose = False):
 
         # Define attributes
-        self.COM_port = COM_port
+        self.com_port = com_port
         self.verbose = verbose
         self.num_simulated_valves = num_simulated_valves
 
@@ -33,7 +33,7 @@ class HamiltonMVP():
         
         # Create serial port (if not in simulation mode)
         if not self.simulate:
-            self.serial = serial.Serial(port = self.COM_port, 
+            self.serial = serial.Serial(port = self.com_port, 
                                  baudrate = 9600, 
                                  bytesize = serial.SEVENBITS, 
                                  parity = serial.PARITY_ODD, 
@@ -79,6 +79,9 @@ class HamiltonMVP():
     # ------------------------------------------------------------------------------------
     def autoDetectValves(self):
         if not self.simulate:
+            print "----------------------------------------------------------------------"
+            print "Opening the Hamilton MVP Valve Daisy Chain"
+            print "   " + "COM Port: " + str(self.com_port)
             for valve_ID in range(self.max_valves): # Loop over all possible valves
 
                 # Generate address character (0=a, 1=b, ...)
@@ -112,10 +115,12 @@ class HamiltonMVP():
                 print "Error: no valves discovered"
                 return False # Return failure
 
-            if self.verbose:
-                print "Found " + str(self.num_valves) + " MVP Units"
-                for valve_ID in range(self.num_valves):
-                    print "Device " + self.valve_names[valve_ID] + " is configured with " + self.valve_configs[valve_ID]
+            # Display found valves
+            print "Found " + str(self.num_valves) + " Hamilton MVP Valves"
+            for valve_ID in range(self.num_valves):
+                print "   " + "Device " + self.valve_names[valve_ID] + " is configured with " + self.valve_configs[valve_ID]
+
+            print "Initializing valves..."
             
             # Wait for final device to stop moving
             self.waitUntilNotMoving(self.num_valves-1)
@@ -128,7 +133,7 @@ class HamiltonMVP():
                 self.max_ports_per_valve.append(self.numPortsPerConfiguration(self.howIsValveConfigured(valve_ID)))
                 self.current_port.append(0)
             self.num_valves = self.num_simulated_valves
-            print "Created " + str(self.num_simulated_valves) + " simulated valves"
+            print "Created " + str(self.num_simulated_valves) + " simulated Hamilton MVP valves"
             return True
 
     # ------------------------------------------------------------------------------------

@@ -32,17 +32,17 @@ class ValveChain(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
 
         # Define local attributes
-        self.COM_port = com_port
+        self.com_port = com_port
         self.verbose = verbose
         self.poll_time = 2000
 
         # Create instance of Hamilton class
         if num_simulated_valves > 0:
-            self.valve_chain = HamiltonMVP(COM_port = 0,
+            self.valve_chain = HamiltonMVP(com_port = 0,
                                            num_simulated_valves = num_simulated_valves,
                                            verbose = self.verbose)
         else:
-            self.valve_chain = HamiltonMVP(COM_port = self.COM_port,
+            self.valve_chain = HamiltonMVP(com_port = self.com_port,
                                            verbose = self.verbose)
 
         # Create QtValveControl widgets for each valve in the chain

@@ -48,6 +48,8 @@ class KilroyProtocols(QtGui.QMainWindow):
         self.status = [-1, -1] # Protocol ID, command ID within protocol
         self.issued_command = []
         self.protocol_UID = None
+
+        print "----------------------------------------------------------------------"
         
         # Create instance of ValveCommands class
         self.valveCommands = ValveCommands(xml_file_path = self.command_xml_path,

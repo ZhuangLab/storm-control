@@ -69,6 +69,7 @@ class RaininRP1():
     # ------------------------------------------------------------------------------------ 
     def connectPump(self):
         if not self.simulate:
+            print "----------------------------------------------------------------------"
             print "Opening a Rainin RP1 Pump"
             self.write(self.disconnect_signal)
             time.sleep(0.1)
