@@ -278,6 +278,8 @@ class KilroyProtocols(QtGui.QMainWindow):
     # Short function to load both commands and protocols in a single file
     # ------------------------------------------------------------------------------------                        
     def loadFullConfiguration(self, xml_file_path = ""):
+        print "----------------------------------------------------------------------"
+
         # Set Configuration XML (load if needed)
         if not xml_file_path:
             xml_file_path = QtGui.QFileDialog.getOpenFileName(self, "Open File", "\home")
@@ -331,7 +333,9 @@ class KilroyProtocols(QtGui.QMainWindow):
                 new_protocol_durations = []
                 for command in protocol: # Get all children
                     new_protocol_durations.append(int(command.get("duration")))
-                    new_protocol_commands.append([command.tag,command.text]) # [Instrument Type, Command Name]       
+                    new_protocol_commands.append([command.tag,command.text]) # [Instrument Type, Command Name]
+                    if (not (command.tag == "pump")) and (not (command.tag == "valve")):
+                        print "Unknown command tag: " + command.tag
                 self.protocol_commands.append(new_protocol_commands)
                 self.protocol_durations.append(new_protocol_durations)
 
