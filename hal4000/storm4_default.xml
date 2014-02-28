@@ -85,6 +85,7 @@
   <y_sign type="int">1</y_sign>
   <flip_axis type="int">1</flip_axis>
   <stage_speed type="float">2.0</stage_speed>
+  <drag_multiplier type="float">0.16</drag_multiplier>
 
   <!-- focus lock settings -->
   <ir_power type="int">6</ir_power>

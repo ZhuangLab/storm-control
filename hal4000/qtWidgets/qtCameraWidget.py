@@ -38,6 +38,7 @@ class QCameraWidget(QtGui.QWidget):
         # These are for dragging (to move the stage).
         self.ctrl_key_down = False
         self.drag_mode = False
+        self.drag_multiplier = parameters.drag_multiplier
         self.drag_x = 0
         self.drag_y = 0
 
@@ -55,8 +56,6 @@ class QCameraWidget(QtGui.QWidget):
         
         self.mouse_x = 0
         self.mouse_y = 0
-
-        self.pixel_size_in_um = 1.0
 
         self.roi_rubber_band = False
 
@@ -157,6 +156,7 @@ class QCameraWidget(QtGui.QWidget):
     def keyPressEvent(self, event):
         if (event.key() == QtCore.Qt.Key_Control):
             self.ctrl_key_down = True
+            QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
 
     ## keyReleaseEvent
     #
@@ -165,6 +165,8 @@ class QCameraWidget(QtGui.QWidget):
     def keyReleaseEvent(self, event):
         if (event.key() == QtCore.Qt.Key_Control):
             self.ctrl_key_down = False
+            if not self.drag_mode:
+                QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         
     ## mouseMoveEvent
     #
@@ -181,8 +183,8 @@ class QCameraWidget(QtGui.QWidget):
         # FIXME: Need to also adjust for binning, current magnification..
         #
         if self.drag_mode:
-            dx = self.pixel_size_in_um * (self.mouse_x - self.drag_x)
-            dy = self.pixel_size_in_um * (self.mouse_y - self.drag_y)
+            dx = self.drag_multiplier * (self.mouse_x - self.drag_x)
+            dy = self.drag_multiplier * (self.mouse_y - self.drag_y)
             self.dragMove.emit(dx, dy)
 
     ## mousePressEvent
@@ -212,7 +214,7 @@ class QCameraWidget(QtGui.QWidget):
             self.dragStart.emit()
             self.drag_x = event.x()
             self.drag_y = event.y()
-            QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
+            QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ClosedHandCursor))
 
         # ROI selection rubber band.
         else:
@@ -229,7 +231,10 @@ class QCameraWidget(QtGui.QWidget):
 
         if self.drag_mode:
             self.drag_mode = False
-            QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+            if self.ctrl_key_down:
+                QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
+            else:
+                QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
         else:
             self.roi_rubber_band.hide()
@@ -260,9 +265,9 @@ class QCameraWidget(QtGui.QWidget):
     def newParameters(self, parameters, colortable, display_range):
         self.colortable = colortable
         self.display_range = display_range
+        self.drag_multiplier = parameters.drag_multiplier
         self.flip_horizontal = parameters.flip_horizontal
         self.flip_vertical = parameters.flip_vertical
-        self.pixel_size_in_um = 0.001 * parameters.nm_per_pixel
         self.transpose = parameters.transpose
         self.x_size = parameters.x_pixels/parameters.x_bin
         self.y_size = parameters.y_pixels/parameters.y_bin
