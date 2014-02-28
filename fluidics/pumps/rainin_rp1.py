@@ -185,7 +185,6 @@ class RaininRP1():
     # Determine the Rainin Status
     # ------------------------------------------------------------------------------------ 
     def requestStatus(self):
-        if self.verbose: print "Requesting status"
         message = []
         if not self.simulate:
             message = self.sendImmediateCommand("?")
