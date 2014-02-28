@@ -51,6 +51,9 @@ class Stage():
         self.x = 0.0
         self.y = 0.0
 
+    def joystickOnOff(self, on):
+        pass
+
 #
 # Stage control dialog specialized for STORM3
 # with Prior motorized stage.
