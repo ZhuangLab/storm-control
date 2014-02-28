@@ -358,7 +358,7 @@ class Dave(QtGui.QMainWindow):
         if self.command_engine.getPause():
             self.running = False
         if self.running: #Proceed to next command
-                self.command_engine.startCommand()
+            self.command_engine.startCommand()
         else: # Handle pause state (not running with an intermediate command_index)
             if self.command_index > 0 and self.command_index < len(self.commands):
                 self.ui.runButton.setText("Restart")
