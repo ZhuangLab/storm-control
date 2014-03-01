@@ -310,7 +310,7 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionNew_Sequence">
    <property name="text">
-    <string>New Sequence</string>
+    <string>Load Sequence</string>
    </property>
   </action>
   <action name="actionQuit">

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dave.ui'
 #
-# Created: Thu Jan 09 21:30:27 2014
+# Created: Sat Mar 01 10:47:56 2014
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -203,7 +203,7 @@ class Ui_MainWindow(object):
         self.progressBarLabel.setText(_translate("MainWindow", "Sequence Progress", None))
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
         self.menuXML.setTitle(_translate("MainWindow", "XML", None))
-        self.actionNew_Sequence.setText(_translate("MainWindow", "New Sequence", None))
+        self.actionNew_Sequence.setText(_translate("MainWindow", "Load Sequence", None))
         self.actionQuit.setText(_translate("MainWindow", "Quit", None))
         self.actionGenerate.setText(_translate("MainWindow", "Generate (Version 1.0)", None))
         self.actionGenerateXML.setText(_translate("MainWindow", "Generate XML", None))
