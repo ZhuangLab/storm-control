@@ -220,7 +220,6 @@ class StandAlone(QtGui.QMainWindow):
     # Handle dragEnterEvent
     # ----------------------------------------------------------------------------------------
     def dropEvent(self, event):
-        print "HERE"
         for url in event.mimeData().urls():
             self.kilroy.kilroyProtocols.loadFullConfiguration(xml_file_path = str(url.encodedPath())[1:])
 
