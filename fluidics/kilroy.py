@@ -177,6 +177,11 @@ class StandAlone(QtGui.QMainWindow):
         self.centralWidget = QtGui.QWidget()
         self.centralWidget.setLayout(self.kilroy.mainLayout)
 
+        # This is for handling file drops.
+        self.centralWidget.__class__.dragEnterEvent = self.dragEnterEvent
+        self.centralWidget.__class__.dropEvent = self.dropEvent
+        self.centralWidget.setAcceptDrops(True)
+        
         # set central widget
         self.setCentralWidget(self.centralWidget)
 
@@ -201,6 +206,23 @@ class StandAlone(QtGui.QMainWindow):
         valve_menu = menubar.addMenu("&Valves")
         for menu_item in self.kilroy.valveChain.menu_items[0]:
             valve_menu.addAction(menu_item)
+
+    # ----------------------------------------------------------------------------------------
+    # Handle dragEnterEvent
+    # ----------------------------------------------------------------------------------------
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            event.ignore()
+
+    # ----------------------------------------------------------------------------------------
+    # Handle dragEnterEvent
+    # ----------------------------------------------------------------------------------------
+    def dropEvent(self, event):
+        print "HERE"
+        for url in event.mimeData().urls():
+            self.kilroy.kilroyProtocols.loadFullConfiguration(xml_file_path = str(url.encodedPath())[1:])
 
     # ----------------------------------------------------------------------------------------
     # Handle close event
