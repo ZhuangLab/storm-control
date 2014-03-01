@@ -60,7 +60,7 @@ class Notifier:
                 msg['From'] = self.from_address
                 msg['To'] = self.to_address
             
-                server = smtplib.SMTP(self.smtp_server)
+                server = smtplib.SMTP(self.smtp_server, 587)
                 server.starttls()
                 server.login(self.from_address, self.from_password)
                 server.sendmail(self.from_address, [self.to_address], msg.as_string())
