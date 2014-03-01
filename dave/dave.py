@@ -309,7 +309,7 @@ class Dave(QtGui.QMainWindow):
     @hdebug.debug
     def dropEvent(self, event):
         for url in event.mimeData().urls():
-            self.newSequence(str(url.encodedPath())[1:])
+            self.handleDragDropFile(str(url.encodedPath())[1:])
 
     ## handleAbortButton
     #
@@ -365,6 +365,24 @@ class Dave(QtGui.QMainWindow):
                 self.ui.runButton.setText("Restart")
                 self.ui.runButton.setEnabled(True)
 
+    ## handleDropXML
+    #
+    # Handles a drop event containing a url to an xml file
+    #
+    # @param file_path Path to file dragged into Dave.
+    #
+    def handleDragDropFile(self, file_path):
+        recipe_parser = recipeParser.XMLRecipeParser(verbose = True)
+        (xml, xml_file_path) = recipe_parser.loadXML(file_path)
+        root = xml.getroot()
+        if root.tag == "recipe" or root.tag == "experiment":
+            output_filename = recipe_parser.parseXML(xml_file_path)
+            if os.path.isfile(output_filename):
+                self.newSequence(output_filename)
+        elif root.tag == "sequence":
+            self.newSequence(xml_file_path)
+    
+        
     ## handleGenerateXML
     #
     # Handles Generate from Recipe XML
