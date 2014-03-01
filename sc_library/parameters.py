@@ -283,6 +283,11 @@ class StormXMLObject(object):
                     setattr(self, slot, float_array)
                 elif (node_type == "string-array"):
                     setattr(self, slot, node_value.split(","))
+                elif (node_type == "boolean"):
+                    if node_value == "True":
+                        setattr(self, slot, True)
+                    else:
+                        setattr(self, slot, False)
                 # everything else is assumed to be a (non-unicode) string
                 else: 
                     setattr(self, slot, str(node_value))

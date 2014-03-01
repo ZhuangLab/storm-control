@@ -212,6 +212,7 @@ class Window(QtGui.QMainWindow):
         self.ui.abortButton.clicked.connect(self.handleAbort)
         self.ui.actionQuit.triggered.connect(self.quit)
         self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
+        self.ui.actionLoad_Dax.triggered.connect(self.handleLoadDax)
         self.ui.actionLoad_Mosaic.triggered.connect(self.handleLoadMosaic)
         self.ui.actionLoad_Positions.triggered.connect(self.handleLoadPositions)
         self.ui.actionSave_Mosaic.triggered.connect(self.handleSaveMosaic)
@@ -261,8 +262,9 @@ class Window(QtGui.QMainWindow):
             self.picture_queue = self.picture_queue[1:]
             self.comm.captureStart(next_x_um, next_y_um)
         else:
-            self.taking_pictures = False
-            self.comm.commDisconnect()
+            if self.taking_pictures:
+                self.taking_pictures = False
+                self.comm.commDisconnect()
 
     ## addPositions
     #
@@ -357,6 +359,21 @@ class Window(QtGui.QMainWindow):
         self.sections.gridChange(self.ui.xSpinBox.value(),
                                  self.ui.ySpinBox.value())
 
+    ## handleLoadDax
+    #
+    # Handles loading dax files, which can be useful for retrospective analysis.
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def handleLoadDax(self, boolean):
+        dax_filenames = QtGui.QFileDialog.getOpenFileNames(self,
+                                                           "Load Dax Files",
+                                                           self.parameters.directory,
+                                                           "*.dax")
+        for i in range(dax_filenames.count()):
+            self.comm.loadImage(str(dax_filenames.takeFirst()))
+    
     ## handleLoadMosaic
     #
     # Handles the load mosaic action.
