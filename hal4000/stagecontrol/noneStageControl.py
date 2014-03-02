@@ -31,7 +31,6 @@ class Stage():
         self.y = y
 
     def goRelative(self, dx, dy):
-        print "stage gr"
         self.x += dx
         self.y += dy
         
