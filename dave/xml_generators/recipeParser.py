@@ -293,8 +293,10 @@ class XMLRecipeParser(QtGui.QWidget):
     def saveFlatSequence(self):
         if self.flat_sequence_file_path == "":
             self.flat_sequence_file_path = str(QtGui.QFileDialog.getSaveFileName(self,
-                                                                    "Save XML Sequence",
-                                                                    "*.xml"))
+                                                                                 "Save XML Sequence",
+                                                                                 self.directory,
+                                                                                 "*.xml"))
+            
         try:
             self.flat_sequence_xml.write(self.flat_sequence_file_path,
                                          encoding = 'ISO-8859-1',
