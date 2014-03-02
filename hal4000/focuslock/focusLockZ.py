@@ -147,7 +147,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
             if (signal[1] == "commMessage"):
                 signal[2].connect(self.handleCommMessage)
 
-            if (signal[1] == "jstickLockJump"):
+            if (signal[1] == "lockJump"):
                 signal[2].connect(self.jump)
 
     ## getLockTarget

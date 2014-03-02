@@ -73,10 +73,10 @@ class JoystickObject(QtCore.QObject, halModule.HalModule):
     #
     @hdebug.debug
     def getSignals(self):
-        return [[self.hal_type, "jstickLockJump", self.lock_jump],
+        return [[self.hal_type, "lockJump", self.lock_jump],
                 [self.hal_type, "jstickMotion", self.motion],
-                [self.hal_type, "jstickStep", self.step],
-                [self.hal_type, "jstickToggleFilm", self.toggle_film]]
+                [self.hal_type, "stepMove", self.step],
+                [self.hal_type, "toggleFilm", self.toggle_film]]
 
     ## hatEvent
     #
