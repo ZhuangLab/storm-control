@@ -53,6 +53,20 @@ class QStatusDisplay(QtGui.QWidget):
             scaled = 0
         return scaled
 
+    ## getValue
+    #
+    # Returns the current value
+    #
+    # @param normalized The value should be normalized to the range 0.0 - 1.0
+    #
+    # @return The current value as a floating point number.
+    #
+    def getValue(self, normalized = True):
+        if normalized:
+            return float(self.value)/float(self.y_size)
+        else:
+            return float(self.value)
+
     ## paintBackground
     #
     # Paint the background of the widget.

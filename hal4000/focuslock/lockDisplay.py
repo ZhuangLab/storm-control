@@ -28,6 +28,7 @@ import focuslock.lockModes as lockModes
 # The lock display UI and lock control base class.
 #
 class LockDisplay(QtGui.QWidget):
+    lockStatus = QtCore.pyqtSignal(float, float)
     foundSum = QtCore.pyqtSignal(float)
     recenteredPiezo = QtCore.pyqtSignal()
 
@@ -360,6 +361,7 @@ class LockDisplay(QtGui.QWidget):
     def tcpHandleSetLockTarget(self, target):
         self.current_mode.setLockTarget(target/self.scale)
 
+
 ## LockDisplayQPD
 #
 # LockDisplay specialized for QPD style offset data.
@@ -453,6 +455,11 @@ class LockDisplayQPD(LockDisplay):
         self.ui.qpdYText.setText("y: {0:.1f}".format(y_offset))        
         self.zDisplay.updateValue(stage_z)
         self.ui.zText.setText("{0:.3f}um".format(stage_z))
+
+        # Send lock status signal.
+        self.lockStatus.emit(self.offsetDisplay.getValue(),
+                             self.sumDisplay.getValue())
+
 
 ## LockDisplayCam
 #
@@ -570,6 +577,10 @@ class LockDisplayCam(LockDisplay):
 
         # Change blinking value so that the red dot in the camera display blinks.
         self.show_dot = not self.show_dot
+
+        # Send lock status signal.
+        self.lockStatus.emit(self.offsetDisplay.getValue(),
+                             self.sumDisplay.getValue())
 
     ## handleAdjustAOI
     #
