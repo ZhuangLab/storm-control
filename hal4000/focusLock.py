@@ -7,34 +7,9 @@
 # Hazen 03/14
 #
 
-import sys
-from PyQt4 import QtGui
+import halLib.standalone as standalone
 
-import sc_library.parameters as params
-
-if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
-
-    parameters = params.Parameters("settings_default.xml")
-    setup_name = parameters.setup_name
-    parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
-    parameters.setup_name = setup_name
-    hardware = params.Hardware(setup_name + "_hardware.xml")
-
-    found = False
-    for module in hardware.modules:
-        if (module.hal_type == "focuslock"):
-            a_module = __import__(module.module_name, globals(), locals(), [setup_name], -1)
-            a_class = getattr(a_module, module.class_name)
-            instance = a_class(module.parameters, parameters, None)
-            instance.show()
-            found = True
-            break
-
-    if found:
-        app.exec_()
-    else:
-        print "Focus lock not found for", setup_name
+standalone.runModule("focuslock")
 
 #
 # The MIT License
