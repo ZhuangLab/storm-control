@@ -8,6 +8,8 @@
 # Hazen 12/09
 #
 
+import time
+
 ## QPD
 #
 # A fake QPD class.
@@ -26,6 +28,7 @@ class QPD():
     # @return [1000.0, 0.0, 0.0]
     #
     def qpdScan(self):
+        time.sleep(0.05)
         return [1000.0, 0.0, 0.0]
 
     ## shutDown
