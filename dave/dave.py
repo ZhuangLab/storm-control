@@ -240,7 +240,6 @@ class Dave(QtGui.QMainWindow):
         self.ui.abortButton.setEnabled(False)
         self.ui.frequencyLabel.hide()
         self.ui.frequencySpinBox.hide()
-        self.ui.runButton.hide()
         self.ui.statusMsgCheckBox.hide()
 
         # Set icon.
@@ -319,14 +318,30 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleAbortButton(self, boolean):
-        if (self.running):
-            #Set flag to signal reset to handleDone when called
-            self.command_index = len(self.commands) + 1
-            self.command_engine.abort()
-        else: # Paused
-            self.command_index = len(self.commands) + 1
-            self.handleDone()
-            
+        # Force manual conformation of abort
+        messageBox = QtGui.QMessageBox(parent = self)
+        messageBox.setWindowTitle("Abort?")
+        messageBox.setText("Are you sure you want to abort the current run?")
+        messageBox.setStandardButtons(QtGui.QMessageBox.Cancel |
+                                      QtGui.QMessageBox.Ok)
+        messageBox.setDefaultButton(QtGui.QMessageBox.Cancel)
+        button_ID = messageBox.exec_()
+
+        # Handle response
+        if button_ID == QtGui.QMessageBox.Ok:
+            abort_text =  "Aborted current run at command " + str(self.command_index)
+            abort_text += ": " + str(self.commands[self.command_index].getDetails()[1][1])
+            print abort_text
+            if (self.running):
+                #Set flag to signal reset to handleDone when called
+                self.command_index = len(self.commands) + 1
+                self.command_engine.abort()
+            else: # Paused
+                self.command_index = len(self.commands) + 1
+                self.handleDone()
+        else: # Cancel button or window closed event
+            pass
+    
     ## handleCommandListClick
     #
     # Reset command sequence list to the current command
