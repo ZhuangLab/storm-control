@@ -274,8 +274,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
                     self.image_is_new = False
 
                 try:
-                    self.client_sock.send("image," + str(self.image_data_len))
-                    self.msleep(1)
+                    self.client_sock.send("image," + str(self.image_data_len) + ",")
                     self.client_sock.send(self.image_data)
                 except:
                     self.mutex.lock()
