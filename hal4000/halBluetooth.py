@@ -48,7 +48,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         self.client_sock = False
         self.connected = False
         self.drag_gain = 1.0
-        self.drag_multiplier = 10.0
+        self.drag_multiplier = 100.0
         self.drag_x = 0.0
         self.drag_y = 0.0
         self.image_is_new = True
@@ -86,6 +86,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         # Setup timer.
         self.click_timer.setInterval(200)
         self.click_timer.timeout.connect(self.handleClickTimer)
+        self.click_timer.setSingleShot(True)
 
         # Connect signals.
         self.newData.connect(self.handleNewData)
@@ -94,9 +95,17 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
 
     ## addMessage
     #
-    # @param message The message to add to the queue.
+    # @param message The message to add to the queue, but only if we are connected.
     #
     def addMessage(self, message):
+
+        # Check if we connected.
+        self.mutex.lock()
+        connected = self.connected
+        self.mutex.unlock()
+        if not connected:
+            return
+
         self.messages.append(message)
 
     ## cleanup
@@ -130,6 +139,8 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         for signal in signals:
             if (signal[1] == "cameraDisplayCaptured"):
                 signal[2].connect(self.handleNewPixmap)
+            elif (signal[1] == "focusLockStatus"):
+                signal[2].connect(self.handleFocusLockStatus)
 
     ## dragUpdate
     #
@@ -163,7 +174,30 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
             self.dragStart.emit()
             self.dragUpdate()
 
+    ## handleFocusLockStatus
+    #
+    # @param lock_offset The current focus lock offset (nominally 0.0 - 1.0).
+    # @param lock_sum The current focus lock sum (nominally 0.0 - 1.0).
+    #
+    def handleFocusLockStatus(self, lock_offset, lock_sum):
+
+        # Enforce 0.0 - 1.0 range.
+        if (lock_offset < 0.0):
+            lock_offset = 0.0
+        elif (lock_offset > 1.0):
+            lock_offset = 1.0
+        if (lock_sum < 0.0):
+            lock_sum = 0.0
+        elif (lock_sum > 1.0):
+            lock_sum = 1.0
+
+        # Put the message in the queue.
+        self.addMessage("lockupdate,{0:.3f},{1:.3f}".format(lock_offset, lock_sum))
+
     ## handleNewData
+    #
+    # Handles message from the device at the other end of the Bluetooth connection.
+    # handleNewMessage would probably be a better name for this method..
     #
     # @param data A string containing the message from the device.
     #
@@ -176,9 +210,9 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         if not connected:
             return
 
+        # Messages can come down from the device at any time.
         if (data != "ack"):
             if ("action" in data):
-                print data
                 [type, ax, ay] = data.split(",")
                 if (type == "actiondown"):
                     self.click_x = float(ax)
@@ -206,53 +240,54 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
             elif (data == "focusup"):
                 self.lockJump.emit(self.lock_jump_size)
 
+        # Messages are only sent up to the device when the device requests a new image.
+        if self.should_send_image:
 
-        # Send any new messages first as this should be fast.
-        if (len(self.messages) > 0):
-            to_send = self.messages.pop(0)
-            try:
-                self.client_sock.send(to_send)
-            except:
-                self.mutex.lock()
-                self.connected = False
-                self.messages = []
-                self.mutex.unlock()
+            # Send all the new messages first (one at time) as this should be fast.
+            if (len(self.messages) > 0):
+                to_send = self.messages.pop(0)
+                try:
+                    self.client_sock.send(to_send)
+                except:
+                    self.mutex.lock()
+                    self.connected = False
+                    self.messages = []
+                    self.mutex.unlock()
 
-        # If there are no remaining messages to send 
-        # then send a new image (if requested).
-        elif (self.should_send_image):
+            # If there are no remaining messages to send then send the new image.
+            else:
 
-            #
-            # This comes from here:
-            #  http://stackoverflow.com/questions/13302524/pyqt-qpixmap-save-to-stringio
-            #
-            if (self.image_is_new):
-                byte_array = QtCore.QByteArray()
-                buffer = QtCore.QBuffer(byte_array)
-                buffer.open(QtCore.QIODevice.WriteOnly)
-                self.current_image.save(buffer, 'JPEG', quality = 50)
+                #
+                # This comes from here:
+                #  http://stackoverflow.com/questions/13302524/pyqt-qpixmap-save-to-stringio
+                #
+                if (self.image_is_new):
+                    byte_array = QtCore.QByteArray()
+                    buffer = QtCore.QBuffer(byte_array)
+                    buffer.open(QtCore.QIODevice.WriteOnly)
+                    self.current_image.save(buffer, 'JPEG', quality = 50)
                 #self.current_image.save(buffer, 'JPEG')
                 
-                image_io = StringIO(byte_array)
-                self.image_data = image_io.getvalue()
-                self.image_data_len = len(self.image_data)
-                self.image_is_new = False
+                    image_io = StringIO(byte_array)
+                    self.image_data = image_io.getvalue()
+                    self.image_data_len = len(self.image_data)
+                    self.image_is_new = False
 
-            try:
-                self.client_sock.send("image," + str(self.image_data_len))
-                self.msleep(1)
-                self.client_sock.send(self.image_data)
-            except:
+                try:
+                    self.client_sock.send("image," + str(self.image_data_len))
+                    self.msleep(1)
+                    self.client_sock.send(self.image_data)
+                except:
+                    self.mutex.lock()
+                    self.connected = False
+                    self.messages = []
+                    self.mutex.unlock()
+
                 self.mutex.lock()
-                self.connected = False
-                self.messages = []
+                self.images_sent += 1
                 self.mutex.unlock()
-
-            self.mutex.lock()
-            self.images_sent += 1
-            self.mutex.unlock()
-
-            self.should_send_image = False
+                
+                self.should_send_image = False
 
     ## newParameters
     #
@@ -324,26 +359,33 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
             hdebug.logText("Bluetooth: Connected.")
             self.mutex.lock()
             self.client_sock = client_sock
+            connected = True
             self.connected = True
             self.images_sent = 0
             self.start_time = time.time()
             self.mutex.unlock()
 
-            while self.connected:
+            while connected:
                 
                 # Block here waiting for a string from the paired device.
-                data = client_sock.recv(1024)
+                data = self.client_sock.recv(1024)
                 if (len(data) == 0):
                     self.mutex.lock()
+                    connect = False
                     self.connected = False
                     self.messages = []
                     images_per_second = float(self.images_sent)/float(time.time() - self.start_time)
+                    hdebug.logText("Bluetooth: Disconnected")
                     hdebug.logText("Bluetooth: Sent {0:.2f} images per second.".format(images_per_second))
                     self.mutex.unlock()
                 else:
                     for datum in data.split("<>"):
                         if (len(datum) > 0):
                             self.newData.emit(datum)
+
+                self.mutex.lock()
+                connected = self.connected
+                self.mutex.unlock()
 
     ## startFilm
     #
