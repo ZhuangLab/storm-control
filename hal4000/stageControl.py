@@ -4,29 +4,42 @@
 #
 # Run stage control only.
 #
-# Hazen 03/12
+# Hazen 03/14
 #
 
 import sys
 from PyQt4 import QtGui
 
-import halLib.parameters as params
+import sc_library.parameters as params
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
+
     parameters = params.Parameters("settings_default.xml")
     setup_name = parameters.setup_name
     parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
     parameters.setup_name = setup_name
-    stagecontrol = __import__('stagecontrol.' + setup_name.lower() + 'StageControl', globals(), locals(), [setup_name], -1)
-    scontrol = stagecontrol.AStageControl(parameters, None)
-    scontrol.show()
-    app.exec_()
+    hardware = params.Hardware(setup_name + "_hardware.xml")
+
+    found = False
+    for module in hardware.modules:
+        if (module.hal_type == "stage"):
+            a_module = __import__(module.module_name, globals(), locals(), [setup_name], -1)
+            a_class = getattr(a_module, module.class_name)
+            instance = a_class(module.parameters, parameters, None)
+            instance.show()
+            found = True
+            break
+
+    if found:
+        app.exec_()
+    else:
+        print "Stage control not found for", setup_name
 
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
