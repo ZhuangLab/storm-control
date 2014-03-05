@@ -237,7 +237,6 @@ class Dave(QtGui.QMainWindow):
         self.ui.timeLabel.setText("")
 
         # Hide widgets
-        self.ui.abortButton.setEnabled(False)
         self.ui.frequencyLabel.hide()
         self.ui.frequencySpinBox.hide()
         self.ui.statusMsgCheckBox.hide()
@@ -259,6 +258,7 @@ class Dave(QtGui.QMainWindow):
         self.ui.runButton.clicked.connect(self.handleRunButton)
         self.ui.smtpServerLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.toAddressLineEdit.textChanged.connect(self.handleNotifierChange)
+        self.ui.selectCommandButton.clicked.connect(self.handleSelectButton)
                                                         
         # Load saved notifications settings.
         self.noti_settings = [[self.ui.fromAddressLineEdit, "from_address"],
@@ -273,8 +273,13 @@ class Dave(QtGui.QMainWindow):
         self.ui.commandDetailsTable.setRowCount(self.command_details_table_size[0])
         self.ui.commandDetailsTable.setColumnCount(self.command_details_table_size[1])
 
-        # Set active status
+        # Initialize command widgets
         self.command_widgets = []
+
+        # Set enabled/disabled status
+        self.ui.runButton.setEnabled(False)
+        self.ui.abortButton.setEnabled(False)
+        self.ui.selectCommandButton.setEnabled(False)
 
         # Enable mouse over updates of command descriptor
         self.ui.commandSequenceList.setMouseTracking(True)
@@ -365,6 +370,7 @@ class Dave(QtGui.QMainWindow):
             self.ui.runButton.setText("Start")
             self.ui.runButton.setEnabled(True)
             self.ui.abortButton.setEnabled(False)
+            self.ui.selectCommandButton.setEnabled(True)
             self.running = False
 
         # Issue the command
@@ -381,6 +387,7 @@ class Dave(QtGui.QMainWindow):
             if self.command_index > 0 and self.command_index < len(self.commands):
                 self.ui.runButton.setText("Restart")
                 self.ui.runButton.setEnabled(True)
+                self.ui.selectCommandButton.setEnabled(True)
 
     ## handleDropXML
     #
@@ -398,7 +405,6 @@ class Dave(QtGui.QMainWindow):
                 self.newSequence(output_filename)
         elif root.tag == "sequence":
             self.newSequence(xml_file_path)
-    
         
     ## handleGenerateXML
     #
@@ -460,9 +466,45 @@ class Dave(QtGui.QMainWindow):
         else: # Start
             self.ui.runButton.setText("Pause")
             self.ui.abortButton.setEnabled(True)
+            self.ui.selectCommandButton.setEnabled(False)
             self.running = True
             self.issueCommand()
             self.command_engine.startCommand()
+
+    ## handleSelectButton
+    #
+    # Handles the select command button. Used to set the current command to the selected command. 
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def handleSelectButton(self, boolean):
+        # Force manual conformation of abort
+        messageBox = QtGui.QMessageBox(parent = self)
+        messageBox.setWindowTitle("Change Command?")
+        messageBox.setText("Are you sure you want to change to the current command?")
+        messageBox.setStandardButtons(QtGui.QMessageBox.Cancel |
+                                      QtGui.QMessageBox.Ok)
+        messageBox.setDefaultButton(QtGui.QMessageBox.Cancel)
+        button_ID = messageBox.exec_()
+
+        old_command_index = self.command_index
+        new_command_index = self.ui.commandSequenceList.currentRow()
+
+        # Handle response
+        if button_ID == QtGui.QMessageBox.Ok:
+            # Generate display text
+            display_text =  "Changed command\n"
+            display_text += "   From command " + str(old_command_index) + ":"
+            display_text += str(self.commands[old_command_index].getDetails()[1][1])
+            display_text += "   To command " + str(new_command_index) + ":"
+            display_text += str(self.commands[new_command_index].getDetails()[1][1])
+            print display_text
+            
+            self.command_index = new_command_index
+
+        else: # Cancel button or window closed event
+            print "Canceled change command request"
 
     ## issueCommand
     #
@@ -495,11 +537,13 @@ class Dave(QtGui.QMainWindow):
                 self.sequence_length = len(self.commands)
                 self.sequence_filename = sequence_filename
                 self.updateGUI()
-                
-                self.ui.abortButton.show()
-                self.ui.abortButton.setEnabled(False)
+
+                # Set enabled/disabled status
+                self.ui.runButton.setEnabled(True)
                 self.ui.runButton.setText("Start")
-                self.ui.runButton.show()
+                self.ui.abortButton.setEnabled(False)
+                self.ui.selectCommandButton.setEnabled(True)
+
                 self.createCommandList()
                 self.issueCommand()
                 

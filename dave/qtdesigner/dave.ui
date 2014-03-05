@@ -29,22 +29,22 @@
    <string>Dave</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="mainGridLayout" rowstretch="0,0,0,0,0,0,0">
-    <item row="6" column="2">
+   <layout class="QGridLayout" name="mainGridLayout" rowstretch="0,0,0,0,0,0,0,0">
+    <item row="7" column="2">
      <widget class="QPushButton" name="abortButton">
       <property name="text">
        <string>Abort</string>
       </property>
      </widget>
     </item>
-    <item row="6" column="1">
+    <item row="7" column="1">
      <widget class="QPushButton" name="runButton">
       <property name="text">
        <string>Run</string>
       </property>
      </widget>
     </item>
-    <item row="6" column="3">
+    <item row="7" column="4">
      <spacer name="horizontalSpacer">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
@@ -57,7 +57,7 @@
       </property>
      </spacer>
     </item>
-    <item row="4" column="5">
+    <item row="4" column="6">
      <spacer name="verticalSpacer2">
       <property name="orientation">
        <enum>Qt::Vertical</enum>
@@ -70,7 +70,7 @@
       </property>
      </spacer>
     </item>
-    <item row="1" column="5">
+    <item row="1" column="6">
      <widget class="QGroupBox" name="notificationGroupBox">
       <property name="title">
        <string>Notifications</string>
@@ -164,7 +164,7 @@
       </layout>
      </widget>
     </item>
-    <item row="0" column="1" colspan="5">
+    <item row="0" column="1" colspan="6">
      <widget class="QGroupBox" name="sequenceGroupBox">
       <property name="title">
        <string>Sequence File</string>
@@ -180,7 +180,7 @@
       </layout>
      </widget>
     </item>
-    <item row="2" column="5">
+    <item row="2" column="6">
      <widget class="QGroupBox" name="estimatesGroupBox">
       <property name="title">
        <string>Estimates</string>
@@ -203,7 +203,7 @@
       </layout>
      </widget>
     </item>
-    <item row="1" column="1" rowspan="4" colspan="3">
+    <item row="1" column="1" rowspan="4" colspan="4">
      <widget class="QGroupBox" name="commandGroupBox">
       <property name="title">
        <string>Sequence Details</string>
@@ -218,6 +218,13 @@
        </item>
        <item>
         <widget class="QListWidget" name="commandSequenceList"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="selectCommandButton">
+         <property name="text">
+          <string>Select Command</string>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QLabel" name="commandDetailLabel">
@@ -260,6 +267,22 @@
          <attribute name="verticalHeaderMinimumSectionSize">
           <number>18</number>
          </attribute>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="currentCommandGroupBox">
+         <property name="title">
+          <string>Current Command</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <widget class="QLabel" name="currentCommand">
+            <property name="text">
+             <string>Command Details</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
        <item>
