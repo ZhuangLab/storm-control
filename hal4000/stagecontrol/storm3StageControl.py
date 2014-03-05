@@ -60,8 +60,12 @@ class QPriorFilterWheel(QtCore.QObject):
 # Use QStageThread for communication with the Prior stage.
 #
 class QPriorThread(stageThread.QStageThread):
-    def __init__(self, stage, parent = None):
-        stageThread.QStageThread.__init__(self, stage, parent)
+    def __init__(self, stage, move_update_freq = 1, pos_update_freq = 100, parent = None):
+        stageThread.QStageThread.__init__(self,
+                                          stage,
+                                          move_update_freq = move_update_freq,
+                                          pos_update_freq = pos_update_freq,
+                                          parent = parent)
         global prior_mutex
         self.mutex = prior_mutex
 
