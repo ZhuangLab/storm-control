@@ -63,9 +63,10 @@ class XMLRecipeParser(QtGui.QWidget):
                 if child.text == None: new_child.text = ""
                 else:
                     new_child.text = str(child.text)
-                    for loop_iterator in self.loop_iterator:
+                    for [loop_ID, loop_iterator] in enumerate(self.loop_iterator):
+                        pad_length = len(str(len(self.loop_variables[loop_ID])))
                         if loop_iterator >= 0:
-                            new_child.text += "_" + str(loop_iterator)
+                            new_child.text += "_" + str(loop_iterator).zfill(pad_length)
                 
                 if child.tail == None: new_child.tail = ""
                 else: new_child.tail = str(child.tail)
