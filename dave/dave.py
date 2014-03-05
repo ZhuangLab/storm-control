@@ -282,8 +282,6 @@ class Dave(QtGui.QMainWindow):
         self.ui.selectCommandButton.setEnabled(False)
 
         # Enable mouse over updates of command descriptor
-        self.ui.commandSequenceList.setMouseTracking(True)
-        self.ui.commandSequenceList.itemEntered.connect(self.updateCommandDescriptorTable)
         self.ui.commandSequenceList.clicked.connect(self.handleCommandListClick)
 
         # Initialize progress bar
@@ -353,7 +351,7 @@ class Dave(QtGui.QMainWindow):
     #
     #
     def handleCommandListClick(self):
-        self.updateCommandSequenceDisplay(self.command_index)
+        self.updateCommandSequenceDisplay(self.ui.commandSequenceList.currentRow())
 
     ## handleDone
     #
@@ -495,13 +493,15 @@ class Dave(QtGui.QMainWindow):
         if button_ID == QtGui.QMessageBox.Ok:
             # Generate display text
             display_text =  "Changed command\n"
-            display_text += "   From command " + str(old_command_index) + ":"
+            display_text += "   From command " + str(old_command_index) + ": "
             display_text += str(self.commands[old_command_index].getDetails()[1][1])
-            display_text += "   To command " + str(new_command_index) + ":"
+            display_text += "   To command " + str(new_command_index) + ": "
             display_text += str(self.commands[new_command_index].getDetails()[1][1])
             print display_text
             
             self.command_index = new_command_index
+
+            self.issueCommand()
 
         else: # Cancel button or window closed event
             print "Canceled change command request"
@@ -512,6 +512,7 @@ class Dave(QtGui.QMainWindow):
     #
     def issueCommand(self):
         self.updateCommandSequenceDisplay(self.command_index)
+        self.updateCurrentCommandDisplay(self.command_index)
         self.ui.progressBar.setValue(self.command_index)
         self.command_engine.loadCommand(self.commands[self.command_index])
         
@@ -572,6 +573,16 @@ class Dave(QtGui.QMainWindow):
         self.command_widgets[command_index].setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
         self.ui.commandSequenceList.setCurrentRow(command_index)
         self.updateCommandDescriptorTable(self.command_widgets[command_index])
+
+    ## updateCurrentCommandDisplay
+    #
+    #  Update the GUI display of the current command details
+    #
+    def updateCurrentCommandDisplay(self, command_index):
+        command_details = self.commands[command_index].getDetails()
+        display_text = str(command_index + 1) + ": "
+        display_text += str(command_details[1][1])
+        self.ui.currentCommand.setText(display_text)
 
     ## updateEstimates
     #
