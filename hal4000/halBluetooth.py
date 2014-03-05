@@ -288,13 +288,6 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
                 
                 self.should_send_image = False
 
-    ## newParameters
-    #
-    # @param parameters A parameters object.
-    #
-    def newParameters(self, parameters):
-        self.lock_jump_size = parameters.lockt_step
-
     ## handleNewPixmap
     #
     # @param new_pixmap A QPixmap object.
@@ -306,7 +299,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         # the default picture which is hopefully small enough not
         # to cause too much of a load on the connection.
         #
-        # Needs to be tested with a less powerful phone.
+        # Needs to be tested with an older phone..
         #
         if not self.send_pictures:
             return
@@ -315,6 +308,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         self.current_image = QtGui.QPixmap(256, 256)
         painter = QtGui.QPainter(self.current_image)
         painter.setPen(QtGui.QColor(0, 0, 0))
+        painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0)))
         painter.drawRect(self.current_image.rect())
 
         # Figure out bounding rectangle to use.
@@ -338,13 +332,17 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         # Draw image in pixmap
         painter.drawPixmap(QtCore.QRect(xi, yi, xf - xi, yf - yi), new_pixmap, new_pixmap.rect())
 
-        # Draw multiplier circle
-        #w = 8 * int(self.drag_multiplier)
-        #h = w
-        #painter.setPen(QtGui.QColor(255, 255, 255))
-        #painter.drawEllipse(128 - w/2, 128 - h/2, w, h)
+        # Close painter.
+        painter.end()
 
         self.image_is_new = True
+
+    ## newParameters
+    #
+    # @param parameters A parameters object.
+    #
+    def newParameters(self, parameters):
+        self.lock_jump_size = parameters.lockt_step
 
     ## run
     #
