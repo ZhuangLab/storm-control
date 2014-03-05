@@ -23,7 +23,7 @@ import stagecontrol.stageControl as stageControl
 #
 
 #prior_stage = prior.Prior(port = "COM2")
-prior_stage = prior.Prior(port = "COM9", baudrate = 115200, wait_time = 1.0e-4)
+prior_stage = prior.Prior(port = "COM9", baudrate = 115200, wait_time = 1.0e-3)
 prior_mutex = QtCore.QMutex()
 
 #
@@ -60,7 +60,7 @@ class QPriorFilterWheel(QtCore.QObject):
 # Use QStageThread for communication with the Prior stage.
 #
 class QPriorThread(stageThread.QStageThread):
-    def __init__(self, stage, move_update_freq = 1, pos_update_freq = 100, parent = None):
+    def __init__(self, stage, move_update_freq = 20, pos_update_freq = 100, parent = None):
         stageThread.QStageThread.__init__(self,
                                           stage,
                                           move_update_freq = move_update_freq,
