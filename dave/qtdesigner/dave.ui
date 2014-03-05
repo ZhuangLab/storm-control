@@ -327,8 +327,15 @@
     </property>
     <addaction name="actionGenerateXML"/>
    </widget>
+   <widget class="QMenu" name="menuNotifications">
+    <property name="title">
+     <string>Notifications</string>
+    </property>
+    <addaction name="actionSendTestEmail"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuXML"/>
+   <addaction name="menuNotifications"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionNew_Sequence">
@@ -349,6 +356,11 @@
   <action name="actionGenerateXML">
    <property name="text">
     <string>Generate XML</string>
+   </property>
+  </action>
+  <action name="actionSendTestEmail">
+   <property name="text">
+    <string>Send Test Email</string>
    </property>
   </action>
  </widget>

@@ -253,6 +253,7 @@ class Dave(QtGui.QMainWindow):
         self.ui.actionNew_Sequence.triggered.connect(self.newSequenceFile)
         self.ui.actionQuit.triggered.connect(self.quit)
         self.ui.actionGenerateXML.triggered.connect(self.handleGenerateXML)
+        self.ui.actionSendTestEmail.triggered.connect(self.handleSendTestEmail)
         self.ui.fromAddressLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.fromPasswordLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.runButton.clicked.connect(self.handleRunButton)
@@ -505,6 +506,16 @@ class Dave(QtGui.QMainWindow):
 
         else: # Cancel button or window closed event
             print "Canceled change command request"
+
+    ## handleSendTestEmail
+    #
+    # Sends a test email based on the current notifier settings. 
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def handleSendTestEmail(self, boolean):
+        self.notifier.sendMessage("Notifier Test", "Open the pod bay doors, HAL")
 
     ## issueCommand
     #

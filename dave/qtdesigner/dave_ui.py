@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dave.ui'
 #
-# Created: Wed Mar 05 09:39:39 2014
+# Created: Wed Mar 05 11:19:08 2014
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -169,6 +169,8 @@ class Ui_MainWindow(object):
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
         self.menuXML = QtGui.QMenu(self.menubar)
         self.menuXML.setObjectName(_fromUtf8("menuXML"))
+        self.menuNotifications = QtGui.QMenu(self.menubar)
+        self.menuNotifications.setObjectName(_fromUtf8("menuNotifications"))
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
@@ -181,12 +183,16 @@ class Ui_MainWindow(object):
         self.actionGenerate.setObjectName(_fromUtf8("actionGenerate"))
         self.actionGenerateXML = QtGui.QAction(MainWindow)
         self.actionGenerateXML.setObjectName(_fromUtf8("actionGenerateXML"))
+        self.actionSendTestEmail = QtGui.QAction(MainWindow)
+        self.actionSendTestEmail.setObjectName(_fromUtf8("actionSendTestEmail"))
         self.menuFile.addAction(self.actionNew_Sequence)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionQuit)
         self.menuXML.addAction(self.actionGenerateXML)
+        self.menuNotifications.addAction(self.actionSendTestEmail)
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuXML.menuAction())
+        self.menubar.addAction(self.menuNotifications.menuAction())
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -217,8 +223,10 @@ class Ui_MainWindow(object):
         self.progressBarLabel.setText(_translate("MainWindow", "Sequence Progress", None))
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
         self.menuXML.setTitle(_translate("MainWindow", "XML", None))
+        self.menuNotifications.setTitle(_translate("MainWindow", "Notifications", None))
         self.actionNew_Sequence.setText(_translate("MainWindow", "Load Sequence", None))
         self.actionQuit.setText(_translate("MainWindow", "Quit", None))
         self.actionGenerate.setText(_translate("MainWindow", "Generate (Version 1.0)", None))
         self.actionGenerateXML.setText(_translate("MainWindow", "Generate XML", None))
+        self.actionSendTestEmail.setText(_translate("MainWindow", "Send Test Email", None))
 
