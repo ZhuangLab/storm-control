@@ -442,6 +442,9 @@ class Dave(QtGui.QMainWindow):
     def handleProblem(self, message):
         self.ui.runButton.setText("Restart")
         self.running = False
+        current_command_name = str(self.commands[self.command_index].getDetails()[1][1])
+        message = current_command_name + '\n' + message
+        
         if (self.ui.errorMsgCheckBox.isChecked()):
             self.notifier.sendMessage("Acquisition Problem",
                                       message)
