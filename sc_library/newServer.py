@@ -21,11 +21,11 @@ from sc_library.tcpMessage import TCPMessage
 # Server Class 
 # ----------------------------------------------------------------------------------------
 class TCPServer(QtNetwork.QTcpServer):
-
-    # Define custom command ready signal
+    # Define custom Qt signals
     com_got_connection = QtCore.pyqtSignal()
     com_lost_connection = QtCore.pyqtSignal()
-    message_ready = QtCore.pyqtSignal()
+    message_ready = QtCore.pyqtSignal(object)
+    acknowledged = QtCore.pyqtSignal()
 
     def __init__(self,
                  port=9500,
@@ -36,12 +36,9 @@ class TCPServer(QtNetwork.QTcpServer):
 
         # Initialize internal variables
         self.verbose = verbose
-        self.address = address; # Default is local address
-        self.port = port # 9500 is default Kilroy port
+        self.address = address # Default is local address
+        self.port = port
         self.socket = None
-        self.message_buffer = []
-        self.num_message = 0
-        self.last_message_written = []    
         
         # Connect new connection signal
         self.newConnection.connect(self.handleClientConnection)
@@ -83,23 +80,11 @@ class TCPServer(QtNetwork.QTcpServer):
             self.connectToNewClients()
 
     # ------------------------------------------------------------------------------------
-    # Remove message from Buffer 
+    # Handle busy signal 
     # ------------------------------------------------------------------------------------       
-    def getLastMessage(self):
-        if self.num_message > 0:
-            message = self.message_buffer.pop()
-            self.num_message -= 1
-        else:
-            message = None
-        
-        return message
-
-    # ------------------------------------------------------------------------------------
-    # Parse data in buffer into protocol name 
-    # ------------------------------------------------------------------------------------       
-    def getMessage(self):
-        return self.getLastMessage()
-
+    def handleBusy(self):
+        pass
+    
     # ------------------------------------------------------------------------------------
     # Handle connection of a new client 
     # ------------------------------------------------------------------------------------       
@@ -108,14 +93,14 @@ class TCPServer(QtNetwork.QTcpServer):
 
         if not self.isConnected():
             self.socket = socket
-            self.socket.readyRead.connect(self.handleNewMessage)
+            self.socket.readyRead.connect(self.handleReadyRead)
             self.socket.disconnected.connect(self.handleClientDisconnect)
             self.com_got_connection.emit()
-            if self.verbose:
-                print "Connected new client"
+            if self.verbose: print "Connected new client"
         else: # Refuse new socket if one already exists
             message = TCPMessage(message_type = "Busy")
-            socket.write(pickle.dumps(message))
+            if self.verbose: print "Sent: \n" + str(message)
+            socket.write(pickle.dumps(message) + "\n")
             socket.disconnectFromHost()
             socket.close()
         
@@ -127,30 +112,27 @@ class TCPServer(QtNetwork.QTcpServer):
         self.socket.close()
         self.socket = None
         self.com_lost_connection.emit()
-        if self.verbose:
-            print "Client disconnected"
+        if self.verbose: print "Client disconnected"
         
     # ------------------------------------------------------------------------------------
     # Handles a new message on the socket (receives the readyRead signal from the socket)
     # ------------------------------------------------------------------------------------       
-    def handleNewMessage(self):
+    def handleReadyRead(self):
         message_str = ""
         while self.socket.canReadLine():
             # Read data line
             message_str += str(self.socket.readLine())
-        message = pickle.loads(message_str)
-        
-        # Store message
-        self.message_buffer.append(message)
-        self.num_message += 1
-        
-        # Acknowledge data
-        ack_message = TCPMessage(message_type = "Acknowledge")
-        ack_string = pickle.dumps(ack_message)
-        self.send(ack_string)
 
-        # Emit data ready signal
-        self.message_ready.emit()
+        # Unpickle message
+        message = pickle.loads(message_str)
+        if self.verbose: print "Received: \n" + str(message)
+
+        if message.getType() == "Acknowledge":
+            self.acknowledged.emit()
+        elif message.getType() == "Busy":
+            self.handleBusy()
+        else:
+            self.message_ready.emit(message)
 
     # ------------------------------------------------------------------------------------
     # Return true if connected 
@@ -162,12 +144,25 @@ class TCPServer(QtNetwork.QTcpServer):
             return False
 
     # ------------------------------------------------------------------------------------
-    # Send message
+    # Low level string communication
     # ------------------------------------------------------------------------------------       
     def send(self, message_str):
         if self.isConnected():
             self.socket.write(message_str + "\n")
             self.socket.flush()
+
+    # ------------------------------------------------------------------------------------
+    # Send a message via the socket 
+    # ------------------------------------------------------------------------------------       
+    def sendMessage(self, message):
+        if self.isConnected():
+            message_str = pickle.dumps(message)
+            self.send(message_str)
+            if self.verbose: print "Sent: \n" + str(message)
+            return True
+        else:
+            print self.server_name + " socket not connected. Did not send: " + str(command)
+            return False
         
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
@@ -199,10 +194,9 @@ class StandAlone(QtGui.QMainWindow):
     # ----------------------------------------------------------------------------------------
     # Handle New Message
     # ----------------------------------------------------------------------------------------
-    def handleMessageReady(self):
-        message = self.server.getMessage()
-        print "Received: ", message
-        
+    def handleMessageReady(self, message):
+        message.complete = "True"
+        self.server.sendMessage(message)
     # ----------------------------------------------------------------------------------------
     # Handle close event
     # ----------------------------------------------------------------------------------------

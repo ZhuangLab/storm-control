@@ -21,10 +21,9 @@ from sc_library.tcpMessage import TCPMessage
 # Basic Socket
 # ----------------------------------------------------------------------------------------
 class Socket(QtNetwork.QTcpSocket):
-
     # Define custom command ready signal
     acknowledged = QtCore.pyqtSignal()
-    complete = QtCore.pyqtSignal(object)
+    message_ready = QtCore.pyqtSignal(object)
     
     def __init__(self,
                  parent = None,
@@ -73,6 +72,12 @@ class Socket(QtNetwork.QTcpSocket):
             print "Connected to "+ self.server_name + " server"
 
     # ------------------------------------------------------------------------------------
+    # Handle multiple client connections 
+    # ------------------------------------------------------------------------------------       
+    def handleBusy(self):
+        pass
+    
+    # ------------------------------------------------------------------------------------
     # Handle new data triggered by the readyRead signal 
     # ------------------------------------------------------------------------------------       
     def handleReadyRead(self):
@@ -80,14 +85,16 @@ class Socket(QtNetwork.QTcpSocket):
         while self.canReadLine():
             # Read data line
             message_str += str(self.readLine())
+            
         message = pickle.loads(message_str)
+        if self.verbose: print "Received: \n" + str(message)
+        
         if message.getType() == "Acknowledge":
             self.acknowledged.emit()
         elif message.getType() == "Busy":
-            #### HANDLE BUSY
-            pass
+            self.handleBusy()
         else:
-            self.complete.emit(message)
+            self.message_ready.emit(message)
 
     # ------------------------------------------------------------------------------------
     # Send message 
@@ -95,6 +102,7 @@ class Socket(QtNetwork.QTcpSocket):
     def sendMessage(self, message):
         message_string = pickle.dumps(message)
         self.write(message_string + "\n") # Newline required to trigger canReadLine()
+        if self.verbose: print "Sent: \n" + str(message)
 
 # ----------------------------------------------------------------------------------------
 # TCP Client Class
@@ -102,7 +110,7 @@ class Socket(QtNetwork.QTcpSocket):
 class TCPClient(QtGui.QWidget):
     # Define custom command ready signal: to relay socket signals
     acknowledged = QtCore.pyqtSignal()
-    complete = QtCore.pyqtSignal(object)
+    message_ready = QtCore.pyqtSignal(object)
     disconnect = QtCore.pyqtSignal()
 
     def __init__(self,
@@ -129,7 +137,7 @@ class TCPClient(QtGui.QWidget):
         
         # Connect socket signals
         self.socket.acknowledged.connect(self.handleAcknowledged)
-        self.socket.complete.connect(self.handleComplete)
+        self.socket.message_ready.connect(self.handleMessageReady)
         self.socket.disconnected.connect(self.handleDisconnect)
 
     # ------------------------------------------------------------------------------------
@@ -148,10 +156,10 @@ class TCPClient(QtGui.QWidget):
             self.acknowledged.emit() # All messages have been sent and received
         
     # ------------------------------------------------------------------------------------
-    # Handle completion of signal command 
+    # Relay message ready signal with message 
     # ------------------------------------------------------------------------------------       
-    def handleComplete(self, message):
-        self.complete.emit(message)
+    def handleMessageReady(self, message):
+        self.message_ready.emit(message)
 
     # ------------------------------------------------------------------------------------
     # Pass server disconnect signal 

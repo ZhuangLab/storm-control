@@ -27,8 +27,10 @@ class TCPMessage():
         return self.id
 
     def __str__(self):
-        string_rep = "Message Type: " + self.message_type
-        string_rep += "\nUnique ID: " + self.id
+        string_rep = "Message Type: " + str(self.message_type) + "\n\t"
+        for attribute in vars(self).keys():
+            if not attribute == "message_type":
+                string_rep += attribute + ": " + str(getattr(self, attribute)) + "\n\t"
         return string_rep
 
 #
