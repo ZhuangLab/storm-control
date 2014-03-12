@@ -85,14 +85,6 @@ class SingleCamera(genericCamera.Camera):
     def getCameraDisplay(self):
         return self.camera_display
 
-    ## getCameraDisplayArea
-    #
-    # @return The UI widget where images from the camera are rendered.
-    #
-    @hdebug.debug
-    def getCameraDisplayArea(self):
-        return self.camera_display.camera_widget
-
     ## getFilmSize
     #
     # @return The size of the current film.
