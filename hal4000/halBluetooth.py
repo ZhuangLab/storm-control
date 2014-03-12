@@ -59,7 +59,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         self.messages = []
         self.mutex = QtCore.QMutex()
         self.send_pictures = hardware.send_pictures
-        self.should_send_image = False
+        #self.should_send_image = False
         self.start_time = 0
 
         # Load default image.
@@ -211,7 +211,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
             return
 
         # Messages can come down from the device at any time.
-        if (data != "ack"):
+        if (data != "ack") and (data != "newimage"):
             if ("action" in data):
                 [type, ay, ax] = data.split(",")
                 if (type == "actiondown"):
@@ -231,8 +231,6 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
                         self.is_drag = False
                     else:
                         self.clickUpdate()
-            elif (data == "newimage"):
-                self.should_send_image = True
             elif (data == "record"):
                 self.toggleFilm.emit()
             elif (data == "focusdown"):
@@ -240,8 +238,9 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
             elif (data == "focusup"):
                 self.lockJump.emit(self.lock_jump_size)
 
-        # Messages are only sent up to the device when the device requests a new image.
-        if self.should_send_image:
+        # Messages are only sent up to the device when the device requests a new image
+        # or acknowledges the receipt of a previous message.
+        else:
 
             # Send all the new messages first (one at time) as this should be fast.
             if (len(self.messages) > 0):
@@ -266,7 +265,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
                     buffer = QtCore.QBuffer(byte_array)
                     buffer.open(QtCore.QIODevice.WriteOnly)
                     self.current_image.save(buffer, 'JPEG', quality = 50)
-                #self.current_image.save(buffer, 'JPEG')
+                    #self.current_image.save(buffer, 'JPEG')
                 
                     image_io = StringIO(byte_array)
                     self.image_data = image_io.getvalue()
@@ -285,8 +284,6 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
                 self.mutex.lock()
                 self.images_sent += 1
                 self.mutex.unlock()
-                
-                self.should_send_image = False
 
     ## handleNewPixmap
     #
