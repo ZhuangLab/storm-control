@@ -80,8 +80,8 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
                                      service_classes = [ uuid, bluetooth.SERIAL_PORT_CLASS ],
                                      profiles = [ bluetooth.SERIAL_PORT_PROFILE ],
                                      )
-        self.server_sock.settimeout(0.5)
-        print "timeout:", self.server_sock.gettimeout()
+        #self.server_sock.settimeout(0.5)
+        #print "timeout:", self.server_sock.gettimeout()
 
         # Setup timer.
         self.click_timer.setInterval(200)
@@ -213,15 +213,15 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         # Messages can come down from the device at any time.
         if (data != "ack"):
             if ("action" in data):
-                [type, ax, ay] = data.split(",")
+                [type, ay, ax] = data.split(",")
                 if (type == "actiondown"):
                     self.click_x = float(ax)
-                    self.click_y = float(ay)
+                    self.click_y = -1.0 * float(ay)
                     self.is_down = True
                     self.click_timer.start()
                 if (type == "actionmove"):
                     self.drag_x = float(ax)
-                    self.drag_y = float(ay)
+                    self.drag_y = -1.0 * float(ay)
                     if self.is_drag:
                         self.dragUpdate()
                 if (type == "actionup"):
@@ -329,7 +329,9 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
             xi = margin
             xf = 255 - margin
 
-        # Draw image in pixmap
+        # Draw (rotated) image in pixmap
+        painter.translate(256,0)
+        painter.rotate(90)
         painter.drawPixmap(QtCore.QRect(xi, yi, xf - xi, yf - yi), new_pixmap, new_pixmap.rect())
 
         # Close painter.
@@ -370,6 +372,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
                     self.mutex.lock()
                     connect = False
                     self.connected = False
+                    self.drag_gain = 1.0
                     self.messages = []
                     images_per_second = float(self.images_sent)/float(time.time() - self.start_time)
                     hdebug.logText("Bluetooth: Disconnected")
