@@ -14,6 +14,7 @@ import bluetooth
 from cStringIO import StringIO
 from PyQt4 import QtCore, QtGui
 import time
+import traceback
 
 import halLib.halModule as halModule
 
@@ -59,39 +60,44 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         self.messages = []
         self.mutex = QtCore.QMutex()
         self.send_pictures = hardware.send_pictures
-        #self.should_send_image = False
         self.start_time = 0
 
         # Load default image.
         self.current_image = QtGui.QImage("bt_image.png")
 
         # Setup bluetooth socket.
-        self.server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-        self.server_sock.bind(("",bluetooth.PORT_ANY))
-        self.server_sock.listen(1)
+        have_bluetooth = True
+        try:
+            self.server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+            self.server_sock.bind(("",bluetooth.PORT_ANY))
+            self.server_sock.listen(1)
 
-        port = self.server_sock.getsockname()[1]
-        hdebug.logText("Bluetooth: Listening on RFCOMM channel {0:d}".format(port))
+            port = self.server_sock.getsockname()[1]
+            hdebug.logText("Bluetooth: Listening on RFCOMM channel {0:d}".format(port))
 
-        uuid = "3e1f9ea8-9c11-11e3-b248-425861b86ab6"
+            uuid = "3e1f9ea8-9c11-11e3-b248-425861b86ab6"
+            
+            bluetooth.advertise_service( self.server_sock, "halServer",
+                                         service_id = uuid,
+                                         service_classes = [ uuid, bluetooth.SERIAL_PORT_CLASS ],
+                                         profiles = [ bluetooth.SERIAL_PORT_PROFILE ],
+                                         )
+        except:
+            print traceback.format_exc()
+            hdebug.logText("Failed to start Bluetooth")
+            have_bluetooth = False
 
-        bluetooth.advertise_service( self.server_sock, "halServer",
-                                     service_id = uuid,
-                                     service_classes = [ uuid, bluetooth.SERIAL_PORT_CLASS ],
-                                     profiles = [ bluetooth.SERIAL_PORT_PROFILE ],
-                                     )
-        #self.server_sock.settimeout(0.5)
-        #print "timeout:", self.server_sock.gettimeout()
+        if have_bluetooth:
 
-        # Setup timer.
-        self.click_timer.setInterval(200)
-        self.click_timer.timeout.connect(self.handleClickTimer)
-        self.click_timer.setSingleShot(True)
+            # Setup timer.
+            self.click_timer.setInterval(200)
+            self.click_timer.timeout.connect(self.handleClickTimer)
+            self.click_timer.setSingleShot(True)
 
-        # Connect signals.
-        self.newData.connect(self.handleNewData)
+            # Connect signals.
+            self.newData.connect(self.handleNewData)
 
-        self.start(QtCore.QThread.NormalPriority)
+            self.start(QtCore.QThread.NormalPriority)
 
     ## addMessage
     #
