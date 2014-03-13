@@ -14,7 +14,6 @@ package edu.harvard.zhuanglab.tma03;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.UUID;
@@ -85,7 +84,6 @@ public class BluetoothIO {
     private class ConnectedThread extends Thread {
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
-        private final InputStreamReader mmInStreamReader;
         private final OutputStream mmOutStream;
      
         public ConnectedThread(BluetoothSocket socket) {
@@ -101,7 +99,6 @@ public class BluetoothIO {
             } catch (IOException e) { }
      
             mmInStream = tmpIn;
-            mmInStreamReader = new InputStreamReader(tmpIn);
             mmOutStream = tmpOut;
         }
      
