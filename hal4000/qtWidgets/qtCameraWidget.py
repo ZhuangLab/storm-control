@@ -17,6 +17,7 @@ import sys
 # The base class for displaying data from a camera.
 #
 class QCameraWidget(QtGui.QWidget):
+    displayCaptured = QtCore.pyqtSignal(object)
     dragStart = QtCore.pyqtSignal()
     dragMove = QtCore.pyqtSignal(float, float)
     intensityInfo = QtCore.pyqtSignal(int, int, int)
@@ -319,6 +320,13 @@ class QCameraWidget(QtGui.QWidget):
             # Transfer the buffer to the screen.
             painter = QtGui.QPainter(self)
             painter.drawPixmap(0, 0, self.buffer)
+
+            # Draw a version for any external devices that want a copy
+            # of whatever is currently displayed by this widget.
+            a_pixmap = QtGui.QPixmap(vr.width(), vr.height())
+            painter = QtGui.QPainter(a_pixmap)
+            painter.drawImage(a_pixmap.rect(), self.image, vr)
+            self.displayCaptured.emit(a_pixmap)
 
     ## setColorTable
     #

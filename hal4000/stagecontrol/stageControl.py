@@ -259,17 +259,19 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
             if (signal[1] == "commMessage"):
                 signal[2].connect(self.handleCommMessage)
 
-            # Joystick signals
+            # Joystick signals.
             elif (signal[1] == "jstickMotion"):
                 signal[2].connect(self.jog)
-            elif (signal[1] == "jstickStep"):
-                signal[2].connect(self.moveRelative)
 
             # Drag signals
             elif (signal[1] == "dragStart"):
                 signal[2].connect(self.handleDragStart)
             elif (signal[1] == "dragMove"):
                 signal[2].connect(self.handleDragMove)
+
+            # Motion signals
+            elif (signal[1] == "stepMove"):
+                signal[2].connect(self.moveRelative)
 
     ## handleAdd
     #
@@ -317,12 +319,11 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
     # @param drag_x_disp Offset distance in x in microns.
     # @param drag_y_disp Offset distance in y in microns.
     #
-    @hdebug.debug
     def handleDragMove(self, drag_x_disp, drag_y_disp):
         if self.stage:
             [dx, dy] = self.translator.translate(drag_x_disp, drag_y_disp)
-            self.stage.dragMove(self.drag_x_start + dx,
-                                self.drag_y_start + dy)
+            self.stage.dragMove(self.drag_start_x + dx,
+                                self.drag_start_y + dy)
 
     ## handleDragStart
     #
@@ -330,8 +331,8 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleDragStart(self):
-        self.drag_x_start = self.stage_x
-        self.drag_y_start = self.stage_y
+        self.drag_start_x = self.stage_x
+        self.drag_start_y = self.stage_y
 
     ## handleGo
     #

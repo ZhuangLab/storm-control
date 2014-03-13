@@ -378,8 +378,8 @@ class Window(QtGui.QMainWindow):
                 signal[2].connect(self.handleCommStop)
             elif (signal[1] == "commMessage"):
                 signal[2].connect(self.handleCommMessage)
-            elif (signal[1] == "jstickToggleFilm"):
-                signal[2].connect(self.handleJoystickToggleFilm)
+            elif (signal[1] == "toggleFilm"):
+                signal[2].connect(self.handleToggleFilm)
 
     ## dragEnterEvent
     #
@@ -518,12 +518,12 @@ class Window(QtGui.QMainWindow):
             self.newDirectory(self.current_directory)
             self.current_directory = False
 
-    ## handleJoystickToggleFilm
+    ## handleToggleFilm
     #
     # Start/stop filming.
     #
     @hdebug.debug
-    def handleJoystickToggleFilm(self):
+    def handleToggleFilm(self):
         self.toggleFilm(False)
 
     ## handleModeComboBox
