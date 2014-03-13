@@ -25,21 +25,6 @@ class DaveActionFindSum(DaveAction):
         self.min_sum = min_sum
         self.message = TCPMessage(message_type = "Find Sum",
                                   data = {"min_sum": min_sum})
-
-    ## handleReply
-    #
-    # @param message. The response from Hal.
-    #
-    def handleReply(self, message):
-        if message.getType() == "Find Sum" and message.isComplete():
-            if message.getData("sum") > self.min_sum:
-                self.completeAction()
-            else:
-                self.error_message = "Sum signal " + str(message.getData("Sum")) + " is below threshold value of " + str(self.min_sum)
-                self.completeActionWithError()
-        else:
-            self.error_message = "Communication Error"
-            self.completeActionWithError()
             
 ## DaveActionMovie
 #
@@ -69,36 +54,6 @@ class DaveActionMovie(DaveAction):
         self.message = stop_message
         self.tcp_client.sendMessage(self.message)
 
-    ## handleReply
-    #
-    # Returns no error if a_string is "NA" or int(a_string) is greater than the
-    # minimum number of spots that the movie should have (as specified by
-    # the movie XML object).
-    #
-    # @param a_string The response from HAL.
-    #
-    def handleReply(self, message):
-        if message.getType() == "Movie" and message.isComplete():
-            if message.getData("num_spots") > self.movie.min_spots:
-                self.completeAction()
-            else:
-                self.error_message = "Sum signal " + str(message.getData("Sum")) + " is below threshold value of " + str(self.min_sum)
-                self.completeActionWithError()
-        elif message.getType() == "Abort" and message.isComplete():
-            self.completeAction()
-        else:
-            self.error_message = "Communication Error"
-            self.completeActionWithError()
-
-    ## start
-    #
-    # Send the startMovie command to HAL.
-    #
-    # @param comm A tcpClient object.
-    #
-    def start(self):
-        DaveAction.start(self)
-
 ## DaveActionMovieParameters
 #
 # The movie parameters action.
@@ -115,14 +70,14 @@ class DaveActionMovieParameters(DaveAction):
         self.movie = movie
         self.should_pause = self.movie.pause
         self.complete_on_timer = True
-        
-    ## start
-    #
-    # Send  the movie parameters command to HAL.
-    #
-    def start(self):
-        DaveAction.start(self)
-        self.tcp_client.sendMovieParameters(self.movie)
+
+        movie_data = {}
+        if hasattr(movie, "parameters"): movie_data["parameters"] = movie.paraeters
+        if hasattr(movie, "stage_x"): movie_data["stage_x"] = movie.stage_x
+        if hasattr(movie, "stage_y"): movie_data["stage_y"] = movie.stage_y
+        if hasattr(movie, "lock_target"): movie_data["lock_target"] = movie.lock_target
+
+        self.message = TCPMessage(message_type = "Movie Parameters", data = movie_data)
 
 ## DaveActionRecenter
 #
@@ -138,14 +93,7 @@ class DaveActionRecenter(DaveAction):
     def __init__(self, tcp_client):
         DaveAction.__init__(self, tcp_client)
         self.delay = 200
-
-    ## start
-    #
-    # Send the recenter piezo command to HAL.
-    #
-    def start(self):
-        DaveAction.start(self)
-        self.tcp_client.startRecenterPiezo()
+        self.message = TCPMessage(message_type = "Recenter")
 
 ## DaveActionValveProtocol
 #
@@ -164,24 +112,5 @@ class DaveActionValveProtocol(DaveAction):
         self.protocol_name = protocol_xml.protocol_name
         self.protocol_is_running = False
 
-    ## handleComplete
-    #
-    # Handle a complete message from the kilroyClient.
-    #
-    # @param a_string The complete message from kilroy
-    #
-    def handleComplete(self, a_string):
-        print "Received Complete from Kilroy " + a_string
-        self.protocol_is_running = False
-        self.completeAction()
-
-    ## start
-    #
-    # Start sending protocols to kilroy
-    #
-    # @param comm A kilroy client object.
-    #
-    def start(self):
-        DaveAction.start(self)
-        self.protocol_is_running = True
-        self.tcp_client.sendProtocol(self.protocol_name)
+        self.message = TCPMessage(message_type = "Kilroy Protocol",
+                                  data = {"name": self.protocol_name})

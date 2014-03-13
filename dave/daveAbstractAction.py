@@ -81,10 +81,18 @@ class DaveAction(QtCore.QObject):
 
     ## handleReply
     #
-    # handle the com port complete signal
+    # handle the return of a message
     #
     def handleReply(self, message):
-        self.completeAction()
+        # Check to see if the same message got returned
+        if not (message.getID() == self.message.getID()):
+            self.error_message = "Communication Error: Incorrect Message Returned"
+            self.completeActionWithError()
+        elif message.hasError():
+            self.error_message = message.getErrorMessage()
+            self.completeActionWithError()
+        else: # Correct message and no error
+            self.completeAction()
 
     ## completeActionWithError
     #
