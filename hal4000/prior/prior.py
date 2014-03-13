@@ -42,6 +42,8 @@ class Prior(RS232.RS232):
             print "Prior Stage is not connected? Stage is not on?"
         else:   # this turns off "drift correction".
             self.setServo(False)
+            self.setEncoderWindow("X", 2)
+            self.setEncoderWindow("Y", 2)
 
     ## _command
     #
@@ -98,7 +100,8 @@ class Prior(RS232.RS232):
 
     ## getServo
     #
-    # I don't remember what this is for or what it does..
+    # Returns whether or not the stage is servoing, i.e. updating it
+    # position based on the encoders in the event of drift.
     #
     # @return [servo x, servo y].
     #
@@ -173,15 +176,16 @@ class Prior(RS232.RS232):
     #
     def setEncoderWindow(self, axis, window):
         assert window >= 0, "setEncoderWindow window is too small " + str(window)
-        assert window <= 4, "setEncoderWindow window is too large " + str(window)
-        if axis == "X":
+        #assert window <= 4, "setEncoderWindow window is too large " + str(window)
+        if (axis == "X"):
             self._command("ENCW X," + str(window))
-        if axis == "Y":
+        if (axis == "Y"):
             self._command("ENCW Y," + str(window))
 
     ## setServo
     #
-    # I think this is probably related to the encoder.
+    # Set the stage to update (or not) based on the encoders in the
+    # event of stage drift.
     #
     # @param servo True/False turn the servo on/off?
     #
@@ -286,11 +290,12 @@ if __name__ == "__main__":
         stage = Prior(port = "COM9", baudrate = 115200)
         stage.setVelocity(1.0, 1.0)
         print stage._command("SMS")
+        print stage._command("ENCW")
 
         for info in stage.info():
             print info
 
-        if 0:
+        if 1:
             print stage.getServo()
             stage.setServo(True)
             print stage.getServo()

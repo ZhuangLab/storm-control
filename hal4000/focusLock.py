@@ -4,30 +4,17 @@
 #
 # Run focus lock control only.
 #
-# Hazen 03/12
+# Hazen 03/14
 #
 
-import sys
-from PyQt4 import QtGui
+import halLib.standalone as standalone
 
-import halLib.parameters as params
-
-if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
-    parameters = params.Parameters("settings_default.xml")
-    setup_name = parameters.setup_name
-    parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
-    parameters.setup_name = setup_name
-    focuslock = __import__('focuslock.' + setup_name.lower() + 'FocusLockZ', globals(), locals(), [setup_name], -1)
-    flock = focuslock.AFocusLockZ(parameters, None)
-    flock.show()
-    app.exec_()
-
+standalone.runModule("focuslock")
 
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

@@ -85,14 +85,6 @@ class SingleCamera(genericCamera.Camera):
     def getCameraDisplay(self):
         return self.camera_display
 
-    ## getCameraDisplayArea
-    #
-    # @return The UI widget where images from the camera are rendered.
-    #
-    @hdebug.debug
-    def getCameraDisplayArea(self):
-        return self.camera_display.camera_widget
-
     ## getFilmSize
     #
     # @return The size of the current film.
@@ -114,7 +106,8 @@ class SingleCamera(genericCamera.Camera):
     #
     @hdebug.debug
     def getSignals(self):
-        return [["camera", "cameraROISelection", self.camera_display.cameraROISelection],
+        return [["camera", "cameraDisplayCaptured", self.camera_display.cameraDisplayCaptured],
+                ["camera", "cameraROISelection", self.camera_display.cameraROISelection],
                 ["camera", "dragStart", self.camera_display.cameraDragStart],
                 ["camera", "dragMove", self.camera_display.cameraDragMove]]
 

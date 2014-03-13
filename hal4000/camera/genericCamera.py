@@ -68,17 +68,6 @@ class Camera(QtGui.QDialog):
     def getCameraDisplay(self):
         return False
 
-    ## getCameraDisplayArea
-    #
-    # Return the sub-region of the camera display where the
-    # camera images are actually shown. This is used by the
-    # misc controls on some setups.
-    #
-    # @return False, The default camera has no display area.
-    #
-    def getCameraDisplayArea(self):
-        return False
-
     ## getFilmSize
     #
     # Return the total size of the film(s) the camera(s)

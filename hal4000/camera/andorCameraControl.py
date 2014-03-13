@@ -247,7 +247,7 @@ class ACameraControl(cameraControl.CameraControl):
     #
     @hdebug.debug
     def newParameters(self, parameters):
-        self.initCamera()
+        #self.initCamera()
         p = parameters
         self.reversed_shutter = p.reversed_shutter
         try:

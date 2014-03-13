@@ -31,7 +31,7 @@ from PyQt4 import QtCore
 # jog(sx, sy)
 #   Jog at a speed given by sx, sy in um/second
 #
-# lockout(flag)
+# joystickOnOff(flag)
 #   Lockout stage motion (or not).
 #
 # position()
