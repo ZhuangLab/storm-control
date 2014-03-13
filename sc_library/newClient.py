@@ -22,7 +22,6 @@ from sc_library.tcpMessage import TCPMessage
 # ----------------------------------------------------------------------------------------
 class Socket(QtNetwork.QTcpSocket):
     # Define custom command ready signal
-    acknowledged = QtCore.pyqtSignal()
     message_ready = QtCore.pyqtSignal(object)
     
     def __init__(self,
@@ -35,9 +34,10 @@ class Socket(QtNetwork.QTcpSocket):
 
         # Initialize internal variables
         self.verbose = verbose
-        self.address = address # Default is local address
-        self.port = port # Default is port 9500 
+        self.address = address 
+        self.port = port 
         self.server_name = server_name
+        self.num_conn_tries = 5
         
         # Connect data ready signal
         self.readyRead.connect(self.handleReadyRead)
@@ -60,14 +60,14 @@ class Socket(QtNetwork.QTcpSocket):
 
         self.connectToHost(self.address, self.port)
         tries = 0
-        while (not self.waitForConnected() and (tries < 5)):
+        while (not self.waitForConnected() and (tries < self.num_conn_tries)):
             print "Could not find " + self.server_name + " server. Attempt: " + str(tries)
             time.sleep(1)
             self.connectToHost(self.address, self.port)
             tries += 1
             
-        if tries==5:
-            print self.server_name + " server found"
+        if tries==self.num_conn_tries:
+            print self.server_name + " server not found"
         else:
             print "Connected to "+ self.server_name + " server"
 
@@ -88,10 +88,8 @@ class Socket(QtNetwork.QTcpSocket):
             
         message = pickle.loads(message_str)
         if self.verbose: print "Received: \n" + str(message)
-        
-        if message.getType() == "Acknowledge":
-            self.acknowledged.emit()
-        elif message.getType() == "Busy":
+
+        if message.getType() == "Busy":
             self.handleBusy()
         else:
             self.message_ready.emit(message)
@@ -102,6 +100,7 @@ class Socket(QtNetwork.QTcpSocket):
     def sendMessage(self, message):
         message_string = pickle.dumps(message)
         self.write(message_string + "\n") # Newline required to trigger canReadLine()
+        self.flush()
         if self.verbose: print "Sent: \n" + str(message)
 
 # ----------------------------------------------------------------------------------------
@@ -109,7 +108,6 @@ class Socket(QtNetwork.QTcpSocket):
 # ----------------------------------------------------------------------------------------                                                                
 class TCPClient(QtGui.QWidget):
     # Define custom command ready signal: to relay socket signals
-    acknowledged = QtCore.pyqtSignal()
     message_ready = QtCore.pyqtSignal(object)
     disconnect = QtCore.pyqtSignal()
 
@@ -126,17 +124,14 @@ class TCPClient(QtGui.QWidget):
         self.port = port # Default is 9500
         self.server_name = server_name
         self.verbose = verbose
-        self.unacknowledged_messages = 0
-        self.command_pause_time = 0.05
-        self.sent_message = None
         
         # Create instance of socket
         self.socket = Socket(port = self.port,
                              server_name = self.server_name,
+                             address = self.address,
                              verbose = self.verbose)
         
         # Connect socket signals
-        self.socket.acknowledged.connect(self.handleAcknowledged)
         self.socket.message_ready.connect(self.handleMessageReady)
         self.socket.disconnected.connect(self.handleDisconnect)
 
@@ -146,14 +141,6 @@ class TCPClient(QtGui.QWidget):
     def close(self):
         if self.verbose: print "Closing client: " + self.server_name
         if self.isConnected(): self.socket.close()
-        
-    # ------------------------------------------------------------------------------------
-    # Handle acknowledged receipt of transmitted message 
-    # ------------------------------------------------------------------------------------       
-    def handleAcknowledged(self):
-        self.unacknowledged_messages -= 1
-        if self.unacknowledged_messages == 0:
-            self.acknowledged.emit() # All messages have been sent and received
         
     # ------------------------------------------------------------------------------------
     # Relay message ready signal with message 
@@ -181,10 +168,7 @@ class TCPClient(QtGui.QWidget):
     # ------------------------------------------------------------------------------------       
     def sendMessage(self, message):
         if self.isConnected():
-            self.unacknowledged_messages += 1
             self.socket.sendMessage(message)
-            self.socket.flush()
-            time.sleep(self.command_pause_time)
             return True
         else:
             print self.server_name + " socket not connected. Did not send: " + str(command)
@@ -203,7 +187,6 @@ class TCPClient(QtGui.QWidget):
     def startCommunication(self):
         if not self.isConnected():
             self.socket.connectToServer()
-            self.unacknowledged_messages = 0
 
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
@@ -214,24 +197,45 @@ class StandAlone(QtGui.QMainWindow):
 
         # Create client
         self.client = TCPClient(port = 9500, server_name = "Test", verbose = True)
-
-        # Connect PyQt signals
-        self.client.acknowledged.connect(self.handleAcknowledge)
-        
-        # Create Test message
-        self.message = TCPMessage(message_type = "Test Message")
-        self.message.data = [1,2,3]
-
-        # Start Communication and send message
+        self.client.message_ready.connect(self.handleMessageReady)            
         self.client.startCommunication()
-        self.client.sendMessage(self.message)
 
+        self.message_ID = 1
+        self.sendTestMessage()
+        
     # ----------------------------------------------------------------------------------------
-    # Handle ackwnoledge
+    # Send Test Messages
     # ----------------------------------------------------------------------------------------
-    def handleAcknowledge(self):
-        print "Acknowledge receipt of message"
+    def sendTestMessage(self):
+        if self.message_ID == 1:
+            # Create Test message
+            message = TCPMessage(message_type = "Stage Position",
+                                  data = {"Stage_X": 100.00, "Stage_Y": 0.00})
+        elif self.message_ID ==2:
+            message = TCPMessage(message_type = "Movie",
+                                  data = {"Name": "Test_Movie_01", "Parameters": 1})
 
+        else:
+            message = TCPMessage(message_type = "Done")
+    
+        self.message_ID += 1
+        self.sent_message = message
+        self.client.sendMessage(message)
+        
+    # ----------------------------------------------------------------------------------------
+    # Handle New Message
+    # ----------------------------------------------------------------------------------------
+    def handleMessageReady(self, message):
+        # Handle responses to messages
+        if self.sent_message.getID() == message.getID():
+            if message.isComplete():
+                print "Completed message: "
+                print message
+        else:
+            print "Received an unexpected message"
+
+        self.sendTestMessage()
+        
     # ----------------------------------------------------------------------------------------
     # Handle close event
     # ----------------------------------------------------------------------------------------

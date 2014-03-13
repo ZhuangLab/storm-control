@@ -25,7 +25,6 @@ class TCPServer(QtNetwork.QTcpServer):
     com_got_connection = QtCore.pyqtSignal()
     com_lost_connection = QtCore.pyqtSignal()
     message_ready = QtCore.pyqtSignal(object)
-    acknowledged = QtCore.pyqtSignal()
 
     def __init__(self,
                  port=9500,
@@ -127,9 +126,7 @@ class TCPServer(QtNetwork.QTcpServer):
         message = pickle.loads(message_str)
         if self.verbose: print "Received: \n" + str(message)
 
-        if message.getType() == "Acknowledge":
-            self.acknowledged.emit()
-        elif message.getType() == "Busy":
+        if message.getType() == "Busy":
             self.handleBusy()
         else:
             self.message_ready.emit(message)
@@ -144,20 +141,13 @@ class TCPServer(QtNetwork.QTcpServer):
             return False
 
     # ------------------------------------------------------------------------------------
-    # Low level string communication
-    # ------------------------------------------------------------------------------------       
-    def send(self, message_str):
-        if self.isConnected():
-            self.socket.write(message_str + "\n")
-            self.socket.flush()
-
-    # ------------------------------------------------------------------------------------
     # Send a message via the socket 
     # ------------------------------------------------------------------------------------       
     def sendMessage(self, message):
         if self.isConnected():
             message_str = pickle.dumps(message)
-            self.send(message_str)
+            self.socket.write(message_str + "\n")
+            self.socket.flush()
             if self.verbose: print "Sent: \n" + str(message)
             return True
         else:
@@ -195,8 +185,17 @@ class StandAlone(QtGui.QMainWindow):
     # Handle New Message
     # ----------------------------------------------------------------------------------------
     def handleMessageReady(self, message):
-        message.complete = "True"
-        self.server.sendMessage(message)
+        # Parse Based on Message Type
+        if message.getType() == "Stage Position":
+            print "Stage X: ", message.getData("Stage_X"), "Stage Y: ", message.getData("Stage_Y")
+            message.markAsComplete()
+            self.server.sendMessage(message)
+            
+        elif message.getType() == "Movie":
+            print "Movie: ", "Name: ", message.getData("Name"), "Parameters: ", message.getData("Parameters")
+            message.markAsComplete()
+            self.server.sendMessage(message)
+            
     # ----------------------------------------------------------------------------------------
     # Handle close event
     # ----------------------------------------------------------------------------------------

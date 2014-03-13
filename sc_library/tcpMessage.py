@@ -25,6 +25,7 @@ class TCPMessage():
         self.data = data
         self.response = None
         self.test = False
+        self.complete = False
         
     def getType(self):
         return self.message_type
@@ -32,14 +33,20 @@ class TCPMessage():
     def getID(self):
         return self.id
 
-    def getData(self, key):
-        return self.data.get(key, default = None)
+    def getData(self, key_value):
+        return self.data.get(key_value, None)
 
-    def getResponse(self, key):
-        return self.data.get(key, default = None)
+    def getResponse(self, key_value):
+        return self.response.get(key_value, None)
 
     def isTest(self):
         return self.test
+
+    def isComplete(self):
+        return self.complete
+
+    def markAsComplete(self):
+        self.complete = True
     
     def __str__(self):
         string_rep = "Message Type: " + str(self.message_type) + "\n"
