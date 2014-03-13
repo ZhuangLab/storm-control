@@ -28,9 +28,10 @@ import focuslock.lockModes as lockModes
 # The lock display UI and lock control base class.
 #
 class LockDisplay(QtGui.QWidget):
+    foundOptimal = QtCore.pyqtSignal(float)
+    foundSum = QtCore.pyqtSignal(float)
     lockDisplay = QtCore.pyqtSignal(object)
     lockStatus = QtCore.pyqtSignal(float, float)
-    foundSum = QtCore.pyqtSignal(float)
     recenteredPiezo = QtCore.pyqtSignal()
 
     ## __init__
@@ -58,6 +59,7 @@ class LockDisplay(QtGui.QWidget):
         self.ir_laser = ir_laser
         self.ir_power = 0
         self.offset = 0
+        self.optimizing_sum = False
         self.parameters = parameters
         self.power = 0
         self.stage_z = 0
@@ -344,6 +346,16 @@ class LockDisplay(QtGui.QWidget):
     def tcpHandleFindSum(self):
         self.control_thread.findSumSignal()
 
+    ## tcpHandleOptimizeSum
+    #
+    # Adjust the laser power until the sum signal is in the range 0.5 - 0.9.
+    #
+    def tcpHandleOptimizeSum(self):
+        if self.ir_laser and self.ir_laser.havePowerControl():
+            self.optimizing_sum = True
+        else:
+            self.foundOptimal.emit(self.power)
+
     ## tcpHandleRecenterPiezo
     #
     # Tell the control thread to recenter the piezo.
@@ -579,6 +591,17 @@ class LockDisplayCam(LockDisplay):
             self.x_offset = x_offset/power
             self.y_offset = y_offset/power
 
+        # Adjust laser power, if requested.
+        if self.optimizing_sum:
+            cur_sum = self.sumDisplay.getValue()
+            if (cur_sum < 0.5):
+                self.ui.irSlider.setValue(self.ui.irSlider.value() + 1)
+            elif (cur_sum > 0.9):
+                self.ui.irSlider.setValue(self.ui.irSlider.value() - 1)
+            else:
+                self.optimizing_sum = False
+                self.foundOptimal.emit(power)
+
         # Change blinking value so that the red dot in the camera display blinks.
         self.show_dot = not self.show_dot
 
@@ -641,6 +664,7 @@ class LockDisplayCam(LockDisplay):
     #
     # This is called approximately every ten seconds to update the picture
     # that is displayed from the camera.
+    #
     def updateCamera(self):
         self.camDisplay.newImage(self.control_thread.getImage(), self.show_dot)
         

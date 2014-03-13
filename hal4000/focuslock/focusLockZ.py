@@ -183,11 +183,24 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
         if (m_type == "findSum"):
             self.tcpHandleFindSum()
 
+        elif (m_type == "optimizeSum"):
+            self.tcpHandleOptimizeSum()
+
         elif (m_type == "recenterPiezo"):
             self.tcpHandleRecenterPiezo
 
         elif (m_type == "setLockTarget"):
             self.tcpHandleSetLockTarget(m_data[0])
+
+    ## handleFoundOptimal
+    #
+    # Notify external program (via TCP/IP) that the optimal sum signal has been found.
+    #
+    # @param lock_sum The lock sum signal.
+    #
+    @hdebug.debug
+    def handleFoundOptimal(self, lock_sum):
+        self.tcpComplete.emit(str(lock_sum))
 
     ## handleFoundSum
     #
@@ -370,6 +383,14 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     def tcpHandleFindSum(self):
         self.lock_display1.tcpHandleFindSum()
 
+    ## tcpHandleOptimizeSum
+    #
+    # Handle optimize sum requests that come via TCP/IP.
+    #
+    @hdebug.debug
+    def tcpHandleOptimizeSum(self):
+        self.lock_display1.tcpHandleOptimizeSum()
+
     ## tcpHandleRecenterPiezo
     #
     # Handle piezo recentering requests that come via TCP/IP.
@@ -387,6 +408,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def tcpHandleSetLockTarget(self, target):
         self.lock_display1.tcpHandleSetLockTarget(target)
+
 
     ## toggleLockButtonDisplay
     #
@@ -459,6 +481,7 @@ class FocusLockZQPD(FocusLockZ):
                                                         control_thread, 
                                                         ir_laser, 
                                                         self.ui.lockDisplayWidget)
+        self.lock_display1.foundOptimal.connect(self.handleFoundOptimal)
         self.lock_display1.foundSum.connect(self.handleFoundSum)
         self.lock_display1.recenteredPiezo.connect(self.handleRecenteredPiezo)
 
@@ -494,6 +517,7 @@ class FocusLockZCam(FocusLockZ):
                                                         control_thread, 
                                                         ir_laser, 
                                                         self.ui.lockDisplayWidget)
+        self.lock_display1.foundOptimal.connect(self.handleFoundOptimal)
         self.lock_display1.foundSum.connect(self.handleFoundSum)
         self.lock_display1.recenteredPiezo.connect(self.handleRecenteredPiezo)
 
@@ -529,6 +553,7 @@ class FocusLockZDualCam(FocusLockZ):
                                                         ir_lasers[0], 
                                                         self.ui.lockDisplay1Widget)
         self.lock_display1.ui.statusBox.setTitle("Lock1 Status")
+        self.lock_display1.foundOptimal.connect(self.handleFoundOptimal)
         self.lock_display1.foundSum.connect(self.handleFoundSum)
         self.lock_display1.recenteredPiezo.connect(self.handleRecenteredPiezo)
 
@@ -668,6 +693,15 @@ class FocusLockZDualCam(FocusLockZ):
     def tcpHandleFindSum(self):
         self.lock_display1.tcpHandleFindSum()
         self.lock_display2.tcpHandleFindSum()
+
+    ## tcpHandleOptimizeSum
+    #
+    # Handle optimize sum requests that come via TCP/IP. Tells both focus locks to optimize sum.
+    #
+    @hdebug.debug
+    def tcpHandleOptimizeSum(self):
+        self.lock_display1.tcpHandleOptimizeSum()
+        self.lock_display2.tcpHandleOptimizeSum()
 
     ## tcpHandleRecenterPiezo
     #
