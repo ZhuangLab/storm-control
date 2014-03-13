@@ -20,6 +20,7 @@ public class TMACameraView extends ImageView {
 	private float center_y = 128;
 	private boolean live = false;
 	private float multiplier = 1;
+	private boolean show_gain = true;
 	
 	private Bitmap mBitmap;
 	private Rect mBitmapBounds;
@@ -75,7 +76,9 @@ public class TMACameraView extends ImageView {
 
     	if (live){
         	canvas.drawBitmap(mBitmap, mBitmapBounds, mImageBounds, mBitmapPaint);
-        	canvas.drawCircle(center_x, center_y, 20 * multiplier, mPaintLine);
+        	if (show_gain){
+        		canvas.drawCircle(center_x, center_y, 20 * multiplier, mPaintLine);
+        	}
     	}
     }
     
@@ -106,5 +109,14 @@ public class TMACameraView extends ImageView {
 
     public void setMultiplier(float new_multiplier){
     	multiplier = new_multiplier;
+    }
+    
+    public void setShowGain(int new_show_gain){
+    	if (new_show_gain != 0){
+    		show_gain = true;
+    	}
+    	else{
+    		show_gain = false;
+    	}
     }
 }

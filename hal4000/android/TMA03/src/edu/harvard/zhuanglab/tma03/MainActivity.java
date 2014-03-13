@@ -9,7 +9,6 @@
 
 package edu.harvard.zhuanglab.tma03;
 
-import android.app.ActionBar;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -23,14 +22,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-/*
- * Variables and methods listed alphabetically.
- */
 public class MainActivity extends Activity {
 
 	private static final boolean DEBUG = true;
@@ -109,6 +106,9 @@ public class MainActivity extends Activity {
             	else if (message[0].equals("gainchange")){
             		mTMACameraView.setMultiplier(Float.parseFloat(message[1]));
             	}
+            	else if (message[0].equals("showgain")){
+            		mTMACameraView.setShowGain(Integer.parseInt(message[1]));
+            	}
             	else if (message[0].equals("lockupdate")){
             		mTMALockView.newLockData(Float.parseFloat(message[1]), Float.parseFloat(message[2]));
             	}
@@ -121,6 +121,13 @@ public class MainActivity extends Activity {
         }
     };
     
+	OnClickListener mTMALockViewOnClickListener = new OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			sendLockClick();
+		}
+	};
+	
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
         case REQUEST_CONNECT_DEVICE:
@@ -153,7 +160,9 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         
 		mTMACameraView = (TMACameraView) findViewById(R.id.cameraView);
+
 		mTMALockView = (TMALockView) findViewById(R.id.lockView);
+		mTMALockView.setOnClickListener(mTMALockViewOnClickListener);
         
         mDownButton = (Button) findViewById(R.id.downButton);
         mRecordButton = (Button) findViewById(R.id.recordButton);
@@ -161,7 +170,7 @@ public class MainActivity extends Activity {
         configureButtons(false);
         
         mRelativeLayout = (RelativeLayout) findViewById(R.id.relativeLayout1);
-        mRelativeLayout.setOnTouchListener(relativeLayoutOnTouchListener);
+        mRelativeLayout.setOnTouchListener(relativeLayout1OnTouchListener);
         
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
                 
@@ -232,7 +241,7 @@ public class MainActivity extends Activity {
     		mBluetoothIO.stop();
 	}
 
-	OnTouchListener relativeLayoutOnTouchListener = new OnTouchListener() {
+	OnTouchListener relativeLayout1OnTouchListener = new OnTouchListener() {
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
 			double eventX = ((double) event.getX()) / ((double)mTMACameraView.width) - 0.5;
@@ -282,7 +291,12 @@ public class MainActivity extends Activity {
         if (DEBUG) Log.i(TAG, "focusup");
 		mBluetoothIO.sendMessage("focusup");
     }
-		
+
+	public void sendLockClick(){
+		if (DEBUG) Log.i(TAG, "lockclick");
+		mBluetoothIO.sendMessage("lockclick");
+	}
+	
 	public void sendRecord(View view){
         if (DEBUG) Log.i(TAG, "sendRecord");
 		mBluetoothIO.sendMessage("record");
