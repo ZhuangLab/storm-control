@@ -48,10 +48,12 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         self.click_y = 0.0
         self.client_sock = False
         self.connected = False
+        self.default_image = QtGui.QImage("bt_image.png")
         self.drag_gain = 1.0
         self.drag_multiplier = 100.0
         self.drag_x = 0.0
         self.drag_y = 0.0
+        self.filming = False
         self.image_is_new = True
         self.images_sent = 0
         self.is_down = False
@@ -60,10 +62,11 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         self.messages = []
         self.mutex = QtCore.QMutex()
         self.send_pictures = hardware.send_pictures
+        self.show_camera = True
         self.start_time = 0
 
-        # Load default image.
-        self.current_image = QtGui.QImage("bt_image.png")
+        # Set current image to default.
+        self.current_image = self.default_image
 
         # Setup bluetooth socket.
         have_bluetooth = True
@@ -144,9 +147,11 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
     def connectSignals(self, signals):
         for signal in signals:
             if (signal[1] == "cameraDisplayCaptured"):
-                signal[2].connect(self.handleNewPixmap)
+                signal[2].connect(self.handleNewCameraPixmap)
             elif (signal[1] == "focusLockStatus"):
                 signal[2].connect(self.handleFocusLockStatus)
+            elif (signal[1] == "focusLockDisplay"):
+                signal[2].connect(self.handleNewLockPixmap)
 
     ## dragUpdate
     #
@@ -200,6 +205,14 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         # Put the message in the queue.
         self.addMessage("lockupdate,{0:.3f},{1:.3f}".format(lock_offset, lock_sum))
 
+    ## handleNewCameraPixmap
+    #
+    # @param new_pixmap A QPixmap object from the camera display.
+    #
+    def handleNewCameraPixmap(self, new_pixmap):
+        if self.show_camera:
+            self.handleNewPixmap(new_pixmap)
+
     ## handleNewData
     #
     # Handles message from the device at the other end of the Bluetooth connection.
@@ -243,6 +256,14 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
                 self.lockJump.emit(-self.lock_jump_size)
             elif (data == "focusup"):
                 self.lockJump.emit(self.lock_jump_size)
+            elif (data == "lockclick"):
+                self.show_camera = not self.show_camera
+                if self.show_camera:
+                    self.addMessage("showgain,1")
+                else:
+                    self.addMessage("showgain,0")
+                self.current_image = self.default_image
+                self.image_is_new = True
 
         # Messages are only sent up to the device when the device requests a new image
         # or acknowledges the receipt of a previous message.
@@ -290,6 +311,14 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
                 self.mutex.lock()
                 self.images_sent += 1
                 self.mutex.unlock()
+
+    ## handleNewLockPixmap
+    #
+    # @param new_pixmap A QPixmap object from the focus lock.
+    #
+    def handleNewLockPixmap(self, new_pixmap):
+        if not self.show_camera:
+            self.handleNewPixmap(new_pixmap)
 
     ## handleNewPixmap
     #
@@ -358,6 +387,8 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
 
             # Block here waiting for a connection.
             [client_sock, client_info] = self.server_sock.accept()
+
+            # Initialization of a new connection.
             hdebug.logText("Bluetooth: Connected.")
             self.mutex.lock()
             self.client_sock = client_sock
@@ -365,6 +396,13 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
             self.connected = True
             self.images_sent = 0
             self.start_time = time.time()
+            
+            # Send initial configuration information.
+            if self.filming:
+                self.messages.append("startfilm")
+            else:
+                self.messages.append("stopfilm")
+
             self.mutex.unlock()
 
             while connected:
@@ -377,6 +415,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
                     self.connected = False
                     self.drag_gain = 1.0
                     self.messages = []
+                    self.show_camera = True
                     images_per_second = float(self.images_sent)/float(time.time() - self.start_time)
                     hdebug.logText("Bluetooth: Disconnected")
                     hdebug.logText("Bluetooth: Sent {0:.2f} images per second.".format(images_per_second))
@@ -398,6 +437,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
     @hdebug.debug
     def startFilm(self, film_name, run_shutters):
         self.addMessage("startfilm")
+        self.filming = True
 
     ## stopFilm
     #
@@ -406,6 +446,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
     @hdebug.debug
     def stopFilm(self, film_writer):
         self.addMessage("stopfilm")
+        self.filming = False
                             
 #
 # The MIT License

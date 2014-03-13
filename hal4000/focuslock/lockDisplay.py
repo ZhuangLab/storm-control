@@ -28,6 +28,7 @@ import focuslock.lockModes as lockModes
 # The lock display UI and lock control base class.
 #
 class LockDisplay(QtGui.QWidget):
+    lockDisplay = QtCore.pyqtSignal(object)
     lockStatus = QtCore.pyqtSignal(float, float)
     foundSum = QtCore.pyqtSignal(float)
     recenteredPiezo = QtCore.pyqtSignal()
@@ -460,6 +461,9 @@ class LockDisplayQPD(LockDisplay):
         self.lockStatus.emit(self.offsetDisplay.getValue(),
                              self.sumDisplay.getValue())
 
+        # Send current lock picture.
+        self.lockDisplay.emit(QtGui.QPixmap.grabWidget(self.qpdDisplay))
+
 
 ## LockDisplayCam
 #
@@ -581,6 +585,9 @@ class LockDisplayCam(LockDisplay):
         # Send lock status signal.
         self.lockStatus.emit(self.offsetDisplay.getValue(),
                              self.sumDisplay.getValue())
+
+        # Send current lock picture.
+        self.lockDisplay.emit(QtGui.QPixmap.grabWidget(self.camDisplay))
 
     ## handleAdjustAOI
     #

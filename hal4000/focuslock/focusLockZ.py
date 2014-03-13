@@ -165,7 +165,8 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def getSignals(self):
         return [[self.hal_type, "tcpComplete", self.tcpComplete],
-                [self.hal_type, "focusLockStatus", self.lock_display1.lockStatus]]
+                [self.hal_type, "focusLockStatus", self.lock_display1.lockStatus],
+                [self.hal_type, "focusLockDisplay", self.lock_display1.lockDisplay]]
 
     ## handleCommMessage
     #
