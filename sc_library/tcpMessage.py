@@ -10,7 +10,7 @@
 # ----------------------------------------------------------------------------------------
 # Import
 # ----------------------------------------------------------------------------------------
-import uuid
+import uuid 
 
 # ----------------------------------------------------------------------------------------
 # TCP Message Class
@@ -24,6 +24,8 @@ class TCPMessage():
         self.id = str(uuid.uuid1())
         self.data = data
         self.response = None
+        self.error = False
+        self.error_message = None
         self.test = False
         self.complete = False
         
@@ -45,6 +47,12 @@ class TCPMessage():
     def isComplete(self):
         return self.complete
 
+    def isError(self):
+        return self.error
+
+    def getErrorMessage(self):
+        return self.error_message
+    
     def markAsComplete(self):
         self.complete = True
     
