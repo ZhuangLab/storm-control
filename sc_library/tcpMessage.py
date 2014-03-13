@@ -47,7 +47,7 @@ class TCPMessage():
     def isComplete(self):
         return self.complete
 
-    def isError(self):
+    def hasError(self):
         return self.error
 
     def getErrorMessage(self):
