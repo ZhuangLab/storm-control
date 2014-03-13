@@ -28,6 +28,7 @@ import colorTables.colorTables as colorTables
 # The Camera display class.
 #
 class CameraDisplay(QtGui.QFrame):
+    cameraDisplayCaptured = QtCore.pyqtSignal(object)
     cameraDragStart = QtCore.pyqtSignal()
     cameraDragMove = QtCore.pyqtSignal(float, float)
     cameraROISelection = QtCore.pyqtSignal(object, object)
@@ -108,6 +109,7 @@ class CameraDisplay(QtGui.QFrame):
         self.ui.autoScaleButton.clicked.connect(self.autoScale)
         self.ui.colorComboBox.currentIndexChanged.connect(self.colorTableChange)
         self.ui.syncSpinBox.valueChanged.connect(self.handleSync)
+        self.camera_widget.displayCaptured.connect(self.handleDisplayCaptured)
         self.camera_widget.dragStart.connect(self.handleDragStart)
         self.camera_widget.dragMove.connect(self.handleDragMove)
         self.camera_widget.intensityInfo.connect(self.handleIntensityInfo)
@@ -193,6 +195,13 @@ class CameraDisplay(QtGui.QFrame):
     def getRecordButton(self):
         return self.ui.recordButton
 
+    ## handleDisplayCaptured
+    #
+    # @param a_pixmap A QPixmap object containing the image currently visible on the screen.
+    #
+    def handleDisplayCaptured(self, a_pixmap):
+        self.cameraDisplayCaptured.emit(a_pixmap)
+
     ## handleDragStart
     #
     def handleDragStart(self):
@@ -224,6 +233,11 @@ class CameraDisplay(QtGui.QFrame):
             self.show_grid = 1
             self.ui.gridAct.setText("Hide Grid")
         self.camera_widget.setShowGrid(self.show_grid)
+
+    ## handleNewImage
+    #
+    # This relays
+    #
 
     ## handleInfo
     #
