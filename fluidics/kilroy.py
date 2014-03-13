@@ -18,7 +18,7 @@ from PyQt4 import QtCore, QtGui
 from valves.valveChain import ValveChain
 from pumps.pumpControl import PumpControl
 from kilroyProtocols import KilroyProtocols
-from kilroyServer import KilroyServer
+from sc_library.newServer import TCPServer
 import sc_library.parameters as params
 
 # ----------------------------------------------------------------------------------------
@@ -52,8 +52,7 @@ class Kilroy(QtGui.QMainWindow):
             self.simulate_pump = parameters.simulate_pump
 
         # Define additional internal attributes
-        self.sent_protocol_names = []
-        self.sent_protocol_UIDs = []
+        self.received_message = None
         
         # Create ValveChain instance
         self.valveChain = ValveChain(com_port = self.valve_com_port,
@@ -76,10 +75,11 @@ class Kilroy(QtGui.QMainWindow):
         self.kilroyProtocols.completed_protocol_signal.connect(self.handleProtocolComplete)
 
         # Create Kilroy TCP Server and connect signals
-        self.tcpServer = KilroyServer(port = self.tcp_port,
-                                      verbose = self.verbose)
+        self.tcpServer = TCPServer(port = self.tcp_port,
+                                   server_name = "Kilroy",
+                                   verbose = self.verbose)
         
-        self.tcpServer.data_ready.connect(self.handleTCPData)
+        self.tcpServer.message_ready.connect(self.handleTCPData)
 
         # Create GUI
         self.createGUI()
@@ -104,7 +104,7 @@ class Kilroy(QtGui.QMainWindow):
         self.mainLayout.addWidget(self.kilroyProtocols.pumpCommands.mainWidget, 2, 1, 1, 1)
         self.mainLayout.addWidget(self.valveChain.mainWidget, 0, 2, 2, 2)
         self.mainLayout.addWidget(self.pumpControl.mainWidget, 0, 4, 2, 1)
-        self.mainLayout.addWidget(self.tcpServer.mainWidget, 2, 2, 1, 4)
+        #self.mainLayout.addWidget(self.tcpServer.mainWidget, 2, 2, 1, 4)
 
     # ----------------------------------------------------------------------------------------
     # Redirect protocol status change from kilroyProtocols to valveChain
@@ -121,35 +121,34 @@ class Kilroy(QtGui.QMainWindow):
     # ----------------------------------------------------------------------------------------
     # Handle a protocol complete signal from the valve protocols
     # ----------------------------------------------------------------------------------------
-    def handleProtocolComplete(self, protocol_UID):
+    def handleProtocolComplete(self, message):
         # If the protocol was sent by TCP pass on the complete signal
-        if protocol_UID in self.sent_protocol_UIDs:
-            list_ID = self.sent_protocol_UIDs.index(protocol_UID)
-            protocol_name = self.sent_protocol_names.pop(list_ID)
-            protocol_UID = self.sent_protocol_UIDs.pop(list_ID)
-            self.tcpServer.sendProtocolComplete(protocol_name, protocol_UID)
+        if self.received_message.getID() == message.getID():
+            message.markAsComplete()
+            self.tcpServer.sendMessage(message)
 
     # ----------------------------------------------------------------------------------------
     # Handle protocol request sent via TCP server
     # ----------------------------------------------------------------------------------------
-    def handleTCPData(self):
-        # Get protocol from tcpServer
-        [protocol_name, protocol_UID] = self.tcpServer.getProtocol()
-        
+    def handleTCPData(self, message):
         if self.verbose:
-            print "Received Protocol from Kilroy Client: " + protocol_name
-            print " with unique ID: " + protocol_UID
-            
-        if self.kilroyProtocols.isValidProtocol(protocol_name):
-            # Keep track of protocols issued via TCP 
-            self.sent_protocol_names.append(protocol_name)
-            self.sent_protocol_UIDs.append(protocol_UID)
-            
+            print "Received message: " + str(message)
+        
+        # Confirm that message is a protocol message
+        if not message.getType() == "Kilroy Protocol":
+            message.setError(True, "Wrong message type sent to Kilroy: " + message.getType())
+            self.tcpServer.sendMessage(message)
+        elif not self.kilroyProtocols.isValidProtocol(message.getData("name")):
+            message.setError(True, "Invalid Kilroy Protocol")
+            self.tcpServer.sendMessage(message)
+        elif message.isTest():
+            required_time = self.kilroyProtocols.requiredTime(message.getData("name"))
+            message.setResponse("Required Time", required_time)
+        else: # Valid, non-test message                                    
+            # Keep track of valid messages issued via TCP 
+            self.received_message = message
             # Start the protocol
-            self.kilroyProtocols.startProtocolRemotely(protocol_name, protocol_UID)
-
-        else: # Respond with a protocol complete to cancel the invalid protocol
-            self.tcpServer.sendProtocolComplete(protocol_name, protocol_UID)
+            self.kilroyProtocols.startProtocolRemotely(message)
             
     # ----------------------------------------------------------------------------------------
     # Redirect commands from kilroy protocol class to valves or pump

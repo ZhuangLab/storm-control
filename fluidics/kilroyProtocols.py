@@ -15,7 +15,6 @@
 # ----------------------------------------------------------------------------------------
 import sys
 import os
-import uuid
 import xml.etree.ElementTree as elementTree
 from PyQt4 import QtCore, QtGui
 from valves.valveCommands import ValveCommands
@@ -29,7 +28,7 @@ class KilroyProtocols(QtGui.QMainWindow):
     # Define custom command ready signal
     command_ready_signal = QtCore.pyqtSignal() # A command is ready to be issued
     status_change_signal = QtCore.pyqtSignal() # A protocol status change occured
-    completed_protocol_signal = QtCore.pyqtSignal(str) # Name of completed protocol
+    completed_protocol_signal = QtCore.pyqtSignal(object) # Name of completed protocol
         
     def __init__(self,
                  protocol_xml_path = "default_config.xml",
@@ -47,7 +46,7 @@ class KilroyProtocols(QtGui.QMainWindow):
         self.num_protocols = 0
         self.status = [-1, -1] # Protocol ID, command ID within protocol
         self.issued_command = []
-        self.protocol_UID = None
+        self.received_message = None
 
         print "----------------------------------------------------------------------"
         
@@ -397,7 +396,7 @@ class KilroyProtocols(QtGui.QMainWindow):
     # ------------------------------------------------------------------------------------
     # Initialize and start a protocol specified by name
     # ------------------------------------------------------------------------------------
-    def startProtocolByName(self, protocol_name, protocol_UID):
+    def startProtocolByName(self, protocol_name):
         if self.isValidProtocol(protocol_name):
             if self.isRunningProtocol():
                 if self.verbose:
@@ -416,13 +415,14 @@ class KilroyProtocols(QtGui.QMainWindow):
     # ------------------------------------------------------------------------------------
     def startProtocolLocally(self):
         # Run protocol
-        self.protocol_UID = str(uuid.uuid1()) # Create a unique idea for this protocol
+        self.received_message = None # Remove existing messages
         self.startProtocol()
 
     # ------------------------------------------------------------------------------------
-    # Initialize and start a protocol specified by name
+    # Initialize and start a protocol specified by a TCP message
     # ------------------------------------------------------------------------------------
-    def startProtocolRemotely(self, protocol_name, protocol_UID):
+    def startProtocolRemotely(self, message):
+        protocol_name = message.getData("name")
         if self.isValidProtocol(protocol_name):
             if self.isRunningProtocol():
                 if self.verbose:
@@ -434,7 +434,7 @@ class KilroyProtocols(QtGui.QMainWindow):
             self.protocolListWidget.setCurrentRow(protocol_ID)
 
             # Run protocol
-            self.protocol_UID = protocol_UID
+            self.received_message = message
             self.startProtocol()
             
     # ------------------------------------------------------------------------------------
@@ -444,12 +444,12 @@ class KilroyProtocols(QtGui.QMainWindow):
         # Get name of current protocol
         if self.status[0] >= 0:
             if self.verbose: print "Stopped Protocol"
-            self.completed_protocol_signal.emit(self.protocol_UID)
+            self.completed_protocol_signal.emit(self.received_message)
         
         # Reset status and emit status change signal
         self.status = [-1,-1]
         self.status_change_signal.emit()
-        self.protocol_UID = None
+        self.received_message = None
         
         # Stop timer
         self.protocol_timer.stop()
