@@ -62,7 +62,7 @@ class DaveAction(QtCore.QObject):
     # Handle clean up of the action
     #
     def cleanUp(self):
-        self.tcp_client.complete.disconnect()
+        self.tcp_client.message_ready.disconnect()
 
     ## completeAction
     #

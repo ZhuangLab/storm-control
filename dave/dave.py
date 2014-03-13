@@ -79,10 +79,11 @@ class CommandEngine(QtGui.QWidget):
         self.should_pause = False
 
         # HAL Client
-        self.HALClient = tcpClient.TCPClient(port = 9000)
+        self.HALClient = tcpClient.TCPClient(port = 9000, server_name = "HAL")
         
         # Kilroy Client
-        self.kilroyClient = tcpClient.TCPClient(port = 9500)
+        self.kilroyClient = tcpClient.TCPClient(port = 9500,
+                                                server_name = "Kilroy")
     
     ## abort
     #
