@@ -153,7 +153,7 @@ class TCPServer(QtNetwork.QTcpServer):
             if self.verbose: print "Sent: \n" + str(message)
             return True
         else:
-            print self.server_name + " socket not connected. Did not send: " + str(command)
+            print self.server_name + " socket not connected. Did not send: " + str(message)
             return False
         
 # ----------------------------------------------------------------------------------------
