@@ -31,8 +31,8 @@ import sequenceParser
 from xml_generators import xml_generator, recipeParser
 
 # Communication
-import fluidics.kilroyClient
-import sc_library.tcpClient as tcpClient
+import sc_library.tcpMessage
+import sc_library.newClient as tcpClient
 
 # UI
 import qtdesigner.dave_ui as daveUi
@@ -42,7 +42,6 @@ import daveActions
 
 # Parameter loading
 import sc_library.parameters as params
-
 
 ## createTableWidget
 #
@@ -80,10 +79,10 @@ class CommandEngine(QtGui.QWidget):
         self.should_pause = False
 
         # HAL Client
-        self.HALClient = tcpClient.TCPClient(self)
+        self.HALClient = tcpClient.TCPClient(port = 9000)
         
         # Kilroy Client
-        self.kilroyClient = fluidics.kilroyClient.KilroyClient(verbose = True)
+        self.kilroyClient = tcpClient.TCPClient(port = 9500)
     
     ## abort
     #
@@ -129,7 +128,7 @@ class CommandEngine(QtGui.QWidget):
     ## startCommand
     #
     # Start a command or command sequence
-    #
+    # 
     def startCommand(self):
         if not self.should_pause and len(self.actions) > 0:
             # Extract next action from list

@@ -5,7 +5,7 @@
 # Collection of classes that control the establish the basic operation of dave
 # as it issues various types of commands to HAL and Kilroy
 #
-# Hazen 06/13; Jeff 1/14
+# Hazen 06/13; Jeff 1/14 
 #
 
 from daveAbstractAction import DaveAction
@@ -23,26 +23,24 @@ class DaveActionFindSum(DaveAction):
     def __init__(self, tcp_client, min_sum):
         DaveAction.__init__(self, tcp_client)
         self.min_sum = min_sum
+        self.message = TCPMessage(message_type = "Find Sum",
+                                  data = {"min_sum": min_sum})
 
-    ## handleComplete
+    ## handleReply
     #
-    # @param a_string The sum signal message from HAL.
+    # @param message. The response from Hal.
     #
-    def handleComplete(self, a_string):
-        if (a_string == "NA") or (float(a_string) > self.min_sum):
-            self.completeAction()
+    def handleReply(self, message):
+        if message.getType() == "Find Sum" and message.isComplete():
+            if message.getData("sum") > self.min_sum:
+                self.completeAction()
+            else:
+                self.error_message = "Sum signal " + str(message.getData("Sum")) + " is below threshold value of " + str(self.min_sum)
+                self.completeActionWithError()
         else:
-            self.error_message = "Sum signal " + a_string + " is below threshold value of " + str(self.min_sum)
+            self.error_message = "Communication Error"
             self.completeActionWithError()
-
-    ## start
-    #
-    # Send the startFindSum message to HAL.
-    #
-    def start(self):
-        DaveAction.start(self)
-        self.tcp_client.startFindSum()
-
+            
 ## DaveActionMovie
 #
 # The movie acquisition action.
@@ -55,18 +53,23 @@ class DaveActionMovie(DaveAction):
     #
     def __init__(self, tcp_client, movie):
         DaveAction.__init__(self, tcp_client)
-        self.acquiring = False
         self.movie = movie
+
+        # Create TCP Message Dictionary
+        movie_data = movie.__dict__()                
+        self.message = TCPMessage(message_type = "Movie",
+                                  data = movie_data)
 
     ## abort
     #
-    # Aborts the movie (if we are current acquiring).
+    # Aborts the movie 
     #
     def abort(self):
-        if self.acquiring:
-            self.tcp_client.stopMovie()
+        stop_message = TCPMessage(message_type = "Abort")
+        self.message = stop_message
+        self.tcp_client.sendMessage(self.message)
 
-    ## handleComplete
+    ## handleReply
     #
     # Returns no error if a_string is "NA" or int(a_string) is greater than the
     # minimum number of spots that the movie should have (as specified by
@@ -74,12 +77,17 @@ class DaveActionMovie(DaveAction):
     #
     # @param a_string The response from HAL.
     #
-    def handleComplete(self, a_string):
-        self.acquiring = False
-        if (a_string == "NA") or (int(a_string) >= self.movie.min_spots):
+    def handleReply(self, message):
+        if message.getType() == "Movie" and message.isComplete():
+            if message.getData("num_spots") > self.movie.min_spots:
+                self.completeAction()
+            else:
+                self.error_message = "Sum signal " + str(message.getData("Sum")) + " is below threshold value of " + str(self.min_sum)
+                self.completeActionWithError()
+        elif message.getType() == "Abort" and message.isComplete():
             self.completeAction()
         else:
-            self.error_message = "Spot finder counts " + a_string + " is below threshold value of " + str(self.movie.min_spots)
+            self.error_message = "Communication Error"
             self.completeActionWithError()
 
     ## start
@@ -90,8 +98,6 @@ class DaveActionMovie(DaveAction):
     #
     def start(self):
         DaveAction.start(self)
-        self.acquiring = True
-        self.tcp_client.startMovie(self.movie)
 
 ## DaveActionMovieParameters
 #

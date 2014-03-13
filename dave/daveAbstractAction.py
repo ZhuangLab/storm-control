@@ -4,10 +4,11 @@
 #
 # An abstract class for a dave action
 #
-# Jeff 1/14
+# Jeff 1/14 
 #
 
 from PyQt4 import QtCore
+from sc_library.tcpMessage import TCPMessage
 
 ## DaveAction
 #
@@ -30,6 +31,7 @@ class DaveAction(QtCore.QObject):
 
         # Connect com port
         self.tcp_client = tcp_client
+        self.message = TCPMessage()
 
         # Initialize error message
         self.error_message = ""
@@ -42,9 +44,8 @@ class DaveAction(QtCore.QObject):
         self.delay = 100 # Default delay
 
         # Define complete requirements
-        self.complete_on_acknowledge = False # Complete after acknowledgement of command received
         self.complete_on_timer = False # Complete self.delay ms after acknowledgement of command received
-        # If both attributes are false, then the command completes only on the complete signal
+                                       # Otherwise complete upon receipt of response message
             
         # Define pause after completion state
         self.should_pause = False
@@ -61,7 +62,6 @@ class DaveAction(QtCore.QObject):
     # Handle clean up of the action
     #
     def cleanUp(self):
-        self.tcp_client.acknowledged.disconnect()
         self.tcp_client.complete.disconnect()
 
     ## completeAction
@@ -79,21 +79,11 @@ class DaveAction(QtCore.QObject):
     def getError(self):
         return self.error_message
 
-    ## handleAcknowledged
-    #
-    # handle the com port acknowledge signal
-    #
-    def handleAcknowledged(self):
-        if self.complete_on_acknowledge:
-            self.completeAction()
-        elif self.complete_on_timer:
-            self.delay_timer.start(self.delay)
-
-    ## handleComplete
+    ## handleReply
     #
     # handle the com port complete signal
     #
-    def handleComplete(self):
+    def handleReply(self, message):
         self.completeAction()
 
     ## completeActionWithError
@@ -114,6 +104,13 @@ class DaveAction(QtCore.QObject):
         if self.complete_on_timer:
             self.completeAction()
 
+    ## setTest
+    #
+    # Converts the Dave Action to a test request
+    #
+    def setTest(self, boolean):
+        self.message.test = boolean
+
     ## shouldPause
     #
     # Determine if the command engine should pause after this action
@@ -123,10 +120,9 @@ class DaveAction(QtCore.QObject):
 
     ## start
     #
-    # Start the desired action. Must be overloaded. 
+    # Start the action.
     #
     def start(self):
-        self.tcp_client.acknowledged.connect(self.handleAcknowledged)
-        self.tcp_client.complete.connect(self.handleComplete)
+        self.tcp_client.message_ready.connect(self.handleReply)
         self.tcp_client.startCommunication()
-
+        self.tcp_client.sendMessage(self.message)
