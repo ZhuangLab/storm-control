@@ -16,21 +16,36 @@ import uuid
 # TCP Message Class
 # ----------------------------------------------------------------------------------------
 class TCPMessage():
-    def __init__(self, message_type = "Default"):
+    def __init__(self,
+                 message_type = "Default",
+                 data = None,
+                 test = False):
         self.message_type = message_type
         self.id = str(uuid.uuid1())
-
+        self.data = data
+        self.response = None
+        self.test = False
+        
     def getType(self):
         return self.message_type
 
     def getID(self):
         return self.id
 
+    def getData(self, key):
+        return self.data.get(key, default = None)
+
+    def getResponse(self, key):
+        return self.data.get(key, default = None)
+
+    def isTest(self):
+        return self.test
+    
     def __str__(self):
-        string_rep = "Message Type: " + str(self.message_type) + "\n\t"
+        string_rep = "Message Type: " + str(self.message_type) + "\n"
         for attribute in vars(self).keys():
             if not attribute == "message_type":
-                string_rep += attribute + ": " + str(getattr(self, attribute)) + "\n\t"
+                string_rep += "\t" + attribute + ": " + str(getattr(self, attribute)) + "\n"
         return string_rep
 
 #
