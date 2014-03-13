@@ -9,6 +9,7 @@
 #
 
 from daveAbstractAction import DaveAction
+from sc_library.tcpMessage import TCPMessage
 
 ## DaveActionFindSum
 #
@@ -85,7 +86,6 @@ class DaveActionMovieParameters(DaveAction):
 # has a motorized Z.
 #
 class DaveActionRecenter(DaveAction):
-
     ## __init__
     #
     # Create the object, set the delay time to 200 milliseconds.
@@ -100,7 +100,6 @@ class DaveActionRecenter(DaveAction):
 # The fluidics protocol action. Send commands to Kilroy.
 #
 class DaveActionValveProtocol(DaveAction):
-
     ## __init__
     #
     # Initialize the valve protocol action
