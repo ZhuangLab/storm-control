@@ -41,6 +41,9 @@ class TCPMessage():
     def getResponse(self, key_value):
         return self.response.get(key_value, None)
 
+    def setResponse(self, key_name, value):
+        self.response[key_name] = value
+
     def isTest(self):
         return self.test
 
@@ -49,6 +52,10 @@ class TCPMessage():
 
     def hasError(self):
         return self.error
+
+    def setError(self, error_boolean, error_message):
+        self.error = error_boolean
+        self.error_message = error_message
 
     def getErrorMessage(self):
         return self.error_message

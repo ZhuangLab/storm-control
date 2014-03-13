@@ -28,6 +28,7 @@ class TCPServer(QtNetwork.QTcpServer):
 
     def __init__(self,
                  port=9500,
+                 server_name = "default",
                  address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
                  parent = None,
                  verbose = False):
@@ -37,6 +38,7 @@ class TCPServer(QtNetwork.QTcpServer):
         self.verbose = verbose
         self.address = address # Default is local address
         self.port = port
+        self.server_name = server_name
         self.socket = None
         
         # Connect new connection signal
