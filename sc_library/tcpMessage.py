@@ -18,12 +18,12 @@ import uuid
 class TCPMessage():
     def __init__(self,
                  message_type = "Default",
-                 data = None,
+                 data = {},
                  test = False):
         self.message_type = message_type
         self.id = str(uuid.uuid1())
         self.data = data
-        self.response = None
+        self.response = {}
         self.error = False
         self.error_message = None
         self.test = False
@@ -56,6 +56,9 @@ class TCPMessage():
     def setError(self, error_boolean, error_message):
         self.error = error_boolean
         self.error_message = error_message
+
+    def enableTest(self, test_boolean):
+        self.test = test_boolean
 
     def getErrorMessage(self):
         return self.error_message
