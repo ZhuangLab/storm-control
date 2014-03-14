@@ -42,7 +42,9 @@ class DaveActionMovie(DaveAction):
         self.movie = movie
 
         # Create TCP Message Dictionary
-        movie_data = movie.__dict__()                
+        print movie
+        movie_data = movie.__dict__
+        print movie_data
         self.message = TCPMessage(message_type = "Movie",
                                   data = movie_data)
 
