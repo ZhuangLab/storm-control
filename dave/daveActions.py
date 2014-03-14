@@ -40,13 +40,25 @@ class DaveActionMovie(DaveAction):
     def __init__(self, tcp_client, movie):
         DaveAction.__init__(self, tcp_client)
         self.movie = movie
-
-        # Create TCP Message Dictionary
-        print movie
         movie_data = movie.__dict__
-        print movie_data
+
+        print movie
+        print "Movie Data", movie_data
+        if "progression" in movie_data:
+            del movie_data["progression"]
+            print movie_data
+##            if hasattr(movie.progression, "type"):
+##                movie_data["progression_type"] = movie.progression.type
+##            if hasattr(movie.progression, "channels"):
+##                movie_data["progression_channels"] = movie.progression.channels
+##            if hasattr(movie.progressions, "filename"):
+##                movie_data["progression_filename"] = movie.progression.filename
+    
+        # Create TCP Message Dictionary
         self.message = TCPMessage(message_type = "Movie",
                                   data = movie_data)
+
+        print self.message
 
     ## abort
     #
