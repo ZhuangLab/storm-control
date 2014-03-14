@@ -171,7 +171,7 @@ class TCPClient(QtGui.QWidget):
             self.socket.sendMessage(message)
             return True
         else:
-            print self.server_name + " socket not connected. Did not send: " + str(command)
+            print self.server_name + " socket not connected. Did not send: " + str(message)
             return False      
 
     # ------------------------------------------------------------------------------------
