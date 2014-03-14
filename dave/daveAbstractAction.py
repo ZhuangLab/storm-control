@@ -17,8 +17,8 @@ from sc_library.tcpMessage import TCPMessage
 class DaveAction(QtCore.QObject):
 
     # Define custom signal
-    complete_signal = QtCore.pyqtSignal()
-    error_signal = QtCore.pyqtSignal(str)
+    complete_signal = QtCore.pyqtSignal(object)
+    error_signal = QtCore.pyqtSignal(object)
     
     ## __init__
     #
@@ -55,7 +55,8 @@ class DaveAction(QtCore.QObject):
     # Handle an external abort call
     #
     def abort(self):
-        self.completeAction()
+        self.message.markAsComplete()
+        self.completeAction(self.message)
 
     ## cleanUp
     #
@@ -68,9 +69,9 @@ class DaveAction(QtCore.QObject):
     #
     # Handle the completion of an action
     #
-    def completeAction(self):
+    def completeAction(self, message):
         self.tcp_client.stopCommunication()
-        self.complete_signal.emit()
+        self.complete_signal.emit(message)
 
     ## getError
     #
@@ -86,23 +87,22 @@ class DaveAction(QtCore.QObject):
     def handleReply(self, message):
         # Check to see if the same message got returned
         if not (message.getID() == self.message.getID()):
-            self.error_message = "Communication Error: Incorrect Message Returned"
-            self.completeActionWithError()
+            message.setError(True,"Communication Error: Incorrect Message Returned")
+            self.completeActionWithError(message)
         elif message.hasError():
-            self.error_message = message.getErrorMessage()
-            self.completeActionWithError()
+            self.completeActionWithError(message)
         else: # Correct message and no error
-            self.completeAction()
+            self.completeAction(message)
 
     ## completeActionWithError
     #
     # Send an error message if needed
     #
-    def completeActionWithError(self):
+    def completeActionWithError(self, message):
         if self.should_pause_after_error == True:
             self.should_pause = True
         self.tcp_client.stopCommunication()
-        self.error_signal.emit(self.error_message)
+        self.error_signal.emit(message)
 
     ## handleTimerDone
     #
@@ -110,7 +110,8 @@ class DaveAction(QtCore.QObject):
     #
     def handleTimerDone(self):
         if self.complete_on_timer:
-            self.completeAction()
+            self.message.markAsComplete()
+            self.completeAction(self.message)
 
     ## setTest
     #

@@ -77,13 +77,16 @@ class CommandEngine(QtGui.QWidget):
         self.current_action = None
         self.command = None
         self.should_pause = False
-
+        self.command_duration = []
+        self.command_disk_usage = []
+        
+        self.test_mode = False
+        
         # HAL Client
         self.HALClient = tcpClient.TCPClient(port = 9000, server_name = "HAL")
         
         # Kilroy Client
-        self.kilroyClient = tcpClient.TCPClient(port = 9500,
-                                                server_name = "Kilroy")
+        self.kilroyClient = tcpClient.TCPClient(port = 9500, server_name = "Kilroy")
     
     ## abort
     #
@@ -119,12 +122,18 @@ class CommandEngine(QtGui.QWidget):
         elif command_type == "fluidics":
             self.actions.append(daveActions.DaveActionValveProtocol(self.kilroyClient, command))
 
+        # If in test mode, configure actions as test
+        if self.test_mode:
+            for action in self.actions:
+                action.message.enableTest(True)  
+
     ## getPause
     #
     # Returns the current pause request state of the command engine
     #
     def getPause(self):
-        return self.should_pause
+        if self.test_mode: return False
+        else: return self.should_pause
         
     ## startCommand
     #
@@ -139,17 +148,32 @@ class CommandEngine(QtGui.QWidget):
             self.current_action.complete_signal.connect(self.handleActionComplete)
             self.current_action.error_signal.connect(self.handleErrorSignal)
 
+            # Reset command duration and disk usage
+            self.command_duration = 0.0
+            self.command_disk_usage = 0.0
+            
             # Start current action
             self.current_action.start()
+
+    ## enableTestMode
+    #
+    # Toggle the command engine test mode
+    # 
+    def enableTestMode(self, mode_boolean):
+        self.test_mode = mode_boolean
 
     ## handleActionComplete
     #
     # Handle the completion of the previous action
     #
-    def handleActionComplete(self):  
+    def handleActionComplete(self, message):  
         self.current_action.cleanUp()
         self.current_action.complete_signal.disconnect()
         self.current_action.error_signal.disconnect()
+
+        if self.test_mode:
+            self.command_duration += message.getResponse("duration")
+            self.command_disk_usage += message.getResponse("disk_usage")
 
         # Configure the command engine to pause after completion of the command sequence
         if self.current_action.shouldPause():
@@ -164,10 +188,10 @@ class CommandEngine(QtGui.QWidget):
     #
     # Handle an error signal: Reserved for future use
     #
-    def handleErrorSignal(self, error_message):
-        self.problem.emit(error_message)
-        self.handleActionComplete()
-        
+    def handleErrorSignal(self, message):
+        self.problem.emit(message.getErrorMessage())
+        self.handleActionComplete(message)
+
 ## Dave Main Window Function
 #
 # The main window
@@ -190,11 +214,15 @@ class Dave(QtGui.QMainWindow):
         self.parameters = parameters
         self.command_index = 0
         self.commands = []
+        self.disk_usages = []
+        self.command_durations = []
+        self.is_command_valid = []
         self.notifier = notifications.Notifier("", "", "", "")
         self.running = False
         self.settings = QtCore.QSettings("Zhuang Lab", "dave")
         self.sequence_filename = ""
-
+        self.test_mode = False
+        
         self.createGUI()
 
         # Movie engine.
@@ -360,18 +388,30 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleDone(self):
+        if self.test_mode:
+            self.disk_usages[self.command_index] = self.command_engine.command_disk_usage
+            self.command_durations[self.command_index] = self.command_engine.command_duration
+            self.is_command_valid[self.command_index] = True
+
         # Increment command
         self.command_index += 1
 
         # Handle last command in list
         if self.command_index >= len(self.commands):
             self.command_index = 0
-            self.ui.runButton.setText("Start")
-            self.ui.runButton.setEnabled(True)
-            self.ui.abortButton.setEnabled(False)
-            self.ui.selectCommandButton.setEnabled(True)
-            self.running = False
 
+            if not self.test_mode:
+                self.ui.runButton.setText("Start")
+                self.ui.runButton.setEnabled(True)
+                self.ui.abortButton.setEnabled(False)
+                self.ui.selectCommandButton.setEnabled(True)
+
+            self.running = False
+            self.command_engine.enableTestMode(False) # To recover from initial test run
+            self.test_mode = False
+
+            self.updateEstimates() # Update estimates for test mode
+            
         # Issue the command
         self.issueCommand()
 
@@ -381,8 +421,7 @@ class Dave(QtGui.QMainWindow):
         if self.running: #Proceed to next command
             self.command_engine.startCommand()
         else: # Handle pause state (not running with an intermediate command_index)
-            # Provide audible acknowledgement of pause
-            print "\7\7"
+            if not self.test_mode: print "\7\7" # Provide audible acknowledgement of pause
             if self.command_index > 0 and self.command_index < len(self.commands):
                 self.ui.runButton.setText("Restart")
                 self.ui.runButton.setEnabled(True)
@@ -440,17 +479,20 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleProblem(self, message):
-        self.ui.runButton.setText("Restart")
-        self.running = False
-        current_command_name = str(self.commands[self.command_index].getDetails()[1][1])
-        message = current_command_name + '\n' + message
-        
-        if (self.ui.errorMsgCheckBox.isChecked()):
-            self.notifier.sendMessage("Acquisition Problem",
-                                      message)
-        QtGui.QMessageBox.information(self,
-                                      "Acquisition Problem",
-                                      message)
+        if not self.test_mode:
+            self.ui.runButton.setText("Restart")
+            self.running = False
+            current_command_name = str(self.commands[self.command_index].getDetails()[1][1])
+            message = current_command_name + '\n' + message
+            
+            if (self.ui.errorMsgCheckBox.isChecked()):
+                self.notifier.sendMessage("Acquisition Problem",
+                                          message)
+            QtGui.QMessageBox.information(self,
+                                          "Acquisition Problem",
+                                          message)
+        else:
+            pass # Skip warning messages for now
 
     ## handleRunButton
     #
@@ -552,15 +594,22 @@ class Dave(QtGui.QMainWindow):
                 self.sequence_length = len(self.commands)
                 self.sequence_filename = sequence_filename
                 self.updateGUI()
-
+                self.command_engine.enableTestMode(True)
+                self.test_mode = True
+                self.disk_usages = [0.0] * len(self.commands)
+                self.command_durations = [0.0] * len(self.commands)
+                self.is_command_valid = [False] * len(self.commands)
+                
                 # Set enabled/disabled status
-                self.ui.runButton.setEnabled(True)
+                self.ui.runButton.setEnabled(False)
                 self.ui.runButton.setText("Start")
                 self.ui.abortButton.setEnabled(False)
-                self.ui.selectCommandButton.setEnabled(True)
+                self.ui.selectCommandButton.setEnabled(False)
 
                 self.createCommandList()
                 self.issueCommand()
+
+                self.handleRunButton(True) # Start test
                 
     ## newSequenceFile
     #
@@ -598,21 +647,6 @@ class Dave(QtGui.QMainWindow):
         display_text += str(command_details[1][1])
         self.ui.currentCommand.setText(display_text)
 
-    ## updateEstimates
-    #
-    # Updates the (displayed) estimates of the run time and the run size.
-    #
-    @hdebug.debug
-    def updateEstimates(self):
-        total_frames = 0
-        for command in self.commands:
-            if command.getType() == "movie":
-                total_frames += command.length
-        est_time = float(total_frames)/(57.3 * 60.0 * 60.0) + len(self.commands) * 10.0/(60.0 * 60.0)
-        est_space = float(256 * 256 * 2 * total_frames)/(1000.0 * 1000.0 * 1000.0)
-        self.ui.timeLabel.setText("Run Length: {0:.1f} hours (57Hz)".format(est_time))
-        self.ui.spaceLabel.setText("Run Size: {0:.1f} GB (256x256)".format(est_space))
-
     ## updateGUI
     #
     # Update the GUI elements
@@ -622,9 +656,21 @@ class Dave(QtGui.QMainWindow):
         # Current sequence xml file
         self.ui.sequenceLabel.setText(self.sequence_filename)
 
-        # Update time estimates 
-        self.updateEstimates()
-
+    ## updateEstimates
+    #
+    # Update disk and duration estimates
+    #
+    @hdebug.debug
+    def updateEstimates(self):
+        est_time = 0.0
+        est_space = 0.0
+        for i in range(len(self.commands)):
+            est_time += self.command_durations[i]
+            est_space += self.disk_usages[i]
+            
+        self.ui.timeLabel.setText("Run Length: {0:.1f} hours ".format(est_time/3600))
+        self.ui.spaceLabel.setText("Run Size: {0:.1f} GB ".format(est_space))
+        
     ## updateCommandDescriptorTable
     #
     # Display the details of the current command
@@ -675,6 +721,16 @@ class Dave(QtGui.QMainWindow):
     @hdebug.debug
     def quit(self, boolean):
         self.close()
+
+    ## validateCommands
+    #
+    # Validate that the listed commands can be run and determine disk and time requirements
+    #
+    @hdebug.debug
+    def validateCommands(self):
+            
+        self.ui.timeLabel.setText("Run Length: {0:.1f} hours".format(total_duration/(3600)))
+        self.ui.spaceLabel.setText("Run Size: {0:.1f} GB ".format(total_disk))
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)

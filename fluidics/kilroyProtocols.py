@@ -230,7 +230,6 @@ class KilroyProtocols(QtGui.QMainWindow):
     # ------------------------------------------------------------------------------------                       
     def issueValveCommand(self, command_name):
         self.issueCommand(["valve", command_name])
-
         
     # ------------------------------------------------------------------------------------
     # Check to see if protocol name is in the list of protocols
@@ -352,7 +351,17 @@ class KilroyProtocols(QtGui.QMainWindow):
                 textString = "    " + command[0] + ": " + command[1] + ": "
                 textString += str(self.protocol_durations[protocol_ID][command_ID]) + " s"
                 print textString
+    # ------------------------------------------------------------------------------------
+    # Display loaded protocols
+    # ------------------------------------------------------------------------------------                                                
+    def requiredTime(self, protocol_name):
+        protocol_ID = self.protocol_names.index(protocol_name)
+        total_time = 0.0
+        for time in self.protocol_durations[protocol_ID]:
+            total_time += time
 
+        return total_time
+        
     # ------------------------------------------------------------------------------------
     # Initialize and start a protocol and issue first command
     # ------------------------------------------------------------------------------------

@@ -50,5 +50,13 @@
 	<valve duration = "10">Flow STORM Buffer</valve>
 	<pump duration = "0">Stop Flow</pump>
      </protocol>
+     <protocol name = "Hybridize 2">
+        <pump duration = "0">Normal Flow</pump>
+        <valve duration = "20">Set Hyb 2</valve>
+	<valve duration = "10">Flow Hybridization</valve>
+	<valve duration = "10">Flow Wash</valve>
+	<valve duration = "10">Flow STORM Buffer</valve>
+	<pump duration = "0">Stop Flow</pump>
+     </protocol>
    </kilroy_protocols>
 </kilroy_configuration>
