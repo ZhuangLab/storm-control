@@ -172,8 +172,10 @@ class CommandEngine(QtGui.QWidget):
         self.current_action.error_signal.disconnect()
 
         if self.test_mode:
-            self.command_duration += message.getResponse("duration")
-            self.command_disk_usage += message.getResponse("disk_usage")
+            time = message.getResponse("duration")
+            if time is not None: self.command_duration += time
+            space = message.getResponse("disk_usage")
+            if space is not None: self.command_disk_usage += space
 
         # Configure the command engine to pause after completion of the command sequence
         if self.current_action.shouldPause():
@@ -222,6 +224,7 @@ class Dave(QtGui.QMainWindow):
         self.settings = QtCore.QSettings("Zhuang Lab", "dave")
         self.sequence_filename = ""
         self.test_mode = False
+        self.skip_warning = False
         
         self.createGUI()
 
@@ -391,7 +394,6 @@ class Dave(QtGui.QMainWindow):
         if self.test_mode:
             self.disk_usages[self.command_index] = self.command_engine.command_disk_usage
             self.command_durations[self.command_index] = self.command_engine.command_duration
-            self.is_command_valid[self.command_index] = True
 
         # Increment command
         self.command_index += 1
@@ -399,8 +401,7 @@ class Dave(QtGui.QMainWindow):
         # Handle last command in list
         if self.command_index >= len(self.commands):
             self.command_index = 0
-
-            if not self.test_mode:
+            if all(self.is_command_valid): # Activate UI if sequence is valid
                 self.ui.runButton.setText("Start")
                 self.ui.runButton.setEnabled(True)
                 self.ui.abortButton.setEnabled(False)
@@ -408,10 +409,10 @@ class Dave(QtGui.QMainWindow):
 
             self.running = False
             self.command_engine.enableTestMode(False) # To recover from initial test run
-            self.test_mode = False
+            if self.test_mode:
+                self.updateEstimates()
+                self.test_mode = False
 
-            self.updateEstimates() # Update estimates for test mode
-            
         # Issue the command
         self.issueCommand()
 
@@ -479,11 +480,11 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleProblem(self, message):
+        current_command_name = str(self.commands[self.command_index].getDetails()[1][1])
+        message_str = current_command_name + '\n' + message
         if not self.test_mode:
             self.ui.runButton.setText("Restart")
             self.running = False
-            current_command_name = str(self.commands[self.command_index].getDetails()[1][1])
-            message = current_command_name + '\n' + message
             
             if (self.ui.errorMsgCheckBox.isChecked()):
                 self.notifier.sendMessage("Acquisition Problem",
@@ -492,7 +493,15 @@ class Dave(QtGui.QMainWindow):
                                           "Acquisition Problem",
                                           message)
         else:
-            pass # Skip warning messages for now
+            self.is_command_valid[self.command_index] = False
+            if not self.skip_warning:
+                QtGui.QMessageBox.information(self,
+                                          "Acquisition Problem",
+                                          message)
+            # Display only one warning on load
+            self.skip_warning = True
+
+            print "Invalid command: " + current_command_name
 
     ## handleRunButton
     #
@@ -598,7 +607,7 @@ class Dave(QtGui.QMainWindow):
                 self.test_mode = True
                 self.disk_usages = [0.0] * len(self.commands)
                 self.command_durations = [0.0] * len(self.commands)
-                self.is_command_valid = [False] * len(self.commands)
+                self.is_command_valid = [True] * len(self.commands)
                 
                 # Set enabled/disabled status
                 self.ui.runButton.setEnabled(False)
@@ -609,7 +618,9 @@ class Dave(QtGui.QMainWindow):
                 self.createCommandList()
                 self.issueCommand()
 
-                self.handleRunButton(True) # Start test
+                # Start Test Run
+                self.running = True
+                self.command_engine.startCommand()
                 
     ## newSequenceFile
     #
