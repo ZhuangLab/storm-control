@@ -150,6 +150,7 @@ class Translator():
 # will be a QStageThread object for buffering purposes.
 #
 class StageControl(QtGui.QDialog, halModule.HalModule):
+    tcpComplete = QtCore.pyqtSignal(object)
 
     ## __init__
     #
@@ -273,6 +274,14 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
             elif (signal[1] == "stepMove"):
                 signal[2].connect(self.moveRelative)
 
+    ## getSignals
+    #
+    # @return The signals this module provides.
+    #
+    @hdebug.debug
+    def getSignals(self):
+        return [[self.hal_type, "tcpComplete", self.tcpComplete]]
+
     ## handleAdd
     #
     # Add the current stage position to the saved positions combo box.
@@ -303,12 +312,20 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleCommMessage(self, message):
-
-        m_type = message.getType()
-        m_data = message.getData()
-
-        if (m_type == "moveTo"):
-            self.moveAbsolute(m_data[0], m_data[1])
+        if message.getType() == "Move Stage":
+            x_pos = message.getData("stage_x")
+            y_pos = message.getData("stage_y")
+            if not x_pos or not y_pos:
+                message.setError(True, "Invalid positions")
+            if message.isTest(): # Handle test request
+                message.setResponse("duration", 0.0)
+                message.setResponse("disk_usage", 0.0)
+                message.markAsComplete()
+            elif not message.hasError():
+                self.moveAbsolute(m_data[0], m_data[1])
+                message.markAsComplete()
+            
+            self.tcpComplete.emit(message) 
 
     ## handleDragMove
     #
