@@ -62,8 +62,11 @@ class TCPCommunications(QtGui.QWidget):
     # Close the socket
     #
     def close(self):
-        if self.socket: self.socket.close()
-
+        if self.socket:
+            self.socket.close()
+            if self.verbose:
+                print "Closing TCP communications: " + self.server_name
+            
     ## handleBusy
     #
     # Handle a busy message

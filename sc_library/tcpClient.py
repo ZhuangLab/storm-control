@@ -46,16 +46,8 @@ class TCPClient(TCPCommunications, QtGui.QWidget):
         TCPCommunications.__init__(self, parent=parent, port=port, server_name=server_name,
                                    address=address, verbose=verbose)
         
-        # Create instance of socket
+        # Create instance of TCP socket
         self.socket = QtNetwork.QTcpSocket()
-
-    ## close
-    #
-    # Close the socket
-    #
-    def close(self):
-        if self.verbose: print "Closing client: " + self.server_name
-        TCPCommunications.close(self)
 
     ## connectToServer
     #
