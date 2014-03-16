@@ -31,8 +31,7 @@ import sequenceParser
 from xml_generators import xml_generator, recipeParser
 
 # Communication
-import sc_library.tcpMessage
-import sc_library.newClient as tcpClient
+import sc_library.tcpClient as tcpClient
 
 # UI
 import qtdesigner.dave_ui as daveUi
@@ -125,7 +124,7 @@ class CommandEngine(QtGui.QWidget):
         # If in test mode, configure actions as test
         if self.test_mode:
             for action in self.actions:
-                action.message.enableTest(True)  
+                action.message.setTestMode(True)  
 
     ## getPause
     #

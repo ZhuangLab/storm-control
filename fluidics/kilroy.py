@@ -18,7 +18,7 @@ from PyQt4 import QtCore, QtGui
 from valves.valveChain import ValveChain
 from pumps.pumpControl import PumpControl
 from kilroyProtocols import KilroyProtocols
-from sc_library.newServer import TCPServer
+from sc_library.tcpServer import TCPServer
 import sc_library.parameters as params
 
 # ----------------------------------------------------------------------------------------
@@ -130,10 +130,7 @@ class Kilroy(QtGui.QMainWindow):
     # ----------------------------------------------------------------------------------------
     # Handle protocol request sent via TCP server
     # ----------------------------------------------------------------------------------------
-    def handleTCPData(self, message):
-        if self.verbose:
-            print "Received message: " + str(message)
-        
+    def handleTCPData(self, message):        
         # Confirm that message is a protocol message
         if not message.getType() == "Kilroy Protocol":
             message.setError(True, "Wrong message type sent to Kilroy: " + message.getType())
@@ -143,9 +140,8 @@ class Kilroy(QtGui.QMainWindow):
             self.tcpServer.sendMessage(message)
         elif message.isTest():
             required_time = self.kilroyProtocols.requiredTime(message.getData("name"))
-            print "Required time: " + str(required_time)
-            message.setResponse("duration", required_time)
-            message.setResponse("disk_usage", 0.0)
+            message.addResponse("duration", required_time)
+            message.addResponse("disk_usage", 0.0)
             self.tcpServer.sendMessage(message)
         else: # Valid, non-test message                                    
             # Keep track of valid messages issued via TCP 

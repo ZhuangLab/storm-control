@@ -25,7 +25,7 @@ class DaveActionFindSum(DaveAction):
         DaveAction.__init__(self, tcp_client)
         self.min_sum = min_sum
         self.message = TCPMessage(message_type = "Find Sum",
-                                  data = {"min_sum": min_sum})
+                                  message_data = {"min_sum": min_sum})
             
 ## DaveActionMovie
 #
@@ -92,7 +92,7 @@ class DaveActionMovieParameters(DaveAction):
         if hasattr(movie, "stage_y"): movie_data["stage_y"] = movie.stage_y
         if hasattr(movie, "lock_target"): movie_data["lock_target"] = movie.lock_target
 
-        self.message = TCPMessage(message_type = "Movie Parameters", data = movie_data)
+        self.message = TCPMessage(message_type = "Movie Parameters", message_data = movie_data)
 
 ## DaveActionRecenter
 #
@@ -126,4 +126,4 @@ class DaveActionValveProtocol(DaveAction):
         self.protocol_is_running = False
 
         self.message = TCPMessage(message_type = "Kilroy Protocol",
-                                  data = {"name": self.protocol_name})
+                                  message_data = {"name": self.protocol_name})
