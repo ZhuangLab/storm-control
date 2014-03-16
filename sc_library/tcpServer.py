@@ -16,16 +16,23 @@ import time
 import pickle
 from PyQt4 import QtCore, QtGui, QtNetwork
 from sc_library.tcpMessage import TCPMessage
+from sc_library.tcpCommunications import TCPCommunications
 
 # ----------------------------------------------------------------------------------------
 # Server Class 
 # ----------------------------------------------------------------------------------------
-class TCPServer(QtNetwork.QTcpServer):
-    # Define custom Qt signals
-    com_got_connection = QtCore.pyqtSignal()
-    com_lost_connection = QtCore.pyqtSignal()
-    message_ready = QtCore.pyqtSignal(object)
+class TCPServer(TCPCommunications, QtNetwork.QTcpServer):
 
+    ## __init__
+    #
+    # Class constructor
+    #
+    # @param parent A reference to an owning class.
+    # @param port The TCP/IP port for communication.
+    # @param server_name A string name for the communication server.
+    # @param address An address for the TCP/IP communication.
+    # @param verbose A boolean controlling the verbosity of the class
+    #
     def __init__(self,
                  port=9500,
                  server_name = "default",
@@ -33,13 +40,8 @@ class TCPServer(QtNetwork.QTcpServer):
                  parent = None,
                  verbose = False):
         QtNetwork.QTcpServer.__init__(self, parent)
-
-        # Initialize internal variables
-        self.verbose = verbose
-        self.address = address # Default is local address
-        self.port = port
-        self.server_name = server_name
-        self.socket = None
+        TCPCommunications.__init__(self, parent=parent, port=port, server_name=server_name,
+                                   address=address, verbose=verbose)
         
         # Connect new connection signal
         self.newConnection.connect(self.handleClientConnection)
@@ -47,16 +49,10 @@ class TCPServer(QtNetwork.QTcpServer):
         # Listen for new connections
         self.connectToNewClients()
 
-    # ------------------------------------------------------------------------------------
-    # Close 
-    # ------------------------------------------------------------------------------------       
-    def close(self):
-        if self.verbose: print "Closing TCP server"
-        if self.socket: self.socket.close()
-
-    # ------------------------------------------------------------------------------------
-    # Listen for new clients 
-    # ------------------------------------------------------------------------------------       
+    ## connectToNewClients
+    #
+    # Listen for new clients
+    #
     def connectToNewClients(self):
         if self.verbose:
             string = "Listening for new clients at: \n"
@@ -66,9 +62,10 @@ class TCPServer(QtNetwork.QTcpServer):
         self.listen(self.address, self.port)
         self.com_got_connection.emit()
         
-    # ------------------------------------------------------------------------------------
-    # Disconnect from all clients 
-    # ------------------------------------------------------------------------------------       
+    ## disconnectFromClients
+    #
+    # Disconnect from clients
+    #
     def disconnectFromClients(self):
         if self.verbose:
             print "Force disconnect from clients"
@@ -79,16 +76,11 @@ class TCPServer(QtNetwork.QTcpServer):
             self.socket = None
             self.com_lost_connection.emit()
             self.connectToNewClients()
-
-    # ------------------------------------------------------------------------------------
-    # Handle busy signal 
-    # ------------------------------------------------------------------------------------       
-    def handleBusy(self):
-        pass
     
-    # ------------------------------------------------------------------------------------
-    # Handle connection of a new client 
-    # ------------------------------------------------------------------------------------       
+    ## handleClientConnection
+    #
+    # Handle connection from a new client
+    #
     def handleClientConnection(self):
         socket = self.nextPendingConnection()
 
@@ -105,56 +97,16 @@ class TCPServer(QtNetwork.QTcpServer):
             socket.disconnectFromHost()
             socket.close()
         
-    # ------------------------------------------------------------------------------------
-    # Handle client disconnect 
-    # ------------------------------------------------------------------------------------       
+    ## handleClientDisconnect
+    #
+    # Handle diconnection of client
+    #
     def handleClientDisconnect(self):
         self.socket.disconnectFromHost()
         self.socket.close()
         self.socket = None
         self.com_lost_connection.emit()
         if self.verbose: print "Client disconnected"
-        
-    # ------------------------------------------------------------------------------------
-    # Handles a new message on the socket (receives the readyRead signal from the socket)
-    # ------------------------------------------------------------------------------------       
-    def handleReadyRead(self):
-        message_str = ""
-        while self.socket.canReadLine():
-            # Read data line
-            message_str += str(self.socket.readLine())
-
-        # Unpickle message
-        message = pickle.loads(message_str)
-        if self.verbose: print "Received: \n" + str(message)
-
-        if message.getType() == "Busy":
-            self.handleBusy()
-        else:
-            self.message_ready.emit(message)
-
-    # ------------------------------------------------------------------------------------
-    # Return true if connected 
-    # ------------------------------------------------------------------------------------       
-    def isConnected(self):
-        if self.socket and (self.socket.state() == QtNetwork.QAbstractSocket.ConnectedState):
-            return True
-        else:
-            return False
-
-    # ------------------------------------------------------------------------------------
-    # Send a message via the socket 
-    # ------------------------------------------------------------------------------------       
-    def sendMessage(self, message):
-        if self.isConnected():
-            message_str = pickle.dumps(message)
-            self.socket.write(message_str + "\n")
-            self.socket.flush()
-            if self.verbose: print "Sent: \n" + str(message)
-            return True
-        else:
-            print self.server_name + " socket not connected. Did not send: " + str(message)
-            return False
         
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class

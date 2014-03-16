@@ -29,7 +29,7 @@ class TCPClient(TCPCommunications, QtGui.QWidget):
 
     ## __init__
     #
-    # The constructor for a basic socket
+    # Class constructor
     #
     # @param parent A reference to an owning class.
     # @param port The TCP/IP port for communication.
@@ -48,6 +48,7 @@ class TCPClient(TCPCommunications, QtGui.QWidget):
         
         # Create instance of TCP socket
         self.socket = QtNetwork.QTcpSocket()
+        self.socket.readyRead.connect(self.handleReadyRead)
 
     ## connectToServer
     #
