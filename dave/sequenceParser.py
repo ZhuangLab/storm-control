@@ -155,8 +155,6 @@ class Movie(AbstractCommand):
         progression_xml = movie_xml.getElementsByTagName("progression")
         if (len(progression_xml) > 0):
             self.progression = Progression(progression_xml[0])
-        else:
-            self.progression = Progression(None)
 
     ## getDescriptor
     #
