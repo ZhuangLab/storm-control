@@ -154,7 +154,7 @@ class TCPMessage(object):
     # @param test_boolean A boolean that indicates whether the message should be considered a test
     #
     def setTestMode(self, test_boolean):
-        self.test = test_boolean
+        self.test_mode = test_boolean
 
     ## markAsComplete
     #
