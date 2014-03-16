@@ -16,18 +16,23 @@ import uuid
 # TCP Message Class
 # ----------------------------------------------------------------------------------------
 class TCPMessage():
+
+    message_id = 0
     def __init__(self,
                  message_type = "Default",
                  data = {},
                  test = False):
         self.message_type = message_type
         self.id = str(uuid.uuid1())
+        self.id = self.message_id
         self.data = data
         self.response = {}
         self.error = False
         self.error_message = None
         self.test = False
         self.complete = False
+
+        self.message_id += 1
         
     def getType(self):
         return self.message_type
