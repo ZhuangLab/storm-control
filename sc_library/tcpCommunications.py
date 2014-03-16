@@ -24,8 +24,7 @@ from sc_library.tcpMessage import TCPMessage
 # An abstract class used to define the basic process of exchanging TCP messages. Client and
 # servers should be inherited from this class.
 #
-class TCPCommunications(QtGui.QWidget):
-    # Custom PyQt signals
+class TCPCommunications(object):
     message_ready = QtCore.pyqtSignal(object) # Relay received TCP messages.
     com_got_connection = QtCore.pyqtSignal()
     com_lost_connection = QtCore.pyqtSignal()
@@ -46,7 +45,6 @@ class TCPCommunications(QtGui.QWidget):
                  address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
                  parent = None,
                  verbose = False):
-        QtGui.QWidget.__init__(self, parent)
 
         # Initialize internal attributes
         self.address = address

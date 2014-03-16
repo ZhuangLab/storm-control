@@ -25,8 +25,11 @@ from sc_library.tcpCommunications import TCPCommunications
 #
 # A generic TCP client class used to transfer TCP messages from one program to another
 #
-class TCPClient(TCPCommunications, QtGui.QWidget):
-
+class TCPClient(QtCore.QObject, TCPCommunications):
+    # Custom PyQt signals
+    message_ready = QtCore.pyqtSignal(object) # Relay received TCP messages.
+    com_got_connection = QtCore.pyqtSignal()
+    com_lost_connection = QtCore.pyqtSignal()
     ## __init__
     #
     # Class constructor
@@ -43,6 +46,7 @@ class TCPClient(TCPCommunications, QtGui.QWidget):
                  server_name = "default",
                  address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
                  verbose = False):
+        QtCore.QObject.__init__(self)
         TCPCommunications.__init__(self, parent=parent, port=port, server_name=server_name,
                                    address=address, verbose=verbose)
         
@@ -100,6 +104,7 @@ class StandAlone(QtGui.QMainWindow):
 
         # Create client
         self.client = TCPClient(port = 9500, server_name = "Test", verbose = True)
+
         self.client.message_ready.connect(self.handleMessageReady)            
         self.client.startCommunication()
 
@@ -113,10 +118,10 @@ class StandAlone(QtGui.QMainWindow):
         if self.message_ID == 1:
             # Create Test message
             message = TCPMessage(message_type = "Stage Position",
-                                  data = {"Stage_X": 100.00, "Stage_Y": 0.00})
+                                 message_data = {"Stage_X": 100.00, "Stage_Y": 0.00})
         elif self.message_ID ==2:
             message = TCPMessage(message_type = "Movie",
-                                  data = {"Name": "Test_Movie_01", "Parameters": 1})
+                                 message_data = {"Name": "Test_Movie_01", "Parameters": 1})
 
         else:
             message = TCPMessage(message_type = "Done")

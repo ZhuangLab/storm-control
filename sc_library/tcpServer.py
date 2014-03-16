@@ -21,8 +21,13 @@ from sc_library.tcpCommunications import TCPCommunications
 # ----------------------------------------------------------------------------------------
 # Server Class 
 # ----------------------------------------------------------------------------------------
-class TCPServer(TCPCommunications, QtNetwork.QTcpServer):
-
+class TCPServer(QtNetwork.QTcpServer, TCPCommunications):
+    # Custom PyQt signals: These must redefined since TCPCommunications is the second
+    # inherited class
+    message_ready = QtCore.pyqtSignal(object) # Relay received TCP messages.
+    com_got_connection = QtCore.pyqtSignal()
+    com_lost_connection = QtCore.pyqtSignal()
+    
     ## __init__
     #
     # Class constructor
@@ -42,7 +47,7 @@ class TCPServer(TCPCommunications, QtNetwork.QTcpServer):
         QtNetwork.QTcpServer.__init__(self, parent)
         TCPCommunications.__init__(self, parent=parent, port=port, server_name=server_name,
                                    address=address, verbose=verbose)
-        
+
         # Connect new connection signal
         self.newConnection.connect(self.handleClientConnection)
         
