@@ -59,7 +59,8 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
         self.offset_file = 0
         self.parameters = parameters
         self.jumpsize = 0.0
-
+        self.tcp_message = None
+        
     ## cleanup
     #
     @hdebug.debug
@@ -176,21 +177,31 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleCommMessage(self, message):
-
-        m_type = message.getType()
-        m_data = message.getData()
-
-        if (m_type == "findSum"):
-            self.tcpHandleFindSum()
-
-        elif (m_type == "optimizeSum"):
-            self.tcpHandleOptimizeSum()
-
-        elif (m_type == "recenterPiezo"):
-            self.tcpHandleRecenterPiezo
-
-        elif (m_type == "setLockTarget"):
-            self.tcpHandleSetLockTarget(m_data[0])
+        self.tcp_message = message # Store received message
+        if message.isTest():
+            message.markAsComplete()
+            if message.getType() == "Find Sum":
+                pass 
+            elif message.getType() == "Set Lock Target":
+                pass 
+            elif message.getType() == "Find Optimal Sum":
+                pass
+            elif message.getType() == "Recenter Piezo":
+                pass
+            self.tcpComplete.emit(message)
+            self.tcp_message = None
+        else:
+            if message.getType() == "Find Sum":
+                self.tcpHandleFindSum()
+            elif message.getType() == "Set Lock Target":
+                self.tcpHandleSetLockTarget(message.getData("focus_target"))
+                message.markAsComplete()
+                self.tcpComplete.emit(message)
+                self.tcp_message = None
+            elif message.getType() == "Find Optimal Sum":
+                self.tcpHandleOptimizeSum()
+            elif message.getType() == "Recenter Piezo":
+                self.tcpHandleRecenterPiezo()
 
     ## handleFoundOptimal
     #
@@ -200,7 +211,11 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleFoundOptimal(self, lock_sum):
-        self.tcpComplete.emit(str(lock_sum))
+        message = self.tcp_message
+        message.markAsComplete()
+        message.setResponse("optimal_sum", lock_sum)
+        self.tcpComplete.emit(message)
+        self.tcp_message = None
 
     ## handleFoundSum
     #
@@ -210,7 +225,14 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleFoundSum(self, lock_sum):
-        self.tcpComplete.emit(str(lock_sum))
+        message = self.tcp_message
+        min_sum = message.getData("min_sum")
+        if lock_sum >= min_sum:
+            message.markAsComplete()
+        else:
+            message.setError(True, "Found sum " + str(lock_sum) " is smaller than minimum sum " + str(min_sum))        
+        self.tcpComplete.emit(message)
+        self.tcp_message = None
 
     ## handleJumpPButton
     #
@@ -283,7 +305,10 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleRecenteredPiezo(self):
-        self.tcpComplete.emit("NA")
+        message = self.tcp_message
+        message.markAsComplete()
+        self.tcpComplete.emit(message)
+        self.tcp_message = None
 
     ## handleQuit
     #
@@ -408,7 +433,6 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def tcpHandleSetLockTarget(self, target):
         self.lock_display1.tcpHandleSetLockTarget(target)
-
 
     ## toggleLockButtonDisplay
     #
