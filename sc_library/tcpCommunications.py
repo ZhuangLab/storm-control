@@ -46,6 +46,7 @@ class TCPCommunications(QtGui.QWidget):
                  address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
                  parent = None,
                  verbose = False):
+        QtGui.QWidget.__init__(self, parent)
 
         # Initialize internal attributes
         self.address = address
@@ -65,7 +66,7 @@ class TCPCommunications(QtGui.QWidget):
 
     ## handleBusy
     #
-    # Handle a busy message in response to communication
+    # Handle a busy message
     #
     def handleBusy(self):
         pass

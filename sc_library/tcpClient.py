@@ -19,14 +19,13 @@ import time
 import pickle
 from PyQt4 import QtCore, QtGui, QtNetwork
 from sc_library.tcpMessage import TCPMessage
+from sc_library.tcpCommunications import TCPCommunications
 
-## Socket
+## TCPClient
 #
-# A basic socket class.
+# A generic TCP client class used to transfer TCP messages from one program to another
 #
-class Socket(QtNetwork.QTcpSocket):
-    # Define custom command ready signal
-    message_ready = QtCore.pyqtSignal(object)
+class TCPClient(TCPCommunications, QtGui.QWidget):
 
     ## __init__
     #
@@ -44,24 +43,19 @@ class Socket(QtNetwork.QTcpSocket):
                  server_name = "default",
                  address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
                  verbose = False):
-        QtNetwork.QTcpSocket.__init__(self, parent)
-
-        # Initialize internal variables
-        self.address = address
-        self.num_conn_tries = 5
-        self.port = port 
-        self.server_name = server_name
-        self.verbose = verbose
+        TCPCommunications.__init__(self, parent=parent, port=port, server_name=server_name,
+                                   address=address, verbose=verbose)
         
-        # Connect data ready signal
-        self.readyRead.connect(self.handleReadyRead)
+        # Create instance of socket
+        self.socket = QtNetwork.QTcpSocket()
 
     ## close
     #
     # Close the socket
     #
     def close(self):
-        if self.verbose: print "Closing socket"
+        if self.verbose: print "Closing client: " + self.server_name
+        TCPCommunications.close(self)
 
     ## connectToServer
     #
@@ -74,12 +68,13 @@ class Socket(QtNetwork.QTcpSocket):
             string += "    Port: " + str(self.port)
             print string
 
-        self.connectToHost(self.address, self.port)
+        # Attempt to connect to host.
+        self.socket.connectToHost(self.address, self.port)
         tries = 0
-        while (not self.waitForConnected() and (tries < self.num_conn_tries)):
+        while (not self.socket.waitForConnected() and (tries < self.num_conn_tries)):
             print "Could not find " + self.server_name + " server. Attempt: " + str(tries)
             time.sleep(1)
-            self.connectToHost(self.address, self.port)
+            self.socket.connectToHost(self.address, self.port)
             tries += 1
             
         if tries==self.num_conn_tries:
@@ -87,138 +82,21 @@ class Socket(QtNetwork.QTcpSocket):
         else:
             print "Connected to "+ self.server_name + " server"
 
-    ## handleBusy
+    ## startCommunication
     #
-    # Address the situation in which the server already has a client
+    # Start communications with server
     #
-    def handleBusy(self): 
-        pass
-    
-    ## handleReadyRead
+    def startCommunication(self):
+        if not self.isConnected():
+            self.connectToServer()
+
+    ## stopCommunication
     #
-    # Unpickle message classes sent by the server and forward them on
+    # Stop communications with server
     #
-    def handleReadyRead(self):
-        message_str = ""
-        while self.canReadLine():
-            # Read data line
-            message_str += str(self.readLine())
-            
-        message = pickle.loads(message_str)
-        if self.verbose: print "Received: \n" + str(message)
-
-        if message.getType() == "Busy":
-            self.handleBusy()
-        else:
-            self.message_ready.emit(message)
-
-    ## sendMessage
-    #
-    # Pickle a TCP message class and send to server
-    #
-    # @params message An instance of the TCP message class.
-    #
-    def sendMessage(self, message):
-        message_string = pickle.dumps(message)
-        self.write(message_string + "\n") # Newline required to trigger canReadLine()
-        self.flush()
-        if self.verbose: print "Sent: \n" + str(message)
-
-## TCPClient
-#
-# A generic TCP client class used to transfer TCP messages from one program to another
-#
-class TCPClient(QtGui.QWidget):
-    # Custom PyQt signals
-    message_ready = QtCore.pyqtSignal(object) # Relay received TCP messages.
-    disconnect = QtCore.pyqtSignal() # Indicate server disconnect
-
-    ## __init__
-    #
-    # The constructor for a basic socket
-    #
-    # @param parent A reference to an owning class.
-    # @param port The TCP/IP port for communication.
-    # @param server_name A string name for the communication server.
-    # @param address An address for the TCP/IP communication.
-    # @param verbose A boolean controlling the verbosity of the class
-    #
-    def __init__(self,
-                 parent = None,
-                 port=9500,
-                 server_name = "default",
-                 address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
-                 verbose = False):
-        QtGui.QWidget.__init__(self, parent)
-
-        # Define attributes
-        self.address = address # Default is local machine
-        self.port = port 
-        self.server_name = server_name
-        self.verbose = verbose
-        
-        # Create instance of socket
-        self.socket = Socket(port = self.port,
-                             server_name = self.server_name,
-                             address = self.address,
-                             verbose = self.verbose)
-        
-        # Connect socket signals
-        self.socket.message_ready.connect(self.handleMessageReady)
-        self.socket.disconnected.connect(self.handleDisconnect)
-
-    # ------------------------------------------------------------------------------------
-    # Close 
-    # ------------------------------------------------------------------------------------       
-    def close(self):
-        if self.verbose: print "Closing client: " + self.server_name
-        if self.isConnected(): self.socket.close()
-        
-    # ------------------------------------------------------------------------------------
-    # Relay message ready signal with message 
-    # ------------------------------------------------------------------------------------       
-    def handleMessageReady(self, message):
-        self.message_ready.emit(message)
-
-    # ------------------------------------------------------------------------------------
-    # Pass server disconnect signal 
-    # ------------------------------------------------------------------------------------       
-    def handleDisconnect(self):
-        self.disconnect.emit()
-
-    # ------------------------------------------------------------------------------------
-    # Return true if socket exists and is connected 
-    # ------------------------------------------------------------------------------------       
-    def isConnected(self):
-        if (self.socket.state() == QtNetwork.QAbstractSocket.ConnectedState):
-            return True
-        else:
-            return False   
-
-    # ------------------------------------------------------------------------------------
-    # Send a message via the socket 
-    # ------------------------------------------------------------------------------------       
-    def sendMessage(self, message):
-        if self.isConnected():
-            self.socket.sendMessage(message)
-            return True
-        else:
-            print self.server_name + " socket not connected. Did not send: " + str(message)
-            return False      
-
-    # ------------------------------------------------------------------------------------
-    # Disconnect the socket from the host
-    # ------------------------------------------------------------------------------------       
     def stopCommunication(self):
         if self.isConnected():
             self.socket.disconnectFromHost()
-
-    # ------------------------------------------------------------------------------------
-    # Attempt to connect socket
-    # ------------------------------------------------------------------------------------       
-    def startCommunication(self):
-        if not self.isConnected():
-            self.socket.connectToServer()
 
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
