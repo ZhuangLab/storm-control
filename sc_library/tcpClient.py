@@ -16,20 +16,16 @@
 # 
 import sys
 import time
-import pickle
-from PyQt4 import QtCore, QtGui, QtNetwork
+from PyQt4 import QtGui, QtNetwork
 from sc_library.tcpMessage import TCPMessage
 from sc_library.tcpCommunications import TCPCommunications
 
 ## TCPClient
 #
-# A generic TCP client class used to transfer TCP messages from one program to another
+# A TCP client class used to transfer TCP messages from one program to another
 #
-class TCPClient(QtCore.QObject, TCPCommunications):
-    # Custom PyQt signals
-    message_ready = QtCore.pyqtSignal(object) # Relay received TCP messages.
-    com_got_connection = QtCore.pyqtSignal()
-    com_lost_connection = QtCore.pyqtSignal()
+class TCPClient(TCPCommunications):
+
     ## __init__
     #
     # Class constructor
@@ -46,7 +42,6 @@ class TCPClient(QtCore.QObject, TCPCommunications):
                  server_name = "default",
                  address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
                  verbose = False):
-        QtCore.QObject.__init__(self)
         TCPCommunications.__init__(self, parent=parent, port=port, server_name=server_name,
                                    address=address, verbose=verbose)
         

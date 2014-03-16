@@ -13,10 +13,8 @@
 # 
 # Import
 # 
-import sys
-import time
 import pickle
-from PyQt4 import QtCore, QtGui, QtNetwork
+from PyQt4 import QtCore, QtNetwork
 from sc_library.tcpMessage import TCPMessage
 
 ## TCPCommunications
@@ -24,7 +22,7 @@ from sc_library.tcpMessage import TCPMessage
 # An abstract class used to define the basic process of exchanging TCP messages. Client and
 # servers should be inherited from this class.
 #
-class TCPCommunications(object):
+class TCPCommunications(QtCore.QObject):
     message_ready = QtCore.pyqtSignal(object) # Relay received TCP messages.
     com_got_connection = QtCore.pyqtSignal()
     com_lost_connection = QtCore.pyqtSignal()
@@ -45,7 +43,8 @@ class TCPCommunications(object):
                  address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
                  parent = None,
                  verbose = False):
-
+        QtCore.QObject.__init__(self)
+        
         # Initialize internal attributes
         self.address = address
         self.num_conn_tries = 5

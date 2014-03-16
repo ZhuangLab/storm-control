@@ -12,15 +12,15 @@
 # Import
 # ----------------------------------------------------------------------------------------
 import sys
-import time
 import pickle
 from PyQt4 import QtCore, QtGui, QtNetwork
 from sc_library.tcpMessage import TCPMessage
 from sc_library.tcpCommunications import TCPCommunications
 
-# ----------------------------------------------------------------------------------------
-# Server Class 
-# ----------------------------------------------------------------------------------------
+## TCPServer
+#
+# A TCP server for passing TCP messages between programs
+#
 class TCPServer(QtNetwork.QTcpServer, TCPCommunications):
     # Custom PyQt signals: These must redefined since TCPCommunications is the second
     # inherited class
