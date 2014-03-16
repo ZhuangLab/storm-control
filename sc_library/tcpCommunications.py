@@ -1,0 +1,140 @@
+#!/usr/bin/python
+#
+## @file 
+#
+# A TCP communications class that provides the basic methods for relaying TCP messages.
+#
+# ----------------------------------------------------------------------------------------
+# Jeffrey Moffitt
+# 3/16/14
+# jeffmoffitt@gmail.com
+# ----------------------------------------------------------------------------------------
+
+# 
+# Import
+# 
+import sys
+import time
+import pickle
+from PyQt4 import QtCore, QtGui, QtNetwork
+from sc_library.tcpMessage import TCPMessage
+
+## TCPCommunications
+#
+# An abstract class used to define the basic process of exchanging TCP messages. Client and
+# servers should be inherited from this class.
+#
+class TCPCommunications(QtGui.QWidget):
+    # Custom PyQt signals
+    message_ready = QtCore.pyqtSignal(object) # Relay received TCP messages.
+    com_got_connection = QtCore.pyqtSignal()
+    com_lost_connection = QtCore.pyqtSignal()
+
+    ## __init__
+    #
+    # Constructor for this class.
+    #
+    # @param parent A reference to an owning class.
+    # @param port The TCP/IP port for communication.
+    # @param server_name A string name for the communication server.
+    # @param address An address for the TCP/IP communication.
+    # @param verbose A boolean controlling the verbosity of the class.
+    #
+    def __init__(self,
+                 port=9500,
+                 server_name = "default",
+                 address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
+                 parent = None,
+                 verbose = False):
+
+        # Initialize internal attributes
+        self.address = address
+        self.num_conn_tries = 5
+        self.port = port 
+        self.server_name = server_name
+        self.verbose = verbose
+
+        self.socket = None
+
+    ## close
+    #
+    # Close the socket
+    #
+    def close(self):
+        if self.socket: self.socket.close()
+
+    ## handleBusy
+    #
+    # Handle a busy message in response to communication
+    #
+    def handleBusy(self):
+        pass
+
+    ## handleReadyRead
+    #
+    # Unpickle a received TCP message class and forward as appropriate
+    #
+    def handleReadyRead(self):
+        message_str = ""
+        while self.socket.canReadLine():
+            # Read data line
+            message_str += str(self.socket.readLine())
+
+        # Unpickle message
+        message = pickle.loads(message_str)
+        if self.verbose: print "Received: \n" + str(message)
+
+        if message.getType() == "Busy":
+            self.handleBusy()
+        else:
+            self.message_ready.emit(message)
+    
+    ## isConnected
+    #
+    # Return true if the socket is connected and active
+    #
+    def isConnected(self):
+        if self.socket and (self.socket.state() == QtNetwork.QAbstractSocket.ConnectedState):
+            return True
+        else:
+            return False
+
+    ## sendMessage
+    #
+    # Pickle and send a TCP message if the socket is connected
+    #
+    def sendMessage(self, message):
+        if self.isConnected():
+            message_str = pickle.dumps(message)
+            self.socket.write(message_str + "\n")
+            self.socket.flush()
+            if self.verbose: print "Sent: \n" + str(message)
+            return True
+        else:
+            print self.server_name + " socket not connected. Did not send: " + str(message)
+            return False
+
+#
+# The MIT License
+#
+# Copyright (c) 2014 Zhuang Lab, Harvard University
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+

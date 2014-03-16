@@ -1,29 +1,43 @@
 #!/usr/bin/python
-# ----------------------------------------------------------------------------------------
+#
+## @file 
+#
 # A TCP communication class that acts as the client side for generic communications
 # between programs in the storm-control project
+#
 # ----------------------------------------------------------------------------------------
-# Jeff Moffitt
+# Jeffrey Moffitt
 # 3/8/14
 # jeffmoffitt@gmail.com
 # ----------------------------------------------------------------------------------------
 
-# ----------------------------------------------------------------------------------------
+# 
 # Import
-# ----------------------------------------------------------------------------------------
+# 
 import sys
 import time
 import pickle
 from PyQt4 import QtCore, QtGui, QtNetwork
 from sc_library.tcpMessage import TCPMessage
 
-# ----------------------------------------------------------------------------------------
-# Basic Socket
-# ----------------------------------------------------------------------------------------
+## Socket
+#
+# A basic socket class.
+#
 class Socket(QtNetwork.QTcpSocket):
     # Define custom command ready signal
     message_ready = QtCore.pyqtSignal(object)
-    
+
+    ## __init__
+    #
+    # The constructor for a basic socket
+    #
+    # @param parent A reference to an owning class.
+    # @param port The TCP/IP port for communication.
+    # @param server_name A string name for the communication server.
+    # @param address An address for the TCP/IP communication.
+    # @param verbose A boolean controlling the verbosity of the class
+    #
     def __init__(self,
                  parent = None,
                  port=9500,
@@ -33,24 +47,26 @@ class Socket(QtNetwork.QTcpSocket):
         QtNetwork.QTcpSocket.__init__(self, parent)
 
         # Initialize internal variables
-        self.verbose = verbose
-        self.address = address 
+        self.address = address
+        self.num_conn_tries = 5
         self.port = port 
         self.server_name = server_name
-        self.num_conn_tries = 5
+        self.verbose = verbose
         
         # Connect data ready signal
         self.readyRead.connect(self.handleReadyRead)
 
-    # ------------------------------------------------------------------------------------
-    # Close 
-    # ------------------------------------------------------------------------------------       
+    ## close
+    #
+    # Close the socket
+    #
     def close(self):
         if self.verbose: print "Closing socket"
 
-    # ------------------------------------------------------------------------------------
-    # Connect to Server 
-    # ------------------------------------------------------------------------------------       
+    ## connectToServer
+    #
+    # Attempt to establish a connection with the server at the indicated address and port
+    #
     def connectToServer(self):
         if self.verbose:
             string = "Looking for " + self.server_name + " server at: \n"
@@ -71,15 +87,17 @@ class Socket(QtNetwork.QTcpSocket):
         else:
             print "Connected to "+ self.server_name + " server"
 
-    # ------------------------------------------------------------------------------------
-    # Handle multiple client connections 
-    # ------------------------------------------------------------------------------------       
+    ## handleBusy
+    #
+    # Address the situation in which the server already has a client
+    #
     def handleBusy(self): 
         pass
     
-    # ------------------------------------------------------------------------------------
-    # Handle new data triggered by the readyRead signal 
-    # ------------------------------------------------------------------------------------       
+    ## handleReadyRead
+    #
+    # Unpickle message classes sent by the server and forward them on
+    #
     def handleReadyRead(self):
         message_str = ""
         while self.canReadLine():
@@ -94,23 +112,37 @@ class Socket(QtNetwork.QTcpSocket):
         else:
             self.message_ready.emit(message)
 
-    # ------------------------------------------------------------------------------------
-    # Send message 
-    # ------------------------------------------------------------------------------------       
+    ## sendMessage
+    #
+    # Pickle a TCP message class and send to server
+    #
+    # @params message An instance of the TCP message class.
+    #
     def sendMessage(self, message):
         message_string = pickle.dumps(message)
         self.write(message_string + "\n") # Newline required to trigger canReadLine()
         self.flush()
         if self.verbose: print "Sent: \n" + str(message)
 
-# ----------------------------------------------------------------------------------------
-# TCP Client Class
-# ----------------------------------------------------------------------------------------                                                                
+## TCPClient
+#
+# A generic TCP client class used to transfer TCP messages from one program to another
+#
 class TCPClient(QtGui.QWidget):
-    # Define custom command ready signal: to relay socket signals
-    message_ready = QtCore.pyqtSignal(object)
-    disconnect = QtCore.pyqtSignal()
+    # Custom PyQt signals
+    message_ready = QtCore.pyqtSignal(object) # Relay received TCP messages.
+    disconnect = QtCore.pyqtSignal() # Indicate server disconnect
 
+    ## __init__
+    #
+    # The constructor for a basic socket
+    #
+    # @param parent A reference to an owning class.
+    # @param port The TCP/IP port for communication.
+    # @param server_name A string name for the communication server.
+    # @param address An address for the TCP/IP communication.
+    # @param verbose A boolean controlling the verbosity of the class
+    #
     def __init__(self,
                  parent = None,
                  port=9500,
@@ -121,7 +153,7 @@ class TCPClient(QtGui.QWidget):
 
         # Define attributes
         self.address = address # Default is local machine
-        self.port = port # Default is 9500
+        self.port = port 
         self.server_name = server_name
         self.verbose = verbose
         
