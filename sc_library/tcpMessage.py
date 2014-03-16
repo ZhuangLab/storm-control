@@ -19,6 +19,8 @@ class TCPMessage(object):
 
     ## __init__
     #
+    # The constructor for a TCP message object
+    #
     # @param message_type A string specifying the type of the command.
     # @param message_data A dictionary containing the message data.
     # @param test_mode A boolean specifying whether the command is a test command
@@ -35,11 +37,12 @@ class TCPMessage(object):
         self.response = {}
         self.test_mode = test_mode
 
-        self.message_id = TCPMessage._COUNTER # Record instance number
-
+        self.message_id = TCPMessage._COUNTER # Record instance number.
         TCPMessage._COUNTER += 1 # Increment the instance counter.
 
     ## addData
+    #
+    # Add or change the contents of fields in the message data dictionary
     #
     # @param key_name A string specifying the name/type of the data to be added to the message data.
     # @param value The data.
@@ -49,6 +52,8 @@ class TCPMessage(object):
 
     ## addResponse
     #
+    # Add or change the contents of fields in the response data dictionary
+    #
     # @param key_name A string specifying the name/type of the data to be added to the response data.
     # @param value The data.
     #
@@ -56,6 +61,8 @@ class TCPMessage(object):
         self.response[key_name] = value
 
     ## getData
+    #
+    # Access elements of the message data by name
     #
     # @param key_name A string specifying the name/type of the data to be accessed from the message data.
     # @return The value of the requested entry.
@@ -65,6 +72,8 @@ class TCPMessage(object):
 
     ## getErrorMessage
     #
+    # Return the error message string, which is empty if no error occurred. 
+    #
     # @return A string describing any errors if present.
     #
     def getErrorMessage(self):
@@ -72,12 +81,16 @@ class TCPMessage(object):
 
     ## getID
     #
+    # Return a unique ID for each message object
+    #
     # @return An unique ID for the message.
     #
     def getID(self):
         return self.message_id
 
     ## getResponse
+    #
+    # Access elements of the response message by name. If the element is not present, None is returned.
     #
     # @param key_name A string specifying the name/type of the data to be accessed from the response data.
     # @return The value of the requested entry.
@@ -87,12 +100,16 @@ class TCPMessage(object):
 
     ## getType
     #
+    # Return a string describing the message type
+    #
     # @return A string describing the type of the message.
     #    
     def getType(self):
         return self.message_type
 
     ## hasError
+    #
+    # Return the error status of the message
     #
     # @return A boolean which indicates whether an error has occurred or not.
     #    
@@ -101,6 +118,8 @@ class TCPMessage(object):
 
     ## isComplete
     #
+    # Return the completion status of the message
+    #
     # @return A boolean which indicates whether the message was delivered and executed.
     #  
     def isComplete(self):
@@ -108,12 +127,17 @@ class TCPMessage(object):
 
     ## isTest
     #
+    # Return the test status of the message. If the message is in test mode, then it will not be
+    # executed. Rather its validity and properties of its execution will be returned. 
+    #
     # @return A boolean which indicates whether the message is in test mode.
     #  
     def isTest(self):
         return self.test_mode
 
     ## setError
+    #
+    # Set the error status of the message
     #
     # @param error_boolean A boolean that indicates whether an error has occurred
     # @param error_message A string describing the error
@@ -125,17 +149,23 @@ class TCPMessage(object):
 
     ## setTestMode
     #
+    # Set the test status of the message
+    #
     # @param test_boolean A boolean that indicates whether the message should be considered a test
     #
     def setTestMode(self, test_boolean):
         self.test = test_boolean
 
     ## markAsComplete
-    #    
+    #
+    # Mark a message as complete. A message can be completed while still generating an error. 
+    #
     def markAsComplete(self):
         self.complete = True
 
     ## __str__
+    #
+    # Generate a string representation of the message
     #
     # @param string_rep A string representation of the contents of the message and its properties
     def __str__(self):
