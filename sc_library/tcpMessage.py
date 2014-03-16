@@ -1,87 +1,177 @@
 #!/usr/bin/python
-# ----------------------------------------------------------------------------------------
-# A message class for TCP/IP communication
+#
+## @file 
+#
+# Handles remote control (via TCP/IP of the data collection program) 
 # ----------------------------------------------------------------------------------------
 # Jeffrey Moffitt
 # 3/8/14
 # jeffmoffitt@gmail.com
 # ----------------------------------------------------------------------------------------
 
-# ----------------------------------------------------------------------------------------
-# Import
-# ----------------------------------------------------------------------------------------
-import uuid 
+## TCPMessage
+#
+# Contains the contents and status of a TCP message.
+#
+class TCPMessage(object):
 
-# ----------------------------------------------------------------------------------------
-# TCP Message Class
-# ----------------------------------------------------------------------------------------
-class TCPMessage():
+    _COUNTER = 0 # Track number of created instances of this class.
 
-    message_id = 0
+    ## __init__
+    #
+    # @param message_type A string specifying the type of the command.
+    # @param message_data A dictionary containing the message data.
+    # @param test_mode A boolean specifying whether the command is a test command
+    #
     def __init__(self,
                  message_type = "Default",
-                 data = {},
-                 test = False):
-        self.message_type = message_type
-        self.id = str(uuid.uuid1())
-        self.id = self.message_id
-        self.data = data
-        self.response = {}
+                 message_data = {},
+                 test_mode = False):
+        self.complete = False
         self.error = False
         self.error_message = None
-        self.test = False
-        self.complete = False
+        self.message_data = message_data
+        self.message_type = message_type
+        self.response = {}
+        self.test_mode = test_mode
 
-        self.message_id += 1
-        
-    def getType(self):
-        return self.message_type
+        self.message_id = TCPMessage._COUNTER # Record instance number
 
-    def getID(self):
-        return self.id
+        TCPMessage._COUNTER += 1 # Increment the instance counter.
 
+    ## addData
+    #
+    # @param key_name A string specifying the name/type of the data to be added to the message data.
+    # @param value The data.
+    #
+    def addData(self, key_name, value):
+        self.message_data[key_name] = value
+
+    ## addResponse
+    #
+    # @param key_name A string specifying the name/type of the data to be added to the response data.
+    # @param value The data.
+    #
+    def addResponse(self, key_name, value):
+        self.response[key_name] = value
+
+    ## getData
+    #
+    # @param key_name A string specifying the name/type of the data to be accessed from the message data.
+    # @return The value of the requested entry.
+    #
     def getData(self, key_value):
-        return self.data.get(key_value, None)
+        return self.message_data.get(key_value, None)
 
+    ## getErrorMessage
+    #
+    # @return A string describing any errors if present.
+    #
+    def getErrorMessage(self):
+        return self.error_message
+
+    ## getID
+    #
+    # @return An unique ID for the message.
+    #
+    def getID(self):
+        return self.message_id
+
+    ## getResponse
+    #
+    # @param key_name A string specifying the name/type of the data to be accessed from the response data.
+    # @return The value of the requested entry.
+    #
     def getResponse(self, key_value):
         return self.response.get(key_value, None)
 
-    def setResponse(self, key_name, value):
-        self.response[key_name] = value
+    ## getType
+    #
+    # @return A string describing the type of the message.
+    #    
+    def getType(self):
+        return self.message_type
 
-    def isTest(self):
-        return self.test
-
-    def isComplete(self):
-        return self.complete
-
+    ## hasError
+    #
+    # @return A boolean which indicates whether an error has occurred or not.
+    #    
     def hasError(self):
         return self.error
 
+    ## isComplete
+    #
+    # @return A boolean which indicates whether the message was delivered and executed.
+    #  
+    def isComplete(self):
+        return self.complete
+
+    ## isTest
+    #
+    # @return A boolean which indicates whether the message is in test mode.
+    #  
+    def isTest(self):
+        return self.test_mode
+
+    ## setError
+    #
+    # @param error_boolean A boolean that indicates whether an error has occurred
+    # @param error_message A string describing the error
+    # @return A boolean which indicates whether the message is in test mode.
+    #  
     def setError(self, error_boolean, error_message):
         self.error = error_boolean
         self.error_message = error_message
 
-    def enableTest(self, test_boolean):
+    ## setTestMode
+    #
+    # @param test_boolean A boolean that indicates whether the message should be considered a test
+    #
+    def setTestMode(self, test_boolean):
         self.test = test_boolean
 
-    def getErrorMessage(self):
-        return self.error_message
-    
+    ## markAsComplete
+    #    
     def markAsComplete(self):
         self.complete = True
-    
+
+    ## __str__
+    #
+    # @param string_rep A string representation of the contents of the message and its properties
     def __str__(self):
-        string_rep = "Message Type: " + str(self.message_type) + "\n"
+        string_rep = "\tMessage Type: " + str(self.message_type)
         for attribute in vars(self).keys():
             if not attribute == "message_type":
-                string_rep += "\t" + attribute + ": " + str(getattr(self, attribute)) + "\n"
+                string_rep += "\n\t" + attribute + ": " + str(getattr(self, attribute))
         return string_rep
+
+# ----------------------------------------------------------------------------------------
+# Test/Demo of Class
+# ----------------------------------------------------------------------------------------                        
+if __name__ == "__main__":
+    message = TCPMessage(message_type="findSum",
+                         message_data={"find_sum":200},
+                         test_mode=False)
+
+    print "-"*40
+    print message
+    print "-"*40
+    message.markAsComplete()
+    print message.getData("find_sum")
+    message.setError(True, "Could not find focus")
+    print "-"*40
+    print message
+
+    message = TCPMessage(message_type="movie",
+                         message_data={"name":"Test_0_0.dax", "length":1000, "parameters":1},
+                         test_mode=False)
+    print "-"*40
+    print message
 
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
