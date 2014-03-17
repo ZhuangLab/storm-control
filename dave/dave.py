@@ -497,27 +497,33 @@ class Dave(QtGui.QMainWindow):
     # @param message The problem message from the movie engine.
     #
     @hdebug.debug
-    def handleProblem(self, message):
+    def handleProblem(self, message_str):
         current_command_name = str(self.commands[self.command_index].getDetails()[1][1])
-        message_str = current_command_name + '\n' + message
+        message_str = current_command_name + "\n" + message_str
         if not self.test_mode:
             self.ui.runButton.setText("Restart")
             self.running = False
-            
             if (self.ui.errorMsgCheckBox.isChecked()):
                 self.notifier.sendMessage("Acquisition Problem",
-                                          message)
+                                          message_str)
             QtGui.QMessageBox.information(self,
                                           "Acquisition Problem",
-                                          message)
-        else:
+                                          message_str)
+        else: # Test mode
             self.is_command_valid[self.command_index] = False
+            message_str += "\nIgnore remaining errors?"
+            print "here"
             if not self.skip_warning:
-                QtGui.QMessageBox.information(self,
-                                          "Acquisition Problem",
-                                          message)
-            # Display only one warning on load
-            self.skip_warning = True
+                messageBox = QtGui.QMessageBox(parent = self)
+                messageBox.setWindowTitle("Invalid Command")
+                messageBox.setText(message_str)
+                messageBox.setStandardButtons(QtGui.QMessageBox.No |
+                                              QtGui.QMessageBox.YesToAll)
+                messageBox.setIcon(QtGui.QMessageBox.Warning)
+                messageBox.setDefaultButton(QtGui.QMessageBox.YesToAll)
+                button_ID = messageBox.exec_()
+                if button_ID == QtGui.QMessageBox.YesToAll:
+                    self.skip_warning = True # Skip additional warnings
 
             print "Invalid command: " + current_command_name
 
@@ -620,6 +626,7 @@ class Dave(QtGui.QMainWindow):
                                               "XML Generation Error",
                                               traceback.format_exc())
             else:
+                self.skip_warning = False #Enable warnings for invalid commands
                 self.commands = commands
                 self.command_index = 0
                 self.sequence_length = len(self.commands)
