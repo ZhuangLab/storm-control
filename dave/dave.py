@@ -419,6 +419,7 @@ class Dave(QtGui.QMainWindow):
             self.command_engine.enableTestMode(False) # To recover from initial test run
             if self.test_mode:
                 self.updateEstimates()
+                self.createCommandList() # Redraw list to color invalid commands
                 self.test_mode = False
 
         # Issue the command
@@ -670,13 +671,14 @@ class Dave(QtGui.QMainWindow):
 
     ## updateCommandSequenceDisplay
     #
-    #  Update the GUI display of the current command details
+    #  Update the GUI display of the current command deails
     #
     def updateCommandSequenceDisplay(self, command_index):
         # disable selectability of all other elements
         for widget in self.command_widgets:
             widget.setFlags(QtCore.Qt.ItemIsEnabled)
-
+            
+            
         self.command_widgets[command_index].setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
         self.ui.commandSequenceList.setCurrentRow(command_index)
         self.updateCommandDescriptorTable(self.command_widgets[command_index])
@@ -747,9 +749,14 @@ class Dave(QtGui.QMainWindow):
         self.ui.commandSequenceList.clear()
         self.command_widgets = []
         
-        for command in self.commands:
+        for [command_ID, command] in enumerate(self.commands):
             widget = QtGui.QListWidgetItem(command.getDescriptor())
+            
             widget.setFlags(QtCore.Qt.ItemIsEnabled)
+            if self.is_command_valid[command_ID]:
+                widget.setBackground(QtGui.QBrush(QtCore.Qt.white))
+            else:
+                widget.setBackground(QtGui.QBrush(QtCore.Qt.red))
             self.ui.commandSequenceList.addItem(widget)
             self.command_widgets.append(widget)
         
