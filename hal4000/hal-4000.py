@@ -490,7 +490,7 @@ class Window(QtGui.QMainWindow):
                 # start the film
                 self.tcp_requested_movie = True
                 self.ui.lengthSpinBox.setValue(message.getData("length"))
-                self.startFile(filmSettings.FilmSettings("fixed_length", message.getData("length"))
+                self.startFile(filmSettings.FilmSettings("fixed_length", message.getData("length")))
                                
 ##        elif (m_type == "setDirectory"):
 ##            if (not self.current_directory):
