@@ -230,7 +230,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
         if lock_sum >= min_sum:
             message.markAsComplete()
         else:
-            message.setError(True, "Found sum " + str(lock_sum) " is smaller than minimum sum " + str(min_sum))        
+            message.setError(True, "Found sum " + str(lock_sum) + " is smaller than minimum sum " + str(min_sum))
         self.tcpComplete.emit(message)
         self.tcp_message = None
 
