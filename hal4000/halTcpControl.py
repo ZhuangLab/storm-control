@@ -31,11 +31,11 @@ class HalTCPControl(TCPServer, halModule.HalModule):
     # @param parent The PyQt parent.
     #
     def __init__(self, hardware, parameters, parent):
-        tcpControl.TCPControl.__init__(self,
-                                       port=hardware.tcp_port,
-                                       server_name="Hal",
-                                       parent=parent,
-                                       verbose=True)
+        TCPServer.__init__(self,
+                           port=hardware.tcp_port,
+                           server_name="Hal",
+                           parent=parent,
+                           verbose=True)
         halModule.HalModule.__init__(self)
 
     ## connectSignals
