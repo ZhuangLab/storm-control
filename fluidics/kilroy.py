@@ -141,7 +141,6 @@ class Kilroy(QtGui.QMainWindow):
         elif message.isTest():
             required_time = self.kilroyProtocols.requiredTime(message.getData("name"))
             message.addResponse("duration", required_time)
-            message.addResponse("disk_usage", 0.0)
             self.tcpServer.sendMessage(message)
         else: # Valid, non-test message                                    
             # Keep track of valid messages issued via TCP 
