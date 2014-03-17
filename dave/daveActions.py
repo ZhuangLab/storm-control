@@ -136,7 +136,6 @@ class DaveAction(QtCore.QObject):
         self.tcp_client.startCommunication()
         self.tcp_client.sendMessage(self.message)
 
-
 # ----------------------------------------------------------------------------------------
 # Specific Actions
 # ----------------------------------------------------------------------------------------
@@ -153,9 +152,23 @@ class FindSum(DaveAction):
     #
     def __init__(self, tcp_client, min_sum):
         DaveAction.__init__(self, tcp_client)
-        self.message = TCPMessage(message_type = "Focus Lock",
-                                  message_data = {"command":"find_sum",
-                                                  "min_sum": min_sum})
+        self.message = TCPMessage(message_type = "Find Sum",
+                                  message_data = {"min_sum": min_sum})
+
+## Set Focus Lock Target
+#
+# The set focus lock target action.
+#
+class SetFocusLockTarget(DaveAction):
+
+    ## __init__
+    #
+    # @param focus_target The target for the focus lock.
+    #
+    def __init__(self, tcp_client, focus_target):
+        DaveAction.__init__(self, tcp_client)
+        self.message = TCPMessage(message_type = "Set Lock Target",
+                                  message_data = {"focus_target": focus_target})
 
 ## MoveStage
 #
@@ -172,90 +185,65 @@ class MoveStage(DaveAction):
         self.message = TCPMessage(message_type = "Move Stage",
                                   message_data = {"stage_x":command.stage_x,
                                                   "stage_y":command.stage_y})
-            
-## DaveActionMovie
+
+## TakeMovie
 #
-# The movie acquisition action.
+# Send a take movie command to Hal
 #
-class DaveActionMovie(DaveAction):
+class TakeMovie(DaveAction):
 
     ## __init__
     #
-    # @param movie A movie XML object.
+    # @param command A XML command object.
     #
-    def __init__(self, tcp_client, movie):
+    def __init__(self, tcp_client, command):
         DaveAction.__init__(self, tcp_client)
-        self.movie = movie
-        movie_data = movie.__dict__
+        message_data = {"name":command.name,
+                        "length":command.length
+                        "min_spots":command.min_spots}
+        if hasattr(command, "parameters"):
+            message_data["parameters"] = command.parameters
+        else:
+            message_data["parameters"] = 0
+        self.message = TCPMessage(message_type = "Take Movie",
+                                  message_data = message_data)
 
-        print movie
-        print "Movie Data", movie_data
-        if "progression" in movie_data:
-            del movie_data["progression"]
-            print movie_data
-##            if hasattr(movie.progression, "type"):
-##                movie_data["progression_type"] = movie.progression.type
-##            if hasattr(movie.progression, "channels"):
-##                movie_data["progression_channels"] = movie.progression.channels
-##            if hasattr(movie.progressions, "filename"):
-##                movie_data["progression_filename"] = movie.progression.filename
-    
-        # Create TCP Message Dictionary
-        self.message = TCPMessage(message_type = "Movie",
-                                  data = movie_data)
-
-        print self.message
-
-    ## abort
-    #
-    # Aborts the movie 
-    #
-    def abort(self):
-        stop_message = TCPMessage(message_type = "abortMovie")
-        self.message = stop_message
-        self.tcp_client.sendMessage(self.message)
-
-
-## DaveActionMovieParameters
-#
-# The movie parameters action.
-#
-class DaveActionMovieParameters(DaveAction):
-
-    ## __init__
-    #
-    # @param movie A XML movie object.
-    #
-    def __init__(self, tcp_client, movie):
-        DaveAction.__init__(self, tcp_client)
-        self.delay = movie.delay
-        self.movie = movie
-        self.should_pause = self.movie.pause
-        self.complete_on_timer = True
-
-        movie_data = {}
-        if hasattr(movie, "parameters"): movie_data["parameters"] = movie.parameters
-        if hasattr(movie, "stage_x"): movie_data["stage_x"] = movie.stage_x
-        if hasattr(movie, "stage_y"): movie_data["stage_y"] = movie.stage_y
-        if hasattr(movie, "lock_target"): movie_data["lock_target"] = movie.lock_target
-
-        self.message = TCPMessage(message_type = "Movie Parameters", message_data = movie_data)
-
-## DaveActionRecenter
+## RecenterPiezo
 #
 # The piezo recentering action. Note that this is only useful if the microscope
 # has a motorized Z.
 #
-class DaveActionRecenter(DaveAction):
+class RecenterPiezo(DaveAction):
     ## __init__
     #
-    # Create the object, set the delay time to 200 milliseconds.
+    # Create the object
     #
     def __init__(self, tcp_client):
         DaveAction.__init__(self, tcp_client)
-        self.delay = 200
-        self.message = TCPMessage(message_type = "Recenter")
+        self.message = TCPMessage(message_type = "Recenter Piezo")
 
+
+## SetProgression
+#
+# The action responsible for setting the illumination progression.
+#
+class SetProgression(DaveAction):
+    ## __init__
+    #
+    # @param progression an XML object describing the desired progression
+    #
+    def __init__(self, tcp_client, progression):
+        DaveAction.__init__(self, tcp_client)
+        #message_data = progression.__dict__  ### TEST THIS SIMPLE CODE
+        message_data = {"type":progression.type}
+        if hasattr(progression, "filename"):
+            message_data["file"] = progression.filename
+        if progression.channels:
+            message_data["channels"] = progression.channels
+        
+        self.message = TCPMessage(message_type = "Set Progression",
+                                  message_data = message_data)
+            
 ## DaveActionValveProtocol
 #
 # The fluidics protocol action. Send commands to Kilroy.

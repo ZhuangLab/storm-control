@@ -114,10 +114,18 @@ class CommandEngine(QtGui.QWidget):
         # Load and parse command 
         command_type = command.getType()
         if command_type == "movie":
-            self.actions.append(daveActions.DaveActionMovieParameters(self.HALClient, command))
-            if command.recenter:            self.actions.append(daveActions.DaveActionRecenter(self.HALClient))
-            if (command.find_sum > 0.0):    self.actions.append(daveActions.DaveActionFindSum(self.HALClient, command.find_sum))
-            if (command.length > 0):        self.actions.append(daveActions.DaveActionMovie(self.HALClient, command))
+            if hasattr(command, "stage_x") and hasattr(command, "stage_y"):
+                self.actions.append(daveActions.MoveStage(self.HALClient, command))
+            if command.find_sum > 0.0:
+                self.actions.append(daveActions.FindSum(self.HALClient, command.find_sum))
+            if hasattr(command, "lock_target"):
+                self.actions.append(daveActions.SetFocusLockTarget(self.HALClient, command.lock_target))
+            if command.recenter:
+                self.actions.append(daveActions.RecenterPiezo(self.HALClient))
+            if hasattr(command.progression):
+                self.actions.append(daveActions.SetProgression(self.HALClient, self.progression))
+            if command.length > 0:
+                self.actions.append(daveActions.TakeMovie(self.HALClient, command)
         elif command_type == "fluidics":
             self.actions.append(daveActions.DaveActionValveProtocol(self.kilroyClient, command))
 
