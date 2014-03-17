@@ -902,7 +902,7 @@ class Window(QtGui.QMainWindow):
             if self.tcp_message:
                 message = self.tcp_message
                 found_spots = self.writer.getSpotCounts()
-                message.setResponse("found_spots", found_spots)
+                message.addResponse("found_spots", found_spots)
                 min_spots = message.getData("min_spots")
                 if found_spots < min_spots and min_spots > 0.0:
                     err_str = str(found_spots) + " found molecules is less than the target: "
