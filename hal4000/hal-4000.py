@@ -502,7 +502,7 @@ class Window(QtGui.QMainWindow):
                 # set parameters
                 self.parameters_box.setCurrentParameters(message.getData("parameters"))
                 # set filename
-                self.ui.filenameLabel.setText(message.getData("name" + self.parameters.filetype))
+                self.ui.filenameLabel.setText(message.getData("name") + self.parameters.filetype)
                 # start the film
                 self.tcp_requested_movie = True
                 self.ui.lengthSpinBox.setValue(message.getData("length"))
