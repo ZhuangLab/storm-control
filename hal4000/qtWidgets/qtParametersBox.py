@@ -109,8 +109,9 @@ class QParametersBox(QtGui.QWidget):
         self.layout.insertWidget(0, radio_button)
         radio_button.clicked.connect(self.toggleParameters)
         radio_button.deleteSelected.connect(self.handleDeleteSelected)
-        if (len(self.radio_buttons) == 1):
-            radio_button.click()
+        #if (len(self.radio_buttons) == 1):
+        radio_button.click() # Activate each new parameters as loaded to populate
+                             # camera-specific fields
 
     ## getCurrentParameters
     #
@@ -118,6 +119,21 @@ class QParametersBox(QtGui.QWidget):
     #
     def getCurrentParameters(self):
         return self.current_parameters
+
+    ## getParameters
+    #
+    # Returns the requested parameters if the request is valid.
+    #
+    # @param param_index An integer or a string specifying the identify of the parameters
+    #
+    def getParameters(self, param_index):
+        if param_index in self.button_names:
+            button_ID = self.button_names.index(param_index)
+            return self.radio_buttons[button_ID].getParameters()
+        elif param_index in range(len(self.radio_buttons)):
+            return self.radio_buttons[param_index].getParameters()
+        else:
+            return None
 
     ## handleDeleteSelected
     #

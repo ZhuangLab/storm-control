@@ -490,6 +490,10 @@ class Window(QtGui.QMainWindow):
                     message.setError(True, err_str)
                 # Get disk usage and duration
                 if not message.hasError():
+                    parameters = self.parameters_box.getCurrentParameters(message.getData("parameters"))
+                    num_frames = message.getData("length")
+
+                    
                     disk_usage, duration = self.parameters_box.estimateDurationAndUsage(message.getData("parameters"),
                                                                                         message.getData("length"))
                     message.addResponse("duration", duration)
@@ -957,7 +961,6 @@ class Window(QtGui.QMainWindow):
                                           "Bad parameters",
                                           traceback.format_exc())
         self.startCamera()
-
 
     ## updateFilenameLabel
     #
