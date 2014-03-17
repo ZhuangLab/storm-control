@@ -351,7 +351,6 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
                 signal[2].connect(self.remoteSetPower)
             elif (signal[1] == "incPower"):
                 signal[2].connect(self.remoteIncPower)
-
             elif (signal[1] == "commMessage"):
                 signal[2].connect(self.handleCommMessage)
 

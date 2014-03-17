@@ -122,8 +122,8 @@ class CommandEngine(QtGui.QWidget):
                 self.actions.append(daveActions.SetFocusLockTarget(self.HALClient, command.lock_target))
             if command.recenter:
                 self.actions.append(daveActions.RecenterPiezo(self.HALClient))
-            if hasattr(command.progression):
-                self.actions.append(daveActions.SetProgression(self.HALClient, self.progression))
+            if hasattr(command,"progression"):
+                self.actions.append(daveActions.SetProgression(self.HALClient, command.progression))
             if command.length > 0:
                 self.actions.append(daveActions.TakeMovie(self.HALClient, command))
         elif command_type == "fluidics":

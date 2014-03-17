@@ -318,8 +318,6 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
             if not x_pos or not y_pos:
                 message.setError(True, "Invalid positions")
             if message.isTest(): # Handle test request
-                message.setResponse("duration", 0.0)
-                message.setResponse("disk_usage", 0.0)
                 message.markAsComplete()
             elif not message.hasError():
                 self.moveAbsolute(m_data[0], m_data[1])
