@@ -490,14 +490,11 @@ class Window(QtGui.QMainWindow):
                     message.setError(True, err_str)
                 # Get disk usage and duration
                 if not message.hasError():
-                    parameters = self.parameters_box.getCurrentParameters(message.getData("parameters"))
                     num_frames = message.getData("length")
-
-                    
-                    disk_usage, duration = self.parameters_box.estimateDurationAndUsage(message.getData("parameters"),
-                                                                                        message.getData("length"))
-                    message.addResponse("duration", duration)
-                    message.addResponse("disk_usage", disk_usage)
+                    parameters = self.parameters_box.getCurrentParameters(message.getData("parameters"))
+                    message.addResponse("duration", num_frames * parameters.kinetic_value)
+                    mega_bytes_per_frame = parameters.bytesPerFrame * 1.0/2^20 # convert to megabytes
+                    message.addResponse("disk_usage", mega_bytes_per_frame*num_frames)
                 
                 message.markAsComplete()
                 self.tcpComplete.emit(message)
