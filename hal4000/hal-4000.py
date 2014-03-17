@@ -910,8 +910,8 @@ class Window(QtGui.QMainWindow):
                     err_str += str(min_spots)
                     message.setError(True, err_str)
 
-                num_frames = self.writer.getFilmLength()
-                message.addResponse("num_frames", num_frames)
+                length = self.writer.getFilmLength()
+                message.addResponse("length", length)
                 
                 message.markAsComplete()
                 self.tcp_requested_movie = False
