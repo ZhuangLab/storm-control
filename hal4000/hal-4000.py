@@ -22,7 +22,7 @@
 # These are loaded dynamically in the __init__ based on
 # the contents of the hardware.xml file. Examples of modules
 # include spotCounter.py, illumination/illuminationControl.py
-# and tcpControl.py
+# and tcpServer.py
 #
 # Each module must implement the methods described in the
 # HalModule class in halLib.halModule, or be a sub-class
@@ -116,6 +116,7 @@ class Window(QtGui.QMainWindow):
         self.old_shutters_file = ""
         self.parameters = parameters
         self.settings = QtCore.QSettings("Zhuang Lab", "hal-4000_" + parameters.setup_name.lower())
+        self.tcp_message = None
         self.tcp_requested_movie = False
         self.ui_mode = ""
         self.will_overwrite = False
@@ -469,33 +470,32 @@ class Window(QtGui.QMainWindow):
     #
     # Handles all the message from tcpControl.
     #
-    # @param message A tcpControl.TCPMessage object.
+    # @param message A tcpMessage.TCPMessage object.
     #
     @hdebug.debug
     def handleCommMessage(self, message):
 
-        m_type = message.getType()
-        m_data = message.getData()
-
-        if (m_type == "abortMovie"):
+        # Handle abort request from Dave.
+        if message.getType() == "Abort Movie":
             if self.filming:
-                self.stopFilm()
-
-        elif (m_type == "parameters"):
-            self.parameters_box.setCurrentParameters(m_data[0])
-
-        elif (m_type == "movie"):
-            # set to new comm specific values
-            self.ui.filenameLabel.setText(m_data[0] + self.parameters.filetype)
-
-            # start the film
-            self.tcp_requested_movie = True
-            self.startFilm(filmSettings.FilmSettings("fixed_length", m_data[1]))
-
-        elif (m_type == "setDirectory"):
-            if (not self.current_directory):
-                self.current_directory = self.directory[:-1]
-            self.newDirectory(m_data[0])
+                self.stopFile()
+        elif message.getType() == "Take Movie":
+            if message.isTest():
+                pass  ## WORK IN PROGRESS
+            else:
+                # set parameters
+                self.parameters_box.setCurrentParameters(message.getData("parameters"))
+                # set filename
+                self.ui.filenameLabel.setText(message.getData("name" + self.parameters.filetype))
+                # start the film
+                self.tcp_requested_movie = True
+                self.ui.lengthSpinBox.setValue(message.getData("length"))
+                self.startFile(filmSettings.FilmSettings("fixed_length", message.getData("length"))
+                               
+##        elif (m_type == "setDirectory"):
+##            if (not self.current_directory):
+##                self.current_directory = self.directory[:-1]
+##            self.newDirectory(m_data[0])
 
     ## handleCommStart
     #
@@ -874,8 +874,19 @@ class Window(QtGui.QMainWindow):
             if (self.writer.getLockTarget() == "failed"):
                 hdebug.logText("QPD/Camera appears to have frozen..")
                 self.quit()
-            self.tcpComplete.emit(str(self.writer.getSpotCounts()))
-            self.tcp_requested_movie = False
+
+            # Return tcp requested message
+            if self.tcp_message:
+                message = self.tcp_message
+                found_spots = self.writer.getSpotCounts()
+                message.setResponse("found_spots", found_spots)
+                min_spots = message.getData("min_spots")
+                if found_spots < min_spots and min_spots > 0.0:
+                    message.setError(True,
+                                     str(found_spots) + " found molecules is less than the target: " + str(min_spots))
+                message.markAsComplete()
+                self.tcpComplete.emit(message)
+                self.tcp_requested_movie = False
 
     ## toggleFilm
     #
