@@ -141,7 +141,10 @@ class Movie(AbstractCommand):
                 elif (node.nodeName == "name"):
                     self.name = node.firstChild.nodeValue
                 elif (node.nodeName == "parameters"):
-                    self.parameters = int(node.firstChild.nodeValue)
+                    try:
+                        self.parameters = int(node.firstChild.nodeValue)
+                    except:
+                        self.parameters = str(node.firstChild.nodeValue)
                 elif (node.nodeName == "pause"):
                     self.pause = int(node.firstChild.nodeValue)
                 elif (node.nodeName == "recenter"):
@@ -175,7 +178,7 @@ class Movie(AbstractCommand):
 
         # Parameters
         if hasattr(self, "parameters"):
-            details.append(["Parameters", "{0:d}".format(self.parameters)])
+            details.append(["Parameters", str(self.parameters)])
         else:
             details.append(["Parameters", "None"])
 
