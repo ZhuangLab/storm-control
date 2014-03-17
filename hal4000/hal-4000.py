@@ -480,6 +480,7 @@ class Window(QtGui.QMainWindow):
                 self.tcp_message.addResponse("aborted", True)
             if self.filming:
                 self.stopFilm()
+        # Handle movie request.
         elif message.getType() == "Take Movie":
             if message.isTest():
                 # Check parameters
@@ -502,7 +503,15 @@ class Window(QtGui.QMainWindow):
                 self.tcpComplete.emit(message)
             else:
                 # set parameters
-                self.parameters_box.setCurrentParameters(message.getData("parameters"))
+                if self.parameters_box.isValidParameters(message.getData("parameters"))
+                    self.parameters_box.setCurrentParameters(message.getData("parameters"))
+                else:
+                    err_str = str(message.getData("parameters")) + " is an invalid parameters option"
+                    message.setError(True, err_str)
+                    #message.markAsComplete() # In the future, this can allow Dave to repeat the command
+                    self.tcpComplete.emit(message)
+                    return # Exit before starting movie
+                
                 # set filename
                 self.ui.filenameLabel.setText(message.getData("name") + self.parameters.filetype)
                 # start the film
