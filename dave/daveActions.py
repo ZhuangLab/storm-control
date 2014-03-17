@@ -209,6 +209,14 @@ class TakeMovie(DaveAction):
         self.message = TCPMessage(message_type = "Take Movie",
                                   message_data = message_data)
 
+    ## abort
+    #
+    # Send an abort message to Hal
+    #
+    def abort(self):
+        stop_message = TCPMessage(message_type = "Abort Movie")
+        self.tcp_client.sendMessage(stop_message)
+
 ## RecenterPiezo
 #
 # The piezo recentering action. Note that this is only useful if the microscope

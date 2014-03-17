@@ -237,6 +237,13 @@ class GenericFile:
 
         self.open = False
 
+    ## getFilmLength()
+    #
+    # @return The film's length in number of frames (per camera).
+    #
+    def getFilmLength(self):
+        return self.number_frames
+
     ## getLockTarget()
     #
     # @return The film's lock target.

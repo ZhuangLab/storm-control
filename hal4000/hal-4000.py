@@ -476,8 +476,10 @@ class Window(QtGui.QMainWindow):
     def handleCommMessage(self, message):
         # Handle abort request from Dave.
         if message.getType() == "Abort Movie":
+            if self.tcp_message:
+                self.tcp_message.addResponse("aborted", True)
             if self.filming:
-                self.stopFile()
+                self.stopFilm()
         elif message.getType() == "Take Movie":
             if message.isTest():
                 # Check parameters
@@ -890,7 +892,6 @@ class Window(QtGui.QMainWindow):
         # Notify tcp/ip client that the movie is finished
         # if the client requested the movie.
         if self.tcp_requested_movie:
-
             # Disable record button so that user can't take movies in HAL.
             self.ui.recordButton.setEnabled(False)
 
@@ -908,6 +909,10 @@ class Window(QtGui.QMainWindow):
                     err_str = str(found_spots) + " found molecules is less than the target: "
                     err_str += str(min_spots)
                     message.setError(True, err_str)
+
+                num_frames = self.writer.getFilmSize()
+                message.addResponse("num_frames", num_frames)
+                
                 message.markAsComplete()
                 self.tcp_requested_movie = False
                 self.tcp_message = None
