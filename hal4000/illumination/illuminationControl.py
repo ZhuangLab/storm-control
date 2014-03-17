@@ -274,6 +274,7 @@ class QIlluminationControlWidget(QtGui.QWidget):
 #
 class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     channelNames = QtCore.pyqtSignal(object)
+    tcpComplete = QtCore.pyqtSignal(object)
 
     ## __init__
     #
@@ -372,7 +373,8 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     def getSignals(self):
         return [[self.hal_type, "channelNames", self.channelNames],
                 [self.hal_type, "newColors", self.shutter_control.newColors],
-                [self.hal_type, "newCycleLength", self.shutter_control.newCycleLength]]
+                [self.hal_type, "newCycleLength", self.shutter_control.newCycleLength],
+                [self.hal_type, "tcpComplete", self.tcpComplete]]
 
     ## handleCommMessage
     #
@@ -382,14 +384,22 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleCommMessage(self, message):
-
-        m_type = message.getType()
-        m_data = message.getData()
-
-        if (m_type == "setPower"):
-            self.remoteSetPower(m_data[0], m_data[1])
-        elif (m_type == "incPower"):
-            self.remoteIncPower(m_data[0], m_data[1])
+        if message.getType() == "Set Power":
+            if message.isTest():
+                pass
+            else:
+                self.remoteSetPower(message.getData("channel"),
+                                    message.getData("power"))
+                message.markAsComplete()
+            self.tcpMessage.emit(message)
+        elif message.getType() == "Increment Power":
+            if message.isTest():
+                pass
+            else:
+                self.remoteIncPower(message.getData("channel"),
+                                    message.getData("increment"))
+                message.markAsComplete()
+            self.tcpMessage.emit(message)       
 
     ## handleOk
     #
