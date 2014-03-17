@@ -512,7 +512,6 @@ class Dave(QtGui.QMainWindow):
         else: # Test mode
             self.is_command_valid[self.command_index] = False
             message_str += "\nIgnore remaining errors?"
-            print "here"
             if not self.skip_warning:
                 messageBox = QtGui.QMessageBox(parent = self)
                 messageBox.setWindowTitle("Invalid Command")
