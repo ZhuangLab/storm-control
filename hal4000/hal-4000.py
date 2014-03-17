@@ -480,7 +480,21 @@ class Window(QtGui.QMainWindow):
                 self.stopFile()
         elif message.getType() == "Take Movie":
             if message.isTest():
-                ### WORK IN PROGRESS
+                # Check parameters
+                if not self.parameters_box.isValidParameters(message.getData("parameters")):
+                    err_str = str(message.getData("parameters")) + " is an invalid parameters option"
+                    message.setError(True, err_str)
+                # Check length
+                if message.getData("length") == None or message.getData("length") < 1:
+                    err_str = str(message.getData("length")) + "is an invalid movie length"
+                    message.setError(True, err_str)
+                # Get disk usage and duration
+                if not message.hasError():
+                    disk_usage, duration = self.parameters_box.estimateDurationAndUsage(message.getData("parameters"),
+                                                                                        message.getData("length"))
+                    message.addResponse("duration", duration)
+                    message.addResponse("disk_usage", disk_usage)
+                
                 message.markAsComplete()
                 self.tcpComplete.emit(message)
             else:
