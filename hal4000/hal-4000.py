@@ -493,7 +493,7 @@ class Window(QtGui.QMainWindow):
                     num_frames = message.getData("length")
                     parameters = self.parameters_box.getParameters(message.getData("parameters"))
                     message.addResponse("duration", num_frames * parameters.kinetic_value)
-                    mega_bytes_per_frame = parameters.bytesPerFrame * 1.0/2^20 # convert to megabytes
+                    mega_bytes_per_frame = parameters.bytesPerFrame * 1.0/2**20 # convert to megabytes
                     message.addResponse("disk_usage", mega_bytes_per_frame*num_frames)
                 
                 message.markAsComplete()
