@@ -1,0 +1,52 @@
+Notes on how to get pyAPT installed and working (64bit MinGW).
+
+1. Get pyAPT from here:
+  https://github.com/freespace/pyAPT.git
+
+  This will need to be somewhere in your Python path.
+
+
+2. Get pylibftdi from here:
+  https://pypi.python.org/pypi/pylibftdi
+
+  Install as usual (i.e. python setup.py install).  
+
+
+3. Get (pre-built) libftdi1 from here:
+  https://code.google.com/p/picusb/downloads/list
+
+  You'll want libftdi1git_devkit_mingw64.zip or something similar.
+  Extract and copy libftdi1.dll and libusb-1.0.dll from the bin64 directory
+  into your MinGW64 lib directory. Your MinGW64 lib directory also needs
+  to be in your PATH.
+
+
+4. Get zadig from here:
+  http://sourceforge.net/projects/libwdi/files/zadig/
+
+  This program lets you change the "APT USB Device" driver from FTDIBUS
+  (or equivalent) to WinUSB. Start zadig, select "Options" -> "List All Devices",
+  choose "APT USB Device" from the (now populated) drop down menu and click
+  "Replace Driver". 
+
+  Note that doing this will break the "APT User" program provided by Thorlabs 
+  (it will no longer find your devices). I was able to get this to work again 
+  using the Device Manager and telling Windows to "Roll Back Driver".
+
+
+Now when you run get_info.py in the pyAPT project you should get a list of
+APT controllers on your system. If you get an error message like this:
+
+Looking for APT controllers
+Traceback (most recent call last):
+  File "get_info.py", line 25, in <module>
+    sys.exit(info())
+  File "c:\Users\Hazen\pyAPT\runner.py", line 24, in inner
+    controllers = drv.list_devices()
+  File "c:\Python27\lib\site-packages\pylibftdi-0.13-py2.7.egg\pylibftdi
+py", line 168, in list_devices
+    msg = "%s (%d)" % (self.get_error_string(), res)
+
+It means that no APT controllers were found, which is most likely due to having
+the wrong USB driver installed (FTDIBUS instead of WinUSB).
+
