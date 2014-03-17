@@ -55,6 +55,7 @@ class TCPClient(TCPCommunications):
     #
     def connectToServer(self):
         if self.verbose:
+            print "-"*50
             string = "Looking for " + self.server_name + " server at: \n"
             string += "    Address: " + self.address.toString() + "\n"
             string += "    Port: " + str(self.port)
@@ -72,7 +73,8 @@ class TCPClient(TCPCommunications):
         if tries==self.num_conn_tries:
             print self.server_name + " server not found"
         else:
-            print "Connected to "+ self.server_name + " server"
+            if self.verbose:
+                print "Connected to "+ self.server_name + " server"
 
     ## startCommunication
     #
