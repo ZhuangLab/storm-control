@@ -125,7 +125,7 @@ class CommandEngine(QtGui.QWidget):
             if hasattr(command.progression):
                 self.actions.append(daveActions.SetProgression(self.HALClient, self.progression))
             if command.length > 0:
-                self.actions.append(daveActions.TakeMovie(self.HALClient, command)
+                self.actions.append(daveActions.TakeMovie(self.HALClient, command))
         elif command_type == "fluidics":
             self.actions.append(daveActions.DaveActionValveProtocol(self.kilroyClient, command))
 

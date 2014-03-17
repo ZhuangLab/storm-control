@@ -9,6 +9,7 @@
 #
 
 from sc_library.tcpMessage import TCPMessage
+from PyQt4 import QtCore
 
 ## DaveAction
 #
@@ -199,7 +200,7 @@ class TakeMovie(DaveAction):
     def __init__(self, tcp_client, command):
         DaveAction.__init__(self, tcp_client)
         message_data = {"name":command.name,
-                        "length":command.length
+                        "length":command.length,
                         "min_spots":command.min_spots}
         if hasattr(command, "parameters"):
             message_data["parameters"] = command.parameters
