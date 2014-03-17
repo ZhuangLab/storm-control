@@ -503,7 +503,7 @@ class Window(QtGui.QMainWindow):
                 self.tcpComplete.emit(message)
             else:
                 # set parameters
-                if self.parameters_box.isValidParameters(message.getData("parameters"))
+                if self.parameters_box.isValidParameters(message.getData("parameters")):
                     self.parameters_box.setCurrentParameters(message.getData("parameters"))
                 else:
                     err_str = str(message.getData("parameters")) + " is an invalid parameters option"
