@@ -84,8 +84,9 @@ class QParametersBox(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
         self.current_parameters = None
         self.current_button = False
+        self.button_names = []
         self.radio_buttons = []
-
+        
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.setMargin(4)
         self.layout.setSpacing(2)
@@ -93,7 +94,6 @@ class QParametersBox(QtGui.QWidget):
                                                     12,
                                                     QtGui.QSizePolicy.Minimum,
                                                     QtGui.QSizePolicy.Expanding))
-
 
     ## addParameters
     #
@@ -105,6 +105,7 @@ class QParametersBox(QtGui.QWidget):
         self.current_parameters = parameters
         radio_button = ParametersRadioButton(parameters)
         self.radio_buttons.append(radio_button)
+        self.button_names.append(radio_button.text())
         self.layout.insertWidget(0, radio_button)
         radio_button.clicked.connect(self.toggleParameters)
         radio_button.deleteSelected.connect(self.handleDeleteSelected)
@@ -123,12 +124,28 @@ class QParametersBox(QtGui.QWidget):
     # Handles the deleteSelected action from a parameters radio button.
     #
     def handleDeleteSelected(self):
-        for button in self.radio_buttons:
+        for [button_ID, button] in enumerate(self.radio_buttons):
             if button.delete_desired:
                 self.layout.removeWidget(button)
                 self.radio_buttons.remove(button)
+                self.button_names.pop(button_ID)
                 button.close()
 
+    ## isValidParameters
+    #
+    # Returns true if the requested parameters exist.
+    #
+    # @param index An integer or a string specifying the identify of the parameters
+    #
+##    def isValidParameters(self, param_index):
+##        if isinstance(param_index, basestring): # Request by name
+##            
+##        else:
+##            try:
+##                button = self.radio_buttons[index]
+##            except:
+##                return False
+        
     ## setCurrentParameters
     #
     # Select one of the parameter choices in the parameters box.
