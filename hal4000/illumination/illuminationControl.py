@@ -390,7 +390,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
             else:
                 self.remoteSetPower(message.getData("channel"),
                                     message.getData("power"))
-                message.markAsComplete()
+            message.markAsComplete()
             self.tcpMessage.emit(message)
         elif message.getType() == "Increment Power":
             if message.isTest():
@@ -398,7 +398,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
             else:
                 self.remoteIncPower(message.getData("channel"),
                                     message.getData("increment"))
-                message.markAsComplete()
+            message.markAsComplete()
             self.tcpMessage.emit(message)       
 
     ## handleOk

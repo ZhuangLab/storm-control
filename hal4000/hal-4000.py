@@ -474,14 +474,15 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleCommMessage(self, message):
-
         # Handle abort request from Dave.
         if message.getType() == "Abort Movie":
             if self.filming:
                 self.stopFile()
         elif message.getType() == "Take Movie":
             if message.isTest():
-                pass  ## WORK IN PROGRESS
+                ### WORK IN PROGRESS
+                message.markAsComplete()
+                self.tcpComplete.emit(message)
             else:
                 # set parameters
                 self.parameters_box.setCurrentParameters(message.getData("parameters"))
@@ -491,11 +492,16 @@ class Window(QtGui.QMainWindow):
                 self.tcp_requested_movie = True
                 self.ui.lengthSpinBox.setValue(message.getData("length"))
                 self.startFile(filmSettings.FilmSettings("fixed_length", message.getData("length")))
-                               
-##        elif (m_type == "setDirectory"):
-##            if (not self.current_directory):
-##                self.current_directory = self.directory[:-1]
-##            self.newDirectory(m_data[0])
+        elif message.getType() == "Set Directory":
+            if message.isTest():
+                message.markAsComplete()
+                self.tcpComplete.emit(message)
+            else:
+                if not self.current_directory:
+                    self.current_directory = self.directory[:-1]
+                self.newDirectory(message.getData("directory"))
+                message.markAsComplete()
+                self.tcpComplete.emit(message)
 
     ## handleCommStart
     #
@@ -882,11 +888,13 @@ class Window(QtGui.QMainWindow):
                 message.setResponse("found_spots", found_spots)
                 min_spots = message.getData("min_spots")
                 if found_spots < min_spots and min_spots > 0.0:
-                    message.setError(True,
-                                     str(found_spots) + " found molecules is less than the target: " + str(min_spots))
+                    err_str = str(found_spots) + " found molecules is less than the target: "
+                    err_str += str(min_spots)
+                    message.setError(True, err_str)
                 message.markAsComplete()
-                self.tcpComplete.emit(message)
                 self.tcp_requested_movie = False
+                self.tcp_message = False
+                self.tcpComplete.emit(message)
 
     ## toggleFilm
     #

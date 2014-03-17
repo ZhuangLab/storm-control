@@ -315,14 +315,12 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
         if message.getType() == "Move Stage":
             x_pos = message.getData("stage_x")
             y_pos = message.getData("stage_y")
-            if not x_pos or not y_pos:
-                message.setError(True, "Invalid positions")
-            if message.isTest(): # Handle test request
-                message.markAsComplete()
-            elif not message.hasError():
-                self.moveAbsolute(m_data[0], m_data[1])
-                message.markAsComplete()
-            
+            if message.isTest():
+                if not x_pos or not y_pos:
+                    message.setError(True, "Invalid positions")
+            else:
+                self.moveAbsolute(x_pos, y_pos)
+            self.markAsComplete()
             self.tcpComplete.emit(message) 
 
     ## handleDragMove
