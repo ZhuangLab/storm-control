@@ -443,15 +443,20 @@ class Dave(QtGui.QMainWindow):
     # @param file_path Path to file dragged into Dave.
     #
     def handleDragDropFile(self, file_path):
-        recipe_parser = recipeParser.XMLRecipeParser(verbose = True)
-        (xml, xml_file_path) = recipe_parser.loadXML(file_path)
-        root = xml.getroot()
-        if root.tag == "recipe" or root.tag == "experiment":
-            output_filename = recipe_parser.parseXML(xml_file_path)
-            if os.path.isfile(output_filename):
-                self.newSequence(output_filename)
-        elif root.tag == "sequence":
-            self.newSequence(xml_file_path)
+        if self.running:
+            QtGui.QMessageBox.information(self,
+                                          "New Sequence Request",
+                                          "Please pause or abort current")
+        else:
+            recipe_parser = recipeParser.XMLRecipeParser(verbose = True)
+            (xml, xml_file_path) = recipe_parser.loadXML(file_path)
+            root = xml.getroot()
+            if root.tag == "recipe" or root.tag == "experiment":
+                output_filename = recipe_parser.parseXML(xml_file_path)
+                if os.path.isfile(output_filename):
+                    self.newSequence(output_filename)
+            elif root.tag == "sequence":
+                self.newSequence(xml_file_path)
         
     ## handleGenerateXML
     #
@@ -461,10 +466,15 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleGenerateXML(self, boolean):
-        recipe_parser = recipeParser.XMLRecipeParser(verbose = True)
-        output_filename = recipe_parser.parseXML()
-        if os.path.isfile(output_filename):
-            self.newSequence(output_filename)
+        if self.running:
+            QtGui.QMessageBox.information(self,
+                                          "New Sequence Request",
+                                          "Please pause or abort current")
+        else:
+            recipe_parser = recipeParser.XMLRecipeParser(verbose = True)
+            output_filename = recipe_parser.parseXML()
+            if os.path.isfile(output_filename):
+                self.newSequence(output_filename)
             
     ## handleNotifierChange
     #
@@ -597,7 +607,11 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def newSequence(self, sequence_filename):
-        if (not self.running):
+        if self.running:
+            QtGui.QMessageBox.information(self,
+                                          "New Sequence Request",
+                                          "Please pause or abort current")
+        if not self.running:
             commands = []
             try:
                 commands = sequenceParser.parseMovieXml(sequence_filename)
@@ -638,10 +652,15 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def newSequenceFile(self, boolean):
-        sequence_filename = str(QtGui.QFileDialog.getOpenFileName(self, "New Sequence", self.directory, "*.xml"))
-        if sequence_filename:
-            self.directory = os.path.dirname(sequence_filename)
-            self.newSequence(sequence_filename)
+        if self.running:
+            QtGui.QMessageBox.information(self,
+                                          "New Sequence Request",
+                                          "Please pause or abort current")
+        else:
+            sequence_filename = str(QtGui.QFileDialog.getOpenFileName(self, "New Sequence", self.directory, "*.xml"))
+            if sequence_filename:
+                self.directory = os.path.dirname(sequence_filename)
+                self.newSequence(sequence_filename)
 
     ## updateCommandSequenceDisplay
     #
