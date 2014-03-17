@@ -506,7 +506,8 @@ class Window(QtGui.QMainWindow):
                 # start the film
                 self.tcp_requested_movie = True
                 self.ui.lengthSpinBox.setValue(message.getData("length"))
-                self.startFile(filmSettings.FilmSettings("fixed_length", message.getData("length")))
+                self.startFilm(filmSettings.FilmSettings("fixed_length", message.getData("length")))
+                
         elif message.getType() == "Set Directory":
             if message.isTest():
                 message.markAsComplete()
