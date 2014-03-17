@@ -137,26 +137,26 @@ class QParametersBox(QtGui.QWidget):
     #
     # @param index An integer or a string specifying the identify of the parameters
     #
-##    def isValidParameters(self, param_index):
-##        if isinstance(param_index, basestring): # Request by name
-##            
-##        else:
-##            try:
-##                button = self.radio_buttons[index]
-##            except:
-##                return False
+    def isValidParameters(self, param_index):
+        if (param_index in self.button_names) or (param_index in range(len(self.radio_buttons))):
+            return True
+        else:
+            return False
         
     ## setCurrentParameters
     #
     # Select one of the parameter choices in the parameters box.
     #
-    # @param index The index of the parameters to select, 0 <= x < number of parameters choices.
+    # @param param_index The name or index of the requested parameters
     #
-    def setCurrentParameters(self, index):
-        if (index >= 0) and (index < len(self.radio_buttons)):
-            self.radio_buttons[index].click()
+    def setCurrentParameters(self, param_index):
+        if param_index in self.button_names:
+            button_ID = self.button_names.index(param_index)
+            self.radio_buttons[button_ID].click()
+        elif param_index in range(len(self.radio_buttons)):
+            self.radio_buttons[param_index].click()
         else:
-            print "Requested parameter index not available", index
+            print "Requested parameter index not available", param_index
 
     ## startFilm
     #
