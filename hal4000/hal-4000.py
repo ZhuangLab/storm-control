@@ -505,6 +505,7 @@ class Window(QtGui.QMainWindow):
                 self.ui.filenameLabel.setText(message.getData("name") + self.parameters.filetype)
                 # start the film
                 self.tcp_requested_movie = True
+                self.tcp_message = message
                 self.ui.lengthSpinBox.setValue(message.getData("length"))
                 self.startFilm(filmSettings.FilmSettings("fixed_length", message.getData("length")))
                 
@@ -909,7 +910,7 @@ class Window(QtGui.QMainWindow):
                     message.setError(True, err_str)
                 message.markAsComplete()
                 self.tcp_requested_movie = False
-                self.tcp_message = False
+                self.tcp_message = None
                 self.tcpComplete.emit(message)
 
     ## toggleFilm
