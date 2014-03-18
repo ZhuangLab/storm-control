@@ -246,7 +246,7 @@ class SetProgression(DaveAction):
         #message_data = progression.__dict__  ### TEST THIS SIMPLE CODE
         message_data = {"type":progression.type}
         if hasattr(progression, "filename"):
-            message_data["file"] = progression.filename
+            message_data["filename"] = progression.filename
         if progression.channels:
             message_data["channels"] = progression.channels
         
