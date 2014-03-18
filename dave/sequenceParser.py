@@ -216,7 +216,10 @@ class Movie(AbstractCommand):
             details.append(["Pause", "No"])
 
         # Progression
-        details.append(["Progression", self.progression.type])
+        if hasattr(self.progression, "type"):
+            details.append(["Progression", self.progression.type])
+        else:
+            details.append(["Progression", "None"])
 
         # Recenter
         if self.recenter:
