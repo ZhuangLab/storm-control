@@ -128,7 +128,9 @@ class Movie(AbstractCommand):
         # parse settings
         for node in movie_xml.childNodes:
             if node.nodeType == Node.ELEMENT_NODE:
-                if (node.nodeName == "delay"):
+                if (node.nodeName == "directory"):
+                    self.directory = node.firstChild.nodeValue
+                elif (node.nodeName == "delay"):
                     self.delay = int(node.firstChild.nodeValue)
                 elif (node.nodeName == "find_sum"):
                     self.find_sum = float(node.firstChild.nodeValue)

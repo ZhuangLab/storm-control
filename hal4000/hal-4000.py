@@ -514,22 +514,19 @@ class Window(QtGui.QMainWindow):
                 
                 # set filename
                 self.ui.filenameLabel.setText(message.getData("name") + self.parameters.filetype)
+
+                # change directory if requested
+                new_directory = message.getData("directory")
+                if not new_directory == None:
+                    if not self.current_directory:
+                        self.current_directory = self.directory[:-1]
+                    self.newDirectory(message.getData("directory"))
+                
                 # start the film
                 self.tcp_requested_movie = True
                 self.tcp_message = message
                 self.ui.lengthSpinBox.setValue(message.getData("length"))
                 self.startFilm(filmSettings.FilmSettings("fixed_length", message.getData("length")))
-                
-        elif message.getType() == "Set Directory":
-            if message.isTest():
-                message.markAsComplete()
-                self.tcpComplete.emit(message)
-            else:
-                if not self.current_directory:
-                    self.current_directory = self.directory[:-1]
-                self.newDirectory(message.getData("directory"))
-                message.markAsComplete()
-                self.tcpComplete.emit(message)
 
     ## handleCommStart
     #
