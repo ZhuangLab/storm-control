@@ -110,10 +110,10 @@ class TCPCommunications(QtCore.QObject):
             self.socket.write(message_str + "\n")
             self.socket.flush()
             if self.verbose: print "Sent: \n" + str(message)
-            return True
         else:
-            print self.server_name + " socket not connected. Did not send: " + str(message)
-            return False
+            print self.server_name + " socket not connected. Did not send: \n" + str(message)
+            message.setError(True, "Communication Error: " + self.server_name + " socket not connected")
+            self.message_ready.emit(message) # Return message with error
 
 #
 # The MIT License

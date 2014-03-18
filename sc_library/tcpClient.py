@@ -63,18 +63,10 @@ class TCPClient(TCPCommunications):
 
         # Attempt to connect to host.
         self.socket.connectToHost(self.address, self.port)
-        tries = 0
-        while (not self.socket.waitForConnected() and (tries < self.num_conn_tries)):
-            print "Could not find " + self.server_name + " server. Attempt: " + str(tries)
-            time.sleep(1)
-            self.socket.connectToHost(self.address, self.port)
-            tries += 1
-            
-        if tries==self.num_conn_tries:
+
+        if not self.socket.waitForConnected(1000):
             print self.server_name + " server not found"
-        else:
-            if self.verbose:
-                print "Connected to "+ self.server_name + " server"
+        
 
     ## startCommunication
     #
