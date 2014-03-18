@@ -511,16 +511,16 @@ class Window(QtGui.QMainWindow):
                     #message.markAsComplete() # In the future, this can allow Dave to repeat the command
                     self.tcpComplete.emit(message)
                     return # Exit before starting movie
-                
-                # set filename
-                self.ui.filenameLabel.setText(message.getData("name") + self.parameters.filetype)
 
                 # change directory if requested
                 new_directory = message.getData("directory")
                 if not new_directory == None:
                     if not self.current_directory:
                         self.current_directory = self.directory[:-1]
-                    self.newDirectory(message.getData("directory"))
+                    self.newDirectory(new_directory)
+                
+                # set filename
+                self.ui.filenameLabel.setText(message.getData("name") + self.parameters.filetype)
                 
                 # start the film
                 self.tcp_requested_movie = True
