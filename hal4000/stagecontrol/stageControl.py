@@ -316,7 +316,7 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
             x_pos = message.getData("stage_x")
             y_pos = message.getData("stage_y")
             if message.isTest():
-                if not x_pos or not y_pos:
+                if x_pos == None or y_pos == None:
                     message.setError(True, "Invalid positions")
             else:
                 self.moveAbsolute(x_pos, y_pos)
