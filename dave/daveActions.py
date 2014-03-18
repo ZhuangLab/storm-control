@@ -208,6 +208,8 @@ class TakeMovie(DaveAction):
             message_data["parameters"] = 0
         if hasattr(command, "directory"):
             message_data["directory"] = command.directory
+        if hasattr(command, "overwrite"):
+            message_data["overwrite"] = command.overwrite
         self.message = TCPMessage(message_type = "Take Movie",
                                   message_data = message_data)
 

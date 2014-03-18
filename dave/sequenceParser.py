@@ -142,6 +142,11 @@ class Movie(AbstractCommand):
                     self.min_spots = int(node.firstChild.nodeValue)
                 elif (node.nodeName == "name"):
                     self.name = node.firstChild.nodeValue
+                elif (node.nodeName == "overwrite"):
+                    if node.firstChild.nodeValue == "True":
+                        self.overwrite = True
+                    else:
+                        self.overwrite = False
                 elif (node.nodeName == "parameters"):
                     try:
                         self.parameters = int(node.firstChild.nodeValue)

@@ -496,6 +496,16 @@ class Window(QtGui.QMainWindow):
                     if not os.path.isdir(message.getData("directory")):
                         err_str = str(message.getData("directory")) + " is an invalid directory"
                         message.setError(True, err_str)
+                # Check file overwrite
+                if not message.getData("overwrite"):
+                    if not message.getData("directory") == None:
+                        directory = message.getData("directory")
+                    else:
+                        directory = self.parameters.directory
+                    if os.path.exists(directory + name):
+                        err_str = directory + name + " will be overwritten"
+                        message.setError(True, err_str)
+                    
                 # Get disk usage and duration
                 if not message.hasError():
                     num_frames = message.getData("length")
