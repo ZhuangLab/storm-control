@@ -217,7 +217,10 @@ class Movie(AbstractCommand):
 
         # Progression
         if hasattr(self.progression, "type"):
-            details.append(["Progression", self.progression.type])
+            display_str = self.progression.type
+            if self.progression.type == "file":
+                display_str += ": " + self.progression.filename
+            details.append(["Progression", display_str])
         else:
             details.append(["Progression", "None"])
 
