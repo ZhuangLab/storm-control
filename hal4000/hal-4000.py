@@ -491,6 +491,11 @@ class Window(QtGui.QMainWindow):
                 if message.getData("length") == None or message.getData("length") < 1:
                     err_str = str(message.getData("length")) + "is an invalid movie length"
                     message.setError(True, err_str)
+                # Check directory
+                if not message.getData("directory") == None:
+                    if not os.path.isdir(message.getData("directory")):
+                        err_str = str(message.getData("directory")) + " is an invalid directory"
+                        message.setError(True, err_str)
                 # Get disk usage and duration
                 if not message.hasError():
                     num_frames = message.getData("length")
