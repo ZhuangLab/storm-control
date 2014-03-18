@@ -502,8 +502,9 @@ class Window(QtGui.QMainWindow):
                         directory = message.getData("directory")
                     else:
                         directory = self.parameters.directory
-                    if os.path.exists(directory + name):
-                        err_str = directory + name + " will be overwritten"
+                    file_path = directory + message.getData("name") + self.parameters.filetype
+                    if os.path.exists(file_path):
+                        err_str = file_path + " will be overwritten"
                         message.setError(True, err_str)
                     
                 # Get disk usage and duration
