@@ -1,10 +1,6 @@
 
 The Hal software controls the microscope.
 
-The Dave and Steve programs depend on some libraries in the
-halLib folder, so the hal4000 directory needs to be in your
-Python path.
-
 Please see the INSTALL.txt file for instructions on how to 
 get started. 
 
