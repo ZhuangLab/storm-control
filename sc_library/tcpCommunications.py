@@ -34,7 +34,7 @@ class TCPCommunications(QtCore.QObject):
     # @param parent A reference to an owning class.
     # @param port The TCP/IP port for communication.
     # @param server_name A string name for the communication server.
-    # @param address An address for the TCP/IP communication.
+    # @param address An address for the TCP/IP communication. Defaults to the local machine.
     # @param verbose A boolean controlling the verbosity of the class.
     #
     def __init__(self,
@@ -47,13 +47,11 @@ class TCPCommunications(QtCore.QObject):
         
         # Initialize internal attributes
         self.address = address
-        self.num_conn_tries = 5
         self.port = port 
         self.server_name = server_name
-        self.verbose = verbose
-
         self.socket = None
-
+        self.verbose = verbose
+    
     ## close
     #
     # Close the socket
@@ -61,12 +59,11 @@ class TCPCommunications(QtCore.QObject):
     def close(self):
         if self.socket:
             self.socket.close()
-            if self.verbose:
-                print "Closing TCP communications: " + self.server_name
+            if self.verbose: print "Closing TCP communications: " + self.server_name
             
     ## handleBusy
     #
-    # Handle a busy message
+    # Handle a busy message. Reserved for future use.
     #
     def handleBusy(self):
         pass
@@ -92,7 +89,9 @@ class TCPCommunications(QtCore.QObject):
     
     ## isConnected
     #
-    # Return true if the socket is connected and active
+    # Return true if the socket is connected and active.
+    #
+    # @return A boolean describing the connected state of the socket.
     #
     def isConnected(self):
         if self.socket and (self.socket.state() == QtNetwork.QAbstractSocket.ConnectedState):
@@ -103,6 +102,8 @@ class TCPCommunications(QtCore.QObject):
     ## sendMessage
     #
     # Pickle and send a TCP message if the socket is connected
+    #
+    # @param message A TCP message object.
     #
     def sendMessage(self, message):
         if self.isConnected():

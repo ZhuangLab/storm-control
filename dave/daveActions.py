@@ -5,7 +5,7 @@
 # Collection of classes that control the establish the basic operation of dave
 # as it issues various types of commands to HAL and Kilroy
 #
-# Hazen 06/13; Jeff 1/14 
+# Jeff 3/14 
 #
 
 from sc_library.tcpMessage import TCPMessage
@@ -24,6 +24,9 @@ class DaveAction(QtCore.QObject):
     ## __init__
     #
     # Default initialization.
+    #
+    # @param tcp_client A tcp communications object
+    # @param parent A parent class
     #
     def __init__(self, tcp_client, parent = None):
 
@@ -70,6 +73,8 @@ class DaveAction(QtCore.QObject):
     #
     # Handle the completion of an action
     #
+    # @param message A TCP message object
+    #
     def completeAction(self, message):
         self.tcp_client.stopCommunication()
         self.complete_signal.emit(message)
@@ -85,6 +90,8 @@ class DaveAction(QtCore.QObject):
     #
     # handle the return of a message
     #
+    # @param message A TCP message object
+    #
     def handleReply(self, message):
         # Check to see if the same message got returned
         if not (message.getID() == self.message.getID()):
@@ -98,6 +105,8 @@ class DaveAction(QtCore.QObject):
     ## completeActionWithError
     #
     # Send an error message if needed
+    #
+    # @param message A TCP message object
     #
     def completeActionWithError(self, message):
         if self.should_pause_after_error == True:
@@ -125,6 +134,7 @@ class DaveAction(QtCore.QObject):
     #
     # Determine if the command engine should pause after this action
     #
+    # @return A boolean determining if the program pauses after this action is complete
     def shouldPause(self):
         return self.should_pause
 
@@ -149,6 +159,7 @@ class FindSum(DaveAction):
 
     ## __init__
     #
+    # @param tcp_client A tcp communications object
     # @param min_sum The minimum sum that we should get from HAL upon completion of this action.
     #
     def __init__(self, tcp_client, min_sum):
@@ -164,6 +175,7 @@ class SetFocusLockTarget(DaveAction):
 
     ## __init__
     #
+    # @param tcp_client A tcp communications object
     # @param focus_target The target for the focus lock.
     #
     def __init__(self, tcp_client, focus_target):
@@ -179,7 +191,8 @@ class MoveStage(DaveAction):
 
     ## __init__
     #
-    # @param command A XML command object.
+    # @param tcp_client A tcp communications object.
+    # @param command A XML command object for a movie.
     #
     def __init__(self, tcp_client, command):
         DaveAction.__init__(self, tcp_client)
@@ -195,7 +208,8 @@ class TakeMovie(DaveAction):
 
     ## __init__
     #
-    # @param command A XML command object.
+    # @param tcp_client A tcp communications object.
+    # @param command A XML command object for a movie.
     #
     def __init__(self, tcp_client, command):
         DaveAction.__init__(self, tcp_client)
@@ -229,7 +243,7 @@ class TakeMovie(DaveAction):
 class RecenterPiezo(DaveAction):
     ## __init__
     #
-    # Create the object
+    # @param tcp_client A tcp communications object.
     #
     def __init__(self, tcp_client):
         DaveAction.__init__(self, tcp_client)
@@ -243,6 +257,7 @@ class RecenterPiezo(DaveAction):
 class SetProgression(DaveAction):
     ## __init__
     #
+    # @param tcp_client A tcp communications object.    
     # @param progression an XML object describing the desired progression
     #
     def __init__(self, tcp_client, progression):
@@ -262,10 +277,12 @@ class SetProgression(DaveAction):
 # The fluidics protocol action. Send commands to Kilroy.
 #
 class DaveActionValveProtocol(DaveAction):
+
     ## __init__
     #
     # Initialize the valve protocol action
     #
+    # @param tcp_client A tcp communications object.
     # @param protocols A valve protocols xml object
     #
     def __init__(self, tcp_client, protocol_xml):
@@ -275,3 +292,27 @@ class DaveActionValveProtocol(DaveAction):
 
         self.message = TCPMessage(message_type = "Kilroy Protocol",
                                   message_data = {"name": self.protocol_name})
+
+#
+# The MIT License
+#
+# Copyright (c) 2014 Zhuang Lab, Harvard University
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#

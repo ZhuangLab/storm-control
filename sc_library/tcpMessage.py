@@ -14,7 +14,6 @@
 # Contains the contents and status of a TCP message.
 #
 class TCPMessage(object):
-
     _COUNTER = 0 # Track number of created instances of this class.
 
     ## __init__
@@ -141,7 +140,6 @@ class TCPMessage(object):
     #
     # @param error_boolean A boolean that indicates whether an error has occurred
     # @param error_message A string describing the error
-    # @return A boolean which indicates whether the message is in test mode.
     #  
     def setError(self, error_boolean, error_message):
         self.error = error_boolean
@@ -167,7 +165,8 @@ class TCPMessage(object):
     #
     # Generate a string representation of the message
     #
-    # @param string_rep A string representation of the contents of the message and its properties
+    # @return string_rep A string representation of the contents of the message and its properties
+    #
     def __str__(self):
         string_rep = "\tMessage Type: " + str(self.message_type)
         for attribute in sorted(vars(self).keys()):
@@ -176,7 +175,7 @@ class TCPMessage(object):
         return string_rep
 
 # ----------------------------------------------------------------------------------------
-# Test/Demo of Class
+# Test of Class
 # ----------------------------------------------------------------------------------------                        
 if __name__ == "__main__":
     message = TCPMessage(message_type="findSum",
