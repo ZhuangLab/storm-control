@@ -65,8 +65,7 @@ class TCPClient(TCPCommunications):
         self.socket.connectToHost(self.address, self.port)
 
         if not self.socket.waitForConnected(1000):
-            print self.server_name + " server not found"
-        
+            print self.server_name + " server not found"        
 
     ## startCommunication
     #

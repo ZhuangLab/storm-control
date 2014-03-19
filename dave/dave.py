@@ -160,7 +160,6 @@ class CommandEngine(QtGui.QWidget):
             # Reset command duration and disk usage
             self.command_duration = 0.0
             self.command_disk_usage = 0.0
-            
             # Start current action
             self.current_action.start()
 
@@ -175,11 +174,11 @@ class CommandEngine(QtGui.QWidget):
     #
     # Handle the completion of the previous action
     #
-    def handleActionComplete(self, message):  
+    def handleActionComplete(self, message):
         self.current_action.cleanUp()
         self.current_action.complete_signal.disconnect()
         self.current_action.error_signal.disconnect()
-
+        
         if self.test_mode:
             time = message.getResponse("duration")
             if time is not None: self.command_duration += time
@@ -197,11 +196,11 @@ class CommandEngine(QtGui.QWidget):
         
     ## handleErrorSignal
     #
-    # Handle an error signal: Reserved for future use
+    # Handle an error signal
     #
     def handleErrorSignal(self, message):
-        self.problem.emit(message)
         self.handleActionComplete(message)
+        self.problem.emit(message)
 
 ## Dave Main Window Function
 #
