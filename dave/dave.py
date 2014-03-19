@@ -199,8 +199,9 @@ class CommandEngine(QtGui.QWidget):
     # Handle an error signal
     #
     def handleErrorSignal(self, message):
-        self.handleActionComplete(message)
         self.problem.emit(message)
+        self.handleActionComplete(message)
+        
 
 ## Dave Main Window Function
 #
