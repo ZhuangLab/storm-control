@@ -555,8 +555,9 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleCommStart(self):
-        print "commStart"
-        self.ui.recordButton.setEnabled(False)
+        pass
+        #print "commStart"
+        #self.ui.recordButton.setEnabled(False)
 
     ## handleCommStop
     #
@@ -564,8 +565,8 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleCommStop(self):
-        print "commStop"
-        self.ui.recordButton.setEnabled(True)
+        #print "commStop"
+        #self.ui.recordButton.setEnabled(True)
         if self.current_directory:
             self.newDirectory(self.current_directory)
             self.current_directory = False
