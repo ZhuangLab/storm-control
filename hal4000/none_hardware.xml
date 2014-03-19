@@ -16,6 +16,7 @@
   <modules>
 
     <!-- Bluetooth communication -->
+    <!--
     <bluetooth>
       <class_name type="string">HalBluetooth</class_name>
       <module_name type="string">halBluetooth</module_name>
@@ -23,6 +24,7 @@
 	<send_pictures type="int">1</send_pictures>
       </parameters>
     </bluetooth>
+    -->
 
     <!-- The focus lock -->
     <focuslock>
