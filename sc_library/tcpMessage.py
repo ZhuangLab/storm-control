@@ -170,7 +170,7 @@ class TCPMessage(object):
     # @param string_rep A string representation of the contents of the message and its properties
     def __str__(self):
         string_rep = "\tMessage Type: " + str(self.message_type)
-        for attribute in vars(self).keys():
+        for attribute in sorted(vars(self).keys()):
             if not attribute == "message_type":
                 string_rep += "\n\t" + attribute + ": " + str(getattr(self, attribute))
         return string_rep
