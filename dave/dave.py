@@ -717,13 +717,13 @@ class Dave(QtGui.QMainWindow):
             est_time += self.command_durations[i]
             est_space += self.disk_usages[i]
             
-        self.ui.timeLabel.setText("Run Duration: " + str(datetime.timedelta(seconds=est_time)))
-        if est_space/2**20 < 1.0: # Less than GB
+        self.ui.timeLabel.setText("Run Duration: " + str(datetime.timedelta(seconds=est_time))[0:8])
+        if est_space/2**10 < 1.0: # Less than GB
             self.ui.spaceLabel.setText("Run Size: {0:.2f} MB ".format(est_space))
-        elif est_space/2**40 < 1.0: # Less than TB
-            self.ui.spaceLabel.setText("Run Size: {0:.2f} GB ".format(est_space/2**20))
+        elif est_space/2**20 < 1.0: # Less than TB
+            self.ui.spaceLabel.setText("Run Size: {0:.2f} GB ".format(est_space/2**10))
         else: # Bigger than 1 TB
-            self.ui.spaceLabel.setText("Run Size: {0:.2f} TB ".format(est_space/2**40))
+            self.ui.spaceLabel.setText("Run Size: {0:.2f} TB ".format(est_space/2**20))
         
     ## updateCommandDescriptorTable
     #
