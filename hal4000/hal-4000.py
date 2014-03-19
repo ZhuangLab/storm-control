@@ -511,7 +511,6 @@ class Window(QtGui.QMainWindow):
                     if os.path.exists(file_path):
                         err_str = file_path + " will be overwritten"
                         message.setError(True, err_str)
-                    
                 # Get disk usage and duration
                 if not message.hasError():
                     num_frames = message.getData("length")
@@ -519,17 +518,16 @@ class Window(QtGui.QMainWindow):
                     message.addResponse("duration", num_frames * parameters.kinetic_value)
                     mega_bytes_per_frame = parameters.bytesPerFrame * 1.0/2**20 # convert to megabytes
                     message.addResponse("disk_usage", mega_bytes_per_frame*num_frames)
-                
-                message.markAsComplete()
+
+                message.markAsComplete() # The message is complete even if there is an error
                 self.tcpComplete.emit(message)
             else:
-                # set parameters
+                # set parameters. double check before filming
                 if self.parameters_box.isValidParameters(message.getData("parameters")):
                     self.parameters_box.setCurrentParameters(message.getData("parameters"))
                 else:
                     err_str = str(message.getData("parameters")) + " is an invalid parameters option"
                     message.setError(True, err_str)
-                    #message.markAsComplete() # In the future, this can allow Dave to repeat the command
                     self.tcpComplete.emit(message)
                     return # Exit before starting movie
 

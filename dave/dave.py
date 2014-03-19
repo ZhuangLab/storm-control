@@ -63,7 +63,7 @@ def createTableWidget(text):
 class CommandEngine(QtGui.QWidget):
     done = QtCore.pyqtSignal()
     idle = QtCore.pyqtSignal(bool)
-    problem = QtCore.pyqtSignal(str)
+    problem = QtCore.pyqtSignal(object)
     
     ## __init__
     #
@@ -200,7 +200,7 @@ class CommandEngine(QtGui.QWidget):
     # Handle an error signal: Reserved for future use
     #
     def handleErrorSignal(self, message):
-        self.problem.emit(message.getErrorMessage())
+        self.problem.emit(message)
         self.handleActionComplete(message)
 
 ## Dave Main Window Function
@@ -499,10 +499,12 @@ class Dave(QtGui.QMainWindow):
     # @param message The problem message from the movie engine.
     #
     @hdebug.debug
-    def handleProblem(self, message_str):
+    def handleProblem(self, message):
         current_command_name = str(self.commands[self.command_index].getDetails()[1][1])
-        message_str = current_command_name + "\n" + message_str
+        message_str = current_command_name + "\n" + message.getErrorMessage()
         if not self.test_mode:
+            if not message.isComplete(): # Decrement command to prepare to resend it (if desired).
+                self.command_index -= 1 # handleDone will increment back to the desired index
             self.ui.runButton.setText("Restart")
             self.running = False
             if (self.ui.errorMsgCheckBox.isChecked()):
