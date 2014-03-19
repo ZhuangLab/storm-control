@@ -30,6 +30,7 @@
 #
 #
 # Hazen 02/14
+# Jeff 3/14
 #
 
 import os
@@ -482,6 +483,10 @@ class Window(QtGui.QMainWindow):
                 self.stopFilm()
         # Handle movie request.
         elif message.getType() == "Take Movie":
+            if self.filming:
+                message.setError(True, "Hal is currently running")
+                self.tcpComplete.emit(message)
+                return
             if message.isTest():
                 # Check parameters
                 if not self.parameters_box.isValidParameters(message.getData("parameters")):
