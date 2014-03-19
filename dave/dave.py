@@ -502,8 +502,8 @@ class Dave(QtGui.QMainWindow):
         current_command_name = str(self.commands[self.command_index].getDetails()[1][1])
         message_str = current_command_name + "\n" + message.getErrorMessage()
         if not self.test_mode:
-            if not message.isComplete(): # Decrement command to prepare to resend it (if desired).
-                self.command_index -= 1 # handleDone will increment back to the desired index
+            #if not message.isComplete(): # Decrement command to prepare to resend it (if desired).
+            #    self.command_index -= 1 # handleDone will increment back to the desired index
             self.ui.runButton.setText("Restart")
             self.running = False
             if (self.ui.errorMsgCheckBox.isChecked()):
