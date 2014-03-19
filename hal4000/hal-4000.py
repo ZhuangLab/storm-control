@@ -856,8 +856,8 @@ class Window(QtGui.QMainWindow):
         self.parameters_box.startFilm()
 
         # Enable record button so that TCP requested films can be stopped.
-        if self.tcp_requested_movie:
-            self.ui.recordButton.setEnabled(True)
+        #if self.tcp_requested_movie:
+        #    self.ui.recordButton.setEnabled(True)
 
         # go...
         self.startCamera()
@@ -921,7 +921,7 @@ class Window(QtGui.QMainWindow):
         # if the client requested the movie.
         if self.tcp_requested_movie:
             # Disable record button so that user can't take movies in HAL.
-            self.ui.recordButton.setEnabled(False)
+            # self.ui.recordButton.setEnabled(False)
 
             if (self.writer.getLockTarget() == "failed"):
                 hdebug.logText("QPD/Camera appears to have frozen..")
