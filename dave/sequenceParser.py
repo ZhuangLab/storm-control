@@ -171,7 +171,7 @@ class Movie(AbstractCommand):
     # Return a string that describes the command
     #
     def getDescriptor(self):
-        return self.name + " ({0:.1f}, {0:.1f})".format(self.stage_x, self.stage_y)
+        return self.name + " ({0:.1f}, {1:.1f})".format(self.stage_x, self.stage_y)
 
     ## getDetails
     #
