@@ -9,7 +9,6 @@
 # a response is recieved from the acquisition software.
 #
 # Hazen 06/13
-# Jeff 3/14
 #
 
 # Common
@@ -141,8 +140,6 @@ class CommandEngine(QtGui.QWidget):
     #
     # Returns the current pause request state of the command engine
     #
-    # @return A boolean describing the desired pause state
-    #
     def getPause(self):
         if self.test_mode: return False
         else: return self.should_pause
@@ -169,17 +166,13 @@ class CommandEngine(QtGui.QWidget):
     ## enableTestMode
     #
     # Toggle the command engine test mode
-    #
-    # @param boolean_mode A boolean which determines the mode of the command engine
-    #
-    def enableTestMode(self, boolean_mode):
-        self.test_mode = boolean_mode
+    # 
+    def enableTestMode(self, mode_boolean):
+        self.test_mode = mode_boolean
 
     ## handleActionComplete
     #
     # Handle the completion of the previous action
-    #
-    # @param message A TCP message object
     #
     def handleActionComplete(self, message):
         self.current_action.cleanUp()
@@ -204,8 +197,6 @@ class CommandEngine(QtGui.QWidget):
     ## handleErrorSignal
     #
     # Handle an error signal
-    #
-    # @param message A TCP message object
     #
     def handleErrorSignal(self, message):
         self.handleActionComplete(message)
@@ -398,6 +389,7 @@ class Dave(QtGui.QMainWindow):
     #
     # Reset command sequence list to the current command
     #
+    #
     def handleCommandListClick(self):
         self.updateCommandSequenceDisplay(self.ui.commandSequenceList.currentRow())
 
@@ -469,7 +461,7 @@ class Dave(QtGui.QMainWindow):
         
     ## handleGenerateXML
     #
-    # Handles request to generate an XML sequence from an XML recipe.
+    # Handles Generate from Recipe XML
     #
     # @param boolean Dummy parameter.
     #
@@ -503,7 +495,7 @@ class Dave(QtGui.QMainWindow):
     # Handles the problem signal from the movie engine. Notifies the operator by e-mail if requested.
     # Displays a dialog box describing the problem.
     #
-    # @param message A TCP message object that contains a description of the error.
+    # @param message The problem message from the movie engine.
     #
     @hdebug.debug
     def handleProblem(self, message):
@@ -534,6 +526,7 @@ class Dave(QtGui.QMainWindow):
                 button_ID = messageBox.exec_()
                 if button_ID == QtGui.QMessageBox.YesToAll:
                     self.skip_warning = True # Skip additional warnings
+
             print "Invalid command: " + current_command_name
 
     ## handleRunButton
@@ -616,7 +609,7 @@ class Dave(QtGui.QMainWindow):
         
     ## newSequence
     #
-    # Parses a XML file describing the list of commands to execute.
+    # Parses a XML file describing the list of movies to take.
     #
     # @param sequence_filename The name of the XML file.
     #
@@ -680,9 +673,7 @@ class Dave(QtGui.QMainWindow):
 
     ## updateCommandSequenceDisplay
     #
-    # Update the GUI display of the current command details
-    #
-    # @param command_index The index of the current selected command.
+    #  Update the GUI display of the current command deails
     #
     def updateCommandSequenceDisplay(self, command_index):
         # disable selectability of all other elements
@@ -696,9 +687,7 @@ class Dave(QtGui.QMainWindow):
 
     ## updateCurrentCommandDisplay
     #
-    # Update the GUI display of the current command details
-    #
-    # @param command_index The index of the current selected command
+    #  Update the GUI display of the current command details
     #
     def updateCurrentCommandDisplay(self, command_index):
         command_details = self.commands[command_index].getDetails()
@@ -738,8 +727,6 @@ class Dave(QtGui.QMainWindow):
     ## updateCommandDescriptorTable
     #
     # Display the details of the current command
-    #
-    # @param list_widget The list widget of the current selected command
     #
     @hdebug.debug
     def updateCommandDescriptorTable(self, list_widget):
@@ -793,9 +780,16 @@ class Dave(QtGui.QMainWindow):
     def quit(self, boolean):
         self.close()
 
-#
-# Main execution code
-# 
+    ## validateCommands
+    #
+    # Validate that the listed commands can be run and determine disk and time requirements
+    #
+    @hdebug.debug
+    def validateCommands(self):
+            
+        self.ui.timeLabel.setText("Run Length: {0:.1f} hours".format(total_duration/(3600)))
+        self.ui.spaceLabel.setText("Run Size: {0:.1f} GB ".format(total_disk))
+
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     parameters = params.Parameters("settings_default.xml")
@@ -804,14 +798,14 @@ if __name__ == "__main__":
     #hdebug.startLogging(parameters.directory + "logs/", "dave")
 
     # Load app.
-    dave = Dave(parameters)
-    dave.show()
+    window = Dave(parameters)
+    window.show()
     app.exec_()
 
 #
 # The MIT License
 #
-# Copyright (c) 2014 Zhuang Lab, Harvard University
+# Copyright (c) 2013 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

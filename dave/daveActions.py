@@ -79,6 +79,18 @@ class DaveAction(QtCore.QObject):
         self.tcp_client.stopCommunication()
         self.complete_signal.emit(message)
 
+    ## completeActionWithError
+    #
+    # Send an error message if needed
+    #
+    # @param message A TCP message object
+    #
+    def completeActionWithError(self, message):
+        if self.should_pause_after_error == True:
+            self.should_pause = True
+        self.tcp_client.stopCommunication()
+        self.error_signal.emit(message)
+
     ## getError
     #
     # @return The error message if there a problem occured during this action.
@@ -101,18 +113,6 @@ class DaveAction(QtCore.QObject):
             self.completeActionWithError(message)
         else: # Correct message and no error
             self.completeAction(message)
-
-    ## completeActionWithError
-    #
-    # Send an error message if needed
-    #
-    # @param message A TCP message object
-    #
-    def completeActionWithError(self, message):
-        if self.should_pause_after_error == True:
-            self.should_pause = True
-        self.tcp_client.stopCommunication()
-        self.error_signal.emit(message)
 
     ## handleTimerDone
     #
@@ -151,6 +151,27 @@ class DaveAction(QtCore.QObject):
 # Specific Actions
 # ----------------------------------------------------------------------------------------
 
+## DaveActionValveProtocol
+#
+# The fluidics protocol action. Send commands to Kilroy.
+#
+class DaveActionValveProtocol(DaveAction):
+
+    ## __init__
+    #
+    # Initialize the valve protocol action
+    #
+    # @param tcp_client A tcp communications object.
+    # @param protocols A valve protocols xml object
+    #
+    def __init__(self, tcp_client, protocol_xml):
+        DaveAction.__init__(self, tcp_client)
+        self.protocol_name = protocol_xml.protocol_name
+        self.protocol_is_running = False
+
+        self.message = TCPMessage(message_type = "Kilroy Protocol",
+                                  message_data = {"name": self.protocol_name})
+
 ## FindSum
 #
 # The find sum action.
@@ -166,22 +187,6 @@ class FindSum(DaveAction):
         DaveAction.__init__(self, tcp_client)
         self.message = TCPMessage(message_type = "Find Sum",
                                   message_data = {"min_sum": min_sum})
-
-## Set Focus Lock Target
-#
-# The set focus lock target action.
-#
-class SetFocusLockTarget(DaveAction):
-
-    ## __init__
-    #
-    # @param tcp_client A tcp communications object
-    # @param focus_target The target for the focus lock.
-    #
-    def __init__(self, tcp_client, focus_target):
-        DaveAction.__init__(self, tcp_client)
-        self.message = TCPMessage(message_type = "Set Lock Target",
-                                  message_data = {"focus_target": focus_target})
 
 ## MoveStage
 #
@@ -199,6 +204,57 @@ class MoveStage(DaveAction):
         self.message = TCPMessage(message_type = "Move Stage",
                                   message_data = {"stage_x":command.stage_x,
                                                   "stage_y":command.stage_y})
+## RecenterPiezo
+#
+# The piezo recentering action. Note that this is only useful if the microscope
+# has a motorized Z.
+#
+class RecenterPiezo(DaveAction):
+    ## __init__
+    #
+    # @param tcp_client A tcp communications object.
+    #
+    def __init__(self, tcp_client):
+        DaveAction.__init__(self, tcp_client)
+        self.message = TCPMessage(message_type = "Recenter Piezo")
+
+## Set Focus Lock Target
+#
+# The set focus lock target action.
+#
+class SetFocusLockTarget(DaveAction):
+
+    ## __init__
+    #
+    # @param tcp_client A tcp communications object
+    # @param focus_target The target for the focus lock.
+    #
+    def __init__(self, tcp_client, focus_target):
+        DaveAction.__init__(self, tcp_client)
+        self.message = TCPMessage(message_type = "Set Lock Target",
+                                  message_data = {"focus_target": focus_target})
+
+## SetProgression
+#
+# The action responsible for setting the illumination progression.
+#
+class SetProgression(DaveAction):
+    ## __init__
+    #
+    # @param tcp_client A tcp communications object.    
+    # @param progression an XML object describing the desired progression
+    #
+    def __init__(self, tcp_client, progression):
+        DaveAction.__init__(self, tcp_client)
+        #message_data = progression.__dict__  ### TEST THIS SIMPLE CODE
+        message_data = {"type":progression.type}
+        if hasattr(progression, "filename"):
+            message_data["filename"] = progression.filename
+        if progression.channels:
+            message_data["channels"] = progression.channels
+        
+        self.message = TCPMessage(message_type = "Set Progression",
+                                  message_data = message_data)
 
 ## TakeMovie
 #
@@ -234,64 +290,6 @@ class TakeMovie(DaveAction):
     def abort(self):
         stop_message = TCPMessage(message_type = "Abort Movie")
         self.tcp_client.sendMessage(stop_message)
-
-## RecenterPiezo
-#
-# The piezo recentering action. Note that this is only useful if the microscope
-# has a motorized Z.
-#
-class RecenterPiezo(DaveAction):
-    ## __init__
-    #
-    # @param tcp_client A tcp communications object.
-    #
-    def __init__(self, tcp_client):
-        DaveAction.__init__(self, tcp_client)
-        self.message = TCPMessage(message_type = "Recenter Piezo")
-
-
-## SetProgression
-#
-# The action responsible for setting the illumination progression.
-#
-class SetProgression(DaveAction):
-    ## __init__
-    #
-    # @param tcp_client A tcp communications object.    
-    # @param progression an XML object describing the desired progression
-    #
-    def __init__(self, tcp_client, progression):
-        DaveAction.__init__(self, tcp_client)
-        #message_data = progression.__dict__  ### TEST THIS SIMPLE CODE
-        message_data = {"type":progression.type}
-        if hasattr(progression, "filename"):
-            message_data["filename"] = progression.filename
-        if progression.channels:
-            message_data["channels"] = progression.channels
-        
-        self.message = TCPMessage(message_type = "Set Progression",
-                                  message_data = message_data)
-            
-## DaveActionValveProtocol
-#
-# The fluidics protocol action. Send commands to Kilroy.
-#
-class DaveActionValveProtocol(DaveAction):
-
-    ## __init__
-    #
-    # Initialize the valve protocol action
-    #
-    # @param tcp_client A tcp communications object.
-    # @param protocols A valve protocols xml object
-    #
-    def __init__(self, tcp_client, protocol_xml):
-        DaveAction.__init__(self, tcp_client)
-        self.protocol_name = protocol_xml.protocol_name
-        self.protocol_is_running = False
-
-        self.message = TCPMessage(message_type = "Kilroy Protocol",
-                                  message_data = {"name": self.protocol_name})
 
 #
 # The MIT License
