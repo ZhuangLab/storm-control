@@ -30,7 +30,7 @@
 #
 #
 # Hazen 02/14
-# Jeff 3/14
+# Jeff 03/14
 #
 
 import os
@@ -109,6 +109,7 @@ class Window(QtGui.QMainWindow):
 
         # General (alphabetically ordered)
         self.current_directory = False
+        self.current_length = 0
         self.directory = False
         self.filename = ""
         self.filming = False
@@ -475,33 +476,39 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleCommMessage(self, message):
+
         # Handle abort request from Dave.
-        if message.getType() == "Abort Movie":
+        if (message.getType() == "Abort Movie"):
             if self.tcp_message:
                 self.tcp_message.addResponse("aborted", True)
             if self.filming:
                 self.stopFilm()
+
         # Handle movie request.
-        elif message.getType() == "Take Movie":
+        #
+        # JMFix: Add "Set parameters" message.
+        #
+        elif (message.getType() == "Take Movie"):
             if self.filming:
                 message.setError(True, "Hal is currently running")
                 self.tcpComplete.emit(message)
                 return
             if message.isTest():
-                # Check parameters
+
+                # Check parameters.
                 if not self.parameters_box.isValidParameters(message.getData("parameters")):
-                    err_str = str(message.getData("parameters")) + " is an invalid parameters option"
-                    message.setError(True, err_str)
-                # Check length
-                if message.getData("length") == None or message.getData("length") < 1:
-                    err_str = str(message.getData("length")) + "is an invalid movie length"
-                    message.setError(True, err_str)
-                # Check directory
+                    message.setError(True, str(message.getData("parameters")) + " is an invalid parameters option")
+
+                # Check length.
+                if (message.getData("length") == None) or (message.getData("length") < 1):
+                    message.setError(True, str(message.getData("length")) + "is an invalid movie length")
+
+                # Check directory.
                 if not message.getData("directory") == None:
                     if not os.path.isdir(message.getData("directory")):
-                        err_str = str(message.getData("directory")) + " is an invalid directory"
-                        message.setError(True, err_str)
-                # Check file overwrite
+                        message.setError(True, str(message.getData("directory")) + " is an invalid directory")
+
+                # Check file overwrite.
                 if not message.getData("overwrite"):
                     if not message.getData("directory") == None:
                         directory = message.getData("directory")
@@ -509,39 +516,40 @@ class Window(QtGui.QMainWindow):
                         directory = self.parameters.directory
                     file_path = directory + message.getData("name") + self.parameters.filetype
                     if os.path.exists(file_path):
-                        err_str = file_path + " will be overwritten"
-                        message.setError(True, err_str)
-                # Get disk usage and duration
+                        message.setError(True, file_path + " will be overwritten")
+
+                # Get disk usage and duration.
                 if not message.hasError():
                     num_frames = message.getData("length")
                     parameters = self.parameters_box.getParameters(message.getData("parameters"))
                     message.addResponse("duration", num_frames * parameters.kinetic_value)
-                    mega_bytes_per_frame = parameters.bytesPerFrame * 1.0/2**20 # convert to megabytes
-                    message.addResponse("disk_usage", mega_bytes_per_frame*num_frames)
+                    mega_bytes_per_frame = parameters.bytesPerFrame * 1.0/2**20 # Convert to megabytes.
+                    message.addResponse("disk_usage", mega_bytes_per_frame * num_frames)
 
-                message.markAsComplete() # The message is complete even if there is an error
+                message.markAsComplete() # The message is complete even if there is an error.
                 self.tcpComplete.emit(message)
+
             else:
-                # set parameters. double check before filming
+                # Set parameters, double check before filming.
                 if self.parameters_box.isValidParameters(message.getData("parameters")):
                     self.parameters_box.setCurrentParameters(message.getData("parameters"))
                 else:
-                    err_str = str(message.getData("parameters")) + " is an invalid parameters option"
-                    message.setError(True, err_str)
+                    message.setError(True, str(message.getData("parameters")) + " is an invalid parameters option")
                     self.tcpComplete.emit(message)
-                    return # Exit before starting movie
+                    return # Exit before starting movie.
 
-                # change directory if requested
+                # Change directory if requested.
                 new_directory = message.getData("directory")
                 if not new_directory == None:
                     if not self.current_directory:
                         self.current_directory = self.directory[:-1]
                     self.newDirectory(new_directory)
                 
-                # set filename
+                # Set filename.
                 self.ui.filenameLabel.setText(message.getData("name") + self.parameters.filetype)
                 
-                # start the film
+                # Start the film.
+                self.current_length = self.parameters.frames
                 self.tcp_requested_movie = True
                 self.tcp_message = message
                 self.ui.lengthSpinBox.setValue(message.getData("length"))
@@ -587,7 +595,7 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleModeComboBox(self, mode):
-        if mode == 0:
+        if (mode == 0):
             self.parameters.acq_mode = "run_till_abort"
         else:
             self.parameters.acq_mode = "fixed_length"
@@ -930,6 +938,8 @@ class Window(QtGui.QMainWindow):
                 message = self.tcp_message
                 found_spots = self.writer.getSpotCounts()
                 message.addResponse("found_spots", found_spots)
+
+                # JMFix: Error checking in Dave.
                 min_spots = message.getData("min_spots")
                 if found_spots < min_spots and min_spots > 0.0:
                     err_str = str(found_spots) + " found molecules is less than the target: "
@@ -943,6 +953,8 @@ class Window(QtGui.QMainWindow):
                 self.tcp_requested_movie = False
                 self.tcp_message = None
                 self.tcpComplete.emit(message)
+
+                self.ui.lengthSpinBox.setValue(self.current_length)
 
     ## toggleFilm
     #
@@ -1085,7 +1097,7 @@ if __name__ == "__main__":
     params.setSetupName(parameters, setup_name)
 
     # Start logger.
-#    hdebug.startLogging(parameters.directory + "logs/", "hal4000")
+    hdebug.startLogging(parameters.directory + "logs/", "hal4000")
 
     # Load app.
     window = Window(hardware, parameters)
