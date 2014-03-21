@@ -312,11 +312,11 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleCommMessage(self, message):
-        if message.getType() == "Move Stage":
+        if (message.getType() == "Move Stage"):
             x_pos = message.getData("stage_x")
             y_pos = message.getData("stage_y")
             if message.isTest():
-                if x_pos == None or y_pos == None:
+                if (x_pos == None) or (y_pos == None):
                     message.setError(True, "Invalid positions")
             else:
                 self.moveAbsolute(x_pos, y_pos)
