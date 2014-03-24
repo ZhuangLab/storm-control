@@ -240,12 +240,12 @@ class SetFocusLockTarget(DaveAction):
     ## __init__
     #
     # @param tcp_client A tcp communications object
-    # @param focus_target The target for the focus lock.
+    # @param lock_target The target for the focus lock.
     #
-    def __init__(self, tcp_client, focus_target):
+    def __init__(self, tcp_client, lock_target):
         DaveAction.__init__(self, tcp_client)
         self.message = TCPMessage(message_type = "Set Lock Target",
-                                  message_data = {"focus_target": focus_target})
+                                  message_data = {"lock_target": lock_target})
 
 ## SetProgression
 #

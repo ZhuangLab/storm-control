@@ -187,8 +187,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
             if message.isTest():
                 self.tcpComplete.emit(self.tcp_message)
             else:
-                # JMFix: use lock_target?
-                self.tcpHandleSetLockTarget(self.tcp_message.getData("focus_target"))
+                self.tcpHandleSetLockTarget(self.tcp_message.getData("lock_target"))
                 self.tcpComplete.emit(self.tcp_message)
         elif (message.getType() == "Find Optimal Sum"):
             if message.isTest():
