@@ -67,7 +67,7 @@ class DaveAction(QtCore.QObject):
     # Handle clean up of the action
     #
     def cleanUp(self):
-        self.tcp_client.message_ready.disconnect()
+        self.tcp_client.messageReceived.disconnect()
 
     ## completeAction
     #
@@ -143,7 +143,7 @@ class DaveAction(QtCore.QObject):
     # Start the action.
     #
     def start(self):
-        self.tcp_client.message_ready.connect(self.handleReply)
+        self.tcp_client.messageReceived.connect(self.handleReply)
         self.tcp_client.startCommunication()
         self.tcp_client.sendMessage(self.message)
 

@@ -177,34 +177,29 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleCommMessage(self, message):
-        if message.getType() == "Find Sum":
+        self.tcp_message = message
+        self.tcp_message.markAsComplete()
+        if (message.getType() == "Find Sum"):
             if message.isTest():
-                message.markAsComplete()
-                self.tcpComplete.emit(message)
+                self.tcpComplete.emit(self.tcp_message)
             else:
-                self.tcp_message = message
                 self.tcpHandleFindSum()
-        elif message.getType() == "Set Lock Target":
+        elif (message.getType() == "Set Lock Target"):
             if message.isTest():
-                message.markAsComplete()
-                self.tcpComplete.emit(message)
+                self.tcpComplete.emit(self.tcp_message)
             else:
-                self.tcpHandleSetLockTarget(message.getData("focus_target"))
-                message.markAsComplete()
-                self.tcpComplete.emit(message)
-        elif message.getType() == "Find Optimal Sum":
+                # JMFix: use lock_target?
+                self.tcpHandleSetLockTarget(self.tcp_message.getData("focus_target"))
+                self.tcpComplete.emit(self.tcp_message)
+        elif (message.getType() == "Find Optimal Sum"):
             if message.isTest():
-                message.markAsComplete()
-                self.tcpComplete.emit(message)
+                self.tcpComplete.emit(self.tcp_message)
             else:
-                self.tcp_message = message
                 self.tcpHandleOptimizeSum()
-        elif message.getType() == "Recenter Piezo":
+        elif (message.getType() == "Recenter Piezo"):
             if message.isTest():
-                message.markAsComplete()
-                self.tcpComplete.emit(message)
+                self.tcpComplete.emit(self.tcp_message)
             else:
-                self.tcp_message = message
                 self.tcpHandleRecenterPiezo()
 
     ## handleFoundOptimal
@@ -215,11 +210,8 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleFoundOptimal(self, lock_sum):
-        message = self.tcp_message
-        message.markAsComplete()
-        message.setResponse("optimal_sum", lock_sum)
-        self.tcp_message = None
-        self.tcpComplete.emit(message)
+        self.tcp_message.setResponse("optimal_sum", lock_sum)
+        self.tcpComplete.emit(self.tcp_message)
 
     ## handleFoundSum
     #
@@ -229,13 +221,12 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleFoundSum(self, lock_sum):
-        message = self.tcp_message
-        min_sum = message.getData("min_sum")
-        message.markAsComplete()
+        # JMFix: Check minimum sum in Dave (or as a method in the message?).
+        min_sum = self.tcp_message.getData("min_sum")
+        self.tcp_message.markAsComplete()
         if lock_sum <= min_sum:
-            message.setError(True, "Found sum " + str(lock_sum) + " is smaller than minimum sum " + str(min_sum))
-        self.tcp_message = None
-        self.tcpComplete.emit(message)
+            self.tcp_message.setError(True, "Found sum " + str(lock_sum) + " is smaller than minimum sum " + str(min_sum))
+        self.tcpComplete.emit(self.tcp_message)
 
     ## handleJumpPButton
     #
@@ -308,10 +299,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleRecenteredPiezo(self):
-        message = self.tcp_message
-        message.markAsComplete()
-        self.tcp_message = None
-        self.tcpComplete.emit(message)
+        self.tcpComplete.emit(self.tcp_message)
 
     ## handleQuit
     #

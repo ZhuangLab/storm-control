@@ -23,9 +23,7 @@ from sc_library.tcpMessage import TCPMessage
 # servers should be inherited from this class.
 #
 class TCPCommunications(QtCore.QObject):
-    message_ready = QtCore.pyqtSignal(object) # Relay received TCP messages.
-    com_got_connection = QtCore.pyqtSignal()
-    com_lost_connection = QtCore.pyqtSignal()
+    messageReceived = QtCore.pyqtSignal(object) # Relay received TCP messages.
 
     ## __init__
     #
@@ -85,7 +83,7 @@ class TCPCommunications(QtCore.QObject):
         if message.getType() == "Busy":
             self.handleBusy()
         else:
-            self.message_ready.emit(message)
+            self.messageReceived.emit(message)
     
     ## isConnected
     #
@@ -117,7 +115,7 @@ class TCPCommunications(QtCore.QObject):
             if message.isTest():
                 message.markAsComplete()
             print message
-            self.message_ready.emit(message) # Return message with error
+            self.messageReady.emit(message) # Return message with error
 
 #
 # The MIT License

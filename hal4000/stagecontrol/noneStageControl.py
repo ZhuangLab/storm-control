@@ -54,8 +54,7 @@ class Stage():
         pass
 
 #
-# Stage control dialog specialized for STORM3
-# with Prior motorized stage.
+# Stage control dialog specialized for emulation setup.
 #
 class AStageControl(stageControl.StageControl):
     def __init__(self, hardware, parameters, parent = None):

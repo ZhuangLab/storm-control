@@ -7,7 +7,6 @@
 # 3/8/14
 # jeffmoffitt@gmail.com
 # ----------------------------------------------------------------------------------------
-
 # ----------------------------------------------------------------------------------------
 # Import
 # ----------------------------------------------------------------------------------------
@@ -22,11 +21,9 @@ from sc_library.tcpCommunications import TCPCommunications
 # A TCP server for passing TCP messages between programs
 #
 class TCPServer(QtNetwork.QTcpServer, TCPCommunications):
-    # Custom PyQt signals: These must redefined since TCPCommunications is the second
-    # inherited class
-    message_ready = QtCore.pyqtSignal(object) # Relay received TCP messages.
-    com_got_connection = QtCore.pyqtSignal()
-    com_lost_connection = QtCore.pyqtSignal()
+    messageReceived = TCPCommunications.messageReceived
+    comGotConnection = QtCore.pyqtSignal()
+    comLostConnection = QtCore.pyqtSignal()
     
     ## __init__
     #
@@ -39,7 +36,7 @@ class TCPServer(QtNetwork.QTcpServer, TCPCommunications):
     # @param verbose A boolean controlling the verbosity of the class
     #
     def __init__(self,
-                 port=9500,
+                 port = 9500,
                  server_name = "default",
                  address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
                  parent = None,
@@ -65,7 +62,7 @@ class TCPServer(QtNetwork.QTcpServer, TCPCommunications):
             string += "    Port: " + str(self.port)
             print string
         self.listen(self.address, self.port)
-        self.com_got_connection.emit()
+        self.comGotConnection.emit()
         
     ## disconnectFromClients
     #
@@ -79,7 +76,7 @@ class TCPServer(QtNetwork.QTcpServer, TCPCommunications):
             self.socket.waitForDisconnect()
             self.socket.close()
             self.socket = None
-            self.com_lost_connection.emit()
+            self.comLostConnection.emit()
             self.connectToNewClients()
     
     ## handleClientConnection
@@ -110,9 +107,10 @@ class TCPServer(QtNetwork.QTcpServer, TCPCommunications):
         self.socket.disconnectFromHost()
         self.socket.close()
         self.socket = None
-        self.com_lost_connection.emit()
+        self.comLostConnection.emit()
         if self.verbose: print "Client disconnected"
-        
+
+
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
 # ----------------------------------------------------------------------------------------                                                                
@@ -124,9 +122,9 @@ class StandAlone(QtGui.QMainWindow):
         self.server = TCPServer(port = 9500, verbose = True)
 
         # Connect PyQt signals
-        self.server.com_got_connection.connect(self.handleNewConnection)
-        self.server.com_lost_connection.connect(self.handleLostConnection)
-        self.server.message_ready.connect(self.handleMessageReady)            
+        self.server.comGotConnection.connect(self.handleNewConnection)
+        self.server.comLostConnection.connect(self.handleLostConnection)
+        self.server.messageReady.connect(self.handleMessageReady)            
 
     # ----------------------------------------------------------------------------------------
     # Handle New Connection

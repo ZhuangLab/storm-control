@@ -384,22 +384,17 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleCommMessage(self, message):
-        if message.getType() == "Set Power":
-            if message.isTest():
-                pass
-            else:
+        message.markAsComplete()
+        if (message.getType() == "Set Power"):
+            if not message.isTest():
                 self.remoteSetPower(message.getData("channel"),
                                     message.getData("power"))
-            message.markAsComplete()
             self.tcpMessage.emit(message)
-        elif message.getType() == "Increment Power":
-            if message.isTest():
-                pass
-            else:
+        elif (message.getType() == "Increment Power"):
+            if not message.isTest():
                 self.remoteIncPower(message.getData("channel"),
                                     message.getData("increment"))
-            message.markAsComplete()
-            self.tcpMessage.emit(message)       
+            self.tcpMessage.emit(message)
 
     ## handleOk
     #

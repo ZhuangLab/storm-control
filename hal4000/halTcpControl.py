@@ -32,10 +32,10 @@ class HalTCPControl(TCPServer, halModule.HalModule):
     #
     def __init__(self, hardware, parameters, parent):
         TCPServer.__init__(self,
-                           port=hardware.tcp_port,
-                           server_name="Hal",
-                           parent=parent,
-                           verbose=True)
+                           port = hardware.tcp_port,
+                           server_name = "Hal",
+                           parent = parent,
+                           verbose = True)
         halModule.HalModule.__init__(self)
 
     ## connectSignals
@@ -54,9 +54,9 @@ class HalTCPControl(TCPServer, halModule.HalModule):
     #
     @hdebug.debug
     def getSignals(self):
-        return [[self.hal_type, "commGotConnection", self.com_got_connection],
-                [self.hal_type, "commLostConnection", self.com_lost_connection],
-                [self.hal_type, "commMessage", self.message_ready]]
+        return [[self.hal_type, "commGotConnection", self.comGotConnection],
+                [self.hal_type, "commLostConnection", self.comLostConnection],
+                [self.hal_type, "commMessage", self.messageReceived]]
 
 #
 # The MIT License

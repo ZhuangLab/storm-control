@@ -42,8 +42,12 @@ class TCPClient(TCPCommunications):
                  server_name = "default",
                  address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
                  verbose = False):
-        TCPCommunications.__init__(self, parent=parent, port=port, server_name=server_name,
-                                   address=address, verbose=verbose)
+        TCPCommunications.__init__(self, 
+                                   parent = parent, 
+                                   port = port, 
+                                   server_name = server_name,
+                                   address = address, 
+                                   verbose = verbose)
         
         # Create instance of TCP socket
         self.socket = QtNetwork.QTcpSocket()
@@ -83,6 +87,7 @@ class TCPClient(TCPCommunications):
         if self.isConnected():
             self.socket.disconnectFromHost()
 
+
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
 # ----------------------------------------------------------------------------------------                                                                
@@ -93,7 +98,7 @@ class StandAlone(QtGui.QMainWindow):
         # Create client
         self.client = TCPClient(port = 9500, server_name = "Test", verbose = True)
 
-        self.client.message_ready.connect(self.handleMessageReady)            
+        self.client.messageReceived.connect(self.handleMessageReady)
         self.client.startCommunication()
 
         self.message_ID = 1

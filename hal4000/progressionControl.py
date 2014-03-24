@@ -527,13 +527,11 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleCommMessage(self, message):
-        if message.getType() == "Set Progression":
-            if message.isTest():
-                pass
-            else:
-                if message.getData("type") == "lockedout":
+        if (message.getType() == "Set Progression"):
+            if not message.isTest():
+                if (message.getData("type") == "lockedout"):
                     self.tcpHandleProgressionLockout()
-                elif message.getData("type") == "file":
+                elif (message.getData("type") == "file"):
                     self.tcpHandleProgressionType(message.getData("type"))
                     self.tcpHandleProgressionFile(message.getData("filename"))
                 else:
