@@ -113,7 +113,7 @@ class TCPCommunications(QtCore.QObject):
             if message.isTest():
                 message.markAsComplete()
             print message
-            self.messageReady.emit(message) # Return message with error
+            self.messageReceived.emit(message) # Return message with error
 
 #
 # The MIT License
