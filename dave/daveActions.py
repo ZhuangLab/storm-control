@@ -147,9 +147,9 @@ class DaveAction(QtCore.QObject):
         self.tcp_client.startCommunication()
         self.tcp_client.sendMessage(self.message)
 
-# ----------------------------------------------------------------------------------------
+# 
 # Specific Actions
-# ----------------------------------------------------------------------------------------
+# 
 
 ## DaveActionValveProtocol
 #
@@ -185,8 +185,21 @@ class FindSum(DaveAction):
     #
     def __init__(self, tcp_client, min_sum):
         DaveAction.__init__(self, tcp_client)
+        self.min_sum
         self.message = TCPMessage(message_type = "Find Sum",
                                   message_data = {"min_sum": min_sum})
+
+    ## handleReply
+    #
+    # Overload of default handleReply to allow comparison of min_sum
+    #
+    # @param message A TCP message object
+    #
+    def handleReply(self, message):
+        found_sum = message.getResponse("found_sum")
+        if found_sum <= self.min_sum:
+            message.setError(True, "Found sum " + str(found_sum) + " is smaller than minimum sum " + str(self.min_sum))
+        DaveAction.handleReply(message)
 
 ## MoveStage
 #

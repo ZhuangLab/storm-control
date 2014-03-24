@@ -209,7 +209,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleFoundOptimal(self, lock_sum):
-        self.tcp_message.setResponse("optimal_sum", lock_sum)
+        self.tcp_message.addResponse("optimal_sum", lock_sum)
         self.tcpComplete.emit(self.tcp_message)
 
     ## handleFoundSum
@@ -220,10 +220,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleFoundSum(self, lock_sum):
-        # JMFix: Check minimum sum in Dave (or as a method in the message?).
-        min_sum = self.tcp_message.getData("min_sum")
-        if lock_sum <= min_sum:
-            self.tcp_message.setError(True, "Found sum " + str(lock_sum) + " is smaller than minimum sum " + str(min_sum))
+        self.tcp_message.addResponse("found_sum", lock_sum)
         self.tcpComplete.emit(self.tcp_message)
 
     ## handleJumpPButton
