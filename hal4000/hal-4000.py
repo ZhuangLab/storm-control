@@ -513,11 +513,11 @@ class Window(QtGui.QMainWindow):
 
                 # Check directory.
                 if message.getData("directory") == None:
-                    directory = self.parameters.directory
+                    directory = self.directory[:-1]
                 else:
                     directory = message.getData("directory")
                 if not os.path.isdir(directory):
-                    message.setError(True, str(message.getData("directory")) + " is an invalid directory")
+                    message.setError(True, str(directory) + " is an invalid directory")
 
                 # Check file overwrite.
                 if not message.getData("overwrite"):
