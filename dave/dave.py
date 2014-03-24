@@ -117,10 +117,10 @@ class CommandEngine(QtGui.QWidget):
         if command_type == "movie":
             if hasattr(command, "stage_x") and hasattr(command, "stage_y"):
                 self.actions.append(daveActions.MoveStage(self.HALClient, command))
-            if command.find_sum > 0.0:
-                self.actions.append(daveActions.FindSum(self.HALClient, command.find_sum))
             if hasattr(command, "lock_target"):
                 self.actions.append(daveActions.SetFocusLockTarget(self.HALClient, command.lock_target))
+            if command.find_sum > 0.0:
+                self.actions.append(daveActions.FindSum(self.HALClient, command.find_sum))
             if command.recenter:
                 self.actions.append(daveActions.RecenterPiezo(self.HALClient))
             if hasattr(command,"progression"):
