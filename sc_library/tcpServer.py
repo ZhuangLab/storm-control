@@ -91,7 +91,7 @@ class TCPServer(QtNetwork.QTcpServer, TCPCommunications):
             self.socket = socket
             self.socket.readyRead.connect(self.handleReadyRead)
             self.socket.disconnected.connect(self.handleClientDisconnect)
-            self.com_got_connection.emit()
+            self.comGotConnection.emit()
             if self.verbose: print "Connected new client"
         else: # Refuse new socket if one already exists
             message = TCPMessage(message_type = "Busy")
