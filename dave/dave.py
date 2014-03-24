@@ -188,7 +188,7 @@ class CommandEngine(QtGui.QWidget):
             if space is not None: self.command_disk_usage += space
 
         # Configure the command engine to pause after completion of the command sequence
-        if self.current_action.shouldPause():
+        if self.current_action.shouldPause() and not self.test_mode:
             self.should_pause = True
         
         if len(self.actions) > 0:
