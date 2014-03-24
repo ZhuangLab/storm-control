@@ -113,7 +113,7 @@ class Window(QtGui.QMainWindow):
         self.directory = False
         self.filename = ""
         self.filming = False
-        self.logfile_fp = open(parameters.logfile, "a")
+        #self.logfile_fp = open(parameters.logfile, "a")
         self.modules = []
         self.old_shutters_file = ""
         self.parameters = parameters
@@ -126,8 +126,8 @@ class Window(QtGui.QMainWindow):
         self.xml_directory = ""
 
         # Logfile setup
-        self.logfile_fp.write("\r\n")
-        self.logfile_fp.flush()
+        #self.logfile_fp.write("\r\n")
+        #self.logfile_fp.flush()
 
         
         setup_name = parameters.setup_name.lower()
@@ -349,7 +349,7 @@ class Window(QtGui.QMainWindow):
             module.saveGUISettings(self.settings)
 
         # Close the film notes log file.
-        self.logfile_fp.close()
+        #self.logfile_fp.close()
 
         # stop the camera
         self.camera.close()
@@ -495,7 +495,7 @@ class Window(QtGui.QMainWindow):
                 if self.parameters_box.isValidParameters(message.getData("parameters")):
                     self.tcp_message = message
                     self.parameters_box.setCurrentParameters(message.getData("parameters"))
-                    # Return the message after parameters have been set in newParameters
+                    self.toggleSettings() # Kludge to handle the situation in which the current parameters are highlighted
                 else:
                     message.setError(True, str(message.getData("parameters")) + " is an invalid parameters option")
                     self.tcpComplete.emit(message)
@@ -911,8 +911,8 @@ class Window(QtGui.QMainWindow):
             self.writer.closeFile()
 
             self.updateNotes() # Get any changes to the notes made during filming.
-            self.logfile_fp.write(str(datetime.datetime.now()) + "," + self.film_name + "," + str(self.parameters.notes) + "\r\n")
-            self.logfile_fp.flush()
+            #self.logfile_fp.write(str(datetime.datetime.now()) + "," + self.film_name + "," + str(self.parameters.notes) + "\r\n")
+            #self.logfile_fp.flush()
 
             if self.ui.autoIncCheckBox.isChecked() and (not self.tcp_requested_movie):
                 self.ui.indexSpinBox.setValue(self.ui.indexSpinBox.value() + 1)
@@ -1103,7 +1103,7 @@ if __name__ == "__main__":
     params.setSetupName(parameters, setup_name)
 
     # Start logger.
-    hdebug.startLogging(parameters.directory + "logs/", "hal4000")
+    #hdebug.startLogging(parameters.directory + "logs/", "hal4000")
 
     # Load app.
     window = Window(hardware, parameters)
