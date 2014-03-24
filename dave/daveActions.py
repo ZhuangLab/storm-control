@@ -33,33 +33,24 @@ class DaveAction(QtCore.QObject):
         # Initialize parent class
         QtCore.QObject.__init__(self, parent)
 
-        # Connect com port
         self.tcp_client = tcp_client
         self.message = TCPMessage()
 
-        # Initialize error message
-        self.error_message = ""
-        self.should_pause_after_error = True
+        # Define pause behaviors
+        self.should_pause = False # Pause after completion
+        self.should_pause_after_error = True # Pause after error
 
         # Initialize internal timer
-        self.delay_timer = QtCore.QTimer(self)
-        self.delay_timer.setSingleShot(True)
-        self.delay_timer.timeout.connect(self.handleTimerDone)
-        self.delay = 100 # Default delay
-
-        # Define complete requirements
-        self.complete_on_timer = False # Complete self.delay ms after acknowledgement of command received
-                                       # Otherwise complete upon receipt of response message
-            
-        # Define pause after completion state
-        self.should_pause = False
+        self.lost_message_timer = QtCore.QTimer(self)
+        self.lost_message_timer.setSingleShot(True)
+        self.lost_message_timer.timeout.connect(self.handleTimerDone)
+        self.delay = 500 # Wait 500 ms for a test message to be returned before issuing an error
 
     ## abort
     #
     # Handle an external abort call
     #
     def abort(self):
-        self.message.markAsComplete()
         self.completeAction(self.message)
 
     ## cleanUp
@@ -78,7 +69,7 @@ class DaveAction(QtCore.QObject):
     def completeAction(self, message):
         self.tcp_client.stopCommunication()
         self.complete_signal.emit(message)
-
+    
     ## completeActionWithError
     #
     # Send an error message if needed
@@ -91,13 +82,6 @@ class DaveAction(QtCore.QObject):
         self.tcp_client.stopCommunication()
         self.error_signal.emit(message)
 
-    ## getError
-    #
-    # @return The error message if there a problem occured during this action.
-    #
-    def getError(self):
-        return self.error_message
-
     ## handleReply
     #
     # handle the return of a message
@@ -105,9 +89,11 @@ class DaveAction(QtCore.QObject):
     # @param message A TCP message object
     #
     def handleReply(self, message):
+        # Stop lost message timer
+        self.lost_message_timer.stop()
         # Check to see if the same message got returned
         if not (message.getID() == self.message.getID()):
-            message.setError(True,"Communication Error: Incorrect Message Returned")
+            message.setError(True, "Communication Error: Incorrect Message Returned")
             self.completeActionWithError(message)
         elif message.hasError():
             self.completeActionWithError(message)
@@ -119,9 +105,10 @@ class DaveAction(QtCore.QObject):
     # Handle a timer done signal
     #
     def handleTimerDone(self):
-        if self.complete_on_timer:
-            self.message.markAsComplete()
-            self.completeAction(self.message)
+        error_str = "A message of type " + self.message.getType() + " was never received.\n"
+        error_str += "Perhaps a module is missing?"
+        self.message.setError(True, error_str)
+        self.completeActionWithError(self.message)
 
     ## setTest
     #
@@ -145,6 +132,8 @@ class DaveAction(QtCore.QObject):
     def start(self):
         self.tcp_client.messageReceived.connect(self.handleReply)
         self.tcp_client.startCommunication()
+        if self.message.isTest():
+            self.lost_message_timer.start(self.delay)
         self.tcp_client.sendMessage(self.message)
 
 # 
