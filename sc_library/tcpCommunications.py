@@ -110,8 +110,6 @@ class TCPCommunications(QtCore.QObject):
         else:
             print self.server_name + " socket not connected. \nDid not send:" 
             message.setError(True, "Communication Error: " + self.server_name + " socket not connected")
-            if message.isTest():
-                message.markAsComplete()
             print message
             self.messageReceived.emit(message) # Return message with error
 
