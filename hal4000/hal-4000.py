@@ -117,6 +117,7 @@ class Window(QtGui.QMainWindow):
         self.modules = []
         self.old_shutters_file = ""
         self.parameters = parameters
+        self.parameters_test_mode = None # Used for recalling previous parameters in test mode
         self.settings = QtCore.QSettings("Zhuang Lab", "hal-4000_" + parameters.setup_name.lower())
         self.tcp_message = None
         self.tcp_requested_movie = False
@@ -489,6 +490,8 @@ class Window(QtGui.QMainWindow):
             if message.isTest():
                 if not self.parameters_box.isValidParameters(message.getData("parameters")):
                     message.setError(True, str(message.getData("parameters")) + " is an invalid parameters option")
+                else: # save parameters to keep track parameter trajectory for accurate time and disk estimates 
+                    self.parameters_test_mode = self.parameters_box.getParameters(message.getData("parameters"))
                 self.tcpComplete.emit(message)
             else:
                 # Set parameters, double check before filming.
@@ -528,7 +531,10 @@ class Window(QtGui.QMainWindow):
                 # Get disk usage and duration.
                 if not message.hasError():
                     if message.getData("parameters") == None:
-                        parameters = self.parameters
+                        if self.parameters_test_mode == None:
+                            parameters = self.parameters
+                        else:
+                            parameters = self.parameters_test_mode
                     else:
                         if self.parameters_box.isValidParameters(message.getData("parameters")):
                             parameters = self.parameters_box.getParameters(message.getData("parameters"))
