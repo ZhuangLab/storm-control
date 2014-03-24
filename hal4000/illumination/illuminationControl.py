@@ -384,7 +384,6 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleCommMessage(self, message):
-        message.markAsComplete()
         if (message.getType() == "Set Power"):
             if not message.isTest():
                 self.remoteSetPower(message.getData("channel"),

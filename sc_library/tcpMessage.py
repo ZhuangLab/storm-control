@@ -28,7 +28,7 @@ class TCPMessage(object):
                  message_type = "Default",
                  message_data = {},
                  test_mode = False):
-        self.complete = False
+        #self.complete = False
         self.error = False
         self.error_message = None
         self.message_data = message_data
@@ -121,8 +121,8 @@ class TCPMessage(object):
     #
     # @return A boolean which indicates whether the message was delivered and executed.
     #  
-    def isComplete(self):
-        return self.complete
+    #def isComplete(self):
+    #    return self.complete
 
     ## isTest
     #
@@ -158,8 +158,8 @@ class TCPMessage(object):
     #
     # Mark a message as complete. A message can be completed while still generating an error. 
     #
-    def markAsComplete(self):
-        self.complete = True
+    #def markAsComplete(self):
+    #    self.complete = True
 
     ## __str__
     #

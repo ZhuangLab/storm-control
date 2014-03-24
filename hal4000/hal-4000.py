@@ -526,7 +526,6 @@ class Window(QtGui.QMainWindow):
                     mega_bytes_per_frame = parameters.bytesPerFrame * 1.0/2**20 # Convert to megabytes.
                     message.addResponse("disk_usage", mega_bytes_per_frame * num_frames)
 
-                message.markAsComplete() # The message is complete even if there is an error.
                 self.tcpComplete.emit(message)
 
             else:
@@ -949,7 +948,6 @@ class Window(QtGui.QMainWindow):
                 length = self.writer.getFilmLength()
                 message.addResponse("length", length)
                 
-                message.markAsComplete()
                 self.tcp_requested_movie = False
                 self.tcp_message = None
                 self.tcpComplete.emit(message)

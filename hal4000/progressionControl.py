@@ -541,7 +541,6 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
                                                      channel[1],
                                                      channel[2],
                                                      channel[3])
-            message.markAsComplete()
             self.tcpComplete.emit(message)
         
     ## handleOk

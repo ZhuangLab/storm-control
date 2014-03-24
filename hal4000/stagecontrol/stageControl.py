@@ -320,7 +320,6 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
                     message.setError(True, "Invalid positions")
             else:
                 self.moveAbsolute(x_pos, y_pos)
-            message.markAsComplete()
             self.tcpComplete.emit(message) 
 
     ## handleDragMove
