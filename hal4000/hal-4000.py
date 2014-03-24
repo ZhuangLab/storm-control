@@ -484,59 +484,62 @@ class Window(QtGui.QMainWindow):
             if self.filming:
                 self.stopFilm()
 
+        # Handle set parameters request.
+        elif (message.getType() == "Set Parameters"):
+            if message.isTest():
+                if not self.parameters_box.isValidParameters(message.getData("parameters")):
+                    message.setError(True, str(message.getData("parameters")) + " is an invalid parameters option")
+                self.tcpComplete.emit(message)
+            else:
+                # Set parameters, double check before filming.
+                if self.parameters_box.isValidParameters(message.getData("parameters")):
+                    self.tcp_message = message
+                    self.parameters_box.setCurrentParameters(message.getData("parameters"))
+                    # Return the message after parameters have been set in newParameters
+                else:
+                    message.setError(True, str(message.getData("parameters")) + " is an invalid parameters option")
+                    self.tcpComplete.emit(message)
+        
         # Handle movie request.
-        #
-        # JMFix: Add "Set parameters" message.
-        #
         elif (message.getType() == "Take Movie"):
             if self.filming:
                 message.setError(True, "Hal is currently running")
                 self.tcpComplete.emit(message)
                 return
             if message.isTest():
-
-                # Check parameters.
-                if not self.parameters_box.isValidParameters(message.getData("parameters")):
-                    message.setError(True, str(message.getData("parameters")) + " is an invalid parameters option")
-
                 # Check length.
                 if (message.getData("length") == None) or (message.getData("length") < 1):
                     message.setError(True, str(message.getData("length")) + "is an invalid movie length")
 
                 # Check directory.
-                if not message.getData("directory") == None:
-                    if not os.path.isdir(message.getData("directory")):
-                        message.setError(True, str(message.getData("directory")) + " is an invalid directory")
+                if message.getData("directory") == None:
+                    directory = self.parameters.directory
+                else:
+                    directory = message.getData("directory")
+                if not os.path.isdir(directory):
+                    message.setError(True, str(message.getData("directory")) + " is an invalid directory")
 
                 # Check file overwrite.
                 if not message.getData("overwrite"):
-                    if not message.getData("directory") == None:
-                        directory = message.getData("directory")
-                    else:
-                        directory = self.parameters.directory
                     file_path = directory + message.getData("name") + self.parameters.filetype
                     if os.path.exists(file_path):
                         message.setError(True, file_path + " will be overwritten")
 
                 # Get disk usage and duration.
                 if not message.hasError():
+                    if message.getData("parameters") == None:
+                        parameters = self.parameters
+                    else:
+                        parameters = self.parameters_box.getParameters(message.getData("parameters"))
                     num_frames = message.getData("length")
-                    parameters = self.parameters_box.getParameters(message.getData("parameters"))
                     message.addResponse("duration", num_frames * parameters.kinetic_value)
                     mega_bytes_per_frame = parameters.bytesPerFrame * 1.0/2**20 # Convert to megabytes.
                     message.addResponse("disk_usage", mega_bytes_per_frame * num_frames)
 
+                # Return message
                 self.tcpComplete.emit(message)
 
-            else:
-                # Set parameters, double check before filming.
-                if self.parameters_box.isValidParameters(message.getData("parameters")):
-                    self.parameters_box.setCurrentParameters(message.getData("parameters"))
-                else:
-                    message.setError(True, str(message.getData("parameters")) + " is an invalid parameters option")
-                    self.tcpComplete.emit(message)
-                    return # Exit before starting movie.
-
+            else: # Take movie.
                 # Change directory if requested.
                 new_directory = message.getData("directory")
                 if not new_directory == None:
@@ -694,6 +697,11 @@ class Window(QtGui.QMainWindow):
 
         # Start the camera
         #self.startCamera()
+
+        # Return a Set Parameters TCP message if appropriate
+        if not (self.tcp_message == None):
+            self.tcpComplete.emit(self.tcp_message)
+            self.tcp_message = None        
 
     ## newSettings
     #

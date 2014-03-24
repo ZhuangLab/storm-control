@@ -247,6 +247,21 @@ class SetFocusLockTarget(DaveAction):
         self.message = TCPMessage(message_type = "Set Lock Target",
                                   message_data = {"lock_target": lock_target})
 
+## Set Parameters
+#
+# The action responsible for setting the movie parameters in Hal.
+#
+class SetParameters(DaveAction):
+    ## __init__
+    #
+    # @param tcp_client A tcp communications object.    
+    # @param command A XML command object for a movie.
+    #
+    def __init__(self, tcp_client, command):
+        DaveAction.__init__(self, tcp_client)
+        self.message = TCPMessage(message_type = "Set Parameters",
+                                  message_data = {"parameters": command.parameters})
+
 ## SetProgression
 #
 # The action responsible for setting the illumination progression.
@@ -288,7 +303,7 @@ class TakeMovie(DaveAction):
         if hasattr(command, "parameters"):
             message_data["parameters"] = command.parameters
         else:
-            message_data["parameters"] = 0
+            message_data["parameters"] = None
         if hasattr(command, "directory"):
             message_data["directory"] = command.directory
         if hasattr(command, "overwrite"):
