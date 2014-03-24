@@ -1,15 +1,16 @@
 #!/usr/bin/python
-# ----------------------------------------------------------------------------------------
+# 
 # A TCP communication class that acts as the server side for generic communications
 # between programs in the storm-control project
-# ----------------------------------------------------------------------------------------
+# 
 # Jeff Moffitt
 # 3/8/14
 # jeffmoffitt@gmail.com
-# ----------------------------------------------------------------------------------------
-# ----------------------------------------------------------------------------------------
+#
+
+# 
 # Import
-# ----------------------------------------------------------------------------------------
+# 
 import sys
 import pickle
 from PyQt4 import QtCore, QtGui, QtNetwork
@@ -111,9 +112,9 @@ class TCPServer(QtNetwork.QTcpServer, TCPCommunications):
         if self.verbose: print "Client disconnected"
 
 
-# ----------------------------------------------------------------------------------------
+# 
 # Stand Alone Test Class
-# ----------------------------------------------------------------------------------------                                                                
+#                                                               
 class StandAlone(QtGui.QMainWindow):
     def __init__(self, parent = None):
         super(StandAlone, self).__init__(parent)
@@ -126,21 +127,21 @@ class StandAlone(QtGui.QMainWindow):
         self.server.comLostConnection.connect(self.handleLostConnection)
         self.server.messageReady.connect(self.handleMessageReady)            
 
-    # ----------------------------------------------------------------------------------------
+    # 
     # Handle New Connection
-    # ----------------------------------------------------------------------------------------
+    # 
     def handleNewConnection(self):
         print "Established connection"
 
-    # ----------------------------------------------------------------------------------------
+    # 
     # Handle Lost Connection
-    # ----------------------------------------------------------------------------------------
+    # 
     def handleLostConnection(self):
         print "Lost connection"
 
-    # ----------------------------------------------------------------------------------------
+    # 
     # Handle New Message
-    # ----------------------------------------------------------------------------------------
+    # 
     def handleMessageReady(self, message):
         # Parse Based on Message Type
         if message.getType() == "Stage Position":
@@ -153,16 +154,16 @@ class StandAlone(QtGui.QMainWindow):
             message.markAsComplete()
             self.server.sendMessage(message)
             
-    # ----------------------------------------------------------------------------------------
+    # 
     # Handle close event
-    # ----------------------------------------------------------------------------------------
+    # 
     def closeEvent(self, event):
         self.server.close()
         self.close()
             
-# ----------------------------------------------------------------------------------------
+# 
 # Test/Demo of Class
-# ----------------------------------------------------------------------------------------                        
+#                        
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     window = StandAlone()

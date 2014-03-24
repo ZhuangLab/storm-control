@@ -3,11 +3,11 @@
 ## @file 
 #
 # Handles remote control (via TCP/IP of the data collection program) 
-# ----------------------------------------------------------------------------------------
+# 
 # Jeffrey Moffitt
 # 3/8/14
 # jeffmoffitt@gmail.com
-# ----------------------------------------------------------------------------------------
+# 
 
 ## TCPMessage
 #
@@ -174,9 +174,9 @@ class TCPMessage(object):
                 string_rep += "\n\t" + attribute + ": " + str(getattr(self, attribute))
         return string_rep
 
-# ----------------------------------------------------------------------------------------
+# 
 # Test of Class
-# ----------------------------------------------------------------------------------------                        
+#                         
 if __name__ == "__main__":
     message = TCPMessage(message_type="findSum",
                          message_data={"find_sum":200},

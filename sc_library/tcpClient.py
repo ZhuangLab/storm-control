@@ -5,11 +5,9 @@
 # A TCP communication class that acts as the client side for generic communications
 # between programs in the storm-control project
 #
-# ----------------------------------------------------------------------------------------
 # Jeffrey Moffitt
 # 3/8/14
 # jeffmoffitt@gmail.com
-# ----------------------------------------------------------------------------------------
 
 # 
 # Import
@@ -88,9 +86,9 @@ class TCPClient(TCPCommunications):
             self.socket.disconnectFromHost()
 
 
-# ----------------------------------------------------------------------------------------
+# 
 # Stand Alone Test Class
-# ----------------------------------------------------------------------------------------                                                                
+#                                                               
 class StandAlone(QtGui.QMainWindow):
     def __init__(self, parent = None):
         super(StandAlone, self).__init__(parent)
@@ -104,9 +102,9 @@ class StandAlone(QtGui.QMainWindow):
         self.message_ID = 1
         self.sendTestMessage()
         
-    # ----------------------------------------------------------------------------------------
+    # 
     # Send Test Messages
-    # ----------------------------------------------------------------------------------------
+    # 
     def sendTestMessage(self):
         if self.message_ID == 1:
             # Create Test message
@@ -123,9 +121,9 @@ class StandAlone(QtGui.QMainWindow):
         self.sent_message = message
         self.client.sendMessage(message)
         
-    # ----------------------------------------------------------------------------------------
+    # 
     # Handle New Message
-    # ----------------------------------------------------------------------------------------
+    # 
     def handleMessageReady(self, message):
         # Handle responses to messages
         if self.sent_message.getID() == message.getID():
@@ -137,16 +135,16 @@ class StandAlone(QtGui.QMainWindow):
 
         self.sendTestMessage()
         
-    # ----------------------------------------------------------------------------------------
+    # 
     # Handle close event
-    # ----------------------------------------------------------------------------------------
+    # 
     def closeEvent(self, event):
         self.client.close()
         self.close()
        
-# ----------------------------------------------------------------------------------------
+# 
 # Test/Demo of Class
-# ----------------------------------------------------------------------------------------                        
+#                         
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     window = StandAlone()

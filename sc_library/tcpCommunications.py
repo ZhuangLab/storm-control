@@ -4,11 +4,9 @@
 #
 # A TCP communications class that provides the basic methods for relaying TCP messages.
 #
-# ----------------------------------------------------------------------------------------
 # Jeffrey Moffitt
 # 3/16/14
 # jeffmoffitt@gmail.com
-# ----------------------------------------------------------------------------------------
 
 # 
 # Import
