@@ -79,7 +79,7 @@ class Kilroy(QtGui.QMainWindow):
                                    server_name = "Kilroy",
                                    verbose = self.verbose)
         
-        self.tcpServer.message_ready.connect(self.handleTCPData)
+        self.tcpServer.messageReceived.connect(self.handleTCPData)
 
         # Create GUI
         self.createGUI()
