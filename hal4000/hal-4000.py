@@ -530,7 +530,11 @@ class Window(QtGui.QMainWindow):
                     if message.getData("parameters") == None:
                         parameters = self.parameters
                     else:
-                        parameters = self.parameters_box.getParameters(message.getData("parameters"))
+                        if self.parameters_box.isValidParameters(message.getData("parameters")):
+                            parameters = self.parameters_box.getParameters(message.getData("parameters"))
+                        else:
+                            parameters = self.parameters # Parameters are incorrect, but
+                                                         # the error has already been recorded above
                     num_frames = message.getData("length")
                     message.addResponse("duration", num_frames * parameters.kinetic_value)
                     mega_bytes_per_frame = parameters.bytesPerFrame * 1.0/2**20 # Convert to megabytes.
