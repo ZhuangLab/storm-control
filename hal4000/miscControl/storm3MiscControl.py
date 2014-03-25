@@ -9,7 +9,7 @@
 #
 
 import glob
-import Image
+from PIL import Image
 import numpy
 import os
 import sys
