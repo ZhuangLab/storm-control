@@ -86,10 +86,16 @@ class TCPClient(TCPCommunications):
             self.socket.disconnectFromHost()
 
 
+## StandAlone
 # 
 # Stand Alone Test Class
 #                                                               
 class StandAlone(QtGui.QMainWindow):
+
+    ## __init__
+    #
+    # @param parent (optional) The PyQt parent of this object.
+    #
     def __init__(self, parent = None):
         super(StandAlone, self).__init__(parent)
 
@@ -101,7 +107,8 @@ class StandAlone(QtGui.QMainWindow):
 
         self.message_ID = 1
         self.sendTestMessage()
-        
+
+    ## sendTestMessage
     # 
     # Send Test Messages
     # 
@@ -121,8 +128,11 @@ class StandAlone(QtGui.QMainWindow):
         self.sent_message = message
         self.client.sendMessage(message)
         
+    ## handleMessageReady
     # 
-    # Handle New Message
+    # Handle New Message.
+    #
+    # @param message A TCPMessage object.
     # 
     def handleMessageReady(self, message):
         # Handle responses to messages
@@ -134,9 +144,12 @@ class StandAlone(QtGui.QMainWindow):
             print "Received an unexpected message"
 
         self.sendTestMessage()
-        
+
+    ## closeEvent
     # 
-    # Handle close event
+    # Handle close event.
+    #
+    # @param event A PyQt QEvent object.
     # 
     def closeEvent(self, event):
         self.client.close()

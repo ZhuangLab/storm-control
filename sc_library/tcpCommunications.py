@@ -8,9 +8,6 @@
 # 3/16/14
 # jeffmoffitt@gmail.com
 
-# 
-# Import
-# 
 import pickle
 from PyQt4 import QtCore, QtNetwork
 from sc_library.tcpMessage import TCPMessage
@@ -99,7 +96,7 @@ class TCPCommunications(QtCore.QObject):
     #
     # Pickle and send a TCP message if the socket is connected
     #
-    # @param message A TCP message object.
+    # @param message A TCPMessage object.
     #
     def sendMessage(self, message):
         if self.isConnected():

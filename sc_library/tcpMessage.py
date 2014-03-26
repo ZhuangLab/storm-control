@@ -64,10 +64,11 @@ class TCPMessage(object):
     # Access elements of the message data by name
     #
     # @param key_name A string specifying the name/type of the data to be accessed from the message data.
+    #
     # @return The value of the requested entry.
     #
-    def getData(self, key_value):
-        return self.message_data.get(key_value, None)
+    def getData(self, key_name):
+        return self.message_data.get(key_name, None)
 
     ## getErrorMessage
     #
@@ -94,8 +95,8 @@ class TCPMessage(object):
     # @param key_name A string specifying the name/type of the data to be accessed from the response data.
     # @return The value of the requested entry.
     #
-    def getResponse(self, key_value):
-        return self.response.get(key_value, None)
+    def getResponse(self, key_name):
+        return self.response.get(key_name, None)
 
     ## getType
     #

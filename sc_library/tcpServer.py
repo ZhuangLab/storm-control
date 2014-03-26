@@ -8,9 +8,6 @@
 # jeffmoffitt@gmail.com
 #
 
-# 
-# Import
-# 
 import sys
 import pickle
 from PyQt4 import QtCore, QtGui, QtNetwork
@@ -112,10 +109,16 @@ class TCPServer(QtNetwork.QTcpServer, TCPCommunications):
         if self.verbose: print "Client disconnected"
 
 
+## StandAlone
 # 
 # Stand Alone Test Class
 #                                                               
 class StandAlone(QtGui.QMainWindow):
+
+    ## __init__
+    #
+    # @param parent (optional) The PyQt parent of this object, defaults to none.
+    #
     def __init__(self, parent = None):
         super(StandAlone, self).__init__(parent)
 
@@ -127,20 +130,25 @@ class StandAlone(QtGui.QMainWindow):
         self.server.comLostConnection.connect(self.handleLostConnection)
         self.server.messageReady.connect(self.handleMessageReady)            
 
+    ## handleNewConnection
     # 
-    # Handle New Connection
+    # Handle New Connection.
     # 
     def handleNewConnection(self):
         print "Established connection"
 
+    ## handleLostConnection
     # 
-    # Handle Lost Connection
+    # Handle Lost Connection.
     # 
     def handleLostConnection(self):
         print "Lost connection"
 
+    ## handleMessageReady
     # 
-    # Handle New Message
+    # Handle New Message.
+    #
+    # @param message A TCPMessage object.
     # 
     def handleMessageReady(self, message):
         # Parse Based on Message Type
@@ -153,9 +161,12 @@ class StandAlone(QtGui.QMainWindow):
             print "Movie: ", "Name: ", message.getData("Name"), "Parameters: ", message.getData("Parameters")
             message.markAsComplete()
             self.server.sendMessage(message)
-            
+
+    ## closeEvent
     # 
-    # Handle close event
+    # Handle close event.
+    #
+    # @param event A PyQt QEvent object.
     # 
     def closeEvent(self, event):
         self.server.close()
