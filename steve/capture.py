@@ -20,11 +20,25 @@ import sc_library.hdebug as hdebug
 
 # Communication with the acquisition software
 import sc_library.tcpClient as tcpClient
+import sc_library.tcpMessage as tcpMessage
 
 # Reading DAX files
 import sc_library.daxspereader as daxspereader
 
 import coord
+
+## StageMessage
+#
+# Creates stage messages for communication via TCPClient.
+#
+# @param stagex The stage x coordinate.
+# @param stagey The stage y coordinate.
+#
+def stageMessage(stagex, stagey):  
+    return tcpMessage.TCPMessage(message_type = "Move Stage",
+                                 message_data = {"stage_x":stagex,
+                                                 "stage_y":stagey})
+
 
 ## Image
 #
@@ -61,31 +75,6 @@ class Image():
     def __repr__(self):
         return hdebug.objectToString(self, "capture.Image", ["height", "width", "x_um", "y_um"])
 
-## Movie
-#
-# Movie class for use w/ tcpClient
-#
-class Movie():
-
-    ## __init__
-    #
-    # @param name The name of the movie (specified in the xml file).
-    # @param stagex The x position at which to take the movie.
-    # @param stagey The y position at which to take the movie.
-    #
-    def __init__(self, name, stagex, stagey):
-        self.stage_x = float(stagex)
-        self.stage_y = float(stagey)
-
-        self.name = name
-        self.length = 1
-        self.progressions = []
-
-    ## __repr__
-    #
-    def __repr__(self):
-        return hdebug.objectToString(self, "capture.Movie", ["stage_x", "stage_y"])
-
 ## Capture
 #
 # Handles capturing images from HAL. Instructions to HAL about how
@@ -109,6 +98,7 @@ class Capture(QtCore.QObject):
     @hdebug.debug
     def __init__(self, parameters):
         QtCore.QObject.__init__(self)
+        self.busy = True
         self.curr_x = 0.0
         self.curr_y = 0.0
         self.dax = None
@@ -118,17 +108,11 @@ class Capture(QtCore.QObject):
         self.flip_horizontal = parameters.flip_horizontal
         self.flip_vertical = parameters.flip_vertical
         self.movies_remaining = 0
-        self.stage_speed = parameters.stage_speed
         self.transpose = parameters.transpose
 
-        self.start_timer = QtCore.QTimer(self)
-        self.start_timer.setSingleShot(True)
-        self.start_timer.timeout.connect(self.handleStartTimer)
-
         self.tcp_client = tcpClient.TCPClient()
-        self.tcp_client.acknowledged.connect(self.handleAcknowledged)
-        self.tcp_client.complete.connect(self.captureDone)
-        self.tcp_client.disconnect.connect(self.handleDisconnect)
+        self.tcp_client.comLostConnection.connect(self.handleDisconnect)
+        self.tcp_client.messageReceived.connect(self.handleMessageReceived)
         self.connected = False
 
     ## captureDone
@@ -140,7 +124,7 @@ class Capture(QtCore.QObject):
     # @param a_string Not used.
     #
     @hdebug.debug
-    def captureDone(self, a_string):
+    def captureDone(self):
         print "captureDone"
 
         # determine filename
@@ -162,31 +146,22 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def captureStart(self, stagex, stagey):
-        print "captureStart:", stagex, stagey
-        if not self.tcp_client.isConnected():
-            self.commConnect(True)
-
-        if self.tcp_client.isConnected():
-            # set up for capture
-            self.movie = Movie(self.filename, stagex, stagey)
-            self.tcp_client.sendMovieParameters(self.movie)
-
-            # determine how long to wait, depending on stage speed.
-            dist_x = stagex - self.curr_x
-            dist_y = stagey - self.curr_y
-            dist = math.sqrt(dist_x*dist_x + dist_y*dist_y)
-            sleep_time = 0.001 * (dist/self.stage_speed) + 1.0
-            self.start_timer.setInterval(1000.0 * sleep_time)
-            self.start_timer.start()
-            
-            # record current position
-            self.curr_x = stagex
-            self.curr_y = stagey
-
-            return True
+        if self.busy:
+            print "captureStart: busy"
         else:
-            print "captureStage: not connected"
-            return False
+            print "captureStart:", stagex, stagey
+            if not self.tcp_client.isConnected():
+                self.commConnect(True)
+
+            if self.tcp_client.isConnected():
+                message = stageMessage(stagex, stagey)
+                message.addData("captureStart", True)
+                self.tcp_client.sendMessage(message)
+                self.busy = True
+                return True
+            else:
+                print "captureStart: not connected"
+                return False
 
     ## commConnect
     #
@@ -198,7 +173,9 @@ class Capture(QtCore.QObject):
     def commConnect(self, set_directory = False):
         self.tcp_client.startCommunication()
         if self.tcp_client.isConnected() and set_directory:
-            self.tcp_client.sendSetDirectory(self.directory[:-1])
+            message = tcpMessage.TCPMessage(message_type = "Set Directory",
+                                            message_data = {"directory" : self.directory})
+            self.tcp_client.sendMessage(message)
 
     ## commDisconnect
     #
@@ -206,6 +183,7 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def commDisconnect(self):
+        self.busy = False
         self.tcp_client.stopCommunication()
 
     ## gotoPosition
@@ -217,48 +195,49 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def gotoPosition(self, stagex, stagey):
-        print "gotoPosition:", stagex, stagey
-
-        if not self.tcp_client.isConnected():
-            self.commConnect()
-
-        if self.tcp_client.isConnected():
-            self.movie = Movie(self.filename, stagex, stagey)
-            self.tcp_client.sendMovieParameters(self.movie)
-            self.goto = True
+        if self.busy:
+            print "gotoPosition: busy"
+        
         else:
-            print "gotoPosition: not connected"
+            print "gotoPosition:", stagex, stagey
 
-    ## handleAcknowledged
-    #
-    # Handles the acknowledged signal. If this was a simple stage
-    # move then we disconnect from HAL.
-    #
-    @hdebug.debug
-    def handleAcknowledged(self):
-        if self.goto:
-            self.commDisconnect()
-            self.goto = False
+            if not self.tcp_client.isConnected():
+                self.commConnect()
+
+            if self.tcp_client.isConnected():
+                self.busy = True
+                self.tcp_client.sendMessage(stageMessage(stagex, stagey))
+            else:
+                print "gotoPosition: not connected"
 
     ## handleDisconnect
     #
-    # This does nothing.
+    # Called when HAL disconnects.
     #
     @hdebug.debug
     def handleDisconnect(self):
-        pass
+        self.busy = False
 
-    ## handleStartTimer
+    ## handleMessageReceived
     #
-    # Called when the movie timer fires to take the image.
+    # Handles the messageReceived signal from the TCPClient.
+    #
+    # @param message A TCPMessage object.
     #
     @hdebug.debug
-    def handleStartTimer(self):
-        if self.tcp_client.isConnected():
-            self.tcp_client.startMovie(self.movie)
+    def handleMessageReceived(self, message):
+        if not (message.getData("captureStart") == None):
+            new_message = tcpMessage.TCPMessage(message_type = "Take Movie",
+                                                message_data = {"name" : self.filename,
+                                                                "length" : 1,
+                                                                "movie" : True})
+            self.tcp_client.sendMessage(new_message)
+        elif not (message.getData("directory") == None):
+            pass
+        elif not (message.getData("movie") == None):
+            self.captureDone()
         else:
-            print "handleStartTimer: not connected"
-            self.disconnected.emit()
+            self.busy = False
 
     ## loadImage
     #
@@ -268,6 +247,7 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def loadImage(self, filename):
+        self.busy = False
         success = False
 
         # Deals with a file system race condition?
