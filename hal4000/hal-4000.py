@@ -111,13 +111,14 @@ class Window(QtGui.QMainWindow):
         self.current_directory = False
         self.current_length = 0
         self.directory = False
+        self.directory_test_mode = False
         self.filename = ""
         self.filming = False
-        #self.logfile_fp = open(parameters.logfile, "a")
+        self.logfile_fp = open(parameters.logfile, "a")
         self.modules = []
         self.old_shutters_file = ""
         self.parameters = parameters
-        self.parameters_test_mode = None # Used for recalling previous parameters in test mode
+        self.parameters_test_mode = False
         self.settings = QtCore.QSettings("Zhuang Lab", "hal-4000_" + parameters.setup_name.lower())
         self.tcp_message = None
         self.tcp_requested_movie = False
@@ -127,8 +128,8 @@ class Window(QtGui.QMainWindow):
         self.xml_directory = ""
 
         # Logfile setup
-        #self.logfile_fp.write("\r\n")
-        #self.logfile_fp.flush()
+        self.logfile_fp.write("\r\n")
+        self.logfile_fp.flush()
 
         
         setup_name = parameters.setup_name.lower()
@@ -350,7 +351,7 @@ class Window(QtGui.QMainWindow):
             module.saveGUISettings(self.settings)
 
         # Close the film notes log file.
-        #self.logfile_fp.close()
+        self.logfile_fp.close()
 
         # stop the camera
         self.camera.close()
@@ -478,93 +479,118 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleCommMessage(self, message):
 
-        # Handle abort request from Dave.
+        # Handle abort request.
         if (message.getType() == "Abort Movie"):
+            # JMFix: This would seem to have the potential to hang
+            #   if the abort button is pressed and self.filming is false.
+            #   It can also abort non TCP requested movies.
             if self.tcp_message:
                 self.tcp_message.addResponse("aborted", True)
             if self.filming:
                 self.stopFilm()
 
+        # Handle set directory request:
+        elif (message.getType() == "Set Directory"):
+
+            if message.isTest():
+                # Check that the directory exists.
+                self.directory_test_mode = message.getData("directory")
+                if not os.path.isdir(self.directory_test_mode):
+                    message.setError(True, str(self.directory_test_mode) + " is an invalid directory")
+
+            else:
+                # Change directory if requested.
+                new_directory = message.getData("directory")
+                if not os.path.isdir(new_directory):
+                    message.setError(True, str(new_directory) + " is an invalid directory")
+                else:
+                    if not self.current_directory:
+                        self.current_directory = self.directory[:-1]
+                    self.newDirectory(new_directory)
+
+            self.tcpComplete.emit(message)
+
         # Handle set parameters request.
         elif (message.getType() == "Set Parameters"):
+            param_index = message.getData("parameters")
             if message.isTest():
-                if not self.parameters_box.isValidParameters(message.getData("parameters")):
-                    message.setError(True, str(message.getData("parameters")) + " is an invalid parameters option")
-                else: # save parameters to keep track parameter trajectory for accurate time and disk estimates 
-                    self.parameters_test_mode = self.parameters_box.getParameters(message.getData("parameters"))
-                self.tcpComplete.emit(message)
+                if not self.parameters_box.isValidParameters(param_index):
+                    message.setError(True, str(param_index) + " is an invalid parameters option")
+                    self.tcpComplete.emit(message)
+
+                # Save parameters to keep track of parameter trajectory for accurate time and disk estimates.
+                else:
+                    self.parameters_test_mode = self.parameters_box.getParameters(param_index)
+                    if not self.parameters_test_mode.initialized:
+                        self.parameters_box.setCurrentParameters(param_index)
+                    else:
+                        self.tcpComplete.emit(message)
+
             else:
                 # Set parameters, double check before filming.
-                if self.parameters_box.isValidParameters(message.getData("parameters")):
+                if self.parameters_box.isValidParameters(param_index):
                     self.tcp_message = message
-                    self.parameters_box.setCurrentParameters(message.getData("parameters"))
-                    self.toggleSettings() # Kludge to handle the situation in which the current parameters are highlighted
+                    if self.parameters_box.setCurrentParameters(param_index)
+                        self.tcpComplete.emit(message)
                 else:
-                    message.setError(True, str(message.getData("parameters")) + " is an invalid parameters option")
+                    message.setError(True, str(param_index) + " is an invalid parameters option")
                     self.tcpComplete.emit(message)
         
         # Handle movie request.
         elif (message.getType() == "Take Movie"):
+
             if self.filming:
                 message.setError(True, "Hal is currently running")
                 self.tcpComplete.emit(message)
                 return
+
             if message.isTest():
                 # Check length.
                 if (message.getData("length") == None) or (message.getData("length") < 1):
                     message.setError(True, str(message.getData("length")) + "is an invalid movie length")
-
-                # Check directory.
-                if message.getData("directory") == None:
-                    directory = self.directory[:-1]
-                else:
-                    directory = message.getData("directory")
-                if not os.path.isdir(directory):
-                    message.setError(True, str(directory) + " is an invalid directory")
+                    self.tcpComplete.emit(message)
+                    return
 
                 # Check file overwrite.
                 if not message.getData("overwrite"):
-                    file_path = directory + message.getData("name") + self.parameters.filetype
+                    file_path = self.directory_test_mode + message.getData("name") + self.parameters.filetype
                     if os.path.exists(file_path):
                         message.setError(True, file_path + " will be overwritten")
+                        self.tcpComplete.emit(message)
+                        return
+
+                # I took this out as I think it is unnecessary.
+                #if message.getData("parameters") == None:
+                #    if self.parameters_test_mode:
+                #        parameters = self.parameters_test_mode
+                #    else:
+                #        parameters = self.parameters
+                #else:
+                #    if self.parameters_box.isValidParameters(message.getData("parameters")):
+                #        parameters = self.parameters_box.getParameters(message.getData("parameters"))
+                #    else:
+                #        parameters = self.parameters # Parameters are incorrect, but
+                #    # the error has already been recorded above
 
                 # Get disk usage and duration.
-                if not message.hasError():
-                    if message.getData("parameters") == None:
-                        if self.parameters_test_mode == None:
-                            parameters = self.parameters
-                        else:
-                            parameters = self.parameters_test_mode
-                    else:
-                        if self.parameters_box.isValidParameters(message.getData("parameters")):
-                            parameters = self.parameters_box.getParameters(message.getData("parameters"))
-                        else:
-                            parameters = self.parameters # Parameters are incorrect, but
-                                                         # the error has already been recorded above
-                    num_frames = message.getData("length")
-                    message.addResponse("duration", num_frames * parameters.kinetic_value)
-                    mega_bytes_per_frame = parameters.bytesPerFrame * 1.0/2**20 # Convert to megabytes.
-                    message.addResponse("disk_usage", mega_bytes_per_frame * num_frames)
-
-                # Return message
+                num_frames = message.getData("length")
+                message.addResponse("duration", num_frames * self.parameters_test_mode.kinetic_value)
+                mega_bytes_per_frame = self.parameters_test_mode.bytesPerFrame * 1.0/2**20 # Convert to megabytes.
+                message.addResponse("disk_usage", mega_bytes_per_frame * num_frames)
                 self.tcpComplete.emit(message)
 
             else: # Take movie.
-                # Change directory if requested.
-                new_directory = message.getData("directory")
-                if not new_directory == None:
-                    if not self.current_directory:
-                        self.current_directory = self.directory[:-1]
-                    self.newDirectory(new_directory)
-                
+
                 # Set filename.
                 self.ui.filenameLabel.setText(message.getData("name") + self.parameters.filetype)
                 
-                # Start the film.
+                # Record current length and set film length spin box to requested length.
                 self.current_length = self.parameters.frames
+                self.ui.lengthSpinBox.setValue(message.getData("length"))
+
+                # Start the film.
                 self.tcp_requested_movie = True
                 self.tcp_message = message
-                self.ui.lengthSpinBox.setValue(message.getData("length"))
                 self.startFilm(filmSettings.FilmSettings("fixed_length", message.getData("length")))
 
     ## handleCommStart
@@ -573,9 +599,8 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleCommStart(self):
-        pass
-        #print "commStart"
-        #self.ui.recordButton.setEnabled(False)
+        self.directory_test_mode = self.directory[:-1]
+        self.parameters_test_mode = False
 
     ## handleCommStop
     #
@@ -583,8 +608,6 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleCommStop(self):
-        #print "commStop"
-        #self.ui.recordButton.setEnabled(True)
         if self.current_directory:
             self.newDirectory(self.current_directory)
             self.current_directory = False
@@ -661,9 +684,12 @@ class Window(QtGui.QMainWindow):
         # Camera
         #
         # Note that the camera also modifies the parameters file, adding
-        # some information about the frame rate, etc..
+        # some information about the frame rate, etc.. To record that this
+        # as happened we set the initialized attribute of the parameters
+        # to true.
         #
         self.camera.newParameters(p)
+        p.initialized = True
 
         # The working directory is set by the initial parameters. Subsequent
         # parameters files don't change the directory
@@ -921,8 +947,8 @@ class Window(QtGui.QMainWindow):
             self.writer.closeFile()
 
             self.updateNotes() # Get any changes to the notes made during filming.
-            #self.logfile_fp.write(str(datetime.datetime.now()) + "," + self.film_name + "," + str(self.parameters.notes) + "\r\n")
-            #self.logfile_fp.flush()
+            self.logfile_fp.write(str(datetime.datetime.now()) + "," + self.film_name + "," + str(self.parameters.notes) + "\r\n")
+            self.logfile_fp.flush()
 
             if self.ui.autoIncCheckBox.isChecked() and (not self.tcp_requested_movie):
                 self.ui.indexSpinBox.setValue(self.ui.indexSpinBox.value() + 1)
@@ -1113,7 +1139,7 @@ if __name__ == "__main__":
     params.setSetupName(parameters, setup_name)
 
     # Start logger.
-    #hdebug.startLogging(parameters.directory + "logs/", "hal4000")
+    hdebug.startLogging(parameters.directory + "logs/", "hal4000")
 
     # Load app.
     window = Window(hardware, parameters)

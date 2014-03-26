@@ -84,7 +84,6 @@ class QParametersBox(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
         self.current_parameters = None
         self.current_button = False
-        self.button_names = []
         self.radio_buttons = []
         
         self.layout = QtGui.QVBoxLayout(self)
@@ -105,13 +104,18 @@ class QParametersBox(QtGui.QWidget):
         self.current_parameters = parameters
         radio_button = ParametersRadioButton(parameters)
         self.radio_buttons.append(radio_button)
-        self.button_names.append(radio_button.text())
         self.layout.insertWidget(0, radio_button)
         radio_button.clicked.connect(self.toggleParameters)
         radio_button.deleteSelected.connect(self.handleDeleteSelected)
-        #if (len(self.radio_buttons) == 1):
-        radio_button.click() # Activate each new parameters as loaded to populate
-                             # camera-specific fields
+        if (len(self.radio_buttons) == 1):
+            radio_button.click()
+
+    ## getButtonNames
+    #
+    # @return A list containing the names of each of the buttons.
+    #
+    def getButtonNames(self):
+        return map(lambda(x): x.text(), self.radio_buttons)
 
     ## getCurrentParameters
     #
@@ -120,6 +124,21 @@ class QParametersBox(QtGui.QWidget):
     def getCurrentParameters(self):
         return self.current_parameters
 
+    ## getIndexOfParameters
+    #
+    # @param param_index An integer or a string specifying the identifier of the parameters.
+    # 
+    # @return The index of the requested parameters.
+    #
+    def getIndexOfParameters(self, param_index):
+        button_names = self.getButtonNames()
+        if param_index in button_names:
+            return button_names.index(param_index)
+        elif param_index in range(len(button_names)):
+            return param_index
+        else:
+            return -1
+
     ## getParameters
     #
     # Returns the requested parameters if the request is valid.
@@ -127,11 +146,9 @@ class QParametersBox(QtGui.QWidget):
     # @param param_index An integer or a string specifying the identify of the parameters
     #
     def getParameters(self, param_index):
-        if param_index in self.button_names:
-            button_ID = self.button_names.index(param_index)
-            return self.radio_buttons[button_ID].getParameters()
-        elif param_index in range(len(self.radio_buttons)):
-            return self.radio_buttons[param_index].getParameters()
+        index = self.getIndexOfParameters(param_index)
+        if (index != -1):
+            return self.radio_buttons[index].getParameters()
         else:
             return None
 
@@ -144,7 +161,6 @@ class QParametersBox(QtGui.QWidget):
             if button.delete_desired:
                 self.layout.removeWidget(button)
                 self.radio_buttons.remove(button)
-                self.button_names.pop(button_ID)
                 button.close()
 
     ## isValidParameters
@@ -154,7 +170,8 @@ class QParametersBox(QtGui.QWidget):
     # @param index An integer or a string specifying the identify of the parameters
     #
     def isValidParameters(self, param_index):
-        if (param_index in self.button_names) or (param_index in range(len(self.radio_buttons))):
+        # Warn if there are multiple parameters with the same name?
+        if (self.getIndexOfParameters(param_index) != -1):
             return True
         else:
             return False
@@ -165,14 +182,19 @@ class QParametersBox(QtGui.QWidget):
     #
     # @param param_index The name or index of the requested parameters
     #
+    # @return True/False is the selected parameters are the current parameters.
+    #
     def setCurrentParameters(self, param_index):
-        if param_index in self.button_names:
-            button_ID = self.button_names.index(param_index)
-            self.radio_buttons[button_ID].click()
-        elif param_index in range(len(self.radio_buttons)):
-            self.radio_buttons[param_index].click()
-        else:
+        index = self.getIndexOfParameters(param_index)
+        if (index != -1):
+            if (self.radio_buttons[index] == self.current_button):
+                return True
+            else:
+                self.radio_buttons[index].click()
+                return False
+        else
             print "Requested parameter index not available", param_index
+            return False
 
     ## startFilm
     #
