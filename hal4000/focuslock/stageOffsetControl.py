@@ -184,7 +184,7 @@ class StageQPDThread(QtCore.QThread):
     #
     @hdebug.debug
     def findSumSignal(self):
-        if (self.sum < (2.0 * self.sum_min)):
+        if (self.sum < self.sum_min):
             self.qpd_mutex.lock()
             self.find_sum = True
             self.max_sum = 0
@@ -268,10 +268,10 @@ class StageQPDThread(QtCore.QThread):
                 if (power > self.max_sum):
                     self.max_sum = power
                     self.max_pos = self.stage_z
-                if (power > (2.0 * self.sum_min)) and (power < (0.5 * self.max_sum)):
+                if (self.max_sum > self.sum_min) and (power < (0.5 * self.max_sum):
                     self.moveStageAbs(self.max_pos)
                     self.find_sum = False
-                    self.foundSum.emit(power)
+                    self.foundSum.emit(self.max_sum)
                 else:
                     if (self.stage_z >= (2 * self.z_center)):
                         if (self.max_sum > 0):
@@ -279,7 +279,7 @@ class StageQPDThread(QtCore.QThread):
                         else:
                             self.moveStageAbs(self.z_center)
                         self.find_sum = False
-                        self.foundSum.emit(power)
+                        self.foundSum.emit(self.max_sum)
                     else:
                         self.moveStageRel(1.0)
 
