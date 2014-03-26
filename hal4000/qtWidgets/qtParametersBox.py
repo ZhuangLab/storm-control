@@ -194,7 +194,7 @@ class QParametersBox(QtGui.QWidget):
                 return False
         else:
             print "Requested parameter index not available", param_index
-            return False
+            return True
 
     ## startFilm
     #
