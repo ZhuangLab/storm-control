@@ -63,7 +63,7 @@ class MiscControl(QtGui.QDialog, halModule.HalModule):
     # @param boolean Dummy parameter.
     #
     @hdebug.debug
-    def handleOk(self, bool):
+    def handleOk(self, boolean):
         self.hide()
 
     ## handleQuit

@@ -167,7 +167,7 @@ class QParametersBox(QtGui.QWidget):
     #
     # Returns true if the requested parameters exist.
     #
-    # @param index An integer or a string specifying the identify of the parameters
+    # @param param_index An integer or a string specifying the identify of the parameters
     #
     def isValidParameters(self, param_index):
         # Warn if there are multiple parameters with the same name?
@@ -192,7 +192,7 @@ class QParametersBox(QtGui.QWidget):
             else:
                 self.radio_buttons[index].click()
                 return False
-        else
+        else:
             print "Requested parameter index not available", param_index
             return False
 

@@ -34,6 +34,7 @@ class ShutterControl(QtCore.QObject):
     # and returns what voltage corresponds to this power.
     #
     # @param powerToVoltage The function to use to convert (abstract) power to (real) voltage.
+    # @param parent The PyQt parent of this object.
     #
     @hdebug.debug
     def __init__(self, powerToVoltage, parent):

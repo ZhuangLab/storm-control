@@ -118,8 +118,6 @@ class QVWheel(QAbstractWheel):
 
     ## __init__
     #
-    # @param current_pos The starting position of the wheel.
-    # @param wheel_range [min, max, single step, multiple step].
     # @param parent (Optional) The PyQt parent of this widget.
     #
     def __init__(self, parent = None):

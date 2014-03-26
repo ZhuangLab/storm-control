@@ -191,7 +191,7 @@ class SingleCamera(genericCamera.Camera):
     # camera display object to update the UI accordingly.
     #
     # @param writer This is a image writing object (halLib/imagewriters).
-    # @param film_setting A film setting object.
+    # @param film_settings A film settings object.
     #
     @hdebug.debug
     def startFilm(self, writer, film_settings):

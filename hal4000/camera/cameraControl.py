@@ -245,7 +245,7 @@ class CameraControl(QtCore.QThread):
     # requested to take the film but not to save it.
     #
     # @param daxfile This is a image writing object (halLib/imagewriters).
-    # @param film_setting A film setting object.
+    # @param film_settings A film settings object.
     #
     @hdebug.debug
     def startFilm(self, daxfile, film_settings):

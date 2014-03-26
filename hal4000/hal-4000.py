@@ -530,7 +530,7 @@ class Window(QtGui.QMainWindow):
                 # Set parameters, double check before filming.
                 if self.parameters_box.isValidParameters(param_index):
                     self.tcp_message = message
-                    if self.parameters_box.setCurrentParameters(param_index)
+                    if self.parameters_box.setCurrentParameters(param_index):
                         self.tcpComplete.emit(message)
                 else:
                     message.setError(True, str(param_index) + " is an invalid parameters option")
