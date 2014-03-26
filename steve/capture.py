@@ -98,7 +98,7 @@ class Capture(QtCore.QObject):
     @hdebug.debug
     def __init__(self, parameters):
         QtCore.QObject.__init__(self)
-        self.busy = True
+        self.busy = False
         self.curr_x = 0.0
         self.curr_y = 0.0
         self.dax = None
@@ -110,7 +110,9 @@ class Capture(QtCore.QObject):
         self.movies_remaining = 0
         self.transpose = parameters.transpose
 
-        self.tcp_client = tcpClient.TCPClient()
+        self.tcp_client = tcpClient.TCPClient(parent = self,
+                                              port = 9000,
+                                              server_name = "hal")
         self.tcp_client.comLostConnection.connect(self.handleDisconnect)
         self.tcp_client.messageReceived.connect(self.handleMessageReceived)
         self.connected = False
