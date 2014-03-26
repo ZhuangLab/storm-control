@@ -25,9 +25,11 @@ class TCPMessage(object):
     # @param test_mode A boolean specifying whether the command is a test command
     #
     def __init__(self,
-                 message_type = "Default",
+                 message_type = False,
                  message_data = {},
                  test_mode = False):
+
+        assert message_type, "Message type must be defined!"
         #self.complete = False
         self.error = False
         self.error_message = None
