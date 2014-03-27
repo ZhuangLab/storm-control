@@ -8,7 +8,7 @@
 # Jeff 3/14 
 #
 
-from sc_library.tcpMessage import TCPMessage
+import sc_library.tcpMessage as tcpMessage
 from PyQt4 import QtCore
 
 ## DaveAction
@@ -34,7 +34,7 @@ class DaveAction(QtCore.QObject):
         QtCore.QObject.__init__(self, parent)
 
         self.tcp_client = tcp_client
-        self.message = TCPMessage()
+        self.message = None
 
         # Define pause behaviors
         self.should_pause = False # Pause after completion
@@ -44,7 +44,7 @@ class DaveAction(QtCore.QObject):
         self.lost_message_timer = QtCore.QTimer(self)
         self.lost_message_timer.setSingleShot(True)
         self.lost_message_timer.timeout.connect(self.handleTimerDone)
-        self.delay = 500 # Wait 500 ms for a test message to be returned before issuing an error
+        self.delay = 1000 # Wait 1000 ms for a test message to be returned before issuing an error
 
     ## abort
     #
@@ -158,8 +158,8 @@ class DaveActionValveProtocol(DaveAction):
         self.protocol_name = protocol_xml.protocol_name
         self.protocol_is_running = False
 
-        self.message = TCPMessage(message_type = "Kilroy Protocol",
-                                  message_data = {"name": self.protocol_name})
+        self.message = tcpMessage.TCPMessage(message_type = "Kilroy Protocol",
+                                             message_data = {"name": self.protocol_name})
 
 ## FindSum
 #
@@ -175,8 +175,8 @@ class FindSum(DaveAction):
     def __init__(self, tcp_client, min_sum):
         DaveAction.__init__(self, tcp_client)
         self.min_sum
-        self.message = TCPMessage(message_type = "Find Sum",
-                                  message_data = {"min_sum": min_sum})
+        self.message = tcpMessage.TCPMessage(message_type = "Find Sum",
+                                             message_data = {"min_sum": min_sum})
 
     ## handleReply
     #
@@ -203,9 +203,9 @@ class MoveStage(DaveAction):
     #
     def __init__(self, tcp_client, command):
         DaveAction.__init__(self, tcp_client)
-        self.message = TCPMessage(message_type = "Move Stage",
-                                  message_data = {"stage_x":command.stage_x,
-                                                  "stage_y":command.stage_y})
+        self.message = tcpMessage.TCPMessage(message_type = "Move Stage",
+                                             message_data = {"stage_x":command.stage_x,
+                                                             "stage_y":command.stage_y})
 ## RecenterPiezo
 #
 # The piezo recentering action. Note that this is only useful if the microscope
@@ -218,7 +218,7 @@ class RecenterPiezo(DaveAction):
     #
     def __init__(self, tcp_client):
         DaveAction.__init__(self, tcp_client)
-        self.message = TCPMessage(message_type = "Recenter Piezo")
+        self.message = tcpMessage.TCPMessage(message_type = "Recenter Piezo")
 
 ## Set Focus Lock Target
 #
@@ -233,8 +233,8 @@ class SetFocusLockTarget(DaveAction):
     #
     def __init__(self, tcp_client, lock_target):
         DaveAction.__init__(self, tcp_client)
-        self.message = TCPMessage(message_type = "Set Lock Target",
-                                  message_data = {"lock_target": lock_target})
+        self.message = tcpMessage.TCPMessage(message_type = "Set Lock Target",
+                                             message_data = {"lock_target": lock_target})
 
 ## Set Parameters
 #
@@ -248,8 +248,8 @@ class SetParameters(DaveAction):
     #
     def __init__(self, tcp_client, command):
         DaveAction.__init__(self, tcp_client)
-        self.message = TCPMessage(message_type = "Set Parameters",
-                                  message_data = {"parameters": command.parameters})
+        self.message = tcpMessage.TCPMessage(message_type = "Set Parameters",
+                                             message_data = {"parameters": command.parameters})
 
 ## SetProgression
 #
@@ -263,15 +263,14 @@ class SetProgression(DaveAction):
     #
     def __init__(self, tcp_client, progression):
         DaveAction.__init__(self, tcp_client)
-        #message_data = progression.__dict__  ### TEST THIS SIMPLE CODE
         message_data = {"type":progression.type}
         if hasattr(progression, "filename"):
             message_data["filename"] = progression.filename
         if progression.channels:
             message_data["channels"] = progression.channels
         
-        self.message = TCPMessage(message_type = "Set Progression",
-                                  message_data = message_data)
+        self.message = tcpMessage.TCPMessage(message_type = "Set Progression",
+                                             message_data = message_data)
 
 ## TakeMovie
 #
@@ -297,8 +296,9 @@ class TakeMovie(DaveAction):
             message_data["directory"] = command.directory
         if hasattr(command, "overwrite"):
             message_data["overwrite"] = command.overwrite
-        self.message = TCPMessage(message_type = "Take Movie",
-                                  message_data = message_data)
+
+        self.message = tcpMessage.TCPMessage(message_type = "Take Movie",
+                                             message_data = message_data)
 
     ## abort
     #
