@@ -186,9 +186,9 @@ class FindSum(DaveAction):
     #
     def handleReply(self, message):
         found_sum = message.getResponse("found_sum")
-        if found_sum <= self.min_sum:
+        if not (found_sum == None) and (found_sum <= self.min_sum):
             message.setError(True, "Found sum " + str(found_sum) + " is smaller than minimum sum " + str(self.min_sum))
-        DaveAction.handleReply(message)
+        DaveAction.handleReply(self, message)
 
 ## MoveStage
 #
@@ -317,11 +317,11 @@ class TakeMovie(DaveAction):
     #
     def handleReply(self, message):
         found_spots = message.getResponse("found_spots")
-        if found_spots <= self.min_spots:
+        if not (found_spots == None) and (found_spots < self.min_spots):
             err_str = str(found_spots) + " found molecules is less than the target: "
-            err_str += str(min_spots)
+            err_str += str(self.min_spots)
             message.setError(True, err_str)
-        DaveAction.handleReply(message)                
+        DaveAction.handleReply(self,message)                
 
 #
 # The MIT License
