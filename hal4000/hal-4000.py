@@ -522,6 +522,7 @@ class Window(QtGui.QMainWindow):
                 else:
                     self.parameters_test_mode = self.parameters_box.getParameters(param_index)
                     if not self.parameters_test_mode.initialized:
+                        self.tcp_message = message # store message so that it can be returned
                         self.parameters_box.setCurrentParameters(param_index)
                     else:
                         self.tcpComplete.emit(message)
@@ -539,7 +540,10 @@ class Window(QtGui.QMainWindow):
         # Handle movie request.
         elif (message.getType() == "Take Movie"):
 
-            if self.filming:
+            # HB: Question:
+            # Perhaps Hal should not respond to any TCP messages while it is filming?
+            # Move to top of this method?
+            if self.filming: 
                 message.setError(True, "Hal is currently running")
                 self.tcpComplete.emit(message)
                 return
@@ -559,23 +563,23 @@ class Window(QtGui.QMainWindow):
                         self.tcpComplete.emit(message)
                         return
 
-                # I took this out as I think it is unnecessary.
-                #if message.getData("parameters") == None:
-                #    if self.parameters_test_mode:
-                #        parameters = self.parameters_test_mode
-                #    else:
-                #        parameters = self.parameters
-                #else:
-                #    if self.parameters_box.isValidParameters(message.getData("parameters")):
-                #        parameters = self.parameters_box.getParameters(message.getData("parameters"))
-                #    else:
-                #        parameters = self.parameters # Parameters are incorrect, but
-                #    # the error has already been recorded above
+                # Handle movie without specified parameters
+                if message.getData("parameters") == None:
+                    if self.parameters_test_mode:
+                        parameters = self.parameters_test_mode
+                    else:
+                        parameters = self.parameters
+                else:
+                    if self.parameters_box.isValidParameters(message.getData("parameters")):
+                        parameters = self.parameters_box.getParameters(message.getData("parameters"))
+                    else:
+                        parameters = self.parameters # Parameters are incorrect, but
+                                                     # the error has already been recorded above
 
                 # Get disk usage and duration.
                 num_frames = message.getData("length")
-                message.addResponse("duration", num_frames * self.parameters_test_mode.kinetic_value)
-                mega_bytes_per_frame = self.parameters_test_mode.bytesPerFrame * 1.0/2**20 # Convert to megabytes.
+                message.addResponse("duration", num_frames * parameters.kinetic_value)
+                mega_bytes_per_frame = parameters.bytesPerFrame * 1.0/2**20 # Convert to megabytes.
                 message.addResponse("disk_usage", mega_bytes_per_frame * num_frames)
                 self.tcpComplete.emit(message)
 
