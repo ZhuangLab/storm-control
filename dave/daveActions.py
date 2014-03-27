@@ -44,7 +44,7 @@ class DaveAction(QtCore.QObject):
         self.lost_message_timer = QtCore.QTimer(self)
         self.lost_message_timer.setSingleShot(True)
         self.lost_message_timer.timeout.connect(self.handleTimerDone)
-        self.delay = 1000 # Wait 1000 ms for a test message to be returned before issuing an error
+        self.delay = 2000 # Wait for a test message to be returned before issuing an error
 
     ## abort
     #
