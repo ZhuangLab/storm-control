@@ -240,7 +240,7 @@ class Capture(QtCore.QObject):
     @hdebug.debug
     def handleMessageReceived(self, message):
         # FIXME: Need to check for errors from HAL.
-        if (message.getType == "Take Movie"):
+        if (message.getType() == "Take Movie"):
             self.loadImage(self.directory + message.getData("name") + ".dax")
         if (len(self.messages) > 0):
             self.tcp_client.sendMessage(self.messages.pop(0))
