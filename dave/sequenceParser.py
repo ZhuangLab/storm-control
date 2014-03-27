@@ -171,7 +171,11 @@ class Movie(AbstractCommand):
     # Return a string that describes the command
     #
     def getDescriptor(self):
-        return self.name + " ({0:.1f}, {1:.1f})".format(self.stage_x, self.stage_y)
+        print hasattr(self, "stage_x")
+        if hasattr(self, "stage_x") and hasattr(self, "stage_y"):
+            return self.name + " ({0:.1f}, {1:.1f})".format(self.stage_x, self.stage_y)
+        else:
+            return self.name + " (Curr. Pos.)"
 
     ## getDetails
     #
