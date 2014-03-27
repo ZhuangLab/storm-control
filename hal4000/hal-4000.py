@@ -538,7 +538,7 @@ class Window(QtGui.QMainWindow):
         # Handle movie request.
         elif (message.getType() == "Take Movie"):
 
-            # HB: Question:
+            # HBQuestion:
             # Perhaps Hal should not respond to any TCP messages while it is filming?
             # Move to top of this method?
             if self.filming: 
@@ -602,7 +602,8 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleCommStart(self):
         self.directory_test_mode = self.directory[:-1]
-        self.parameters_test_mode = False
+        #self.parameters_test_mode = False
+        # HBQuestion: Doesn't this erase the saved parameters since comm starts/stops with each command?
 
     ## handleCommStop
     #
