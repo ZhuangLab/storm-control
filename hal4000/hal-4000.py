@@ -984,13 +984,6 @@ class Window(QtGui.QMainWindow):
                 found_spots = self.writer.getSpotCounts()
                 message.addResponse("found_spots", found_spots)
 
-                # JMFix: Error checking in Dave.
-                min_spots = message.getData("min_spots")
-                if found_spots < min_spots and min_spots > 0.0:
-                    err_str = str(found_spots) + " found molecules is less than the target: "
-                    err_str += str(min_spots)
-                    message.setError(True, err_str)
-
                 length = self.writer.getFilmLength()
                 message.addResponse("length", length)
                 

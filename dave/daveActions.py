@@ -297,6 +297,7 @@ class TakeMovie(DaveAction):
         if hasattr(command, "overwrite"):
             message_data["overwrite"] = command.overwrite
 
+        self.min_spots = command.min_spots
         self.message = tcpMessage.TCPMessage(message_type = "Take Movie",
                                              message_data = message_data)
 
@@ -307,6 +308,20 @@ class TakeMovie(DaveAction):
     def abort(self):
         stop_message = TCPMessage(message_type = "Abort Movie")
         self.tcp_client.sendMessage(stop_message)
+
+    ## handleReply
+    #
+    # Overload of default handleReply to allow comparison of min_spots
+    #
+    # @param message A TCP message object
+    #
+    def handleReply(self, message):
+        found_spots = message.getResponse("found_spots")
+        if found_spots <= self.min_spots:
+            err_str = str(found_spots) + " found molecules is less than the target: "
+            err_str += str(min_spots)
+            message.setError(True, err_str)
+        DaveAction.handleReply(message)                
 
 #
 # The MIT License
