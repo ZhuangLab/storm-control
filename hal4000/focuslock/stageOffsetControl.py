@@ -268,7 +268,7 @@ class StageQPDThread(QtCore.QThread):
                 if (power > self.max_sum):
                     self.max_sum = power
                     self.max_pos = self.stage_z
-                if (self.max_sum > self.sum_min) and (power < (0.5 * self.max_sum):
+                if (self.max_sum > self.sum_min) and (power < (0.5 * self.max_sum)):
                     self.moveStageAbs(self.max_pos)
                     self.find_sum = False
                     self.foundSum.emit(self.max_sum)
