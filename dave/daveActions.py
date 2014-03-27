@@ -174,7 +174,7 @@ class FindSum(DaveAction):
     #
     def __init__(self, tcp_client, min_sum):
         DaveAction.__init__(self, tcp_client)
-        self.min_sum
+        self.min_sum = min_sum
         self.message = tcpMessage.TCPMessage(message_type = "Find Sum",
                                              message_data = {"min_sum": min_sum})
 
