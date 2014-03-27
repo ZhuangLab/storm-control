@@ -481,11 +481,9 @@ class Window(QtGui.QMainWindow):
 
         # Handle abort request.
         if (message.getType() == "Abort Movie"):
-            # JMFix: This would seem to have the potential to hang
-            #   if the abort button is pressed and self.filming is false.
-            #   It can also abort non TCP requested movies.
             if self.tcp_message:
-                self.tcp_message.addResponse("aborted", True)
+                if self.tcp_message.getType() == "Take Movie":
+                    self.tcp_message.addResponse("aborted", True)
             if self.filming:
                 self.stopFilm()
 
