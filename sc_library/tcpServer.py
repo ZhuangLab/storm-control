@@ -12,14 +12,14 @@ import sys
 import pickle
 from PyQt4 import QtCore, QtGui, QtNetwork
 from sc_library.tcpMessage import TCPMessage
-from sc_library.tcpCommunications import TCPCommunications
+import sc_library.tcpCommunications as tcpCommunications
 
 ## TCPServer
 #
 # A TCP server for passing TCP messages between programs
 #
-class TCPServer(QtNetwork.QTcpServer, TCPCommunications):
-    messageReceived = TCPCommunications.messageReceived
+class TCPServer(QtNetwork.QTcpServer, tcpCommunications.TCPCommunications):
+    messageReceived = tcpCommunications.TCPCommunications.messageReceived
     comGotConnection = QtCore.pyqtSignal()
     comLostConnection = QtCore.pyqtSignal()
     
@@ -40,8 +40,12 @@ class TCPServer(QtNetwork.QTcpServer, TCPCommunications):
                  parent = None,
                  verbose = False):
         QtNetwork.QTcpServer.__init__(self, parent)
-        TCPCommunications.__init__(self, parent=parent, port=port, server_name=server_name,
-                                   address=address, verbose=verbose)
+        tcpCommunications.TCPCommunications.__init__(self,
+                                                     parent=parent,
+                                                     port=port,
+                                                     server_name=server_name,
+                                                     address=address,
+                                                     verbose=verbose)
 
         # Connect new connection signal
         self.newConnection.connect(self.handleClientConnection)
@@ -91,7 +95,7 @@ class TCPServer(QtNetwork.QTcpServer, TCPCommunications):
             self.comGotConnection.emit()
             if self.verbose: print "Connected new client"
         else: # Refuse new socket if one already exists
-            message = TCPMessage(message_type = "Busy")
+            message = TCPMessage(message_type = "Busy") # from tcpMessage.TCPMessage
             if self.verbose: print "Sent: \n" + str(message)
             socket.write(pickle.dumps(message) + "\n")
             socket.disconnectFromHost()
@@ -107,7 +111,6 @@ class TCPServer(QtNetwork.QTcpServer, TCPCommunications):
         self.socket = None
         self.comLostConnection.emit()
         if self.verbose: print "Client disconnected"
-
 
 ## StandAlone
 # 
@@ -154,12 +157,10 @@ class StandAlone(QtGui.QMainWindow):
         # Parse Based on Message Type
         if message.getType() == "Stage Position":
             print "Stage X: ", message.getData("Stage_X"), "Stage Y: ", message.getData("Stage_Y")
-            message.markAsComplete()
             self.server.sendMessage(message)
             
         elif message.getType() == "Movie":
             print "Movie: ", "Name: ", message.getData("Name"), "Parameters: ", message.getData("Parameters")
-            message.markAsComplete()
             self.server.sendMessage(message)
 
     ## closeEvent

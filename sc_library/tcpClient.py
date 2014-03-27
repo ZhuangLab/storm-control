@@ -16,14 +16,13 @@ import sys
 import time
 from PyQt4 import QtCore, QtGui, QtNetwork
 from sc_library.tcpMessage import TCPMessage
-#import sc_library.tcpMessage as tcpMessage
-from sc_library.tcpCommunications import TCPCommunications
+import sc_library.tcpCommunications as tcpCommunications
 
 ## TCPClient
 #
 # A TCP client class used to transfer TCP messages from one program to another
 #
-class TCPClient(TCPCommunications):
+class TCPClient(tcpCommunications.TCPCommunications):
     comLostConnection = QtCore.pyqtSignal()
 
     ## __init__
@@ -42,12 +41,12 @@ class TCPClient(TCPCommunications):
                  server_name = "default",
                  address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
                  verbose = False):
-        TCPCommunications.__init__(self, 
-                                   parent = parent, 
-                                   port = port, 
-                                   server_name = server_name,
-                                   address = address, 
-                                   verbose = verbose)
+        tcpCommunications.TCPCommunications.__init__(self,
+                                                     parent = parent,
+                                                     port = port,
+                                                     server_name = server_name,
+                                                     address = address,
+                                                     verbose = verbose)
         
         # Create instance of TCP socket
         self.socket = QtNetwork.QTcpSocket()
