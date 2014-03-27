@@ -23,7 +23,7 @@ import stagecontrol.stageControl as stageControl
 #
 
 #prior_stage = prior.Prior(port = "COM2")
-prior_stage = prior.Prior(port = "COM9", baudrate = 115200, wait_time = 1.0e-3)
+prior_stage = prior.Prior(port = "COM6", baudrate = 115200, wait_time = 1.0e-3)
 prior_mutex = QtCore.QMutex()
 
 #
