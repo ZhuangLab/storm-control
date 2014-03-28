@@ -27,12 +27,40 @@ import sc_library.daxspereader as daxspereader
 
 import coord
 
+
+## DirectoryMessage
+#
+# Creates a change directory message.
+#
+# @param directory The directory to change to.
+#
+# @return A TCPMessage object.
+#
+def directoryMessage(directory):
+    return tcpMessage.TCPMessage(message_type = "Set Directory",
+                                 message_data = {"directory" : directory})
+
+## MovieMessage
+#
+# Creates a movie message for communication via TCPClient.
+#
+# @param filename The name of the movie.
+#
+# @return A TCPMessage object.
+#
+def movieMessage(filename):
+    return tcpMessage.TCPMessage(message_type = "Take Movie",
+                                 message_data = {"name" : filename,
+                                                 "length" : 1})
+
 ## StageMessage
 #
-# Creates stage messages for communication via TCPClient.
+# Creates a stage message for communication via TCPClient.
 #
 # @param stagex The stage x coordinate.
 # @param stagey The stage y coordinate.
+#
+# @return A TCPMessage object.
 #
 def stageMessage(stagex, stagey):  
     return tcpMessage.TCPMessage(message_type = "Move Stage",
@@ -98,7 +126,7 @@ class Capture(QtCore.QObject):
     @hdebug.debug
     def __init__(self, parameters):
         QtCore.QObject.__init__(self)
-        self.busy = False
+        self.active = False
         self.curr_x = 0.0
         self.curr_y = 0.0
         self.dax = None
@@ -107,7 +135,7 @@ class Capture(QtCore.QObject):
         self.filename = parameters.image_filename
         self.flip_horizontal = parameters.flip_horizontal
         self.flip_vertical = parameters.flip_vertical
-        self.movies_remaining = 0
+        self.messages = []
         self.transpose = parameters.transpose
 
         self.tcp_client = tcpClient.TCPClient(parent = self,
@@ -148,36 +176,25 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def captureStart(self, stagex, stagey):
-        if self.busy:
-            print "captureStart: busy"
-        else:
-            print "captureStart:", stagex, stagey
-            if not self.tcp_client.isConnected():
-                self.commConnect(True)
+        
+        if not self.tcp_client.isConnected():
+            self.commConnect()
 
-            if self.tcp_client.isConnected():
-                message = stageMessage(stagex, stagey)
-                message.addData("captureStart", True)
-                self.tcp_client.sendMessage(message)
-                self.busy = True
-                return True
-            else:
-                print "captureStart: not connected"
-                return False
+        if self.tcp_client.isConnected():
+            self.messages.append(directoryMessage(self.directory))
+            self.messages.append(stageMessage(stagex, stagey))
+            self.messages.append(movieMessage(self.filename))
+            self.sendFirstMessage()
+        else:
+            hdebug.logText("captureStart: unable to connect to HAL.")
 
     ## commConnect
     #
     # Initiate communication with HAL.
     #
-    # @param set_directory (Optional) Tell HAL to change it's working directory, default is False.
-    #
     @hdebug.debug
-    def commConnect(self, set_directory = False):
+    def commConnect(self):
         self.tcp_client.startCommunication()
-        if self.tcp_client.isConnected() and set_directory:
-            message = tcpMessage.TCPMessage(message_type = "Set Directory",
-                                            message_data = {"directory" : self.directory})
-            self.tcp_client.sendMessage(message)
 
     ## commDisconnect
     #
@@ -185,7 +202,6 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def commDisconnect(self):
-        self.busy = False
         self.tcp_client.stopCommunication()
 
     ## gotoPosition
@@ -197,20 +213,15 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def gotoPosition(self, stagex, stagey):
-        if self.busy:
-            print "gotoPosition: busy"
-        
+
+        if not self.tcp_client.isConnected():
+            self.commConnect()
+
+        if self.tcp_client.isConnected():
+            self.messages.append(stageMessage(stagex, stagey))
+            self.sendFirstMessage()
         else:
-            print "gotoPosition:", stagex, stagey
-
-            if not self.tcp_client.isConnected():
-                self.commConnect()
-
-            if self.tcp_client.isConnected():
-                self.busy = True
-                self.tcp_client.sendMessage(stageMessage(stagex, stagey))
-            else:
-                print "gotoPosition: not connected"
+            hdebug.logText("captureStart: unable to connect to HAL.")
 
     ## handleDisconnect
     #
@@ -218,7 +229,7 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def handleDisconnect(self):
-        self.busy = False
+        self.active = False
 
     ## handleMessageReceived
     #
@@ -228,18 +239,13 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def handleMessageReceived(self, message):
-        if not (message.getData("captureStart") == None):
-            new_message = tcpMessage.TCPMessage(message_type = "Take Movie",
-                                                message_data = {"name" : self.filename,
-                                                                "length" : 1,
-                                                                "movie" : True})
-            self.tcp_client.sendMessage(new_message)
-        elif not (message.getData("directory") == None):
-            pass
-        elif not (message.getData("movie") == None):
-            self.captureDone()
+        # FIXME: Need to check for errors from HAL.
+        if (message.getType() == "Take Movie"):
+            self.loadImage(self.directory + message.getData("name") + ".dax")
+        if (len(self.messages) > 0):
+            self.tcp_client.sendMessage(self.messages.pop(0))
         else:
-            self.busy = False
+            self.active = False
 
     ## loadImage
     #
@@ -283,6 +289,17 @@ class Capture(QtCore.QObject):
 
             self.captureComplete.emit(image)
     
+    ## sendFirstMessage
+    #
+    # Kick off communication by sending the first message in the
+    # queue, but only if we are not already waiting for messages
+    # from HAL.
+    #
+    @hdebug.debug
+    def sendFirstMessage(self):
+        if not self.active:
+            self.tcp_client.sendMessage(self.messages.pop(0))
+        
     ## setDirectory
     #
     # Sets self.directory to directory.
