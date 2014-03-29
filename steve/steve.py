@@ -236,6 +236,7 @@ class Window(QtGui.QMainWindow):
 
         self.comm.captureComplete.connect(self.addImage)
         self.comm.disconnected.connect(self.handleDisconnected)
+        self.comm.gotoComplete.connect(self.handleGotoComplete)
 
         self.handleObjectiveChange(0)
 
@@ -310,6 +311,7 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def gotoPosition(self, point):
         if not self.taking_pictures:
+            self.comm.commConnect()
             self.comm.gotoPosition(point.x_um - self.current_offset.x_um, point.y_um - self.current_offset.y_um)
 
     ## handleAbort
@@ -345,6 +347,12 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleDisconnected(self):
         self.taking_pictures = False
+
+    ## handleGotoComplete
+    #
+    @hdebug.debug
+    def handleGotoComplete(self):
+        self.comm.commDisconnect()
 
     ## handleGridChange
     #
@@ -629,6 +637,7 @@ class Window(QtGui.QMainWindow):
             self.setCenter(point)
             self.picture_queue = picture_list[1:]
             self.taking_pictures = True
+            self.comm.commConnect()
             if not self.comm.captureStart(self.current_center.x_um, self.current_center.y_um):
                 self.taking_pictures = False
                 self.picture_queue = []

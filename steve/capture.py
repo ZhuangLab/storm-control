@@ -6,11 +6,12 @@
 # a picture & converts the captured image into a
 # QPixmap.
 #
-# Hazen 02/13
+# Hazen 03/14
 #
 
 import math
 import numpy
+import os
 import time
 
 from PyQt4 import QtCore, QtGui
@@ -118,6 +119,7 @@ class Image():
 class Capture(QtCore.QObject):
     captureComplete = QtCore.pyqtSignal(object)
     disconnected = QtCore.pyqtSignal()
+    gotoComplete = QtCore.pyqtSignal()
 
     ## __init__
     #
@@ -126,7 +128,6 @@ class Capture(QtCore.QObject):
     @hdebug.debug
     def __init__(self, parameters):
         QtCore.QObject.__init__(self)
-        self.active = False
         self.curr_x = 0.0
         self.curr_y = 0.0
         self.dax = None
@@ -137,10 +138,12 @@ class Capture(QtCore.QObject):
         self.flip_vertical = parameters.flip_vertical
         self.messages = []
         self.transpose = parameters.transpose
+        self.waiting_for_response = False
 
         self.tcp_client = tcpClient.TCPClient(parent = self,
                                               port = 9000,
-                                              server_name = "hal")
+                                              server_name = "hal",
+                                              verbose = True)
         self.tcp_client.comLostConnection.connect(self.handleDisconnect)
         self.tcp_client.messageReceived.connect(self.handleMessageReceived)
         self.connected = False
@@ -157,11 +160,8 @@ class Capture(QtCore.QObject):
     def captureDone(self):
         print "captureDone"
 
-        # determine filename
-        filename = self.directory + self.filename + ".dax"
-
-        # load image
-        self.loadImage(filename)
+        # Load image.
+        self.loadImage(self.directory + self.filename + ".dax")
 
     ## captureStart
     #
@@ -176,17 +176,16 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def captureStart(self, stagex, stagey):
+        os.remove(self.directory + self.filename + ".dax")
         
         if not self.tcp_client.isConnected():
-            self.commConnect()
+            hdebug.logText("captureStart: not connected to HAL.")
+            return False
 
-        if self.tcp_client.isConnected():
-            self.messages.append(directoryMessage(self.directory))
-            self.messages.append(stageMessage(stagex, stagey))
-            self.messages.append(movieMessage(self.filename))
-            self.sendFirstMessage()
-        else:
-            hdebug.logText("captureStart: unable to connect to HAL.")
+        self.messages.append(stageMessage(stagex, stagey))
+        self.messages.append(movieMessage(self.filename))
+        self.sendFirstMessage()
+        return True
 
     ## commConnect
     #
@@ -194,6 +193,7 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def commConnect(self):
+        print "connect"
         self.tcp_client.startCommunication()
 
     ## commDisconnect
@@ -202,6 +202,7 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def commDisconnect(self):
+        print "disconnect"
         self.tcp_client.stopCommunication()
 
     ## gotoPosition
@@ -215,13 +216,13 @@ class Capture(QtCore.QObject):
     def gotoPosition(self, stagex, stagey):
 
         if not self.tcp_client.isConnected():
-            self.commConnect()
+            hdebug.logText("gotoPosition: not connected to HAL.")
+            return
 
-        if self.tcp_client.isConnected():
-            self.messages.append(stageMessage(stagex, stagey))
-            self.sendFirstMessage()
-        else:
-            hdebug.logText("captureStart: unable to connect to HAL.")
+        message = stageMessage(stagex, stagey)
+        message.addData("is_goto", True)
+        self.messages.append(message)
+        self.sendFirstMessage()
 
     ## handleDisconnect
     #
@@ -229,7 +230,9 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def handleDisconnect(self):
-        self.active = False
+        self.waiting_for_response = False
+        self.messages = []
+        self.disconnected.emit()
 
     ## handleMessageReceived
     #
@@ -239,13 +242,22 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def handleMessageReceived(self, message):
-        # FIXME: Need to check for errors from HAL.
+        if message.hasError():
+            hdebug.logText("tcp error: " + message.getErrorMessage())
+            self.messages = []
+            self.waiting_for_response = False
+            return
+
+        if (message.getData("is_goto") == True):
+            self.gotoComplete.emit()
+
         if (message.getType() == "Take Movie"):
             self.loadImage(self.directory + message.getData("name") + ".dax")
+
         if (len(self.messages) > 0):
             self.tcp_client.sendMessage(self.messages.pop(0))
         else:
-            self.active = False
+            self.waiting_for_response = False
 
     ## loadImage
     #
@@ -255,7 +267,6 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def loadImage(self, filename):
-        self.busy = False
         success = False
 
         # Deals with a file system race condition?
@@ -297,7 +308,8 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def sendFirstMessage(self):
-        if not self.active:
+        if not self.waiting_for_response:
+            self.waiting_for_response = True
             self.tcp_client.sendMessage(self.messages.pop(0))
         
     ## setDirectory
@@ -322,7 +334,7 @@ class Capture(QtCore.QObject):
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
