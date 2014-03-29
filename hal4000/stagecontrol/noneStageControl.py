@@ -58,7 +58,7 @@ class Stage():
 #
 class AStageControl(stageControl.StageControl):
     def __init__(self, hardware, parameters, parent = None):
-        self.stage = stageThread.QStageThread(Stage())
+        self.stage = stageThread.QStageThread(Stage(), pos_update_freq = 20)
         self.stage.start(QtCore.QThread.NormalPriority)
         stageControl.StageControl.__init__(self, 
                                            parameters,
