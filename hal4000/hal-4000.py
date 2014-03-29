@@ -520,7 +520,7 @@ class Window(QtGui.QMainWindow):
                 else:
                     self.parameters_test_mode = self.parameters_box.getParameters(param_index)
                     if not self.parameters_test_mode.initialized:
-                        self.tcp_message = message # store message so that it can be returned
+                        self.tcp_message = message # Store message so that it can be returned.
                         self.parameters_box.setCurrentParameters(param_index)
                     else:
                         self.tcpComplete.emit(message)
