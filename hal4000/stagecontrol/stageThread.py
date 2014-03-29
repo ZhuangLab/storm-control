@@ -5,7 +5,7 @@
 # Generic stage control thread for buffering communication
 # with a motorized stage.
 #
-# Hazen 02/14
+# Hazen 03/14
 #
 
 from PyQt4 import QtCore
@@ -14,9 +14,13 @@ from PyQt4 import QtCore
 #
 # QThread for communication with a motorized stage.
 #
-# This is necessary for position updates as otherwise
-# the periodic communication with the (slow) stage
-# will cause the whole UI to behave a bit jerkily.
+# This is necessary for position updates as otherwise the periodic 
+# communication with the (slow) stage will cause the whole UI to 
+# behave a bit jerkily. The time resolution of update events for
+# this thread is only nominal, getting the desired responsiveness
+# will like take some setup specific tuning of the move and
+# position update frequencies.
+#
 # The motorized stage class must provide the following methods:
 #
 # getStatus()
@@ -51,7 +55,8 @@ class QStageThread(QtCore.QThread):
 
     ## __init__
     #
-    # Note: The time resolution of update requests is 5ms.
+    # Note: The time resolution of update requests is nominally 5ms. However
+    #   due to OS issues, it is probably not actually any thing like this..
     #
     # @param stage A stage (hardware) control object.
     # @param move_update_freq Update frequency for move commands in units of 5ms.
