@@ -486,6 +486,13 @@ class Window(QtGui.QMainWindow):
                     self.tcp_message.addResponse("aborted", True)
             if self.filming:
                 self.stopFilm()
+            return
+
+        # Reject message if Hal is running.
+        if self.filming: 
+            message.setError(True, "Hal is currently running")
+            self.tcpComplete.emit(message)
+            return
 
         # Handle set directory request:
         elif (message.getType() == "Set Directory"):
@@ -537,14 +544,6 @@ class Window(QtGui.QMainWindow):
         
         # Handle movie request.
         elif (message.getType() == "Take Movie"):
-
-            # HBQuestion:
-            # Perhaps Hal should not respond to any TCP messages while it is filming?
-            # Move to top of this method?
-            if self.filming: 
-                message.setError(True, "Hal is currently running")
-                self.tcpComplete.emit(message)
-                return
 
             if message.isTest():
                 # Check length.
