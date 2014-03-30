@@ -188,7 +188,6 @@ if __name__ == "__main__":
     print "-"*40
     print message
     print "-"*40
-    message.markAsComplete()
     print message.getData("find_sum")
     message.setError(True, "Could not find focus")
     print "-"*40
