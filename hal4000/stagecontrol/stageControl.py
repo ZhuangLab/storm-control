@@ -329,8 +329,7 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
                 if (x_pos == None) or (y_pos == None):
                     message.setError(True, "Invalid positions")
 
-                # JMCheck: Is this correct way to specify that this action will take 1 second?
-                message.addResponse("duration", 1)
+                message.addResponse("duration", 1) # Minimum stage move time (1s)
                 self.tcpComplete.emit(message) 
             else:
                 self.tcp_message = message
