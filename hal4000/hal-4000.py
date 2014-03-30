@@ -537,6 +537,7 @@ class Window(QtGui.QMainWindow):
                 if self.parameters_box.isValidParameters(param_index):
                     self.tcp_message = message
                     if self.parameters_box.setCurrentParameters(param_index):
+                        self.tcp_message = None
                         self.tcpComplete.emit(message)
                 else:
                     message.setError(True, str(param_index) + " is an invalid parameters option")
@@ -560,19 +561,12 @@ class Window(QtGui.QMainWindow):
                         self.tcpComplete.emit(message)
                         return
 
-                # Handle movie without specified parameters
-                if message.getData("parameters") == None:
-                    if self.parameters_test_mode:
-                        parameters = self.parameters_test_mode
-                    else:
-                        parameters = self.parameters
+                # Set parameters
+                if self.parameters_test_mode:
+                    parameters = self.parameters_test_mode
                 else:
-                    if self.parameters_box.isValidParameters(message.getData("parameters")):
-                        parameters = self.parameters_box.getParameters(message.getData("parameters"))
-                    else:
-                        parameters = self.parameters # Parameters are incorrect, but
-                                                     # the error has already been recorded above
-
+                    parameters = self.parameters
+                
                 # Get disk usage and duration.
                 num_frames = message.getData("length")
                 message.addResponse("duration", num_frames * parameters.kinetic_value)
@@ -602,7 +596,6 @@ class Window(QtGui.QMainWindow):
     def handleCommStart(self):
         self.directory_test_mode = self.directory[:-1]
         #self.parameters_test_mode = False
-        # HBQuestion: Doesn't this erase the saved parameters since comm starts/stops with each command?
 
     ## handleCommStop
     #
