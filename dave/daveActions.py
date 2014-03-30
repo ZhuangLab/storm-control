@@ -306,7 +306,7 @@ class TakeMovie(DaveAction):
     # Send an abort message to Hal
     #
     def abort(self):
-        stop_message = TCPMessage(message_type = "Abort Movie")
+        stop_message = tcpMessage.TCPMessage(message_type = "Abort Movie")
         self.tcp_client.sendMessage(stop_message)
 
     ## handleReply
