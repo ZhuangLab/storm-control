@@ -161,7 +161,7 @@ class Capture(QtCore.QObject):
         print "captureDone"
 
         # Load image.
-        self.loadImage(self.directory + self.filename + ".dax")
+        self.loadImage(self.fullname())
 
     ## captureStart
     #
@@ -176,9 +176,9 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def captureStart(self, stagex, stagey):
-        ## HBCheck:  Should we check for the file before deleting it?
-        if os.path.exists(self.directory + self.filename + ".dax"):
-            os.remove(self.directory + self.filename + ".dax")
+        
+        if os.path.exists(self.fullname()):
+            os.remove(self.fullname())
         
         if not self.tcp_client.isConnected():
             hdebug.logText("captureStart: not connected to HAL.")
@@ -206,6 +206,16 @@ class Capture(QtCore.QObject):
     def commDisconnect(self):
         print "disconnect"
         self.tcp_client.stopCommunication()
+
+    ## fullname
+    #
+    # returns the filename with path & extension.
+    #
+    # @return The filename with path & extension as a string.
+    #
+    @hdebug.debug
+    def fullname(self):
+        return self.directory + self.filename + ".dax"
 
     ## gotoPosition
     #
