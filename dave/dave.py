@@ -203,7 +203,6 @@ class CommandEngine(QtGui.QWidget):
     def handleErrorSignal(self, message):
         self.problem.emit(message)
         self.handleActionComplete(message)
-        
 
 ## Dave Main Window Function
 #
@@ -402,21 +401,22 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleDone(self):
-        if self.test_mode:
+        if self.test_mode and self.is_command_valid[self.command_index]:
             self.disk_usages[self.command_index] = self.command_engine.command_disk_usage
             self.command_durations[self.command_index] = self.command_engine.command_duration
 
-        # Increment command
+        # Increment command to the next valid command
         self.command_index += 1
-
+        while (self.command_index <= (len(self.commands)-1)) and (not self.is_command_valid[self.command_index]):
+            self.command_index += 1
+            
         # Handle last command in list
         if self.command_index >= len(self.commands):
             self.command_index = 0
-            if all(self.is_command_valid): # Activate UI if sequence is valid
-                self.ui.runButton.setText("Start")
-                self.ui.runButton.setEnabled(True)
-                self.ui.abortButton.setEnabled(False)
-                self.ui.selectCommandButton.setEnabled(True)
+            self.ui.runButton.setText("Start")
+            self.ui.runButton.setEnabled(True)
+            self.ui.abortButton.setEnabled(False)
+            self.ui.selectCommandButton.setEnabled(True)
 
             self.running = False
             self.command_engine.enableTestMode(False) # To recover from initial test run
@@ -424,7 +424,7 @@ class Dave(QtGui.QMainWindow):
                 self.updateEstimates()
                 self.createCommandList() # Redraw list to color invalid commands
                 self.test_mode = False
-
+                
         # Issue the command
         self.issueCommand()
 
@@ -544,6 +544,19 @@ class Dave(QtGui.QMainWindow):
             self.ui.runButton.setEnabled(False) #Inactivate button until current action is complete
             self.running = False
         else: # Start
+            if not all(self.is_command_valid): # Activate UI if sequence is valid
+                messageBox = QtGui.QMessageBox(parent = self)
+                messageBox.setWindowTitle("Invalid Commands")
+                box_text = "There are invalid commands. Are you sure you want to start?\n"
+                box_text += "Invalid commands will be skipped."
+                messageBox.setText(box_text)
+                messageBox.setStandardButtons(QtGui.QMessageBox.No |
+                                              QtGui.QMessageBox.Yes)
+                messageBox.setDefaultButton(QtGui.QMessageBox.No)
+                button_ID = messageBox.exec_()
+                if not (button_ID == QtGui.QMessageBox.Yes):
+                    return
+
             self.ui.runButton.setText("Pause")
             self.ui.abortButton.setEnabled(True)
             self.ui.selectCommandButton.setEnabled(False)
