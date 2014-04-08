@@ -29,7 +29,7 @@ class STORM3QIlluminationControlWidget(illuminationControl.QIlluminationControlW
         self.aotf_queue.analogModulationOn()
 
         # setup the Cube communication thread
-        self.cube_queue = commandQueues.QSerialLaserComm(cube405.Cube405(port = "COM4"))
+        self.cube_queue = commandQueues.QSerialLaserComm(cube405.Cube405(port = "COM9"))
         self.cube_queue.start(QtCore.QThread.NormalPriority)
 
         illuminationControl.QIlluminationControlWidget.__init__(self, settings_file_name, parameters, parent)
