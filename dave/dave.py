@@ -16,6 +16,7 @@ import os
 import sys
 import traceback
 import datetime
+import time
 
 # XML parsing
 from xml.dom import minidom, Node 
@@ -145,7 +146,34 @@ class CommandEngine(QtGui.QWidget):
     def getPause(self):
         if self.test_mode: return False
         else: return self.should_pause
-        
+
+    ## isTCPAvailable
+    #
+    # Returns true if the specified tcpClient is available
+    #
+    # @param client_name A string specifying the client
+    # @return is_connected A boolean specifying the connected state of the tcpClient
+    def isTCPAvailable(self, client_name):
+        # Define appropriate client
+        if client_name == "hal":
+            tcp_client = self.HALClient
+        elif client_name == "kilroy":
+            tcp_client = self.kilroyClient
+
+        # Start communication
+        tcp_client.startCommunication()
+
+        # Wait
+        time.sleep(1)
+
+        # Check
+        is_connected = tcp_client.isConnected()
+
+        # Close communications if connected
+        tcp_client.stopCommunication()
+
+        return is_connected
+    
     ## startCommand
     #
     # Start a command or command sequence
@@ -235,6 +263,8 @@ class Dave(QtGui.QMainWindow):
         self.sequence_filename = ""
         self.test_mode = False
         self.skip_warning = False
+        self.needs_hal = False
+        self.needs_kilroy = False
         
         self.createGUI()
 
@@ -264,6 +294,34 @@ class Dave(QtGui.QMainWindow):
     @hdebug.debug
     def closeEvent(self, event):
         self.cleanUp()
+
+    ## createCommandList
+    #
+    # create the command list
+    #
+    @hdebug.debug
+    def createCommandList(self):
+        self.ui.commandSequenceList.clear()
+        self.command_widgets = []
+        
+        for [command_ID, command] in enumerate(self.commands):
+            widget = QtGui.QListWidgetItem(command.getDescriptor())
+            
+            widget.setFlags(QtCore.Qt.ItemIsEnabled)
+            if self.is_command_valid[command_ID]:
+                widget.setBackground(QtGui.QBrush(QtCore.Qt.white))
+            else:
+                widget.setBackground(QtGui.QBrush(QtCore.Qt.red))
+            self.ui.commandSequenceList.addItem(widget)
+            self.command_widgets.append(widget)
+        
+        if len(self.commands) > 0:
+            self.command_widgets[0].setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
+            self.ui.commandSequenceList.setCurrentRow(0)
+
+        self.updateCommandDescriptorTable(self.command_widgets[0])
+
+        self.ui.progressBar.setMaximum(len(self.commands))
 
     ## createGUI
     #
@@ -632,7 +690,7 @@ class Dave(QtGui.QMainWindow):
         if self.running:
             QtGui.QMessageBox.information(self,
                                           "New Sequence Request",
-                                          "Please pause or abort current")
+                                          "Please pause or abort current run")
         if not self.running:
             commands = []
             try:
@@ -663,9 +721,7 @@ class Dave(QtGui.QMainWindow):
                 self.createCommandList()
                 self.issueCommand()
 
-                # Start Test Run
-                self.running = True
-                self.command_engine.startCommand()
+                self.validateCommandSequence()
                 
     ## newSequenceFile
     #
@@ -755,34 +811,45 @@ class Dave(QtGui.QMainWindow):
         for [line_num, line] in enumerate(command_details):
             for [entry_pos, entry] in enumerate(line):
                 self.ui.commandDetailsTable.setItem(line_num, entry_pos, createTableWidget(entry))
-            
-    ## createCommandList
+
+    ## validateCommandSequence
     #
-    # create the command list
+    # Start the validation process for a command sequence
     #
     @hdebug.debug
-    def createCommandList(self):
-        self.ui.commandSequenceList.clear()
-        self.command_widgets = []
-        
-        for [command_ID, command] in enumerate(self.commands):
-            widget = QtGui.QListWidgetItem(command.getDescriptor())
-            
-            widget.setFlags(QtCore.Qt.ItemIsEnabled)
-            if self.is_command_valid[command_ID]:
-                widget.setBackground(QtGui.QBrush(QtCore.Qt.white))
-            else:
-                widget.setBackground(QtGui.QBrush(QtCore.Qt.red))
-            self.ui.commandSequenceList.addItem(widget)
-            self.command_widgets.append(widget)
-        
-        if len(self.commands) > 0:
-            self.command_widgets[0].setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
-            self.ui.commandSequenceList.setCurrentRow(0)
+    def validateCommandSequence(self):
+        # Determine the tcpClients that will be needed
+        self.needs_hal = False
+        self.needs_kilroy = False
+        for command in self.commands:
+            if command.getType() == "movie":
+                needs_hal = True
+            elif command.getType() == "fluidics":
+                needs_kilroy = True
 
-        self.updateCommandDescriptorTable(self.command_widgets[0])
-
-        self.ui.progressBar.setMaximum(len(self.commands))
+        tcp_error = False
+        
+        # Poll tcp status
+        if needs_hal:
+            if not self.command_engine.isTCPAvailable("hal"):
+                tcp_error = True
+                err_message = "This sequence requires communication with Hal.\n"
+                err_message += "Please start Hal!"
+                QtGui.QMessageBox.information(self,
+                                              "TCP Communication Error",
+                                              err_message)
+        if needs_kilroy:
+            if not self.command_engine.isTCPAvailable("kilroy"):
+                tcp_error = True
+                err_message = "This sequence requires communication with Kilroy.\n"
+                err_message += "Please start Kilroy!"
+                QtGui.QMessageBox.information(self,
+                                              "TCP Communication Error",
+                                             err_message)               
+        if not tcp_error:
+            # Start Test Run
+            self.running = True
+            self.command_engine.startCommand()
         
     ## quit
     #
@@ -793,16 +860,6 @@ class Dave(QtGui.QMainWindow):
     @hdebug.debug
     def quit(self, boolean):
         self.close()
-
-    ## validateCommands
-    #
-    # Validate that the listed commands can be run and determine disk and time requirements
-    #
-    @hdebug.debug
-    def validateCommands(self):
-            
-        self.ui.timeLabel.setText("Run Length: {0:.1f} hours".format(total_duration/(3600)))
-        self.ui.spaceLabel.setText("Run Size: {0:.1f} GB ".format(total_disk))
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
