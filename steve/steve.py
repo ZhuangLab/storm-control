@@ -565,7 +565,6 @@ class Window(QtGui.QMainWindow):
             new_scale = float(new_text)
             if (new_scale <= 0.0):
                 new_scale = 1.0e-6
-            print "new_scale", new_scale
             self.view.setScale(new_scale)
         except:
             pass
@@ -671,7 +670,6 @@ class Window(QtGui.QMainWindow):
     #
     def updateScaleLineEdit(self, new_value):
         self.ui.scaleLineEdit.setText("{0:.6f}".format(new_value))
-        #self.ui.scaleLineEdit.setText(str(new_value))
 
     ## quit
     #

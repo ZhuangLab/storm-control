@@ -284,27 +284,10 @@ class MultifieldView(QtGui.QGraphicsView):
         if event.delta() > 0:
             self.view_scale = self.view_scale * self.zoom_in
             self.setScale(self.view_scale)
-#            self.zoomIn()
         else:
             self.view_scale = self.view_scale * self.zoom_out
             self.setScale(self.view_scale)
         self.scaleChange.emit(self.view_scale)
-        print self.view_scale
-
-#            self.zoomOut()
-
-    ## zoomIn
-    #
-    # Scales the image by the variable self.zoom_in.
-    #
-            #def zoomIn(self):
-#        self.scale(self.zoom_in, self.zoom_in)
-
-    ## zoomOut
-    #
-    # Scales the image by the variable self.zoom_out.
- #   def zoomOut(self):
-  #      self.scale(self.zoom_out, self.zoom_out)
 
 
 ## viewImageItem
