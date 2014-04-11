@@ -182,6 +182,10 @@ class Window(QtGui.QMainWindow):
                 sbox.moValueChange.connect(self.handleMOValueChange)
                 self.spin_boxes.append(sbox)
 
+        # Create a validator for scaleLineEdit.
+        self.sce_validator = QtGui.QDoubleValidator(1.0e-6, 1.0e+6, 6, self.ui.scaleLineEdit)
+        self.ui.scaleLineEdit.setValidator(self.sce_validator)
+
         # Initialize view.
         self.view = mosaicView.MosaicView(parameters, self.ui.mosaicFrame)
         layout = QtGui.QGridLayout(self.ui.mosaicFrame)
@@ -221,6 +225,7 @@ class Window(QtGui.QMainWindow):
         self.ui.actionSet_Working_Directory.triggered.connect(self.handleSetWorkingDirectory)
         self.ui.foregroundOpacitySlider.valueChanged.connect(self.handleOpacityChange)
         self.ui.magComboBox.currentIndexChanged.connect(self.handleObjectiveChange)
+        self.ui.scaleLineEdit.textEdited.connect(self.handleScaleChange)
         self.ui.tabWidget.currentChanged.connect(self.handleTabChange)
         self.ui.xSpinBox.valueChanged.connect(self.handleGridChange)
         self.ui.ySpinBox.valueChanged.connect(self.handleGridChange)
@@ -229,6 +234,7 @@ class Window(QtGui.QMainWindow):
         self.view.addSection.connect(self.addSection)
         self.view.gotoPosition.connect(self.gotoPosition)
         self.view.mouseMove.connect(self.updateMosaicLabel)
+        self.view.scaleChange.connect(self.updateScaleLineEdit)
         self.view.takePictures.connect(self.takePictures)
 
         self.sections.addPositions.connect(self.addPositions)
@@ -547,6 +553,22 @@ class Window(QtGui.QMainWindow):
             self.positions.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
             self.sections.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
 
+    ## handleScaleChange.
+    #
+    # Handles user editting the display scale.
+    #
+    # @param new_text The new (text) representation of the desired scale.
+    #
+    @hdebug.debug
+    def handleScaleChange(self, new_text):
+        try:
+            new_scale = float(new_text)
+            if (new_scale <= 0.0):
+                new_scale = 1.0e-6
+            self.view.setScale(new_scale)
+        except:
+            pass
+
     ## handleSetWorkingDirectory
     #
     # Handles changing the current working directory.
@@ -599,15 +621,6 @@ class Window(QtGui.QMainWindow):
             self.ui.mosaicLabel.hide()
             self.sections.setSceneItemsVisible(False)
 
-    ## updateMosaicLabel
-    #
-    # Updates the UI element that displays the current mouse position in microns.
-    #
-    # @param a_point A coord.Point object with current mouse position in microns.
-    #
-    def updateMosaicLabel(self, a_point):
-        self.ui.mosaicLabel.setText("{0:.2f}, {1:.2f}".format(a_point.x_um, a_point.y_um))
-
     ## setCenter
     #
     # Sets the current center (for image acquisition). If an item in the picture_queue is not
@@ -641,6 +654,22 @@ class Window(QtGui.QMainWindow):
             if not self.comm.captureStart(self.current_center.x_um, self.current_center.y_um):
                 self.taking_pictures = False
                 self.picture_queue = []
+
+    ## updateMosaicLabel
+    #
+    # Updates the UI element that displays the current mouse position in microns.
+    #
+    # @param a_point A coord.Point object with current mouse position in microns.
+    #
+    def updateMosaicLabel(self, a_point):
+        self.ui.mosaicLabel.setText("{0:.2f}, {1:.2f}".format(a_point.x_um, a_point.y_um))
+
+    ## updateScaleLineEdit
+    #
+    # @param new_value The new value of the scale.
+    #
+    def updateScaleLineEdit(self, new_value):
+        self.ui.scaleLineEdit.setText("{0:.6f}".format(new_value))
 
     ## quit
     #

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'steve.ui'
 #
-# Created: Tue Feb 25 10:27:03 2014
+# Created: Fri Apr 11 15:00:01 2014
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -115,7 +115,7 @@ class Ui_MainWindow(object):
         self.sectionsScrollArea.setWidgetResizable(True)
         self.sectionsScrollArea.setObjectName(_fromUtf8("sectionsScrollArea"))
         self.scrollAreaWidgetContents_2 = QtGui.QWidget()
-        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 98, 28))
+        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 252, 375))
         self.scrollAreaWidgetContents_2.setObjectName(_fromUtf8("scrollAreaWidgetContents_2"))
         self.sectionsScrollArea.setWidget(self.scrollAreaWidgetContents_2)
         self.verticalLayout_6.addWidget(self.sectionsScrollArea)
@@ -180,6 +180,20 @@ class Ui_MainWindow(object):
         self.mosaicLabel.setSizePolicy(sizePolicy)
         self.mosaicLabel.setObjectName(_fromUtf8("mosaicLabel"))
         self.horizontalLayout.addWidget(self.mosaicLabel)
+        self.scaleLabel = QtGui.QLabel(self.centralwidget)
+        self.scaleLabel.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.scaleLabel.setObjectName(_fromUtf8("scaleLabel"))
+        self.horizontalLayout.addWidget(self.scaleLabel)
+        self.scaleLineEdit = QtGui.QLineEdit(self.centralwidget)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.scaleLineEdit.sizePolicy().hasHeightForWidth())
+        self.scaleLineEdit.setSizePolicy(sizePolicy)
+        self.scaleLineEdit.setMaximumSize(QtCore.QSize(100, 16777215))
+        self.scaleLineEdit.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.scaleLineEdit.setObjectName(_fromUtf8("scaleLineEdit"))
+        self.horizontalLayout.addWidget(self.scaleLineEdit)
         self.xLabel = QtGui.QLabel(self.centralwidget)
         self.xLabel.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.xLabel.setObjectName(_fromUtf8("xLabel"))
@@ -201,10 +215,10 @@ class Ui_MainWindow(object):
         self.abortButton = QtGui.QPushButton(self.centralwidget)
         self.abortButton.setObjectName(_fromUtf8("abortButton"))
         self.horizontalLayout.addWidget(self.abortButton)
-        self.label = QtGui.QLabel(self.centralwidget)
-        self.label.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
-        self.label.setObjectName(_fromUtf8("label"))
-        self.horizontalLayout.addWidget(self.label)
+        self.objectiveLabel = QtGui.QLabel(self.centralwidget)
+        self.objectiveLabel.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.objectiveLabel.setObjectName(_fromUtf8("objectiveLabel"))
+        self.horizontalLayout.addWidget(self.objectiveLabel)
         self.magComboBox = QtGui.QComboBox(self.centralwidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -280,10 +294,12 @@ class Ui_MainWindow(object):
         self.backgroundComboBox.setItemText(0, _translate("MainWindow", "Mean", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.sectionsTab), _translate("MainWindow", "Sections", None))
         self.mosaicLabel.setText(_translate("MainWindow", "TextLabel", None))
+        self.scaleLabel.setText(_translate("MainWindow", "Scale:", None))
+        self.scaleLineEdit.setText(_translate("MainWindow", "1.0", None))
         self.xLabel.setText(_translate("MainWindow", "# X:", None))
         self.yLabel.setText(_translate("MainWindow", "# Y:", None))
         self.abortButton.setText(_translate("MainWindow", "Abort Acquistion", None))
-        self.label.setText(_translate("MainWindow", "Current Objective:", None))
+        self.objectiveLabel.setText(_translate("MainWindow", "Current Objective:", None))
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
         self.actionQuit.setText(_translate("MainWindow", "Quit", None))
         self.actionConnect.setText(_translate("MainWindow", "Connect", None))

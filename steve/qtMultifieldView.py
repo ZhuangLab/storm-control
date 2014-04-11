@@ -26,6 +26,7 @@ import sc_library.daxspereader as datareader
 # locations in microns.
 #
 class MultifieldView(QtGui.QGraphicsView):
+    scaleChange = QtCore.pyqtSignal(float)
 
     ## __init__
     #
@@ -42,6 +43,7 @@ class MultifieldView(QtGui.QGraphicsView):
         self.image_items = []
         self.margin = 8000.0
         self.scene_rect = [-self.margin, -self.margin, self.margin, self.margin]
+        self.view_scale = 1.0
         self.zoom_in = 1.2
         self.zoom_out = 1.0/self.zoom_in
 
@@ -228,6 +230,16 @@ class MultifieldView(QtGui.QGraphicsView):
 
         progress_bar.close()
 
+    ## setScale
+    #
+    # Sets the current scale of the view.
+    #
+    def setScale(self, scale):
+        self.view_scale = scale
+        a_matrix = QtGui.QMatrix()
+        a_matrix.scale(scale, scale)
+        self.setMatrix(a_matrix)
+
     ## updateSceneRect
     #
     # This updates the rectangle describing the overall size of the QGraphicsScene.
@@ -270,22 +282,12 @@ class MultifieldView(QtGui.QGraphicsView):
     #
     def wheelEvent(self, event):
         if event.delta() > 0:
-            self.zoomIn()
+            self.view_scale = self.view_scale * self.zoom_in
+            self.setScale(self.view_scale)
         else:
-            self.zoomOut()
-
-    ## zoomIn
-    #
-    # Scales the image by the variable self.zoom_in.
-    #
-    def zoomIn(self):
-        self.scale(self.zoom_in, self.zoom_in)
-
-    ## zoomOut
-    #
-    # Scales the image by the variable self.zoom_out.
-    def zoomOut(self):
-        self.scale(self.zoom_out, self.zoom_out)
+            self.view_scale = self.view_scale * self.zoom_out
+            self.setScale(self.view_scale)
+        self.scaleChange.emit(self.view_scale)
 
 
 ## viewImageItem
