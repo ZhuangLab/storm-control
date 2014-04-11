@@ -103,7 +103,7 @@
        <parameters>Test_Parameter</parameters>
        <progression>
            <type>file</type>
-           <filename>D:\Users\JeffMoffitt\Dropbox\ZhuangLab\Coding\Python\storm-control\dave\test\test_progression.power</filename>
+           <filename>..\dave\test\test_progression.power</filename>
         </progression>
        <none />
 </movie>
@@ -223,7 +223,7 @@
        <parameters>Test_Parameter</parameters>
        <progression>
            <type>file</type>
-           <filename>D:\Users\JeffMoffitt\Dropbox\ZhuangLab\Coding\Python\storm-control\dave\test\test_progression.power</filename>
+           <filename>..\dave\test\test_progression.power</filename>
         </progression>
        <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
 </movie>
@@ -343,7 +343,7 @@
        <parameters>Test_Parameter</parameters>
        <progression>
            <type>file</type>
-           <filename>D:\Users\JeffMoffitt\Dropbox\ZhuangLab\Coding\Python\storm-control\dave\test\test_progression.power</filename>
+           <filename>..\dave\test\test_progression.power</filename>
         </progression>
        <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
 </movie>
@@ -463,7 +463,7 @@
        <parameters>Test_Parameter</parameters>
        <progression>
            <type>file</type>
-           <filename>D:\Users\JeffMoffitt\Dropbox\ZhuangLab\Coding\Python\storm-control\dave\test\test_progression.power</filename>
+           <filename>..\dave\test\test_progression.power</filename>
         </progression>
        <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
 </movie>
@@ -583,7 +583,7 @@
        <parameters>Test_Parameter</parameters>
        <progression>
            <type>file</type>
-           <filename>D:\Users\JeffMoffitt\Dropbox\ZhuangLab\Coding\Python\storm-control\dave\test\test_progression.power</filename>
+           <filename>..\dave\test\test_progression.power</filename>
         </progression>
        <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
 </movie>

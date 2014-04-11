@@ -107,7 +107,7 @@
        <parameters>Test_Parameter</parameters>
        <progression>
            <type>file</type>
-           <filename>D:\Users\JeffMoffitt\Dropbox\ZhuangLab\Coding\Python\storm-control\dave\test\test_progression.power</filename>
+           <filename>..\dave\test\test_progression.power</filename>
         </progression>
        <variable_entry name = "Movie Loop" />
     </movie>
