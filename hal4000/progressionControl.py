@@ -541,7 +541,20 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
                                                      channel[1],
                                                      channel[2],
                                                      channel[3])
+            else:
+                if (message.getData("type") == "file"):
+                    if not (message.getData("filename") == None):
+                        full_path = os.path.abspath(message.getData("filename"))
+                        if not os.path.exists(full_path):
+                            err_message = str(message.getData("filename"))
+                            err_message += " is not a valid path."
+                            message.setError(True, err_message)
+                    else:
+                        err_message += "No filename provided."
+                        message.setError(True, err_message) 
+
             self.tcpComplete.emit(message)
+            
         
     ## handleOk
     #
@@ -690,7 +703,7 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
         if os.path.exists(filename):
             self.ui.filenameLabel.setText(filename[-40:])
             self.file_channels.newFile(filename)
-
+        
     ## tcpHandleProgressionSet
     #
     # Handles TCP/IP signal to set the values of a math channel.
