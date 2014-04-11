@@ -67,7 +67,6 @@ class DaveAction(QtCore.QObject):
     # @param message A TCP message object
     #
     def completeAction(self, message):
-        self.tcp_client.stopCommunication()
         self.complete_signal.emit(message)
     
     ## completeActionWithError
@@ -79,7 +78,6 @@ class DaveAction(QtCore.QObject):
     def completeActionWithError(self, message):
         if self.should_pause_after_error == True:
             self.should_pause = True
-        self.tcp_client.stopCommunication()
         self.error_signal.emit(message)
 
     ## handleReply
@@ -131,7 +129,6 @@ class DaveAction(QtCore.QObject):
     #
     def start(self):
         self.tcp_client.messageReceived.connect(self.handleReply)
-        self.tcp_client.startCommunication()
         if self.message.isTest():
             self.lost_message_timer.start(self.delay)
         self.tcp_client.sendMessage(self.message)

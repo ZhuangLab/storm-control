@@ -111,7 +111,7 @@ class TCPServer(QtNetwork.QTcpServer, tcpCommunications.TCPCommunications):
         self.socket = None
         self.comLostConnection.emit()
         if self.verbose: print "Client disconnected"
-
+        
 ## StandAlone
 # 
 # Stand Alone Test Class

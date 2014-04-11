@@ -82,9 +82,11 @@ class TCPClient(tcpCommunications.TCPCommunications):
     #
     # Start communications with server
     #
+    # @return a_boolean Returns true if the client is connected.
     def startCommunication(self):
         if not self.isConnected():
             self.connectToServer()
+        return self.isConnected()
 
     ## stopCommunication
     #

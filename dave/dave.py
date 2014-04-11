@@ -146,33 +146,6 @@ class CommandEngine(QtGui.QWidget):
     def getPause(self):
         if self.test_mode: return False
         else: return self.should_pause
-
-    ## isTCPAvailable
-    #
-    # Returns true if the specified tcpClient is available
-    #
-    # @param client_name A string specifying the client
-    # @return is_connected A boolean specifying the connected state of the tcpClient
-    def isTCPAvailable(self, client_name):
-        # Define appropriate client
-        if client_name == "hal":
-            tcp_client = self.HALClient
-        elif client_name == "kilroy":
-            tcp_client = self.kilroyClient
-
-        # Start communication
-        tcp_client.startCommunication()
-
-        # Wait
-        time.sleep(1)
-
-        # Check
-        is_connected = tcp_client.isConnected()
-
-        # Close communications if connected
-        tcp_client.stopCommunication()
-
-        return is_connected
     
     ## startCommand
     #
@@ -482,7 +455,13 @@ class Dave(QtGui.QMainWindow):
                 self.updateEstimates()
                 self.createCommandList() # Redraw list to color invalid commands
                 self.test_mode = False
-                
+
+            # Stop TCP communication
+            if self.needs_hal:
+                self.command_engine.HALClient.stopCommunication()
+            if self.needs_kilroy:
+                self.command_engine.kilroyClient.stopCommunication()
+        
         # Issue the command
         self.issueCommand()
 
@@ -571,6 +550,13 @@ class Dave(QtGui.QMainWindow):
             QtGui.QMessageBox.information(self,
                                           "Acquisition Problem",
                                           message_str)
+
+            # Stop TCP communication
+            if self.needs_hal:
+                self.command_engine.HALClient.stopCommunication()
+            if self.needs_kilroy:
+                self.command_engine.kilroyClient.stopCommunication()
+            
         else: # Test mode
             self.is_command_valid[self.command_index] = False
             message_str += "\nIgnore remaining errors?"
@@ -615,6 +601,12 @@ class Dave(QtGui.QMainWindow):
                 if not (button_ID == QtGui.QMessageBox.Yes):
                     return
 
+            # Start TCP communication
+            if self.needs_hal:
+                self.command_engine.HALClient.startCommunication()
+            if self.needs_kilroy:
+                self.command_engine.kilroyClient.startCommunication()
+            
             self.ui.runButton.setText("Pause")
             self.ui.abortButton.setEnabled(True)
             self.ui.selectCommandButton.setEnabled(False)
@@ -822,24 +814,25 @@ class Dave(QtGui.QMainWindow):
         self.needs_hal = False
         self.needs_kilroy = False
         for command in self.commands:
+            print command.getType()
             if command.getType() == "movie":
-                needs_hal = True
+                self.needs_hal = True
             elif command.getType() == "fluidics":
-                needs_kilroy = True
+                self.needs_kilroy = True
 
         tcp_error = False
         
         # Poll tcp status
-        if needs_hal:
-            if not self.command_engine.isTCPAvailable("hal"):
+        if self.needs_hal:
+            if not self.command_engine.HALClient.startCommunication():
                 tcp_error = True
                 err_message = "This sequence requires communication with Hal.\n"
                 err_message += "Please start Hal!"
                 QtGui.QMessageBox.information(self,
                                               "TCP Communication Error",
                                               err_message)
-        if needs_kilroy:
-            if not self.command_engine.isTCPAvailable("kilroy"):
+        if self.needs_kilroy:
+            if not self.command_engine.kilroyClient.startCommunication():
                 tcp_error = True
                 err_message = "This sequence requires communication with Kilroy.\n"
                 err_message += "Please start Kilroy!"
