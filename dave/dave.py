@@ -397,29 +397,33 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleAbortButton(self, boolean):
-        # Force manual conformation of abort
-        messageBox = QtGui.QMessageBox(parent = self)
-        messageBox.setWindowTitle("Abort?")
-        messageBox.setText("Are you sure you want to abort the current run?")
-        messageBox.setStandardButtons(QtGui.QMessageBox.Cancel |
-                                      QtGui.QMessageBox.Ok)
-        messageBox.setDefaultButton(QtGui.QMessageBox.Cancel)
-        button_ID = messageBox.exec_()
+        if not self.test_mode:
+            # Force manual conformation of abort
+            messageBox = QtGui.QMessageBox(parent = self)
+            messageBox.setWindowTitle("Abort?")
+            messageBox.setText("Are you sure you want to abort the current run?")
+            messageBox.setStandardButtons(QtGui.QMessageBox.Cancel |
+                                          QtGui.QMessageBox.Ok)
+            messageBox.setDefaultButton(QtGui.QMessageBox.Cancel)
+            button_ID = messageBox.exec_()
 
-        # Handle response
-        if button_ID == QtGui.QMessageBox.Ok:
-            abort_text =  "Aborted current run at command " + str(self.command_index)
-            abort_text += ": " + str(self.commands[self.command_index].getDetails()[1][1])
-            print abort_text
-            if (self.running):
-                #Set flag to signal reset to handleDone when called
-                self.command_index = len(self.commands) + 1
-                self.command_engine.abort()
-            else: # Paused
-                self.command_index = len(self.commands) + 1
-                self.handleDone()
-        else: # Cancel button or window closed event
-            pass
+            # Handle response
+            if button_ID == QtGui.QMessageBox.Ok:
+                abort_text =  "Aborted current run at command " + str(self.command_index)
+                abort_text += ": " + str(self.commands[self.command_index].getDetails()[1][1])
+                print abort_text
+                if (self.running):
+                    #Set flag to signal reset to handleDone when called
+                    self.command_index = len(self.commands) + 1
+                    self.command_engine.abort()
+                else: # Paused
+                    self.command_index = len(self.commands) + 1
+                    self.handleDone()
+            else: # Cancel button or window closed event
+                pass
+        else:
+            self.command_index = len(self.commands) + 1
+            self.sequence_validated = False
     
     ## handleCommandListClick
     #
@@ -429,13 +433,13 @@ class Dave(QtGui.QMainWindow):
     def handleCommandListClick(self):
         self.updateCommandSequenceDisplay(self.ui.commandSequenceList.currentRow())
 
-    ## handleDone
+    ## 
     #
     # Handles completion of the current command engine.  
     #
     @hdebug.debug
     def handleDone(self):
-        if self.test_mode and self.is_command_valid[self.command_index]:
+        if self.test_mode and (self.command_index <= (len(self.commands)-1)) and self.is_command_valid[self.command_index]:
             self.disk_usages[self.command_index] = self.command_engine.command_disk_usage
             self.command_durations[self.command_index] = self.command_engine.command_duration
 
@@ -456,6 +460,7 @@ class Dave(QtGui.QMainWindow):
             self.running = False
             self.command_engine.enableTestMode(False) # To complete a validation run
             if self.test_mode:
+                self.sequence_validated = True
                 self.updateEstimates()
                 self.createCommandList() # Redraw list to color invalid commands
                 self.test_mode = False
@@ -865,7 +870,7 @@ class Dave(QtGui.QMainWindow):
             self.running = True
             self.test_mode = True
             self.ui.runButton.setEnabled(False)
-            self.ui.abortButton.setEnabled(False)
+            self.ui.abortButton.setEnabled(True)
             self.ui.selectCommandButton.setEnabled(False)
             self.ui.validateSequenceButton.setEnabled(False)
             self.skip_warning = False
@@ -887,8 +892,7 @@ class Dave(QtGui.QMainWindow):
             self.is_command_valid = [False] * len(self.commands)
             self.createCommandList()
             self.updateEstimates()
-
-            
+   
     ## quit
     #
     # Handles the quit file action.
