@@ -29,18 +29,54 @@
    <string>Dave</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="mainGridLayout" rowstretch="0,0,0,0,0,0,0,0">
-    <item row="7" column="2">
-     <widget class="QPushButton" name="abortButton">
-      <property name="text">
-       <string>Abort</string>
+   <layout class="QGridLayout" name="mainGridLayout" rowstretch="0,0,0,0,0,0,0,0,0">
+    <item row="2" column="6">
+     <widget class="QGroupBox" name="estimatesGroupBox">
+      <property name="title">
+       <string>Estimates</string>
       </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QLabel" name="spaceLabel">
+         <property name="text">
+          <string>TextLabel</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="timeLabel">
+         <property name="text">
+          <string>TextLabel</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </item>
     <item row="7" column="1">
      <widget class="QPushButton" name="runButton">
       <property name="text">
        <string>Run</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="6">
+     <spacer name="verticalSpacer2">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>40</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="7" column="2">
+     <widget class="QPushButton" name="abortButton">
+      <property name="text">
+       <string>Abort</string>
       </property>
      </widget>
     </item>
@@ -53,19 +89,6 @@
        <size>
         <width>40</width>
         <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item row="4" column="6">
-     <spacer name="verticalSpacer2">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>40</height>
        </size>
       </property>
      </spacer>
@@ -180,29 +203,6 @@
       </layout>
      </widget>
     </item>
-    <item row="2" column="6">
-     <widget class="QGroupBox" name="estimatesGroupBox">
-      <property name="title">
-       <string>Estimates</string>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <item>
-        <widget class="QLabel" name="spaceLabel">
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="timeLabel">
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
     <item row="1" column="1" rowspan="4" colspan="4">
      <widget class="QGroupBox" name="commandGroupBox">
       <property name="title">
@@ -300,6 +300,13 @@
         </widget>
        </item>
       </layout>
+     </widget>
+    </item>
+    <item row="7" column="3">
+     <widget class="QPushButton" name="validateSequenceButton">
+      <property name="text">
+       <string>Validate</string>
+      </property>
      </widget>
     </item>
    </layout>

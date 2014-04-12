@@ -329,10 +329,11 @@ class Dave(QtGui.QMainWindow):
         self.ui.fromAddressLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.fromPasswordLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.runButton.clicked.connect(self.handleRunButton)
+        self.ui.selectCommandButton.clicked.connect(self.handleSelectButton)
         self.ui.smtpServerLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.toAddressLineEdit.textChanged.connect(self.handleNotifierChange)
-        self.ui.selectCommandButton.clicked.connect(self.handleSelectButton)
-                                                        
+        self.ui.validateSequenceButton.clicked.connect(self.validateCommandSequence)
+                                              
         # Load saved notifications settings.
         self.noti_settings = [[self.ui.fromAddressLineEdit, "from_address"],
                               [self.ui.fromPasswordLineEdit, "from_password"],
@@ -353,7 +354,8 @@ class Dave(QtGui.QMainWindow):
         self.ui.runButton.setEnabled(False)
         self.ui.abortButton.setEnabled(False)
         self.ui.selectCommandButton.setEnabled(False)
-
+        self.ui.validateSequenceButton.setEnabled(False)
+        
         # Enable mouse over updates of command descriptor
         self.ui.commandSequenceList.clicked.connect(self.handleCommandListClick)
 
@@ -448,9 +450,10 @@ class Dave(QtGui.QMainWindow):
             self.ui.runButton.setEnabled(True)
             self.ui.abortButton.setEnabled(False)
             self.ui.selectCommandButton.setEnabled(True)
-
+            self.ui.validateSequenceButton.setEnabled(True)
+            
             self.running = False
-            self.command_engine.enableTestMode(False) # To recover from initial test run
+            self.command_engine.enableTestMode(False) # To complete a validation run
             if self.test_mode:
                 self.updateEstimates()
                 self.createCommandList() # Redraw list to color invalid commands
@@ -559,7 +562,7 @@ class Dave(QtGui.QMainWindow):
             
         else: # Test mode
             self.is_command_valid[self.command_index] = False
-            message_str += "\nIgnore remaining errors?"
+            message_str += "\nSuppress remaining warnings?"
             if not self.skip_warning:
                 messageBox = QtGui.QMessageBox(parent = self)
                 messageBox.setWindowTitle("Invalid Command")
@@ -610,6 +613,7 @@ class Dave(QtGui.QMainWindow):
             self.ui.runButton.setText("Pause")
             self.ui.abortButton.setEnabled(True)
             self.ui.selectCommandButton.setEnabled(False)
+            self.ui.validateSequenceButton.setEnabled(False)
             self.running = True
             self.issueCommand()
             self.command_engine.startCommand()
@@ -698,22 +702,19 @@ class Dave(QtGui.QMainWindow):
                 self.sequence_length = len(self.commands)
                 self.sequence_filename = sequence_filename
                 self.updateGUI()
-                self.command_engine.enableTestMode(True)
-                self.test_mode = True
                 self.disk_usages = [0.0] * len(self.commands)
                 self.command_durations = [0.0] * len(self.commands)
                 self.is_command_valid = [True] * len(self.commands)
                 
                 # Set enabled/disabled status
-                self.ui.runButton.setEnabled(False)
+                self.ui.runButton.setEnabled(True)
                 self.ui.runButton.setText("Start")
                 self.ui.abortButton.setEnabled(False)
                 self.ui.selectCommandButton.setEnabled(False)
-
+                self.ui.validateSequenceButton.setEnabled(True)
+                
                 self.createCommandList()
                 self.issueCommand()
-
-                self.validateCommandSequence()
                 
     ## newSequenceFile
     #
@@ -741,7 +742,6 @@ class Dave(QtGui.QMainWindow):
         # disable selectability of all other elements
         for widget in self.command_widgets:
             widget.setFlags(QtCore.Qt.ItemIsEnabled)
-            
             
         self.command_widgets[command_index].setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
         self.ui.commandSequenceList.setCurrentRow(command_index)
@@ -804,28 +804,25 @@ class Dave(QtGui.QMainWindow):
             for [entry_pos, entry] in enumerate(line):
                 self.ui.commandDetailsTable.setItem(line_num, entry_pos, createTableWidget(entry))
 
-    ## validateCommandSequence
+    ## validateTCP
     #
-    # Start the validation process for a command sequence
+    # Determine that the required TCP communications are ready
     #
-    @hdebug.debug
-    def validateCommandSequence(self):
-        # Determine the tcpClients that will be needed
+    # @return tcp_ready A boolean describing the state of TCP communications
+    def validateTCP(self):
         self.needs_hal = False
         self.needs_kilroy = False
         for command in self.commands:
-            print command.getType()
             if command.getType() == "movie":
                 self.needs_hal = True
             elif command.getType() == "fluidics":
                 self.needs_kilroy = True
 
-        tcp_error = False
-        
+        tcp_ready = True
         # Poll tcp status
         if self.needs_hal:
             if not self.command_engine.HALClient.startCommunication():
-                tcp_error = True
+                tcp_ready = False
                 err_message = "This sequence requires communication with Hal.\n"
                 err_message += "Please start Hal!"
                 QtGui.QMessageBox.information(self,
@@ -833,17 +830,52 @@ class Dave(QtGui.QMainWindow):
                                               err_message)
         if self.needs_kilroy:
             if not self.command_engine.kilroyClient.startCommunication():
-                tcp_error = True
+                tcp_ready = False
                 err_message = "This sequence requires communication with Kilroy.\n"
                 err_message += "Please start Kilroy!"
                 QtGui.QMessageBox.information(self,
                                               "TCP Communication Error",
-                                             err_message)               
-        if not tcp_error:
-            # Start Test Run
+                                             err_message)
+        return tcp_ready
+
+    ## validateCommandSequence
+    #
+    # Start the validation process for a command sequence
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def validateCommandSequence(self, boolean):
+        tcp_ready = self.validateTCP()   
+        if tcp_ready: # Start Test Run
+            # Configure UI
             self.running = True
+            self.test_mode = True
+            self.ui.runButton.setEnabled(False)
+            self.ui.abortButton.setEnabled(False)
+            self.ui.selectCommandButton.setEnabled(False)
+            self.ui.validateSequenceButton.setEnabled(False)
+            self.skip_warning = False
+            
+            # Reset command properties
+            self.disk_usages = [0.0] * len(self.commands)
+            self.command_durations = [0.0] * len(self.commands)
+            self.is_command_valid = [True] * len(self.commands)
+            
+            # Configure command engine
+            self.command_engine.enableTestMode(True)
+            self.command_index = 0
+            self.issueCommand()
             self.command_engine.startCommand()
-        
+
+        else: # Mark all commands as invalid
+            self.disk_usages = [0.0] * len(self.commands)
+            self.command_durations = [0.0] * len(self.commands)
+            self.is_command_valid = [False] * len(self.commands)
+            self.createCommandList()
+            self.updateEstimates()
+
+            
     ## quit
     #
     # Handles the quit file action.
