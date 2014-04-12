@@ -234,6 +234,7 @@ class Dave(QtGui.QMainWindow):
         self.running = False
         self.settings = QtCore.QSettings("Zhuang Lab", "dave")
         self.sequence_filename = ""
+        self.sequence_validated = False
         self.test_mode = False
         self.skip_warning = False
         self.needs_hal = False
@@ -591,11 +592,22 @@ class Dave(QtGui.QMainWindow):
             self.ui.runButton.setEnabled(False) #Inactivate button until current action is complete
             self.running = False
         else: # Start
-            if not all(self.is_command_valid): # Activate UI if sequence is valid
+            if not all(self.is_command_valid): # Confirm run in the presence of invalid commands
                 messageBox = QtGui.QMessageBox(parent = self)
                 messageBox.setWindowTitle("Invalid Commands")
                 box_text = "There are invalid commands. Are you sure you want to start?\n"
                 box_text += "Invalid commands will be skipped."
+                messageBox.setText(box_text)
+                messageBox.setStandardButtons(QtGui.QMessageBox.No |
+                                              QtGui.QMessageBox.Yes)
+                messageBox.setDefaultButton(QtGui.QMessageBox.No)
+                button_ID = messageBox.exec_()
+                if not (button_ID == QtGui.QMessageBox.Yes):
+                    return
+            if not self.sequence_validated:
+                messageBox = QtGui.QMessageBox(parent = self)
+                messageBox.setWindowTitle("Unvalidated Sequence")
+                box_text = "The current sequence has not been validated. Are you sure you want to start?\n"
                 messageBox.setText(box_text)
                 messageBox.setStandardButtons(QtGui.QMessageBox.No |
                                               QtGui.QMessageBox.Yes)
@@ -697,6 +709,7 @@ class Dave(QtGui.QMainWindow):
                                               traceback.format_exc())
             else:
                 self.skip_warning = False #Enable warnings for invalid commands
+                self.sequence_validated = False #Mark sequence as unvalidated
                 self.commands = commands
                 self.command_index = 0
                 self.sequence_length = len(self.commands)
