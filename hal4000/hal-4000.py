@@ -554,8 +554,8 @@ class Window(QtGui.QMainWindow):
                     return
 
                 # Check file overwrite.
-                if not message.getData("overwrite"):
-                    file_path = self.directory_test_mode + message.getData("name") + self.parameters.filetype
+                if not (message.getData("overwrite") == None) and (message.getData("overwrite") == False):
+                    file_path = self.directory_test_mode + os.sep + message.getData("name") + self.parameters.filetype
                     if os.path.exists(file_path):
                         message.setError(True, file_path + " will be overwritten")
                         self.tcpComplete.emit(message)

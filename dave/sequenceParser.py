@@ -124,7 +124,7 @@ class Movie(AbstractCommand):
         self.pause = False
         self.progression = None
         self.recenter = 0
-
+        
         # parse settings
         for node in movie_xml.childNodes:
             if node.nodeType == Node.ELEMENT_NODE:
