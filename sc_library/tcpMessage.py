@@ -118,15 +118,6 @@ class TCPMessage(object):
     def hasError(self):
         return self.error
 
-    ## isComplete
-    #
-    # Return the completion status of the message
-    #
-    # @return A boolean which indicates whether the message was delivered and executed.
-    #  
-    #def isComplete(self):
-    #    return self.complete
-
     ## isTest
     #
     # Return the test status of the message. If the message is in test mode, then it will not be
