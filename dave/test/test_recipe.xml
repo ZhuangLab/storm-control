@@ -26,6 +26,16 @@
        <variable_entry name = "Movie Loop" />
     </movie>
 
+	<!-- No file overwrite -->
+    <movie>
+       <name increment="Yes">No_File_Overwrite</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <lock_target>10.0</lock_target>
+	   <overwrite>False</overwrite>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+	
     <!-- Set lock target -->
     <movie>
        <name increment="Yes">Set_Lock_Target</name>

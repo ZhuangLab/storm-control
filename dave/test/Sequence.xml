@@ -22,6 +22,16 @@
        <none />
 </movie>
 
+	
+    <movie>
+       <name>No_File_Overwrite_0</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <lock_target>10.0</lock_target>
+	   <overwrite>False</overwrite>
+       <none />
+</movie>
+	
     
     <movie>
        <name>Set_Lock_Target_0</name>
@@ -142,6 +152,16 @@
        <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
 </movie>
 
+	
+    <movie>
+       <name>No_File_Overwrite_1</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <lock_target>10.0</lock_target>
+	   <overwrite>False</overwrite>
+       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+	
     
     <movie>
        <name>Set_Lock_Target_1</name>
@@ -262,6 +282,16 @@
        <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
 </movie>
 
+	
+    <movie>
+       <name>No_File_Overwrite_2</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <lock_target>10.0</lock_target>
+	   <overwrite>False</overwrite>
+       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+	
     
     <movie>
        <name>Set_Lock_Target_2</name>
@@ -382,6 +412,16 @@
        <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
 </movie>
 
+	
+    <movie>
+       <name>No_File_Overwrite_3</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <lock_target>10.0</lock_target>
+	   <overwrite>False</overwrite>
+       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+	
     
     <movie>
        <name>Set_Lock_Target_3</name>
@@ -502,6 +542,16 @@
        <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
 </movie>
 
+	
+    <movie>
+       <name>No_File_Overwrite_4</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <lock_target>10.0</lock_target>
+	   <overwrite>False</overwrite>
+       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+	
     
     <movie>
        <name>Set_Lock_Target_4</name>
