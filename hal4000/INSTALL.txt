@@ -7,6 +7,7 @@
  (e) numpy
  (f) scipy (for the optimal focus lock mode)
  (g) pywinusb (for the logitech joystick)
+ (h) PyBluez (for bluetooth / android)
 
 (2-3) Note: You should be able to skip the next two steps if you
  are running 64 bit windows as the compiled files are now included in
@@ -43,7 +44,9 @@
  (d) focusLock/focus_quality.c (for optimal focus lock mode)
 
 
-(4) Add the storm_control directory to your Python path.
+(4) Add the storm_control directory to your Python path. Many of the
+ common modules that are used by HAL, dave and steve are located in
+ the sc_library folder.
 
 
 (5) Create data & logs directories:

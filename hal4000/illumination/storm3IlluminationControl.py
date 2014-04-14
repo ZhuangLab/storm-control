@@ -24,12 +24,12 @@ import coherent.cube405 as cube405
 class STORM3QIlluminationControlWidget(illuminationControl.QIlluminationControlWidget):
     def __init__(self, settings_file_name, parameters, parent = None):
         # setup the AOTF communication thread
-        self.aotf_queue = commandQueues.QCTAOTFThread()
+        self.aotf_queue = commandQueues.QCT64BitAOTFThread()
         self.aotf_queue.start(QtCore.QThread.NormalPriority)
         self.aotf_queue.analogModulationOn()
 
         # setup the Cube communication thread
-        self.cube_queue = commandQueues.QSerialLaserComm(cube405.Cube405(port = "COM13"))
+        self.cube_queue = commandQueues.QSerialLaserComm(cube405.Cube405(port = "COM9"))
         self.cube_queue.start(QtCore.QThread.NormalPriority)
 
         illuminationControl.QIlluminationControlWidget.__init__(self, settings_file_name, parameters, parent)
