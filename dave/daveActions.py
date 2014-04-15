@@ -44,7 +44,7 @@ class DaveAction(QtCore.QObject):
         self.lost_message_timer = QtCore.QTimer(self)
         self.lost_message_timer.setSingleShot(True)
         self.lost_message_timer.timeout.connect(self.handleTimerDone)
-        self.delay = 2000 # Wait for a test message to be returned before issuing an error
+        self.lost_message_delay = 2000 # Wait for a test message to be returned before issuing an error
 
     ## abort
     #
@@ -130,7 +130,7 @@ class DaveAction(QtCore.QObject):
     def start(self):
         self.tcp_client.messageReceived.connect(self.handleReply)
         if self.message.isTest():
-            self.lost_message_timer.start(self.delay)
+            self.lost_message_timer.start(self.lost_message_delay)
         self.tcp_client.sendMessage(self.message)
 
 # 
@@ -157,6 +157,63 @@ class DaveActionValveProtocol(DaveAction):
 
         self.message = tcpMessage.TCPMessage(message_type = "Kilroy Protocol",
                                              message_data = {"name": self.protocol_name})
+
+## DaveDelay
+#
+# This action introduces a defined delay in a dave action.  
+#
+class DaveDelay(DaveAction):
+    ## __init__
+    #
+    # @param tcp_client A tcp communications object.
+    #
+    def __init__(self, delay):
+        # Initialize parent class with no tcp_client
+        DaveAction.__init__(self, None)
+    
+        # Prepare delay timer
+        self.delay_timer = QtCore.QTimer(self)
+        self.delay_timer.setSingleShot(True)
+        self.delay_timer.timeout.connect(self.handleTimerComplete)
+        self.delay = delay
+        
+        # Create message and add delay time for accurate dave time estimates
+        self.message = tcpMessage.TCPMessage(message_type = "Delay",
+                                             message_data = {"delay", self.delay});
+        self.message.addResponse("duration", self.delay)
+
+    ## abort
+    #
+    # Handle an external abort call
+    #
+    def abort(self):
+        self.delay_timer.stop()
+        self.completeAction(self.message)
+
+    ## cleanUp
+    #
+    # Handle clean up of the action
+    #
+    def cleanUp(self):
+        pass
+
+    ## handleTimerComplete
+    #
+    # Handle completion of the felay timer
+    #
+    def handleTimerComplete(self):
+        self.completeAction(self.message)
+
+    ## start
+    #
+    # Start the action.
+    #
+    def start(self):
+        if self.message.isTest():
+            self.completeAction(self.message)
+        else:
+            self.delay_timer.start(self.delay)
+            print "Delaying " + str(self.delay) + " ms"
 
 ## FindSum
 #
