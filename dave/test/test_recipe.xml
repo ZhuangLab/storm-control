@@ -77,7 +77,7 @@
        <name increment="Yes">Delay</name>
        <length>300</length>
        <parameters>Test_Parameter</parameters>
-       <delay>2000</delay>
+       <delay>10000</delay>
        <variable_entry name = "Movie Loop" />
     </movie>
 	
