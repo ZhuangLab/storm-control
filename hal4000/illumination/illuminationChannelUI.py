@@ -21,16 +21,17 @@ class ChannelUI(QtGui.QFrame):
     ## __init__
     #
     # @param name The name of the channel (a text string).
-    # @param color The background color to use for the channel [red, green, blue].
+    # @param color The background color to use for the channel (RGB triple as a string).
     # @param parameters The parameters to use in the initial channel setup.
     # @param parent The PyQt parent of this object.
     #
     def __init__(self, number, name, color, parameters, parent):
         QtGui.QFrame.__init__(self, parent):
 
+        self.color = color
         self.parameters = parameters
 
-        self.setStyleSheet("background-color: rgb(" + color + ");")
+        self.setStyleSheet("background-color: rgb(" + self.color + ");")
         self.setFrameShape(QtGui.QFrame.StyledPanel)
         self.setFrameShadow(QtGui.QFrame.Raised)
         self.resize(50, 204)
@@ -47,6 +48,24 @@ class ChannelUI(QtGui.QFrame):
 
         # Connect signals
         self.on_off_button.clicked.connect(self.handleOnOffChange)
+
+    ## disableChannel
+    #
+    # Disables all the UI elements of the channel.
+    #
+    def disableChannel(self):
+        self.setStyleSheet("background-color: rgb(128,128,128);")
+        self.setFrameShadow(QtGui.QFrame.Sunken)
+        self.on_off_button.setCheckable(False)
+
+    ## enableChannel
+    #
+    # enables all the UI elements of the channel.
+    #
+    def enableChannel(self):
+        self.setStyleSheet("background-color: rgb(" + self.color + ");")
+        self.setFrameShadow(QtGui.QFrame.Raised)
+        self.on_off_button.setCheckable(True)
 
     ## getAmplitude
     #
@@ -79,6 +98,20 @@ class ChannelUI(QtGui.QFrame):
 
         self.parameters = parameters
         self.on_off_button.setChecked(self.parameters.on_off_state[channel_number])
+
+    ## remoteIncPower
+    #
+    # @param power_inc The power increment.
+    #
+    def remoteIncPower(self, power_inc):
+        pass
+
+    ## remoteSetPower
+    #
+    # @param new_power The new power.
+    #
+    def remoteSetPower(self, power_inc):
+        pass
 
     ## updatePowerText
     #
