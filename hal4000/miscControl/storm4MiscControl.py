@@ -30,7 +30,7 @@ class AMiscControl(miscControl.MiscControl):
     def __init__(self, hardware, parameters, parent = None):
         miscControl.MiscControl.__init__(self, parameters, parent)
 
-        self.filter_wheel = ix2ucb.IX2UCB(port = "COM12")
+        self.filter_wheel = ix2ucb.IX2UCB(port = "COM3")
         if (not self.filter_wheel.getStatus()):
             self.filter_wheel = False
 

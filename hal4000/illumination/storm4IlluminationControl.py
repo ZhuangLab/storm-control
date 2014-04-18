@@ -29,7 +29,7 @@ class STORM4QIlluminationControlWidget(illuminationControl.QIlluminationControlW
         self.aotf_queue.analogModulationOn()
 
         # setup the Cube communication thread
-        self.cube_queue = commandQueues.QSerialLaserComm(cube405.Cube405("COM3"))
+        self.cube_queue = commandQueues.QSerialLaserComm(cube405.Cube405("COM6"))
         self.cube_queue.start(QtCore.QThread.NormalPriority)
 
         # Setup the filter wheel communication thread.

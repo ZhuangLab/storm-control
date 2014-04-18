@@ -24,7 +24,7 @@ import stagecontrol.stageControl as stageControl
 #
 class AStageControl(stageControl.StageControl):
     def __init__(self, hardware, parameters, parent = None):
-        self.stage = stageThread.QStageThread(marzhauser.MarzhauserRS232("COM6", wait_time = 1.0e-3))
+        self.stage = stageThread.QStageThread(marzhauser.MarzhauserRS232("COM4", wait_time = 1.0e-3))
         self.stage.start(QtCore.QThread.NormalPriority)
         stageControl.StageControl.__init__(self, 
                                            parameters,
