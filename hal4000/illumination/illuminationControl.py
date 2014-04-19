@@ -60,7 +60,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         # Parse XML that describes the hardware.
         hardware = xmlParser.parseHardwareXML("illumination/" + hardware.settings_xml)
 
-        # Modules setup.
+        # Hardware modules setup.
         for module in hardware.modules:
             m_name = module.module_name
             a_module = __import__(m_name, globals(), locals(), [m_name], -1)
@@ -68,7 +68,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
             a_instance = a_class(module.parameters, self)
             self.hardware_modules[module.name] = a_instance
 
-        # Channels setup.
+        # Illumination channels setup.
         x = 0
         for channel in hardware.channels:
             a_instance = illuminationChannel.Channel(channel,
@@ -191,7 +191,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         if self.fp and frame.master:
             str = "{0:d}".format(frame.number)
             for channel in self.channels:
-                str = str + " {0:.4f}".format(channel.getAmplitude())
+                str = str + " " + channel.getAmplitude()
             fp.write(str + "\n")
 
     ## newParameters
@@ -215,11 +215,11 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def newShutters(self, shutters_filename):
-        shutters = xmlParsers.parseShuttersXML(shutters_filename)
+        [waveforms, colors, frames] = xmlParsers.parseShuttersXML(len(self.channels), shutters_filename)
         for i, channel in enumerate(self.channels)
-            channel.newShutters(shutters.channel_data[i])
-        self.newColors.emit(shutters.colors)
-        self.newCycleLength.emit(shutters.cycle_length)
+            channel.newShutters(waveforms[i])
+        self.newColors.emit(colors)
+        self.newCycleLength.emit(frames)
 
     ## remoteIncPower
     #

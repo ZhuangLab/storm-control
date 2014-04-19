@@ -30,11 +30,11 @@ class Channel(QtCore.QObject):
         QtCore.QObject.__init__(self, channels_box)
 
         self.am_on = False
-        self.channel_number = channel.channel
+        self.channel_number = channel.channel_id
         self.channel_ui = False
         self.current_power = 0
         self.display_normalized = False
-        self.max_amplitude = 0
+        self.max_amplitude = 1.0
         self.name = channel.description
         self.parameters = False
         self.shutter_data = []
@@ -71,7 +71,7 @@ class Channel(QtCore.QObject):
 
     ## getAmplitude
     #
-    # @return The current amplitude of the channel.
+    # @return The current amplitude of the channel (as a string).
     #
     def getAmplitude(self):
         return self.channel_ui.getAmplitude()
@@ -98,7 +98,8 @@ class Channel(QtCore.QObject):
 
     ## handleOnOffChange
     #
-    # Handles a request to turn the channel on / off.
+    # Handles a request to turn the channel on / off. These all
+    # come from the UI.
     #
     # @param on True/False on/off.
     #
@@ -115,7 +116,7 @@ class Channel(QtCore.QObject):
                 self.digital_modulation.turnOn(self.channel_number)
 
             if self.mechanical_shutter:
-                self.mechanical_shutter.open(self.channel_number)
+                self.mechanical_shutter.openShutter(self.channel_number)
 
         else:
             if self.amplitude_modulation:
@@ -128,7 +129,7 @@ class Channel(QtCore.QObject):
                 self.digital_modulation.turnOff(self.channel_number)
 
             if self.mechanical_shutter:
-                self.mechanical_shutter.close(self.channel_number)
+                self.mechanical_shutter.closeShutter(self.channel_number)
 
     ## handleSetPower
     #
@@ -152,9 +153,9 @@ class Channel(QtCore.QObject):
 
             if self.mechanical_shutter:
                 if (new_power == 0):
-                    self.mechanical_shutter.close(self.channel_number)
+                    self.mechanical_shutter.closeShutter(self.channel_number)
                 else:
-                    self.mechanical_shutter.open(self.channel_number)
+                    self.mechanical_shutter.openShutter(self.channel_number)
 
     ## newParameters
     #
@@ -165,7 +166,7 @@ class Channel(QtCore.QObject):
             self.parameters.shutter_data[self.channel_number] = self.shutter_data
 
         self.parameters = parameters
-        self.shutter_data = self.parameters[self.channel_number]
+        self.shutter_data = self.parameters.shutter_data[self.channel_number]
         self.channel_ui.newParameters(self.parameters, self.channel_number)
 
     ## newShutters
@@ -177,6 +178,10 @@ class Channel(QtCore.QObject):
         self.used_for_film = False
         if any((y > 0.0) for y in self.shutter_data):
             self.used_for_film = True
+
+        if self.analog_modulation:
+            for i in len(self.shutter_data):
+                self.shutter_data[i] = self.analog_modulation.powerToVoltage(self.channel_number, self.shutter_data[i])
 
     ## remoteIncPower
     #
@@ -234,7 +239,7 @@ class Channel(QtCore.QObject):
     def stopFilm(self):
         if not self.used_for_film:
             self.channel_ui.enableChannel()
-        self.handleOnOffChange(self.was_on)
+        self.channel_ui.setOnOff(self.was_on)
 
 #
 # The MIT License

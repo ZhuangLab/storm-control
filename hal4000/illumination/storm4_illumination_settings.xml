@@ -1,48 +1,43 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<power_control_settings>
-  <control_modules>
+<illumination_settings>
 
-    <control_module>
-      <name>750wheel</name>
-      <module>illumination.filterwheel</module>
-      <class>ThorlabsFW102C</class>
-      <parameters>
-	<port>COM14</port>
-      </parameters>
-    </control_module>
+  <control_module>
+    <name>750wheel</name>
+    <module>illumination.filterwheel</module>
+    <class>ThorlabsFW102C</class>
+    <parameters>
+      <port>COM14</port>
+    </parameters>
+  </control_module>
 
-    <control_module>
-      <name>AOTF</name>
-      <module>illumination.aotf</module>
-      <class>CT64bitAOTF</class>
-      <parameters>
-	<use_fsk type="boolean">true</use_fsk>
-      </parameters>
-    </control_module>
-    
-    <control_module>
-      <name>cube405</name>
-      <module>illumination.laser</module>
-      <class>CoherentCube</class>
-      <parameters>
-	<port>COM13</port>
-      </parameters>
-    </control_module>
+  <control_module>
+    <name>AOTF</name>
+    <module>illumination.aotf</module>
+    <class>CT64bitAOTF</class>
+    <parameters>
+      <use_fsk type="boolean">true</use_fsk>
+    </parameters>
+  </control_module>
+  
+  <control_module>
+    <name>cube405</name>
+    <module>illumination.laser</module>
+    <class>CoherentCube</class>
+    <parameters>
+      <port>COM13</port>
+    </parameters>
+  </control_module>
 
-    <control_module>
-      <name>daq</name>
-      <module>illumination.daq</module>
-      <class>nidaq</class>
-      <parameters>
-	<counter>
-	  <board>PCI-6733</board>
-	  <channel type="int">0</channel>
-	  <trigger>PFI0</trigger>
-	</counter>
+  <control_module>
+    <name>daq</name>
+    <module>illumination.daq</module>
+    <class>nidaq</class>
+    <parameters>
+      <board>PCI-6733</board>
+      <counter type="int">0</counter>
+      <trigger>PFI0</trigger>
       </parameters>
-    </control_module>
-
-  </control_modules>
+  </control_module>
 
   <channel>
     <description>750</description>
@@ -173,4 +168,4 @@
     <frequency type="float">0.0</frequency>
     <amplitude type="int">5000</amplitude>
   </block>
-</power_control_settings>
+</illumination_settings>
