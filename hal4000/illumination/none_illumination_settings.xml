@@ -4,42 +4,48 @@
   <control_modules>
     <control_module>
       <name>wheel1</name>
-      <module>illumination.filterWheel</module>
-      <class>FilterWheel</class>
+      <module_name>illumination.filterWheel</module_name>
+      <class_name>NoneFilterWheel</class_name>
     </control_module>
 
     <control_module>
       <name>aotf1</name>
-      <module>illumination.aotf</module>
-      <class>AOTF</class>
+      <module_name>illumination.aotf</module_name>
+      <class_name>NoneAOTF</class_name>
     </control_module>
     
     <control_module>
       <name>laser1</name>
-      <module>illumination.laser</module>
-      <class>laser</class>
+      <module_name>illumination.laser</module_name>
+      <class_name>NoneLaser</class_name>
     </control_module>
 
     <control_module>
       <name>daq1</name>
-      <module>illumination.daq</module>
-      <class>daq</class>
+      <module_name>illumination.daq</module_name>
+      <class_name>NoneDaq</class_name>
     </control_module>
   </control_modules>
   
   <channels>
     <channel>
       <description>750</description>
-      <color type="rgb">255,0,0</color>
+      <color type="rgb">200,0,0</color>
       <channel_id type="int">0</channel_id>
       
       <amplitude_modulation>
-	<uses>wheel</uses>
+	<uses>wheel1</uses>
 	<display_normalized type="boolean">False</display_normalized>
+	<parameters>
+	  <amplitude type="int">5</amplitude>
+	</parameters>
       </amplitude_modulation>
       
       <digital_modulation>
 	<uses>daq1</uses>
+	<parameters>
+	  <channel type="int">0</channel>
+	</parameters>
       </digital_modulation>
     </channel>
     
@@ -52,7 +58,7 @@
 	<uses>aotf1</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <amplitude>6500</amplitude>
+	  <amplitude type="int">6500</amplitude>
 	  <channel type="int">0</channel>
 	  <off_frequency type="float">20.0</off_frequency>
 	  <on_frequency type="float">91.22</on_frequency>
@@ -75,5 +81,32 @@
 	</parameters>
       </digital_modulation>
     </channel>
+
+    <channel>
+      <description>561</description>
+      <color type="rgb">255,255,0</color>
+      <channel_id type="int">2</channel_id>
+      
+      <digital_modulation>
+	<uses>daq1</uses>
+	<parameters>
+	  <channel type="int">2</channel>
+	</parameters>
+      </digital_modulation>
+    </channel>
+
+    <channel>
+      <description>532</description>
+      <color type="rgb">0,255,0</color>
+      <channel_id type="int">3</channel_id>
+      
+      <mechanical_shutter>
+	<uses>daq1</uses>
+	<parameters>
+	  <channel type="int">3</channel>
+	</parameters>
+      </mechanical_shutter>
+    </channel>
+
   </channels>
 </illumination_settings>

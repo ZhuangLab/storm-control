@@ -45,6 +45,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         self.hardware_modules = {}
         self.fp = False
         self.running_shutters = False
+        self.spacing = 3
 
         if parent:
             self.have_parent = True
@@ -69,14 +70,14 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
             self.hardware_modules[module.name] = a_instance
 
         # Illumination channels setup.
-        x = 0
+        x = 7
         for channel in hardware.channels:
             a_instance = illuminationChannel.Channel(channel,
                                                      parameters,
                                                      self.hardware_modules,
-                                                     self.ui.channelsBox)
-            x += a_instance.setPosition(x, 0)
-            self.channels.append(illuminationChannel.Channel(a_instance))
+                                                     self.ui.powerControlBox)
+            x += a_instance.setPosition(x, 14) + self.spacing
+            self.channels.append(a_instance)
 
         # Connect signals.
         if self.have_parent:
@@ -175,7 +176,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     def moduleInit(self):
         names = []
         for channel in self.channels:
-            names.append[channel.getName()]
+            names.append(channel.getName())
         self.channelNames.emit(names)
 
     ## newFrame
@@ -192,7 +193,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
             str = "{0:d}".format(frame.number)
             for channel in self.channels:
                 str = str + " " + channel.getAmplitude()
-            fp.write(str + "\n")
+            self.fp.write(str + "\n")
 
     ## newParameters
     #
@@ -215,8 +216,8 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def newShutters(self, shutters_filename):
-        [waveforms, colors, frames] = xmlParsers.parseShuttersXML(len(self.channels), shutters_filename)
-        for i, channel in enumerate(self.channels)
+        [waveforms, colors, frames] = xmlParser.parseShuttersXML(len(self.channels), shutters_filename)
+        for i, channel in enumerate(self.channels):
             channel.newShutters(waveforms[i])
         self.newColors.emit(colors)
         self.newCycleLength.emit(frames)
@@ -257,7 +258,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
             str = "frame"
             for channel in self.channels:
                 str = str + " " + channel.getName()
-            fp.write(str + "\n")
+            self.fp.write(str + "\n")
 
         # Running the shutters.
         if run_shutters:
@@ -302,17 +303,25 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def updateSize(self):
+
+        # Determine total width and max channel height.
         new_width = 0
         new_height = 0
         for channel in self.channels:
-            new_width += channel.getWidth()
+            new_width += channel.getWidth() + self.spacing
             if (new_height < channel.getHeight()):
                 new_height = channel.getHeight()
 
-        self.ui.channelsBox.setGeometry(10, 0, new_width + 9, new_height + 19)
+        # Resize all the channels to be the same height.
+        for channel in self.channels:
+            if (channel.getHeight() != new_height):
+                channel.setHeight(new_height)
+        
+        # Resize the group box and the dialog box.
+        self.ui.powerControlBox.setGeometry(10, 0, new_width + 9 - self.spacing, new_height + 19)
 
-        lb_width = self.ui.channelsBox.width()
-        lb_height = self.ui.channelsBox.height()
+        lb_width = self.ui.powerControlBox.width()
+        lb_height = self.ui.powerControlBox.height()
         self.ui.okButton.setGeometry(lb_width - 65, lb_height + 4, 75, 24)
         self.setFixedSize(lb_width + 18, lb_height + 36)
 

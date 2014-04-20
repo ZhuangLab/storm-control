@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'illumination.ui'
 #
-# Created: Fri Nov 22 08:34:08 2013
+# Created: Sat Apr 19 09:33:56 2014
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -34,9 +34,9 @@ class Ui_Dialog(object):
         Dialog.setSizePolicy(sizePolicy)
         Dialog.setMinimumSize(QtCore.QSize(372, 312))
         Dialog.setMaximumSize(QtCore.QSize(372, 312))
-        self.laserBox = QtGui.QGroupBox(Dialog)
-        self.laserBox.setGeometry(QtCore.QRect(10, 0, 354, 271))
-        self.laserBox.setObjectName(_fromUtf8("laserBox"))
+        self.powerControlBox = QtGui.QGroupBox(Dialog)
+        self.powerControlBox.setGeometry(QtCore.QRect(10, 0, 354, 271))
+        self.powerControlBox.setObjectName(_fromUtf8("powerControlBox"))
         self.okButton = QtGui.QPushButton(Dialog)
         self.okButton.setGeometry(QtCore.QRect(290, 280, 75, 24))
         self.okButton.setObjectName(_fromUtf8("okButton"))
@@ -46,6 +46,6 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(_translate("Dialog", "HAL-4000 Illumination", None))
-        self.laserBox.setTitle(_translate("Dialog", "Laser Power Control", None))
+        self.powerControlBox.setTitle(_translate("Dialog", "Power Control", None))
         self.okButton.setText(_translate("Dialog", "Ok", None))
 

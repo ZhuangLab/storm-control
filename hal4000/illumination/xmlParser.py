@@ -125,8 +125,9 @@ def parseShuttersXML(number_channels, shutters_file, oversampling = 100):
     # other modules (such as the spot counter) to associate a color with the
     # a particular frame when, for example, updating the STORM image.
     #
+    color_data = []
     for i in range(frames):
-        colors.append(0)
+        color_data.append(0)
 
     #
     # Create waveforms.
@@ -185,10 +186,10 @@ def parseShuttersXML(number_channels, shutters_file, oversampling = 100):
                 color_end = int(round(float(off)/float(oversampling)))
                 i = color_start
                 while i < color_end:
-                    colors[i] = color
+                    color_data[i] = color
                     i += 1
 
-    [waveforms, colors, frames]
+    return [waveforms, color_data, frames]
 
 
 #

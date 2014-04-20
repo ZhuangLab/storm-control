@@ -25,28 +25,23 @@ class ChannelUI(QtGui.QFrame):
     # @param parameters The parameters to use in the initial channel setup.
     # @param parent The PyQt parent of this object.
     #
-    def __init__(self, number, name, color, parameters, parent):
-        QtGui.QFrame.__init__(self, parent):
+    def __init__(self, name, color, parameters, parent):
+        QtGui.QFrame.__init__(self, parent)
 
         self.color = color
         self.parameters = parameters
 
+        self.setLineWidth(2)
         self.setStyleSheet("background-color: rgb(" + self.color + ");")
-        self.setFrameShape(QtGui.QFrame.StyledPanel)
+        self.setFrameShape(QtGui.QFrame.Panel)
         self.setFrameShadow(QtGui.QFrame.Raised)
-        self.resize(50, 204)
+        self.resize(48, 204)
 
         # Text label.
         self.wavelength_label = QtGui.QLabel(self)
         self.wavelength_label.setGeometry(5, 5, 40, 10)
         self.wavelength_label.setText(name)
         self.wavelength_label.setAlignment(QtCore.Qt.AlignCenter)
-
-        # Current power label.
-        self.power_label = QtGui.QLabel(self.channel_frame)
-        self.power_label.setGeometry(5, 19, 40, 10)
-        self.power_label.setText("")
-        self.power_label.setAlignment(QtCore.Qt.AlignCenter)
 
         # Power on/off radio button.
         self.on_off_button = QtGui.QRadioButton(self)
@@ -63,6 +58,7 @@ class ChannelUI(QtGui.QFrame):
         self.setOnOff(False)
         self.setStyleSheet("background-color: rgb(128,128,128);")
         self.setFrameShadow(QtGui.QFrame.Sunken)
+        self.wavelength_label.setStyleSheet("QLabel { color: rgb(200,200,200)}")
         self.on_off_button.setCheckable(False)
 
     ## enableChannel
@@ -72,6 +68,7 @@ class ChannelUI(QtGui.QFrame):
     def enableChannel(self):
         self.setStyleSheet("background-color: rgb(" + self.color + ");")
         self.setFrameShadow(QtGui.QFrame.Raised)
+        self.wavelength_label.setStyleSheet("QLabel { color: black}")
         self.on_off_button.setCheckable(True)
 
     ## getAmplitude
@@ -79,7 +76,10 @@ class ChannelUI(QtGui.QFrame):
     # @return The current amplitude (as a string).
     #
     def getAmplitude(self):
-        return str(self.power_label.text())
+        if self.on_off_button.isChecked():
+            return "1.0"
+        else:
+            return "0.0"
 
     ## handleOnOffChange
     #
@@ -97,7 +97,7 @@ class ChannelUI(QtGui.QFrame):
     #
     def newParameters(self, parameters, channel_number):
         if self.parameters:
-            self.parameters.on_off_state[channel_number] = self.on_off_state.isChecked()
+            self.parameters.on_off_state[channel_number] = self.on_off_button.isChecked()
 
         self.parameters = parameters
         self.setOnOff(self.parameters.on_off_state[channel_number])
@@ -128,13 +128,6 @@ class ChannelUI(QtGui.QFrame):
     def setOnOff(self, state):
         self.on_off_button.setChecked(state)
 
-    ## updatePowerText
-    #
-    # @param new_text The new text string to display.
-    #
-    def updatePowerText(self, new_text):
-        pass
-
 
 ## ChannelUIAdjustable.
 #
@@ -151,13 +144,20 @@ class ChannelUIAdjustable(ChannelUI):
     # @param amplitude The maximum amplitude for this channel.
     # @param parent The PyQt parent of this object.
     #
-    def __init__(self, number, name, parameters, amplitude, parent):
-        ChannelUI.__init__(self, number, name, parameters, parent)
+    def __init__(self, name, color, parameters, amplitude, parent):
+        ChannelUI.__init__(self, name, color, parameters, parent)
 
         self.buttons = []
-        self.cur_y = 180
+        self.cur_y = 202
         self.max_amplitude = amplitude
 
+        # Current power label.
+        self.power_label = QtGui.QLabel(self)
+        self.power_label.setGeometry(5, 19, 40, 10)
+        self.power_label.setText("")
+        self.power_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        # Slider for controlling the power.
         self.powerslider = QtGui.QSlider(self)
         self.powerslider.setGeometry(13, 34, 24, 141)
         self.powerslider.setMinimum(0)
@@ -165,6 +165,35 @@ class ChannelUIAdjustable(ChannelUI):
         self.powerslider.setPageStep(0.1 * amplitude)
         self.powerslider.setSingleStep(1)
         self.powerslider.valueChanged.connect(self.handleAmplitudeChange)
+
+    ## disableChannel
+    #
+    # Disables all the UI elements of the channel.
+    #
+    def disableChannel(self):
+        ChannelUI.disableChannel(self)
+        self.power_label.setStyleSheet("QLabel { color: rgb(200,200,200)}")
+        self.powerslider.setEnabled(False)
+        for button in self.buttons:
+            button.setEnabled(False)
+
+    ## enableChannel
+    #
+    # enables all the UI elements of the channel.
+    #
+    def enableChannel(self):
+        ChannelUI.enableChannel(self)
+        self.power_label.setStyleSheet("QLabel { color: black}")
+        self.powerslider.setEnabled(True)
+        for button in self.buttons:
+            button.setEnabled(True)
+
+    ## getAmplitude
+    #
+    # @return The current amplitude (as a string).
+    #
+    def getAmplitude(self):
+        return str(self.power_label.text())
 
     ## handleAmplitudeChange
     #
@@ -180,7 +209,7 @@ class ChannelUIAdjustable(ChannelUI):
     def newParameters(self, parameters, channel_number):
         if self.parameters:
             self.parameters.default_power[channel_number] = self.powerslider.value()
-            self.parameters.on_off_state[channel_number] = self.on_off_state.isChecked()
+            self.parameters.on_off_state[channel_number] = self.on_off_button.isChecked()
 
         self.parameters = parameters
         self.setOnOff(self.parameters.on_off_state[channel_number])
@@ -218,7 +247,7 @@ class ChannelUIAdjustable(ChannelUI):
         # Make sure we have enough buttons.
         while (len(self.buttons) < len(button_data)):
             new_button = PowerButton(self.cur_y, self)
-            new_button.powerClick.connect(self.setAmplitude)
+            new_button.powerChange.connect(self.setAmplitude)
             self.buttons.append(new_button)
             self.cur_y += 22
 
@@ -229,11 +258,18 @@ class ChannelUIAdjustable(ChannelUI):
         # Set text and value of the buttons we'll use & show them.
         for i in range(len(button_data)):
             self.buttons[i].setText(button_data[i][0])
-            self.buttons[i].setValue(int(round(button_data[i][1] * self.amplitude)))
+            self.buttons[i].setValue(int(round(button_data[i][1] * self.max_amplitude)))
             self.buttons[i].show()
 
         # Resize based on number of visible buttons.
         self.resize(50, 204 + 22 * len(button_data))
+
+    ## updatePowerText
+    #
+    # @param new_text The new text string to display.
+    #
+    def updatePowerText(self, new_text):
+        self.power_label.setText(new_text)
 
 
 ## PowerButton
@@ -253,8 +289,9 @@ class PowerButton(QtGui.QPushButton):
 
         self.value = 0.0
         self.setGeometry(6, y_loc, 38, 20)
+        self.setStyleSheet("background-color: None;")
 
-        QtGui.QPushButton.clicked.connect(self.handleClicked)
+        self.clicked.connect(self.handleClicked)
 
     ## handleClicked
     #
