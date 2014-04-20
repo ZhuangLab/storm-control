@@ -31,7 +31,6 @@
     <channel>
       <description>750</description>
       <color type="rgb">200,0,0</color>
-      <channel_id type="int">0</channel_id>
       
       <amplitude_modulation>
 	<uses>wheel1</uses>
@@ -52,7 +51,6 @@
     <channel>
       <description>642</description>
       <color type="rgb">255,0,0</color>
-      <channel_id type="int">1</channel_id>
       
       <amplitude_modulation>
 	<uses>aotf1</uses>
@@ -85,7 +83,6 @@
     <channel>
       <description>561</description>
       <color type="rgb">255,255,0</color>
-      <channel_id type="int">2</channel_id>
       
       <digital_modulation>
 	<uses>daq1</uses>
@@ -98,7 +95,6 @@
     <channel>
       <description>532</description>
       <color type="rgb">0,255,0</color>
-      <channel_id type="int">3</channel_id>
       
       <mechanical_shutter>
 	<uses>daq1</uses>

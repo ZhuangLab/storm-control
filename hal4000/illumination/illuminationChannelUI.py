@@ -29,7 +29,6 @@ class ChannelUI(QtGui.QFrame):
         QtGui.QFrame.__init__(self, parent)
 
         self.color = color
-        self.parameters = parameters
 
         self.setLineWidth(2)
         self.setStyleSheet("background-color: rgb(" + self.color + ");")
@@ -90,28 +89,28 @@ class ChannelUI(QtGui.QFrame):
     def handleOnOffChange(self, on_off):
         self.onOffChange.emit(on_off)
 
-    ## newParameters
+    ## newSettings
     #
-    # @param parameters A parameters XML object.
-    # @param channel_number The channel number.
+    # @param on True/False if the on/off radio button is pressed.
+    # @param power (int) The new power.
     #
-    def newParameters(self, parameters, channel_number):
-        if self.parameters:
-            self.parameters.on_off_state[channel_number] = self.on_off_button.isChecked()
-
-        self.parameters = parameters
-        self.setOnOff(self.parameters.on_off_state[channel_number])
+    # @return [old state of on/off radio button, old power slider setting]
+    #
+    def newSettings(self, on, power):
+        old_on = self.on_off_button.isChecked()
+        self.setOnOff(on)
+        return [old_on, 0]
 
     ## remoteIncPower
     #
-    # @param power_inc The power increment.
+    # @param power_inc (int) The power increment.
     #
     def remoteIncPower(self, power_inc):
         pass
 
     ## remoteSetPower
     #
-    # @param new_power The new power.
+    # @param new_power (int) The new power.
     #
     def remoteSetPower(self, new_power):
         if (new_power > 0.5):
@@ -127,6 +126,13 @@ class ChannelUI(QtGui.QFrame):
     #
     def setOnOff(self, state):
         self.on_off_button.setChecked(state)
+
+    ## setupButtons
+    #
+    # @param button_data An array of button data for this channel.
+    #
+    def setupButtons(self, button_data):
+        pass
 
 
 ## ChannelUIAdjustable.
@@ -202,31 +208,30 @@ class ChannelUIAdjustable(ChannelUI):
     def handleAmplitudeChange(self, amplitude):
         self.powerChange.emit(amplitude)
 
-    ## newParameters
+    ## newSettings
     #
-    # @param parameters A parameters object.
+    # @param on True/False if the on/off radio button is pressed.
+    # @param power (int) The new power.
     #
-    def newParameters(self, parameters, channel_number):
-        if self.parameters:
-            self.parameters.default_power[channel_number] = self.powerslider.value()
-            self.parameters.on_off_state[channel_number] = self.on_off_button.isChecked()
-
-        self.parameters = parameters
-        self.setOnOff(self.parameters.on_off_state[channel_number])
-        self.setAmplitude(self.parameters.default_power[channel_number])
-
-        self.setupButtons(self.parameters.power_buttons[channel_number])
+    # @return [old state of on/off radio button, old power slider setting]
+    #
+    def newSettings(self, on, power):
+        old_on = self.on_off_button.isChecked()
+        old_power = self.powerslider.value()
+        self.setOnOff(on)
+        self.setAmplitude(power)
+        return [old_on, old_power]
 
     ## remoteIncPower
     #
-    # @param power_inc The power increment.
+    # @param power_inc (int) The power increment.
     #
     def remoteIncPower(self, power_inc):
         self.setAmplitude(self.powerslider.value() + power_inc)
 
     ## remoteSetPower
     #
-    # @param new_power The new power.
+    # @param new_power (int) The new power.
     #
     def remoteSetPower(self, new_power):
         self.setAmplitude(new_power)

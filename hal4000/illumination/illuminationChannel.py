@@ -20,16 +20,17 @@ class Channel(QtCore.QObject):
 
     ## __init__
     #
+    # @param channel_id The id number for this channel.
     # @param channel A channelXML object describing the channel.
     # @param parameters A parameters XML object.
     # @param hardware_modules An array of hardware module objects.
     # @param channels_box The UI group box where the channels will be drawn.
     #
-    def __init__(self, channel, parameters, hardware_modules, channels_box):
+    def __init__(self, channel_id, channel, parameters, hardware_modules, channels_box):
         QtCore.QObject.__init__(self, channels_box)
 
         self.am_on = False
-        self.channel_number = channel.channel_id
+        self.channel_id = channel_id
         self.channel_ui = False
         self.current_power = 0
         self.display_normalized = False
@@ -41,23 +42,36 @@ class Channel(QtCore.QObject):
         self.was_on = False
 
         # Create variables for communication with the various hardware modules.
+        # This will add the attributes in the list to this class.
         bad_module = False
         for name in ["amplitude_modulation", "analog_modulation", "digital_modulation", "mechanical_shutter"]:
+
             h_module = False
+
+            # Test if the XML file has the attribute of interest.
             if hasattr(channel, name):
-                # FIXME: I don't like these variable names..
+
+                # Get the data for the attribute.
                 a_control = getattr(channel, name)
+
+                # Get the corresponding hardware / control module that will be used for this attribute.
                 h_module = hardware_modules[a_control.uses]
+
+                # Check if the hardware / control module actual works.
                 if not h_module.getStatus():
                     bad_module = True
                 else:
-                    h_module.initialize(name, self.channel_number, a_control.parameters)
+                    # Initialize the hardware / control module with the parameters for this channel.
+                    h_module.initialize(name, self.channel_id, a_control.parameters)
+
+            # Add the attribute to the class.
             setattr(self, name, h_module)
 
         # Configure the UI.
+        # If we have amplitude modulation then this is an adjustable channel with slider.
         if self.amplitude_modulation:
             self.display_normalized = channel.amplitude_modulation.display_normalized
-            self.max_amplitude = self.amplitude_modulation.getAmplitude(self.channel_number)
+            self.max_amplitude = self.amplitude_modulation.getAmplitude(self.channel_id)
             self.channel_ui = illuminationChannelUI.ChannelUIAdjustable(self.name,
                                                                         channel.color,
                                                                         parameters,
@@ -67,6 +81,8 @@ class Channel(QtCore.QObject):
                 self.channel_ui.updatePowerText("0.0000")
             else:
                 self.channel_ui.updatePowerText("0")
+
+        # Otherwise it is a basic channel with on only a on/off radio button.
         else:
             self.channel_ui = illuminationChannelUI.ChannelUI(self.name,
                                                               channel.color,
@@ -120,26 +136,26 @@ class Channel(QtCore.QObject):
                 self.handleSetPower(self.current_power)
         
             if self.analog_modulation:
-                self.analog_modulation.analogOn(self.channel_number)
+                self.analog_modulation.analogOn(self.channel_id)
 
             if self.digital_modulation:
-                self.digital_modulation.digitalOn(self.channel_number)
+                self.digital_modulation.digitalOn(self.channel_id)
 
             if self.mechanical_shutter:
-                self.mechanical_shutter.shutterOn(self.channel_number)
+                self.mechanical_shutter.shutterOn(self.channel_id)
 
         else:
             if self.amplitude_modulation:
                 self.handleSetPower(0)
         
             if self.analog_modulation:
-                self.analog_modulation.analogOff(self.channel_number)
+                self.analog_modulation.analogOff(self.channel_id)
 
             if self.digital_modulation:
-                self.digital_modulation.digitalOff(self.channel_number)
+                self.digital_modulation.digitalOff(self.channel_id)
 
             if self.mechanical_shutter:
-                self.mechanical_shutter.shutterOff(self.channel_number)
+                self.mechanical_shutter.shutterOff(self.channel_id)
 
     ## handleSetPower
     #
@@ -159,27 +175,44 @@ class Channel(QtCore.QObject):
         if self.am_on:
             self.current_power = new_power
             if self.amplitude_modulation:
-                self.amplitude_modulation.setAmplitude(self.channel_number, new_power)
+                self.amplitude_modulation.setAmplitude(self.channel_id, new_power)
 
             if self.mechanical_shutter:
                 if (new_power == 0):
-                    self.mechanical_shutter.closeShutter(self.channel_number)
+                    self.mechanical_shutter.closeShutter(self.channel_id)
                 else:
-                    self.mechanical_shutter.openShutter(self.channel_number)
+                    self.mechanical_shutter.openShutter(self.channel_id)
 
     ## newParameters
     #
     # @param parameters A parameters XML object.
     #
     def newParameters(self, parameters):
+
+        # Calculate new power in slider units if necessary.
+        new_power = parameters.default_power[self.channel_id]
+        if self.display_normalized:
+            new_power = int(round(new_power * self.max_amplitude))
+
+        # Update channel settings.
+        [old_on, old_power] = self.channel_ui.newSettings(parameters.on_off_state[self.channel_id],
+                                                          new_power)
+
+        # Update buttons.
+        self.channel_ui.setupButtons(parameters.power_buttons[self.channel_id])
+
+        # Save previous channel settings and shutter data in old parameters.
         if self.parameters:
-            while (len(self.parameters.shutter_data) <= self.channel_number):
+            if self.display_normalized:
+                old_power = float(old_power)/self.max_amplitude
+            self.parameters.on_off_state[self.channel_id] = old_on
+            self.parameters.default_power[self.channel_id] = old_power
+
+            while (len(self.parameters.shutter_data) <= self.channel_id):
                 self.parameters.shutter_data.append(False)
-            self.parameters.shutter_data[self.channel_number] = self.shutter_data
+            self.parameters.shutter_data[self.channel_id] = self.shutter_data
 
         self.parameters = parameters
-        #self.shutter_data = self.parameters.shutter_data[self.channel_number]
-        self.channel_ui.newParameters(self.parameters, self.channel_number)
 
     ## newShutters
     #
@@ -193,7 +226,7 @@ class Channel(QtCore.QObject):
 
         if self.analog_modulation:
             for i in range(len(self.shutter_data)):
-                self.shutter_data[i] = self.analog_modulation.powerToVoltage(self.channel_number, self.shutter_data[i])
+                self.shutter_data[i] = self.analog_modulation.powerToVoltage(self.channel_id, self.shutter_data[i])
 
     ## remoteIncPower
     #
@@ -203,7 +236,7 @@ class Channel(QtCore.QObject):
     # @param power_inc The channel power increment (0.0 - 1.0).
     #
     def remoteIncPower(self, power_inc):
-        self.channel_ui.remoteIncPower(round(int(new_power * self.max_amplitude)))
+        self.channel_ui.remoteIncPower(int(round(new_power * self.max_amplitude)))
 
     ## remoteSetPower
     #
@@ -213,7 +246,7 @@ class Channel(QtCore.QObject):
     # @param new_power The channel power setting (0.0 - 1.0).
     #
     def remoteSetPower(self, new_power):
-        self.channel_ui.remoteSetPower(round(int(new_power * self.max_amplitude)))
+        self.channel_ui.remoteSetPower(int(round(new_power * self.max_amplitude)))
 
     ## setHeight
     #
@@ -241,12 +274,12 @@ class Channel(QtCore.QObject):
         self.was_on = self.am_on
 
         if self.analog_modulation:
-            self.analog_modulation.analogOff(self.channel_number)
-            self.analog_modulation.analogAddChannel(self.channel_number, self.shutter_data)
+            self.analog_modulation.analogOff(self.channel_id)
+            self.analog_modulation.analogAddChannel(self.channel_id, self.shutter_data)
 
         if self.digital_modulation:
-            self.digital_modulation.digitalOff(self.channel_number)
-            self.digital_modulation.digitalAddChannel(self.channel_number, self.shutter_data)
+            self.digital_modulation.digitalOff(self.channel_id)
+            self.digital_modulation.digitalAddChannel(self.channel_id, self.shutter_data)
 
         if not self.used_for_film:
             self.channel_ui.disableChannel()
