@@ -488,9 +488,13 @@ class Window(QtGui.QMainWindow):
                 self.stopFilm()
             return
 
-        # Reject message if Hal is running.
+        # Reject message if Hal is filming.
+        #
+        # FIXME: Why? We used to allow this so that we could remotely set
+        #    and adjust the power while filming.
+        #
         if self.filming: 
-            message.setError(True, "Hal is currently running")
+            message.setError(True, "Hal is filming")
             self.tcpComplete.emit(message)
             return
 
@@ -547,6 +551,11 @@ class Window(QtGui.QMainWindow):
         elif (message.getType() == "Take Movie"):
 
             if message.isTest():
+
+                #
+                # FIXME: Shouldn't we also check these things when we are actually acquiring?
+                #
+
                 # Check length.
                 if (message.getData("length") == None) or (message.getData("length") < 1):
                     message.setError(True, str(message.getData("length")) + "is an invalid movie length")
@@ -697,9 +706,10 @@ class Window(QtGui.QMainWindow):
         for module in self.modules:
             module.newParameters(p)
 
-        # If we don't already have the shutter data, then update shutters using
-        # the shutter file specified by the parameters file.
-        if (len(p.shutter_data)==0):
+        # If we don't already have the shutter data for these parameters, 
+        # then update shutter data using the shutter file specified by 
+        # the parameters file.
+        if (p.shutter_frames == 0):
             self.newShutters(p.shutters)
 
         # Film settings.
