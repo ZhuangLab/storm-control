@@ -697,8 +697,10 @@ class Window(QtGui.QMainWindow):
         for module in self.modules:
             module.newParameters(p)
 
-        # Update shutters file based on the shutter file specified by the parameters file.
-        self.newShutters(p.shutters)
+        # If we don't already have the shutter data, then update shutters using
+        # the shutter file specified by the parameters file.
+        if (len(p.shutter_data)==0):
+            self.newShutters(p.shutters)
 
         # Film settings.
         extension = p.extension # Save a temporary copy as the original will get wiped out when we set the filename, etc.
