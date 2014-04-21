@@ -158,23 +158,6 @@ class DaveActionValveProtocol(DaveAction):
         self.message = tcpMessage.TCPMessage(message_type = "Kilroy Protocol",
                                              message_data = {"name": self.protocol_name})
 
-## ChangeDirectory
-#
-# Change the Hal Directory.
-#
-class ChangeDirectory(DaveAction):
-
-    ## __init__
-    #
-    # @param tcp_client A tcp communications object
-    # @param directory The desired directory.
-    #
-    def __init__(self, tcp_client, directory):
-        DaveAction.__init__(self, tcp_client)
-        self.min_sum = min_sum
-        self.message = tcpMessage.TCPMessage(message_type = "Change Directory",
-                                             message_data = {"directory": directory})
-
 ## DaveDelay
 #
 # This action introduces a defined delay in a dave action.  
@@ -290,6 +273,23 @@ class RecenterPiezo(DaveAction):
     def __init__(self, tcp_client):
         DaveAction.__init__(self, tcp_client)
         self.message = tcpMessage.TCPMessage(message_type = "Recenter Piezo")
+
+## SetDirectory
+#
+# Change the Hal Directory.
+#
+class SetDirectory(DaveAction):
+
+    ## __init__
+    #
+    # @param tcp_client A tcp communications object
+    # @param directory The desired directory.
+    #
+    def __init__(self, tcp_client, directory):
+        DaveAction.__init__(self, tcp_client)
+        self.min_sum = min_sum
+        self.message = tcpMessage.TCPMessage(message_type = "Set Directory",
+                                             message_data = {"directory": directory})
 
 ## Set Focus Lock Target
 #
