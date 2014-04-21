@@ -287,7 +287,6 @@ class SetDirectory(DaveAction):
     #
     def __init__(self, tcp_client, directory):
         DaveAction.__init__(self, tcp_client)
-        self.min_sum = min_sum
         self.message = tcpMessage.TCPMessage(message_type = "Set Directory",
                                              message_data = {"directory": directory})
 
