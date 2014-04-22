@@ -513,8 +513,6 @@ class Window(QtGui.QMainWindow):
                 if not os.path.isdir(new_directory):
                     message.setError(True, str(new_directory) + " is an invalid directory")
                 else:
-                    if not self.current_directory:
-                        self.current_directory = self.directory[:-1]
                     self.newDirectory(new_directory)
 
             self.tcpComplete.emit(message)
