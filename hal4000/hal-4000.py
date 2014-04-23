@@ -325,6 +325,9 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def cleanUp(self):
+        if self.filming:
+            self.stopFilm()
+
         print " Dave? What are you doing Dave?"
         print "  ..."
 
