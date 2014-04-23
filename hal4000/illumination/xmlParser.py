@@ -102,9 +102,8 @@ def parseHardwareXML(hardware_xml_file):
 #
 # @param number_channels The number of channels.
 # @param shutters_file The name of the shutter sequence xml file.
-# @param oversampling (Optional) The amount of oversampling, default is 100 points per camera frame.
 #
-# @return [waveforms, colors, frames]
+# @return [waveforms, colors, frames, oversampling]
 #
 @hdebug.debug
 def parseShuttersXML(number_channels, shutters_file, oversampling = 100):
@@ -113,7 +112,8 @@ def parseShuttersXML(number_channels, shutters_file, oversampling = 100):
     xml = ElementTree.parse(shutters_file).getroot()
     assert xml.tag == "repeat", shutters_file + " is not a shutters file."
 
-    # Use user-specified oversampling (if requested)
+    # Use user-specified oversampling (if requested), otherwise use 100.
+    oversampling = 100
     if xml.find("oversampling") is not None:
         oversampling = int(xml.find("oversampling").text)
 
@@ -189,7 +189,7 @@ def parseShuttersXML(number_channels, shutters_file, oversampling = 100):
                     color_data[i] = color
                     i += 1
 
-    return [waveforms, color_data, frames]
+    return [waveforms, color_data, frames, oversampling]
 
 
 #

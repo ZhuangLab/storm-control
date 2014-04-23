@@ -29,6 +29,7 @@ class ChannelUI(QtGui.QFrame):
         QtGui.QFrame.__init__(self, parent)
 
         self.color = color
+        self.enabled = True
 
         self.setLineWidth(2)
         self.setStyleSheet("background-color: rgb(" + self.color + ");")
@@ -59,6 +60,7 @@ class ChannelUI(QtGui.QFrame):
         self.setFrameShadow(QtGui.QFrame.Sunken)
         self.wavelength_label.setStyleSheet("QLabel { color: rgb(200,200,200)}")
         self.on_off_button.setCheckable(False)
+        self.enabled = False
 
     ## enableChannel
     #
@@ -69,6 +71,7 @@ class ChannelUI(QtGui.QFrame):
         self.setFrameShadow(QtGui.QFrame.Raised)
         self.wavelength_label.setStyleSheet("QLabel { color: black}")
         self.on_off_button.setCheckable(True)
+        self.enabled = True
 
     ## getAmplitude
     #
@@ -88,6 +91,13 @@ class ChannelUI(QtGui.QFrame):
     #
     def handleOnOffChange(self, on_off):
         self.onOffChange.emit(on_off)
+
+    ## isEnabled
+    #
+    # @return True/False if the channel is enabled.
+    #
+    def isEnabled(self):
+        return self.enabled
 
     ## newSettings
     #
@@ -113,10 +123,11 @@ class ChannelUI(QtGui.QFrame):
     # @param new_power (int) The new power.
     #
     def remoteSetPower(self, new_power):
-        if (new_power > 0.5):
-            self.setOnOff(self, true)
-        else:
-            self.setOnOff(self, false)
+        if self.enabled:
+            if (new_power > 0.5):
+                self.setOnOff(self, true)
+            else:
+                self.setOnOff(self, false)
 
     ## setOnOff
     #
@@ -227,14 +238,16 @@ class ChannelUIAdjustable(ChannelUI):
     # @param power_inc (int) The power increment.
     #
     def remoteIncPower(self, power_inc):
-        self.setAmplitude(self.powerslider.value() + power_inc)
+        if self.enabled:
+            self.setAmplitude(self.powerslider.value() + power_inc)
 
     ## remoteSetPower
     #
     # @param new_power (int) The new power.
     #
     def remoteSetPower(self, new_power):
-        self.setAmplitude(new_power)
+        if self.enabled:
+            self.setAmplitude(new_power)
 
     ## setAmplitude
     #

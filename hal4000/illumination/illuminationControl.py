@@ -68,7 +68,9 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
             a_module = __import__(m_name, globals(), locals(), [m_name], -1)
             a_class = getattr(a_module, module.class_name)
             a_instance = a_class(module.parameters, self)
-            self.hardware_modules[module.name] = a_instance
+            if a_instance.isBuffered():
+                a_instance.start(QtCore.QThread.NormalPriority)
+            self.hardware_modules[module.name] = a_instance            
 
         # Illumination channels setup.
         x = 7
@@ -93,8 +95,11 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def cleanup(self):
+        for channel in self.channels:
+            channel.cleanup()
+
         for name, instance in self.hardware_modules.iteritems():
-            instance.shutdown()
+            instance.cleanup()
 
     ## closeEvent
     #
@@ -222,11 +227,12 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def newShutters(self, shutters_filename):
-        [waveforms, colors, frames] = xmlParser.parseShuttersXML(len(self.channels), shutters_filename)
+        [waveforms, colors, frames, oversampling] = xmlParser.parseShuttersXML(len(self.channels), shutters_filename)
         for i, channel in enumerate(self.channels):
             channel.newShutters(waveforms[i])
         self.parameters.shutter_colors = colors
         self.parameters.shutter_frames = frames
+        self.parameters.shutter_oversampling = oversampling
         self.newColors.emit(colors)
         self.newCycleLength.emit(frames)
 
@@ -278,7 +284,8 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
 
             # Start hardware.
             for name, instance in self.hardware_modules.iteritems():
-                instance.startFilm()
+                instance.startFilm(self.parameters.kinetic_value,
+                                   self.parameters.shutter_oversampling)
 
     ## stopFilm
     #

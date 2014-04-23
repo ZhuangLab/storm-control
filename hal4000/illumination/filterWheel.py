@@ -14,7 +14,7 @@ import illumination.hardwareModule as hardwareModule
 
 ## ThorlabsFW102C
 #
-# Filter wheel class the interfaces with a Thorlabs FW102C filter wheel.
+# Filter wheel class that interfaces with a Thorlabs FW102C filter wheel.
 #
 class ThorlabsFW102C(hardwareModule.BufferedAmplitudeModulation):
 
@@ -27,9 +27,15 @@ class ThorlabsFW102C(hardwareModule.BufferedAmplitudeModulation):
         hardwareModule.BufferedAmplitudeModulation.__init__(self, parameters, parent)
 
         import thorlabs.FW102C as FW102C
-        self.device = FW102C.FW102C(parameters.port)
+        self.filter_wheel = FW102C.FW102C(parameters.port)
         if not (self.device.getStatus()):
             self.working = False
+
+    ## cleanup
+    #
+    def cleanup(self):
+        hardwareModule.BufferedAmplitudeModulation.cleanup(self)
+        self.filter_wheel.shutDown()
 
     ## deviceSetAmplitude
     #
@@ -38,7 +44,7 @@ class ThorlabsFW102C(hardwareModule.BufferedAmplitudeModulation):
     #
     def deviceSetAmplitude(self, channel, amplitude):
         self.device_mutex.lock()
-        self.device.setPosition(amplitude+1)
+        self.filter_wheel.setPosition(amplitude+1)
         self.device_mutex.unlock()
 
 

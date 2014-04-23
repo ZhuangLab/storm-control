@@ -34,6 +34,7 @@ class Channel(QtCore.QObject):
         self.channel_ui = False
         self.current_power = 0
         self.display_normalized = False
+        self.filming_disabled = False
         self.max_amplitude = 1.0
         self.name = channel.description
         self.parameters = False
@@ -95,6 +96,9 @@ class Channel(QtCore.QObject):
             self.channel_ui.onOffChange.connect(self.handleOnOffChange)
             self.channel_ui.powerChange.connect(self.handleSetPower)
 
+    ## cleanup
+    #
+    
     ## getAmplitude
     #
     # @return The current amplitude of the channel (as a string).
@@ -219,8 +223,9 @@ class Channel(QtCore.QObject):
     # @param shutter_data A array containing the shutter data.
     #
     def newShutters(self, shutter_data):
-        self.shutter_data = shutter_data
         self.used_for_film = False
+
+        self.shutter_data = shutter_data
         if any((y > 0.0) for y in self.shutter_data):
             self.used_for_film = True
 
@@ -246,6 +251,7 @@ class Channel(QtCore.QObject):
     # @param new_power The channel power setting (0.0 - 1.0).
     #
     def remoteSetPower(self, new_power):
+        
         self.channel_ui.remoteSetPower(int(round(new_power * self.max_amplitude)))
 
     ## setHeight
@@ -281,17 +287,20 @@ class Channel(QtCore.QObject):
             self.digital_modulation.digitalOff(self.channel_id)
             self.digital_modulation.digitalAddChannel(self.channel_id, self.shutter_data)
 
-        if not self.used_for_film:
+        if not self.used_for_film and self.channel_ui.isEnabled():
             self.channel_ui.disableChannel()
+            self.filming_disabled = True
 
     ## stopFilm
     #
     # Called at the end of filming to reset things.
     #
     def stopFilm(self):
-        if not self.used_for_film:
+        if self.filming_disabled:
             self.channel_ui.enableChannel()
+            self.filming_disabled = False
         self.channel_ui.setOnOff(self.was_on)
+
 
 #
 # The MIT License

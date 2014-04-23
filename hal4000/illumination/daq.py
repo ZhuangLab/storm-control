@@ -38,7 +38,9 @@ class Daq(hardwareModule.HardwareModule):
     # @param channel_data The shutter data for this channel.
     #
     def analogAddChannel(self, channel_id, channel_data):
-        self.analog_data.append([self.analog_settings[channel_id].channel, channel_data])
+        self.analog_data.append([self.analog_settings[channel_id].board,
+                                 self.analog_settings[channel_id].channel,
+                                 channel_data])
 
     ## analogOff
     #
@@ -64,7 +66,9 @@ class Daq(hardwareModule.HardwareModule):
     # @param channel_data The shutter data for this channel.
     #
     def digitalAddChannel(self, channel_id, channel_data):
-        self.digital_data.append([self.digital_settings[channel_id].channel, channel_data])
+        self.digital_data.append([self.digital_settings[channel_id].board,
+                                  self.digital_settings[channel_id].channel,
+                                  channel_data])
 
     ## digitalOff
     #
@@ -141,6 +145,182 @@ class Daq(hardwareModule.HardwareModule):
         hardwareModule.HardwareModule.stopFilm(self)
         self.analog_data = []
         self.digital_data = []
+
+
+## Nidaq
+#
+# National Instruments DAQ card.
+#
+class Nidaq(Daq):
+
+    ## __init__
+    #
+    # @param parameters A XML object containing initial parameters.
+    # @param parent The PyQt parent of this object.
+    #
+    def __init__(self, parameters, parent):
+        Daq.__init__(self, parameters, parent)
+
+        import nationalinstruments.nicontrol as nicontrol
+
+        self.ao_task = False
+        self.ct_task = False
+        self.do_task = False
+
+        if (hasattr(parameters, "counter_board")):
+            self.counter_board = parameters.counter_board
+            self.counter_id = parameters.counter_id
+            self.counter_trigger = parameters.counter_trigger
+        else:
+            self.counter_board = False
+            self.counter_id = False
+            self.counter_trigger = False
+
+        # FIXME:
+        #   Need a waveform_clock_board parameter and we need to fix
+        #   nicontrol to respect this, otherwise we can only use one
+        #   board for waveform output.
+        if (hasattr(parameters, "waveform_clock")):
+            self.waveform_clock = parameters.waveform_clock
+        else:
+            self.waveform_clock = False
+    
+    ## analogOff
+    #
+    # Sets the analog voltage to the minimum.
+    #
+    # @param channel_id The channel id.
+    #
+    def analogOff(self, channel_id):
+        if not self.filming:
+            nicontrol.setAnalogLine(self.analog_settings[channel_id].board,
+                                    self.analog_settings[channel_id].channel,
+                                    self.analog_settings[channel_id].min_voltage)
+
+    ## analogOn
+    #
+    # Sets the analog voltage to the maximum.
+    #
+    # @param channel_id The channel id.
+    #
+    def analogOn(self, channel_id):
+        if not self.filming:
+            nicontrol.setAnalogLine(self.analog_settings[channel_id].board,
+                                    self.analog_settings[channel_id].channel,
+                                    self.analog_settings[channel_id].max_voltage)
+
+    ## digitalOff
+    #
+    # Sets the digital line to 0.
+    #
+    # @param channel_id The channel id.
+    #
+    def digitalOff(self, channel_id):
+        if not self.filming:
+            nicontrol.setDigitalLine(self.digital_settings[channel_id].board,
+                                     self.digital_settings[channel_id].channel,
+                                     False)
+
+    ## digitalOn
+    #
+    # Sets the digital line to 1.
+    #
+    # @param channel_id The channel id.
+    #
+    def digitalOn(self, channel_id):
+        if not self.filming:
+            nicontrol.setDigitalLine(self.digital_settings[channel_id].board,
+                                     self.digital_settings[channel_id].channel,
+                                     True)
+
+    ## shutterOff
+    #
+    # Sets the shutter digital line to 0.
+    #
+    # @param channel_id The channel id.
+    #
+    def shutterOff(self, channel_id):
+        nicontrol.setDigitalLine(self.shutter_settings[channel_id].board,
+                                 self.shutter_settings[channel_id].channel,
+                                 False)
+
+    ## digitalOn
+    #
+    # Sets the shutter digital line to 1.
+    #
+    # @param channel_id The channel id.
+    #
+    def shutterOn(self, channel_id):
+        nicontrol.setDigitalLine(self.shutter_settings[channel_id].board,
+                                 self.shutter_settings[channel_id].channel,
+                                 True)
+
+    ## startFilm
+    #
+    # Called at the start of filming (when shutters are active).
+    #
+    # @param seconds_per_frame How many seconds it takes to acquire each frame.
+    # @param oversampling The number of values in the shutter waveform per frame.
+    #
+    def startFilm(self, seconds_per_frame, oversampling):
+        Daq.startFilm(self, seconds_per_frame, oversampling)
+
+        # Calculate frequency. This is set slightly higher than the camere
+        # frequency so that we are ready at the start of the next frame.
+        frequency = (1.001 / seconds_per_frame, oversampling)
+        
+        # Setup analog waveforms.
+        if (len(self.analog_data) > 0):
+
+            # Sort by board, channel.
+            analog_data = sorted(self.analog_data, key = lambda x: (x[0], x[1]))
+
+            # Create channels.
+            self.ao_task = nicontrol.WaveformOutput(analog_data[0][0], analog_data[0][1])
+            for i in range(len(analog_data) - 1):
+                self.ao_task.addChannel(analog_data[i+1][0], analog_data[i+1][1])
+
+            # Set waveforms.
+            waveform = []
+            for i in range(len(analog_data)):
+                waveform += analog_data[i][2]
+
+            self.ao_task.setWaveform(waveform, frequency, self.waveform_clock)
+        else:
+            self.ao_task = False
+
+        # Setup digital waveforms.
+        if (len(self.digital_data) > 0):
+
+            # Sort by board, channel.
+            digital_data = sorted(self.digital_data, key = lambda x: (x[0], x[1]))
+
+            # Create channels.
+            self.do_task = nicontrol.DigitalWaveformOutput(digital_data[0][0], digital_data[0][1])
+            for i in range(len(digital_data) - 1):
+                self.do_task.addChannel(digital_data[i+1][0], digital_data[i+1][1])
+
+            # Set waveforms.
+            waveform = []
+            for i in range(len(digital_data)):
+                waveform += digital_data[i][2]
+
+            self.do_task.setWaveform(waveform, frequency, self.waveform_clock)
+        else:
+            self.do_task = False
+
+        # Setup the counter.
+
+    ## stopFilm
+    #
+    # Called at the end of filming (when shutters are active).
+    #
+    def stopFilm(self):
+        Daq.stopFilm(self)
+        for task in [self.ct_task, self.ao_task, self.do_task]:
+            if task:
+                task.stopTask()
+                task.clearTask()
 
 
 ## NoneDaq

@@ -56,15 +56,12 @@ class HardwareModule(object):
         self.is_buffered = False
         self.working = True
 
-    ## getBuffered
+    ## cleanup
     #
-    # If the module is buffered (i.e. a QThread) then we'll need to start
-    # it after we instantiate it.
+    # Called when the program closes to clean up.
     #
-    # @return True/False if this module is buffered.
-    #
-    def getBuffered(self):
-        return self.is_buffered
+    def cleanup(self):
+        pass
 
     ## getStatus
     #
@@ -78,24 +75,30 @@ class HardwareModule(object):
     # This is called by each of the channels that wants to use this module.
     #
     # @param interface Interface type (from the perspective of the channel).
-    # @param channel_number The channel id.
+    # @param channel_id The channel id.
     # @param parameters A parameters object for this channel.
     #
-    def initialize(self, interface, channel_number, parameters):
+    def initialize(self, interface, channel_id, parameters):
         pass
 
-    ## shutdown
+    ## isBuffered
     #
-    # Called when the program closes to cleanup.
+    # If the module is buffered (i.e. a QThread) then we'll need to start
+    # it after we instantiate it.
     #
-    def shutdown(self):
-        pass
+    # @return True/False if this module is buffered.
+    #
+    def isBuffered(self):
+        return self.is_buffered
 
     ## startFilm
     #
     # Called at the start of filming (when shutters are active).
     #
-    def startFilm(self):
+    # @param seconds_per_frame How many seconds it takes to acquire each frame.
+    # @param oversampling The number of values in the shutter waveform per frame.
+    #
+    def startFilm(self, seconds_per_frame, oversampling):
         self.filming = True
 
     ## stopFilm
@@ -176,6 +179,14 @@ class BufferedAmplitudeModulation(QtCore.QThread, AmplitudeModulation):
         self.is_buffered = True
         self.running = True
 
+    ## cleanup
+    #
+    # Stop the command queue thread.
+    #
+    def cleanup(self):
+        self.running = False
+        self.wait()
+
     ## deviceSetAmplitude
     #
     # @param channel The channel.
@@ -215,14 +226,6 @@ class BufferedAmplitudeModulation(QtCore.QThread, AmplitudeModulation):
         self.buffer_mutex.lock()
         self.command_buffer.append([channel, amplitude])
         self.buffer_mutex.unlock()
-
-    ## shutDown
-    #
-    # Stop the command queue thread.
-    #
-    def shutDown(self):
-        self.running = False
-        self.wait()
 
 
 #
