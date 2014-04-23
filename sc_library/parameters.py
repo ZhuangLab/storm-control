@@ -163,7 +163,10 @@ def Parameters(parameters_file, is_HAL = False):
         if not os.path.exists(xml_object.shutters):
             xml_object.shutters = os.path.dirname(parameters_file) + "/" + xml_object.shutters
 
+        xml_object.shutter_colors = []
         xml_object.shutter_data = []
+        xml_object.shutter_frames = 0
+
         xml_object.parameters_file = parameters_file
         xml_object.initialized = False
 
