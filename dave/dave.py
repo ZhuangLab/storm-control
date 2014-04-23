@@ -131,6 +131,8 @@ class CommandEngine(QtGui.QWidget):
                 self.actions.append(daveActions.SetParameters(self.HALClient, command))
             if hasattr(command, "delay") and (command.delay > 0):
                 self.actions.append(daveActions.DaveDelay(command.delay))
+            if hasattr(command, "directory"):
+                self.actions.append(daveActions.SetDirectory(self.HALClient, command.directory))
             if command.length > 0:
                 self.actions.append(daveActions.TakeMovie(self.HALClient, command))
         elif command_type == "fluidics":

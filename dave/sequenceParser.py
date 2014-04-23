@@ -118,7 +118,7 @@ class Movie(AbstractCommand):
         # default settings
         self.delay = 0
         self.find_sum = 0.0
-        self.length = 1
+        self.length = 0
         self.min_spots = 0
         self.name = "default"
         self.pause = False

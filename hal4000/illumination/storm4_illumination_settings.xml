@@ -1,171 +1,277 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <illumination_settings>
 
-  <control_module>
-    <name>750wheel</name>
-    <module>illumination.filterwheel</module>
-    <class>ThorlabsFW102C</class>
-    <parameters>
-      <port>COM14</port>
-    </parameters>
-  </control_module>
-
-  <control_module>
-    <name>AOTF</name>
-    <module>illumination.aotf</module>
-    <class>CT64bitAOTF</class>
-    <parameters>
-      <use_fsk type="boolean">true</use_fsk>
-    </parameters>
-  </control_module>
-  
-  <control_module>
-    <name>cube405</name>
-    <module>illumination.laser</module>
-    <class>CoherentCube</class>
-    <parameters>
-      <port>COM13</port>
-    </parameters>
-  </control_module>
-
-  <control_module>
-    <name>daq</name>
-    <module>illumination.daq</module>
-    <class>nidaq</class>
-    <parameters>
-      <board>PCI-6733</board>
-      <counter type="int">0</counter>
-      <trigger>PFI0</trigger>
+  <control_modules>
+    <control_module>
+      <name>750wheel</name>
+      <module>illumination.filterwheel</module>
+      <class>ThorlabsFW102C</class>
+      <parameters>
+	<port>COM14</port>
       </parameters>
-  </control_module>
-
-  <channel>
-    <description>750</description>
-    <color type="rgb">255,0,0</color>
-    <channel type="int">0</channel>
-
-    <amplitude_modulation>
-      <uses>750wheel</uses>
-      <display_normalized type="boolean">False</display_normalized>
-    </amplitude_modulation>
+    </control_module>
     
-    <digital_modulation>
-      <uses>daq</uses>
+    <control_module>
+      <name>AOTF</name>
+      <module>illumination.aotf</module>
+      <class>CT64bitAOTF</class>
+      <parameters>
+	<use_fsk type="boolean">true</use_fsk>
+      </parameters>
+    </control_module>
+    
+    <control_module>
+      <name>cube405</name>
+      <module>illumination.laser</module>
+      <class>CoherentCube</class>
+      <parameters>
+	<port>COM13</port>
+      </parameters>
+    </control_module>
+    
+    <control_module>
+      <name>daq</name>
+      <module>illumination.daq</module>
+      <class>nidaq</class>
       <parameters>
 	<board>PCI-6733</board>
-	<channel type="int">0</channel>
+	<counter type="int">0</counter>
+	<trigger>PFI0</trigger>
       </parameters>
-    </digital_modulation>
+    </control_module>
+  </control_modules>
+
+  <channels>
+
+    <!-- 750 laser -->
+    <channel>
+      <description>750</description>
+      <color type="rgb">200,0,0</color>
+      
+      <amplitude_modulation>
+	<uses>750wheel</uses>
+	<display_normalized type="boolean">False</display_normalized>
+	<parameters>
+	  <amplitude type="int">5</amplitude>
+	</parameters>
+      </amplitude_modulation>
+      
+      <digital_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6733</board>
+	  <channel type="int">0</channel>
+	</parameters>
+      </digital_modulation>
+    </channel>
+
+    <!-- 642 laser -->
+    <channel>
+      <description type="text">642</description>
+      <color type="rgb">255,0,0</color>
+      
+      <amplitude_modulation>
+	<uses>AOTF</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <amplitude>6100</amplitude>
+	  <channel type="int">0</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">91.22</on_frequency>
+	</parameters>
+      </amplitude_modulation>
+      
+      <analog_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6733</board>
+	  <channel type="int">1</channel>
+	  <max_voltage type="float">1.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+	</parameters>
+      </analog_modulation>
+      
+      <digital_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6733</board>
+	  <channel type="int">1</channel>
+	</parameters>
+      </digital_modulation>
+    </channel>
+
+    <!-- 561 laser -->
+    <channel>
+      <description type="text">561</description>
+      <color type="rgb">255,255,0</color>
+      
+      <amplitude_modulation>
+	<uses>AOTF</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <amplitude>6500</amplitude>
+	  <channel type="int">1</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">108.28</on_frequency>
+	</parameters>
+      </amplitude_modulation>
+      
+      <analog_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6733</board>
+	  <channel type="int">2</channel>
+	  <max_voltage type="float">1.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+	</parameters>
+      </analog_modulation>
+      
+      <digital_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6733</board>
+	  <channel type="int">2</channel>
+	</parameters>
+      </digital_modulation>
+    </channel>
+
+    <!-- 532 laser -->
+    <channel>
+      <description type="text">532</description>
+      <color type="rgb">0,255,0</color>
+      
+      <amplitude_modulation>
+	<uses>AOTF</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <amplitude>5700</amplitude>
+	  <channel type="int">2</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">115.73</on_frequency>
+	</parameters>
+      </amplitude_modulation>
+      
+      <analog_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6733</board>
+	  <channel type="int">3</channel>
+	  <max_voltage type="float">1.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+	</parameters>
+      </analog_modulation>
+      
+      <digital_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6733</board>
+	  <channel type="int">3</channel>
+	</parameters>
+      </digital_modulation>
+    </channel>
+
+    <!-- 488 laser -->
+    <channel>
+      <description type="text">488</description>
+      <color type="rgb">0,100,255</color>
+      
+      <amplitude_modulation>
+	<uses>AOTF</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <amplitude>5900</amplitude>
+	  <channel type="int">3</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">130.73</on_frequency>
+	</parameters>
+      </amplitude_modulation>
+      
+      <analog_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6733</board>
+	  <channel type="int">4</channel>
+	  <max_voltage type="float">1.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+	</parameters>
+      </analog_modulation>
+      
+      <digital_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6733</board>
+	  <channel type="int">4</channel>
+	</parameters>
+      </digital_modulation>
+    </channel>
+
+    <!-- 460 laser -->
+    <channel>
+      <description type="text">460</description>
+      <color type="rgb">0,0,255</color>
+      
+      <amplitude_modulation>
+	<uses>AOTF</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <amplitude>5000</amplitude>
+	  <channel type="int">4</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">141.92</on_frequency>
+	</parameters>
+      </amplitude_modulation>
+      
+      <analog_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6733</board>
+	  <channel type="int">5</channel>
+	  <max_voltage type="float">1.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+	</parameters>
+      </analog_modulation>
+      
+      <digital_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6733</board>
+	  <channel type="int">5</channel>
+	</parameters>
+      </digital_modulation>
+    </channel>
+
+    <!-- 405 laser -->
+    <channel>
+      <description type="text">405</description>
+      <color type="rgb">255,0,255</color>
+      
+      <amplitude_modulation>
+	<uses>cube405</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <amplitude>5000</amplitude>
+	</parameters>
+      </amplitude_modulation>
+      
+      <analog_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6733</board>
+	  <channel type="int">6</channel>
+	  <max_voltage type="float">5.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+	</parameters>
+      </analog_modulation>
+      
+      <digital_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6733</board>
+	  <channel type="int">6</channel>
+	</parameters>
+      </digital_modulation>
+    </channel>
+
   </channel>
 
-  <channel>
-    <description type="text">642</description>
-    <color type="rgb">255,0,0</color>
-    <channel type="int">1</channel>
-
-    <amplitude_modulation>
-      <uses>AOTF</uses>
-      <display_normalized type="boolean">True</display_normalized>
-      <parameters>
-	<amplitude>6500</amplitude>
-	<channel type="int">0</channel>
-	<off_frequency type="float">20.0</off_frequency>
-	<on_frequency type="float">91.22</on_frequency>
-      </parameters>
-    </amplitude_modulation>
-    
-    <analog_modulation>
-      <uses>daq</uses>
-      <parameters>
-	<board>PCI-6733</board>
-	<channel type="int">1</channel>
-	<max_voltage type="float">1.0</max_voltage>
-	<min_voltage type="float">0.0</min_voltage>
-      </parameters>
-    </analog_modulation>
-
-    <digital_modulation>
-      <uses>daq</uses>
-      <parameters>
-	<board>PCI-6733</board>
-	<channel type="int">1</channel>
-      </parameters>
-    </digital_modulation>
-  </channel>
-
-  <block>
-    <description type="text">750</description>
-    <color type="rgb">255,0,0</color>
-    <channel type="int">0</channel>
-    <use_filter_wheel type="boolean">TRUE</use_filter_wheel>
-    <amplitude type="int">5</amplitude>
-    <basic_shutter type="boolean">TRUE</basic_shutter>
-    <ni_board type="string">PCI-6733</ni_board>
-    <dig_line type="int">0</dig_line>
-  </block>
-  <block>
-    <description type="text">642</description>
-    <color type="rgb">255,0,0</color>
-    <channel type="int">1</channel>
-    <min_voltage type="float">0.0</min_voltage>
-    <max_voltage type="float">1.0</max_voltage>
-    <use_aotf type="boolean">TRUE</use_aotf>
-    <frequency type="float">91.22</frequency>
-    <amplitude type="int">6100</amplitude>
-    <aotf_channel type="int">0</aotf_channel>
-  </block>
-  <block>
-    <description type="text">561</description>
-    <color type="rgb">255,255,0</color>
-    <channel type="int">2</channel>
-    <min_voltage type="float">0.0</min_voltage>
-    <max_voltage type="float">1.0</max_voltage>
-    <use_aotf type="boolean">TRUE</use_aotf>
-    <frequency type="float">108.28</frequency>
-    <amplitude type="int">6500</amplitude>
-    <aotf_channel type="int">1</aotf_channel>
-  </block>
-  <block>
-    <description type="text">532</description>
-    <color type="rgb">0,255,0</color>
-    <channel type="int">3</channel>
-    <min_voltage type="float">0.0</min_voltage>
-    <max_voltage type="float">1.0</max_voltage>
-    <use_aotf type="boolean">TRUE</use_aotf>
-    <frequency type="float">115.73</frequency>
-    <amplitude type="int">5700</amplitude>
-    <aotf_channel type="int">2</aotf_channel>
-  </block>
-  <block>
-    <description type="text">488</description>
-    <color type="rgb">0,100,255</color>
-    <channel type="int">4</channel>
-    <min_voltage type="float">0.0</min_voltage>
-    <max_voltage type="float">1.0</max_voltage>
-    <use_aotf type="boolean">TRUE</use_aotf>
-    <frequency type="float">130.73</frequency>
-    <amplitude type="int">5900</amplitude>
-    <aotf_channel type="int">3</aotf_channel>
-  </block>
-  <block>
-    <description type="text">460</description>
-    <color type="rgb">0,0,255</color>
-    <channel type="int">5</channel>
-    <min_voltage type="float">0.0</min_voltage>
-    <max_voltage type="float">1.0</max_voltage>
-    <use_aotf type="boolean">TRUE</use_aotf>
-    <frequency type="float">141.92</frequency>
-    <amplitude type="int">5000</amplitude>
-    <aotf_channel type="int">4</aotf_channel>
-  </block>
-  <block>
-    <description type="text">405</description>
-    <color type="rgb">255,0,255</color>
-    <channel type="int">6</channel>
-    <min_voltage type="float">0.0</min_voltage>
-    <max_voltage type="float">5.0</max_voltage>
-    <use_cube405 type="boolean">TRUE</use_cube405>
-    <frequency type="float">0.0</frequency>
-    <amplitude type="int">5000</amplitude>
-  </block>
 </illumination_settings>

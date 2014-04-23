@@ -274,6 +274,22 @@ class RecenterPiezo(DaveAction):
         DaveAction.__init__(self, tcp_client)
         self.message = tcpMessage.TCPMessage(message_type = "Recenter Piezo")
 
+## SetDirectory
+#
+# Change the Hal Directory.
+#
+class SetDirectory(DaveAction):
+
+    ## __init__
+    #
+    # @param tcp_client A tcp communications object
+    # @param directory The desired directory.
+    #
+    def __init__(self, tcp_client, directory):
+        DaveAction.__init__(self, tcp_client)
+        self.message = tcpMessage.TCPMessage(message_type = "Set Directory",
+                                             message_data = {"directory": directory})
+
 ## Set Focus Lock Target
 #
 # The set focus lock target action.
