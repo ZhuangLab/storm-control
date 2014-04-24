@@ -27,12 +27,14 @@ def runModule(module_type):
             a_module = __import__(module.module_name, globals(), locals(), [setup_name], -1)
             a_class = getattr(a_module, module.class_name)
             instance = a_class(module.parameters, parameters, None)
+            instance.newParameters(parameters)
             instance.show()
             found = True
             break
 
     if found:
         app.exec_()
+        instance.cleanup()
     else:
         print module_type, "not found for", setup_name, "setup"
 
