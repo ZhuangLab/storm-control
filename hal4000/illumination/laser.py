@@ -76,7 +76,7 @@ class CoherentCube(hardwareModule.BufferedAmplitudeModulation):
     # @param oversampling The number of values in the shutter waveform per frame.
     #
     def startFilm(self, seconds_per_frame, oversampling):
-        hardwareModule.BufferedAmplitudeModulation.startFilm(self)
+        hardwareModule.BufferedAmplitudeModulation.startFilm(self, seconds_per_frame, oversampling)
         self.device_mutex.lock()
         self.cube_laser.setExtControl(True)
         self.device_mutex.unlock()

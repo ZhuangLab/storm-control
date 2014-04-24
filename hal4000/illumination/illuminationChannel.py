@@ -29,10 +29,12 @@ class Channel(QtCore.QObject):
     def __init__(self, channel_id, channel, parameters, hardware_modules, channels_box):
         QtCore.QObject.__init__(self, channels_box)
 
+        self.am_on = False
         self.channel_id = channel_id
         self.channel_ui = False
         self.current_power = 0
         self.display_normalized = False
+        self.filming = False
         self.filming_disabled = False
         self.max_amplitude = 1.0
         self.min_amplitude = 0.0
@@ -98,7 +100,7 @@ class Channel(QtCore.QObject):
     ## cleanup
     #
     def cleanup(self):
-        self.channel_ui.remoteOn(False)
+        self.channel_ui.setOnOff(False)
     
     ## getAmplitude
     #
@@ -130,12 +132,16 @@ class Channel(QtCore.QObject):
     ## handleOnOffChange
     #
     # Handles a request to turn the channel on / off. These all
-    # come from the UI.
+    # come from the UI. They are ignored when we are filming.
     #
     # @param on True/False on/off.
     #
     def handleOnOffChange(self, on):
-        if on:
+        if self.filming:
+            return
+
+        self.am_on = on
+        if self.am_on:
             if self.amplitude_modulation:
                 self.amplitude_modulation.amplitudeOn(self.channel_id, self.current_power)
         
@@ -154,7 +160,7 @@ class Channel(QtCore.QObject):
         
             if self.analog_modulation:
                 self.analog_modulation.analogOff(self.channel_id)
-
+                
             if self.digital_modulation:
                 self.digital_modulation.digitalOff(self.channel_id)
 
@@ -177,18 +183,21 @@ class Channel(QtCore.QObject):
         self.channel_ui.updatePowerText(power_string)
 
         self.current_power = new_power
-        if self.amplitude_modulation:
-            self.amplitude_modulation.setAmplitude(self.channel_id, new_power)
+        if self.am_on:
+            if self.amplitude_modulation:
+                self.amplitude_modulation.setAmplitude(self.channel_id, new_power)
 
-        if self.mechanical_shutter:
-            if (new_power == self.min_amplitude):
-                self.mechanical_shutter.closeShutter(self.channel_id)
-            else:
-                self.mechanical_shutter.openShutter(self.channel_id)
+            if self.mechanical_shutter:
+                if (new_power == self.min_amplitude):
+                    self.mechanical_shutter.closeShutter(self.channel_id)
+                else:
+                    self.mechanical_shutter.openShutter(self.channel_id)
 
     ## newParameters
     #
     # @param parameters A parameters XML object.
+    #
+    # @return [old on/off setting, old power]
     #
     def newParameters(self, parameters):
 
@@ -204,33 +213,32 @@ class Channel(QtCore.QObject):
         # Update buttons.
         self.channel_ui.setupButtons(parameters.power_buttons[self.channel_id])
 
-        # Save previous channel settings and shutter data in old parameters.
-        if self.parameters:
-            if self.display_normalized:
-                old_power = float(old_power - self.min_amplitude)/self.range
-            self.parameters.on_off_state[self.channel_id] = old_on
-            self.parameters.default_power[self.channel_id] = old_power
+        # Update shutter data, if available.
+        if (parameters.shutter_frames != 0):
+            self.shutter_data = parameters.shutter_data[self.channel_id]
 
-            while (len(self.parameters.shutter_data) <= self.channel_id):
-                self.parameters.shutter_data.append(False)
-            self.parameters.shutter_data[self.channel_id] = self.shutter_data
+        # Normalize power, if necessary.
+        if self.display_normalized:
+            old_power = float(old_power - self.min_amplitude)/self.range
 
-        self.parameters = parameters
+        return [old_on, old_power]
 
     ## newShutters
     #
+    # This both sets the internal shutter data store and converts it
+    # to the appropriate scale based on the analog modulation settings.
+    #
     # @param shutter_data A array containing the shutter data.
     #
+    # @return The processed shutter data.
+    #
     def newShutters(self, shutter_data):
-        self.used_for_film = False
-
         self.shutter_data = shutter_data
-        if any((y > 0.0) for y in self.shutter_data):
-            self.used_for_film = True
-
         if self.analog_modulation:
             for i in range(len(self.shutter_data)):
                 self.shutter_data[i] = self.analog_modulation.powerToVoltage(self.channel_id, self.shutter_data[i])
+
+        return self.shutter_data
 
     ## remoteIncPower
     #
@@ -270,35 +278,56 @@ class Channel(QtCore.QObject):
         self.channel_ui.move(x, y)
         return self.channel_ui.width()
 
-    ## startFilm
+    ## setupFilm
     #
-    # Called at the start of filming to get the channel setup.
+    # Called at the before of filming to get the channel setup.
     #
-    def startFilm(self):
-        self.was_on = self.am_on
+    def setupFilm(self):
 
+        # Figure out if this channel is used for filming.
+        self.used_for_film = False
+        if any((y > 0.0) for y in self.shutter_data):
+            self.used_for_film = True
+
+        # Add analog waveform data.
         if self.analog_modulation:
-            self.analog_modulation.analogOff(self.channel_id)
             self.analog_modulation.analogAddChannel(self.channel_id, self.shutter_data)
 
+        # Add digital waveform data.
         if self.digital_modulation:
-            self.digital_modulation.digitalOff(self.channel_id)
             self.digital_modulation.digitalAddChannel(self.channel_id, self.shutter_data)
 
-        if not self.used_for_film and self.channel_ui.isEnabled():
-            self.channel_ui.disableChannel()
-            self.filming_disabled = True
+    ## startFilm
+    #
+    # Called at the start of filming.
+    #
+    def startFilm(self):
+        self.filming = True
+        if self.channel_ui.isEnabled():
+            self.was_on = self.am_on
+
+            if self.used_for_film:
+                self.channel_ui.setOnOff(True)
+                self.channel_ui.startFilm()
+                self.am_on = True
+                if self.amplitude_modulation:
+                    self.amplitude_modulation.setAmplitude(self.channel_id, self.current_power)
+            else:
+                self.channel_ui.disableChannel()
+                self.filming_disabled = True
 
     ## stopFilm
     #
     # Called at the end of filming to reset things.
     #
     def stopFilm(self):
+        self.filming = False
         if self.filming_disabled:
             self.channel_ui.enableChannel()
             self.filming_disabled = False
-        self.channel_ui.setOnOff(self.was_on)
-
+        else:
+            self.channel_ui.stopFilm()
+            self.channel_ui.setOnOff(self.was_on)
 
 #
 # The MIT License

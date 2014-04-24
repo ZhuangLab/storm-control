@@ -683,6 +683,7 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def newParameters(self):
+
         # For conveniently accessing parameters
         p = self.parameters
 
@@ -712,6 +713,8 @@ class Window(QtGui.QMainWindow):
         # the parameters file.
         if (p.shutter_frames == 0):
             self.newShutters(p.shutters)
+        else:
+            self.ui.shuttersText.setText(getFileName(p.shutters))
 
         # Film settings.
         extension = p.extension # Save a temporary copy as the original will get wiped out when we set the filename, etc.

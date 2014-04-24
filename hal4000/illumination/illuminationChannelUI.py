@@ -117,14 +117,6 @@ class ChannelUI(QtGui.QFrame):
     def remoteIncPower(self, power_inc):
         pass
 
-    ## remoteOn
-    #
-    # @param on True/False turn the channel on/off.
-    #
-    def remoteOn(self, on):
-        if self.enabled:
-            self.on_off_button.setChecked(on)
-
     ## remoteSetPower
     #
     # @param new_power (int) The new power.
@@ -138,12 +130,14 @@ class ChannelUI(QtGui.QFrame):
 
     ## setOnOff
     #
-    # Programmatically sets the state of the on/off button.
+    # Programmatically sets the state of the on/off button. This
+    # also generates event that the button changed state.
     #
     # @param state True/False.
     #
     def setOnOff(self, state):
         self.on_off_button.setChecked(state)
+        self.handleOnOffChange(state)
 
     ## setupButtons
     #
@@ -151,6 +145,19 @@ class ChannelUI(QtGui.QFrame):
     #
     def setupButtons(self, button_data):
         pass
+
+    ## startFilm
+    #
+    # Checks the on/off button and disables it.
+    #
+    def startFilm(self):
+        self.on_off_button.setEnabled(False)
+
+    ## stopFilm
+    #
+    # Enables the on/off button.
+    def stopFilm(self):
+        self.on_off_button.setEnabled(True)
 
 
 ## ChannelUIAdjustable.
@@ -239,18 +246,8 @@ class ChannelUIAdjustable(ChannelUI):
     def newSettings(self, on, power):
         old_on = self.on_off_button.isChecked()
         old_power = self.powerslider.value()
+        self.setOnOff(on)
         self.setAmplitude(power)
-
-        #
-        # This is necessary because if the old state is the same as the new
-        # state we won't get a signal to turn the channel off, and it could
-        # be on due to the call to setAmplitude().
-        #
-        if (on == old_on):
-            self.handleOnOffChange(on)
-        else:
-            self.setOnOff(on)
-
         return [old_on, old_power]
 
     ## remoteIncPower

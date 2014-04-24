@@ -32,9 +32,9 @@ class CrystalTechAOTF(hardwareModule.BufferedAmplitudeModulation):
         if self.working:
             self.use_fsk = parameters.use_fsk
             if self.use_fsk:
-                self.analogModulationOn()
+                self.aotf.analogModulationOn()
             else:
-                self.analogModulationOff()
+                self.aotf.analogModulationOff()
 
     ## amplitudeOff
     #
@@ -69,7 +69,6 @@ class CrystalTechAOTF(hardwareModule.BufferedAmplitudeModulation):
     # @param amplitude The channel amplitude.
     #
     def deviceSetAmplitude(self, channel_id, amplitude):
-        print "aotf", channel_id, amplitude
         aotf_channel = self.channel_parameters[channel_id].channel
         self.device_mutex.lock()
         self.aotf.setAmplitude(aotf_channel, amplitude)
@@ -98,6 +97,10 @@ class CrystalTechAOTF(hardwareModule.BufferedAmplitudeModulation):
 
             self.device_mutex.lock()
             self.aotf.setFrequencies(aotf_channel, frequencies)
+            if self.use_fsk:
+                self.aotf.fskOn(aotf_channel)
+            else:
+                self.aotf.fskOff(aotf_channel)
             self.device_mutex.unlock()
 
 

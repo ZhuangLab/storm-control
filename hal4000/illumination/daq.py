@@ -277,7 +277,7 @@ class Nidaq(Daq):
             analog_data = sorted(self.analog_data, key = lambda x: (x[0], x[1]))
 
             # Create channels.
-            self.ao_task = self.nicontrol.WaveformOutput(analog_data[0][0], analog_data[0][1])
+            self.ao_task = self.nicontrol.AnalogWaveformOutput(analog_data[0][0], analog_data[0][1])
             for i in range(len(analog_data) - 1):
                 self.ao_task.addChannel(analog_data[i+1][0], analog_data[i+1][1])
 
@@ -286,7 +286,7 @@ class Nidaq(Daq):
             for i in range(len(analog_data)):
                 waveform += analog_data[i][2]
 
-            self.ao_task.setWaveform(waveform, frequency, self.waveform_clock)
+            self.ao_task.setWaveform(waveform, frequency, clock = self.waveform_clock)
         else:
             self.ao_task = False
 
@@ -306,7 +306,7 @@ class Nidaq(Daq):
             for i in range(len(digital_data)):
                 waveform += digital_data[i][2]
 
-            self.do_task.setWaveform(waveform, frequency, self.waveform_clock)
+            self.do_task.setWaveform(waveform, frequency, clock = self.waveform_clock)
         else:
             self.do_task = False
 

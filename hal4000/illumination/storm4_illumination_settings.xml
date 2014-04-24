@@ -76,10 +76,18 @@
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
+	  <!-- 642 laser -->
+	  <!--
 	  <maximum type="int">6100</maximum>
 	  <channel type="int">0</channel>
 	  <off_frequency type="float">20.0</off_frequency>
 	  <on_frequency type="float">91.22</on_frequency>
+	  -->
+	  <!-- 656 laser -->
+	  <maximum type="int">5700</maximum>
+	  <channel type="int">0</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">88.7</on_frequency>
 	</parameters>
       </amplitude_modulation>
       
