@@ -182,7 +182,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
             if message.isTest():
                 self.tcpComplete.emit(self.tcp_message)
             else:
-                self.tcpHandleFindSum()
+                self.tcpHandleFindSum(message.getData("min_sum"))
         elif (message.getType() == "Set Lock Target"):
             if message.isTest():
                 self.tcpComplete.emit(self.tcp_message)
@@ -390,8 +390,8 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     # Handle find sum requests that come via TCP/IP.
     #
     @hdebug.debug
-    def tcpHandleFindSum(self):
-        self.lock_display1.tcpHandleFindSum()
+    def tcpHandleFindSum(self, min_sum):
+        self.lock_display1.tcpHandleFindSum(min_sum)
 
     ## tcpHandleOptimizeSum
     #
