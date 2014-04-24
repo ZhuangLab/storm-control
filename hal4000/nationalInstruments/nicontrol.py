@@ -152,11 +152,11 @@ class NIDAQTask():
         return done.value
 
 
-## VoltageOutput
+## AnalogOutput
 #                    
 # Simple analog output class
 #
-class VoltageOutput(NIDAQTask):
+class AnalogOutput(NIDAQTask):
 
     ## __init__
     #
@@ -177,14 +177,14 @@ class VoltageOutput(NIDAQTask):
                                                      c_int(DAQmx_Val_Volts), 
                                                      ""))
 
-    ## outputVoltage
+    ## output
     #
     # Output a single voltage more or less as soon as it is called, 
     # assuming that no other task is running.
     #
     # @param voltage The voltage to output.
     #
-    def outputVoltage(self, voltage):
+    def output(self, voltage):
         c_samples_written = c_long(0)
         c_voltage = c_double(voltage)
         checkStatus(nidaqmx.DAQmxWriteAnalogF64(self.taskHandle, 
@@ -198,11 +198,102 @@ class VoltageOutput(NIDAQTask):
         assert c_samples_written.value == 1, "outputVoltage failed: " + str(c_samples_written.value) + " 1"
 
 
-## WaveformOutput
+## AnalogWaveformInput
+#
+# Analog input class
+#
+# Geared towards acquiring a fixed number of samples at a predefined rate,
+# asynchronously timed off the internal clock.
+#
+class AnalogWaveformInput(NIDAQTask):
+
+    ## __init__
+    #
+    # @param board The board name.
+    # @param channel The channel to use for input.
+    # @param min_val (Optional) Defaults to -10.0V.
+    # @param max_val (Optional) Defaults to 10.0V.
+    #
+    def __init__(self, board, channel, min_val = -10.0, max_val = 10.0):
+        NIDAQTask.__init__(self, board)
+        self.c_waveform = 0
+        self.dev_and_channel = "Dev" + str(self.board_number) + "/ai" + str(channel)
+        self.min_val = min_val
+        self.max_val = max_val
+        self.channels = 1
+        checkStatus(nidaqmx.DAQmxCreateAIVoltageChan(self.taskHandle, 
+                                                     c_char_p(self.dev_and_channel),
+                                                     "",
+                                                     c_int(DAQmx_Val_RSE),
+                                                     c_double(self.min_val), 
+                                                     c_double(self.max_val), 
+                                                     c_int(DAQmx_Val_Volts),
+                                                     None))
+
+    ## addChannel
+    #
+    # Add a channel to the task. I'm pretty sure they have to be added sequentially
+    # with increasing channel number.
+    #
+    # @param channel The channel to add.
+    #
+    def addChannel(self, channel):
+        self.channels += 1
+        self.dev_and_channel = "Dev" + str(self.board_number) + "/ai" + str(channel)        
+        checkStatus(nidaqmx.DAQmxCreateAIVoltageChan(self.taskHandle, 
+                                                     c_char_p(self.dev_and_channel),
+                                                     "",
+                                                     c_int(DAQmx_Val_RSE),
+                                                     c_double(self.min_val), 
+                                                     c_double(self.max_val), 
+                                                     c_int(DAQmx_Val_Volts),
+                                                     None))
+
+    ## configureAcquisition
+    #
+    # Set the sample timing and buffer length.
+    #
+    # @param samples The number of samples to acquire.
+    # @param sample_rate_Hz The sampling rate (in Hz).
+    #
+    def configureAcquisition(self, samples, sample_rate_Hz):
+        self.samples = samples
+        checkStatus(nidaqmx.DAQmxCfgSampClkTiming(self.taskHandle,
+                                                  "",
+                                                  c_double(sample_rate_Hz),
+                                                  c_long(DAQmx_Val_Rising),
+                                                  c_long(DAQmx_Val_FiniteSamps),
+                                                  c_ulonglong(self.samples)))
+
+    ## getData
+    #
+    # Get the acquired data from the DAQ card.
+    #
+    # @return The data as a flat c-types array of size samples * channels.
+    #
+    def getData(self):
+        # allocate space to store the data.
+        c_data_type = c_double * (self.samples * self.channels)
+        data = c_data_type()
+        # acquire the data.
+        c_samples_read = c_long(0)
+        checkStatus(nidaqmx.DAQmxReadAnalogF64(self.taskHandle,
+                                               c_long(self.samples),
+                                               c_double(10.0),
+                                               c_long(DAQmx_Val_GroupByChannel),
+                                               byref(data),
+                                               c_ulong(self.channels*self.samples),
+                                               byref(c_samples_read),
+                                               None))
+        assert c_samples_read.value == self.samples, "Failed to read the right number of samples " + str(c_samples_read.value) + " " + str(self.samples)
+        return data
+
+
+## AnalogWaveformOutput
 #
 # Analog waveform output class
 #
-class WaveformOutput(NIDAQTask):
+class AnalogWaveformOutput(NIDAQTask):
 
     ## __init__
     #
@@ -299,97 +390,6 @@ class WaveformOutput(NIDAQTask):
                                                 byref(c_samples_written), 
                                                 None))
         assert c_samples_written.value == waveform_len, "Failed to write the right number of samples " + str(c_samples_written.value) + " " + str(waveform_len)
-
-
-## AnalogInput
-#
-# Analog input class
-#
-# Geared towards acquiring a fixed number of samples at a predefined rate,
-# asynchronously timed off the internal clock.
-#
-class AnalogInput(NIDAQTask):
-
-    ## __init__
-    #
-    # @param board The board name.
-    # @param channel The channel to use for input.
-    # @param min_val (Optional) Defaults to -10.0V.
-    # @param max_val (Optional) Defaults to 10.0V.
-    #
-    def __init__(self, board, channel, min_val = -10.0, max_val = 10.0):
-        NIDAQTask.__init__(self, board)
-        self.c_waveform = 0
-        self.dev_and_channel = "Dev" + str(self.board_number) + "/ai" + str(channel)
-        self.min_val = min_val
-        self.max_val = max_val
-        self.channels = 1
-        checkStatus(nidaqmx.DAQmxCreateAIVoltageChan(self.taskHandle, 
-                                                     c_char_p(self.dev_and_channel),
-                                                     "",
-                                                     c_int(DAQmx_Val_RSE),
-                                                     c_double(self.min_val), 
-                                                     c_double(self.max_val), 
-                                                     c_int(DAQmx_Val_Volts),
-                                                     None))
-
-    ## addChannel
-    #
-    # Add a channel to the task. I'm pretty sure they have to be added sequentially
-    # with increasing channel number.
-    #
-    # @param channel The channel to add.
-    #
-    def addChannel(self, channel):
-        self.channels += 1
-        self.dev_and_channel = "Dev" + str(self.board_number) + "/ai" + str(channel)        
-        checkStatus(nidaqmx.DAQmxCreateAIVoltageChan(self.taskHandle, 
-                                                     c_char_p(self.dev_and_channel),
-                                                     "",
-                                                     c_int(DAQmx_Val_RSE),
-                                                     c_double(self.min_val), 
-                                                     c_double(self.max_val), 
-                                                     c_int(DAQmx_Val_Volts),
-                                                     None))
-
-    ## configureAcquisition
-    #
-    # Set the sample timing and buffer length.
-    #
-    # @param samples The number of samples to acquire.
-    # @param sample_rate_Hz The sampling rate (in Hz).
-    #
-    def configureAcquisition(self, samples, sample_rate_Hz):
-        self.samples = samples
-        checkStatus(nidaqmx.DAQmxCfgSampClkTiming(self.taskHandle,
-                                                  "",
-                                                  c_double(sample_rate_Hz),
-                                                  c_long(DAQmx_Val_Rising),
-                                                  c_long(DAQmx_Val_FiniteSamps),
-                                                  c_ulonglong(self.samples)))
-
-    ## getData
-    #
-    # Get the acquired data from the DAQ card.
-    #
-    # @return The data as a flat c-types array of size samples * channels.
-    #
-    def getData(self):
-        # allocate space to store the data.
-        c_data_type = c_double * (self.samples * self.channels)
-        data = c_data_type()
-        # acquire the data.
-        c_samples_read = c_long(0)
-        checkStatus(nidaqmx.DAQmxReadAnalogF64(self.taskHandle,
-                                               c_long(self.samples),
-                                               c_double(10.0),
-                                               c_long(DAQmx_Val_GroupByChannel),
-                                               byref(data),
-                                               c_ulong(self.channels*self.samples),
-                                               byref(c_samples_read),
-                                               None))
-        assert c_samples_read.value == self.samples, "Failed to read the right number of samples " + str(c_samples_read.value) + " " + str(self.samples)
-        return data
 
 
 ## CounterOutput
@@ -642,8 +642,8 @@ class DigitalWaveformOutput(NIDAQTask):
 # @param voltage The desired voltage.
 #
 def setAnalogLine(board, line, voltage):
-    task = VoltageOutput(board, line)
-    task.outputVoltage(voltage)
+    task = AnalogOutput(board, line)
+    task.output(voltage)
     task.stopTask()
     task.clearTask()
 
