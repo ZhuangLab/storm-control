@@ -26,6 +26,8 @@ class CoherentCube(hardwareModule.BufferedAmplitudeModulation):
     def __init__(self, parameters, parent):
         hardwareModule.BufferedAmplitudeModulation.__init__(self, parameters, parent)
 
+        self.amplitude_on = False
+
         import coherent.cube as cube
         self.cube_laser = cube.Cube(parameters.port)
         if not (self.cube_laser.getStatus()):
@@ -38,7 +40,10 @@ class CoherentCube(hardwareModule.BufferedAmplitudeModulation):
     # @param channel_id The channel id.
     #
     def amplitudeOff(self, channel_id):
-        self.setAmplitude(channel_id, 0)
+        self.amplitude_on = False
+        self.device_mutex.lock()
+        self.cube_laser.setPower(0.0)
+        self.device_mutex.unlock()
 
     ## amplitudeOn
     #
@@ -48,6 +53,7 @@ class CoherentCube(hardwareModule.BufferedAmplitudeModulation):
     # @param amplitude The channel amplitude.
     #
     def amplitudeOn(self, channel_id, amplitude):
+        self.amplitude_on = True
         self.setAmplitude(channel_id, amplitude)
 
     ## cleanup
@@ -64,9 +70,10 @@ class CoherentCube(hardwareModule.BufferedAmplitudeModulation):
     # @param amplitude The channel amplitude.
     #
     def deviceSetAmplitude(self, channel, amplitude):
-        self.device_mutex.lock()
-        self.cube_laser.setPower(0.01 * amplitude)
-        self.device_mutex.unlock()
+        if self.amplitude_on:
+            self.device_mutex.lock()
+            self.cube_laser.setPower(0.01 * amplitude)
+            self.device_mutex.unlock()
         
     ## startFilm
     #

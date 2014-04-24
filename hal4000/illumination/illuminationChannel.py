@@ -183,15 +183,15 @@ class Channel(QtCore.QObject):
         self.channel_ui.updatePowerText(power_string)
 
         self.current_power = new_power
-        if self.am_on:
-            if self.amplitude_modulation:
-                self.amplitude_modulation.setAmplitude(self.channel_id, new_power)
 
-            if self.mechanical_shutter:
-                if (new_power == self.min_amplitude):
-                    self.mechanical_shutter.closeShutter(self.channel_id)
-                else:
-                    self.mechanical_shutter.openShutter(self.channel_id)
+        if self.amplitude_modulation:
+            self.amplitude_modulation.setAmplitude(self.channel_id, new_power)
+
+        if self.mechanical_shutter:
+            if (new_power == self.min_amplitude):
+                self.mechanical_shutter.closeShutter(self.channel_id)
+            else:
+                self.mechanical_shutter.openShutter(self.channel_id)
 
     ## newParameters
     #
