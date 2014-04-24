@@ -129,14 +129,27 @@ class AmplitudeModulation(HardwareModule):
 
         self.channel_parameters = {}
 
-    ## getAmplitude
+    ## getMaxAmplitude
     #
     # @param channel_id The channel id.
     #
     # @return The maximum amplitude for this channel.
     #
-    def getAmplitude(self, channel_id):
-        return self.channel_parameters[channel_id].amplitude
+    def getMaxAmplitude(self, channel_id):
+        return self.channel_parameters[channel_id].maximum
+
+    ## getMinAmplitude
+    #
+    # @param channel_id The channel id.
+    #
+    # @return The minimum amplitude for this channel.
+    #
+    def getMinAmplitude(self, channel_id):
+        params = self.channel_parameters[channel_id]
+        if (hasattr(params, "minimum")):
+            return params.minimum
+        else:
+            return 0
 
     ## initialize
     #

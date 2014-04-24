@@ -36,8 +36,10 @@ class Channel(QtCore.QObject):
         self.display_normalized = False
         self.filming_disabled = False
         self.max_amplitude = 1.0
+        self.min_amplitude = 0.0
         self.name = channel.description
         self.parameters = False
+        self.range = 1.0
         self.shutter_data = []
         self.used_for_film = False
         self.was_on = False
@@ -72,10 +74,12 @@ class Channel(QtCore.QObject):
         # If we have amplitude modulation then this is an adjustable channel with slider.
         if self.amplitude_modulation:
             self.display_normalized = channel.amplitude_modulation.display_normalized
-            self.max_amplitude = self.amplitude_modulation.getAmplitude(self.channel_id)
+            self.min_amplitude = self.amplitude_modulation.getMinAmplitude(self.channel_id)
+            self.max_amplitude = self.amplitude_modulation.getMaxAmplitude(self.channel_id)
+            self.range = float(self.max_amplitude - self.min_amplitude)
             self.channel_ui = illuminationChannelUI.ChannelUIAdjustable(self.name,
                                                                         channel.color,
-                                                                        parameters,
+                                                                        self.min_amplitude,
                                                                         self.max_amplitude,
                                                                         channels_box)
             if self.display_normalized:
@@ -87,7 +91,6 @@ class Channel(QtCore.QObject):
         else:
             self.channel_ui = illuminationChannelUI.ChannelUI(self.name,
                                                               channel.color,
-                                                              parameters,
                                                               channels_box)
 
         if bad_module:
@@ -98,6 +101,8 @@ class Channel(QtCore.QObject):
 
     ## cleanup
     #
+    def cleanup(self):
+        self.handleOnOffChange(False)
     
     ## getAmplitude
     #
@@ -171,7 +176,8 @@ class Channel(QtCore.QObject):
     #
     def handleSetPower(self, new_power):
         if self.display_normalized:
-            power_string = "{0:.4f}".format(float(new_power)/self.max_amplitude)
+            temp = float(new_power - self.min_amplitude)
+            power_string = "{0:.4f}".format(temp/self.range)
         else:
             power_string = "{0:d}".format(new_power)
         self.channel_ui.updatePowerText(power_string)
@@ -196,7 +202,7 @@ class Channel(QtCore.QObject):
         # Calculate new power in slider units if necessary.
         new_power = parameters.default_power[self.channel_id]
         if self.display_normalized:
-            new_power = int(round(new_power * self.max_amplitude))
+            new_power = int(round(new_power * self.range + self.min_amplitude))
 
         # Update channel settings.
         [old_on, old_power] = self.channel_ui.newSettings(parameters.on_off_state[self.channel_id],
@@ -208,7 +214,7 @@ class Channel(QtCore.QObject):
         # Save previous channel settings and shutter data in old parameters.
         if self.parameters:
             if self.display_normalized:
-                old_power = float(old_power)/self.max_amplitude
+                old_power = float(old_power - self.min_amplitude)/self.range
             self.parameters.on_off_state[self.channel_id] = old_on
             self.parameters.default_power[self.channel_id] = old_power
 
@@ -241,7 +247,7 @@ class Channel(QtCore.QObject):
     # @param power_inc The channel power increment (0.0 - 1.0).
     #
     def remoteIncPower(self, power_inc):
-        self.channel_ui.remoteIncPower(int(round(new_power * self.max_amplitude)))
+        self.channel_ui.remoteIncPower(int(round(new_power * self.range + self.min_amplitude)))
 
     ## remoteSetPower
     #
@@ -250,9 +256,8 @@ class Channel(QtCore.QObject):
     #
     # @param new_power The channel power setting (0.0 - 1.0).
     #
-    def remoteSetPower(self, new_power):
-        
-        self.channel_ui.remoteSetPower(int(round(new_power * self.max_amplitude)))
+    def remoteSetPower(self, new_power):        
+        self.channel_ui.remoteSetPower(int(round(new_power * self.range + self.min_amplitude)))
 
     ## setHeight
     #

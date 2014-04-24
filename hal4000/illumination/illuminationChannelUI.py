@@ -22,10 +22,9 @@ class ChannelUI(QtGui.QFrame):
     #
     # @param name The name of the channel (a text string).
     # @param color The background color to use for the channel (RGB triple as a string).
-    # @param parameters The parameters to use in the initial channel setup.
     # @param parent The PyQt parent of this object.
     #
-    def __init__(self, name, color, parameters, parent):
+    def __init__(self, name, color, parent):
         QtGui.QFrame.__init__(self, parent)
 
         self.color = color
@@ -157,16 +156,17 @@ class ChannelUIAdjustable(ChannelUI):
     #
     # @param name The name of the channel (a text string).
     # @param color The background color to use for the channel (RGB triple as a string).
-    # @param parameters The parameters to use in the initial channel setup.
-    # @param amplitude The maximum amplitude for this channel.
+    # @param minimum The minimum amplitude for this channel.
+    # @param maximum The maximum amplitude for this channel.
     # @param parent The PyQt parent of this object.
     #
-    def __init__(self, name, color, parameters, amplitude, parent):
-        ChannelUI.__init__(self, name, color, parameters, parent)
+    def __init__(self, name, color, minimum, maximum, parent):
+        ChannelUI.__init__(self, name, color, parent)
 
         self.buttons = []
         self.cur_y = 202
-        self.max_amplitude = amplitude
+        self.max_amplitude = maximum
+        self.min_amplitude = minimum
 
         # Current power label.
         self.power_label = QtGui.QLabel(self)
@@ -177,9 +177,11 @@ class ChannelUIAdjustable(ChannelUI):
         # Slider for controlling the power.
         self.powerslider = QtGui.QSlider(self)
         self.powerslider.setGeometry(13, 34, 24, 141)
-        self.powerslider.setMinimum(0)
-        self.powerslider.setMaximum(amplitude)
-        self.powerslider.setPageStep(0.1 * amplitude)
+        self.powerslider.setMinimum(minimum)
+        self.powerslider.setMaximum(maximum)
+        page_step = 0.1 * (maximum - minimum)
+        if (page_step > 1.0):
+            self.powerslider.setPageStep(page_step)
         self.powerslider.setSingleStep(1)
         self.powerslider.valueChanged.connect(self.handleAmplitudeChange)
 
@@ -274,9 +276,10 @@ class ChannelUIAdjustable(ChannelUI):
             button.hide()
 
         # Set text and value of the buttons we'll use & show them.
+        amp_range = float(self.max_amplitude - self.min_amplitude)
         for i in range(len(button_data)):
             self.buttons[i].setText(button_data[i][0])
-            self.buttons[i].setValue(int(round(button_data[i][1] * self.max_amplitude)))
+            self.buttons[i].setValue(int(round(button_data[i][1] * amp_range + self.min_amplitude)))
             self.buttons[i].show()
 
         # Resize based on number of visible buttons.

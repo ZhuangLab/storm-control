@@ -36,7 +36,8 @@
 	<uses>wheel1</uses>
 	<display_normalized type="boolean">False</display_normalized>
 	<parameters>
-	  <amplitude type="int">5</amplitude>
+	  <minimum type="int">1</minimum>
+	  <maximum type="int">6</maximum>
 	</parameters>
       </amplitude_modulation>
       
@@ -56,7 +57,7 @@
 	<uses>aotf1</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <amplitude type="int">6500</amplitude>
+	  <maximum type="int">6500</maximum>
 	  <channel type="int">0</channel>
 	  <off_frequency type="float">20.0</off_frequency>
 	  <on_frequency type="float">91.22</on_frequency>

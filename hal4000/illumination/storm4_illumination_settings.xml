@@ -53,7 +53,8 @@
 	<uses>750wheel</uses>
 	<display_normalized type="boolean">False</display_normalized>
 	<parameters>
-	  <amplitude type="int">5</amplitude>
+	  <minimum type="int">1</minimum>
+	  <maximum type="int">6</maximum>
 	</parameters>
       </amplitude_modulation>
       
@@ -75,7 +76,7 @@
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <amplitude>6100</amplitude>
+	  <maximum>6100</maximum>
 	  <channel type="int">0</channel>
 	  <off_frequency type="float">20.0</off_frequency>
 	  <on_frequency type="float">91.22</on_frequency>
@@ -110,7 +111,7 @@
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <amplitude>6500</amplitude>
+	  <maximum>6500</maximum>
 	  <channel type="int">1</channel>
 	  <off_frequency type="float">20.0</off_frequency>
 	  <on_frequency type="float">108.28</on_frequency>
@@ -145,7 +146,7 @@
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <amplitude>5700</amplitude>
+	  <maximum>5700</maximum>
 	  <channel type="int">2</channel>
 	  <off_frequency type="float">20.0</off_frequency>
 	  <on_frequency type="float">115.73</on_frequency>
@@ -180,7 +181,7 @@
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <amplitude>5900</amplitude>
+	  <maximum>5900</maximum>
 	  <channel type="int">3</channel>
 	  <off_frequency type="float">20.0</off_frequency>
 	  <on_frequency type="float">130.73</on_frequency>
@@ -215,7 +216,7 @@
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <amplitude>5000</amplitude>
+	  <maximum>5000</maximum>
 	  <channel type="int">4</channel>
 	  <off_frequency type="float">20.0</off_frequency>
 	  <on_frequency type="float">141.92</on_frequency>
@@ -250,7 +251,7 @@
 	<uses>cube405</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <amplitude>5000</amplitude>
+	  <maximum>5000</maximum>
 	</parameters>
       </amplitude_modulation>
       

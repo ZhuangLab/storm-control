@@ -44,7 +44,7 @@ class ThorlabsFW102C(hardwareModule.BufferedAmplitudeModulation):
     #
     def deviceSetAmplitude(self, channel, amplitude):
         self.device_mutex.lock()
-        self.filter_wheel.setPosition(amplitude+1)
+        self.filter_wheel.setPosition(amplitude)
         self.device_mutex.unlock()
 
 
