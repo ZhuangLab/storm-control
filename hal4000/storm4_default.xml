@@ -56,7 +56,7 @@
 
   <!-- illumination settings -->
   <shutters type="string">shutters_default.xml</shutters>
-  <default_power channel="0">1.0</default_power>
+  <default_power channel="0">6.0</default_power>
   <default_power channel="1">1.0</default_power>
   <default_power channel="2">1.0</default_power>
   <default_power channel="3">1.0</default_power>

@@ -31,6 +31,25 @@ class CoherentCube(hardwareModule.BufferedAmplitudeModulation):
         if not (self.cube_laser.getStatus()):
             self.working = False
 
+    ## amplitudeOff
+    #
+    # Called when the module should turn off a channel.
+    #
+    # @param channel_id The channel id.
+    #
+    def amplitudeOff(self, channel_id):
+        self.setAmplitude(channel_id, 0)
+
+    ## amplitudeOn
+    #
+    # Called when the module should turn on a channel.
+    #
+    # @param channel_id The channel id.
+    # @param amplitude The channel amplitude.
+    #
+    def amplitudeOn(self, channel_id, amplitude):
+        self.setAmplitude(channel_id, amplitude)
+
     ## cleanup
     #
     # Called when the program closes to clean up.

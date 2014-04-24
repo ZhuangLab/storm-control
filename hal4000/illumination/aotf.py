@@ -36,6 +36,25 @@ class CrystalTechAOTF(hardwareModule.BufferedAmplitudeModulation):
             else:
                 self.analogModulationOff()
 
+    ## amplitudeOff
+    #
+    # Called when the module should turn off a channel.
+    #
+    # @param channel_id The channel id.
+    #
+    def amplitudeOff(self, channel_id):
+        self.setAmplitude(channel_id, 0)
+
+    ## amplitudeOn
+    #
+    # Called when the module should turn on a channel.
+    #
+    # @param channel_id The channel id.
+    # @param amplitude The channel amplitude.
+    #
+    def amplitudeOn(self, channel_id, amplitude):
+        self.setAmplitude(channel_id, amplitude)
+
     ## cleanup
     #
     # Called when the program closes to clean up.
@@ -50,9 +69,10 @@ class CrystalTechAOTF(hardwareModule.BufferedAmplitudeModulation):
     # @param amplitude The channel amplitude.
     #
     def deviceSetAmplitude(self, channel_id, amplitude):
+        print "aotf", channel_id, amplitude
         aotf_channel = self.channel_parameters[channel_id].channel
         self.device_mutex.lock()
-        self.aotf.setAmplitude(aotf_chanel, amplitude)
+        self.aotf.setAmplitude(aotf_channel, amplitude)
         self.device_mutex.unlock()
 
     ## initialize
@@ -64,18 +84,21 @@ class CrystalTechAOTF(hardwareModule.BufferedAmplitudeModulation):
     # @param parameters A parameters object for this channel.
     #
     def initialize(self, interface, channel_id, parameters):
-        hardwareModule.BufferedAmplitudeModulation.initialize(interface, channel_id, parameters)
+        hardwareModule.BufferedAmplitudeModulation.initialize(self, interface, channel_id, parameters)
 
         aotf_channel = self.channel_parameters[channel_id].channel
-        off_frequency = self.channel_paraemters[channel_id].off_frequency
+        off_frequency = self.channel_parameters[channel_id].off_frequency
         on_frequency = self.channel_parameters[channel_id].on_frequency
-        if self.use_fsk:
-            frequencies = [off_frequency, on_frequency, off_frequency, off_frequency]
-        else:
-            frequencies = [on_frequency, off_frequency, off_frequency, off_frequency]
-        self.device_mutex.lock()
-        self.aotf.setFrequencies(aotf_channel, frequencies)
-        self.device_mutex.unlock()
+
+        if self.working:
+            if self.use_fsk:
+                frequencies = [off_frequency, on_frequency, off_frequency, off_frequency]
+            else:
+                frequencies = [on_frequency, off_frequency, off_frequency, off_frequency]
+
+            self.device_mutex.lock()
+            self.aotf.setFrequencies(aotf_channel, frequencies)
+            self.device_mutex.unlock()
 
 
 ## CrystalTechAOTF32bit

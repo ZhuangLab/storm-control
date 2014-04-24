@@ -129,6 +129,25 @@ class AmplitudeModulation(HardwareModule):
 
         self.channel_parameters = {}
 
+    ## amplitudeOff
+    #
+    # Called when the module should turn off a channel.
+    #
+    # @param channel_id The channel id.
+    #
+    def amplitudeOff(self, channel_id):
+        pass
+
+    ## amplitudeOn
+    #
+    # Called when the module should turn on a channel.
+    #
+    # @param channel_id The channel id.
+    # @param amplitude The channel amplitude.
+    #
+    def amplitudeOn(self, channel_id, amplitude):
+        pass
+
     ## getMaxAmplitude
     #
     # @param channel_id The channel id.

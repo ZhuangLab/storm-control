@@ -28,7 +28,7 @@ class ThorlabsFW102C(hardwareModule.BufferedAmplitudeModulation):
 
         import thorlabs.FW102C as FW102C
         self.filter_wheel = FW102C.FW102C(parameters.port)
-        if not (self.device.getStatus()):
+        if not (self.filter_wheel.getStatus()):
             self.working = False
 
     ## cleanup

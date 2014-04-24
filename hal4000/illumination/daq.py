@@ -161,7 +161,8 @@ class Nidaq(Daq):
     def __init__(self, parameters, parent):
         Daq.__init__(self, parameters, parent)
 
-        import nationalinstruments.nicontrol as nicontrol
+        import nationalInstruments.nicontrol as nicontrol
+        self.nicontrol = nicontrol
 
         self.ao_task = False
         self.ct_task = False
@@ -193,9 +194,9 @@ class Nidaq(Daq):
     #
     def analogOff(self, channel_id):
         if not self.filming:
-            nicontrol.setAnalogLine(self.analog_settings[channel_id].board,
-                                    self.analog_settings[channel_id].channel,
-                                    self.analog_settings[channel_id].min_voltage)
+            self.nicontrol.setAnalogLine(self.analog_settings[channel_id].board,
+                                         self.analog_settings[channel_id].channel,
+                                         self.analog_settings[channel_id].min_voltage)
 
     ## analogOn
     #
@@ -205,9 +206,9 @@ class Nidaq(Daq):
     #
     def analogOn(self, channel_id):
         if not self.filming:
-            nicontrol.setAnalogLine(self.analog_settings[channel_id].board,
-                                    self.analog_settings[channel_id].channel,
-                                    self.analog_settings[channel_id].max_voltage)
+            self.nicontrol.setAnalogLine(self.analog_settings[channel_id].board,
+                                         self.analog_settings[channel_id].channel,
+                                         self.analog_settings[channel_id].max_voltage)
 
     ## digitalOff
     #
@@ -217,9 +218,9 @@ class Nidaq(Daq):
     #
     def digitalOff(self, channel_id):
         if not self.filming:
-            nicontrol.setDigitalLine(self.digital_settings[channel_id].board,
-                                     self.digital_settings[channel_id].channel,
-                                     False)
+            self.nicontrol.setDigitalLine(self.digital_settings[channel_id].board,
+                                          self.digital_settings[channel_id].channel,
+                                          False)
 
     ## digitalOn
     #
@@ -229,9 +230,9 @@ class Nidaq(Daq):
     #
     def digitalOn(self, channel_id):
         if not self.filming:
-            nicontrol.setDigitalLine(self.digital_settings[channel_id].board,
-                                     self.digital_settings[channel_id].channel,
-                                     True)
+            self.nicontrol.setDigitalLine(self.digital_settings[channel_id].board,
+                                          self.digital_settings[channel_id].channel,
+                                          True)
 
     ## shutterOff
     #
@@ -240,9 +241,9 @@ class Nidaq(Daq):
     # @param channel_id The channel id.
     #
     def shutterOff(self, channel_id):
-        nicontrol.setDigitalLine(self.shutter_settings[channel_id].board,
-                                 self.shutter_settings[channel_id].channel,
-                                 False)
+        self.nicontrol.setDigitalLine(self.shutter_settings[channel_id].board,
+                                      self.shutter_settings[channel_id].channel,
+                                      False)
 
     ## digitalOn
     #
@@ -251,9 +252,9 @@ class Nidaq(Daq):
     # @param channel_id The channel id.
     #
     def shutterOn(self, channel_id):
-        nicontrol.setDigitalLine(self.shutter_settings[channel_id].board,
-                                 self.shutter_settings[channel_id].channel,
-                                 True)
+        self.nicontrol.setDigitalLine(self.shutter_settings[channel_id].board,
+                                      self.shutter_settings[channel_id].channel,
+                                      True)
 
     ## startFilm
     #
@@ -276,7 +277,7 @@ class Nidaq(Daq):
             analog_data = sorted(self.analog_data, key = lambda x: (x[0], x[1]))
 
             # Create channels.
-            self.ao_task = nicontrol.WaveformOutput(analog_data[0][0], analog_data[0][1])
+            self.ao_task = self.nicontrol.WaveformOutput(analog_data[0][0], analog_data[0][1])
             for i in range(len(analog_data) - 1):
                 self.ao_task.addChannel(analog_data[i+1][0], analog_data[i+1][1])
 
@@ -296,7 +297,7 @@ class Nidaq(Daq):
             digital_data = sorted(self.digital_data, key = lambda x: (x[0], x[1]))
 
             # Create channels.
-            self.do_task = nicontrol.DigitalWaveformOutput(digital_data[0][0], digital_data[0][1])
+            self.do_task = self.nicontrol.DigitalWaveformOutput(digital_data[0][0], digital_data[0][1])
             for i in range(len(digital_data) - 1):
                 self.do_task.addChannel(digital_data[i+1][0], digital_data[i+1][1])
 
@@ -311,10 +312,10 @@ class Nidaq(Daq):
 
         # Setup the counter.
         if self.counter_board:
-            self.ct_task = nicontrol.CounterOutput(self.counter_board, 
-                                                   self.counter_id,
-                                                   frequency, 
-                                                   0.5)
+            self.ct_task = self.nicontrol.CounterOutput(self.counter_board, 
+                                                        self.counter_id,
+                                                        frequency, 
+                                                        0.5)
             self.ct_task.setCounter(oversampling)
             self.ct_task.setTrigger(self.counter_trigger)
         else:

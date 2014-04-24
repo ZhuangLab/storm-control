@@ -29,7 +29,6 @@ class Channel(QtCore.QObject):
     def __init__(self, channel_id, channel, parameters, hardware_modules, channels_box):
         QtCore.QObject.__init__(self, channels_box)
 
-        self.am_on = False
         self.channel_id = channel_id
         self.channel_ui = False
         self.current_power = 0
@@ -60,12 +59,12 @@ class Channel(QtCore.QObject):
                 # Get the corresponding hardware / control module that will be used for this attribute.
                 h_module = hardware_modules[a_control.uses]
 
+                # Initialize the hardware / control module with the parameters for this channel.
+                h_module.initialize(name, self.channel_id, a_control.parameters)
+
                 # Check if the hardware / control module actual works.
                 if not h_module.getStatus():
                     bad_module = True
-                else:
-                    # Initialize the hardware / control module with the parameters for this channel.
-                    h_module.initialize(name, self.channel_id, a_control.parameters)
 
             # Add the attribute to the class.
             setattr(self, name, h_module)
@@ -82,10 +81,7 @@ class Channel(QtCore.QObject):
                                                                         self.min_amplitude,
                                                                         self.max_amplitude,
                                                                         channels_box)
-            if self.display_normalized:
-                self.channel_ui.updatePowerText("0.0000")
-            else:
-                self.channel_ui.updatePowerText("0")
+            self.channel_ui.updatePowerText("NS")
 
         # Otherwise it is a basic channel with on only a on/off radio button.
         else:
@@ -102,7 +98,7 @@ class Channel(QtCore.QObject):
     ## cleanup
     #
     def cleanup(self):
-        self.handleOnOffChange(False)
+        self.channel_ui.remoteOn(False)
     
     ## getAmplitude
     #
@@ -139,10 +135,9 @@ class Channel(QtCore.QObject):
     # @param on True/False on/off.
     #
     def handleOnOffChange(self, on):
-        self.am_on = on
-        if self.am_on:
+        if on:
             if self.amplitude_modulation:
-                self.handleSetPower(self.current_power)
+                self.amplitude_modulation.amplitudeOn(self.channel_id, self.current_power)
         
             if self.analog_modulation:
                 self.analog_modulation.analogOn(self.channel_id)
@@ -155,7 +150,7 @@ class Channel(QtCore.QObject):
 
         else:
             if self.amplitude_modulation:
-                self.handleSetPower(0)
+                self.amplitude_modulation.amplitudeOff(self.channel_id)
         
             if self.analog_modulation:
                 self.analog_modulation.analogOff(self.channel_id)
@@ -176,22 +171,20 @@ class Channel(QtCore.QObject):
     #
     def handleSetPower(self, new_power):
         if self.display_normalized:
-            temp = float(new_power - self.min_amplitude)
-            power_string = "{0:.4f}".format(temp/self.range)
+            power_string = "{0:.4f}".format((new_power - self.min_amplitude)/self.range)
         else:
             power_string = "{0:d}".format(new_power)
         self.channel_ui.updatePowerText(power_string)
 
-        if self.am_on:
-            self.current_power = new_power
-            if self.amplitude_modulation:
-                self.amplitude_modulation.setAmplitude(self.channel_id, new_power)
+        self.current_power = new_power
+        if self.amplitude_modulation:
+            self.amplitude_modulation.setAmplitude(self.channel_id, new_power)
 
-            if self.mechanical_shutter:
-                if (new_power == 0):
-                    self.mechanical_shutter.closeShutter(self.channel_id)
-                else:
-                    self.mechanical_shutter.openShutter(self.channel_id)
+        if self.mechanical_shutter:
+            if (new_power == self.min_amplitude):
+                self.mechanical_shutter.closeShutter(self.channel_id)
+            else:
+                self.mechanical_shutter.openShutter(self.channel_id)
 
     ## newParameters
     #
