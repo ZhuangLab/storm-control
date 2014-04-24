@@ -267,8 +267,8 @@ class Nidaq(Daq):
 
         # Calculate frequency. This is set slightly higher than the camere
         # frequency so that we are ready at the start of the next frame.
-        frequency = (1.001 / seconds_per_frame, oversampling)
-        
+        frequency = (1.001 / seconds_per_frame) * float(oversampling)
+
         # Setup analog waveforms.
         if (len(self.analog_data) > 0):
 
@@ -310,6 +310,20 @@ class Nidaq(Daq):
             self.do_task = False
 
         # Setup the counter.
+        if self.counter_board:
+            self.ct_task = nicontrol.CounterOutput(self.counter_board, 
+                                                   self.counter_id,
+                                                   frequency, 
+                                                   0.5)
+            self.ct_task.setCounter(oversampling)
+            self.ct_task.setTrigger(self.counter_trigger)
+        else:
+            self.ct_task = False
+
+        # Start tasks
+        for task in [self.ct_task, self.ao_task, self.do_task]:
+            if task:
+                task.startTask()
 
     ## stopFilm
     #
