@@ -85,7 +85,7 @@ class QParametersBox(QtGui.QWidget):
         self.current_parameters = None
         self.current_button = False
         self.radio_buttons = []
-
+        
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.setMargin(4)
         self.layout.setSpacing(2)
@@ -93,7 +93,6 @@ class QParametersBox(QtGui.QWidget):
                                                     12,
                                                     QtGui.QSizePolicy.Minimum,
                                                     QtGui.QSizePolicy.Expanding))
-
 
     ## addParameters
     #
@@ -111,6 +110,13 @@ class QParametersBox(QtGui.QWidget):
         if (len(self.radio_buttons) == 1):
             radio_button.click()
 
+    ## getButtonNames
+    #
+    # @return A list containing the names of each of the buttons.
+    #
+    def getButtonNames(self):
+        return map(lambda(x): x.text(), self.radio_buttons)
+
     ## getCurrentParameters
     #
     # @return The current parameters object.
@@ -118,28 +124,77 @@ class QParametersBox(QtGui.QWidget):
     def getCurrentParameters(self):
         return self.current_parameters
 
+    ## getIndexOfParameters
+    #
+    # @param param_index An integer or a string specifying the identifier of the parameters.
+    # 
+    # @return The index of the requested parameters.
+    #
+    def getIndexOfParameters(self, param_index):
+        button_names = self.getButtonNames()
+        if param_index in button_names:
+            return button_names.index(param_index)
+        elif param_index in range(len(button_names)):
+            return param_index
+        else:
+            return -1
+
+    ## getParameters
+    #
+    # Returns the requested parameters if the request is valid.
+    #
+    # @param param_index An integer or a string specifying the identify of the parameters
+    #
+    def getParameters(self, param_index):
+        index = self.getIndexOfParameters(param_index)
+        if (index != -1):
+            return self.radio_buttons[index].getParameters()
+        else:
+            return None
+
     ## handleDeleteSelected
     #
     # Handles the deleteSelected action from a parameters radio button.
     #
     def handleDeleteSelected(self):
-        for button in self.radio_buttons:
+        for [button_ID, button] in enumerate(self.radio_buttons):
             if button.delete_desired:
                 self.layout.removeWidget(button)
                 self.radio_buttons.remove(button)
                 button.close()
 
+    ## isValidParameters
+    #
+    # Returns true if the requested parameters exist.
+    #
+    # @param param_index An integer or a string specifying the identify of the parameters
+    #
+    def isValidParameters(self, param_index):
+        # Warn if there are multiple parameters with the same name?
+        if (self.getIndexOfParameters(param_index) != -1):
+            return True
+        else:
+            return False
+        
     ## setCurrentParameters
     #
     # Select one of the parameter choices in the parameters box.
     #
-    # @param index The index of the parameters to select, 0 <= x < number of parameters choices.
+    # @param param_index The name or index of the requested parameters
     #
-    def setCurrentParameters(self, index):
-        if (index >= 0) and (index < len(self.radio_buttons)):
-            self.radio_buttons[index].click()
+    # @return True/False is the selected parameters are the current parameters.
+    #
+    def setCurrentParameters(self, param_index):
+        index = self.getIndexOfParameters(param_index)
+        if (index != -1):
+            if (self.radio_buttons[index] == self.current_button):
+                return True
+            else:
+                self.radio_buttons[index].click()
+                return False
         else:
-            print "Requested parameter index not available", index
+            print "Requested parameter index not available", param_index
+            return True
 
     ## startFilm
     #

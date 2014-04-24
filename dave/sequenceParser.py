@@ -54,12 +54,54 @@ class Progression:
                     elif node.nodeName == "filename":
                         self.filename = node.firstChild.nodeValue
 
+## AbstractCommand
+#
+# The base class for dave commands
+#
+class AbstractCommand():
+
+    ## __init__
+    #
+    # Create default values
+    #
+    def __init__(self):
+        self.name = "None"
+        self.type = "None"
+
+    ## getName
+    #
+    # Return the name of the command
+    #
+    def getName(self):
+        return self.name
+
+    ## getType
+    #
+    # Return the type of the command
+    #
+    def getType(self):
+        return self.type
+
+    ## getDescriptor
+    #
+    # Return a string that describes the command
+    #
+    def getDescriptor(self):
+        return self.name + ": " + self.type
+
+    ## getDetails
+    #
+    # Return a a list with details for display in a descriptor table
+    #
+    def getDetails(self):
+        return [ [self.type, ""],
+                 ["Name", self.name] ] 
 
 ## Movie
 #
 # The movie object.
 #
-class Movie:
+class Movie(AbstractCommand):
 
     ## __init__
     #
@@ -68,21 +110,27 @@ class Movie:
     # @param movie_xml A xml node describing the movie.
     #
     def __init__(self, movie_xml):
+        AbstractCommand.__init__(self)
+        
+        # Node type
+        self.type = "movie"
 
         # default settings
         self.delay = 0
         self.find_sum = 0.0
-        self.length = 1
+        self.length = 0
         self.min_spots = 0
         self.name = "default"
-        self.pause = 1
+        self.pause = False
         self.progression = None
         self.recenter = 0
-
+        
         # parse settings
         for node in movie_xml.childNodes:
             if node.nodeType == Node.ELEMENT_NODE:
-                if (node.nodeName == "delay"):
+                if (node.nodeName == "directory"):
+                    self.directory = node.firstChild.nodeValue
+                elif (node.nodeName == "delay"):
                     self.delay = int(node.firstChild.nodeValue)
                 elif (node.nodeName == "find_sum"):
                     self.find_sum = float(node.firstChild.nodeValue)
@@ -94,8 +142,16 @@ class Movie:
                     self.min_spots = int(node.firstChild.nodeValue)
                 elif (node.nodeName == "name"):
                     self.name = node.firstChild.nodeValue
+                elif (node.nodeName == "overwrite"):
+                    if node.firstChild.nodeValue == "True":
+                        self.overwrite = True
+                    else:
+                        self.overwrite = False
                 elif (node.nodeName == "parameters"):
-                    self.parameters = int(node.firstChild.nodeValue)
+                    try:
+                        self.parameters = int(node.firstChild.nodeValue)
+                    except:
+                        self.parameters = str(node.firstChild.nodeValue)
                 elif (node.nodeName == "pause"):
                     self.pause = int(node.firstChild.nodeValue)
                 elif (node.nodeName == "recenter"):
@@ -109,13 +165,136 @@ class Movie:
         progression_xml = movie_xml.getElementsByTagName("progression")
         if (len(progression_xml) > 0):
             self.progression = Progression(progression_xml[0])
-        else:
-            self.progression = Progression(None)
 
+    ## getDescriptor
+    #
+    # Return a string that describes the command
+    #
+    def getDescriptor(self):
+        if hasattr(self, "stage_x") and hasattr(self, "stage_y"):
+            return self.name + " ({0:.1f}, {1:.1f})".format(self.stage_x, self.stage_y)
+        else:
+            return self.name + " (Curr. Pos.)"
+
+    ## getDetails
+    #
+    # Return a a list with details for display in a descriptor table
+    #
+    def getDetails(self):
+        details = []
+        # Movie header and name
+        details.append(["Movie Command", ""])
+        details.append(["Name", self.name])
+
+        # Parameters
+        if hasattr(self, "parameters"):
+            details.append(["Parameters", str(self.parameters)])
+        else:
+            details.append(["Parameters", "None"])
+
+        # Length
+        details.append(["Frames", "{0:d}".format(self.length)])
+
+        # Position
+        if hasattr(self, "stage_x") and hasattr(self, "stage_y"):
+            details.append(["Position", "({0:.2f}, {1:.2f})".format(self.stage_x, self.stage_y)])
+        else:
+            details.append(["Position", "Current"])
+
+        # Delay
+        details.append(["Delay", "{0:d}".format(self.delay)])
+
+        # Sum
+        if self.find_sum > 0.0:
+            details.append(["Sum Target", "{0:.1f}".format(self.find_sum)])
+        else:
+            details.append(["Sum Target", "None"]);
+
+        # Lock Target
+        if hasattr(self, "lock_target"):
+            details.append(["Lock Target", "{0:.1f}".format(self.lock_target)])
+        else:
+            details.append(["Lock Target", "None"])
+
+        # Min Spots
+        details.append(["Min Spots", "{0:d}".format(self.min_spots)])
+
+        # Pause
+        if self.pause:
+            details.append(["Pause", "Yes"])
+        else:
+            details.append(["Pause", "No"])
+
+        # Progression
+        if hasattr(self.progression, "type"):
+            display_str = self.progression.type
+            if self.progression.type == "file":
+                display_str += ": " + self.progression.filename
+            details.append(["Progression", display_str])
+        else:
+            details.append(["Progression", "None"])
+
+        # Recenter
+        if self.recenter:
+            details.append(["Recenter", "Yes"])
+        else:
+            details.append(["Recenter", "No"])
+
+        return details
+        
     ## __repr__
     #
     def __repr__(self):
         return hdebug.objectToString(self, "sequenceParser.Movie", ["name", "length", "stage_x", "stage_y"])
+
+## ValveProtocol
+#
+# The fluidics protocol object.  This class controls communication with a valve chain
+#
+class ValveProtocol(AbstractCommand):
+    ## __init__
+    #
+    # Dynamically create the class by processing the fluidics xml object.
+    #
+    # @param fluidics_xml A xml node describing the fluidics command.
+    #
+    def __init__(self, fluidics_xml):
+        AbstractCommand.__init__(self)
+        
+        # node type
+        self.type = "fluidics"
+        
+        # default settings
+        self.protocol_name = []
+        
+        # passed single node
+        node = fluidics_xml
+        
+        # parse settings
+        if node.nodeType == Node.ELEMENT_NODE:
+            if (node.nodeName == "valve_protocol"):
+                self.protocol_name = node.firstChild.nodeValue
+        self.name = self.protocol_name
+
+    ## getDescriptor
+    #
+    # Return a string that describes the command
+    #
+    def getDescriptor(self):
+        return self.name
+
+    ## getDetails
+    #
+    # Return a a list with details for display in a descriptor table
+    #
+    def getDetails(self):
+        return [ ["Valve Command", ""],
+                 ["Name", self.name] ] 
+    
+    ## __repr__
+    #
+    def __repr__(self):
+        return hdebug.objectToString(self, "sequenceParser.ValveProtocol", ["protocol_name"])
 
 ## parseMovieXml
 #
@@ -126,22 +305,26 @@ class Movie:
 def parseMovieXml(movie_xml_filename):
     xml = minidom.parse(movie_xml_filename)
     sequence = xml.getElementsByTagName("sequence").item(0)
-    movies_xml = sequence.getElementsByTagName("movie")
-    movies = []
-    for movie_xml in movies_xml:
-        movies.append(Movie(movie_xml))
 
-    return movies
+    commands = []
+    children = sequence.childNodes
+    for child in children:
+        if child.nodeType == Node.ELEMENT_NODE:
+            if child.tagName == "movie":
+                commands.append(Movie(child))
+            elif child.tagName == "valve_protocol":
+                commands.append(ValveProtocol(child))
 
+    return commands
 
 #
 # Testing
 # 
-
 if __name__ == "__main__":
-    print parseMovieXml("sequence.xml")
-
-
+    parsed_commands = parseMovieXml("sequence.xml")
+    print "Parsed the following commands: "
+    for command in parsed_commands:
+        print command
 
 #
 # The MIT License

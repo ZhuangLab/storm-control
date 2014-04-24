@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<settings>
+  <!-- camera settings -->
+  <emccd_gain type="int">0</emccd_gain>
+  <x_start type="int">129</x_start>
+  <x_end type="int">384</x_end>
+  <y_start type="int">129</y_start>
+  <y_end type="int">384</y_end>
+  <x_bin type="int">1</x_bin>
+  <y_bin type="int">1</y_bin>
+  <exposure_time type="float">0.1</exposure_time>
+  <preampgain type="float">2.4</preampgain>
+
+  <!-- film settings -->
+  <extensions type="string-array">ph1, ,</extensions>
+  <auto_increment type="int">0</auto_increment>
+  <acq_mode type="string">fixed_length</acq_mode> 
+  <frames type="int">5</frames>
+  <directory type="string">C:\users\Data\Jeff M</directory>
+  <auto_shutters type="int">0</auto_shutters>
+  <default_power channel="7">1.0</default_power>
+  
+  <!-- view settings -->
+  <colortable type="string">ramp.ctbl</colortable>
+  <max_intensity type="int">20000</max_intensity>
+
+</settings>

@@ -343,8 +343,8 @@ class LockDisplay(QtGui.QWidget):
     #
     # Tell the control thread to execute the find sum signal procedure.
     #
-    def tcpHandleFindSum(self):
-        self.control_thread.findSumSignal()
+    def tcpHandleFindSum(self, min_sum):
+        self.control_thread.findSumSignal(min_sum)
 
     ## tcpHandleOptimizeSum
     #

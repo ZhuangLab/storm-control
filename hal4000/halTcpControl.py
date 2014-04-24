@@ -10,8 +10,7 @@
 import halLib.halModule as halModule
 
 import sc_library.hdebug as hdebug
-import sc_library.tcpControl as tcpControl
-
+from sc_library.tcpServer import TCPServer
 
 ## TCP/IP Control Class
 #
@@ -19,7 +18,7 @@ import sc_library.tcpControl as tcpControl
 # the server is closed once the connection is made. When the
 # connection is broken the server is opened again.
 #
-class HalTCPControl(tcpControl.TCPControl, halModule.HalModule):
+class HalTCPControl(TCPServer, halModule.HalModule):
 
     ## __init__
     #
@@ -32,7 +31,11 @@ class HalTCPControl(tcpControl.TCPControl, halModule.HalModule):
     # @param parent The PyQt parent.
     #
     def __init__(self, hardware, parameters, parent):
-        tcpControl.TCPControl.__init__(self, hardware, parameters, parent)
+        TCPServer.__init__(self,
+                           port = hardware.tcp_port,
+                           server_name = "Hal",
+                           parent = parent,
+                           verbose = True)
         halModule.HalModule.__init__(self)
 
     ## connectSignals
@@ -43,7 +46,7 @@ class HalTCPControl(tcpControl.TCPControl, halModule.HalModule):
     def connectSignals(self, signals):
         for signal in signals:
             if (signal[1] == "tcpComplete"):
-                signal[2].connect(self.sendComplete)
+                signal[2].connect(self.sendMessage)
 
     ## getSignals
     #
@@ -51,10 +54,9 @@ class HalTCPControl(tcpControl.TCPControl, halModule.HalModule):
     #
     @hdebug.debug
     def getSignals(self):
-        return [[self.hal_type, "commGotConnection", self.commGotConnection],
-                [self.hal_type, "commLostConnection", self.commLostConnection],
-                [self.hal_type, "commMessage", self.commMessage]]
-
+        return [[self.hal_type, "commGotConnection", self.comGotConnection],
+                [self.hal_type, "commLostConnection", self.comLostConnection],
+                [self.hal_type, "commMessage", self.messageReceived]]
 
 #
 # The MIT License

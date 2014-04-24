@@ -1,0 +1,656 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<sequence>
+<movie>
+       <name>No_Parameters_0</name>
+       <length>300</length>
+       <none />
+</movie>
+	
+	
+    <movie>
+       <name>Parameters_By_Name_0</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <none />
+</movie>
+	
+	
+    <movie>
+       <name>Parameters_By_Number_0</name>
+       <length>300</length>
+       <parameters>0</parameters>
+       <none />
+</movie>
+
+	
+    <movie>
+       <name>No_File_Overwrite_0</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <lock_target>10.0</lock_target>
+	   <overwrite>False</overwrite>
+       <none />
+</movie>
+	
+    
+    <movie>
+       <name>Set_Lock_Target_0</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <lock_target>10.0</lock_target>
+       <none />
+</movie>
+	
+	
+    <movie>
+       <name>Find_Sum_0</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <find_sum>50.0</find_sum>
+       <none />
+</movie>
+
+    
+    <movie>
+       <name>Piezo_Recenter_0</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <recenter>1</recenter>
+       <none />
+</movie>
+
+    
+    <movie>
+       <name>Change_Directory_0</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <directory>C:\Users\Data\Log</directory>
+       <none />
+</movie>
+
+    
+    <movie>
+       <name>Delay_0</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <delay>10000</delay>
+       <none />
+</movie>
+	
+	
+    <movie>
+       <name>Min_Spots_0</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <min_spots>2000</min_spots>
+       <none />
+</movie>
+
+    
+    <movie>
+       <name>Pause_0</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <pause>1</pause>
+       <none />
+</movie>
+
+    
+    <movie>
+       <name>Locked_Out_Progression_0</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <progression>
+           <type>lockedout</type>
+        </progression>
+       <none />
+</movie>
+	
+	
+    <movie>
+       <name>Filename_Progression_0</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <progression>
+           <type>file</type>
+           <filename>..\dave\test\test_progression.power</filename>
+        </progression>
+       <none />
+</movie>
+	
+	
+    <movie>
+       <name>Channel_Progression_0</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <progression>
+           <type>exponential</type>
+           <channel frames="100" inc="1.05" start="0.01">6</channel>
+        </progression>
+       <none />
+</movie> 
+	
+  <movie>
+       <name>No_Parameters_1</name>
+       <length>300</length>
+       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Parameters_By_Name_1</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Parameters_By_Number_1</name>
+       <length>300</length>
+       <parameters>0</parameters>
+       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+
+	
+    <movie>
+       <name>No_File_Overwrite_1</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <lock_target>10.0</lock_target>
+	   <overwrite>False</overwrite>
+       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+	
+    
+    <movie>
+       <name>Set_Lock_Target_1</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <lock_target>10.0</lock_target>
+       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Find_Sum_1</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <find_sum>50.0</find_sum>
+       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Piezo_Recenter_1</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <recenter>1</recenter>
+       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Change_Directory_1</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <directory>C:\Users\Data\Log</directory>
+       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Delay_1</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <delay>10000</delay>
+       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Min_Spots_1</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <min_spots>2000</min_spots>
+       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Pause_1</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <pause>1</pause>
+       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Locked_Out_Progression_1</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <progression>
+           <type>lockedout</type>
+        </progression>
+       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Filename_Progression_1</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <progression>
+           <type>file</type>
+           <filename>..\dave\test\test_progression.power</filename>
+        </progression>
+       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Channel_Progression_1</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <progression>
+           <type>exponential</type>
+           <channel frames="100" inc="1.05" start="0.01">6</channel>
+        </progression>
+       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
+</movie> 
+	
+  <movie>
+       <name>No_Parameters_2</name>
+       <length>300</length>
+       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Parameters_By_Name_2</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Parameters_By_Number_2</name>
+       <length>300</length>
+       <parameters>0</parameters>
+       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+
+	
+    <movie>
+       <name>No_File_Overwrite_2</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <lock_target>10.0</lock_target>
+	   <overwrite>False</overwrite>
+       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+	
+    
+    <movie>
+       <name>Set_Lock_Target_2</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <lock_target>10.0</lock_target>
+       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Find_Sum_2</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <find_sum>50.0</find_sum>
+       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Piezo_Recenter_2</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <recenter>1</recenter>
+       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Change_Directory_2</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <directory>C:\Users\Data\Log</directory>
+       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Delay_2</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <delay>10000</delay>
+       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Min_Spots_2</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <min_spots>2000</min_spots>
+       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Pause_2</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <pause>1</pause>
+       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Locked_Out_Progression_2</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <progression>
+           <type>lockedout</type>
+        </progression>
+       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Filename_Progression_2</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <progression>
+           <type>file</type>
+           <filename>..\dave\test\test_progression.power</filename>
+        </progression>
+       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Channel_Progression_2</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <progression>
+           <type>exponential</type>
+           <channel frames="100" inc="1.05" start="0.01">6</channel>
+        </progression>
+       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
+</movie> 
+	
+  <movie>
+       <name>No_Parameters_3</name>
+       <length>300</length>
+       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Parameters_By_Name_3</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Parameters_By_Number_3</name>
+       <length>300</length>
+       <parameters>0</parameters>
+       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+
+	
+    <movie>
+       <name>No_File_Overwrite_3</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <lock_target>10.0</lock_target>
+	   <overwrite>False</overwrite>
+       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+	
+    
+    <movie>
+       <name>Set_Lock_Target_3</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <lock_target>10.0</lock_target>
+       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Find_Sum_3</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <find_sum>50.0</find_sum>
+       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Piezo_Recenter_3</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <recenter>1</recenter>
+       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Change_Directory_3</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <directory>C:\Users\Data\Log</directory>
+       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Delay_3</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <delay>10000</delay>
+       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Min_Spots_3</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <min_spots>2000</min_spots>
+       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Pause_3</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <pause>1</pause>
+       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Locked_Out_Progression_3</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <progression>
+           <type>lockedout</type>
+        </progression>
+       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Filename_Progression_3</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <progression>
+           <type>file</type>
+           <filename>..\dave\test\test_progression.power</filename>
+        </progression>
+       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Channel_Progression_3</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <progression>
+           <type>exponential</type>
+           <channel frames="100" inc="1.05" start="0.01">6</channel>
+        </progression>
+       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
+</movie> 
+	
+  <movie>
+       <name>No_Parameters_4</name>
+       <length>300</length>
+       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Parameters_By_Name_4</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Parameters_By_Number_4</name>
+       <length>300</length>
+       <parameters>0</parameters>
+       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+
+	
+    <movie>
+       <name>No_File_Overwrite_4</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <lock_target>10.0</lock_target>
+	   <overwrite>False</overwrite>
+       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+	
+    
+    <movie>
+       <name>Set_Lock_Target_4</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <lock_target>10.0</lock_target>
+       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Find_Sum_4</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <find_sum>50.0</find_sum>
+       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Piezo_Recenter_4</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <recenter>1</recenter>
+       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Change_Directory_4</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <directory>C:\Users\Data\Log</directory>
+       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Delay_4</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <delay>10000</delay>
+       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Min_Spots_4</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <min_spots>2000</min_spots>
+       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Pause_4</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <pause>1</pause>
+       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+
+    
+    <movie>
+       <name>Locked_Out_Progression_4</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <progression>
+           <type>lockedout</type>
+        </progression>
+       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Filename_Progression_4</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <progression>
+           <type>file</type>
+           <filename>..\dave\test\test_progression.power</filename>
+        </progression>
+       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie>
+	
+	
+    <movie>
+       <name>Channel_Progression_4</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <progression>
+           <type>exponential</type>
+           <channel frames="100" inc="1.05" start="0.01">6</channel>
+        </progression>
+       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
+</movie> 
+	
+  <valve_protocol>Hybridize 1</valve_protocol>
+  <valve_protocol>Hybridize 2</valve_protocol>
+  <valve_protocol>Extra Wash</valve_protocol>
+</sequence>

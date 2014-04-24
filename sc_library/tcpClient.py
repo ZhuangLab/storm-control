@@ -1,300 +1,184 @@
 #!/usr/bin/python
 #
-## @file
+## @file 
 #
-# TCP interface to HAL-4000 data taking program 
-# for the Dave command scripting program.
+# A TCP communication class that acts as the client side for generic communications
+# between programs in the storm-control project
 #
-# Hazen 12/13
-#
+# Jeffrey Moffitt
+# 3/8/14
+# jeffmoffitt@gmail.com
 
+# 
+# Import
+# 
 import sys
 import time
 from PyQt4 import QtCore, QtGui, QtNetwork
-
-import sc_library.hdebug as hdebug
-
-## HALSocket
-#
-# The socket for communication with HAL-4000
-#
-class HALSocket(QtNetwork.QTcpSocket):
-    acknowledged = QtCore.pyqtSignal()
-    complete = QtCore.pyqtSignal(str)
-
-    ## __init__
-    #
-    # @param port The TCP/IP port to communicate on. Usually this is 9000.
-    #
-    @hdebug.debug
-    def __init__(self, port):
-        QtNetwork.QTcpSocket.__init__(self)
-        self.port = port
-
-        # signals
-        self.readyRead.connect(self.handleReadyRead)
-
-    ## connectToHal
-    #
-    # Try to make a connection to the HAL software.
-    #
-    @hdebug.debug
-    def connectToHAL(self):
-        # try to make connection
-        addr = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost)
-        self.connectToHost(addr, self.port)
-        tries = 0
-        while (not self.waitForConnected() and (tries < 5)):
-            print " Couldn't connect to HAL-4000, waiting 1 second and retrying"
-            time.sleep(1)
-            tries += 1
-            self.connectToHost(addr, self.port)
-
-        if (tries == 5):
-            print " Could not connect to HAL-4000."
-        else:
-            print " Connected to HAL-4000."
-
-    ## handleReadyRead
-    #
-    # This is called when there is new data available HAL on the TCP/IP connection.
-    # Depending on the data it emits the appropriate signal.
-    #
-    @hdebug.debug
-    def handleReadyRead(self):
-        while self.canReadLine():
-            line = str(self.readLine()).strip()            
-            if (line == "Ack"):
-                self.acknowledged.emit()
-            elif (line[0:8] == "Complete"):
-                values = line.split(",")
-                if (len(values)==2):
-                    self.complete.emit(values[1])
-                else:
-                    self.complete.emit("NA")
-            elif (line == "Busy"):
-                self.socket.disconnectFromHost()
-
-    ## sendCommand
-    #
-    # Sends a command to HAL.
-    #
-    # @param command The command to send (as a string).
-    #
-    @hdebug.debug
-    def sendCommand(self, command):
-        self.write(QtCore.QByteArray(command + "\n"))
-
+from sc_library.tcpMessage import TCPMessage
+import sc_library.tcpCommunications as tcpCommunications
 
 ## TCPClient
 #
-# Communication wrapper class
+# A TCP client class used to transfer TCP messages from one program to another
 #
-class TCPClient(QtGui.QWidget):
-    acknowledged = QtCore.pyqtSignal()
-    complete = QtCore.pyqtSignal(str)
-    disconnect = QtCore.pyqtSignal()
+class TCPClient(tcpCommunications.TCPCommunications):
+    comLostConnection = QtCore.pyqtSignal()
 
     ## __init__
     #
-    # Open a connection to HAL (A HALSocket) and connect the signals.
+    # Class constructor
     #
-    @hdebug.debug
-    def __init__(self, parent = None):
-        QtGui.QWidget.__init__(self, parent)
-        self.comm_state = None
-        self.socket = HALSocket(9000)
-        self.testing = False
-        self.unacknowledged = 0
-
-        self.socket.acknowledged.connect(self.handleAcknowledged)
-        self.socket.complete.connect(self.handleComplete)
+    # @param parent A reference to an owning class.
+    # @param port The TCP/IP port for communication.
+    # @param server_name A string name for the communication server.
+    # @param address An address for the TCP/IP communication.
+    # @param verbose A boolean controlling the verbosity of the class
+    #
+    def __init__(self,
+                 parent = None,
+                 port=9500,
+                 server_name = "default",
+                 address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
+                 verbose = False):
+        tcpCommunications.TCPCommunications.__init__(self,
+                                                     parent = parent,
+                                                     port = port,
+                                                     server_name = server_name,
+                                                     address = address,
+                                                     verbose = verbose)
+        
+        # Create instance of TCP socket
+        self.socket = QtNetwork.QTcpSocket()
         self.socket.disconnected.connect(self.handleDisconnect)
+        self.socket.readyRead.connect(self.handleReadyRead)
 
-    ## handleAcknowledged
+    ## connectToServer
     #
-    # Handles the acknowledged signal from the HAL socket.
+    # Attempt to establish a connection with the server at the indicated address and port
     #
-    @hdebug.debug
-    def handleAcknowledged(self):
-        self.unacknowledged -= 1
-        hdebug.logText("  got response " + str(self.unacknowledged))
-        if (self.unacknowledged == 0):
-            hdebug.logText(" acknowledged")
-            self.acknowledged.emit()
+    def connectToServer(self):
+        if self.verbose:
+            print "-"*50
+            string = "Looking for " + self.server_name + " server at: \n"
+            string += "    Address: " + self.address.toString() + "\n"
+            string += "    Port: " + str(self.port)
+            print string
 
-    ## handleComplete
-    #
-    # Handles the complete signal from the HAL socket.
-    #
-    @hdebug.debug
-    def handleComplete(self, a_string):
-        if (self.comm_state == "filming"):
-            hdebug.logText(" movie complete " + a_string)
-        elif (self.comm_state == "finding_sum"):
-            hdebug.logText(" finding sum complete " + a_string)
-        elif (self.comm_state == "recentering"):
-            hdebug.logText(" recentering complete " + a_string)
-        else:
-            hdebug.logText(" unknown state: " + str(self.comm_state))
-        self.comm_state = None
-        self.complete.emit(a_string)
+        # Attempt to connect to host.
+        self.socket.connectToHost(self.address, self.port)
+
+        if not self.socket.waitForConnected(1000):
+            print self.server_name + " server not found"        
 
     ## handleDisconnect
     #
-    # Handles the disconnect signal from the HAL socket.
+    # Handles the disconnect from the socket.
     #
-    @hdebug.debug
     def handleDisconnect(self):
-        self.disconnect.emit()
-
-    ## isConnected
-    #
-    # @return True/False is the HAL socket actually connected to HAL.
-    #
-    @hdebug.debug
-    def isConnected(self):
-        if (self.socket.state() == QtNetwork.QAbstractSocket.ConnectedState):
-            return True
-        else:
-            return False
-
-    ## sendCommand
-    #
-    # Sends a command to HAL via the HAL socket.
-    #
-    # @param command The command to send (as a string).
-    #
-    @hdebug.debug
-    def sendCommand(self, command):
-        if self.isConnected():
-            hdebug.logText("  sending: " + command)
-            self.unacknowledged += 1
-            self.socket.sendCommand(command)
-            self.socket.flush()
-            time.sleep(0.05)
-        else:
-            hdebug.logText(" Not connected?!?")
-
-    ## sendMovieParameters
-    #
-    # Sends the parameters for a movie to HAL. This fires all the settings off at once...
-    #
-    # @param movie A movie object.
-    #
-    @hdebug.debug
-    def sendMovieParameters(self, movie):
-
-        # send parameters index.
-        if hasattr(movie, "parameters"):
-            self.sendCommand("parameters,int,{0:d}".format(movie.parameters))
-
-        # send stage position.
-        if hasattr(movie, "stage_x") and hasattr(movie, "stage_y"):
-            self.sendCommand("moveTo,float,{0:.2f},float,{1:.2f}".format(movie.stage_x, movie.stage_y))
-
-        # send lock target.
-        if hasattr(movie, "lock_target"):
-            self.sendCommand("setLockTarget,float,{0:.1f}".format(movie.lock_target))
-
-    ## sendSetDirectory
-    #
-    # Tells HAL to change the current working directory.
-    #
-    # @param directory The new directory (as a string).
-    #
-    @hdebug.debug
-    def sendSetDirectory(self, directory):
-        self.sendCommand("setDirectory,string,{0:s}".format(directory))
+        self.comLostConnection.emit()
 
     ## startCommunication
     #
-    # This tells the HAL socket to make a connection to HAL.
+    # Start communications with server
     #
-    @hdebug.debug
+    # @return a_boolean Returns true if the client is connected.
     def startCommunication(self):
-        hdebug.logText(" starting communications " + str(self.isConnected()))
         if not self.isConnected():
-            self.socket.connectToHAL()
-            self.unacknowledged = 0
-
-    ## startFindSum
-    #
-    # Tells HAL to start the focus lock find sum procedure.
-    #
-    @hdebug.debug
-    def startFindSum(self):
-        hdebug.logText(" start find sum")
-        self.comm_state = "finding_sum"
-        self.sendCommand("findSum")
-
-    ## startMovie
-    #
-    # Configures HAL progressions and starts acquiring a movie.
-    #
-    # @param movie A movie object.
-    #
-    @hdebug.debug
-    def startMovie(self, movie):
-        hdebug.logText(" start movie")
-        if hasattr(movie, "progression"):
-            if (movie.progression.type == "lockedout"):
-                self.sendCommand("progressionLockout")
-            elif (movie.progression.type != "none"):
-                self.sendCommand("progressionType,string,{0:s}".format(movie.progression.type))
-                # Power controlled by file.
-                if movie.progression.type == "file":
-                    self.sendCommand("progressionFile,string,{0:s}".format(movie.progression.filename))
-                else:
-                    for channel in movie.progression.channels:
-                        # Power controlled by progression dialog box settings.
-                        if channel[2]:
-                            self.sendCommand("progressionSet,int,{0:d},float,{1:.4f},int,{2:d},float,{3:.4f}".format(channel[0],
-                                                                                                                     channel[1],
-                                                                                                                     channel[2],
-                                                                                                                     channel[3]))
-                        # Fixed power.
-                        else:
-                            self.sendCommand("setPower,int,{0:d},float,{1:.4f}".format(channel[0], channel[1]))
-        self.comm_state = "filming"
-        self.sendCommand("movie,string,{0:s},int,{1:d}".format(movie.name, movie.length))
-
-    ## startRecenterPiezo
-    #
-    # Tell HAL to recenter the focus lock piezo. This won't do anything if the
-    # microscope does not have a motorized Z.
-    #
-    @hdebug.debug
-    def startRecenterPiezo(self):
-        hdebug.logText(" start recenter piezo")
-        self.comm_state = "recentering"
-        self.sendCommand("recenterPiezo")
+            self.connectToServer()
+        return self.isConnected()
 
     ## stopCommunication
     #
-    # Tell the HAL socket to break the connection to HAL.
+    # Stop communications with server
     #
-    @hdebug.debug
     def stopCommunication(self):
-        hdebug.logText(" stopping communications " + str(self.isConnected()))
         if self.isConnected():
             self.socket.disconnectFromHost()
-            #self.socket.waitForDisconnected()
-            hdebug.logText("  " + str(self.isConnected()))
 
-    ## stopMovie
-    #
-    # Tell HAL to stop taking the current movie.
-    #
-    @hdebug.debug
-    def stopMovie(self):
-        hdebug.logText(" stop movie")
-        self.sendCommand("abortMovie")
 
+## StandAlone
+# 
+# Stand Alone Test Class
+#                                                               
+class StandAlone(QtGui.QMainWindow):
+
+    ## __init__
+    #
+    # @param parent (optional) The PyQt parent of this object.
+    #
+    def __init__(self, parent = None):
+        super(StandAlone, self).__init__(parent)
+
+        # Create client
+        self.client = TCPClient(port = 9500, server_name = "Test", verbose = True)
+
+        self.client.messageReceived.connect(self.handleMessageReady)
+        self.client.startCommunication()
+
+        self.message_ID = 1
+        self.sendTestMessage()
+
+    ## sendTestMessage
+    # 
+    # Send Test Messages
+    # 
+    def sendTestMessage(self):
+        if self.message_ID == 1:
+            # Create Test message
+            message = TCPMessage(message_type = "Stage Position",
+                                 message_data = {"Stage_X": 100.00, "Stage_Y": 0.00})
+        elif self.message_ID ==2:
+            message = TCPMessage(message_type = "Movie",
+                                 message_data = {"Name": "Test_Movie_01", "Parameters": 1})
+
+        else:
+            message = TCPMessage(message_type = "Done")
+    
+        self.message_ID += 1
+        self.sent_message = message
+        self.client.sendMessage(message)
+        
+    ## handleMessageReady
+    # 
+    # Handle New Message.
+    #
+    # @param message A TCPMessage object.
+    # 
+    def handleMessageReady(self, message):
+        # Handle responses to messages
+        if self.sent_message.getID() == message.getID():
+            if message.isComplete():
+                print "Completed message: "
+                print message
+        else:
+            print "Received an unexpected message"
+
+        self.sendTestMessage()
+
+    ## closeEvent
+    # 
+    # Handle close event.
+    #
+    # @param event A PyQt QEvent object.
+    # 
+    def closeEvent(self, event):
+        self.client.close()
+        self.close()
+       
+# 
+# Test/Demo of Class
+#                         
+if __name__ == "__main__":
+    app = QtGui.QApplication(sys.argv)
+    window = StandAlone()
+    window.show()
+    sys.exit(app.exec_())
+    
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

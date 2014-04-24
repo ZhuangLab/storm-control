@@ -389,7 +389,8 @@ class FileChannels(Channels):
 class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     incPower = QtCore.pyqtSignal(int, float)
     setPower = QtCore.pyqtSignal(int, float)
-
+    tcpComplete = QtCore.pyqtSignal(object)
+    
     ## __init__
     #
     # This initializes things and sets up the UI of the power control
@@ -515,7 +516,8 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def getSignals(self):
         return [[self.hal_type, "incPower", self.incPower],
-                [self.hal_type, "setPower", self.setPower]]
+                [self.hal_type, "setPower", self.setPower],
+                [self.hal_type, "tcpComplete", self.tcpComplete]]
 
     ## handleCommMessage
     #
@@ -525,19 +527,35 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleCommMessage(self, message):
+        if (message.getType() == "Set Progression"):
+            if not message.isTest():
+                if (message.getData("type") == "lockedout"):
+                    self.tcpHandleProgressionLockout()
+                elif (message.getData("type") == "file"):
+                    self.tcpHandleProgressionType(message.getData("type"))
+                    self.tcpHandleProgressionFile(message.getData("filename"))
+                else:
+                    self.tcpHandleProgressionType(message.getData("type"))
+                    for channel in message.getData("channels"):
+                        self.tcpHandleProgressionSet(channel[0],
+                                                     channel[1],
+                                                     channel[2],
+                                                     channel[3])
+            else:
+                if (message.getData("type") == "file"):
+                    if not (message.getData("filename") == None):
+                        full_path = os.path.abspath(message.getData("filename"))
+                        if not os.path.exists(full_path):
+                            err_message = str(message.getData("filename"))
+                            err_message += " is not a valid path."
+                            message.setError(True, err_message)
+                    else:
+                        err_message += "No filename provided."
+                        message.setError(True, err_message) 
 
-        m_type = message.getType()
-        m_data = message.getData()
-
-        if (m_type == "progressionLockout"):
-            self.tcpHandleProgressionLockout()
-        elif (m_type == "progressionFile"):
-            self.tcpHandleProgressionFile(m_data[0])
-        elif (m_type == "progressionSet"):
-            self.tcpHandleProgressionSet(m_data[0], m_data[1], m_data[2], m_data[3])
-        elif (m_type == "progressionType"):
-            self.tcpHandleProgressionType(m_data[0])
-
+            self.tcpComplete.emit(message)
+            
+        
     ## handleOk
     #
     # This is called when the user presses the close button. It hides
@@ -685,7 +703,7 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
         if os.path.exists(filename):
             self.ui.filenameLabel.setText(filename[-40:])
             self.file_channels.newFile(filename)
-
+        
     ## tcpHandleProgressionSet
     #
     # Handles TCP/IP signal to set the values of a math channel.

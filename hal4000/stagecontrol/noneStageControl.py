@@ -50,13 +50,15 @@ class Stage():
         self.x = 0.0
         self.y = 0.0
 
+    def joystickOnOff(self, on):
+        pass
+
 #
-# Stage control dialog specialized for STORM3
-# with Prior motorized stage.
+# Stage control dialog specialized for emulation setup.
 #
 class AStageControl(stageControl.StageControl):
     def __init__(self, hardware, parameters, parent = None):
-        self.stage = stageThread.QStageThread(Stage())
+        self.stage = stageThread.QStageThread(Stage(), pos_update_freq = 20)
         self.stage.start(QtCore.QThread.NormalPriority)
         stageControl.StageControl.__init__(self, 
                                            parameters,

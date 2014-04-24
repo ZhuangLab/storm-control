@@ -231,10 +231,10 @@ class WaveformOutput(NIDAQTask):
     # Add additional channels to the waveform task. Note that these have
     # to be added sequentially with increasing channel number (I'm pretty sure).
     #
+    # @param board The board name.
     # @param channel The channel to use for output.
-    # @param board (Optional) Defaults to the board specified when this object was created.
     #
-    def addChannel(self, channel, board = None):
+    def addChannel(self, board, channel):
         self.channels += 1
         board_number = self.board_number
         if board:

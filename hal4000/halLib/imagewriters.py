@@ -237,6 +237,13 @@ class GenericFile:
 
         self.open = False
 
+    ## getFilmLength()
+    #
+    # @return The film's length in number of frames (per camera).
+    #
+    def getFilmLength(self):
+        return self.number_frames
+
     ## getLockTarget()
     #
     # @return The film's lock target.
@@ -388,12 +395,27 @@ class SPEFile(GenericFile):
             fp = self.file_ptrs[i]
             header = chr(0) * 4100
             fp.write(header)
+
+            # NOSCAN
+            fp.seek(34)
+            fp.write(struct.pack("h", -1))
+
+            # FACCOUNT (width)
             fp.seek(42)
             fp.write(struct.pack("h", x_pixels))
-            fp.seek(656)
-            fp.write(struct.pack("h", y_pixels))
+
+            # DATATYPE
             fp.seek(108)
             fp.write(struct.pack("h", 3))
+           
+            # LNOSCAN
+            fp.seek(664)
+            fp.write(struct.pack("h", -1))
+
+            # STRIPE (height)
+            fp.seek(656)
+            fp.write(struct.pack("h", y_pixels))
+
             fp.seek(4100)
 
     ## saveFrame

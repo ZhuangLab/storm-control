@@ -140,6 +140,8 @@ class StageQPDThread(QtCore.QThread):
         self.unacknowledged = 1
         self.z_center = z_center
 
+        self.requested_sum = 0
+
         # center the stage
         # self.newZCenter(z_center)
 
@@ -183,8 +185,9 @@ class StageQPDThread(QtCore.QThread):
     # otherwise emit the foundSum signal.
     #
     @hdebug.debug
-    def findSumSignal(self):
-        if (self.sum < (2.0 * self.sum_min)):
+    def findSumSignal(self, min_sum):
+        if (self.sum < min_sum):  ## Hack
+            self.requested_sum = min_sum
             self.qpd_mutex.lock()
             self.find_sum = True
             self.max_sum = 0
@@ -268,10 +271,10 @@ class StageQPDThread(QtCore.QThread):
                 if (power > self.max_sum):
                     self.max_sum = power
                     self.max_pos = self.stage_z
-                if (power > (2.0 * self.sum_min)) and (power < (0.5 * self.max_sum)):
+                if (self.max_sum > self.requested_sum) and (power < (0.5 * self.max_sum)):
                     self.moveStageAbs(self.max_pos)
                     self.find_sum = False
-                    self.foundSum.emit(power)
+                    self.foundSum.emit(self.max_sum)
                 else:
                     if (self.stage_z >= (2 * self.z_center)):
                         if (self.max_sum > 0):
@@ -279,7 +282,7 @@ class StageQPDThread(QtCore.QThread):
                         else:
                             self.moveStageAbs(self.z_center)
                         self.find_sum = False
-                        self.foundSum.emit(power)
+                        self.foundSum.emit(self.max_sum)
                     else:
                         self.moveStageRel(1.0)
 

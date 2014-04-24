@@ -29,6 +29,12 @@ class Notifier:
         self.from_password = str(from_password)
         self.smtp_server = str(smtp_server)
         self.to_address = str(to_address)
+        self.email_port = 587 # Port for gmail
+
+        # Trim whitespace from email addresses
+        self.to_address_list = self.to_address.split(',')
+        for [index, address] in enumerate(self.to_address_list):
+            self.to_address_list[index] = address.strip()
 
     ## checkNoEmptyField
     #
@@ -60,10 +66,10 @@ class Notifier:
                 msg['From'] = self.from_address
                 msg['To'] = self.to_address
             
-                server = smtplib.SMTP(self.smtp_server)
+                server = smtplib.SMTP(self.smtp_server, self.email_port)
                 server.starttls()
                 server.login(self.from_address, self.from_password)
-                server.sendmail(self.from_address, [self.to_address], msg.as_string())
+                server.sendmail(self.from_address, self.to_address_list, msg.as_string())
                 server.quit()
                 
             except:
@@ -86,6 +92,12 @@ class Notifier:
         self.from_password = str(from_password)
         self.smtp_server = str(smtp_server)
         self.to_address = str(to_address)
+
+        # Trim whitespace from email addresses
+        self.to_address_list = self.to_address.split(',')
+        for [index, address] in enumerate(self.to_address_list):
+            self.to_address_list[index] = address.strip()
+            
 
 
 #

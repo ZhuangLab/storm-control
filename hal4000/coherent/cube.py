@@ -114,6 +114,8 @@ class Cube(RS232.RS232):
     #
     # Set the laser to external control mode.
     #
+    # @param mode True/False turn on/off external control mode.
+    #
     def setExtControl(self, mode):
         if mode:
             self.sendCommand("EXT=1")

@@ -4,8 +4,10 @@
 #
 # The stage control UI.
 #
-# Hazen 02/14
+# Hazen 03/14
 #
+
+import math
 
 from PyQt4 import QtCore, QtGui
 
@@ -150,6 +152,7 @@ class Translator():
 # will be a QStageThread object for buffering purposes.
 #
 class StageControl(QtGui.QDialog, halModule.HalModule):
+    tcpComplete = QtCore.pyqtSignal(object)
 
     ## __init__
     #
@@ -165,9 +168,12 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
         self.directory = ""
         self.drag_start_x = 0
         self.drag_start_y = 0
+        self.move_timer = QtCore.QTimer()
+        self.stage_speed = parameters.stage_speed
         self.stage_x = 0
         self.stage_y = 0
         self.stage_z = 0
+        self.tcp_message = False
         self.translator = Translator()
 
         if parent:
@@ -195,7 +201,11 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
         for button in self.motion_buttons:
             button.buttonClicked.connect(self.moveRelative)
 
-        # connect signals
+        # Configure timer.
+        self.move_timer.setSingleShot(True)
+        self.move_timer.timeout.connect(self.handleMoveTimer)
+
+        # Connect signals.
         if self.have_parent:
             self.ui.okButton.setText("Close")
             self.ui.okButton.clicked.connect(self.handleOk)
@@ -273,6 +283,14 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
             elif (signal[1] == "stepMove"):
                 signal[2].connect(self.moveRelative)
 
+    ## getSignals
+    #
+    # @return The signals this module provides.
+    #
+    @hdebug.debug
+    def getSignals(self):
+        return [[self.hal_type, "tcpComplete", self.tcpComplete]]
+
     ## handleAdd
     #
     # Add the current stage position to the saved positions combo box.
@@ -304,11 +322,27 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def handleCommMessage(self, message):
 
-        m_type = message.getType()
-        m_data = message.getData()
+        if (message.getType() == "Move Stage"):
+            x_pos = message.getData("stage_x")
+            y_pos = message.getData("stage_y")
+            if message.isTest():
+                if (x_pos == None) or (y_pos == None):
+                    message.setError(True, "Invalid positions")
 
-        if (m_type == "moveTo"):
-            self.moveAbsolute(m_data[0], m_data[1])
+                message.addResponse("duration", 1) # Minimum stage move time (1s)
+                self.tcpComplete.emit(message) 
+            else:
+                self.tcp_message = message
+                self.moveAbsolute(x_pos, y_pos)
+
+                # Based on stage speed, calculate how long the move will take.
+                dx = x_pos - self.stage_x
+                dy = y_pos - self.stage_y
+                dd = math.sqrt(dx*dx + dy*dy)
+                move_time = int(dd/self.stage_speed) + 1000
+
+                self.move_timer.setInterval(move_time)
+                self.move_timer.start()
 
     ## handleDragMove
     #
@@ -378,6 +412,15 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
                 self.ui.saveComboBox.addItem("{0:.1f}, {1:.1f}".format(x, y),
                                              [x, y])
             self.ui.saveComboBox.setCurrentIndex(self.ui.saveComboBox.count()-1)
+
+    ## handleMoveTimer
+    #
+    # When the move timer times out we assume that the stage has
+    # reached the desired position.
+    #
+    @hdebug.debug
+    def handleMoveTimer(self):
+        self.tcpComplete.emit(self.tcp_message)
 
     ## handleOk
     #

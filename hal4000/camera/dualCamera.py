@@ -316,7 +316,7 @@ class DualCamera(genericCamera.Camera):
     # tells the UIs to update themselves accordingly.
     #
     # @param writer This is a image writing object (halLib/imagewriters).
-    # @param film_setting A film setting object.
+    # @param film_settings A film settings object.
     #
     @hdebug.debug
     def startFilm(self, writer, film_settings):

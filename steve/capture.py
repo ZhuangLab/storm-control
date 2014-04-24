@@ -6,11 +6,12 @@
 # a picture & converts the captured image into a
 # QPixmap.
 #
-# Hazen 02/13
+# Hazen 03/14
 #
 
 import math
 import numpy
+import os
 import time
 
 from PyQt4 import QtCore, QtGui
@@ -20,11 +21,53 @@ import sc_library.hdebug as hdebug
 
 # Communication with the acquisition software
 import sc_library.tcpClient as tcpClient
+import sc_library.tcpMessage as tcpMessage
 
 # Reading DAX files
 import sc_library.daxspereader as daxspereader
 
 import coord
+
+
+## DirectoryMessage
+#
+# Creates a change directory message.
+#
+# @param directory The directory to change to.
+#
+# @return A TCPMessage object.
+#
+def directoryMessage(directory):
+    return tcpMessage.TCPMessage(message_type = "Set Directory",
+                                 message_data = {"directory" : directory})
+
+## MovieMessage
+#
+# Creates a movie message for communication via TCPClient.
+#
+# @param filename The name of the movie.
+#
+# @return A TCPMessage object.
+#
+def movieMessage(filename):
+    return tcpMessage.TCPMessage(message_type = "Take Movie",
+                                 message_data = {"name" : filename,
+                                                 "length" : 1})
+
+## StageMessage
+#
+# Creates a stage message for communication via TCPClient.
+#
+# @param stagex The stage x coordinate.
+# @param stagey The stage y coordinate.
+#
+# @return A TCPMessage object.
+#
+def stageMessage(stagex, stagey):  
+    return tcpMessage.TCPMessage(message_type = "Move Stage",
+                                 message_data = {"stage_x":stagex,
+                                                 "stage_y":stagey})
+
 
 ## Image
 #
@@ -61,31 +104,6 @@ class Image():
     def __repr__(self):
         return hdebug.objectToString(self, "capture.Image", ["height", "width", "x_um", "y_um"])
 
-## Movie
-#
-# Movie class for use w/ tcpClient
-#
-class Movie():
-
-    ## __init__
-    #
-    # @param name The name of the movie (specified in the xml file).
-    # @param stagex The x position at which to take the movie.
-    # @param stagey The y position at which to take the movie.
-    #
-    def __init__(self, name, stagex, stagey):
-        self.stage_x = float(stagex)
-        self.stage_y = float(stagey)
-
-        self.name = name
-        self.length = 1
-        self.progressions = []
-
-    ## __repr__
-    #
-    def __repr__(self):
-        return hdebug.objectToString(self, "capture.Movie", ["stage_x", "stage_y"])
-
 ## Capture
 #
 # Handles capturing images from HAL. Instructions to HAL about how
@@ -101,6 +119,7 @@ class Movie():
 class Capture(QtCore.QObject):
     captureComplete = QtCore.pyqtSignal(object)
     disconnected = QtCore.pyqtSignal()
+    gotoComplete = QtCore.pyqtSignal()
 
     ## __init__
     #
@@ -117,18 +136,16 @@ class Capture(QtCore.QObject):
         self.filename = parameters.image_filename
         self.flip_horizontal = parameters.flip_horizontal
         self.flip_vertical = parameters.flip_vertical
-        self.movies_remaining = 0
-        self.stage_speed = parameters.stage_speed
+        self.messages = []
         self.transpose = parameters.transpose
+        self.waiting_for_response = False
 
-        self.start_timer = QtCore.QTimer(self)
-        self.start_timer.setSingleShot(True)
-        self.start_timer.timeout.connect(self.handleStartTimer)
-
-        self.tcp_client = tcpClient.TCPClient()
-        self.tcp_client.acknowledged.connect(self.handleAcknowledged)
-        self.tcp_client.complete.connect(self.captureDone)
-        self.tcp_client.disconnect.connect(self.handleDisconnect)
+        self.tcp_client = tcpClient.TCPClient(parent = self,
+                                              port = 9000,
+                                              server_name = "hal",
+                                              verbose = True)
+        self.tcp_client.comLostConnection.connect(self.handleDisconnect)
+        self.tcp_client.messageReceived.connect(self.handleMessageReceived)
         self.connected = False
 
     ## captureDone
@@ -140,14 +157,11 @@ class Capture(QtCore.QObject):
     # @param a_string Not used.
     #
     @hdebug.debug
-    def captureDone(self, a_string):
+    def captureDone(self):
         print "captureDone"
 
-        # determine filename
-        filename = self.directory + self.filename + ".dax"
-
-        # load image
-        self.loadImage(filename)
+        # Load image.
+        self.loadImage(self.fullname())
 
     ## captureStart
     #
@@ -162,43 +176,27 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def captureStart(self, stagex, stagey):
-        print "captureStart:", stagex, stagey
+        
+        if os.path.exists(self.fullname()):
+            os.remove(self.fullname())
+        
         if not self.tcp_client.isConnected():
-            self.commConnect(True)
-
-        if self.tcp_client.isConnected():
-            # set up for capture
-            self.movie = Movie(self.filename, stagex, stagey)
-            self.tcp_client.sendMovieParameters(self.movie)
-
-            # determine how long to wait, depending on stage speed.
-            dist_x = stagex - self.curr_x
-            dist_y = stagey - self.curr_y
-            dist = math.sqrt(dist_x*dist_x + dist_y*dist_y)
-            sleep_time = 0.001 * (dist/self.stage_speed) + 1.0
-            self.start_timer.setInterval(1000.0 * sleep_time)
-            self.start_timer.start()
-            
-            # record current position
-            self.curr_x = stagex
-            self.curr_y = stagey
-
-            return True
-        else:
-            print "captureStage: not connected"
+            hdebug.logText("captureStart: not connected to HAL.")
             return False
+
+        self.messages.append(stageMessage(stagex, stagey))
+        self.messages.append(movieMessage(self.filename))
+        self.sendFirstMessage()
+        return True
 
     ## commConnect
     #
     # Initiate communication with HAL.
     #
-    # @param set_directory (Optional) Tell HAL to change it's working directory, default is False.
-    #
     @hdebug.debug
-    def commConnect(self, set_directory = False):
+    def commConnect(self):
+        print "connect"
         self.tcp_client.startCommunication()
-        if self.tcp_client.isConnected() and set_directory:
-            self.tcp_client.sendSetDirectory(self.directory[:-1])
 
     ## commDisconnect
     #
@@ -206,7 +204,18 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def commDisconnect(self):
+        print "disconnect"
         self.tcp_client.stopCommunication()
+
+    ## fullname
+    #
+    # returns the filename with path & extension.
+    #
+    # @return The filename with path & extension as a string.
+    #
+    @hdebug.debug
+    def fullname(self):
+        return self.directory + self.filename + ".dax"
 
     ## gotoPosition
     #
@@ -217,48 +226,50 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def gotoPosition(self, stagex, stagey):
-        print "gotoPosition:", stagex, stagey
 
         if not self.tcp_client.isConnected():
-            self.commConnect()
+            hdebug.logText("gotoPosition: not connected to HAL.")
+            return
 
-        if self.tcp_client.isConnected():
-            self.movie = Movie(self.filename, stagex, stagey)
-            self.tcp_client.sendMovieParameters(self.movie)
-            self.goto = True
-        else:
-            print "gotoPosition: not connected"
-
-    ## handleAcknowledged
-    #
-    # Handles the acknowledged signal. If this was a simple stage
-    # move then we disconnect from HAL.
-    #
-    @hdebug.debug
-    def handleAcknowledged(self):
-        if self.goto:
-            self.commDisconnect()
-            self.goto = False
+        message = stageMessage(stagex, stagey)
+        message.addData("is_goto", True)
+        self.messages.append(message)
+        self.sendFirstMessage()
 
     ## handleDisconnect
     #
-    # This does nothing.
+    # Called when HAL disconnects.
     #
     @hdebug.debug
     def handleDisconnect(self):
-        pass
+        self.waiting_for_response = False
+        self.messages = []
+        self.disconnected.emit()
 
-    ## handleStartTimer
+    ## handleMessageReceived
     #
-    # Called when the movie timer fires to take the image.
+    # Handles the messageReceived signal from the TCPClient.
+    #
+    # @param message A TCPMessage object.
     #
     @hdebug.debug
-    def handleStartTimer(self):
-        if self.tcp_client.isConnected():
-            self.tcp_client.startMovie(self.movie)
+    def handleMessageReceived(self, message):
+        if message.hasError():
+            hdebug.logText("tcp error: " + message.getErrorMessage())
+            self.messages = []
+            self.waiting_for_response = False
+            return
+
+        if (message.getData("is_goto") == True):
+            self.gotoComplete.emit()
+
+        if (message.getType() == "Take Movie"):
+            self.loadImage(self.directory + message.getData("name") + ".dax")
+
+        if (len(self.messages) > 0):
+            self.tcp_client.sendMessage(self.messages.pop(0))
         else:
-            print "handleStartTimer: not connected"
-            self.disconnected.emit()
+            self.waiting_for_response = False
 
     ## loadImage
     #
@@ -301,6 +312,18 @@ class Capture(QtCore.QObject):
 
             self.captureComplete.emit(image)
     
+    ## sendFirstMessage
+    #
+    # Kick off communication by sending the first message in the
+    # queue, but only if we are not already waiting for messages
+    # from HAL.
+    #
+    @hdebug.debug
+    def sendFirstMessage(self):
+        if not self.waiting_for_response:
+            self.waiting_for_response = True
+            self.tcp_client.sendMessage(self.messages.pop(0))
+        
     ## setDirectory
     #
     # Sets self.directory to directory.
@@ -323,7 +346,7 @@ class Capture(QtCore.QObject):
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

@@ -163,7 +163,13 @@ def Parameters(parameters_file, is_HAL = False):
         if not os.path.exists(xml_object.shutters):
             xml_object.shutters = os.path.dirname(parameters_file) + "/" + xml_object.shutters
 
+        xml_object.shutter_colors = []
+        xml_object.shutter_data = []
+        xml_object.shutter_frames = 0
+        xml_object.shutter_oversampling = 0
+
         xml_object.parameters_file = parameters_file
+        xml_object.initialized = False
 
     return xml_object
 
@@ -292,38 +298,34 @@ class StormXMLObject(object):
                 else: 
                     setattr(self, slot, str(node_value))
 
-    ## __getattribute__
-    #
-    # This method is over-written for the purpose of logging which
-    # attributes of an instance are actually used.
-    #
-    # @param name The name of the attribute to return the value of.
-    #
-    # @return The value of the requested attribute.
-    #
+#    ## __getattribute__
+#    #
+#    # This method is over-written for the purpose of logging which
+#    # attributes of an instance are actually used.
+#    #
+#    # @param name The name of the attribute to return the value of.
+#    #
+#    # @return The value of the requested attribute.
+#    #
 #    def __getattribute__(self, name):
 #        if hasattr(self, "attributes") and (name != "attributes"):
 #            if (name in self.attributes):
 #                self.attributes[name] += 1
 #        return object.__getattribute__(self, name)
-
-    ## __setattr__
-    #
-    # This method is over-written for the purpose of logging which
-    # attributes were added to the class after instantiation.
-    #
-    # @param name The name of attribute to set the value of.
-    # @param value The value to set the attribute to.
-    #
+#
+#    ## __setattr__
+#    #
+#    # This method is over-written for the purpose of logging which
+#    # attributes were added to the class after instantiation.
+#    #
+#    # @param name The name of attribute to set the value of.
+#    # @param value The value to set the attribute to.
+#    #
 #    def __setattr__(self, name, value):
 #        object.__setattr__(self, name, value)
 #        if (name != "attributes"):
 #            self.attributes[name] = 0
-
-    ## unused
-    #
-    # @return A list of the attributes in the instance that were never used.
-    # 
+#
 #    def unused(self):
 #        if not self.warned:
 #            self.warned = True
@@ -334,6 +336,11 @@ class StormXMLObject(object):
 #            return not_used
 #        else:
 #            return []
+
+    ## unused
+    #
+    # @return A list of the attributes in the instance that were never used.
+    # 
     def unused(self):
         return []
 
