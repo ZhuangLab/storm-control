@@ -161,7 +161,7 @@ class Nidaq(Daq):
     def __init__(self, parameters, parent):
         Daq.__init__(self, parameters, parent)
 
-        import nationalInstruments.nicontrol as nicontrol
+        import sc_hardware.nationalInstruments.nicontrol as nicontrol
         self.nicontrol = nicontrol
 
         self.ao_task = False

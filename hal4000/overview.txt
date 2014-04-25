@@ -35,37 +35,41 @@ HAL-4000 (QtGui.QMainWindow)
       cameraParams.CameraParams(QtGui.QGroupBox)
 
 
-  Illumination / Shutter:
+  Bluetooth:
+    halBluetooth.HalBluetooth (QtCore.QThread, halModule.HalModule)
+    
+
+  Illumination / Shutters:
 
     Illumination control dialog:
-      illuminationControl.IlluminationControl (QtGui.QDialog)
+      illuminationControl.IlluminationControl (QtGui.QDialog, halModule.HalModule)
 
     Illumination control powers / shutters:
 
-      Overall power control:
-        illuminationControl.QIlluminationControlWidget (QtGui.QWidget)
+      Control of a single channel:
+        illuminationChannel.Channel (QtCore.QObject)
+   
+        UI for a single channel:
+          illuminationChannelUI.ChannelUI (QtGui.QFrame)
 
-        Control of a particular channel:
-          channelWidgets.QChannel (QtGui.QWidget)
+      Control of a particular piece of hardware:
+          hardwareModule.HardwareModule ()
 
-        Queueing commands for talking to the hardware:
-          commandQueues.QCubeThread (QtCore.QThread)
-          commandQueues.QAOTFThread (QtCore.QThread)
-          ...
-
-      Shutter control:
-        shutterControl.ShutterControl ()
+	    aotf
+	    daq
+	    laser
+	    filterWheel
 
 
   Stage:
-    stageControl.StageControl (QtGui.QDialog)
+    stageControl.StageControl (QtGui.QDialog, halModule.HalModule)
 
     Thread for talking to the hardware:
       stageThread.QStageThread (QtCore.QThread)
 
 
   Focus Lock:
-    focusLockZ.FocusLockZ (QtGui.QDialog)
+    focusLockZ.FocusLockZ (QtGui.QDialog, halModule.HalModule)
 
     Feedback control and current offset & position display
       lockDisplay.LockDisplay (QtGui.QWidget)
@@ -100,20 +104,23 @@ HAL-4000 (QtGui.QMainWindow)
 
 
   Spot Counter:
-    spotCounter.SpotCounter (QtGui.QDialog)
+    spotCounter.SpotCounter (QtGui.QDialog, halModule.HalModule)
 
     Handling the spot counting:
       qtSpotCounter.QObjectCounter (QtGui.QWidget)
 
 
   Miscellaneous hardware:
-    miscControl.MiscControl (QtGui.QDialog)
+    miscControl.MiscControl (QtGui.QDialog, halModule.HalModule)
 
 
   Laser power progressions:
-    progressionControl.ProgressionControl (QtGui.QDialog)
+    progressionControl.ProgressionControl (QtGui.QDialog, halModule.HalModule)
 
 
   Joystick:
-    joystick.JoystickObject (QtCore.QObject)
+    joystick.JoystickObject (QtCore.QObject, halModule.HalModule)
 
+
+  TCP/IP
+    halTcpControl.HalTCPControl (TCPServer, halModule.HalModule)

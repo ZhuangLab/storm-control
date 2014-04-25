@@ -1138,8 +1138,8 @@ if __name__ == "__main__":
     else:
         parameters = params.Parameters("settings_default.xml")
         setup_name = parameters.setup_name
-        hardware = params.Hardware(setup_name + "_hardware.xml")
-        parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
+        hardware = params.Hardware("xml/" + setup_name + "_hardware.xml")
+        parameters = params.Parameters("xml/" + setup_name + "_default.xml", is_HAL = True)
     params.setSetupName(parameters, setup_name)
 
     # Start logger.

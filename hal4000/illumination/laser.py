@@ -28,7 +28,7 @@ class CoherentCube(hardwareModule.BufferedAmplitudeModulation):
 
         self.amplitude_on = False
 
-        import coherent.cube as cube
+        import sc_hardware.coherent.cube as cube
         self.cube_laser = cube.Cube(parameters.port)
         if not (self.cube_laser.getStatus()):
             self.working = False

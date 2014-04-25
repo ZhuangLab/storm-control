@@ -10,7 +10,7 @@
 from PyQt4 import QtCore
 
 # stage.
-import marzhauser.marzhauser as marzhauser
+import sc_hardware.marzhauser.marzhauser as marzhauser
 
 # stage control thread
 import stagecontrol.stageThread as stageThread

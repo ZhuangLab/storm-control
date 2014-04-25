@@ -20,7 +20,7 @@ import sc_library.hdebug as hdebug
 import qtdesigner.storm4_misc_ui as miscControlsUi
 
 # Control
-import olympus.ix2ucb as ix2ucb
+import sc_hardware.olympus.ix2ucb as ix2ucb
 
 #
 # Misc Control Dialog Box

@@ -9,8 +9,8 @@
 #
 
 # qpd, stage and motor.
-import madCityLabs.mclController as mclController
-import thorlabs.uc480Camera as uc480Cam
+import sc_hardware.madCityLabs.mclController as mclController
+import sc_hardware.thorlabs.uc480Camera as uc480Cam
 #import phreshPhotonics.phreshQPD as phreshQPD
 #import prior.prior as prior
 
@@ -18,7 +18,7 @@ import thorlabs.uc480Camera as uc480Cam
 import focuslock.stageOffsetControl as stageOffsetControl
 
 # ir laser control
-import thorlabs.LDC210 as LDC210
+import sc_hardware.thorlabs.LDC210 as LDC210
 
 # focus lock dialog.
 import focuslock.focusLockZ as focusLockZ

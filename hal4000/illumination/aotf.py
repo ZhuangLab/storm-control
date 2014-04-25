@@ -127,7 +127,7 @@ class CrystalTechAOTF32Bit(CrystalTechAOTF):
     #
     def __init__(self, parameters, parent):
 
-        import crystalTechnologies.AOTF as AOTF
+        import sc_hardware.crystalTechnologies.AOTF as AOTF
         self.aotf = AOTF.AOTF()
 
         CrystalTechAOTF.__init__(self, parameters, parent)
@@ -146,7 +146,7 @@ class CrystalTechAOTF64Bit(CrystalTechAOTF):
     #
     def __init__(self, parameters, parent):
 
-        import crystalTechnologies.AOTF as AOTF
+        import sc_hardware.crystalTechnologies.AOTF as AOTF
         self.aotf = AOTF.AOTF64Bit()
 
         CrystalTechAOTF.__init__(self, parameters, parent)

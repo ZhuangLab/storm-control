@@ -16,7 +16,7 @@ import miscControl
 import qtdesigner.prism2_misc_ui as miscControlsUi
 
 # mgmotor (for EPI/TIRF)
-import thorlabs.mgmotorAX as mgmotorAX
+import sc_hardware.thorlabs.mgmotorAX as mgmotorAX
 
 #
 # Misc Control Dialog Box

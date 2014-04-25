@@ -18,7 +18,7 @@ import sc_library.hdebug as hdebug
 
 import camera.frame as frame
 import camera.cameraControl as cameraControl
-import andor.andorcontroller as andor
+import sc_hardware.andor.andorcontroller as andor
 
 ## ACameraControl
 #

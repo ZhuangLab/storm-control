@@ -10,11 +10,8 @@
 import sys
 import time
 
-try:
-    import nationalInstruments.nicontrol as nicontrol
-except:
-    sys.path.append("..")
-    import nationalInstruments.nicontrol as nicontrol
+
+import sc_hardware.nationalInstruments.nicontrol as nicontrol
 
 ## LDC210
 #

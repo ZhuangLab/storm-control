@@ -4,10 +4,11 @@
 #
 # Thorlabs FW102C control.
 #
-# Hazen 5/12 (Josh 6/26/2013)
+# Hazen 5/12 
+# Josh  6/26/2013
 #
 
-import halLib.RS232 as RS232
+import sc_library.serial.RS232 as RS232
 
 ## FW102C
 #

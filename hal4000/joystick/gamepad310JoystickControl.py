@@ -10,7 +10,7 @@
 from PyQt4 import QtCore
 
 import joystick
-import logitech.gamepad310 as gamepad310
+import sc_hardware.logitech.gamepad310 as gamepad310
 
 # Debugging
 import sc_library.hdebug as hdebug

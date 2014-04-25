@@ -7,7 +7,7 @@
 # Hazen 02/14
 #
 
-import halLib.RS232 as RS232
+import sc_hardware.serial.RS232 as RS232
 import time
 
 

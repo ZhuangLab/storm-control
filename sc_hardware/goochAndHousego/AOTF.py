@@ -7,13 +7,13 @@
 # Hazen 02/14
 #
 
-import halLib.RS232 as RS232
+import sc_hardware.serial.RS232 as RS232
 
 import time
 
 ## AOTF
 #
-# Class for controlling a AA Opto-electronics AOTF using RS-232 communication.
+# Class for controlling a Gooch and Housego AOTF using RS-232 communication.
 #
 class AOTF(RS232.RS232):
 

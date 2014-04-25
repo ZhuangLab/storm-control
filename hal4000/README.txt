@@ -30,7 +30,7 @@ Option 1: This will look in the file settings_default.xml to
 
 > python hal-4000.py
 
-Option 2: Specify everything at the command line.
+Option 2: Specify everything at the (DOS) command line.
 
-> python hal-4000.py storm3 storm3_hardware.xml storm3_default.xml
+> python hal-4000.py storm3 xml\storm3_hardware.xml xml\storm3_default.xml
 

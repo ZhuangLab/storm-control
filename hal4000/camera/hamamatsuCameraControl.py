@@ -17,7 +17,7 @@ import sc_library.hdebug as hdebug
 
 import camera.frame as frame
 import camera.cameraControl as cameraControl
-import hamamatsu.hamamatsu_camera as hcam
+import sc_hardware.hamamatsu.hamamatsu_camera as hcam
 
 ## ACameraControl
 #

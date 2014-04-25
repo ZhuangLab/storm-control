@@ -13,11 +13,8 @@ import time
 
 import sc_library.hdebug as hdebug
 
-try:
-    import halLib.RS232 as RS232
-except:
-    sys.path.append("..")
-    import halLib.RS232 as RS232
+import sc_hardware.serial.RS232 as RS232
+
 
 ## loadTangoDLL
 #

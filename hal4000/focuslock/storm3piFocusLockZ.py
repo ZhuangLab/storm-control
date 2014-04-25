@@ -12,7 +12,7 @@
 import focuslock.noneWidgets as noneWidgets
 
 # piezo control.
-import thorlabs.TPZ001 as TPZ001
+import sc_hardware.thorlabs.TPZ001 as TPZ001
 
 # focus lock control thread.
 import focuslock.stageQPDControl as stageQPDControl

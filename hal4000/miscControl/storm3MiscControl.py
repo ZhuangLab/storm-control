@@ -24,7 +24,7 @@ import sc_library.hdebug as hdebug
 import qtdesigner.storm3_misc_ui as miscControlsUi
 
 # SMC100 motor (for EPI/TIRF)
-import newport.SMC100 as SMC100
+import sc_hardware.newport.SMC100 as SMC100
 
 # Prior filter wheel
 import stagecontrol.storm3StageControl as filterWheel

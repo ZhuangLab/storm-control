@@ -26,7 +26,7 @@ class ThorlabsFW102C(hardwareModule.BufferedAmplitudeModulation):
     def __init__(self, parameters, parent):
         hardwareModule.BufferedAmplitudeModulation.__init__(self, parameters, parent)
 
-        import thorlabs.FW102C as FW102C
+        import sc_hardware.thorlabs.FW102C as FW102C
         self.filter_wheel = FW102C.FW102C(parameters.port)
         if not (self.filter_wheel.getStatus()):
             self.working = False

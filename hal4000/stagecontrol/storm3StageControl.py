@@ -10,7 +10,7 @@
 from PyQt4 import QtCore
 
 # stage.
-import prior.prior as prior
+import sc_hardware.prior.prior as prior
 
 # stage control thread
 import stagecontrol.stageThread as stageThread

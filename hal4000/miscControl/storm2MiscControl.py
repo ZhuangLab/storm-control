@@ -20,8 +20,8 @@ import sc_library.hdebug as hdebug
 import qtdesigner.storm2_misc_ui as miscControlsUi
 
 # Control
-import olympus.ix2ucb as ix2ucb
-import phidgets.phidget as phidget
+import sc_hardware.olympus.ix2ucb as ix2ucb
+import sc_hardware.phidgets.phidget as phidget
 
 #
 # Misc Control Dialog Box
