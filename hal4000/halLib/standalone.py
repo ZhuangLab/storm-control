@@ -17,9 +17,9 @@ def runModule(module_type):
 
     parameters = params.Parameters("settings_default.xml")
     setup_name = parameters.setup_name
-    parameters = params.Parameters(setup_name + "_default.xml", is_HAL = True)
+    parameters = params.Parameters("xml/" + setup_name + "_default.xml", is_HAL = True)
     parameters.setup_name = setup_name
-    hardware = params.Hardware(setup_name + "_hardware.xml")
+    hardware = params.Hardware("xml/" + setup_name + "_hardware.xml")
 
     found = False
     for module in hardware.modules:

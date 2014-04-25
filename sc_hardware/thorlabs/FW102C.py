@@ -8,7 +8,7 @@
 # Josh  6/26/2013
 #
 
-import sc_library.serial.RS232 as RS232
+import sc_hardware.serial.RS232 as RS232
 
 ## FW102C
 #

@@ -128,11 +128,8 @@ class LDC210PWMLJ():
     # Connect to the labjack DAQ device.
     #
     def __init__(self):
-        try:
-            import labjack.labjack_u3 as labjack_u3
-        except:
-            sys.path.append("..")
-            import labjack.labjack_u3 as labjack_u3
+        
+        import sc_hardware.labjack.labjack_u3 as labjack_u3
 
         self.am_on = False
         self.dev = labjack_u3.PWM()
