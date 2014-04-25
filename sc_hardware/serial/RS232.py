@@ -93,7 +93,7 @@ class RS232():
     # Closes the RS-232 port.
     #
     def shutDown(self):
-        if self.live:
+        if self.live and hasattr(self, "tty"):
             del(self.tty)
 
     ## waitResponse
