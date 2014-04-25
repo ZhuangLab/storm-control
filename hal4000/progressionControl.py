@@ -602,10 +602,11 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     #
     def newFrame(self, frame, filming):
         if filming and self.channels and frame.master:
-            [active, increment] = self.channels.newFrame(frame.number)
-            for i in range(len(active)):
-                if active[i]:
-                    self.incPower.emit(int(i), increment[i])
+            if (frame.number > 0):
+                [active, increment] = self.channels.newFrame(frame.number)
+                for i in range(len(active)):
+                    if active[i]:
+                        self.incPower.emit(int(i), increment[i])
 
     ## newParameters
     #
