@@ -38,10 +38,10 @@
 
 (3) Compile C helper libraries:
  Instructions on how to compile the libraries are in the library headers.
- (a) hamamatsu/scmos_image_manipulation.c (for Hamamatsu sCMOS camera).
+ (a) sc_hardware/hamamatsu/scmos_image_manipulation.c (for Hamamatsu sCMOS camera).
  (b) objectFinder/LMMoment.c (for the spot counter).
  (c) phreshPhotonics/averager.c (only if you are using their QPD).
- (d) focusLock/focus_quality.c (for optimal focus lock mode)
+ (d) sc_hardware/focusLock/focus_quality.c (for optimal focus lock mode)
 
 
 (4) Add the storm_control directory to your Python path by placing a .pth file in 
