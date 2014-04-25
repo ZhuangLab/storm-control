@@ -78,9 +78,9 @@ class ChannelUI(QtGui.QFrame):
     #
     def getAmplitude(self):
         if self.on_off_button.isChecked():
-            return "1.0"
+            return 1.0
         else:
-            return "0.0"
+            return 0.0
 
     ## handleOnOffChange
     #
@@ -97,6 +97,13 @@ class ChannelUI(QtGui.QFrame):
     #
     def isEnabled(self):
         return self.enabled
+
+    ## isOn
+    #
+    # @return True/False if the channel is on.
+    #
+    def isOn(self):
+        return self.on_off_button.isChecked()
 
     ## newSettings
     #
@@ -224,10 +231,10 @@ class ChannelUIAdjustable(ChannelUI):
 
     ## getAmplitude
     #
-    # @return The current amplitude (as a string).
+    # @return The current amplitude.
     #
     def getAmplitude(self):
-        return str(self.power_label.text())
+        return self.powerslider.value()
 
     ## handleAmplitudeChange
     #

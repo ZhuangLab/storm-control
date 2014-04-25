@@ -29,10 +29,9 @@ class Channel(QtCore.QObject):
     def __init__(self, channel_id, channel, parameters, hardware_modules, channels_box):
         QtCore.QObject.__init__(self, channels_box)
 
-        self.am_on = False
+        self.amplitude_range = 1.0
         self.channel_id = channel_id
         self.channel_ui = False
-        self.current_power = 0
         self.display_normalized = False
         self.filming = False
         self.filming_disabled = False
@@ -40,7 +39,6 @@ class Channel(QtCore.QObject):
         self.min_amplitude = 0.0
         self.name = channel.description
         self.parameters = False
-        self.range = 1.0
         self.shutter_data = []
         self.used_for_film = False
         self.was_on = False
@@ -77,7 +75,7 @@ class Channel(QtCore.QObject):
             self.display_normalized = channel.amplitude_modulation.display_normalized
             self.min_amplitude = self.amplitude_modulation.getMinAmplitude(self.channel_id)
             self.max_amplitude = self.amplitude_modulation.getMaxAmplitude(self.channel_id)
-            self.range = float(self.max_amplitude - self.min_amplitude)
+            self.amplitude_range = float(self.max_amplitude - self.min_amplitude)
             self.channel_ui = illuminationChannelUI.ChannelUIAdjustable(self.name,
                                                                         channel.color,
                                                                         self.min_amplitude,
@@ -104,10 +102,14 @@ class Channel(QtCore.QObject):
     
     ## getAmplitude
     #
+    # Return the current channel amplitude as a string. This is
+    # always normalized.
+    #
     # @return The current amplitude of the channel (as a string).
     #
     def getAmplitude(self):
-        return self.channel_ui.getAmplitude()
+        power = self.channel_ui.getAmplitude()
+        return "{0:.4f}".format((power - self.min_amplitude)/self.amplitude_range)
 
     ## getHeight
     #
@@ -140,10 +142,10 @@ class Channel(QtCore.QObject):
         if self.filming:
             return
 
-        self.am_on = on
-        if self.am_on:
+        if on:
             if self.amplitude_modulation:
-                self.amplitude_modulation.amplitudeOn(self.channel_id, self.current_power)
+                self.amplitude_modulation.amplitudeOn(self.channel_id, 
+                                                      self.channel_ui.getAmplitude())
         
             if self.analog_modulation:
                 self.analog_modulation.analogOn(self.channel_id)
@@ -177,12 +179,10 @@ class Channel(QtCore.QObject):
     #
     def handleSetPower(self, new_power):
         if self.display_normalized:
-            power_string = "{0:.4f}".format((new_power - self.min_amplitude)/self.range)
+            power_string = "{0:.4f}".format((new_power - self.min_amplitude)/self.amplitude_range)
         else:
             power_string = "{0:d}".format(new_power)
         self.channel_ui.updatePowerText(power_string)
-
-        self.current_power = new_power
 
         if self.amplitude_modulation:
             self.amplitude_modulation.setAmplitude(self.channel_id, new_power)
@@ -204,7 +204,7 @@ class Channel(QtCore.QObject):
         # Calculate new power in slider units if necessary.
         new_power = parameters.default_power[self.channel_id]
         if self.display_normalized:
-            new_power = int(round(new_power * self.range + self.min_amplitude))
+            new_power = int(round(new_power * self.amplitude_range + self.min_amplitude))
 
         # Update channel settings.
         [old_on, old_power] = self.channel_ui.newSettings(parameters.on_off_state[self.channel_id],
@@ -219,7 +219,7 @@ class Channel(QtCore.QObject):
 
         # Normalize power, if necessary.
         if self.display_normalized:
-            old_power = float(old_power - self.min_amplitude)/self.range
+            old_power = float(old_power - self.min_amplitude)/self.amplitude_range
 
         return [old_on, old_power]
 
@@ -248,7 +248,7 @@ class Channel(QtCore.QObject):
     # @param power_inc The channel power increment (0.0 - 1.0).
     #
     def remoteIncPower(self, power_inc):
-        self.channel_ui.remoteIncPower(int(round(new_power * self.range + self.min_amplitude)))
+        self.channel_ui.remoteIncPower(int(round(power_inc * self.amplitude_range)))
 
     ## remoteSetPower
     #
@@ -258,7 +258,7 @@ class Channel(QtCore.QObject):
     # @param new_power The channel power setting (0.0 - 1.0).
     #
     def remoteSetPower(self, new_power):        
-        self.channel_ui.remoteSetPower(int(round(new_power * self.range + self.min_amplitude)))
+        self.channel_ui.remoteSetPower(int(round(new_power * self.amplitude_range + self.min_amplitude)))
 
     ## setHeight
     #
@@ -304,14 +304,14 @@ class Channel(QtCore.QObject):
     def startFilm(self):
         self.filming = True
         if self.channel_ui.isEnabled():
-            self.was_on = self.am_on
+            self.was_on = self.channel_ui.isOn()
 
             if self.used_for_film:
                 self.channel_ui.setOnOff(True)
                 self.channel_ui.startFilm()
-                self.am_on = True
                 if self.amplitude_modulation:
-                    self.amplitude_modulation.setAmplitude(self.channel_id, self.current_power)
+                    self.amplitude_modulation.setAmplitude(self.channel_id, 
+                                                           self.channel_ui.getAmplitude())
             else:
                 self.channel_ui.disableChannel()
                 self.filming_disabled = True
