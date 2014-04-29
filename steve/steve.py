@@ -583,7 +583,6 @@ class Window(QtGui.QMainWindow):
                                                                QtGui.QFileDialog.ShowDirsOnly))
         if directory:
             self.parameters.directory = directory + "/"
-            self.comm.setDirectory(self.parameters.directory)
             print self.parameters.directory
 
     ## handleSnapshot
@@ -651,7 +650,9 @@ class Window(QtGui.QMainWindow):
             self.picture_queue = picture_list[1:]
             self.taking_pictures = True
             self.comm.commConnect()
-            if not self.comm.captureStart(self.current_center.x_um, self.current_center.y_um):
+            if self.comm.setDirectory(self.parameters.directory):
+                self.comm.captureStart(self.current_center.x_um, self.current_center.y_um)
+            else:
                 self.taking_pictures = False
                 self.picture_queue = []
 

@@ -166,13 +166,10 @@ class Capture(QtCore.QObject):
     ## captureStart
     #
     # Called to take a image at stagex, stagey. This tells HAL to move,
-    # then starts a timer. When the timer fires the image is taken. The
-    # delay time of the timer depends on the distance of the move.
+    # then when HAL saves the move is complete an image is taken.
     #
     # @param stagex The x position to take the image at.
     # @param stagey The y position to take the image at.
-    #
-    # @return True/False if starting capture was successful.
     #
     @hdebug.debug
     def captureStart(self, stagex, stagey):
@@ -330,9 +327,19 @@ class Capture(QtCore.QObject):
     #
     # @param directory The new working directory (as a string).
     #
+    # @return True/False if starting capture was successful.
+    #
     @hdebug.debug
     def setDirectory(self, directory):
         self.directory = directory
+
+        if not self.tcp_client.isConnected():
+            hdebug.logText("setDirectory: not connected to HAL.")
+            return False
+
+        self.messages.append(directoryMessage(self.directory))
+        self.sendFirstMessage()
+        return True
 
     ## shutDown
     #
