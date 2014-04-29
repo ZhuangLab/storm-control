@@ -12,11 +12,12 @@ from PyQt4 import QtGui
 
 import sc_library.parameters as params
 
-def runModule(module_type):
+def runModule(module_type, setup_name = False):
     app = QtGui.QApplication(sys.argv)
 
     parameters = params.Parameters("settings_default.xml")
-    setup_name = parameters.setup_name
+    if not setup_name:
+        setup_name = parameters.setup_name
     parameters = params.Parameters("xml/" + setup_name + "_default.xml", is_HAL = True)
     parameters.setup_name = setup_name
     hardware = params.Hardware("xml/" + setup_name + "_hardware.xml")
