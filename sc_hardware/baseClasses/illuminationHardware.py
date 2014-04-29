@@ -2,8 +2,10 @@
 #
 ## @file
 #
-# This file contains the base hardware module class as well
-# as the base command queue class.
+# This file contains the base illumination hardware class as well
+# as a buffered variant. Any hardware that will be used for
+# illumination control should be a sub-class of one of these
+# classes.
 #
 # Hazen 04/14
 #
@@ -38,12 +40,14 @@ def removeChannelDuplicates(queue, channel):
 # Base Class.
 #
 
-## HardwareModule
+## IlluminationHardware
+#
+# The base class for illumination hardware.
 #
 # This class is responsible for communication between a channel
 # and a particular piece of hardware.
 #
-class HardwareModule(object):
+class IlluminationHardware(object):
 
     ## __init__
     #
@@ -115,9 +119,9 @@ class HardwareModule(object):
 
 ## AmplitudeModulation
 #
-# Hardware modules that deal with amplitude controlling hardware.
+# The base class for hardware modules that deal with amplitude controlling hardware.
 #
-class AmplitudeModulation(HardwareModule):
+class AmplitudeModulation(IlluminationHardware):
 
     ## __init__
     #
@@ -125,7 +129,7 @@ class AmplitudeModulation(HardwareModule):
     # @param parent The PyQt parent of this object.
     #
     def __init__(self, parameters, parent):
-        HardwareModule.__init__(self, parameters, parent)
+        IlluminationHardware.__init__(self, parameters, parent)
 
         self.channel_parameters = {}
 
@@ -192,7 +196,7 @@ class AmplitudeModulation(HardwareModule):
 
 ## BufferedAmplitudeModulation
 #
-# Buffered amplitude hardware modules.
+# The base class for buffered amplitude hardware modules.
 #
 class BufferedAmplitudeModulation(QtCore.QThread, AmplitudeModulation):
 
@@ -258,6 +262,141 @@ class BufferedAmplitudeModulation(QtCore.QThread, AmplitudeModulation):
         self.buffer_mutex.lock()
         self.command_buffer.append([channel, amplitude])
         self.buffer_mutex.unlock()
+
+
+## DaqModulation
+#
+# The base class for data acquisition cards.
+#
+class DaqModulation(IlluminationHardware):
+
+    ## __init__
+    #
+    # @param parameters A XML object containing initial parameters.
+    # @param parent The PyQt parent of this object.
+    #
+    def __init__(self, parameters, parent):
+        IlluminationHardware.__init__(self, parameters, parent)
+
+        self.analog_data = []
+        self.analog_settings = {}
+        self.digital_data = []
+        self.digital_settings = {}
+        self.shutter_settings = {}
+
+    ## analogAddChannel
+    #
+    # @param channel_id The channel id.
+    # @param channel_data The shutter data for this channel.
+    #
+    def analogAddChannel(self, channel_id, channel_data):
+        self.analog_data.append([self.analog_settings[channel_id].board,
+                                 self.analog_settings[channel_id].channel,
+                                 channel_data])
+
+    ## analogOff
+    #
+    # Sets the analog voltage to the minimum.
+    #
+    # @param channel_id The channel id.
+    #
+    def analogOff(self, channel_id):
+        pass
+
+    ## analogOn
+    #
+    # Sets the analog voltage to the maximum.
+    #
+    # @param channel_id The channel id.
+    #
+    def analogOn(self, channel_id):
+        pass
+
+    ## digitalAddChannel
+    #
+    # @param channel_id The channel id.
+    # @param channel_data The shutter data for this channel.
+    #
+    def digitalAddChannel(self, channel_id, channel_data):
+        self.digital_data.append([self.digital_settings[channel_id].board,
+                                  self.digital_settings[channel_id].channel,
+                                  channel_data])
+
+    ## digitalOff
+    #
+    # Sets the digital line to 0.
+    #
+    # @param channel_id The channel id.
+    #
+    def digitalOff(self, channel_id):
+        pass
+
+    ## digitalOn
+    #
+    # Sets the digital line to 1.
+    #
+    # @param channel_id The channel id.
+    #
+    def digitalOn(self, channel_id):
+        pass
+
+    ## initialize
+    #
+    # This is called by each of the channels that wants to use this module.
+    #
+    # @param interface Interface type (from the perspective of the channel).
+    # @param channel_id The channel id, this needs to be unique.
+    # @param parameters A parameters object for this channel.
+    #
+    def initialize(self, interface, channel_id, parameters):
+        if (interface == "analog_modulation"):
+            self.analog_settings[channel_id] = parameters
+        elif (interface == "digital_modulation"):
+            self.digital_settings[channel_id] = parameters
+        elif (interface == "mechanical_shutter"):
+            self.shutter_settings[channel_id] = parameters
+
+    ## powerToVoltage
+    #
+    # Convert a power (0.0 - 1.0) to the appropriate voltage based on channel settings.
+    #
+    # @param channel_id The channel id.
+    # @param power The power (0.0 - 1.0)
+    #
+    # @return The voltage the corresponds to this power.
+    #
+    def powerToVoltage(self, channel_id, power):
+        minv = self.analog_settings[channel_id].min_voltage
+        maxv = self.analog_settings[channel_id].max_voltage
+        diff = maxv - minv
+        return diff * (power - minv)
+    
+    ## shutterOff
+    #
+    # Sets the shutter digital line to 0.
+    #
+    # @param channel_id The channel id.
+    #
+    def shutterOff(self, channel_id):
+        pass
+
+    ## digitalOn
+    #
+    # Sets the shutter digital line to 1.
+    #
+    # @param channel_id The channel id.
+    #
+    def shutterOn(self, channel_id):
+        pass
+
+    ## stopFilm
+    #
+    # Called at the end of filming (when shutters are active).
+    #
+    def stopFilm(self):
+        IlluminationHardware.stopFilm(self)
+        self.analog_data = []
+        self.digital_data = []
 
 
 #

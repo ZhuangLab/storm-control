@@ -8,7 +8,9 @@
 # Josh  6/26/2013
 #
 
+import sc_hardware.baseClasses.illuminationHardware as illuminationHardware
 import sc_hardware.serial.RS232 as RS232
+
 
 ## FW102C
 #
@@ -89,6 +91,41 @@ class FW102C(RS232.RS232):
     #
     def shutDown(self):
         RS232.RS232.shutDown(self)
+
+
+## HalFW102C
+#
+# HAL illumination control compliant class.
+#
+class HalFW102C(illuminationHardware.BufferedAmplitudeModulation):
+
+    ## __init__
+    #
+    # @param parameters A XML object containing initial parameters.
+    # @param parent The PyQt parent of this object.
+    #
+    def __init__(self, parameters, parent):
+        illuminationHardware.BufferedAmplitudeModulation.__init__(self, parameters, parent)
+
+        self.filter_wheel = FW102C(parameters.port)
+        if not (self.filter_wheel.getStatus()):
+            self.working = False
+
+    ## cleanup
+    #
+    def cleanup(self):
+        illuminationHardware.BufferedAmplitudeModulation.cleanup(self)
+        self.filter_wheel.shutDown()
+
+    ## deviceSetAmplitude
+    #
+    # @param channel The channel.
+    # @param amplitude The channel amplitude.
+    #
+    def deviceSetAmplitude(self, channel, amplitude):
+        self.device_mutex.lock()
+        self.filter_wheel.setPosition(amplitude)
+        self.device_mutex.unlock()
 
 
 #

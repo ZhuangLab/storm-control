@@ -4,25 +4,25 @@
   <control_modules>
     <control_module>
       <name>wheel1</name>
-      <module_name>illumination.filterWheel</module_name>
+      <module_name>sc_hardware.none.filterWheel</module_name>
       <class_name>NoneFilterWheel</class_name>
     </control_module>
 
     <control_module>
       <name>aotf1</name>
-      <module_name>illumination.aotf</module_name>
+      <module_name>sc_hardware.none.aotf</module_name>
       <class_name>NoneAOTF</class_name>
     </control_module>
     
     <control_module>
       <name>laser1</name>
-      <module_name>illumination.laser</module_name>
+      <module_name>sc_hardware.none.laser</module_name>
       <class_name>NoneLaser</class_name>
     </control_module>
 
     <control_module>
       <name>daq1</name>
-      <module_name>illumination.daq</module_name>
+      <module_name>sc_hardware.none.daq</module_name>
       <class_name>NoneDaq</class_name>
     </control_module>
   </control_modules>
@@ -44,6 +44,7 @@
       <digital_modulation>
 	<uses>daq1</uses>
 	<parameters>
+	  <board>none</board>
 	  <channel type="int">0</channel>
 	</parameters>
       </digital_modulation>
@@ -57,16 +58,17 @@
 	<uses>aotf1</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <maximum type="int">6500</maximum>
+	  <maximum type="int">1000</maximum>
 	  <channel type="int">0</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">91.22</on_frequency>
+	  <on_frequency type="float">30.0</on_frequency>
 	</parameters>
       </amplitude_modulation>
       
       <analog_modulation>
 	<uses>daq1</uses>
 	<parameters>
+	  <board>none</board>
 	  <channel type="int">1</channel>
 	  <max_voltage type="float">1.0</max_voltage>
 	  <min_voltage type="float">0.0</min_voltage>
@@ -76,6 +78,7 @@
       <digital_modulation>
 	<uses>daq1</uses>
 	<parameters>
+	  <board>none</board>
 	  <channel type="int">1</channel>
 	</parameters>
       </digital_modulation>
@@ -84,10 +87,22 @@
     <channel>
       <description>561</description>
       <color type="rgb">255,255,0</color>
+
+      <amplitude_modulation>
+	<uses>aotf1</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <maximum type="int">1000</maximum>
+	  <channel type="int">1</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">30.0</on_frequency>
+	</parameters>
+      </amplitude_modulation>
       
       <digital_modulation>
 	<uses>daq1</uses>
 	<parameters>
+	  <board>none</board>
 	  <channel type="int">2</channel>
 	</parameters>
       </digital_modulation>
@@ -96,14 +111,129 @@
     <channel>
       <description>532</description>
       <color type="rgb">0,255,0</color>
+
+      <amplitude_modulation>
+	<uses>aotf1</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <maximum type="int">1000</maximum>
+	  <channel type="int">1</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">30.0</on_frequency>
+	</parameters>
+      </amplitude_modulation>
       
       <mechanical_shutter>
 	<uses>daq1</uses>
 	<parameters>
+	  <board>none</board>
 	  <channel type="int">3</channel>
 	</parameters>
       </mechanical_shutter>
     </channel>
 
+    <channel>
+      <description>488</description>
+      <color type="rgb">0,100,255</color>
+      
+      <amplitude_modulation>
+	<uses>aotf1</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <maximum type="int">1000</maximum>
+	  <channel type="int">0</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">30.0</on_frequency>
+	</parameters>
+      </amplitude_modulation>
+      
+      <analog_modulation>
+	<uses>daq1</uses>
+	<parameters>
+	  <board>none</board>
+	  <channel type="int">1</channel>
+	  <max_voltage type="float">1.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+      </parameters>
+      </analog_modulation>
+      
+      <digital_modulation>
+	<uses>daq1</uses>
+	<parameters>
+	  <board>none</board>
+	  <channel type="int">1</channel>
+	</parameters>
+      </digital_modulation>
+    </channel>
+
+    <channel>
+      <description>460</description>
+      <color type="rgb">0,0,255</color>
+      
+      <amplitude_modulation>
+	<uses>aotf1</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <maximum type="int">1000</maximum>
+	  <channel type="int">0</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">30.0</on_frequency>
+	</parameters>
+      </amplitude_modulation>
+      
+      <analog_modulation>
+	<uses>daq1</uses>
+	<parameters>
+	  <board>none</board>
+	  <channel type="int">1</channel>
+	  <max_voltage type="float">1.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+      </parameters>
+      </analog_modulation>
+      
+      <digital_modulation>
+	<uses>daq1</uses>
+	<parameters>
+	  <board>none</board>
+	  <channel type="int">1</channel>
+	</parameters>
+      </digital_modulation>
+    </channel>
+
+    <channel>
+      <description>405</description>
+      <color type="rgb">255,0,255</color>
+      
+      <amplitude_modulation>
+	<uses>aotf1</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <maximum type="int">1000</maximum>
+	  <channel type="int">0</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">30.0</on_frequency>
+	</parameters>
+      </amplitude_modulation>
+      
+      <analog_modulation>
+	<uses>daq1</uses>
+	<parameters>
+	  <board>none</board>
+	  <channel type="int">1</channel>
+	  <max_voltage type="float">1.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+      </parameters>
+      </analog_modulation>
+      
+      <digital_modulation>
+	<uses>daq1</uses>
+	<parameters>
+	  <board>none</board>
+	  <channel type="int">1</channel>
+	</parameters>
+      </digital_modulation>
+    </channel>
+
   </channels>
+
 </illumination_settings>

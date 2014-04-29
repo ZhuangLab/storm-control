@@ -2,21 +2,20 @@
 #
 ## @file
 #
-# This file contains hardware classes that interface with AOTFs.
+# This file contains hardware classes that interface the
+# Crystal Technologies AOTF to HAL.
 #
 # Hazen 04/14
 #
 
-from PyQt4 import QtCore
-
-import illumination.hardwareModule as hardwareModule
+import sc_hardware.baseClasses.illuminationHardware as illuminationHardware
 
 
 ## CrystalTechAOTF
 #
 # Crystal Technologies AOTF.
 #
-class CrystalTechAOTF(hardwareModule.BufferedAmplitudeModulation):
+class CrystalTechAOTF(illuminationHardware.BufferedAmplitudeModulation):
 
     ## __init__
     #
@@ -24,7 +23,7 @@ class CrystalTechAOTF(hardwareModule.BufferedAmplitudeModulation):
     # @param parent The PyQt parent of this object.
     #
     def __init__(self, parameters, parent):
-        hardwareModule.BufferedAmplitudeModulation.__init__(self, parameters, parent)
+        illuminationHardware.BufferedAmplitudeModulation.__init__(self, parameters, parent)
 
         self.amplitude_on = {}
 
@@ -67,7 +66,7 @@ class CrystalTechAOTF(hardwareModule.BufferedAmplitudeModulation):
     # Called when the program closes to clean up.
     #
     def cleanup(self):
-        hardwareModule.BufferedAmplitudeModulation.cleanup(self)
+        illuminationHardware.BufferedAmplitudeModulation.cleanup(self)
         self.aotf.shutDown()
 
     ## deviceSetAmplitude
@@ -91,7 +90,7 @@ class CrystalTechAOTF(hardwareModule.BufferedAmplitudeModulation):
     # @param parameters A parameters object for this channel.
     #
     def initialize(self, interface, channel_id, parameters):
-        hardwareModule.BufferedAmplitudeModulation.initialize(self, interface, channel_id, parameters)
+        illuminationHardware.BufferedAmplitudeModulation.initialize(self, interface, channel_id, parameters)
         self.amplitude_on[channel_id] = False
 
         aotf_channel = self.channel_parameters[channel_id].channel
@@ -150,21 +149,6 @@ class CrystalTechAOTF64Bit(CrystalTechAOTF):
         self.aotf = AOTF.AOTF64Bit()
 
         CrystalTechAOTF.__init__(self, parameters, parent)
-
-
-## NoneAOTF
-#
-# AOTF emulator.
-#
-class NoneAOTF(hardwareModule.AmplitudeModulation):
-
-    ## __init__
-    #
-    # @param parameters A XML object containing initial parameters.
-    # @param parent The PyQt parent of this object.
-    #
-    def __init__(self, parameters, parent):
-        hardwareModule.AmplitudeModulation.__init__(self, parameters, parent)
 
 
 #

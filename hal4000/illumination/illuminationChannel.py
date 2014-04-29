@@ -189,9 +189,9 @@ class Channel(QtCore.QObject):
 
         if self.mechanical_shutter:
             if (new_power == self.min_amplitude):
-                self.mechanical_shutter.closeShutter(self.channel_id)
+                self.mechanical_shutter.shutterOn(self.channel_id)
             else:
-                self.mechanical_shutter.openShutter(self.channel_id)
+                self.mechanical_shutter.shutterOff(self.channel_id)
 
     ## newParameters
     #

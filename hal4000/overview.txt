@@ -53,12 +53,7 @@ HAL-4000 (QtGui.QMainWindow)
           illuminationChannelUI.ChannelUI (QtGui.QFrame)
 
       Control of a particular piece of hardware:
-          hardwareModule.HardwareModule ()
-
-	    aotf
-	    daq
-	    laser
-	    filterWheel
+          sc_hardware.baseClasses.IlluminationHardware ()
 
 
   Stage:
