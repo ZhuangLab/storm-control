@@ -4,8 +4,8 @@
   <control_modules>
     <control_module>
       <name>750wheel</name>
-      <module_name>illumination.filterWheel</module_name>
-      <class_name>ThorlabsFW102C</class_name>
+      <module_name>sc_hardware.thorlabs.FW102C</module_name>
+      <class_name>HalFW102C</class_name>
       <parameters>
 	<port>COM5</port>
       </parameters>
@@ -13,7 +13,7 @@
     
     <control_module>
       <name>AOTF</name>
-      <module_name>illumination.aotf</module_name>
+      <module_name>sc_hardware.crystalTechnologies.halAotf</module_name>
       <class_name>CrystalTechAOTF64Bit</class_name>
       <parameters>
 	<use_fsk type="boolean">true</use_fsk>
@@ -22,7 +22,7 @@
     
     <control_module>
       <name>cube405</name>
-      <module_name>illumination.laser</module_name>
+      <module_name>sc_hardware.coherent.halLaser</module_name>
       <class_name>CoherentCube</class_name>
       <parameters>
 	<port>COM6</port>
@@ -31,7 +31,7 @@
     
     <control_module>
       <name>daq</name>
-      <module_name>illumination.daq</module_name>
+      <module_name>sc_hardware.nationalInstruments.illuminationNicontrol</module_name>
       <class_name>Nidaq</class_name>
       <parameters>
 	<counter_board>PCI-6733</counter_board>
