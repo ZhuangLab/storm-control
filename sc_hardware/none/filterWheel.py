@@ -2,57 +2,19 @@
 #
 ## @file
 #
-# This file contains hardware classes that interface with filter wheels.
+# Emulated filter wheel.
 #
 # Hazen 04/14
 #
 
-from PyQt4 import QtCore
-
-import illumination.hardwareModule as hardwareModule
-
-
-## ThorlabsFW102C
-#
-# Filter wheel class that interfaces with a Thorlabs FW102C filter wheel.
-#
-class ThorlabsFW102C(hardwareModule.BufferedAmplitudeModulation):
-
-    ## __init__
-    #
-    # @param parameters A XML object containing initial parameters.
-    # @param parent The PyQt parent of this object.
-    #
-    def __init__(self, parameters, parent):
-        hardwareModule.BufferedAmplitudeModulation.__init__(self, parameters, parent)
-
-        import sc_hardware.thorlabs.FW102C as FW102C
-        self.filter_wheel = FW102C.FW102C(parameters.port)
-        if not (self.filter_wheel.getStatus()):
-            self.working = False
-
-    ## cleanup
-    #
-    def cleanup(self):
-        hardwareModule.BufferedAmplitudeModulation.cleanup(self)
-        self.filter_wheel.shutDown()
-
-    ## deviceSetAmplitude
-    #
-    # @param channel The channel.
-    # @param amplitude The channel amplitude.
-    #
-    def deviceSetAmplitude(self, channel, amplitude):
-        self.device_mutex.lock()
-        self.filter_wheel.setPosition(amplitude)
-        self.device_mutex.unlock()
+import sc_hardware.baseClasses.illuminationHardware as illuminationHardware
 
 
 ## NoneFilterWheel
 #
 # Filter wheel emulator.
 #
-class NoneFilterWheel(hardwareModule.AmplitudeModulation):
+class NoneFilterWheel(illuminationHardware.AmplitudeModulation):
 
     ## __init__
     #
@@ -60,7 +22,7 @@ class NoneFilterWheel(hardwareModule.AmplitudeModulation):
     # @param parent The PyQt parent of this object.
     #
     def __init__(self, parameters, parent):
-        hardwareModule.AmplitudeModulation.__init__(self, parameters, parent)
+        illuminationHardware.AmplitudeModulation.__init__(self, parameters, parent)
 
 
 #

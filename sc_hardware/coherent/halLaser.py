@@ -2,21 +2,20 @@
 #
 ## @file
 #
-# This file contains hardware classes that interface with lasers.
+# This file contains hardware classes that interface the
+# coherent lasers to HAL.
 #
 # Hazen 04/14
 #
 
-from PyQt4 import QtCore
-
-import illumination.hardwareModule as hardwareModule
+import sc_hardware.baseClasses.illuminationHardware as illuminationHardware
 
 
 ## CoherentCube
 #
 # Laser class the interfaces with a Coherent Cube laser.
 #
-class CoherentCube(hardwareModule.BufferedAmplitudeModulation):
+class CoherentCube(illuminationHardware.BufferedAmplitudeModulation):
 
     ## __init__
     #
@@ -24,7 +23,7 @@ class CoherentCube(hardwareModule.BufferedAmplitudeModulation):
     # @param parent The PyQt parent of this object.
     #
     def __init__(self, parameters, parent):
-        hardwareModule.BufferedAmplitudeModulation.__init__(self, parameters, parent)
+        illuminationHardware.BufferedAmplitudeModulation.__init__(self, parameters, parent)
 
         self.amplitude_on = False
 
@@ -61,7 +60,7 @@ class CoherentCube(hardwareModule.BufferedAmplitudeModulation):
     # Called when the program closes to clean up.
     #
     def cleanup(self):
-        hardwareModule.BufferedAmplitudeModulation.cleanup(self)
+        illuminationHardware.BufferedAmplitudeModulation.cleanup(self)
         self.cube_laser.shutDown()
 
     ## deviceSetAmplitude
@@ -83,7 +82,7 @@ class CoherentCube(hardwareModule.BufferedAmplitudeModulation):
     # @param oversampling The number of values in the shutter waveform per frame.
     #
     def startFilm(self, seconds_per_frame, oversampling):
-        hardwareModule.BufferedAmplitudeModulation.startFilm(self, seconds_per_frame, oversampling)
+        illuminationHardware.BufferedAmplitudeModulation.startFilm(self, seconds_per_frame, oversampling)
         self.device_mutex.lock()
         self.cube_laser.setExtControl(True)
         self.device_mutex.unlock()
@@ -93,25 +92,10 @@ class CoherentCube(hardwareModule.BufferedAmplitudeModulation):
     # Called at the end of filming (when shutters are active).
     #
     def stopFilm(self):
-        hardwareModule.BufferedAmplitudeModulation.stopFilm(self)
+        illuminationHardware.BufferedAmplitudeModulation.stopFilm(self)
         self.device_mutex.lock()
         self.cube_laser.setExtControl(False)
         self.device_mutex.unlock()
-
-
-## NoneLaser
-#
-# Laser emulator.
-#
-class NoneLaser(hardwareModule.AmplitudeModulation):
-
-    ## __init__
-    #
-    # @param parameters A XML object containing initial parameters.
-    # @param parent The PyQt parent of this object.
-    #
-    def __init__(self, parameters, parent):
-        hardwareModule.AmplitudeModulation.__init__(self, parameters, parent)
 
 
 #

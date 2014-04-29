@@ -2,156 +2,21 @@
 #
 ## @file
 #
-# This file contains hardware classes that interface with data acquistion cards.
+# This file contains hardware classes that interface 
+# National Instruments cards with HAL illumination
+# control software.
 #
 # Hazen 04/14
 #
 
-from PyQt4 import QtCore
 
-import illumination.hardwareModule as hardwareModule
-
-
-## Daq
-#
-# The base class for data acquisition cards.
-#
-class Daq(hardwareModule.HardwareModule):
-
-    ## __init__
-    #
-    # @param parameters A XML object containing initial parameters.
-    # @param parent The PyQt parent of this object.
-    #
-    def __init__(self, parameters, parent):
-        hardwareModule.HardwareModule.__init__(self, parameters, parent)
-
-        self.analog_data = []
-        self.analog_settings = {}
-        self.digital_data = []
-        self.digital_settings = {}
-        self.shutter_settings = {}
-
-    ## analogAddChannel
-    #
-    # @param channel_id The channel id.
-    # @param channel_data The shutter data for this channel.
-    #
-    def analogAddChannel(self, channel_id, channel_data):
-        self.analog_data.append([self.analog_settings[channel_id].board,
-                                 self.analog_settings[channel_id].channel,
-                                 channel_data])
-
-    ## analogOff
-    #
-    # Sets the analog voltage to the minimum.
-    #
-    # @param channel_id The channel id.
-    #
-    def analogOff(self, channel_id):
-        pass
-
-    ## analogOn
-    #
-    # Sets the analog voltage to the maximum.
-    #
-    # @param channel_id The channel id.
-    #
-    def analogOn(self, channel_id):
-        pass
-
-    ## digitalAddChannel
-    #
-    # @param channel_id The channel id.
-    # @param channel_data The shutter data for this channel.
-    #
-    def digitalAddChannel(self, channel_id, channel_data):
-        self.digital_data.append([self.digital_settings[channel_id].board,
-                                  self.digital_settings[channel_id].channel,
-                                  channel_data])
-
-    ## digitalOff
-    #
-    # Sets the digital line to 0.
-    #
-    # @param channel_id The channel id.
-    #
-    def digitalOff(self, channel_id):
-        pass
-
-    ## digitalOn
-    #
-    # Sets the digital line to 1.
-    #
-    # @param channel_id The channel id.
-    #
-    def digitalOn(self, channel_id):
-        pass
-
-    ## initialize
-    #
-    # This is called by each of the channels that wants to use this module.
-    #
-    # @param interface Interface type (from the perspective of the channel).
-    # @param channel_id The channel id, this needs to be unique.
-    # @param parameters A parameters object for this channel.
-    #
-    def initialize(self, interface, channel_id, parameters):
-        if (interface == "analog_modulation"):
-            self.analog_settings[channel_id] = parameters
-        elif (interface == "digital_modulation"):
-            self.digital_settings[channel_id] = parameters
-        elif (interface == "mechanical_shutter"):
-            self.shutter_settings[channel_id] = parameters
-
-    ## powerToVoltage
-    #
-    # Convert a power (0.0 - 1.0) to the appropriate voltage based on channel settings.
-    #
-    # @param channel_id The channel id.
-    # @param power The power (0.0 - 1.0)
-    #
-    # @return The voltage the corresponds to this power.
-    #
-    def powerToVoltage(self, channel_id, power):
-        minv = self.analog_settings[channel_id].min_voltage
-        maxv = self.analog_settings[channel_id].max_voltage
-        diff = maxv - minv
-        return diff * (power - minv)
-    
-    ## shutterOff
-    #
-    # Sets the shutter digital line to 0.
-    #
-    # @param channel_id The channel id.
-    #
-    def shutterOff(self, channel_id):
-        pass
-
-    ## digitalOn
-    #
-    # Sets the shutter digital line to 1.
-    #
-    # @param channel_id The channel id.
-    #
-    def shutterOn(self, channel_id):
-        pass
-
-    ## stopFilm
-    #
-    # Called at the end of filming (when shutters are active).
-    #
-    def stopFilm(self):
-        hardwareModule.HardwareModule.stopFilm(self)
-        self.analog_data = []
-        self.digital_data = []
-
+import sc_hardware.baseClasses.illumationHardware as illuminationHardware
 
 ## Nidaq
 #
 # National Instruments DAQ card.
 #
-class Nidaq(Daq):
+class Nidaq(illuminationHardware.DaqModulation):
 
     ## __init__
     #
@@ -159,7 +24,7 @@ class Nidaq(Daq):
     # @param parent The PyQt parent of this object.
     #
     def __init__(self, parameters, parent):
-        Daq.__init__(self, parameters, parent)
+        DaqModulation.__init__(self, parameters, parent)
 
         import sc_hardware.nationalInstruments.nicontrol as nicontrol
         self.nicontrol = nicontrol
@@ -264,7 +129,7 @@ class Nidaq(Daq):
     # @param oversampling The number of values in the shutter waveform per frame.
     #
     def startFilm(self, seconds_per_frame, oversampling):
-        Daq.startFilm(self, seconds_per_frame, oversampling)
+        DaqModulation.startFilm(self, seconds_per_frame, oversampling)
 
         # Calculate frequency. This is set slightly higher than the camere
         # frequency so that we are ready at the start of the next frame.
@@ -331,26 +196,12 @@ class Nidaq(Daq):
     # Called at the end of filming (when shutters are active).
     #
     def stopFilm(self):
-        Daq.stopFilm(self)
+        DaqModulation.stopFilm(self)
         for task in [self.ct_task, self.ao_task, self.do_task]:
             if task:
                 task.stopTask()
                 task.clearTask()
 
-
-## NoneDaq
-#
-# Daq card emulation.
-#
-class NoneDaq(Daq):
-
-    ## __init__
-    #
-    # @param parameters A XML object containing initial parameters.
-    # @param parent The PyQt parent of this object.
-    #
-    def __init__(self, parameters, parent):
-        Daq.__init__(self, parameters, parent)
 
 
 #
