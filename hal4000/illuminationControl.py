@@ -7,9 +7,14 @@
 # Hazen 03/14
 #
 
+import sys
+
 import halLib.standalone as standalone
 
-standalone.runModule("illumination")
+if (len(sys.argv)==2):
+    standalone.runModule("illumination", sys.argv[1])
+else:
+    standalone.runModule("illumination")    
 
 #
 # The MIT License
