@@ -9,8 +9,9 @@
 # Hazen 04/14
 #
 
+import sc_hardware.baseClasses.illuminationHardware as illuminationHardware
+import sc_hardware.nationalInstruments.nicontrol as nicontrol
 
-import sc_hardware.baseClasses.illumationHardware as illuminationHardware
 
 ## Nidaq
 #
@@ -24,10 +25,7 @@ class Nidaq(illuminationHardware.DaqModulation):
     # @param parent The PyQt parent of this object.
     #
     def __init__(self, parameters, parent):
-        DaqModulation.__init__(self, parameters, parent)
-
-        import sc_hardware.nationalInstruments.nicontrol as nicontrol
-        self.nicontrol = nicontrol
+        illuminationHardware.DaqModulation.__init__(self, parameters, parent)
 
         self.ao_task = False
         self.ct_task = False
@@ -59,9 +57,9 @@ class Nidaq(illuminationHardware.DaqModulation):
     #
     def analogOff(self, channel_id):
         if not self.filming:
-            self.nicontrol.setAnalogLine(self.analog_settings[channel_id].board,
-                                         self.analog_settings[channel_id].channel,
-                                         self.analog_settings[channel_id].min_voltage)
+            nicontrol.setAnalogLine(self.analog_settings[channel_id].board,
+                                    self.analog_settings[channel_id].channel,
+                                    self.analog_settings[channel_id].min_voltage)
 
     ## analogOn
     #
@@ -71,9 +69,9 @@ class Nidaq(illuminationHardware.DaqModulation):
     #
     def analogOn(self, channel_id):
         if not self.filming:
-            self.nicontrol.setAnalogLine(self.analog_settings[channel_id].board,
-                                         self.analog_settings[channel_id].channel,
-                                         self.analog_settings[channel_id].max_voltage)
+            nicontrol.setAnalogLine(self.analog_settings[channel_id].board,
+                                    self.analog_settings[channel_id].channel,
+                                    self.analog_settings[channel_id].max_voltage)
 
     ## digitalOff
     #
@@ -83,9 +81,9 @@ class Nidaq(illuminationHardware.DaqModulation):
     #
     def digitalOff(self, channel_id):
         if not self.filming:
-            self.nicontrol.setDigitalLine(self.digital_settings[channel_id].board,
-                                          self.digital_settings[channel_id].channel,
-                                          False)
+            nicontrol.setDigitalLine(self.digital_settings[channel_id].board,
+                                     self.digital_settings[channel_id].channel,
+                                     False)
 
     ## digitalOn
     #
@@ -95,9 +93,9 @@ class Nidaq(illuminationHardware.DaqModulation):
     #
     def digitalOn(self, channel_id):
         if not self.filming:
-            self.nicontrol.setDigitalLine(self.digital_settings[channel_id].board,
-                                          self.digital_settings[channel_id].channel,
-                                          True)
+            nicontrol.setDigitalLine(self.digital_settings[channel_id].board,
+                                     self.digital_settings[channel_id].channel,
+                                     True)
 
     ## shutterOff
     #
@@ -106,9 +104,9 @@ class Nidaq(illuminationHardware.DaqModulation):
     # @param channel_id The channel id.
     #
     def shutterOff(self, channel_id):
-        self.nicontrol.setDigitalLine(self.shutter_settings[channel_id].board,
-                                      self.shutter_settings[channel_id].channel,
-                                      False)
+        nicontrol.setDigitalLine(self.shutter_settings[channel_id].board,
+                                 self.shutter_settings[channel_id].channel,
+                                 False)
 
     ## digitalOn
     #
@@ -117,9 +115,9 @@ class Nidaq(illuminationHardware.DaqModulation):
     # @param channel_id The channel id.
     #
     def shutterOn(self, channel_id):
-        self.nicontrol.setDigitalLine(self.shutter_settings[channel_id].board,
-                                      self.shutter_settings[channel_id].channel,
-                                      True)
+        nicontrol.setDigitalLine(self.shutter_settings[channel_id].board,
+                                 self.shutter_settings[channel_id].channel,
+                                 True)
 
     ## startFilm
     #
@@ -129,7 +127,7 @@ class Nidaq(illuminationHardware.DaqModulation):
     # @param oversampling The number of values in the shutter waveform per frame.
     #
     def startFilm(self, seconds_per_frame, oversampling):
-        DaqModulation.startFilm(self, seconds_per_frame, oversampling)
+        illuminationHardware.DaqModulation.startFilm(self, seconds_per_frame, oversampling)
 
         # Calculate frequency. This is set slightly higher than the camere
         # frequency so that we are ready at the start of the next frame.
@@ -142,7 +140,7 @@ class Nidaq(illuminationHardware.DaqModulation):
             analog_data = sorted(self.analog_data, key = lambda x: (x[0], x[1]))
 
             # Create channels.
-            self.ao_task = self.nicontrol.AnalogWaveformOutput(analog_data[0][0], analog_data[0][1])
+            self.ao_task = nicontrol.AnalogWaveformOutput(analog_data[0][0], analog_data[0][1])
             for i in range(len(analog_data) - 1):
                 self.ao_task.addChannel(analog_data[i+1][0], analog_data[i+1][1])
 
@@ -162,7 +160,7 @@ class Nidaq(illuminationHardware.DaqModulation):
             digital_data = sorted(self.digital_data, key = lambda x: (x[0], x[1]))
 
             # Create channels.
-            self.do_task = self.nicontrol.DigitalWaveformOutput(digital_data[0][0], digital_data[0][1])
+            self.do_task = nicontrol.DigitalWaveformOutput(digital_data[0][0], digital_data[0][1])
             for i in range(len(digital_data) - 1):
                 self.do_task.addChannel(digital_data[i+1][0], digital_data[i+1][1])
 
@@ -177,10 +175,10 @@ class Nidaq(illuminationHardware.DaqModulation):
 
         # Setup the counter.
         if self.counter_board:
-            self.ct_task = self.nicontrol.CounterOutput(self.counter_board, 
-                                                        self.counter_id,
-                                                        frequency, 
-                                                        0.5)
+            self.ct_task = nicontrol.CounterOutput(self.counter_board, 
+                                                   self.counter_id,
+                                                   frequency, 
+                                                   0.5)
             self.ct_task.setCounter(oversampling)
             self.ct_task.setTrigger(self.counter_trigger)
         else:
@@ -196,7 +194,7 @@ class Nidaq(illuminationHardware.DaqModulation):
     # Called at the end of filming (when shutters are active).
     #
     def stopFilm(self):
-        DaqModulation.stopFilm(self)
+        illuminationHardware.DaqModulation.stopFilm(self)
         for task in [self.ct_task, self.ao_task, self.do_task]:
             if task:
                 task.stopTask()
