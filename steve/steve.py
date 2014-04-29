@@ -255,6 +255,13 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def addImage(self, image):
+
+        # If image is not an object then we are done.
+        if not image:
+            self.taking_pictures = False
+            self.comm.commDisconnect()
+            return
+
         self.view.addImage(image, self.current_objective, self.current_magnification, self.current_offset)
         if (len(self.picture_queue) > 0):
             next_item = self.picture_queue[0]

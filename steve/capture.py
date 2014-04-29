@@ -308,6 +308,9 @@ class Capture(QtCore.QObject):
                           self.dax.filmParameters())
 
             self.captureComplete.emit(image)
+
+        else:
+            self.captureComplete.emit(False)
     
     ## sendFirstMessage
     #
