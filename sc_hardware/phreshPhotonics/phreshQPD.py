@@ -12,11 +12,12 @@ import sys
 
 import sc_hardware.nationalInstruments.nicontrol as nicontrol
 
-if os.path.exists("averager.dll"):
-    averager = ctypes.cdll.LoadLibrary("averager")
-else:
-    averager = ctypes.cdll.LoadLibrary("phreshPhotonics/averager")
 
+directory = os.path.dirname(__file__)
+if not (directory == ""):
+    directory += "/"
+
+averager = ctypes.cdll.LoadLibrary(directory + "averager.dll")
 
 ## PhreshQPD
 #
@@ -71,7 +72,7 @@ class PhreshQPDSTORM3(PhreshQPD):
     #
     def __init__(self, samples = 5000, sample_rate_Hz = 100000):
         PhreshQPD.__init__(self, samples = samples, sample_rate_Hz = sample_rate_Hz)
-        self.qpd_task = nicontrol.AnalogInput("PCI-MIO-16E-4", 0)
+        self.qpd_task = nicontrol.AnalogWaveformInput("PCI-MIO-16E-4", 0)
         self.qpd_task.addChannel(1)
         self.qpd_task.addChannel(2)
         self.qpd_task.configureAcquisition(samples, sample_rate_Hz)
@@ -110,8 +111,7 @@ class PhreshQPDPRISM2(PhreshQPD):
     #
     def __init__(self, samples = 5000, sample_rate_Hz = 100000):
         PhreshQPD.__init__(self, samples = samples, sample_rate_Hz = sample_rate_Hz)
-#        self.qpd_task = nicontrol.AnalogInput("PCI-MIO-16E-4", 0)
-        self.qpd_task = nicontrol.AnalogInput("PCIe-6321", 0)
+        self.qpd_task = nicontrol.AnalogWaveformInput("PCIe-6321", 0)
         self.qpd_task.addChannel(1)
         self.qpd_task.configureAcquisition(samples, sample_rate_Hz)
 
