@@ -26,7 +26,7 @@
       <module_name>sc_hardware.coherent.halLaser</module_name>
       <class_name>CoherentCube</class_name>
       <parameters>
-	<port>COM4</port>
+	<port>COM5</port>
       </parameters>
     </control_module>
     
