@@ -116,7 +116,6 @@ class RS232():
         response = ""
         index = -1
         while (index == -1) and (attempts < max_attempts):
-            print attempts
             response_len = self.tty.inWaiting()
             if response_len > 0:
                 response += self.tty.read(response_len)
