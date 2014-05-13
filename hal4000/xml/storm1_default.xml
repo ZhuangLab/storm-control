@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<settings>
+  <!-- general -->
+  <debug type="int">1</debug>
+  <use_as_default type="int">1</use_as_default>
+
+  <!-- camera settings -->
+  <emccd_gain type="int">0</emccd_gain>
+  <x_start type="int">1</x_start>
+  <x_end type="int">512</x_end>
+  <y_start type="int">1</y_start>
+  <y_end type="int">512</y_end>
+  <x_bin type="int">1</x_bin>
+  <y_bin type="int">1</y_bin>
+  <exposure_time type="float">0.0</exposure_time>
+  <frame_transfer_mode type="int">1</frame_transfer_mode>
+  <temperature type="int">-70</temperature>
+
+  <!-- less common camera settings -->
+  <preampgain type="float">1.0</preampgain>
+  <hsspeed type="float">10.0</hsspeed>
+  <vsspeed type="float">3.3</vsspeed>
+  <kinetic_cycle_time type="float">0.0</kinetic_cycle_time>
+  <adchannel type="int">0</adchannel>
+  <emgainmode type="int">0</emgainmode>
+  <baselineclamp type="int">1</baselineclamp>
+  <vsamplitude type="int">0</vsamplitude>
+  <off_during_filming type="int">0</off_during_filming>
+  <low_during_filming type="int">0</low_during_filming>
+  <head_model type="string">unknown</head_model>
+  <reversed_shutter type="int">0</reversed_shutter>
+  <external_trigger type="int">0</external_trigger>
+
+  <!-- film settings -->
+  <want_big_endian type="int">1</want_big_endian>
+  <directory type="string">G:\Data\</directory>
+  <filename type="string">movie</filename>
+  <acq_mode type="string">run_till_abort</acq_mode>
+<!--  <acq_mode type="string">fixed_length</acq_mode> -->
+  <frames type="int">600</frames>
+  <logfile type="string">g:\Data\image_log.txt</logfile>
+  <extensions type="string-array">,A647,Cy5,Cy3,Cy2,A405,FITC,YFP,GFP,BF</extensions>
+  <auto_increment type="int">1</auto_increment>
+  <want_bell type="int">1</want_bell>
+  <auto_shutters type="int">1</auto_shutters>
+  <filetype type="string">.dax</filetype>
+
+  <!-- view settings -->
+  <flip_horizontal type="int">0</flip_horizontal>
+  <flip_vertical type="int">0</flip_vertical>
+  <transpose type="int">0</transpose>
+  <scalemax type="int">2000</scalemax>
+  <scalemin type="int">100</scalemin>
+  <max_intensity type="int">10000</max_intensity>
+  <colortable type="string">idl5.ctbl</colortable>
+  <sync type="int">0</sync>
+
+  <!-- illumination settings -->
+  <shutters type="string">shutters_default.xml</shutters>
+  <default_power channel="0">1.0</default_power>
+  <default_power channel="1">1.0</default_power>
+  <default_power channel="2">1.0</default_power>
+  <default_power channel="3">1.0</default_power>
+  <default_power channel="4">1.0</default_power>
+  <default_power channel="5">1.0</default_power>
+  <default_power channel="6">1.0</default_power>
+  <button channel="0" power="1.0">Max</button>
+  <button channel="0" power="0.1">Low</button>
+  <button channel="1" power="1.0">Max</button>
+  <button channel="1" power="0.1">Low</button>
+  <button channel="2" power="1.0">Max</button>
+  <button channel="2" power="0.1">Low</button>
+  <button channel="3" power="1.0">Max</button>
+  <button channel="3" power="0.1">Low</button>
+  <button channel="4" power="1.0">Max</button>
+  <button channel="4" power="0.1">Low</button>
+  <button channel="5" power="1.0">Max</button>
+  <button channel="5" power="0.1">Low</button>
+  <button channel="6" power="1.0">Max</button>
+  <button channel="6" power="0.1">Low</button>
+
+  <!-- stage settings -->
+  <small_step_size type="float">5.0</small_step_size>
+  <large_step_size type="float">25.0</large_step_size>
+  <x_sign type="int">-1</x_sign>
+  <y_sign type="int">1</y_sign>
+  <flip_axis type="int">0</flip_axis>
+  <stage_speed type="float">2.0</stage_speed>
+  <drag_multiplier type="float">0.16</drag_multiplier>
+
+  <!-- focus lock settings -->
+  <qpd_mode type="int">0</qpd_mode>
+  <qpd_zcenter type="float">30.0</qpd_zcenter>
+  <qpd_scale type="float">3200.0</qpd_scale>
+<!--  <qpd_scale type="float">1421.0</qpd_scale> -->
+<!--  <qpd_scale type="float">1.0</qpd_scale> -->
+  <qpd_sum_max type="int">1500</qpd_sum_max>
+  <cal_deadtime type="int">20</cal_deadtime>
+  <cal_range type="float">600</cal_range>
+  <cal_step_size type="float">10</cal_step_size>
+  <cal_frames_to_pause type="int">2</cal_frames_to_pause>
+  <zscan_start type="float">50.0</zscan_start>
+  <zscan_step type="float">0.1</zscan_step>
+  <zscan_frames_to_pause type="int">100</zscan_frames_to_pause>
+  <zscan_stop type="float">51.0</zscan_stop>
+  <zscan_focus_lock type="int">0</zscan_focus_lock>
+  <olock_bracket_step type="int">1000</olock_bracket_step>
+  <olock_scan_step type="int">100</olock_scan_step>
+  <olock_scan_hold type="int">10</olock_scan_hold>
+  <olock_quality_threshold type="float">0.0</olock_quality_threshold>
+
+  <!-- spot counter -->
+  <have_spot_counter type="int">1</have_spot_counter>
+  <cell_size type="int">32</cell_size>
+  <threshold type="int">250</threshold>
+  <min_spots type="int">0</min_spots>
+  <max_spots type="int">500</max_spots>
+  <scale_bar_len type="float">1000</scale_bar_len>
+  <nm_per_pixel type="float">164</nm_per_pixel>
+
+  <!-- temperature logger settings -->
+  <have_temperature_logger type="int">0</have_temperature_logger>
+
+  <!-- misc control -->
+  <jog_size type="float">0.01</jog_size>
+  <epi_position type="float">17.92</epi_position>
+  <tirf_position type="float">20.36</tirf_position>
+  <dYAG_max type="float">165.0</dYAG_max>
+  <dYAG_power type="float">40.0</dYAG_power>
+
+  <!-- TCP/IP control -->
+  <have_tcp_control type="int">1</have_tcp_control>
+  <tcp_port type="int">9000</tcp_port>
+
+  <!-- power progression settings -->
+  <have_progressions type="int">1</have_progressions>
+  <use_progressions type="int">0</use_progressions>
+  <pstart_value type="float">0.1</pstart_value>
+  <pinc_value type="float">0.01</pinc_value>
+  <pframe_value type="int">1000</pframe_value>
+
+  <!-- joystick setting -->
+  <hat_step type="float">1.0</hat_step> <!-- step size in um for hat button press -->
+  <joystick_gain type="float-array">25, 2500</joystick_gain>   <!-- max velocity in um/s: valid range 1 to max stage speed -->
+  <joystick_multiplier_value type="float">5</joystick_multiplier_value> <!-- X button multiplier for joystick and focus lock -->
+  <joystick_mode type="string">quadratic</joystick_mode> <!-- linear or quadratic -->
+  <joystick_signx type="float">1.0</joystick_signx>
+  <joystick_signy type="float">-1.0</joystick_signy>
+  <lockt_step type="float">0.025</lockt_step> <!-- focus lock step size in um -->
+  <min_offset type="float">0.1</min_offset> <!-- min joystick offset to be non-zero (0.0 - 1.0) -->
+  <xy_swap type="int">0</xy_swap> <!-- swap x and y axises -->
+
+</settings>
