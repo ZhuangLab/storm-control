@@ -24,7 +24,7 @@
       <menu_item type="string">Illumination</menu_item>
       <module_name type="string">illumination.illuminationControl</module_name>
       <parameters>
-	<settings_xml type="string">prism2_illumination_settings.xml</settings_xml>
+	<settings_xml type="string">storm1_illumination_settings.xml</settings_xml>
       </parameters>
     </illumination>
 
