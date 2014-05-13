@@ -15,7 +15,7 @@
     <focuslock>
       <class_name type="string">AFocusLockZ</class_name>
       <menu_item type="string">Focus Lock</menu_item>
-      <module_name type="string">focuslock.prism2FocusLockZ</module_name>
+      <module_name type="string">focuslock.storm1FocusLockZ</module_name>
     </focuslock>
 
     <!-- Illumination (lasers, shutters, etc) control. -->
@@ -52,7 +52,7 @@
     <stage>
       <class_name type="string">AStageControl</class_name>
       <menu_item type="string">Stage Control</menu_item>
-      <module_name type="string">stagecontrol.storm4StageControl</module_name>
+      <module_name type="string">stagecontrol.storm1StageControl</module_name>
     </stage>
 
     <!-- Remote control of HAL via TCP/IP. -->
