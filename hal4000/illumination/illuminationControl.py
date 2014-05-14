@@ -296,8 +296,9 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
 
             # Start hardware.
             for name, instance in self.hardware_modules.iteritems():
-                instance.startFilm(self.parameters.kinetic_value,
-                                   self.parameters.shutter_oversampling)
+                if (instance.getStatus() == True):
+                    instance.startFilm(self.parameters.kinetic_value,
+                                       self.parameters.shutter_oversampling)
 
             # Start channels.
             for channel in self.channels:
@@ -323,7 +324,8 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
 
             # Stop hardware.
             for name, instance in self.hardware_modules.iteritems():
-                instance.stopFilm()
+                if (instance.getStatus() == True):
+                    instance.stopFilm()
 
             self.running_shutters = False
 
