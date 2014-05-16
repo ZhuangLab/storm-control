@@ -167,7 +167,7 @@ class Window(QtGui.QMainWindow):
         self.ui.setupUi(self)
         
         title = self.parameters.setup_name
-        if (title.lower != hgit.getBranch().lower()):
+        if (title.lower() != hgit.getBranch().lower()):
             title += " (" + hgit.getBranch() + ")"
         self.setWindowTitle(title)
 
