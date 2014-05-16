@@ -31,11 +31,11 @@
 
     <!-- Illumination (lasers, shutters, etc) control. -->
     <illumination>
-      <class_name type="string">AIlluminationControl</class_name>
+      <class_name type="string">IlluminationControl</class_name>
       <menu_item type="string">Illumination</menu_item>
-      <module_name type="string">illumination.storm3IlluminationControl</module_name>
+      <module_name type="string">illumination.illuminationControl</module_name>
       <parameters>
-	<settings_xml type="string">storm3_illumination_control_settings.xml</settings_xml>
+	<settings_xml type="string">storm3_illumination_settings.xml</settings_xml>
       </parameters>
     </illumination>
 
