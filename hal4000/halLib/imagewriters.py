@@ -11,23 +11,10 @@ import copy
 import struct
 import tiffwriter
 
+import sc_library.hgit as hgit
 
-# Figure out the version of the software, if possible.
-have_git = True
-try:
-    import git
-except:
-    print "GitPython is not installed, software version information will not be recorded."
-    have_git = False
-
-software_version = "NA"
-if have_git:
-    try:
-        repo = git.Repo(".")
-        software_version = str(repo.commit('HEAD'))
-    except:
-        print "Cannot determine software version."
-
+# Get the version of the software.
+software_version = hgit.getVersion()
 
 ## attrToString
 #
