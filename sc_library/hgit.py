@@ -28,11 +28,9 @@ except:
     print "Did not find .git directory here:", git_dir
 
 def getBranch():
-    global branch
     return branch
 
 def getVersion():
-    global version
     return version
 
 if __name__ == "__main__":
