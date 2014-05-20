@@ -124,6 +124,12 @@ class Channel(QtCore.QObject):
     def getWidth(self):
         return self.channel_ui.width()
 
+    ## getX
+    #
+    # @return The x position of the channel UI element.
+    def getX(self):
+        return self.channel_ui.x()
+
     ## getName
     #
     # @return The name of the channel.
