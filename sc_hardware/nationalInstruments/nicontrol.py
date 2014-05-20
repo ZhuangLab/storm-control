@@ -104,11 +104,13 @@ def getBoardDevNumber(board):
 # DAQ communication classes
 #
 
+
 ## NIDAQTask
 #
 # NIDAQmx task base class
 #
 class NIDAQTask():
+    ctr = 0
 
     ## __init__
     #
@@ -117,7 +119,8 @@ class NIDAQTask():
     def __init__(self, board):
         self.board_number = getBoardDevNumber(board)
         self.taskHandle = TaskHandle(0)
-        checkStatus(nidaqmx.DAQmxCreateTask("", byref(self.taskHandle)))
+        checkStatus(nidaqmx.DAQmxCreateTask(str(NIDAQTask.ctr), byref(self.taskHandle)))
+        NIDAQTask.ctr += 1
 
     ## clearTask
     #
@@ -304,7 +307,7 @@ class AnalogWaveformOutput(NIDAQTask):
     #
     def __init__(self, board, channel, min_val = -10.0, max_val = 10.0):
         NIDAQTask.__init__(self, board)
-        self.c_waveform = 0
+        self.c_waveform = False
         self.dev_and_channel = "Dev" + str(self.board_number) + "/ao" + str(channel)
         self.min_val = min_val
         self.max_val = max_val
@@ -360,7 +363,7 @@ class AnalogWaveformOutput(NIDAQTask):
         if len(clock) > 0:
             clock_source = "/Dev" + str(self.board_number) + "/" + str(clock)
 
-        # set the timing for the waveform.
+        # Set the timing for the waveform.
         sample_mode = DAQmx_Val_ContSamps
         if finite:
             sample_mode = DAQmx_Val_FiniteSamps
@@ -374,7 +377,7 @@ class AnalogWaveformOutput(NIDAQTask):
                                                   c_long(sample_mode),
                                                   c_ulonglong(waveform_len)))
 
-        # transfer the waveform data to the DAQ board buffer.
+        # Transfer the waveform data to the DAQ board buffer.
         data_len = len(waveform)
         c_samples_written = c_long(data_len)
         c_wave_form_type = c_double * data_len
