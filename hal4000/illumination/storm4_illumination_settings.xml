@@ -13,7 +13,7 @@
     
     <control_module>
       <name>AOTF</name>
-      <module_name>sc_hardware.crystalTechnologies.halAotf</module_name>
+      <module_name>sc_hardware.crystalTechnologies.hAotf</module_name>
       <class_name>CrystalTechAOTF64Bit</class_name>
       <parameters>
 	<use_fsk type="boolean">true</use_fsk>
@@ -22,7 +22,7 @@
     
     <control_module>
       <name>cube405</name>
-      <module_name>sc_hardware.coherent.halLaser</module_name>
+      <module_name>sc_hardware.coherent.hLaser</module_name>
       <class_name>CoherentCube</class_name>
       <parameters>
 	<port>COM6</port>
@@ -31,7 +31,7 @@
     
     <control_module>
       <name>daq</name>
-      <module_name>sc_hardware.nationalInstruments.illuminationNicontrol</module_name>
+      <module_name>sc_hardware.nationalInstruments.hNicontrol</module_name>
       <class_name>Nidaq</class_name>
       <parameters>
 	<counter_board>PCI-6733</counter_board>
