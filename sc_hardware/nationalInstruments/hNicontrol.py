@@ -11,6 +11,9 @@
 
 import time
 
+# Debugging
+import sc_library.hdebug as hdebug
+
 import sc_hardware.baseClasses.illuminationHardware as illuminationHardware
 import sc_hardware.nationalInstruments.nicontrol as nicontrol
 
@@ -158,7 +161,7 @@ class Nidaq(illuminationHardware.DaqModulation):
 
             iters = 0
             while (iters < 5) and (not initAoTask()):
-                print "Trying again", iters
+                hdebug.logText("initAoTask failed " + str(iters))
                 self.ao_task.clearTask()
                 time.sleep(0.1)
                 iters += 1
@@ -189,7 +192,7 @@ class Nidaq(illuminationHardware.DaqModulation):
 
             iters = 0
             while (iters < 5) and (not initDoTask()):
-                print "Trying again", iters
+                hdebug.logText("initDoTask failed " + str(iters))
                 self.do_task.clearTask()
                 time.sleep(0.1)
                 iters += 1
