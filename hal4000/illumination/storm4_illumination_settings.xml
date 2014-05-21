@@ -283,6 +283,23 @@
       </digital_modulation>
     </channel>
 
+    <!-- LED -->
+    <channel>
+      <description>LED</description>
+      <color type="rgb">255,255,255</color>
+      
+      <analog_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6733</board>
+	  <channel type="int">7</channel>
+	  <max_voltage type="float">5.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+	</parameters>
+      </analog_modulation>
+      
+    </channel>
+
   </channels>
 
 </illumination_settings>
