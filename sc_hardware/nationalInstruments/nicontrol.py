@@ -30,6 +30,7 @@ DAQmx_Val_RSE = 10083
 DAQmx_Val_NRSE = 10078
 DAQmx_Val_Diff = 10106
 DAQmx_Val_PseudoDiff = 12529
+DAQmx_Val_Task_Verify = 2
 
 TaskHandle = c_ulong
 
@@ -153,6 +154,13 @@ class NIDAQTask():
         #done = c_long(0)
         checkStatus(nidaqmx.DAQmxIsTaskDone(self.taskHandle, None))
         return done.value
+
+    ## verifyTask
+    #
+    # @return The status of the task.
+    #
+    def verifyTask(self):
+        return nidaqmx.DAQmxTaskControl(self.taskHandle, DAQmx_Val_Task_Verify)
 
 
 ## AnalogOutput
@@ -356,6 +364,8 @@ class AnalogWaveformOutput(NIDAQTask):
     # @param clock (Optional) The clock signal to use as a time base for the wave form, defaults to ctr0out.
     # @param rising (Optional) Update on the rising or falling edge, defaults to rising.
     #
+    # @return True/False For success or failure.
+    #
     def setWaveform(self, waveform, sample_rate, finite = 0, clock = "ctr0out", rising = True):
         waveform_len = len(waveform)/self.channels
 
@@ -392,7 +402,11 @@ class AnalogWaveformOutput(NIDAQTask):
                                                 byref(self.c_waveform), 
                                                 byref(c_samples_written), 
                                                 None))
-        assert c_samples_written.value == waveform_len, "Failed to write the right number of samples " + str(c_samples_written.value) + " " + str(waveform_len)
+
+        if (c_samples_written.value == waveform_len):
+            return True
+        else:
+            return False
 
 
 ## CounterOutput
@@ -593,6 +607,8 @@ class DigitalWaveformOutput(NIDAQTask):
     # @param clock (Optional) The clock signal that will drive the wave form output, defaults to "ctr0out".
     # @param rising (Optional) True/False update on the rising edge, defaults to True.
     #
+    # @return True/False For success or failure.
+    #
     def setWaveform(self, waveform, sample_rate, finite = 0, clock = "ctr0out", rising = True):
         waveform_len = len(waveform)/self.channels
 
@@ -632,7 +648,12 @@ class DigitalWaveformOutput(NIDAQTask):
                                                    byref(self.c_waveform), 
                                                    byref(c_samples_written), 
                                                    None))
-        assert c_samples_written.value == waveform_len, "Failed to write the right number of samples " + str(c_samples_written.value) + " " + str(waveform_len)
+
+        if (c_samples_written.value == waveform_len):
+            return True
+        else:
+            return False
+
 
 #
 # Convenience functions.
