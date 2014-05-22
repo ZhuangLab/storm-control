@@ -451,7 +451,6 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
         self.filming = 0
         self.filenames = [False, False]
         self.image_graphs = [False, False]
-        self.number_cameras = 1
         self.parameters = parameters
         self.spot_counter = False
         self.spot_graphs = [False, False]
@@ -755,7 +754,7 @@ class SingleSpotCounter(SpotCounter):
     # @param parent (Optional) The PyQt parent of this dialog box.
     #
     def __init__(self, hardware, parameters, parent = None):
-        self.cameras = 1
+        self.number_cameras = 1
         
         import qtdesigner.spotcounter_ui as spotCounterUi
         self.ui = spotCounterUi.Ui_Dialog()
@@ -775,7 +774,7 @@ class DualSpotCounter(SpotCounter):
     # @param parent (Optional) The PyQt parent of this dialog box.
     #
     def __init__(self, hardware, parameters, parent = None):
-        self.cameras = 2
+        self.number_cameras = 2
         
         import qtdesigner.dualspotcounter_ui as spotCounterUi
         self.ui = spotCounterUi.Ui_Dialog()
