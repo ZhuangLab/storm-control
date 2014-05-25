@@ -157,7 +157,6 @@ class DaveActionValveProtocol(DaveAction):
 
         self.message = tcpMessage.TCPMessage(message_type = "Kilroy Protocol",
                                              message_data = {"name": self.protocol_name})
-
 ## DaveDelay
 #
 # This action introduces a defined delay in a dave action.  
@@ -215,6 +214,42 @@ class DaveDelay(DaveAction):
             self.delay_timer.start(self.delay)
             print "Delaying " + str(self.delay) + " ms"
 
+## DavePause
+#
+# This action pauses dave on execution.  
+#
+class DavePause(DaveAction):
+    ## __init__
+    #
+    # @param tcp_client A tcp communications object.
+    #
+    def __init__(self):
+        # Initialize parent class with no tcp_client
+        DaveAction.__init__(self, None)
+        
+        # Create message and add delay time for accurate dave time estimates
+        self.message = tcpMessage.TCPMessage(message_type = "Pause");
+
+        # Define pause behaviors
+        self.should_pause = True
+
+    ## cleanUp
+    #
+    # Handle clean up of the action
+    #
+    def cleanUp(self):
+        pass
+
+    ## start
+    #
+    # Start the action.
+    #
+    def start(self):
+        if self.message.isTest():
+            self.completeAction(self.message)
+        else:
+            self.completeAction(self.message)
+        
 ## FindSum
 #
 # The find sum action.
