@@ -14,36 +14,39 @@
     </parameters>
   </camera>
 
-  <focuslock>
-    <module type="string">storm4piFocusLockZ</module>
-  </focuslock>
+  <modules>
 
-  <illumination>
-    <module type="string">storm4IlluminationControl</module>
-  </illumination>
+    <!-- The focus lock -->
+    <focuslock>
+      <class_name type="string">AFocusLockZ</class_name>
+      <menu_item type="string">Focus Lock</menu_item>
+      <module_name type="string">focuslock.storm4piFocusLockZ</module_name>
+    </focuslock>
 
-  <joystick>
-    <module type="string">gamepad310JoystickControl</module>
-  </joystick>
+    <!-- Illumination (lasers, shutters, etc) control. -->
+    <illumination>
+      <class_name type="string">IlluminationControl</class_name>
+      <menu_item type="string">Illumination</menu_item>
+      <module_name type="string">illumination.illuminationControl</module_name>
+      <parameters>
+	<settings_xml type="string">storm4_illumination_settings.xml</settings_xml>
+      </parameters>
+    </illumination>
 
-  <!--
-  <misc_control>
-    <module type="string">storm4MiscControl</module>
-  </misc_control>
-  -->
+    <!-- Automatic illumination power adjustment. -->
+    <progressions>
+      <class_name type="string">ProgressionControl</class_name>
+      <menu_item type="string">Progressions</menu_item>
+      <module_name type="string">progressionControl</module_name>
+    </progressions>
 
-  <shutters>
-    <module type="string">storm4ShutterControl</module>
-  </shutters>
+    <!-- The live STORM analysis and display. -->
+    <spotcounter>
+      <class_name type="string">DualSpotCounter</class_name>
+      <menu_item type="string">Spot Counter</menu_item>
+      <module_name type="string">spotCounter</module_name>
+    </spotcounter>
 
-  <stage>
-    <module type="string">storm4StageControl</module>
-  </stage>
+  </modules>
 
-  <!--
-  <temperature_logger>
-    <module type="string">NA</module>
-  </temperature_logger>
-  -->
-  
 </hardware>

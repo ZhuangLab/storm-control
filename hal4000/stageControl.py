@@ -7,9 +7,14 @@
 # Hazen 03/14
 #
 
+import sys
+
 import halLib.standalone as standalone
 
-standalone.runModule("stage")
+if (len(sys.argv)==2):
+    standalone.runModule("stage", sys.argv[1])
+else:
+    standalone.runModule("stage")
 
 #
 # The MIT License

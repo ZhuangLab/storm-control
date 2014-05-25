@@ -112,11 +112,11 @@ def Parameters(parameters_file, is_HAL = False):
 
     # Read camera1/camera2 settings (only used with dual camera setups).
     camera1 = xml.find("camera1")
-    if camera1:
+    if camera1 is not None:
         xml_object.camera1 = StormXMLObject(camera1)
 
     camera2 = xml.find("camera2")
-    if camera2:
+    if camera2 is not None:
         xml_object.camera2 = StormXMLObject(camera2)
 
     xml_object.parameters_file = parameters_file

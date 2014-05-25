@@ -680,7 +680,7 @@ class FocusLockZDualCam(FocusLockZ):
     #        
     @hdebug.debug
     def startFilm(self, filename, run_shutters):
-        FocusLockZ.startFilm(self, filename, tcp_requested)
+        FocusLockZ.startFilm(self, filename, run_shutters)
         self.lock_display2.startLock(False)
 
     ## stopFilm

@@ -296,8 +296,9 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
 
             # Start hardware.
             for name, instance in self.hardware_modules.iteritems():
-                instance.startFilm(self.parameters.kinetic_value,
-                                   self.parameters.shutter_oversampling)
+                if (instance.getStatus() == True):
+                    instance.startFilm(self.parameters.kinetic_value,
+                                       self.parameters.shutter_oversampling)
 
             # Start channels.
             for channel in self.channels:
@@ -323,7 +324,8 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
 
             # Stop hardware.
             for name, instance in self.hardware_modules.iteritems():
-                instance.stopFilm()
+                if (instance.getStatus() == True):
+                    instance.stopFilm()
 
             self.running_shutters = False
 
@@ -335,11 +337,9 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def updateSize(self):
 
-        # Determine total width and max channel height.
-        new_width = 0
+        # Determine max channel height.
         new_height = 0
         for channel in self.channels:
-            new_width += channel.getWidth() + self.spacing
             if (new_height < channel.getHeight()):
                 new_height = channel.getHeight()
 
@@ -349,7 +349,8 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
                 channel.setHeight(new_height)
         
         # Resize the group box and the dialog box.
-        self.ui.powerControlBox.setGeometry(10, 0, new_width + 9 - self.spacing, new_height + 19)
+        new_width = self.channels[-1].getX() + self.channels[1].getWidth() + 7
+        self.ui.powerControlBox.setGeometry(10, 0, new_width, new_height + 19)
 
         lb_width = self.ui.powerControlBox.width()
         lb_height = self.ui.powerControlBox.height()

@@ -99,7 +99,10 @@ class RS232():
     ## waitResponse
     #
     # Waits much longer for a response. This is the method to use if
-    # you are sure that the hardware will respond eventually.
+    # you are sure that the hardware will respond eventually. If you
+    # don't set end_of_response then it will automatically be the
+    # end_of_line character, and this will return once it finds the
+    # first end_of_line character.
     #
     # @param end_of_response (Optional) The expected character(s) at the end of the response string, defaults to end_of_line.
     # @param max_attempts (Optional) How many cycles of polling to undertake before giving up, defaults to 200.
@@ -116,7 +119,7 @@ class RS232():
             response_len = self.tty.inWaiting()
             if response_len > 0:
                 response += self.tty.read(response_len)
-            time.sleep(0.1 * self.wait_time)
+            time.sleep(self.wait_time)
             index = response.find(end_of_response)
             attempts += 1
         return response

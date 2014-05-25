@@ -30,6 +30,7 @@ DAQmx_Val_RSE = 10083
 DAQmx_Val_NRSE = 10078
 DAQmx_Val_Diff = 10106
 DAQmx_Val_PseudoDiff = 12529
+DAQmx_Val_Task_Verify = 2
 
 TaskHandle = c_ulong
 
@@ -104,11 +105,13 @@ def getBoardDevNumber(board):
 # DAQ communication classes
 #
 
+
 ## NIDAQTask
 #
 # NIDAQmx task base class
 #
 class NIDAQTask():
+    ctr = 0
 
     ## __init__
     #
@@ -117,7 +120,8 @@ class NIDAQTask():
     def __init__(self, board):
         self.board_number = getBoardDevNumber(board)
         self.taskHandle = TaskHandle(0)
-        checkStatus(nidaqmx.DAQmxCreateTask("", byref(self.taskHandle)))
+        checkStatus(nidaqmx.DAQmxCreateTask(str(NIDAQTask.ctr), byref(self.taskHandle)))
+        NIDAQTask.ctr += 1
 
     ## clearTask
     #
@@ -150,6 +154,13 @@ class NIDAQTask():
         #done = c_long(0)
         checkStatus(nidaqmx.DAQmxIsTaskDone(self.taskHandle, None))
         return done.value
+
+    ## verifyTask
+    #
+    # @return The status of the task.
+    #
+    def verifyTask(self):
+        return nidaqmx.DAQmxTaskControl(self.taskHandle, DAQmx_Val_Task_Verify)
 
 
 ## AnalogOutput
@@ -304,7 +315,7 @@ class AnalogWaveformOutput(NIDAQTask):
     #
     def __init__(self, board, channel, min_val = -10.0, max_val = 10.0):
         NIDAQTask.__init__(self, board)
-        self.c_waveform = 0
+        self.c_waveform = False
         self.dev_and_channel = "Dev" + str(self.board_number) + "/ao" + str(channel)
         self.min_val = min_val
         self.max_val = max_val
@@ -353,6 +364,8 @@ class AnalogWaveformOutput(NIDAQTask):
     # @param clock (Optional) The clock signal to use as a time base for the wave form, defaults to ctr0out.
     # @param rising (Optional) Update on the rising or falling edge, defaults to rising.
     #
+    # @return True/False For success or failure.
+    #
     def setWaveform(self, waveform, sample_rate, finite = 0, clock = "ctr0out", rising = True):
         waveform_len = len(waveform)/self.channels
 
@@ -360,7 +373,7 @@ class AnalogWaveformOutput(NIDAQTask):
         if len(clock) > 0:
             clock_source = "/Dev" + str(self.board_number) + "/" + str(clock)
 
-        # set the timing for the waveform.
+        # Set the timing for the waveform.
         sample_mode = DAQmx_Val_ContSamps
         if finite:
             sample_mode = DAQmx_Val_FiniteSamps
@@ -374,7 +387,7 @@ class AnalogWaveformOutput(NIDAQTask):
                                                   c_long(sample_mode),
                                                   c_ulonglong(waveform_len)))
 
-        # transfer the waveform data to the DAQ board buffer.
+        # Transfer the waveform data to the DAQ board buffer.
         data_len = len(waveform)
         c_samples_written = c_long(data_len)
         c_wave_form_type = c_double * data_len
@@ -389,7 +402,11 @@ class AnalogWaveformOutput(NIDAQTask):
                                                 byref(self.c_waveform), 
                                                 byref(c_samples_written), 
                                                 None))
-        assert c_samples_written.value == waveform_len, "Failed to write the right number of samples " + str(c_samples_written.value) + " " + str(waveform_len)
+
+        if (c_samples_written.value == waveform_len):
+            return True
+        else:
+            return False
 
 
 ## CounterOutput
@@ -590,6 +607,8 @@ class DigitalWaveformOutput(NIDAQTask):
     # @param clock (Optional) The clock signal that will drive the wave form output, defaults to "ctr0out".
     # @param rising (Optional) True/False update on the rising edge, defaults to True.
     #
+    # @return True/False For success or failure.
+    #
     def setWaveform(self, waveform, sample_rate, finite = 0, clock = "ctr0out", rising = True):
         waveform_len = len(waveform)/self.channels
 
@@ -629,7 +648,12 @@ class DigitalWaveformOutput(NIDAQTask):
                                                    byref(self.c_waveform), 
                                                    byref(c_samples_written), 
                                                    None))
-        assert c_samples_written.value == waveform_len, "Failed to write the right number of samples " + str(c_samples_written.value) + " " + str(waveform_len)
+
+        if (c_samples_written.value == waveform_len):
+            return True
+        else:
+            return False
+
 
 #
 # Convenience functions.

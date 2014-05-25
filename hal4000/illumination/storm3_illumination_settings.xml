@@ -2,15 +2,7 @@
 <illumination_settings>
 
   <control_modules>
-    <control_module>
-      <name>750wheel</name>
-      <module_name>sc_hardware.thorlabs.FW102C</module_name>
-      <class_name>HalFW102C</class_name>
-      <parameters>
-	<port>COM5</port>
-      </parameters>
-    </control_module>
-    
+
     <control_module>
       <name>AOTF</name>
       <module_name>sc_hardware.crystalTechnologies.hAotf</module_name>
@@ -25,16 +17,16 @@
       <module_name>sc_hardware.coherent.hLaser</module_name>
       <class_name>CoherentCube</class_name>
       <parameters>
-	<port>COM6</port>
+	<port>COM9</port>
       </parameters>
     </control_module>
-    
+
     <control_module>
       <name>daq</name>
       <module_name>sc_hardware.nationalInstruments.hNicontrol</module_name>
       <class_name>Nidaq</class_name>
       <parameters>
-	<counter_board>PCI-6733</counter_board>
+	<counter_board>PCI-6722</counter_board>
 	<counter_id type="int">0</counter_id>
 	<counter_trigger type="int">0</counter_trigger>
 	<waveform_clock>ctr0out</waveform_clock>
@@ -44,71 +36,32 @@
 
   <channels>
 
-    <!-- 750 laser -->
+    <!-- 647 laser -->
     <channel>
-      <description>750</description>
-      <color type="rgb">200,0,0</color>
-      
-      <amplitude_modulation>
-	<uses>750wheel</uses>
-	<display_normalized type="boolean">False</display_normalized>
-	<parameters>
-	  <minimum type="int">1</minimum>
-	  <maximum type="int">6</maximum>
-	</parameters>
-      </amplitude_modulation>
-      
-      <digital_modulation>
-	<uses>daq</uses>
-	<parameters>
-	  <board>PCI-6733</board>
-	  <channel type="int">0</channel>
-	</parameters>
-      </digital_modulation>
-    </channel>
-
-    <!-- 642 laser -->
-    <channel>
-      <description>642</description>
+      <description>647</description>
       <color type="rgb">255,0,0</color>
       
       <amplitude_modulation>
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <!-- 642 laser -->
-	  <maximum type="int">6100</maximum>
+	  <maximum type="int">7857</maximum>
 	  <channel type="int">0</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">91.22</on_frequency>
-
-	  <!-- 656 laser -->
-	  <!--
-	  <maximum type="int">5700</maximum>
-	  <channel type="int">0</channel>
-	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">88.7</on_frequency>
-	  -->
+	  <on_frequency type="float">90.36</on_frequency>
 	</parameters>
       </amplitude_modulation>
       
       <analog_modulation>
 	<uses>daq</uses>
 	<parameters>
-	  <board>PCI-6733</board>
-	  <channel type="int">1</channel>
-	  <max_voltage type="float">1.0</max_voltage>
+	  <board>PCI-6722</board>
+	  <channel type="int">0</channel>
+	  <max_voltage type="float">6.0</max_voltage>
 	  <min_voltage type="float">0.0</min_voltage>
 	</parameters>
       </analog_modulation>
-      
-      <digital_modulation>
-	<uses>daq</uses>
-	<parameters>
-	  <board>PCI-6733</board>
-	  <channel type="int">1</channel>
-	</parameters>
-      </digital_modulation>
+
     </channel>
 
     <!-- 561 laser -->
@@ -120,30 +73,23 @@
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <maximum type="int">6500</maximum>
+	  <maximum type="int">7000</maximum>
 	  <channel type="int">1</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">108.28</on_frequency>
+	  <on_frequency type="float">107.92</on_frequency>
 	</parameters>
       </amplitude_modulation>
       
       <analog_modulation>
 	<uses>daq</uses>
 	<parameters>
-	  <board>PCI-6733</board>
-	  <channel type="int">2</channel>
-	  <max_voltage type="float">1.0</max_voltage>
+	  <board>PCI-6722</board>
+	  <channel type="int">1</channel>
+	  <max_voltage type="float">6.0</max_voltage>
 	  <min_voltage type="float">0.0</min_voltage>
 	</parameters>
       </analog_modulation>
-      
-      <digital_modulation>
-	<uses>daq</uses>
-	<parameters>
-	  <board>PCI-6733</board>
-	  <channel type="int">2</channel>
-	</parameters>
-      </digital_modulation>
+
     </channel>
 
     <!-- 532 laser -->
@@ -155,107 +101,114 @@
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <maximum type="int">5700</maximum>
+	  <maximum type="int">6571</maximum>
 	  <channel type="int">2</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">115.73</on_frequency>
+	  <on_frequency type="float">115.82</on_frequency>
 	</parameters>
       </amplitude_modulation>
       
       <analog_modulation>
 	<uses>daq</uses>
 	<parameters>
-	  <board>PCI-6733</board>
-	  <channel type="int">3</channel>
-	  <max_voltage type="float">1.0</max_voltage>
+	  <board>PCI-6722</board>
+	  <channel type="int">2</channel>
+	  <max_voltage type="float">6.0</max_voltage>
 	  <min_voltage type="float">0.0</min_voltage>
 	</parameters>
       </analog_modulation>
-      
-      <digital_modulation>
-	<uses>daq</uses>
-	<parameters>
-	  <board>PCI-6733</board>
-	  <channel type="int">3</channel>
-	</parameters>
-      </digital_modulation>
+
     </channel>
 
-    <!-- 488 laser -->
+    <!-- 514 laser -->
     <channel>
-      <description>488</description>
-      <color type="rgb">0,100,255</color>
+      <description>514</description>
+      <color type="rgb">0,255,128</color>
       
       <amplitude_modulation>
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <maximum type="int">5900</maximum>
+	  <maximum type="int">6500</maximum>
 	  <channel type="int">3</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">130.73</on_frequency>
+	  <on_frequency type="float">121.26</on_frequency>
 	</parameters>
       </amplitude_modulation>
       
       <analog_modulation>
 	<uses>daq</uses>
 	<parameters>
-	  <board>PCI-6733</board>
-	  <channel type="int">4</channel>
-	  <max_voltage type="float">1.0</max_voltage>
+	  <board>PCI-6722</board>
+	  <channel type="int">3</channel>
+	  <max_voltage type="float">6.0</max_voltage>
 	  <min_voltage type="float">0.0</min_voltage>
 	</parameters>
       </analog_modulation>
-      
-      <digital_modulation>
-	<uses>daq</uses>
-	<parameters>
-	  <board>PCI-6733</board>
-	  <channel type="int">4</channel>
-	</parameters>
-      </digital_modulation>
+
     </channel>
 
-    <!-- 460 laser -->
+    <!-- 488 laser -->
     <channel>
-      <description>460</description>
+      <description>488</description>
       <color type="rgb">0,0,255</color>
       
       <amplitude_modulation>
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <maximum type="int">5000</maximum>
+	  <maximum type="int">6143</maximum>
 	  <channel type="int">4</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">141.92</on_frequency>
+	  <on_frequency type="float">130.58</on_frequency>
 	</parameters>
       </amplitude_modulation>
       
       <analog_modulation>
 	<uses>daq</uses>
 	<parameters>
-	  <board>PCI-6733</board>
-	  <channel type="int">5</channel>
-	  <max_voltage type="float">1.0</max_voltage>
+	  <board>PCI-6722</board>
+	  <channel type="int">4</channel>
+	  <max_voltage type="float">6.0</max_voltage>
 	  <min_voltage type="float">0.0</min_voltage>
 	</parameters>
       </analog_modulation>
+
+    </channel>
+
+    <!-- 457 laser -->
+    <channel>
+      <description>457</description>
+      <color type="rgb">128,0,255</color>
+
+      <amplitude_modulation>
+	<uses>AOTF</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <maximum type="int">5786</maximum>
+	  <channel type="int">5</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">143.36</on_frequency>
+	</parameters>
+      </amplitude_modulation>
       
-      <digital_modulation>
+      <analog_modulation>
 	<uses>daq</uses>
 	<parameters>
-	  <board>PCI-6733</board>
+	  <board>PCI-6722</board>
 	  <channel type="int">5</channel>
+	  <max_voltage type="float">6.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
 	</parameters>
-      </digital_modulation>
+      </analog_modulation>
+
     </channel>
 
     <!-- 405 laser -->
     <channel>
       <description>405</description>
       <color type="rgb">255,0,255</color>
-      
+
       <amplitude_modulation>
 	<uses>cube405</uses>
 	<display_normalized type="boolean">True</display_normalized>
@@ -267,37 +220,13 @@
       <analog_modulation>
 	<uses>daq</uses>
 	<parameters>
-	  <board>PCI-6733</board>
+	  <board>PCI-6722</board>
 	  <channel type="int">6</channel>
 	  <max_voltage type="float">5.0</max_voltage>
 	  <min_voltage type="float">0.0</min_voltage>
 	</parameters>
       </analog_modulation>
-      
-      <digital_modulation>
-	<uses>daq</uses>
-	<parameters>
-	  <board>PCI-6733</board>
-	  <channel type="int">6</channel>
-	</parameters>
-      </digital_modulation>
-    </channel>
 
-    <!-- LED -->
-    <channel>
-      <description>LED</description>
-      <color type="rgb">255,255,255</color>
-      
-      <analog_modulation>
-	<uses>daq</uses>
-	<parameters>
-	  <board>PCI-6733</board>
-	  <channel type="int">7</channel>
-	  <max_voltage type="float">5.0</max_voltage>
-	  <min_voltage type="float">0.0</min_voltage>
-	</parameters>
-      </analog_modulation>
-      
     </channel>
 
   </channels>

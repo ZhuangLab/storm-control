@@ -50,6 +50,7 @@ import qtWidgets.qtAppIcon as qtAppIcon
 import qtWidgets.qtParametersBox as qtParametersBox
 
 import sc_library.parameters as params
+import sc_library.hgit as hgit
 
 ## getFileName
 #
@@ -165,7 +166,11 @@ class Window(QtGui.QMainWindow):
         self.ui = hal4000Ui.Ui_MainWindow()
         self.ui.setupUi(self)
         
-        self.setWindowTitle(self.parameters.setup_name)
+        title = self.parameters.setup_name
+        if (title.lower() != hgit.getBranch().lower()):
+            title += " (" + hgit.getBranch() + ")"
+        self.setWindowTitle(title)
+
         self.setWindowIcon(qtAppIcon.QAppIcon())
 
         self.parameters_box = qtParametersBox.QParametersBox(self.ui.settingsScrollArea)

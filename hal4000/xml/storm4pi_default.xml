@@ -90,12 +90,12 @@
 
   <!-- film settings -->
   <want_big_endian type="int">1</want_big_endian>
-  <directory type="string">C:\users\Data\</directory>
+  <directory type="string">C:\Data\</directory>
   <filename type="string">movie</filename>
   <acq_mode type="string">run_till_abort</acq_mode>
 <!--  <acq_mode type="string">fixed_length</acq_mode> -->
   <frames type="int">600</frames>
-  <logfile type="string">c:\users\Data\image_log.txt</logfile>
+  <logfile type="string">c:\Data\image_log.txt</logfile>
   <extensions type="string-array">,A647,Cy5,Cy3,Cy2,A405,FITC,YFP,GFP,BF</extensions>
   <auto_increment type="int">1</auto_increment>
   <want_bell type="int">1</want_bell>

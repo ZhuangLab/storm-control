@@ -7,9 +7,14 @@
 # Hazen 03/14
 #
 
+import sys
+
 import halLib.standalone as standalone
 
-standalone.runModule("focuslock")
+if (len(sys.argv)==2):
+    standalone.runModule("focuslock", sys.argv[1])
+else:
+    standalone.runModule("focuslock")
 
 #
 # The MIT License

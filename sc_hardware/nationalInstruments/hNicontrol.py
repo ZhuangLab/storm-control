@@ -9,6 +9,11 @@
 # Hazen 04/14
 #
 
+import time
+
+# Debugging
+import sc_library.hdebug as hdebug
+
 import sc_hardware.baseClasses.illuminationHardware as illuminationHardware
 import sc_hardware.nationalInstruments.nicontrol as nicontrol
 
@@ -139,17 +144,28 @@ class Nidaq(illuminationHardware.DaqModulation):
             # Sort by board, channel.
             analog_data = sorted(self.analog_data, key = lambda x: (x[0], x[1]))
 
-            # Create channels.
-            self.ao_task = nicontrol.AnalogWaveformOutput(analog_data[0][0], analog_data[0][1])
-            for i in range(len(analog_data) - 1):
-                self.ao_task.addChannel(analog_data[i+1][0], analog_data[i+1][1])
-
             # Set waveforms.
             waveform = []
             for i in range(len(analog_data)):
                 waveform += analog_data[i][2]
 
-            self.ao_task.setWaveform(waveform, frequency, clock = self.waveform_clock)
+            def initAoTask():
+
+                # Create channels.
+                self.ao_task = nicontrol.AnalogWaveformOutput(analog_data[0][0], analog_data[0][1])
+                for i in range(len(analog_data) - 1):
+                    self.ao_task.addChannel(analog_data[i+1][0], analog_data[i+1][1])
+
+                # Add waveform
+                return self.ao_task.setWaveform(waveform, frequency, clock = self.waveform_clock)
+
+            iters = 0
+            while (iters < 5) and (not initAoTask()):
+                hdebug.logText("initAoTask failed " + str(iters))
+                self.ao_task.clearTask()
+                time.sleep(0.1)
+                iters += 1
+
         else:
             self.ao_task = False
 
@@ -159,17 +175,28 @@ class Nidaq(illuminationHardware.DaqModulation):
             # Sort by board, channel.
             digital_data = sorted(self.digital_data, key = lambda x: (x[0], x[1]))
 
-            # Create channels.
-            self.do_task = nicontrol.DigitalWaveformOutput(digital_data[0][0], digital_data[0][1])
-            for i in range(len(digital_data) - 1):
-                self.do_task.addChannel(digital_data[i+1][0], digital_data[i+1][1])
-
             # Set waveforms.
             waveform = []
             for i in range(len(digital_data)):
                 waveform += digital_data[i][2]
 
-            self.do_task.setWaveform(waveform, frequency, clock = self.waveform_clock)
+            def initDoTask():
+
+                # Create channels.
+                self.do_task = nicontrol.DigitalWaveformOutput(digital_data[0][0], digital_data[0][1])
+                for i in range(len(digital_data) - 1):
+                    self.do_task.addChannel(digital_data[i+1][0], digital_data[i+1][1])
+
+                # Add waveform
+                return self.do_task.setWaveform(waveform, frequency, clock = self.waveform_clock)
+
+            iters = 0
+            while (iters < 5) and (not initDoTask()):
+                hdebug.logText("initDoTask failed " + str(iters))
+                self.do_task.clearTask()
+                time.sleep(0.1)
+                iters += 1
+
         else:
             self.do_task = False
 
