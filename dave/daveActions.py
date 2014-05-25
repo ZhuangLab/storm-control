@@ -221,9 +221,9 @@ class DaveDelay(DaveAction):
 class DavePause(DaveAction):
     ## __init__
     #
-    # @param tcp_client A tcp communications object.
+    # @param should_pause A boolean determining if Dave should pause.
     #
-    def __init__(self):
+    def __init__(self, should_pause):
         # Initialize parent class with no tcp_client
         DaveAction.__init__(self, None)
         
@@ -231,7 +231,7 @@ class DavePause(DaveAction):
         self.message = tcpMessage.TCPMessage(message_type = "Pause");
 
         # Define pause behaviors
-        self.should_pause = True
+        self.should_pause = should_pause
 
     ## cleanUp
     #

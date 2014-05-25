@@ -116,6 +116,8 @@ class CommandEngine(QtGui.QWidget):
         # Load and parse command 
         command_type = command.getType()
         if command_type == "movie":
+            if hasattr(command, "pause"):
+                self.actions.append(daveActions.DavePause(command.pause))
             if hasattr(command, "stage_x") and hasattr(command, "stage_y"):
                 self.actions.append(daveActions.MoveStage(self.HALClient, command))
             if hasattr(command, "lock_target"):
