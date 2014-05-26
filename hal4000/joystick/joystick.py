@@ -38,8 +38,8 @@ class JoystickObject(QtCore.QObject, halModule.HalModule):
         self.button_timer = QtCore.QTimer(self)
         self.jstick = joystick
         self.parameters = parameters
-        self.parameters.joystick_gain_index = 0
-        self.parameters.multiplier = 1
+        self.parameters.set("joystick_gain_index", 0)
+        self.parameters.set("multiplier", 1)
         self.old_right_joystick = [0, 0]
         self.old_left_joystick = [0, 0]
         self.to_emit = False
@@ -87,10 +87,10 @@ class JoystickObject(QtCore.QObject, halModule.HalModule):
     #
     def hatEvent(self, sx, sy):
         p = self.parameters
-        sx = sx*p.hat_step*p.joystick_signx
-        sy = sy*p.hat_step*p.joystick_signy
+        sx = sx * p.get("hat_step") * p.get("joystick_signx")
+        sy = sy * p.get("hat_step") * p.get("joystick_signy")
 
-        if p.xy_swap:
+        if p.get("xy_swap"):
             self.step.emit(sy, sx)
         else:
             self.step.emit(sx,sy)
@@ -117,20 +117,20 @@ class JoystickObject(QtCore.QObject, halModule.HalModule):
     def leftJoystickEvent(self, x_speed, y_speed):
         p = self.parameters
 
-        if(abs(x_speed) > p.min_offset) or (abs(y_speed) > p.min_offset):
-            if (p.joystick_mode == "quadratic"):
+        if(abs(x_speed) > p.get("min_offset")) or (abs(y_speed) > p.get("min_offset")):
+            if (p.get("joystick_mode") == "quadratic"):
                 x_speed = x_speed * x_speed * cmp(x_speed, 0.0)
                 y_speed = y_speed * y_speed * cmp(y_speed, 0.0)
 
                 # x_speed and y_speed range from -1.0 to 1.0.
                 # convert to units of microns per second
-                gain = p.multiplier*p.joystick_gain[p.joystick_gain_index]
-                x_speed = gain*x_speed*p.joystick_signx
-                y_speed = gain*y_speed*p.joystick_signy
+                gain = p.get("multiplier") * p.get("joystick_gain")[p.get("joystick_gain_index")]
+                x_speed = gain * x_speed * p.get("joystick_signx")
+                y_speed = gain * y_speed * p.get("joystick_signy")
 
                 # The stage and the joystick might have different ideas
                 # about which direction is x.
-                if p.xy_swap:
+                if p.get("xy_swap"):
                     self.motion.emit(y_speed, x_speed)
                 else:
                     self.motion.emit(x_speed, y_speed)
@@ -160,22 +160,22 @@ class JoystickObject(QtCore.QObject, halModule.HalModule):
         for [e_type, e_data] in events:
             # Buttons
             if(e_type == "left upper trigger") and (e_data == "Press"): # focus up
-                self.lock_jump.emit(p.multiplier*p.lockt_step)
+                self.lock_jump.emit(p.get("multiplier") * p.get("lockt_step"))
             elif(e_type == "left lower trigger") and (e_data == "Press"): # focus down
-                self.lock_jump.emit(-p.multiplier*p.lockt_step)
+                self.lock_jump.emit(-p.get("multiplier") * p.get("lockt_step"))
             elif(e_type == "right upper trigger") and (e_data == "Press"): # start/stop film
                 self.toggle_film.emit()
             elif(e_type == "back") and (e_data == "Press"): # emergency stage stop
                 self.motion.emit(0.0, 0.0)
             elif(e_type == "left joystick press") and (e_data == "Press"): # toggle movement gain
-                p.joystick_gain_index += 1
-                if(p.joystick_gain_index == len(p.joystick_gain)):
-                    p.joystick_gain_index = 0
+                p.set("joystick_gain_index", p.get("joystick_gain_index") + 1)
+                if(p.get("joystick_gain_index") == len(p.get("joystick_gain"))):
+                    p.set("joystick_gain_index", 0)
             elif(e_type == "X"): # engage/disengage movement multiplier
                 if (e_data == "Press"):
-                    p.multiplier = p.joystick_multiplier_value 
+                    p.set("multiplier", p.get("joystick_multiplier_value"))
                 else: # "Release"
-                    p.multiplier = 1.0
+                    p.set("multiplier", 1.0)
                 # Recall joystick event to reflect changes in gain
                 self.leftJoystickEvent(self.old_left_joystick[0], self.old_left_joystick[1])
 

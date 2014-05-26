@@ -56,7 +56,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         # UI setup.
         self.ui = illuminationUi.Ui_Dialog()
         self.ui.setupUi(self)
-        self.setWindowTitle(parameters.setup_name + " Illumination Control")
+        self.setWindowTitle(parameters.get("setup_name") + " Illumination Control")
         self.setWindowIcon(qtAppIcon.QAppIcon())
 
         # Parse XML that describes the hardware.
@@ -219,12 +219,12 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
 
             # Save previous button state and power.
             if self.parameters:
-                self.parameters.on_off_state[i] = old_on
-                self.parameters.default_power[i] = old_power
+                self.parameters.get("on_off_state")[i] = old_on
+                self.parameters.get("default_power")[i] = old_power
 
         if (parameters.shutter_frames > 0):
-            self.newColors.emit(parameters.shutter_colors)
-            self.newCycleLength.emit(parameters.shutter_frames)
+            self.newColors.emit(parameters.get("shutter_colors"))
+            self.newCycleLength.emit(parameters.get("shutter_frames"))
 
         self.parameters = parameters
 
@@ -239,12 +239,12 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         [waveforms, colors, frames, oversampling] = xmlParser.parseShuttersXML(len(self.channels), 
                                                                                shutters_filename)
 
-        self.parameters.shutter_data = []
+        self.parameters.set("shutter_data", [])
         for i, channel in enumerate(self.channels):
-            self.parameters.shutter_data.append(channel.newShutters(waveforms[i]))
-        self.parameters.shutter_colors = colors
-        self.parameters.shutter_frames = frames
-        self.parameters.shutter_oversampling = oversampling
+            self.parameters.get("shutter_data").append(channel.newShutters(waveforms[i]))
+        self.parameters.set("shutter_colors", colors)
+        self.parameters.set("shutter_frames", frames)
+        self.parameters.set("shutter_oversampling", oversampling)
         self.newColors.emit(colors)
         self.newCycleLength.emit(frames)
 
@@ -297,8 +297,8 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
             # Start hardware.
             for name, instance in self.hardware_modules.iteritems():
                 if (instance.getStatus() == True):
-                    instance.startFilm(self.parameters.kinetic_value,
-                                       self.parameters.shutter_oversampling)
+                    instance.startFilm(self.parameters.get("kinetic_value"),
+                                       self.parameters.get("shutter_oversampling"))
 
             # Start channels.
             for channel in self.channels:

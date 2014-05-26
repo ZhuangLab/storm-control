@@ -58,7 +58,7 @@ class CameraDisplay(QtGui.QFrame):
         self.display_timer = QtCore.QTimer(self)
         self.filming = False
         self.frame = False
-        self.max_intensity = parameters.max_intensity
+        self.max_intensity = parameters.get("max_intensity")
         self.parameters = parameters
         self.show_grid = 0
         self.show_info = 1
@@ -151,8 +151,8 @@ class CameraDisplay(QtGui.QFrame):
     #
     @hdebug.debug
     def colorTableChange(self, index):
-        self.parameters.colortable = self.ui.colorComboBox.currentText() + ".ctbl" 
-        self.color_table = self.color_tables.getTableByName(self.parameters.colortable)
+        self.parameters.set("colortable", self.ui.colorComboBox.currentText() + ".ctbl")
+        self.color_table = self.color_tables.getTableByName(self.parameters.get("colortable"))
         self.camera_widget.newColorTable(self.color_table)
         self.color_gradient.newColorTable(self.color_table)
 
@@ -292,7 +292,7 @@ class CameraDisplay(QtGui.QFrame):
     #
     @hdebug.debug
     def handleSync(self, frame):
-        self.parameters.sync = frame
+        self.parameters.set("sync", frame)
 
     ## handleTarget
     #
@@ -324,7 +324,7 @@ class CameraDisplay(QtGui.QFrame):
     def newFrames(self, frames):
         for frame in frames:
             if (frame.which_camera == self.which_camera):
-                if self.filming and self.parameters.sync:
+                if self.filming and self.parameters.get("sync"):
                     if((frame.number % self.cycle_length) == (self.parameters.sync-1)):
                         self.frame = frame
                 else:
@@ -346,8 +346,8 @@ class CameraDisplay(QtGui.QFrame):
         #
         # setup the camera display widget
         #
-        self.color_table = self.color_tables.getTableByName(p.colortable)
-        display_range = [p.scalemin, p.scalemax]
+        self.color_table = self.color_tables.getTableByName(p.get("colortable"))
+        display_range = [p.get("scalemin"), p.get("scalemax")]
         self.camera_widget.newParameters(p, self.color_table, display_range)
 
         # camera display
@@ -363,13 +363,13 @@ class CameraDisplay(QtGui.QFrame):
             layout.setMargin(2)
             layout.addWidget(self.color_gradient)
 
-        self.ui.colorComboBox.setCurrentIndex(self.ui.colorComboBox.findText(p.colortable[:-5]))
+        self.ui.colorComboBox.setCurrentIndex(self.ui.colorComboBox.findText(p.get("colortable")[:-5]))
 
         # general settings
-        self.max_intensity = parameters.max_intensity
+        self.max_intensity = parameters.get("max_intensity")
         self.ui.rangeSlider.setRange([0.0, self.max_intensity, 1.0])
-        self.ui.rangeSlider.setValues([float(p.scalemin), float(p.scalemax)])
-        self.ui.syncSpinBox.setValue(p.sync)
+        self.ui.rangeSlider.setValues([float(p.get("scalemin")), float(p.get("scalemax"))])
+        self.ui.syncSpinBox.setValue(p.get("sync"))
 
     ## rangeChange
     #
@@ -385,8 +385,8 @@ class CameraDisplay(QtGui.QFrame):
                 scale_max += 1.0
             else:
                 scale_min -= 1.0
-        self.parameters.scalemax = int(scale_max)
-        self.parameters.scalemin = int(scale_min)
+        self.parameters.set("scalemax", int(scale_max))
+        self.parameters.set("scalemin", int(scale_min))
         self.updateRange()
 
     ## setSyncMax
@@ -427,9 +427,9 @@ class CameraDisplay(QtGui.QFrame):
     #
     @hdebug.debug
     def updateRange(self):
-        self.ui.scaleMax.setText(str(self.parameters.scalemax))
-        self.ui.scaleMin.setText(str(self.parameters.scalemin))
-        self.camera_widget.newRange([self.parameters.scalemin, self.parameters.scalemax])
+        self.ui.scaleMax.setText(str(self.parameters.get("scalemax")))
+        self.ui.scaleMin.setText(str(self.parameters.get("scalemin")))
+        self.camera_widget.newRange([self.parameters.get("scalemin"), self.parameters.get("scalemax")])
 
 ## CameraScollArea
 #

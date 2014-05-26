@@ -38,7 +38,7 @@ class QObjectCounterThread(QtCore.QThread):
         self.mutex = QtCore.QMutex()
         self.running = True
         self.thread_index = index
-        self.threshold = parameters.threshold
+        self.threshold = parameters.get("threshold")
 
     ## newImage
     #
@@ -57,7 +57,7 @@ class QObjectCounterThread(QtCore.QThread):
     #
     def newParameters(self, parameters):
         self.mutex.lock()
-        self.threshold = parameters.threshold
+        self.threshold = parameters.get("threshold")
         self.mutex.unlock()
 
     ## run

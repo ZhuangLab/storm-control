@@ -209,7 +209,7 @@ class Channel(QtCore.QObject):
     def newParameters(self, parameters):
 
         # Calculate new power in slider units if necessary.
-        new_power = parameters.default_power[self.channel_id]
+        new_power = parameters.get("default_power")[self.channel_id]
         if self.display_normalized:
             new_power = int(round(new_power * self.amplitude_range + self.min_amplitude))
 
@@ -218,11 +218,11 @@ class Channel(QtCore.QObject):
                                                           new_power)
 
         # Update buttons.
-        self.channel_ui.setupButtons(parameters.power_buttons[self.channel_id])
+        self.channel_ui.setupButtons(parameters.get("power_buttons")[self.channel_id])
 
         # Update shutter data, if available.
         if (parameters.shutter_frames != 0):
-            self.shutter_data = parameters.shutter_data[self.channel_id]
+            self.shutter_data = parameters.get("shutter_data")[self.channel_id]
 
         # Normalize power, if necessary.
         if self.display_normalized:

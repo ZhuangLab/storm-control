@@ -39,16 +39,13 @@ class QCameraWidget(QtGui.QWidget):
         # These are for dragging (to move the stage).
         self.ctrl_key_down = False
         self.drag_mode = False
-        if hasattr(parameters, "drag_multiplier"):
-            self.drag_multiplier = parameters.drag_multiplier
-        else:
-            self.drag_multiplier = 1.0
+        self.drag_multiplier = parameters.get("drag_multiplier", 1.0)
         self.drag_x = 0
         self.drag_y = 0
 
-        self.flip_horizontal = parameters.flip_horizontal
-        self.flip_vertical = parameters.flip_vertical
-        self.transpose = parameters.transpose
+        self.flip_horizontal = parameters.get("flip_horizontal")
+        self.flip_vertical = parameters.get("flip_vertical")
+        self.transpose = parameters.get("transpose")
 
         self.image = False
         self.image_min = 0
@@ -269,16 +266,12 @@ class QCameraWidget(QtGui.QWidget):
     def newParameters(self, parameters, colortable, display_range):
         self.colortable = colortable
         self.display_range = display_range
-        self.flip_horizontal = parameters.flip_horizontal
-        self.flip_vertical = parameters.flip_vertical
-        self.transpose = parameters.transpose
-        self.x_size = parameters.x_pixels/parameters.x_bin
-        self.y_size = parameters.y_pixels/parameters.y_bin
-
-        if hasattr(parameters, "drag_multiplier"):
-            self.drag_multiplier = parameters.drag_multiplier
-        else:
-            self.drag_multiplier = 1.0
+        self.flip_horizontal = parameters.get("flip_horizontal")
+        self.flip_vertical = parameters.get("flip_vertical")
+        self.transpose = parameters.get("transpose")
+        self.x_size = parameters.get("x_pixels")/parameters.get("x_bin")
+        self.y_size = parameters.get("y_pixels")/parameters.get("y_bin")
+        self.drag_multiplier = parameters.get("drag_multiplier", 1.0)
 
         self.calcFinalSize()
 

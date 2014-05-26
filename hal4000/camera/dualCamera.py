@@ -128,14 +128,14 @@ class DualCamera(genericCamera.Camera):
 
         # Setup UI
         self.camera1 = CameraDialog(hardware.display,
-                                    parameters.camera1,
-                                    parameters.setup_name + " Camera1",
+                                    parameters.get("camera1"),
+                                    parameters.get("setup_name") + " Camera1",
                                     "camera1",
                                     parent)
 
         self.camera2 = CameraDialog(hardware.display,
-                                    parameters.camera1,
-                                    parameters.setup_name + " Camera2",
+                                    parameters.get("camera1"),
+                                    parameters.get("setup_name") + " Camera2",
                                     "camera2",
                                     parent)
 
@@ -199,8 +199,8 @@ class DualCamera(genericCamera.Camera):
     @hdebug.debug
     def handleGainChangeCamera1(self, gain):
         self.stopCamera()
-        self.parameters.camera1.emccd_gain = gain
-        self.camera_control.setEMCCDGain(0, self.parameters.camera1.emccd_gain)
+        self.parameters.get("camera1").set("emccd_gain", gain)
+        self.camera_control.setEMCCDGain(0, self.parameters.get("camera1").get("emccd_gain"))
         self.startCamera()
 
     ## handleGainChangeCamera2
@@ -212,8 +212,8 @@ class DualCamera(genericCamera.Camera):
     @hdebug.debug
     def handleGainChangeCamera2(self, gain):
         self.stopCamera()
-        self.parameters.camera2.emccd_gain = gain
-        self.camera_control.setEMCCDGain(1, self.parameters.camera2.emccd_gain)
+        self.parameters.get("camera2").set("emccd_gain", gain)
+        self.camera_control.setEMCCDGain(1, self.parameters.get("camera2").get("emccd_gain"))
         self.startCamera()
 
     ## handleMaxFrames
@@ -255,15 +255,15 @@ class DualCamera(genericCamera.Camera):
         # These values are used by the shutterControl class to figure out how fast 
         # to run the shutter timers. As written the shutters are driven by camera1.
         #
-        [p.exposure_value, p.accumulate_value, p.kinetic_value] = self.camera_control.getAcquisitionTimings(0)
+        p.set(["exposure_value", "accumulate_value", "kinetic_value"], self.camera_control.getAcquisitionTimings(0))
 
-        [p.camera1.exposure_value, p.camera1.accumulate_value, p.camera1.kinetic_value] = self.camera_control.getAcquisitionTimings(0)
-        self.camera1.camera_display.newParameters(parameters.camera1)
-        self.camera1.camera_params.newParameters(parameters.camera1)
+        p.get("camera1").set(["exposure_value", "accumulate_value", "kinetic_value"], self.camera_control.getAcquisitionTimings(0))
+        self.camera1.camera_display.newParameters(parameters.get("camera1"))
+        self.camera1.camera_params.newParameters(parameters.get("camera1"))
 
-        [p.camera2.exposure_value, p.camera2.accumulate_value, p.camera2.kinetic_value] = self.camera_control.getAcquisitionTimings(1)
-        self.camera2.camera_display.newParameters(parameters.camera2)
-        self.camera2.camera_params.newParameters(parameters.camera2)
+        p.get("camera2").set(["exposure_value", "accumulate_value", "kinetic_value"], self.camera_control.getAcquisitionTimings(1))
+        self.camera2.camera_display.newParameters(parameters.get("camera2"))
+        self.camera2.camera_params.newParameters(parameters.get("camera2"))
 
     ## setSyncMax
     #
@@ -390,12 +390,12 @@ class DualCamera(genericCamera.Camera):
 
             # Get camera1 temperature
             cur_temp = self.camera_control.getTemperature(0)
-            self.parameters.camera1.actual_temperature = cur_temp[0]
+            self.parameters.get("camera1").set("actual_temperature", cur_temp[0])
             self.camera1.camera_params.newTemperature(cur_temp)
 
             # Get camera2 temperature
             cur_temp = self.camera_control.getTemperature(1)
-            self.parameters.camera2.actual_temperature = cur_temp[0]
+            self.parameters.get("camera2").set("actual_temperature", cur_temp[0])
             self.camera2.camera_params.newTemperature(cur_temp)
 
 

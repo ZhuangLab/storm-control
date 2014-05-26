@@ -223,7 +223,7 @@ class ACameraControl(cameraControl.CameraControl):
             self.camera.setFrameTransferMode(p.frame_transfer_mode)
 
             # Set camera fan to low. This is overriden by the off option
-            if p.low_during_filming:
+            if p.get("low_during_filming"):
                 if self.filming:
                     self.camera.setFanMode(1) # fan on low
                 else:
@@ -231,7 +231,7 @@ class ACameraControl(cameraControl.CameraControl):
 
             # This is for testing whether the camera fan is shaking the
             # the camera, adding noise to the images.
-            if p.off_during_filming:
+            if p.get("off_during_filming"):
                 if self.filming:
                     self.camera.setFanMode(2) # fan off
                 else:
@@ -249,55 +249,55 @@ class ACameraControl(cameraControl.CameraControl):
     def newParameters(self, parameters):
         #self.initCamera()
         p = parameters
-        self.reversed_shutter = p.reversed_shutter
+        self.reversed_shutter = p.get("reversed_shutter")
         try:
             hdebug.logText("Setting Read Mode", False)
             self.camera.setReadMode(4)
 
             hdebug.logText("Setting Temperature", False)
-            self.camera.setTemperature(p.temperature)
+            self.camera.setTemperature(p.get("temperature"))
 
             hdebug.logText("Setting Trigger Mode", False)
             self.camera.setTriggerMode(0)
 
             hdebug.logText("Setting ROI and Binning", False)
-            self.camera.setROIAndBinning(p.ROI, p.binning)
+            self.camera.setROIAndBinning(p.get("ROI"), p.get("binning"))
 
             hdebug.logText("Setting Horizontal Shift Speed", False)
-            self.camera.setHSSpeed(p.hsspeed)
+            self.camera.setHSSpeed(p.get("hsspeed"))
 
             hdebug.logText("Setting Vertical Shift Amplitude", False)
-            self.camera.setVSAmplitude(p.vsamplitude)
+            self.camera.setVSAmplitude(p.get("vsamplitude"))
 
             hdebug.logText("Setting Vertical Shift Speed", False)
-            self.camera.setVSSpeed(p.vsspeed)
+            self.camera.setVSSpeed(p.get("vsspeed"))
 
             hdebug.logText("Setting EM Gain Mode", False)
-            self.camera.setEMGainMode(p.emgainmode)
+            self.camera.setEMGainMode(p.get("emgainmode"))
 
             hdebug.logText("Setting EM Gain", False)
-            self.camera.setEMCCDGain(p.emccd_gain)
+            self.camera.setEMCCDGain(p.get("emccd_gain"))
 
             hdebug.logText("Setting Baseline Clamp", False)
-            self.camera.setBaselineClamp(p.baselineclamp)
+            self.camera.setBaselineClamp(p.get("baselineclamp"))
 
             hdebug.logText("Setting Preamp Gain", False)
-            self.camera.setPreAmpGain(p.preampgain)
+            self.camera.setPreAmpGain(p.get("preampgain"))
 
             hdebug.logText("Setting Acquisition Mode", False)
             self.camera.setACQMode("run_till_abort")
 
             hdebug.logText("Setting Frame Transfer Mode", False)
-            self.camera.setFrameTransferMode(p.frame_transfer_mode)
+            self.camera.setFrameTransferMode(p.get("frame_transfer_mode"))
 
             hdebug.logText("Setting Exposure Time", False)
-            self.camera.setExposureTime(p.exposure_time)
+            self.camera.setExposureTime(p.get("exposure_time"))
 
             hdebug.logText("Setting Kinetic Cycle Time", False)
-            self.camera.setKineticCycleTime(p.kinetic_cycle_time)
+            self.camera.setKineticCycleTime(p.get("kinetic_cycle_time"))
 
             hdebug.logText("Setting ADChannel", False)
-            self.camera.setADChannel(p.adchannel)
+            self.camera.setADChannel(p.get("adchannel"))
 
             p.head_model = self.camera.getHeadModel()
 

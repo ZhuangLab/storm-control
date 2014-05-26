@@ -115,12 +115,12 @@ class Window(QtGui.QMainWindow):
         self.directory_test_mode = False
         self.filename = ""
         self.filming = False
-        self.logfile_fp = open(parameters.logfile, "a")
+        self.logfile_fp = open(parameters.get("logfile"), "a")
         self.modules = []
         self.old_shutters_file = ""
         self.parameters = parameters
         self.parameters_test_mode = False
-        self.settings = QtCore.QSettings("Zhuang Lab", "hal-4000_" + parameters.setup_name.lower())
+        self.settings = QtCore.QSettings("Zhuang Lab", "hal-4000_" + parameters.get("setup_name").lower())
         self.tcp_message = None
         self.tcp_requested_movie = False
         self.ui_mode = ""
@@ -133,7 +133,7 @@ class Window(QtGui.QMainWindow):
         self.logfile_fp.flush()
 
         
-        setup_name = parameters.setup_name.lower()
+        setup_name = parameters.get("setup_name").lower()
 
         #
         # Load the camera module
@@ -166,7 +166,7 @@ class Window(QtGui.QMainWindow):
         self.ui = hal4000Ui.Ui_MainWindow()
         self.ui.setupUi(self)
         
-        title = self.parameters.setup_name
+        title = self.parameters.get("setup_name")
         if (title.lower() != hgit.getBranch().lower()):
             title += " (" + hgit.getBranch() + ")"
         self.setWindowTitle(title)
@@ -456,7 +456,7 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleAutoInc(self, flag):
-        self.parameters.auto_increment = flag
+        self.parameters.set("auto_increment", flag)
 
     ## handleAutoShutters
     #
@@ -466,7 +466,7 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleAutoShutters(self, flag):
-        self.parameters.auto_shutters = flag
+        self.parameters.set("auto_shutters", flag)
 
     ## handleClose
     #
@@ -595,7 +595,7 @@ class Window(QtGui.QMainWindow):
                 self.ui.filenameLabel.setText(message.getData("name") + self.parameters.filetype)
                 
                 # Record current length and set film length spin box to requested length.
-                self.current_length = self.parameters.frames
+                self.current_length = self.parameters.get("frames")
                 self.ui.lengthSpinBox.setValue(message.getData("length"))
 
                 # Start the film.
@@ -641,9 +641,9 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleModeComboBox(self, mode):
         if (mode == 0):
-            self.parameters.acq_mode = "run_till_abort"
+            self.parameters.set("acq_mode", "run_till_abort")
         else:
-            self.parameters.acq_mode = "fixed_length"
+            self.parameters.set("acq_mode", "fixed_length")
         self.showHideLength()
 
     ## newDirectory
@@ -658,12 +658,12 @@ class Window(QtGui.QMainWindow):
         if (not directory):
             directory = str(QtGui.QFileDialog.getExistingDirectory(self, 
                                                                    "New Directory", 
-                                                                   str(self.parameters.directory),
+                                                                   str(self.parameters.get("directory")),
                                                                    QtGui.QFileDialog.ShowDirsOnly))
         if directory and os.path.exists(directory):
             self.directory = directory + "/"
-            self.parameters.directory = self.directory
-            self.ui.directoryText.setText(trimString(self.parameters.directory, 31))
+            self.parameters.set("directory", self.directory)
+            self.ui.directoryText.setText(trimString(self.parameters.get("directory"), 31))
         self.updateFilenameLabel("foo")
 
     ## newFrames
@@ -700,14 +700,14 @@ class Window(QtGui.QMainWindow):
         # to true.
         #
         self.camera.newParameters(p)
-        p.initialized = True
+        p.set("initialized", True)
 
         # The working directory is set by the initial parameters. Subsequent
         # parameters files don't change the directory
         if self.directory:
-            p.directory = self.directory
+            p.set("directory", self.directory)
         else:
-            self.directory = p.directory
+            self.directory = p.get("directory")
 
         # Modules.
         for module in self.modules:
@@ -716,32 +716,32 @@ class Window(QtGui.QMainWindow):
         # If we don't already have the shutter data for these parameters, 
         # then update shutter data using the shutter file specified by 
         # the parameters file.
-        if (p.shutter_frames == 0):
-            self.newShutters(p.shutters)
+        if (p.get("shutter_frames") == 0):
+            self.newShutters(p.get("shutters"))
         else:
-            self.ui.shuttersText.setText(getFileName(p.shutters))
+            self.ui.shuttersText.setText(getFileName(p.get("shutters")))
 
         # Film settings.
-        extension = p.extension # Save a temporary copy as the original will get wiped out when we set the filename, etc.
-        filetype = p.filetype
-        self.ui.directoryText.setText(trimString(p.directory, 31))
-        self.ui.filenameEdit.setText(p.filename)
-        if p.auto_increment:
+        extension = p.get("extension") # Save a temporary copy as the original will get wiped out when we set the filename, etc.
+        filetype = p.get("filetype")
+        self.ui.directoryText.setText(trimString(p.get("directory"), 31))
+        self.ui.filenameEdit.setText(p.get("filename"))
+        if p.get("auto_increment"):
             self.ui.autoIncCheckBox.setChecked(True)
         else:
             self.ui.autoIncCheckBox.setChecked(False)
         self.ui.extensionComboBox.clear()
-        for ext in p.extensions:
+        for ext in p.get("extensions"):
             self.ui.extensionComboBox.addItem(ext)
         self.ui.extensionComboBox.setCurrentIndex(self.ui.extensionComboBox.findText(extension))
         self.ui.filetypeComboBox.setCurrentIndex(self.ui.filetypeComboBox.findText(filetype))
-        if p.acq_mode == "run_till_abort":
+        if p.get("acq_mode") == "run_till_abort":
             self.ui.modeComboBox.setCurrentIndex(0)
         else:
             self.ui.modeComboBox.setCurrentIndex(1)
-        self.ui.lengthSpinBox.setValue(p.frames)
+        self.ui.lengthSpinBox.setValue(p.get("frames"))
         self.showHideLength()
-        if p.auto_shutters:
+        if p.get("auto_shutters"):
             self.ui.autoShuttersCheckBox.setChecked(True)
         else:
             self.ui.autoShuttersCheckBox.setChecked(False)
@@ -823,11 +823,11 @@ class Window(QtGui.QMainWindow):
             hdebug.logText("failed to parse shutter file " + shutters_filename)
             for module in self.modules:
                 module.newShutters(self.old_shutters_file)
-            self.parameters.shutters = self.old_shutters_file
+            self.parameters.set("shutters", self.old_shutters_file)
         if new_shutters:
-            self.parameters.shutters = shutters_filename
+            self.parameters.set("shutters", shutters_filename)
             self.old_shutters_file = shutters_filename
-            self.ui.shuttersText.setText(getFileName(self.parameters.shutters))
+            self.ui.shuttersText.setText(getFileName(self.parameters.get("shutters")))
             params.setDefaultShutter(shutters_filename)
             
     ## newShuttersFile
@@ -882,12 +882,12 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def startFilm(self, film_settings = None):
         self.filming = True
-        self.film_name = self.parameters.directory + str(self.ui.filenameLabel.text())
+        self.film_name = self.parameters.get("directory") + str(self.ui.filenameLabel.text())
         self.film_name = self.film_name[:-len(self.ui.filetypeComboBox.currentText())]
 
         if not film_settings:
-            film_settings = filmSettings.FilmSettings(self.parameters.acq_mode,
-                                                      self.parameters.frames)
+            film_settings = filmSettings.FilmSettings(self.parameters.get("acq_mode"),
+                                                      self.parameters.get("frames"))
             save_film = self.ui.saveMovieCheckBox.isChecked()
         else:
             save_film = True
@@ -946,8 +946,8 @@ class Window(QtGui.QMainWindow):
 
         # Beep to warn the user that the film is done in the case of longer 
         # fixed length films during which they might have passed out.
-        if self.parameters.want_bell and (self.parameters.acq_mode == "fixed_length"):
-            if (self.parameters.frames > 1000):
+        if self.parameters.get("want_bell") and (self.parameters.get("acq_mode") == "fixed_length"):
+            if (self.parameters.get("frames") > 1000):
                 print "\7\7"
 
         # Stop the camera.
@@ -963,7 +963,7 @@ class Window(QtGui.QMainWindow):
             self.writer.closeFile()
 
             self.updateNotes() # Get any changes to the notes made during filming.
-            self.logfile_fp.write(str(datetime.datetime.now()) + "," + self.film_name + "," + str(self.parameters.notes) + "\r\n")
+            self.logfile_fp.write(str(datetime.datetime.now()) + "," + self.film_name + "," + str(self.parameters.get("notes")) + "\r\n")
             self.logfile_fp.flush()
 
             if self.ui.autoIncCheckBox.isChecked() and (not self.tcp_requested_movie):
@@ -1068,19 +1068,19 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def updateFilenameLabel(self, dummy):
         name = str(self.ui.filenameEdit.displayText())
-        self.parameters.filename = name
+        self.parameters.set("filename", name)
 
         name += "_{0:04d}".format(self.ui.indexSpinBox.value())
 
-        self.parameters.extension = str(self.ui.extensionComboBox.currentText())
-        if len(self.parameters.extension) > 0:
-            name += "_" + self.parameters.extension
+        self.parameters.set("extension", str(self.ui.extensionComboBox.currentText()))
+        if len(self.parameters.get("extension")) > 0:
+            name += "_" + self.parameters.get("extension")
 
-        self.parameters.filetype = str(self.ui.filetypeComboBox.currentText())
-        name += self.parameters.filetype
+        self.parameters.set("filetype", str(self.ui.filetypeComboBox.currentText()))
+        name += self.parameters.get("filetype")
 
         self.ui.filenameLabel.setText(name)
-        if os.path.exists(self.parameters.directory + name):
+        if os.path.exists(self.parameters.get("directory") + name):
             self.will_overwrite = True
             self.ui.filenameLabel.setStyleSheet("QLabel { color: red}")
         else:
@@ -1114,7 +1114,7 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def updateLength(self, length):
-        self.parameters.frames = length
+        self.parameters.set("frames", length)
 
     ## updateNotes
     #
@@ -1123,7 +1123,7 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def updateNotes(self):
-        self.parameters.notes = self.ui.notesEdit.toPlainText()
+        self.parameters.set("notes", self.ui.notesEdit.toPlainText())
 
 
 if __name__ == "__main__":
@@ -1142,13 +1142,13 @@ if __name__ == "__main__":
         parameters = params.Parameters(sys.argv[3], is_HAL = True)
     else:
         parameters = params.Parameters("settings_default.xml")
-        setup_name = parameters.setup_name
+        setup_name = parameters.get("setup_name")
         hardware = params.Hardware("xml/" + setup_name + "_hardware.xml")
         parameters = params.Parameters("xml/" + setup_name + "_default.xml", is_HAL = True)
     params.setSetupName(parameters, setup_name)
 
     # Start logger.
-    hdebug.startLogging(parameters.directory + "logs/", "hal4000")
+    hdebug.startLogging(parameters.get("directory") + "logs/", "hal4000")
 
     # Load app.
     window = Window(hardware, parameters)

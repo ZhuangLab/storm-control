@@ -43,7 +43,7 @@ class AMiscControl(miscControl.MiscControl):
         # UI setup
         self.ui = miscControlsUi.Ui_Dialog()
         self.ui.setupUi(self)
-        self.setWindowTitle(parameters.setup_name + " Misc Control")
+        self.setWindowTitle(parameters.get("setup_name") + " Misc Control")
 
         # connect signals
         if self.have_parent:
@@ -82,7 +82,7 @@ class AMiscControl(miscControl.MiscControl):
                 filter.setStyleSheet("QPushButton { color: red}")
                 if self.filter_wheel:
                     self.filter_wheel.setPosition(i+1)
-                self.parameters.filter_position = i
+                self.parameters.set("filter_position", i)
             else:
                 filter.setStyleSheet("QPushButton { color: black}")
 
@@ -105,11 +105,11 @@ class AMiscControl(miscControl.MiscControl):
     @hdebug.debug
     def newParameters(self, parameters):
         self.parameters = parameters
-        names = parameters.filter_names
+        names = parameters.get("filter_names")
         if (len(names) == 6):
             for i in range(6):
                 self.filters[i].setText(names[i])
-        self.filters[self.parameters.filter_position].click()
+        self.filters[self.parameters.get("filter_position")].click()
 
     @hdebug.debug
     def quit(self):

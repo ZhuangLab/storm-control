@@ -220,20 +220,20 @@ class ACameraControl(cameraControl.CameraControl):
                     self.cameras[i].setACQMode("run_till_abort")
 
             for i in range(2):
-                p = getattr(parameters, "camera" + str(i+1))
+                p = parameters.get("camera" + str(i+1))
                 # Due to what I can only assume is a bug in some of the
                 # older Andor software you need to reset the frame
                 # transfer mode after setting the aquisition mode.
                 self.cameras[i].setFrameTransferMode(p.frame_transfer_mode)
                 # Set camera fan to low. This is overriden by the off option
-                if p.low_during_filming:
+                if p.get("low_during_filming"):
                     if filming:
                         self.cameras[i].setFanMode(1) # fan on low
                     else:
                         self.cameras[i].setFanMode(0) # fan on full
                 # This is for testing whether the camera fan is shaking the
                 # the camera, adding noise to the images.
-                if p.off_during_filming:
+                if p.get("off_during_filming"):
                     if filming:
                         self.cameras[i].setFanMode(2) # fan off
                     else:
@@ -252,59 +252,59 @@ class ACameraControl(cameraControl.CameraControl):
         self.initCamera()
         self.got_camera = True
         for i in range(2):
-            p = getattr(parameters, "camera" + str(i+1))
-            self.reversed_shutter[i] = p.reversed_shutter
+            p = parameters.get("camera" + str(i+1))
+            self.reversed_shutter[i] = p.get("reversed_shutter")
             try:
                 hdebug.logText("Setting Read Mode", False)
                 self.cameras[i].setReadMode(4)
 
                 hdebug.logText("Setting Temperature", False)
-                self.cameras[i].setTemperature(p.temperature)
+                self.cameras[i].setTemperature(p.get("temperature"))
                 
                 hdebug.logText("Setting Trigger Mode", False)
                 if p.external_trigger:
-                    self.cameras[i].setTriggerMode(p.external_trigger)
+                    self.cameras[i].setTriggerMode(p.get("external_trigger"))
                 else:
                     self.cameras[i].setTriggerMode(0)
 
                 hdebug.logText("Setting ROI and Binning", False)
-                self.cameras[i].setROIAndBinning(p.ROI, p.binning)
+                self.cameras[i].setROIAndBinning(p.get("ROI"), p.get("binning"))
 
                 hdebug.logText("Setting Horizontal Shift Speed", False)
-                self.cameras[i].setHSSpeed(p.hsspeed)
+                self.cameras[i].setHSSpeed(p.get("hsspeed"))
 
                 hdebug.logText("Setting Vertical Shift Amplitude", False)
-                self.cameras[i].setVSAmplitude(p.vsamplitude)
+                self.cameras[i].setVSAmplitude(p.get("vsamplitude"))
 
                 hdebug.logText("Setting Vertical Shift Speed", False)
-                self.cameras[i].setVSSpeed(p.vsspeed)
+                self.cameras[i].setVSSpeed(p.get("vsspeed"))
 
                 hdebug.logText("Setting EM Gain Mode", False)
-                self.cameras[i].setEMGainMode(p.emgainmode)
+                self.cameras[i].setEMGainMode(p.get("emgainmode"))
 
                 hdebug.logText("Setting EM Gain", False)
-                self.cameras[i].setEMCCDGain(p.emccd_gain)
+                self.cameras[i].setEMCCDGain(p.get("emccd_gain"))
 
                 hdebug.logText("Setting Baseline Clamp", False)
-                self.cameras[i].setBaselineClamp(p.baselineclamp)
+                self.cameras[i].setBaselineClamp(p.get("baselineclamp"))
 
                 hdebug.logText("Setting Preamp Gain", False)
-                self.cameras[i].setPreAmpGain(p.preampgain)
+                self.cameras[i].setPreAmpGain(p.get("preampgain"))
 
                 hdebug.logText("Setting Acquisition Mode", False)
                 self.cameras[i].setACQMode("run_till_abort")
 
                 hdebug.logText("Setting Frame Transfer Mode", False)
-                self.cameras[i].setFrameTransferMode(p.frame_transfer_mode)
+                self.cameras[i].setFrameTransferMode(p.get("frame_transfer_mode"))
 
                 hdebug.logText("Setting Exposure Time", False)
-                self.cameras[i].setExposureTime(p.exposure_time)
+                self.cameras[i].setExposureTime(p.get("exposure_time"))
 
                 hdebug.logText("Setting Kinetic Cycle Time", False)
-                self.cameras[i].setKineticCycleTime(p.kinetic_cycle_time)
+                self.cameras[i].setKineticCycleTime(p.get("kinetic_cycle_time"))
 
                 hdebug.logText("Setting ADChannel", False)
-                self.cameras[i].setADChannel(p.adchannel)
+                self.cameras[i].setADChannel(p.get("adchannel"))
 
                 p.head_model = self.cameras[i].getHeadModel()
 

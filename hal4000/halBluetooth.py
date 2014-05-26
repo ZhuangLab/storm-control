@@ -376,7 +376,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
     # @param parameters A parameters object.
     #
     def newParameters(self, parameters):
-        self.lock_jump_size = parameters.lockt_step
+        self.lock_jump_size = parameters.get("lockt_step")
 
     ## run
     #

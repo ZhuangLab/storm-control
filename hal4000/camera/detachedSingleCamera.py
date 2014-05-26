@@ -44,7 +44,7 @@ class DetachedSingleCamera(singleCamera.SingleCamera):
 
         self.ui = cameraDetachedUi.Ui_Dialog()
         self.ui.setupUi(self)
-        self.setWindowTitle(parameters.setup_name + " Camera")
+        self.setWindowTitle(parameters.get("setup_name") + " Camera")
 
         # Set up camera display.
         camera_display_ui = cameraDisplayUi.Ui_Frame()

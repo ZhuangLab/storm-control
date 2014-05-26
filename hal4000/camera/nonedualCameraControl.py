@@ -112,18 +112,18 @@ class ACameraControl(cameraControl.CameraControl):
         self.initCamera()
 
         # Run at the speed determined by camera 1
-        if (parameters.camera1.exposure_time > 0.010):
-            self.sleep_time = int(1000.0 * parameters.camera1.exposure_time)
+        if (parameters.get("camera1").get("exposure_time") > 0.010):
+            self.sleep_time = int(1000.0 * parameters.get("camera1").get("exposure_time"))
         else:
             self.sleep_time = 10
 
         # Set acquisition timing values for camera1 and camera2
-        [parameters.camera1.exposure_value, parameters.camera1.accumulate_value, parameters.camera1.kinetic_value] = self.getAcquisitionTimings(0)
-        [parameters.camera2.exposure_value, parameters.camera2.accumulate_value, parameters.camera2.kinetic_value] = self.getAcquisitionTimings(1)
+        parameters.get("camera1").set(["exposure_value", "accumulate_value", "kinetic_value"], self.getAcquisitionTimings(0))
+        parameters.get("camera2").set(["exposure_value", "accumulate_value", "kinetic_value"], self.getAcquisitionTimings(1))
 
         # Create fake image for camera 1
-        size_x = parameters.camera1.x_pixels
-        size_y = parameters.camera1.y_pixels
+        size_x = parameters.get("camera1").get("x_pixels")
+        size_y = parameters.get("camera1").get("y_pixels")
         self.camera1_frame_size = [size_x, size_y]
         camera1_fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
         for i in range(size_x):
@@ -132,8 +132,8 @@ class ACameraControl(cameraControl.CameraControl):
         self.camera1_fake_frame = numpy.fromstring(camera1_fake_frame, dtype = numpy.uint16)
 
         # Create fake image for camera 2
-        size_x = parameters.camera2.x_pixels
-        size_y = parameters.camera2.y_pixels
+        size_x = parameters.get("camera2").get("x_pixels")
+        size_y = parameters.get("camera2").get("y_pixels")
         self.camera2_frame_size = [size_x, size_y]
         camera2_fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
         for i in range(size_x):

@@ -39,10 +39,7 @@ class ACameraControl(cameraControl.CameraControl):
 
         self.stop_at_max = True
 
-        if hasattr(parameters, "camera_id"):
-            self.camera = hcam.HamamatsuCameraMR(parameters.camera_id)
-        else:
-            self.camera = hcam.HamamatsuCameraMR(0)
+        self.camera = hcam.HamamatsuCameraMR(parameters.get("camera_id", 0))
 
     ## closeShutter
     #
@@ -116,22 +113,22 @@ class ACameraControl(cameraControl.CameraControl):
 
         try:
             # Set ROI location and size.
-            self.camera.setPropertyValue("subarray_hpos", p.x_start)
-            self.camera.setPropertyValue("subarray_hsize", p.x_pixels)
-            self.camera.setPropertyValue("subarray_vpos", p.y_start)
-            self.camera.setPropertyValue("subarray_vsize", p.y_pixels)
+            self.camera.setPropertyValue("subarray_hpos", p.get("x_start"))
+            self.camera.setPropertyValue("subarray_hsize", p.get("x_pixels"))
+            self.camera.setPropertyValue("subarray_vpos", p.get("y_start"))
+            self.camera.setPropertyValue("subarray_vsize", p.get("y_pixels"))
 
             # Set binning.
-            if (p.x_bin != p.y_bin):
+            if (p.get("x_bin") != p.get("y_bin")):
                 raise AssertionError("unequal binning is not supported.")
-            if (p.x_bin == 1):
+            if (p.get("x_bin") == 1):
                 self.camera.setPropertyValue("binning", "1x1")
-            elif (p.x_bin == 2):
+            elif (p.get("x_bin") == 2):
                 self.camera.setPropertyValue("binning", "2x2")
-            elif (p.x_bin == 4):
+            elif (p.get("x_bin") == 4):
                 self.camera.setPropertyValue("binning", "4x4")
             else:
-                raise AssertionError("unsupported bin size", p.x_bin)
+                raise AssertionError("unsupported bin size", p.get("x_bin"))
 
             # Set the rest of the hamamatsu properties.
             #

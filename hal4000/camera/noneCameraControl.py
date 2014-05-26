@@ -100,12 +100,12 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def newParameters(self, parameters):
         #self.initCamera()
-        if (parameters.exposure_time > 0.010):
-            self.sleep_time = int(1000.0 * parameters.exposure_time)
+        if (parameters.get("exposure_time") > 0.010):
+            self.sleep_time = int(1000.0 * parameters.get("exposure_time"))
         else:
             self.sleep_time = 10
-        size_x = parameters.x_pixels
-        size_y = parameters.y_pixels
+        size_x = parameters.get("x_pixels")
+        size_y = parameters.get("y_pixels")
         self.fake_frame_size = [size_x, size_y]
         fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
         for i in range(size_x):

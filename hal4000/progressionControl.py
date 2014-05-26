@@ -112,14 +112,14 @@ class MathChannels(Channels):
             channel_initial_spin_box.setGeometry(x_positions[2], 2, 68, 18)
             channel_initial_spin_box.setDecimals(4)
             channel_initial_spin_box.setMaximum(1.0)
-            channel_initial_spin_box.setValue(parameters.pstart_value)
+            channel_initial_spin_box.setValue(parameters.get("pstart_value"))
             channel_initial_spin_box.setSingleStep(0.0001)
 
             # increment
             channel_inc_spin_box = QtGui.QDoubleSpinBox(channel_frame)
             channel_inc_spin_box.setGeometry(x_positions[3], 2, 68, 18)
             channel_inc_spin_box.setDecimals(4)
-            channel_inc_spin_box.setValue(parameters.pinc_value)
+            channel_inc_spin_box.setValue(parameters.get("pinc_value"))
             channel_inc_spin_box.setSingleStep(0.0001)
 
             # time to increment
@@ -127,7 +127,7 @@ class MathChannels(Channels):
             channel_time_spin_box.setGeometry(x_positions[4], 2, 68, 18)
             channel_time_spin_box.setMinimum(100)
             channel_time_spin_box.setMaximum(100000)
-            channel_time_spin_box.setValue(parameters.pframe_value)
+            channel_time_spin_box.setValue(parameters.get("pframe_value"))
             channel_time_spin_box.setSingleStep(100)
             
             self.channels.append([channel_active_check_box,
@@ -420,7 +420,7 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
         # UI setup
         self.ui = progressionUi.Ui_Dialog()
         self.ui.setupUi(self)
-        self.setWindowTitle(parameters.setup_name + " Progression Control")
+        self.setWindowTitle(parameters.get("setup_name") + " Progression Control")
         self.setWindowIcon(qtAppIcon.QAppIcon())
 
         # connect signals
@@ -576,9 +576,9 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def handleProgCheck(self, state):
         if state:
-            self.parameters.use_progressions = True
+            self.parameters.set("use_progressions", True)
         else:
-            self.parameters.use_progressions = False
+            self.parameters.set("use_progressions", False)
 
     ## handleQuit
     #
@@ -634,7 +634,7 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     def newPowerFile(self, bool):
         power_filename = QtGui.QFileDialog.getOpenFileName(self,
                                                            "New Power File",
-                                                           str(self.parameters.directory),
+                                                           str(self.parameters.get("directory")),
                                                            "*.power")
         if power_filename:
             self.ui.filenameLabel.setText(power_filename[-40:])
@@ -666,7 +666,7 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     #
     def startFilm(self, film_name, run_shutters):
         self.channels = False
-        if (self.isVisible() and self.parameters.use_progressions):
+        if (self.isVisible() and self.parameters.get("use_progressions")):
             # determine which tab is active.
             if self.ui.linearTab.isVisible():
                 self.channels = self.linear_channels

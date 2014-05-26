@@ -462,7 +462,7 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
 
         # UI setup.
         self.ui.setupUi(self)
-        self.setWindowTitle(parameters.setup_name + " Spot Counter")
+        self.setWindowTitle(parameters.get("setup_name") + " Spot Counter")
         self.setWindowIcon(qtAppIcon.QAppIcon())
 
         # Setup Counter objects.
@@ -487,8 +487,8 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
             graph_h = parents[i].height() - 4
             self.spot_graphs[i] = QSpotGraph(graph_w,
                                              graph_h,
-                                             parameters.min_spots,
-                                             parameters.max_spots,
+                                             parameters.get("min_spots"),
+                                             parameters.get("max_spots"),
                                              parent = parents[i])
             self.spot_graphs[i].setGeometry(2, 2, graph_w, graph_h)
             self.spot_graphs[i].show()
@@ -500,20 +500,10 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
             parents = [self.ui.imageFrame, self.ui.imageFrame2]
 
         for i in range(self.number_cameras):
-            #camera_params = parameters
-            #if hasattr(parameters, "camera" + str(i+1)):
-            #    camera_params = getattr(parameters, "camera" + str(i+1))
-
             image_w = parents[i].width() - 4
             image_h = parents[i].height() - 4
-            #scale_bar_len = (parameters.scale_bar_len / parameters.nm_per_pixel) * \
-            #    float(image_w) / float(camera_params.x_pixels * camera_params.x_bin)
 
             self.image_graphs[i] = QImageGraph(image_w, image_h, parent = parents[i])
-            #                                   image_h,
-            #                                   camera_params.flip_horizontal,
-            #                                   camera_params.flip_vertical,
-            #                                   parent = parents[i])
             self.image_graphs[i].setGeometry(2, 2, image_w, image_h)
             self.image_graphs[i].blank()
             self.image_graphs[i].show()
@@ -582,7 +572,7 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
         for i in range(self.number_cameras):
             self.spot_graphs[i].changeYRange(y_max = new_max)
         self.ui.minSpinBox.setMaximum(new_max - 10)
-        self.parameters.max_spots = new_max
+        self.parameters.set("max_spots", new_max)
 
     ## handleMinChange
     #
@@ -595,7 +585,7 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
         for i in range(self.number_cameras):
             self.spot_graphs[i].changeYRange(y_min = new_min)
         self.ui.maxSpinBox.setMinimum(new_min + 10)
-        self.parameters.max_spots = new_min
+        self.parameters.set("min_spots", new_min)
 
     ## handleOk
     #
@@ -666,16 +656,16 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
         for i in range(self.number_cameras):
             self.counters[i].reset()
 
-            camera_params = parameters
-            if hasattr(parameters, "camera" + str(i+1)):
-                camera_params = getattr(parameters, "camera" + str(i+1))
-            scale_bar_len = (parameters.scale_bar_len / parameters.nm_per_pixel) * \
-                float(self.image_graphs[i].width()) / float(camera_params.x_pixels * camera_params.x_bin)
+            camera_params = parameters.get("camera" + str(i+1), parameters)
+            #if hasattr(parameters, "camera" + str(i+1)):
+            #    camera_params = getattr(parameters, "camera" + str(i+1))
+            scale_bar_len = (parameters.get("scale_bar_len") / parameters.get("nm_per_pixel")) * \
+                float(self.image_graphs[i].width()) / float(camera_params.get("x_pixels") * camera_params.get("x_bin"))
             self.image_graphs[i].newParameters(camera_params, scale_bar_len)
 
         # UI update.
-        self.ui.maxSpinBox.setValue(parameters.max_spots)
-        self.ui.minSpinBox.setValue(parameters.min_spots)
+        self.ui.maxSpinBox.setValue(parameters.get("max_spots"))
+        self.ui.minSpinBox.setValue(parameters.get("min_spots"))
 
     ## updateCounts
     #
@@ -806,12 +796,12 @@ if __name__ == "__main__":
     # Start spotCounter as a stand-alone application.
     app = QtGui.QApplication(sys.argv)
     parameters = params.Parameters(sys.argv[1], is_HAL = True)
-    parameters.setup_name = "offline"
+    parameters.set("setup_name", "offline")
     
-    parameters.x_pixels = width
-    parameters.y_pixels = height
-    parameters.x_bin = 1
-    parameters.y_bin = 1
+    parameters.set("x_pixels", width)
+    parameters.set("y_pixels", height)
+    parameters.set("x_bin", 1)
+    parameters.set("y_bin", 1)
 
     spotCounter = SingleSpotCounter(parameters)
     spotCounter.newParameters(parameters, [[255,255,255]])

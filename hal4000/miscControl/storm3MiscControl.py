@@ -46,7 +46,7 @@ class AMiscControl(miscControl.MiscControl):
         # UI setup
         self.ui = miscControlsUi.Ui_Dialog()
         self.ui.setupUi(self)
-        self.setWindowTitle(parameters.setup_name + " Misc Control")
+        self.setWindowTitle(parameters.get("setup_name") + " Misc Control")
 
         # connect signals
         if self.have_parent:
@@ -153,9 +153,9 @@ class AMiscControl(miscControl.MiscControl):
     @hdebug.debug
     def handleClearROI(self, bool):
         self.start_x = 0
-        self.stop_x = self.parameters.x_pixels
+        self.stop_x = self.parameters.get("x_pixels")
         self.start_y = 0
-        self.stop_y = self.parameters.y_pixels
+        self.stop_y = self.parameters.get("y_pixels")
         self.updateROIText()
 
     @hdebug.debug
@@ -164,7 +164,7 @@ class AMiscControl(miscControl.MiscControl):
             if filter.isChecked():
                 filter.setStyleSheet("QPushButton { color: red}")
                 self.filter_wheel.setPosition(i+1)
-                self.parameters.filter_position = i
+                self.parameters.set("filter_position", i)
             else:
                 filter.setStyleSheet("QPushButton { color: black}")
 
@@ -245,15 +245,15 @@ class AMiscControl(miscControl.MiscControl):
     @hdebug.debug
     def newParameters(self, parameters):
         self.parameters = parameters
-        self.jog_size = parameters.jog_size
-        self.epi_position = parameters.epi_position
-        self.tirf_position = parameters.tirf_position
+        self.jog_size = parameters.get("jog_size")
+        self.epi_position = parameters.get("epi_position")
+        self.tirf_position = parameters.get("tirf_position")
 
         names = parameters.filter_names
         if (len(names) == 6):
             for i in range(6):
                 self.filters[i].setText(names[i])
-        self.filters[self.parameters.filter_position].click()
+        self.filters[self.parameters.get("filter_position")].click()
 
         self.handleClearROI(True)
 

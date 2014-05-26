@@ -16,21 +16,6 @@ import sc_library.hgit as hgit
 # Get the version of the software.
 software_version = hgit.getVersion()
 
-## attrToString
-#
-# Convert an attribute to a string, or "NA" if the attribute does not exist.
-#
-# @param obj A Python object.
-# @param attr A attribute of the object as a string.
-#
-# @return The string form of the attribute if it exists, otherwise "NA".
-#
-def attrToString(obj, attr):
-    if hasattr(obj, attr):
-        return str(getattr(obj, attr))
-    else:
-        return "NA"
-
 ## availableFileFormats
 #
 # Return a list of the available movie formats.
@@ -78,14 +63,8 @@ def createFileWriter(filetype, filename, parameters, cameras):
 # @return [x size (pixels), y size (pixels)]
 #
 def getCameraSize(parameters, camera_name):
-    if (hasattr(parameters, camera_name)):
-        camera_obj = getattr(parameters, camera_name)
-        x_pixels = camera_obj.x_pixels
-        y_pixels = camera_obj.y_pixels
-    else:
-        x_pixels = parameters.x_pixels
-        y_pixels = parameters.y_pixels
-    return [x_pixels, y_pixels]
+    camera_obj = parameters.get(camera_name, parameters)
+    return [camera_obj.get("x_pixels"), camera_obj.get("y_pixels")]
 
 ## writeInfFile
 #
@@ -111,9 +90,9 @@ def writeInfFile(filename, filetype, number_frames, parameters, camera, stage_po
     fp.write("information file for" + nl)
     fp.write(filename + nl)
     fp.write("software version = " + software_version + nl)
-    fp.write("machine name = " + p.setup_name + nl)
-    fp.write("parameters file = " + p.parameters_file + nl)
-    fp.write("shutters file = " + p.shutters + nl)
+    fp.write("machine name = " + p.get("setup_name") + nl)
+    fp.write("parameters file = " + p.get("parameters_file") + nl)
+    fp.write("shutters file = " + p.get("shutters") + nl)
     if p.want_big_endian:
         fp.write("data type = 16 bit integers (binary, big endian)" + nl)
     else:
@@ -121,34 +100,34 @@ def writeInfFile(filename, filetype, number_frames, parameters, camera, stage_po
     fp.write("number of frames = " + str(number_frames) + nl)
 
     # Camera related
-    fp.write("frame size = " + str(c.x_pixels * c.y_pixels) + nl)
-    fp.write("frame dimensions = " + str(c.x_pixels) + " x " + str(c.y_pixels) + nl)
-    fp.write("binning = " + str(c.x_bin) + " x " + str(c.y_bin) + nl)
+    fp.write("frame size = " + str(c.get("x_pixels") * c.get("y_pixels")) + nl)
+    fp.write("frame dimensions = " + str(c.get("x_pixels")) + " x " + str(c.get("y_pixels")) + nl)
+    fp.write("binning = " + str(c.get("x_bin")) + " x " + str(c.get("y_bin")) + nl)
     if hasattr(c, "frame_transfer_mode") and c.frame_transfer_mode:
         fp.write("CCD mode = frame-transfer" + nl)
-    fp.write("horizontal shift speed = " + attrToString(c, "hsspeed") + nl)
-    fp.write("vertical shift speed = " + attrToString(c, "vsspeed") + nl)
-    fp.write("EMCCD Gain = " + attrToString(c, "emccd_gain") + nl)
-    fp.write("Preamp Gain = " + attrToString(c, "preampgain") + nl)
-    fp.write("Exposure Time = " + str(c.exposure_value) + nl)
-    fp.write("Frames Per Second = " + str(1.0/c.kinetic_value) + nl)
-    fp.write("camera temperature (deg. C) = " + attrToString(c, "actual_temperature") + nl)
-    fp.write("camera head = " + attrToString(c, "head_model") + nl)
-    fp.write("ADChannel = " + attrToString(c, "adchannel") + nl)
-    fp.write("scalemax = " + str(c.scalemax) + nl)
-    fp.write("scalemin = " + str(c.scalemin) + nl)
+    fp.write("horizontal shift speed = " + str(c.get("hsspeed", "NA")) + nl)
+    fp.write("vertical shift speed = " + str(c.get("vsspeed", "NA")) + nl)
+    fp.write("EMCCD Gain = " + str(c.get("emccd_gain", "NA")) + nl)
+    fp.write("Preamp Gain = " + str(c.get("preampgain", "NA")) + nl)
+    fp.write("Exposure Time = " + str(c.get("exposure_value")) + nl)
+    fp.write("Frames Per Second = " + str(1.0/c.get("kinetic_value")) + nl)
+    fp.write("camera temperature (deg. C) = " + str(c.get("actual_temperature", "NA")) + nl)
+    fp.write("camera head = " + str(c.get("head_model", "NA")) + nl)
+    fp.write("ADChannel = " + str(c.get("adchannel", "NA")) + nl)
+    fp.write("scalemax = " + str(c.get("scalemax")) + nl)
+    fp.write("scalemin = " + str(c.get("scalemin")) + nl)
 
-    fp.write("x_start = " + str(c.x_start) + nl)
-    fp.write("x_end = " + str(c.x_end) + nl)
-    fp.write("y_start = " + str(c.y_start) + nl)
-    fp.write("y_end = " + str(c.y_end) + nl)
+    fp.write("x_start = " + str(c.get("x_start")) + nl)
+    fp.write("x_end = " + str(c.get("x_end")) + nl)
+    fp.write("y_start = " + str(c.get("y_start")) + nl)
+    fp.write("y_end = " + str(c.get("y_end")) + nl)
 
     # Additional info
     fp.write("Stage X = {0:.2f}".format(stage_position[0]) + nl)
     fp.write("Stage Y = {0:.2f}".format(stage_position[1]) + nl)
     fp.write("Stage Z = {0:.2f}".format(stage_position[2]) + nl)
     fp.write("Lock Target = " + str(lock_target) + nl)
-    fp.write("notes = " + str(p.notes) + nl)
+    fp.write("notes = " + str(p.get("notes")) + nl)
     fp.close()
 
 #def writeInfFile(file_class, stage_position, lock_target):
@@ -210,12 +189,9 @@ class GenericFile:
 
         # Write the inf files.
         for i in range(len(self.filenames)):
-            if (hasattr(self.parameters, self.cameras[i])):
-                camera = getattr(self.parameters, self.cameras[i])
-            else:
-                camera = self.parameters
+            camera = self.parameters.get(self.cameras[i], self.parameters)
             writeInfFile(self.filenames[i],
-                         self.parameters.filetype,
+                         self.parameters.get("filetype"),
                          self.number_frames[i],
                          self.parameters,
                          camera,
@@ -273,10 +249,7 @@ class GenericFile:
     def totalFilmSize(self):
         total_size = 0.0
         for i in range(len(self.filenames)):
-            if (hasattr(self.parameters, self.cameras[i])):
-                temp = getattr(self.parameters, self.cameras[i])
-            else:
-                temp = self.parameters
+            temp = self.parameters.get(self.cameras[i], self.parameters)
             total_size += self.number_frames[i] * temp.bytesPerFrame * 0.000000953674
         return total_size
 
@@ -314,7 +287,7 @@ class DaxFile(GenericFile):
         for i in range(len(self.cameras)):
             if (frame.which_camera == self.cameras[i]):
                 np_data = frame.getData()
-                if self.parameters.want_big_endian:
+                if self.parameters.get("want_big_endian"):
                     np_data = np_data.byteswap()
                     np_data.tofile(self.file_ptrs[i])
                 else:
@@ -353,7 +326,7 @@ class DualCameraFormatFile(GenericFile):
         np_data = frame.getData().copy()
         np_data[0] = int(frame.which_camera[6:])-1
         #temp = chr(camera_int) + chr(camera_int) + copy.copy(frame.data[2:])
-        if self.parameters.want_big_endian:
+        if self.parameters.get("want_big_endian"):
             np_data.tofile(self.file_ptrs[0]).byteswap()
             #self.file_ptrs[0].write(fconv.LEtoBE(temp))
         else:
