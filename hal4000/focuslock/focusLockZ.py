@@ -101,7 +101,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
         parameters = self.parameters
 
         # UI setup
-        self.setWindowTitle(parameters.setup_name + " Focus Lock")
+        self.setWindowTitle(parameters.get("setup_name") + " Focus Lock")
         self.setWindowIcon(qtAppIcon.QAppIcon())
         self.ui.lockLabel.setStyleSheet("QLabel { color: green }")
         self.toggleLockButtonDisplay(self.lock_display1.shouldDisplayLockButton())
@@ -117,7 +117,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
             vbox_layout.addWidget(button)
             self.buttons.append(button)
 
-        self.buttons[parameters.qpd_mode].setChecked(True)
+        self.buttons[parameters.get("qpd_mode")].setChecked(True)
 
         for button in self.buttons:
             button.clicked.connect(self.handleRadioButtons)

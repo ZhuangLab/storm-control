@@ -34,7 +34,7 @@ class AFocusLockZ(focusLockZ.FocusLockZQPD):
                                                            stage,
                                                            lock_fn,
                                                            50.0, 
-                                                           parameters.qpd_zcenter)        
+                                                           parameters.get("qpd_zcenter"))
         ir_laser = LDC210.LDC210("PCIe-6321", 1)
         focusLockZ.FocusLockZQPD.__init__(self,
                                           parameters,

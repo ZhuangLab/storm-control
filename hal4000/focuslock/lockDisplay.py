@@ -84,7 +84,7 @@ class LockDisplay(QtGui.QWidget):
                                                    parameters,
                                                    self)]
         
-        self.current_mode = self.lock_modes[parameters.qpd_mode]
+        self.current_mode = self.lock_modes[parameters.get("qpd_mode")]
 
         # UI setup
         self.ui = lockdisplayUi.Ui_Form()
@@ -112,7 +112,7 @@ class LockDisplay(QtGui.QWidget):
             self.ir_state = True
             self.handleIrButton(None)
             if self.ir_laser.havePowerControl():
-                self.ui.irSlider.setValue(parameters.ir_power)
+                self.ui.irSlider.setValue(parameters.get("ir_power"))
 
         self.newParameters(parameters)
 
@@ -198,7 +198,7 @@ class LockDisplay(QtGui.QWidget):
     #
     @hdebug.debug
     def handleAdjustStage(self, direction):
-        self.jump(float(direction)*self.parameters.lockt_step)
+        self.jump(float(direction)*self.parameters.get("lockt_step"))
 
     ## handleFoundSum
     #
@@ -288,10 +288,10 @@ class LockDisplay(QtGui.QWidget):
         p = parameters
         for lock_mode in self.lock_modes:
             lock_mode.newParameters(parameters)
-        self.control_thread.newZCenter(p.qpd_zcenter)
+        self.control_thread.newZCenter(p.get("qpd_zcenter"))
         if not self.current_mode.amLocked():
             self.control_thread.recenter()
-        self.scale = p.qpd_scale
+        self.scale = p.get("qpd_scale")
 
     ## quit
     #
@@ -417,14 +417,14 @@ class LockDisplayQPD(LockDisplay):
         self.sumDisplay = lockDisplayWidgets.QSumDisplay(status_x,
                                                          status_y,
                                                          0,
-                                                         parameters.qpd_sum_max,
+                                                         parameters.get("qpd_sum_max"),
                                                          self.sum_min,
                                                          False,
                                                          parent = self.ui.sumFrame)
         self.sumDisplay.setGeometry(2, 2, status_x, status_y)
 
         # stage display widget setup
-        stage_max = int(2.0 * parameters.qpd_zcenter)
+        stage_max = int(2.0 * parameters.get("qpd_zcenter"))
         status_x = self.ui.zFrame.width() - 4
         status_y = self.ui.zFrame.height() - 4
         self.zDisplay = lockDisplayWidgets.QStageDisplay(status_x,
@@ -529,14 +529,14 @@ class LockDisplayCam(LockDisplay):
         self.sumDisplay = lockDisplayWidgets.QSumDisplay(status_x,
                                                          status_y,
                                                          0,
-                                                         parameters.qpd_sum_max,
+                                                         parameters.get("qpd_sum_max"),
                                                          self.sum_min,
                                                          255,
                                                          parent = self.ui.sumFrame)
         self.sumDisplay.setGeometry(2, 2, status_x, status_y)
 
         # stage display widget setup
-        stage_max = int(2.0 * parameters.qpd_zcenter)
+        stage_max = int(2.0 * parameters.get("qpd_zcenter"))
         status_x = self.ui.zFrame.width() - 4
         status_y = self.ui.zFrame.height() - 4
         self.zDisplay = lockDisplayWidgets.QStageDisplay(status_x,

@@ -28,7 +28,7 @@ class AFocusLockZ(focusLockZ.FocusLockZQPD):
                                                            stage,
                                                            lock_fn,
                                                            50.0, 
-                                                           parameters.qpd_zcenter)
+                                                           parameters.get("qpd_zcenter"))
         ir_laser = noneWidgets.IRLaser()
         focusLockZ.FocusLockZQPD.__init__(self,
                                           parameters,

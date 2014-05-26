@@ -471,11 +471,11 @@ class OptimalLockMode(JumpLockMode):
     # @param parameters A parameters object.
     #
     def newParameters(self, parameters):
-        self.quality_threshold = parameters.olock_quality_threshold
-        self.qpd_zcenter = parameters.qpd_zcenter
-        self.bracket_step = 0.001 * parameters.olock_bracket_step
-        self.scan_step = 0.001 * parameters.olock_scan_step
-        self.scan_hold = parameters.olock_scan_hold
+        self.quality_threshold = parameters.get("olock_quality_threshold")
+        self.qpd_zcenter = parameters.get("qpd_zcenter")
+        self.bracket_step = 0.001 * parameters.get("olock_bracket_step")
+        self.scan_step = 0.001 * parameters.get("olock_scan_step")
+        self.scan_hold = parameters.get("olock_scan_hold")
 
     ## reset
     #
@@ -609,10 +609,10 @@ class CalibrationLockMode(JumpLockMode):
     def newParameters(self, parameters):
         #self.calibrationSetup(parameters.qpd_zcenter, 
         self.calibrationSetup(0.0, 
-                              parameters.cal_deadtime, 
-                              parameters.cal_range, 
-                              parameters.cal_step_size, 
-                              parameters.cal_frames_to_pause)
+                              parameters.get("cal_deadtime"), 
+                              parameters.get("cal_range"), 
+                              parameters.get("cal_step_size"), 
+                              parameters.get("cal_frames_to_pause"))
 
     ## startLock
     #
@@ -679,11 +679,11 @@ class ZScanLockMode(JumpLockMode):
     # @param parameters A parameters object.
     #
     def newParameters(self, parameters):
-        self.z_start = parameters.zscan_start
-        self.z_step = parameters.zscan_step
-        self.z_frames_to_pause = parameters.zscan_frames_to_pause
-        self.z_stop = parameters.zscan_stop
-        self.z_focus_lock = parameters.zscan_focus_lock
+        self.z_start = parameters.get("zscan_start")
+        self.z_step = parameters.get("zscan_step")
+        self.z_frames_to_pause = parameters.get("zscan_frames_to_pause")
+        self.z_stop = parameters.get("zscan_stop")
+        self.z_focus_lock = parameters.get("zscan_focus_lock")
 
     ## startLock
     #
@@ -781,11 +781,11 @@ class LargeOffsetLock(JumpLockMode):
     #
     def newParameters(self, parameters):
         if hasattr(parameters, "jump_down_delay"):
-            self.jump_down_timer.setInterval(parameters.jump_down_delay)
+            self.jump_down_timer.setInterval(parameters.get("jump_down_delay"))
         if hasattr(parameters, "frame_delay"):
-            self.frame_delay = parameters.frame_delay
+            self.frame_delay = parameters.get("frame_delay")
         if hasattr(parameters, "jump_up_delay"):
-            self.jump_up_timer.setInterval(parameters.jump_up_delay)
+            self.jump_up_timer.setInterval(parameters.get("jump_up_delay"))
 
     ## refindLock
     #

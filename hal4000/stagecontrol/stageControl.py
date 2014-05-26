@@ -93,26 +93,25 @@ class Translator():
     # Update orientation adjustments based on settings.
     #
     def newParameters(self, parameters):
-        self.flip_axis = parameters.flip_axis
-        self.x_sign = parameters.x_sign
-        self.y_sign = parameters.y_sign
+        self.flip_axis = parameters.get("flip_axis")
+        self.x_sign = parameters.get("x_sign")
+        self.y_sign = parameters.get("y_sign")
 
-        if hasattr(parameters, "camera1"):
-            parameters = getattr(parameters, "camera1")
+        parameters = parameters.get("camera1", parameters)
 
         self.camera_x_sign = 1
-        if (parameters.flip_horizontal):
+        if (parameters.get("flip_horizontal")):
             self.camera_x_sign = -1
 
         self.camera_y_sign = 1
-        if (parameters.flip_vertical):
+        if (parameters.get("flip_vertical")):
             self.camera_y_sign = -1
 
         if self.flip_axis:
             [self.camera_x_sign, self.camera_y_sign] = [self.camera_y_sign, self.camera_x_sign]
 
         self.camera_flip_axis = 0
-        if (parameters.transpose):
+        if (parameters.get("transpose")):
             self.camera_flip_axis = 1
             self.camera_x_sign = -1 * self.camera_x_sign
             self.camera_y_sign = -1 * self.camera_y_sign
@@ -169,7 +168,7 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
         self.drag_start_x = 0
         self.drag_start_y = 0
         self.move_timer = QtCore.QTimer()
-        self.stage_speed = parameters.stage_speed
+        self.stage_speed = parameters.get("stage_speed")
         self.stage_x = 0
         self.stage_y = 0
         self.stage_z = 0
@@ -184,7 +183,7 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
         # UI setup
         self.ui = stageUi.Ui_Dialog()
         self.ui.setupUi(self)
-        self.setWindowTitle(parameters.setup_name + " Stage Control")
+        self.setWindowTitle(parameters.get("setup_name") + " Stage Control")
         self.setWindowIcon(qtAppIcon.QAppIcon())
 
         # UI motion buttons.
@@ -232,7 +231,7 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
             self.stage = False
         else:
             self.stage.updatePosition.connect(self.handleUpdatePosition)
-            self.stage.setVelocity(parameters.stage_speed, parameters.stage_speed)
+            self.stage.setVelocity(parameters.get("stage_speed"), parameters.get("stage_speed"))
 
     ## cleanup
     #
@@ -529,10 +528,10 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug    
     def newParameters(self, parameters):
-        self.directory = parameters.directory
+        self.directory = parameters.get("directory")
         self.translator.newParameters(parameters)
         for button in self.motion_buttons:
-            button.setStepSize(parameters.small_step_size, parameters.large_step_size)
+            button.setStepSize(parameters.get("small_step_size"), parameters.get("large_step_size"))
 
     ## startFilm
     #

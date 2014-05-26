@@ -42,7 +42,7 @@ class AFocusLockZ(focusLockZ.FocusLockZDualCam):
                                                             stage1,
                                                             lock_fn,
                                                             50.0,
-                                                            parameters.qpd_zcenter)
+                                                            parameters.get("qpd_zcenter"))
 
         # Upper objective camera and piezo.
         cam2 = uc480Cam.CameraQPD300(camera_id = 3,
@@ -53,7 +53,7 @@ class AFocusLockZ(focusLockZ.FocusLockZDualCam):
                                                             stage2,
                                                             lock_fn,
                                                             50.0,
-                                                            parameters.qpd_zcenter)
+                                                            parameters.get("qpd_zcenter"))
 
         ir_laser = LDC210.LDC210PWMLJ()
 
