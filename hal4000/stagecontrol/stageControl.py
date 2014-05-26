@@ -113,8 +113,8 @@ class Translator():
         self.camera_flip_axis = 0
         if (parameters.get("transpose")):
             self.camera_flip_axis = 1
-            self.camera_x_sign = -1 * self.camera_x_sign
-            self.camera_y_sign = -1 * self.camera_y_sign
+            #self.camera_x_sign = -1 * self.camera_x_sign
+            #self.camera_y_sign = -1 * self.camera_y_sign
 
     ## translate
     #
