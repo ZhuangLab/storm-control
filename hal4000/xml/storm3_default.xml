@@ -82,8 +82,8 @@
   <!-- stage settings -->
   <small_step_size type="float">5.0</small_step_size>
   <large_step_size type="float">25.0</large_step_size>
-  <x_sign type="int">1</x_sign>
-  <y_sign type="int">1</y_sign>
+  <x_sign type="int">-1</x_sign>
+  <y_sign type="int">-1</y_sign>
   <flip_axis type="int">1</flip_axis>
   <stage_speed type="float">5.0</stage_speed>
   <drag_multiplier type="float">0.16</drag_multiplier>
