@@ -691,7 +691,12 @@ class Window(QtGui.QMainWindow):
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
-    parameters = params.Parameters("settings_default.xml")
+
+    # Load settings.
+    if (len(sys.argv)==2):
+        parameters = params.Parameters(sys.argv[1])
+    else:
+        parameters = params.Parameters("settings_default.xml")
 
     # Start logger.
     hdebug.startLogging(parameters.directory + "logs/", "steve")
