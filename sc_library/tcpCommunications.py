@@ -7,8 +7,10 @@
 # Jeffrey Moffitt
 # 3/16/14
 # jeffmoffitt@gmail.com
+#
+# Hazen 05/14
+#
 
-import pickle
 from PyQt4 import QtCore, QtNetwork
 from sc_library.tcpMessage import TCPMessage
 
@@ -63,7 +65,7 @@ class TCPCommunications(QtCore.QObject):
 
     ## handleReadyRead
     #
-    # Unpickle a received TCP message class and forward as appropriate
+    # Create TCP message class from JSON message and forward as appropriate
     #
     def handleReadyRead(self):
         message_str = ""
@@ -71,8 +73,8 @@ class TCPCommunications(QtCore.QObject):
             # Read data line
             message_str += str(self.socket.readLine())
 
-        # Unpickle message
-        message = pickle.loads(message_str)
+        # Create message.
+        message = TCPMessage.fromJSON(message_str)
         if self.verbose: print "Received: \n" + str(message)
 
         if message.getType() == "Busy":
@@ -94,14 +96,14 @@ class TCPCommunications(QtCore.QObject):
 
     ## sendMessage
     #
-    # Pickle and send a TCP message if the socket is connected
+    # Send TCP message as JSON string if the socket is connected.
     #
     # @param message A TCPMessage object.
     #
     def sendMessage(self, message):
         if self.isConnected():
-            message_str = pickle.dumps(message)
-            self.socket.write(message_str + "\n")
+            #message_str = pickle.dumps(message)
+            self.socket.write(message.toJSON() + "\n")
             self.socket.flush()
             if self.verbose: print "Sent: \n" + str(message)
         else:

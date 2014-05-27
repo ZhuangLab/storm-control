@@ -8,6 +8,11 @@
 # 3/8/14
 # jeffmoffitt@gmail.com
 # 
+# Hazen 05/14
+#
+
+import json
+
 
 ## TCPMessage
 #
@@ -61,6 +66,19 @@ class TCPMessage(object):
     def addResponse(self, key_name, value):
         self.response[key_name] = value
 
+    ## fromJSON
+    #
+    # Creates a Message from a JSON string.
+    #
+    # @param json_string A JSON string containing the serialized object data.
+    #
+    @staticmethod
+    def fromJSON(json_string):
+        print "type:", type(json_string)
+        message = TCPMessage(message_type = True)
+        message.__dict__.update(json.loads(json_string))
+        return message
+
     ## getData
     #
     # Access elements of the message data by name
@@ -98,6 +116,7 @@ class TCPMessage(object):
     # @return The value of the requested entry.
     #
     def getResponse(self, key_name):
+        print "-", key_name, "-", self.response.get(key_name, "NA")
         return self.response.get(key_name, None)
 
     ## getType
@@ -148,6 +167,15 @@ class TCPMessage(object):
     def setTestMode(self, test_boolean):
         self.test_mode = test_boolean
 
+    ## toJSON
+    #
+    # Serialize using JSON.
+    #
+    # @return A string containing the JSON serialization.
+    #
+    def toJSON(self):
+        return json.dumps(self.__dict__)
+
     ## markAsComplete
     #
     # Mark a message as complete. A message can be completed while still generating an error. 
@@ -164,31 +192,47 @@ class TCPMessage(object):
     def __str__(self):
         string_rep = "\tMessage Type: " + str(self.message_type)
         for attribute in sorted(vars(self).keys()):
-            if not attribute == "message_type":
+            if not (attribute == "message_type"):
                 string_rep += "\n\t" + attribute + ": " + str(getattr(self, attribute))
         return string_rep
+
 
 # 
 # Test of Class
 #                         
 if __name__ == "__main__":
-    message = TCPMessage(message_type="findSum",
-                         message_data={"find_sum":200},
-                         test_mode=False)
 
-    print "-"*40
-    print message
-    print "-"*40
-    print message.getData("find_sum")
-    message.setError(True, "Could not find focus")
-    print "-"*40
-    print message
+    if 0:
+        message = TCPMessage(message_type="findSum",
+                             message_data={"find_sum":200},
+                             test_mode=False)
 
-    message = TCPMessage(message_type="movie",
-                         message_data={"name":"Test_0_0.dax", "length":1000, "parameters":1},
-                         test_mode=False)
-    print "-"*40
-    print message
+        print "-"*40
+        print message
+        print "-"*40
+        print message.getData("find_sum")
+        message.setError(True, "Could not find focus")
+        print "-"*40
+        print message
+
+        message = TCPMessage(message_type="movie",
+                             message_data={"name":"Test_0_0.dax", "length":1000, "parameters":1},
+                             test_mode=False)
+        print "-"*40
+        print message
+
+    if 1:
+        message = TCPMessage(message_type="findSum",
+                             message_data={"find_sum":200},
+                             test_mode=False)
+        temp = message.toJSON()
+        print temp
+        print type(temp)
+
+        #print message
+        #print ""
+        #message = TCPMessage.fromJSON(message.toJSON())
+        #print message
 
 #
 # The MIT License

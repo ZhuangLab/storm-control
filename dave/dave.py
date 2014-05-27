@@ -84,10 +84,13 @@ class CommandEngine(QtGui.QWidget):
         self.test_mode = False
         
         # HAL Client
-        self.HALClient = tcpClient.TCPClient(port = 9000, server_name = "HAL")
+        self.HALClient = tcpClient.TCPClient(port = 9000,
+                                             server_name = "HAL",
+                                             verbose = True)
         
         # Kilroy Client
-        self.kilroyClient = tcpClient.TCPClient(port = 9500, server_name = "Kilroy")
+        self.kilroyClient = tcpClient.TCPClient(port = 9500,
+                                                server_name = "Kilroy")
     
     ## abort
     #
@@ -185,6 +188,10 @@ class CommandEngine(QtGui.QWidget):
             if time is not None: self.command_duration += time
             space = message.getResponse("disk_usage")
             if space is not None: self.command_disk_usage += space
+            print "times:"
+            print "  ", self.command_duration
+            print "  ", self.command_disk_usage
+            print ""
 
         # Configure the command engine to pause after completion of the command sequence
         if self.current_action.shouldPause() and not self.test_mode:

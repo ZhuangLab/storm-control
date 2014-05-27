@@ -7,9 +7,10 @@
 # 3/8/14
 # jeffmoffitt@gmail.com
 #
+# Hazen 05/14
+#
 
 import sys
-import pickle
 from PyQt4 import QtCore, QtGui, QtNetwork
 from sc_library.tcpMessage import TCPMessage
 import sc_library.tcpCommunications as tcpCommunications
@@ -97,7 +98,7 @@ class TCPServer(QtNetwork.QTcpServer, tcpCommunications.TCPCommunications):
         else: # Refuse new socket if one already exists
             message = TCPMessage(message_type = "Busy") # from tcpMessage.TCPMessage
             if self.verbose: print "Sent: \n" + str(message)
-            socket.write(pickle.dumps(message) + "\n")
+            socket.write(message.toJSON() + "\n")
             socket.disconnectFromHost()
             socket.close()
         
