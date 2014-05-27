@@ -78,8 +78,8 @@ class CommandEngine(QtGui.QWidget):
         self.current_action = None
         self.command = None
         self.should_pause = False
-        self.command_duration = []
-        self.command_disk_usage = []
+        self.command_duration = 0
+        self.command_disk_usage = 0
         
         self.test_mode = False
         
@@ -110,6 +110,11 @@ class CommandEngine(QtGui.QWidget):
     #
     @hdebug.debug
     def loadCommand(self, command):
+
+        # Reset command duration and disk usage
+        self.command_duration = 0.0
+        self.command_disk_usage = 0.0
+
         # Re-Initialize state of command_engine
         self.actions = []
         self.current_action = None
@@ -161,9 +166,6 @@ class CommandEngine(QtGui.QWidget):
             self.current_action.complete_signal.connect(self.handleActionComplete)
             self.current_action.error_signal.connect(self.handleErrorSignal)
 
-            # Reset command duration and disk usage
-            self.command_duration = 0.0
-            self.command_disk_usage = 0.0
             # Start current action
             self.current_action.start()
 
@@ -188,10 +190,6 @@ class CommandEngine(QtGui.QWidget):
             if time is not None: self.command_duration += time
             space = message.getResponse("disk_usage")
             if space is not None: self.command_disk_usage += space
-            print "times:"
-            print "  ", self.command_duration
-            print "  ", self.command_disk_usage
-            print ""
 
         # Configure the command engine to pause after completion of the command sequence
         if self.current_action.shouldPause() and not self.test_mode:
