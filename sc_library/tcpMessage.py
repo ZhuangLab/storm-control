@@ -74,7 +74,6 @@ class TCPMessage(object):
     #
     @staticmethod
     def fromJSON(json_string):
-        print "type:", type(json_string)
         message = TCPMessage(message_type = True)
         message.__dict__.update(json.loads(json_string))
         return message
@@ -116,7 +115,6 @@ class TCPMessage(object):
     # @return The value of the requested entry.
     #
     def getResponse(self, key_name):
-        print "-", key_name, "-", self.response.get(key_name, "NA")
         return self.response.get(key_name, None)
 
     ## getType
