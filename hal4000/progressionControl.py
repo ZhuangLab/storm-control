@@ -716,6 +716,10 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def tcpHandleProgressionSet(self, channel, start_power, frames, increment):
+        if frames is None:
+            frames = 100
+        if increment is None:
+            increment = 0.0
         if self.ui.linearTab.isVisible():
             self.linear_channels.remoteSetChannel(channel, start_power, increment, frames)
         elif self.ui.expTab.isVisible():
