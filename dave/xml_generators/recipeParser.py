@@ -115,8 +115,11 @@ class XMLRecipeParser(QtGui.QWidget):
     def loadXML(self, xml_file_path, header = "Open XML File", file_types = "XML (*.xml)"):
         if xml_file_path == "":
             temp_file_path = str(QtGui.QFileDialog.getOpenFileName(self, header, self.directory, file_types))
-            if os.path.isfile(temp_file_path):
-                xml_file_path = temp_file_path
+            if (len(temp_file_path) > 0):
+                if os.path.isfile(temp_file_path):
+                    xml_file_path = temp_file_path
+            else:
+                return (None, xml_file_path)
         try:
             # Parse xml
             xml = ElementTree.parse(xml_file_path)

@@ -526,8 +526,9 @@ class Dave(QtGui.QMainWindow):
         else:
             recipe_parser = recipeParser.XMLRecipeParser(verbose = True)
             output_filename = recipe_parser.parseXML()
-            if os.path.isfile(output_filename):
-                self.newSequence(output_filename)
+            if output_filename is not None:
+                if os.path.isfile(output_filename):
+                    self.newSequence(output_filename)
             
     ## handleNotifierChange
     #
