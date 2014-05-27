@@ -5,40 +5,32 @@
 # Generate XML for Dave given a position list
 # and an experiment description file.
 #
-# Hazen 12/10
+# Hazen 05/14
 #
 
 import math
 import os
-from xml.dom import minidom, Node
+
+from xml.etree import ElementTree
 from PyQt4 import QtCore, QtGui
 
-nl = "\n"
 
-## writeSingleMovie
+## generate
 #
-# Writes the xml for a single movie to the XML file.
+# @param parent The PyQt parent to use when displaying a dialog box.
+# @param xml_file The input XML file.
+# @param position_file A positions file.
+# @param generated_file The name of output file
 #
-# @param fp The XML file pointer.
-# @param movie The XML describing a single movie.
+# @return True/False if the XML generation was successful (or not).
 #
-def writeSingleMovie(fp, movie):
-    movie.writexml(fp)
+def generate(parent, xml_file, position_file, generated_file):
 
-## generateXML
-#
-# @param descriptor_file The XML experiment description file.
-# @param position_file A text file containing a list of positions to take the movies at.
-# @param output_file The file to save the movie XML to.
-# @param directory The working directory.
-# @param parent A PyQt object to use as the parent for dialog boxes.
-#
-def generateXML(descriptor_file, position_file, output_file, directory, parent):
-    pause = 1
-    pos_fp = open(position_file, "r")
-    out_fp = open(output_file, "w")
+    directory = os.path.dirname(xml_file)
+    pause = True
 
     # Load position data
+    pos_fp = open(position_file, "r")
     x_pos = []
     y_pos = []
     while 1:
@@ -47,6 +39,49 @@ def generateXML(descriptor_file, position_file, output_file, directory, parent):
         [x, y] = line.split(",")
         x_pos.append(float(x))
         y_pos.append(float(y))
+    pos_fp.close()
+
+    xml = ElementTree.parse(xml_file).getroot()
+
+    # Load "header" info.
+    x_offset = float(xml.find("x_offset").text)
+    y_offset = float(xml.find("y_offset").text)
+    delay = 500
+    if xml.find("delay") is not None:
+        delay = int(xml.find("delay"))
+
+    # Open output XML file & write header.
+    out_fp = open(generated_file, "w")
+    out_fp.write("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n")
+    out_fp.write("<sequence>\n")
+
+    # Parse passes.
+    first_movie = True
+    pass_number = 0
+    for root_node in xml:
+        if (root_node.tag == "pass"):
+            print "pass"
+            for pass_node in root_node:
+                if (pass_node.tag == "movie"):
+                    print "  ", pass_node.find("name").text
+
+#                    power_filenames = {}
+
+        # Iterate over positions.
+#        for i in range(len(x_pos)):
+#            mx = x_pos[i] + x_offset
+#            my = y_pos[i] + y_offset
+#
+#            # Iterate over movies.
+#            for j, movie in enumerate(a_pass.find("movie")):
+#                print movie.find("name").text, mx, my
+
+    out_fp.write("</sequence>\n")
+
+    return False
+
+
+if 0:
 
     # Load experiment descriptor file
     dom = minidom.parse(descriptor_file)

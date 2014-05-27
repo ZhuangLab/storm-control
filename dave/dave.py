@@ -2,13 +2,12 @@
 #
 ## @file
 #
-# Utility for running scripting files for remote control of the HAL-4000 data taking program.
-# The concept is that for each movie that we want to take we create a list of actions that
-# we iterate through. Actions are things like finding sum, recentering the z piezo and taking
-# a movie. Actions can have a delay time associated with them as well as a requirement that
-# a response is recieved from the acquisition software.
+# Utility for running scripting files for remote control of the HAL-4000 data taking 
+# program. The concept is that for each movie that we want to take we create a list 
+# of actions that we iterate through. Actions are things like finding sum, recentering 
+# the z piezo and taking a movie. Actions can have a delay time associated with them.
 #
-# Hazen 06/13
+# Hazen 05/14
 #
 
 # Common
@@ -19,7 +18,7 @@ import datetime
 import time
 
 # XML parsing
-from xml.dom import minidom, Node 
+#from xml.dom import minidom, Node
 
 # PyQt
 from PyQt4 import QtCore, QtGui
@@ -29,8 +28,8 @@ import sc_library.hdebug as hdebug
 
 # General
 import notifications
+import sequenceGenerator
 import sequenceParser
-from xml_generators import xml_generator, recipeParser
 
 # Communication
 import sc_library.tcpClient as tcpClient
@@ -524,10 +523,14 @@ class Dave(QtGui.QMainWindow):
                                           "New Sequence Request",
                                           "Please pause or abort current")
         else:
-            recipe_parser = recipeParser.XMLRecipeParser(verbose = True)
-            output_filename = recipe_parser.parseXML()
-            if output_filename is not None:
-                if os.path.isfile(output_filename):
+            recipe_xml_file = str(QtGui.QFileDialog.getOpenFileName(self, 
+                                                                    "Open XML File", 
+                                                                    self.directory, 
+                                                                    "XML (*.xml)"))
+            if (len(recipe_xml_file)>0):
+                self.directory = os.path.dirname(recipe_xml_file)
+                generated_xml_file = sequenceGenerator.generate(self, recipe_xml_file)
+                if generated_xml_file is not None:
                     self.newSequence(output_filename)
             
     ## handleNotifierChange
