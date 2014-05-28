@@ -59,8 +59,26 @@ def generate(parent, xml_file, position_file, generated_file):
             mx = x_pos[i] + x_offset
             my = y_pos[i] + y_offset
             
-            for movie_number, movie_node in enumerate([x for x in pass_node if (x.tag == "movie")]):
+            for movie_number, temp_node in enumerate([x for x in pass_node if (x.tag == "movie")]):
 
+                # Create a copy so that we don't change the original.
+                movie_node = copy.deepcopy(temp_node)
+
+                # Add extra information to complete the movie node.
+                field = ElementTree.SubElement(movie_node, "base_delay")
+                field.text = delay
+
+                if first_movie:
+                    field = ElementTree.SubElement(movie_node, "first_movie")
+                    field.text = str(first_movie)
+
+                if (movie_number > 0):
+                    field = ElementTree.SubElement(movie_node, "stage_x")
+                    field.text = str(mx)
+                    field = ElementTree.SubElement(movie_node, "stage_y")
+                    field.text = str(my)
+
+                # Create new block for this movie.
                 block = ElementTree.SubElement(xml_out, "block")
 
                 # Create move stage action.
@@ -91,7 +109,10 @@ def generate(parent, xml_file, position_file, generated_file):
                     da_recenter_piezo = daveActions.DARecenterPiezo()
                     da_recenter_piezo.addToETree(block)
 
-                # Create progression action..
+                # Create progression action.
+                if movie_node.find("progression") is not None:
+                    prog_node = movie_node.find("progression")
+                    type = prog_node.find("type").text
 
                 # Create parameters action.
                 parameters = movie_node.find("parameters")
