@@ -7,13 +7,18 @@
 #
 # Jeff 3/14 
 #
+# Hazen 05/14
+#
+
+from xml.etree import ElementTree
+from PyQt4 import QtCore
 
 import sc_library.tcpMessage as tcpMessage
-from PyQt4 import QtCore
+
 
 ## DaveAction
 #
-# The base class for a dave action.
+# The base class for a dave action (DA for short).
 #
 class DaveAction(QtCore.QObject):
 
@@ -25,19 +30,21 @@ class DaveAction(QtCore.QObject):
     #
     # Default initialization.
     #
-    # @param tcp_client A tcp communications object
-    # @param parent A parent class
-    #
-    def __init__(self, tcp_client, parent = None):
+    def __init__(self):
 
         # Initialize parent class
-        QtCore.QObject.__init__(self, parent)
+        QtCore.QObject.__init__(self, None)
 
-        self.tcp_client = tcp_client
+        self.action_type = "NA"
+        self.disk_usage = 0
+        self.duration = 0
+        self.properties = {}
+        self.tcp_client = None
         self.message = None
+        self.valid = True
 
         # Define pause behaviors
-        self.should_pause = False # Pause after completion
+        self.should_pause = False            # Pause after completion
         self.should_pause_after_error = True # Pause after error
 
         # Initialize internal timer
@@ -53,6 +60,21 @@ class DaveAction(QtCore.QObject):
     def abort(self):
         self.completeAction(self.message)
 
+    ## addToETree
+    #
+    # Save the information necessary to recreate the action to a XML ElementTree.
+    #
+    # @param etree The XML ElementTree.
+    #
+    def addToETree(self, etree):
+        block = ElementTree.SubElement(etree, str(type(self).__name__))
+        for key in self.properties.keys():
+            value = self.properties[key]
+            if value is not None:
+                field = ElementTree.SubElement(block, key)
+                field.set("type", str(type(value).__name__))
+                field.text = str(value)
+
     ## cleanUp
     #
     # Handle clean up of the action
@@ -67,8 +89,13 @@ class DaveAction(QtCore.QObject):
     # @param message A TCP message object
     #
     def completeAction(self, message):
+        if message.isTest():
+            time = message.getResponse("duration")
+            if time is not None: self.duration = time
+            space = message.getResponse("disk_usage")
+            if space is not None: self.disk_usage = space
         self.complete_signal.emit(message)
-    
+
     ## completeActionWithError
     #
     # Send an error message if needed
@@ -76,9 +103,44 @@ class DaveAction(QtCore.QObject):
     # @param message A TCP message object
     #
     def completeActionWithError(self, message):
-        if self.should_pause_after_error == True:
+        if (self.should_pause_after_error == True):
             self.should_pause = True
         self.error_signal.emit(message)
+
+    ## getActionType
+    #
+    # @return The type of the action (i.e. "hal", "kilroy", ..)
+    #
+    def getActionType(self):
+        return self.action_type
+
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        return type(self).__name__[2:]
+
+    ## getDuration
+    #
+    # @return Duration (in seconds?)
+    #
+    def getDuration(self):
+        return self.duration
+
+    ## getLongDescriptor
+    #
+    # @return A (long) string that describes the action.
+    #
+    def getLongDescriptor(self):
+        return self.getDescriptor()
+
+    ## getUsage
+    #
+    # @return Disk usage.
+    #
+    def getUsage(self):
+        return self.disk_usage
 
     ## handleReply
     #
@@ -87,8 +149,10 @@ class DaveAction(QtCore.QObject):
     # @param message A TCP message object
     #
     def handleReply(self, message):
+
         # Stop lost message timer
         self.lost_message_timer.stop()
+
         # Check to see if the same message got returned
         if not (message.getID() == self.message.getID()):
             message.setError(True, "Communication Error: Incorrect Message Returned")
@@ -108,12 +172,38 @@ class DaveAction(QtCore.QObject):
         self.message.setError(True, error_str)
         self.completeActionWithError(self.message)
 
-    ## setTest
+    ## isValid
     #
-    # Converts the Dave Action to a test request
+    # @return True/False is the command is valid.
     #
-    def setTest(self, boolean):
-        self.message.test = boolean
+    def isValid(self):
+        return self.valid
+
+    ## setProperty
+    #
+    # Set object property, throw an error if the property is not recognized.
+    #
+    def setProperty(self, pname, pvalue):
+        if pname in self.properties.keys():
+            self.properties[pname] = pvalue
+        else:
+            raise Exception(pname + " is not a valid property for " + str(type(self)))
+
+    ## setup
+    #
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
+        pass
+
+    ## setValid
+    #
+    # @param is_valid True/False is this message is valid.
+    #
+    def setValid(self, is_valid):
+        self.valid = is_valid
 
     ## shouldPause
     #
@@ -127,60 +217,36 @@ class DaveAction(QtCore.QObject):
     #
     # Start the action.
     #
-    def start(self):
+    # @param tcp_client The TCP client to use for communication.
+    # @param test_mode Send the command in test mode.
+    #
+    def start(self, tcp_client, test_mode):
+        self.tcp_client = tcp_client
+        self.message.setTestMode(test_mode)
+
         self.tcp_client.messageReceived.connect(self.handleReply)
         if self.message.isTest():
             self.lost_message_timer.start(self.lost_message_delay)
         self.tcp_client.sendMessage(self.message)
 
+
 # 
 # Specific Actions
 # 
 
-## DaveActionValveProtocol
-#
-# The fluidics protocol action. Send commands to Kilroy.
-#
-class DaveActionValveProtocol(DaveAction):
-
-    ## __init__
-    #
-    # Initialize the valve protocol action
-    #
-    # @param tcp_client A tcp communications object.
-    # @param protocols A valve protocols xml object
-    #
-    def __init__(self, tcp_client, protocol_xml):
-        DaveAction.__init__(self, tcp_client)
-        self.protocol_name = protocol_xml.protocol_name
-        self.protocol_is_running = False
-
-        self.message = tcpMessage.TCPMessage(message_type = "Kilroy Protocol",
-                                             message_data = {"name": self.protocol_name})
-## DaveDelay
+## DADelay
 #
 # This action introduces a defined delay in a dave action.  
 #
-class DaveDelay(DaveAction):
+class DADelay(DaveAction):
+
     ## __init__
     #
-    # @param tcp_client A tcp communications object.
-    #
-    def __init__(self, delay):
-        # Initialize parent class with no tcp_client
-        DaveAction.__init__(self, None)
-    
-        # Prepare delay timer
-        self.delay_timer = QtCore.QTimer(self)
-        self.delay_timer.setSingleShot(True)
-        self.delay_timer.timeout.connect(self.handleTimerComplete)
-        self.delay = delay
-        
-        # Create message and add delay time for accurate dave time estimates
-        self.message = tcpMessage.TCPMessage(message_type = "Delay",
-                                             message_data = {"delay", self.delay});
-        self.message.addResponse("duration", self.delay)
+    def __init__(self):
+        DaveAction.__init__(self)
 
+        self.properties = {"delay" : None}
+    
     ## abort
     #
     # Handle an external abort call
@@ -203,69 +269,54 @@ class DaveDelay(DaveAction):
     def handleTimerComplete(self):
         self.completeAction(self.message)
 
+    ## setup
+    #
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
+
+        # Prepare delay timer
+        self.delay_timer = QtCore.QTimer(self)
+        self.delay_timer.setSingleShot(True)
+        self.delay_timer.timeout.connect(self.handleTimerComplete)
+        self.delay = int(node.find("delay").text)
+        
+        # Create message and add delay time for accurate dave time estimates
+        self.message = tcpMessage.TCPMessage(message_type = "Delay",
+                                             message_data = {"delay", self.delay});
+        self.message.addResponse("duration", self.delay)
+
     ## start
     #
     # Start the action.
     #
-    def start(self):
+    # @param dummy Ignored.
+    # @param test_mode Send the command in test mode.
+    #
+    def start(self, dummy, test_mode):
+        self.message.setTestMode(test_mode)
+
         if self.message.isTest():
             self.completeAction(self.message)
         else:
             self.delay_timer.start(self.delay)
             print "Delaying " + str(self.delay) + " ms"
 
-## DavePause
-#
-# This action pauses dave on execution.  
-#
-class DavePause(DaveAction):
-    ## __init__
-    #
-    # @param should_pause A boolean determining if Dave should pause.
-    #
-    def __init__(self, should_pause):
-        # Initialize parent class with no tcp_client
-        DaveAction.__init__(self, None)
-        
-        # Create message and add delay time for accurate dave time estimates
-        self.message = tcpMessage.TCPMessage(message_type = "Pause");
-
-        # Define pause behaviors
-        self.should_pause = should_pause
-
-    ## cleanUp
-    #
-    # Handle clean up of the action
-    #
-    def cleanUp(self):
-        pass
-
-    ## start
-    #
-    # Start the action.
-    #
-    def start(self):
-        if self.message.isTest():
-            self.completeAction(self.message)
-        else:
-            self.completeAction(self.message)
-        
-## FindSum
+## DAFindSum
 #
 # The find sum action.
 #
-class FindSum(DaveAction):
+class DAFindSum(DaveAction):
 
     ## __init__
     #
-    # @param tcp_client A tcp communications object
-    # @param min_sum The minimum sum that we should get from HAL upon completion of this action.
-    #
-    def __init__(self, tcp_client, min_sum):
-        DaveAction.__init__(self, tcp_client)
-        self.min_sum = min_sum
-        self.message = tcpMessage.TCPMessage(message_type = "Find Sum",
-                                             message_data = {"min_sum": min_sum})
+    def __init__(self):
+        DaveAction.__init__(self)
+
+        self.action_type = "hal"
+        self.properties = {"min_sum" : None}
 
     ## handleReply
     #
@@ -279,132 +330,231 @@ class FindSum(DaveAction):
             message.setError(True, "Found sum " + str(found_sum) + " is smaller than minimum sum " + str(self.min_sum))
         DaveAction.handleReply(self, message)
 
-## MoveStage
+    ## setup
+    #
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
+        self.min_sum = int(node.find("min_sum").text)
+        self.message = tcpMessage.TCPMessage(message_type = "Find Sum",
+                                             message_data = {"min_sum": self.min_sum})
+
+## DAMoveStage
 #
 # The movie parameters action.
 #
-class MoveStage(DaveAction):
+class DAMoveStage(DaveAction):
 
     ## __init__
     #
     # @param tcp_client A tcp communications object.
-    # @param command A XML command object for a movie.
     #
-    def __init__(self, tcp_client, command):
-        DaveAction.__init__(self, tcp_client)
+    def __init__(self):
+        DaveAction.__init__(self)
+
+        self.action_type = "hal"
+        self.properties = {"stage_x" : None,
+                           "stage_y" : None}
+
+    ## setup
+    #
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
         self.message = tcpMessage.TCPMessage(message_type = "Move Stage",
-                                             message_data = {"stage_x":command.stage_x,
-                                                             "stage_y":command.stage_y})
-## RecenterPiezo
+                                             message_data = {"stage_x" : float(node.find("stage_x").text),
+                                                             "stage_y" : float(node.find("stage_y").text)})
+
+
+class DAPause(DaveAction):
+
+    ## __init__
+    #
+    # @param tcp_client A tcp communications object.
+    #
+    def __init__(self):
+        DaveAction.__init__(self)
+        
+    ## cleanUp
+    #
+    # Handle clean up of the action
+    #
+    def cleanUp(self):
+        pass
+
+    ## setup
+    #
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
+        # Create message and add delay time for accurate dave time estimates
+        self.message = tcpMessage.TCPMessage(message_type = "Pause");
+        
+        # Define pause behaviors
+        self.should_pause = True
+
+    ## start
+    #
+    # Start the action.
+    #
+    # @param dummy Ignored.
+    # @param test_mode Send the command in test mode.
+    #
+    def start(self, dummy, test_mode):
+        self.message.setTestMode(test_mode)
+
+        if self.message.isTest():
+            self.completeAction(self.message)
+        else:
+            self.completeAction(self.message)
+
+## DARecenterPiezo
 #
 # The piezo recentering action. Note that this is only useful if the microscope
 # has a motorized Z.
 #
-class RecenterPiezo(DaveAction):
+class DARecenterPiezo(DaveAction):
+
     ## __init__
     #
-    # @param tcp_client A tcp communications object.
+    def __init__(self):
+        DaveAction.__init__(self)
+
+        self.action_type = "hal"
+
+    ## setup
     #
-    def __init__(self, tcp_client):
-        DaveAction.__init__(self, tcp_client)
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
         self.message = tcpMessage.TCPMessage(message_type = "Recenter Piezo")
 
-## SetDirectory
+## DASetDirectory
 #
 # Change the Hal Directory.
 #
-class SetDirectory(DaveAction):
+class DASetDirectory(DaveAction):
 
     ## __init__
     #
-    # @param tcp_client A tcp communications object
-    # @param directory The desired directory.
-    #
-    def __init__(self, tcp_client, directory):
-        DaveAction.__init__(self, tcp_client)
-        self.message = tcpMessage.TCPMessage(message_type = "Set Directory",
-                                             message_data = {"directory": directory})
+    def __init__(self):
+        DaveAction.__init__(self)
 
-## Set Focus Lock Target
+        self.action_type = "hal"
+        self.properties = {"directory" : None}
+
+    ## setup
+    #
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
+        self.message = tcpMessage.TCPMessage(message_type = "Set Directory",
+                                             message_data = {"directory" : node.find("directory").text})
+
+## DASetFocusLockTarget
 #
 # The set focus lock target action.
 #
-class SetFocusLockTarget(DaveAction):
+class DASetFocusLockTarget(DaveAction):
 
     ## __init__
     #
-    # @param tcp_client A tcp communications object
-    # @param lock_target The target for the focus lock.
-    #
-    def __init__(self, tcp_client, lock_target):
-        DaveAction.__init__(self, tcp_client)
-        self.message = tcpMessage.TCPMessage(message_type = "Set Lock Target",
-                                             message_data = {"lock_target": lock_target})
+    def __init__(self):
+        DaveAction.__init__(self)
 
-## Set Parameters
+        self.action_type = "hal"
+        self.properties = {"lock_target" : None}
+
+    ## setup
+    #
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
+        self.message = tcpMessage.TCPMessage(message_type = "Set Lock Target",
+                                             message_data = {"lock_target" : float(node.find("lock_target").text)})
+
+## DASetParameters
 #
 # The action responsible for setting the movie parameters in Hal.
 #
-class SetParameters(DaveAction):
+class DASetParameters(DaveAction):
     ## __init__
     #
-    # @param tcp_client A tcp communications object.    
-    # @param command A XML command object for a movie.
-    #
-    def __init__(self, tcp_client, command):
-        DaveAction.__init__(self, tcp_client)
-        self.message = tcpMessage.TCPMessage(message_type = "Set Parameters",
-                                             message_data = {"parameters": command.parameters})
+    def __init__(self):
+        DaveAction.__init__(self)
 
-## SetProgression
+        self.action_type = "hal"
+        self.properties = {"parameters" : None}
+
+    ## setup
+    #
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
+        self.message = tcpMessage.TCPMessage(message_type = "Set Parameters",
+                                             message_data = {"parameters" : node.find("parameters").text})
+
+## DASetProgression
 #
 # The action responsible for setting the illumination progression.
 #
-class SetProgression(DaveAction):
+class DASetProgression(DaveAction):
     ## __init__
     #
-    # @param tcp_client A tcp communications object.    
-    # @param progression an XML object describing the desired progression
-    #
-    def __init__(self, tcp_client, progression):
-        DaveAction.__init__(self, tcp_client)
-        message_data = {"type":progression.type}
-        if hasattr(progression, "filename"):
-            message_data["filename"] = progression.filename
-        if progression.channels:
-            message_data["channels"] = progression.channels
-        
-        self.message = tcpMessage.TCPMessage(message_type = "Set Progression",
-                                             message_data = message_data)
+    def __init__(self):
+        DaveAction.__init__(self)
 
-## TakeMovie
+        self.action_type = "hal"
+
+    ## setup
+    #
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
+        pass
+#        message_data = {"type":progression.type}
+#        if hasattr(progression, "filename"):
+#            message_data["filename"] = progression.filename
+#        if progression.channels:
+#            message_data["channels"] = progression.channels
+#        
+#        self.message = tcpMessage.TCPMessage(message_type = "Set Progression",
+#                                             message_data = message_data)
+
+## DATakeMovie
 #
 # Send a take movie command to Hal
 #
-class TakeMovie(DaveAction):
+class DATakeMovie(DaveAction):
 
     ## __init__
     #
-    # @param tcp_client A tcp communications object.
-    # @param command A XML command object for a movie.
-    #
-    def __init__(self, tcp_client, command):
-        DaveAction.__init__(self, tcp_client)
-        message_data = {"name":command.name,
-                        "length":command.length,
-                        "min_spots":command.min_spots}
-        if hasattr(command, "parameters"):
-            message_data["parameters"] = command.parameters
-        else:
-            message_data["parameters"] = None
-        if hasattr(command, "directory"):
-            message_data["directory"] = command.directory
-        if hasattr(command, "overwrite"):
-            message_data["overwrite"] = command.overwrite
+    def __init__(self):
+        DaveAction.__init__(self)
 
-        self.min_spots = command.min_spots
-        self.message = tcpMessage.TCPMessage(message_type = "Take Movie",
-                                             message_data = message_data)
+        self.action_type = "hal"
+        self.properties = {"name" : None,
+                           "length" : None,
+                           "min_spots" : None,
+                           "parameters" : None,
+                           "directory" : None,
+                           "overwrite" : None}
 
     ## abort
     #
@@ -427,6 +577,64 @@ class TakeMovie(DaveAction):
             err_str += str(self.min_spots)
             message.setError(True, err_str)
         DaveAction.handleReply(self,message)                
+
+    ## setup
+    #
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
+        self.min_spots = 0
+        if node.find("min_spots") is not None:
+            self.min_spots = int(node.find("min_spots").text)
+            
+        message_data = {"name" : node.find("name").text,
+                        "length" : int(node.find("length").text),
+                        "min_spots" : self.min_spots,
+                        "parameters" : None}
+        
+        if node.find("parameters") is not None:
+            message_data["parameters"] = node.find("parameters").text
+            
+        if node.find("directory") is not None:
+            message_data["directory"] = node.find("directory").text
+            
+        if node.find("overwrite") is not None:
+            message_data["overwrite"] = node.find("overwrite").text
+
+        self.message = tcpMessage.TCPMessage(message_type = "Take Movie",
+                                             message_data = message_data)
+
+
+## DAValveProtocol
+#
+# The fluidics protocol action. Send commands to Kilroy.
+#
+class DAValveProtocol(DaveAction):
+
+    ## __init__
+    #
+    # Initialize the valve protocol action
+    #
+    def __init__(self):
+        DaveAction.__init__(self)
+
+        self.action_type = "kilroy"
+        self.properties = {"name" : None}
+
+    ## setup
+    #
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
+        self.protocol_name = node.find("name").text
+        self.protocol_is_running = False
+
+        self.message = tcpMessage.TCPMessage(message_type = "Kilroy Protocol",
+                                             message_data = {"name": self.protocol_name})
 
 #
 # The MIT License

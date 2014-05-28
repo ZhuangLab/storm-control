@@ -2,8 +2,7 @@
 #
 ## @file
 #
-# Generate XML for Dave given a position list
-# and an experiment description file.
+# Generate XML for Dave given a position list and an experiment description file.
 #
 # Hazen 05/14
 #
@@ -11,9 +10,11 @@
 import math
 import os
 
+from xml.dom import minidom
 from xml.etree import ElementTree
 from PyQt4 import QtCore, QtGui
 
+import daveActions
 
 ## generate
 #
@@ -41,186 +42,134 @@ def generate(parent, xml_file, position_file, generated_file):
         y_pos.append(float(y))
     pos_fp.close()
 
-    xml = ElementTree.parse(xml_file).getroot()
+    xml_in = ElementTree.parse(xml_file).getroot()
 
     # Load "header" info.
-    x_offset = float(xml.find("x_offset").text)
-    y_offset = float(xml.find("y_offset").text)
-    delay = 500
-    if xml.find("delay") is not None:
-        delay = int(xml.find("delay"))
+    x_offset = float(xml_in.find("x_offset").text)
+    y_offset = float(xml_in.find("y_offset").text)
+    delay = 0
+    if xml_in.find("delay") is not None:
+        delay = int(xml_in.find("delay"))
 
-    # Open output XML file & write header.
-    out_fp = open(generated_file, "w")
-    out_fp.write("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n")
-    out_fp.write("<sequence>\n")
-
-    # Parse passes.
+    # Generate output xml tree.
+    xml_out = ElementTree.Element("sequence")
     first_movie = True
-    pass_number = 0
-    for root_node in xml:
-        if (root_node.tag == "pass"):
-            print "pass"
-            for pass_node in root_node:
-                if (pass_node.tag == "movie"):
-                    print "  ", pass_node.find("name").text
-
-#                    power_filenames = {}
-
-        # Iterate over positions.
-#        for i in range(len(x_pos)):
-#            mx = x_pos[i] + x_offset
-#            my = y_pos[i] + y_offset
-#
-#            # Iterate over movies.
-#            for j, movie in enumerate(a_pass.find("movie")):
-#                print movie.find("name").text, mx, my
-
-    out_fp.write("</sequence>\n")
-
-    return False
-
-
-if 0:
-
-    # Load experiment descriptor file
-    dom = minidom.parse(descriptor_file)
-    xml = dom.getElementsByTagName("experiment").item(0)
-
-    x_offset = float(xml.getElementsByTagName("x_offset").item(0).firstChild.nodeValue)
-    y_offset = float(xml.getElementsByTagName("y_offset").item(0).firstChild.nodeValue)
-
-    # Determine minimum delay time (in milliseconds)
-    temp = xml.getElementsByTagName("delay")
-    if (len(temp) > 0):
-        delay_time = int(temp.item(0).firstChild.nodeValue)
-    else:
-        delay_time = 500
-
-    # Determine stage speed (in units of mm/second)
-    temp = xml.getElementsByTagName("stage_speed")
-    if (len(temp) > 0):
-        stage_speed = float(temp.item(0).firstChild.nodeValue)
-    else:
-        stage_speed = 2.0
-
-    passes = xml.getElementsByTagName("pass")
-
-    # Write the XML
-    out_fp.write("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>" + nl)
-    out_fp.write("<sequence>" + nl)
-
-    first_movie = True
-    pass_number = 0
-    for a_pass in passes:
-        old_mx = 0.0
-        old_my = 0.0
-        power_filenames = {}
+    for pass_number, pass_node in enumerate([x for x in xml_in if (x.tag == "pass")]):
         for i in range(len(x_pos)):
             mx = x_pos[i] + x_offset
             my = y_pos[i] + y_offset
-            for j, movie in enumerate(a_pass.getElementsByTagName("movie")):
+            
+            for movie_number, movie_node in enumerate([x for x in pass_node if (x.tag == "movie")]):
 
-                # sort out the proper name for the movie
-                temp = movie.cloneNode(True)
-                movie_name = str(temp.getElementsByTagName("name").item(0).firstChild.nodeValue)
-                temp_name = movie_name + "_" + str(pass_number) + "_" + str(i)
-                temp.getElementsByTagName("name").item(0).firstChild.nodeValue = temp_name
+                block = ElementTree.SubElement(xml_out, "block")
 
-                # if this is file type progression, then have the user
-                # specify the name of the file to use & add to the xml
-                if not (movie_name in power_filenames):
-                    progression = temp.getElementsByTagName("progression")
-                    if (len(progression) > 0):
-                        type = progression[0].getElementsByTagName("type").item(0).firstChild.nodeValue
-                        if (type == "file"):
-                            power_filenames[movie_name] = str(QtGui.QFileDialog.getOpenFileName(parent,
-                                                                                               movie_name + " Power File",
-                                                                                               directory,
-                                                                                               "*.power"))
-                            directory = os.path.dirname(power_filenames[movie_name])
+                # Create move stage action.
+                if (movie_number == 0):
+                    da_move_stage = daveActions.DAMoveStage()
+                    da_move_stage.setProperty("stage_x", mx)
+                    da_move_stage.setProperty("stage_y", my)
+                    da_move_stage.addToETree(block)
 
-                # if we have a power filename for this movie, verify that this movie has 
-                # a progression of type "file" and if so, insert the filename into the xml.
-                if (movie_name in power_filenames):
-                    progression = temp.getElementsByTagName("progression")[0]
-                    type = progression.getElementsByTagName("type").item(0).firstChild.nodeValue
-                    if (type == "file"):
-                        filename = dom.createElement("filename")
-                        filename.appendChild(dom.createTextNode(power_filenames[movie_name]))
-                        progression.appendChild(filename)
+                # Create set lock target action.
+                lock_target = movie_node.find("lock_target")
+                if lock_target is not None:
+                    da_set_focus_lock_target = daveActions.DASetFocusLockTarget()
+                    da_set_focus_lock_target.setProperty("lock_target", float(lock_target.text))
+                    da_set_focus_lock_target.addToETree(block)
 
-                # Add delay element, if it doesn't exist
-                delay = temp.getElementsByTagName("delay")
-                if(len(delay) == 0):
-                    delay = dom.createElement("delay")
-                    if (j == 0) and (not first_movie):
-                        delay.appendChild(dom.createTextNode(str(delay_time)))
-                    else:
-                        delay.appendChild(dom.createTextNode(str(200)))
-                    temp.appendChild(delay)
+                # Create find sum action.
+                find_sum = movie_node.find("find_sum")
+                if find_sum is not None:
+                    min_sum = float(find_sum.text)
+                    if (min_sum > 0.0):
+                        da_find_sum = daveActions.DAFindSum()
+                        da_find_sum.setProperty("min_sum", min_sum)
+                        da_find_sum.addToETree(block)
 
-                # Add additional delay to allow for stage motion between positions.
-                if (j == 0) and (not first_movie):
-                    dist_x = mx - old_mx
-                    dist_y = my - old_my
-                    dist = math.sqrt(dist_x*dist_x + dist_y*dist_y)
-                    time = int(dist/stage_speed)
-                    if (hasattr(delay, "firstChild")):
-                        delay.firstChild.nodeValue = str(time + int(delay.firstChild.nodeValue))
-                    else:
-                        delay.item(0).firstChild.nodeValue = str(time + int(delay.item(0).firstChild.nodeValue))
+                # Create recenter action.
+                if movie_node.find("recenter") is not None:
+                    da_recenter_piezo = daveActions.DARecenterPiezo()
+                    da_recenter_piezo.addToETree(block)
 
-                # set delay of the first movie to zero
-                if first_movie:
-                    if (hasattr(delay, "firstChild")):
-                        delay.firstChild.nodeValue = "0"
-                    else:
-                        delay.item(0).firstChild.nodeValue = "0"
+                # Create progression action..
 
-                # remove find_sum and recenter if this is the first movie
-                if first_movie:
-                    find_sum = temp.getElementsByTagName("find_sum")
-                    if (len(find_sum) > 0):
-                        temp.getElementsByTagName("find_sum").item(0).firstChild.nodeValue = 0
-                    recenter = temp.getElementsByTagName("recenter")
-                    if (len(recenter) > 0):
-                        temp.getElementsByTagName("recenter").item(0).firstChild.nodeValue = 0
+                # Create parameters action.
+                parameters = movie_node.find("parameters")
+                if parameters is not None:
+                    da_set_parameters = daveActions.DASetParameters()
+                    da_set_parameters.setProperty("parameters", parameters.text)
+                    da_set_parameters.addToETree(block)
 
-                # add pause element
-                pause = dom.createElement("pause")
-                temp.appendChild(pause)
-                if first_movie:
-                    pause.appendChild(dom.createTextNode("1"))
-                    first_movie = False
-                else:
-                    pause.appendChild(dom.createTextNode("0"))
+                # Create directory action.
+                directory = movie_node.find("directory")
+                if directory is not None:
+                    da_set_directory = daveActions.DASetDirectory()
+                    da_set_directory.setProperty("directory", directory)
+                    da_set_directory.addToETree(block)
 
-                # add stage position elements
-                stagex = dom.createElement("stage_x")
-                stagex.appendChild(dom.createTextNode(str(mx)))
-                temp.appendChild(stagex)
+                # Create delay action.
+                extra_delay = movie_node.find("delay")
+                if extra_delay is not None:
+                    total_delay = delay + int(extra_delay.text)
+                    if (total_delay > 0):
+                        da_delay = daveActions.DADelay()
+                        da_delay.setProperty("delay", total_delay)
+                        da_delay.addToETree(block)
 
-                stagey = dom.createElement("stage_y")
-                stagey.appendChild(dom.createTextNode(str(my)))
-                temp.appendChild(stagey)
+                # Create pause action.
+                if first_movie or movie_node.find("pause") is not None:
+                    da_pause = daveActions.DAPause()
+                    da_pause.addToETree(block)
 
-                # write the xml for this movie
-                writeSingleMovie(out_fp, temp)
-                out_fp.write(nl)
+                # Create movie action.
+                movie_length = int(movie_node.find("length").text)
+                if (movie_length > 0):
+                    da_take_movie = daveActions.DATakeMovie()
+                    movie_name = movie_node.find("name").text
+                    da_take_movie.setProperty("name", movie_name + "_" + str(pass_number) + "_" + str(i))
+                    da_take_movie.setProperty("length", movie_length)
+                    min_spots = movie_node.find("min_spots")
+                    if min_spots is not None:
+                        da_take_movie.setProperty("min_spots", int(min_spots.text))
+                    da_take_movie.addToETree(block)
 
-            # record current stage position
-            old_mx = mx
-            old_my = my
+                first_movie = False
 
-            out_fp.write(nl)
-        out_fp.write(nl)
-        pass_number += 1
-        
-    out_fp.write("</sequence>" + nl)
+    # Save to output XML file.
+    out_fp = open(generated_file, "w")
+
+    #
+    # Thank you StackOverflow..
+    # http://stackoverflow.com/questions/17402323/use-xml-etree-elementtree-to-write-out-nicely-formatted-xml-files
+    #
+    rough_string = ElementTree.tostring(xml_out, 'utf-8')
+
+    reparsed = minidom.parseString(rough_string)
+    out_fp.write(reparsed.toprettyxml(indent="  ", encoding = "ISO-8859-1"))
     out_fp.close()
 
-if __name__ == "__main__":
-    import sys
-    generateXML(sys.argv[1], sys.argv[2], sys.argv[3])
+    return generated_file
 
+#
+# The MIT License
+#
+# Copyright (c) 2014 Zhuang Lab, Harvard University
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#

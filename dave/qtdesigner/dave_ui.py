@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'dave.ui'
 #
-# Created: Sat Apr 12 08:21:49 2014
-#      by: PyQt4 UI code generator 4.10.3
+# Created: Wed May 28 10:38:36 2014
+#      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -125,26 +125,6 @@ class Ui_MainWindow(object):
         self.selectCommandButton = QtGui.QPushButton(self.commandGroupBox)
         self.selectCommandButton.setObjectName(_fromUtf8("selectCommandButton"))
         self.verticalLayout_3.addWidget(self.selectCommandButton)
-        self.commandDetailLabel = QtGui.QLabel(self.commandGroupBox)
-        self.commandDetailLabel.setObjectName(_fromUtf8("commandDetailLabel"))
-        self.verticalLayout_3.addWidget(self.commandDetailLabel)
-        self.commandDetailsTable = QtGui.QTableWidget(self.commandGroupBox)
-        font = QtGui.QFont()
-        font.setPointSize(8)
-        self.commandDetailsTable.setFont(font)
-        self.commandDetailsTable.setFocusPolicy(QtCore.Qt.NoFocus)
-        self.commandDetailsTable.setSelectionMode(QtGui.QAbstractItemView.NoSelection)
-        self.commandDetailsTable.setShowGrid(False)
-        self.commandDetailsTable.setWordWrap(False)
-        self.commandDetailsTable.setObjectName(_fromUtf8("commandDetailsTable"))
-        self.commandDetailsTable.setColumnCount(0)
-        self.commandDetailsTable.setRowCount(0)
-        self.commandDetailsTable.horizontalHeader().setVisible(False)
-        self.commandDetailsTable.horizontalHeader().setMinimumSectionSize(18)
-        self.commandDetailsTable.verticalHeader().setVisible(False)
-        self.commandDetailsTable.verticalHeader().setDefaultSectionSize(18)
-        self.commandDetailsTable.verticalHeader().setMinimumSectionSize(18)
-        self.verticalLayout_3.addWidget(self.commandDetailsTable)
         self.currentCommandGroupBox = QtGui.QGroupBox(self.commandGroupBox)
         self.currentCommandGroupBox.setObjectName(_fromUtf8("currentCommandGroupBox"))
         self.verticalLayout_5 = QtGui.QVBoxLayout(self.currentCommandGroupBox)
@@ -166,7 +146,7 @@ class Ui_MainWindow(object):
         self.mainGridLayout.addWidget(self.validateSequenceButton, 7, 3, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 592, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 592, 26))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -220,7 +200,6 @@ class Ui_MainWindow(object):
         self.commandGroupBox.setTitle(_translate("MainWindow", "Sequence Details", None))
         self.commandSequenceLabel.setText(_translate("MainWindow", "Command Sequence", None))
         self.selectCommandButton.setText(_translate("MainWindow", "Select Command", None))
-        self.commandDetailLabel.setText(_translate("MainWindow", "Command Details", None))
         self.currentCommandGroupBox.setTitle(_translate("MainWindow", "Current Command", None))
         self.currentCommand.setText(_translate("MainWindow", "Command Details", None))
         self.progressBarLabel.setText(_translate("MainWindow", "Sequence Progress", None))
