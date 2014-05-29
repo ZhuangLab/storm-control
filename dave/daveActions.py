@@ -74,6 +74,9 @@ class DaveAction(QtCore.QObject):
     ## addToETree
     #
     # Save the information necessary to recreate the action to a XML ElementTree.
+    # This is more of a static method as it is designed to be used in the XML
+    # generation phase to create sequence XML files from XML files that describe
+    # an experiment.
     #
     # @param etree The XML ElementTree to add to.
     # @param node The XML node to parse what to add.
@@ -652,7 +655,10 @@ class DASetProgression(DaveAction):
     def addToETree(self, etree, node):
         progression = node.find("progression")
         if progression is not None:
-            node.append(progression)
+            block = ElementTree.SubElement(etree, str(type(self).__name__))
+            for pnode in progression:
+                # The round trip fixes some white space issues.
+                block.append(ElementTree.fromstring(ElementTree.tostring(pnode)))
 
     ## setup
     #
@@ -661,15 +667,36 @@ class DASetProgression(DaveAction):
     # @param node The node of an ElementTree.
     #
     def setup(self, node):
-        pass
-#        message_data = {"type":progression.type}
-#        if hasattr(progression, "filename"):
-#            message_data["filename"] = progression.filename
-#        if progression.channels:
-#            message_data["channels"] = progression.channels
-#        
-#        self.message = tcpMessage.TCPMessage(message_type = "Set Progression",
-#                                             message_data = message_data)
+
+        message_data = {"type" : node.find("type").text}
+
+        # File progression.
+        if node.find("filename") is not None:
+            message_data["filename"] = node.find("filename").text
+
+        # Math progression.
+        elif node.find("channel") is not None:
+            channels = []
+            for ch_node in [x for x in node if (x.tag == "channel")]:
+                channel = int(ch_node.text)
+                start = float(ch_node.attrib["start"])
+
+                if "frames" in ch_node.attrib:
+                    frames = int(ch_node.attrib["frames"])
+                else:
+                    frames = 100
+
+                if "inc" in ch_node.attrib:
+                    inc = float(ch_node.attrib["inc"])
+                else:
+                    inc = 0.0
+    
+                channels.append([channel, start, frames, inc])
+
+            message_data["channels"] = channels
+        
+        self.message = tcpMessage.TCPMessage(message_type = "Set Progression",
+                                             message_data = message_data)
 
 ## DATakeMovie
 #
@@ -720,7 +747,7 @@ class DATakeMovie(DaveAction):
                 addField(block, "length", length)
 
                 if min_spots is not None:
-                    addField(block, "min_spots", int(min_spots.txt)
+                    addField(block, "min_spots", int(min_spots.txt))
 
                 if parameters is not None:
                     addField(block, "parameters", parameters.text)

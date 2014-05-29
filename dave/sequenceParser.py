@@ -40,36 +40,6 @@ def parseSequenceFile(xml_file):
             actions.append(createAction(action_node))
     return actions
 
-## Progression
-#
-# The progression object.
-#
-class Progression:
-
-    ## __init__
-    #
-    # Creates a progression object from the progression XML.
-    #
-    # @param progression_xml A xml node describing the progression.
-    #
-    def __init__(self, progression_xml):
-        self.channels = []
-        self.type = "none"
-
-        if progression_xml:
-            for node in progression_xml.childNodes:
-                if node.nodeType == Node.ELEMENT_NODE:
-                    if node.nodeName == "type":
-                        self.type = node.firstChild.nodeValue
-                    elif node.nodeName == "channel":
-                        channel = int(node.firstChild.nodeValue)
-                        start = parseText(node.getAttribute("start"), float)
-                        frames = parseText(node.getAttribute("frames"), int)
-                        inc = parseText(node.getAttribute("inc"), float)
-                        self.channels.append([channel, start, frames, inc])
-                    elif node.nodeName == "filename":
-                        self.filename = node.firstChild.nodeValue
-
 #
 # The MIT License
 #
