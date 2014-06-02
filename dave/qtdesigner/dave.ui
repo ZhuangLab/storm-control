@@ -217,7 +217,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QListWidget" name="commandSequenceList"/>
+        <widget class="QTreeView" name="commandSequenceTreeView"/>
        </item>
        <item>
         <widget class="QPushButton" name="selectCommandButton">

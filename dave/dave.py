@@ -200,8 +200,13 @@ class Dave(QtGui.QMainWindow):
         for [object, name] in self.noti_settings:
             object.setText(self.settings.value(name, "").toString())
 
+        # Initialize command tree view.
+        self.ui.commandSequenceTreeView.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        self.ui.commandSequenceTreeView.setUniformRowHeights(True)
+        self.ui.commandSequenceTreeView.setHeaderHidden(True)
+
         # Initialize command widgets
-        self.command_widgets = []
+            #self.command_widgets = []
 
         # Set enabled/disabled status
         self.ui.runButton.setEnabled(False)
@@ -210,7 +215,7 @@ class Dave(QtGui.QMainWindow):
         self.ui.validateSequenceButton.setEnabled(False)
         
         # Enable mouse over updates of command descriptor
-        self.ui.commandSequenceList.clicked.connect(self.handleCommandListClick)
+        #self.ui.commandSequenceList.clicked.connect(self.handleCommandListClick)
 
         # Initialize progress bar
         self.ui.progressBar.setValue(0)
@@ -717,19 +722,21 @@ class Dave(QtGui.QMainWindow):
                                           "New Sequence Request",
                                           "Please pause or abort current run")
         if not self.running:
-            commands = []
+            model = False
             try:
-                commands = sequenceParser.parseSequenceFile(sequence_filename)
+                model = sequenceParser.parseSequenceFile(sequence_filename)
             except:
                 QtGui.QMessageBox.information(self,
                                               "Error Loading Sequence",
                                               traceback.format_exc())
             else:
+                self.command_model = model
+                self.ui.commandSequenceTreeView.setModel(self.command_model)
                 self.skip_warning = False #Enable warnings for invalid commands
                 self.sequence_validated = False #Mark sequence as unvalidated
-                self.commands = commands
-                self.command_index = 0
-                self.sequence_length = len(self.commands)
+                #self.commands = commands
+                #self.command_index = 0
+                #self.sequence_length = len(self.commands)
                 self.sequence_filename = sequence_filename
                 self.updateGUI()
                 
@@ -740,8 +747,8 @@ class Dave(QtGui.QMainWindow):
                 self.ui.selectCommandButton.setEnabled(False)
                 self.ui.validateSequenceButton.setEnabled(True)
                 
-                self.createCommandList()
-                self.issueCommand()
+                #self.createCommandList()
+                #self.issueCommand()
                 
     ## updateCommandSequenceDisplay
     #

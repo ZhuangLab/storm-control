@@ -8,37 +8,56 @@
 #
 
 from xml.etree import ElementTree
+from PyQt4 import QtCore, QtGui
 
 import daveActions
 
 
-## createAction
+## DaveActionStandardItem
 #
-# Creates a DaveAction from the node of an ElementTree.
+# A QStandardItem specialized to hold a DaveAction.
 #
-# @param node The node of an ElementTree.
+class DaveActionStandardItem(QtGui.QStandardItem):
+
+    def __init__(self, node):
+        dave_action_class = getattr(daveActions, node.tag)
+        self.dave_action = dave_action_class()
+        self.dave_action.setup(node)
+
+        QtGui.QStandardItem.__init__(self, self.dave_action.getDescriptor())
+
+## DaveStandardItemModel
 #
-# @return The DaveAction.
+# A QStandardItemModel specialized for Dave.
 #
-def createAction(node):
-    d_class = getattr(daveActions, node.tag)
-    d_instance = d_class()
-    d_instance.setup(node)
-    return d_instance
+class DaveStandardItemModel(QtGui.QStandardItemModel):
+
+    def __init__(self):
+        QtGui.QStandardItemModel.__init__(self)
+
+
 
 ## parseSequenceFile
 #
 # @param xml_file The xml_file to parse to create the command sequence.
 #
-# @return A list of DaveActions.
+# @return A QStandardItemModel object for using in a QTreeView.
 #
 def parseSequenceFile(xml_file):
-    actions = []
+    model = QtGui.QStandardItemModel()
     xml = ElementTree.parse(xml_file).getroot()
-    for block_node in xml:
-        for action_node in block_node:
-            actions.append(createAction(action_node))
-    return actions
+    for outer_block_node in xml:
+        outer_parent = QtGui.QStandardItem(outer_block_node.get("name", "NA"))
+        for inner_block_node in outer_block_node:
+            inner_parent = QtGui.QStandardItem(inner_block_node.get("name", "NA"))
+            actions = []
+            for action_node in inner_block_node:
+                actions.append(DaveActionStandardItem(action_node))
+            inner_parent.appendColumn(actions)
+            outer_parent.appendRow(inner_parent)
+        model.appendRow(outer_parent)
+
+    return model
 
 #
 # The MIT License
