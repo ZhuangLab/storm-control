@@ -69,6 +69,11 @@ def generate(parent, xml_file, position_file, generated_file):
     xml_out = ElementTree.Element("sequence")
     first_movie = True
     for pass_number, pass_node in enumerate([x for x in xml_in if (x.tag == "pass")]):
+
+        # Create a new block for this pass.
+        pass_block = ElementTree.SubElement(xml_out, "outer_block")
+        pass_block.set("name", "pass " + str(pass_number))
+
         for i in range(len(x_pos)):
             mx = x_pos[i] + x_offset
             my = y_pos[i] + y_offset
@@ -103,6 +108,7 @@ def generate(parent, xml_file, position_file, generated_file):
                 if first_movie:
                     field = ElementTree.SubElement(movie_node, "first_movie")
                     field.text = str(first_movie)
+                    first_movie = False
 
                 if (movie_number == 0):
                     field = ElementTree.SubElement(movie_node, "stage_x")
@@ -110,13 +116,16 @@ def generate(parent, xml_file, position_file, generated_file):
                     field = ElementTree.SubElement(movie_node, "stage_y")
                     field.text = str(my)
 
-                # Create new block for this movie.
-                block = ElementTree.SubElement(xml_out, "block")
+                field = movie_node.find("name")
+                if field is not None:
 
-                for action in da_actions:
-                    action.addToETree(block, movie_node)
+                    # Create new block for this movie.
+                    movie_block = ElementTree.SubElement(pass_block, "inner_block")
+                    movie_block.set("name", field.text + " " + str(pass_number) + " " + str(i))
 
-                first_movie = False
+                    field.text = field.text + "_" + str(pass_number) + "_" + str(i)
+                    for action in da_actions:
+                        action.addToETree(movie_block, movie_node)
 
     # Save to output XML file.
     out_fp = open(generated_file, "w")
