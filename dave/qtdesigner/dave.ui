@@ -217,7 +217,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QTreeView" name="commandSequenceTreeView"/>
+        <widget class="DaveCommandTreeViewer" name="commandSequenceTreeView"/>
        </item>
        <item>
         <widget class="QPushButton" name="selectCommandButton">
@@ -328,6 +328,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>DaveCommandTreeViewer</class>
+   <extends>QTreeView</extends>
+   <header>sequenceViewer</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

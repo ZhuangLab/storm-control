@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dave.ui'
 #
-# Created: Wed May 28 10:38:36 2014
+# Created: Tue Jun 03 13:57:24 2014
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -119,9 +119,9 @@ class Ui_MainWindow(object):
         self.commandSequenceLabel = QtGui.QLabel(self.commandGroupBox)
         self.commandSequenceLabel.setObjectName(_fromUtf8("commandSequenceLabel"))
         self.verticalLayout_3.addWidget(self.commandSequenceLabel)
-        self.commandSequenceList = QtGui.QListWidget(self.commandGroupBox)
-        self.commandSequenceList.setObjectName(_fromUtf8("commandSequenceList"))
-        self.verticalLayout_3.addWidget(self.commandSequenceList)
+        self.commandSequenceTreeView = DaveCommandTreeViewer(self.commandGroupBox)
+        self.commandSequenceTreeView.setObjectName(_fromUtf8("commandSequenceTreeView"))
+        self.verticalLayout_3.addWidget(self.commandSequenceTreeView)
         self.selectCommandButton = QtGui.QPushButton(self.commandGroupBox)
         self.selectCommandButton.setObjectName(_fromUtf8("selectCommandButton"))
         self.verticalLayout_3.addWidget(self.selectCommandButton)
@@ -213,3 +213,4 @@ class Ui_MainWindow(object):
         self.actionGenerateXML.setText(_translate("MainWindow", "Generate XML", None))
         self.actionSendTestEmail.setText(_translate("MainWindow", "Send Test Email", None))
 
+from sequenceViewer import DaveCommandTreeViewer

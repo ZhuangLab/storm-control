@@ -29,7 +29,7 @@ import sc_library.hdebug as hdebug
 # General
 import notifications
 import sequenceGenerator
-import sequenceParser
+import sequenceViewer
 
 # Communication
 import sc_library.tcpClient as tcpClient
@@ -45,7 +45,7 @@ import sc_library.parameters as params
 #
 # This class handles the execution of commands that can be given to Dave
 #
-class CommandEngine(QtGui.QWidget):
+class CommandEngine(QtCore.QObject):
     done = QtCore.pyqtSignal()
     paused = QtCore.pyqtSignal()
     problem = QtCore.pyqtSignal(object)
@@ -55,7 +55,7 @@ class CommandEngine(QtGui.QWidget):
     #
     @hdebug.debug
     def __init__(self, parent = None):
-        QtGui.QWidget.__init__(self, parent)
+        QtCore.QObject.__init__(self, parent)
 
         # Set defaults
         self.command = None
@@ -128,9 +128,9 @@ class CommandEngine(QtGui.QWidget):
         self.handleActionComplete(message)
 
 
-## Dave Main Window Function
+## Dave
 #
-# The main window
+# The main window of Dave.
 #
 class Dave(QtGui.QMainWindow):
 
@@ -200,23 +200,12 @@ class Dave(QtGui.QMainWindow):
         for [object, name] in self.noti_settings:
             object.setText(self.settings.value(name, "").toString())
 
-        # Initialize command tree view.
-        self.ui.commandSequenceTreeView.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
-        self.ui.commandSequenceTreeView.setUniformRowHeights(True)
-        self.ui.commandSequenceTreeView.setHeaderHidden(True)
-
-        # Initialize command widgets
-            #self.command_widgets = []
-
         # Set enabled/disabled status
         self.ui.runButton.setEnabled(False)
         self.ui.abortButton.setEnabled(False)
         self.ui.selectCommandButton.setEnabled(False)
         self.ui.validateSequenceButton.setEnabled(False)
         
-        # Enable mouse over updates of command descriptor
-        #self.ui.commandSequenceList.clicked.connect(self.handleCommandListClick)
-
         # Initialize progress bar
         self.ui.progressBar.setValue(0)
         self.ui.progressBar.setMinimum(0)
@@ -724,19 +713,15 @@ class Dave(QtGui.QMainWindow):
         if not self.running:
             model = False
             try:
-                model = sequenceParser.parseSequenceFile(sequence_filename)
+                model = sequenceViewer.parseSequenceFile(sequence_filename)
             except:
                 QtGui.QMessageBox.information(self,
                                               "Error Loading Sequence",
                                               traceback.format_exc())
             else:
-                self.command_model = model
-                self.ui.commandSequenceTreeView.setModel(self.command_model)
+                self.ui.commandSequenceTreeView.setModel(model)
                 self.skip_warning = False #Enable warnings for invalid commands
                 self.sequence_validated = False #Mark sequence as unvalidated
-                #self.commands = commands
-                #self.command_index = 0
-                #self.sequence_length = len(self.commands)
                 self.sequence_filename = sequence_filename
                 self.updateGUI()
                 
