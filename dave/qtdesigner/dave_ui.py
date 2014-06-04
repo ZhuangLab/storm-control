@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dave.ui'
 #
-# Created: Wed Jun 04 14:44:14 2014
+# Created: Wed Jun 04 15:12:18 2014
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(592, 723)
+        MainWindow.resize(722, 723)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -149,7 +149,7 @@ class Ui_MainWindow(object):
         self.mainGridLayout.addWidget(self.validateSequenceButton, 7, 3, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 592, 26))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 722, 26))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
