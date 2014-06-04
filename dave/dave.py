@@ -148,8 +148,6 @@ class Dave(QtGui.QMainWindow):
         # General.
         self.directory = ""
         self.parameters = parameters
-        self.command_index = 0
-        self.commands = []
         self.notifier = notifications.Notifier("", "", "", "")
         self.running = False
         self.settings = QtCore.QSettings("Zhuang Lab", "dave")
@@ -165,6 +163,7 @@ class Dave(QtGui.QMainWindow):
         self.ui.setupUi(self)
         self.ui.spaceLabel.setText("")
         self.ui.timeLabel.setText("")
+        self.ui.sequenceLabel.setText("")
 
         # Hide widgets
         self.ui.frequencyLabel.hide()
@@ -217,7 +216,6 @@ class Dave(QtGui.QMainWindow):
         self.command_engine.problem.connect(self.handleProblem)
         self.command_engine.paused.connect(self.handlePauseFromCommandEngine)
 
-        self.updateGUI()
 
     ## cleanUp
     #
@@ -238,32 +236,6 @@ class Dave(QtGui.QMainWindow):
     @hdebug.debug
     def closeEvent(self, event):
         self.cleanUp()
-
-    ## createCommandList
-    #
-    # create the command list
-    #
-    @hdebug.debug
-    def createCommandList(self):
-        self.ui.commandSequenceList.clear()
-        self.command_widgets = []
-        
-        for [command_ID, command] in enumerate(self.commands):
-            widget = QtGui.QListWidgetItem(command.getDescriptor())
-            
-            widget.setFlags(QtCore.Qt.ItemIsEnabled)
-            if self.commands[command_ID].isValid():
-                widget.setBackground(QtGui.QBrush(QtCore.Qt.white))
-            else:
-                widget.setBackground(QtGui.QBrush(QtCore.Qt.red))
-            self.ui.commandSequenceList.addItem(widget)
-            self.command_widgets.append(widget)
-        
-        if len(self.commands) > 0:
-            self.command_widgets[0].setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
-            self.ui.commandSequenceList.setCurrentRow(0)
-
-        self.ui.progressBar.setMaximum(len(self.commands))
 
     ## dragEnterEvent
     #
@@ -308,60 +280,51 @@ class Dave(QtGui.QMainWindow):
             button_ID = messageBox.exec_()
 
             # Handle response
-            if button_ID == QtGui.QMessageBox.Ok:
-                abort_text =  "Aborted current run at command " + str(self.command_index)
-                abort_text += ": " + str(self.commands[self.command_index].getDetails()[1][1])
+            if (button_ID == QtGui.QMessageBox.Ok):
+                abort_text =  "Aborted current run at command " + str(self.ui.commandSequenceTreeView.getCurrentIndex())
+                abort_text += ": " + str(self.ui.commandSequenceTreeView.getCurrentItem().getDaveAction().getDescriptor())
                 print abort_text
+                self.ui.commandSequenceTreeView.abort()
+
+                # Set flag to signal reset to handleDone when called.
                 if (self.running):
-                    #Set flag to signal reset to handleDone when called
-                    self.command_index = len(self.commands) + 1
                     self.command_engine.abort()
-                else: # Paused
-                    self.command_index = len(self.commands) + 1
+
+                # Paused
+                else:
                     self.handleDone()
-            else: # Cancel button or window closed event
+
+            # Cancel button or window closed event
+            else: 
                 pass
+
         else:
-            self.command_index = len(self.commands) + 1
+            self.ui.commandSequenceTreeView.resetItemIndex()
             self.sequence_validated = False
     
-    ## handleCommandListClick
-    #
-    # Reset command sequence list to the current command
-    #
-    #
-    def handleCommandListClick(self):
-        self.updateCommandSequenceDisplay(self.ui.commandSequenceList.currentRow())
-
-    ## 
+    ## handleDone
     #
     # Handles completion of the current command engine.  
     #
     @hdebug.debug
     def handleDone(self):
-        #if self.test_mode and (self.command_index <= (len(self.commands)-1)) and self.is_command_valid[self.command_index]:
-        #    self.disk_usages[self.command_index] = self.command_engine.command_disk_usage
-        #    self.command_durations[self.command_index] = self.command_engine.command_duration
 
-        # Increment command to the next valid command
-        self.command_index += 1
-        while (self.command_index <= (len(self.commands)-1)) and (not self.commands[self.command_index].isValid()):
-            self.command_index += 1
+        # Increment command to the next valid command / action.
+        next_command = self.ui.commandSequenceTreeView.getNextItem()
             
-        # Handle last command in list
-        if self.command_index >= len(self.commands):
-            self.command_index = 0
+        # Handle last command in list.
+        if next_command is None:
             self.ui.runButton.setText("Start")
             self.ui.runButton.setEnabled(True)
             self.ui.abortButton.setEnabled(False)
             self.ui.selectCommandButton.setEnabled(True)
             self.ui.validateSequenceButton.setEnabled(True)
+            self.ui.commandSequenceTreeView.resetItemIndex()
             
             self.running = False
             if self.test_mode:
                 self.sequence_validated = True
                 self.updateEstimates()
-                self.createCommandList() # Redraw list to color invalid commands
                 self.test_mode = False
 
             # Stop TCP communication
@@ -370,21 +333,18 @@ class Dave(QtGui.QMainWindow):
             if self.needs_kilroy:
                 self.command_engine.kilroyClient.stopCommunication()
 
-            # Issue first command
-            self.issueCommand()
-
         # Continue with next command.
         else: 
 
-            # Issue the command.
-            self.issueCommand()
-
             #Check for requested pause.
             if self.running: 
-                self.command_engine.startCommand(self.commands[self.command_index],
+                self.command_engine.startCommand(next_command.getDaveAction(), 
                                                  self.test_mode)
             else: 
                 self.handlePause()
+
+        # Update progress bar and current command display.
+        self.updateRunStatusDisplay()
 
     ## handleDropXML
     #
@@ -479,9 +439,9 @@ class Dave(QtGui.QMainWindow):
         print "\7\7" # Provide audible acknowledgement of pause.
 
         # Update run button text and status.
-        if (self.command_index >= 0) and (self.command_index < (len(self.commands)-1)):
+        self.ui.runButton.setEnabled(True)
+        if not self.ui.commandSequenceTreeView.haveNextItem():
             self.ui.runButton.setText("Restart")
-            self.ui.runButton.setEnabled(True)
             self.ui.selectCommandButton.setEnabled(True)
         else:
             self.ui.runButton.setText("Start")
@@ -504,8 +464,8 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleProblem(self, message):
-        current_command_name = self.commands[self.command_index].getDescriptor()
-        message_str = current_command_name + "\n" + message.getErrorMessage()
+        current_item = self.ui.commandSequenceTreeView.getCurrentItem()
+        message_str = current_item.getDaveAction().getDescriptor() + "\n" + message.getErrorMessage()
         if not self.test_mode:
 
             # Pause Dave.
@@ -526,7 +486,7 @@ class Dave(QtGui.QMainWindow):
                                           message_str)
 
         else: # Test mode
-            self.commands[self.command_index].setValid(False)
+            current_item.setValid(False)
             message_str += "\nSuppress remaining warnings?"
             if not self.skip_warning:
                 messageBox = QtGui.QMessageBox(parent = self)
@@ -540,7 +500,7 @@ class Dave(QtGui.QMainWindow):
                 if button_ID == QtGui.QMessageBox.YesToAll:
                     self.skip_warning = True # Skip additional warnings
 
-            print "Invalid command: " + current_command_name
+            print "Invalid command: " + current_item.getDaveAction().getDescriptor()
 
     ## handleRunButton
     #
@@ -561,14 +521,8 @@ class Dave(QtGui.QMainWindow):
         # Start
         else: 
 
-            # Check if any commands are invalid.
-            all_valid = True
-            for command in self.commands:
-                if not command.isValid():
-                    all_valid = False
-
             # Confirm run in the presence of invalid commands
-            if not all_valid: 
+            if not self.ui.commandSequenceTreeView.isAllValid():
                 messageBox = QtGui.QMessageBox(parent = self)
                 messageBox.setWindowTitle("Invalid Commands")
                 box_text = "There are invalid commands. Are you sure you want to start?\n"
@@ -603,8 +557,8 @@ class Dave(QtGui.QMainWindow):
             self.ui.selectCommandButton.setEnabled(False)
             self.ui.validateSequenceButton.setEnabled(False)
             self.running = True
-            self.issueCommand()
-            self.command_engine.startCommand(self.commands[self.command_index],
+            self.updateRunStatusDisplay()
+            self.command_engine.startCommand(self.ui.commandSequenceTreeView.getCurrentItem().getDaveAction(),
                                              self.test_mode)
 
     ## handleSelectButton
@@ -615,34 +569,35 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleSelectButton(self, boolean):
-        # Force manual conformation of abort
-        messageBox = QtGui.QMessageBox(parent = self)
-        messageBox.setWindowTitle("Change Command?")
-        messageBox.setText("Are you sure you want to change to the current command?")
-        messageBox.setStandardButtons(QtGui.QMessageBox.Cancel |
-                                      QtGui.QMessageBox.Ok)
-        messageBox.setDefaultButton(QtGui.QMessageBox.Cancel)
-        button_ID = messageBox.exec_()
-
-        old_command_index = self.command_index
-        new_command_index = self.ui.commandSequenceList.currentRow()
-
-        # Handle response
-        if button_ID == QtGui.QMessageBox.Ok:
-            # Generate display text
-            display_text =  "Changed command\n"
-            display_text += "   From command " + str(old_command_index) + ": "
-            display_text += str(self.commands[old_command_index].getDescriptor())
-            display_text += "   To command " + str(new_command_index) + ": "
-            display_text += str(self.commands[new_command_index].getDescriptor())
-            print display_text
-            
-            self.command_index = new_command_index
-
-            self.issueCommand()
-
-        else: # Cancel button or window closed event
-            print "Canceled change command request"
+        pass
+#        # Force manual conformation of abort
+#        messageBox = QtGui.QMessageBox(parent = self)
+#        messageBox.setWindowTitle("Change Command?")
+#        messageBox.setText("Are you sure you want to change to the current command?")
+#        messageBox.setStandardButtons(QtGui.QMessageBox.Cancel |
+#                                      QtGui.QMessageBox.Ok)
+#        messageBox.setDefaultButton(QtGui.QMessageBox.Cancel)
+#        button_ID = messageBox.exec_()
+#
+#        old_command_index = self.command_index
+#        new_command_index = self.ui.commandSequenceList.currentRow()
+#
+#        # Handle response
+#        if button_ID == QtGui.QMessageBox.Ok:
+#            # Generate display text
+#            display_text =  "Changed command\n"
+#            display_text += "   From command " + str(old_command_index) + ": "
+#            display_text += str(self.commands[old_command_index].getDescriptor())
+#            display_text += "   To command " + str(new_command_index) + ": "
+#            display_text += str(self.commands[new_command_index].getDescriptor())
+#            print display_text
+#            
+#            self.command_index = new_command_index
+#
+#            self.issueCommand()
+#
+#        else: # Cancel button or window closed event
+#            print "Canceled change command request"
 
     ## handleSendTestEmail
     #
@@ -662,8 +617,10 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleValidateCommandSequence(self, boolean):
-        tcp_ready = self.validateTCP()   
-        if tcp_ready: # Start Test Run
+
+        # Start Test Run
+        if self.validateTCP():
+
             # Configure UI
             self.running = True
             self.test_mode = True
@@ -673,30 +630,19 @@ class Dave(QtGui.QMainWindow):
             self.ui.validateSequenceButton.setEnabled(False)
             self.skip_warning = False
             
-            # Reset command properties
-            for command in self.commands:
-                command.setValid(True)
+            # Reset command properties.
+            self.ui.commandSequenceTreeView.setAllValid(True)
             
-            # Configure command engine
-            self.command_index = 0
-            self.issueCommand()
-            self.command_engine.startCommand(self.commands[self.command_index],
+            # Configure command engine.
+            self.ui.commandSequenceTreeView.resetItemIndex()
+            self.updateRunStatusDisplay()
+            self.command_engine.startCommand(self.ui.commandSequenceTreeView.getCurrentItem().getDaveAction(),
                                              self.test_mode)
 
-        else: # Mark all commands as invalid
-            for command in self.commands:
-                command.setValid(False)
-            self.createCommandList()
+        # Mark all commands as invalid
+        else: 
+            self.ui.commandSequenceTreeView.setAllValid(False)
             self.updateEstimates()
-
-    ## issueCommand
-    #
-    # Update the GUI
-    #
-    def issueCommand(self):
-        self.updateCommandSequenceDisplay(self.command_index)
-        self.ui.progressBar.setValue(self.command_index)
-        self.ui.currentCommand.setText(self.commands[self.command_index].getLongDescriptor())
 
     ## newSequence
     #
@@ -722,8 +668,9 @@ class Dave(QtGui.QMainWindow):
                 self.ui.commandSequenceTreeView.setModel(model)
                 self.skip_warning = False #Enable warnings for invalid commands
                 self.sequence_validated = False #Mark sequence as unvalidated
-                self.sequence_filename = sequence_filename
-                self.updateGUI()
+                self.ui.sequenceLabel.setText(sequence_filename)
+                self.ui.progressBar.setMaximum(self.ui.commandSequenceTreeView.getNumberItems())
+                self.updateRunStatusDisplay()
                 
                 # Set enabled/disabled status
                 self.ui.runButton.setEnabled(True)
@@ -731,37 +678,6 @@ class Dave(QtGui.QMainWindow):
                 self.ui.abortButton.setEnabled(False)
                 self.ui.selectCommandButton.setEnabled(False)
                 self.ui.validateSequenceButton.setEnabled(True)
-                
-                #self.createCommandList()
-                #self.issueCommand()
-                
-    ## updateCommandSequenceDisplay
-    #
-    #  Update the GUI display of the current command deails
-    #
-    def updateCommandSequenceDisplay(self, command_index):
-        # disable selectability of all other elements
-        for widget in self.command_widgets:
-            widget.setFlags(QtCore.Qt.ItemIsEnabled)
-            
-        self.command_widgets[command_index].setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
-        self.ui.commandSequenceList.setCurrentRow(command_index)
-
-    ## updateCurrentCommandDisplay
-    #
-    #  Update the GUI display of the current command details
-    #
-    def updateCurrentCommandDisplay(self, command_index):
-        self.ui.currentCommand.setText(self.commands[command_index].getDescriptor())
-
-    ## updateGUI
-    #
-    # Update the GUI elements
-    #
-    @hdebug.debug
-    def updateGUI(self):
-        # Current sequence xml file
-        self.ui.sequenceLabel.setText(self.sequence_filename)
 
     ## updateEstimates
     #
@@ -769,12 +685,7 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def updateEstimates(self):
-        est_time = 0.0
-        est_space = 0.0
-        for command in self.commands:
-            if command.isValid():
-                est_time += command.getDuration()
-                est_space += command.getUsage()
+        [est_time, est_space] = self.ui.commandSequenceTreeView.getEstimates()
             
         self.ui.timeLabel.setText("Run Duration: " + str(datetime.timedelta(seconds=est_time))[0:8])
         if est_space/2**10 < 1.0: # Less than GB
@@ -783,6 +694,14 @@ class Dave(QtGui.QMainWindow):
             self.ui.spaceLabel.setText("Run Size: {0:.2f} GB ".format(est_space/2**10))
         else: # Bigger than 1 TB
             self.ui.spaceLabel.setText("Run Size: {0:.2f} TB ".format(est_space/2**20))
+
+    ## updateRunStatusDisplay
+    #
+    # Update the GUI.
+    #
+    def updateRunStatusDisplay(self):
+        self.ui.progressBar.setValue(self.ui.commandSequenceTreeView.getCurrentIndex())
+        self.ui.currentCommand.setText(self.ui.commandSequenceTreeView.getCurrentItem().getDaveAction().getLongDescriptor())
         
     ## validateTCP
     #
@@ -792,13 +711,15 @@ class Dave(QtGui.QMainWindow):
     def validateTCP(self):
         self.needs_hal = False
         self.needs_kilroy = False
-        for command in self.commands:
-            if (command.getActionType() == "hal"):
-                self.needs_hal = True
-            elif (command.getActionType() == "kilroy"):
-                self.needs_kilroy = True
+        types = self.ui.commandSequenceTreeView.getActionTypes()
+        print types
+        if ("hal" in types):
+            self.needs_hal = True
+        if ("kilroy" in types):
+            self.needs_kilroy = True
 
         tcp_ready = True
+
         # Poll tcp status
         if self.needs_hal:
             if not self.command_engine.HALClient.startCommunication():
