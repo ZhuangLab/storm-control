@@ -32,6 +32,7 @@ class DaveActionStandardItem(QtGui.QStandardItem):
         self.valid = True
 
         QtGui.QStandardItem.__init__(self, self.dave_action.getDescriptor())
+        self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
     ## getDaveAction
     #
@@ -286,9 +287,16 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
         self.dave_action_index = 0
         self.dave_action_si = []
 
+    ## addItem
+    #
+    # @param dave_action_si A DaveActionStandardItem.
+    #
+    def addItem(self, dave_action_si):
+        self.dave_action_si.append(dave_action_si)
+
     ## addItems
     #
-    # @param dave_action_si An array of DaveActionStandardItems
+    # @param dave_action_si A list of DaveActionStandardItems.
     #
     def addItems(self, dave_action_si):
         self.dave_action_si.extend(dave_action_si)
@@ -427,26 +435,37 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
 #
 # @param xml_file The xml_file to parse to create the command sequence.
 #
-# @return A QStandardItemModel object for using in a QTreeView.
+# @return A DaveStandardItemModel object for using in a DaveCommandTreeViewer.
 #
 def parseSequenceFile(xml_file):
     model = DaveStandardItemModel()
     xml = ElementTree.parse(xml_file).getroot()
-    for outer_block_node in xml:
-        outer_parent = QtGui.QStandardItem(outer_block_node.get("name", "NA"))
-        outer_parent.setFlags(QtCore.Qt.ItemIsEnabled)
-        for inner_block_node in outer_block_node:
-            inner_parent = QtGui.QStandardItem(inner_block_node.get("name", "NA"))
-            inner_parent.setFlags(QtCore.Qt.ItemIsEnabled)
-            actions = []
-            for action_node in inner_block_node:
-                actions.append(DaveActionStandardItem(action_node))
-            inner_parent.appendColumn(actions)
-            model.addItems(actions)
-            outer_parent.appendRow(inner_parent)
-        model.appendRow(outer_parent)
-
+    recursiveParse(model, model, xml)
     return model
+
+## recursiveParse
+#
+# Recursively parse the XML tree.
+#
+# @param model The root DaveStandardItemModel.
+# @param model_branch_model A branch of a DaveStandardItemModel.
+# @param xml_branch The current xml branch
+# 
+def recursiveParse(model, model_branch, xml_branch):
+    for node in xml_branch:
+
+        # Everything is either a branch.
+        if (node.tag == "branch"):
+            parent = QtGui.QStandardItem(node.get("name", "NA"))
+            parent.setFlags(QtCore.Qt.ItemIsEnabled)
+            model_branch.appendRow(parent)
+            recursiveParse(model, parent, node)
+
+        # Or a leaf (DaveAction).
+        else:
+            action = DaveActionStandardItem(node)
+            model.addItem(action)
+            model_branch.appendRow(action)
 
 #
 # The MIT License
