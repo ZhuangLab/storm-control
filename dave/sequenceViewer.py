@@ -294,13 +294,6 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
     def addItem(self, dave_action_si):
         self.dave_action_si.append(dave_action_si)
 
-    ## addItems
-    #
-    # @param dave_action_si A list of DaveActionStandardItems.
-    #
-    def addItems(self, dave_action_si):
-        self.dave_action_si.extend(dave_action_si)
-
     ## getActionTypes
     #
     # @return A list of DaveAction types (i.e. "hal" or "kilroy").
