@@ -245,7 +245,7 @@ class DaveAction(QtCore.QObject):
 
 ## DADelay
 #
-# This action introduces a defined delay in a dave action.  
+# This action introduces a defined delay.
 #
 class DADelay(DaveAction):
 
@@ -297,6 +297,13 @@ class DADelay(DaveAction):
     def cleanUp(self):
         pass
 
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        return "pause for " + str(self.delay) + "ms"
+
     ## handleTimerComplete
     #
     # Handle completion of the felay timer
@@ -339,6 +346,7 @@ class DADelay(DaveAction):
             self.delay_timer.start(self.delay)
             print "Delaying " + str(self.delay) + " ms"
 
+
 ## DAFindSum
 #
 # The find sum action.
@@ -366,6 +374,13 @@ class DAFindSum(DaveAction):
             if (min_sum > 0.0):
                 block = ElementTree.SubElement(etree, str(type(self).__name__))
                 addField(block, "min_sum", min_sum)
+
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        return "find sum (minimum sum = " + str(self.min_sum) + ")"
                 
     ## handleReply
     #
@@ -390,9 +405,10 @@ class DAFindSum(DaveAction):
         self.message = tcpMessage.TCPMessage(message_type = "Find Sum",
                                              message_data = {"min_sum": self.min_sum})
 
+
 ## DAMoveStage
 #
-# The movie parameters action.
+# The move stage action.
 #
 class DAMoveStage(DaveAction):
 
@@ -420,6 +436,13 @@ class DAMoveStage(DaveAction):
             addField(block, "stage_x", float(stage_x.text))
             addField(block, "stage_y", float(stage_y.text))
 
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        return "move stage to " + str(self.stage_x) + ", " + str(self.stage_y)
+
     ## setup
     #
     # Perform post creation initialization.
@@ -427,11 +450,17 @@ class DAMoveStage(DaveAction):
     # @param node The node of an ElementTree.
     #
     def setup(self, node):
+        self.stage_x = float(node.find("stage_x").text)
+        self.stage_y = float(node.find("stage_y").text)
         self.message = tcpMessage.TCPMessage(message_type = "Move Stage",
-                                             message_data = {"stage_x" : float(node.find("stage_x").text),
-                                                             "stage_y" : float(node.find("stage_y").text)})
+                                             message_data = {"stage_x" : self.stage_x,
+                                                             "stage_y" : self.stage_y})
 
 
+## DAPause
+#
+# This action causes Dave to pause.
+#
 class DAPause(DaveAction):
 
     ## __init__
@@ -461,6 +490,13 @@ class DAPause(DaveAction):
     def cleanUp(self):
         pass
 
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        return "pause"
+
     ## setup
     #
     # Perform post creation initialization.
@@ -489,6 +525,7 @@ class DAPause(DaveAction):
         else:
             self.completeAction(self.message)
 
+
 ## DARecenterPiezo
 #
 # The piezo recentering action. Note that this is only useful if the microscope
@@ -515,6 +552,13 @@ class DARecenterPiezo(DaveAction):
         if (recenter is not None):
             block = ElementTree.SubElement(etree, str(type(self).__name__))
 
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        return "recenter piezo"
+
     ## setup
     #
     # Perform post creation initialization.
@@ -523,6 +567,7 @@ class DARecenterPiezo(DaveAction):
     #
     def setup(self, node):
         self.message = tcpMessage.TCPMessage(message_type = "Recenter Piezo")
+
 
 ## DASetDirectory
 #
@@ -550,6 +595,13 @@ class DASetDirectory(DaveAction):
             block = ElementTree.SubElement(etree, str(type(self).__name__))
             addField(block, "directory", directory.text)
 
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        return "change directory to " + self.directory
+
     ## setup
     #
     # Perform post creation initialization.
@@ -557,8 +609,10 @@ class DASetDirectory(DaveAction):
     # @param node The node of an ElementTree.
     #
     def setup(self, node):
+        self.directory = node.find("directory").text
         self.message = tcpMessage.TCPMessage(message_type = "Set Directory",
-                                             message_data = {"directory" : node.find("directory").text})
+                                             message_data = {self.directory})
+
 
 ## DASetFocusLockTarget
 #
@@ -586,6 +640,13 @@ class DASetFocusLockTarget(DaveAction):
             block = ElementTree.SubElement(etree, str(type(self).__name__))
             addField(block, "lock_target", float(lock_target.text))
 
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        return "set focus lock target to " + str(self.lock_target)
+
     ## setup
     #
     # Perform post creation initialization.
@@ -593,8 +654,10 @@ class DASetFocusLockTarget(DaveAction):
     # @param node The node of an ElementTree.
     #
     def setup(self, node):
+        self.lock_target = float(node.find("lock_target").text)
         self.message = tcpMessage.TCPMessage(message_type = "Set Lock Target",
-                                             message_data = {"lock_target" : float(node.find("lock_target").text)})
+                                             message_data = {"lock_target" : self.lock_target})
+
 
 ## DASetParameters
 #
@@ -622,6 +685,13 @@ class DASetParameters(DaveAction):
             block = ElementTree.SubElement(etree, str(type(self).__name__))
             addField(block, "parameters", float(parameters.text))
 
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        return "set parameters to " + self.parameters
+
     ## setup
     #
     # Perform post creation initialization.
@@ -629,8 +699,10 @@ class DASetParameters(DaveAction):
     # @param node The node of an ElementTree.
     #
     def setup(self, node):
+        self.parameters = node.find("parameters").text
         self.message = tcpMessage.TCPMessage(message_type = "Set Parameters",
-                                             message_data = {"parameters" : node.find("parameters").text})
+                                             message_data = {"parameters" : self.parameters})
+
 
 ## DASetProgression
 #
@@ -660,6 +732,13 @@ class DASetProgression(DaveAction):
                 # The round trip fixes some white space issues.
                 block.append(ElementTree.fromstring(ElementTree.tostring(pnode)))
 
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        return "set progressions to " + self.type
+
     ## setup
     #
     # Perform post creation initialization.
@@ -668,7 +747,8 @@ class DASetProgression(DaveAction):
     #
     def setup(self, node):
 
-        message_data = {"type" : node.find("type").text}
+        self.type = node.find("type").text
+        message_data = {"type" : self.type}
 
         # File progression.
         if node.find("filename") is not None:
@@ -758,6 +838,16 @@ class DATakeMovie(DaveAction):
                 if overwrite is not None:
                     addField(block, "overwrite", overwrite.text)
 
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        if (self.min_spots > 0):
+            return "take movie " + self.name + ", " + str(self.length) + " frames, " + str(self.min_spots) + " minimum spots"
+        else:
+            return "take movie " + self.name + ", " + str(self.length) + " frames"
+
     ## handleReply
     #
     # Overload of default handleReply to allow comparison of min_spots
@@ -779,12 +869,15 @@ class DATakeMovie(DaveAction):
     # @param node The node of an ElementTree.
     #
     def setup(self, node):
+        self.name = node.find("name").text
+        self.length = int(node.find("length").text)
+
         self.min_spots = 0
         if node.find("min_spots") is not None:
             self.min_spots = int(node.find("min_spots").text)
             
-        message_data = {"name" : node.find("name").text,
-                        "length" : int(node.find("length").text),
+        message_data = {"name" : self.name,
+                        "length" : self.length,
                         "min_spots" : self.min_spots,
                         "parameters" : None}
         
@@ -831,6 +924,13 @@ class DAValveProtocol(DaveAction):
         if (name is not None):
             block = ElementTree.SubElement(etree, str(type(self).__name__))
             addField(block, "name", name.text)
+
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        return "valve protocol " + self.protocol_name
 
     ## setup
     #
