@@ -71,7 +71,7 @@ def generate(parent, xml_file, position_file, generated_file):
     for pass_number, pass_node in enumerate([x for x in xml_in if (x.tag == "pass")]):
 
         # Create a new block for this pass.
-        pass_block = ElementTree.SubElement(xml_out, "outer_block")
+        pass_block = ElementTree.SubElement(xml_out, "branch")
         pass_block.set("name", "pass " + str(pass_number))
 
         for i in range(len(x_pos)):
@@ -120,7 +120,7 @@ def generate(parent, xml_file, position_file, generated_file):
                 if field is not None:
 
                     # Create new block for this movie.
-                    movie_block = ElementTree.SubElement(pass_block, "inner_block")
+                    movie_block = ElementTree.SubElement(pass_block, "branch")
                     movie_block.set("name", field.text + " " + str(pass_number) + " " + str(i))
 
                     field.text = field.text + "_" + str(pass_number) + "_" + str(i)
