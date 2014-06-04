@@ -335,8 +335,12 @@ class Dave(QtGui.QMainWindow):
 
         # Continue with next command.
         else: 
+            
+            # Update time remaining time estimate.
+            est_time = self.ui.commandSequenceTreeView.getRemainingTime()
+            self.ui.remainingLabel.setText("Time Remaining: " + str(datetime.timedelta(seconds = est_time))[0:8])
 
-            #Check for requested pause.
+            # Check for requested pause.
             if self.running: 
                 self.command_engine.startCommand(next_command.getDaveAction(), 
                                                  self.test_mode)
@@ -688,6 +692,7 @@ class Dave(QtGui.QMainWindow):
         [est_time, est_space] = self.ui.commandSequenceTreeView.getEstimates()
             
         self.ui.timeLabel.setText("Run Duration: " + str(datetime.timedelta(seconds=est_time))[0:8])
+        self.ui.remainingLabel.setText("Time Remaining: " + str(datetime.timedelta(seconds=est_time))[0:8])
         if est_space/2**10 < 1.0: # Less than GB
             self.ui.spaceLabel.setText("Run Size: {0:.2f} MB ".format(est_space))
         elif est_space/2**20 < 1.0: # Less than TB

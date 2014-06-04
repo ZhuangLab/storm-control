@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dave.ui'
 #
-# Created: Tue Jun 03 13:57:24 2014
+# Created: Wed Jun 04 14:44:14 2014
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -48,6 +48,9 @@ class Ui_MainWindow(object):
         self.timeLabel = QtGui.QLabel(self.estimatesGroupBox)
         self.timeLabel.setObjectName(_fromUtf8("timeLabel"))
         self.verticalLayout_2.addWidget(self.timeLabel)
+        self.remainingLabel = QtGui.QLabel(self.estimatesGroupBox)
+        self.remainingLabel.setObjectName(_fromUtf8("remainingLabel"))
+        self.verticalLayout_2.addWidget(self.remainingLabel)
         self.mainGridLayout.addWidget(self.estimatesGroupBox, 2, 6, 1, 1)
         self.runButton = QtGui.QPushButton(self.centralwidget)
         self.runButton.setObjectName(_fromUtf8("runButton"))
@@ -185,6 +188,7 @@ class Ui_MainWindow(object):
         self.estimatesGroupBox.setTitle(_translate("MainWindow", "Estimates", None))
         self.spaceLabel.setText(_translate("MainWindow", "TextLabel", None))
         self.timeLabel.setText(_translate("MainWindow", "TextLabel", None))
+        self.remainingLabel.setText(_translate("MainWindow", "TextLabel", None))
         self.runButton.setText(_translate("MainWindow", "Run", None))
         self.abortButton.setText(_translate("MainWindow", "Abort", None))
         self.notificationGroupBox.setTitle(_translate("MainWindow", "Notifications", None))
