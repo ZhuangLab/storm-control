@@ -161,9 +161,11 @@ class Dave(QtGui.QMainWindow):
         # UI setup.
         self.ui = daveUi.Ui_MainWindow()
         self.ui.setupUi(self)
+
+        self.ui.remainingLabel.setText("")
+        self.ui.sequenceLabel.setText("")
         self.ui.spaceLabel.setText("")
         self.ui.timeLabel.setText("")
-        self.ui.sequenceLabel.setText("")
 
         # Hide widgets
         self.ui.frequencyLabel.hide()
@@ -183,14 +185,14 @@ class Dave(QtGui.QMainWindow):
         self.ui.actionQuit.triggered.connect(self.quit)
         self.ui.actionGenerateXML.triggered.connect(self.handleGenerateXML)
         self.ui.actionSendTestEmail.triggered.connect(self.handleSendTestEmail)
+        self.ui.commandSequenceTreeView.update.connect(self.handleDetailsUpdate)
         self.ui.fromAddressLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.fromPasswordLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.runButton.clicked.connect(self.handleRunButton)
-        self.ui.selectCommandButton.clicked.connect(self.handleSelectButton)
         self.ui.smtpServerLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.toAddressLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.validateSequenceButton.clicked.connect(self.handleValidateCommandSequence)
-                                              
+                                                      
         # Load saved notifications settings.
         self.noti_settings = [[self.ui.fromAddressLineEdit, "from_address"],
                               [self.ui.fromPasswordLineEdit, "from_password"],
@@ -199,10 +201,12 @@ class Dave(QtGui.QMainWindow):
         for [object, name] in self.noti_settings:
             object.setText(self.settings.value(name, "").toString())
 
+        # Configure command details table.
+        #self.ui.commandTableView.setHeaderHidden(True)
+
         # Set enabled/disabled status
         self.ui.runButton.setEnabled(False)
         self.ui.abortButton.setEnabled(False)
-        self.ui.selectCommandButton.setEnabled(False)
         self.ui.validateSequenceButton.setEnabled(False)
         
         # Initialize progress bar
@@ -302,6 +306,23 @@ class Dave(QtGui.QMainWindow):
             self.ui.commandSequenceTreeView.resetItemIndex()
             self.sequence_validated = False
     
+    ## handleDetailsUpdate
+    #
+    # Update command details table with information about the command.
+    #
+    # @param details An array containing the command details.
+    #
+    def handleDetailsUpdate(self, details):
+        model = QtGui.QStandardItemModel()
+        for row in details:
+            items = []
+            for column in row:
+                item = QtGui.QStandardItem(str(column))
+                item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+                items.append(item)
+            model.appendRow(items)
+        self.ui.commandTableView.setModel(model)
+
     ## handleDone
     #
     # Handles completion of the current command engine.  
@@ -317,7 +338,6 @@ class Dave(QtGui.QMainWindow):
             self.ui.runButton.setText("Start")
             self.ui.runButton.setEnabled(True)
             self.ui.abortButton.setEnabled(False)
-            self.ui.selectCommandButton.setEnabled(True)
             self.ui.validateSequenceButton.setEnabled(True)
             self.ui.commandSequenceTreeView.resetItemIndex()
             
@@ -446,10 +466,8 @@ class Dave(QtGui.QMainWindow):
         self.ui.runButton.setEnabled(True)
         if not self.ui.commandSequenceTreeView.haveNextItem():
             self.ui.runButton.setText("Restart")
-            self.ui.selectCommandButton.setEnabled(True)
         else:
             self.ui.runButton.setText("Start")
-
 
     ## handlePauseFromCommandEngine
     #
@@ -558,7 +576,6 @@ class Dave(QtGui.QMainWindow):
             
             self.ui.runButton.setText("Pause")
             self.ui.abortButton.setEnabled(True)
-            self.ui.selectCommandButton.setEnabled(False)
             self.ui.validateSequenceButton.setEnabled(False)
             self.running = True
             self.updateRunStatusDisplay()
@@ -630,7 +647,6 @@ class Dave(QtGui.QMainWindow):
             self.test_mode = True
             self.ui.runButton.setEnabled(False)
             self.ui.abortButton.setEnabled(True)
-            self.ui.selectCommandButton.setEnabled(False)
             self.ui.validateSequenceButton.setEnabled(False)
             self.skip_warning = False
             
@@ -680,7 +696,6 @@ class Dave(QtGui.QMainWindow):
                 self.ui.runButton.setEnabled(True)
                 self.ui.runButton.setText("Start")
                 self.ui.abortButton.setEnabled(False)
-                self.ui.selectCommandButton.setEnabled(False)
                 self.ui.validateSequenceButton.setEnabled(True)
 
     ## updateEstimates
@@ -706,7 +721,7 @@ class Dave(QtGui.QMainWindow):
     #
     def updateRunStatusDisplay(self):
         self.ui.progressBar.setValue(self.ui.commandSequenceTreeView.getCurrentIndex())
-        self.ui.currentCommand.setText(self.ui.commandSequenceTreeView.getCurrentItem().getDaveAction().getLongDescriptor())
+        #self.ui.currentCommand.setText(self.ui.commandSequenceTreeView.getCurrentItem().getDaveAction().getLongDescriptor())
         
     ## validateTCP
     #

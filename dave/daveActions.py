@@ -139,10 +139,15 @@ class DaveAction(QtCore.QObject):
 
     ## getLongDescriptor
     #
-    # @return A (long) string that describes the action.
+    # @return A N x 2 array containing the message data.
     #
     def getLongDescriptor(self):
-        return self.getDescriptor()
+        if self.message is not None:
+            mdict = self.message.getMessageData()
+            data = []
+            for key in sorted(mdict):
+                data.append([key, mdict[key]])
+            return data
 
     ## getUsage
     #

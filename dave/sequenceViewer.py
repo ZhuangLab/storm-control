@@ -72,7 +72,8 @@ class DaveActionStandardItem(QtGui.QStandardItem):
 # This class wraps the tree view and it's associated model.
 #
 class DaveCommandTreeViewer(QtGui.QTreeView):
-    action_clicked = QtCore.pyqtSignal(object)
+    double_clicked = QtCore.pyqtSignal(object)
+    update = QtCore.pyqtSignal(object)
 
     ## __init__
     #
@@ -182,7 +183,7 @@ class DaveCommandTreeViewer(QtGui.QTreeView):
         if self.dv_model is not None:
             qt_item = self.dv_model.itemFromIndex(model_index)
             if (qt_item.type() == DaveActionType):
-                self.action_clicked.emit(qt_item)
+                self.update.emit(qt_item.getDaveAction().getLongDescriptor())
 
     ## haveNextItem
     #
@@ -263,15 +264,19 @@ class DaveCommandTreeViewer(QtGui.QTreeView):
     def setModel(self, dv_model):
         self.dv_model = dv_model
         QtGui.QTreeView.setModel(self, self.dv_model)
-        self.reset()
-
+        self.viewportUpdate()
+        #self.reset()
+        
     ## viewportUpdate
     #
     # Update the viewport.
     #
     def viewportUpdate(self):
-        self.scrollTo(self.dv_model.indexFromItem(self.dv_model.getCurrentItem()))
+        item = self.dv_model.getCurrentItem()
+        self.scrollTo(self.dv_model.indexFromItem(item))
         self.viewport().update()
+        self.update.emit(item.getDaveAction().getLongDescriptor())
+
 
 ## DaveStandardItemModel
 #
