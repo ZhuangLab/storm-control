@@ -11,11 +11,12 @@
 import sc_hardware.baseClasses.illuminationHardware as illuminationHardware
 
 
-## CoherentCube
+
+## CoherentSerialLaser
 #
-# Laser class the interfaces with a Coherent Cube laser.
+# Laser class the interfaces with a Coherent laser via serial port.
 #
-class CoherentCube(illuminationHardware.BufferedAmplitudeModulation):
+class CoherentSerialLaser(illuminationHardware.BufferedAmplitudeModulation):
 
     ## __init__
     #
@@ -24,13 +25,6 @@ class CoherentCube(illuminationHardware.BufferedAmplitudeModulation):
     #
     def __init__(self, parameters, parent):
         illuminationHardware.BufferedAmplitudeModulation.__init__(self, parameters, parent)
-
-        self.amplitude_on = False
-
-        import sc_hardware.coherent.cube as cube
-        self.cube_laser = cube.Cube(parameters.port)
-        if not (self.cube_laser.getStatus()):
-            self.working = False
 
     ## amplitudeOff
     #
@@ -41,7 +35,7 @@ class CoherentCube(illuminationHardware.BufferedAmplitudeModulation):
     def amplitudeOff(self, channel_id):
         self.amplitude_on = False
         self.device_mutex.lock()
-        self.cube_laser.setPower(0.0)
+        self.serial_laser.setPower(0.0)
         self.device_mutex.unlock()
 
     ## amplitudeOn
@@ -61,7 +55,7 @@ class CoherentCube(illuminationHardware.BufferedAmplitudeModulation):
     #
     def cleanup(self):
         illuminationHardware.BufferedAmplitudeModulation.cleanup(self)
-        self.cube_laser.shutDown()
+        self.serial_laser.shutDown()
 
     ## deviceSetAmplitude
     #
@@ -71,7 +65,7 @@ class CoherentCube(illuminationHardware.BufferedAmplitudeModulation):
     def deviceSetAmplitude(self, channel, amplitude):
         if self.amplitude_on:
             self.device_mutex.lock()
-            self.cube_laser.setPower(0.01 * amplitude)
+            self.serial_laser.setPower(0.01 * amplitude)
             self.device_mutex.unlock()
         
     ## startFilm
@@ -84,7 +78,7 @@ class CoherentCube(illuminationHardware.BufferedAmplitudeModulation):
     def startFilm(self, seconds_per_frame, oversampling):
         illuminationHardware.BufferedAmplitudeModulation.startFilm(self, seconds_per_frame, oversampling)
         self.device_mutex.lock()
-        self.cube_laser.setExtControl(True)
+        self.serial_laser.setExtControl(True)
         self.device_mutex.unlock()
 
     ## stopFilm
@@ -94,8 +88,52 @@ class CoherentCube(illuminationHardware.BufferedAmplitudeModulation):
     def stopFilm(self):
         illuminationHardware.BufferedAmplitudeModulation.stopFilm(self)
         self.device_mutex.lock()
-        self.cube_laser.setExtControl(False)
+        self.serial_laser.setExtControl(False)
         self.device_mutex.unlock()
+
+
+## CoherentCube
+#
+# Laser class the interfaces with a Coherent Cube laser.
+#
+class CoherentCube(CoherentSerialLaser):
+
+    ## __init__
+    #
+    # @param parameters A XML object containing initial parameters.
+    # @param parent The PyQt parent of this object.
+    #
+    def __init__(self, parameters, parent):
+        CoherentSerialLaser.__init__(self, parameters, parent)
+
+        self.amplitude_on = False
+
+        import sc_hardware.coherent.cube as cube
+        self.serial_laser = cube.Cube(parameters.port)
+        if not (self.serial_laser.getStatus()):
+            self.working = False
+
+
+## CoherentObis
+#
+# Laser class the interfaces with a Coherent Obis laser.
+#
+class CoherentObis(CoherentSerialLaser):
+
+    ## __init__
+    #
+    # @param parameters A XML object containing initial parameters.
+    # @param parent The PyQt parent of this object.
+    #
+    def __init__(self, parameters, parent):
+        CoherentSerialLaser.__init__(self, parameters, parent)
+
+        self.amplitude_on = False
+
+        import sc_hardware.coherent.obis as obis
+        self.serial_laser = obis.Obis(parameters.port)
+        if not (self.serial_laser.getStatus()):
+            self.working = False
 
 
 #
