@@ -88,12 +88,6 @@ class MagOffsetSpinBox(QtGui.QDoubleSpinBox):
 
         self.valueChanged.connect(self.handleValueChange)
 
-#    def enableDisable(self, objective):
-#        if (objective == self.objective):
-#            self.setReadOnly(True)
-#        else:
-#            self.setReadOnly(False)
-
     ## handleValueChange
     #
     # Emits the moValueChange signal.
@@ -128,7 +122,10 @@ class Window(QtGui.QMainWindow):
         self.debug = parameters.debug
         self.parameters = parameters
         self.picture_queue = []
+        self.stage_tracking_timer = QtCore.QTimer(self)
         self.taking_pictures = False
+
+        self.stage_tracking_timer.setInterval(500)
 
         # ui setup
         self.ui = steveUi.Ui_MainWindow()
@@ -227,8 +224,11 @@ class Window(QtGui.QMainWindow):
         self.ui.magComboBox.currentIndexChanged.connect(self.handleObjectiveChange)
         self.ui.scaleLineEdit.textEdited.connect(self.handleScaleChange)
         self.ui.tabWidget.currentChanged.connect(self.handleTabChange)
+        self.ui.trackStageCheckBox.stateChanged.connect(self.handleTrackStage)
         self.ui.xSpinBox.valueChanged.connect(self.handleGridChange)
         self.ui.ySpinBox.valueChanged.connect(self.handleGridChange)
+
+        self.stage_tracking_timer.timeout.connect(self.handleStageTrackingTimer)
 
         self.view.addPosition.connect(self.addPositions)
         self.view.addSection.connect(self.addSection)
@@ -242,6 +242,7 @@ class Window(QtGui.QMainWindow):
 
         self.comm.captureComplete.connect(self.addImage)
         self.comm.disconnected.connect(self.handleDisconnected)
+        self.comm.getPositionComplete.connect(self.handleGetPositionComplete)
         self.comm.gotoComplete.connect(self.handleGotoComplete)
 
         self.handleObjectiveChange(0)
@@ -263,6 +264,7 @@ class Window(QtGui.QMainWindow):
             return
 
         self.view.addImage(image, self.current_objective, self.current_magnification, self.current_offset)
+        self.view.setCrosshairPosition(image.x_pix, image.y_pix)
         if (len(self.picture_queue) > 0):
             next_item = self.picture_queue[0]
             if (type(next_item) == type(coord.Point(0,0,"um"))):
@@ -360,6 +362,15 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleDisconnected(self):
         self.taking_pictures = False
+
+    ## handleGetPositionComplete
+    #
+    # @param stage_x The stage X position (in pixels).
+    # @param stage_y The stage Y position (in pixels).
+    #
+    @hdebug.debug
+    def handleGetPositionComplete(self, stage_x, stage_y):
+        self.view.setCrosshairPosition(stage_x, stage_y)
 
     ## handleGotoComplete
     #
@@ -608,6 +619,16 @@ class Window(QtGui.QMainWindow):
             pixmap = QtGui.QPixmap.grabWidget(self.view.viewport())
             pixmap.save(snapshot_filename)
 
+    ## handleStageTrackingTimer
+    #
+    # Get the current stage position from HAL and update the mosaic.
+    #
+    @hdebug.debug
+    def handleStageTrackingTimer(self):
+        if not self.taking_pictures:
+            self.comm.commConnect()
+            self.comm.getPosition()
+
     ## handleTabChange
     #
     # When the Mosiac tab is selected this shows the UI element where the current
@@ -626,6 +647,23 @@ class Window(QtGui.QMainWindow):
         else:
             self.ui.mosaicLabel.hide()
             self.sections.setSceneItemsVisible(False)
+
+    ## handleTrackStage
+    #
+    # Turn on/off (HAL) stage tracking when checked.
+    #
+    # @param state Current state of the check box.
+    #
+    @hdebug.debug
+    def handleTrackStage(self, state):
+        if (state == QtCore.Qt.Checked):
+            self.view.showCrosshair(True)
+            self.stage_tracking_timer.start()
+            self.comm.commConnect()
+        else:
+            self.view.showCrosshair(False)
+            self.stage_tracking_timer.stop()
+            self.comm.commDisconnect()
 
     ## setCenter
     #
