@@ -23,7 +23,7 @@ class MS2000(RS232.RS232):
 
     ## __init__
     #
-    # Connect to the Marzhuaser stage at the specified port.
+    # Connect to the MS2000 stage at the specified port.
     #
     # @param port The RS-232 port name (e.g. "COM1").
     # @param wait_time (Optional) How long (in seconds) for a response from the stage.
@@ -178,7 +178,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
