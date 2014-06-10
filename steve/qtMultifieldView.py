@@ -65,7 +65,7 @@ class MultifieldView(QtGui.QGraphicsView):
     # Adds a ViewImageItem to the QGraphicsScene.
     #
     # We don't use the image objects x and y fields for positioning the image as these give the location
-    # of the center of the image and the where as the QGraphicsScene uses the upper left corner of the image.
+    # of the center of the image and the QGraphicsScene uses the upper left corner of the image.
     #
     # @param image A capure.Image item.
     # @param x_pix The x location of the left edge of the image.
