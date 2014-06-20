@@ -13,6 +13,15 @@
   <!-- Define the other modules to use for this setup. -->
   <modules>
 
+    <!-- Bluetooth communication -->
+    <bluetooth>
+      <class_name type="string">HalBluetooth</class_name>
+      <module_name type="string">halBluetooth</module_name>
+      <parameters>
+	<send_pictures type="int">1</send_pictures>
+      </parameters>
+    </bluetooth>
+
     <!-- Illumination (lasers, shutters, etc) control. -->
     <illumination>
       <class_name type="string">IlluminationControl</class_name>
