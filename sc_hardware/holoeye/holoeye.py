@@ -7,6 +7,7 @@
 # Hazen 07/14
 #
 
+import numpy
 import sys
 
 from PyQt4 import QtCore, QtGui
@@ -15,6 +16,7 @@ import sc_library.parameters as parameters
 import sc_hardware.holoeye.holoeyeSLM as holoeyeSLM
 
 import sc_hardware.holoeye.holoeye_ui as holoeyeUi
+
 
 ## HoloeyeDialog
 #
@@ -37,10 +39,12 @@ class HoloeyeDialog(QtGui.QDialog):
         self.ui = holoeyeUi.Ui_Dialog()
         self.ui.setupUi(self)
 
+        self.ui.periodDoubleSpinBox.hide()
         self.ui.patternComboBox.addItems(["Black",
                                           "Grey",
                                           "White",
-                                          "Stripes"])
+                                          "Stripes",
+                                          "Grating"])
 
         # Connect signals.
         if parent is not None:
@@ -50,6 +54,7 @@ class HoloeyeDialog(QtGui.QDialog):
             self.ui.okButton.setText("Quit")
             self.ui.okButton.clicked.connect(self.close)
         self.ui.patternComboBox.currentIndexChanged.connect(self.handlePattern)
+        self.ui.periodDoubleSpinBox.valueChanged.connect(self.handlePeriod)
         self.ui.thumbnailWidget.changeScreen.connect(self.handleChangeScreen)
         self.ui.thumbnailWidget.newImage.connect(self.handleNewImage)
         self.slm.grabbedScreen.connect(self.handleGrabScreen)
@@ -88,42 +93,38 @@ class HoloeyeDialog(QtGui.QDialog):
     #
     def handlePattern(self, id):
 
-        screen_size = self.slm.getScreenSize()
-        image = QtGui.QImage(screen_size[0], screen_size[1], QtGui.QImage.Format_RGB32)
-        painter = QtGui.QPainter(image)
+        if (id == 0) or (id == 1) or (id == 2):
+            self.ui.periodDoubleSpinBox.hide()
 
-        # Black
-        if (id == 0):
-            painter.setPen(QtGui.QColor(0, 0, 0))
-            painter.setBrush(QtGui.QColor(0, 0, 0))
-            painter.drawRect(0, 0, image.width(), image.height())
+            # Black
+            if (id == 0):
+                image = monochrome(self.slm.getScreenSize(), 0)
 
-        # Grey
-        elif (id == 1):
-            painter.setPen(QtGui.QColor(128, 128, 128))
-            painter.setBrush(QtGui.QColor(128, 128, 128))
-            painter.drawRect(0, 0, image.width(), image.height())
+            # Grey
+            elif (id == 1):
+                image = monochrome(self.slm.getScreenSize(), 128)
 
-        # White
-        elif (id == 2):
-            painter.setPen(QtGui.QColor(255, 255, 255))
-            painter.setBrush(QtGui.QColor(255, 255, 255))
-            painter.drawRect(0, 0, image.width(), image.height())
+            # White
+            else:
+                image = monochrome(self.slm.getScreenSize(), 255)
 
         # (Vertical) stripes
-        elif (id == 3):
-            n_stripes = 5
-            inc = image.width()/n_stripes
-            for i in range(n_stripes):
-                if ((i%2)==0):
-                    painter.setPen(QtGui.QColor(0, 0, 0))
-                    painter.setBrush(QtGui.QColor(0, 0, 0))
-                else:
-                    painter.setPen(QtGui.QColor(255, 255, 255))
-                    painter.setBrush(QtGui.QColor(255, 255, 255))
-                painter.drawRect(i*inc, 0, inc, image.height())
-                
-        painter.end()
+        elif (id == 3) or (id == 4):
+            self.ui.periodDoubleSpinBox.show()
+            image = grating(self.slm.getScreenSize(),
+                            self.ui.periodDoubleSpinBox.value(), 
+                            (True if (id == 3) else False))
+
+        self.setImage(image)
+
+    ## handlePeriod
+    #
+    # @param period The new value for the period (of the grating).
+    #
+    def handlePeriod(self, period):
+        image = grating(self.slm.getScreenSize(),
+                        period,
+                        (True if (self.ui.patternComboBox.currentIndex() == 3) else False))
         self.setImage(image)
 
     ## handleNewImage
@@ -154,6 +155,48 @@ class HoloeyeDialog(QtGui.QDialog):
     def setImage(self, q_image):
         self.slm.setImage(q_image)
         self.ui.thumbnailWidget.setImage(q_image)
+
+
+## grating
+#
+# @param screen_size The size of the screen.
+# @param period The grating period.
+# @param binary True/False.
+#
+# @return A grating QImage.
+#
+def grating(screen_size, period, binary):
+    xv = numpy.indices((screen_size[1], screen_size[0]))[1]
+    sine_xv = 127.5 + 127.5*numpy.sin(xv * 2.0 *  numpy.pi * period)
+    numpy_image = numpy.ascontiguousarray(sine_xv, dtype = numpy.uint8)
+    
+    if binary:
+        mask = (numpy_image < 128)
+        numpy_image[mask] = 0
+        numpy_image[~mask] = 255
+
+    image = QtGui.QImage(numpy_image.data, screen_size[0], screen_size[1], QtGui.QImage.Format_Indexed8)
+    image.np_data = numpy_image
+
+    for i in range(256):
+        image.setColor(i,QtGui.qRgb(i,i,i))
+    return image
+
+## monochrome
+#
+# @param screen_size The size of the screen.
+# @param color The image color.
+#
+# @return A monochrome QImage.
+#
+def monochrome(screen_size, color):
+    image = QtGui.QImage(screen_size[0], screen_size[1], QtGui.QImage.Format_RGB32)
+    painter = QtGui.QPainter(image)
+    painter.setPen(QtGui.QColor(color, color, color))
+    painter.setBrush(QtGui.QColor(color, color, color))
+    painter.drawRect(0, 0, image.width(), image.height())
+    painter.end()
+    return image
 
 
 if __name__ == '__main__':

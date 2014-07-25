@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'holoeye.ui'
 #
-# Created: Fri Jul 25 14:51:57 2014
+# Created: Fri Jul 25 16:24:26 2014
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -54,14 +54,21 @@ class Ui_Dialog(object):
         self.patternComboBox = QtGui.QComboBox(Dialog)
         self.patternComboBox.setObjectName(_fromUtf8("patternComboBox"))
         self.horizontalLayout.addWidget(self.patternComboBox)
-        self.periodDoubleSpinBox = QtGui.QDoubleSpinBox(Dialog)
+        self.widget = QtGui.QWidget(Dialog)
+        self.widget.setMinimumSize(QtCore.QSize(80, 0))
+        self.widget.setObjectName(_fromUtf8("widget"))
+        self.horizontalLayout_3 = QtGui.QHBoxLayout(self.widget)
+        self.horizontalLayout_3.setMargin(0)
+        self.horizontalLayout_3.setObjectName(_fromUtf8("horizontalLayout_3"))
+        self.periodDoubleSpinBox = QtGui.QDoubleSpinBox(self.widget)
         self.periodDoubleSpinBox.setMinimumSize(QtCore.QSize(80, 0))
-        self.periodDoubleSpinBox.setDecimals(3)
+        self.periodDoubleSpinBox.setDecimals(4)
         self.periodDoubleSpinBox.setMaximum(2.0)
-        self.periodDoubleSpinBox.setSingleStep(0.01)
-        self.periodDoubleSpinBox.setProperty("value", 0.1)
+        self.periodDoubleSpinBox.setSingleStep(0.001)
+        self.periodDoubleSpinBox.setProperty("value", 0.01)
         self.periodDoubleSpinBox.setObjectName(_fromUtf8("periodDoubleSpinBox"))
-        self.horizontalLayout.addWidget(self.periodDoubleSpinBox)
+        self.horizontalLayout_3.addWidget(self.periodDoubleSpinBox)
+        self.horizontalLayout.addWidget(self.widget)
         self.screenLabel = QtGui.QLabel(Dialog)
         self.screenLabel.setObjectName(_fromUtf8("screenLabel"))
         self.horizontalLayout.addWidget(self.screenLabel)
