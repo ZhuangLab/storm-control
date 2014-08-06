@@ -251,7 +251,7 @@ class SingleCamera(genericCamera.Camera):
     def updateTemperature(self):
         if self.camera_control.haveTemperature():
             cur_temp = self.camera_control.getTemperature()
-            self.parameters.actual_temperature = cur_temp[0]
+            self.parameters.set("actual_temperature", cur_temp[0])
             self.camera_params.newTemperature(cur_temp)
 
 #

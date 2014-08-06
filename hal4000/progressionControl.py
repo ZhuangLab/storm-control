@@ -619,7 +619,7 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def newParameters(self, parameters):
         self.parameters = parameters
-        if parameters.use_progressions:
+        if parameters.get("use_progressions"):
             self.ui.progressionsCheckBox.setChecked(True)
         else:
             self.ui.progressionsCheckBox.setChecked(False)

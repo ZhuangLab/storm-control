@@ -36,7 +36,7 @@ class Obis(RS232.RS232):
             self.pmin = 0.0
             self.pmax = 5.0
             [self.pmin, self.pmax] = self.getPowerRange()
-            self.setExtControl(True)
+            self.setExtControl(False)
             if (not self.getLaserOnOff()):
                 self.setLaserOnOff(True)
         except:
@@ -68,7 +68,7 @@ class Obis(RS232.RS232):
     def getLaserOnOff(self):
         self.sendCommand("SOURce:AM:STATe?")
         resp = self.waitResponse()
-        if ("ON" in response):
+        if ("ON" in resp):
             self.on = True
             return True
         else:
@@ -83,7 +83,7 @@ class Obis(RS232.RS232):
         self.sendCommand("SOURce:POWer:LIMit:LOW?")
         pmin = 1000.0 * float(self.waitResponse()[:-6])
         self.sendCommand("SOURce:POWer:LIMit:HIGH?")
-        pmin = 1000.0 * float(self.waitResponse()[:-6])
+        pmax = 1000.0 * float(self.waitResponse()[:-6])
         return [pmin, pmax]
 
     ## getPower
@@ -130,7 +130,7 @@ class Obis(RS232.RS232):
     def setPower(self, power_in_mw):
         if power_in_mw > self.pmax:
             power_in_mw = self.pmax
-        self.sendCommand("SOURce:POWer:LEVel:IMMediate:AMPLitude" + str(0.001*power_in_mw))
+        self.sendCommand("SOURce:POWer:LEVel:IMMediate:AMPLitude " + str(0.001*power_in_mw))
         self.waitResponse()
 
     ## shutDown
@@ -147,10 +147,12 @@ class Obis(RS232.RS232):
 #
 
 if __name__ == "__main__":
-    obis = Obis("COM1")
+    obis = Obis("COM9")
     if obis.getStatus():
         print obis.getPowerRange()
         print obis.getLaserOnOff()
+        obis.setPower(200.0)
+        time.sleep(10)
         obis.shutDown()
 
 #

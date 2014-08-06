@@ -136,7 +136,7 @@ class Nidaq(illuminationHardware.DaqModulation):
 
         # Calculate frequency. This is set slightly higher than the camere
         # frequency so that we are ready at the start of the next frame.
-        frequency = (1.001 / seconds_per_frame) * float(oversampling)
+        frequency = (1.01 / seconds_per_frame) * float(oversampling)
 
         # Setup analog waveforms.
         if (len(self.analog_data) > 0):
