@@ -688,14 +688,17 @@ class DASetParameters(DaveAction):
         parameters = node.find("parameters")
         if (parameters is not None):
             block = ElementTree.SubElement(etree, str(type(self).__name__))
-            addField(block, "parameters", float(parameters.text))
+            try:
+                addField(block, "parameters", int(parameters.text))
+            except ValueError:
+                addField(block, "parameters", parameters.text)
 
     ## getDescriptor
     #
     # @return A string that describes the action.
     #
     def getDescriptor(self):
-        return "set parameters to " + self.parameters
+        return "set parameters to " + str(self.parameters)
 
     ## setup
     #
@@ -704,10 +707,13 @@ class DASetParameters(DaveAction):
     # @param node The node of an ElementTree.
     #
     def setup(self, node):
-        self.parameters = node.find("parameters").text
+        p_node = node.find("parameters")
+        if (p_node.attrib["type"] == "int"):
+            self.parameters = int(node.find("parameters").text)
+        else:
+            self.parameters = node.find("parameters").text
         self.message = tcpMessage.TCPMessage(message_type = "Set Parameters",
                                              message_data = {"parameters" : self.parameters})
-
 
 ## DASetProgression
 #
