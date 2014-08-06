@@ -222,7 +222,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
                 self.parameters.get("on_off_state")[i] = old_on
                 self.parameters.get("default_power")[i] = old_power
 
-        if (parameters.shutter_frames > 0):
+        if (parameters.get("shutter_frames") > 0):
             self.newColors.emit(parameters.get("shutter_colors"))
             self.newCycleLength.emit(parameters.get("shutter_frames"))
 
