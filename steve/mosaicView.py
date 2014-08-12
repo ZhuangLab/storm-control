@@ -92,7 +92,8 @@ class Crosshair(QtGui.QGraphicsItem):
     def __init__(self):
         QtGui.QGraphicsItem.__init__(self)
 
-        self.ch_size = 10
+        self.ch_size = 15.0
+        self.r_size = self.ch_size
         self.visible = False
 
         self.setZValue(1001.0)
@@ -102,10 +103,10 @@ class Crosshair(QtGui.QGraphicsItem):
     # @return The bounding rectangle (as a QRectF)
     #
     def boundingRect(self):
-        return QtCore.QRectF(-self.ch_size,
-                              -self.ch_size,
-                              2.0 * self.ch_size,
-                              2.0 * self.ch_size)
+        return QtCore.QRectF(-self.r_size,
+                              -self.r_size,
+                              2.0 * self.r_size,
+                              2.0 * self.r_size)
 
     ## paint
     #
@@ -115,13 +116,23 @@ class Crosshair(QtGui.QGraphicsItem):
     #
     def paint(self, painter, options, widget):
         if self.visible:
-            painter.drawLine(-self.ch_size, 0, self.ch_size, 0)
-            painter.drawLine(0, -self.ch_size, 0, self.ch_size)
-            painter.drawEllipse(-0.5 * self.ch_size,
-                                 -0.5 * self.ch_size,
-                                 self.ch_size,
-                                 self.ch_size)
+            painter.drawLine(-self.r_size, 0, self.r_size, 0)
+            painter.drawLine(0, -self.r_size, 0, self.r_size)
+            painter.drawEllipse(-0.5 * self.r_size,
+                                 -0.5 * self.r_size,
+                                 self.r_size,
+                                 self.r_size)
     
+    ## setScale
+    #
+    # Resizes the cross-hair based on the current view scale.
+    #
+    # @param scale The current scale of the view.
+    #
+    def setScale(self, scale):
+        print scale
+        self.r_size = round(self.ch_size/scale)
+
     ## setVisible
     #
     # @param is_visible True/False if the cross-haur should be visible.
@@ -433,6 +444,16 @@ class MosaicView(multiView.MultifieldView):
     #
     def showCrosshair(self, is_visible):
         self.cross_hair.setVisible(is_visible)
+
+    ## wheelEvent
+    #
+    # Resizes the stage tracking cross-hair based on the current scale.
+    #
+    # @param event A PyQt mouse wheel event.
+    #
+    def wheelEvent(self, event):
+        multiView.MultifieldView.wheelEvent(self, event)
+        self.cross_hair.setScale(self.view_scale)
 
 
 #
