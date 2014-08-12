@@ -128,7 +128,7 @@ class Image():
 class Capture(QtCore.QObject):
     captureComplete = QtCore.pyqtSignal(object)
     disconnected = QtCore.pyqtSignal()
-    getPositionComplete = QtCore.pyqtSignal(float, float)
+    getPositionComplete = QtCore.pyqtSignal(object)
     gotoComplete = QtCore.pyqtSignal()
 
     ## __init__
@@ -289,7 +289,7 @@ class Capture(QtCore.QObject):
             a_point = coord.Point(message.getResponse("stage_x"),
                                   message.getResponse("stage_y"),
                                   "um")
-            self.getPositionComplete.emit(a_point.x_pix, a_point.y_pix)
+            self.getPositionComplete.emit(a_point)
 
         if (message.getType() == "Take Movie"):
             self.loadImage(self.directory + message.getData("name") + ".dax")
