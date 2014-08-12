@@ -116,6 +116,7 @@ class Crosshair(QtGui.QGraphicsItem):
     #
     def paint(self, painter, options, widget):
         if self.visible:
+            painter.setPen(QtGui.QPen(QtGui.QColor(0,0,255)))
             painter.drawLine(-self.r_size, 0, self.r_size, 0)
             painter.drawLine(0, -self.r_size, 0, self.r_size)
             painter.drawEllipse(-0.5 * self.r_size,
