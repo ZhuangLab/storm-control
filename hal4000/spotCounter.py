@@ -264,7 +264,7 @@ class QSpotGraph(QtGui.QWidget):
                 if color:
                     qtcolor = QtGui.QColor(color[0], color[1], color[2])
                 else:
-                    qtcolor = QtGui.QColor(0, 0, 0)
+                    qtcolor = QtGui.QColor(255, 255, 255)
                 painter.setPen(QtGui.QColor(0, 0, 0))
 #                painter.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0),0))
                 painter.setBrush(qtcolor)
@@ -444,7 +444,7 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def __init__(self, parameters, parent = None):
-        QtGui.QMainWindow.__init__(self, parent)
+        QtGui.QDialog.__init__(self, parent)
         halModule.HalModule.__init__(self)
 
         self.counters = [False, False]

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<settings>
+
+  <!-- general -->
+  <flip_horizontal type="int">1</flip_horizontal>
+  <flip_vertical type="int">1</flip_vertical>
+  <transpose type="int">1</transpose>
+
+  <debug type="int">1</debug>
+  <use_as_default type="int">1</use_as_default>
+  <extrapolate_picture_count type="int">9</extrapolate_picture_count>
+  <mag1 type="string">100x,100.0,0.0,0.0</mag1>
+  <mag2 type="string">60x,60.0,0.0,0.0</mag2>
+  <mag3 type="string">10x,10.0,0.0,0.0</mag3>
+  <mag4 type="string">4x,3.93,28.0,362.0</mag4>
+
+  <!-- capture -->
+  <directory type="string">c:\data\</directory>
+  <image_filename type="string">steve</image_filename>
+  <pixels_to_um type="float">0.156</pixels_to_um>
+
+  <!-- position rectangles & section circles -->
+  <rectangle_size type="float">43.0</rectangle_size>
+  <ellipse_size type="float">10</ellipse_size>
+  <pen_width type="int">20</pen_width>
+  <step_size type="float">0.5</step_size>
+
+</settings>

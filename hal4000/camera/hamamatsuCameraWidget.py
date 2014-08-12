@@ -12,7 +12,7 @@ from PyQt4 import QtCore, QtGui
 
 import qtWidgets.qtCameraWidget as qtCameraWidget
 
-import hamamatsu.scmos_image_manipulation_c as scmos_im
+import sc_hardware.hamamatsu.scmos_image_manipulation_c as scmos_im
 
 ## ACameraWidget
 #

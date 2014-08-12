@@ -325,7 +325,7 @@ class CameraDisplay(QtGui.QFrame):
         for frame in frames:
             if (frame.which_camera == self.which_camera):
                 if self.filming and self.parameters.get("sync"):
-                    if((frame.number % self.cycle_length) == (self.parameters.sync-1)):
+                    if((frame.number % self.cycle_length) == (self.parameters.get("sync")-1)):
                         self.frame = frame
                 else:
                     self.frame = frame

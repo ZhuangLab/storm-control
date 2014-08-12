@@ -466,7 +466,7 @@ if __name__ == "__main__":
 
     parameters = Parameters(100, 100, 1, 1)
     daxfile = DaxFile("test", parameters)
-    frame = create_string_buffer(parameters.x_pixels * parameters.y_pixels)
+    frame = create_string_buffer(parameters.get("x_pixels") * parameters.get("y_pixels"))
     daxfile.saveFrame(frame)
     daxfile.closeFile()
 

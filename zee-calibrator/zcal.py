@@ -1,12 +1,15 @@
 #!/usr/bin/python
 #
-# Z calibration.
+## @file
 #
-# Hazen 04/10
+# Z calibration functions.
+#
+# Hazen 07/14
 #
 
 import math
 import numpy
+import numpy.lib.recfunctions
 import os
 import re
 import scipy
@@ -16,26 +19,72 @@ import struct
 #
 # different power z calibration functions
 #
+
+## zcalib0
+#
+# Z calibration fitting function with no additional parameters.
+#
+# @param p Fit parameters.
+# @param z Z values.
+#
+# @return The function at the specified z values.
+#
 def zcalib0(p, z):
     wo,c,d = p
     X = (z-c)/d
     return wo*numpy.sqrt(1.0 + numpy.power(X,2))
 
+## zcalib1
+#
+# Z calibration fitting function with 1 additional parameters.
+#
+# @param p Fit parameters.
+# @param z Z values.
+#
+# @return The function at the specified z values.
+#
 def zcalib1(p, z):
     wo,c,d,A = p
     X = (z-c)/d
     return wo*numpy.sqrt(1.0 + numpy.power(X,2) + A * numpy.power(X,3))
 
+## zcalib2
+#
+# Z calibration fitting function with 2 additional parameters.
+#
+# @param p Fit parameters.
+# @param z Z values.
+#
+# @return The function at the specified z values.
+#
 def zcalib2(p, z):
     wo,c,d,A,B = p
     X = (z-c)/d
     return wo*numpy.sqrt(1.0 + numpy.power(X,2) + A * numpy.power(X,3) + B * numpy.power(X,4))
 
+## zcalib3
+#
+# Z calibration fitting function with 3 additional parameters.
+#
+# @param p Fit parameters.
+# @param z Z values.
+#
+# @return The function at the specified z values.
+#
 def zcalib3(p, z):
     wo,c,d,A,B,C = p
     X = (z-c)/d
     return wo*numpy.sqrt(1.0 + numpy.power(X,2) + A * numpy.power(X,3) + B * numpy.power(X,4) + C * numpy.power(X,5))
 
+## zcalib4
+#
+# Z calibration fitting function with 4 additional parameters.
+#
+# @param p Fit parameters.
+# @param z Z values.
+#
+# @return The function at the specified z values.
+#
 def zcalib4(p, z):
     wo,c,d,A,B,C,D = p
     X = (z-c)/d
@@ -47,9 +96,79 @@ zcalibs = [zcalib0, zcalib1, zcalib2, zcalib3, zcalib4]
 #
 # insight3 file reading
 #
+
+## getV
+#
+# Helper function for reading binary header data.
+#
+# @param fp A file pointer.
+# @param format A string defining the data format.
+# @param size An integer specifying how many bytes to read.
+#
+# @return The unpacked value from the file.
+#
 def getV(fp, format, size):
     return struct.unpack(format, fp.read(size))[0]
 
+## i3DataType
+#
+# @return A numpy data type to use for reading Insight3 format files.
+#
+def i3DataType():
+    return numpy.dtype([('x', numpy.float32),   # original x location
+                        ('y', numpy.float32),   # original y location
+                        ('xc', numpy.float32),  # drift corrected x location
+                        ('yc', numpy.float32),  # drift corrected y location
+                        ('h', numpy.float32),   # fit height
+                        ('a', numpy.float32),   # fit area
+                        ('w', numpy.float32),   # fit width
+                        ('phi', numpy.float32), # fit angle (for unconstrained elliptical gaussian)
+                        ('ax', numpy.float32),  # peak aspect ratio
+                        ('bg', numpy.float32),  # fit background
+                        ('i', numpy.float32),   # sum - baseline for pixels included in the peak
+                        ('c', numpy.int32),     # peak category ([0..9] for STORM images)
+                        ('fi', numpy.int32),    # fit iterations
+                        ('fr', numpy.int32),    # frame
+                        ('tl', numpy.int32),    # track length
+                        ('lk', numpy.int32),    # link (id of the next molecule in the trace)
+                        ('z', numpy.float32),   # original z coordinate
+                        ('zc', numpy.float32)]) # drift corrected z coordinate
+
+## maskData
+#
+# Creates a new i3 data structure containing only
+# those elements where mask is True.
+#
+# @param i3data The insight3 format data.
+# @param mask The (numpy) mask.
+#
+# @return An i3data data structure containing only the localizations where mask was true.
+#
+def maskData(i3data, mask):
+    new_i3data = numpy.zeros(mask.sum(), dtype = i3DataType())
+    for field in i3data.dtype.names:
+        new_i3data[field] = i3data[field][mask]
+    return new_i3data
+
+## posSet
+#
+# Convenience function for setting both a position
+# and it's corresponding drift corrected value.
+#
+# @param i3data The insight3 format data.
+# @param field The field to set.
+# @param value The values to set the field to.
+#
+def posSet(i3data, field, value):
+    setI3Field(i3data, field, value)
+    setI3Field(i3data, field + 'c', value)
+
+## readHeader
+#
+# @param fp A file pointer.
+#
+# @return [# frames, # localizations, file version, file status]
+#
 def readHeader(fp):
     version = getV(fp, "4s", 4)
     frames = getV(fp, "i", 4)
@@ -63,7 +182,16 @@ def readHeader(fp):
         print ""
     return [frames, molecules, version, status]
 
-def loadI3File(filename, nm_per_pixel):
+## readI3File
+#
+# Read the data from an Insight3 format file.
+#
+# @param filename The filename of the file including the path.
+# @param nm_per_pixel The number of nm per pixel.
+#
+# @return The localization data.
+#
+def readI3File(filename, nm_per_pixel):
     print "nm_per_pixel", nm_per_pixel
     fp = open(filename, "rb")
 
@@ -71,39 +199,25 @@ def loadI3File(filename, nm_per_pixel):
     [frames, molecules, version, status] = readHeader(fp)
 
     # Read molecule info
-    data = numpy.fromfile(fp, dtype = numpy.dtype([('x', numpy.float32),    # original x location
-                                                   ('y', numpy.float32),    # original y location
-                                                   ('xc', numpy.float32),   # drift corrected x location
-                                                   ('yc', numpy.float32),   # drift corrected y location
-                                                   ('h', numpy.float32),    # fit height
-                                                   ('a', numpy.float32),    # fit area
-                                                   ('w', numpy.float32),    # fit width
-                                                   ('phi', numpy.float32),  # fit angle (for unconstrained elliptical gaussian)
-                                                   ('ax', numpy.float32),   # peak aspect ratio
-                                                   ('bg', numpy.float32),   # fit background
-                                                   ('i', numpy.float32),    # sum - baseline for pixels included in the peak
-                                                   ('c', numpy.int32),      # peak category ([0..9] for STORM images)
-                                                   ('fi', numpy.int32),     # fit iterations
-                                                   ('fr', numpy.int32),     # frame
-                                                   ('tl', numpy.int32),     # track length
-                                                   ('lk', numpy.int32),     # link (id of the next molecule in the trace)
-                                                   ('z', numpy.float32),    # original z coordinate
-                                                   ('zc', numpy.float32)])) # drift corrected z coordinate
-
+    data = numpy.fromfile(fp, dtype = i3DataType())
     data = data[:][0:molecules]
     fp.close()
 
-    return [data['x'],
-            data['y'],
-            data['c'],
-            data['i'],
-            data['fr'],
-            numpy.sqrt(data['w']*data['w']/data['ax'])/nm_per_pixel,
-            numpy.sqrt(data['w']*data['w']*data['ax'])/nm_per_pixel]
+    return data
+
+#    return [data,
+#            data['x'],
+#            data['y'],
+#            data['c'],
+#            data['i'],
+#            data['fr'],
+#            numpy.sqrt(data['w']*data['w']/data['ax'])/nm_per_pixel,
+#            numpy.sqrt(data['w']*data['w']*data['ax'])/nm_per_pixel]
 
 
+## ZCalibration
 #
-# z calibration class
+# A class to encapsulate fitting Z calibration data.
 #
 class ZCalibration():
 
@@ -111,20 +225,23 @@ class ZCalibration():
     def __init__(self, filename, fit_power, minimum_intensity, nm_per_pixel):
         self.filename = filename
         self.fit_power = fit_power
+        self.nm_per_pixel = nm_per_pixel
 
         # state variables
-        self.tilt = [0.0, 0.0, 0.0]
         self.edge_loc = 0
         self.frames = None
         self.good_stagep = None
         self.good_offsetp = None
+        self.i3_data = None
         self.mask = None
-        self.nm_per_pixel = nm_per_pixel
         self.offsets = None
         self.quick_z = None
         self.stage_zero = None
         self.sz = None
+        self.tilt = [0.0, 0.0, 0.0]
+        self.wx = None
         self.wx_fit = None
+        self.wy = None
         self.wy_fit = None
         self.z = None
         self.z_offset = 0
@@ -242,7 +359,7 @@ class ZCalibration():
 
     # Return localization category information
     def getCategory(self):
-        return self.cat
+        return self.i3_data['c']
 
     # Return fit curves
     def getFitValues(self):
@@ -300,7 +417,12 @@ class ZCalibration():
         wystring = "wy0=%.1f;zry=%.1f;gy=%.1f;Dy=%.3f;Cy=%.3f;By=%.3f;Ay=%.3f;" % (coeffs[0], coeffs[2], coeffs[1], coeffs[6], coeffs[5], coeffs[4], coeffs[3])
         return wystring
 
+    ## getWxWyData
+    #
     # Return the Wx and Wy of the localizations
+    #
+    # @return [wx, wy]
+    #
     def getWxWyData(self):
         return [self.wx, self.wy]
 
@@ -339,18 +461,29 @@ class ZCalibration():
         self.wy_fit[0] = self.wy_fit[0]/self.nm_per_pixel
         self.fit_power = 4
 
+    ## loadMolecules
+    #
     # Load the molecules found by Insight3
+    #
+    # @param filename The name of the Insight format file to load.
+    # @param minimum_intensity The minimum intensity
+    #
     def loadMolecules(self, filename, minimum_intensity):
-        [x, y, cat, i, f, wx, wy] = loadI3File(filename, self.nm_per_pixel)
-        mask = (i > minimum_intensity)
-        self.f = f[mask] - 1
-        self.x = x[mask]
-        self.y = y[mask]
-        self.cat = cat[mask]
-        self.wx = wx[mask]
-        self.wy = wy[mask]
+        self.i3_data = readI3File(filename, self.nm_per_pixel)
+        self.i3_data = maskData(self.i3_data, (self.i3_data['i'] > minimum_intensity))
+        self.i3_data['fr'] -= 1
+        self.wx = numpy.sqrt(self.i3_data['w']*self.i3_data['w']/self.i3_data['ax'])/self.nm_per_pixel
+        self.wy = numpy.sqrt(self.i3_data['w']*self.i3_data['w']*self.i3_data['ax'])/self.nm_per_pixel
 
+    ## objectZCoords
+    #
     # Determines the z coordinates from the x and y widths
+    #
+    # @param wx The localization widths in x.
+    # @param wy The localization widths in y.
+    #
+    # @return [molecule z location, fit error]
+    #
     def objectZCoords(self, wx, wy):
 
         # roughly estimate z
@@ -378,16 +511,33 @@ class ZCalibration():
         err = numpy.zeros(wx.shape[0])
         return [rz, err]
 
+    ## saveCalibration
+    #
     # Save the calibration coefficients in a file.
+    #
+    # @param filename The file to save the calibration in.
+    #
     def saveCalibration(self, filename):
         fp = open(filename, "w")
         string = self.getWxString() + self.getWyString()
         fp.write(string + "\n")
         fp.close()
 
+    ## selectObjects
+    #
     # Returns arrays containing the objects in the mask == True 
     # frames that meet the appropriate criteria.
+    #
+    # @param mask A numpy mask with True in the frames that we want to analyze.
+    #
+    # @return [x, y, wx, wy, sz] Of the localizations in the correct frames and widths that were not too far from the mean.
+    #
     def selectObjects(self, mask):
+        i3_x = self.i3_data['x']
+        i3_y = self.i3_data['y']
+        i3_wx = self.wx
+        i3_wy = self.wy
+
         x = numpy.array(())
         y = numpy.array(())
         sz = numpy.array(()) # i.e. z as determined by the nominal stage position and sample tilt.
@@ -395,11 +545,12 @@ class ZCalibration():
         wy = numpy.array(())
         for i in range(self.frames):
             if mask[i]:
-                f_mask = (self.f == i)
-                _x = self.x[f_mask]
-                _y = self.y[f_mask]
-                _wx = self.wx[f_mask]
-                _wy = self.wy[f_mask]
+                
+                f_mask = (self.i3_data['fr'] == i)
+                _x = i3_x[f_mask]
+                _y = i3_y[f_mask]
+                _wx = i3_wx[f_mask]
+                _wy = i3_wy[f_mask]
 
                 max_err = 1.5
                 mwx = scipy.mean(_wx)
@@ -428,10 +579,17 @@ class ZCalibration():
 
         return x, y, wx, wy, sz
 
+    ## stageCalibration
+    #
     # If we have an offset file then we can use the stage positions
     # and the offset data to figure out what the offsets correspond
     # to in nm. As a side effect this also figures out what the "good"
     # range of the data is, i.e. where the stage was moving.
+    #
+    # @param filename The name of the offset file.
+    #
+    # @return True/False If everything worked (or not).
+    #
     def stageCalibration(self, filename):
 
         # load offset information

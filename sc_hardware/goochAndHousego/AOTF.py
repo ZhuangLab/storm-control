@@ -25,7 +25,6 @@ class AOTF(RS232.RS232):
     #
     def __init__(self, port = "COM8"):
         self.active_channel = False
-        self.channels = []
         self.number_channels = 8
         try:
             # open port
@@ -43,8 +42,8 @@ class AOTF(RS232.RS232):
     # Turns off analog modulation of the AOTF.
     #
     def analogModulationOff(self):
-        for channel in self.channels:
-            self.setActiveChannel(channel)
+        for channel in range(self.number_channels):
+            self.setActiveChannel(i+1)
             self.commWithResp("on")
 
     ## analogModulationOn
@@ -91,9 +90,7 @@ class AOTF(RS232.RS232):
     #
     def setAmplitude(self, channel, amplitude):
         assert channel > 0, "setAmplitude: channel out of range " + str(channel)
-        assert channel <= 8, "setAmplitude: channel out of range " + str(channel)
-        if not (channel in self.channels):
-            self.channels.append(channel)
+        assert channel <= self.number_channels, "setAmplitude: channel out of range " + str(channel)
         self.setActiveChannel(channel)
         self.commWithResp("am " + str(amplitude))
 
@@ -106,7 +103,7 @@ class AOTF(RS232.RS232):
     #
     def setFrequency(self, channel, frequency):
         assert channel > 0, "setFrequency: channel out of range " + str(channel)
-        assert channel <= 8, "setFrequency: channel out of range " + str(channel) 
+        assert channel <= self.number_channels, "setFrequency: channel out of range " + str(channel) 
         self.setActiveChannel(channel)
         cmd = "fr " + "{0:.3f}".format(frequency)
         self.commWithResp(cmd)

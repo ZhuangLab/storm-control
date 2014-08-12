@@ -132,11 +132,11 @@ class CommandEngine(QtGui.QWidget):
                 self.actions.append(daveActions.FindSum(self.HALClient, command.find_sum))
             if command.recenter:
                 self.actions.append(daveActions.RecenterPiezo(self.HALClient))
+            if hasattr(command, "parameters"):
+                self.actions.append(daveActions.SetParameters(self.HALClient, command))
             if hasattr(command,"progression"):
                 if command.progression:
                     self.actions.append(daveActions.SetProgression(self.HALClient, command.progression))
-            if hasattr(command, "parameters"):
-                self.actions.append(daveActions.SetParameters(self.HALClient, command))
             if hasattr(command, "delay") and (command.delay > 0):
                 self.actions.append(daveActions.DaveDelay(command.delay))
             if hasattr(command, "directory"):
