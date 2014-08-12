@@ -365,12 +365,14 @@ class Window(QtGui.QMainWindow):
 
     ## handleGetPositionComplete
     #
-    # @param stage_x The stage X position (in pixels).
-    # @param stage_y The stage Y position (in pixels).
+    # @param a_point A coord.Point object specifying the current stage location.
     #
     @hdebug.debug
-    def handleGetPositionComplete(self, stage_x, stage_y):
-        self.view.setCrosshairPosition(stage_x, stage_y)
+    def handleGetPositionComplete(self, a_point):
+        offset_point = coord.Point(a_point.x_um + self.current_offset.x_um,
+                                   a_point.y_um + self.current_offset.y_um,
+                                   "um")
+        self.view.setCrosshairPosition(offset_point.x_pix, offset_point.y_pix)
 
     ## handleGotoComplete
     #
@@ -708,7 +710,10 @@ class Window(QtGui.QMainWindow):
     # @param a_point A coord.Point object with current mouse position in microns.
     #
     def updateMosaicLabel(self, a_point):
-        self.ui.mosaicLabel.setText("{0:.2f}, {1:.2f}".format(a_point.x_um, a_point.y_um))
+        offset_point = coord.Point(a_point.x_um - self.current_offset.x_um,
+                                   a_point.y_um - self.current_offset.y_um,
+                                   "um")
+        self.ui.mosaicLabel.setText("{0:.2f}, {1:.2f}".format(offset_point.x_um, offset_point.y_um))
 
     ## updateScaleLineEdit
     #
