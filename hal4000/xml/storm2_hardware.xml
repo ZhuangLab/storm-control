@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <hardware>
-  <!-- Defines all the hardware (for storm2).
-       
-       Note that if you don't have a particular piece of hardware
-       it needs to be commented out in this file.
-    -->
+  <!-- Defines the camera for storm4. -->
 
   <camera>
     <module type="string">classicSingleCamera</module>
@@ -89,4 +85,5 @@
     </tcpip>
 
   </modules>
+
 </hardware>
