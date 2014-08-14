@@ -15,9 +15,6 @@ import sc_hardware.prior.prior as prior
 # stage control thread.
 import stagecontrol.stageThread as stageThread
 
-# stage control thread.
-import stagecontrol.stageThread as stageThread
-
 # stage control dialog.
 import stagecontrol.stageControl as stageControl
 
