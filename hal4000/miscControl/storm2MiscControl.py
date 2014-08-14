@@ -28,8 +28,8 @@ import sc_hardware.phidgets.phidget as phidget
 #
 class AMiscControl(miscControl.MiscControl):
     @hdebug.debug
-    def __init__(self, hardware, parameters, camera_widget, parent = None):
-        super(AMiscControl, self).__init__(parameters, parent)
+    def __init__(self, hardware, parameters, parent = None):
+        miscControl.MiscControl.__init__(self, parameters, parent)
 
         self.filter_wheel = ix2ucb.IX2UCB(port = "COM7")
         if (not self.filter_wheel.getStatus()):
