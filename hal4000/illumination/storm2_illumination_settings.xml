@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<illumination_settings>
+
+  <control_modules>
+    <control_module>
+      <name>750wheel</name>
+      <module_name>sc_hardware.thorlabs.FW102C</module_name>
+      <class_name>HalFW102C</class_name>
+      <parameters>
+	<port>COM9</port>
+      </parameters>
+    </control_module>
+    
+    <control_module>
+      <name>AOTF</name>
+      <module_name>sc_hardware.crystalTechnologies.hAotf</module_name>
+      <class_name>CrystalTechAOTF64Bit</class_name>
+      <parameters>
+	<use_fsk type="boolean">true</use_fsk>
+      </parameters>
+    </control_module>
+    
+    <control_module>
+      <name>cube405</name>
+      <module_name>sc_hardware.coherent.hLaser</module_name>
+      <class_name>CoherentCube</class_name>
+      <parameters>
+	<port>COM8</port>
+      </parameters>
+    </control_module>
+    
+    <control_module>
+      <name>daq</name>
+      <module_name>sc_hardware.nationalInstruments.hNicontrol</module_name>
+      <class_name>Nidaq</class_name>
+      <parameters>
+	<counter_board>PCIe-6259</counter_board>
+	<counter_id type="int">0</counter_id>
+	<counter_trigger type="int">0</counter_trigger>
+	<waveform_clock>PFI12</waveform_clock>
+      </parameters>
+    </control_module>
+  </control_modules>
+
+  <channels>
+
+    <!-- 750 laser -->
+    <channel>
+      <description>750</description>
+      <color type="rgb">200,0,0</color>
+      
+      <amplitude_modulation>
+	<uses>750wheel</uses>
+	<display_normalized type="boolean">False</display_normalized>
+	<parameters>
+	  <minimum type="int">1</minimum>
+	  <maximum type="int">6</maximum>
+	</parameters>
+      </amplitude_modulation>
+      
+      <digital_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCIe-6259</board>
+	  <channel type="int">4</channel>
+	</parameters>
+      </digital_modulation>
+    </channel>
+
+    <!-- 647 laser -->
+    <channel>
+      <description>647</description>
+      <color type="rgb">255,0,0</color>
+      
+      <amplitude_modulation>
+	<uses>AOTF</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <maximum type="int">6400</maximum>
+	  <channel type="int">3</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">89.93</on_frequency>
+	</parameters>
+      </amplitude_modulation>
+      
+      <analog_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCIe-6259</board>
+	  <channel type="int">3</channel>
+	  <max_voltage type="float">1.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+	</parameters>
+      </analog_modulation>
+      
+      <digital_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCIe-6259</board>
+	  <channel type="int">12</channel>
+	</parameters>
+      </digital_modulation>
+
+      <mechanical_shutter>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCIe-6259</board>
+	  <channel type="int">3</channel>
+	</parameters>
+      </mechanical_shutter>
+
+    </channel>
+
+    <!-- 560 laser -->
+    <channel>
+      <description>560</description>
+      <color type="rgb">255,255,0</color>
+      
+      <amplitude_modulation>
+	<uses>AOTF</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <maximum type="int">6200</maximum>
+	  <channel type="int">2</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">107.8</on_frequency>
+	</parameters>
+      </amplitude_modulation>
+      
+      <analog_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCIe-6259</board>
+	  <channel type="int">2</channel>
+	  <max_voltage type="float">1.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+	</parameters>
+      </analog_modulation>
+      
+      <digital_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCIe-6259</board>
+	  <channel type="int">11</channel>
+	</parameters>
+      </digital_modulation>
+
+      <mechanical_shutter>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCIe-6259</board>
+	  <channel type="int">2</channel>
+	</parameters>
+      </mechanical_shutter>
+
+    </channel>
+
+    <!-- 488 laser -->
+    <channel>
+      <description>488</description>
+      <color type="rgb">0,100,255</color>
+      
+      <amplitude_modulation>
+	<uses>AOTF</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <maximum type="int">5700</maximum>
+	  <channel type="int">1</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">129.86</on_frequency>
+	</parameters>
+      </amplitude_modulation>
+      
+      <analog_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCIe-6259</board>
+	  <channel type="int">1</channel>
+	  <max_voltage type="float">1.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+	</parameters>
+      </analog_modulation>
+      
+      <digital_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCIe-6259</board>
+	  <channel type="int">10</channel>
+	</parameters>
+      </digital_modulation>
+
+      <mechanical_shutter>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCIe-6259</board>
+	  <channel type="int">1</channel>
+	</parameters>
+      </mechanical_shutter>
+
+    </channel>
+
+    <!-- 405 laser -->
+    <channel>
+      <description>405</description>
+      <color type="rgb">255,0,255</color>
+      
+      <amplitude_modulation>
+	<uses>cube405</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <maximum type="int">10000</maximum>
+	</parameters>
+      </amplitude_modulation>
+      
+      <analog_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCIe-6259</board>
+	  <channel type="int">0</channel>
+	  <max_voltage type="float">5.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+	</parameters>
+      </analog_modulation>
+
+      <mechanical_shutter>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCIe-6259</board>
+	  <channel type="int">0</channel>
+	</parameters>
+      </mechanical_shutter>
+
+    </channel>
+  </channels>
+
+</illumination_settings>

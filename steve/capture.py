@@ -29,7 +29,7 @@ import sc_library.daxspereader as daxspereader
 import coord
 
 
-## DirectoryMessage
+## directoryMessage
 #
 # Creates a change directory message.
 #
@@ -41,7 +41,16 @@ def directoryMessage(directory):
     return tcpMessage.TCPMessage(message_type = "Set Directory",
                                  message_data = {"directory" : directory})
 
-## MovieMessage
+## getPositionMessage
+#
+# Creates a get stage position message for communication via TCPClient.
+#
+# @return A TCPMessage object.
+#
+def getPositionMessage():
+    return tcpMessage.TCPMessage(message_type = "Get Stage Position")
+
+## movieMessage
 #
 # Creates a movie message for communication via TCPClient.
 #
@@ -54,7 +63,7 @@ def movieMessage(filename):
                                  message_data = {"name" : filename,
                                                  "length" : 1})
 
-## StageMessage
+## moveStageMessage
 #
 # Creates a stage message for communication via TCPClient.
 #
@@ -63,7 +72,7 @@ def movieMessage(filename):
 #
 # @return A TCPMessage object.
 #
-def stageMessage(stagex, stagey):  
+def moveStageMessage(stagex, stagey):  
     return tcpMessage.TCPMessage(message_type = "Move Stage",
                                  message_data = {"stage_x":stagex,
                                                  "stage_y":stagey})
@@ -119,6 +128,7 @@ class Image():
 class Capture(QtCore.QObject):
     captureComplete = QtCore.pyqtSignal(object)
     disconnected = QtCore.pyqtSignal()
+    getPositionComplete = QtCore.pyqtSignal(object)
     gotoComplete = QtCore.pyqtSignal()
 
     ## __init__
@@ -166,7 +176,7 @@ class Capture(QtCore.QObject):
     ## captureStart
     #
     # Called to take a image at stagex, stagey. This tells HAL to move,
-    # then when HAL saves the move is complete an image is taken.
+    # then when HAL returns that the move is complete an image is taken.
     #
     # @param stagex The x position to take the image at.
     # @param stagey The y position to take the image at.
@@ -181,7 +191,7 @@ class Capture(QtCore.QObject):
             hdebug.logText("captureStart: not connected to HAL.")
             return False
 
-        self.messages.append(stageMessage(stagex, stagey))
+        self.messages.append(moveStageMessage(stagex, stagey))
         self.messages.append(movieMessage(self.filename))
         self.sendFirstMessage()
         return True
@@ -214,6 +224,21 @@ class Capture(QtCore.QObject):
     def fullname(self):
         return self.directory + self.filename + ".dax"
 
+    ## getPosition
+    #
+    # Called to query HAL about the current stage position.
+    #
+    @hdebug.debug
+    def getPosition(self):
+
+        if not self.tcp_client.isConnected():
+            hdebug.logText("getPosition: not connected to HAL.")
+            return
+
+        message = getPositionMessage()
+        self.messages.append(message)
+        self.sendFirstMessage()
+
     ## gotoPosition
     #
     # Called to move to stagex, stagey.
@@ -228,7 +253,7 @@ class Capture(QtCore.QObject):
             hdebug.logText("gotoPosition: not connected to HAL.")
             return
 
-        message = stageMessage(stagex, stagey)
+        message = moveStageMessage(stagex, stagey)
         message.addData("is_goto", True)
         self.messages.append(message)
         self.sendFirstMessage()
@@ -259,6 +284,12 @@ class Capture(QtCore.QObject):
 
         if (message.getData("is_goto") == True):
             self.gotoComplete.emit()
+
+        if (message.getType() == "Get Stage Position"):
+            a_point = coord.Point(message.getResponse("stage_x"),
+                                  message.getResponse("stage_y"),
+                                  "um")
+            self.getPositionComplete.emit(a_point)
 
         if (message.getType() == "Take Movie"):
             self.loadImage(self.directory + message.getData("name") + ".dax")

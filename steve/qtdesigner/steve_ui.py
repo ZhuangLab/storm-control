@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'steve.ui'
 #
-# Created: Fri Apr 11 15:00:01 2014
+# Created: Tue Jun 10 10:15:09 2014
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -115,7 +115,7 @@ class Ui_MainWindow(object):
         self.sectionsScrollArea.setWidgetResizable(True)
         self.sectionsScrollArea.setObjectName(_fromUtf8("sectionsScrollArea"))
         self.scrollAreaWidgetContents_2 = QtGui.QWidget()
-        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 252, 375))
+        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 98, 28))
         self.scrollAreaWidgetContents_2.setObjectName(_fromUtf8("scrollAreaWidgetContents_2"))
         self.sectionsScrollArea.setWidget(self.scrollAreaWidgetContents_2)
         self.verticalLayout_6.addWidget(self.sectionsScrollArea)
@@ -172,6 +172,9 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.tabWidget)
         self.horizontalLayout = QtGui.QHBoxLayout()
         self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
+        self.trackStageCheckBox = QtGui.QCheckBox(self.centralwidget)
+        self.trackStageCheckBox.setObjectName(_fromUtf8("trackStageCheckBox"))
+        self.horizontalLayout.addWidget(self.trackStageCheckBox)
         self.mosaicLabel = QtGui.QLabel(self.centralwidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -293,6 +296,7 @@ class Ui_MainWindow(object):
         self.backgroundLabel.setText(_translate("MainWindow", "Background Type", None))
         self.backgroundComboBox.setItemText(0, _translate("MainWindow", "Mean", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.sectionsTab), _translate("MainWindow", "Sections", None))
+        self.trackStageCheckBox.setText(_translate("MainWindow", "Track Stage", None))
         self.mosaicLabel.setText(_translate("MainWindow", "TextLabel", None))
         self.scaleLabel.setText(_translate("MainWindow", "Scale:", None))
         self.scaleLineEdit.setText(_translate("MainWindow", "1.0", None))

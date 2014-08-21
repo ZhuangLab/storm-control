@@ -12,6 +12,9 @@ from PyQt4 import QtCore
 # stage.
 import sc_hardware.prior.prior as prior
 
+# stage control thread.
+import stagecontrol.stageThread as stageThread
+
 # stage control dialog.
 import stagecontrol.stageControl as stageControl
 
@@ -23,7 +26,7 @@ import stagecontrol.stageControl as stageControl
 #
 
 #prior_stage = prior.Prior(port = "COM1")
-prior_stage = prior.Prior(port = "COM10", baudrate = 9600)
+prior_stage = prior.Prior(port = "COM5", baudrate = 9600)
 prior_mutex = QtCore.QMutex()
 
 #
@@ -54,76 +57,26 @@ class QPriorZ(QtCore.QObject):
 # the periodic communication with the Prior stage
 # will cause the whole UI to behave a bit jerkily.
 #
-class QPriorThread(QtCore.QThread):
-    def __init__(self, parent = None):
-        QtCore.QThread.__init__(self, parent)
-        global prior_stage
+class QPriorThread(stageThread.QStageThread):
+    def __init__(self, stage):
+        stageThread.QStageThread.__init__(self,
+                                          stage,
+                                          move_update_freq = 100,
+                                          pos_update_freq = 100,
+                                          parent = None)
         global prior_mutex
-        self.stage = prior_stage
-        self.stage_position = [0.0, 0.0, 0.0]
-        self.running = self.stage.getStatus()
         self.mutex = prior_mutex
-
-    def getStatus(self):
-        return self.running
-
-    def goAbsolute(self, x, y):
-        self.mutex.lock()
-        self.stage.goAbsolute(x, y)
-        self.stage_position = self.stage.position()
-        self.mutex.unlock()
-
-    def goRelative(self, dx, dy):
-        self.mutex.lock()
-        self.stage.goRelative(dx, dy)
-        self.stage_position = self.stage.position()
-        self.mutex.unlock()
-        
-    def lockout(self, flag):
-        self.mutex.lock()
-        self.stage.joystickOnOff(not flag)
-        self.mutex.unlock()
-
-    def position(self):
-        self.mutex.lock()
-        stage_position = self.stage_position
-        self.mutex.unlock()
-        return stage_position
-
-    def run(self):
-        while self.running:
-            self.mutex.lock()
-            self.stage_position = self.stage.position()
-            self.mutex.unlock()
-            self.msleep(500)
-
-    def setVelocity(self, vx, vy):
-        self.mutex.lock()
-        self.stage.setVelocity(vx, vy)
-        self.mutex.unlock()
-
-    def shutDown(self):
-        self.running = 0
-        self.wait()
-        self.stage.shutDown()
-
-    def zero(self):
-        self.mutex.lock()
-        self.stage.zero()
-        self.stage_position = self.stage.position()
-        self.mutex.unlock()
 
 #
 # Stage control dialog specialized for STORM2
 # with Prior motorized stage.
 #
 class AStageControl(stageControl.StageControl):
-    def __init__(self, hardware, parameters, tcp_control, parent = None):
-        self.stage = QPriorThread()
+    def __init__(self, hardware, parameters, parent = None):
+        self.stage = QPriorThread(prior_stage)
         self.stage.start(QtCore.QThread.NormalPriority)
         stageControl.StageControl.__init__(self,
                                            parameters,
-                                           tcp_control,
                                            parent)
 
 #

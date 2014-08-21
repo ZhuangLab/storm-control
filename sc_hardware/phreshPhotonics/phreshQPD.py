@@ -160,7 +160,7 @@ class PhreshQPDSTORM2(PhreshQPD):
     # need to restart things on occasion.
     #
     def createTask(self):
-        self.qpd_task = nicontrol.AnalogInput("PCIe-6259", 0)
+        self.qpd_task = nicontrol.AnalogWaveformInput("PCIe-6259", 0)
         self.qpd_task.addChannel(1)
         self.qpd_task.addChannel(2)
         self.qpd_task.configureAcquisition(self.samples, self.sample_rate_Hz)

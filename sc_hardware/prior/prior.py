@@ -287,7 +287,7 @@ class PriorFocus(Prior):
 
 if __name__ == "__main__":
     if 1:
-        stage = Prior(port = "COM9", baudrate = 115200)
+        stage = Prior(port = "COM10", baudrate = 9600)
         stage.setVelocity(1.0, 1.0)
         print stage._command("SMS")
         print stage._command("ENCW")

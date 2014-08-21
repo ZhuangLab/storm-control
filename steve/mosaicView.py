@@ -4,7 +4,7 @@
 #
 # Handles viewing the mosaic.
 #
-# Hazen 07/13
+# Hazen 06/14
 #
 
 import os
@@ -79,6 +79,73 @@ def createSpiral(number):
     return positions
 
 
+## Crosshair
+#
+# The cross-hair item to indicate the current stage position.
+#
+class Crosshair(QtGui.QGraphicsItem):
+
+    ## __init__
+    #
+    # Create a Crosshair object.
+    #
+    def __init__(self):
+        QtGui.QGraphicsItem.__init__(self)
+
+        self.ch_size = 15.0
+        self.r_size = self.ch_size
+        self.visible = False
+
+        self.setZValue(1001.0)
+
+    ## boundingRect
+    #
+    # @return The bounding rectangle (as a QRectF)
+    #
+    def boundingRect(self):
+        return QtCore.QRectF(-self.r_size,
+                              -self.r_size,
+                              2.0 * self.r_size,
+                              2.0 * self.r_size)
+
+    ## paint
+    #
+    # @param painter A QPainter object.
+    # @param options A QStyleOptionGraphicsItem object.
+    # @param widget A QWidget object.
+    #
+    def paint(self, painter, options, widget):
+        if self.visible:
+            painter.setPen(QtGui.QPen(QtGui.QColor(0,0,255)))
+            painter.drawLine(-self.r_size, 0, self.r_size, 0)
+            painter.drawLine(0, -self.r_size, 0, self.r_size)
+            painter.drawEllipse(-0.5 * self.r_size,
+                                 -0.5 * self.r_size,
+                                 self.r_size,
+                                 self.r_size)
+    
+    ## setScale
+    #
+    # Resizes the cross-hair based on the current view scale.
+    #
+    # @param scale The current scale of the view.
+    #
+    def setScale(self, scale):
+        print scale
+        self.r_size = round(self.ch_size/scale)
+
+    ## setVisible
+    #
+    # @param is_visible True/False if the cross-haur should be visible.
+    #
+    def setVisible(self, is_visible):
+        if is_visible:
+            self.visible = True
+        else:
+            self.visible = False
+        self.update()
+
+        
 ## MosaicView
 #
 # Handles user interaction with the mosaic.
@@ -101,6 +168,7 @@ class MosaicView(multiView.MultifieldView):
         multiView.MultifieldView.__init__(self, parameters, parent)
 
         # class variables
+        self.cross_hair = Crosshair()
         self.extrapolate_count = parameters.extrapolate_picture_count
         self.extrapolate_start = None
         self.number_x = 5
@@ -132,6 +200,9 @@ class MosaicView(multiView.MultifieldView):
         self.gotoAct.triggered.connect(self.handleGoto)
         self.removeAct.triggered.connect(self.handleRemoveLastItem)
         self.extrapolateAct.triggered.connect(self.handleExtrapolate)
+
+        # crosshair
+        self.scene.addItem(self.cross_hair)
 
     ## addImage
     #
@@ -360,11 +431,36 @@ class MosaicView(multiView.MultifieldView):
             else:
                 self.popup_menu.exec_(event.globalPos())
 
+    ## setCrosshairPosition
+    #
+    # @param x_pos The x position of the cross-hair.
+    # @param y_pos The y position of the cross-hair.
+    #
+    def setCrosshairPosition(self, x_pos, y_pos):
+        self.cross_hair.setPos(x_pos, y_pos)
+
+    ## showCrosshair
+    #
+    # @param is_visible True/False to show or hide the current stage position cross-hair.
+    #
+    def showCrosshair(self, is_visible):
+        self.cross_hair.setVisible(is_visible)
+
+    ## wheelEvent
+    #
+    # Resizes the stage tracking cross-hair based on the current scale.
+    #
+    # @param event A PyQt mouse wheel event.
+    #
+    def wheelEvent(self, event):
+        multiView.MultifieldView.wheelEvent(self, event)
+        self.cross_hair.setScale(self.view_scale)
+
 
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

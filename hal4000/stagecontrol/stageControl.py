@@ -343,6 +343,11 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
                 self.move_timer.setInterval(move_time)
                 self.move_timer.start()
 
+        elif (message.getType() == "Get Stage Position"):
+            message.addResponse("stage_x", self.stage_x)
+            message.addResponse("stage_y", self.stage_y)
+            self.tcpComplete.emit(message)
+
     ## handleDragMove
     #
     # This is motion relative to a fixed point. The expected inputs are

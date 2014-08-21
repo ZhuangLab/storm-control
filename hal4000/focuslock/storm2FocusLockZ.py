@@ -26,7 +26,7 @@ import focuslock.focusLockZ as focusLockZ
 # with Phresh QPD and MCL objective Z positioner.
 #
 class AFocusLockZ(focusLockZ.FocusLockZQPD):
-    def __init__(self, hardware, parameters, tcp_control, parent = None):
+    def __init__(self, hardware, parameters, parent = None):
         qpd = phreshQPD.PhreshQPDSTORM2()
         stage = zstage.QPriorZ()
 #        lock_fn = lambda (x): -1.75 * x
@@ -40,7 +40,6 @@ class AFocusLockZ(focusLockZ.FocusLockZQPD):
         ir_laser = LDC210.LDC210("PCIe-6259", 8)
         focusLockZ.FocusLockZQPD.__init__(self,
                                           parameters,
-                                          tcp_control,
                                           control_thread,
                                           ir_laser,
                                           parent)

@@ -34,12 +34,12 @@
 
   <!-- film settings -->
   <want_big_endian type="int">1</want_big_endian>
-  <directory type="string">C:\Users\Data\</directory>
+  <directory type="string">C:\Data\</directory>
   <filename type="string">movie</filename>
   <acq_mode type="string">run_till_abort</acq_mode>
 <!--  <acq_mode type="string">fixed_length</acq_mode> -->
   <frames type="int">600</frames>
-  <logfile type="string">c:\Users\Data\image_log.txt</logfile>
+  <logfile type="string">c:\Data\image_log.txt</logfile>
   <extensions type="string-array">,A750,A647,Cy5,Cy3,Cy2,A405,FITC,YFP,GFP,BF</extensions>
   <auto_increment type="int">1</auto_increment>
   <want_bell type="int">1</want_bell>
@@ -49,7 +49,7 @@
   <!-- view settings -->
   <flip_horizontal type="int">0</flip_horizontal>
   <flip_vertical type="int">0</flip_vertical>
-  <transpose type="int">0</transpose>
+  <transpose type="int">1</transpose>
   <scalemax type="int">2000</scalemax>
   <scalemin type="int">100</scalemin>
   <max_intensity type="int">50000</max_intensity>
@@ -79,7 +79,9 @@
   <large_step_size type="float">25.0</large_step_size>
   <x_sign type="int">-1</x_sign>
   <y_sign type="int">1</y_sign>
+  <flip_axis type="int">1</flip_axis>
   <stage_speed type="float">5.0</stage_speed>
+  <drag_multiplier type="float">0.16</drag_multiplier>
 
   <!-- focus lock settings -->
   <qpd_mode type="int">0</qpd_mode>

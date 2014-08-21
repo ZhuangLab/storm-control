@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <settings>
 
-  <screen_id type="int">1</screen_id>
+  <screen_id type="int">2</screen_id>
   <grayscale_only type="boolean">True</grayscale_only>
 
 </settings>

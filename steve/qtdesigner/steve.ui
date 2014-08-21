@@ -187,8 +187,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>252</width>
-                   <height>375</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                 </widget>
@@ -303,6 +303,13 @@
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QCheckBox" name="trackStageCheckBox">
+        <property name="text">
+         <string>Track Stage</string>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QLabel" name="mosaicLabel">
         <property name="sizePolicy">
