@@ -134,13 +134,13 @@ class ACameraControl(cameraControl.CameraControl):
             hdebug.logText("Initializing Andor Camera", False)
 
             if (platform.architecture()[0] == "32bit"):
-                path = "c:/Program Files/Andor iXon/Drivers/"
+                path = "c:/Program Files/Andor Solis/"
                 driver = "atmcd32d.dll"
                 if os.path.exists(path + driver):
                     self.initCameraHelperFn(path, driver, pci_card)
                     return
 
-                path = "c:/Program Files/Andor Solis/"
+                path = "c:/Program Files/Andor iXon/Drivers/"
                 driver = "atmcd32d.dll"
                 if os.path.exists(path + driver):
                     self.initCameraHelperFn(path, driver, pci_card)
@@ -275,6 +275,9 @@ class ACameraControl(cameraControl.CameraControl):
             hdebug.logText("Setting EM Gain Mode", False)
             self.camera.setEMGainMode(p.get("emgainmode"))
 
+            hdebug.logText("Setting Advanced EM Gain Control", False)
+            self.camera.setEMAdvanced(p.get("emccd_advanced", False))
+
             hdebug.logText("Setting EM Gain", False)
             self.camera.setEMCCDGain(p.get("emccd_gain"))
 
@@ -300,6 +303,8 @@ class ACameraControl(cameraControl.CameraControl):
             self.camera.setADChannel(p.get("adchannel"))
 
             p.head_model = self.camera.getHeadModel()
+
+            [p.em_gain_low, p.em_gain_high] = self.camera.getEMGainRange()
 
             hdebug.logText("Camera Initialized", False)
             self.got_camera = True

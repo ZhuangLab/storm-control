@@ -443,6 +443,33 @@ class AndorCamera:
         except:
             print "getCurrentSetup: One or more parameters are not defined."
 
+    ## getEMAdvanced
+    #
+    # Get the current advanced EM setting.
+    #
+    # @return Return the advanced EM setting (1 or 0).
+    #
+    def getEMAdvanced(self):
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        state = c_int()
+        andorCheck(andor.GetEMAdvanced(byref(state)), "GetEMAdvanced")
+        return state.value
+
+    ## getEMGainRange
+    #
+    # Get the EM gain range. This will abort the current acquisition.
+    #
+    # @return Return the EM gain range.
+    #
+    def getEMGainRange(self):
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        low = c_int()
+        high = c_int()
+        andorCheck(andor.GetEMGainRange(byref(low), byref(high)), "GetEMGainRange")
+        return [low.value, high.value]
+
     ## setACQMode
     #
     # Sets up the camera in the appropriate acquisition mode &
@@ -498,6 +525,28 @@ class AndorCamera:
             active = 0
         andorCheck(andor.SetBaselineClamp(c_int(active)), "SetBaselineClamp")
 
+    ## setEMAdvanced
+    #
+    # Allow access to higher EM gain levels.
+    #
+    # @param enable True/False to enable access.
+    #
+    def setEMAdvanced(self, enable):
+        print "SEMA:", enable
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        if enable:
+            enable = 1
+        else:
+            enable = 0
+        try:
+            andorCheck(andor.SetEMAdvanced(c_int(enable)), "SetEMAdvanced")
+        except AssertionError, e:
+            if (e.message != "SetEMAdvancedfailed with status = 20992"):
+                raise e
+            else:
+                print "Advanced EM mode not available."
+
     ## setEMCCDGain
     #
     # Set the camera EM gain.
@@ -507,7 +556,7 @@ class AndorCamera:
     def setEMCCDGain(self, gain):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        andorCheck(andor.SetEMCCDGain(gain), "SetEMCCDGain")
+        andorCheck(andor.SetEMCCDGain(c_int(gain)), "SetEMCCDGain")
 
     ## setEMGainMode
     #
@@ -864,8 +913,8 @@ if __name__ == "__main__":
         for key in keys:
             print key, '\t', dictionary[key]
 
-    andor_path = "c:/Program Files (x86)/Andor SOLIS/Drivers/"
-    loadAndorDLL(andor_path + "atmcd64d.dll")
+    andor_path = "c:/Program Files/Andor SOLIS/"
+    loadAndorDLL(andor_path + "atmcd32d.dll")
     print getAvailableCameras(), "cameras connected"
     handles = getCameraHandles()
     print "camera handles: ", handles
@@ -876,6 +925,11 @@ if __name__ == "__main__":
         cameras.append(camera)
         print "Camera", handle, "Properties:"
         printDict(camera.getProperties())
+        camera.setEMAdvanced(True)
+        camera.setEMGainMode(2)
+        print "Gain range:", camera.getEMGainRange()
+        print "Advanced:", camera.getEMAdvanced()
+        #camera.setEMCCDGain(250)
         print ""
 
 #    camera = AndorCamera("c:/Program Files/Andor SOLIS/Drivers/")
