@@ -532,7 +532,6 @@ class AndorCamera:
     # @param enable True/False to enable access.
     #
     def setEMAdvanced(self, enable):
-        print "SEMA:", enable
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
         if enable:
