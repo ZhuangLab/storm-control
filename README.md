@@ -7,6 +7,8 @@ You will need Python and PyQt as well as a number of other libraries. Please see
 # Directory Layout #
 dave - This folder contains software (dave.py) that is used to control hal for automated acquisition of multiple images and/or STORM movies. Dave controls Hal via TCP/IP.
 
+fluidics - This folder contains software (kilroy.py) to control a series of pumps and valves so that fluid control can be integrated with imaging. 
+
 hal4000 - This folder contains the hal-4000 microscope control and image acquisition software (hal-4000.py).
 
 sc_hardware - This folder contains classes for interfacing with various bits of hardware. Folders are (usually) the manufacturers name.
