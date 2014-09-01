@@ -285,7 +285,7 @@ class QCameraWidget(QtGui.QWidget):
 
         self.calcFinalSize()
 
-    ## newRang
+    ## newRange
     #
     # @param range [minimum, maximum]
     #
