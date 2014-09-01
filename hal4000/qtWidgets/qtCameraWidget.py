@@ -43,6 +43,8 @@ class QCameraWidget(QtGui.QWidget):
         self.drag_x = 0
         self.drag_y = 0
 
+        self.display_saturated_pixels = False # Boolean to control pixel display.
+
         self.flip_horizontal = parameters.get("flip_horizontal")
         self.flip_vertical = parameters.get("flip_vertical")
         self.transpose = parameters.get("transpose")
@@ -54,6 +56,8 @@ class QCameraWidget(QtGui.QWidget):
         # This is the amount of image magnification.
         # Only integer values are allowed.
         self.magnification = 1
+
+        self.max_intensity = parameters.max_intensity
         
         self.mouse_x = 0
         self.mouse_y = 0
@@ -272,10 +276,16 @@ class QCameraWidget(QtGui.QWidget):
         self.x_size = parameters.get("x_pixels")/parameters.get("x_bin")
         self.y_size = parameters.get("y_pixels")/parameters.get("y_bin")
         self.drag_multiplier = parameters.get("drag_multiplier", 1.0)
+        self.max_intensity = parameters.max_intensity
+
+        if "_sat.ctbl" in parameters.colortable:
+            self.display_saturated_pixels = True
+        else:
+            self.display_saturated_pixels = False
 
         self.calcFinalSize()
 
-    ## newRange
+    ## newRang
     #
     # @param range [minimum, maximum]
     #
@@ -416,10 +426,20 @@ class QCameraWidget(QtGui.QWidget):
             if reoriented:
                 image_data = numpy.ascontiguousarray(image_data)
 
+            if self.display_saturated_pixels:
+                max_range = 254.0
+            else:
+                max_range = 255.0
+
             temp = image_data.astype(numpy.float32)
-            temp = 255.0*(temp - self.display_range[0])/(self.display_range[1] - self.display_range[0])
-            temp[(temp > 255.0)] = 255.0
+            temp = max_range *(temp - self.display_range[0])/(self.display_range[1] - self.display_range[0])
+            temp[(temp > max_range )] = max_range 
             temp[(temp < 0.0)] = 0.0
+
+            # Check for saturated pixels
+            if self.display_saturated_pixels:
+                temp[image_data >= self.max_intensity] = 255.0
+            
             temp = temp.astype(numpy.uint8)
 
             # Create QImage & draw at final magnification.
