@@ -556,6 +556,7 @@ class Dave(QtGui.QMainWindow):
                 button_ID = messageBox.exec_()
                 if not (button_ID == QtGui.QMessageBox.Yes):
                     return
+
             if not self.sequence_validated:
                 messageBox = QtGui.QMessageBox(parent = self)
                 messageBox.setWindowTitle("Unvalidated Sequence")
@@ -569,10 +570,7 @@ class Dave(QtGui.QMainWindow):
                     return
 
             # Start TCP communication
-            if self.needs_hal:
-                self.command_engine.HALClient.startCommunication()
-            if self.needs_kilroy:
-                self.command_engine.kilroyClient.startCommunication()
+            self.validateAndStartTCP()
             
             self.ui.runButton.setText("Pause")
             self.ui.abortButton.setEnabled(True)
@@ -640,7 +638,7 @@ class Dave(QtGui.QMainWindow):
     def handleValidateCommandSequence(self, boolean):
 
         # Start Test Run
-        if self.validateTCP():
+        if self.validateAndStartTCP():
 
             # Configure UI
             self.running = True
@@ -723,12 +721,13 @@ class Dave(QtGui.QMainWindow):
         self.ui.progressBar.setValue(self.ui.commandSequenceTreeView.getCurrentIndex())
         #self.ui.currentCommand.setText(self.ui.commandSequenceTreeView.getCurrentItem().getDaveAction().getLongDescriptor())
         
-    ## validateTCP
+    ## validateAndStartTCP
     #
-    # Determine that the required TCP communications are ready
+    # Determine that the required TCP communications are ready and start them if they are.
     #
     # @return tcp_ready A boolean describing the state of TCP communications
-    def validateTCP(self):
+    #
+    def validateAndStartTCP(self):
         self.needs_hal = False
         self.needs_kilroy = False
         types = self.ui.commandSequenceTreeView.getActionTypes()
