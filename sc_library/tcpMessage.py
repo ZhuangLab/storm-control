@@ -107,6 +107,13 @@ class TCPMessage(object):
     def getID(self):
         return self.message_id
 
+    ## getMessageData
+    #
+    # @return The message data dictionary.
+    #
+    def getMessageData(self):
+        return self.message_data
+
     ## getResponse
     #
     # Access elements of the response message by name. If the element is not present, None is returned.
