@@ -155,8 +155,6 @@ class XMLRecipeParser(QtGui.QWidget):
 
         return new_parent
 
-
-
     ## handleLoop
     #
     # Handles iteration of loop variables and naming of blocks corresponding to loops

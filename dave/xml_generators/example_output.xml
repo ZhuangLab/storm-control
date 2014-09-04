@@ -31,4 +31,35 @@
     <progression><type>lockedout</type></progression>
     <stage_x>576.92</stage_x><stage_y> -208.81</stage_y>
 </movie>
+</block></block><block name="Valve Loop 1"><valve_protocol>Hybridize 2</valve_protocol>
+<block name="Movie Loop 0"><movie>
+    <name>bleach_1_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>-41.55</stage_x><stage_y> -141.29
+</stage_y>
+</movie>
+<movie>
+    <name>405_1_0</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>-41.55</stage_x><stage_y> -141.29
+</stage_y>
+</movie>
+</block><block name="Movie Loop 1"><movie>
+    <name>bleach_1_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>576.92</stage_x><stage_y> -208.81</stage_y>
+</movie>
+<movie>
+    <name>405_1_1</name>
+    <length>20</length>
+    <lock_target>0.0</lock_target>
+    <progression><type>lockedout</type></progression>
+    <stage_x>576.92</stage_x><stage_y> -208.81</stage_y>
+</movie>
 </block></block></sequence>

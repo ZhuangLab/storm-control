@@ -34,6 +34,7 @@
 
 <loop_variable name = "Valve Loop">
   <value><valve_protocol>Hybridize 1</valve_protocol></value>
+  <value><valve_protocol>Hybridize 2</valve_protocol></value>
 </loop_variable>
 
 <loop_variable name = "Movie Loop">

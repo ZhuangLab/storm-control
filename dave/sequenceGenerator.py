@@ -52,7 +52,8 @@ def generate(parent, xml_file):
                                                                directory, 
                                                                "*.xml"))
         if (len(generated_file)>0):
-            is_good = v2Generator.generate(parent, xml_file, generated_file)
+            is_good = v2Generator.generate(xml_filename = xml_file,
+                                           output_filename = generated_file)
 
     if is_good:
         return generated_file
