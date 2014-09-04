@@ -88,10 +88,12 @@ class XMLRecipeParser(QtGui.QWidget):
     def handleLoop(self, loop, new_parent):
         loop_name = loop.attrib["name"]
         loop_ID = self.loop_variable_names.index(loop_name)
-
         for local_iterator in range(len(self.loop_variables[loop_ID])):
             self.loop_iterator[loop_ID] = local_iterator
-            self.copyElementWithLoop(loop, new_parent)
+            loop_block = ElementTree.Element("block")
+            loop_block.attrib["name"] = loop_name + " " + str(local_iterator)
+            self.copyElementWithLoop(loop, loop_block)
+            new_parent.append(loop_block)
         self.loop_iterator[loop_ID] = -1
 
     # ------------------------------------------------------------------------------------
