@@ -7,7 +7,7 @@
 #
 # Jeff 3/14 
 #
-# Hazen 05/14
+# Hazen 09/14
 #
 
 from xml.etree import ElementTree
@@ -71,25 +71,26 @@ class DaveAction(QtCore.QObject):
     def abort(self):
         self.completeAction(self.message)
 
-    ## addToETree
-    #
-    # Save the information necessary to recreate the action to a XML ElementTree.
-    # This is more of a static method as it is designed to be used in the XML
-    # generation phase to create sequence XML files from XML files that describe
-    # an experiment.
-    #
-    # @param etree The XML ElementTree to add to.
-    # @param node The XML node to parse what to add.
-    #
-    def addToETree(self, etree, node):
-        pass
-
     ## cleanUp
     #
     # Handle clean up of the action
     #
     def cleanUp(self):
         self.tcp_client.messageReceived.disconnect()
+
+    ## createETree
+    #
+    # Takes a dictionary that may (or may not) contain the information that is
+    # is necessary to create the Action. If the information is not present then
+    # None is returned. If the information is present then a ElementTree is
+    # is returned containing the information necessary to create the Action.
+    #
+    # @param dict A dictionary.
+    #
+    # @return A ElementTree object or None.
+    #
+    def createETree(self, dict):
+        pass
 
     ## completeAction
     #
@@ -267,40 +268,25 @@ class DADelay(DaveAction):
         self.delay_timer.stop()
         self.completeAction(self.message)
 
-    ## addToETree
-    #
-    # Save the information necessary to recreate the action to a XML ElementTree.
-    #
-    # @param etree The XML ElementTree to add to.
-    # @param node The XML node to parse what to add.
-    #
-    def addToETree(self, etree, node):
-
-        # Determine delays.
-        base_delay = node.find("base_delay")
-        if base_delay is not None:
-            base_delay = int(base_delay.text)
-        else:
-            base_delay = 0
-
-        delay = node.find("delay")
-        if delay is not None:
-            delay = int(delay.text)
-        else:
-            delay = 0
-
-        # Add action if total delay is greater than zero.
-        total_delay = base_delay + delay
-        if (total_delay > 0):
-            block = ElementTree.SubElement(etree, str(type(self).__name__)),
-            addField(block, "delay", total_delay)
-
     ## cleanUp
     #
     # Handle clean up of the action
     #
     def cleanUp(self):
         pass
+
+    ## createETree
+    #
+    # @param dict A dictionary.
+    #
+    # @return A ElementTree object or None.
+    #
+    def createETree(self, dict):
+        delay = dict.get("delay")
+        if delay is not None:
+            block = ElementTree.Element(str(type(self).__name__))
+            addField(block, "delay", delay)
+            return block
 
     ## getDescriptor
     #
@@ -365,20 +351,21 @@ class DAFindSum(DaveAction):
 
         self.action_type = "hal"
 
-    ## addToETree
+    ## createETree
     #
-    # Save the information necessary to recreate the action to a XML ElementTree.
+    # @param dict A dictionary.
     #
-    # @param etree The XML ElementTree to add to.
-    # @param node The XML node to parse what to add.
+    # @return A ElementTree object or None.
     #
-    def addToETree(self, etree, node):
-        find_sum = node.find("find_sum")
-        if (find_sum is not None):
-            min_sum = float(find_sum.text)
-            if (min_sum > 0.0):
-                block = ElementTree.SubElement(etree, str(type(self).__name__))
-                addField(block, "min_sum", min_sum)
+    def createETree(self, dict):
+        find_sum = dict.get("find_sum")
+        if find_sum is None:
+            return
+
+        if (find_sum > 0.0):
+            block = ElementTree.Element(str(type(self).__name__))
+            addField(block, "min_sum", find_sum)
+            return block
 
     ## getDescriptor
     #
@@ -426,20 +413,20 @@ class DAMoveStage(DaveAction):
 
         self.action_type = "hal"
 
-    ## addToETree
+    ## createETree
     #
-    # Save the information necessary to recreate the action to a XML ElementTree.
+    # @param dict A dictionary.
     #
-    # @param etree The XML ElementTree to add to.
-    # @param node The XML node to parse what to add.
+    # @return A ElementTree object or None.
     #
-    def addToETree(self, etree, node):
-        stage_x = node.find("stage_x")
-        stage_y = node.find("stage_y")
+    def createETree(self, dict):
+        stage_x = dict.get("stage_x")
+        stage_y = dict.get("stage_y")
         if (stage_x is not None) and (stage_y is not None):
-            block = ElementTree.SubElement(etree, str(type(self).__name__))
-            addField(block, "stage_x", float(stage_x.text))
-            addField(block, "stage_y", float(stage_y.text))
+            block = ElementTree.Element(str(type(self).__name__))
+            addField(block, "stage_x", stage_x)
+            addField(block, "stage_y", stage_y)
+            return block
 
     ## getDescriptor
     #
@@ -475,19 +462,6 @@ class DAPause(DaveAction):
     def __init__(self):
         DaveAction.__init__(self)
 
-    ## addToETree
-    #
-    # Save the information necessary to recreate the action to a XML ElementTree.
-    #
-    # @param etree The XML ElementTree to add to.
-    # @param node The XML node to parse what to add.
-    #
-    def addToETree(self, etree, node):
-        first_movie = node.find("first_movie")
-        pause = node.find("pause")
-        if (first_movie is not None) or (pause is not None):
-            block = ElementTree.SubElement(etree, str(type(self).__name__))
-        
     ## cleanUp
     #
     # Handle clean up of the action
@@ -495,6 +469,19 @@ class DAPause(DaveAction):
     def cleanUp(self):
         pass
 
+    ## createETree
+    #
+    # @param dict A dictionary.
+    #
+    # @return A ElementTree object or None.
+    #
+    def createETree(self, dict):
+        first_movie = dict.get("first_movie")
+        pause = dict.get("pause")
+        if (first_movie is not None) or (pause is not None):
+            block = ElementTree.Element(str(type(self).__name__))
+            return block
+        
     ## getDescriptor
     #
     # @return A string that describes the action.
@@ -545,17 +532,17 @@ class DARecenterPiezo(DaveAction):
 
         self.action_type = "hal"
 
-    ## addToETree
+    ## createETree
     #
-    # Save the information necessary to recreate the action to a XML ElementTree.
+    # @param dict A dictionary.
     #
-    # @param etree The XML ElementTree to add to.
-    # @param node The XML node to parse what to add.
+    # @return A ElementTree object or None.
     #
-    def addToETree(self, etree, node):
-        recenter = node.find("recenter")
+    def createETree(self, dict):
+        recenter = dict.get("recenter")
         if (recenter is not None):
-            block = ElementTree.SubElement(etree, str(type(self).__name__))
+            block = ElementTree.Element(str(type(self).__name__))
+            return block
 
     ## getDescriptor
     #
@@ -587,18 +574,18 @@ class DASetDirectory(DaveAction):
 
         self.action_type = "hal"
 
-    ## addToETree
+    ## createETree
     #
-    # Save the information necessary to recreate the action to a XML ElementTree.
+    # @param dict A dictionary.
     #
-    # @param etree The XML ElementTree to add to.
-    # @param node The XML node to parse what to add.
+    # @return A ElementTree object or None.
     #
-    def addToETree(self, etree, node):
-        directory = node.find("directory")
+    def createETree(self, dict):
+        directory = dict.get("directory")
         if (directory is not None):
-            block = ElementTree.SubElement(etree, str(type(self).__name__))
-            addField(block, "directory", directory.text)
+            block = ElementTree.Element(str(type(self).__name__))
+            addField(block, "directory", directory)
+            return block
 
     ## getDescriptor
     #
@@ -632,18 +619,18 @@ class DASetFocusLockTarget(DaveAction):
 
         self.action_type = "hal"
 
-    ## addToETree
+    ## createETree
     #
-    # Save the information necessary to recreate the action to a XML ElementTree.
+    # @param dict A dictionary.
     #
-    # @param etree The XML ElementTree to add to.
-    # @param node The XML node to parse what to add.
+    # @return A ElementTree object or None.
     #
-    def addToETree(self, etree, node):
-        lock_target = node.find("lock_target")
+    def createETree(self, dict):
+        lock_target = dict.get("lock_target")
         if (lock_target is not None):
-            block = ElementTree.SubElement(etree, str(type(self).__name__))
-            addField(block, "lock_target", float(lock_target.text))
+            block = ElementTree.Element(str(type(self).__name__))
+            addField(block, "lock_target", lock_target)
+            return block
 
     ## getDescriptor
     #
@@ -677,21 +664,18 @@ class DASetParameters(DaveAction):
 
         self.action_type = "hal"
 
-    ## addToETree
+    ## createETree
     #
-    # Save the information necessary to recreate the action to a XML ElementTree.
+    # @param dict A dictionary.
     #
-    # @param etree The XML ElementTree to add to.
-    # @param node The XML node to parse what to add.
+    # @return A ElementTree object or None.
     #
-    def addToETree(self, etree, node):
-        parameters = node.find("parameters")
+    def createETree(self, dict):
+        parameters = dict.get("parameters")
         if (parameters is not None):
-            block = ElementTree.SubElement(etree, str(type(self).__name__))
-            try:
-                addField(block, "parameters", int(parameters.text))
-            except ValueError:
-                addField(block, "parameters", parameters.text)
+            block = ElementTree.Element(str(type(self).__name__))
+            addField(block, "parameters", parameters)
+            return block
 
     ## getDescriptor
     #
@@ -728,20 +712,20 @@ class DASetProgression(DaveAction):
 
         self.action_type = "hal"
 
-    ## addToETree
+    ## createETree
     #
-    # Save the information necessary to recreate the action to a XML ElementTree.
+    # @param dict A dictionary.
     #
-    # @param etree The XML ElementTree to add to.
-    # @param node The XML node to parse what to add.
+    # @return A ElementTree object or None.
     #
-    def addToETree(self, etree, node):
-        progression = node.find("progression")
+    def createETree(self, dict):
+        progression = dict.get("progression")
         if progression is not None:
-            block = ElementTree.SubElement(etree, str(type(self).__name__))
+            block = ElementTree.Element(str(type(self).__name__))
             for pnode in progression:
                 # The round trip fixes some white space issues.
                 block.append(ElementTree.fromstring(ElementTree.tostring(pnode)))
+            return block
 
     ## getDescriptor
     #
@@ -816,38 +800,38 @@ class DATakeMovie(DaveAction):
         stop_message = tcpMessage.TCPMessage(message_type = "Abort Movie")
         self.tcp_client.sendMessage(stop_message)
 
-    ## addToETree
+    ## createETree
     #
-    # Save the information necessary to recreate the action to a XML ElementTree.
+    # @param dict A dictionary.
     #
-    # @param etree The XML ElementTree to add to.
-    # @param node The XML node to parse what to add.
+    # @return A ElementTree object or None.
     #
-    def addToETree(self, etree, node):
-        name = node.find("name")
-        length = node.find("length")
-        min_spots = node.find("min_spots")
-        parameters = node.find("parameters")
-        directory = node.find("directory")
-        overwrite = node.find("overwrite")
+    def createETree(self, dict):
+        name = node.dict("name")
+        length = node.dict("length")
+        min_spots = node.dict("min_spots")
+        parameters = node.dict("parameters")
+        directory = node.dict("directory")
+        overwrite = node.dict("overwrite")
         if (name is not None) and (length is not None):
-            length = int(length.text)
             if (length > 0):
-                block = ElementTree.SubElement(etree, str(type(self).__name__))
-                addField(block, "name", name.text)
+                block = ElementTree.Element(str(type(self).__name__))
+                addField(block, "name", name)
                 addField(block, "length", length)
 
                 if min_spots is not None:
-                    addField(block, "min_spots", int(min_spots.txt))
+                    addField(block, "min_spots", min_spots)
 
                 if parameters is not None:
-                    addField(block, "parameters", parameters.text)
+                    addField(block, "parameters", parameters)
 
                 if directory is not None:
-                    addField(block, "directory", directory.text)
+                    addField(block, "directory", directory)
 
                 if overwrite is not None:
-                    addField(block, "overwrite", overwrite.text)
+                    addField(block, "overwrite", overwrite)
+
+                return block
 
     ## getDescriptor
     #
@@ -921,20 +905,20 @@ class DAValveProtocol(DaveAction):
         self.action_type = "kilroy"
         self.properties = {"name" : None}
 
-    ## addToETree
+    ## createETree
     #
-    # Save the information necessary to recreate the action to a XML ElementTree.
+    # @param dict A dictionary.
     #
-    # @param etree The XML ElementTree to add to.
-    # @param node The XML node to parse what to add.
+    # @return A ElementTree object or None.
     #
-    def addToETree(self, etree, node):
+    def createETree(self, dict):
         
         # This overlaps with movie..
-        name = node.find("name")
+        name = dict.get("name")
         if (name is not None):
-            block = ElementTree.SubElement(etree, str(type(self).__name__))
-            addField(block, "name", name.text)
+            block = ElementTree.Element(str(type(self).__name__))
+            addField(block, "name", name)
+            return block
 
     ## getDescriptor
     #
