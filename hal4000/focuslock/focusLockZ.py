@@ -151,6 +151,14 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
             if (signal[1] == "lockJump"):
                 signal[2].connect(self.jump)
 
+    ## getLockedStatus
+    #
+    # @return The current status of the focus lock.
+    #
+    @hdebug.debug
+    def getLockedStatus(self):
+        return self.lock_display1.getLockedStatus()
+
     ## getLockTarget
     #
     # @return The current lock target.

@@ -64,8 +64,10 @@
 #
 # Hazen 12/12
 #
+# Jeff 9/14: Added focus lock buffers to track performance to determine if locked
 
 from PyQt4 import QtCore
+from collections import deque 
 
 # Debugging
 import sc_library.hdebug as hdebug
@@ -100,7 +102,7 @@ import sc_library.hdebug as hdebug
 #   and returns the appropriate response (in um) by the stage.
 #
 class StageQPDThread(QtCore.QThread):
-    controlUpdate = QtCore.pyqtSignal(float, float, float, float)
+    controlUpdate = QtCore.pyqtSignal(float, float, float, float, bool)
     foundSum = QtCore.pyqtSignal(float)
     recenteredPiezo = QtCore.pyqtSignal()
 
@@ -111,11 +113,13 @@ class StageQPDThread(QtCore.QThread):
     # @param lock_fn A function to use in the focus feedback correction loop.
     # @param min_sum The sum below which QPD signal will be considered to have been lost.
     # @param z_center The center position of the piezo.
+    # @param buffer_length The length of the buffers to determine focus lock/performance.
+    # @param offset_thresh The minimum difference between the lock and offset to be considered locked.
     # @param slow_stage (Optional) True/False is communication with the piezo stage slow.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, qpd, stage, lock_fn, min_sum, z_center, slow_stage = False, parent = None):
+    def __init__(self, qpd, stage, lock_fn, min_sum, z_center, buffer_length, offset_thresh, slow_stage = False, parent = None):
         QtCore.QThread.__init__(self, parent)
         self.qpd = qpd
         self.stage = stage
@@ -142,6 +146,12 @@ class StageQPDThread(QtCore.QThread):
 
         self.requested_sum = 0
 
+        self.buffer_length = 10
+        self.offset_thresh = offset_target
+        self.sum_thresh = self.min_sum
+        self.is_locked_buffer = deque([False]*self.buffer_length)
+        self.is_locked = False
+        
         # center the stage
         # self.newZCenter(z_center)
 
@@ -179,6 +189,20 @@ class StageQPDThread(QtCore.QThread):
         self.qpd_mutex.unlock()
         return temp
 
+    ## getLockedStatus()
+    #
+    # @return The status of the focus lock
+    #
+    @hdebug.debug
+    def getLockedStatus(self):
+        if self.qpd_mutex.tryLock(1000):
+            is_locked = self.is_locked
+            self.qpd_mutex.unlock()
+            return is_locked
+        else:
+            print "QPD/Camera are frozen?"
+            return "failed"
+
     ## findSumSignal
     #
     # If sum signal is below a threshold start the sum signal search,
@@ -193,6 +217,7 @@ class StageQPDThread(QtCore.QThread):
             self.max_sum = 0
             self.max_pos = 0
             self.moveStageAbs(0)
+            self.resetBuffer()
             self.qpd_mutex.unlock()
         else:
             self.foundSum.emit(self.sum)
@@ -247,6 +272,14 @@ class StageQPDThread(QtCore.QThread):
         #self.emit(QtCore.SIGNAL("recenteredPiezo()"))
         self.recenteredPiezo.emit()
 
+    ## resetBuffer
+    #
+    # Resets the focus lock buffer.
+    #
+    def resetBuffer(self):
+        self.is_locked_buffer = deque([False]*self.buffer_length)
+        self.is_locked = False
+
     ## run
     #
     # Get the current power and offsets from the QPD. Scan for
@@ -297,8 +330,14 @@ class StageQPDThread(QtCore.QThread):
                     else:
                         self.moveStageRel(self.lock_fn(self.offset - self.target))
 
+                    # Set buffer and determined lock status
+                    is_locked_now = (abs(self.offset - self.target) < self.offset_thresh) and (power > self.sum_thresh)
+                    self.is_locked_buffer.popleft()
+                    self.is_locked_buffer.append(is_locked_now)
+                    self.is_locked = (self.is_locked_buffer.count(True) == self.buffer_length)
+
             #self.emit(QtCore.SIGNAL("controlUpdate(float, float, float, float)"), x_offset, y_offset, power, self.stage_z)
-            self.controlUpdate.emit(x_offset, y_offset, power, self.stage_z)
+            self.controlUpdate.emit(x_offset, y_offset, power, self.stage_z, self.is_locked)
             self.qpd_mutex.unlock()
             self.msleep(1)
 
@@ -319,6 +358,7 @@ class StageQPDThread(QtCore.QThread):
     def setTarget(self, target):
         self.qpd_mutex.lock()
         self.target = target
+        self.resetBuffer()
         self.qpd_mutex.unlock()
 
     ## startLock
@@ -334,6 +374,7 @@ class StageQPDThread(QtCore.QThread):
             self.target = self.offset
         self.qpd_mutex.unlock()
         self.waitForAcknowledgement()
+        self.resetBuffer()
 
     ## stopLock
     #
@@ -347,6 +388,7 @@ class StageQPDThread(QtCore.QThread):
         self.target = None
         self.qpd_mutex.unlock()
         self.waitForAcknowledgement()
+        self.resetBuffer()
 
     ## stopThread
     #
@@ -394,13 +436,15 @@ class MotorStageQPDThread(StageQPDThread):
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, qpd, stage, motor, lock_fn, min_sum, z_center, slow_stage = False, parent = None):
+    def __init__(self, qpd, stage, motor, lock_fn, min_sum, z_center, buffer_length, offset_thresh, slow_stage = False, parent = None):
         StageQPDThread.__init__(self,
                                 qpd,
                                 stage,
                                 lock_fn,
                                 min_sum,
                                 z_center,
+                                buffer_length,
+                                offset_thresh,
                                 slow_stage = slow_stage,
                                 parent = parent)
         self.motor = motor
@@ -459,13 +503,15 @@ class StageCamThread(StageQPDThread):
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, cam, stage, lock_fn, min_sum, z_center, slow_stage = False, parent = None):
+    def __init__(self, cam, stage, lock_fn, min_sum, z_center, buffer_length, offset_thresh, slow_stage = False, parent = None):
         StageQPDThread.__init__(self,
                                 cam,
                                 stage,
                                 lock_fn,
                                 min_sum,
                                 z_center,
+                                buffer_length,
+                                offset_thresh,
                                 slow_stage = slow_stage,
                                 parent = parent)
         self.cam = cam
@@ -541,7 +587,7 @@ class StageCamThread(StageQPDThread):
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
