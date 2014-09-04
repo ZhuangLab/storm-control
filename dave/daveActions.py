@@ -921,20 +921,20 @@ class DAValveProtocol(DaveAction):
         self.action_type = "kilroy"
         self.properties = {"name" : None}
 
-    ## addToETree
+    ## createETree
     #
-    # Save the information necessary to recreate the action to a XML ElementTree.
+    # Generate a Element Tree for the valve protocol specified.
     #
-    # @param etree The XML ElementTree to add to.
-    # @param node The XML node to parse what to add.
+    # @param dictionary A dictionary containing the relevant data to create the element tree
     #
-    def addToETree(self, etree, node):
-        
-        # This overlaps with movie..
-        name = node.find("name")
+    def createETree(self, dictionary):
+        name = dictionary.get("name", None)
         if (name is not None):
-            block = ElementTree.SubElement(etree, str(type(self).__name__))
-            addField(block, "name", name.text)
+            node = ElementTree.Element(str(type(self).__name__))
+            node.text = name
+            return node
+        else:
+            return None
 
     ## getDescriptor
     #
@@ -950,7 +950,7 @@ class DAValveProtocol(DaveAction):
     # @param node The node of an ElementTree.
     #
     def setup(self, node):
-        self.protocol_name = node.find("name").text
+        self.protocol_name = node.text
         self.protocol_is_running = False
 
         self.message = tcpMessage.TCPMessage(message_type = "Kilroy Protocol",
