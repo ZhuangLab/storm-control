@@ -189,10 +189,9 @@ class QOffsetDisplay(QStatusDisplay):
             painter.drawLine(0, self.center_bar, self.x_size, self.center_bar)
 
         # foreground
-        color = QtGui.QColor(0, 255, 0, 200)
+        color = QtGui.QColor(0, 0, 0, 150)
         if self.warning:
-            print "here"
-            color = QtGui.QColor(0, 0, 0, 150)
+            color = QtGui.QColor(0, 255, 0, 200)
         painter.setPen(color)
         painter.setBrush(color)
         painter.drawRect(2, self.y_size - self.value - 2, self.x_size - 5, 3)

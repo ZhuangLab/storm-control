@@ -335,7 +335,7 @@ class StageQPDThread(QtCore.QThread):
                     self.is_locked_buffer.popleft()
                     self.is_locked_buffer.append(is_locked_now)
                     self.is_locked = (self.is_locked_buffer.count(True) == self.buffer_length)
-
+                    
             #self.emit(QtCore.SIGNAL("controlUpdate(float, float, float, float)"), x_offset, y_offset, power, self.stage_z)
             self.controlUpdate.emit(x_offset, y_offset, power, self.stage_z, self.is_locked)
             self.qpd_mutex.unlock()
