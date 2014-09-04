@@ -47,7 +47,60 @@ class XMLRecipeParser(QtGui.QWidget):
 
         self.flat_sequence = []
         self.flat_sequence_xml = []
-        self.flat_sequence_file_path = output_filename
+        self.xml_sequence_file_path = output_filename
+
+        self.da_primitives_xml = []
+
+        self.movie_da_actions = [daveActions.DAMoveStage(),
+                                 daveActions.DASetFocusLockTarget(),
+                                 daveActions.DAFindSum(),
+                                 daveActions.DARecenterPiezo(),
+                                 daveActions.DASetParameters(),
+                                 daveActions.DASetProgression(),
+                                 daveActions.DASetDirectory(),
+                                 daveActions.DADelay(),
+                                 daveActions.DAPause(),
+                                 daveActions.DATakeMovie()]
+
+    # ------------------------------------------------------------------------------------
+    # Make a copy of an etree 
+    # ------------------------------------------------------------------------------------ 
+    def convertToDaveXMLPrimitives(self, primitives_xml, flat_sequence):
+        for child in flat_sequence:
+            if child.tag == "block":
+                block = ElementTree.SubElement(primitives_xml, child.attrib["name"])
+                self.convertToDaveXMLPrimitives(block, child)
+
+            elif child.tag == "movie":
+                movie_block = ElementTree.SubElement(primitives_xml, "branch")
+                name = child.find("name")
+
+                # Determine name.
+                if name is not None:
+                    movie_block.set("name", name.text)
+                else:
+                    movie_block.set("name", "No Name Provided")
+
+                # Determine dictionary
+                movie_dict = [];
+                for element in movie_block:
+                    if element.tag == "progressions":
+                        movie_dict[element.tag] = element
+                    else:
+                        movie_dict[element.tag] = element.text
+                # Build and append primitives
+                for action in self.movie_da_actions:
+                    movie_block.append(action.createETree(movie_dict))
+            
+            elif child.tag == "valve_protocol":
+                primitives_xml.append(daveActions.DAValveProtocols.createETree({"name": child.text}))
+
+            elif child.tag == "change_directory":
+                primitives_xml.append(daveActions.DASetDirectory.createETree({"directory": child.text}))
+            
+            else:
+                pass
+                ## Eventually display an unknown tag error. For now ignore
 
     # ------------------------------------------------------------------------------------
     # Make a copy of an etree 
@@ -214,7 +267,7 @@ class XMLRecipeParser(QtGui.QWidget):
             print "Unexpected contents: " + self.xml_filename
             return ""
 
-        return self.flat_sequence_file_path
+        return self.xml_sequence_file_path
 
 
     # ------------------------------------------------------------------------------------
@@ -247,8 +300,13 @@ class XMLRecipeParser(QtGui.QWidget):
         for command_sequence in self.command_sequences:
             self.copyElementWithLoop(command_sequence, self.flat_sequence)
 
+        # Create Dave Action Primitives
+        self.da_primitives_xml = ElementTree.Element("sequence")
+        self.da_primitives_xml.text = "\n"
+        self.convertToDaveXMLPrimitives(self.da_primitives_xml, self.flat_sequence)
+
         # Create element tree and insert sequence
-        self.flat_sequence_xml = ElementTree.ElementTree(self.flat_sequence)
+        self.flat_sequence_xml = ElementTree.ElementTree(self.da_primitives_xml)
 
         # Save flat sequence
         self.saveFlatSequence()
@@ -263,12 +321,12 @@ class XMLRecipeParser(QtGui.QWidget):
         output_filename = str(QtGui.QFileDialog.getSaveFileName(self, "Generated File", self.directory, "*.xml"))
         try:
             xml_generator.generateXML(self.xml_filename, positions_filename, output_filename, self.directory, self)
-            self.flat_sequence_file_path = output_filename
+            self.xml_sequence_file_path = output_filename
         except:
             QtGui.QMessageBox.information(self,
                                           "XML Generation Error",
                                           traceback.format_exc())
-            self.flat_sequence_file_path = ""
+            self.xml_sequence_file_path = ""
     
     # ------------------------------------------------------------------------------------
     # Find and replace items in command sequence
@@ -297,20 +355,19 @@ class XMLRecipeParser(QtGui.QWidget):
     # Save flat sequence
     # ------------------------------------------------------------------------------------
     def saveFlatSequence(self):
-        if self.flat_sequence_file_path == "":
-            self.flat_sequence_file_path = str(QtGui.QFileDialog.getSaveFileName(self,
+        if self.xml_sequence_file_path == "":
+            self.xml_sequence_file_path = str(QtGui.QFileDialog.getSaveFileName(self,
                                                                                  "Save XML Sequence",
                                                                                  self.directory,
                                                                                  "*.xml"))
-            
         try:
-            self.flat_sequence_xml.write(self.flat_sequence_file_path,
+            self.flat_sequence_xml.write(self.xml_sequence_file_path,
                                          encoding = 'ISO-8859-1',
                                          xml_declaration = True)
         except:
             QtGui.QMessageBox.information(self,"Error",
                                           "Error saving xml file")
-            self.flat_sequence_file_path = ""
+            self.xml_sequence_file_path = ""
 
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
