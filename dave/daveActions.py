@@ -807,12 +807,12 @@ class DATakeMovie(DaveAction):
     # @return A ElementTree object or None.
     #
     def createETree(self, dict):
-        name = node.dict("name")
-        length = node.dict("length")
-        min_spots = node.dict("min_spots")
-        parameters = node.dict("parameters")
-        directory = node.dict("directory")
-        overwrite = node.dict("overwrite")
+        name = dict.get("name")
+        length = dict.get("length")
+        min_spots = dict.get("min_spots")
+        parameters = dict.get("parameters")
+        directory = dict.get("directory")
+        overwrite = dict.get("overwrite")
         if (name is not None) and (length is not None):
             if (length > 0):
                 block = ElementTree.Element(str(type(self).__name__))
