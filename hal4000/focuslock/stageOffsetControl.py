@@ -147,8 +147,8 @@ class StageQPDThread(QtCore.QThread):
         self.requested_sum = 0
 
         self.buffer_length = 10
-        self.offset_thresh = offset_target
-        self.sum_thresh = self.min_sum
+        self.offset_thresh = offset_thresh
+        self.sum_thresh = self.sum_min
         self.is_locked_buffer = deque([False]*self.buffer_length)
         self.is_locked = False
         

@@ -34,7 +34,9 @@ class AFocusLockZ(focusLockZ.FocusLockZQPD):
         control_thread = stageOffsetControl.StageQPDThread(qpd,
                                                            stage,
                                                            lock_fn,
-                                                           50.0, 
+                                                           50.0,
+                                                           10,
+                                                           0.01,
                                                            parameters.get("qpd_zcenter"),
                                                            slow_stage = True)
         ir_laser = LDC210.LDC210("PCIe-6259", 8)

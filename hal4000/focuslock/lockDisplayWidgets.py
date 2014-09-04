@@ -191,6 +191,7 @@ class QOffsetDisplay(QStatusDisplay):
         # foreground
         color = QtGui.QColor(0, 255, 0, 200)
         if self.warning:
+            print "here"
             color = QtGui.QColor(0, 0, 0, 150)
         painter.setPen(color)
         painter.setBrush(color)
