@@ -36,8 +36,8 @@ class AFocusLockZ(focusLockZ.FocusLockZQPD):
                                                            lock_fn,
                                                            50.0,
                                                            parameters.get("qpd_zcenter"),
-                                                           3,
-                                                           0.01,
+                                                           parameters.get("is_locked_buffer_length", 10),
+                                                           parameters.get("is_locked_offset_thresh", 0.01),
                                                            slow_stage = True)
         ir_laser = LDC210.LDC210("PCIe-6259", 8)
         focusLockZ.FocusLockZQPD.__init__(self,

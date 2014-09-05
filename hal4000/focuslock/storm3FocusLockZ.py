@@ -36,7 +36,10 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                                            stage,
                                                            lock_fn,
                                                            50.0,
-                                                           parameters.get("qpd_zcenter"))
+                                                           parameters.get("qpd_zcenter"),
+                                                           parameters.get("is_locked_buffer_length", 10),
+                                                           parameters.get("is_locked_offset_thresh", 0.01))
+)
         #ir_laser = LDC210.LDC210("PCI-6722", 1)
         ir_laser = LDC210.LDC210PWMNI("PCI-MIO-16E-4", 0)
         focusLockZ.FocusLockZCam.__init__(self,
