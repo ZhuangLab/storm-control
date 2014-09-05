@@ -104,6 +104,7 @@ import sc_library.hdebug as hdebug
 class StageQPDThread(QtCore.QThread):
     controlUpdate = QtCore.pyqtSignal(float, float, float, float, bool)
     foundSum = QtCore.pyqtSignal(float)
+    lockStatusRequest = QtCore.pyqtSignal(bool)
     recenteredPiezo = QtCore.pyqtSignal()
 
     ## __init__
@@ -189,12 +190,12 @@ class StageQPDThread(QtCore.QThread):
         self.qpd_mutex.unlock()
         return temp
 
-    ## getLockedStatus()
+    ## getFocusStatus()
     #
     # @return The status of the focus lock
     #
     @hdebug.debug
-    def getLockedStatus(self):
+    def getFocusStatus(self):
         if self.qpd_mutex.tryLock(1000):
             is_locked = self.is_locked
             self.qpd_mutex.unlock()

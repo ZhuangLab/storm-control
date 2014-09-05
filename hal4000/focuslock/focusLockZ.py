@@ -60,6 +60,13 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
         self.parameters = parameters
         self.jumpsize = 0.0
         self.tcp_message = None
+
+        # Qt timer for checking focus lock
+        self.focus_check_timer = QtCore.QTimer()
+        self.focus_check_timer.setSingleShot(True)
+        self.focus_check_timer.timeout.connect(self.tcpPollFocusStatus)
+        self.num_focus_checks = 0
+        self.accum_focus_checks = 0
         
     ## cleanup
     #
@@ -191,6 +198,14 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
                 self.tcpComplete.emit(self.tcp_message)
             else:
                 self.tcpHandleFindSum(message.getData("min_sum"))
+        elif (message.getType() == "Check Focus Lock"):
+            if message.isTest():
+                self.tcpComplete.emit(self.tcp_message)
+            else:
+                self.accum_focus_checks = 0
+                self.num_focus_checks = message.getData("num_focus_checks")
+                self.tcpPollFocusStatus()
+                
         elif (message.getType() == "Set Lock Target"):
             if message.isTest():
                 self.tcpComplete.emit(self.tcp_message)
@@ -427,6 +442,29 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     def tcpHandleSetLockTarget(self, target):
         self.lock_display1.tcpHandleSetLockTarget(target)
 
+    ## tcpPollFocusStatus
+    #
+    # Check the focus lock thread to see if it registers as in focus.
+    #
+    # @return A boolean that determines if the system is in focus.
+    #
+    @hdebug.debug
+    def tcpPollFocusStatus(self):
+        focus_status = self.lock_display1.getFocusStatus()
+
+        if focus_status: # Return message if focus is found
+            self.tcp_message.addResponse("focus_status", focus_status)
+            self.tcpComplete.emit(self.tcp_message)
+
+        else:
+            print "Focus check " + str(self.accum_focus_checks) + ": not in focus"
+            self.accum_focus_checks += 1
+            if self.accum_focus_checks < self.num_focus_checks:
+                self.focus_check_timer.start(100) # Wait one 100 ms then measure again
+            else: # Repeat
+                self.tcp_message.addResponse("focus_status", focus_status)
+                self.tcpComplete.emit(self.tcp_message)
+                
     ## toggleLockButtonDisplay
     #
     # Show/hide the lock button depending on the show parameter.
@@ -467,6 +505,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
         else:
             self.ui.lockButton.setText("Lock")
             self.ui.lockButton.setStyleSheet("QPushButton { color: black}")
+
 
 ## FocusLockZ
 #

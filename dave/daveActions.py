@@ -27,7 +27,6 @@ def addField(block, name, value):
     field.set("type", str(type(value).__name__))
     field.text = str(value)
 
-
 ## DaveAction
 #
 # The base class for a dave action (DA for short).
@@ -251,6 +250,63 @@ class DaveAction(QtCore.QObject):
 # 
 # Specific Actions
 # 
+
+## DACheckFocus
+#
+# This action confirms that the sample is current 'in focus'
+#
+class DACheckFocus(DaveAction):
+
+    ## __init__
+    #
+    def __init__(self):
+        DaveAction.__init__(self)
+
+        self.action_type = "hal"
+
+    ## createETree
+    #
+    # @param dictionary A dictionary.
+    #
+    # @return A ElementTree object or None.
+    #
+    def createETree(self, dictionary):
+        num_focus_checks = dictionary.get("num_focus_checks") # Periodic checks every 100 ms
+        if (num_focus_checks > 0.0):
+            block = ElementTree.Element(str(type(self).__name__))
+            addField(block, "num_focus_checks", num_focus_checks)
+            return block
+
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        return "Confirm Focus (" + str(float(self.num_focus_checks)/10) + " s window)"
+                
+    ## handleReply
+    #
+    # Overload of default handleReply to allow determin
+    #
+    # @param message A TCP message object
+    #
+    def handleReply(self, message):
+        focus_status = message.getResponse("focus_status")
+        if not message.isTest() and not (focus_status == True):
+            message.setError(True, "The focus is not locked.")
+        DaveAction.handleReply(self, message)
+
+    ## setup
+    #
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
+        self.num_focus_checks = int(node.find("num_focus_checks").text)
+        self.message = tcpMessage.TCPMessage(message_type = "Check Focus Lock",
+                                             message_data = {"num_focus_checks": self.num_focus_checks})
+
 
 ## DADelay
 #

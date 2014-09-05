@@ -164,6 +164,13 @@ class LockDisplay(QtGui.QWidget):
         self.stage_z = stage_z
         self.is_locked = is_locked
 
+    ## getFocusStatus
+    #
+    # @return A boolean that determines the focus status, e.g. is the system in focus
+    #
+    def getFocusStatus(self):
+        return self.control_thread.getFocusStatus()
+
     ## getLockModes
     #
     # @return A python array containing all the available lock modes.

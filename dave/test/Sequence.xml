@@ -2,7 +2,7 @@
 <sequence>
   
 
-  <branch name="Movie Loop 0">
+  <branch name="Movie Loop">
     <branch name="No_Parameters_0">
       <DATakeMovie>
         <name type="str">No_Parameters_0</name>
@@ -65,6 +65,19 @@
       </DASetParameters>
       <DATakeMovie>
         <name type="str">Find_Sum_0</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Check_Focus_0">
+      <DACheckFocus>
+        <num_focus_checks type="int">10</num_focus_checks>
+      </DACheckFocus>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Check_Focus_0</name>
         <length type="int">300</length>
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
@@ -170,8 +183,6 @@
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
     </branch>
-  </branch>
-  <branch name="Movie Loop 1">
     <branch name="No_Parameters_1">
       <DAMoveStage>
         <stage_x type="float">0.0</stage_x>
@@ -258,6 +269,23 @@
       </DASetParameters>
       <DATakeMovie>
         <name type="str">Find_Sum_1</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Check_Focus_1">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DACheckFocus>
+        <num_focus_checks type="int">10</num_focus_checks>
+      </DACheckFocus>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Check_Focus_1</name>
         <length type="int">300</length>
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
@@ -395,8 +423,6 @@
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
     </branch>
-  </branch>
-  <branch name="Movie Loop 2">
     <branch name="No_Parameters_2">
       <DAMoveStage>
         <stage_x type="float">10.0</stage_x>
@@ -483,6 +509,23 @@
       </DASetParameters>
       <DATakeMovie>
         <name type="str">Find_Sum_2</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Check_Focus_2">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DACheckFocus>
+        <num_focus_checks type="int">10</num_focus_checks>
+      </DACheckFocus>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Check_Focus_2</name>
         <length type="int">300</length>
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
@@ -620,8 +663,6 @@
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
     </branch>
-  </branch>
-  <branch name="Movie Loop 3">
     <branch name="No_Parameters_3">
       <DAMoveStage>
         <stage_x type="float">10.0</stage_x>
@@ -708,6 +749,23 @@
       </DASetParameters>
       <DATakeMovie>
         <name type="str">Find_Sum_3</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Check_Focus_3">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DACheckFocus>
+        <num_focus_checks type="int">10</num_focus_checks>
+      </DACheckFocus>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Check_Focus_3</name>
         <length type="int">300</length>
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
@@ -845,8 +903,6 @@
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
     </branch>
-  </branch>
-  <branch name="Movie Loop 4">
     <branch name="No_Parameters_4">
       <DAMoveStage>
         <stage_x type="float">0.0</stage_x>
@@ -933,6 +989,23 @@
       </DASetParameters>
       <DATakeMovie>
         <name type="str">Find_Sum_4</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Check_Focus_4">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DACheckFocus>
+        <num_focus_checks type="int">10</num_focus_checks>
+      </DACheckFocus>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Check_Focus_4</name>
         <length type="int">300</length>
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>

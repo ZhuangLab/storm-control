@@ -54,6 +54,15 @@
        <variable_entry name = "Movie Loop" />
     </movie>
 
+    <!-- Check Focus -->
+    <movie>
+       <name increment="Yes">Check_Focus</name>
+       <length>300</length>
+       <parameters>Test_Parameter</parameters>
+       <num_focus_checks>10</num_focus_checks>
+       <variable_entry name = "Movie Loop" />
+    </movie>
+
     <!-- Recenter -->
     <movie>
        <name increment="Yes">Piezo_Recenter</name>
