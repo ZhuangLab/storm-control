@@ -146,7 +146,7 @@ class StageQPDThread(QtCore.QThread):
 
         self.requested_sum = 0
 
-        self.buffer_length = 10
+        self.buffer_length = buffer_length
         self.offset_thresh = offset_thresh
         self.sum_thresh = self.sum_min
         self.is_locked_buffer = deque([False]*self.buffer_length)
@@ -334,7 +334,7 @@ class StageQPDThread(QtCore.QThread):
                     is_locked_now = (abs(self.offset - self.target) < self.offset_thresh) and (power > self.sum_thresh)
                     self.is_locked_buffer.popleft()
                     self.is_locked_buffer.append(is_locked_now)
-                    self.is_locked = (self.is_locked_buffer.count(True) == self.buffer_length)
+                    self.is_locked = (self.is_locked_buffer.count(True) == self.buffer_length) # 3/4: Kludge to account for periodic jumps in camera based focus lock
                     
             #self.emit(QtCore.SIGNAL("controlUpdate(float, float, float, float)"), x_offset, y_offset, power, self.stage_z)
             self.controlUpdate.emit(x_offset, y_offset, power, self.stage_z, self.is_locked)
