@@ -678,18 +678,20 @@ class Dave(QtGui.QMainWindow):
                                           "Please pause or abort current run")
         if not self.running:
             model = False
+            no_error = True
             try:
                 model = sequenceViewer.parseSequenceFile(sequence_filename)
 
             except:
                 try:
                     generated_xml_file = sequenceGenerator.generate(self, sequence_filename)
-                    model = sequenceViewer.parseSequenceFile(sequence_filename)
+                    model = sequenceViewer.parseSequenceFile(generated_xml_file)
                 except:         
                     QtGui.QMessageBox.information(self,
                                                   "Error Loading Sequence",
                                                   traceback.format_exc())
-            else:
+                    no_error = False
+            if no_error:
                 self.ui.commandSequenceTreeView.setModel(model)
                 self.skip_warning = False #Enable warnings for invalid commands
                 self.sequence_validated = False #Mark sequence as unvalidated
