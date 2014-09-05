@@ -91,7 +91,8 @@ class DaveCommandTreeViewer(QtGui.QTreeView):
         self.setHeaderHidden(True)
 
         self.clicked.connect(self.handleClick)
-
+        self.doubleClicked.connect(self.handleDoubleClick)
+        
     ## abort
     #
     # Sets the abort flag to True & resets the model.
@@ -185,6 +186,16 @@ class DaveCommandTreeViewer(QtGui.QTreeView):
             if (qt_item.type() == DaveActionType):
                 self.update.emit(qt_item.getDaveAction().getLongDescriptor())
 
+    ## handleDoubleClick
+    #
+    # @param model_index The QModelIndex of the time that was doubled clicked.
+    #
+    def handleDoubleClick(self, model_index):
+        if self.dv_model is not None:
+            qt_item = self.dv_model.itemFromIndex(model_index)
+            if (qt_item.type() == DaveActionType):
+                self.double_clicked.emit(qt_item)
+    
     ## haveNextItem
     #
     # @return True/False if there is a next item available.
@@ -252,9 +263,9 @@ class DaveCommandTreeViewer(QtGui.QTreeView):
     #
     # @param an_action The DaveActionStandardItem to use as the current item.
     #
-    def setCurrentItem(self, an_item):
+    def setCurrentAction(self, an_item):
         if self.dv_model is not None:
-            self.dv_model.setCurrentItem(an_item)
+            self.dv_model.setCurrentAction(an_item)
             self.viewportUpdate()
 
     ## setModel
