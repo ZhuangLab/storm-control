@@ -47,9 +47,9 @@ def generate(parent, xml_file, position_file, generated_file):
     xml_in = ElementTree.parse(xml_file).getroot()
 
     # Load "header" info.
-    x_offset = nodeToDict.gf("x_offset", float, 0.0)(xml_in)
-    y_offset = nodeToDict.gf("y_offset", float, 0.0)(xml_in)
-    delay = nodeToDict.gf("delay", int, 0)(xml_in)
+    x_offset = nodeToDict.gf("x_offset", [float], 0.0)(xml_in)
+    y_offset = nodeToDict.gf("y_offset", [float], 0.0)(xml_in)
+    delay = nodeToDict.gf("delay", [int], 0)(xml_in)
 
     # Create instances of all the supported actions
     # in the order in which they should occur.
