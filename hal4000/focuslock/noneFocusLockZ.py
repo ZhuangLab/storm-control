@@ -27,7 +27,9 @@ class AFocusLockZ(focusLockZ.FocusLockZQPD):
         control_thread = stageOffsetControl.StageQPDThread(qpd,
                                                            stage,
                                                            lock_fn,
-                                                           50.0, 
+                                                           50.0,
+                                                           parameters.get("is_locked_buffer_length", 10),
+                                                           parameters.get("is_locked_offset_thresh", 0.01),
                                                            parameters.get("qpd_zcenter"))
         ir_laser = noneWidgets.IRLaser()
         focusLockZ.FocusLockZQPD.__init__(self,
