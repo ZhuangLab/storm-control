@@ -7,20 +7,20 @@
 # Hazen 09/14
 #
 
-
-## getField
+## gf
 #
-# Return the value of a field, or default_value if the field does not exist.
+# Return a function that can be used to extract the value of a field from an ElementTree node.
+#  Function arguments:
+#   param: node A ElementTree xml node.
 #
-# @param node A ElementTree xml node.
 # @param field The name of the field (or None).
 # @param convert_fn The function to use for conversion, or None if no conversion is desired.
-# @param default (Optional) The value to return if the field is not found.
+# @param default_value (Optional) The value to return if the field is not found.
 #
-# @return The field converted with convert_fn or default_value if the field is not found.
+# @return A function for extracting a field from an ElementTree node.
 #
-def gf(convert_fn, default_value = None):
-    def getField(node, field):
+def gf(field, convert_fn, default_value = None):
+    def getField(node):
         temp = node.find(field)
         if temp is not None:
             if convert_fn is not None:
@@ -31,13 +31,20 @@ def gf(convert_fn, default_value = None):
             return default_value
     return getField
 
-movie_node_conversion = {"delay" : gf(int, 0),
-                         "directory" : gf(str),
-                         "length" : gf(int),
-                         "name" : gf(str),
-                         "min_spots" : gf(int),
-                         "overwrite" : gf(bool),
-                         "parameters" : gf(str)}
+movie_node_conversion = {"delay" : gf("delay", int),
+                         "directory" : gf("directory", str),
+                         "find_sum" : gf("find_sum", int),
+                         "length" : gf("length", int),
+                         "lock_target" : gf("lock_target", float),
+                         "name" : gf("name", str),
+                         "min_spots" : gf("min_spots", int),
+                         "overwrite" : gf("overwrite", bool),
+                         "parameters" : gf("parameters", str),
+                         "pause" : gf("pause", bool),
+                         "progression" : gf("progression", None),
+                         "recenter" : gf("recenter", bool),
+                         "stage_x" : gf("stage_x", float),
+                         "stage_y" : gf("stage_y", float)}
 
 ## movieNodeToDict
 #
@@ -50,7 +57,7 @@ movie_node_conversion = {"delay" : gf(int, 0),
 def movieNodeToDict(movie_node):
     dict = {}
     for field in movie_node_conversion.keys():
-        value = movie_node_conversion[field](movie_node, field)
+        value = movie_node_conversion[field](movie_node)
         if value is not None:
             dict[field] = value
     return dict
