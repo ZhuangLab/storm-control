@@ -355,7 +355,7 @@ class StageQPDThread(QtCore.QThread):
     #
     # @param offset_thresh The minimum distance to the lock target to be considered 'in focus'.
     #
-    def setOffsetThreshold(self, offset_thresh)
+    def setOffsetThreshold(self, offset_thresh):
         self.qpd_mutex.lock()
         self.offset_thresh = offset_thresh
         self.resetBuffer()
@@ -374,7 +374,7 @@ class StageQPDThread(QtCore.QThread):
     #
     # @param sum_thresh The minimum sum value to consider the focus locked.
     #
-    def setSumThreshold(self, sum_thresh)
+    def setSumThreshold(self, sum_thresh):
         self.qpd_mutex.lock()
         self.sum_thresh = sum_thresh
         self.resetBuffer()
