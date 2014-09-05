@@ -83,6 +83,10 @@ class XMLRecipeParser(QtGui.QWidget):
     # @param flat_sequence The element tree that contains a flat sequence of higher order commands, e.g. <movie>
     #
     def convertToDaveXMLPrimitives(self, primitives_xml, flat_sequence):
+        if self.verbose:
+            print "---------------------------------------------------------"
+            print "Converting to Dave Primitives"
+        
         # Loop over all children
         for child in flat_sequence:
             if child.tag == "branch": # Generate block and call recursively to handle elements in blocks
@@ -121,14 +125,14 @@ class XMLRecipeParser(QtGui.QWidget):
                 pass
                 ## Eventually display an unknown tag error. For now ignore
 
-    ## copyElementWithLoop
+    ## copyChildren
     #
-    # Handles copying elements within a <loop> tag to a flat sequence
+    # Handles copying children of the specified parent to the new_parent specifically handling <loop> and <variable_entry> tags
     #
     # @param parent The element tree to be copied
     # @param new_parent The element tree that will contain the flat sequence
     #       
-    def copyElementWithLoop(self, parent, new_parent):
+    def copyChildren(self, parent, new_parent):
         for child in parent:
             if child.tag == "loop":
                 self.handleLoop(child, new_parent)
@@ -147,14 +151,14 @@ class XMLRecipeParser(QtGui.QWidget):
                 if child.tail == None: new_child.tail = ""
                 else: new_child.tail = str(child.tail)
                 del new_child.attrib["increment"]
-                self.copyElementWithLoop(child, new_child)
+                self.copyChildren(child, new_child)
             else:
                 new_child = ElementTree.SubElement(new_parent, child.tag, child.attrib)
                 if child.text == None: new_child.text = ""
                 else: new_child.text = str(child.text)
                 if child.tail == None: new_child.tail = ""
                 else: new_child.tail = str(child.tail)
-                self.copyElementWithLoop(child, new_child)
+                self.copyChildren(child, new_child)
 
         return new_parent
 
@@ -162,18 +166,18 @@ class XMLRecipeParser(QtGui.QWidget):
     #
     # Handles iteration of loop variables and naming of branches corresponding to loops
     #
-    # @param loop The loop to be copied
+    # @param loop The element whos children should be copied and replicated
     # @param new_parent The element tree that will contain the flat sequence
     #             
     def handleLoop(self, loop, new_parent):
         loop_name = loop.attrib["name"]
         loop_ID = self.loop_variable_names.index(loop_name)
+        loop_block = ElementTree.Element("branch")
+        loop_block.attrib["name"] = loop_name
         for local_iterator in range(len(self.loop_variables[loop_ID])):
-            self.loop_iterator[loop_ID] = local_iterator
-            loop_block = ElementTree.Element("branch")
-            loop_block.attrib["name"] = loop_name + " " + str(local_iterator)
-            self.copyElementWithLoop(loop, loop_block)
-            new_parent.append(loop_block)
+            self.loop_iterator[loop_ID] = local_iterator # Store iterator for updating names
+            self.copyChildren(loop, loop_block)
+        new_parent.append(loop_block)
         self.loop_iterator[loop_ID] = -1
 
     ## handleVariableEntry
@@ -193,7 +197,7 @@ class XMLRecipeParser(QtGui.QWidget):
         last_child = variable_entry[-1]
         last_child.tail = "\n"
         
-        self.copyElementWithLoop(variable_entry, new_parent)
+        self.copyChildren(variable_entry, new_parent)
         
     ## loadXML
     #
@@ -338,7 +342,7 @@ class XMLRecipeParser(QtGui.QWidget):
 
         # Fill sequence from command sequence elements
         for command_sequence in self.command_sequences:
-            self.copyElementWithLoop(command_sequence, self.flat_sequence)
+            self.copyChildren(command_sequence, self.flat_sequence)
 
         # Create Dave action primitives
         self.da_primitives_xml = ElementTree.Element("sequence")
@@ -414,13 +418,14 @@ class XMLRecipeParser(QtGui.QWidget):
                                           "Error saving xml file")
             self.xml_sequence_file_path = ""
 
-
     ## writtenXMLPath
     #
     # Determine if an XML file was written.
     #
     def writtenXMLPath(self):
         return self.xml_sequence_file_path
+
+
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
 # ----------------------------------------------------------------------------------------

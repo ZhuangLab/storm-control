@@ -85,13 +85,13 @@
         <parameters type="str">Test_Parameter</parameters>
       </DASetParameters>
       <DASetDirectory>
-        <directory type="str">C:\Users\Data\Log</directory>
+        <directory type="str">C:\data\test</directory>
       </DASetDirectory>
       <DATakeMovie>
         <name type="str">Change_Directory_0</name>
         <length type="int">300</length>
         <parameters type="str">Test_Parameter</parameters>
-        <directory type="str">C:\Users\Data\Log</directory>
+        <directory type="str">C:\data\test</directory>
       </DATakeMovie>
     </branch>
     <branch name="Delay_0">
@@ -286,13 +286,13 @@
         <parameters type="str">Test_Parameter</parameters>
       </DASetParameters>
       <DASetDirectory>
-        <directory type="str">C:\Users\Data\Log</directory>
+        <directory type="str">C:\data\test</directory>
       </DASetDirectory>
       <DATakeMovie>
         <name type="str">Change_Directory_1</name>
         <length type="int">300</length>
         <parameters type="str">Test_Parameter</parameters>
-        <directory type="str">C:\Users\Data\Log</directory>
+        <directory type="str">C:\data\test</directory>
       </DATakeMovie>
     </branch>
     <branch name="Delay_1">
@@ -511,13 +511,13 @@
         <parameters type="str">Test_Parameter</parameters>
       </DASetParameters>
       <DASetDirectory>
-        <directory type="str">C:\Users\Data\Log</directory>
+        <directory type="str">C:\data\test</directory>
       </DASetDirectory>
       <DATakeMovie>
         <name type="str">Change_Directory_2</name>
         <length type="int">300</length>
         <parameters type="str">Test_Parameter</parameters>
-        <directory type="str">C:\Users\Data\Log</directory>
+        <directory type="str">C:\data\test</directory>
       </DATakeMovie>
     </branch>
     <branch name="Delay_2">
@@ -736,13 +736,13 @@
         <parameters type="str">Test_Parameter</parameters>
       </DASetParameters>
       <DASetDirectory>
-        <directory type="str">C:\Users\Data\Log</directory>
+        <directory type="str">C:\data\test</directory>
       </DASetDirectory>
       <DATakeMovie>
         <name type="str">Change_Directory_3</name>
         <length type="int">300</length>
         <parameters type="str">Test_Parameter</parameters>
-        <directory type="str">C:\Users\Data\Log</directory>
+        <directory type="str">C:\data\test</directory>
       </DATakeMovie>
     </branch>
     <branch name="Delay_3">
@@ -961,13 +961,13 @@
         <parameters type="str">Test_Parameter</parameters>
       </DASetParameters>
       <DASetDirectory>
-        <directory type="str">C:\Users\Data\Log</directory>
+        <directory type="str">C:\data\test</directory>
       </DASetDirectory>
       <DATakeMovie>
         <name type="str">Change_Directory_4</name>
         <length type="int">300</length>
         <parameters type="str">Test_Parameter</parameters>
-        <directory type="str">C:\Users\Data\Log</directory>
+        <directory type="str">C:\data\test</directory>
       </DATakeMovie>
     </branch>
     <branch name="Delay_4">
