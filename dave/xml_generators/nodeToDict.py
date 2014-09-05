@@ -19,32 +19,34 @@
 #
 # @return A function for extracting a field from an ElementTree node.
 #
-def gf(field, convert_fn, default_value = None):
+def gf(field, convert_fns, default_value = None):
     def getField(node):
         temp = node.find(field)
         if temp is not None:
-            if convert_fn is not None:
-                return convert_fn(temp.text)
-            else:
-                return temp
+            for convert_fn in convert_fns:
+                try:
+                    return convert_fn(temp.text)
+                except:
+                    pass
+            return temp # No conversion
         else:
             return default_value
     return getField
 
-movie_node_conversion = {"delay" : gf("delay", int),
-                         "directory" : gf("directory", str),
-                         "find_sum" : gf("find_sum", float),
-                         "length" : gf("length", int),
-                         "lock_target" : gf("lock_target", float),
-                         "name" : gf("name", str),
-                         "min_spots" : gf("min_spots", int),
-                         "overwrite" : gf("overwrite", bool),
-                         "parameters" : gf("parameters", str),
-                         "pause" : gf("pause", bool),
-                         "progression" : gf("progression", None),
-                         "recenter" : gf("recenter", bool),
-                         "stage_x" : gf("stage_x", float),
-                         "stage_y" : gf("stage_y", float)}
+movie_node_conversion = {"delay" : gf("delay", [int]),
+                         "directory" : gf("directory", [str]),
+                         "find_sum" : gf("find_sum", [float]),
+                         "length" : gf("length", [int]),
+                         "lock_target" : gf("lock_target", [float]),
+                         "name" : gf("name", [str]),
+                         "min_spots" : gf("min_spots", [int]),
+                         "overwrite" : gf("overwrite", [bool]),
+                         "parameters" : gf("parameters", [int,str]),
+                         "pause" : gf("pause", [bool]),
+                         "progression" : gf("progression", [None]),
+                         "recenter" : gf("recenter", [bool]),
+                         "stage_x" : gf("stage_x", [float]),
+                         "stage_y" : gf("stage_y", [float])}
 
 ## movieNodeToDict
 #
