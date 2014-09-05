@@ -145,7 +145,6 @@ class DaveAction(QtCore.QObject):
     def getLongDescriptor(self):
         if self.message is not None:
             mdict = self.message.getMessageData()
-            print mdict
             data = []
             for key in sorted(mdict):
                 data.append([key, mdict[key]])
