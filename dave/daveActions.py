@@ -476,9 +476,8 @@ class DAPause(DaveAction):
     # @return A ElementTree object or None.
     #
     def createETree(self, dict):
-        first_movie = dict.get("first_movie")
         pause = dict.get("pause")
-        if (first_movie is not None) or (pause is not None):
+        if (pause is not None):
             block = ElementTree.Element(str(type(self).__name__))
             return block
         
