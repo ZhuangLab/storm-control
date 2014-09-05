@@ -377,20 +377,22 @@ class Dave(QtGui.QMainWindow):
     # @param file_path Path to file dragged into Dave.
     #
     def handleDragDropFile(self, file_path):
-        if self.running:
-            QtGui.QMessageBox.information(self,
-                                          "New Sequence Request",
-                                          "Please pause or abort current")
-        else:
-            recipe_parser = recipeParser.XMLRecipeParser(verbose = True)
-            (xml, xml_file_path) = recipe_parser.loadXML(file_path)
-            root = xml.getroot()
-            if root.tag == "recipe" or root.tag == "experiment":
-                output_filename = recipe_parser.parseXML(xml_file_path)
-                if os.path.isfile(output_filename):
-                    self.newSequence(output_filename)
-            elif root.tag == "sequence":
-                self.newSequence(xml_file_path)
+        self.newSequence(file_path)
+
+#        if self.running:
+#            QtGui.QMessageBox.information(self,
+#                                          "New Sequence Request",
+#                                          "Please pause or abort current")
+#        else:
+#            recipe_parser = recipeParser.XMLRecipeParser(verbose = True)
+#            (xml, xml_file_path) = recipe_parser.loadXML(file_path)
+#            root = xml.getroot()
+#            if root.tag == "recipe" or root.tag == "experiment":
+#                output_filename = recipe_parser.parseXML(xml_file_path)
+#                if os.path.isfile(output_filename):
+#                    self.newSequence(output_filename)
+#            elif root.tag == "sequence":
+#                self.newSequence(xml_file_path)
         
     ## handleGenerateXML
     #
