@@ -33,6 +33,20 @@ def gf(field, convert_fns, default_value = None):
             return default_value
     return getField
 
+## booleanConversion
+#
+# Return a boolean based on the string or integer value of entry
+#
+# @parame value The value to be converted
+#
+# @return A boolean based on the value of entry
+#
+def boolConv(value):
+    if (value == "False") or (value == "false") or (value == 0):
+        return False
+    else:
+        return True
+
 movie_node_conversion = {"delay" : gf("delay", [int]),
                          "directory" : gf("directory", [str]),
                          "find_sum" : gf("find_sum", [float]),
@@ -40,11 +54,11 @@ movie_node_conversion = {"delay" : gf("delay", [int]),
                          "lock_target" : gf("lock_target", [float]),
                          "name" : gf("name", [str]),
                          "min_spots" : gf("min_spots", [int]),
-                         "overwrite" : gf("overwrite", [bool]),
+                         "overwrite" : gf("overwrite", [boolConv]),
                          "parameters" : gf("parameters", [int,str]),
-                         "pause" : gf("pause", [bool]),
+                         "pause" : gf("pause", [boolConv]),
                          "progression" : gf("progression", [None]),
-                         "recenter" : gf("recenter", [bool]),
+                         "recenter" : gf("recenter", [boolConv]),
                          "stage_x" : gf("stage_x", [float]),
                          "stage_y" : gf("stage_y", [float])}
 
