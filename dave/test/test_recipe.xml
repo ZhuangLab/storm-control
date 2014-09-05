@@ -59,7 +59,7 @@
        <name increment="Yes">Check_Focus</name>
        <length>300</length>
        <parameters>Test_Parameter</parameters>
-       <num_focus_checks>10</num_focus_checks>
+       <num_focus_checks>30</num_focus_checks>
        <variable_entry name = "Movie Loop" />
     </movie>
 
