@@ -192,7 +192,8 @@ class Dave(QtGui.QMainWindow):
         self.ui.smtpServerLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.toAddressLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.validateSequenceButton.clicked.connect(self.handleValidateCommandSequence)
-                                                      
+        self.ui.commandSequenceTreeView.double_clicked.connect(self.handleDoubleClick)
+                              
         # Load saved notifications settings.
         self.noti_settings = [[self.ui.fromAddressLineEdit, "from_address"],
                               [self.ui.fromPasswordLineEdit, "from_password"],
@@ -219,7 +220,6 @@ class Dave(QtGui.QMainWindow):
         self.command_engine.done.connect(self.handleDone)
         self.command_engine.problem.connect(self.handleProblem)
         self.command_engine.paused.connect(self.handlePauseFromCommandEngine)
-
 
     ## cleanUp
     #
@@ -323,6 +323,27 @@ class Dave(QtGui.QMainWindow):
             model.appendRow(items)
         self.ui.commandTableView.setModel(model)
 
+    ## handleDoubleClick
+    #
+    # Change the current command to the command that has been double clicked.
+    #
+    # @param item The Dave Action item double clicked.
+    #
+    def handleDoubleClick(self, item):
+        # Confirm that you want to change to the current command
+        messageBox = QtGui.QMessageBox(parent = self)
+        messageBox.setWindowTitle("Change Command?")
+        messageBox.setText("Are you sure you want to change the command?")
+        messageBox.setStandardButtons(QtGui.QMessageBox.Cancel |
+                                      QtGui.QMessageBox.Ok)
+        messageBox.setDefaultButton(QtGui.QMessageBox.Cancel)
+        button_ID = messageBox.exec_()
+
+        if (button_ID == QtGui.QMessageBox.Ok):
+            self.ui.commandSequenceTreeView.setCurrentAction(item)    
+        else:
+            pass
+
     ## handleDone
     #
     # Handles completion of the current command engine.  
@@ -378,21 +399,6 @@ class Dave(QtGui.QMainWindow):
     #
     def handleDragDropFile(self, file_path):
         self.newSequence(file_path)
-
-#        if self.running:
-#            QtGui.QMessageBox.information(self,
-#                                          "New Sequence Request",
-#                                          "Please pause or abort current")
-#        else:
-#            recipe_parser = recipeParser.XMLRecipeParser(verbose = True)
-#            (xml, xml_file_path) = recipe_parser.loadXML(file_path)
-#            root = xml.getroot()
-#            if root.tag == "recipe" or root.tag == "experiment":
-#                output_filename = recipe_parser.parseXML(xml_file_path)
-#                if os.path.isfile(output_filename):
-#                    self.newSequence(output_filename)
-#            elif root.tag == "sequence":
-#                self.newSequence(xml_file_path)
         
     ## handleGenerateXML
     #
@@ -591,6 +597,9 @@ class Dave(QtGui.QMainWindow):
     @hdebug.debug
     def handleSelectButton(self, boolean):
         pass
+
+#        ui.commandSequenceTreeView.setCurrentItem
+ #   
 #        # Force manual conformation of abort
 #        messageBox = QtGui.QMessageBox(parent = self)
 #        messageBox.setWindowTitle("Change Command?")
@@ -728,7 +737,6 @@ class Dave(QtGui.QMainWindow):
     #
     def updateRunStatusDisplay(self):
         self.ui.progressBar.setValue(self.ui.commandSequenceTreeView.getCurrentIndex())
-        #self.ui.currentCommand.setText(self.ui.commandSequenceTreeView.getCurrentItem().getDaveAction().getLongDescriptor())
         
     ## validateAndStartTCP
     #
@@ -740,7 +748,6 @@ class Dave(QtGui.QMainWindow):
         self.needs_hal = False
         self.needs_kilroy = False
         types = self.ui.commandSequenceTreeView.getActionTypes()
-        print types
         if ("hal" in types):
             self.needs_hal = True
         if ("kilroy" in types):
