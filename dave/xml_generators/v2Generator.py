@@ -62,7 +62,7 @@ class XMLRecipeParser(QtGui.QWidget):
         self.flat_sequence = []
         self.flat_sequence_xml = []
         self.xml_sequence_file_path = output_filename
-
+        
         self.da_primitives_xml = []
 
         # A convenient list of dave actions required for parsing a <movie> tag
@@ -402,17 +402,25 @@ class XMLRecipeParser(QtGui.QWidget):
                                                                                  "Save XML Sequence",
                                                                                  self.directory,
                                                                                  "*.xml"))
-        #try:
-        out_fp = open(self.xml_sequence_file_path, "w")
-        rough_string = ElementTree.tostring(self.da_primitives_xml, 'utf-8')        
-        reparsed = minidom.parseString(rough_string)
-        out_fp.write(reparsed.toprettyxml(indent="  ", encoding = "ISO-8859-1"))
-        out_fp.close()
-        #except:
-        #    QtGui.QMessageBox.information(self,"Error",
-        #                                  "Error saving xml file")
-        #    self.xml_sequence_file_path = ""
+        try:
+            out_fp = open(self.xml_sequence_file_path, "w")
+            rough_string = ElementTree.tostring(self.da_primitives_xml, 'utf-8')        
+            reparsed = minidom.parseString(rough_string)
+            out_fp.write(reparsed.toprettyxml(indent="  ", encoding = "ISO-8859-1"))
+            out_fp.close()
+            self.wrote_XML = True
+        except:
+            QtGui.QMessageBox.information(self,"Error",
+                                          "Error saving xml file")
+            self.xml_sequence_file_path = ""
 
+
+    ## writtenXMLPath
+    #
+    # Determine if an XML file was written.
+    #
+    def writtenXMLPath(self):
+        return self.xml_sequence_file_path
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
 # ----------------------------------------------------------------------------------------

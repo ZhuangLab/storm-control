@@ -680,10 +680,15 @@ class Dave(QtGui.QMainWindow):
             model = False
             try:
                 model = sequenceViewer.parseSequenceFile(sequence_filename)
+
             except:
-                QtGui.QMessageBox.information(self,
-                                              "Error Loading Sequence",
-                                              traceback.format_exc())
+                try:
+                    generated_xml_file = sequenceGenerator.generate(self, sequence_filename)
+                    model = sequenceViewer.parseSequenceFile(sequence_filename)
+                except:         
+                    QtGui.QMessageBox.information(self,
+                                                  "Error Loading Sequence",
+                                                  traceback.format_exc())
             else:
                 self.ui.commandSequenceTreeView.setModel(model)
                 self.skip_warning = False #Enable warnings for invalid commands

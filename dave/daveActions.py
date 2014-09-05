@@ -145,6 +145,7 @@ class DaveAction(QtCore.QObject):
     def getLongDescriptor(self):
         if self.message is not None:
             mdict = self.message.getMessageData()
+            print mdict
             data = []
             for key in sorted(mdict):
                 data.append([key, mdict[key]])
@@ -393,7 +394,7 @@ class DAFindSum(DaveAction):
     # @param node The node of an ElementTree.
     #
     def setup(self, node):
-        self.min_sum = int(node.find("min_sum").text)
+        self.min_sum = float(node.find("min_sum").text)
         self.message = tcpMessage.TCPMessage(message_type = "Find Sum",
                                              message_data = {"min_sum": self.min_sum})
 

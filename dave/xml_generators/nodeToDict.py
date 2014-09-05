@@ -33,7 +33,7 @@ def gf(field, convert_fn, default_value = None):
 
 movie_node_conversion = {"delay" : gf("delay", int),
                          "directory" : gf("directory", str),
-                         "find_sum" : gf("find_sum", int),
+                         "find_sum" : gf("find_sum", float),
                          "length" : gf("length", int),
                          "lock_target" : gf("lock_target", float),
                          "name" : gf("name", str),

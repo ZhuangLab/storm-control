@@ -47,14 +47,10 @@ def generate(parent, xml_file):
 
     # Version 2 XML format.
     elif (root_element == "recipe"):
-        generated_file = str(QtGui.QFileDialog.getSaveFileName(parent, 
-                                                               "Generated File", 
-                                                               directory, 
-                                                               "*.xml"))
-        if (len(generated_file)>0):
-            is_good = v2Generator.generate(xml_filename = xml_file,
-                                           output_filename = generated_file)
-
+        xml_parser = v2Generator.XMLRecipeParser(xml_filename = xml_file)
+        xml_parser.parseXML()
+        generated_file = xml_parser.writtenXMLPath()
+        is_good = not (generated_file == "")
     if is_good:
         return generated_file
     else:
