@@ -16,9 +16,11 @@
 # 
 import os, sys
 from xml.etree import ElementTree
+from xml.dom import minidom
 from PyQt4 import QtCore, QtGui
-import xml_generator
+import xml_generators.nodeToDict as nodeToDict
 import traceback
+import daveActions
 
 ## XMLRecipeParser
 # 
@@ -83,9 +85,10 @@ class XMLRecipeParser(QtGui.QWidget):
     def convertToDaveXMLPrimitives(self, primitives_xml, flat_sequence):
         # Loop over all children
         for child in flat_sequence:
-            if child.tag == "block": # Generate block and call recursively to handle elements in blocks
-                block = ElementTree.SubElement(primitives_xml, child.attrib["name"])
-                self.convertToDaveXMLPrimitives(block, child)
+            if child.tag == "branch": # Generate block and call recursively to handle elements in blocks
+                branch = ElementTree.SubElement(primitives_xml, "branch")
+                branch.attrib["name"] = child.attrib["name"]
+                self.convertToDaveXMLPrimitives(branch, child)
             
             elif child.tag == "movie": # Handle <movie> tag
                 movie_block = ElementTree.SubElement(primitives_xml, "branch")
@@ -98,21 +101,21 @@ class XMLRecipeParser(QtGui.QWidget):
                     movie_block.set("name", "No Name Provided")
 
                 # Determine dictionary
-                movie_dict = [];
-                for element in movie_block:
-                    if element.tag == "progressions":
-                        movie_dict[element.tag] = element
-                    else:
-                        movie_dict[element.tag] = element.text
-                # Build and append primitives
+                movie_dict = nodeToDict.movieNodeToDict(child)
                 for action in self.movie_da_actions:
-                    movie_block.append(action.createETree(movie_dict))
+                    new_node = action.createETree(movie_dict)
+                    if new_node is not None:
+                        movie_block.append(new_node)
             
             elif child.tag == "valve_protocol": # Handle <valve_protocol> tag
-                primitives_xml.append(daveActions.DAValveProtocols.createETree({"name": child.text}))
+                new_node = daveActions.DAValveProtocol().createETree({"name": child.text})
+                if new_node is not None:
+                    primitives_xml.append(new_node)
 
             elif child.tag == "change_directory": # Handle change_directory tag
-                primitives_xml.append(daveActions.DASetDirectory.createETree({"directory": child.text}))
+                new_node = daveActions.DASetDirectory().createETree({"directory": child.text})
+                if new_node is not None:
+                    primitives_xml.append(new_node)
             
             else:
                 pass
@@ -157,7 +160,7 @@ class XMLRecipeParser(QtGui.QWidget):
 
     ## handleLoop
     #
-    # Handles iteration of loop variables and naming of blocks corresponding to loops
+    # Handles iteration of loop variables and naming of branches corresponding to loops
     #
     # @param loop The loop to be copied
     # @param new_parent The element tree that will contain the flat sequence
@@ -167,7 +170,7 @@ class XMLRecipeParser(QtGui.QWidget):
         loop_ID = self.loop_variable_names.index(loop_name)
         for local_iterator in range(len(self.loop_variables[loop_ID])):
             self.loop_iterator[loop_ID] = local_iterator
-            loop_block = ElementTree.Element("block")
+            loop_block = ElementTree.Element("branch")
             loop_block.attrib["name"] = loop_name + " " + str(local_iterator)
             self.copyElementWithLoop(loop, loop_block)
             new_parent.append(loop_block)
@@ -342,9 +345,6 @@ class XMLRecipeParser(QtGui.QWidget):
         self.da_primitives_xml.text = "\n"
         self.convertToDaveXMLPrimitives(self.da_primitives_xml, self.flat_sequence)
 
-        # Create element tree and insert sequence
-        self.da_primitives_xml = ElementTree.ElementTree(self.da_primitives_xml)
-
         # Save dave primitives
         self.saveDavePrimitives()
 
@@ -402,14 +402,16 @@ class XMLRecipeParser(QtGui.QWidget):
                                                                                  "Save XML Sequence",
                                                                                  self.directory,
                                                                                  "*.xml"))
-        try:
-            self.flat_sequence_xml.write(self.da_primitives_xml,
-                                         encoding = 'ISO-8859-1',
-                                         xml_declaration = True)
-        except:
-            QtGui.QMessageBox.information(self,"Error",
-                                          "Error saving xml file")
-            self.xml_sequence_file_path = ""
+        #try:
+        out_fp = open(self.xml_sequence_file_path, "w")
+        rough_string = ElementTree.tostring(self.da_primitives_xml, 'utf-8')        
+        reparsed = minidom.parseString(rough_string)
+        out_fp.write(reparsed.toprettyxml(indent="  ", encoding = "ISO-8859-1"))
+        out_fp.close()
+        #except:
+        #    QtGui.QMessageBox.information(self,"Error",
+        #                                  "Error saving xml file")
+        #    self.xml_sequence_file_path = ""
 
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class

@@ -89,7 +89,7 @@ class DaveAction(QtCore.QObject):
     #
     # @return A ElementTree object or None.
     #
-    def createETree(self, dict):
+    def createETree(self, dictionary):
         pass
 
     ## completeAction
@@ -281,8 +281,8 @@ class DADelay(DaveAction):
     #
     # @return A ElementTree object or None.
     #
-    def createETree(self, dict):
-        delay = dict.get("delay")
+    def createETree(self, dictionary):
+        delay = dictionary.get("delay")
         if delay is not None:
             block = ElementTree.Element(str(type(self).__name__))
             addField(block, "delay", delay)
@@ -357,8 +357,8 @@ class DAFindSum(DaveAction):
     #
     # @return A ElementTree object or None.
     #
-    def createETree(self, dict):
-        find_sum = dict.get("find_sum")
+    def createETree(self, dictionary):
+        find_sum = dictionary.get("find_sum")
         if find_sum is None:
             return
 
@@ -419,9 +419,9 @@ class DAMoveStage(DaveAction):
     #
     # @return A ElementTree object or None.
     #
-    def createETree(self, dict):
-        stage_x = dict.get("stage_x")
-        stage_y = dict.get("stage_y")
+    def createETree(self, dictionary):
+        stage_x = dictionary.get("stage_x")
+        stage_y = dictionary.get("stage_y")
         if (stage_x is not None) and (stage_y is not None):
             block = ElementTree.Element(str(type(self).__name__))
             addField(block, "stage_x", stage_x)
@@ -475,8 +475,8 @@ class DAPause(DaveAction):
     #
     # @return A ElementTree object or None.
     #
-    def createETree(self, dict):
-        pause = dict.get("pause")
+    def createETree(self, dictionary):
+        pause = dictionary.get("pause")
         if (pause is not None):
             block = ElementTree.Element(str(type(self).__name__))
             return block
@@ -533,12 +533,12 @@ class DARecenterPiezo(DaveAction):
 
     ## createETree
     #
-    # @param dict A dictionary.
+    # @param dictionary A dictionary.
     #
     # @return A ElementTree object or None.
     #
-    def createETree(self, dict):
-        recenter = dict.get("recenter")
+    def createETree(self, dictionary):
+        recenter = dictionary.get("recenter")
         if (recenter is not None):
             block = ElementTree.Element(str(type(self).__name__))
             return block
@@ -575,12 +575,12 @@ class DASetDirectory(DaveAction):
 
     ## createETree
     #
-    # @param dict A dictionary.
+    # @param dictionary A dictionary.
     #
     # @return A ElementTree object or None.
     #
-    def createETree(self, dict):
-        directory = dict.get("directory")
+    def createETree(self, dictionary):
+        directory = dictionary.get("directory")
         if (directory is not None):
             block = ElementTree.Element(str(type(self).__name__))
             addField(block, "directory", directory)
@@ -620,12 +620,12 @@ class DASetFocusLockTarget(DaveAction):
 
     ## createETree
     #
-    # @param dict A dictionary.
+    # @param dictionary A dictionary.
     #
     # @return A ElementTree object or None.
     #
-    def createETree(self, dict):
-        lock_target = dict.get("lock_target")
+    def createETree(self, dictionary):
+        lock_target = dictionary.get("lock_target")
         if (lock_target is not None):
             block = ElementTree.Element(str(type(self).__name__))
             addField(block, "lock_target", lock_target)
@@ -665,12 +665,12 @@ class DASetParameters(DaveAction):
 
     ## createETree
     #
-    # @param dict A dictionary.
+    # @param dictionary A dictionary.
     #
     # @return A ElementTree object or None.
     #
-    def createETree(self, dict):
-        parameters = dict.get("parameters")
+    def createETree(self, dictionary):
+        parameters = dictionary.get("parameters")
         if (parameters is not None):
             block = ElementTree.Element(str(type(self).__name__))
             addField(block, "parameters", parameters)
@@ -713,12 +713,12 @@ class DASetProgression(DaveAction):
 
     ## createETree
     #
-    # @param dict A dictionary.
+    # @param dictionary A dictionary.
     #
     # @return A ElementTree object or None.
     #
-    def createETree(self, dict):
-        progression = dict.get("progression")
+    def createETree(self, dictionary):
+        progression = dictionary.get("progression")
         if progression is not None:
             block = ElementTree.Element(str(type(self).__name__))
             for pnode in progression:
@@ -801,17 +801,17 @@ class DATakeMovie(DaveAction):
 
     ## createETree
     #
-    # @param dict A dictionary.
+    # @param dictionary A dictionary.
     #
     # @return A ElementTree object or None.
     #
-    def createETree(self, dict):
-        name = dict.get("name")
-        length = dict.get("length")
-        min_spots = dict.get("min_spots")
-        parameters = dict.get("parameters")
-        directory = dict.get("directory")
-        overwrite = dict.get("overwrite")
+    def createETree(self, dictionary):
+        name = dictionary.get("name")
+        length = dictionary.get("length")
+        min_spots = dictionary.get("min_spots")
+        parameters = dictionary.get("parameters")
+        directory = dictionary.get("directory")
+        overwrite = dictionary.get("overwrite")
         if (name is not None) and (length is not None):
             if (length > 0):
                 block = ElementTree.Element(str(type(self).__name__))

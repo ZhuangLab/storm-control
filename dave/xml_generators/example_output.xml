@@ -1,65 +1,147 @@
-<?xml version='1.0' encoding='ISO-8859-1'?>
+<?xml version="1.0" encoding="ISO-8859-1"?>
 <sequence>
-<block name="Valve Loop 0"><valve_protocol>Hybridize 1</valve_protocol>
-<block name="Movie Loop 0"><movie>
-    <name>bleach_0_0</name>
-    <length>20</length>
-    <lock_target>0.0</lock_target>
-    <progression><type>lockedout</type></progression>
-    <stage_x>-41.55</stage_x><stage_y> -141.29
-</stage_y>
-</movie>
-<movie>
-    <name>405_0_0</name>
-    <length>20</length>
-    <lock_target>0.0</lock_target>
-    <progression><type>lockedout</type></progression>
-    <stage_x>-41.55</stage_x><stage_y> -141.29
-</stage_y>
-</movie>
-</block><block name="Movie Loop 1"><movie>
-    <name>bleach_0_1</name>
-    <length>20</length>
-    <lock_target>0.0</lock_target>
-    <progression><type>lockedout</type></progression>
-    <stage_x>576.92</stage_x><stage_y> -208.81</stage_y>
-</movie>
-<movie>
-    <name>405_0_1</name>
-    <length>20</length>
-    <lock_target>0.0</lock_target>
-    <progression><type>lockedout</type></progression>
-    <stage_x>576.92</stage_x><stage_y> -208.81</stage_y>
-</movie>
-</block></block><block name="Valve Loop 1"><valve_protocol>Hybridize 2</valve_protocol>
-<block name="Movie Loop 0"><movie>
-    <name>bleach_1_0</name>
-    <length>20</length>
-    <lock_target>0.0</lock_target>
-    <progression><type>lockedout</type></progression>
-    <stage_x>-41.55</stage_x><stage_y> -141.29
-</stage_y>
-</movie>
-<movie>
-    <name>405_1_0</name>
-    <length>20</length>
-    <lock_target>0.0</lock_target>
-    <progression><type>lockedout</type></progression>
-    <stage_x>-41.55</stage_x><stage_y> -141.29
-</stage_y>
-</movie>
-</block><block name="Movie Loop 1"><movie>
-    <name>bleach_1_1</name>
-    <length>20</length>
-    <lock_target>0.0</lock_target>
-    <progression><type>lockedout</type></progression>
-    <stage_x>576.92</stage_x><stage_y> -208.81</stage_y>
-</movie>
-<movie>
-    <name>405_1_1</name>
-    <length>20</length>
-    <lock_target>0.0</lock_target>
-    <progression><type>lockedout</type></progression>
-    <stage_x>576.92</stage_x><stage_y> -208.81</stage_y>
-</movie>
-</block></block></sequence>
+  
+
+  <branch name="Valve Loop 0">
+    <DAValveProtocol>Hybridize 1</DAValveProtocol>
+    <branch name="Movie Loop 0">
+      <branch name="bleach_0_0">
+        <DAMoveStage>
+          <stage_x type="float">-41.55</stage_x>
+          <stage_y type="float">-141.29</stage_y>
+        </DAMoveStage>
+        <DASetFocusLockTarget>
+          <lock_target type="float">0.0</lock_target>
+        </DASetFocusLockTarget>
+        <DASetProgression>
+          <type>lockedout</type>
+        </DASetProgression>
+        <DATakeMovie>
+          <name type="str">bleach_0_0</name>
+          <length type="int">20</length>
+        </DATakeMovie>
+      </branch>
+      <branch name="405_0_0">
+        <DAMoveStage>
+          <stage_x type="float">-41.55</stage_x>
+          <stage_y type="float">-141.29</stage_y>
+        </DAMoveStage>
+        <DASetFocusLockTarget>
+          <lock_target type="float">0.0</lock_target>
+        </DASetFocusLockTarget>
+        <DASetProgression>
+          <type>lockedout</type>
+        </DASetProgression>
+        <DATakeMovie>
+          <name type="str">405_0_0</name>
+          <length type="int">20</length>
+        </DATakeMovie>
+      </branch>
+    </branch>
+    <branch name="Movie Loop 1">
+      <branch name="bleach_0_1">
+        <DAMoveStage>
+          <stage_x type="float">576.92</stage_x>
+          <stage_y type="float">-208.81</stage_y>
+        </DAMoveStage>
+        <DASetFocusLockTarget>
+          <lock_target type="float">0.0</lock_target>
+        </DASetFocusLockTarget>
+        <DASetProgression>
+          <type>lockedout</type>
+        </DASetProgression>
+        <DATakeMovie>
+          <name type="str">bleach_0_1</name>
+          <length type="int">20</length>
+        </DATakeMovie>
+      </branch>
+      <branch name="405_0_1">
+        <DAMoveStage>
+          <stage_x type="float">576.92</stage_x>
+          <stage_y type="float">-208.81</stage_y>
+        </DAMoveStage>
+        <DASetFocusLockTarget>
+          <lock_target type="float">0.0</lock_target>
+        </DASetFocusLockTarget>
+        <DASetProgression>
+          <type>lockedout</type>
+        </DASetProgression>
+        <DATakeMovie>
+          <name type="str">405_0_1</name>
+          <length type="int">20</length>
+        </DATakeMovie>
+      </branch>
+    </branch>
+  </branch>
+  <branch name="Valve Loop 1">
+    <DAValveProtocol>Hybridize 2</DAValveProtocol>
+    <branch name="Movie Loop 0">
+      <branch name="bleach_1_0">
+        <DAMoveStage>
+          <stage_x type="float">-41.55</stage_x>
+          <stage_y type="float">-141.29</stage_y>
+        </DAMoveStage>
+        <DASetFocusLockTarget>
+          <lock_target type="float">0.0</lock_target>
+        </DASetFocusLockTarget>
+        <DASetProgression>
+          <type>lockedout</type>
+        </DASetProgression>
+        <DATakeMovie>
+          <name type="str">bleach_1_0</name>
+          <length type="int">20</length>
+        </DATakeMovie>
+      </branch>
+      <branch name="405_1_0">
+        <DAMoveStage>
+          <stage_x type="float">-41.55</stage_x>
+          <stage_y type="float">-141.29</stage_y>
+        </DAMoveStage>
+        <DASetFocusLockTarget>
+          <lock_target type="float">0.0</lock_target>
+        </DASetFocusLockTarget>
+        <DASetProgression>
+          <type>lockedout</type>
+        </DASetProgression>
+        <DATakeMovie>
+          <name type="str">405_1_0</name>
+          <length type="int">20</length>
+        </DATakeMovie>
+      </branch>
+    </branch>
+    <branch name="Movie Loop 1">
+      <branch name="bleach_1_1">
+        <DAMoveStage>
+          <stage_x type="float">576.92</stage_x>
+          <stage_y type="float">-208.81</stage_y>
+        </DAMoveStage>
+        <DASetFocusLockTarget>
+          <lock_target type="float">0.0</lock_target>
+        </DASetFocusLockTarget>
+        <DASetProgression>
+          <type>lockedout</type>
+        </DASetProgression>
+        <DATakeMovie>
+          <name type="str">bleach_1_1</name>
+          <length type="int">20</length>
+        </DATakeMovie>
+      </branch>
+      <branch name="405_1_1">
+        <DAMoveStage>
+          <stage_x type="float">576.92</stage_x>
+          <stage_y type="float">-208.81</stage_y>
+        </DAMoveStage>
+        <DASetFocusLockTarget>
+          <lock_target type="float">0.0</lock_target>
+        </DASetFocusLockTarget>
+        <DASetProgression>
+          <type>lockedout</type>
+        </DASetProgression>
+        <DATakeMovie>
+          <name type="str">405_1_1</name>
+          <length type="int">20</length>
+        </DATakeMovie>
+      </branch>
+    </branch>
+  </branch>
+</sequence>
