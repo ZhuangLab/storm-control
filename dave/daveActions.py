@@ -150,6 +150,8 @@ class DaveAction(QtCore.QObject):
             for key in sorted(mdict):
                 data.append([key, mdict[key]])
             return data
+        else:
+            return [None,None]
 
     ## getUsage
     #
@@ -319,7 +321,7 @@ class DADelay(DaveAction):
         
         # Create message and add delay time for accurate dave time estimates
         self.message = tcpMessage.TCPMessage(message_type = "Delay",
-                                             message_data = {"delay", self.delay});
+                                             message_data = {"delay": self.delay});
         self.message.addResponse("duration", self.delay)
 
     ## start
@@ -603,7 +605,7 @@ class DASetDirectory(DaveAction):
     def setup(self, node):
         self.directory = node.find("directory").text
         self.message = tcpMessage.TCPMessage(message_type = "Set Directory",
-                                             message_data = {self.directory})
+                                             message_data = {"directory": self.directory})
 
 
 ## DASetFocusLockTarget
