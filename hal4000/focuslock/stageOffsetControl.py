@@ -341,6 +341,26 @@ class StageQPDThread(QtCore.QThread):
             self.qpd_mutex.unlock()
             self.msleep(1)
 
+    ## setBufferLength
+    #
+    # @param buffer_length The length of the is_locked buffer.
+    #
+    def setBufferLength(self, buffer_length):
+        self.qpd_mutex.lock()
+        self.buffer_length = buffer_length
+        self.resetBuffer()
+        self.qpd_mutex.unlock()
+
+    ## setOffsetThreshold
+    #
+    # @param offset_thresh The minimum distance to the lock target to be considered 'in focus'.
+    #
+    def setOffsetThreshold(self, offset_thresh)
+        self.qpd_mutex.lock()
+        self.offset_thresh = offset_thresh
+        self.resetBuffer()
+        self.qpd_mutex.unlock()
+
     ## setStage
     #
     # @param stage A piezo stage like object.
@@ -348,6 +368,16 @@ class StageQPDThread(QtCore.QThread):
     def setStage(self, stage):
         self.qpd_mutex.lock()
         self.stage = stage
+        self.qpd_mutex.unlock()
+
+    ## setSumThreshold
+    #
+    # @param sum_thresh The minimum sum value to consider the focus locked.
+    #
+    def setSumThreshold(self, sum_thresh)
+        self.qpd_mutex.lock()
+        self.sum_thresh = sum_thresh
+        self.resetBuffer()
         self.qpd_mutex.unlock()
 
     ## setTarget
