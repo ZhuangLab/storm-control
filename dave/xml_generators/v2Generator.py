@@ -1,26 +1,40 @@
 #!/usr/bin/python
-# ----------------------------------------------------------------------------------------
+#
+## @file
+#
 # An xml parser class that takes a sequence recipe xml file and converts it to
 # a flat sequence file that can be read by Dave
-# ----------------------------------------------------------------------------------------
+#
 # Jeffrey Moffitt
 # 1/5/14
+# 9/4/14: Updated to Dave4 format
 # jeffmoffitt@gmail.com
-# ----------------------------------------------------------------------------------------
+#
 
-# ----------------------------------------------------------------------------------------
+# 
 # Import
-# ----------------------------------------------------------------------------------------
+# 
 import os, sys
 from xml.etree import ElementTree
+from xml.dom import minidom
 from PyQt4 import QtCore, QtGui
-import xml_generator
+import xml_generators.nodeToDict as nodeToDict
 import traceback
+import daveActions
 
-# ----------------------------------------------------------------------------------------
-# XML Recipe Parser Class
-# ----------------------------------------------------------------------------------------
+## XMLRecipeParser
+# 
+# A class for parsing the version 2 dave files and generating dave primitive sequences
+#
 class XMLRecipeParser(QtGui.QWidget):
+
+    ## __init__
+    #
+    # Initialize the class
+    # @param xml_filename Name of the xml file to parse
+    # @param output_filename Name of the xml file to generate
+    # @param verbose Controls progress reporting
+    #
     def __init__(self,
                  xml_filename = "",
                  output_filename = "",
@@ -47,12 +61,78 @@ class XMLRecipeParser(QtGui.QWidget):
 
         self.flat_sequence = []
         self.flat_sequence_xml = []
-        self.flat_sequence_file_path = output_filename
+        self.xml_sequence_file_path = output_filename
+        
+        self.da_primitives_xml = []
 
-    # ------------------------------------------------------------------------------------
-    # Make a copy of an etree 
-    # ------------------------------------------------------------------------------------        
-    def copyElementWithLoop(self, parent, new_parent):
+        # A convenient list of dave actions required for parsing a <movie> tag
+        self.movie_da_actions = [daveActions.DAMoveStage(),
+                                 daveActions.DASetFocusLockTarget(),
+                                 daveActions.DAFindSum(),
+                                 daveActions.DARecenterPiezo(),
+                                 daveActions.DASetParameters(),
+                                 daveActions.DASetProgression(),
+                                 daveActions.DASetDirectory(),
+                                 daveActions.DADelay(),
+                                 daveActions.DAPause(),
+                                 daveActions.DATakeMovie()]
+
+    ## convertToDaveXMLPrimitives
+    #
+    # @param primitives_xml The element tree that will contain dave primitives
+    # @param flat_sequence The element tree that contains a flat sequence of higher order commands, e.g. <movie>
+    #
+    def convertToDaveXMLPrimitives(self, primitives_xml, flat_sequence):
+        if self.verbose:
+            print "---------------------------------------------------------"
+            print "Converting to Dave Primitives"
+        
+        # Loop over all children
+        for child in flat_sequence:
+            if child.tag == "branch": # Generate block and call recursively to handle elements in blocks
+                branch = ElementTree.SubElement(primitives_xml, "branch")
+                branch.attrib["name"] = child.attrib["name"]
+                self.convertToDaveXMLPrimitives(branch, child)
+            
+            elif child.tag == "movie": # Handle <movie> tag
+                movie_block = ElementTree.SubElement(primitives_xml, "branch")
+                name = child.find("name")
+
+                # Determine name.
+                if name is not None:
+                    movie_block.set("name", name.text)
+                else:
+                    movie_block.set("name", "No Name Provided")
+
+                # Determine dictionary
+                movie_dict = nodeToDict.movieNodeToDict(child)
+                for action in self.movie_da_actions:
+                    new_node = action.createETree(movie_dict)
+                    if new_node is not None:
+                        movie_block.append(new_node)
+            
+            elif child.tag == "valve_protocol": # Handle <valve_protocol> tag
+                new_node = daveActions.DAValveProtocol().createETree({"name": child.text})
+                if new_node is not None:
+                    primitives_xml.append(new_node)
+
+            elif child.tag == "change_directory": # Handle change_directory tag
+                new_node = daveActions.DASetDirectory().createETree({"directory": child.text})
+                if new_node is not None:
+                    primitives_xml.append(new_node)
+            
+            else:
+                pass
+                ## Eventually display an unknown tag error. For now ignore
+
+    ## copyChildren
+    #
+    # Handles copying children of the specified parent to the new_parent specifically handling <loop> and <variable_entry> tags
+    #
+    # @param parent The element tree to be copied
+    # @param new_parent The element tree that will contain the flat sequence
+    #       
+    def copyChildren(self, parent, new_parent):
         for child in parent:
             if child.tag == "loop":
                 self.handleLoop(child, new_parent)
@@ -71,33 +151,43 @@ class XMLRecipeParser(QtGui.QWidget):
                 if child.tail == None: new_child.tail = ""
                 else: new_child.tail = str(child.tail)
                 del new_child.attrib["increment"]
-                self.copyElementWithLoop(child, new_child)
+                self.copyChildren(child, new_child)
             else:
                 new_child = ElementTree.SubElement(new_parent, child.tag, child.attrib)
                 if child.text == None: new_child.text = ""
                 else: new_child.text = str(child.text)
                 if child.tail == None: new_child.tail = ""
                 else: new_child.tail = str(child.tail)
-                self.copyElementWithLoop(child, new_child)
+                self.copyChildren(child, new_child)
 
         return new_parent
 
-    # ------------------------------------------------------------------------------------
-    # Handle a loop element 
-    # ------------------------------------------------------------------------------------        
+    ## handleLoop
+    #
+    # Handles iteration of loop variables and naming of branches corresponding to loops
+    #
+    # @param loop The element whos children should be copied and replicated
+    # @param new_parent The element tree that will contain the flat sequence
+    #             
     def handleLoop(self, loop, new_parent):
         loop_name = loop.attrib["name"]
         loop_ID = self.loop_variable_names.index(loop_name)
-
+        loop_block = ElementTree.Element("branch")
+        loop_block.attrib["name"] = loop_name
         for local_iterator in range(len(self.loop_variables[loop_ID])):
-            self.loop_iterator[loop_ID] = local_iterator
-            self.copyElementWithLoop(loop, new_parent)
+            self.loop_iterator[loop_ID] = local_iterator # Store iterator for updating names
+            self.copyChildren(loop, loop_block)
+        new_parent.append(loop_block)
         self.loop_iterator[loop_ID] = -1
 
-    # ------------------------------------------------------------------------------------
-    # Handle a variable entry element 
-    # ------------------------------------------------------------------------------------        
-    def handleVariableEntry(self,child, new_parent):
+    ## handleVariableEntry
+    #
+    # Handles proper replacement of <variable_entry> tags in loops
+    #
+    # @param child The variable entry node
+    # @param new_parent The element tree that will contain the flat sequence
+    #
+    def handleVariableEntry(self, child, new_parent):
         variable_name = child.attrib["name"]
         loop_ID = self.loop_variable_names.index(variable_name)
 
@@ -107,11 +197,16 @@ class XMLRecipeParser(QtGui.QWidget):
         last_child = variable_entry[-1]
         last_child.tail = "\n"
         
-        self.copyElementWithLoop(variable_entry, new_parent)
+        self.copyChildren(variable_entry, new_parent)
         
-    # ------------------------------------------------------------------------------------
-    # Create XML dialog for loading xml file and return parsed xml
-    # ------------------------------------------------------------------------------------        
+    ## loadXML
+    #
+    # Load generic XML files
+    #
+    # @param xml_file_path The xml file path
+    # @param header The header to display
+    # @param file_types The file types to display
+    #        
     def loadXML(self, xml_file_path, header = "Open XML File", file_types = "XML (*.xml)"):
         if xml_file_path == "":
             temp_file_path = str(QtGui.QFileDialog.getOpenFileName(self, header, self.directory, file_types))
@@ -129,9 +224,10 @@ class XMLRecipeParser(QtGui.QWidget):
             print "Invalid xml file: " + xml_file_path
             return (None, xml_file_path)
 
-    # ------------------------------------------------------------------------------------
-    # Parse loop variables and extract from file as needed
-    # ------------------------------------------------------------------------------------        
+    ## parseLoopVariables
+    #
+    # Parse the original loop variable entries
+    #        
     def parseLoopVariables(self):
         # Reset loop variables
         for i in range(len(self.loop_variable_names)):
@@ -184,9 +280,12 @@ class XMLRecipeParser(QtGui.QWidget):
                 if self.verbose:
                     print "Extracted loop variables from " + path_to_loop_variable_xml
 
-    # ------------------------------------------------------------------------------------
-    # Load and parse a XML file with defined sequence recipe
-    # ------------------------------------------------------------------------------------
+    ## parseXML
+    #
+    # Load a xml recipe file.
+    #
+    # @param xml_file_path Path to the xml file.
+    #  
     def parseXML(self, xml_file_path = ""):
         # Handle passed file name
         if not xml_file_path == "":
@@ -212,12 +311,12 @@ class XMLRecipeParser(QtGui.QWidget):
             print "Unexpected contents: " + self.xml_filename
             return ""
 
-        return self.flat_sequence_file_path
+        return self.xml_sequence_file_path
 
-
-    # ------------------------------------------------------------------------------------
-    # Parse the recipe format
-    # ------------------------------------------------------------------------------------
+    ## parseXMLRecipe
+    #
+    # Parse the XML recipe file.
+    #
     def parseXMLRecipe(self):
         # Parse major components of recipe file
         for child in self.main_element:
@@ -243,17 +342,20 @@ class XMLRecipeParser(QtGui.QWidget):
 
         # Fill sequence from command sequence elements
         for command_sequence in self.command_sequences:
-            self.copyElementWithLoop(command_sequence, self.flat_sequence)
+            self.copyChildren(command_sequence, self.flat_sequence)
 
-        # Create element tree and insert sequence
-        self.flat_sequence_xml = ElementTree.ElementTree(self.flat_sequence)
+        # Create Dave action primitives
+        self.da_primitives_xml = ElementTree.Element("sequence")
+        self.da_primitives_xml.text = "\n"
+        self.convertToDaveXMLPrimitives(self.da_primitives_xml, self.flat_sequence)
 
-        # Save flat sequence
-        self.saveFlatSequence()
+        # Save dave primitives
+        self.saveDavePrimitives()
 
-    # ------------------------------------------------------------------------------------
-    # Parse the experiment format
-    # ------------------------------------------------------------------------------------
+    ## parseXMLExperiment
+    #
+    # Not necessary because Dave handles this.
+    #
     def parseXMLExperiment(self):
         # Get additional file paths
         positions_filename = str(QtGui.QFileDialog.getOpenFileName(self, "Positions File", self.directory, "*.txt"))
@@ -261,16 +363,19 @@ class XMLRecipeParser(QtGui.QWidget):
         output_filename = str(QtGui.QFileDialog.getSaveFileName(self, "Generated File", self.directory, "*.xml"))
         try:
             xml_generator.generateXML(self.xml_filename, positions_filename, output_filename, self.directory, self)
-            self.flat_sequence_file_path = output_filename
+            self.xml_sequence_file_path = output_filename
         except:
             QtGui.QMessageBox.information(self,
                                           "XML Generation Error",
                                           traceback.format_exc())
-            self.flat_sequence_file_path = ""
+            self.xml_sequence_file_path = ""
     
-    # ------------------------------------------------------------------------------------
-    # Find and replace items in command sequence
-    # ------------------------------------------------------------------------------------        
+    ## replaceItems
+    #
+    # Replace <item> tags in the command sequence.
+    #
+    # @param element An element tree element.
+    #
     def replaceItems(self, element):
         child_count = 0
         for [child_ID, child] in enumerate(element):
@@ -291,24 +396,35 @@ class XMLRecipeParser(QtGui.QWidget):
                 child_count += 1
         return element
 
-    # ------------------------------------------------------------------------------------
-    # Save flat sequence
-    # ------------------------------------------------------------------------------------
-    def saveFlatSequence(self):
-        if self.flat_sequence_file_path == "":
-            self.flat_sequence_file_path = str(QtGui.QFileDialog.getSaveFileName(self,
+    ## saveDavePrimitives
+    #
+    # Save the final dave primitives sequence.
+    #
+    def saveDavePrimitives(self):
+        if self.xml_sequence_file_path == "":
+            self.xml_sequence_file_path = str(QtGui.QFileDialog.getSaveFileName(self,
                                                                                  "Save XML Sequence",
                                                                                  self.directory,
                                                                                  "*.xml"))
-            
         try:
-            self.flat_sequence_xml.write(self.flat_sequence_file_path,
-                                         encoding = 'ISO-8859-1',
-                                         xml_declaration = True)
+            out_fp = open(self.xml_sequence_file_path, "w")
+            rough_string = ElementTree.tostring(self.da_primitives_xml, 'utf-8')        
+            reparsed = minidom.parseString(rough_string)
+            out_fp.write(reparsed.toprettyxml(indent="  ", encoding = "ISO-8859-1"))
+            out_fp.close()
+            self.wrote_XML = True
         except:
             QtGui.QMessageBox.information(self,"Error",
                                           "Error saving xml file")
-            self.flat_sequence_file_path = ""
+            self.xml_sequence_file_path = ""
+
+    ## writtenXMLPath
+    #
+    # Determine if an XML file was written.
+    #
+    def writtenXMLPath(self):
+        return self.xml_sequence_file_path
+
 
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class

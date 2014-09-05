@@ -32,7 +32,7 @@
        <length>300</length>
        <parameters>Test_Parameter</parameters>
        <lock_target>10.0</lock_target>
-	   <overwrite>False</overwrite>
+       <overwrite>False</overwrite>
        <variable_entry name = "Movie Loop" />
     </movie>
 	
@@ -68,7 +68,7 @@
        <name increment="Yes">Change_Directory</name>
        <length>300</length>
        <parameters>Test_Parameter</parameters>
-       <directory>C:\Users\Data\Log</directory>
+       <directory>C:\data\test</directory>
        <variable_entry name = "Movie Loop" />
     </movie>
 

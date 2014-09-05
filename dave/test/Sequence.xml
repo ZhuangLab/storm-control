@@ -1,656 +1,1077 @@
-<?xml version='1.0' encoding='ISO-8859-1'?>
+<?xml version="1.0" encoding="ISO-8859-1"?>
 <sequence>
-<movie>
-       <name>No_Parameters_0</name>
-       <length>300</length>
-       <none />
-</movie>
-	
-	
-    <movie>
-       <name>Parameters_By_Name_0</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <none />
-</movie>
-	
-	
-    <movie>
-       <name>Parameters_By_Number_0</name>
-       <length>300</length>
-       <parameters>0</parameters>
-       <none />
-</movie>
+  
 
-	
-    <movie>
-       <name>No_File_Overwrite_0</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <lock_target>10.0</lock_target>
-	   <overwrite>False</overwrite>
-       <none />
-</movie>
-	
-    
-    <movie>
-       <name>Set_Lock_Target_0</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <lock_target>10.0</lock_target>
-       <none />
-</movie>
-	
-	
-    <movie>
-       <name>Find_Sum_0</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <find_sum>50.0</find_sum>
-       <none />
-</movie>
-
-    
-    <movie>
-       <name>Piezo_Recenter_0</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <recenter>1</recenter>
-       <none />
-</movie>
-
-    
-    <movie>
-       <name>Change_Directory_0</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <directory>C:\Users\Data\Log</directory>
-       <none />
-</movie>
-
-    
-    <movie>
-       <name>Delay_0</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <delay>10000</delay>
-       <none />
-</movie>
-	
-	
-    <movie>
-       <name>Min_Spots_0</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <min_spots>2000</min_spots>
-       <none />
-</movie>
-
-    
-    <movie>
-       <name>Pause_0</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <pause>1</pause>
-       <none />
-</movie>
-
-    
-    <movie>
-       <name>Locked_Out_Progression_0</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <progression>
-           <type>lockedout</type>
-        </progression>
-       <none />
-</movie>
-	
-	
-    <movie>
-       <name>Filename_Progression_0</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <progression>
-           <type>file</type>
-           <filename>..\dave\test\test_progression.power</filename>
-        </progression>
-       <none />
-</movie>
-	
-	
-    <movie>
-       <name>Channel_Progression_0</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <progression>
-           <type>exponential</type>
-           <channel frames="100" inc="1.05" start="0.01">6</channel>
-        </progression>
-       <none />
-</movie> 
-	
-  <movie>
-       <name>No_Parameters_1</name>
-       <length>300</length>
-       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Parameters_By_Name_1</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Parameters_By_Number_1</name>
-       <length>300</length>
-       <parameters>0</parameters>
-       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-
-	
-    <movie>
-       <name>No_File_Overwrite_1</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <lock_target>10.0</lock_target>
-	   <overwrite>False</overwrite>
-       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-	
-    
-    <movie>
-       <name>Set_Lock_Target_1</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <lock_target>10.0</lock_target>
-       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Find_Sum_1</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <find_sum>50.0</find_sum>
-       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Piezo_Recenter_1</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <recenter>1</recenter>
-       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Change_Directory_1</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <directory>C:\Users\Data\Log</directory>
-       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Delay_1</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <delay>10000</delay>
-       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Min_Spots_1</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <min_spots>2000</min_spots>
-       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Pause_1</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <pause>1</pause>
-       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Locked_Out_Progression_1</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <progression>
-           <type>lockedout</type>
-        </progression>
-       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Filename_Progression_1</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <progression>
-           <type>file</type>
-           <filename>..\dave\test\test_progression.power</filename>
-        </progression>
-       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Channel_Progression_1</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <progression>
-           <type>exponential</type>
-           <channel frames="100" inc="1.05" start="0.01">6</channel>
-        </progression>
-       <stage_x>0.0</stage_x><stage_y>0.0</stage_y>
-</movie> 
-	
-  <movie>
-       <name>No_Parameters_2</name>
-       <length>300</length>
-       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Parameters_By_Name_2</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Parameters_By_Number_2</name>
-       <length>300</length>
-       <parameters>0</parameters>
-       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-
-	
-    <movie>
-       <name>No_File_Overwrite_2</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <lock_target>10.0</lock_target>
-	   <overwrite>False</overwrite>
-       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-	
-    
-    <movie>
-       <name>Set_Lock_Target_2</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <lock_target>10.0</lock_target>
-       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Find_Sum_2</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <find_sum>50.0</find_sum>
-       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Piezo_Recenter_2</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <recenter>1</recenter>
-       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Change_Directory_2</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <directory>C:\Users\Data\Log</directory>
-       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Delay_2</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <delay>10000</delay>
-       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Min_Spots_2</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <min_spots>2000</min_spots>
-       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Pause_2</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <pause>1</pause>
-       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Locked_Out_Progression_2</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <progression>
-           <type>lockedout</type>
-        </progression>
-       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Filename_Progression_2</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <progression>
-           <type>file</type>
-           <filename>..\dave\test\test_progression.power</filename>
-        </progression>
-       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Channel_Progression_2</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <progression>
-           <type>exponential</type>
-           <channel frames="100" inc="1.05" start="0.01">6</channel>
-        </progression>
-       <stage_x>10.0</stage_x><stage_y>0.0</stage_y>
-</movie> 
-	
-  <movie>
-       <name>No_Parameters_3</name>
-       <length>300</length>
-       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Parameters_By_Name_3</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Parameters_By_Number_3</name>
-       <length>300</length>
-       <parameters>0</parameters>
-       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-
-	
-    <movie>
-       <name>No_File_Overwrite_3</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <lock_target>10.0</lock_target>
-	   <overwrite>False</overwrite>
-       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-	
-    
-    <movie>
-       <name>Set_Lock_Target_3</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <lock_target>10.0</lock_target>
-       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Find_Sum_3</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <find_sum>50.0</find_sum>
-       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Piezo_Recenter_3</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <recenter>1</recenter>
-       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Change_Directory_3</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <directory>C:\Users\Data\Log</directory>
-       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Delay_3</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <delay>10000</delay>
-       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Min_Spots_3</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <min_spots>2000</min_spots>
-       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Pause_3</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <pause>1</pause>
-       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Locked_Out_Progression_3</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <progression>
-           <type>lockedout</type>
-        </progression>
-       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Filename_Progression_3</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <progression>
-           <type>file</type>
-           <filename>..\dave\test\test_progression.power</filename>
-        </progression>
-       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Channel_Progression_3</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <progression>
-           <type>exponential</type>
-           <channel frames="100" inc="1.05" start="0.01">6</channel>
-        </progression>
-       <stage_x>10.0</stage_x><stage_y>10.0</stage_y>
-</movie> 
-	
-  <movie>
-       <name>No_Parameters_4</name>
-       <length>300</length>
-       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Parameters_By_Name_4</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Parameters_By_Number_4</name>
-       <length>300</length>
-       <parameters>0</parameters>
-       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-
-	
-    <movie>
-       <name>No_File_Overwrite_4</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <lock_target>10.0</lock_target>
-	   <overwrite>False</overwrite>
-       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-	
-    
-    <movie>
-       <name>Set_Lock_Target_4</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <lock_target>10.0</lock_target>
-       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Find_Sum_4</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <find_sum>50.0</find_sum>
-       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Piezo_Recenter_4</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <recenter>1</recenter>
-       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Change_Directory_4</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <directory>C:\Users\Data\Log</directory>
-       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Delay_4</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <delay>10000</delay>
-       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Min_Spots_4</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <min_spots>2000</min_spots>
-       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Pause_4</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <pause>1</pause>
-       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-
-    
-    <movie>
-       <name>Locked_Out_Progression_4</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <progression>
-           <type>lockedout</type>
-        </progression>
-       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Filename_Progression_4</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <progression>
-           <type>file</type>
-           <filename>..\dave\test\test_progression.power</filename>
-        </progression>
-       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
-</movie>
-	
-	
-    <movie>
-       <name>Channel_Progression_4</name>
-       <length>300</length>
-       <parameters>Test_Parameter</parameters>
-       <progression>
-           <type>exponential</type>
-           <channel frames="100" inc="1.05" start="0.01">6</channel>
-        </progression>
-       <stage_x>0.0</stage_x><stage_y>10.0</stage_y>
-</movie> 
-	
-  <valve_protocol>Hybridize 1</valve_protocol>
-  <valve_protocol>Hybridize 2</valve_protocol>
-  <valve_protocol>Extra Wash</valve_protocol>
+  <branch name="Movie Loop 0">
+    <branch name="No_Parameters_0">
+      <DATakeMovie>
+        <name type="str">No_Parameters_0</name>
+        <length type="int">300</length>
+      </DATakeMovie>
+    </branch>
+    <branch name="Parameters_By_Name_0">
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Parameters_By_Name_0</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Parameters_By_Number_0">
+      <DASetParameters>
+        <parameters type="int">0</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Parameters_By_Number_0</name>
+        <length type="int">300</length>
+        <parameters type="int">0</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="No_File_Overwrite_0">
+      <DASetFocusLockTarget>
+        <lock_target type="float">10.0</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">No_File_Overwrite_0</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+        <overwrite type="bool">False</overwrite>
+      </DATakeMovie>
+    </branch>
+    <branch name="Set_Lock_Target_0">
+      <DASetFocusLockTarget>
+        <lock_target type="float">10.0</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Set_Lock_Target_0</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Find_Sum_0">
+      <DAFindSum>
+        <min_sum type="float">50.0</min_sum>
+      </DAFindSum>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Find_Sum_0</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Piezo_Recenter_0">
+      <DARecenterPiezo/>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Piezo_Recenter_0</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Change_Directory_0">
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetDirectory>
+        <directory type="str">C:\data\test</directory>
+      </DASetDirectory>
+      <DATakeMovie>
+        <name type="str">Change_Directory_0</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+        <directory type="str">C:\data\test</directory>
+      </DATakeMovie>
+    </branch>
+    <branch name="Delay_0">
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DADelay>
+        <delay type="int">10000</delay>
+      </DADelay>
+      <DATakeMovie>
+        <name type="str">Delay_0</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Min_Spots_0">
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Min_Spots_0</name>
+        <length type="int">300</length>
+        <min_spots type="int">2000</min_spots>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Pause_0">
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DAPause/>
+      <DATakeMovie>
+        <name type="str">Pause_0</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Locked_Out_Progression_0">
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetProgression>
+        <type>lockedout</type>
+      </DASetProgression>
+      <DATakeMovie>
+        <name type="str">Locked_Out_Progression_0</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Filename_Progression_0">
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetProgression>
+        <type>file</type>
+        <filename>..\dave\test\test_progression.power</filename>
+      </DASetProgression>
+      <DATakeMovie>
+        <name type="str">Filename_Progression_0</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Channel_Progression_0">
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetProgression>
+        <type>exponential</type>
+        <channel frames="100" inc="1.05" start="0.01">6</channel>
+      </DASetProgression>
+      <DATakeMovie>
+        <name type="str">Channel_Progression_0</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+  </branch>
+  <branch name="Movie Loop 1">
+    <branch name="No_Parameters_1">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DATakeMovie>
+        <name type="str">No_Parameters_1</name>
+        <length type="int">300</length>
+      </DATakeMovie>
+    </branch>
+    <branch name="Parameters_By_Name_1">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Parameters_By_Name_1</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Parameters_By_Number_1">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="int">0</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Parameters_By_Number_1</name>
+        <length type="int">300</length>
+        <parameters type="int">0</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="No_File_Overwrite_1">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetFocusLockTarget>
+        <lock_target type="float">10.0</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">No_File_Overwrite_1</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+        <overwrite type="bool">False</overwrite>
+      </DATakeMovie>
+    </branch>
+    <branch name="Set_Lock_Target_1">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetFocusLockTarget>
+        <lock_target type="float">10.0</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Set_Lock_Target_1</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Find_Sum_1">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DAFindSum>
+        <min_sum type="float">50.0</min_sum>
+      </DAFindSum>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Find_Sum_1</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Piezo_Recenter_1">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DARecenterPiezo/>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Piezo_Recenter_1</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Change_Directory_1">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetDirectory>
+        <directory type="str">C:\data\test</directory>
+      </DASetDirectory>
+      <DATakeMovie>
+        <name type="str">Change_Directory_1</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+        <directory type="str">C:\data\test</directory>
+      </DATakeMovie>
+    </branch>
+    <branch name="Delay_1">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DADelay>
+        <delay type="int">10000</delay>
+      </DADelay>
+      <DATakeMovie>
+        <name type="str">Delay_1</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Min_Spots_1">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Min_Spots_1</name>
+        <length type="int">300</length>
+        <min_spots type="int">2000</min_spots>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Pause_1">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DAPause/>
+      <DATakeMovie>
+        <name type="str">Pause_1</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Locked_Out_Progression_1">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetProgression>
+        <type>lockedout</type>
+      </DASetProgression>
+      <DATakeMovie>
+        <name type="str">Locked_Out_Progression_1</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Filename_Progression_1">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetProgression>
+        <type>file</type>
+        <filename>..\dave\test\test_progression.power</filename>
+      </DASetProgression>
+      <DATakeMovie>
+        <name type="str">Filename_Progression_1</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Channel_Progression_1">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetProgression>
+        <type>exponential</type>
+        <channel frames="100" inc="1.05" start="0.01">6</channel>
+      </DASetProgression>
+      <DATakeMovie>
+        <name type="str">Channel_Progression_1</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+  </branch>
+  <branch name="Movie Loop 2">
+    <branch name="No_Parameters_2">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DATakeMovie>
+        <name type="str">No_Parameters_2</name>
+        <length type="int">300</length>
+      </DATakeMovie>
+    </branch>
+    <branch name="Parameters_By_Name_2">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Parameters_By_Name_2</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Parameters_By_Number_2">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="int">0</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Parameters_By_Number_2</name>
+        <length type="int">300</length>
+        <parameters type="int">0</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="No_File_Overwrite_2">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetFocusLockTarget>
+        <lock_target type="float">10.0</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">No_File_Overwrite_2</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+        <overwrite type="bool">False</overwrite>
+      </DATakeMovie>
+    </branch>
+    <branch name="Set_Lock_Target_2">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetFocusLockTarget>
+        <lock_target type="float">10.0</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Set_Lock_Target_2</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Find_Sum_2">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DAFindSum>
+        <min_sum type="float">50.0</min_sum>
+      </DAFindSum>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Find_Sum_2</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Piezo_Recenter_2">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DARecenterPiezo/>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Piezo_Recenter_2</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Change_Directory_2">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetDirectory>
+        <directory type="str">C:\data\test</directory>
+      </DASetDirectory>
+      <DATakeMovie>
+        <name type="str">Change_Directory_2</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+        <directory type="str">C:\data\test</directory>
+      </DATakeMovie>
+    </branch>
+    <branch name="Delay_2">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DADelay>
+        <delay type="int">10000</delay>
+      </DADelay>
+      <DATakeMovie>
+        <name type="str">Delay_2</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Min_Spots_2">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Min_Spots_2</name>
+        <length type="int">300</length>
+        <min_spots type="int">2000</min_spots>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Pause_2">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DAPause/>
+      <DATakeMovie>
+        <name type="str">Pause_2</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Locked_Out_Progression_2">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetProgression>
+        <type>lockedout</type>
+      </DASetProgression>
+      <DATakeMovie>
+        <name type="str">Locked_Out_Progression_2</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Filename_Progression_2">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetProgression>
+        <type>file</type>
+        <filename>..\dave\test\test_progression.power</filename>
+      </DASetProgression>
+      <DATakeMovie>
+        <name type="str">Filename_Progression_2</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Channel_Progression_2">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">0.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetProgression>
+        <type>exponential</type>
+        <channel frames="100" inc="1.05" start="0.01">6</channel>
+      </DASetProgression>
+      <DATakeMovie>
+        <name type="str">Channel_Progression_2</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+  </branch>
+  <branch name="Movie Loop 3">
+    <branch name="No_Parameters_3">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DATakeMovie>
+        <name type="str">No_Parameters_3</name>
+        <length type="int">300</length>
+      </DATakeMovie>
+    </branch>
+    <branch name="Parameters_By_Name_3">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Parameters_By_Name_3</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Parameters_By_Number_3">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="int">0</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Parameters_By_Number_3</name>
+        <length type="int">300</length>
+        <parameters type="int">0</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="No_File_Overwrite_3">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetFocusLockTarget>
+        <lock_target type="float">10.0</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">No_File_Overwrite_3</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+        <overwrite type="bool">False</overwrite>
+      </DATakeMovie>
+    </branch>
+    <branch name="Set_Lock_Target_3">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetFocusLockTarget>
+        <lock_target type="float">10.0</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Set_Lock_Target_3</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Find_Sum_3">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DAFindSum>
+        <min_sum type="float">50.0</min_sum>
+      </DAFindSum>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Find_Sum_3</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Piezo_Recenter_3">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DARecenterPiezo/>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Piezo_Recenter_3</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Change_Directory_3">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetDirectory>
+        <directory type="str">C:\data\test</directory>
+      </DASetDirectory>
+      <DATakeMovie>
+        <name type="str">Change_Directory_3</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+        <directory type="str">C:\data\test</directory>
+      </DATakeMovie>
+    </branch>
+    <branch name="Delay_3">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DADelay>
+        <delay type="int">10000</delay>
+      </DADelay>
+      <DATakeMovie>
+        <name type="str">Delay_3</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Min_Spots_3">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Min_Spots_3</name>
+        <length type="int">300</length>
+        <min_spots type="int">2000</min_spots>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Pause_3">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DAPause/>
+      <DATakeMovie>
+        <name type="str">Pause_3</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Locked_Out_Progression_3">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetProgression>
+        <type>lockedout</type>
+      </DASetProgression>
+      <DATakeMovie>
+        <name type="str">Locked_Out_Progression_3</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Filename_Progression_3">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetProgression>
+        <type>file</type>
+        <filename>..\dave\test\test_progression.power</filename>
+      </DASetProgression>
+      <DATakeMovie>
+        <name type="str">Filename_Progression_3</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Channel_Progression_3">
+      <DAMoveStage>
+        <stage_x type="float">10.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetProgression>
+        <type>exponential</type>
+        <channel frames="100" inc="1.05" start="0.01">6</channel>
+      </DASetProgression>
+      <DATakeMovie>
+        <name type="str">Channel_Progression_3</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+  </branch>
+  <branch name="Movie Loop 4">
+    <branch name="No_Parameters_4">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DATakeMovie>
+        <name type="str">No_Parameters_4</name>
+        <length type="int">300</length>
+      </DATakeMovie>
+    </branch>
+    <branch name="Parameters_By_Name_4">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Parameters_By_Name_4</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Parameters_By_Number_4">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="int">0</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Parameters_By_Number_4</name>
+        <length type="int">300</length>
+        <parameters type="int">0</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="No_File_Overwrite_4">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetFocusLockTarget>
+        <lock_target type="float">10.0</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">No_File_Overwrite_4</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+        <overwrite type="bool">False</overwrite>
+      </DATakeMovie>
+    </branch>
+    <branch name="Set_Lock_Target_4">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetFocusLockTarget>
+        <lock_target type="float">10.0</lock_target>
+      </DASetFocusLockTarget>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Set_Lock_Target_4</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Find_Sum_4">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DAFindSum>
+        <min_sum type="float">50.0</min_sum>
+      </DAFindSum>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Find_Sum_4</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Piezo_Recenter_4">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DARecenterPiezo/>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Piezo_Recenter_4</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Change_Directory_4">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetDirectory>
+        <directory type="str">C:\data\test</directory>
+      </DASetDirectory>
+      <DATakeMovie>
+        <name type="str">Change_Directory_4</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+        <directory type="str">C:\data\test</directory>
+      </DATakeMovie>
+    </branch>
+    <branch name="Delay_4">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DADelay>
+        <delay type="int">10000</delay>
+      </DADelay>
+      <DATakeMovie>
+        <name type="str">Delay_4</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Min_Spots_4">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DATakeMovie>
+        <name type="str">Min_Spots_4</name>
+        <length type="int">300</length>
+        <min_spots type="int">2000</min_spots>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Pause_4">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DAPause/>
+      <DATakeMovie>
+        <name type="str">Pause_4</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Locked_Out_Progression_4">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetProgression>
+        <type>lockedout</type>
+      </DASetProgression>
+      <DATakeMovie>
+        <name type="str">Locked_Out_Progression_4</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Filename_Progression_4">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetProgression>
+        <type>file</type>
+        <filename>..\dave\test\test_progression.power</filename>
+      </DASetProgression>
+      <DATakeMovie>
+        <name type="str">Filename_Progression_4</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+    <branch name="Channel_Progression_4">
+      <DAMoveStage>
+        <stage_x type="float">0.0</stage_x>
+        <stage_y type="float">10.0</stage_y>
+      </DAMoveStage>
+      <DASetParameters>
+        <parameters type="str">Test_Parameter</parameters>
+      </DASetParameters>
+      <DASetProgression>
+        <type>exponential</type>
+        <channel frames="100" inc="1.05" start="0.01">6</channel>
+      </DASetProgression>
+      <DATakeMovie>
+        <name type="str">Channel_Progression_4</name>
+        <length type="int">300</length>
+        <parameters type="str">Test_Parameter</parameters>
+      </DATakeMovie>
+    </branch>
+  </branch>
+  <DAValveProtocol>Hybridize 1</DAValveProtocol>
+  <DAValveProtocol>Hybridize 2</DAValveProtocol>
+  <DAValveProtocol>Extra Wash</DAValveProtocol>
 </sequence>

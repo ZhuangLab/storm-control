@@ -15,6 +15,7 @@ from xml.dom import minidom
 from xml.etree import ElementTree
 from PyQt4 import QtCore, QtGui
 
+import xml_generators.nodeToDict as nodeToDict
 import daveActions
 
 ## generate
@@ -46,11 +47,9 @@ def generate(parent, xml_file, position_file, generated_file):
     xml_in = ElementTree.parse(xml_file).getroot()
 
     # Load "header" info.
-    x_offset = float(xml_in.find("x_offset").text)
-    y_offset = float(xml_in.find("y_offset").text)
-    delay = 0
-    if xml_in.find("delay") is not None:
-        delay = int(xml_in.find("delay"))
+    x_offset = nodeToDict.gf("x_offset", float, 0.0)(xml_in)
+    y_offset = nodeToDict.gf("y_offset", float, 0.0)(xml_in)
+    delay = nodeToDict.gf("delay", int, 0)(xml_in)
 
     # Create instances of all the supported actions
     # in the order in which they should occur.
@@ -78,7 +77,7 @@ def generate(parent, xml_file, position_file, generated_file):
             mx = x_pos[i] + x_offset
             my = y_pos[i] + y_offset
             
-            for movie_number, temp_node in enumerate([x for x in pass_node if (x.tag == "movie")]):
+            for movie_number, movie_node in enumerate([x for x in pass_node if (x.tag == "movie")]):
 
                 #
                 # Check if we need to get a filename for a power progression.
@@ -86,46 +85,45 @@ def generate(parent, xml_file, position_file, generated_file):
                 # This modifies the original node so that we don't have to keep
                 # selecting a filename.
                 #
-                pnode = temp_node.find("progression")
+                pnode = movie_node.find("progression")
                 if pnode is not None:
                     if (pnode.find("type").text == "file"):
                         if pnode.find("filename") is None:
                             filename = str(QtGui.QFileDialog.getOpenFileName(parent,
-                                                                             temp_node.find("name").text + " Power File",
+                                                                             movie_node.find("name").text + " Power File",
                                                                              directory,
                                                                              "*.power"))
                             directory = os.path.dirname(filename)
                             field = ElementTree.SubElement(pnode, "filename")
                             field.text = filename
 
-                # Create a copy so that we don't change the original.
-                movie_node = copy.deepcopy(temp_node)
+                # Create dictionary for node.
+                movie_dict = nodeToDict.movieNodeToDict(movie_node)
 
                 # Add extra information to complete the movie node.
-                field = ElementTree.SubElement(movie_node, "base_delay")
-                field.text = delay
+                total_delay = delay
+                if "delay" in movie_dict:
+                    total_delay += movie_dict["delay"]
+                if (total_delay > 0):
+                    movie_dict["delay"] = total_delay
 
                 if first_movie:
-                    field = ElementTree.SubElement(movie_node, "first_movie")
-                    field.text = str(first_movie)
+                    movie_dict["pause"] = True
                     first_movie = False
 
                 if (movie_number == 0):
-                    field = ElementTree.SubElement(movie_node, "stage_x")
-                    field.text = str(mx)
-                    field = ElementTree.SubElement(movie_node, "stage_y")
-                    field.text = str(my)
+                    movie_dict["stage_x"] = mx
+                    movie_dict["stage_y"] = my
 
-                field = movie_node.find("name")
-                if field is not None:
-
+                if "name" in movie_dict:
                     # Create new block for this movie.
                     movie_block = ElementTree.SubElement(pass_block, "branch")
-                    movie_block.set("name", field.text + " " + str(pass_number) + " " + str(i))
+                    movie_block.set("name", movie_dict["name"] + " " + str(pass_number) + " " + str(i))
 
-                    field.text = field.text + "_" + str(pass_number) + "_" + str(i)
                     for action in da_actions:
-                        action.addToETree(movie_block, movie_node)
+                        node = action.createETree(movie_dict)
+                        if node is not None:
+                            movie_block.append(node)
 
     # Save to output XML file.
     out_fp = open(generated_file, "w")

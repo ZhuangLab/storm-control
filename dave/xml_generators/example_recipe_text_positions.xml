@@ -7,7 +7,6 @@
     <loop name = "Movie Loop" increment = "name">	
  	<item name = "Movie 1"></item>
 	<item name = "Movie 2"></item>
-        <item name = "Movie 3"></item>
     </loop>
   </loop>
 </command_sequence>
@@ -32,22 +31,10 @@
   </movie>
 </item>
 
-<item name = "Movie 3">
-  <movie>
-    <name increment = "Yes">647</name>
-    <length>20</length>
-    <lock_target>0.0</lock_target>
-    <progression><type>lockedout</type></progression>
-    <variable_entry name = "Movie Loop"></variable_entry>
-  </movie>
-</item>
 
 <loop_variable name = "Valve Loop">
   <value><valve_protocol>Hybridize 1</valve_protocol></value>
   <value><valve_protocol>Hybridize 2</valve_protocol></value>
-  <value><valve_protocol>Hybridize 3</valve_protocol></value>
-  <value><valve_protocol>Hybridize 4</valve_protocol></value>
-  <value><valve_protocol>Hybridize 5</valve_protocol></value>
 </loop_variable>
 
 <loop_variable name = "Movie Loop">
