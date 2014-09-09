@@ -9,7 +9,8 @@
 #
 
 # qpd and stage.
-import stagecontrol.storm2StageControl as zstage
+#import stagecontrol.storm2StageControl as zstage
+import sc_hardware.prior.prior as prior
 import sc_hardware.phreshPhotonics.phreshQPD as phreshQPD
 
 # focus lock control thread.
@@ -28,15 +29,14 @@ import focuslock.focusLockZ as focusLockZ
 class AFocusLockZ(focusLockZ.FocusLockZQPD):
     def __init__(self, hardware, parameters, parent = None):
         qpd = phreshQPD.PhreshQPDSTORM2()
-        stage = zstage.QPriorZ()
+        stage = prior.PriorZ(port = "COM19")
 #        lock_fn = lambda (x): -1.75 * x
-        lock_fn = lambda (x): x
+        lock_fn = lambda (x): 2.5 * x
         control_thread = stageOffsetControl.StageQPDThread(qpd,
                                                            stage,
                                                            lock_fn,
                                                            50.0, 
-                                                           parameters.get("qpd_zcenter"),
-                                                           slow_stage = True)
+                                                           parameters.get("qpd_zcenter"))
         ir_laser = LDC210.LDC210("PCIe-6259", 8)
         focusLockZ.FocusLockZQPD.__init__(self,
                                           parameters,
