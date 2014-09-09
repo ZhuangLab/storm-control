@@ -256,27 +256,52 @@ class PriorZ(Prior):
     # @param baudrate (Optional) The communication baud rate, defaults to 9600.
     #
     def __init__(self, port = "COM1", timeout = None, baudrate = 9600):
-        Prior.__init__(self, port = port, timeout = timeout, baudrate = baudrate)
         self.z_scale = 1.0
+
+        # Connect to change baud.
+        #Prior.__init__(self, port = port, timeout = timeout, baudrate = 9600)
+        #self.changeBaudRate(baudrate)
+        #self.shutDown()
+
+        # Connect at correct baud.
+        Prior.__init__(self, port = port, timeout = timeout, baudrate = baudrate)
         if not self.live:
             print "Failed to connect to Prior piezo controller."
 
+    ## changeBaudRate
+    #
+    # Change communication baud rate.
+    #
+    # @param baudrate The communication baud rate.
+    #
+    def changeBaudRate(self, baudrate):
+        self._command("BAUD " + str(baudrate))
+
+    ## getBaudRate
+    #
+    # @return The current baud rate.
+    #
+    def getBaudRate(self):
+        baudrate = self._command("BAUD")[0]
+        return int(baudrate)
+
     ## zMoveRelative
     #
-    # @param dz Amount to move focus motor (in um?).
+    # @param dz Amount to move piezo (in um).
     #
     def zMoveRelative(self, dz):
-        self._command("U " + str(dz * self.z_scale))
+        self._command("U {0:.3f}".format(dz * self.z_scale))
 
     ## zMoveTo
     #
-    # @param z Position to move the focus motor to (in um?).
+    # @param z Position to move piezo (in um).
+    #
     def zMoveTo(self, z):
-        self._command("V " + str(z * self.z_scale))
+        self._command("V {0:.3f}".format(z * self.z_scale))
 
     ## zPosition
     #
-    # @return The current z position of the focus motor (in um?).
+    # @return The current z position of the piezo (in um).
     #
     def zPosition(self):
         zpos = self._command("PZ")[0]
@@ -357,8 +382,9 @@ if __name__ == "__main__":
         for info in piezo.info():
             print info
 
-        piezo.zMoveTo(50.0)
+        piezo.zMoveTo(40.0)
         print piezo.zPosition()
+        print piezo.getBaudRate()
         
 
 #
