@@ -86,7 +86,7 @@
   <!-- focus lock settings -->
   <qpd_mode type="int">0</qpd_mode>
   <qpd_zcenter type="float">50.0</qpd_zcenter>
-  <qpd_scale type="float">1400.0</qpd_scale>
+  <qpd_scale type="float">-2400.0</qpd_scale>
 <!--  <qpd_scale type="float">1421.0</qpd_scale> -->
 <!--  <qpd_scale type="float">1.0</qpd_scale> -->
   <qpd_sum_max type="int">1500</qpd_sum_max>
