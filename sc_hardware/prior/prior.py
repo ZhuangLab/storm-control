@@ -7,9 +7,10 @@
 # Hazen 5/11
 #
 
-import sc_hardware.serial.RS232 as RS232
 import time
 
+import sc_hardware.nationalInstruments.nicontrol as nicontrol
+import sc_hardware.serial.RS232 as RS232
 
 ## Prior
 #
@@ -242,6 +243,26 @@ class Prior(RS232.RS232):
         zpos = self._command("<PZ")
         return zpos[1:]
 
+
+## PriorNI
+#
+# National instruments based control.
+#
+class PriorNI(object):
+
+    def __init__(self):
+        self.scale = 1.0/25.0
+        #self.ao_task = nicontrol.AnalogOutput("PCI-6713", 0)
+
+    def shutDown(self):
+        #self.ao_task.stopTask()
+        #self.ao_task.clearTask()
+        pass
+        
+    def zMoveTo(self, z):
+        #self.ao_task.output(self.scale * z)
+        #nicontrol.setAnalogLine("PCI-6713", 0, self.scale * z)
+        nicontrol.setAnalogLine("PCIe-6259", 0, self.scale * z)
 
 ## PriorZ
 #

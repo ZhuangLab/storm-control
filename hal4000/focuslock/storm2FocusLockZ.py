@@ -30,8 +30,9 @@ class AFocusLockZ(focusLockZ.FocusLockZQPD):
     def __init__(self, hardware, parameters, parent = None):
         qpd = phreshQPD.PhreshQPDSTORM2()
         stage = prior.PriorZ(port = "COM19")
-#        lock_fn = lambda (x): -1.75 * x
         lock_fn = lambda (x): 2.5 * x
+        #stage = prior.PriorNI()
+        #lock_fn = lambda (x): 2.5 * x
         control_thread = stageOffsetControl.StageQPDThread(qpd,
                                                            stage,
                                                            lock_fn,
