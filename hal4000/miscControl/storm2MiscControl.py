@@ -31,7 +31,7 @@ class AMiscControl(miscControl.MiscControl):
     def __init__(self, hardware, parameters, parent = None):
         miscControl.MiscControl.__init__(self, parameters, parent)
 
-        self.filter_wheel = ix2ucb.IX2UCB(port = "COM7")
+        self.filter_wheel = ix2ucb.IX2UCB(port = "COM10")
         if (not self.filter_wheel.getStatus()):
             self.filter_wheel = False
         self.lamp_servo = phidget.Phidget("c:/Program Files/Phidgets/")

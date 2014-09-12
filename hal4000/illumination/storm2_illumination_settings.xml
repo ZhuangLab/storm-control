@@ -7,7 +7,7 @@
       <module_name>sc_hardware.thorlabs.FW102C</module_name>
       <class_name>HalFW102C</class_name>
       <parameters>
-	<port>COM9</port>
+	<port>COM4</port>
       </parameters>
     </control_module>
     
@@ -25,7 +25,7 @@
       <module_name>sc_hardware.coherent.hLaser</module_name>
       <class_name>CoherentCube</class_name>
       <parameters>
-	<port>COM8</port>
+	<port>COM3</port>
       </parameters>
     </control_module>
     
