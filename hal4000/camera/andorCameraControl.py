@@ -147,6 +147,12 @@ class ACameraControl(cameraControl.CameraControl):
                     return
 
             else:
+                path = "c:/Program Files/Andor Solis/"
+                driver = "atmcd64d.dll"
+                if os.path.exists(path + driver):
+                    self.initCameraHelperFn(path, driver, pci_card)
+                    return
+
                 path = "c:/Program Files/Andor Solis/Drivers/"
                 driver = "atmcd64d.dll"
                 if os.path.exists(path + driver):
