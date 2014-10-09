@@ -124,17 +124,17 @@ class AndorCamera:
     def __init__(self, andor_path, camera_handle):
         self.camera_handle = camera_handle
 
-        # general
+        # General
         self.pixels = 0
 
-        # camera properties storage
+        # Camera properties storage.
         self._props_ = {}
 
-        # initialize the camera
+        # Initialize the camera.
         setCurrentCamera(self.camera_handle)
         andorCheck(andor.Initialize(andor_path + "Detector.ini"), "Initialize")
 
-        # determine camera capabilities (useful??)
+        # Determine camera capabilities (useful??).
         caps = AndorCapabilities(sizeof(c_ulong)*12,0,0,0,0,0,0,0,0,0,0,0)
         andorCheck(andor.GetCapabilities(byref(caps)), "GetCapabilities")
         self._props_['AcqModes'] = caps.ulAcqModes
@@ -149,19 +149,19 @@ class AndorCamera:
         self._props_['EMGainCapability'] = caps.ulEMGainCapability
         self._props_['FTReadModes'] = caps.ulFTReadModes
 
-        # determine camera pixel size
+        # Determine camera pixel size.
         x_pixels = c_long()
         y_pixels = c_long()
         andorCheck(andor.GetDetector(byref(x_pixels), byref(y_pixels)), "GetDetector")
         self._props_['XPixels'] = x_pixels.value
         self._props_['YPixels'] = y_pixels.value
 
-        # determine camera head model
+        # Determine camera head model.
         head_model = create_string_buffer(32)
         andorCheck(andor.GetHeadModel(head_model), "GetHeadModel")
         self._props_['HeadModel'] = head_model.value
 
-        # determine hardware version
+        # Determine hardware version.
         plug_in_card_version = c_uint()
         flex_10k_file_version = c_uint()
         dummy1 = c_uint()
@@ -180,7 +180,7 @@ class AndorCamera:
         self._props_["CameraFirmwareVersion"] = camera_firmware_version.value
         self._props_["CameraFirmwareBuild"] = camera_firmware_build.value
 
-        # determine vertical shift speeds
+        # Determine vertical shift speeds.
         number = c_int()
         andorCheck(andor.GetNumberVSSpeeds(byref(number)), "GetNumberVSSpeeds")
         self._props_["VSSpeeds"] = range(number.value)
@@ -190,7 +190,7 @@ class AndorCamera:
             andorCheck(andor.GetVSSpeed(index, byref(speed)), "GetVSSpeed")
             self._props_["VSSpeeds"][i] = speed.value
 
-        # determine horizontal shift speeds
+        # Determine horizontal shift speeds.
         andorCheck(andor.GetNumberADChannels(byref(number)), "GetNumberADChannels")
         self._props_["NumberADChannels"] = number.value
         self._props_["HSSpeeds"] = range(number.value)
@@ -204,13 +204,13 @@ class AndorCamera:
                 andorCheck(andor.GetHSSpeed(channel, 0, type, byref(speed)), "GetHSSpeed")
                 self._props_["HSSpeeds"][i][j] = speed.value
         
-        # determine temperature range
+        # Determine temperature range.
         min_temp = c_int()
         max_temp = c_int()
         andorCheck(andor.GetTemperatureRange(byref(min_temp), byref(max_temp)), "GetTemperatureRange")
         self._props_["TemperatureRange"] = [min_temp.value, max_temp.value]
 
-        # determine preamp gains available
+        # Determine preamp gains available.
         number = c_int()
         andorCheck(andor.GetNumberPreAmpGains(byref(number)), "GetNumberPreAmpGains")
         self._props_["PreAmpGains"] = range(number.value)
@@ -220,7 +220,7 @@ class AndorCamera:
             andorCheck(andor.GetPreAmpGain(index, byref(gain)), "GetPreAmpGain")
             self._props_["PreAmpGains"][i] = gain.value
 
-        # determine EM gain range
+        # Determine EM gain range.
         low = c_int()
         high = c_int()
         andorCheck(andor.GetEMGainRange(byref(low), byref(high)), "GetEMGainRange")
@@ -626,6 +626,24 @@ class AndorCamera:
         andorCheck(andor.SetHSSpeed(0, c_int(index)), "SetHSSpeed")
         self.hsspeed = speeds[index]
 
+    ## setIsolatedCropMode
+    #
+    # Turn on/off isolated crop mode (if available).
+    #
+    def setIsolatedCropMode(self, active, height, width, vbin, hbin):
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        if active:
+            active = 1
+        else:
+            active = 0
+        andorCheck(andor.SetIsolatedCropMode(c_int(active),
+                                             c_int(height),
+                                             c_int(width),
+                                             c_int(vbin),
+                                             c_int(hbin)),
+                   "SetIsolatedCropMode")
+
     ## setKineticCycleTime
     #
     # Set the kinetic cycle time.
@@ -912,8 +930,8 @@ if __name__ == "__main__":
         for key in keys:
             print key, '\t', dictionary[key]
 
-    andor_path = "c:/Program Files/Andor SOLIS/"
-    loadAndorDLL(andor_path + "atmcd32d.dll")
+    andor_path = "c:/Program Files/Andor SOLIS/Drivers/"
+    loadAndorDLL(andor_path + "atmcd64d.dll")
     print getAvailableCameras(), "cameras connected"
     handles = getCameraHandles()
     print "camera handles: ", handles

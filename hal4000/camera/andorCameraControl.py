@@ -267,7 +267,21 @@ class ACameraControl(cameraControl.CameraControl):
             self.camera.setTriggerMode(0)
 
             hdebug.logText("Setting ROI and Binning", False)
-            self.camera.setROIAndBinning(p.get("ROI"), p.get("binning"))
+            cam_roi = p.get("ROI")
+            cam_binning = p.get("binning")
+            if p.get("isolated_cropmode", False):
+                self.camera.setIsolatedCropMode(True, 
+                                                cam_roi[3] - cam_roi[2],
+                                                cam_roi[1] - cam_roi[0],
+                                                cam_binning[1],
+                                                cam_binning[0])
+            else:
+                self.camera.setIsolatedCropMode(False,
+                                                cam_roi[3] - cam_roi[2],
+                                                cam_roi[1] - cam_roi[0],
+                                                cam_binning[1],
+                                                cam_binning[0])
+                self.camera.setROIAndBinning(cam_roi, cam_binning)
 
             hdebug.logText("Setting Horizontal Shift Speed", False)
             self.camera.setHSSpeed(p.get("hsspeed"))
