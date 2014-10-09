@@ -9,6 +9,7 @@
 
 from ctypes import *
 import os
+import sys
 
 focus_quality = False
 
@@ -19,10 +20,15 @@ focus_quality = False
 def loadFocusQualityDLL():
     global focus_quality
     if not focus_quality:
-        if os.path.exists("focus_quality.dll"):
-            focus_quality = cdll.LoadLibrary("focus_quality")
+
+        directory = os.path.dirname(__file__)
+        if not (directory == ""):
+            directory += "/"
+
+        if (sys.platform == "win32"):
+            focus_quality = cdll.LoadLibrary(directory + "focus_quality.dll")
         else:
-            focus_quality = cdll.LoadLibrary("focuslock/focus_quality")
+            focus_quality = cdll.LoadLibrary(directory + "focus_quality.so")
 
 loadFocusQualityDLL()
 c_imageGradient = focus_quality.imageGradient
