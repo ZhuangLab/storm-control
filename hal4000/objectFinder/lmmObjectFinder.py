@@ -39,7 +39,10 @@ def initialize():
     if not (directory == ""):
         directory += "/"
 
-    lmmoment = cdll.LoadLibrary(directory + "LMMoment.dll")
+    if (sys.platform == "win32"):
+        lmmoment = cdll.LoadLibrary(directory + "LMMoment.dll")
+    else:
+        lmmoment = cdll.LoadLibrary(directory + "LMMoment.so")
     lmmoment.initialize()
 
 ## findObjects
