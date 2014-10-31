@@ -247,10 +247,11 @@ class ZCalibration():
         self.z_offset = 0
 
         # Is this a molecule list file?
-        if(filename[-4:] == ".bin"):
-            self.loadMolecules(filename, minimum_intensity)
-        else:
-            self.loadCalibration(filename)
+        if filename is not None:
+            if(filename[-4:] == ".bin"):
+                self.loadMolecules(filename, minimum_intensity)
+            else:
+                self.loadCalibration(filename)
 
     # determine z dependence on wx - wy, this is used to provide
     # a good guess for where to start searching for the right
@@ -597,9 +598,11 @@ class ZCalibration():
             if os.path.exists(filename[:-9] + ".off"):
                 self.offsets = numpy.loadtxt(filename[:-9] + ".off",
                                              skiprows = 1)
-            else:
+            elif os.path.exists(filename[:-10] + ".off"):
                 self.offsets = numpy.loadtxt(filename[:-10] + ".off",
                                              skiprows = 1)
+            else:
+                self.offsets = numpy.loadtxt(filename, skiprows = 1)
         except:
             return False
 
