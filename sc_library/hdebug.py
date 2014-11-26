@@ -76,8 +76,8 @@ def logText(a_string, to_console = True):
         a_logger.info("  " + a_string)
         logging_mutex.unlock()
 
-    if to_console:
-        print a_string
+    #if to_console:
+    #    print a_string
 
 ## startLogging
 #
