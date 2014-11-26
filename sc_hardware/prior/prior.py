@@ -62,12 +62,18 @@ class Prior(RS232.RS232):
     # @return True/False The stage is busy doing something.
     #
     def active(self):
-        state = self.state()
-        try:
-            state.index("busy")
-            return 1
-        except:
-            return 0
+        response = self._command("$")[0]
+        if (response == "0"):
+            return False
+        else:
+            return True
+
+#        state = self.state()
+#        try:
+#            state.index("busy")
+#            return 1
+#        except:
+#            return 0
 
     ## backlashOnOff
     #
@@ -209,6 +215,9 @@ class Prior(RS232.RS232):
         self._command("SMS," + str(speed))
 
     ## state
+    #
+    # FIXME: Not sure if this works anymore, I can't find this command in the
+    #   manual for the ProScanIII stage.
     #
     # @return An array containing the status of each axis ("busy" or "idle").
     #
