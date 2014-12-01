@@ -7,7 +7,7 @@
       <module_name>sc_hardware.thorlabs.FW102C</module_name>
       <class_name>HalFW102C</class_name>
       <parameters>
-	<port>COM4</port>
+	<port>COM16</port>
       </parameters>
     </control_module>
     
@@ -25,7 +25,7 @@
       <module_name>sc_hardware.coherent.hLaser</module_name>
       <class_name>CoherentCube</class_name>
       <parameters>
-	<port>COM3</port>
+	<port>COM9</port>
       </parameters>
     </control_module>
     
@@ -76,10 +76,10 @@
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <maximum type="int">6400</maximum>
+	  <maximum type="int">6300</maximum>
 	  <channel type="int">3</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">89.93</on_frequency>
+	  <on_frequency type="float">89.96</on_frequency>
 	</parameters>
       </amplitude_modulation>
       
@@ -120,10 +120,10 @@
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <maximum type="int">6200</maximum>
+	  <maximum type="int">6000</maximum>
 	  <channel type="int">2</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">107.8</on_frequency>
+	  <on_frequency type="float">107.84</on_frequency>
 	</parameters>
       </amplitude_modulation>
       
@@ -164,10 +164,10 @@
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <maximum type="int">5700</maximum>
+	  <maximum type="int">6100</maximum>
 	  <channel type="int">1</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">129.86</on_frequency>
+	  <on_frequency type="float">129.90</on_frequency>
 	</parameters>
       </amplitude_modulation>
       
