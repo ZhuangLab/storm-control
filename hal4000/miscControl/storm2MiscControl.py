@@ -19,9 +19,9 @@ import sc_library.hdebug as hdebug
 # UIs.
 import qtdesigner.storm2_misc_ui as miscControlsUi
 
-# Control
-import sc_hardware.olympus.ix2ucb as ix2ucb
-import sc_hardware.phidgets.phidget as phidget
+
+# Prior filter wheel
+import stagecontrol.storm2StageControl as filterWheel
 
 #
 # Misc Control Dialog Box
@@ -31,14 +31,7 @@ class AMiscControl(miscControl.MiscControl):
     def __init__(self, hardware, parameters, parent = None):
         miscControl.MiscControl.__init__(self, parameters, parent)
 
-        self.filter_wheel = ix2ucb.IX2UCB(port = "COM10")
-        if (not self.filter_wheel.getStatus()):
-            self.filter_wheel = False
-        self.lamp_servo = phidget.Phidget("c:/Program Files/Phidgets/")
-
-        # we need to stall briefly to give time for 
-        # the laser/lamp servo to initialize.
-        time.sleep(0.1)
+        self.filter_wheel = filterWheel.QPriorFilterWheel()
 
         # UI setup
         self.ui = miscControlsUi.Ui_Dialog()
@@ -52,16 +45,6 @@ class AMiscControl(miscControl.MiscControl):
         else:
             self.ui.okButton.setText("Quit")
             self.ui.okButton.clicked.connect(self.handleQuit)
-
-        # setup laser/lamp
-        self.ui.laserButton.clicked.connect(self.handleLaser)
-        self.ui.lampButton.clicked.connect(self.handleLamp)
-        if self.lamp_servo.atMinimum():
-            self.ui.laserButton.setStyleSheet("QPushButton { color: red }")
-            self.ui.lampButton.setStyleSheet("QPushButton { color: black }")
-        else:
-            self.ui.laserButton.setStyleSheet("QPushButton { color: black }")
-            self.ui.lampButton.setStyleSheet("QPushButton { color: red }")
 
         # setup filter wheel
         self.filters = [self.ui.filter1Button,
@@ -87,22 +70,6 @@ class AMiscControl(miscControl.MiscControl):
                 filter.setStyleSheet("QPushButton { color: black}")
 
     @hdebug.debug
-    def handleLamp(self, bool):
-        self.ui.laserButton.setStyleSheet("QPushButton { color: black }")
-        self.ui.lampButton.setStyleSheet("QPushButton { color: red }")
-        self.lamp_servo.goToMax()
-
-    @hdebug.debug
-    def handleLaser(self, bool):
-        self.ui.laserButton.setStyleSheet("QPushButton { color: red }")
-        self.ui.lampButton.setStyleSheet("QPushButton { color: black }")
-        self.lamp_servo.goToMin()
-        
-    @hdebug.debug
-    def handleOk(self, bool):
-        self.hide()
-
-    @hdebug.debug
     def newParameters(self, parameters):
         self.parameters = parameters
         names = parameters.get("filter_names")
@@ -110,12 +77,6 @@ class AMiscControl(miscControl.MiscControl):
             for i in range(6):
                 self.filters[i].setText(names[i])
         self.filters[self.parameters.get("filter_position")].click()
-
-    @hdebug.debug
-    def quit(self):
-        if self.filter_wheel:
-            self.filter_wheel.shutDown()
-        self.lamp_servo.shutDown()
 
 #
 # The MIT License

@@ -19,20 +19,17 @@ import stagecontrol.stageThread as stageThread
 import stagecontrol.stageControl as stageControl
 
 #
-# STORM2 uses the same Prior stage for the focus lock
-# so we create a global Prior control class here, and 
-# also a global mutex so that stage XY and Z commands
-# don't get crossed.
+# STORM2 also uses the Prior stage for filter wheel control.
 #
 
-#prior_stage = prior.Prior(port = "COM1")
-prior_stage = prior.Prior(port = "COM8", baudrate = 9600)
+prior_stage = prior.Prior(port = "COM14")
+#prior_stage = prior.Prior(port = "COM14", baudrate = 9600)
 prior_mutex = QtCore.QMutex()
 
 #
-# Class for communication with the Prior stage for Z.
+# Class for communication with the Prior filter wheel.
 #
-class QPriorZ(QtCore.QObject):
+class QPriorFilterWheel(QtCore.QObject):
     def __init__(self, parent = None):
         QtCore.QObject.__init__(self, parent)
         global prior_stage
@@ -41,10 +38,19 @@ class QPriorZ(QtCore.QObject):
         self.mutex = prior_mutex
         self.running = self.stage.getStatus()
 
-    def zMoveTo(self, z):
+    def getPosition(self):
         if self.running:
             self.mutex.lock()
-            self.stage.zMoveTo(z)
+            filter = self.stage.getFilter()
+            self.mutex.unlock()
+            return filter
+        else:
+            return 0
+
+    def setPosition(self, n):
+        if self.running:
+            self.mutex.lock()
+            self.stage.changeFilter(n)
             self.mutex.unlock()
 
     def shutDown(self):
