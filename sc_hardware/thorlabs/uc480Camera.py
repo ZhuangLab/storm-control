@@ -751,6 +751,68 @@ class CameraQPD300(CameraQPD):
         self.half_y = self.y_width/2
         self.X = numpy.arange(self.y_width) - 0.5*float(self.y_width)
 
+## CameraQPD500
+#
+# QPD emulation class with a 500x500 pixel ROI.
+#
+class CameraQPD500(CameraQPD):
+
+    ## __init__
+    #
+    # @param camera_id (Optional) The camera id, defaults to 1.
+    # @param fit_mutex (Optional) A QMutex to use during fitting, defaults to False.
+    #
+    def __init__(self, camera_id = 1, fit_mutex = False):
+        CameraQPD.__init__(self, camera_id, fit_mutex)
+
+        # Change initial zero distance to 250.0
+        self.zero_dist = 250.0
+
+        # Change width to 500 x 500.
+        self.x_width = 500
+        self.y_width = 500
+        self.setAOI()
+
+        # Set camera to run as fast as possible
+        self.cam.setPixelClock()
+        self.cam.setFrameRate()
+        
+        # Some derived parameters
+        self.half_x = self.x_width/2
+        self.half_y = self.y_width/2
+        self.X = numpy.arange(self.y_width) - 0.5*float(self.y_width)
+
+
+## CameraQPD752
+#
+# QPD emulation class with a 752x752 pixel ROI.
+#
+class CameraQPD752(CameraQPD):
+
+    ## __init__
+    #
+    # @param camera_id (Optional) The camera id, defaults to 1.
+    # @param fit_mutex (Optional) A QMutex to use during fitting, defaults to False.
+    #
+    def __init__(self, camera_id = 1, fit_mutex = False):
+        CameraQPD.__init__(self, camera_id, fit_mutex)
+
+        # Change initial zero distance to 250.0
+        self.zero_dist = 376.0
+
+        # Change width to 500 x 500.
+        self.x_width = 752
+        self.y_width = 752
+        self.setAOI()
+
+        # Set camera to run as fast as possible
+        self.cam.setPixelClock()
+        self.cam.setFrameRate()
+        
+        # Some derived parameters
+        self.half_x = self.x_width/2
+        self.half_y = self.y_width/2
+        self.X = numpy.arange(self.y_width) - 0.5*float(self.y_width)
 
 # Testing
 if __name__ == "__main__":
