@@ -9,9 +9,8 @@
 #
 
 # qpd and stage.
-#import stagecontrol.storm2StageControl as zstage
-import sc_hardware.prior.prior as prior
-import sc_hardware.phreshPhotonics.phreshQPD as phreshQPD
+import sc_hardware.madCityLabs.mclVoltageZController as MCLVZC
+import sc_hardware.thorlabs.uc480Camera as uc480Cam
 
 # focus lock control thread.
 import focuslock.stageOffsetControl as stageOffsetControl
@@ -23,23 +22,22 @@ import sc_hardware.thorlabs.LDC210 as LDC210
 import focuslock.focusLockZ as focusLockZ
 
 #
-# Focus Lock Dialog Box specialized for STORM3
-# with Phresh QPD and MCL objective Z positioner.
+# Focus Lock Dialog Box specialized for STORM2
+# with UC480 camera and MCL piezo z stage.
 #
-class AFocusLockZ(focusLockZ.FocusLockZQPD):
+class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, hardware, parameters, parent = None):
-        qpd = phreshQPD.PhreshQPDSTORM2()
-        stage = prior.PriorZ(port = "COM7")
-        lock_fn = lambda (x): 2.5 * x
-        #stage = prior.PriorNI()
-        #lock_fn = lambda (x): 2.5 * x
-        control_thread = stageOffsetControl.StageQPDThread(qpd,
+        cam = uc480Cam.CameraQPD500(camera_id = 1)
+        stage = MCLVZC.MCLVZControl("USB-6002", 0)
+        lock_fn = lambda (x): 0.030 * x
+        control_thread = stageOffsetControl.StageCamThread(cam,
                                                            stage,
                                                            lock_fn,
                                                            50.0, 
                                                            parameters.get("qpd_zcenter"))
-        ir_laser = LDC210.LDC210("PCIe-6259", 8)
-        focusLockZ.FocusLockZQPD.__init__(self,
+        #ir_laser = LDC210.LDC210("PCIe-6259", 8)
+        ir_laser = LDC210.LDC210PWMNI("PCIe-6259", 0)
+        focusLockZ.FocusLockZCam.__init__(self,
                                           parameters,
                                           control_thread,
                                           ir_laser,

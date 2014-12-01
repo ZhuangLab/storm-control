@@ -19,8 +19,8 @@
   <external_trigger type="int">0</external_trigger>
 
   <!-- film settings -->
-  <want_big_endian type="int">1</want_big_endian>
-  <directory type="string">C:\Data\</directory>
+  <want_big_endian type="int">0</want_big_endian>
+  <directory type="string">E:\Data\</directory>
   <filename type="string">movie</filename>
   <acq_mode type="string">run_till_abort</acq_mode>
 <!--  <acq_mode type="string">fixed_length</acq_mode> -->
@@ -70,12 +70,11 @@
   <drag_multiplier type="float">0.16</drag_multiplier>
 
   <!-- focus lock settings -->
+  <ir_power type="int">6</ir_power>
   <qpd_mode type="int">0</qpd_mode>
-  <qpd_zcenter type="float">50.0</qpd_zcenter>
-  <qpd_scale type="float">1400.0</qpd_scale>
-<!--  <qpd_scale type="float">1421.0</qpd_scale> -->
-<!--  <qpd_scale type="float">1.0</qpd_scale> -->
-  <qpd_sum_max type="int">1500</qpd_sum_max>
+  <qpd_zcenter type="float">125.0</qpd_zcenter>
+  <qpd_scale type="float">-70.0</qpd_scale>
+  <qpd_sum_max type="int">256</qpd_sum_max>
   <cal_deadtime type="int">20</cal_deadtime>
   <cal_range type="float">600</cal_range>
   <cal_step_size type="float">10</cal_step_size>
