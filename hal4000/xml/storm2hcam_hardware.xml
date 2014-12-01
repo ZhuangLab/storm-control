@@ -45,7 +45,6 @@
       </parameters>
     </illumination>
     
-    
     <!-- Joystick controller. -->
     <!--
     <joystick>
@@ -56,22 +55,18 @@
     -->
 	
     <!-- Control of miscellaneous hardware. -->
-    <!--
     <misc_control>
       <class_name type="string">AMiscControl</class_name>
       <menu_item type="string">Misc. Control</menu_item>
       <module_name type="string">miscControl.storm2MiscControl</module_name>
     </misc_control>
-    -->
 
     <!-- Automatic illumination power adjustment. -->
-    <!--
     <progressions>
       <class_name type="string">ProgressionControl</class_name>
       <menu_item type="string">Progressions</menu_item>
       <module_name type="string">progressionControl</module_name>
     </progressions>
-    -->
 
     <!-- The live STORM analysis and display. -->
     <!--
