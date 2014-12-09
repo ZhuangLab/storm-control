@@ -20,6 +20,8 @@ import time
 drv_acquiring = 20072
 drv_idle = 20073
 drv_no_new_data = 20024
+drv_not_available = 20992
+drv_not_supported = 20991
 drv_success = 20002
 drv_tempcycle = 20074
 drv_temp_not_stabilized = 20035
@@ -67,7 +69,7 @@ def loadAndorDLL(andor_dll):
 # @param message A string message, usually this is the name of the function call.
 #
 def andorCheck(status, message):
-    assert status == drv_success, message + "failed with status = " + str(status)
+    assert status == drv_success, message + " failed with status = " + str(status)
 
 ## getAvailableCameras
 #
@@ -538,13 +540,15 @@ class AndorCamera:
             enable = 1
         else:
             enable = 0
-        try:
-            andorCheck(andor.SetEMAdvanced(c_int(enable)), "SetEMAdvanced")
-        except AssertionError, e:
-            if (e.message != "SetEMAdvancedfailed with status = 20992"):
-                raise e
-            else:
-                print "Advanced EM mode not available."
+        status = andor.SetEMAdvanced(c_int(enable))
+        if (enable == 1):
+            andorCheck(status, "SetEMAdvanced")
+        else:
+            if (status == drv_not_supported):
+                return
+            if (status == drv_not_available):
+                return
+            andorCheck(status, "SetEMAdvanced")
 
     ## setEMCCDGain
     #
@@ -566,7 +570,11 @@ class AndorCamera:
     def setEMGainMode(self, mode):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        andorCheck(andor.SetEMGainMode(c_int(mode)), "SetEMGainMode")
+        status = andor.SetEMGainMode(c_int(mode))
+        if (status == drv_not_supported):
+            print "Warning: Setting EM Gain Mode is not supported by this camera."
+        else:
+            andorCheck(status, "SetEMGainMode")
 
     ## setExposureTime
     #
@@ -637,12 +645,16 @@ class AndorCamera:
             active = 1
         else:
             active = 0
-        andorCheck(andor.SetIsolatedCropMode(c_int(active),
-                                             c_int(height),
-                                             c_int(width),
-                                             c_int(vbin),
-                                             c_int(hbin)),
-                   "SetIsolatedCropMode")
+        status = andor.SetIsolatedCropMode(c_int(active),
+                                           c_int(height),
+                                           c_int(width),
+                                           c_int(vbin),
+                                           c_int(hbin))
+        if (active == 1):
+            andorCheck(status, "SetIsolatedCropMode")
+        else:
+            if (status != drv_not_supported):
+                andorCheck(status, "SetIsolatedCropMode")
 
     ## setKineticCycleTime
     #
