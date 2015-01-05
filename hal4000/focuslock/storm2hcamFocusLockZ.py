@@ -27,7 +27,8 @@ import focuslock.focusLockZ as focusLockZ
 #
 class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, hardware, parameters, parent = None):
-        cam = uc480Cam.CameraQPD752(camera_id = 1)
+        #cam = uc480Cam.CameraQPD752(camera_id = 1)
+        cam = uc480Cam.CameraQPD(camera_id = 1, x_width = 752, y_width = 40)
         stage = MCLVZC.MCLVZControl("USB-6002", 0)
         lock_fn = lambda (x): 0.07 * x
         control_thread = stageOffsetControl.StageCamThread(cam,
@@ -35,7 +36,6 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                                            lock_fn,
                                                            50.0, 
                                                            parameters.get("qpd_zcenter"))
-        #ir_laser = LDC210.LDC210("PCIe-6259", 8)
         ir_laser = LDC210.LDC210PWMNI("PCI-6601", 0)
         focusLockZ.FocusLockZCam.__init__(self,
                                           parameters,
