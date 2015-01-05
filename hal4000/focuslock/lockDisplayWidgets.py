@@ -448,7 +448,7 @@ class QCamDisplay(QtGui.QWidget):
 
             # Update the image.
             np_data = data[0]
-            w, h = np_data.shape
+            h, w = np_data.shape
             self.image = QtGui.QImage(np_data.data, w, h, QtGui.QImage.Format_Indexed8)
             self.image.ndarray = np_data
             for i in range(256):
@@ -465,19 +465,20 @@ class QCamDisplay(QtGui.QWidget):
             self.e_size = round(12.0*float(self.width())/float(w))
 
             # Update offsets
+            scale = float(h)/float(w)
             if (data[1] == 0.0):
                 self.draw_e1 = False
             else:
                 self.draw_e1 = True
                 self.x_off1 = ((data[2]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size
-                self.y_off1 = ((data[1]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size
+                self.y_off1 = ((data[1]+h/2)/float(h))*float(self.height())*scale - 0.5*self.e_size
             
             if (data[3] == 0.0):
                 self.draw_e2 = False
             else:
                 self.draw_e2 = True
                 self.x_off2 = ((data[4]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size
-                self.y_off2 = ((data[3]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size
+                self.y_off2 = ((data[3]+h/2)/float(h))*float(self.height())*scale - 0.5*self.e_size
 
             # Red dot in camera display
             self.show_dot = show_dot
@@ -493,9 +494,20 @@ class QCamDisplay(QtGui.QWidget):
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
         if self.image:
+
+            # Draw background.
+            painter.setPen(QtGui.QColor(50,0,0))
+            painter.setBrush(QtGui.QColor(50,0,0))
+            painter.drawRect(0, 0, self.width(), self.height())
+            
             # Draw image.
+            scale = float(self.width())/float(self.image.width())
             painter.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
-            destination_rect = QtCore.QRect(0, 0, self.width(), self.height())
+            y_start = int(self.height()/2 - scale * self.image.height()/2)
+            destination_rect = QtCore.QRect(0,
+                                            y_start,
+                                            int(scale * self.image.width()), 
+                                            int(scale * self.image.height()))
             painter.drawImage(destination_rect, self.image)
 
             # Draw alignment lines & zoomed image.
@@ -510,6 +522,7 @@ class QCamDisplay(QtGui.QWidget):
                     destination_rect = QtCore.QRect(self.zoom_x, self.zoom_y, self.zoom_size, self.zoom_size)
                     painter.drawImage(destination_rect, self.zoom_image)
                     painter.setPen(QtGui.QColor(200,200,200))
+                    painter.setBrush(QtGui.QColor(0,0,0,0))
                     painter.drawRect(destination_rect)
 
                 painter.setPen(QtGui.QColor(255,255,255))
@@ -521,22 +534,25 @@ class QCamDisplay(QtGui.QWidget):
             # Draw focus lock feedback.
             else:
                 painter.setRenderHint(QtGui.QPainter.Antialiasing)
+                painter.setBrush(QtGui.QColor(0,0,0,0))
 
                 # Round green circles for fitting mode.
                 if self.fit_mode:
                     painter.setPen(QtGui.QColor(0,255,0))
                     if self.draw_e1:
-                        painter.drawEllipse(QtCore.QPointF(self.x_off1, self.y_off1), self.e_size, self.e_size)
+                        painter.drawEllipse(QtCore.QPointF(self.x_off1, self.y_off1 + y_start), 
+                                            self.e_size, self.e_size)
                     if self.draw_e2:
-                        painter.drawEllipse(QtCore.QPointF(self.x_off2, self.y_off2), self.e_size, self.e_size)
+                        painter.drawEllipse(QtCore.QPointF(self.x_off2, self.y_off2 + y_start), 
+                                            self.e_size, self.e_size)
 
                 # Square blue boxes for moment mode.
                 else:
                     painter.setPen(QtGui.QColor(0,0,255))
                     if self.draw_e1:
-                        painter.drawRect(self.x_off1, self.y_off1, 2*self.e_size, 2*self.e_size)
+                        painter.drawRect(self.x_off1, self.y_off1 + y_start, 2*self.e_size, 2*self.e_size)
                     if self.draw_e2:
-                        painter.drawRect(self.x_off2, self.y_off2, 2*self.e_size, 2*self.e_size)
+                        painter.drawRect(self.x_off2, self.y_off2 + y_start, 2*self.e_size, 2*self.e_size)
 
             # display red dot (or not)
             if self.show_dot:
