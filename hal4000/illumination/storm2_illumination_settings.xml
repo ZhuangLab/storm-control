@@ -8,6 +8,7 @@
       <class_name>HalFW102C</class_name>
       <parameters>
 	<port>COM16</port>
+	<baud_rate>9600</baud_rate>
       </parameters>
     </control_module>
     
@@ -26,6 +27,7 @@
       <class_name>CoherentCube</class_name>
       <parameters>
 	<port>COM9</port>
+	<baud_rate>9600</baud_rate>
       </parameters>
     </control_module>
     
