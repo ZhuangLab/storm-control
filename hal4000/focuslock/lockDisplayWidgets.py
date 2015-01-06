@@ -464,14 +464,22 @@ class QCamDisplay(QtGui.QWidget):
             painter = QtGui.QPainter(self.display_pixmap)
 
             # Draw background.
-            painter.setPen(QtGui.QColor(240,240,240))
-            painter.setBrush(QtGui.QColor(240,240,240))
+            painter.setPen(QtGui.QColor(0,0,0))
+            painter.setBrush(QtGui.QColor(0,0,0))
             painter.drawRect(0, 0, w, w)
 
             # Draw image.
             y_start = self.display_pixmap.height()/2 - self.camera_image.height()/2
             destination_rect = QtCore.QRect(0, y_start, self.camera_image.width(), self.camera_image.height())
             painter.drawImage(destination_rect, self.camera_image)
+
+            # Draw bounding rectangle.
+            if (w != h):
+                pen = QtGui.QPen(QtGui.QColor(255,0,0))
+                pen.setWidth(self.display_pixmap.width()/self.width())
+                painter.setPen(pen)
+                painter.setBrush(QtGui.QColor(0,0,0,0))
+                painter.drawRect(destination_rect)
 
             # Update zoomed image (if necessary).
             if (self.zoom_im_x >= 0):
