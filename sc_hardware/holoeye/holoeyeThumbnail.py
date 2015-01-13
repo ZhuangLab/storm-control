@@ -60,7 +60,7 @@ class HoloeyeThumbnail(QtGui.QWidget):
     def keyPressEvent(self, event):
         keys = []
         for i in range(self.num_screens):
-            keys.append(getattr(QtCore.Qt, "Key_" + str(i)))
+            keys.append(getattr(QtCore.Qt, "Key_" + str(i+1)))
 
         for i, key in enumerate(keys):
             if (event.key() == key):
