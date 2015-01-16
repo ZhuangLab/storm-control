@@ -8,6 +8,7 @@
       <class_name>HalFW102C</class_name>
       <parameters>
 	<port>COM5</port>
+	<baud_rate>9600</baud_rate>
       </parameters>
     </control_module>
     

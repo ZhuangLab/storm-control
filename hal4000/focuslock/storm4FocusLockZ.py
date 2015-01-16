@@ -26,7 +26,7 @@ import focuslock.focusLockZ as focusLockZ
 #
 class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, hardware, parameters, parent = None):
-        cam = uc480Cam.CameraQPD300(camera_id = 1)
+        cam = uc480Cam.CameraQPD(camera_id = 1, x_width = 300, y_width = 50)
         stage = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/")
         lock_fn = lambda (x): 0.09 * x
         control_thread = stageOffsetControl.StageCamThread(cam,

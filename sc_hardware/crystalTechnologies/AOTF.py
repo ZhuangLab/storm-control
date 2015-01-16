@@ -100,6 +100,7 @@ class AOTF():
         try:
             self.aotf_handle = aotf.AotfOpen(0)
             self._aotfSendCmd("dau en")
+            self._sendCmd("dau gain * 255")
             return True
         except:
             return False
@@ -311,6 +312,7 @@ class AOTF64Bit(AOTF):
         if ("Invalid" in response):
             return False
         else:
+            self._sendCmd("dau gain * 255")
             return True
 
     ## _sendCmd

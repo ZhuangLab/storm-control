@@ -21,12 +21,13 @@ class FW102C(RS232.RS232):
     ## __init__
     #
     # @param port The com port the filter wheel is connected to.
+    # @param baud_rate The baud rate to use for communication.
     #
-    def __init__(self, port = "COM14"): # changed to "COM14" (was "COM5" before), Josh 6/26/13"
+    def __init__(self, port = "COM10", baud_rate = 9600): # changed to "COM14" (was "COM5" before), Josh 6/26/13"
         self.on = False
         try:
             # open port
-            RS232.RS232.__init__(self, port, None, 115200, "\r", 0.05)
+            RS232.RS232.__init__(self, port, None, baud_rate, "\r", 0.05)
 
             # see if the filter wheel is connected
             assert not(self.getID() == None)
@@ -107,7 +108,7 @@ class HalFW102C(illuminationHardware.BufferedAmplitudeModulation):
     def __init__(self, parameters, parent):
         illuminationHardware.BufferedAmplitudeModulation.__init__(self, parameters, parent)
 
-        self.filter_wheel = FW102C(parameters.port)
+        self.filter_wheel = FW102C(parameters.port, parameters.baud_rate)
         if not (self.filter_wheel.getStatus()):
             self.working = False
 

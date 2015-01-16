@@ -119,6 +119,7 @@ def generate(parent, xml_file, position_file, generated_file):
                     # Create new block for this movie.
                     movie_block = ElementTree.SubElement(pass_block, "branch")
                     movie_block.set("name", movie_dict["name"] + " " + str(pass_number) + " " + str(i))
+                    movie_dict["name"] += "_" + str(pass_number) + "_" + str(i)
 
                     for action in da_actions:
                         node = action.createETree(movie_dict)

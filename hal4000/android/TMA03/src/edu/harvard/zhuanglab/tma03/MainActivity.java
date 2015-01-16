@@ -147,6 +147,7 @@ public class MainActivity extends Activity {
             if (resultCode == Activity.RESULT_OK) {
                 // Bluetooth is now enabled, so set up a chat session
                 Toast.makeText(this, "Bluetooth Enabled", Toast.LENGTH_SHORT).show();
+                mBluetoothIO = new BluetoothIO(this, mHandler);
             } else {
                 // User did not enable Bluetooth or an error occured
                 Toast.makeText(this, "Bluetooth Not Enabled", Toast.LENGTH_SHORT).show();

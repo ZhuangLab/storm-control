@@ -11,6 +11,7 @@
  *
  */
 
+#include <stdlib.h>
 
 /* function definitions */
 

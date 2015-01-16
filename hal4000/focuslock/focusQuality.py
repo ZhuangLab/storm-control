@@ -8,7 +8,10 @@
 #
 
 from ctypes import *
+import numpy
+from numpy.ctypeslib import ndpointer
 import os
+import sys
 
 focus_quality = False
 
@@ -19,13 +22,23 @@ focus_quality = False
 def loadFocusQualityDLL():
     global focus_quality
     if not focus_quality:
-        if os.path.exists("focus_quality.dll"):
-            focus_quality = cdll.LoadLibrary("focus_quality")
+
+        directory = os.path.dirname(__file__)
+        if (directory == ""):
+            directory = "./"
         else:
-            focus_quality = cdll.LoadLibrary("focuslock/focus_quality")
+            directory += "/"
+
+        if (sys.platform == "win32"):
+            focus_quality = cdll.LoadLibrary(directory + "focus_quality.dll")
+        else:
+            focus_quality = cdll.LoadLibrary(directory + "focus_quality.so")
 
 loadFocusQualityDLL()
 c_imageGradient = focus_quality.imageGradient
+c_imageGradient.argtypes = [ndpointer(dtype=numpy.uint16),
+                            c_int,
+                            c_int]
 c_imageGradient.restype = c_float
 
 ## imageGradient
@@ -33,9 +46,9 @@ c_imageGradient.restype = c_float
 # Returns the magnitude of the image gradient in the x direction.
 #
 def imageGradient(frame):
-    return c_imageGradient(frame.getDataPtr(),
-                           c_int(frame.image_x),
-                           c_int(frame.image_y))
+    return c_imageGradient(frame.getData(),
+                           frame.image_x,
+                           frame.image_y)
 
 
 #

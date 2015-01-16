@@ -193,6 +193,7 @@ int isPeak(short image[], int size_x, int size_y, int x, int y, int threshold)
   }
 
   mean = sum/bdy_len;
+
   return mean;
 }
 
@@ -273,6 +274,7 @@ void peakPosition(short image[], int size_x, int size_y, int x, int y, int mean,
     *px = -1.0;
     *py = -1.0;
   }
+
 }
 
 /*
