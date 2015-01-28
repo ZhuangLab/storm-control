@@ -27,7 +27,8 @@ import focuslock.focusLockZ as focusLockZ
 #
 class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, hardware, parameters, parent = None):
-        cam = uc480Cam.CameraQPD500(camera_id = 1)
+        #cam = uc480Cam.CameraQPD500(camera_id = 1)
+        cam = uc480Cam.CameraQPD(camera_id = 1, x_width = 752, y_width = 40)
         stage = MCLVZC.MCLVZControl("USB-6002", 0)
         lock_fn = lambda (x): 0.030 * x
         control_thread = stageOffsetControl.StageCamThread(cam,
