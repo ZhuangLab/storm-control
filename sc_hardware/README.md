@@ -3,17 +3,18 @@
 
 | Device | Interface | Manufacturer | Status |
 |--------|--------------|--------|
-| AOTF | RS-232 | AA Optoelectronics | Worked, not used |
-| AOTF | DLL | Crystal Technologies | Works, in use |
-| AOTF | RS-232 | Gooch and Housego | Worked, not used |
-| CMOS Camera | DLL | Hamamatsu | Works, in use |
-| DAQ | DLL|  National Instruments | Works, in use |
-| DAQ (U3) | DLL | Labjack | Works, in use |
-| EMCCD Camera | DLL | Andor | Works, in use |
-| Filter Wheel | COM | Edmunds | Uncertain |
-| Filter Wheel | RS-232 | Thorlabs | Works, in use |
-| Joystick (DualAction) | HID | Logitech | Worked, not used |
-| Joystick (Gamepad 310) | HID | Logitech | Works, in use |
+| AOTF                   | RS-232 | AA Optoelectronics   | Worked, not used |
+| AOTF                   | DLL    | Crystal Technologies | Works, in use |
+| AOTF                   | RS-232 | Gooch and Housego    | Worked, not used |
+| CMOS Camera            | DLL    | Hamamatsu            | Works, in use |
+| DAQ                    | DLL    | National Instruments | Works, in use |
+| DAQ (U3)               | DLL    | Labjack              | Works, in use |
+| EMCCD Camera           | DLL    | Andor                | Works, in use |
+| Filter Wheel           | COM    | Edmunds              | Uncertain |
+| Filter Wheel           | RS-232 | Thorlabs             | Works, in use |
+| Joystick (DualAction)  | HID    | Logitech             | Worked, not used |
+
+| Joystick (Gamepad 310) | HID   | Logitech | Works, in use |
 | Laser | RS-232 | MPB Communications | Uncertain |
 | Laser | DAQ | Thorlabs | Works, in use |
 | Laser (Compass 315M) | DAQ | Coherent | Worked, not used |
