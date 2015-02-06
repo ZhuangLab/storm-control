@@ -49,6 +49,7 @@
   <default_power channel="2">1.0</default_power>
   <default_power channel="3">1.0</default_power>
   <default_power channel="4">1.0</default_power>
+  <default_power channel="5">1.0</default_power>
   <button channel="0" power="1.0">Max</button>
   <button channel="0" power="0.1">Low</button>
   <button channel="1" power="1.0">Max</button>
@@ -59,6 +60,8 @@
   <button channel="3" power="0.1">Low</button>
   <button channel="4" power="1.0">Max</button>
   <button channel="4" power="0.1">Low</button>
+  <button channel="5" power="1.0">Max</button>
+  <button channel="5" power="0.1">Low</button>
 
   <!-- stage settings -->
   <small_step_size type="float">5.0</small_step_size>

@@ -44,7 +44,7 @@
 	<settings_xml type="string">storm2_illumination_settings.xml</settings_xml>
       </parameters>
     </illumination>
-    
+   
     <!-- Joystick controller. -->
     <!--
     <joystick>
@@ -55,6 +55,7 @@
     -->
 	
     <!-- Control of miscellaneous hardware. -->
+
     <misc_control>
       <class_name type="string">AMiscControl</class_name>
       <menu_item type="string">Misc. Control</menu_item>
@@ -62,6 +63,7 @@
     </misc_control>
 
     <!-- Automatic illumination power adjustment. -->
+
     <progressions>
       <class_name type="string">ProgressionControl</class_name>
       <menu_item type="string">Progressions</menu_item>
@@ -85,8 +87,8 @@
       <module_name type="string">stagecontrol.storm2StageControl</module_name>
     </stage>
     
-
     <!-- Remote control of HAL via TCP/IP. -->
+
     <tcpip>
       <class_name type="string">HalTCPControl</class_name>
       <module_name type="string">halTcpControl</module_name>
