@@ -2,7 +2,7 @@
 ### Hardware Drivers Status Summary Table ###
 
 | Device | Interface | Manufacturer | Status |
-| ------ | ------------ | ------ |
+| ------ | --------- | ------------ | ------ |
 | AOTF                   | RS-232 | AA Optoelectronics   | Worked, not used |
 | AOTF                   | DLL    | Crystal Technologies | Works, in use |
 | AOTF                   | RS-232 | Gooch and Housego    | Worked, not used |
