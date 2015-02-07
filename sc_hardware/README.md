@@ -42,9 +42,9 @@
 
 #### Interface Notes ####
 
-COM = Windows COM interface.
-DAQ = Data acquisition card.
-HID = USB human interface device.
-RS-232 = Serial interface.
-MM = Micro-Manager.
-Video = Acts like a computer monitor.
+* COM = Windows COM interface.
+* DAQ = Data acquisition card.
+* HID = USB human interface device.
+* RS-232 = Serial interface.
+* MM = Micro-Manager.
+* Video = Acts like a computer monitor.
