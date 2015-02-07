@@ -13,7 +13,6 @@
 | Filter Wheel           | COM    | Edmunds              | Uncertain |
 | Filter Wheel           | RS-232 | Thorlabs             | Works, in use |
 | Joystick (DualAction)  | HID    | Logitech             | Worked, not used |
-
 | Joystick (Gamepad 310) | HID   | Logitech | Works, in use |
 | Laser | RS-232 | MPB Communications | Uncertain |
 | Laser | DAQ | Thorlabs | Works, in use |
