@@ -65,19 +65,22 @@ def getDebug():
 
 ## logText
 #
-# @param a_string The text string to add to the log file.
-# @param to_console (Optional) print the string on stdout, defaults to True.
+# Note: Calling this with to_console = True from a thread that is not
+#   the main thread seemed to occasionally lock the computer.
 #
-def logText(a_string, to_console = True):
+# @param a_string The text string to add to the log file.
+# @param to_console (Optional) print the string on stdout, defaults to False.
+#
+def logText(a_string, to_console = False):
     global a_logger, logging_mutex
     if a_logger:
         logging_mutex.lock()
         a_logger.info("message:")
         a_logger.info("  " + a_string)
+        if to_console:
+            print a_string
         logging_mutex.unlock()
 
-    #if to_console:
-    #    print a_string
 
 ## startLogging
 #
