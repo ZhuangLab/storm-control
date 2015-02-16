@@ -89,16 +89,6 @@ class DCAM_PARAM_PROPERTYVALUETEXT(ctypes.Structure):
                 ("textbytes", ctypes.c_int32)]
 
 
-#
-# Initialization
-#
-dcam = ctypes.windll.dcamapi
-temp = ctypes.c_int32(0)
-checkStatus(dcam.dcam_init(None, ctypes.byref(temp), None), 
-            "dcam_init")
-n_cameras = temp.value
-
-
 ## checkStatus
 #
 # Check return value of the dcam function call.
@@ -153,6 +143,18 @@ def getModelInfo(camera_id):
                                        ctypes.c_int(c_buf_len)),
                 "dcam_getmodelinfo")
     return c_buf.value
+
+
+
+#
+# Initialization
+#
+dcam = ctypes.windll.dcamapi
+temp = ctypes.c_int32(0)
+checkStatus(dcam.dcam_init(None, ctypes.byref(temp), None), 
+            "dcam_init")
+n_cameras = temp.value
+
 
 
 ## HCamData
