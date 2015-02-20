@@ -53,7 +53,7 @@
       <menu_item type="string">Misc. Control</menu_item>
       <module_name type="string">miscControl.storm2MiscControl</module_name>
       <parameters>
-	<port>COM9</port>
+	<port type="string">COM9</port>
 	<baud_rate type="int">115200</baud_rate>
       </parameters>
     </misc_control>

@@ -33,9 +33,9 @@ class AMiscControl(miscControl.MiscControl):
     def __init__(self, hardware, parameters, parent = None):
         miscControl.MiscControl.__init__(self, parameters, parent)
 
-        #self.em_filter_wheel = FW102C.FW102C(hardware.port, hardware.baud_rate)
         self.em_filter_pos = 0
-        self.em_filter_wheel = FW102C.FW102C("COM9", 115200)
+        self.em_filter_wheel = FW102C.FW102C(hardware.port, hardware.baud_rate)
+        #self.em_filter_wheel = FW102C.FW102C("COM9", 115200)
         self.filter_wheel = filterWheel.QPriorFilterWheel()
 
         # UI setup
