@@ -2,6 +2,8 @@
 <illumination_settings>
 
   <control_modules>
+
+    <!--
     <control_module>
       <name>Emissionwheel</name>
       <module_name>sc_hardware.thorlabs.FW102C</module_name>
@@ -11,6 +13,7 @@
 	<baud_rate type="int">115200</baud_rate>
       </parameters>
     </control_module>
+    -->
 
     <control_module>
       <name>750wheel</name>
@@ -56,6 +59,7 @@
 
   <channels>
     <!-- Emission Filter Wheel -->
+    <!--
     <channel>
       <description>EMwheel</description>
       <color type="rgb">200,200,200</color>
@@ -70,6 +74,7 @@
       </amplitude_modulation>
 
     </channel>
+    -->
 
     <!-- 750 laser -->
     <channel>
