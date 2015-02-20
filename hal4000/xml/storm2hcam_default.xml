@@ -14,6 +14,7 @@
   <x_bin type="int">1</x_bin>
   <y_bin type="int">1</y_bin>
   <exposure_time type="float">0.01</exposure_time>
+  <defect_correct_mode type="int">1</defect_correct_mode>
 
   <!-- less common camera settings -->
   <external_trigger type="int">0</external_trigger>
@@ -104,7 +105,7 @@
   <!-- temperature logger settings -->
 
   <!-- misc control -->
-  <filter_names type="string-array">Dy750,Al647,mEos2,Atto488,DAPI,Penta</filter_names>
+  <filter_names type="string-array">Empty,Empty,Penta,Storm,Empty,Empty</filter_names>
   <filter_position type="int">0</filter_position>
 
   <!-- TCP/IP control -->
