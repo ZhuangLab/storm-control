@@ -115,7 +115,7 @@
   <!-- temperature logger settings -->
 
   <!-- misc control -->
-  <filter_names type="string-array">Dy750,Al647,mEos2,Atto488,DAPI,Penta</filter_names>
+  <filter_names type="string-array">Empty,Empty,Penta,Storm,Empty,Empty</filter_names>
   <filter_position type="int">0</filter_position>
 
   <!-- TCP/IP control -->
