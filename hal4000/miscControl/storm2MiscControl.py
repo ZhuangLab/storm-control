@@ -19,9 +19,11 @@ import sc_library.hdebug as hdebug
 # UIs.
 import qtdesigner.storm2_misc_ui as miscControlsUi
 
-# Control
-import sc_hardware.olympus.ix2ucb as ix2ucb
-import sc_hardware.phidgets.phidget as phidget
+# Emission filter wheel
+import sc_hardware.thorlabs.FW102C as FW102C
+
+# Prior filter wheel
+import stagecontrol.storm2StageControl as filterWheel
 
 #
 # Misc Control Dialog Box
@@ -31,14 +33,10 @@ class AMiscControl(miscControl.MiscControl):
     def __init__(self, hardware, parameters, parent = None):
         miscControl.MiscControl.__init__(self, parameters, parent)
 
-        self.filter_wheel = ix2ucb.IX2UCB(port = "COM7")
-        if (not self.filter_wheel.getStatus()):
-            self.filter_wheel = False
-        self.lamp_servo = phidget.Phidget("c:/Program Files/Phidgets/")
-
-        # we need to stall briefly to give time for 
-        # the laser/lamp servo to initialize.
-        time.sleep(0.1)
+        #self.em_filter_wheel = FW102C.FW102C(hardware.port, hardware.baud_rate)
+        self.em_filter_pos = 0
+        self.em_filter_wheel = FW102C.FW102C("COM9", 115200)
+        self.filter_wheel = filterWheel.QPriorFilterWheel()
 
         # UI setup
         self.ui = miscControlsUi.Ui_Dialog()
@@ -53,27 +51,45 @@ class AMiscControl(miscControl.MiscControl):
             self.ui.okButton.setText("Quit")
             self.ui.okButton.clicked.connect(self.handleQuit)
 
-        # setup laser/lamp
-        self.ui.laserButton.clicked.connect(self.handleLaser)
-        self.ui.lampButton.clicked.connect(self.handleLamp)
-        if self.lamp_servo.atMinimum():
-            self.ui.laserButton.setStyleSheet("QPushButton { color: red }")
-            self.ui.lampButton.setStyleSheet("QPushButton { color: black }")
-        else:
-            self.ui.laserButton.setStyleSheet("QPushButton { color: black }")
-            self.ui.lampButton.setStyleSheet("QPushButton { color: red }")
-
-        # setup filter wheel
+        # setup (turret) filter wheel
         self.filters = [self.ui.filter1Button,
                         self.ui.filter2Button,
                         self.ui.filter3Button,
                         self.ui.filter4Button,
                         self.ui.filter5Button,
                         self.ui.filter6Button]
-        for filter in self.filters:
-            filter.clicked.connect(self.handleFilter)
+        for afilter in self.filters:
+            afilter.clicked.connect(self.handleFilter)
         if self.filter_wheel:
             self.filters[self.filter_wheel.getPosition()-1].click()
+
+        # setup (emission) filter wheel
+        self.ui.emFilter5Button.hide()
+        self.ui.emFilter6Button.hide()
+        self.em_filters = [self.ui.emFilter1Button,
+                           self.ui.emFilter2Button,
+                           self.ui.emFilter3Button,
+                           self.ui.emFilter4Button,
+                           self.ui.emFilter5Button,
+                           self.ui.emFilter6Button]
+        for afilter in self.em_filters:
+            afilter.clicked.connect(self.handleEmFilter)
+        if self.em_filter_wheel:
+            self.em_filters[parameters.get("em_filter")].click()
+
+        self.ui.emCheckBox.setChecked(parameters.get("em_checked"))
+        self.ui.emSpinBox.setValue(parameters.get("em_period"))
+
+    @hdebug.debug
+    def handleEmFilter(self, bool):
+        for i, afilter in enumerate(self.em_filters):
+            if afilter.isChecked():
+                afilter.setStyleSheet("QPushButton { color: red}")
+                if self.em_filter_wheel:
+                    self.em_filter_wheel.setPosition(i+1)
+                self.parameters.set("em_filter", i)
+            else:
+                afilter.setStyleSheet("QPushButton { color: black}")
 
     @hdebug.debug
     def handleFilter(self, bool):
@@ -81,41 +97,38 @@ class AMiscControl(miscControl.MiscControl):
             if filter.isChecked():
                 filter.setStyleSheet("QPushButton { color: red}")
                 if self.filter_wheel:
+                    self.em_filter_pos = i
                     self.filter_wheel.setPosition(i+1)
                 self.parameters.set("filter_position", i)
             else:
                 filter.setStyleSheet("QPushButton { color: black}")
 
-    @hdebug.debug
-    def handleLamp(self, bool):
-        self.ui.laserButton.setStyleSheet("QPushButton { color: black }")
-        self.ui.lampButton.setStyleSheet("QPushButton { color: red }")
-        self.lamp_servo.goToMax()
-
-    @hdebug.debug
-    def handleLaser(self, bool):
-        self.ui.laserButton.setStyleSheet("QPushButton { color: red }")
-        self.ui.lampButton.setStyleSheet("QPushButton { color: black }")
-        self.lamp_servo.goToMin()
-        
-    @hdebug.debug
-    def handleOk(self, bool):
-        self.hide()
+    def newFrame(self, frame, filming):
+        if filming:
+            if self.ui.emCheckBox.isChecked():
+                if (((frame.number + 1) % self.ui.emSpinBox.value()) == 0):
+                    self.em_filter_pos += 1
+                    self.em_filters[(self.em_filter_pos%4)].click()
 
     @hdebug.debug
     def newParameters(self, parameters):
+        self.parameters.em_checked = self.ui.emCheckBox.isChecked()
+        self.parameters.em_period = self.ui.emSpinBox.value()
+
         self.parameters = parameters
         names = parameters.get("filter_names")
         if (len(names) == 6):
             for i in range(6):
                 self.filters[i].setText(names[i])
-        self.filters[self.parameters.get("filter_position")].click()
 
-    @hdebug.debug
-    def quit(self):
-        if self.filter_wheel:
-            self.filter_wheel.shutDown()
-        self.lamp_servo.shutDown()
+        self.filters[self.parameters.get("filter_position")].click()
+        self.em_filters[self.parameters.get("em_filter")].click()
+        self.ui.emCheckBox.setChecked(self.parameters.get("em_checked"))
+        self.ui.emSpinBox.setValue(self.parameters.get("em_period"))
+
+    def startFilm(self, film_name, run_shutters):
+        if self.ui.emCheckBox.isChecked():
+            self.em_filters[0].click()
 
 #
 # The MIT License

@@ -236,6 +236,10 @@ class QStageDisplay(QOffsetDisplay):
             color = QtGui.QColor(180, 180, 180)
         else:
             color = QtGui.QColor(255, 255, 255)
+
+        if (self.value < self.warning_low) or (self.value > self.warning_high):
+            color = QtGui.QColor(255, 0, 0)
+
         painter.setPen(color)
         painter.setBrush(color)
         painter.drawRect(0, 0, self.x_size, self.y_size)
@@ -338,12 +342,13 @@ class QCamDisplay(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
         self.adjust_mode = False
         self.background = QtGui.QColor(0,0,0)
+        self.camera_image = None
+        self.display_pixmap = None
         self.draw_e1 = True
         self.draw_e2 = True
         self.e_size = 8
         self.fit_mode = True
         self.foreground = QtGui.QColor(0,255,0)
-        self.image = None
         self.show_dot = False
         self.static_text = [QtGui.QStaticText("Fit"), QtGui.QStaticText("Moment")]
         self.tooltips = ["click to adjust", "<m> key to change mode\n<arrow> keys to move spots\n<,.> keys to change zero point"]
@@ -368,7 +373,7 @@ class QCamDisplay(QtGui.QWidget):
     # @return A image from the focus lock camera.
     #
     def getImage(self):
-        return self.image
+        return self.display_pixmap
 
     ## keyPressEvent
     #
@@ -411,13 +416,13 @@ class QCamDisplay(QtGui.QWidget):
     #
     def mouseMoveEvent(self, event):
         self.zoom_im_x = -1
-        if self.image and self.adjust_mode:
+        if self.display_pixmap and self.adjust_mode:
             half_size = self.zoom_size / 2
-            x_bound = half_size * self.width()/self.image.width() + 1
-            y_bound = half_size * self.height()/self.image.height() + 1
+            x_bound = half_size * self.width()/self.display_pixmap.width() + 1
+            y_bound = half_size * self.height()/self.display_pixmap.height() + 1
             if ((event.x() >= x_bound) and (event.x() < (self.width() - x_bound)) and (event.y() >= y_bound) and (event.y() < (self.height() - y_bound))):
-                self.zoom_im_x = event.x() * self.image.width()/self.width() - half_size
-                self.zoom_im_y = event.y() * self.image.height()/self.height() - half_size
+                self.zoom_im_x = event.x() * self.display_pixmap.width()/self.width() - half_size
+                self.zoom_im_y = event.y() * self.display_pixmap.height()/self.height() - half_size
                 self.zoom_x = event.x() - half_size
                 self.zoom_y = event.y() - half_size
 
@@ -446,19 +451,41 @@ class QCamDisplay(QtGui.QWidget):
         # Update image if data is good..
         if (type(data) == type([])):
 
-            # Update the image.
+            # Update the camera image.
             np_data = data[0]
-            w, h = np_data.shape
-            self.image = QtGui.QImage(np_data.data, w, h, QtGui.QImage.Format_Indexed8)
-            self.image.ndarray = np_data
+            h, w = np_data.shape
+            self.camera_image = QtGui.QImage(np_data.data, w, h, QtGui.QImage.Format_Indexed8)
+            self.camera_image.ndarray = np_data
             for i in range(256):
-                self.image.setColor(i, QtGui.QColor(i,i,i).rgb())
-            
+                self.camera_image.setColor(i, QtGui.QColor(i,i,i).rgb())
+
+            # Update display image. This is a square version of the camera image.
+            self.display_pixmap = QtGui.QPixmap(w, w)
+            painter = QtGui.QPainter(self.display_pixmap)
+
+            # Draw background.
+            painter.setPen(QtGui.QColor(0,0,0))
+            painter.setBrush(QtGui.QColor(0,0,0))
+            painter.drawRect(0, 0, w, w)
+
+            # Draw image.
+            y_start = self.display_pixmap.height()/2 - self.camera_image.height()/2
+            destination_rect = QtCore.QRect(0, y_start, self.camera_image.width(), self.camera_image.height())
+            painter.drawImage(destination_rect, self.camera_image)
+
+            # Draw bounding rectangle.
+            if (w != h):
+                pen = QtGui.QPen(QtGui.QColor(255,0,0))
+                pen.setWidth(self.display_pixmap.width()/self.width())
+                painter.setPen(pen)
+                painter.setBrush(QtGui.QColor(0,0,0,0))
+                painter.drawRect(destination_rect)
+
             # Update zoomed image (if necessary).
             if (self.zoom_im_x >= 0):
                 self.zoom_image = QtGui.QImage(self.zoom_size, self.zoom_size, QtGui.QImage.Format_RGB32)
                 painter = QtGui.QPainter(self.zoom_image)
-                painter.drawImage(0, 0, self.image, self.zoom_im_x, self.zoom_im_y, self.zoom_size, self.zoom_size)
+                painter.drawPixmap(0, 0, self.display_pixmap, self.zoom_im_x, self.zoom_im_y, self.zoom_size, self.zoom_size)
             else:
                 self.zoom_image = False
 
@@ -470,14 +497,14 @@ class QCamDisplay(QtGui.QWidget):
             else:
                 self.draw_e1 = True
                 self.x_off1 = ((data[2]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size
-                self.y_off1 = ((data[1]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size
+                self.y_off1 = ((data[1]+w/2)/float(w))*float(self.height()) - 0.5*self.e_size
             
             if (data[3] == 0.0):
                 self.draw_e2 = False
             else:
                 self.draw_e2 = True
                 self.x_off2 = ((data[4]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size
-                self.y_off2 = ((data[3]+h/2)/float(h))*float(self.height()) - 0.5*self.e_size
+                self.y_off2 = ((data[3]+w/2)/float(w))*float(self.height()) - 0.5*self.e_size
 
             # Red dot in camera display
             self.show_dot = show_dot
@@ -492,11 +519,12 @@ class QCamDisplay(QtGui.QWidget):
     #
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
-        if self.image:
+        if self.display_pixmap:
+
             # Draw image.
-            painter.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
             destination_rect = QtCore.QRect(0, 0, self.width(), self.height())
-            painter.drawImage(destination_rect, self.image)
+            painter.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
+            painter.drawPixmap(destination_rect, self.display_pixmap)
 
             # Draw alignment lines & zoomed image.
             if self.adjust_mode:
@@ -510,6 +538,7 @@ class QCamDisplay(QtGui.QWidget):
                     destination_rect = QtCore.QRect(self.zoom_x, self.zoom_y, self.zoom_size, self.zoom_size)
                     painter.drawImage(destination_rect, self.zoom_image)
                     painter.setPen(QtGui.QColor(200,200,200))
+                    painter.setBrush(QtGui.QColor(0,0,0,0))
                     painter.drawRect(destination_rect)
 
                 painter.setPen(QtGui.QColor(255,255,255))
@@ -521,14 +550,17 @@ class QCamDisplay(QtGui.QWidget):
             # Draw focus lock feedback.
             else:
                 painter.setRenderHint(QtGui.QPainter.Antialiasing)
+                painter.setBrush(QtGui.QColor(0,0,0,0))
 
                 # Round green circles for fitting mode.
                 if self.fit_mode:
                     painter.setPen(QtGui.QColor(0,255,0))
                     if self.draw_e1:
-                        painter.drawEllipse(QtCore.QPointF(self.x_off1, self.y_off1), self.e_size, self.e_size)
+                        painter.drawEllipse(QtCore.QPointF(self.x_off1, self.y_off1), 
+                                            self.e_size, self.e_size)
                     if self.draw_e2:
-                        painter.drawEllipse(QtCore.QPointF(self.x_off2, self.y_off2), self.e_size, self.e_size)
+                        painter.drawEllipse(QtCore.QPointF(self.x_off2, self.y_off2), 
+                                            self.e_size, self.e_size)
 
                 # Square blue boxes for moment mode.
                 else:

@@ -76,7 +76,6 @@ class MiscControl(QtGui.QDialog, halModule.HalModule):
     def handleQuit(self, boolean):
         self.close()
 
-
 #
 # The MIT License
 #

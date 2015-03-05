@@ -7,9 +7,15 @@
 # Hazen 03/14
 #
 
+import sys
+
 import halLib.standalone as standalone
 
-standalone.runModule("misc_control")
+if (len(sys.argv)==2):
+    standalone.runModule("misc_control", sys.argv[1])
+else:
+    standalone.runModule("misc_control")    
+
 
 #
 # The MIT License

@@ -318,14 +318,14 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
 
         if self.running_shutters:
 
-            # Stop channels.
-            for channel in self.channels:
-                channel.stopFilm()
-
             # Stop hardware.
             for name, instance in self.hardware_modules.iteritems():
                 if (instance.getStatus() == True):
                     instance.stopFilm()
+
+            # Stop channels.
+            for channel in self.channels:
+                channel.stopFilm()
 
             self.running_shutters = False
 

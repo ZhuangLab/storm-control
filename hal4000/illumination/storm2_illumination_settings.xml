@@ -2,15 +2,29 @@
 <illumination_settings>
 
   <control_modules>
+
+    <!--
+    <control_module>
+      <name>Emissionwheel</name>
+      <module_name>sc_hardware.thorlabs.FW102C</module_name>
+      <class_name>HalFW102C</class_name>
+      <parameters>
+	<port>COM9</port>
+	<baud_rate type="int">115200</baud_rate>
+      </parameters>
+    </control_module>
+    -->
+
     <control_module>
       <name>750wheel</name>
       <module_name>sc_hardware.thorlabs.FW102C</module_name>
       <class_name>HalFW102C</class_name>
       <parameters>
-	<port>COM9</port>
+	<port>COM10</port>
+	<baud_rate type="int">9600</baud_rate>
       </parameters>
     </control_module>
-    
+
     <control_module>
       <name>AOTF</name>
       <module_name>sc_hardware.crystalTechnologies.hAotf</module_name>
@@ -25,7 +39,8 @@
       <module_name>sc_hardware.coherent.hLaser</module_name>
       <class_name>CoherentCube</class_name>
       <parameters>
-	<port>COM8</port>
+	<port>COM4</port>
+	<baud_rate>9600</baud_rate>
       </parameters>
     </control_module>
     
@@ -43,12 +58,29 @@
   </control_modules>
 
   <channels>
+    <!-- Emission Filter Wheel -->
+    <!--
+    <channel>
+      <description>EMwheel</description>
+      <color type="rgb">200,200,200</color>
+      
+      <amplitude_modulation>
+	<uses>Emissionwheel</uses>
+	<display_normalized type="boolean">False</display_normalized>
+	<parameters>
+	  <minimum type="int">1</minimum>
+	  <maximum type="int">6</maximum>
+	</parameters>
+      </amplitude_modulation>
+
+    </channel>
+    -->
 
     <!-- 750 laser -->
     <channel>
       <description>750</description>
       <color type="rgb">200,0,0</color>
-      
+
       <amplitude_modulation>
 	<uses>750wheel</uses>
 	<display_normalized type="boolean">False</display_normalized>
@@ -57,7 +89,7 @@
 	  <maximum type="int">6</maximum>
 	</parameters>
       </amplitude_modulation>
-      
+    
       <digital_modulation>
 	<uses>daq</uses>
 	<parameters>
@@ -65,6 +97,7 @@
 	  <channel type="int">4</channel>
 	</parameters>
       </digital_modulation>
+
     </channel>
 
     <!-- 647 laser -->
@@ -76,10 +109,10 @@
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <maximum type="int">6400</maximum>
+	  <maximum type="int">6300</maximum>
 	  <channel type="int">3</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">89.93</on_frequency>
+	  <on_frequency type="float">89.96</on_frequency>
 	</parameters>
       </amplitude_modulation>
       
@@ -120,10 +153,10 @@
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <maximum type="int">6200</maximum>
+	  <maximum type="int">6000</maximum>
 	  <channel type="int">2</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">107.8</on_frequency>
+	  <on_frequency type="float">107.84</on_frequency>
 	</parameters>
       </amplitude_modulation>
       
@@ -164,10 +197,10 @@
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <maximum type="int">5700</maximum>
+	  <maximum type="int">6100</maximum>
 	  <channel type="int">1</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">129.86</on_frequency>
+	  <on_frequency type="float">129.90</on_frequency>
 	</parameters>
       </amplitude_modulation>
       

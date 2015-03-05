@@ -452,8 +452,10 @@ class CameraQPD():
     #
     # @param camera_id (Optional) The camera ID number, defaults to 1.
     # @param fit_mutex (Optional) A QMutex to use for fitting (to avoid thread safety issues with numpy), defaults to False.
+    # @param x_width (Optional) AOI size in x, defaults to 200.
+    # @param y_width (Optional) AOI size in y, defaults to 200.
     #
-    def __init__(self, camera_id = 1, fit_mutex = False):
+    def __init__(self, camera_id = 1, fit_mutex = False, x_width = 200, y_width = 200):
         self.file_name = "cam_offsets_" + str(camera_id) + ".txt"
         self.fit_mode = 1
         self.fit_mutex = fit_mutex
@@ -463,7 +465,7 @@ class CameraQPD():
         self.y_off1 = 0.0
         self.x_off2 = 0.0
         self.y_off2 = 0.0
-        self.zero_dist = 100.0
+        self.zero_dist = 0.5 * x_width
 
         # Open camera
         self.cam = Camera(camera_id)
@@ -471,7 +473,7 @@ class CameraQPD():
         # Set timeout
         self.cam.setTimeout(1)
 
-        # Set camera AOI
+        # Set camera AOI x_start, y_start.
         if (os.path.exists(self.file_name)):
             fp = open(self.file_name, "r")
             data = fp.readline().split(",")
@@ -482,11 +484,12 @@ class CameraQPD():
             self.x_start = 0
             self.y_start = 0
 
-        self.x_width = 200
-        self.y_width = 200
+        # Set camera AOI.
+        self.x_width = x_width
+        self.y_width = y_width
         self.setAOI()
 
-        # Set camera to run as fast as possible
+        # Run at maximum speed.
         self.cam.setPixelClock()
         self.cam.setFrameRate()
 
@@ -652,18 +655,18 @@ class CameraQPD():
 
             # Fit first gaussian to data in the left half of the picture.
             total_good =0
-            [max_x, max_y, params, status] = self.fitGaussian(data[:,:self.half_y])
+            [max_x, max_y, params, status] = self.fitGaussian(data[:,:self.half_x])
             if status:
                 total_good += 1
-                self.x_off1 = float(max_x) + params[2] - self.half_x
-                self.y_off1 = float(max_y) + params[3] - self.half_y
+                self.x_off1 = float(max_x) + params[2] - self.half_y
+                self.y_off1 = float(max_y) + params[3] - self.half_x
                 dist1 = abs(self.y_off1)
 
             # Fit second gaussian to data in the right half of the picture.
-            [max_x, max_y, params, status] = self.fitGaussian(data[:,-self.half_y:])
+            [max_x, max_y, params, status] = self.fitGaussian(data[:,-self.half_x:])
             if status:
                 total_good += 1
-                self.x_off2 = float(max_x) + params[2] - self.half_x
+                self.x_off2 = float(max_x) + params[2] - self.half_y
                 self.y_off2 = float(max_y) + params[3]
                 dist2 = abs(self.y_off2)
 
@@ -684,21 +687,21 @@ class CameraQPD():
             self.y_off2 = 0.0
 
             total_good = 0
-            data_band = data[self.half_x-15:self.half_x+15,:]
+            data_band = data[self.half_y-15:self.half_y+15,:]
 
             # Moment for the object in the left half of the picture.
-            x = numpy.arange(self.half_y)
-            data_ave = numpy.average(data_band[:,:self.half_y], axis = 0)
+            x = numpy.arange(self.half_x)
+            data_ave = numpy.average(data_band[:,:self.half_x], axis = 0)
             power1 = numpy.sum(data_ave)
 
             dist1 = 0.0
             if (power1 > 0.0):
                 total_good += 1
-                self.y_off1 = numpy.sum(x * data_ave) / power1 - self.half_y
+                self.y_off1 = numpy.sum(x * data_ave) / power1 - self.half_x
                 dist1 = abs(self.y_off1)
 
             # Moment for the object in the right half of the picture.
-            data_ave = numpy.average(data_band[:,self.half_y:], axis = 0)
+            data_ave = numpy.average(data_band[:,self.half_x:], axis = 0)
             power2 = numpy.sum(data_ave)
 
             dist2 = 0.0
@@ -751,6 +754,68 @@ class CameraQPD300(CameraQPD):
         self.half_y = self.y_width/2
         self.X = numpy.arange(self.y_width) - 0.5*float(self.y_width)
 
+## CameraQPD500
+#
+# QPD emulation class with a 500x500 pixel ROI.
+#
+class CameraQPD500(CameraQPD):
+
+    ## __init__
+    #
+    # @param camera_id (Optional) The camera id, defaults to 1.
+    # @param fit_mutex (Optional) A QMutex to use during fitting, defaults to False.
+    #
+    def __init__(self, camera_id = 1, fit_mutex = False):
+        CameraQPD.__init__(self, camera_id, fit_mutex)
+
+        # Change initial zero distance to 250.0
+        self.zero_dist = 250.0
+
+        # Change width to 500 x 500.
+        self.x_width = 500
+        self.y_width = 500
+        self.setAOI()
+
+        # Set camera to run as fast as possible
+        self.cam.setPixelClock()
+        self.cam.setFrameRate()
+        
+        # Some derived parameters
+        self.half_x = self.x_width/2
+        self.half_y = self.y_width/2
+        self.X = numpy.arange(self.y_width) - 0.5*float(self.y_width)
+
+
+## CameraQPD752
+#
+# QPD emulation class with a 752x752 pixel ROI.
+#
+class CameraQPD752(CameraQPD):
+
+    ## __init__
+    #
+    # @param camera_id (Optional) The camera id, defaults to 1.
+    # @param fit_mutex (Optional) A QMutex to use during fitting, defaults to False.
+    #
+    def __init__(self, camera_id = 1, fit_mutex = False):
+        CameraQPD.__init__(self, camera_id, fit_mutex)
+
+        # Change initial zero distance to 250.0
+        self.zero_dist = 376.0
+
+        # Change width to 500 x 500.
+        self.x_width = 752
+        self.y_width = 752
+        self.setAOI()
+
+        # Set camera to run as fast as possible
+        self.cam.setPixelClock()
+        self.cam.setFrameRate()
+        
+        # Some derived parameters
+        self.half_x = self.x_width/2
+        self.half_y = self.y_width/2
+        self.X = numpy.arange(self.y_width) - 0.5*float(self.y_width)
 
 # Testing
 if __name__ == "__main__":

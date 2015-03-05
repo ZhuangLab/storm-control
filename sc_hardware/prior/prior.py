@@ -7,9 +7,10 @@
 # Hazen 5/11
 #
 
-import sc_hardware.serial.RS232 as RS232
 import time
 
+import sc_hardware.nationalInstruments.nicontrol as nicontrol
+import sc_hardware.serial.RS232 as RS232
 
 ## Prior
 #
@@ -61,12 +62,18 @@ class Prior(RS232.RS232):
     # @return True/False The stage is busy doing something.
     #
     def active(self):
-        state = self.state()
-        try:
-            state.index("busy")
-            return 1
-        except:
-            return 0
+        response = self._command("$")[0]
+        if (response == "0"):
+            return False
+        else:
+            return True
+
+#        state = self.state()
+#        try:
+#            state.index("busy")
+#            return 1
+#        except:
+#            return 0
 
     ## backlashOnOff
     #
@@ -209,6 +216,9 @@ class Prior(RS232.RS232):
 
     ## state
     #
+    # FIXME: Not sure if this works anymore, I can't find this command in the
+    #   manual for the ProScanIII stage.
+    #
     # @return An array containing the status of each axis ("busy" or "idle").
     #
     def state(self):
@@ -243,11 +253,31 @@ class Prior(RS232.RS232):
         return zpos[1:]
 
 
-## PriorFocus
+## PriorNI
 #
-# Encapsulates communication via RS-232 with a Prior focus drive motor.
+# National instruments based control.
 #
-class PriorFocus(Prior):
+class PriorNI(object):
+
+    def __init__(self):
+        self.scale = 1.0/25.0
+        #self.ao_task = nicontrol.AnalogOutput("PCI-6713", 0)
+
+    def shutDown(self):
+        #self.ao_task.stopTask()
+        #self.ao_task.clearTask()
+        pass
+        
+    def zMoveTo(self, z):
+        #self.ao_task.output(self.scale * z)
+        #nicontrol.setAnalogLine("PCI-6713", 0, self.scale * z)
+        nicontrol.setAnalogLine("PCIe-6259", 0, self.scale * z)
+
+## PriorZ
+#
+# Encapsulates communication via RS-232 with a Prior Z piezo stage.
+#
+class PriorZ(Prior):
 
     ## __init__
     #
@@ -256,37 +286,84 @@ class PriorFocus(Prior):
     # @param baudrate (Optional) The communication baud rate, defaults to 9600.
     #
     def __init__(self, port = "COM1", timeout = None, baudrate = 9600):
+        self.z_scale = 1.0
+
+        # Connect to change baud.
+        #Prior.__init__(self, port = port, timeout = timeout, baudrate = 9600)
+        #self.changeBaudRate(baudrate)
+        #self.shutDown()
+
+        # Connect at correct baud.
         Prior.__init__(self, port = port, timeout = timeout, baudrate = baudrate)
         if not self.live:
-            print "Failed to connect to Prior focus motor controller."
+            print "Failed to connect to Prior piezo controller."
+
+    ## changeBaudRate
+    #
+    # Change communication baud rate.
+    #
+    # @param baudrate The communication baud rate.
+    #
+    def changeBaudRate(self, baudrate):
+        self._command("BAUD " + str(baudrate))
+
+    ## getBaudRate
+    #
+    # @return The current baud rate.
+    #
+    def getBaudRate(self):
+        baudrate = self._command("BAUD")[0]
+        return int(baudrate)
 
     ## zMoveRelative
     #
-    # @param dz Amount to move focus motor (in um?).
+    # @param dz Amount to move piezo (in um).
     #
     def zMoveRelative(self, dz):
-        self._command("U " + str(10.0 * dz))
+        self._command("U {0:.3f}".format(dz * self.z_scale))
 
     ## zMoveTo
     #
-    # @param z Position to move the focus motor to (in um?).
+    # @param z Position to move piezo (in um).
+    #
     def zMoveTo(self, z):
-        self._command("V " + str(10.0 * z))
+        self._command("V {0:.3f}".format(z * self.z_scale))
 
     ## zPosition
     #
-    # @return The current z position of the focus motor (in um?).
+    # @return The current z position of the piezo (in um).
     #
     def zPosition(self):
         zpos = self._command("PZ")[0]
-        return float(zpos) * 0.1
+        return float(zpos)/self.z_scale
+
+
+## PriorFocus
+#
+# Encapsulates communication via RS-232 with a Prior focus drive motor.
+#
+class PriorFocus(PriorZ):
+
+    ## __init__
+    #
+    # @param port (Optional) The RS-232 port to use, defaults to "COM1".
+    # @param timeout (Optional) The time out value for communication, defaults to None.
+    # @param baudrate (Optional) The communication baud rate, defaults to 9600.
+    #
+    def __init__(self, port = "COM1", timeout = None, baudrate = 9600):
+        PriorZ.__init__(self, port = port, timeout = timeout, baudrate = baudrate)
+        self.z_scale = 10.0
+        if not self.live:
+            print "Failed to connect to Prior focus motor controller."
+
+
 
 #
 # Testing
 # 
 
 if __name__ == "__main__":
-    if 1:
+    if 0:
         stage = Prior(port = "COM10", baudrate = 9600)
         stage.setVelocity(1.0, 1.0)
         print stage._command("SMS")
@@ -329,6 +406,16 @@ if __name__ == "__main__":
         print stage.zPosition()
         stage.zMoveRelative(-5.0)
         print stage.zPosition()
+
+    if 1:
+        piezo = PriorZ(port = "COM19")
+        for info in piezo.info():
+            print info
+
+        piezo.zMoveTo(40.0)
+        print piezo.zPosition()
+        print piezo.getBaudRate()
+        
 
 #
 # The MIT License

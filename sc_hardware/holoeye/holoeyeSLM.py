@@ -49,7 +49,8 @@ class HoloeyeSLM(QtGui.QDialog):
     # @return The number of screens.
     #
     def getNumScreens(self):
-        return self.desktop.numScreens()
+        print "getNumScreens", self.desktop.screenCount()
+        return self.desktop.screenCount()
 
     ## grabScreen
     #
