@@ -88,8 +88,6 @@
                 <property name="frameShadow">
                  <enum>QFrame::Raised</enum>
                 </property>
-                <zorder>groupBox</zorder>
-                <zorder>groupBox</zorder>
                </widget>
               </item>
              </layout>
@@ -177,7 +175,14 @@
                </widget>
               </item>
               <item row="3" column="1">
-               <widget class="QDoubleSpinBox" name="doubleSpinBox_2"/>
+               <widget class="QDoubleSpinBox" name="yStartPosSpinBox">
+                <property name="minimum">
+                 <double>-50000.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>500000.000000000000000</double>
+                </property>
+               </widget>
               </item>
               <item row="1" column="0">
                <widget class="QLabel" name="xPosLabel">
@@ -200,7 +205,14 @@
                </widget>
               </item>
               <item row="1" column="1">
-               <widget class="QDoubleSpinBox" name="doubleSpinBox"/>
+               <widget class="QDoubleSpinBox" name="xStartPosSpinBox">
+                <property name="minimum">
+                 <double>-50000.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>50000.000000000000000</double>
+                </property>
+               </widget>
               </item>
               <item row="3" column="0">
                <widget class="QLabel" name="yPosLabel">
@@ -248,7 +260,6 @@
                 <property name="frameShadow">
                  <enum>QFrame::Raised</enum>
                 </property>
-                <zorder>magComboBox</zorder>
                </widget>
               </item>
               <item row="2" column="2">
@@ -638,6 +649,23 @@
    </property>
   </action>
  </widget>
+ <tabstops>
+  <tabstop>xStartPosSpinBox</tabstop>
+  <tabstop>yStartPosSpinBox</tabstop>
+  <tabstop>xSpinBox</tabstop>
+  <tabstop>ySpinBox</tabstop>
+  <tabstop>imageGridButton</tabstop>
+  <tabstop>abortButton</tabstop>
+  <tabstop>trackStageCheckBox</tabstop>
+  <tabstop>scaleLineEdit</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>foregroundOpacitySlider</tabstop>
+  <tabstop>backgroundComboBox</tabstop>
+  <tabstop>thresholdSlider</tabstop>
+  <tabstop>showFeaturesCheckBox</tabstop>
+  <tabstop>moveAllSectionsCheckBox</tabstop>
+  <tabstop>sectionsScrollArea</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

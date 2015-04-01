@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'steve.ui'
 #
-# Created: Wed Apr 01 11:08:08 2015
+# Created: Wed Apr 01 13:44:45 2015
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -109,9 +109,11 @@ class Ui_MainWindow(object):
         self.numYLabel.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.numYLabel.setObjectName(_fromUtf8("numYLabel"))
         self.gridLayout_2.addWidget(self.numYLabel, 3, 2, 1, 1)
-        self.doubleSpinBox_2 = QtGui.QDoubleSpinBox(self.groupBox)
-        self.doubleSpinBox_2.setObjectName(_fromUtf8("doubleSpinBox_2"))
-        self.gridLayout_2.addWidget(self.doubleSpinBox_2, 3, 1, 1, 1)
+        self.yStartPosSpinBox = QtGui.QDoubleSpinBox(self.groupBox)
+        self.yStartPosSpinBox.setMinimum(-50000.0)
+        self.yStartPosSpinBox.setMaximum(500000.0)
+        self.yStartPosSpinBox.setObjectName(_fromUtf8("yStartPosSpinBox"))
+        self.gridLayout_2.addWidget(self.yStartPosSpinBox, 3, 1, 1, 1)
         self.xPosLabel = QtGui.QLabel(self.groupBox)
         self.xPosLabel.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.xPosLabel.setObjectName(_fromUtf8("xPosLabel"))
@@ -120,9 +122,11 @@ class Ui_MainWindow(object):
         self.numXLabel.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.numXLabel.setObjectName(_fromUtf8("numXLabel"))
         self.gridLayout_2.addWidget(self.numXLabel, 1, 2, 1, 1)
-        self.doubleSpinBox = QtGui.QDoubleSpinBox(self.groupBox)
-        self.doubleSpinBox.setObjectName(_fromUtf8("doubleSpinBox"))
-        self.gridLayout_2.addWidget(self.doubleSpinBox, 1, 1, 1, 1)
+        self.xStartPosSpinBox = QtGui.QDoubleSpinBox(self.groupBox)
+        self.xStartPosSpinBox.setMinimum(-50000.0)
+        self.xStartPosSpinBox.setMaximum(50000.0)
+        self.xStartPosSpinBox.setObjectName(_fromUtf8("xStartPosSpinBox"))
+        self.gridLayout_2.addWidget(self.xStartPosSpinBox, 1, 1, 1, 1)
         self.yPosLabel = QtGui.QLabel(self.groupBox)
         self.yPosLabel.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.yPosLabel.setObjectName(_fromUtf8("yPosLabel"))
@@ -332,6 +336,20 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        MainWindow.setTabOrder(self.xStartPosSpinBox, self.yStartPosSpinBox)
+        MainWindow.setTabOrder(self.yStartPosSpinBox, self.xSpinBox)
+        MainWindow.setTabOrder(self.xSpinBox, self.ySpinBox)
+        MainWindow.setTabOrder(self.ySpinBox, self.imageGridButton)
+        MainWindow.setTabOrder(self.imageGridButton, self.abortButton)
+        MainWindow.setTabOrder(self.abortButton, self.trackStageCheckBox)
+        MainWindow.setTabOrder(self.trackStageCheckBox, self.scaleLineEdit)
+        MainWindow.setTabOrder(self.scaleLineEdit, self.tabWidget)
+        MainWindow.setTabOrder(self.tabWidget, self.foregroundOpacitySlider)
+        MainWindow.setTabOrder(self.foregroundOpacitySlider, self.backgroundComboBox)
+        MainWindow.setTabOrder(self.backgroundComboBox, self.thresholdSlider)
+        MainWindow.setTabOrder(self.thresholdSlider, self.showFeaturesCheckBox)
+        MainWindow.setTabOrder(self.showFeaturesCheckBox, self.moveAllSectionsCheckBox)
+        MainWindow.setTabOrder(self.moveAllSectionsCheckBox, self.sectionsScrollArea)
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "Steve", None))
