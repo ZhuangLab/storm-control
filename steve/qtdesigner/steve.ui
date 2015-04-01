@@ -33,7 +33,6 @@
           <property name="frameShadow">
            <enum>QFrame::Raised</enum>
           </property>
-          <zorder>widget</zorder>
          </widget>
         </item>
         <item>
@@ -89,7 +88,6 @@
                 <property name="frameShadow">
                  <enum>QFrame::Raised</enum>
                 </property>
-                <zorder>tilesGroupBox</zorder>
                </widget>
               </item>
              </layout>
@@ -148,7 +146,7 @@
                     <item>
                      <widget class="QDoubleSpinBox" name="xStartPosSpinBox">
                       <property name="sizePolicy">
-                       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                         <horstretch>0</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
@@ -552,8 +550,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>254</width>
-                   <height>533</height>
+                   <width>260</width>
+                   <height>549</height>
                   </rect>
                  </property>
                 </widget>
@@ -674,7 +672,7 @@
      <x>0</x>
      <y>0</y>
      <width>1148</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

@@ -210,7 +210,6 @@ class Window(QtGui.QMainWindow):
         self.comm = capture.Capture(parameters)
 
         # signals
-        self.ui.abortButton.clicked.connect(self.handleAbort)
         self.ui.actionQuit.triggered.connect(self.quit)
         self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
         self.ui.actionLoad_Dax.triggered.connect(self.handleLoadDax)
@@ -228,9 +227,6 @@ class Window(QtGui.QMainWindow):
         self.ui.trackStageCheckBox.stateChanged.connect(self.handleTrackStage)
         self.ui.xSpinBox.valueChanged.connect(self.handleGridChange)
         self.ui.ySpinBox.valueChanged.connect(self.handleGridChange)
-
-        # Configure ui active status
-        self.ui.abortButton.setEnabled(False)
 
         self.stage_tracking_timer.timeout.connect(self.handleStageTrackingTimer)
 
@@ -333,17 +329,6 @@ class Window(QtGui.QMainWindow):
             self.comm.commConnect()
             self.comm.gotoPosition(point.x_um - self.current_offset.x_um, point.y_um - self.current_offset.y_um)
 
-    ## handleAbort
-    #
-    # Handles the abort pictures button.
-    #
-    # @param boolean Dummy parameter.
-    #
-    @hdebug.debug
-    def handleAbort(self, boolean):
-        self.picture_queue = []
-        self.toggleTakingPicturesStatus(False)
-
     ## handleDeleteImages
     #
     # Handles the delete images action.
@@ -406,17 +391,21 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleImageGrid(self, dummy):
-        # Build position list
-        pos_list = mosaicView.createGrid(self.ui.xSpinBox.value(), self.ui.ySpinBox.value())
+        if not self.taking_pictures:
+            # Build position list
+            pos_list = mosaicView.createGrid(self.ui.xSpinBox.value(), self.ui.ySpinBox.value())
 
-        # Define first position
-        first_pos = coord.Point(self.ui.xStartPosSpinBox.value(),
-                                self.ui.yStartPosSpinBox.value(),
-                                "um")
-        pos_list.insert(0,first_pos)
+            # Define first position
+            first_pos = coord.Point(self.ui.xStartPosSpinBox.value(),
+                                    self.ui.yStartPosSpinBox.value(),
+                                    "um")
+            pos_list.insert(0,first_pos)
 
-        # Take pictures
-        self.takePictures(pos_list)
+            # Take pictures
+            self.takePictures(pos_list)
+        else:
+            self.picture_queue = []
+            self.toggleTakingPicturesStatus(False)
 
     ## handleLoadDax
     #
@@ -750,8 +739,10 @@ class Window(QtGui.QMainWindow):
         self.ui.ySpinBox.setEnabled(not status)
         self.ui.xStartPosSpinBox.setEnabled(not status)
         self.ui.yStartPosSpinBox.setEnabled(not status)
-        self.ui.imageGridButton.setEnabled(not status)
-        self.ui.abortButton.setEnabled(status)
+        if status:
+            self.ui.imageGridButton.setText("Abort")
+        else:
+            self.ui.imageGridButton.setText("Acquire")
 
     ## updateMosaicLabel
     #

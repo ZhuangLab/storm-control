@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'steve.ui'
 #
-# Created: Wed Apr  1 15:13:45 2015
-#      by: PyQt4 UI code generator 4.10.4
+# Created: Wed Apr 01 19:40:53 2015
+#      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -96,7 +96,7 @@ class Ui_MainWindow(object):
         self.xPosLabel.setObjectName(_fromUtf8("xPosLabel"))
         self.horizontalLayout_4.addWidget(self.xPosLabel)
         self.xStartPosSpinBox = QtGui.QDoubleSpinBox(self.tilesGroupBox)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Preferred)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.xStartPosSpinBox.sizePolicy().hasHeightForWidth())
@@ -170,9 +170,15 @@ class Ui_MainWindow(object):
         self.verticalLayout_7.addLayout(self.horizontalLayout_7)
         self.horizontalLayout_8.addLayout(self.verticalLayout_7)
         self.verticalLayout_8.addLayout(self.horizontalLayout_8)
+        self.horizontalLayout_10 = QtGui.QHBoxLayout()
+        self.horizontalLayout_10.setObjectName(_fromUtf8("horizontalLayout_10"))
+        spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout_10.addItem(spacerItem)
         self.imageGridButton = QtGui.QPushButton(self.tilesGroupBox)
+        self.imageGridButton.setMaximumSize(QtCore.QSize(150, 16777215))
         self.imageGridButton.setObjectName(_fromUtf8("imageGridButton"))
-        self.verticalLayout_8.addWidget(self.imageGridButton)
+        self.horizontalLayout_10.addWidget(self.imageGridButton)
+        self.verticalLayout_8.addLayout(self.horizontalLayout_10)
         self.verticalLayout_2.addWidget(self.tilesGroupBox)
         self.objectivesGroupBox = QtGui.QGroupBox(self.widget)
         self.objectivesGroupBox.setMinimumSize(QtCore.QSize(250, 50))
@@ -200,8 +206,8 @@ class Ui_MainWindow(object):
         self.objectiveLabel.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.objectiveLabel.setObjectName(_fromUtf8("objectiveLabel"))
         self.gridLayout_4.addWidget(self.objectiveLabel, 2, 1, 1, 1)
-        spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.gridLayout_4.addItem(spacerItem, 2, 0, 1, 1)
+        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.gridLayout_4.addItem(spacerItem1, 2, 0, 1, 1)
         self.verticalLayout_2.addWidget(self.objectivesGroupBox)
         self.groupBox_2 = QtGui.QGroupBox(self.widget)
         self.groupBox_2.setMinimumSize(QtCore.QSize(0, 20))
@@ -283,7 +289,7 @@ class Ui_MainWindow(object):
         self.sectionsScrollArea.setWidgetResizable(True)
         self.sectionsScrollArea.setObjectName(_fromUtf8("sectionsScrollArea"))
         self.scrollAreaWidgetContents_2 = QtGui.QWidget()
-        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 254, 533))
+        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 260, 549))
         self.scrollAreaWidgetContents_2.setObjectName(_fromUtf8("scrollAreaWidgetContents_2"))
         self.sectionsScrollArea.setWidget(self.scrollAreaWidgetContents_2)
         self.verticalLayout_6.addWidget(self.sectionsScrollArea)
@@ -340,7 +346,7 @@ class Ui_MainWindow(object):
         self.gridLayout_2.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1148, 25))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1148, 21))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -407,7 +413,7 @@ class Ui_MainWindow(object):
         self.gridDimLabel.setText(_translate("MainWindow", "Grid Size", None))
         self.numXLabel.setText(_translate("MainWindow", "# X:", None))
         self.numYLabel.setText(_translate("MainWindow", "# Y:", None))
-        self.imageGridButton.setText(_translate("MainWindow", "Image Grid", None))
+        self.imageGridButton.setText(_translate("MainWindow", "Acquire", None))
         self.objectivesGroupBox.setTitle(_translate("MainWindow", "Objective Settings", None))
         self.objectiveLabel.setText(_translate("MainWindow", "Current Objective:", None))
         self.groupBox_2.setTitle(_translate("MainWindow", "Misc", None))
