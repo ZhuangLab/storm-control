@@ -221,6 +221,7 @@ class Window(QtGui.QMainWindow):
         self.ui.actionSave_Snapshot.triggered.connect(self.handleSnapshot)
         self.ui.actionSet_Working_Directory.triggered.connect(self.handleSetWorkingDirectory)
         self.ui.foregroundOpacitySlider.valueChanged.connect(self.handleOpacityChange)
+        self.ui.imageGridButton.clicked.connect(self.handleImageGrid)
         self.ui.magComboBox.currentIndexChanged.connect(self.handleObjectiveChange)
         self.ui.scaleLineEdit.textEdited.connect(self.handleScaleChange)
         self.ui.tabWidget.currentChanged.connect(self.handleTabChange)
@@ -392,6 +393,16 @@ class Window(QtGui.QMainWindow):
                              self.ui.ySpinBox.value())
         self.sections.gridChange(self.ui.xSpinBox.value(),
                                  self.ui.ySpinBox.value())
+
+    ## handleImageGrid
+    #
+    # Handles the press of the Image Grid button.
+    #
+    # @param num Dummy parameter.
+    #
+    @hdebug.debug
+    def handleImageGrid(self):
+        pass
 
     ## handleLoadDax
     #
