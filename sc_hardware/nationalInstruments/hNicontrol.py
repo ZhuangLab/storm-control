@@ -20,7 +20,7 @@ import sc_hardware.nationalInstruments.nicontrol as nicontrol
 
 ## Nidaq
 #
-# National Instruments DAQ card.
+# National Instruments DAQ card (modulation).
 #
 class Nidaq(illuminationHardware.DaqModulation):
 
@@ -227,6 +227,86 @@ class Nidaq(illuminationHardware.DaqModulation):
                 task.stopTask()
                 task.clearTask()
 
+
+## NidaqAmp
+#
+# National Instruments DAQ card analog amplitude modulation.
+#
+class NidaqAmp(illuminationHardware.AmplitudeModulation):
+
+    ## __init__
+    #
+    # @param parameters A XML object containing initial parameters.
+    # @param parent The PyQt parent of this object.
+    #
+    def __init__(self, parameters, parent):
+        illuminationHardware.AmplitudeModulation.__init__(self, parameters, parent)
+
+    ## amplitudeOff
+    #
+    # Called when the module should turn off a channel.
+    #
+    # @param channel_id The channel id.
+    #
+    def amplitudeOff(self, channel_id):
+        nicontrol.setAnalogLine(self.channel_parameters[channel_id].board,
+                                self.channel_parameters[channel_id].channel,
+                                self.channel_parameters[channel_id].min_voltage)
+
+    ## amplitudeOn
+    #
+    # Called when the module should turn on a channel.
+    #
+    # @param channel_id The channel id.
+    # @param amplitude The channel amplitude.
+    #
+    def amplitudeOn(self, channel_id, amplitude):
+        nicontrol.setAnalogLine(self.channel_parameters[channel_id].board,
+                                self.channel_parameters[channel_id].channel,
+                                0.001 * amplitude)
+
+    ## getMaxAmplitude
+    #
+    # @param channel_id The channel id.
+    #
+    # @return The maximum amplitude for this channel.
+    #
+    def getMaxAmplitude(self, channel_id):
+        return self.channel_parameters[channel_id].maximum
+
+    ## getMinAmplitude
+    #
+    # @param channel_id The channel id.
+    #
+    # @return The minimum amplitude for this channel.
+    #
+    def getMinAmplitude(self, channel_id):
+        params = self.channel_parameters[channel_id]
+        if (hasattr(params, "minimum")):
+            return params.minimum
+        else:
+            return 0
+
+    ## initialize
+    #
+    # This is called by each of the channels that wants to use this module.
+    #
+    # @param interface Interface type (from the perspective of the channel).
+    # @param channel_id The channel id.
+    # @param parameters A parameters object for this channel.
+    #
+    def initialize(self, interface, channel_id, parameters):
+        self.channel_parameters[channel_id] = parameters
+        self.channel_parameters[channel_id].maximum = int(1000.0 * parameters.max_voltage)
+        self.channel_parameters[channel_id].minimum = int(1000.0 * parameters.min_voltage)
+
+    ## setAmplitude
+    #
+    # @param channel_id The channel id.
+    # @param amplitude The channel amplitude.
+    #
+    def setAmplitude(self, channel_id, amplitude):
+        self.amplitudeOn(channel_id, amplitude)
 
 
 #
