@@ -122,9 +122,9 @@ class Window(QtGui.QMainWindow):
         self.debug = parameters.debug
         self.parameters = parameters
         self.picture_queue = []
+        self.requested_stage_pos = False
         self.stage_tracking_timer = QtCore.QTimer(self)
         self.taking_pictures = False
-
         self.stage_tracking_timer.setInterval(500)
 
         # ui setup
@@ -220,6 +220,7 @@ class Window(QtGui.QMainWindow):
         self.ui.actionSave_Snapshot.triggered.connect(self.handleSnapshot)
         self.ui.actionSet_Working_Directory.triggered.connect(self.handleSetWorkingDirectory)
         self.ui.foregroundOpacitySlider.valueChanged.connect(self.handleOpacityChange)
+        self.ui.getStagePosButton.clicked.connect(self.handleGetStagePosButton)
         self.ui.imageGridButton.clicked.connect(self.handleImageGrid)
         self.ui.magComboBox.currentIndexChanged.connect(self.handleObjectiveChange)
         self.ui.scaleLineEdit.textEdited.connect(self.handleScaleChange)
@@ -353,16 +354,33 @@ class Window(QtGui.QMainWindow):
     def handleDisconnected(self):
         self.toggleTakingPicturesStatus(False)
 
+    ## handleGetStagePosButton
+    #
+    # @param dummy Dummy parameter.
+    #
+    @hdebug.debug
+    def handleGetStagePosButton(self, dummy):
+        self.requested_stage_pos = True
+        self.comm.commConnect()
+        self.comm.getPosition()
+        
     ## handleGetPositionComplete
     #
     # @param a_point A coord.Point object specifying the current stage location.
     #
     @hdebug.debug
     def handleGetPositionComplete(self, a_point):
-        offset_point = coord.Point(a_point.x_um + self.current_offset.x_um,
-                                   a_point.y_um + self.current_offset.y_um,
-                                   "um")
-        self.view.setCrosshairPosition(offset_point.x_pix, offset_point.y_pix)
+        if not self.requested_stage_pos:
+            # Update cross hair
+            offset_point = coord.Point(a_point.x_um + self.current_offset.x_um,
+                                       a_point.y_um + self.current_offset.y_um,
+                                       "um")
+            self.view.setCrosshairPosition(offset_point.x_pix, offset_point.y_pix)
+        else:
+            self.requested_stage_pos = False
+            self.ui.xStartPosSpinBox.setValue(a_point.x_um)
+            self.ui.yStartPosSpinBox.setValue(a_point.y_um)
+            self.comm.commDisconnect()
 
     ## handleGotoComplete
     #
@@ -403,9 +421,10 @@ class Window(QtGui.QMainWindow):
 
             # Take pictures
             self.takePictures(pos_list)
-        else:
+        else: # Abort button
             self.picture_queue = []
             self.toggleTakingPicturesStatus(False)
+            self.comm.commDisconnect()
 
     ## handleLoadDax
     #
@@ -739,6 +758,7 @@ class Window(QtGui.QMainWindow):
         self.ui.ySpinBox.setEnabled(not status)
         self.ui.xStartPosSpinBox.setEnabled(not status)
         self.ui.yStartPosSpinBox.setEnabled(not status)
+        self.ui.getStagePosButton.setEnabled(not status)
         if status:
             self.ui.imageGridButton.setText("Abort")
         else:
