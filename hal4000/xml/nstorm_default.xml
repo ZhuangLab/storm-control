@@ -60,9 +60,6 @@
   <default_power channel="1">1.0</default_power>
   <default_power channel="2">1.0</default_power>
   <default_power channel="3">1.0</default_power>
-  <default_power channel="4">1.0</default_power>
-  <default_power channel="5">1.0</default_power>
-  <default_power channel="6">1.0</default_power>
   <button channel="0" power="1.0">Max</button>
   <button channel="0" power="0.1">Low</button>
   <button channel="1" power="1.0">Max</button>
@@ -71,12 +68,6 @@
   <button channel="2" power="0.1">Low</button>
   <button channel="3" power="1.0">Max</button>
   <button channel="3" power="0.1">Low</button>
-  <button channel="4" power="1.0">Max</button>
-  <button channel="4" power="0.1">Low</button>
-  <button channel="5" power="1.0">Max</button>
-  <button channel="5" power="0.1">Low</button>
-  <button channel="6" power="1.0">Max</button>
-  <button channel="6" power="0.1">Low</button>
 
   <!-- stage settings -->
   <small_step_size type="float">5.0</small_step_size>
@@ -90,9 +81,6 @@
   <!-- focus lock settings -->
   <qpd_mode type="int">0</qpd_mode>
   <qpd_zcenter type="float">50.0</qpd_zcenter>
-<!--  <qpd_scale type="float">1350.0</qpd_scale> -->
-<!--  <qpd_scale type="float">3200.0</qpd_scale> -->
-<!--  <qpd_scale type="float">1421.0</qpd_scale> -->
   <qpd_scale type="float">50.0</qpd_scale>
   <qpd_sum_max type="int">1500</qpd_sum_max>
   <cal_deadtime type="int">20</cal_deadtime>
