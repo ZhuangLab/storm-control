@@ -1,5 +1,6 @@
 ## storm-control ##
 This is a repository of code developed in the [Zhuang Lab](http://zhuang.harvard.edu) for the acquisition of STORM movies.
+The official release of this software can be found [here](https://github.com/ZhuangLab/storm-control).
 
 ## Installation ##
 You will need Python and PyQt as well as a number of other libraries. Please see the Install.txt file in the hal4000 folder.
