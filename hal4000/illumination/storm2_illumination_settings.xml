@@ -80,7 +80,7 @@
     <channel>
       <description>750</description>
       <color type="rgb">200,0,0</color>
-
+<!--
       <amplitude_modulation>
 	<uses>750wheel</uses>
 	<display_normalized type="boolean">False</display_normalized>
@@ -89,7 +89,7 @@
 	  <maximum type="int">6</maximum>
 	</parameters>
       </amplitude_modulation>
-    
+    -->
       <digital_modulation>
 	<uses>daq</uses>
 	<parameters>

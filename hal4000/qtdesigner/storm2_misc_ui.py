@@ -129,7 +129,7 @@ class Ui_Dialog(object):
         self.filter4Button.setText(_translate("Dialog", "4", None))
         self.filter5Button.setText(_translate("Dialog", "5", None))
         self.filter6Button.setText(_translate("Dialog", "6", None))
-        self.emGroupBox.setTitle(_translate("Dialog", "Emission Filter Wheen Control", None))
+        self.emGroupBox.setTitle(_translate("Dialog", "Emission Filter Wheel Control", None))
         self.emFilter1Button.setText(_translate("Dialog", "1", None))
         self.emFilter2Button.setText(_translate("Dialog", "2", None))
         self.emFilter3Button.setText(_translate("Dialog", "3", None))
