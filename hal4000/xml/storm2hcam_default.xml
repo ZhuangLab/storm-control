@@ -107,6 +107,9 @@
   <!-- misc control -->
   <filter_names type="string-array">Empty,Empty,Penta,Storm,Empty,Empty</filter_names>
   <filter_position type="int">0</filter_position>
+  <em_filter type="int">0</em_filter>
+  <em_checked type="int">0</em_checked>
+  <em_period type="int">60</em_period>
 
   <!-- TCP/IP control -->
   <have_tcp_control type="int">1</have_tcp_control>
