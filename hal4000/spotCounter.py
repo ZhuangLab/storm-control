@@ -13,6 +13,7 @@
 import sys
 from PyQt4 import QtCore, QtGui
 import sip
+import time
 
 import qtWidgets.qtAppIcon as qtAppIcon
 
@@ -94,11 +95,12 @@ class OfflineDriver(QtCore.QObject):
     def __init__(self, spot_counter, data_file, png_filename, parent = None):
         QtCore.QObject.__init__(self, parent)
 
+        self.begin_time = 0
         self.cur_frame = 0
         self.data_file = data_file
         self.png_filename = png_filename
         self.spot_counter = spot_counter
-
+        
         [self.width, self.height, self.length] = data_file.filmSize()
 
         self.start_timer = QtCore.QTimer(self)
@@ -124,13 +126,16 @@ class OfflineDriver(QtCore.QObject):
                                                    self.width,
                                                    self.height,
                                                    "camera1",
-                                                   True))
+                                                   True),
+                                       True)
             self.cur_frame += 1
             if ((self.cur_frame % 100) == 0):
                 print "Frame:", self.cur_frame, "(", self.length, ")"
         else:
-            self.spot_counter.stopCounter()
+            elapsed_time = time.time() - self.begin_time
+            self.spot_counter.stopFilm(False)
             print "Finished Analysis"
+            print self.length, "Frames analyzed in", elapsed_time, "seconds (", float(self.length)/elapsed_time, ") FPS."
 
     ## startAnalysis
     #
@@ -138,7 +143,8 @@ class OfflineDriver(QtCore.QObject):
     # delay to give PyQt a chance to get everything setup.
     #
     def startAnalysis(self):
-        self.spot_counter.startCounter(self.png_filename)
+        self.spot_counter.startFilm(self.png_filename, False)
+        self.begin_time = time.time()
         self.nextImage()
 
 ## QSpotGraph
@@ -450,6 +456,7 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
         self.counters = [False, False]
         self.filming = 0
         self.filenames = [False, False]
+        self.frame_interval = parameters.get("interval", 1)
         self.image_graphs = [False, False]
         self.parameters = parameters
         self.spot_counter = False
@@ -636,7 +643,7 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
     # @param filming True/False if we are currently filming.
     #
     def newFrame(self, frame, filming):
-        if self.spot_counter:
+        if self.spot_counter and ((frame.number % self.frame_interval) == 0):
             self.spot_counter.newImageToCount(frame)
 
     ## newParameters
@@ -650,6 +657,7 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
     def newParameters(self, parameters):
         self.parameters = parameters
 
+        self.frame_interval = parameters.get("interval", 1)
         self.spot_counter.newParameters(parameters)
 
         # Update counters, count graph(s) & STORM image(s).
@@ -803,8 +811,9 @@ if __name__ == "__main__":
     parameters.set("x_bin", 1)
     parameters.set("y_bin", 1)
 
-    spotCounter = SingleSpotCounter(parameters)
-    spotCounter.newParameters(parameters, [[255,255,255]])
+    spotCounter = SingleSpotCounter(None, parameters)
+    #spotCounter.newParameters(parameters, [[255,255,255]])
+    spotCounter.newParameters(parameters)
 
     # Start driver.
     driver = OfflineDriver(spotCounter, data_file, sys.argv[3])
