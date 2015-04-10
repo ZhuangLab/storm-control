@@ -11,7 +11,7 @@
   <mag1 type="string">100x,100.0,0.0,0.0</mag1>  
   <mag2 type="string">60x,57.43,0.0,0.0</mag2>
   <mag3 type="string">10x,10.1,-49.1,266.0</mag3>
-  <mag4 type="string">4x,4.0,0.0,0.0</mag4>  
+  <mag4 type="string">4x,4.0,-2228.0,-658.0</mag4>  
 
   <!-- capture -->
   <directory type="string">c:\data\</directory>
