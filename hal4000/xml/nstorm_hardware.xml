@@ -52,6 +52,13 @@
     </progressions>
     -->
 
+    <!-- Control of miscellaneous hardware. -->
+    <misc_control>
+      <class_name type="string">AMiscControl</class_name>
+      <menu_item type="string">Misc. Control</menu_item>
+      <module_name type="string">miscControl.nstormMiscControl</module_name>
+    </misc_control>
+
     <!-- The live STORM analysis and display -->
     <spotcounter>
       <class_name type="string">SingleSpotCounter</class_name>
@@ -60,13 +67,11 @@
     </spotcounter>
 
     <!-- Motorized XY stage -->
-    <!--
     <stage>
       <class_name type="string">AStageControl</class_name>
       <menu_item type="string">Stage Control</menu_item>
-      <module_name type="string">stagecontrol.noneStageControl</module_name>
+      <module_name type="string">stagecontrol.nStormStageControl</module_name>
     </stage>
-    -->
 
     <!-- Remote control of HAL via TCP/IP -->
     <tcpip>

@@ -79,23 +79,6 @@
   <drag_multiplier type="float">0.16</drag_multiplier>
 
   <!-- focus lock settings -->
-  <qpd_mode type="int">0</qpd_mode>
-  <qpd_zcenter type="float">50.0</qpd_zcenter>
-  <qpd_scale type="float">50.0</qpd_scale>
-  <qpd_sum_max type="int">1500</qpd_sum_max>
-  <cal_deadtime type="int">20</cal_deadtime>
-  <cal_range type="float">600</cal_range>
-  <cal_step_size type="float">10</cal_step_size>
-  <cal_frames_to_pause type="int">2</cal_frames_to_pause>
-  <zscan_start type="float">50.0</zscan_start>
-  <zscan_step type="float">0.1</zscan_step>
-  <zscan_frames_to_pause type="int">100</zscan_frames_to_pause>
-  <zscan_stop type="float">51.0</zscan_stop>
-  <zscan_focus_lock type="int">0</zscan_focus_lock>
-  <olock_bracket_step type="int">1000</olock_bracket_step>
-  <olock_scan_step type="int">100</olock_scan_step>
-  <olock_scan_hold type="int">10</olock_scan_hold>
-  <olock_quality_threshold type="float">0.0</olock_quality_threshold>
 
   <!-- spot counter -->
   <have_spot_counter type="int">1</have_spot_counter>
@@ -108,10 +91,11 @@
 
   <!-- misc control -->
   <jog_size type="float">0.01</jog_size>
-  <epi_position type="float">17.92</epi_position>
-  <tirf_position type="float">20.36</tirf_position>
-  <filter_names type="string-array">1,2,3,4,5,6</filter_names>
+  <epi_position type="float">28.0</epi_position>
+  <tirf_position type="float">58.0</tirf_position>
+  <filter_names type="string-array">GFP,C-STORM,N-STORM,QUAD,EMPTY,EMPTY</filter_names>
   <filter_position type="int">0</filter_position>
+  <bf_shutter type="boolean">False</bf_shutter>
 
   <!-- power progression settings -->
   <have_progressions type="int">1</have_progressions>
@@ -119,17 +103,5 @@
   <pstart_value type="float">0.1</pstart_value>
   <pinc_value type="float">0.01</pinc_value>
   <pframe_value type="int">1000</pframe_value>
-
-  <!-- joystick setting -->
-  <hat_step type="float">1.0</hat_step> <!-- step size in um for hat button press -->
-  <joystick_gain type="float-array">25, 2500</joystick_gain>   <!-- max velocity in um/s: valid range 100 -> 1000 -->
-  <!-- <joystick_gain_index type = "int">0</joystick_gain_index> -->
-  <joystick_multiplier_value type="float">5</joystick_multiplier_value> <!-- X button multiplier for joystick and focus lock -->
-  <joystick_mode type="string">quadratic</joystick_mode> <!-- linear or quadratic -->
-  <joystick_signx type="float">1.0</joystick_signx>
-  <joystick_signy type="float">-1.0</joystick_signy>
-  <lockt_step type="float">0.025</lockt_step> <!-- focus lock step size in um -->
-  <min_offset type="float">0.1</min_offset> <!-- min joystick offset to be non-zero (0.0 - 1.0) -->
-  <xy_swap type="int">0</xy_swap> <!-- swap x and y axises -->
 
 </settings>
