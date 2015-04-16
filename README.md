@@ -31,4 +31,6 @@ zee-calibrator - This folder contains software (main.py) that is used to generat
 
 5. We can only provide fairly limited support. You will probably have the most success adapting this software for your purposes if you are reasonably familiar with the Python programming language.
 
-6. Questions should be addressed to Hazen Babcock (hbabcock _at_ fas.harvard.edu).
+6. This software can also control an NSTORM setup, with some limitations, the biggest of which is probably that shutter sequences don't work.
+
+7. Questions should be addressed to Hazen Babcock (hbabcock _at_ fas.harvard.edu).
