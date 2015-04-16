@@ -33,9 +33,10 @@ class AMiscControl(miscControl.MiscControl):
     def __init__(self, hardware, parameters, parent = None):
         miscControl.MiscControl.__init__(self, parameters, parent)
 
-        #self.em_filter_wheel = FW102C.FW102C(hardware.port, hardware.baud_rate)
         self.em_filter_pos = 0
-        self.em_filter_wheel = FW102C.FW102C("COM9", 115200)
+        self.em_filter_wheel = FW102C.FW102C(hardware.port, hardware.baud_rate)
+        if not self.em_filter_wheel.live:
+            self.em_filter_wheel = False
         self.filter_wheel = filterWheel.QPriorFilterWheel()
 
         # UI setup
@@ -86,6 +87,7 @@ class AMiscControl(miscControl.MiscControl):
             if afilter.isChecked():
                 afilter.setStyleSheet("QPushButton { color: red}")
                 if self.em_filter_wheel:
+                    self.em_filter_pos = i
                     self.em_filter_wheel.setPosition(i+1)
                 self.parameters.set("em_filter", i)
             else:
@@ -127,7 +129,7 @@ class AMiscControl(miscControl.MiscControl):
         self.ui.emSpinBox.setValue(self.parameters.get("em_period"))
 
     def startFilm(self, film_name, run_shutters):
-        if self.ui.emCheckBox.isChecked():
+        if self.ui.emCheckBox.isChecked():        
             self.em_filters[0].click()
 
 #

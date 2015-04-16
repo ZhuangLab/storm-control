@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'steve.ui'
 #
-# Created: Wed Apr 01 19:40:53 2015
+# Created: Sat Apr 04 10:00:55 2015
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -172,6 +172,10 @@ class Ui_MainWindow(object):
         self.verticalLayout_8.addLayout(self.horizontalLayout_8)
         self.horizontalLayout_10 = QtGui.QHBoxLayout()
         self.horizontalLayout_10.setObjectName(_fromUtf8("horizontalLayout_10"))
+        self.getStagePosButton = QtGui.QPushButton(self.tilesGroupBox)
+        self.getStagePosButton.setMaximumSize(QtCore.QSize(150, 16777215))
+        self.getStagePosButton.setObjectName(_fromUtf8("getStagePosButton"))
+        self.horizontalLayout_10.addWidget(self.getStagePosButton)
         spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_10.addItem(spacerItem)
         self.imageGridButton = QtGui.QPushButton(self.tilesGroupBox)
@@ -289,7 +293,7 @@ class Ui_MainWindow(object):
         self.sectionsScrollArea.setWidgetResizable(True)
         self.sectionsScrollArea.setObjectName(_fromUtf8("sectionsScrollArea"))
         self.scrollAreaWidgetContents_2 = QtGui.QWidget()
-        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 260, 549))
+        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 26, 16))
         self.scrollAreaWidgetContents_2.setObjectName(_fromUtf8("scrollAreaWidgetContents_2"))
         self.sectionsScrollArea.setWidget(self.scrollAreaWidgetContents_2)
         self.verticalLayout_6.addWidget(self.sectionsScrollArea)
@@ -413,6 +417,7 @@ class Ui_MainWindow(object):
         self.gridDimLabel.setText(_translate("MainWindow", "Grid Size", None))
         self.numXLabel.setText(_translate("MainWindow", "# X:", None))
         self.numYLabel.setText(_translate("MainWindow", "# Y:", None))
+        self.getStagePosButton.setText(_translate("MainWindow", "Get Stage Position", None))
         self.imageGridButton.setText(_translate("MainWindow", "Acquire", None))
         self.objectivesGroupBox.setTitle(_translate("MainWindow", "Objective Settings", None))
         self.objectiveLabel.setText(_translate("MainWindow", "Current Objective:", None))

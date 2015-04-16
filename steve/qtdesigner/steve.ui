@@ -278,6 +278,19 @@
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_10">
                 <item>
+                 <widget class="QPushButton" name="getStagePosButton">
+                  <property name="maximumSize">
+                   <size>
+                    <width>150</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Get Stage Position</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
                  <spacer name="horizontalSpacer_2">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -550,8 +563,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>260</width>
-                   <height>549</height>
+                   <width>26</width>
+                   <height>16</height>
                   </rect>
                  </property>
                 </widget>

@@ -184,7 +184,7 @@
     </rect>
    </property>
    <property name="title">
-    <string>Emission Filter Wheen Control</string>
+    <string>Emission Filter Wheel Control</string>
    </property>
    <widget class="QPushButton" name="emFilter1Button">
     <property name="geometry">
