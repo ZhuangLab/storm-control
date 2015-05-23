@@ -142,6 +142,11 @@ class Window(QtGui.QMainWindow):
 
         self.setWindowIcon(QtGui.QIcon("steve.ico"))
 
+        # handling file drops
+        self.ui.centralwidget.__class__.dragEnterEvent = self.dragEnterEvent
+        self.ui.centralwidget.__class__.dropEvent = self.dropEvent
+        self.ui.centralwidget.setAcceptDrops(True)
+        
         # Initialize objectives.
         objectives = []
         for i in range(10):
@@ -318,6 +323,69 @@ class Window(QtGui.QMainWindow):
     def closeEvent(self, event):
         self.cleanUp()
 
+    ## dragEnterEvent
+    #
+    # This is called when a file is dragged into the main window.
+    #
+    # @param event A QEvent object.
+    #
+    @hdebug.debug
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            event.ignore()
+
+    ## dropEvent
+    #
+    # This is called when a file is dropped on the main window. 
+    #
+    # @param event A QEvent object containing the filenames.
+    #
+    @hdebug.debug
+    def dropEvent(self, event):
+        # Initialize filenames variable
+        filenames = []
+
+        # Tranfer urls to filenames
+        for url in event.mimeData().urls():
+            filenames.append(str(url.toLocalFile()))
+
+        # Sort file names
+        filenames = sorted(filenames)
+
+        # Identify first type
+        name, firstType = os.path.splitext(filenames[0])
+
+        # Check to see if all types are the same
+        sameType = []
+        for filename in filenames:
+            name, fileType = os.path.splitext(filename)
+            sameType.append(fileType == firstType)
+
+        # If not, raise an error and abort load
+        if not all(sameType):
+            hdebug.logText(" Loaded mixed file types")
+            QtGui.QMessageBox.information(self,
+                                          "Too many file types",
+                                          "")
+            return
+        
+        # Load files
+        if (firstType == '.dax'): # Load dax files
+            filenameList = QtCore.QStringList() # Convert strings to QStringList
+            for filename in filenames:
+                filenameList.append(filename)
+            self.loadDax(filenameList)
+        elif (firstType == '.msc'): # Load mosaics
+            for filename in sorted(filenames):
+                self.loadMosaic(filename)
+        else:
+            hdebug.logText(" " + firstType + " is not recognized")
+            QtGui.QMessageBox.information(self,
+                                          "File type not recognized",
+                                          "")                    
+
     ## gotoPosition
     #
     # Tell HAL to move to the specified position (if self.taking_pictures is False).
@@ -428,7 +496,7 @@ class Window(QtGui.QMainWindow):
 
     ## handleLoadDax
     #
-    # Handles loading dax files, which can be useful for retrospective analysis.
+    # Handles user request to load dax files.
     #
     # @param boolean Dummy parameter.
     #
@@ -438,12 +506,11 @@ class Window(QtGui.QMainWindow):
                                                            "Load Dax Files",
                                                            self.parameters.directory,
                                                            "*.dax")
-        for i in range(dax_filenames.count()):
-            self.comm.loadImage(str(dax_filenames.takeFirst()))
-    
+        self.loadDax(dax_filenames)
+
     ## handleLoadMosaic
     #
-    # Handles the load mosaic action.
+    # Handles a user request to load a mosaic.
     #
     # @param boolean Dummy parameter.
     #
@@ -452,56 +519,9 @@ class Window(QtGui.QMainWindow):
         mosaic_filename = str(QtGui.QFileDialog.getOpenFileName(self,
                                                                 "Load Mosaic",
                                                                 self.parameters.directory,
-                                                                "*.msc"))
-        if mosaic_filename:
-            legacy_format = True
-            dirname = os.path.dirname(mosaic_filename)
-
-            mosaic_fp = open(mosaic_filename, "r")
-
-            # First, figure out file size
-            mosaic_fp.readline()
-            number_lines = 0
-            while 1:
-                line = mosaic_fp.readline()
-                if not line: break
-                number_lines += 1
-            mosaic_fp.seek(0)
-
-            # Create progress bar
-            progress_bar = QtGui.QProgressDialog("Load Files...",
-                                                 "Abort Load",
-                                                 0,
-                                                 number_lines,
-                                                 self)
-            progress_bar.setWindowModality(QtCore.Qt.WindowModal)
-
-            mosaic_dirname = os.path.dirname(mosaic_filename)
-            file_number = 1
-            while 1:
-                if progress_bar.wasCanceled(): break
-                line = mosaic_fp.readline().rstrip()
-                if not line: break
-                data = line.split(",")
-                if (self.view.loadFromMosaicFileData(data, mosaic_dirname)):
-                    legacy_format = False
-                elif (self.positions.loadFromMosaicFileData(data, mosaic_dirname)):
-                    legacy_format = False
-                elif (self.sections.loadFromMosaicFileData(data, mosaic_dirname)):
-                    legacy_format = False
-                else:
-                    print "Unrecognized scene element:", data[0]
-                
-                progress_bar.setValue(file_number)
-                file_number += 1
-
-            progress_bar.close()
-            mosaic_fp.close()
-
-            if legacy_format:
-                # load older data formats here..
-                pass
-
+                                                                "*.msc"))    
+        self.loadMosaic(mosaic_filename)
+    
     ## handleLoadPositions
     #
     # Handles the load positions action.
@@ -699,6 +719,75 @@ class Window(QtGui.QMainWindow):
             self.view.showCrosshair(False)
             self.stage_tracking_timer.stop()
             self.comm.commDisconnect()
+
+    ## loadDax
+    #
+    # Handles loading dax files, which can be useful for retrospective analysis.
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def loadDax(self, dax_filenames):
+        for i in range(dax_filenames.count()):
+            self.comm.loadImage(str(dax_filenames.takeFirst()))
+
+    ## loadMosaic
+    #
+    # Handles the load mosaic action.
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def loadMosaic(self, mosaic_filename):
+        if mosaic_filename:
+            legacy_format = True
+            dirname = os.path.dirname(mosaic_filename)
+
+            mosaic_fp = open(mosaic_filename, "r")
+
+            # First, figure out file size
+            mosaic_fp.readline()
+            number_lines = 0
+            while 1:
+                line = mosaic_fp.readline()
+                if not line: break
+                number_lines += 1
+            mosaic_fp.seek(0)
+
+            # Create progress bar
+            progress_bar = QtGui.QProgressDialog("Load Files...",
+                                                 "Abort Load",
+                                                 0,
+                                                 number_lines,
+                                                 self)
+            progress_bar.setWindowModality(QtCore.Qt.WindowModal)
+
+            mosaic_dirname = os.path.dirname(mosaic_filename)
+            file_number = 1
+            while 1:
+                if progress_bar.wasCanceled(): break
+                line = mosaic_fp.readline().rstrip()
+                if not line: break
+                data = line.split(",")
+                if (self.view.loadFromMosaicFileData(data, mosaic_dirname)):
+                    legacy_format = False
+                elif (self.positions.loadFromMosaicFileData(data, mosaic_dirname)):
+                    legacy_format = False
+                elif (self.sections.loadFromMosaicFileData(data, mosaic_dirname)):
+                    legacy_format = False
+                else:
+                    print "Unrecognized scene element:", data[0]
+                
+                progress_bar.setValue(file_number)
+                file_number += 1
+
+            progress_bar.close()
+            mosaic_fp.close()
+
+            if legacy_format:
+                # load older data formats here..
+                pass
+
 
     ## setCenter
     #
