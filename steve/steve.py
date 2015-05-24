@@ -423,8 +423,7 @@ class Window(QtGui.QMainWindow):
             self.takePictures(pos_list)
         else: # Abort button
             self.picture_queue = []
-            self.toggleTakingPicturesStatus(False)
-            self.comm.commDisconnect()
+            # addImage will handle reseting the ui and disconnecting comm
 
     ## handleLoadDax
     #
