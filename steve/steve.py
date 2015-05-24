@@ -9,6 +9,7 @@
 
 import os
 import sys
+import re
 from PyQt4 import QtCore, QtGui
 
 # Debugging
@@ -213,6 +214,7 @@ class Window(QtGui.QMainWindow):
         self.ui.actionQuit.triggered.connect(self.quit)
         self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
         self.ui.actionLoad_Dax.triggered.connect(self.handleLoadDax)
+        self.ui.actionLoad_Dax_By_Pattern.triggered.connect(self.handleLoadDaxByPattern)
         self.ui.actionLoad_Mosaic.triggered.connect(self.handleLoadMosaic)
         self.ui.actionLoad_Positions.triggered.connect(self.handleLoadPositions)
         self.ui.actionSave_Mosaic.triggered.connect(self.handleSaveMosaic)
@@ -440,7 +442,52 @@ class Window(QtGui.QMainWindow):
                                                            "*.dax")
         for i in range(dax_filenames.count()):
             self.comm.loadImage(str(dax_filenames.takeFirst()))
-    
+
+    ## handleLoadDaxByPattern
+    #
+    # Handles loading dax files via a specified regular expression pattern.
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def handleLoadDaxByPattern(self, boolean):
+        # Define input string
+        info_string = "Directory: " + self.parameters.directory + '\n'
+        info_string = info_string + "Enter file filter"
+
+        # Request file filter
+        example_input = "[a-zA-Z0-9_]+.dax"
+        file_filter, ok = QtGui.QInputDialog.getText(self,
+                                                    "Enter File Filter",
+                                                    info_string,
+                                                    QtGui.QLineEdit.Normal,
+                                                    example_input)
+
+        # Handle cancel
+        if not ok:
+            return
+
+        # Find files matching filter in default directory
+        filenames = [f for f in os.listdir(self.parameters.directory) if re.match(str(file_filter), f)]
+
+        # Exit if empty
+        if not filenames:
+            error_string = "No files in " + self.parameters.directory
+            error_string += " matched the provided filter: " + str(file_filter)
+           
+            QtGui.QMessageBox.warning(self,
+                                      "Error",
+                                      error_string)
+
+            return
+        
+        else:
+            print "Found " + str(len(filenames)) + " files matching " + file_filter + " in " + self.parameters.directory
+
+        # Load dax files
+        for filename in filenames:
+            self.comm.loadImage(self.parameters.directory + filename)
+                                                    
     ## handleLoadMosaic
     #
     # Handles the load mosaic action.
