@@ -17,6 +17,7 @@ import sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.steve_ui as steveUi
+from qtdesigner.loaddax_dialog_ui import Ui_Dialog as loaddax_dialog
 
 # Graphics
 import mosaicView
@@ -30,6 +31,56 @@ import capture
 import coord
 import sc_library.parameters as params
 
+class LoadDaxDialog(QtGui.QDialog, loaddax_dialog):
+    ## __init__
+    #
+    # @param title_text The text of the title of the dialog box
+    # @param default_directory The default directory for loading dax
+    # @param default_filter The default filter for loading dax
+    # @param parent (Optional) The PyQt parent of this object, default is None.
+    #
+    @hdebug.debug
+    def __init__(self, parent = None,
+                 title_text = "Load Dax by Pattern",
+                 default_directory = "",
+                 default_filter = "\S+.dax",
+                 ):
+        QtGui.QDialog.__init__(self,parent)
+        self.setupUi(self)
+
+        # Update window title
+        self.setWindowTitle(title_text)
+
+        # Add provided defaults to line edit widgets
+        self.directory_line_edit.setText(default_directory)
+        self.file_filter_line_edit.setText(default_filter)
+
+        # Connect buttons
+        self.new_directory_button.clicked.connect(self.handleNewDirectory)
+
+    ## getValues
+    #
+    # Return the values of the directory and file filter text boxes
+    #
+    # @return The directory value
+    # @return The file filter value
+    @hdebug.debug
+    def getValues(self):
+        return self.directory_line_edit.text(), self.file_filter_line_edit.text()
+
+    ## handleNewDirectory
+    #
+    # Handle request for a new directory
+    #
+    @hdebug.debug
+    def handleNewDirectory(self, boolean):
+        directory = str(QtGui.QFileDialog.getExistingDirectory(self,
+                                                               "New Directory",
+                                                               str(self.directory_line_edit.text()),
+                                                               QtGui.QFileDialog.ShowDirsOnly))
+        if directory:
+            self.directory_line_edit.setText(directory)
+    
 
 ## findMO
 #
@@ -451,25 +502,28 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleLoadDaxByPattern(self, boolean):
-        # Define input string
-        info_string = "Directory: " + self.parameters.directory + '\n'
-        info_string = info_string + "Enter file filter"
-
-        # Request file filter
-        example_input = "[a-zA-Z0-9_]+.dax"
-        file_filter, ok = QtGui.QInputDialog.getText(self,
-                                                    "Enter File Filter",
-                                                    info_string,
-                                                    QtGui.QLineEdit.Normal,
-                                                    example_input)
-
-        # Handle cancel
-        if not ok:
+        # Prepare and display dialog
+        dialog = LoadDaxDialog(self,
+                               default_directory = self.parameters.directory)
+    
+        
+        if dialog.exec_():
+            directory, file_filter = dialog.getValues() # Get values
+        else:
             return
 
+        # Check to see if file filter is a valid regular expression
+        try:
+            re.compile(str(file_filter))
+        except re.error:
+            QtGui.QMessageBox.warning(self,
+                                      "Error",
+                                      str(file_filter) + " is not a valid regular expression.")
+            return
+        
         # Find files matching filter in default directory
-        filenames = [f for f in os.listdir(self.parameters.directory) if re.match(str(file_filter), f)]
-
+        filenames = [f for f in os.listdir(directory) if re.match(str(file_filter), f)]
+        
         # Exit if empty
         if not filenames:
             error_string = "No files in " + self.parameters.directory
