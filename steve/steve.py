@@ -537,10 +537,25 @@ class Window(QtGui.QMainWindow):
         else:
             print "Found " + str(len(filenames)) + " files matching " + file_filter + " in " + self.parameters.directory
 
+        # Create progress bar
+        progress_bar = QtGui.QProgressDialog("Load Files...",
+                                             "Abort Load",
+                                             0,
+                                             number_lines,
+                                             self)
+        progress_bar.setWindowModality(QtCore.Qt.WindowModal)
+        file_number += 1
+        
         # Load dax files
         for filename in filenames:
+            if progress_bar.wasCanceled(): break
             self.comm.loadImage(self.parameters.directory + filename)
-                                                    
+            progress_bar.setValue(file_number)
+            file_number += 1
+
+        # Close progress bar
+        progress_bar.close()
+                                         
     ## handleLoadMosaic
     #
     # Handles the load mosaic action.
