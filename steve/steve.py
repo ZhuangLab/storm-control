@@ -172,6 +172,7 @@ class Window(QtGui.QMainWindow):
         self.current_objective = False
         self.current_offset = coord.Point(0.0, 0.0, "um")
         self.debug = parameters.debug
+        self.file_filter = "\S+.dax"
         self.parameters = parameters
         self.picture_queue = []
         self.requested_stage_pos = False
@@ -503,7 +504,8 @@ class Window(QtGui.QMainWindow):
     def handleLoadDaxByPattern(self, boolean):
         # Prepare and display dialog
         dialog = LoadDaxDialog(self,
-                               default_directory = self.parameters.directory)
+                               default_directory = self.parameters.directory,
+                               default_filter = self.file_filter)
     
         
         if dialog.exec_():
@@ -511,6 +513,9 @@ class Window(QtGui.QMainWindow):
         else:
             return
 
+        # Update internal record of file filter
+        self.file_filter = file_filter
+        
         # Check to see if file filter is a valid regular expression
         try:
             re.compile(str(file_filter))
