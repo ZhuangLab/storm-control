@@ -538,13 +538,14 @@ class Window(QtGui.QMainWindow):
             print "Found " + str(len(filenames)) + " files matching " + file_filter + " in " + self.parameters.directory
 
         # Create progress bar
-        progress_bar = QtGui.QProgressDialog("Load Files...",
+        progress_bar = QtGui.QProgressDialog("Loading " + str(len(filenames)) +  " Files ...",
                                              "Abort Load",
                                              0,
-                                             number_lines,
+                                             len(filenames),
                                              self)
+        progress_bar.setWindowTitle("Dax Load Progress")
         progress_bar.setWindowModality(QtCore.Qt.WindowModal)
-        file_number += 1
+        file_number = 1
         
         # Load dax files
         for filename in filenames:
