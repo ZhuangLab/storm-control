@@ -98,11 +98,11 @@
   <cal_range type="float">600</cal_range>
   <cal_step_size type="float">10</cal_step_size>
   <cal_frames_to_pause type="int">2</cal_frames_to_pause>
-  <zscan_start type="float">50.0</zscan_start>
+  <!-- <zscan_start type="float">51.0</zscan_start> -->
   <zscan_step type="float">0.1</zscan_step>
-  <zscan_frames_to_pause type="int">100</zscan_frames_to_pause>
-  <zscan_stop type="float">51.0</zscan_stop>
-  <zscan_focus_lock type="int">0</zscan_focus_lock>
+  <zscan_frames_to_pause type="int">10</zscan_frames_to_pause>
+  <zscan_stop type="float">1.0</zscan_stop>
+  <!-- <zscan_focus_lock type="int">0</zscan_focus_lock> -->
   <olock_bracket_step type="int">1000</olock_bracket_step>
   <olock_scan_step type="int">100</olock_scan_step>
   <olock_scan_hold type="int">10</olock_scan_hold>

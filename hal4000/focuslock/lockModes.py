@@ -4,7 +4,7 @@
 #
 # These classes implement various focus lock modes.
 #
-# Hazen 08/10
+# Hazen 05/15
 #
 
 from PyQt4 import QtCore
@@ -171,6 +171,7 @@ class JumpLockMode(LockMode):
     # Restarts the focus lock when the relock timer fires.
     #
     def restartLock(self):
+        print "restart", self.relock_timer.interval()
         self.control_thread.startLock()
 
     ## setLockTarget
@@ -679,11 +680,11 @@ class ZScanLockMode(JumpLockMode):
     # @param parameters A parameters object.
     #
     def newParameters(self, parameters):
-        self.z_start = parameters.get("zscan_start")
+        self.z_start = parameters.get("zscan_start", 0.0)
         self.z_step = parameters.get("zscan_step")
         self.z_frames_to_pause = parameters.get("zscan_frames_to_pause")
         self.z_stop = parameters.get("zscan_stop")
-        self.z_focus_lock = parameters.get("zscan_focus_lock")
+        self.z_focus_lock = parameters.get("zscan_focus_lock", 0)
 
     ## startLock
     #
@@ -829,10 +830,100 @@ class LargeOffsetLock(JumpLockMode):
             self.control_thread.recenter()
 
 
+## ZScanLockModeV2
+#
+# The stage will scan up (or down) from it's current lock target. This is
+# different from v1 in that it only moves in one direction and it maintains
+# the lock during/after scanning.
+#
+class ZScanLockModeV2(AlwaysOnLockMode):
+
+    ## __init__
+    #
+    # @param control_thread A thread object that controls the focus lock.
+    # @param parameters A parameters object.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
+    def __init__(self, control_thread, parameters, parent):
+        AlwaysOnLockMode.__init__(self, control_thread, parameters, parent)
+        self.relock_timer.setInterval(2000)
+        self.counter = None
+        self.current_z = None
+        self.name = "Z Scan"
+        self.start_lock_target = None
+        self.z_step = None
+        self.z_frames_to_pause = None
+        self.z_stop = None
+
+    ## newFrame
+    #
+    # Handles a new frame from the camera. This moves to a new z position
+    # if the scan has not been completed.
+    #
+    # @param frame A frame object.
+    # @param offset The offset signal from the focus lock.
+    # @param power The sum signal from the focus lock.
+    # @param stage_z The z position of the piezo stage.
+    #
+    def newFrame(self, frame, offset, power, stage_z):
+        if (abs(self.current_z) < self.z_stop):
+            if (self.counter == self.z_frames_to_pause):
+                self.counter = 0
+                self.current_z += self.z_step
+                if self.locked:
+                    self.relock_timer.stop()
+                    self.control_thread.stopLock()
+                self.control_thread.moveStageRel(self.z_step)
+                if self.locked:
+                    self.relock_timer.start()
+            self.counter += 1
+
+    ## newParameters
+    #
+    # Handles new parameters.
+    #
+    # @param parameters A parameters object.
+    #
+    def newParameters(self, parameters):
+        self.z_step = parameters.get("zscan_step")
+        self.z_frames_to_pause = parameters.get("zscan_frames_to_pause")
+        self.z_stop = parameters.get("zscan_stop")
+
+    ## setLockTarget
+    #
+    # Sets the focus lock target to the desired value.
+    #
+    # @param target The desired lock target.
+    #
+    def setLockTarget(self, target):
+        self.start_lock_target = self.control_thread.getLockTarget()
+        AlwaysOnLockMode.setLockTarget(self, target)
+
+    ## startLock
+    #
+    # Starts the focus lock.
+    #
+    def startLock(self):
+        print "startLock"
+        AlwaysOnLockMode.startLock(self)
+        self.counter = 0
+        self.current_z = 0.0
+        self.start_lock_target = self.control_thread.getLockTarget()
+
+    ## stopLock
+    #
+    # Stops the focus lock.
+    #
+    def stopLock(self):
+        print "stopLock", self.start_lock_target
+        self.control_thread.setTarget(self.start_lock_target)
+        AlwaysOnLockMode.stopLock(self)
+
+
 #
 # The MIT License
 #
-# Copyright (c) 2010 Zhuang Lab, Harvard University
+# Copyright (c) 2015 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

@@ -10,6 +10,7 @@
 
 import numpy
 import sys
+import time
 
 import hamamatsu_camera as hc
 
@@ -50,19 +51,23 @@ var = numpy.zeros(cam_x * cam_y, dtype = numpy.int64)
 #break_on_next_loop = False
 n_frames = int(sys.argv[2])
 hcam.startAcquisition()
-count = 0
-while (count < n_frames):
+processed = 0
+captured = 0
+start_time = time.time()
+while (processed < n_frames):
 
     # Get frames.
     [frames, dims] = hcam.getFrames()
-    if ((count%10)==0):
-        print "Accumulated", count, "frames, current back log is", len(frames), "frames"
+    captured += len(frames)
+    
+    if ((processed%10)==0):
+        print "Accumulated", processed, "frames, current back log is", len(frames), "frames"
     
     if (len(frames) > 0):
         aframe = frames[0].getData().astype(numpy.int32) - cam_offset
         mean += aframe
         var += aframe * aframe
-        count += 1
+        processed += 1
 
     #if break_on_next_loop:
     #    break
@@ -70,7 +75,10 @@ while (count < n_frames):
     #if (len(frames) == 0):
     #    break_on_next_loop = True
 
+end_time = time.time()
 hcam.stopAcquisition()
+print "Captured:", captured, "frames in", (end_time - start_time), "seconds."
+print "FPS:", captured/(end_time - start_time)
 
 # Compute mean & variance & save results.
 #mean = mean/float(n_frames)

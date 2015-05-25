@@ -58,7 +58,21 @@ class ACameraControl(cameraControl.CameraControl):
     #
     @hdebug.debug
     def getAcquisitionTimings(self):
-        frame_rate = self.camera.getPropertyValue("internal_frame_rate")[0]
+        #frame_rate = self.camera.getPropertyValue("internal_frame_rate")[0]
+
+        # The camera frame rate seems to be max(exposure time, readout time).
+        # This number may not be good accurate enough for shutter synchronization?
+        exposure_time = self.camera.getPropertyValue("exposure_time")[0]
+        readout_time = self.camera.getPropertyValue("timing_readout_time")[0]
+        if (exposure_time < readout_time):
+            frame_rate = 1.0/readout_time
+
+            # Print a warning since the user probably does not want this to be true.
+            hdebug.logText("Camera exposure time (" + str(exposure_time) + ") is less than the readout time (" + str(readout_time), True)
+
+        else:
+            frame_rate = 1.0/exposure_time
+
         temp = 1.0/frame_rate
         return [temp, temp, temp]
 
@@ -143,12 +157,13 @@ class ACameraControl(cameraControl.CameraControl):
                 if self.camera.isCameraProperty(key):
                     self.camera.setPropertyValue(key, value)
 
+
             # Set camera sub-array mode so that it will return the correct frame rate.
             self.camera.setSubArrayMode()
 
             self.got_camera = True
 
-        except:
+        except hcam.DCAMException:
             hdebug.logText("QCameraThread: Bad camera settings")
             print traceback.format_exc()
             self.got_camera = False

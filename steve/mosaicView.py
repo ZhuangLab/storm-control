@@ -131,7 +131,6 @@ class Crosshair(QtGui.QGraphicsItem):
     # @param scale The current scale of the view.
     #
     def setScale(self, scale):
-        print scale
         self.r_size = round(self.ch_size/scale)
 
     ## setVisible

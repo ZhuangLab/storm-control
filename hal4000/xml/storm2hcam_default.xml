@@ -14,6 +14,7 @@
   <x_bin type="int">1</x_bin>
   <y_bin type="int">1</y_bin>
   <exposure_time type="float">0.01</exposure_time>
+  <defect_correct_mode type="int">1</defect_correct_mode>
 
   <!-- less common camera settings -->
   <external_trigger type="int">0</external_trigger>
@@ -49,6 +50,7 @@
   <default_power channel="2">1.0</default_power>
   <default_power channel="3">1.0</default_power>
   <default_power channel="4">1.0</default_power>
+  <default_power channel="5">1.0</default_power>
   <button channel="0" power="1.0">Max</button>
   <button channel="0" power="0.1">Low</button>
   <button channel="1" power="1.0">Max</button>
@@ -59,6 +61,8 @@
   <button channel="3" power="0.1">Low</button>
   <button channel="4" power="1.0">Max</button>
   <button channel="4" power="0.1">Low</button>
+  <button channel="5" power="1.0">Max</button>
+  <button channel="5" power="0.1">Low</button>
 
   <!-- stage settings -->
   <small_step_size type="float">5.0</small_step_size>
@@ -101,8 +105,11 @@
   <!-- temperature logger settings -->
 
   <!-- misc control -->
-  <filter_names type="string-array">Dy750,Al647,mEos2,Atto488,DAPI,Penta</filter_names>
+  <filter_names type="string-array">Empty,Empty,Penta,Storm,Empty,Empty</filter_names>
   <filter_position type="int">0</filter_position>
+  <em_filter type="int">0</em_filter>
+  <em_checked type="int">0</em_checked>
+  <em_period type="int">60</em_period>
 
   <!-- TCP/IP control -->
   <have_tcp_control type="int">1</have_tcp_control>
