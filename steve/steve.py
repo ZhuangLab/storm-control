@@ -9,6 +9,7 @@
 
 import os
 import sys
+import re
 from PyQt4 import QtCore, QtGui
 
 # Debugging
@@ -16,6 +17,7 @@ import sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.steve_ui as steveUi
+from qtdesigner.loaddax_dialog_ui import Ui_Dialog as loaddax_dialog
 
 # Graphics
 import mosaicView
@@ -29,6 +31,56 @@ import capture
 import coord
 import sc_library.parameters as params
 
+class LoadDaxDialog(QtGui.QDialog, loaddax_dialog):
+    ## __init__
+    #
+    # @param title_text The text of the title of the dialog box
+    # @param default_directory The default directory for loading dax
+    # @param default_filter The default filter for loading dax
+    # @param parent (Optional) The PyQt parent of this object, default is None.
+    #
+    @hdebug.debug
+    def __init__(self, parent = None,
+                 title_text = "Load Dax by Pattern",
+                 default_directory = "",
+                 default_filter = "\S+.dax",
+                 ):
+        QtGui.QDialog.__init__(self,parent)
+        self.setupUi(self)
+
+        # Update window title
+        self.setWindowTitle(title_text)
+
+        # Add provided defaults to line edit widgets
+        self.directory_line_edit.setText(default_directory)
+        self.file_filter_line_edit.setText(default_filter)
+
+        # Connect buttons
+        self.new_directory_button.clicked.connect(self.handleNewDirectory)
+
+    ## getValues
+    #
+    # Return the values of the directory and file filter text boxes
+    #
+    # @return The directory value
+    # @return The file filter value
+    @hdebug.debug
+    def getValues(self):
+        return self.directory_line_edit.text(), self.file_filter_line_edit.text()
+
+    ## handleNewDirectory
+    #
+    # Handle request for a new directory
+    #
+    @hdebug.debug
+    def handleNewDirectory(self, boolean):
+        directory = str(QtGui.QFileDialog.getExistingDirectory(self,
+                                                               "New Directory",
+                                                               str(self.directory_line_edit.text()),
+                                                               QtGui.QFileDialog.ShowDirsOnly))
+        if directory:
+            self.directory_line_edit.setText(directory)
+    
 
 ## findMO
 #
@@ -213,6 +265,7 @@ class Window(QtGui.QMainWindow):
         self.ui.actionQuit.triggered.connect(self.quit)
         self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
         self.ui.actionLoad_Dax.triggered.connect(self.handleLoadDax)
+        self.ui.actionLoad_Dax_By_Pattern.triggered.connect(self.handleLoadDaxByPattern)
         self.ui.actionLoad_Mosaic.triggered.connect(self.handleLoadMosaic)
         self.ui.actionLoad_Positions.triggered.connect(self.handleLoadPositions)
         self.ui.actionSave_Mosaic.triggered.connect(self.handleSaveMosaic)
@@ -439,7 +492,55 @@ class Window(QtGui.QMainWindow):
                                                            "*.dax")
         for i in range(dax_filenames.count()):
             self.comm.loadImage(str(dax_filenames.takeFirst()))
+
+    ## handleLoadDaxByPattern
+    #
+    # Handles loading dax files via a specified regular expression pattern.
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def handleLoadDaxByPattern(self, boolean):
+        # Prepare and display dialog
+        dialog = LoadDaxDialog(self,
+                               default_directory = self.parameters.directory)
     
+        
+        if dialog.exec_():
+            directory, file_filter = dialog.getValues() # Get values
+        else:
+            return
+
+        # Check to see if file filter is a valid regular expression
+        try:
+            re.compile(str(file_filter))
+        except re.error:
+            QtGui.QMessageBox.warning(self,
+                                      "Error",
+                                      str(file_filter) + " is not a valid regular expression.")
+            return
+        
+        # Find files matching filter in default directory
+        filenames = [f for f in os.listdir(directory) if re.match(str(file_filter), f)]
+        
+        # Exit if empty
+        if not filenames:
+            error_string = "No files in " + self.parameters.directory
+            error_string += " matched the provided filter: " + str(file_filter)
+           
+            QtGui.QMessageBox.warning(self,
+                                      "Error",
+                                      error_string)
+
+            return
+        
+        else:
+            print "Found " + str(len(filenames)) + " files matching " + file_filter + " in " + self.parameters.directory
+
+        # Load dax files
+        for filename in filenames:
+            self.comm.loadImage(self.parameters.directory + filename)
+                                                    
     ## handleLoadMosaic
     #
     # Handles the load mosaic action.
