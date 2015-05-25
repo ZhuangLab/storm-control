@@ -2,8 +2,8 @@
 <settings>
 
   <!-- general -->
-  <flip_horizontal type="int">0</flip_horizontal>
-  <flip_vertical type="int">0</flip_vertical>
+  <flip_horizontal type="int">1</flip_horizontal>
+  <flip_vertical type="int">1</flip_vertical>
   <transpose type="int">1</transpose>
   <debug type="int">1</debug>
   <use_as_default type="int">1</use_as_default>
@@ -13,7 +13,7 @@
   <mag3 type="string">4x,4.0,0.0,0.0</mag3>
 
   <!-- capture -->
-  <directory type="string">c:\data\</directory>
+  <directory type="string">D:\Test\</directory>
   <image_filename type="string">steve</image_filename>
   <pixels_to_um type="float">0.167</pixels_to_um>
 
