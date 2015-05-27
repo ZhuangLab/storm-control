@@ -884,7 +884,11 @@ class DATakeMovie(DaveAction):
             message_data["directory"] = node.find("directory").text
             
         if node.find("overwrite") is not None:
-            message_data["overwrite"] = node.find("overwrite").text
+            message_data["overwrite"] = True # Default is to overwrite
+            
+            boolean_text = node.find("overwrite").text
+            if (boolean_text.lower() == "false"):
+                message_data["overwrite"] = False
 
         self.message = tcpMessage.TCPMessage(message_type = "Take Movie",
                                              message_data = message_data)
