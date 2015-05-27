@@ -178,6 +178,7 @@ class Window(QtGui.QMainWindow):
         self.requested_stage_pos = False
         self.stage_tracking_timer = QtCore.QTimer(self)
         self.taking_pictures = False
+        self.snapshot_directory = self.parameters.directory
         self.stage_tracking_timer.setInterval(500)
 
         # ui setup
@@ -764,7 +765,8 @@ class Window(QtGui.QMainWindow):
                                                                str(self.parameters.directory),
                                                                QtGui.QFileDialog.ShowDirsOnly))
         if directory:
-            self.parameters.directory = directory + "/"
+            self.parameters.directory = directory + os.path.sep
+            self.snapshot_directory = directory + os.path.sep
             print self.parameters.directory
 
     ## handleSnapshot
@@ -777,11 +779,14 @@ class Window(QtGui.QMainWindow):
     def handleSnapshot(self, boolean):
         snapshot_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
                                                                   "Save Snapshot", 
-                                                                  self.parameters.directory, 
+                                                                  self.snapshot_directory, 
                                                                   "*.png"))
         if snapshot_filename:
             pixmap = QtGui.QPixmap.grabWidget(self.view.viewport())
             pixmap.save(snapshot_filename)
+
+            self.snapshot_directory = os.path.dirname(snapshot_filename)
+            
 
     ## handleStageTrackingTimer
     #
