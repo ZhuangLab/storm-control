@@ -15,7 +15,6 @@ from PyQt4 import QtCore
 
 import sc_library.tcpMessage as tcpMessage
 
-
 ## addField
 #
 # @param block A ElementTree node.
@@ -148,6 +147,12 @@ class DaveAction(QtCore.QObject):
             data = []
             for key in sorted(mdict):
                 data.append([key, mdict[key]])
+            # Add disk usage and duration
+            if not (self.disk_usage == 0):
+                data.append(["disk usage (kb)", self.disk_usage])
+            if not (self.duration == 0):
+                data.append(["duration (s)", self.duration])
+            
             return data
         else:
             return [None,None]
