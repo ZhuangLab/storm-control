@@ -82,7 +82,6 @@ class DaveCommandTreeViewer(QtGui.QTreeView):
     def __init__(self, parent = None):
         QtGui.QTreeView.__init__(self, parent)
 
-        #self.current_rect = None
         self.aborted = False
         self.dv_model = None
 
@@ -276,7 +275,6 @@ class DaveCommandTreeViewer(QtGui.QTreeView):
         self.dv_model = dv_model
         QtGui.QTreeView.setModel(self, self.dv_model)
         self.viewportUpdate()
-        #self.reset()
         
     ## viewportUpdate
     #
@@ -302,6 +300,13 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
 
         self.dave_action_index = 0
         self.dave_action_si = []
+        self.dave_action_storage = [] # A place to store actions in test mode
+        
+        # Lists for fast validation.
+        self.test_actions = [] # A list of actions to validate
+        self.test_ids = [] # A list of ids corresponding to the test actions
+
+        self.test_mode = False
 
     ## addItem
     #
@@ -309,6 +314,14 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
     #
     def addItem(self, dave_action_si):
         self.dave_action_si.append(dave_action_si)
+
+        # Check if action requires validation
+        action_id = dave_action_si.getDataAction().getID()
+        if action_id is not None:
+            # Check if id is on the list
+            if not ## Code to identify if on lis
+                self.test_ids.append(action_id)
+                self.test_actions.append(dave_action_si)
 
     ## getActionTypes
     #
@@ -327,13 +340,18 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
     # @return The current item index.
     #
     def getCurrentIndex(self):
-        return self.dave_action_index
+        if  self.validation_mode:
+            return self.validation_action_index
+        else: # In validation mode
+            return self.dave_action_index
+
 
     ## getCurrentItem
     #
     # @return The current DaveActionStandardItem.
     #
     def getCurrentItem(self):
+        if not self.va
         return self.dave_action_si[self.dave_action_index]
 
     ## getNextItem
@@ -439,6 +457,22 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
         else:
             print "item not found!"
 
+    ## setTestMode
+    #
+    # @param boolean Sets test mode.
+    #
+    def setTestMode(self, is_test_mode):
+        if self.test_mode:
+            if not is_test_mode: # Toggle off test mode
+                self.test_mode = False
+                self.dave_action_si = self.dave_action_storage # Recover full list
+                self.resetItemIndex()
+        else:
+            if is_test_mode:
+                self.test_mode = True
+                self.dave_action_storage = self.dave_action_si
+                self.dave_action_si = self.test_actions
+                self.resetItemIndex()
 
 ## parseSequenceFile
 #
