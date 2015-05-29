@@ -53,7 +53,6 @@ class DaveAction(QtCore.QObject):
         self.tcp_client = None
         self.message = None
         self.valid = True
-        self.validate = False
 
         # Define pause behaviors
         self.should_pause = False            # Pause after completion
@@ -465,8 +464,7 @@ class DAMoveStage(DaveAction):
                                              message_data = {"stage_x" : self.stage_x,
                                                              "stage_y" : self.stage_y})
 
-        # Create id
-        self.validate = True # Require validation
+        # Create id to indicate required validation
         self.id = self.message.getType() + " "
         self.id += "stage_x: " + str(self.stage_x) + " "
         self.id += "stage_y: " + str(self.stage_y)
@@ -626,7 +624,6 @@ class DASetDirectory(DaveAction):
                                              message_data = {"directory": self.directory})
 
         # Require validation
-        self.validate = True 
         self.id = self.message.getType() + " "
         self.id += self.directory
 
@@ -724,7 +721,6 @@ class DASetParameters(DaveAction):
                                              message_data = {"parameters" : self.parameters})
 
         # Require validation
-        self.validate = True 
         self.id = self.message.getType() + " "
         self.id += str(self.parameters)
 
@@ -804,7 +800,6 @@ class DASetProgression(DaveAction):
 
         # Require validation only for provided filenames
         if node.find("filename") is not None:
-            self.validate = True 
             self.id = self.message.getType() + " "
             self.id += node.find("filename").text   
 
@@ -928,7 +923,6 @@ class DATakeMovie(DaveAction):
                                              message_data = message_data)
 
         # Require validation
-        self.validate = True
         self.id = self.message.getType() + " "
         self.id = str(self.length) + " "
         if message_data["parameters"] is not None:
@@ -986,7 +980,6 @@ class DAValveProtocol(DaveAction):
                                              message_data = {"name": self.protocol_name})
 
         # Require validation
-        self.validate = True
         self.id = self.message.getType() + " "
         self.id = self.protocol_name        
 
