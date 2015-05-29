@@ -384,10 +384,7 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
     # @return The current item index.
     #
     def getCurrentIndex(self):
-        if  self.validation_mode:
-            return self.validation_action_index
-        else: # In validation mode
-            return self.dave_action_index
+        return self.dave_action_index
 
 
     ## getCurrentItem
@@ -395,7 +392,6 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
     # @return The current DaveActionStandardItem.
     #
     def getCurrentItem(self):
-        if not self.va
         return self.dave_action_si[self.dave_action_index]
 
     ## getNextItem
