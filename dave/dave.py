@@ -588,47 +588,6 @@ class Dave(QtGui.QMainWindow):
             self.command_engine.startCommand(self.ui.commandSequenceTreeView.getCurrentItem().getDaveAction(),
                                              self.test_mode)
 
-    ## handleSelectButton
-    #
-    # Handles the select command button. Used to set the current command to the selected command. 
-    #
-    # @param boolean Dummy parameter.
-    #
-    @hdebug.debug
-    def handleSelectButton(self, boolean):
-        pass
-
-#        ui.commandSequenceTreeView.setCurrentItem
- #   
-#        # Force manual conformation of abort
-#        messageBox = QtGui.QMessageBox(parent = self)
-#        messageBox.setWindowTitle("Change Command?")
-#        messageBox.setText("Are you sure you want to change to the current command?")
-#        messageBox.setStandardButtons(QtGui.QMessageBox.Cancel |
-#                                      QtGui.QMessageBox.Ok)
-#        messageBox.setDefaultButton(QtGui.QMessageBox.Cancel)
-#        button_ID = messageBox.exec_()
-#
-#        old_command_index = self.command_index
-#        new_command_index = self.ui.commandSequenceList.currentRow()
-#
-#        # Handle response
-#        if button_ID == QtGui.QMessageBox.Ok:
-#            # Generate display text
-#            display_text =  "Changed command\n"
-#            display_text += "   From command " + str(old_command_index) + ": "
-#            display_text += str(self.commands[old_command_index].getDescriptor())
-#            display_text += "   To command " + str(new_command_index) + ": "
-#            display_text += str(self.commands[new_command_index].getDescriptor())
-#            print display_text
-#            
-#            self.command_index = new_command_index
-#
-#            self.issueCommand()
-#
-#        else: # Cancel button or window closed event
-#            print "Canceled change command request"
-
     ## handleSendTestEmail
     #
     # Sends a test email based on the current notifier settings. 
