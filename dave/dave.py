@@ -350,6 +350,10 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleDone(self):
+        # Handle updating usage information if in test mode
+        if self.test_mode:
+            self.ui.commandSequenceTreeView.updateEstimates()
+        
 
         # Increment command to the next valid command / action.
         next_command = self.ui.commandSequenceTreeView.getNextItem()
@@ -367,6 +371,7 @@ class Dave(QtGui.QMainWindow):
                 self.sequence_validated = True
                 self.updateEstimates()
                 self.test_mode = False
+                self.ui.commandSequenceTreeView.setTestMode(False)
 
             # Stop TCP communication
             if self.needs_hal:

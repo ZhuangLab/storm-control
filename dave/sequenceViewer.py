@@ -55,6 +55,15 @@ class DaveActionStandardItem(QtGui.QStandardItem):
     def isValid(self):
         return self.valid
 
+    ## setUsageEstimates
+    #
+    # @param disk_usage The estimated disk_usage for the action
+    # @param duration The estimated duration of the action
+    #
+    def setUsageEstimates(self, disk_usage, duration):
+        self.dave_action.setDiskUsage(disk_usage)
+        self.dave_action.setDuration(duration)
+
     ## setValid
     #
     # @param valid True/False if the DaveAction associated with this item is valid.
@@ -298,6 +307,12 @@ class DaveCommandTreeViewer(QtGui.QTreeView):
     def setTestMode(self, test_mode):
         if self.dv_model is not None:
             self.dv_model.setTestMode(test_mode)
+
+    ## updateEstimates
+    #
+    def updateEstimates(self):
+        if self.dv_model is not None:
+            self.dv_model.updateEstimates()
         
     ## viewportUpdate
     #
@@ -428,7 +443,6 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
         for item in self.dave_action_si:
             if item.isValid():
                 est_space += item.getDaveAction().getUsage()
-        print "space", est_space
         return est_space
 
     ## haveNextItem
@@ -512,6 +526,23 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
                 self.dave_action_storage = self.dave_action_si
                 self.dave_action_si = self.test_actions
                 self.resetItemIndex()
+
+    ## updateEstimates
+    #
+    def updateEstimates(self):
+        if self.test_mode: # Only needed in test mode
+
+            # Find current id and the current disk usage and duration.
+            current_id = self.test_ids[self.dave_action_index]
+            current_item = self.dave_action_si[self.dave_action_index]
+            current_action = current_item.getDaveAction()
+            disk_usage = current_action.getUsage()
+            duration = current_action.getDuration()
+            
+            # Update usage estimated for all actions that have this id.
+            for item in self.dave_action_storage:
+                if item.getDaveActionID() == current_id:
+                    item.setUsageEstimates(disk_usage, duration)
 
 ## parseSequenceFile
 #
