@@ -275,6 +275,14 @@ class DaveCommandTreeViewer(QtGui.QTreeView):
         self.dv_model = dv_model
         QtGui.QTreeView.setModel(self, self.dv_model)
         self.viewportUpdate()
+
+    ## setTestMode
+    #
+    # @param test_mode True/False sets the test mode of the DaveStandardItemModel.
+    #
+    def setTestMode(self, test_mode):
+        if self.dv_model is not None:
+            self.dv_model.setTestMode(test_mode)
         
     ## viewportUpdate
     #
@@ -459,16 +467,16 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
 
     ## setTestMode
     #
-    # @param boolean Sets test mode.
+    # @param test_mode True/False sets the test mode.
     #
-    def setTestMode(self, is_test_mode):
+    def setTestMode(self, test_mode):
         if self.test_mode:
-            if not is_test_mode: # Toggle off test mode
+            if not test_mode: # Toggle off test mode
                 self.test_mode = False
                 self.dave_action_si = self.dave_action_storage # Recover full list
                 self.resetItemIndex()
         else:
-            if is_test_mode:
+            if test_mode:
                 self.test_mode = True
                 self.dave_action_storage = self.dave_action_si
                 self.dave_action_si = self.test_actions
