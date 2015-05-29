@@ -41,6 +41,13 @@ class DaveActionStandardItem(QtGui.QStandardItem):
     def getDaveAction(self):
         return self.dave_action
 
+    ## getDaveActionID
+    #
+    # @return The id associated with the DaveAction associated with this item.
+    #
+    def getDaveActionID(self):
+        return self.dave_action.getID()
+
     ## isValid
     #
     # @return True/False if the command is valid.
@@ -267,6 +274,14 @@ class DaveCommandTreeViewer(QtGui.QTreeView):
             self.dv_model.setCurrentAction(an_item)
             self.viewportUpdate()
 
+    ## setCurrentItemValidity
+    #
+    # @param is_valid True/False determines the validity of the currentItem(s)
+    #
+    def setCurrentItemValid(self, is_valid):
+        if self.dv_model is not None:
+            self.dv_model.setCurrentItemValid(is_valid)
+
     ## setModel
     #
     # @param qt_model The DaveStandardItemModel associated with the tree.
@@ -465,6 +480,22 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
         else:
             print "item not found!"
 
+    ## setCurrentItemValid
+    #
+    # @param is_Valid True/False determines the validity of the currentItem(s)
+    #
+    def setCurrentItemValid(self, is_Valid):
+        if self.test_mode:
+            # Find current id
+            current_id = self.test_ids[self.dave_action_index]
+            # Change validity of all actions that have this id
+            for item in self.dave_action_storage:
+                if item.getDaveActionID() == current_id:
+                    item.setValid(is_Valid)
+        else: # Not used
+            item = self.dave_action_si[self.dave_action_index]
+            item.setValid(is_valid)
+                    
     ## setTestMode
     #
     # @param test_mode True/False sets the test mode.

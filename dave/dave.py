@@ -516,7 +516,8 @@ class Dave(QtGui.QMainWindow):
                                           message_str)
 
         else: # Test mode
-            current_item.setValid(False)
+            #current_item.setValid(False)
+            self.ui.commandSequenceTreeView.setCurrentItemValid(False)
             message_str += "\nSuppress remaining warnings?"
             if not self.skip_warning:
                 messageBox = QtGui.QMessageBox(parent = self)
@@ -621,9 +622,12 @@ class Dave(QtGui.QMainWindow):
             # Reset command properties.
             self.ui.commandSequenceTreeView.setAllValid(True)
             
-            # Configure command engine.
+            # Place commandSequence into test mode.
             self.ui.commandSequenceTreeView.resetItemIndex()
             self.updateRunStatusDisplay()
+            self.ui.commandSequenceTreeView.setTestMode(True)
+
+            # Send first command.
             self.command_engine.startCommand(self.ui.commandSequenceTreeView.getCurrentItem().getDaveAction(),
                                              self.test_mode)
 
