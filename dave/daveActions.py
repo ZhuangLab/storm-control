@@ -220,6 +220,13 @@ class DaveAction(QtCore.QObject):
         else:
             raise Exception(pname + " is not a valid property for " + str(type(self)))
 
+    ## setDuration
+    #
+    # @param duration The estimated time to execute.
+    #
+    def setDuration(self, duration):
+        self.duration = duration
+
     ## setup
     #
     # Perform post creation initialization.
@@ -228,6 +235,13 @@ class DaveAction(QtCore.QObject):
     #
     def setup(self, node):
         pass
+
+    ## setDiskUsage
+    #
+    # @param disk_usage The disk usage.
+    #
+    def setDiskUsage(self, disk_usage):
+        self.disk_usage = disk_usage
 
     ## setValid
     #
