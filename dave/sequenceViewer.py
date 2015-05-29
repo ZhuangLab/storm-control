@@ -354,13 +354,19 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
         self.dave_action_si.append(dave_action_si)
 
         # Check if action requires validation
-        action_id = dave_action_si.getDataAction().getID()
+        action_id = dave_action_si.getDaveAction().getID()
         if action_id is not None:
-            # Check if id is on the list
-            if not ## Code to identify if on lis
-                self.test_ids.append(action_id)
-                self.test_actions.append(dave_action_si)
+            # Check for existing id
+            is_present = False
+            for id_value in self.test_ids:
+                if action_id == id_value:
+                    is_present = True
 
+            # Add to list
+            if not is_present:
+                self.test_actions.append(dave_action_si)
+                self.test_ids.append(action_id)
+    
     ## getActionTypes
     #
     # @return A list of DaveAction types (i.e. "hal" or "kilroy").
