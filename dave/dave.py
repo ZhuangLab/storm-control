@@ -69,7 +69,8 @@ class CommandEngine(QtCore.QObject):
         
         # Kilroy Client
         self.kilroyClient = tcpClient.TCPClient(port = 9500,
-                                                server_name = "Kilroy")
+                                                server_name = "Kilroy",
+                                                verbose = True)
     
     ## abort
     #
@@ -376,9 +377,9 @@ class Dave(QtGui.QMainWindow):
             self.running = False
             if self.test_mode:
                 self.sequence_validated = True
-                self.updateEstimates()
                 self.test_mode = False
                 self.ui.commandSequenceTreeView.setTestMode(False)
+                self.updateEstimates()
 
             # Stop TCP communication
             if self.needs_hal:
