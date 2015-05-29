@@ -303,9 +303,17 @@ class Dave(QtGui.QMainWindow):
                 pass
 
         else:
-            self.ui.commandSequenceTreeView.resetItemIndex()
+            
+            self.test_mode = False
             self.sequence_validated = False
-    
+            self.ui.commandSequenceTreeView.setTestMode(False)
+            
+            if (self.running):
+                self.command_engine.abort()
+            else:
+                self.handleDone()
+
+        
     ## handleDetailsUpdate
     #
     # Update command details table with information about the command.
@@ -353,11 +361,10 @@ class Dave(QtGui.QMainWindow):
         # Handle updating usage information if in test mode
         if self.test_mode:
             self.ui.commandSequenceTreeView.updateEstimates()
-        
 
         # Increment command to the next valid command / action.
         next_command = self.ui.commandSequenceTreeView.getNextItem()
-            
+
         # Handle last command in list.
         if next_command is None:
             self.ui.runButton.setText("Start")
