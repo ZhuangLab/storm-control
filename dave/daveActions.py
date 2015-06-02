@@ -326,7 +326,6 @@ class DACheckFocus(DaveAction):
         self.message = tcpMessage.TCPMessage(message_type = "Check Focus Lock",
                                              message_data = message_data)
 
-
 ## DADelay
 #
 # This action introduces a defined delay.

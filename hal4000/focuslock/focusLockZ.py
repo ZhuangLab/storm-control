@@ -242,6 +242,8 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleFoundSum(self, lock_sum):
+        focus_status = self.lock_display1.getFocusStatus()
+        self.tcp_message.addResponse("focus_status", focus_status)
         self.tcp_message.addResponse("found_sum", lock_sum)
         self.tcpComplete.emit(self.tcp_message)
 
@@ -461,9 +463,14 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
             self.accum_focus_checks += 1
             if self.accum_focus_checks < self.num_focus_checks:
                 self.focus_check_timer.start(100) # Wait one 100 ms then measure again
-            else: # Repeat
-                self.tcp_message.addResponse("focus_status", focus_status)
-                self.tcpComplete.emit(self.tcp_message)
+            else: # Focus not found after the specified number of checks
+                min_sum = self.tcp_message.getData("min_sum")
+                scan_focus = self.tcp_message.getData("focus_scan")
+                if (scan_focus is True) and (min_sum is not None): # Implement a focus scan
+                    self.tcpHandleFindSum(min_sum)
+                else: # No scan, just return error
+                    self.tcp_message.addResponse("focus_status", focus_status)
+                    self.tcpComplete.emit(self.tcp_message)
                 
     ## toggleLockButtonDisplay
     #
