@@ -464,14 +464,20 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
             if self.accum_focus_checks < self.num_focus_checks:
                 self.focus_check_timer.start(100) # Wait one 100 ms then measure again
             else: # Focus not found after the specified number of checks
-                min_sum = self.tcp_message.getData("min_sum")
                 scan_focus = self.tcp_message.getData("focus_scan")
-                if (scan_focus is True) and (min_sum is not None): # Implement a focus scan
-                    self.tcpHandleFindSum(min_sum)
+                if scan_focus is True:
+                    # Get minimum sum for FindSum scan
+                    min_sum = self.tcp_message.getData("min_sum")
+                    if min_sum is None: # Not provided. Use default for parameters.
+                        min_sum = self.parameters.get("qpd_sum_min", 50)
+
+                    # Send scan command
+                    self.tcpHandleFindSum(min_sum) # message is returned by handleFoundSum
+                    
                 else: # No scan, just return error
                     self.tcp_message.addResponse("focus_status", focus_status)
                     self.tcpComplete.emit(self.tcp_message)
-                
+    
     ## toggleLockButtonDisplay
     #
     # Show/hide the lock button depending on the show parameter.
