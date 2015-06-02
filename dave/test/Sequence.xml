@@ -70,6 +70,9 @@
       </DATakeMovie>
     </branch>
     <branch name="Check_Focus_No_Scan_0">
+      <DACheckFocus>
+        <num_focus_checks>5</num_focus_checks>
+      </DACheckFocus>
       <DASetParameters>
         <parameters type="str">Test_Parameter</parameters>
       </DASetParameters>
@@ -79,12 +82,17 @@
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
     </branch>
-    <branch name="Check_Focus_No_Scan_0">
+    <branch name="Check_Focus_Scan_0">
+      <DACheckFocus>
+        <num_focus_checks>5</num_focus_checks>
+        <focus_scan/>
+        <min_sum>1000</min_sum>
+      </DACheckFocus>
       <DASetParameters>
         <parameters type="str">Test_Parameter</parameters>
       </DASetParameters>
       <DATakeMovie>
-        <name type="str">Check_Focus_No_Scan_0</name>
+        <name type="str">Check_Focus_Scan_0</name>
         <length type="int">300</length>
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
@@ -288,6 +296,9 @@
         <stage_x type="float">0.0</stage_x>
         <stage_y type="float">0.0</stage_y>
       </DAMoveStage>
+      <DACheckFocus>
+        <num_focus_checks>5</num_focus_checks>
+      </DACheckFocus>
       <DASetParameters>
         <parameters type="str">Test_Parameter</parameters>
       </DASetParameters>
@@ -297,16 +308,21 @@
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
     </branch>
-    <branch name="Check_Focus_No_Scan_1">
+    <branch name="Check_Focus_Scan_1">
       <DAMoveStage>
         <stage_x type="float">0.0</stage_x>
         <stage_y type="float">0.0</stage_y>
       </DAMoveStage>
+      <DACheckFocus>
+        <num_focus_checks>5</num_focus_checks>
+        <focus_scan/>
+        <min_sum>1000</min_sum>
+      </DACheckFocus>
       <DASetParameters>
         <parameters type="str">Test_Parameter</parameters>
       </DASetParameters>
       <DATakeMovie>
-        <name type="str">Check_Focus_No_Scan_1</name>
+        <name type="str">Check_Focus_Scan_1</name>
         <length type="int">300</length>
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
@@ -542,6 +558,9 @@
         <stage_x type="float">10.0</stage_x>
         <stage_y type="float">0.0</stage_y>
       </DAMoveStage>
+      <DACheckFocus>
+        <num_focus_checks>5</num_focus_checks>
+      </DACheckFocus>
       <DASetParameters>
         <parameters type="str">Test_Parameter</parameters>
       </DASetParameters>
@@ -551,16 +570,21 @@
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
     </branch>
-    <branch name="Check_Focus_No_Scan_2">
+    <branch name="Check_Focus_Scan_2">
       <DAMoveStage>
         <stage_x type="float">10.0</stage_x>
         <stage_y type="float">0.0</stage_y>
       </DAMoveStage>
+      <DACheckFocus>
+        <num_focus_checks>5</num_focus_checks>
+        <focus_scan/>
+        <min_sum>1000</min_sum>
+      </DACheckFocus>
       <DASetParameters>
         <parameters type="str">Test_Parameter</parameters>
       </DASetParameters>
       <DATakeMovie>
-        <name type="str">Check_Focus_No_Scan_2</name>
+        <name type="str">Check_Focus_Scan_2</name>
         <length type="int">300</length>
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
@@ -796,6 +820,9 @@
         <stage_x type="float">10.0</stage_x>
         <stage_y type="float">10.0</stage_y>
       </DAMoveStage>
+      <DACheckFocus>
+        <num_focus_checks>5</num_focus_checks>
+      </DACheckFocus>
       <DASetParameters>
         <parameters type="str">Test_Parameter</parameters>
       </DASetParameters>
@@ -805,16 +832,21 @@
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
     </branch>
-    <branch name="Check_Focus_No_Scan_3">
+    <branch name="Check_Focus_Scan_3">
       <DAMoveStage>
         <stage_x type="float">10.0</stage_x>
         <stage_y type="float">10.0</stage_y>
       </DAMoveStage>
+      <DACheckFocus>
+        <num_focus_checks>5</num_focus_checks>
+        <focus_scan/>
+        <min_sum>1000</min_sum>
+      </DACheckFocus>
       <DASetParameters>
         <parameters type="str">Test_Parameter</parameters>
       </DASetParameters>
       <DATakeMovie>
-        <name type="str">Check_Focus_No_Scan_3</name>
+        <name type="str">Check_Focus_Scan_3</name>
         <length type="int">300</length>
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
@@ -1050,6 +1082,9 @@
         <stage_x type="float">0.0</stage_x>
         <stage_y type="float">10.0</stage_y>
       </DAMoveStage>
+      <DACheckFocus>
+        <num_focus_checks>5</num_focus_checks>
+      </DACheckFocus>
       <DASetParameters>
         <parameters type="str">Test_Parameter</parameters>
       </DASetParameters>
@@ -1059,16 +1094,21 @@
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
     </branch>
-    <branch name="Check_Focus_No_Scan_4">
+    <branch name="Check_Focus_Scan_4">
       <DAMoveStage>
         <stage_x type="float">0.0</stage_x>
         <stage_y type="float">10.0</stage_y>
       </DAMoveStage>
+      <DACheckFocus>
+        <num_focus_checks>5</num_focus_checks>
+        <focus_scan/>
+        <min_sum>1000</min_sum>
+      </DACheckFocus>
       <DASetParameters>
         <parameters type="str">Test_Parameter</parameters>
       </DASetParameters>
       <DATakeMovie>
-        <name type="str">Check_Focus_No_Scan_4</name>
+        <name type="str">Check_Focus_Scan_4</name>
         <length type="int">300</length>
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>

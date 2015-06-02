@@ -67,16 +67,17 @@
     
 	<!-- Check Focus w Scan-->
     <movie>
-       <name increment="Yes">Check_Focus_No_Scan</name>
+       <name increment="Yes">Check_Focus_Scan</name>
        <length>300</length>
        <parameters>Test_Parameter</parameters>
        <check_focus>
 			<num_focus_checks>5</num_focus_checks>
-			<min_sum>1000</min_sum>
+			<focus_scan/> 
+			<min_sum>1000</min_sum> 
 	   </check_focus>
        <variable_entry name = "Movie Loop" />
     </movie>
-	
+
     <!-- Recenter -->
     <movie>
        <name increment="Yes">Piezo_Recenter</name>
