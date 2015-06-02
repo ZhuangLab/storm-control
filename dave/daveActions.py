@@ -297,7 +297,10 @@ class DACheckFocus(DaveAction):
     def handleReply(self, message):
         focus_status = message.getResponse("focus_status")
         if not message.isTest() and not (focus_status == True):
-            message.setError(True, "The focus is not locked.")
+            error_message = "The focus is not locked."
+            if self.focus_scan:
+                error_message = " Minimum sum found: " + str(message.getResponse("found_sum"))
+            message.setError(True, error_message)
         DaveAction.handleReply(self, message)
 
     ## setup
