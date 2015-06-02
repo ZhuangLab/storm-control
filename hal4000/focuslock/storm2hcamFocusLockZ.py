@@ -34,7 +34,7 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
         control_thread = stageOffsetControl.StageCamThread(cam,
                                                            stage,
                                                            lock_fn,
-                                                           50.0, 
+                                                           parameters.get("qpd_sum_min", 50.0), 
                                                            parameters.get("qpd_zcenter"),
                                                            parameters.get("is_locked_buffer_length", 10),
                                                            parameters.get("is_locked_offset_thresh", 0.01))
