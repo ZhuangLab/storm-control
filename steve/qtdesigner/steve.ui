@@ -563,8 +563,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>26</width>
-                   <height>16</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                 </widget>
@@ -696,6 +696,7 @@
     <addaction name="separator"/>
     <addaction name="actionDelete_Images"/>
     <addaction name="actionLoad_Dax"/>
+    <addaction name="actionLoad_Dax_By_Pattern"/>
     <addaction name="actionLoad_Mosaic"/>
     <addaction name="actionLoad_Positions"/>
     <addaction name="actionSave_Mosaic"/>
@@ -760,6 +761,11 @@
   <action name="actionLoad_Dax">
    <property name="text">
     <string>Load Dax</string>
+   </property>
+  </action>
+  <action name="actionLoad_Dax_By_Pattern">
+   <property name="text">
+    <string>Load Dax By Pattern</string>
    </property>
   </action>
  </widget>

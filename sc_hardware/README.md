@@ -22,6 +22,7 @@
 | Laser (Obis) | RS-232 | Coherent | Worked, not used |
 | Microscope (IX2) | RS-232 | Olympus | Works, in use |
 | Microscope (IX3) | MM | Olympus | Worked, not used |
+| Microscope (TiU) | MM | Nikon | Works, in use |
 | Motorized Stage (SMC100) | RS-232 | Newport | Works, in use |
 | Motorized Stage | COM | Thorlabs | Doesn't work |
 | Piezo | COM | Thorlabs | Doesn't work |

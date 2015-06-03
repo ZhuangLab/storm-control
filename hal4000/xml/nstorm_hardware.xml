@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<hardware>
+
+  <!-- Define the camera. -->
+  <camera>
+    <module type="string">classicSingleCamera</module>
+    <parameters>
+      <control type="string">andorCameraControl</control>
+      <display type="string">andorCameraWidget</display>
+    </parameters>
+  </camera>
+
+  <!-- Define the other modules to use for this setup. -->
+  <modules>
+
+    <!-- Bluetooth communication -->
+    <!--
+    <bluetooth>
+      <class_name type="string">HalBluetooth</class_name>
+      <module_name type="string">halBluetooth</module_name>
+      <parameters>
+	<send_pictures type="int">1</send_pictures>
+      </parameters>
+    </bluetooth>
+    -->
+
+    <!-- The focus lock -->
+    <!--
+    <focuslock>
+      <class_name type="string">AFocusLockZ</class_name>
+      <menu_item type="string">Focus Lock</menu_item>
+      <module_name type="string">focuslock.noneFocusLockZ</module_name>
+    </focuslock>
+    -->
+
+    <!-- Illumination (lasers, shutters, etc) control -->
+    <illumination>
+      <class_name type="string">IlluminationControl</class_name>
+      <menu_item type="string">Illumination</menu_item>
+      <module_name type="string">illumination.illuminationControl</module_name>
+      <parameters>
+	<settings_xml type="string">nstorm_illumination_settings.xml</settings_xml>
+      </parameters>
+    </illumination>
+
+    <!-- Automatic illumination power adjustment -->
+    <!--
+    <progressions>
+      <class_name type="string">ProgressionControl</class_name>
+      <menu_item type="string">Progressions</menu_item>
+      <module_name type="string">progressionControl</module_name>
+    </progressions>
+    -->
+
+    <!-- Control of miscellaneous hardware. -->
+    <misc_control>
+      <class_name type="string">AMiscControl</class_name>
+      <menu_item type="string">Misc. Control</menu_item>
+      <module_name type="string">miscControl.nstormMiscControl</module_name>
+    </misc_control>
+
+    <!-- The live STORM analysis and display -->
+    <spotcounter>
+      <class_name type="string">SingleSpotCounter</class_name>
+      <menu_item type="string">Spot Counter</menu_item>
+      <module_name type="string">spotCounter</module_name>
+    </spotcounter>
+
+    <!-- Motorized XY stage -->
+    <stage>
+      <class_name type="string">AStageControl</class_name>
+      <menu_item type="string">Stage Control</menu_item>
+      <module_name type="string">stagecontrol.nStormStageControl</module_name>
+    </stage>
+
+    <!-- Remote control of HAL via TCP/IP -->
+    <tcpip>
+      <class_name type="string">HalTCPControl</class_name>
+      <module_name type="string">halTcpControl</module_name>
+      <parameters>
+	<tcp_port type="int">9000</tcp_port>
+      </parameters>
+    </tcpip>
+
+  </modules>
+  
+</hardware>

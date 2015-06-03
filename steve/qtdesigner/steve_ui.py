@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'steve.ui'
 #
-# Created: Sat Apr 04 10:00:55 2015
-#      by: PyQt4 UI code generator 4.9.6
+# Created: Sun May 24 08:41:07 2015
+#      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -293,7 +293,7 @@ class Ui_MainWindow(object):
         self.sectionsScrollArea.setWidgetResizable(True)
         self.sectionsScrollArea.setObjectName(_fromUtf8("sectionsScrollArea"))
         self.scrollAreaWidgetContents_2 = QtGui.QWidget()
-        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 26, 16))
+        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 98, 28))
         self.scrollAreaWidgetContents_2.setObjectName(_fromUtf8("scrollAreaWidgetContents_2"))
         self.sectionsScrollArea.setWidget(self.scrollAreaWidgetContents_2)
         self.verticalLayout_6.addWidget(self.sectionsScrollArea)
@@ -380,10 +380,13 @@ class Ui_MainWindow(object):
         self.actionSave_Snapshot.setObjectName(_fromUtf8("actionSave_Snapshot"))
         self.actionLoad_Dax = QtGui.QAction(MainWindow)
         self.actionLoad_Dax.setObjectName(_fromUtf8("actionLoad_Dax"))
+        self.actionLoad_Dax_By_Pattern = QtGui.QAction(MainWindow)
+        self.actionLoad_Dax_By_Pattern.setObjectName(_fromUtf8("actionLoad_Dax_By_Pattern"))
         self.menuFile.addAction(self.actionSet_Working_Directory)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionDelete_Images)
         self.menuFile.addAction(self.actionLoad_Dax)
+        self.menuFile.addAction(self.actionLoad_Dax_By_Pattern)
         self.menuFile.addAction(self.actionLoad_Mosaic)
         self.menuFile.addAction(self.actionLoad_Positions)
         self.menuFile.addAction(self.actionSave_Mosaic)
@@ -449,4 +452,5 @@ class Ui_MainWindow(object):
         self.actionLoad_Positions.setText(_translate("MainWindow", "Load Positions", None))
         self.actionSave_Snapshot.setText(_translate("MainWindow", "Save Snapshot", None))
         self.actionLoad_Dax.setText(_translate("MainWindow", "Load Dax", None))
+        self.actionLoad_Dax_By_Pattern.setText(_translate("MainWindow", "Load Dax By Pattern", None))
 
