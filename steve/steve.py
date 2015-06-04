@@ -17,7 +17,8 @@ import sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.steve_ui as steveUi
-from qtdesigner.loaddax_dialog_ui import Ui_Dialog as loaddax_dialog
+from qtdesigner.loaddax_dialog_ui import Ui_Dialog as LoadDaxDialog_Ui
+from qtdesigner.adjust_contrast_dialog_ui import Ui_Dialog as AdjustContrastDialog_Ui
 
 # Graphics
 import mosaicView
@@ -31,7 +32,7 @@ import capture
 import coord
 import sc_library.parameters as params
 
-class LoadDaxDialog(QtGui.QDialog, loaddax_dialog):
+class LoadDaxDialog(QtGui.QDialog, LoadDaxDialog_Ui):
     ## __init__
     #
     # @param title_text The text of the title of the dialog box
@@ -81,6 +82,113 @@ class LoadDaxDialog(QtGui.QDialog, loaddax_dialog):
         if directory:
             self.directory_line_edit.setText(directory)
     
+
+class AdjustContrastDialog(QtGui.QDialog, AdjustContrastDialog_Ui):
+    ## __init__
+    #
+    # @param title_text The text of the title of the dialog box
+    # @param default_min_max The starting minimum and maximum values
+    # @param scale_min_max The minimum and maximum allowed values
+    # @param parent (Optional) The PyQt parent of this object, default is None.
+    #
+    @hdebug.debug
+    def __init__(self, parent = None,
+                 title_text = "Adjust Contrast",
+                 default_min_max = [0, 16000],
+                 scale_min_max = [0, 16000],
+                 ):
+        QtGui.QDialog.__init__(self,parent)
+        self.setupUi(self)
+
+        # Update window title.
+        self.setWindowTitle(title_text)
+
+        # Configure the spin boxes.
+        self.high_spin_box.setRange(scale_min_max[0], scale_min_max[1])
+        self.high_spin_box.setValue(default_min_max[1])
+        self.high_spin_box.setSingleStep(1)
+        self.low_spin_box.setRange(scale_min_max[0], scale_min_max[1])
+        self.low_spin_box.setValue(default_min_max[0])
+        self.low_spin_box.setSingleStep(1)
+
+        # Configure the slider.
+        self.high_contrast_slider.setRange(scale_min_max[0], scale_min_max[1])
+        self.high_contrast_slider.setSliderPosition(default_min_max[1])
+        self.low_contrast_slider.setRange(scale_min_max[0], scale_min_max[1])
+        self.low_contrast_slider.setSliderPosition(default_min_max[0])
+
+        # Connect signals.
+        self.high_contrast_slider.sliderMoved.connect(self.handleHighSliderUpdate)
+        self.low_contrast_slider.sliderMoved.connect(self.handleLowSliderUpdate)
+        self.high_spin_box.valueChanged.connect(self.handleHighSpinBoxUpdate)
+        self.low_spin_box.valueChanged.connect(self.handleLowSpinBoxUpdate)
+        
+    ## getValues
+    #
+    # Return the values of the directory and file filter text boxes
+    #
+    # @return The minimum and maximum contrast values set by the user
+    @hdebug.debug
+    def getValues(self):
+        return [self.low_spin_box.value(), self.high_spin_box.value()]
+
+
+    # handleHighSliderUpdate
+    #
+    # Handle user adjustment of the high contrast slider
+    #
+    @hdebug.debug
+    def handleHighSliderUpdate(self, dummy):
+        new_value = self.high_contrast_slider.value()
+        low_value = self.low_spin_box.value()
+        if new_value > low_value: # Coerce to larger than low contrast
+            self.high_spin_box.setValue(new_value)
+        else:
+            self.high_contrast_slider.setValue(low_value+1)
+            self.high_spin_box.setValue(low_value+1)
+        
+    
+    # handleLowSliderUpdate
+    #
+    # Handle user adjustment of the low contrast slider
+    #
+    @hdebug.debug
+    def handleLowSliderUpdate(self, dummy):
+        new_value = self.low_contrast_slider.value()
+        high_value = self.high_spin_box.value()
+        if new_value < high_value: # Coerce to smaller than high contrast
+            self.low_spin_box.setValue(new_value)
+        else:
+            self.low_contrast_slider.setValue(high_value-1)
+            self.low_spin_box.setValue(high_value-1)
+
+    # handleHighSpinBoxUpdate
+    #
+    # Handle user adjustment of the high contrast spin box
+    #
+    @hdebug.debug
+    def handleHighSpinBoxUpdate(self, dummy):
+        low_value = self.low_spin_box.value()
+        new_value = self.high_spin_box.value()
+        if new_value > low_value:
+            self.high_contrast_slider.setValue(new_value)
+        else:
+            self.high_spin_box.setValue(low_value+1)
+            self.high_contrast_slider.setValue(low_value+1)
+    
+    # handleLowSpinBoxUpdate
+    #
+    # Handle user adjustment of the low contrast spin box
+    #
+    @hdebug.debug
+    def handleLowSpinBoxUpdate(self, dummy):
+        high_value = self.high_spin_box.value()
+        new_value = self.low_spin_box.value()
+        if new_value < high_value:
+            self.low_contrast_slider.setValue(new_value)
+        else:
+            self.low_spin_box.setValue(high_value-1)
+            self.low_contrast_slider.setValue(high_value-1)
 
 ## findMO
 #
@@ -270,6 +378,7 @@ class Window(QtGui.QMainWindow):
 
         # signals
         self.ui.actionQuit.triggered.connect(self.quit)
+        self.ui.actionAdjust_Contrast.triggered.connect(self.handleAdjustContrast)
         self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
         self.ui.actionLoad_Dax.triggered.connect(self.handleLoadDax)
         self.ui.actionLoad_Dax_By_Pattern.triggered.connect(self.handleLoadDaxByPattern)
@@ -452,6 +561,23 @@ class Window(QtGui.QMainWindow):
         if not self.taking_pictures:
             self.comm.commConnect()
             self.comm.gotoPosition(point.x_um - self.current_offset.x_um, point.y_um - self.current_offset.y_um)
+
+    ## handleAdjustContrast
+    #
+    # Handles a request to adjust the contrast of all imageItems.
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def handleAdjustContrast(self, boolean):
+        # Prepare and display dialog
+        dialog = AdjustContrastDialog(self)
+        
+        if dialog.exec_():
+            newRange = dialog.getValues() # Get values
+            print newRange
+        else:
+            return
 
     ## handleDeleteImages
     #

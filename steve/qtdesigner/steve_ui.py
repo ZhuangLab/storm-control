@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'steve.ui'
 #
-# Created: Sun May 24 08:41:07 2015
-#      by: PyQt4 UI code generator 4.10.3
+# Created: Thu Jun 04 08:30:00 2015
+#      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -293,7 +293,7 @@ class Ui_MainWindow(object):
         self.sectionsScrollArea.setWidgetResizable(True)
         self.sectionsScrollArea.setObjectName(_fromUtf8("sectionsScrollArea"))
         self.scrollAreaWidgetContents_2 = QtGui.QWidget()
-        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 98, 28))
+        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 260, 549))
         self.scrollAreaWidgetContents_2.setObjectName(_fromUtf8("scrollAreaWidgetContents_2"))
         self.sectionsScrollArea.setWidget(self.scrollAreaWidgetContents_2)
         self.verticalLayout_6.addWidget(self.sectionsScrollArea)
@@ -354,6 +354,8 @@ class Ui_MainWindow(object):
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
+        self.menuView = QtGui.QMenu(self.menubar)
+        self.menuView.setObjectName(_fromUtf8("menuView"))
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName(_fromUtf8("statusbar"))
@@ -382,6 +384,8 @@ class Ui_MainWindow(object):
         self.actionLoad_Dax.setObjectName(_fromUtf8("actionLoad_Dax"))
         self.actionLoad_Dax_By_Pattern = QtGui.QAction(MainWindow)
         self.actionLoad_Dax_By_Pattern.setObjectName(_fromUtf8("actionLoad_Dax_By_Pattern"))
+        self.actionAdjust_Contrast = QtGui.QAction(MainWindow)
+        self.actionAdjust_Contrast.setObjectName(_fromUtf8("actionAdjust_Contrast"))
         self.menuFile.addAction(self.actionSet_Working_Directory)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionDelete_Images)
@@ -394,7 +398,9 @@ class Ui_MainWindow(object):
         self.menuFile.addAction(self.actionSave_Snapshot)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionQuit)
+        self.menuView.addAction(self.actionAdjust_Contrast)
         self.menubar.addAction(self.menuFile.menuAction())
+        self.menubar.addAction(self.menuView.menuAction())
 
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
@@ -441,6 +447,7 @@ class Ui_MainWindow(object):
         self.backgroundComboBox.setItemText(0, _translate("MainWindow", "Mean", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.sectionsTab), _translate("MainWindow", "Sections", None))
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
+        self.menuView.setTitle(_translate("MainWindow", "View", None))
         self.actionQuit.setText(_translate("MainWindow", "Quit", None))
         self.actionConnect.setText(_translate("MainWindow", "Connect", None))
         self.actionDisconnect.setText(_translate("MainWindow", "Disconnect", None))
@@ -453,4 +460,5 @@ class Ui_MainWindow(object):
         self.actionSave_Snapshot.setText(_translate("MainWindow", "Save Snapshot", None))
         self.actionLoad_Dax.setText(_translate("MainWindow", "Load Dax", None))
         self.actionLoad_Dax_By_Pattern.setText(_translate("MainWindow", "Load Dax By Pattern", None))
+        self.actionAdjust_Contrast.setText(_translate("MainWindow", "Adjust Contrast", None))
 
