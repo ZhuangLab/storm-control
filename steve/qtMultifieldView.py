@@ -145,6 +145,18 @@ class MultifieldView(QtGui.QGraphicsView):
         self.currentz = 0.0
         self.image_items = []
 
+    ## getContrast
+    #
+    # @return The minimum and maximum pixmap values from all image items.
+    #
+    def getContrast(self):
+        if len(self.image_items) >= 1:
+            min_value = min(item.pixmap_min for item in self.image_items)
+            max_value = max(item.pixmap_max for item in self.image_items)
+            return [min_value, max_value]
+        else:
+            return [None, None]
+
     ## getImageItems
     #
     # @return An array containing all of the viewImageItems in the scene.

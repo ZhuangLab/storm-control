@@ -577,8 +577,16 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleAdjustContrast(self, boolean):
+        # Determine the current contrast
+        current_contrast = self.view.getContrast()
+        print "Current Contrast: " + str(current_contrast)
+        if current_contrast[0] is None:
+            current_contrast = [0, 16000] # Default values for HAL: FIXME
+ 
         # Prepare and display dialog
-        dialog = AdjustContrastDialog(self)
+        dialog = AdjustContrastDialog(self,
+                                      "Adjust Contrast",
+                                      current_contrast)
         
         if dialog.exec_():
             newRange = dialog.getValues() # Get values
