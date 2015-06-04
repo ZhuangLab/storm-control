@@ -763,6 +763,7 @@ class Window(QtGui.QMainWindow):
         
         else:
             print "Found " + str(len(filenames)) + " files matching " + file_filter + " in " + self.parameters.directory
+            print "Loading frame: " + str(frame_num)
 
         # Load dax
         self.loadDax(filenames, frame_num)
