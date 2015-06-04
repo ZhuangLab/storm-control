@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'adjust_contrast_dialog.ui'
 #
-# Created: Thu Jun 04 08:51:06 2015
+# Created: Thu Jun 04 10:08:00 2015
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!

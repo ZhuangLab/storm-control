@@ -38,6 +38,7 @@ class LoadDaxDialog(QtGui.QDialog, LoadDaxDialog_Ui):
     # @param title_text The text of the title of the dialog box
     # @param default_directory The default directory for loading dax
     # @param default_filter The default filter for loading dax
+    # @param default_frame The default frame of the dax to load
     # @param parent (Optional) The PyQt parent of this object, default is None.
     #
     @hdebug.debug
@@ -45,6 +46,7 @@ class LoadDaxDialog(QtGui.QDialog, LoadDaxDialog_Ui):
                  title_text = "Load Dax by Pattern",
                  default_directory = "",
                  default_filter = "\S+.dax",
+                 default_frame = 0,
                  ):
         QtGui.QDialog.__init__(self,parent)
         self.setupUi(self)
@@ -55,6 +57,8 @@ class LoadDaxDialog(QtGui.QDialog, LoadDaxDialog_Ui):
         # Add provided defaults to line edit widgets
         self.directory_line_edit.setText(default_directory)
         self.file_filter_line_edit.setText(default_filter)
+        self.frame_spin_box.setValue(default_frame)
+        self.frame_spin_box.setRange(0, 1e4)
 
         # Connect buttons
         self.new_directory_button.clicked.connect(self.handleNewDirectory)
@@ -63,11 +67,13 @@ class LoadDaxDialog(QtGui.QDialog, LoadDaxDialog_Ui):
     #
     # Return the values of the directory and file filter text boxes
     #
-    # @return The directory value
-    # @return The file filter value
+    # @return A list of the following: The directory value, the file filter value, and the frame
+    #
     @hdebug.debug
     def getValues(self):
-        return str(self.directory_line_edit.text()), str(self.file_filter_line_edit.text())
+        return [str(self.directory_line_edit.text()),
+                str(self.file_filter_line_edit.text()),
+                self.frame_spin_box.value()]
 
     ## handleNewDirectory
     #
@@ -725,7 +731,7 @@ class Window(QtGui.QMainWindow):
     
         
         if dialog.exec_():
-            directory, file_filter = dialog.getValues() # Get values
+            directory, file_filter, frame_num = dialog.getValues() # Get values
         else:
             return
 
@@ -759,7 +765,7 @@ class Window(QtGui.QMainWindow):
             print "Found " + str(len(filenames)) + " files matching " + file_filter + " in " + self.parameters.directory
 
         # Load dax
-        self.loadDax(filenames)
+        self.loadDax(filenames, frame_num)
                                          
     ## handleLoadMosaic
     #
@@ -981,10 +987,11 @@ class Window(QtGui.QMainWindow):
     #
     # Handles loading dax files, which can be useful for retrospective analysis.
     #
-    # @param boolean Dummy parameter.
+    # @param filenames A list of file names.
+    # @param frame_num The frame number to load. Starts at 0. Default is 0.
     #
     @hdebug.debug
-    def loadDax(self, filenames):
+    def loadDax(self, filenames, frame_num = 0):
 
         # Create progress bar
         progress_bar = QtGui.QProgressDialog("Loading " + str(len(filenames)) +  " Files ...",
@@ -999,7 +1006,7 @@ class Window(QtGui.QMainWindow):
         # Load dax files
         for filename in filenames:
             if progress_bar.wasCanceled(): break
-            self.comm.loadImage(filename)
+            self.comm.loadImage(filename, frame_num)
             progress_bar.setValue(file_number)
             file_number += 1
 
