@@ -44,7 +44,9 @@ class MCLVZControl(object):
     def zMoveTo(self, z):
         try:
             #nicontrol.setAnalogLine(self.board, self.line, z * self.scale)
-            self.ni_task.output(z * self.scale)
+            voltage = z * self.scale
+            if (voltage > 0.0) and (voltage < 10.0):
+                self.ni_task.output(voltage)
         except AssertionError as e:
             print "Caught outputVoltage error:", type(e), str(e)
             self.ni_task.stopTask()
