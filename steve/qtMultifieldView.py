@@ -86,6 +86,18 @@ class MultifieldView(QtGui.QGraphicsView):
         self.centerOn(x_pix, y_pix)
         self.updateSceneRect(x_pix, y_pix)
 
+    ## changeContrast
+    #
+    # Change the contrast of all image items
+    #
+    # @param contrast_range The new minimum and maximum contrast values (which will control what is set to 0 and to 255)
+    #
+    def changeContrast(self, contrast_range):
+        for item in self.image_items:
+            item.pixmap_min = contrast_range[0]
+            item.pixmap_max = contrast_range[1]
+            item.createPixmap()
+
     ## changeImageMagnifications
     #
     # Update the magnifications of the images taken with the specified objective.

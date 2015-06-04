@@ -582,7 +582,9 @@ class Window(QtGui.QMainWindow):
         
         if dialog.exec_():
             newRange = dialog.getValues() # Get values
-            print newRange
+            print "Adjusted Contrast: " + str(newRange)
+
+            self.view.changeContrast(newRange)
         else:
             return
 
