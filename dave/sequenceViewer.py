@@ -369,7 +369,7 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
                 self.dave_actions_test_dict[action_id] = [dave_action_si] # Start list
             else: # Add to current list of actions with the same id
                 self.dave_actions_test_dict[action_id].append(dave_action_si)
-                
+        
     ## getActionTypes
     #
     # @return A list of DaveAction types (i.e. "hal" or "kilroy").
@@ -482,7 +482,7 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
     # @param valid True/False Sets the valid status of all the items.
     #
     def setAllValid(self, valid):
-        for item in self.dave_actions_cur:
+        for item in self.dave_actions_all:
             item.setValid(valid)
 
     ## setCurrentItem
@@ -502,16 +502,18 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
     #
     # @param is_Valid True/False determines the validity of the currentItem(s)
     #
-    def setCurrentItemValid(self, is_Valid):
+    def setCurrentItemValid(self, is_valid):
         if self.test_mode:
             # Find current id
             current_item = self.dave_actions_cur[self.dave_action_index]
             current_action = current_item.getDaveAction()
             current_id = current_action.getID()
+
+            print current_id, is_valid
             
             # Change validity of all actions that have this id
             for item in self.dave_actions_test_dict[current_id]:
-                item.setUsageEstimates(disk_usage, duration)
+                item.setValid(is_valid)
                 
         else: # Not used
             item = self.dave_actions_cur[self.dave_action_index]

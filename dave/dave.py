@@ -128,7 +128,6 @@ class CommandEngine(QtCore.QObject):
         self.problem.emit(message)
         self.handleActionComplete(message)
 
-
 ## Dave
 #
 # The main window of Dave.
@@ -529,7 +528,6 @@ class Dave(QtGui.QMainWindow):
                                           message_str)
 
         else: # Test mode
-            #current_item.setValid(False)
             self.ui.commandSequenceTreeView.setCurrentItemValid(False)
             message_str += "\nSuppress remaining warnings?"
             if not self.skip_warning:
