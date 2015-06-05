@@ -678,6 +678,7 @@ class Dave(QtGui.QMainWindow):
                     no_error = False
             if no_error:
                 self.ui.commandSequenceTreeView.setModel(model)
+                self.ui.commandSequenceTreeView.setTestMode(False)
                 self.skip_warning = False #Enable warnings for invalid commands
                 self.sequence_validated = False #Mark sequence as unvalidated
                 self.ui.sequenceLabel.setText(sequence_filename)
