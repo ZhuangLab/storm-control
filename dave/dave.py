@@ -69,7 +69,8 @@ class CommandEngine(QtCore.QObject):
         
         # Kilroy Client
         self.kilroyClient = tcpClient.TCPClient(port = 9500,
-                                                server_name = "Kilroy")
+                                                server_name = "Kilroy",
+                                                verbose = True)
     
     ## abort
     #
@@ -126,7 +127,6 @@ class CommandEngine(QtCore.QObject):
     def handleErrorSignal(self, message):
         self.problem.emit(message)
         self.handleActionComplete(message)
-
 
 ## Dave
 #
@@ -303,9 +303,17 @@ class Dave(QtGui.QMainWindow):
                 pass
 
         else:
-            self.ui.commandSequenceTreeView.resetItemIndex()
+            
+            self.test_mode = False
             self.sequence_validated = False
-    
+            self.ui.commandSequenceTreeView.setTestMode(False)
+            
+            if (self.running):
+                self.command_engine.abort()
+            else:
+                self.handleDone()
+
+        
     ## handleDetailsUpdate
     #
     # Update command details table with information about the command.
@@ -350,10 +358,13 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleDone(self):
+        # Handle updating usage information if in test mode
+        if self.test_mode:
+            self.ui.commandSequenceTreeView.updateEstimates()
 
         # Increment command to the next valid command / action.
         next_command = self.ui.commandSequenceTreeView.getNextItem()
-            
+
         # Handle last command in list.
         if next_command is None:
             self.ui.runButton.setText("Start")
@@ -365,8 +376,9 @@ class Dave(QtGui.QMainWindow):
             self.running = False
             if self.test_mode:
                 self.sequence_validated = True
-                self.updateEstimates()
                 self.test_mode = False
+                self.ui.commandSequenceTreeView.setTestMode(False)
+                self.updateEstimates()
 
             # Stop TCP communication
             if self.needs_hal:
@@ -516,7 +528,7 @@ class Dave(QtGui.QMainWindow):
                                           message_str)
 
         else: # Test mode
-            current_item.setValid(False)
+            self.ui.commandSequenceTreeView.setCurrentItemValid(False)
             message_str += "\nSuppress remaining warnings?"
             if not self.skip_warning:
                 messageBox = QtGui.QMessageBox(parent = self)
@@ -588,47 +600,6 @@ class Dave(QtGui.QMainWindow):
             self.command_engine.startCommand(self.ui.commandSequenceTreeView.getCurrentItem().getDaveAction(),
                                              self.test_mode)
 
-    ## handleSelectButton
-    #
-    # Handles the select command button. Used to set the current command to the selected command. 
-    #
-    # @param boolean Dummy parameter.
-    #
-    @hdebug.debug
-    def handleSelectButton(self, boolean):
-        pass
-
-#        ui.commandSequenceTreeView.setCurrentItem
- #   
-#        # Force manual conformation of abort
-#        messageBox = QtGui.QMessageBox(parent = self)
-#        messageBox.setWindowTitle("Change Command?")
-#        messageBox.setText("Are you sure you want to change to the current command?")
-#        messageBox.setStandardButtons(QtGui.QMessageBox.Cancel |
-#                                      QtGui.QMessageBox.Ok)
-#        messageBox.setDefaultButton(QtGui.QMessageBox.Cancel)
-#        button_ID = messageBox.exec_()
-#
-#        old_command_index = self.command_index
-#        new_command_index = self.ui.commandSequenceList.currentRow()
-#
-#        # Handle response
-#        if button_ID == QtGui.QMessageBox.Ok:
-#            # Generate display text
-#            display_text =  "Changed command\n"
-#            display_text += "   From command " + str(old_command_index) + ": "
-#            display_text += str(self.commands[old_command_index].getDescriptor())
-#            display_text += "   To command " + str(new_command_index) + ": "
-#            display_text += str(self.commands[new_command_index].getDescriptor())
-#            print display_text
-#            
-#            self.command_index = new_command_index
-#
-#            self.issueCommand()
-#
-#        else: # Cancel button or window closed event
-#            print "Canceled change command request"
-
     ## handleSendTestEmail
     #
     # Sends a test email based on the current notifier settings. 
@@ -662,9 +633,12 @@ class Dave(QtGui.QMainWindow):
             # Reset command properties.
             self.ui.commandSequenceTreeView.setAllValid(True)
             
-            # Configure command engine.
+            # Place commandSequence into test mode.
             self.ui.commandSequenceTreeView.resetItemIndex()
             self.updateRunStatusDisplay()
+            self.ui.commandSequenceTreeView.setTestMode(True)
+
+            # Send first command.
             self.command_engine.startCommand(self.ui.commandSequenceTreeView.getCurrentItem().getDaveAction(),
                                              self.test_mode)
 
@@ -702,6 +676,7 @@ class Dave(QtGui.QMainWindow):
                     no_error = False
             if no_error:
                 self.ui.commandSequenceTreeView.setModel(model)
+                self.ui.commandSequenceTreeView.setTestMode(False)
                 self.skip_warning = False #Enable warnings for invalid commands
                 self.sequence_validated = False #Mark sequence as unvalidated
                 self.ui.sequenceLabel.setText(sequence_filename)

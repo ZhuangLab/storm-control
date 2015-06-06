@@ -2,7 +2,7 @@
 <sequence>
   
 
-  <branch name="Movie Loop 0">
+  <branch name="Movie Loop">
     <branch name="No_Parameters_0">
       <DATakeMovie>
         <name type="str">No_Parameters_0</name>
@@ -170,8 +170,6 @@
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
     </branch>
-  </branch>
-  <branch name="Movie Loop 1">
     <branch name="No_Parameters_1">
       <DAMoveStage>
         <stage_x type="float">0.0</stage_x>
@@ -395,8 +393,6 @@
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
     </branch>
-  </branch>
-  <branch name="Movie Loop 2">
     <branch name="No_Parameters_2">
       <DAMoveStage>
         <stage_x type="float">10.0</stage_x>
@@ -620,8 +616,6 @@
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
     </branch>
-  </branch>
-  <branch name="Movie Loop 3">
     <branch name="No_Parameters_3">
       <DAMoveStage>
         <stage_x type="float">10.0</stage_x>
@@ -845,8 +839,6 @@
         <parameters type="str">Test_Parameter</parameters>
       </DATakeMovie>
     </branch>
-  </branch>
-  <branch name="Movie Loop 4">
     <branch name="No_Parameters_4">
       <DAMoveStage>
         <stage_x type="float">0.0</stage_x>

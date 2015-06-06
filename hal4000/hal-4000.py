@@ -555,27 +555,22 @@ class Window(QtGui.QMainWindow):
         
         # Handle movie request.
         elif (message.getType() == "Take Movie"):
-
-            if message.isTest():
-
-                #
-                # FIXME: Shouldn't we also check these things when we are actually acquiring?
-                #
-
-                # Check length.
-                if (message.getData("length") == None) or (message.getData("length") < 1):
-                    message.setError(True, str(message.getData("length")) + "is an invalid movie length")
+   
+            # Check length (independent of whether the message is a test).
+            if (message.getData("length") == None) or (message.getData("length") < 1):
+                message.setError(True, str(message.getData("length")) + "is an invalid movie length")
+                self.tcpComplete.emit(message)
+                return
+            
+            # Check file overwrite (independence of whether the message is a test)
+            if not (message.getData("overwrite") == None) and (message.getData("overwrite") == False):
+                file_path = self.directory_test_mode + os.sep + message.getData("name") + self.parameters.filetype
+                if os.path.exists(file_path):
+                    message.setError(True, file_path + " will be overwritten")
                     self.tcpComplete.emit(message)
                     return
 
-                # Check file overwrite.
-                if not (message.getData("overwrite") == None) and (message.getData("overwrite") == False):
-                    file_path = self.directory_test_mode + os.sep + message.getData("name") + self.parameters.filetype
-                    if os.path.exists(file_path):
-                        message.setError(True, file_path + " will be overwritten")
-                        self.tcpComplete.emit(message)
-                        return
-
+            if message.isTest():
                 # Set parameters
                 if self.parameters_test_mode:
                     parameters = self.parameters_test_mode
