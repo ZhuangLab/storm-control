@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<illumination_settings>
+
+  <control_modules>
+
+    <!--
+    <control_module>
+      <name>Emissionwheel</name>
+      <module_name>sc_hardware.thorlabs.FW102C</module_name>
+      <class_name>HalFW102C</class_name>
+      <parameters>
+	<port>COM9</port>
+	<baud_rate type="int">115200</baud_rate>
+      </parameters>
+    </control_module>
+    -->
+
+    <!--
+    <control_module>
+      <name>750wheel</name>
+      <module_name>sc_hardware.thorlabs.FW102C</module_name>
+      <class_name>HalFW102C</class_name>
+      <parameters>
+	<port>COM10</port>
+	<baud_rate type="int">9600</baud_rate>
+      </parameters>
+    </control_module>
+    -->
+
+    <control_module>
+      <name>AOTF</name>
+      <module_name>sc_hardware.aaopto.hAotf</module_name>
+      <class_name>AAAOTF</class_name>
+      <parameters>
+	<use_fsk type="boolean">False</use_fsk>
+      </parameters>
+    </control_module>
+    
+    <control_module>
+      <name>obis405</name>
+      <module_name>sc_hardware.coherent.hLaser</module_name>
+      <class_name>CoherentObis</class_name>
+      <parameters>
+	<port>COM11</port>
+	<baud_rate>9600</baud_rate>
+      </parameters>
+    </control_module>
+
+    <!--
+    <control_module>
+      <name>daq</name>
+      <module_name>sc_hardware.nationalInstruments.hNicontrol</module_name>
+      <class_name>Nidaq</class_name>
+      <parameters>
+	<counter_board>PCIe-6259</counter_board>
+	<counter_id type="int">0</counter_id>
+	<counter_trigger type="int">0</counter_trigger>
+	<waveform_clock>PFI12</waveform_clock>
+      </parameters>
+    </control_module>
+    -->
+  </control_modules>
+
+
+  <channels>
+
+    <!-- 750 laser -->
+
+    <!-- 690 laser -->
+
+    <!-- 647 laser -->
+    <channel>
+      <description>647</description>
+      <color type="rgb">255,0,0</color>
+      
+      <amplitude_modulation>
+	<uses>AOTF</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <maximum type="int">1023</maximum>
+	  <channel type="int">8</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">77.79</on_frequency>
+	</parameters>
+      </amplitude_modulation>
+      
+
+    </channel>
+
+    <!-- 560 laser -->
+    <channel>
+      <description>560</description>
+      <color type="rgb">195, 255, 0</color>
+
+      <amplitude_modulation>
+	<uses>AOTF</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+          <maximum type="int">1023</maximum>
+	  <channel type="int">7</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">92.308</on_frequency>
+	</parameters>
+      </amplitude_modulation>
+    </channel>
+
+    <!-- 532 laser -->
+
+    <!-- 488 laser -->
+
+    <!-- 460 laser -->
+
+    <!-- 405 laser -->
+    <channel>
+      <description>405</description>
+      <color type="rgb">130, 0, 200</color>
+      
+      <amplitude_modulation>
+	<uses>obis405</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <maximum type="int">10000</maximum>
+	</parameters>
+      </amplitude_modulation>
+    </channel>
+
+
+  </channels>
+
+</illumination_settings>
+
