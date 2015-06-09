@@ -615,7 +615,7 @@ class DigitalWaveformOutput(NIDAQTask):
         waveform_len = len(waveform)/self.channels
 
         clock_source = ""
-        if len(clock) > 0:
+        if len(clock) > 0 and not clock is "OnboardClock":
             clock_source = "/Dev" + str(self.board_number) + "/" + str(clock)
 
         # set the timing for the waveform.

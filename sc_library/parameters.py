@@ -195,6 +195,9 @@ def setCameraParameters(camera):
     camera.bytesPerFrame = 2 * camera.x_pixels * camera.y_pixels/(camera.x_bin * camera.y_bin)
     camera.actual_temperature = 0
 
+    #specific for Zyla
+    camera.frame_rate = 10
+
 ## setDefaultShutters
 #
 # This sets the shutter name parameter of the default parameters object.

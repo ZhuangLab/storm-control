@@ -91,8 +91,8 @@ class Obis(RS232.RS232):
     # @return the current laser power.
     #
     def getPower(self):
-        self.sendCommand("SOURce:POWer:NOMinal?")
-        return float(self.waitResponse()[:-1])
+        self.sendCommand("SOURce:POWer:LEVel?")
+        return float(self.waitResponse()[:-6])
 
     ## setExtControl
     #

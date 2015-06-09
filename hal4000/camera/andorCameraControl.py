@@ -126,6 +126,10 @@ class ACameraControl(cameraControl.CameraControl):
     # based on the OS type (32 or 64bit) and a search of the common
     # Andor directory names.
     #
+    # If drivers are installed both for Andor sCMOS and iXon, this function
+    # might fail because the atmcd32d.dll for the sCMOS will not detect
+    # the iXon camera
+    #
     # @param pci_card (Optional) The ID of the PC card to use.
     #
     @hdebug.debug
@@ -147,6 +151,12 @@ class ACameraControl(cameraControl.CameraControl):
                     return
 
             else:
+		path = "c:/Program Files/Andor Driver Pack 2/"
+		driver = "atmcd64d.dll"
+		if os.path.exists(path + driver):
+		    self.initCameraHelperFn(path, driver, pci_card)
+		    return
+
                 path = "c:/Program Files/Andor Solis/"
                 driver = "atmcd64d.dll"
                 if os.path.exists(path + driver):
