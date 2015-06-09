@@ -92,7 +92,7 @@ class Obis(RS232.RS232):
     #
     def getPower(self):
         self.sendCommand("SOURce:POWer:LEVel?")
-        return float(self.waitResponse()[:-6])
+        return 1000.0 * float(self.waitResponse()[:-6])
 
     ## setExtControl
     #
