@@ -27,7 +27,7 @@ class Prior(RS232.RS232):
     # @param wait_time How long to wait between polling events before it is decided that there is no new data available on the port, defaults to 20ms.
     #
     def __init__(self, port = "COM2", timeout = None, baudrate = 9600, wait_time = 0.02):
-        self.unit_to_um = 0.25
+        self.unit_to_um = 1.0
         self.um_to_unit = 1.0/self.unit_to_um
         self.x = 0.0
         self.y = 0.0
@@ -372,6 +372,7 @@ if __name__ == "__main__":
         #print stage._command("SMS")
         #print "enc:", stage._command("ENCODER,X")
         #print "res:", stage._command("RES,X")
+        print stage._command("RES,S,1")
         print stage.position()
 
         for info in stage.info():

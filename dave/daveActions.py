@@ -15,7 +15,6 @@ from PyQt4 import QtCore
 
 import sc_library.tcpMessage as tcpMessage
 
-
 ## addField
 #
 # @param block A ElementTree node.
@@ -50,6 +49,7 @@ class DaveAction(QtCore.QObject):
         self.action_type = "NA"
         self.disk_usage = 0
         self.duration = 0
+        self.id = None
         self.tcp_client = None
         self.message = None
         self.valid = True
@@ -138,6 +138,13 @@ class DaveAction(QtCore.QObject):
     def getDuration(self):
         return self.duration
 
+    ## getID
+    #
+    # @return An ID used to identify 'unique' actions for validation
+    #
+    def getID(self):
+        return self.id
+
     ## getLongDescriptor
     #
     # @return A N x 2 array containing the message data.
@@ -148,6 +155,13 @@ class DaveAction(QtCore.QObject):
             data = []
             for key in sorted(mdict):
                 data.append([key, mdict[key]])
+
+            # Add disk usage and duration
+            if not (self.disk_usage == 0):
+                data.append(["disk usage (kb)", self.disk_usage])
+            if not (self.duration == 0):
+                data.append(["duration (s)", self.duration])
+            
             return data
         else:
             return [None,None]
@@ -206,6 +220,13 @@ class DaveAction(QtCore.QObject):
         else:
             raise Exception(pname + " is not a valid property for " + str(type(self)))
 
+    ## setDuration
+    #
+    # @param duration The estimated time to execute.
+    #
+    def setDuration(self, duration):
+        self.duration = duration
+
     ## setup
     #
     # Perform post creation initialization.
@@ -214,6 +235,13 @@ class DaveAction(QtCore.QObject):
     #
     def setup(self, node):
         pass
+
+    ## setDiskUsage
+    #
+    # @param disk_usage The disk usage.
+    #
+    def setDiskUsage(self, disk_usage):
+        self.disk_usage = disk_usage
 
     ## setValid
     #
@@ -450,6 +478,10 @@ class DAMoveStage(DaveAction):
                                              message_data = {"stage_x" : self.stage_x,
                                                              "stage_y" : self.stage_y})
 
+        # Create id to indicate required validation
+        self.id = self.message.getType() + " "
+        self.id += "stage_x: " + str(self.stage_x) + " "
+        self.id += "stage_y: " + str(self.stage_y)
 
 ## DAPause
 #
@@ -561,7 +593,6 @@ class DARecenterPiezo(DaveAction):
     def setup(self, node):
         self.message = tcpMessage.TCPMessage(message_type = "Recenter Piezo")
 
-
 ## DASetDirectory
 #
 # Change the Hal Directory.
@@ -606,6 +637,9 @@ class DASetDirectory(DaveAction):
         self.message = tcpMessage.TCPMessage(message_type = "Set Directory",
                                              message_data = {"directory": self.directory})
 
+        # Require validation
+        self.id = self.message.getType() + " "
+        self.id += self.directory
 
 ## DASetFocusLockTarget
 #
@@ -700,6 +734,10 @@ class DASetParameters(DaveAction):
         self.message = tcpMessage.TCPMessage(message_type = "Set Parameters",
                                              message_data = {"parameters" : self.parameters})
 
+        # Require validation
+        self.id = self.message.getType() + " "
+        self.id += str(self.parameters)
+
 ## DASetProgression
 #
 # The action responsible for setting the illumination progression.
@@ -773,6 +811,11 @@ class DASetProgression(DaveAction):
         
         self.message = tcpMessage.TCPMessage(message_type = "Set Progression",
                                              message_data = message_data)
+
+        # Require validation only for provided filenames
+        if node.find("filename") is not None:
+            self.id = self.message.getType() + " "
+            self.id += node.find("filename").text   
 
 ## DATakeMovie
 #
@@ -884,11 +927,20 @@ class DATakeMovie(DaveAction):
             message_data["directory"] = node.find("directory").text
             
         if node.find("overwrite") is not None:
-            message_data["overwrite"] = node.find("overwrite").text
+            message_data["overwrite"] = True # Default is to overwrite
+            
+            boolean_text = node.find("overwrite").text
+            if (boolean_text.lower() == "false"):
+                message_data["overwrite"] = False
 
         self.message = tcpMessage.TCPMessage(message_type = "Take Movie",
                                              message_data = message_data)
 
+        # Require validation
+        self.id = self.message.getType() + " "
+        self.id = str(self.length) + " "
+        if message_data["parameters"] is not None:
+            self.id = str(message_data["parameters"])
 
 ## DAValveProtocol
 #
@@ -940,6 +992,10 @@ class DAValveProtocol(DaveAction):
 
         self.message = tcpMessage.TCPMessage(message_type = "Kilroy Protocol",
                                              message_data = {"name": self.protocol_name})
+
+        # Require validation
+        self.id = self.message.getType() + " "
+        self.id = self.protocol_name        
 
 #
 # The MIT License
