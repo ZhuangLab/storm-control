@@ -188,6 +188,46 @@
 
     </channel>
 
+
+    <!-- 532 laser -->
+ <!--   
+         <channel>
+      <description>532</description>
+      <color type="rgb">0,255,0</color>
+      
+      <amplitude_modulation>
+	<uses>AOTF</uses>
+	<display_normalized type="boolean">True</display_normalized>
+	<parameters>
+	  <maximum type="int">5500</maximum>
+	  <channel type="int">2</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">115.3</on_frequency>
+	</parameters>
+      </amplitude_modulation>
+      
+      <analog_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCIe-6259</board>
+	  <channel type="int">2</channel>
+	  <max_voltage type="float">1.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+	</parameters>
+      </analog_modulation>
+      
+      <digital_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCIe-6259</board>
+	  <channel type="int">11</channel>
+	</parameters>
+      </digital_modulation>
+
+    </channel>
+    -->
+
+
     <!-- 488 laser -->
     <channel>
       <description>488</description>

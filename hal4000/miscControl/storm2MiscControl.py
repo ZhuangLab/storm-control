@@ -34,9 +34,9 @@ class AMiscControl(miscControl.MiscControl):
         miscControl.MiscControl.__init__(self, parameters, parent)
 
         self.em_filter_pos = 0
-        self.em_filter_wheel = FW102C.FW102C(hardware.port, hardware.baud_rate)
-        if not self.em_filter_wheel.live:
-            self.em_filter_wheel = False
+        self.em_filter_wheel = filterWheel.QPriorFilterWheel()
+        #if not self.em_filter_wheel.live:
+        #    self.em_filter_wheel = False
         self.filter_wheel = filterWheel.QPriorFilterWheel()
 
         # UI setup
@@ -62,21 +62,29 @@ class AMiscControl(miscControl.MiscControl):
         for afilter in self.filters:
             afilter.clicked.connect(self.handleFilter)
         if self.filter_wheel:
-            self.filters[self.filter_wheel.getPosition()-1].click()
+            self.filters[self.filter_wheel.getPosition(1)-1].click()
 
         # setup (emission) filter wheel
         self.ui.emFilter5Button.hide()
         self.ui.emFilter6Button.hide()
+        self.ui.emFilter7Button.hide()
+        self.ui.emFilter8Button.hide()
+        self.ui.emFilter9Button.hide()
+        self.ui.emFilter10Button.hide()
         self.em_filters = [self.ui.emFilter1Button,
                            self.ui.emFilter2Button,
                            self.ui.emFilter3Button,
                            self.ui.emFilter4Button,
                            self.ui.emFilter5Button,
-                           self.ui.emFilter6Button]
+                           self.ui.emFilter6Button,
+                           self.ui.emFilter7Button,
+                           self.ui.emFilter8Button,
+                           self.ui.emFilter9Button,
+                           self.ui.emFilter10Button]
         for afilter in self.em_filters:
             afilter.clicked.connect(self.handleEmFilter)
         if self.em_filter_wheel:
-            self.em_filters[parameters.get("em_filter")].click()
+            self.em_filters[self.filter_wheel.getPosition(2)-1].click()
 
         self.ui.emCheckBox.setChecked(parameters.get("em_checked"))
         self.ui.emSpinBox.setValue(parameters.get("em_period"))
@@ -88,7 +96,7 @@ class AMiscControl(miscControl.MiscControl):
                 afilter.setStyleSheet("QPushButton { color: red}")
                 if self.em_filter_wheel:
                     self.em_filter_pos = i
-                    self.em_filter_wheel.setPosition(i+1)
+                    self.em_filter_wheel.setPosition(i+1, 2)
                 self.parameters.set("em_filter", i)
             else:
                 afilter.setStyleSheet("QPushButton { color: black}")
@@ -100,7 +108,7 @@ class AMiscControl(miscControl.MiscControl):
                 filter.setStyleSheet("QPushButton { color: red}")
                 if self.filter_wheel:
                     self.em_filter_pos = i
-                    self.filter_wheel.setPosition(i+1)
+                    self.filter_wheel.setPosition(i+1, 1)
                 self.parameters.set("filter_position", i)
             else:
                 filter.setStyleSheet("QPushButton { color: black}")

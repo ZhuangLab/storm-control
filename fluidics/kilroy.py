@@ -123,8 +123,9 @@ class Kilroy(QtGui.QMainWindow):
     # ----------------------------------------------------------------------------------------
     def handleProtocolComplete(self, message):
         # If the protocol was sent by TCP pass on the complete signal
-        if self.received_message.getID() == message.getID():
+        if (self.received_message is not None) and self.received_message.getID() == message.getID():
             self.tcpServer.sendMessage(message)
+            self.received_message = None # Reset the received_message
 
     # ----------------------------------------------------------------------------------------
     # Handle protocol request sent via TCP server
