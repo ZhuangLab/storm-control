@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'qt_regex_file_dialog.ui'
 #
-# Created: Fri Jun 12 14:09:21 2015
-#      by: PyQt4 UI code generator 4.11.3
+# Created: Mon Jun 15 14:41:58 2015
+#      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -42,6 +42,12 @@ class Ui_Dialog(object):
         self.nameLineEdit = QtGui.QLineEdit(Dialog)
         self.nameLineEdit.setObjectName(_fromUtf8("nameLineEdit"))
         self.horizontalLayout.addWidget(self.nameLineEdit)
+        self.frameNumLabel = QtGui.QLabel(Dialog)
+        self.frameNumLabel.setObjectName(_fromUtf8("frameNumLabel"))
+        self.horizontalLayout.addWidget(self.frameNumLabel)
+        self.frameNumSpinBox = QtGui.QSpinBox(Dialog)
+        self.frameNumSpinBox.setObjectName(_fromUtf8("frameNumSpinBox"))
+        self.horizontalLayout.addWidget(self.frameNumSpinBox)
         self.verticalLayout.addLayout(self.horizontalLayout)
 
         self.retranslateUi(Dialog)
@@ -50,4 +56,5 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(_translate("Dialog", "Dialog", None))
         self.nameLabel.setText(_translate("Dialog", "Name Filter:", None))
+        self.frameNumLabel.setText(_translate("Dialog", "Frame Number:", None))
 

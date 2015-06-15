@@ -10,19 +10,26 @@ import sys
 
 import qtdesigner.qt_regex_file_dialog_ui as qtRegexFileDialogUi
 
-
 def regexGetOpenFileNames():
     fdialog = QRegexFileDialog()
     fdialog.exec_()
     return fdialog.getSelectedFiles()
 
-
 class RegexFilterModel(QtGui.QSortFilterProxyModel):
-
+    ## __init__
+    #
+    # @param regex_string The default regular expression
+    # @param parent (Optional) The PyQt parent of this object, default is None.
+    #
     def __init__(self, regex_string, parent = None):
         QtGui.QSortFilterProxyModel.__init__(self, parent)
         self.regex = re.compile(regex_string)
 
+    ## filterAcceptsRow
+    #
+    # @param source_row
+    # @param source_parent
+    #
     def filterAcceptsRow(self, source_row, source_parent):
         source_model = self.sourceModel()
         index0 = source_model.index(source_row, 0, source_parent)
@@ -37,10 +44,16 @@ class RegexFilterModel(QtGui.QSortFilterProxyModel):
             return True
         else:
             return False
-
         
 class QRegexFileDialog(QtGui.QDialog):
-
+    ## __init__
+    #
+    # @param caption The title of the dialog
+    # @param directory The starting directory.
+    # @param extensions The required file extensions
+    # @param regex The default regular expression string
+    # @param parent (Optional) The PyQt parent of this object, default is None.
+    #
     def __init__(self, caption = "Select File(s)", directory = None, extensions = None, regex = "", parent = None):
         QtGui.QDialog.__init__(self, parent)
         self.files_selected = None
@@ -76,26 +89,40 @@ class QRegexFileDialog(QtGui.QDialog):
 
         # Connect regex line edit.
         self.ui.nameLineEdit.textChanged.connect(self.handleRegexChanged)
-        
+
+    ## getSelectedFiles
+    #
+    # @return The list of selected files
+    #
     def getSelectedFiles(self):
         return self.files_selected
-    
+
+    ## handleAccepted
+    #    
     def handleAccepted(self):
         self.close()
 
+    ## handleRegexChanged
+    #    
     def handleRegexChanged(self):
         self.regex_timer.start()
-        
+
+    ## handleRegexTimer
+    #  
     def handleRegexTimer(self): 
         self.fdialog.setProxyModel(RegexFilterModel(str(self.ui.nameLineEdit.text())))
-        
+
+    ## handleRejected
+    #       
     def handleRejected(self):
         self.close()
-        
+
+    ## handleSelected
+    #     
     def handleSelected(self, files_selected):
         self.files_selected = map(str, files_selected)
 
-
+## Stand alone test
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     dialog = QRegexFileDialog()

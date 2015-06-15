@@ -32,6 +32,16 @@
      <item>
       <widget class="QLineEdit" name="nameLineEdit"/>
      </item>
+     <item>
+      <widget class="QLabel" name="frameNumLabel">
+       <property name="text">
+        <string>Frame Number:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSpinBox" name="frameNumSpinBox"/>
+     </item>
     </layout>
    </item>
   </layout>
