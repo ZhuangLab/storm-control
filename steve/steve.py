@@ -33,63 +33,6 @@ import capture
 import coord
 import sc_library.parameters as params
 
-##class LoadDaxDialog(QtGui.QDialog, LoadDaxDialog_Ui):
-##    ## __init__
-##    #
-##    # @param title_text The text of the title of the dialog box
-##    # @param default_directory The default directory for loading dax
-##    # @param default_filter The default filter for loading dax
-##    # @param default_frame The default frame of the dax to load
-##    # @param parent (Optional) The PyQt parent of this object, default is None.
-##    #
-##    @hdebug.debug
-##    def __init__(self, parent = None,
-##                 title_text = "Load Dax by Pattern",
-##                 default_directory = "",
-##                 default_filter = "\S+.dax",
-##                 default_frame = 0,
-##                 ):
-##        QtGui.QDialog.__init__(self,parent)
-##        self.setupUi(self)
-##
-##        # Update window title
-##        self.setWindowTitle(title_text)
-##
-##        # Add provided defaults to line edit widgets
-##        self.directory_line_edit.setText(default_directory)
-##        self.file_filter_line_edit.setText(default_filter)
-##        self.frame_spin_box.setValue(default_frame)
-##        self.frame_spin_box.setRange(0, 1e4)
-##
-##        # Connect buttons
-##        self.new_directory_button.clicked.connect(self.handleNewDirectory)
-##
-##    ## getValues
-##    #
-##    # Return the values of the directory and file filter text boxes
-##    #
-##    # @return A list of the following: The directory value, the file filter value, and the frame
-##    #
-##    @hdebug.debug
-##    def getValues(self):
-##        return [str(self.directory_line_edit.text()),
-##                str(self.file_filter_line_edit.text()),
-##                self.frame_spin_box.value()]
-##
-##    ## handleNewDirectory
-##    #
-##    # Handle request for a new directory
-##    #
-##    @hdebug.debug
-##    def handleNewDirectory(self, boolean):
-##        directory = str(QtGui.QFileDialog.getExistingDirectory(self,
-##                                                               "New Directory",
-##                                                               str(self.directory_line_edit.text()),
-##                                                               QtGui.QFileDialog.ShowDirsOnly))
-##        if directory:
-##            self.directory_line_edit.setText(directory)
-    
-
 class AdjustContrastDialog(QtGui.QDialog, AdjustContrastDialog_Ui):
     ## __init__
     #
@@ -297,6 +240,7 @@ class Window(QtGui.QMainWindow):
         self.file_filter = "\S+.dax"
         self.parameters = parameters
         self.picture_queue = []
+        self.regexp_str = ""
         self.requested_stage_pos = False
         self.stage_tracking_timer = QtCore.QTimer(self)
         self.taking_pictures = False
@@ -395,7 +339,6 @@ class Window(QtGui.QMainWindow):
         self.ui.actionAdjust_Contrast.triggered.connect(self.handleAdjustContrast)
         self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
         self.ui.actionLoad_Dax.triggered.connect(self.handleLoadDax)
-        self.ui.actionLoad_Dax_By_Pattern.triggered.connect(self.handleLoadDaxByPattern)
         self.ui.actionLoad_Mosaic.triggered.connect(self.handleLoadMosaic)
         self.ui.actionLoad_Positions.triggered.connect(self.handleLoadPositions)
         self.ui.actionSave_Mosaic.triggered.connect(self.handleSaveMosaic)
@@ -706,29 +649,20 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleLoadDax(self, boolean):
-
         # Open custom dialog to select files and frame number
-        [filenames, frame_num, file_filter] = qtRegexFileDialog.regexGetOpenFileNamesAndFrame()
-        print filenames, frame_num
-
+        fdialog = qtRegexFileDialog.QRegexFileDialog(regex = self.regexp_str,
+                                                     extensions = "*.dax")
+        fdialog.exec_()
+        [filenames, frame_num, file_filter] = fdialog.getOutput()
         if len(filenames) > 0:
             print "Found " + str(len(filenames)) + " files matching " + str(file_filter) + " in " + os.path.dirname(filenames[0])
             print "Loading frame: " + str(frame_num)
 
+            # Save regexp string for next time the dialog is opened
+            self.regexp_str = file_filter
+                
             # Load dax
             self.loadDax(filenames, frame_num)
-        
-    ## handleLoadDaxByPattern
-    #
-    # Handles loading dax files via a specified regular expression pattern.
-    #
-    # @param boolean Dummy parameter.
-    #
-    @hdebug.debug
-    def handleLoadDaxByPattern(self, boolean):
-
-        pass 
-
                                          
     ## handleLoadMosaic
     #

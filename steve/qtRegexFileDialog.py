@@ -10,10 +10,10 @@ import sys
 
 import qtdesigner.qt_regex_file_dialog_ui as qtRegexFileDialogUi
 
-def regexGetOpenFileNames():
+def regexGetFileNames():
     fdialog = QRegexFileDialog()
     fdialog.exec_()
-    return fdialog.getSelectedFiles()
+    return fdialog.getOutput()
 
 class RegexFilterModel(QtGui.QSortFilterProxyModel):
     ## __init__
@@ -74,8 +74,9 @@ class QRegexFileDialog(QtGui.QDialog):
         self.setMinimumSize(self.fdialog.width() + 20, self.fdialog.height() + 40)
 
         # Set filter
-        self.fdialog.setProxyModel(RegexFilterModel(""))
-
+        self.fdialog.setProxyModel(RegexFilterModel(regex))
+        self.ui.nameLineEdit.setText(regex)
+        
         # Connect file dialog signals.
         self.fdialog.accepted.connect(self.handleAccepted)
         self.fdialog.filesSelected.connect(self.handleSelected)        
@@ -83,7 +84,7 @@ class QRegexFileDialog(QtGui.QDialog):
 
         # Configure timer for regex updates.
         self.regex_timer = QtCore.QTimer()
-        self.regex_timer.setInterval(200)
+        self.regex_timer.setInterval(200) # Delay between regexp changes and filtering of model
         self.regex_timer.setSingleShot(True)
         self.regex_timer.timeout.connect(self.handleRegexTimer)
 
@@ -94,8 +95,8 @@ class QRegexFileDialog(QtGui.QDialog):
     #
     # @return The list of selected files
     #
-    def getSelectedFiles(self):
-        return self.files_selected
+    def getOutput(self):
+        return [self.files_selected, self.ui.frameNumSpinBox.value(), str(self.ui.nameLineEdit.text())]
 
     ## handleAccepted
     #    
@@ -109,8 +110,12 @@ class QRegexFileDialog(QtGui.QDialog):
 
     ## handleRegexTimer
     #  
-    def handleRegexTimer(self): 
-        self.fdialog.setProxyModel(RegexFilterModel(str(self.ui.nameLineEdit.text())))
+    def handleRegexTimer(self):
+        new_regex_str = str(self.ui.nameLineEdit.text())
+        try:
+            self.fdialog.setProxyModel(RegexFilterModel(new_regex_str))
+        except:
+            pass
 
     ## handleRejected
     #       

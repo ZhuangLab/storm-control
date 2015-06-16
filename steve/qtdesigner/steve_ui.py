@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'steve.ui'
 #
-# Created: Thu Jun 04 08:30:00 2015
+# Created: Mon Jun 15 16:15:50 2015
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -293,7 +293,7 @@ class Ui_MainWindow(object):
         self.sectionsScrollArea.setWidgetResizable(True)
         self.sectionsScrollArea.setObjectName(_fromUtf8("sectionsScrollArea"))
         self.scrollAreaWidgetContents_2 = QtGui.QWidget()
-        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 260, 549))
+        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 98, 28))
         self.scrollAreaWidgetContents_2.setObjectName(_fromUtf8("scrollAreaWidgetContents_2"))
         self.sectionsScrollArea.setWidget(self.scrollAreaWidgetContents_2)
         self.verticalLayout_6.addWidget(self.sectionsScrollArea)
@@ -390,7 +390,6 @@ class Ui_MainWindow(object):
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionDelete_Images)
         self.menuFile.addAction(self.actionLoad_Dax)
-        self.menuFile.addAction(self.actionLoad_Dax_By_Pattern)
         self.menuFile.addAction(self.actionLoad_Mosaic)
         self.menuFile.addAction(self.actionLoad_Positions)
         self.menuFile.addAction(self.actionSave_Mosaic)
