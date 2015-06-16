@@ -57,7 +57,8 @@ class DaveAction(QtCore.QObject):
         # Define pause behaviors
         self.should_pause = False            # Pause after completion
         self.should_pause_after_error = True # Pause after error
-
+        self.should_pause_default = False    # Default pause state for reset
+        
         # Initialize internal timer
         self.lost_message_timer = QtCore.QTimer(self)
         self.lost_message_timer.setSingleShot(True)
@@ -77,6 +78,7 @@ class DaveAction(QtCore.QObject):
     #
     def cleanUp(self):
         self.tcp_client.messageReceived.disconnect()
+        self.resetPause() # Allow a paused action to be rerun without a pause
 
     ## createETree
     #
@@ -210,6 +212,13 @@ class DaveAction(QtCore.QObject):
     def isValid(self):
         return self.valid
 
+    ## resetPause
+    #
+    # Reset the pause state to the default value
+    #
+    def resetPause(self):
+        self.should_pause = self.should_pause_default
+    
     ## setProperty
     #
     # Set object property, throw an error if the property is not recognized.
@@ -534,6 +543,7 @@ class DAPause(DaveAction):
         
         # Define pause behaviors
         self.should_pause = True
+        self.should_pause_default = True
 
     ## start
     #
