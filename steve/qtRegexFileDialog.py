@@ -84,7 +84,7 @@ class QRegexFileDialog(QtGui.QDialog):
 
         # Configure timer for regex updates.
         self.regex_timer = QtCore.QTimer()
-        self.regex_timer.setInterval(200) # Delay between regexp changes and filtering of model
+        self.regex_timer.setInterval(200) # Delay between regexp changes and application of filter
         self.regex_timer.setSingleShot(True)
         self.regex_timer.timeout.connect(self.handleRegexTimer)
 
@@ -93,7 +93,7 @@ class QRegexFileDialog(QtGui.QDialog):
 
     ## getSelectedFiles
     #
-    # @return The list of selected files
+    # @return The list of selected files, the frame number, the previous regex
     #
     def getOutput(self):
         return [self.files_selected, self.ui.frameNumSpinBox.value(), str(self.ui.nameLineEdit.text())]
@@ -114,8 +114,10 @@ class QRegexFileDialog(QtGui.QDialog):
         new_regex_str = str(self.ui.nameLineEdit.text())
         try:
             self.fdialog.setProxyModel(RegexFilterModel(new_regex_str))
+            self.ui.nameLineEdit.setStyleSheet("color: rgb(0, 0, 0);")
         except:
-            pass
+            self.ui.nameLineEdit.setStyleSheet("color: rgb(255, 0, 255);")
+            self.fdialog.setProxyModel(RegexFilterModel("")) # Display all files
 
     ## handleRejected
     #       
