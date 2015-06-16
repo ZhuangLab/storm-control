@@ -563,8 +563,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>260</width>
+                   <height>549</height>
                   </rect>
                  </property>
                 </widget>
@@ -716,7 +716,10 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionQuit">
    <property name="text">
-    <string>Quit</string>
+    <string>Quit (Ctrl+Q)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
    </property>
   </action>
   <action name="actionConnect">
@@ -731,12 +734,18 @@
   </action>
   <action name="actionSave_Positions">
    <property name="text">
-    <string>Save Positions</string>
+    <string>Save Positions (Ctrl+T)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
    </property>
   </action>
   <action name="actionSave_Mosaic">
    <property name="text">
-    <string>Save Mosaic</string>
+    <string>Save Mosaic (Ctrl+S)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
   <action name="actionSet_Working_Directory">
@@ -746,27 +755,42 @@
   </action>
   <action name="actionLoad_Mosaic">
    <property name="text">
-    <string>Load Mosaic</string>
+    <string>Load Mosaic (Ctrl+M)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
    </property>
   </action>
   <action name="actionDelete_Images">
    <property name="text">
-    <string>Delete Images</string>
+    <string>Delete Images (Ctrl+D)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
    </property>
   </action>
   <action name="actionLoad_Positions">
    <property name="text">
-    <string>Load Positions</string>
+    <string>Load Positions (Ctrl+P)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
    </property>
   </action>
   <action name="actionSave_Snapshot">
    <property name="text">
-    <string>Save Snapshot</string>
+    <string>Save Snapshot (Ctrl+I)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+I</string>
    </property>
   </action>
   <action name="actionLoad_Dax">
    <property name="text">
-    <string>Load Dax</string>
+    <string>Load Dax (Ctrl+L)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
    </property>
   </action>
   <action name="actionLoad_Dax_By_Pattern">
@@ -776,7 +800,10 @@
   </action>
   <action name="actionAdjust_Contrast">
    <property name="text">
-    <string>Adjust Contrast</string>
+    <string>Adjust Contrast (Ctrl+C)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
    </property>
   </action>
  </widget>

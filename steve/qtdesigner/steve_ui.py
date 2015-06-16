@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'steve.ui'
 #
-# Created: Mon Jun 15 16:15:50 2015
+# Created: Tue Jun 16 17:21:34 2015
 #      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -293,7 +293,7 @@ class Ui_MainWindow(object):
         self.sectionsScrollArea.setWidgetResizable(True)
         self.sectionsScrollArea.setObjectName(_fromUtf8("sectionsScrollArea"))
         self.scrollAreaWidgetContents_2 = QtGui.QWidget()
-        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 98, 28))
+        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 260, 549))
         self.scrollAreaWidgetContents_2.setObjectName(_fromUtf8("scrollAreaWidgetContents_2"))
         self.sectionsScrollArea.setWidget(self.scrollAreaWidgetContents_2)
         self.verticalLayout_6.addWidget(self.sectionsScrollArea)
@@ -447,17 +447,26 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.sectionsTab), _translate("MainWindow", "Sections", None))
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
         self.menuView.setTitle(_translate("MainWindow", "View", None))
-        self.actionQuit.setText(_translate("MainWindow", "Quit", None))
+        self.actionQuit.setText(_translate("MainWindow", "Quit (Ctrl+Q)", None))
+        self.actionQuit.setShortcut(_translate("MainWindow", "Ctrl+Q", None))
         self.actionConnect.setText(_translate("MainWindow", "Connect", None))
         self.actionDisconnect.setText(_translate("MainWindow", "Disconnect", None))
-        self.actionSave_Positions.setText(_translate("MainWindow", "Save Positions", None))
-        self.actionSave_Mosaic.setText(_translate("MainWindow", "Save Mosaic", None))
+        self.actionSave_Positions.setText(_translate("MainWindow", "Save Positions (Ctrl+T)", None))
+        self.actionSave_Positions.setShortcut(_translate("MainWindow", "Ctrl+T", None))
+        self.actionSave_Mosaic.setText(_translate("MainWindow", "Save Mosaic (Ctrl+S)", None))
+        self.actionSave_Mosaic.setShortcut(_translate("MainWindow", "Ctrl+S", None))
         self.actionSet_Working_Directory.setText(_translate("MainWindow", "Set Working Directory", None))
-        self.actionLoad_Mosaic.setText(_translate("MainWindow", "Load Mosaic", None))
-        self.actionDelete_Images.setText(_translate("MainWindow", "Delete Images", None))
-        self.actionLoad_Positions.setText(_translate("MainWindow", "Load Positions", None))
-        self.actionSave_Snapshot.setText(_translate("MainWindow", "Save Snapshot", None))
-        self.actionLoad_Dax.setText(_translate("MainWindow", "Load Dax", None))
+        self.actionLoad_Mosaic.setText(_translate("MainWindow", "Load Mosaic (Ctrl+M)", None))
+        self.actionLoad_Mosaic.setShortcut(_translate("MainWindow", "Ctrl+M", None))
+        self.actionDelete_Images.setText(_translate("MainWindow", "Delete Images (Ctrl+D)", None))
+        self.actionDelete_Images.setShortcut(_translate("MainWindow", "Ctrl+D", None))
+        self.actionLoad_Positions.setText(_translate("MainWindow", "Load Positions (Ctrl+P)", None))
+        self.actionLoad_Positions.setShortcut(_translate("MainWindow", "Ctrl+P", None))
+        self.actionSave_Snapshot.setText(_translate("MainWindow", "Save Snapshot (Ctrl+I)", None))
+        self.actionSave_Snapshot.setShortcut(_translate("MainWindow", "Ctrl+I", None))
+        self.actionLoad_Dax.setText(_translate("MainWindow", "Load Dax (Ctrl+L)", None))
+        self.actionLoad_Dax.setShortcut(_translate("MainWindow", "Ctrl+L", None))
         self.actionLoad_Dax_By_Pattern.setText(_translate("MainWindow", "Load Dax By Pattern", None))
-        self.actionAdjust_Contrast.setText(_translate("MainWindow", "Adjust Contrast", None))
+        self.actionAdjust_Contrast.setText(_translate("MainWindow", "Adjust Contrast (Ctrl+C)", None))
+        self.actionAdjust_Contrast.setShortcut(_translate("MainWindow", "Ctrl+C", None))
 
