@@ -6,7 +6,7 @@ The official release of this software can be found [here](https://github.com/Zhu
 You will need Python and PyQt as well as a number of other libraries. Please see the Install.txt file in the hal4000 folder.
 
 ## Directory Layout ##
-dave - This folder contains software (dave.py) that is used to control hal for automated acquisition of multiple images and/or STORM movies. Dave controls Hal via TCP/IP.
+dave - This folder contains software (dave.py) that is used to control hal for automated acquisition of multiple images and/or STORM movies. Dave controls Hal and Kilroy via TCP/IP.
 
 fluidics - This folder contains software (kilroy.py) to control a series of pumps and valves so that fluid control can be integrated with imaging. 
 
