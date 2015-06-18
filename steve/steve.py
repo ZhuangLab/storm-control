@@ -17,7 +17,8 @@ import sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.steve_ui as steveUi
-from qtdesigner.loaddax_dialog_ui import Ui_Dialog as loaddax_dialog
+from qtdesigner.adjust_contrast_dialog_ui import Ui_Dialog as AdjustContrastDialog_Ui
+import qtRegexFileDialog
 
 # Graphics
 import mosaicView
@@ -31,56 +32,119 @@ import capture
 import coord
 import sc_library.parameters as params
 
-class LoadDaxDialog(QtGui.QDialog, loaddax_dialog):
+class AdjustContrastDialog(QtGui.QDialog, AdjustContrastDialog_Ui):
     ## __init__
     #
     # @param title_text The text of the title of the dialog box
-    # @param default_directory The default directory for loading dax
-    # @param default_filter The default filter for loading dax
+    # @param default_min_max The starting minimum and maximum values
+    # @param scale_min_max The minimum and maximum allowed values
     # @param parent (Optional) The PyQt parent of this object, default is None.
     #
     @hdebug.debug
     def __init__(self, parent = None,
-                 title_text = "Load Dax by Pattern",
-                 default_directory = "",
-                 default_filter = "\S+.dax",
+                 title_text = "Adjust Contrast",
+                 default_min_max = [0, 16000],
+                 scale_min_max = [0, 16000],
                  ):
         QtGui.QDialog.__init__(self,parent)
         self.setupUi(self)
 
-        # Update window title
+        # Update window title.
         self.setWindowTitle(title_text)
 
-        # Add provided defaults to line edit widgets
-        self.directory_line_edit.setText(default_directory)
-        self.file_filter_line_edit.setText(default_filter)
+        # Configure the spin boxes.
+        self.high_spin_box.setRange(scale_min_max[0], scale_min_max[1])
+        self.high_spin_box.setValue(default_min_max[1])
+        self.high_spin_box.setSingleStep(1)
+        self.low_spin_box.setRange(scale_min_max[0], scale_min_max[1])
+        self.low_spin_box.setValue(default_min_max[0])
+        self.low_spin_box.setSingleStep(1)
 
-        # Connect buttons
-        self.new_directory_button.clicked.connect(self.handleNewDirectory)
+        # Configure the slider.
+        self.high_contrast_slider.setRange(scale_min_max[0], scale_min_max[1])
+        self.high_contrast_slider.setSliderPosition(default_min_max[1])
+        self.low_contrast_slider.setRange(scale_min_max[0], scale_min_max[1])
+        self.low_contrast_slider.setSliderPosition(default_min_max[0])
 
-    ## getValues
+        # Connect signals.
+        self.high_contrast_slider.sliderMoved.connect(self.handleHighSliderUpdate)
+        self.low_contrast_slider.sliderMoved.connect(self.handleLowSliderUpdate)
+        self.high_contrast_slider.sliderReleased.connect(self.handleHighSliderRelease)
+        self.low_contrast_slider.sliderReleased.connect(self.handleLowSliderRelease)
+
+        self.high_spin_box.valueChanged.connect(self.handleHighSpinBoxUpdate)
+        self.low_spin_box.valueChanged.connect(self.handleLowSpinBoxUpdate)
+
+
+   ## getValues
     #
     # Return the values of the directory and file filter text boxes
     #
-    # @return The directory value
-    # @return The file filter value
+    # @return The minimum and maximum contrast values set by the user
     @hdebug.debug
     def getValues(self):
-        return str(self.directory_line_edit.text()), str(self.file_filter_line_edit.text())
+        return [self.low_spin_box.value(), self.high_spin_box.value()]
 
-    ## handleNewDirectory
+
+    # handleHighSliderRelease
     #
-    # Handle request for a new directory
+    # Coerce slider value to new range upon release
     #
     @hdebug.debug
-    def handleNewDirectory(self, boolean):
-        directory = str(QtGui.QFileDialog.getExistingDirectory(self,
-                                                               "New Directory",
-                                                               str(self.directory_line_edit.text()),
-                                                               QtGui.QFileDialog.ShowDirsOnly))
-        if directory:
-            self.directory_line_edit.setText(directory)
+    def handleHighSliderRelease(self):
+        new_value = self.high_contrast_slider.value()
+        low_value = self.low_spin_box.value()
+        if new_value > low_value: # Coerce to larger than low contrast
+            self.high_spin_box.setValue(new_value)
+        else:
+            self.high_contrast_slider.setValue(low_value+1)
+            self.high_spin_box.setMinimum(low_value+1)
+
+    # handleLowSliderRelease
+    #
+    # Coerce slider value to new range upon release
+    #
+    @hdebug.debug
+    def handleLowSliderRelease(self):
+        new_value = self.low_contrast_slider.value()
+        high_value = self.high_spin_box.value()
+        if new_value < high_value: # Coerce to smaller than high contrast
+            self.low_spin_box.setValue(new_value)
+        else:
+            self.low_contrast_slider.setValue(high_value-1)
+            self.low_spin_box.setMaximum(high_value-1)
     
+    # handleHighSliderUpdate
+    #
+    # Handle movement of the high contrast slider
+    #
+    @hdebug.debug
+    def handleHighSliderUpdate(self, dummy):
+        self.high_spin_box.setValue(self.high_contrast_slider.value())
+
+    # handleLowSliderUpdate
+    #
+    # Handle movement of the low contrast slider
+    #
+    @hdebug.debug
+    def handleLowSliderUpdate(self, dummy):
+        self.low_spin_box.setValue(self.low_contrast_slider.value())
+
+    # handleHighSpinBoxUpdate
+    #
+    # Handle user adjustment of the high contrast spin box
+    #
+    @hdebug.debug
+    def handleHighSpinBoxUpdate(self, dummy):
+        self.high_contrast_slider.setValue(self.high_spin_box.value())
+    
+    # handleLowSpinBoxUpdate
+    #
+    # Handle user adjustment of the low contrast spin box
+    #
+    @hdebug.debug
+    def handleLowSpinBoxUpdate(self, dummy):
+        self.low_contrast_slider.setValue(self.low_spin_box.value())
 
 ## findMO
 #
@@ -175,6 +239,7 @@ class Window(QtGui.QMainWindow):
         self.file_filter = "\S+.dax"
         self.parameters = parameters
         self.picture_queue = []
+        self.regexp_str = ""
         self.requested_stage_pos = False
         self.stage_tracking_timer = QtCore.QTimer(self)
         self.taking_pictures = False
@@ -270,9 +335,9 @@ class Window(QtGui.QMainWindow):
 
         # signals
         self.ui.actionQuit.triggered.connect(self.quit)
+        self.ui.actionAdjust_Contrast.triggered.connect(self.handleAdjustContrast)
         self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
         self.ui.actionLoad_Dax.triggered.connect(self.handleLoadDax)
-        self.ui.actionLoad_Dax_By_Pattern.triggered.connect(self.handleLoadDaxByPattern)
         self.ui.actionLoad_Mosaic.triggered.connect(self.handleLoadMosaic)
         self.ui.actionLoad_Positions.triggered.connect(self.handleLoadPositions)
         self.ui.actionSave_Mosaic.triggered.connect(self.handleSaveMosaic)
@@ -453,6 +518,33 @@ class Window(QtGui.QMainWindow):
             self.comm.commConnect()
             self.comm.gotoPosition(point.x_um - self.current_offset.x_um, point.y_um - self.current_offset.y_um)
 
+    ## handleAdjustContrast
+    #
+    # Handles a request to adjust the contrast of all imageItems.
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def handleAdjustContrast(self, boolean):
+        # Determine the current contrast
+        current_contrast = self.view.getContrast()
+        print "Current Contrast: " + str(current_contrast)
+        if current_contrast[0] is None:
+            current_contrast = [0, 16000] # Default values for HAL: FIXME
+ 
+        # Prepare and display dialog
+        dialog = AdjustContrastDialog(self,
+                                      "Adjust Contrast",
+                                      current_contrast)
+        
+        if dialog.exec_():
+            newRange = dialog.getValues() # Get values
+            print "Adjusted Contrast: " + str(newRange)
+
+            self.view.changeContrast(newRange)
+        else:
+            return
+
     ## handleDeleteImages
     #
     # Handles the delete images action.
@@ -556,67 +648,21 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleLoadDax(self, boolean):
-        # Open dialog to select files
-        dax_filenames = QtGui.QFileDialog.getOpenFileNames(self,
-                                                           "Load Dax Files",
-                                                           self.parameters.directory,
-                                                           "*.dax")
-        # Convert to a list of strings
-        filenames = [str(f) for f in dax_filenames]
+        # Open custom dialog to select files and frame number
+        fdialog = qtRegexFileDialog.QRegexFileDialog(directory = self.parameters.directory,
+                                                     regex = self.regexp_str,
+                                                     extensions = "*.dax")
+        fdialog.exec_()
+        [filenames, frame_num, file_filter] = fdialog.getOutput()
+        if (filenames is not None) and (len(filenames) > 0):
+            print "Found " + str(len(filenames)) + " files matching " + str(file_filter) + " in " + os.path.dirname(filenames[0])
+            print "Loading frame: " + str(frame_num)
 
-        # Load dax.
-        self.loadDax(filenames)
-
-    ## handleLoadDaxByPattern
-    #
-    # Handles loading dax files via a specified regular expression pattern.
-    #
-    # @param boolean Dummy parameter.
-    #
-    @hdebug.debug
-    def handleLoadDaxByPattern(self, boolean):
-        # Prepare and display dialog
-        dialog = LoadDaxDialog(self,
-                               default_directory = self.parameters.directory,
-                               default_filter = self.file_filter)
-    
-        
-        if dialog.exec_():
-            directory, file_filter = dialog.getValues() # Get values
-        else:
-            return
-
-        # Update internal record of file filter
-        self.file_filter = file_filter
-        
-        # Check to see if file filter is a valid regular expression
-        try:
-            re.compile(str(file_filter))
-        except re.error:
-            QtGui.QMessageBox.warning(self,
-                                      "Error",
-                                      str(file_filter) + " is not a valid regular expression.")
-            return
-        
-        # Find files matching filter in default directory
-        filenames = [directory + f for f in os.listdir(directory) if re.match(str(file_filter), f)]
-        
-        # Exit if empty
-        if not filenames:
-            error_string = "No files in " + directory
-            error_string += " matched the provided filter: " + str(file_filter)
-           
-            QtGui.QMessageBox.warning(self,
-                                      "Error",
-                                      error_string)
-
-            return
-        
-        else:
-            print "Found " + str(len(filenames)) + " files matching " + file_filter + " in " + self.parameters.directory
-
-        # Load dax
-        self.loadDax(filenames)
+            # Save regexp string for next time the dialog is opened
+            self.regexp_str = file_filter
+                
+            # Load dax
+            self.loadDax(filenames, frame_num)
                                          
     ## handleLoadMosaic
     #
@@ -838,10 +884,11 @@ class Window(QtGui.QMainWindow):
     #
     # Handles loading dax files, which can be useful for retrospective analysis.
     #
-    # @param boolean Dummy parameter.
+    # @param filenames A list of file names.
+    # @param frame_num The frame number to load. Starts at 0. Default is 0.
     #
     @hdebug.debug
-    def loadDax(self, filenames):
+    def loadDax(self, filenames, frame_num = 0):
 
         # Create progress bar
         progress_bar = QtGui.QProgressDialog("Loading " + str(len(filenames)) +  " Files ...",
@@ -856,7 +903,7 @@ class Window(QtGui.QMainWindow):
         # Load dax files
         for filename in filenames:
             if progress_bar.wasCanceled(): break
-            self.comm.loadImage(filename)
+            self.comm.loadImage(filename, frame_num)
             progress_bar.setValue(file_number)
             file_number += 1
 
