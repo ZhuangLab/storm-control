@@ -563,8 +563,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>260</width>
-                   <height>549</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                 </widget>
@@ -734,7 +734,7 @@
   </action>
   <action name="actionSave_Positions">
    <property name="text">
-    <string>Save Positions (Ctrl+T)</string>
+    <string>Save Positions</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+T</string>
@@ -742,7 +742,7 @@
   </action>
   <action name="actionSave_Mosaic">
    <property name="text">
-    <string>Save Mosaic (Ctrl+S)</string>
+    <string>Save Mosaic</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
@@ -755,7 +755,7 @@
   </action>
   <action name="actionLoad_Mosaic">
    <property name="text">
-    <string>Load Mosaic (Ctrl+M)</string>
+    <string>Load Mosaic</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+M</string>
@@ -763,7 +763,7 @@
   </action>
   <action name="actionDelete_Images">
    <property name="text">
-    <string>Delete Images (Ctrl+D)</string>
+    <string>Delete Images</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+D</string>
@@ -771,7 +771,7 @@
   </action>
   <action name="actionLoad_Positions">
    <property name="text">
-    <string>Load Positions (Ctrl+P)</string>
+    <string>Load Positions</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+P</string>
@@ -779,7 +779,7 @@
   </action>
   <action name="actionSave_Snapshot">
    <property name="text">
-    <string>Save Snapshot (Ctrl+I)</string>
+    <string>Save Snapshot</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+I</string>
@@ -787,7 +787,7 @@
   </action>
   <action name="actionLoad_Dax">
    <property name="text">
-    <string>Load Dax (Ctrl+L)</string>
+    <string>Load Dax</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+L</string>

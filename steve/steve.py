@@ -17,7 +17,6 @@ import sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.steve_ui as steveUi
-from qtdesigner.loaddax_dialog_ui import Ui_Dialog as LoadDaxDialog_Ui
 from qtdesigner.adjust_contrast_dialog_ui import Ui_Dialog as AdjustContrastDialog_Ui
 import qtRegexFileDialog
 

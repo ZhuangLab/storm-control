@@ -116,7 +116,7 @@ class QRegexFileDialog(QtGui.QDialog):
             self.fdialog.setProxyModel(RegexFilterModel(new_regex_str))
             self.ui.nameLineEdit.setStyleSheet("color: rgb(0, 0, 0);")
         except:
-            self.ui.nameLineEdit.setStyleSheet("color: rgb(255, 0, 255);")
+            self.ui.nameLineEdit.setStyleSheet("color: rgb(255, 0, 0);")
             self.fdialog.setProxyModel(RegexFilterModel("")) # Display all files
 
     ## handleRejected
