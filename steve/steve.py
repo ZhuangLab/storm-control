@@ -649,11 +649,9 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleLoadDax(self, boolean):
         # Open custom dialog to select files and frame number
-        fdialog = qtRegexFileDialog.QRegexFileDialog(directory = self.parameters.directory,
-                                                     regex = self.regexp_str,
-                                                     extensions = "*.dax")
-        fdialog.exec_()
-        [filenames, frame_num, file_filter] = fdialog.getOutput()
+        [filenames, frame_num, file_filter] = qtRegexFileDialog.regexGetFileNames(directory = self.parameters.directory,
+                                                                                  regex = self.regexp_str,
+                                                                                  extensions = "*.dax")
         if (filenames is not None) and (len(filenames) > 0):
             print "Found " + str(len(filenames)) + " files matching " + str(file_filter) + " in " + os.path.dirname(filenames[0])
             print "Loading frame: " + str(frame_num)

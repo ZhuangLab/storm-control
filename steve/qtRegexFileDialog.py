@@ -10,8 +10,8 @@ import sys
 
 import qtdesigner.qt_regex_file_dialog_ui as qtRegexFileDialogUi
 
-def regexGetFileNames():
-    fdialog = QRegexFileDialog()
+def regexGetFileNames(caption = "Select File(s)", directory = None, extensions = None, regex = ""):
+    fdialog = QRegexFileDialog(caption, directory, extensions, regex)
     fdialog.exec_()
     return fdialog.getOutput()
 
