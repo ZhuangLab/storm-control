@@ -122,19 +122,19 @@ def halParameters(parameters_file):
     #xml_object.kinetic_value = 0
 
     # And a few random other things
-#    film_xml = xml_object.get("film")
-#    film_xml.notes = ""
-#    if not film_xml.has("extension"):
-#        film_xml.set("extension", film_xml.extensions[0])
+    film_xml = xml_object.get("film")
+    film_xml.notes = ""
+    if not film_xml.has("extension"):
+        film_xml.set("extension", film_xml.extensions[0])
 
-#    illumination_xml = xml_object.get("illumination")
-#    if not os.path.exists(illumination_xml.get("shutters")):
-#        illumination_xml.set("shutters", os.path.dirname(parameters_file) + "/" + illumination_xml.get("shutters"))
+    illumination_xml = xml_object.get("illumination")
+    if not os.path.exists(illumination_xml.get("shutters")):
+        illumination_xml.set("shutters", os.path.dirname(parameters_file) + "/" + illumination_xml.get("shutters"))
 
-#    illumination_xml.set("shutter_colors", [])
-#    illumination_xml.set("shutter_data", [])
-#    illumination_xml.set("shutter_frames", 0)
-#    illumination_xml.set("shutter_oversampling", 0)
+    illumination_xml.set("shutter_colors", [])
+    illumination_xml.set("shutter_data", [])
+    illumination_xml.set("shutter_frames", 0)
+    illumination_xml.set("shutter_oversampling", 0)
 
     return xml_object
 
@@ -623,7 +623,7 @@ if __name__ == "__main__":
         p1 = halParameters(sys.argv[1])
         p2 = halParameters(sys.argv[2])
                 
-        string = ElementTree.tostring(p2.toXML(), 'utf-8')
+        string = ElementTree.tostring(default_params.toXML(), 'utf-8')
         reparsed = minidom.parseString(string)
         print reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1")
         
