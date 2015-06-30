@@ -122,7 +122,7 @@ def halParameters(parameters_file):
     #xml_object.kinetic_value = 0
 
     # And a few random other things
-    xml_object.set("frames_per_second", 0)
+    xml_object.set("seconds_per_frame", 0)
     xml_object.set("initialized", False)
 
     film_xml = xml_object.get("film")

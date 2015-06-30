@@ -161,7 +161,7 @@ class SingleCamera(genericCamera.Camera):
         self.camera_control.newParameters(parameters)
         [exposure_time, cycle_time] = self.camera_control.getAcquisitionTimings()
         p.set(["camera1.exposure_time", "camera1.cycle_time"], [exposure_time, cycle_time])
-        p.set("frames_per_second", 1.0/cycle_time)
+        p.set("seconds_per_frame", cycle_time)
         self.camera_display.newParameters(parameters.get("camera1"))
         self.camera_params.newParameters(parameters.get("camera1"))
 
