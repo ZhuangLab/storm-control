@@ -23,8 +23,8 @@ import sc_library.hdebug as hdebug
 # of this class that implement at least the following methods:
 #
 # getAcquisitionTimings()
-#    Returns the current acquisition timings as a triple:
-#    [time, time, time]
+#    Returns the current acquisition timings as:
+#    [exposure time, cycle time]
 #
 # initCamera()
 #    Initializes the camera.
@@ -78,6 +78,7 @@ class CameraControl(QtCore.QThread):
         self.key = -1
         self.max_frames_sig = SingleShotSignal(self.reachedMaxFrames)
         self.mutex = QtCore.QMutex()
+        self.parameters = None
         self.reached_max_frames = False
         self.running = True
         self.shutter = False
@@ -193,6 +194,16 @@ class CameraControl(QtCore.QThread):
     def newFilmSettings(self, parameters, film_settings):
         pass
 
+    ## newParameters
+    #
+    # Update the camera based on a new set of parameters.
+    #
+    # @param parameters A parameters object.
+    #
+    @hdebug.debug
+    def newParameters(self, parameters):
+        pass
+        
     ## openShutter
     #
     # Sets the shutter (open) flag to true.
