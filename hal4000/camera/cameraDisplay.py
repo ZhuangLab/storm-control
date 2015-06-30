@@ -339,9 +339,10 @@ class CameraDisplay(QtGui.QFrame):
     #
     @hdebug.debug
     def newParameters(self, parameters):
+        self.parameters = parameters
+                
         # for conveniently accessing parameters
         p = parameters
-        self.parameters = p
 
         #
         # setup the camera display widget
