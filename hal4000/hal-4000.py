@@ -762,7 +762,7 @@ class Window(QtGui.QMainWindow):
         # parse parameters file
         is_valid_xml = True
         try:
-            parameters = params.Parameters(parameters_filename, is_HAL = True)
+            parameters = params.halParameters(parameters_filename)
         except:
             is_valid_xml = False
             hdebug.logText("failed to parse parameters file " + parameters_filename)
