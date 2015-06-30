@@ -122,8 +122,11 @@ def halParameters(parameters_file):
     #xml_object.kinetic_value = 0
 
     # And a few random other things
+    xml_object.set("frames_per_second", 0)
+    xml_object.set("initialized", False)
+
     film_xml = xml_object.get("film")
-    film_xml.notes = ""
+    film_xml.set("notes", "")
     if not film_xml.has("extension"):
         film_xml.set("extension", film_xml.extensions[0])
 
@@ -133,7 +136,7 @@ def halParameters(parameters_file):
 
     illumination_xml.set("shutter_colors", [])
     illumination_xml.set("shutter_data", [])
-    illumination_xml.set("shutter_frames", 0)
+    illumination_xml.set("shutter_frames", -1)
     illumination_xml.set("shutter_oversampling", 0)
 
     return xml_object
@@ -210,8 +213,6 @@ def Parameters(parameters_file):
 # @param camera A camera XML object.
 #
 def setCameraParameters(camera):
-
-    # FIXME: Somewhat Andor specific?
     
     camera.set("x_pixels", camera.get("x_end") - camera.get("x_start") + 1)
     camera.set("y_pixels", camera.get("y_end") - camera.get("y_start") + 1)
@@ -225,11 +226,13 @@ def setCameraParameters(camera):
     camera.set("binning", [camera.get("x_bin"),
                            camera.get("y_bin")])
 
-    camera.set("exposure_value", 0)
-    camera.set("accumulate_value", 0)
-    camera.set("kinetic_value", 0)
-    camera.set("bytesPerFrame", 2 * camera.get("x_pixels") * camera.get("y_pixels")/(camera.get("x_bin") * camera.get("y_bin")))
     camera.set("actual_temperature", 0)
+    camera.set("exposure_time", 0)      # This is the actual exposure time.
+    camera.set("cycle_time", 0)         # This is the time between frames.
+
+#    camera.set("accumulate_value", 0)
+#    camera.set("kinetic_value", 0)
+
 
 ## setDefaultShutters
 #
@@ -377,6 +380,13 @@ class StormXMLObject(object):
     # @return The propery if found, otherwise default.
     #
     def get(self, pname, default = None, mark_used = True):
+
+        # Check for sub-property.
+        pnames = pname.split(".")
+        if (len(pnames) > 1):
+            xml_object = self.get(pnames[0])
+            return xml_object.get(".".join(pnames[1:]), default, mark_used)
+
         if hasattr(self, pname):
             if mark_used:
                 self.isUsed(pname)
@@ -397,36 +407,6 @@ class StormXMLObject(object):
     def getAttrs(self):
         attrs = filter(lambda(x): x[0] != "_", sorted(dir(self)))
         return filter(lambda(x): not callable(self.get(x, mark_used = False)), attrs)
-
-    ## getRec
-    #
-    # The recursive version of get().
-    #
-    # @param pname A string containing the property name.
-    # @param default (Optional) The value to use if the property is not found.
-    #
-    # @return The propery if found, otherwise default.
-    #
-#    def getRec(self, pname, default = None, depth = 0):
-#        
-#        # At the current level.
-#        if hasattr(self, pname):
-#            self.isUsed(pname)
-#            return getattr(self, pname)
-#
-#        # At a lower level.
-#        for elt in self.getSubXMLObjects():
-#            if elt.hasRec(pname):
-#                return elt.getRec(pname, depth = depth + 1)
-#
-#        # Depth dependent failure mode.
-#        if (depth > 0):
-#            return False
-#        else:
-#            if default is not None:
-#                return default
-#            else:
-#                raise ParametersException("Requested property " + pname + " not found and no default was specified.")
 
     ## getSubXMLObjects
     #
@@ -460,28 +440,6 @@ class StormXMLObject(object):
     def has(self, pname):
         self.isUsed(pname)
         return hasattr(self, pname)
-
-    ## hasRec
-    #
-    # The recursive version of has().
-    #
-    # @param pname A string containing the property name.
-    #
-    # @return True if found, otherwise False.
-    #
-#    def hasRec(self, pname):
-#        
-#        # At the current level.
-#        if hasattr(self, pname):
-#            self.isUsed(pname)
-#            return True
-#
-#        # At a lower level.
-#        for elt in self.getSubXMLObjects():
-#            if elt.hasRec(pname):
-#                return True
-#
-#        return False
 
     ## hasUnused
     #
@@ -534,7 +492,22 @@ class StormXMLObject(object):
     # @param value The value to set the property too.
     #
     def set(self, pname, value):
-        setattr(self, pname, value)
+
+        # Check for list of pnames and values.
+        if isinstance(pname, list):
+            if (len(pname) == len(value)):
+                for i in range(len(pname)):
+                    self.set(pname[i], value[i])
+            else:
+                raise ParameterException("Lengths do not match in parameters multi-set. " + str(len(pname)) + ", " + str(len(value)))
+            return
+        
+        # Check for sub-property.
+        pnames = pname.split(".")
+        if (len(pnames) > 1):
+            self.get(pnames[0]).set(".".join(pnames[1:]), value)
+        else:
+            setattr(self, pname, value)
 
     ## toXML
     #
@@ -568,9 +541,9 @@ class StormXMLObject(object):
 
                 # Lists.
                 elif isinstance(value, list):
-                    if isinstance(value[0], int):
+                    if (len(value) > 0) and isinstance(value[0], int):
                         list_type = "int-array"
-                    elif isinstance(value[0], float):
+                    elif (len(value) > 0) and isinstance(value[0], float):
                         list_type = "float-array"
                     else:
                         list_type = "string-array"
@@ -622,8 +595,9 @@ if __name__ == "__main__":
     if 1:
         p1 = halParameters(sys.argv[1])
         p2 = halParameters(sys.argv[2])
+        p2.set("film.filename", "bar")
                 
-        string = ElementTree.tostring(default_params.toXML(), 'utf-8')
+        string = ElementTree.tostring(p2.toXML(), 'utf-8')
         reparsed = minidom.parseString(string)
         print reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1")
         
