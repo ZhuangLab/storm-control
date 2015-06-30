@@ -290,7 +290,7 @@ class StormXMLObject(object):
     def __init__(self, nodes, recurse = False):
 
         self._recursed_ = False
-        self._unused_ = []
+        self._unused_ = {}
         self._warned_ = False
 
         # FIXME: someday this is going to cause a problem..
@@ -367,7 +367,7 @@ class StormXMLObject(object):
     # @param value The value to set the property too.
     #
     def create(self, pname, value):
-        self._unused_.append(pname)
+        self._unused_[pname] = True
         self.set(pname, value)
 
     ## get
@@ -450,8 +450,9 @@ class StormXMLObject(object):
     def hasUnused(self):
 
         # Check current level.
-        if (len(self._unused_) > 0):
-            return True
+        for key in self._unused_:
+            if self._unused_[key]:
+                return True
 
         # Check lower levels.
         for elt in self.getSubXMLObjects():
@@ -467,10 +468,7 @@ class StormXMLObject(object):
     # @param pname The name of the property.
     #
     def isUsed(self, pname):
-        if (pname == "asdf"):
-            raise ParameterException("wtf??")
-        if pname in self._unused_:
-            self._unused_.remove(pname)
+        self._unused_[pname] = False
 
     ## saveToFile
     #
@@ -523,6 +521,10 @@ class StormXMLObject(object):
                 xml.append(value.toXML(attr))
             else:
 
+                # Don't save the following.
+                if attr in ["shutter_colors", "shutter_data"]:
+                    continue
+                
                 # Handle default power settings.
                 if (attr == "default_power"):
                     for i, elt in enumerate(value):
@@ -547,6 +549,7 @@ class StormXMLObject(object):
                         list_type = "float-array"
                     else:
                         list_type = "string-array"
+
                     field = ElementTree.SubElement(xml, attr)
                     field.set("type", list_type)
                     field.text = ",".join(map(str, value))
