@@ -120,8 +120,8 @@ class SingleCamera(genericCamera.Camera):
     @hdebug.debug
     def handleGainChange(self, gain):
         self.stopCamera()
-        self.parameters.set("camera.emccd_gain", gain)
-        self.camera_control.setEMCCDGain(self.parameters.get("camera.emccd_gain"))
+        self.parameters.set("camera1.emccd_gain", gain)
+        self.camera_control.setEMCCDGain(self.parameters.get("camera1.emccd_gain"))
         self.startCamera()
 
     ## handleMaxFrames
