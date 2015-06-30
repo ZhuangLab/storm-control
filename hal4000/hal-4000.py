@@ -958,9 +958,6 @@ class Window(QtGui.QMainWindow):
             # Close film file.
             self.writer.closeFile()
 
-            # Save current parameters.
-            self.parameters.saveToFile(self.film_name + ".xml")
-
             # Get any changes to the notes made during filming and update log file.
             self.updateNotes() 
             self.logfile_fp.write(str(datetime.datetime.now()) + "," + self.film_name + "," + str(self.parameters.get("film.notes")) + "\r\n")
