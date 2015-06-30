@@ -55,11 +55,11 @@ def copySettings(original, duplicate):
 
         # Main block parameter.
         else:
-            if duplicate.has(sub_attr):
-                settings.set(sub_attr), duplicate.get(sub_attr)
+            if duplicate.has(attr):
+                settings.set(attr, duplicate.get(attr))
     
     if duplicate.hasUnused():
-        raise ParametersException("Unused settings " + ",".join(map(lambda(x): "'" + str(x) + "'", duplicate.getUnused())))
+        raise ParametersException("Unrecognized settings " + ",".join(map(lambda(x): "'" + str(x) + "'", duplicate.getUnused())))
                         
     return settings
 
@@ -229,10 +229,6 @@ def setCameraParameters(camera):
     camera.set("actual_temperature", 0)
     camera.set("exposure_time", 0)      # This is the actual exposure time.
     camera.set("cycle_time", 0)         # This is the time between frames.
-
-#    camera.set("accumulate_value", 0)
-#    camera.set("kinetic_value", 0)
-
 
 ## setDefaultShutters
 #
@@ -431,7 +427,7 @@ class StormXMLObject(object):
     # @return The list of unused parameters.
     #
     def getUnused(self):
-        unused = copy.copy(self._unused_)
+        unused = filter(lambda(x): self._unused_[x], self._unused_.keys())
         for elt in self.getSubXMLObjects():
             unused = unused + elt.getUnused()
         return unused
@@ -475,7 +471,8 @@ class StormXMLObject(object):
     # @param pname The name of the property.
     #
     def isUsed(self, pname):
-        self._unused_[pname] = False
+        if pname in self._unused_:
+            self._unused_[pname] = False
 
     ## saveToFile
     #
