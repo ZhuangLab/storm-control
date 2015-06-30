@@ -358,6 +358,13 @@ class StormXMLObject(object):
                 setattr(self, node.tag, StormXMLObject(node, True))
                 self._recursed_ = True
 
+    ## copy()
+    #
+    # @return A deep copy of this object.
+    #
+    def copy(self):
+        return copy.deepcopy(self)
+
     ## create
     #
     # Create a property. This is basically the same as set, but it also
