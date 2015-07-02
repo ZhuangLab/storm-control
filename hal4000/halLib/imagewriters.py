@@ -156,6 +156,7 @@ class GenericFile:
         self.parameters = parameters.copy()
         self.parameters.set("acquisition", params.StormXMLObject([]))
 
+        # FIXME: different cameras could have different lock targets.
         self.parameters.set("acquisition.lock_target", 0.0)
         self.parameters.set("acquisition.spot_counts", "NA")
         self.parameters.set("acquisition.stage_position", [0.0, 0.0, 0.0])
@@ -199,6 +200,7 @@ class GenericFile:
                          camera)
 
             # Save the parameters.
+            self.parameters.set("acquisition.camera", "camera" + str(i+1))
             self.parameters.set("acquisition.number_frames", self.number_frames[i])
             self.parameters.set("acquisition.x_pixels", camera.get("x_pixels"))
             self.parameters.set("acquisition.y_pixels", camera.get("y_pixels"))
