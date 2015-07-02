@@ -202,8 +202,6 @@ class GenericFile:
             # Save the parameters.
             self.parameters.set("acquisition.camera", "camera" + str(i+1))
             self.parameters.set("acquisition.number_frames", self.number_frames[i])
-            self.parameters.set("acquisition.x_pixels", camera.get("x_pixels"))
-            self.parameters.set("acquisition.y_pixels", camera.get("y_pixels"))
             self.parameters.saveToFile(filename + ".xml")
 
         self.is_open = False
