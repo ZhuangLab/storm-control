@@ -74,16 +74,15 @@ def getCameraSize(parameters, camera_name):
 # the file meta-data.
 #
 # @param filename The name of the movie file.
-# @param filetype The type of the movie file, e.g. ".dax", ".spe", etc.
 # @param number_frames The number of frames in the movie.
 # @param parameters A parameters object.
 # @param camera The camera sub-object of a parameters object.
 # @param stage_position The stage position, [stage x, stage y, stage z].
 # @param lock_target The focus lock target.
 #
-def writeInfFile(filename, filetype, number_frames, parameters, camera):
+def writeInfFile(filename, number_frames, parameters, camera):
     c = camera
-    fp = open(filename[0:-len(filetype)] + ".inf", "w")
+    fp = open(filename + ".inf", "w")
     nl =  "\n"
     p = parameters
 
@@ -190,17 +189,18 @@ class GenericFile:
             for fp in self.file_ptrs:
                 fp.close()
 
-        # Write the inf files.
+        # Write the parameters XML and .inf files.
         for i in range(len(self.filenames)):
             camera = self.parameters.get(self.cameras[i], self.parameters)
-            writeInfFile(self.filenames[i],
-                         self.parameters.get("film.filetype"),
+            filename = self.filenames[i][0:-len(self.parameters.get("film.filetype"))]
+            writeInfFile(filename,
                          self.number_frames[i],
                          self.parameters,
                          camera)
 
-        # Save the parameters.
-        self.parameters.saveToFile(self.filename + ".xml")
+            # Save the parameters.
+            self.parameters.set("acquisition.number_frames", self.number_frames[i])
+            self.parameters.saveToFile(filename + ".xml")
 
         self.is_open = False
 
