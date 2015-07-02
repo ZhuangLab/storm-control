@@ -1065,7 +1065,7 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def updateFilenameLabel(self, dummy):
         name = str(self.ui.filenameEdit.displayText())
-        self.parameters.set("filename", name)
+        self.parameters.set("film.filename", name)
 
         name += "_{0:04d}".format(self.ui.indexSpinBox.value())
 
@@ -1073,7 +1073,7 @@ class Window(QtGui.QMainWindow):
         if len(self.parameters.get("film.extension")) > 0:
             name += "_" + self.parameters.get("film.extension")
 
-        self.parameters.set("filetype", str(self.ui.filetypeComboBox.currentText()))
+        self.parameters.set("film.filetype", str(self.ui.filetypeComboBox.currentText()))
         name += self.parameters.get("film.filetype")
 
         self.ui.filenameLabel.setText(name)

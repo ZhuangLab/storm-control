@@ -194,7 +194,7 @@ class GenericFile:
         for i in range(len(self.filenames)):
             camera = self.parameters.get(self.cameras[i], self.parameters)
             writeInfFile(self.filenames[i],
-                         self.parameters.get("filetype"),
+                         self.parameters.get("film.filetype"),
                          self.number_frames[i],
                          self.parameters,
                          camera)
