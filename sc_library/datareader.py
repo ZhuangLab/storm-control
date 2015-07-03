@@ -84,7 +84,7 @@ class DataReader:
 #
 # Dax reader class. This is a Zhuang lab custom format.
 #
-class DaxReader(Reader):
+class DaxReader(DataReader):
     
     # dax specific initialization
     def __init__(self, filename, xml):
@@ -119,7 +119,7 @@ class DaxReader(Reader):
 #
 # SPE (Roper Scientific) reader class.
 #
-class SpeReader(Reader):
+class SpeReader(DataReader):
 
     # Spe specific initialization.
     def __init__(self, filename, xml):
@@ -170,7 +170,7 @@ class SpeReader(Reader):
 #
 # TIF reader class.
 #
-class TifReader(Reader):
+class TifReader(DataReader):
     def __init__(self, filename):
         DataReader.__init__(self, filename, xml)
                 
