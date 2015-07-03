@@ -348,7 +348,7 @@
               <property name="rightMargin">
                <number>0</number>
               </property>
-              <item row="0" column="1" colspan="2">
+              <item row="0" column="0" colspan="2">
                <widget class="QFrame" name="objectivesFrame">
                 <property name="frameShape">
                  <enum>QFrame::StyledPanel</enum>
@@ -357,45 +357,6 @@
                  <enum>QFrame::Raised</enum>
                 </property>
                </widget>
-              </item>
-              <item row="2" column="2">
-               <widget class="QComboBox" name="magComboBox">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::ClickFocus</enum>
-                </property>
-                <property name="editable">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <widget class="QLabel" name="objectiveLabel">
-                <property name="text">
-                 <string>Current Objective:</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <spacer name="horizontalSpacer">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
               </item>
              </layout>
             </widget>
@@ -685,7 +646,7 @@
      <x>0</x>
      <y>0</y>
      <width>1148</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

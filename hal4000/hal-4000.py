@@ -506,6 +506,22 @@ class Window(QtGui.QMainWindow):
             self.tcpComplete.emit(message)
             return
 
+        # Handle mosaic information request, pass mosaic XML data back:
+        elif (message.getType() == "Get Mosaic Settings"):
+            message.addResponse("pixels_to_um", self.parameters.get("mosaic.pixels_to_um"))
+            i = 1
+            print self.parameters.get("mosaic.obj1")
+            while self.parameters.has("mosaic.obj" + str(i)):
+                print "adding objective"
+                message.addResponse("obj" + str(i), self.parameters.get("mosaic.obj" + str(i)))
+                i += 1
+            self.tcpComplete.emit(message)
+            
+        # Return the current objective.
+        elif (message.getType() == "Get Objective"):
+            message.addResponse("objective", self.parameters.get("mosaic.objective"))
+            self.tcpComplete.emit(message)
+            
         # Handle set directory request:
         elif (message.getType() == "Set Directory"):
 

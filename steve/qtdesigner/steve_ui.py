@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'steve.ui'
 #
-# Created: Thu Jun 18 17:09:10 2015
-#      by: PyQt4 UI code generator 4.9.6
+# Created: Thu Jul  2 21:23:48 2015
+#      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -195,23 +195,7 @@ class Ui_MainWindow(object):
         self.objectivesFrame.setFrameShape(QtGui.QFrame.StyledPanel)
         self.objectivesFrame.setFrameShadow(QtGui.QFrame.Raised)
         self.objectivesFrame.setObjectName(_fromUtf8("objectivesFrame"))
-        self.gridLayout_4.addWidget(self.objectivesFrame, 0, 1, 1, 2)
-        self.magComboBox = QtGui.QComboBox(self.objectivesGroupBox)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.magComboBox.sizePolicy().hasHeightForWidth())
-        self.magComboBox.setSizePolicy(sizePolicy)
-        self.magComboBox.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.magComboBox.setEditable(False)
-        self.magComboBox.setObjectName(_fromUtf8("magComboBox"))
-        self.gridLayout_4.addWidget(self.magComboBox, 2, 2, 1, 1)
-        self.objectiveLabel = QtGui.QLabel(self.objectivesGroupBox)
-        self.objectiveLabel.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
-        self.objectiveLabel.setObjectName(_fromUtf8("objectiveLabel"))
-        self.gridLayout_4.addWidget(self.objectiveLabel, 2, 1, 1, 1)
-        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.gridLayout_4.addItem(spacerItem1, 2, 0, 1, 1)
+        self.gridLayout_4.addWidget(self.objectivesFrame, 0, 0, 1, 2)
         self.verticalLayout_2.addWidget(self.objectivesGroupBox)
         self.groupBox_2 = QtGui.QGroupBox(self.widget)
         self.groupBox_2.setMinimumSize(QtCore.QSize(0, 20))
@@ -350,7 +334,7 @@ class Ui_MainWindow(object):
         self.gridLayout_2.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1148, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1148, 26))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -428,7 +412,6 @@ class Ui_MainWindow(object):
         self.getStagePosButton.setText(_translate("MainWindow", "Get Stage Position", None))
         self.imageGridButton.setText(_translate("MainWindow", "Acquire", None))
         self.objectivesGroupBox.setTitle(_translate("MainWindow", "Objective Settings", None))
-        self.objectiveLabel.setText(_translate("MainWindow", "Current Objective:", None))
         self.groupBox_2.setTitle(_translate("MainWindow", "Misc", None))
         self.trackStageCheckBox.setText(_translate("MainWindow", "Track Stage", None))
         self.scaleLabel.setText(_translate("MainWindow", "Scale:", None))

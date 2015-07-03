@@ -24,7 +24,7 @@ import sc_library.tcpClient as tcpClient
 import sc_library.tcpMessage as tcpMessage
 
 # Reading DAX files
-import sc_library.daxspereader as daxspereader
+import sc_library.datareader as datareader
 
 import coord
 
@@ -50,6 +50,13 @@ def directoryMessage(directory):
 def getPositionMessage():
     return tcpMessage.TCPMessage(message_type = "Get Stage Position")
 
+## mosaicSettingsMessage
+#
+# Creates a mosaic message for communication via TCPClient.
+#
+def mosaicSettingsMessage():
+    return tcpMessage.TCPMessage(message_type = "Get Mosaic Settings")
+    
 ## movieMessage
 #
 # Creates a movie message for communication via TCPClient.
@@ -76,6 +83,13 @@ def moveStageMessage(stagex, stagey):
     return tcpMessage.TCPMessage(message_type = "Move Stage",
                                  message_data = {"stage_x":stagex,
                                                  "stage_y":stagey})
+
+## objectiveMessage
+#
+# Creates a objective message for communication via TCPClient.
+#
+def objectiveMessage():
+    return tcpMessage.TCPMessage(message_type = "Get Objective")
 
 
 ## Image
@@ -127,9 +141,11 @@ class Image():
 #
 class Capture(QtCore.QObject):
     captureComplete = QtCore.pyqtSignal(object)
+    changeObjective = QtCore.pyqtSignal(object)
     disconnected = QtCore.pyqtSignal()
     getPositionComplete = QtCore.pyqtSignal(object)
     gotoComplete = QtCore.pyqtSignal()
+    newObjectiveData = QtCore.pyqtSignal(object)
 
     ## __init__
     #
@@ -138,16 +154,15 @@ class Capture(QtCore.QObject):
     @hdebug.debug
     def __init__(self, parameters):
         QtCore.QObject.__init__(self)
+        self.curr_objective = None
         self.curr_x = 0.0
         self.curr_y = 0.0
         self.dax = None
         self.directory = parameters.directory
         self.goto = False
+        self.got_settings = False
         self.filename = parameters.image_filename
-        self.flip_horizontal = parameters.flip_horizontal
-        self.flip_vertical = parameters.flip_vertical
         self.messages = []
-        self.transpose = parameters.transpose
         self.waiting_for_response = False
 
         self.tcp_client = tcpClient.TCPClient(parent = self,
@@ -191,6 +206,9 @@ class Capture(QtCore.QObject):
             hdebug.logText("captureStart: not connected to HAL.")
             return False
 
+        if not self.got_settings:
+            self.messages.append(mosaicSettingsMessage())                                 
+        self.messages.append(objectiveMessage())
         self.messages.append(moveStageMessage(stagex, stagey))
         self.messages.append(movieMessage(self.filename))
         self.sendFirstMessage()
@@ -235,8 +253,25 @@ class Capture(QtCore.QObject):
             hdebug.logText("getPosition: not connected to HAL.")
             return
 
-        message = getPositionMessage()
-        self.messages.append(message)
+        if not self.got_settings:
+            self.messages.append(mosaicSettingsMessage())
+        self.messages.append(objectiveMessage())
+        self.messages.append(getPositionsMessage())
+        self.sendFirstMessage()
+
+    ## getSettings
+    #
+    # Try and get mosaic settings from HAL.
+    #
+    @hdebug.debug
+    def getSettings(self):
+        
+        if not self.tcp_client.isConnected():
+            hdebug.logText("getSettings: not connected to HAL.")
+            return
+
+        self.messages.append(mosaicSettingsMessage())
+        self.messages.append(objectiveMessage())
         self.sendFirstMessage()
 
     ## gotoPosition
@@ -253,6 +288,9 @@ class Capture(QtCore.QObject):
             hdebug.logText("gotoPosition: not connected to HAL.")
             return
 
+        if not self.got_settings:
+            self.messages.append(mosaicSettingsMessage())                                 
+        self.messages.append(objectiveMessage())
         message = moveStageMessage(stagex, stagey)
         message.addData("is_goto", True)
         self.messages.append(message)
@@ -284,6 +322,19 @@ class Capture(QtCore.QObject):
 
         if (message.getData("is_goto") == True):
             self.gotoComplete.emit()
+                             
+        if (message.getType() == "Get Mosaic Settings"):
+            self.got_settings = True
+            coord.Point.pixels_to_um = message.getResponse("pixels_to_um")
+            i = 1
+            while message.getResponse("obj" + str(i)) is not None:
+                self.newObjectiveData.emit(message.getResponse("obj" + str(i)).split(","))
+                i += 1
+            
+        if (message.getType() == "Get Objective"):
+            if self.curr_objective is None or (self.curr_objective != message.getResponse("objective")):
+                self.curr_objective = message.getResponse("objective")
+                self.changeObjective.emit(self.curr_objective)
 
         if (message.getType() == "Get Stage Position"):
             a_point = coord.Point(message.getResponse("stage_x"),
@@ -326,11 +377,11 @@ class Capture(QtCore.QObject):
             tries += 1
 
         if type(frame) == type(numpy.array([])):
-            if self.flip_horizontal:
+            if self.dax.xml.get("mosaic.flip_horizontal"):
                 frame = numpy.fliplr(frame)
-            if self.flip_vertical:
+            if self.dax.xml.get("mosaic.flip_vertical"):
                 frame = numpy.flipud(frame)
-            if self.transpose:
+            if self.dax.xml.get("mosaic.transpose"):
                 frame = numpy.transpose(frame)
             image = Image(frame,
                           self.dax.filmSize(),
