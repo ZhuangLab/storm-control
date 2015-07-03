@@ -441,8 +441,18 @@ class StormXMLObject(object):
     # @return True if found, otherwise False.
     #
     def has(self, pname):
-        self.isUsed(pname)
-        return hasattr(self, pname)
+
+        # Check for sub-property.
+        pnames = pname.split(".")
+        if (len(pnames) > 1):
+            xml_object = self.get(pnames[0])
+            return xml_object.has(".".join(pnames[1:]))
+
+        if hasattr(self, pname):
+            self.isUsed(pname)
+            return True
+        else:
+            return False
 
     ## hasUnused
     #
