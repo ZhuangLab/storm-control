@@ -117,10 +117,6 @@ def halParameters(parameters_file):
         if xml_object.has(attr):
             setCameraParameters(xml_object.get(attr))
 
-    #xml_object.exposure_value = 0
-    #xml_object.accumulate_value = 0
-    #xml_object.kinetic_value = 0
-
     # And a few random other things
     xml_object.set("seconds_per_frame", 0)
     xml_object.set("initialized", False)
@@ -373,6 +369,22 @@ class StormXMLObject(object):
         self._unused_[pname] = True
         self.set(pname, value)
 
+    ## diff
+    #
+    # Return the parameters that are different in another StormXMLObject from
+    # those in the current object. This does not check recursively.
+    #
+    # @param other The other StormXMLObject.
+    #
+    # @return The names of the properties that are different.
+    #
+    def diff(self, other):
+        diffs = []
+        for pname in filter(lambda(x): not isinstance(self.get(x, mark_used = False), StormXMLObject), self.getAttrs()):
+            if (self.get(pname) != other.get(pname)):
+                diffs.append(pname)
+        return diffs
+                        
     ## get
     #
     # Get a property of this object.
@@ -610,13 +622,14 @@ if __name__ == "__main__":
             print ""
 
     if 1:
-        p1 = halParameters(sys.argv[1])
-        p2 = halParameters(sys.argv[2])
-        p2.set("film.filename", "bar")
-                
-        string = ElementTree.tostring(p2.toXML(), 'utf-8')
-        reparsed = minidom.parseString(string)
-        print reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1")
+        p1 = halParameters(sys.argv[1]).get("camera1")
+        p2 = halParameters(sys.argv[2]).get("camera1")
+        for diff in p2.diff(p1):
+            print diff, p1.get(diff), p2.get(diff)
+
+#        string = ElementTree.tostring(p2.toXML(), 'utf-8')
+#        reparsed = minidom.parseString(string)
+#        print reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1")
         
 #
 # The MIT License
