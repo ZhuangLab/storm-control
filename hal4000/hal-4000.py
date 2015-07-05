@@ -512,14 +512,14 @@ class Window(QtGui.QMainWindow):
             i = 1
             print self.parameters.get("mosaic.obj1")
             while self.parameters.has("mosaic.obj" + str(i)):
-                print "adding objective"
                 message.addResponse("obj" + str(i), self.parameters.get("mosaic.obj" + str(i)))
                 i += 1
             self.tcpComplete.emit(message)
             
         # Return the current objective.
         elif (message.getType() == "Get Objective"):
-            message.addResponse("objective", self.parameters.get("mosaic.objective"))
+            obj_data  = self.parameters.get("mosaic." + self.parameters.get("mosaic.objective"))
+            message.addResponse("objective", obj_data.split(",")[0])
             self.tcpComplete.emit(message)
             
         # Handle set directory request:
