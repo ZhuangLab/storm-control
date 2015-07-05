@@ -59,7 +59,7 @@ class DataReader:
         self.closeFilePtr()
 
     # Check the requested frame number to be sure it is in range.
-    def checkFrameNumber(frame_number):
+    def checkFrameNumber(self, frame_number):
         if (frame_number < 0):
             raise IOError("frame_number must be greater than or equal to 0")
         if (frame_number >= self.number_frames):
