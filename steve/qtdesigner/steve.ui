@@ -322,7 +322,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="objectivesGroupBox">
+            <widget class="ObjectivesGroupBox" name="objectivesGroupBox">
              <property name="minimumSize">
               <size>
                <width>250</width>
@@ -338,31 +338,10 @@
              <property name="title">
               <string>Objective Settings</string>
              </property>
-             <layout class="QGridLayout" name="gridLayout_4">
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>9</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <item row="0" column="0" colspan="2">
-               <widget class="QFrame" name="objectivesFrame">
-                <property name="frameShape">
-                 <enum>QFrame::StyledPanel</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Raised</enum>
-                </property>
-               </widget>
-              </item>
-             </layout>
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="groupBox_2">
+            <widget class="QGroupBox" name="miscGroupBox">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -524,8 +503,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>254</width>
+                   <height>533</height>
                   </rect>
                  </property>
                 </widget>
@@ -646,7 +625,7 @@
      <x>0</x>
      <y>0</y>
      <width>1148</width>
-     <height>26</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -768,6 +747,14 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ObjectivesGroupBox</class>
+   <extends>QGroupBox</extends>
+   <header>objectives</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>xStartPosSpinBox</tabstop>
   <tabstop>yStartPosSpinBox</tabstop>
