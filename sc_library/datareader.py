@@ -58,6 +58,13 @@ class DataReader:
     def __del__(self):
         self.closeFilePtr()
 
+    # Check the requested frame number to be sure it is in range.
+    def checkFrameNumber(frame_number):
+        if (frame_number < 0):
+            raise IOError("frame_number must be greater than or equal to 0")
+        if (frame_number >= self.number_frames):
+            raise IOError("frame number must be less than " + str(self.number_frames))
+            
     # Close the file.
     def closeFilePtr(self):
         if self.fileptr:
@@ -74,21 +81,6 @@ class DataReader:
     # Returns the film size.
     def filmSize(self):
         return [self.image_width, self.image_height, self.number_frames]
-
-#    # Returns the picture x,y,z location.
-#    def filmLocation(self):
-#        return [self.xml.get("acquisition.stage_position")]
-#
-#    # Returns the film focus lock target.
-#    def lockTarget(self):
-#        return [self.xml.get("acquisition.lock_target")]
-#
-#    # Returns the scale used to display the film when
-#    # the picture was taken.
-#    def filmScale(self):
-#        return [[self.xml.get(self.camera + ".scalemin")],
-#                [self.xml.get(self.camera + ".scalemax")]]
-
 
 #
 # Dax reader class. This is a Zhuang lab custom format.
@@ -110,8 +102,7 @@ class DaxReader(DataReader):
     # load a frame & return it as a numpy array
     def loadAFrame(self, frame_number):
         if self.fileptr:
-            assert frame_number >= 0, "frame_number must be greater than or equal to 0"
-            assert frame_number < self.number_frames, "frame number must be less than " + str(self.number_frames)
+            self.checkFrameNumber(frame_number)
             self.fileptr.seek(frame_number * self.image_height * self.image_width * 2)
             image_data = numpy.fromfile(self.fileptr, dtype='int16', count = self.image_height * self.image_width)
             image_data = numpy.transpose(numpy.reshape(image_data, [self.image_width, self.image_height]))
@@ -161,8 +152,7 @@ class SpeReader(DataReader):
     # load a frame & return it as a numpy array
     def loadAFrame(self, frame_number, cast_to_int16 = True):
         if self.fileptr:
-            assert frame_number >= 0, "frame_number must be greater than or equal to 0"
-            assert frame_number < self.number_frames, "frame number must be less than " + str(self.number_frames)
+            self.checkFrameNumber(frame_number)
             self.fileptr.seek(self.header_size + frame_number * self.image_size)
             image_data = numpy.fromfile(self.fileptr, dtype=self.image_mode, count = self.image_height * self.image_width)
             if cast_to_int16:
@@ -189,8 +179,7 @@ class TifReader(DataReader):
         self.number_frames = self.xml.get("acquisition.number_frames")
 
     def loadAFrame(self, frame_number, cast_to_int16 = True):
-        assert frame_number >= 0, "frame_number must be greater than or equal to 0"
-        assert frame_number < self.number_frames, "frame number must be less than " + str(self.number_frames)
+        self.checkFrameNumber(frame_number)
         self.im.seek(frame_number)
         image_data = numpy.array(list(self.im.getdata()))
         assert len(image_data.shape) == 1, "not a monochrome tif image."

@@ -323,7 +323,11 @@ class Capture(QtCore.QObject):
             self.waiting_for_response = False
             return
 
-        if (message.getData("is_other") == True):
+        #
+        # If the message does not involve taking a movie and there are no more
+        # messages then emit the otherComplete signal.
+        #
+        if (message.getData("is_other") == True) and (len(self.messages) == 0):
             self.otherComplete.emit()
             
         if (message.getType() == "Get Mosaic Settings"):
@@ -345,6 +349,9 @@ class Capture(QtCore.QObject):
                                   "um")
             self.getPositionComplete.emit(a_point)
 
+        #
+        # self.loadImage() will emit the captureComplete signal.
+        #
         if (message.getType() == "Take Movie"):
             self.loadImage(self.directory + message.getData("name") + ".dax")
 
@@ -374,8 +381,7 @@ class Capture(QtCore.QObject):
                 self.movie.closeFilePtr()
                 success = True
 
-            # FIXME: Should only be except IOError?
-            except:
+            except IOError:
                 print "Failed to load:" + filename + " frame " + str(frame_num)
                 frame = None
                 time.sleep(0.05)
