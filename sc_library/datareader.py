@@ -19,8 +19,8 @@ import sc_library.parameters as parameters
 # saved in the corresponding XML file.
 #
 def reader(filename):
-    filename = os.path.splitext(filename)[0]    
-    xml = parameters.Parameters(filename + ".xml")
+    no_ext_name = os.path.splitext(filename)[0]    
+    xml = parameters.Parameters(no_ext_name + ".xml")
     file_type = xml.get("film.filetype")
     if (file_type == ".dax"):
         return DaxReader(filename, xml)
@@ -48,6 +48,7 @@ def reader(filename):
 class DataReader:
 
     def __init__(self, filename, xml):
+        self.fileptr = False
         self.filename = filename
         self.xml = xml
 
@@ -55,30 +56,38 @@ class DataReader:
         
     # Close the file on cleanup.
     def __del__(self):
+        self.closeFilePtr()
+
+    # Close the file.
+    def closeFilePtr(self):
         if self.fileptr:
             self.fileptr.close()
-
+            
     # Returns the film name.
     def filmFilename(self):
         return self.filename
 
+    # Returns the film parameters.
+    def filmParameters(self):
+        return self.xml
+        
     # Returns the film size.
     def filmSize(self):
         return [self.image_width, self.image_height, self.number_frames]
 
-    # Returns the picture x,y,z location.
-    def filmLocation(self):
-        return [self.xml.get("acquisition.stage_position")]
-
-    # Returns the film focus lock target.
-    def lockTarget(self):
-        return [self.xml.get("acquisition.lock_target")]
-
-    # Returns the scale used to display the film when
-    # the picture was taken.
-    def filmScale(self):
-        return [[self.xml.get(self.camera + ".scalemin")],
-                [self.xml.get(self.camera + ".scalemax")]]
+#    # Returns the picture x,y,z location.
+#    def filmLocation(self):
+#        return [self.xml.get("acquisition.stage_position")]
+#
+#    # Returns the film focus lock target.
+#    def lockTarget(self):
+#        return [self.xml.get("acquisition.lock_target")]
+#
+#    # Returns the scale used to display the film when
+#    # the picture was taken.
+#    def filmScale(self):
+#        return [[self.xml.get(self.camera + ".scalemin")],
+#                [self.xml.get(self.camera + ".scalemax")]]
 
 
 #
@@ -96,12 +105,7 @@ class DaxReader(DataReader):
         self.number_frames = self.xml.get("acquisition.number_frames")
         
         # open the dax file
-        if os.path.exists(filename):
-            self.fileptr = open(filename, "rb")
-        else:
-            self.fileptr = 0
-            if verbose:
-                print "dax data not found", filename
+        self.fileptr = open(filename, "rb")
 
     # load a frame & return it as a numpy array
     def loadAFrame(self, frame_number):

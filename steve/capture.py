@@ -79,17 +79,19 @@ def movieMessage(filename):
 #
 # @return A TCPMessage object.
 #
-def moveStageMessage(stagex, stagey):  
+def moveStageMessage(stagex, stagey, is_other = False):  
     return tcpMessage.TCPMessage(message_type = "Move Stage",
                                  message_data = {"stage_x":stagex,
-                                                 "stage_y":stagey})
+                                                 "stage_y":stagey,
+                                                 "is_other":is_other})
 
 ## objectiveMessage
 #
 # Creates a objective message for communication via TCPClient.
 #
-def objectiveMessage():
-    return tcpMessage.TCPMessage(message_type = "Get Objective")
+def objectiveMessage(is_other = False):
+    return tcpMessage.TCPMessage(message_type = "Get Objective",
+                                 message_data = {"is_other":is_other})
 
 
 ## Image
@@ -102,18 +104,19 @@ class Image():
     #
     # @param data The image data (a numpy array).
     # @param size [image width, image height, number of frames].
-    # @param display_scale [image value that equals 0, image value that equals 255].
-    # @param location [stage x, stage y].
-    # @param params The HAL xml file that was used to acquire the image.
+    # @param params A StormXMLObject describing the acqusition.
     #
-    def __init__(self, data, size, display_scale, location, params):
+    def __init__(self, data, size, params):
+        self.camera = params.get("acquisition.camera")
         self.data = data
         self.height = size[0]
-        self.image_min = display_scale[0]
-        self.image_max = display_scale[1]
-        self.parameters_file = params
+        self.image_min = params.get(self.camera + ".scalemin")
+        self.image_max = params.get(self.camera + ".scalemax")
+        self.parameters = params
+        self.parameters_file = params.get("parameters_file")
         self.width = size[1]
 
+        location = params.get("acquisition.stage_position")
         self.x_um = location[0]
         self.y_um = location[1]
 
@@ -135,17 +138,17 @@ class Image():
 # this program).
 #
 # The TCP/IP connection is made and broken for each request (take a
-# movie or move to a position). This is done for user convenience
-# because when the connection is active some features of HAL, such 
-# as movie acquisition, are locked out.
+# movie (or movies), move to a position, etc.). This is done for user
+# convenience because when the connection is active some features of
+# HAL, such as movie acquisition, are locked out.
 #
 class Capture(QtCore.QObject):
     captureComplete = QtCore.pyqtSignal(object)
     changeObjective = QtCore.pyqtSignal(object)
     disconnected = QtCore.pyqtSignal()
     getPositionComplete = QtCore.pyqtSignal(object)
-    gotoComplete = QtCore.pyqtSignal()
     newObjectiveData = QtCore.pyqtSignal(object)
+    otherComplete = QtCore.pyqtSignal()
 
     ## __init__
     #
@@ -157,12 +160,12 @@ class Capture(QtCore.QObject):
         self.curr_objective = None
         self.curr_x = 0.0
         self.curr_y = 0.0
-        self.dax = None
         self.directory = parameters.directory
         self.goto = False
         self.got_settings = False
         self.filename = parameters.image_filename
         self.messages = []
+        self.movie = None
         self.waiting_for_response = False
 
         self.tcp_client = tcpClient.TCPClient(parent = self,
@@ -198,6 +201,8 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def captureStart(self, stagex, stagey):
+
+        print stagex, stagey
         
         if os.path.exists(self.fullname()):
             os.remove(self.fullname())
@@ -212,7 +217,6 @@ class Capture(QtCore.QObject):
         self.messages.append(moveStageMessage(stagex, stagey))
         self.messages.append(movieMessage(self.filename))
         self.sendFirstMessage()
-        return True
 
     ## commConnect
     #
@@ -271,7 +275,7 @@ class Capture(QtCore.QObject):
             return
 
         self.messages.append(mosaicSettingsMessage())
-        self.messages.append(objectiveMessage())
+        self.messages.append(objectiveMessage(True))
         self.sendFirstMessage()
 
     ## gotoPosition
@@ -283,7 +287,7 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def gotoPosition(self, stagex, stagey):
-
+        
         if not self.tcp_client.isConnected():
             hdebug.logText("gotoPosition: not connected to HAL.")
             return
@@ -291,9 +295,7 @@ class Capture(QtCore.QObject):
         if not self.got_settings:
             self.messages.append(mosaicSettingsMessage())                                 
         self.messages.append(objectiveMessage())
-        message = moveStageMessage(stagex, stagey)
-        message.addData("is_goto", True)
-        self.messages.append(message)
+        self.messages.append(moveStageMessage(stagex, stagey, True))
         self.sendFirstMessage()
 
     ## handleDisconnect
@@ -314,15 +316,16 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def handleMessageReceived(self, message):
+
         if message.hasError():
             hdebug.logText("tcp error: " + message.getErrorMessage())
             self.messages = []
             self.waiting_for_response = False
             return
 
-        if (message.getData("is_goto") == True):
-            self.gotoComplete.emit()
-                             
+        if (message.getData("is_other") == True):
+            self.otherComplete.emit()
+            
         if (message.getType() == "Get Mosaic Settings"):
             self.got_settings = True
             coord.Point.pixels_to_um = message.getResponse("pixels_to_um")
@@ -366,10 +369,12 @@ class Capture(QtCore.QObject):
         tries = 0
         while (not success) and (tries < 4):
             try:
-                self.dax = daxspereader.DaxReader(filename, verbose = 1)
-                frame = self.dax.loadAFrame(frame_num)
-                self.dax.closeFilePtr()
+                self.movie = datareader.reader(filename)
+                frame = self.movie.loadAFrame(frame_num)
+                self.movie.closeFilePtr()
                 success = True
+
+            # FIXME: Should only be except IOError?
             except:
                 print "Failed to load:" + filename + " frame " + str(frame_num)
                 frame = None
@@ -377,17 +382,15 @@ class Capture(QtCore.QObject):
             tries += 1
 
         if type(frame) == type(numpy.array([])):
-            if self.dax.xml.get("mosaic.flip_horizontal"):
+            if self.movie.xml.get("mosaic.flip_horizontal"):
                 frame = numpy.fliplr(frame)
-            if self.dax.xml.get("mosaic.flip_vertical"):
+            if self.movie.xml.get("mosaic.flip_vertical"):
                 frame = numpy.flipud(frame)
-            if self.dax.xml.get("mosaic.transpose"):
+            if self.movie.xml.get("mosaic.transpose"):
                 frame = numpy.transpose(frame)
             image = Image(frame,
-                          self.dax.filmSize(),
-                          self.dax.filmScale(),
-                          self.dax.filmLocation(),
-                          self.dax.filmParameters())
+                          self.movie.filmSize(),
+                          self.movie.filmParameters())
 
             self.captureComplete.emit(image)
 

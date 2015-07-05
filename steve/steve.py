@@ -369,12 +369,13 @@ class Window(QtGui.QMainWindow):
         self.comm.captureComplete.connect(self.addImage)
         self.comm.disconnected.connect(self.handleDisconnected)
         self.comm.getPositionComplete.connect(self.handleGetPositionComplete)
-        self.comm.gotoComplete.connect(self.handleGotoComplete)
         self.comm.newObjectiveData.connect(self.handleNewObjectiveData)
+        self.comm.otherComplete.connect(self.handleOtherComplete)
 
         self.handleObjectiveChange(0)
         
         # Try and get settings from HAL.
+        self.comm.commConnect()
         self.comm.getSettings()
         
     ## addImage
@@ -403,8 +404,8 @@ class Window(QtGui.QMainWindow):
                 next_y_um = self.current_center.y_um
             else:
                 [tx, ty] = next_item
-                next_x_um = self.current_center.x_um + 0.95 * float(image.width) * self.parameters.pixels_to_um * tx / self.current_magnification
-                next_y_um = self.current_center.y_um + 0.95 * float(image.height) * self.parameters.pixels_to_um * ty / self.current_magnification
+                next_x_um = self.current_center.x_um + 0.95 * float(image.width) * coord.Point.pixels_to_um * tx / self.current_magnification
+                next_y_um = self.current_center.y_um + 0.95 * float(image.height) * coord.Point.pixels_to_um * ty / self.current_magnification
             self.picture_queue = self.picture_queue[1:]
             self.comm.captureStart(next_x_um, next_y_um)
         else:
@@ -601,12 +602,6 @@ class Window(QtGui.QMainWindow):
             self.ui.yStartPosSpinBox.setValue(a_point.y_um)
             self.comm.commDisconnect()
 
-    ## handleGotoComplete
-    #
-    @hdebug.debug
-    def handleGotoComplete(self):
-        self.comm.commDisconnect()
-
     ## handleGridChange
     #
     # Handles a change in the size of the grid of images to take when asked to take a grid of images.
@@ -800,6 +795,12 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleOpacityChange(self, value):
         self.sections.changeOpacity(0.01*float(value))
+        
+    ## handleOtherComplete
+    #
+    @hdebug.debug
+    def handleOtherComplete(self):
+        self.comm.commDisconnect()
 
     ## handleSavePositions
     #
