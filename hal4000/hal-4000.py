@@ -603,7 +603,7 @@ class Window(QtGui.QMainWindow):
             else: # Take movie.
 
                 # Set filename.
-                self.ui.filenameLabel.setText(message.getData("name") + self.parameters.filetype)
+                self.ui.filenameLabel.setText(message.getData("name") + self.parameters.get("film.filetype"))
                 
                 # Record current length and set film length spin box to requested length.
                 self.current_length = self.parameters.get("film.frames")
