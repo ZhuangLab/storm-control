@@ -558,6 +558,12 @@ class StormXMLObject(object):
                         field.set("channel", str(i))
                         field.text = str(elt)
 
+                # Handle button on / off state.
+                elif (attr == "on_off_state"):
+                    field = ElementTree.SubElement(xml, attr)
+                    field.set("type", "int-array")
+                    field.text = ",".join(map(lambda(x): str(int(x)), value))
+                    
                 # Handle power buttons.
                 elif (attr == "power_buttons"):
                     for i, elt in enumerate(value):
