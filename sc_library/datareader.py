@@ -20,7 +20,7 @@ import sc_library.parameters as parameters
 #
 def reader(filename):
     no_ext_name = os.path.splitext(filename)[0]    
-    xml = parameters.Parameters(no_ext_name + ".xml")
+    xml = parameters.parameters(no_ext_name + ".xml")
     file_type = xml.get("film.filetype")
     if (file_type == ".dax"):
         return DaxReader(filename, xml)
