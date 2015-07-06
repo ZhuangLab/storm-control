@@ -14,9 +14,11 @@ from PyQt4 import QtCore, QtGui
 #
 # Handles controls for a single objective.
 #
-class Objective(object):
+class Objective(QtCore.QObject):
+    valueChanged = QtCore.pyqtSignal(str, str, float)
 
     def __init__(self, data, fixed, parent):
+        QtCore.QObject.__init__(self, parent)
         
         self.data = data
         self.fixed = fixed
@@ -38,14 +40,17 @@ class Objective(object):
             sbox = ObjDoubleSpinBox(float(data[1]), 1.0, 200.0, parent)
             sbox.setDecimals(2)
             sbox.setSingleStep(0.01)
+            sbox.valueChanged.connect(self.handleMagChanged)
             self.qt_widgets.append(sbox)
 
             # X offset.
             sbox = ObjDoubleSpinBox(float(data[2]), -10000.0, 10000.0, parent)
+            sbox.valueChanged.connect(self.handleXOffsetChanged)
             self.qt_widgets.append(sbox)
 
             # Y offset.
             sbox = ObjDoubleSpinBox(float(data[3]), -10000.0, 10000.0, parent)
+            sbox.valueChanged.connect(self.handleYOffsetChanged)
             self.qt_widgets.append(sbox)
 
     ## getData
@@ -64,7 +69,22 @@ class Objective(object):
     #
     def getQtWidgets(self):
         return self.qt_widgets
-    
+
+    ## handleMagChange
+    #
+    def handleMagChanged(self, value):
+        self.valueChanged.emit(self.objective_name, "magnification", value)
+
+    ## handleMagChange
+    #
+    def handleXOffsetChanged(self, value):
+        self.valueChanged.emit(self.objective_name, "xoffset", value)
+
+    ## handleMagChange
+    #
+    def handleYOffsetChanged(self, value):
+        self.valueChanged.emit(self.objective_name, "yoffset", value)
+        
     ## select
     #
     # Indicate that this is the current objective.
@@ -79,6 +99,7 @@ class Objective(object):
 # Handle display and interaction with all the objectives.
 #
 class ObjectivesGroupBox(QtGui.QGroupBox):
+    valueChanged = QtCore.pyqtSignal(str, str, float)
     
     def __init__(self, parent):
         QtGui.QGroupBox.__init__(self, parent)
@@ -103,6 +124,7 @@ class ObjectivesGroupBox(QtGui.QGroupBox):
             return
         
         obj = Objective(data, False, self)
+        obj.valueChanged.connect(self.handleValueChanged)
         self.objectives[data[0]] = obj
         
         # Add objective to layout.
@@ -119,6 +141,9 @@ class ObjectivesGroupBox(QtGui.QGroupBox):
     def getData(self, objective_name):
         self.updateSelected(objective_name)
         return self.objectives[objective_name].getData()
+
+    def handleValueChanged(self, objective, pname, value):
+        self.valueChanged.emit(objective, pname, value)
         
     def updateSelected(self, cur_objective):
         if self.last_objective is not None:
@@ -133,6 +158,7 @@ class ObjectivesGroupBox(QtGui.QGroupBox):
 # paint to indicate that it is selected.
 #
 class ObjDoubleSpinBox(QtGui.QWidget):
+    valueChanged = QtCore.pyqtSignal(float)
 
     def __init__(self, val, minimum, maximum, parent):
         QtGui.QWidget.__init__(self, parent)
@@ -142,11 +168,15 @@ class ObjDoubleSpinBox(QtGui.QWidget):
         self.spin_box.setMaximum(maximum)
         self.spin_box.setMinimum(minimum)
         self.spin_box.setValue(val)
+        self.spin_box.valueChanged.connect(self.handleValueChanged)
 
         layout = QtGui.QHBoxLayout(self)
         layout.setMargin(2)
         layout.addWidget(self.spin_box)
 
+    def handleValueChanged(self, value):
+        self.valueChanged.emit(value)
+        
     ## paintEvent
     #
     # Paints the control UI depending on whether it is selected or not.

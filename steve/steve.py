@@ -4,7 +4,11 @@
 #
 # A utility for creating image mosaics and imaging array tomography type samples.
 #
-# Hazen 07/13
+# Since we usually use a 100x objective, everything is defined relative to this
+# objective. This means among other things that internally we use a magnification
+# that is adjusted so that the magnification of the 100x objective is 1.0.
+#
+# Hazen 07/15
 #
 
 import os
@@ -167,8 +171,6 @@ class Window(QtGui.QMainWindow):
 
         # variables
         self.current_center = coord.Point(0.0, 0.0, "um")
-        self.current_magnification = 1.0
-        self.current_objective = False
         self.current_offset = coord.Point(0.0, 0.0, "um")
         self.debug = parameters.debug
         self.file_filter = "\S+.dax"
@@ -270,6 +272,8 @@ class Window(QtGui.QMainWindow):
         self.comm.getPositionComplete.connect(self.handleGetPositionComplete)
         self.comm.newObjectiveData.connect(self.handleNewObjectiveData)
         self.comm.otherComplete.connect(self.handleOtherComplete)
+
+        self.ui.objectivesGroupBox.valueChanged.connect(self.handleMOValueChange)
         
         # Try and get settings from HAL.
         self.comm.commConnect()
@@ -291,7 +295,11 @@ class Window(QtGui.QMainWindow):
             self.comm.commDisconnect()
             return
 
-        self.view.addImage(image, self.current_objective, self.current_magnification, self.current_offset)
+        objective = image.parameters.get("mosaic." + image.parameters.get("mosaic.objective")).split(",")[0]
+        [magnification, x_offset, y_offset] = self.ui.objectivesGroupBox.getData(objective)
+        magnification = magnification * 0.01
+        self.current_offset = coord.Point(x_offset, y_offset, "um")
+        self.view.addImage(image, objective, magnification, self.current_offset)
         self.view.setCrosshairPosition(image.x_pix, image.y_pix)
         if (len(self.picture_queue) > 0):
             next_item = self.picture_queue[0]
@@ -301,8 +309,8 @@ class Window(QtGui.QMainWindow):
                 next_y_um = self.current_center.y_um
             else:
                 [tx, ty] = next_item
-                next_x_um = self.current_center.x_um + 0.95 * float(image.width) * coord.Point.pixels_to_um * tx / self.current_magnification
-                next_y_um = self.current_center.y_um + 0.95 * float(image.height) * coord.Point.pixels_to_um * ty / self.current_magnification
+                next_x_um = self.current_center.x_um + 0.95 * float(image.width) * coord.Point.pixels_to_um * tx / magnification
+                next_y_um = self.current_center.y_um + 0.95 * float(image.height) * coord.Point.pixels_to_um * ty / magnification
             self.picture_queue = self.picture_queue[1:]
             self.comm.captureStart(next_x_um, next_y_um)
         else:
@@ -597,6 +605,23 @@ class Window(QtGui.QMainWindow):
         if positions_filename:
             self.positions.loadPositions(positions_filename)
 
+    ## handleMOValueChange
+    #
+    # Handles the moValueChange signal from the magnification and offset spin boxes.
+    #
+    # @param objective The objective associated with the spin box that was changed.
+    # @param pname The box type of the spin box that was changed.
+    # @param value The new value of the spin box that was changed.
+    #
+    @hdebug.debug
+    def handleMOValueChange(self, objective, pname, value):
+        if (pname == "magnification"):
+            self.view.changeMagnification(objective, value/100.0)
+        elif (pname == "xoffset"):
+            self.view.changeXOffset(objective, coord.umToPix(value))
+        elif (pname == "yoffset"):
+            self.view.changeYOffset(objective, coord.umToPix(value))
+            
     ## handleNewObjectiveData
     #
     # Handles adding a new objective to the list of available objectives.
@@ -941,9 +966,9 @@ if __name__ == "__main__":
 
     # Load settings.
     if (len(sys.argv)==2):
-        parameters = params.Parameters(sys.argv[1])
+        parameters = params.parameters(sys.argv[1])
     else:
-        parameters = params.Parameters("settings_default.xml")
+        parameters = params.parameters("settings_default.xml")
 
     # Start logger.
     hdebug.startLogging(parameters.directory + "logs/", "steve")
