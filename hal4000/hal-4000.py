@@ -672,7 +672,7 @@ class Window(QtGui.QMainWindow):
                                                                    QtGui.QFileDialog.ShowDirsOnly))
         if directory and os.path.exists(directory):
             self.directory = directory + "/"
-            self.parameters.set("film.directory", self.directory)
+            self.parameters.set("film.directory", str(self.directory))
             self.ui.directoryText.setText(trimString(self.parameters.get("film.directory"), 31))
         self.updateFilenameLabel("foo")
 
@@ -713,7 +713,7 @@ class Window(QtGui.QMainWindow):
         p.set("initialized", True)
 
         # The working directory is set by the initial parameters. Subsequent
-        # parameters files don't change the directory
+        # parameters files don't change the directory.
         if self.directory:
             p.set("film.directory", self.directory)
         else:
@@ -1135,7 +1135,7 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def updateNotes(self):
-        self.parameters.set("film.notes", self.ui.notesEdit.toPlainText())
+        self.parameters.set("film.notes", str(self.ui.notesEdit.toPlainText()))
 
 
 if __name__ == "__main__":
