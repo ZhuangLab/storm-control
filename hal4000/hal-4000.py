@@ -510,7 +510,6 @@ class Window(QtGui.QMainWindow):
         elif (message.getType() == "Get Mosaic Settings"):
             message.addResponse("pixels_to_um", self.parameters.get("mosaic.pixels_to_um"))
             i = 1
-            print self.parameters.get("mosaic.obj1")
             while self.parameters.has("mosaic.obj" + str(i)):
                 message.addResponse("obj" + str(i), self.parameters.get("mosaic.obj" + str(i)))
                 i += 1
@@ -518,7 +517,7 @@ class Window(QtGui.QMainWindow):
             
         # Return the current objective.
         elif (message.getType() == "Get Objective"):
-            obj_data  = self.parameters.get("mosaic." + self.parameters.get("mosaic.objective"))
+            obj_data = self.parameters.get("mosaic." + self.parameters.get("mosaic.objective"))
             message.addResponse("objective", obj_data.split(",")[0])
             self.tcpComplete.emit(message)
             
@@ -1151,12 +1150,12 @@ if __name__ == "__main__":
     # Load settings.
     if (len(sys.argv) == 4):
         setup_name = sys.argv[1]
-        hardware = params.Hardware(sys.argv[2])
+        hardware = params.hardware(sys.argv[2])
         parameters = params.halParameters(sys.argv[3])
     else:
-        parameters = params.Parameters("settings_default.xml")
+        parameters = params.parameters("settings_default.xml")
         setup_name = parameters.get("setup_name")
-        hardware = params.Hardware("xml/" + setup_name + "_hardware.xml")
+        hardware = params.hardware("xml/" + setup_name + "_hardware.xml")
         parameters = params.halParameters("xml/" + setup_name + "_default.xml")
     params.setSetupName(parameters, setup_name)
 

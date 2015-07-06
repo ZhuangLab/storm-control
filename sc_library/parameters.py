@@ -94,7 +94,7 @@ def fileType(xml_file):
 def halParameters(parameters_file):
 
     # Read general settings
-    xml_object = Parameters(parameters_file)
+    xml_object = parameters(parameters_file)
 
     #
     # In the process of creating the complete parameters object we can
@@ -137,7 +137,7 @@ def halParameters(parameters_file):
 
     return xml_object
 
-## Hardware
+## hardware
 #
 # Parses a hardware file to create a hardware object.
 #
@@ -145,7 +145,7 @@ def halParameters(parameters_file):
 #
 # @return A hardware object.
 #
-def Hardware(hardware_file):
+def hardware(hardware_file):
     xml = ElementTree.parse(hardware_file).getroot()
     if (xml.tag != "hardware"):
         raise ParametersException(hardware_file + " is not a hardware file.")
@@ -182,7 +182,7 @@ def Hardware(hardware_file):
 
     return xml_object
 
-## Parameters
+## parameters
 #
 # Parses a parameters file to create a parameters object.
 #
@@ -190,7 +190,7 @@ def Hardware(hardware_file):
 #
 # @return A parameters object.
 #
-def Parameters(parameters_file):
+def parameters(parameters_file):
     xml = ElementTree.parse(parameters_file).getroot()
     if (xml.tag != "settings"):
         raise ParameterException(parameters_file + " is not a setting file.")
@@ -336,14 +336,15 @@ class StormXMLObject(object):
                     self.create(slot, float_array)
                 elif (node_type == "string-array"):
                     self.create(slot, node_value.split(","))
-                elif (node_type == "boolean"):
+                elif (node_type == "boolean") or (node_type == "bool"):
                     if node_value == "True":
                         self.create(slot, True)
                     else:
                         self.create(slot, False)
-                # everything else is assumed to be a (non-unicode) string
-                else: 
+                elif (node_type == "string") or (node_type == "str"):
                     self.create(slot, str(node_value))
+                else:
+                    raise ParametersException("unrecognized type, " + node_type)
 
             # Sub-node.
             elif recurse and (len(node) > 0):
@@ -600,6 +601,7 @@ class StormXMLObject(object):
     # 
     def unused(self):
         return []
+
 
 #
 # Testing

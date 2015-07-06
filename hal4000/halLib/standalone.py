@@ -15,12 +15,12 @@ import sc_library.parameters as params
 def runModule(module_type, setup_name = False):
     app = QtGui.QApplication(sys.argv)
 
-    parameters = params.Parameters("settings_default.xml")
+    parameters = params.parameters("settings_default.xml")
     if not setup_name:
         setup_name = parameters.get("setup_name")
     parameters = params.halParameters("xml/" + setup_name + "_default.xml")
     parameters.set("setup_name", setup_name)
-    hardware = params.Hardware("xml/" + setup_name + "_hardware.xml")
+    hardware = params.hardware("xml/" + setup_name + "_hardware.xml")
 
     found = False
     for module in hardware.modules:
