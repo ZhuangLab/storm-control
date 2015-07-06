@@ -130,6 +130,7 @@ class Image():
     def __repr__(self):
         return hdebug.objectToString(self, "capture.Image", ["height", "width", "x_um", "y_um"])
 
+
 ## Capture
 #
 # Handles capturing images from HAL. Instructions to HAL about how
@@ -260,7 +261,7 @@ class Capture(QtCore.QObject):
         if not self.got_settings:
             self.messages.append(mosaicSettingsMessage())
         self.messages.append(objectiveMessage())
-        self.messages.append(getPositionsMessage())
+        self.messages.append(getPositionMessage())
         self.sendFirstMessage()
 
     ## getSettings
