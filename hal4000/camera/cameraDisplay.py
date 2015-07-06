@@ -151,7 +151,7 @@ class CameraDisplay(QtGui.QFrame):
     #
     @hdebug.debug
     def colorTableChange(self, index):
-        self.parameters.set("colortable", self.ui.colorComboBox.currentText() + ".ctbl")
+        self.parameters.set("colortable", str(self.ui.colorComboBox.currentText() + ".ctbl"))
         self.color_table = self.color_tables.getTableByName(self.parameters.get("colortable"))
         self.camera_widget.newColorTable(self.color_table)
         self.color_gradient.newColorTable(self.color_table)
