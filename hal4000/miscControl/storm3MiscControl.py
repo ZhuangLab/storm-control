@@ -153,9 +153,9 @@ class AMiscControl(miscControl.MiscControl):
     @hdebug.debug
     def handleClearROI(self, bool):
         self.start_x = 0
-        self.stop_x = self.parameters.get("x_pixels")
+        self.stop_x = self.parameters.get("camera1.x_pixels")
         self.start_y = 0
-        self.stop_y = self.parameters.get("y_pixels")
+        self.stop_y = self.parameters.get("camera1.y_pixels")
         self.updateROIText()
 
     @hdebug.debug
@@ -245,15 +245,15 @@ class AMiscControl(miscControl.MiscControl):
     @hdebug.debug
     def newParameters(self, parameters):
         self.parameters = parameters
-        self.jog_size = parameters.get("jog_size")
-        self.epi_position = parameters.get("epi_position")
-        self.tirf_position = parameters.get("tirf_position")
+        self.jog_size = parameters.get("misc.jog_size")
+        self.epi_position = parameters.get("misc.epi_position")
+        self.tirf_position = parameters.get("misc.tirf_position")
 
-        names = parameters.filter_names
+        names = parameters.get("misc.filter_names")
         if (len(names) == 6):
             for i in range(6):
                 self.filters[i].setText(names[i])
-        self.filters[self.parameters.get("filter_position")].click()
+        self.filters[self.parameters.get("misc.filter_position")].click()
 
         self.handleClearROI(True)
 

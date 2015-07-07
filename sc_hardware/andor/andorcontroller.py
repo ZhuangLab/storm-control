@@ -423,7 +423,7 @@ class AndorCamera:
         kinetic = c_float()
         andorCheck(andor.GetAcquisitionTimings(byref(exposure), byref(accumulate), byref(kinetic)),
                    "GetAcqisitionTimings")
-        return [exposure.value, accumulate.value, kinetic.value]
+        return [exposure.value, kinetic.value, accumulate.value]
 
     ## getCurrentSetup
     #
