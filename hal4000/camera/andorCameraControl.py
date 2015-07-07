@@ -283,13 +283,13 @@ class ACameraControl(cameraControl.CameraControl):
                 self.camera.setROIAndBinning(cam_roi, cam_binning)
 
             hdebug.logText("Setting Horizontal Shift Speed", False)
-            self.camera.setHSSpeed(p.get("hsspeed"))
+            p.set("hsspeed", self.camera.setHSSpeed(p.get("hsspeed")))
 
             hdebug.logText("Setting Vertical Shift Amplitude", False)
             self.camera.setVSAmplitude(p.get("vsamplitude"))
 
             hdebug.logText("Setting Vertical Shift Speed", False)
-            self.camera.setVSSpeed(p.get("vsspeed"))
+            p.set("vsspeed", self.camera.setVSSpeed(p.get("vsspeed")))
 
             hdebug.logText("Setting EM Gain Mode", False)
             self.camera.setEMGainMode(p.get("emgainmode"))
@@ -304,7 +304,7 @@ class ACameraControl(cameraControl.CameraControl):
             self.camera.setBaselineClamp(p.get("baselineclamp"))
 
             hdebug.logText("Setting Preamp Gain", False)
-            self.camera.setPreAmpGain(p.get("preampgain"))
+            p.set("preampgain", self.camera.setPreAmpGain(p.get("preampgain")))
 
             hdebug.logText("Setting Acquisition Mode", False)
             self.camera.setACQMode("run_till_abort")
