@@ -223,8 +223,8 @@ def setCameraParameters(camera):
                            camera.get("y_bin")])
 
     camera.set("actual_temperature", 0)
-    camera.set("exposure_time", 0)      # This is the actual exposure time.
-    camera.set("cycle_time", 0)         # This is the time between frames.
+    camera.set("exposure_value", 0)      # This is the actual exposure time.
+    camera.set("cycle_value", 0)         # This is the time between frames.
 
 ## setDefaultShutters
 #

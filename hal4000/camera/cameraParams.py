@@ -94,8 +94,8 @@ class CameraParams(QtGui.QGroupBox):
             self.ui.exposureTimeText.setText("External")
             self.ui.FPSText.setText("External")
         else:
-            self.ui.exposureTimeText.setText("%.4f" % p.get("exposure_time"))
-            self.ui.FPSText.setText("%.4f" % (1.0/p.get("cycle_time")))
+            self.ui.exposureTimeText.setText("%.4f" % p.get("exposure_value"))
+            self.ui.FPSText.setText("%.4f" % (1.0/p.get("cycle_value")))
 
     ## newTemperature
     #

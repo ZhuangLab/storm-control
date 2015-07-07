@@ -171,7 +171,6 @@ class JumpLockMode(LockMode):
     # Restarts the focus lock when the relock timer fires.
     #
     def restartLock(self):
-        print "restart", self.relock_timer.interval()
         self.control_thread.startLock()
 
     ## setLockTarget
@@ -904,7 +903,6 @@ class ZScanLockModeV2(AlwaysOnLockMode):
     # Starts the focus lock.
     #
     def startLock(self):
-        print "startLock"
         AlwaysOnLockMode.startLock(self)
         self.counter = 0
         self.current_z = 0.0
@@ -915,7 +913,6 @@ class ZScanLockModeV2(AlwaysOnLockMode):
     # Stops the focus lock.
     #
     def stopLock(self):
-        print "stopLock", self.start_lock_target
         self.control_thread.setTarget(self.start_lock_target)
         AlwaysOnLockMode.stopLock(self)
 
