@@ -60,7 +60,7 @@ def copySettings(original, duplicate):
     
     if duplicate.hasUnused():
         raise ParametersException("Unrecognized settings " + ",".join(map(lambda(x): "'" + str(x) + "'", duplicate.getUnused())))
-                        
+
     return settings
 
 ## fileType
