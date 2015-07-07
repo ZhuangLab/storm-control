@@ -464,6 +464,8 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleChangeObjective(self, objective):
         self.ui.objectivesGroupBox.changeObjective(objective)
+        [magnification, x_offset, y_offset] = self.ui.objectivesGroupBox.getData(objective)
+        self.current_offset = coord.Point(x_offset, y_offset, "um")
 
     ## handleDeleteImages
     #
