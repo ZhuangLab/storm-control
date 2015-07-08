@@ -40,15 +40,23 @@ def debug(fn):
         if a_logger:
             logging_mutex.lock()
             if fn.__module__ == "__main__":
-                a_logger.info(fn.__module__ + "." + fn.__name__)
+                a_logger.info(fn.__module__ + "." + fn.__name__ + " started")
                 for i, arg in enumerate(args):
                     a_logger.info("    " + str(i) + " " + str(arg))
             else:
-                a_logger.info("  " + fn.__module__ + "." + fn.__name__)
+                a_logger.info("  " + fn.__module__ + "." + fn.__name__ + " started")
                 for i, arg in enumerate(args):
                     a_logger.info("      " + str(i) + " " + str(arg))
             logging_mutex.unlock()
-        return fn(*args, **kw)
+        temp = fn(*args, **kw)
+        if a_logger:
+            logging_mutex.lock()
+            if fn.__module__ == "__main__":
+                a_logger.info(fn.__module__ + "." + fn.__name__ + " ended")
+            else:
+                a_logger.info("  " + fn.__module__ + "." + fn.__name__ + " ended")
+            logging_mutex.unlock()
+        return temp
     return __wrapper
 
 ## getDebug
@@ -112,7 +120,7 @@ def startLogging(directory, program_name):
     log_filename = directory + program_name + "_" + str(index) + ".out"
     try:
         rf_handler = logging.handlers.RotatingFileHandler(log_filename,
-                                                          maxBytes = 20000,
+                                                          maxBytes = 200000,
                                                           backupCount = 5)
     except IOError:
         print "Logging Error! Could not open", log_filename
