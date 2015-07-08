@@ -89,7 +89,8 @@ class ChannelUI(QtGui.QFrame):
     # @param on_off The state of the radio button.
     #
     def handleOnOffChange(self, on_off):
-        self.onOffChange.emit(on_off)
+        if not (on_off == self.on_off_button.isChecked()):
+            self.onOffChange.emit(on_off)
 
     ## isEnabled
     #
