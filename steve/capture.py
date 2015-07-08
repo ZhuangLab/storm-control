@@ -258,6 +258,8 @@ class Capture(QtCore.QObject):
             hdebug.logText("getSettings: not connected to HAL.")
             return
 
+        if not self.got_settings:
+            self.messages.append(mosaicSettingsMessage())
         self.messages.append(objectiveMessage(True))
         self.sendFirstMessage()
         
