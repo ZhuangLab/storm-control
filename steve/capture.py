@@ -247,6 +247,20 @@ class Capture(QtCore.QObject):
     def fullname(self):
         return self.directory + self.filename + ".dax"
 
+    ## getObjective
+    #
+    # Called to query HAL about the current objective.
+    #
+    @hdebug.debug
+    def getObjective(self):
+        
+        if not self.tcp_client.isConnected():
+            hdebug.logText("getSettings: not connected to HAL.")
+            return
+
+        self.messages.append(objectiveMessage(True))
+        self.sendFirstMessage()
+        
     ## getPosition
     #
     # Called to query HAL about the current stage position.

@@ -258,6 +258,7 @@ class Window(QtGui.QMainWindow):
 
         self.view.addPosition.connect(self.addPositions)
         self.view.addSection.connect(self.addSection)
+        self.view.getObjective.connect(self.handleGetObjective)
         self.view.gotoPosition.connect(self.gotoPosition)
         self.view.mouseMove.connect(self.updateMosaicLabel)
         self.view.scaleChange.connect(self.updateScaleLineEdit)
@@ -491,6 +492,13 @@ class Window(QtGui.QMainWindow):
     def handleDisconnected(self):
         self.toggleTakingPicturesStatus(False)
 
+    ## handleGetObjective
+    #
+    @hdebug.debug
+    def handleGetObjective(self):
+        self.comm.commConnect()
+        self.comm.getObjective()
+        
     ## handleGetStagePosButton
     #
     # @param dummy Dummy parameter.
