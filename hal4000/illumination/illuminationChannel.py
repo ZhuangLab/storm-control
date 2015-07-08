@@ -111,6 +111,13 @@ class Channel(QtCore.QObject):
         power = self.channel_ui.getAmplitude()
         return "{0:.4f}".format((power - self.min_amplitude)/self.amplitude_range)
 
+    ## getChannelId
+    #
+    # @return The id of the channel
+    #
+    def getChannelId(self):
+        return self.channel_id
+
     ## getHeight
     #
     # @return The height of the channel UI element.
