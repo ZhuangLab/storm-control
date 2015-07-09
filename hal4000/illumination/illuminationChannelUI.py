@@ -89,8 +89,7 @@ class ChannelUI(QtGui.QFrame):
     # @param on_off The state of the radio button.
     #
     def handleOnOffChange(self, on_off):
-        if not (on_off == self.on_off_button.isChecked()):
-            self.onOffChange.emit(on_off)
+        self.onOffChange.emit(on_off)
 
     ## isEnabled
     #
@@ -115,7 +114,8 @@ class ChannelUI(QtGui.QFrame):
     #
     def newSettings(self, on, power):
         old_on = self.on_off_button.isChecked()
-        self.setOnOff(on)
+        if (old_on != on):
+            self.setOnOff(on)
         return [old_on, 0]
 
     ## remoteIncPower
@@ -254,8 +254,10 @@ class ChannelUIAdjustable(ChannelUI):
     def newSettings(self, on, power):
         old_on = self.on_off_button.isChecked()
         old_power = self.powerslider.value()
-        self.setOnOff(on)
-        self.setAmplitude(power)
+        if (old_on != on):
+            self.setOnOff(on)
+        if (old_power != power):
+            self.setAmplitude(power)
         return [old_on, old_power]
 
     ## remoteIncPower
