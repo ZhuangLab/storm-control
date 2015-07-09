@@ -210,7 +210,7 @@ class SingleCamera(genericCamera.Camera):
     @hdebug.debug
     def stopCamera(self):
         self.camera_control.stopCamera()
-        self.updateTemperature()
+#        self.updateTemperature()
 
     ## stopFilm
     #
