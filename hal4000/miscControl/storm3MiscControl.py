@@ -164,7 +164,7 @@ class AMiscControl(miscControl.MiscControl):
             if filter.isChecked():
                 filter.setStyleSheet("QPushButton { color: red}")
                 self.filter_wheel.setPosition(i+1)
-                self.parameters.set("filter_position", i)
+                self.parameters.set("misc.filter_position", i)
             else:
                 filter.setStyleSheet("QPushButton { color: black}")
 
