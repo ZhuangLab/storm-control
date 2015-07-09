@@ -81,8 +81,9 @@ class CameraParams(QtGui.QGroupBox):
             self.ui.EMCCDSlider.valueChanged.disconnect()
             self.ui.EMCCDSlider.setMinimum(p.get("em_gain_low", 1))
             self.ui.EMCCDSlider.setMaximum(p.get("em_gain_high", 10))
+            self.ui.EMCCDSlider.setValue(p.get("emccd_gain"))
+            self.ui.EMCCDLabel.setText("EMCCD Gain: %d" % p.get("emccd_gain"))
             self.ui.EMCCDSlider.valueChanged.connect(self.cameraGainChange)
-            self.ui.EMCCDSlider.setValue(p.emccd_gain)
 
         if p.has("preampgain"):
             self.ui.preampGainText.setText("%.1f" % p.get("preampgain"))
