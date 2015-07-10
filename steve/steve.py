@@ -4,7 +4,11 @@
 #
 # A utility for creating image mosaics and imaging array tomography type samples.
 #
-# Hazen 07/13
+# Since we usually use a 100x objective, everything is defined relative to this
+# objective. This means among other things that internally we use a magnification
+# that is adjusted so that the magnification of the 100x objective is 1.0.
+#
+# Hazen 07/15
 #
 
 import os
@@ -22,6 +26,7 @@ import qtRegexFileDialog
 
 # Graphics
 import mosaicView
+import objectives
 import positions
 import sections
 
@@ -75,8 +80,7 @@ class AdjustContrastDialog(QtGui.QDialog, AdjustContrastDialog_Ui):
         self.high_spin_box.valueChanged.connect(self.handleHighSpinBoxUpdate)
         self.low_spin_box.valueChanged.connect(self.handleLowSpinBoxUpdate)
 
-
-   ## getValues
+    ## getValues
     #
     # Return the values of the directory and file filter text boxes
     #
@@ -146,71 +150,6 @@ class AdjustContrastDialog(QtGui.QDialog, AdjustContrastDialog_Ui):
     def handleLowSpinBoxUpdate(self, dummy):
         self.low_contrast_slider.setValue(self.low_spin_box.value())
 
-## findMO
-#
-# Find the magnification and offsets for the current objective.
-#
-# @param objective The microscope objective (a string).
-# @param spin_boxes A list of spin boxes.
-#
-# @return [magnification, offset in x, offset in y].
-#
-def findMO(objective, spin_boxes):
-    magnification = 1.0
-    x_offset = 0.0
-    y_offset = 0.0
-    for box in spin_boxes:
-        if (box.objective == objective):
-            if (box.box_type == "magnification"):
-                magnification = box.value()
-            elif (box.box_type == "xoffset"):
-                x_offset = box.value()
-            elif (box.box_type == "yoffset"):
-                y_offset = box.value()
-
-    return [magnification, x_offset, y_offset]
-
-## MagOffsetSpinBox
-#
-# Spin boxes that are used to update magnification & offset.
-#
-class MagOffsetSpinBox(QtGui.QDoubleSpinBox):
-    
-    moValueChange = QtCore.pyqtSignal(object, object, float)
-
-    ## __init__
-    #
-    # @param objective The objective the spin boxes are associated with.
-    # @param box_type What kind of spin box this is, one of "magnification", "xoffset" or "yoffset".
-    # @param initial_value The initial value for the spin box.
-    # @param parent (Optional) The PyQt parent of the spin box, default is None.
-    #
-    def __init__(self, objective, box_type, initial_value, parent = None):
-        QtGui.QDoubleSpinBox.__init__(self, parent)
-
-        self.box_type = box_type
-        self.objective = objective
-        
-        if (self.box_type == "magnification"):
-            self.setDecimals(2)
-            self.setMaximum(200.0)
-            self.setMinimum(1.0)
-            self.setSingleStep(0.01)
-        else:
-            self.setMaximum(10000.0)
-            self.setMinimum(-10000.0)
-
-        self.setValue(initial_value)
-
-        self.valueChanged.connect(self.handleValueChange)
-
-    ## handleValueChange
-    #
-    # Emits the moValueChange signal.
-    #
-    def handleValueChange(self, value):
-        self.moValueChange.emit(self.objective, self.box_type, value)
-
 
 ## Window
 #
@@ -228,12 +167,10 @@ class Window(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self, parent)
 
         # coordinate system setup
-        coord.Point.pixels_to_um = parameters.pixels_to_um
+        coord.Point.pixels_to_um = 1.0
 
         # variables
         self.current_center = coord.Point(0.0, 0.0, "um")
-        self.current_magnification = 1.0
-        self.current_objective = False
         self.current_offset = coord.Point(0.0, 0.0, "um")
         self.debug = parameters.debug
         self.file_filter = "\S+.dax"
@@ -244,6 +181,7 @@ class Window(QtGui.QMainWindow):
         self.stage_tracking_timer = QtCore.QTimer(self)
         self.taking_pictures = False
         self.snapshot_directory = self.parameters.directory
+        self.spin_boxes = []
         self.stage_tracking_timer.setInterval(500)
 
         # ui setup
@@ -265,47 +203,10 @@ class Window(QtGui.QMainWindow):
         self.ui.centralwidget.__class__.dragEnterEvent = self.dragEnterEvent
         self.ui.centralwidget.__class__.dropEvent = self.dropEvent
         self.ui.centralwidget.setAcceptDrops(True)
-        
-        # Initialize objectives.
-        objectives = []
-        for i in range(10):
-            mag = "mag" + str(i)
-            if hasattr(self.parameters, mag):
-                data = getattr(self.parameters, mag)
-                obj_name = data.split(",")[0]
-                objectives.append(data)
-                self.ui.magComboBox.addItem(obj_name, data)
-
-        # Create labels and spin boxes for objective settings.
-        self.spin_boxes = []
-        layout = QtGui.QGridLayout(self.ui.objectivesFrame)
-
-        for i, label_text in enumerate(["Objective", "Magnification", "X Offset", "Y Offset"]):
-            text_item = QtGui.QLabel(label_text, self.ui.objectivesFrame)
-            layout.addWidget(text_item, 0, i)
-
-        # The first objective is assumed to be the 100x & is not adjustable.
-        data = objectives[0].split(",")
-        self.current_objective = data[0]
-        for j, datum in enumerate(data):
-            text_item = QtGui.QLabel(datum, self.ui.objectivesFrame)
-            layout.addWidget(text_item, 1, j)
-
-        # The other objectives are adjustable.
-        for i, obj in enumerate(objectives[1:]):
-            data = obj.split(",")
-            text_item = QtGui.QLabel(data[0], self.ui.objectivesFrame)
-            layout.addWidget(text_item, i+2, 0)
-
-            for j, btype in enumerate(["magnification", "xoffset", "yoffset"]):
-                sbox = MagOffsetSpinBox(data[0], btype, float(data[j+1]))
-                layout.addWidget(sbox, i+2, j+1)
-                sbox.moValueChange.connect(self.handleMOValueChange)
-                self.spin_boxes.append(sbox)
 
         # Create a validator for scaleLineEdit.
-        self.sce_validator = QtGui.QDoubleValidator(1.0e-6, 1.0e+6, 6, self.ui.scaleLineEdit)
-        self.ui.scaleLineEdit.setValidator(self.sce_validator)
+        self.scale_validator = QtGui.QDoubleValidator(1.0e-6, 1.0e+6, 6, self.ui.scaleLineEdit)
+        self.ui.scaleLineEdit.setValidator(self.scale_validator)
 
         # Initialize view.
         self.view = mosaicView.MosaicView(parameters, self.ui.mosaicFrame)
@@ -347,7 +248,6 @@ class Window(QtGui.QMainWindow):
         self.ui.foregroundOpacitySlider.valueChanged.connect(self.handleOpacityChange)
         self.ui.getStagePosButton.clicked.connect(self.handleGetStagePosButton)
         self.ui.imageGridButton.clicked.connect(self.handleImageGrid)
-        self.ui.magComboBox.currentIndexChanged.connect(self.handleObjectiveChange)
         self.ui.scaleLineEdit.textEdited.connect(self.handleScaleChange)
         self.ui.tabWidget.currentChanged.connect(self.handleTabChange)
         self.ui.trackStageCheckBox.stateChanged.connect(self.handleTrackStage)
@@ -358,6 +258,7 @@ class Window(QtGui.QMainWindow):
 
         self.view.addPosition.connect(self.addPositions)
         self.view.addSection.connect(self.addSection)
+        self.view.getObjective.connect(self.handleGetObjective)
         self.view.gotoPosition.connect(self.gotoPosition)
         self.view.mouseMove.connect(self.updateMosaicLabel)
         self.view.scaleChange.connect(self.updateScaleLineEdit)
@@ -367,12 +268,18 @@ class Window(QtGui.QMainWindow):
         self.sections.takePictures.connect(self.takePictures)
 
         self.comm.captureComplete.connect(self.addImage)
+        self.comm.changeObjective.connect(self.handleChangeObjective)
         self.comm.disconnected.connect(self.handleDisconnected)
         self.comm.getPositionComplete.connect(self.handleGetPositionComplete)
-        self.comm.gotoComplete.connect(self.handleGotoComplete)
+        self.comm.newObjectiveData.connect(self.handleNewObjectiveData)
+        self.comm.otherComplete.connect(self.handleOtherComplete)
 
-        self.handleObjectiveChange(0)
-
+        self.ui.objectivesGroupBox.valueChanged.connect(self.handleMOValueChange)
+        
+        # Try and get settings from HAL.
+        self.comm.commConnect()
+        self.comm.getSettings()
+        
     ## addImage
     #
     # Adds a capture.Image object to the graphics scene. Checks self.picture_queue to see if there
@@ -389,7 +296,11 @@ class Window(QtGui.QMainWindow):
             self.comm.commDisconnect()
             return
 
-        self.view.addImage(image, self.current_objective, self.current_magnification, self.current_offset)
+        objective = image.parameters.get("mosaic." + image.parameters.get("mosaic.objective")).split(",")[0]
+        [magnification, x_offset, y_offset] = self.ui.objectivesGroupBox.getData(objective)
+        magnification = magnification * 0.01
+        self.current_offset = coord.Point(x_offset, y_offset, "um")
+        self.view.addImage(image, objective, magnification, self.current_offset)
         self.view.setCrosshairPosition(image.x_pix, image.y_pix)
         if (len(self.picture_queue) > 0):
             next_item = self.picture_queue[0]
@@ -399,8 +310,8 @@ class Window(QtGui.QMainWindow):
                 next_y_um = self.current_center.y_um
             else:
                 [tx, ty] = next_item
-                next_x_um = self.current_center.x_um + 0.95 * float(image.width) * self.parameters.pixels_to_um * tx / self.current_magnification
-                next_y_um = self.current_center.y_um + 0.95 * float(image.height) * self.parameters.pixels_to_um * ty / self.current_magnification
+                next_x_um = self.current_center.x_um + 0.95 * float(image.width) * coord.Point.pixels_to_um * tx / magnification
+                next_y_um = self.current_center.y_um + 0.95 * float(image.height) * coord.Point.pixels_to_um * ty / magnification
             self.picture_queue = self.picture_queue[1:]
             self.comm.captureStart(next_x_um, next_y_um)
         else:
@@ -545,6 +456,18 @@ class Window(QtGui.QMainWindow):
         else:
             return
 
+    ## handleChangeObjective
+    #
+    # Handles the objective change signal from capture.
+    #
+    # @param objective The name of the objective.
+    #
+    @hdebug.debug
+    def handleChangeObjective(self, objective):
+        self.ui.objectivesGroupBox.changeObjective(objective)
+        [magnification, x_offset, y_offset] = self.ui.objectivesGroupBox.getData(objective)
+        self.current_offset = coord.Point(x_offset, y_offset, "um")
+
     ## handleDeleteImages
     #
     # Handles the delete images action.
@@ -569,6 +492,13 @@ class Window(QtGui.QMainWindow):
     def handleDisconnected(self):
         self.toggleTakingPicturesStatus(False)
 
+    ## handleGetObjective
+    #
+    @hdebug.debug
+    def handleGetObjective(self):
+        self.comm.commConnect()
+        self.comm.getObjective()
+        
     ## handleGetStagePosButton
     #
     # @param dummy Dummy parameter.
@@ -596,12 +526,6 @@ class Window(QtGui.QMainWindow):
             self.ui.xStartPosSpinBox.setValue(a_point.x_um)
             self.ui.yStartPosSpinBox.setValue(a_point.y_um)
             self.comm.commDisconnect()
-
-    ## handleGotoComplete
-    #
-    @hdebug.debug
-    def handleGotoComplete(self):
-        self.comm.commDisconnect()
 
     ## handleGridChange
     #
@@ -696,47 +620,28 @@ class Window(QtGui.QMainWindow):
     # Handles the moValueChange signal from the magnification and offset spin boxes.
     #
     # @param objective The objective associated with the spin box that was changed.
-    # @param box_type The box type of the spin box that was changed.
+    # @param pname The box type of the spin box that was changed.
     # @param value The new value of the spin box that was changed.
     #
     @hdebug.debug
-    def handleMOValueChange(self, objective, box_type, value):
-        if (box_type == "magnification"):
-            value = value/100.0
-            if (objective == self.current_objective):
-                self.current_magnification = value
-            self.view.changeMagnification(objective, value)
-        elif (box_type == "xoffset"):
-            if (objective == self.current_objective):
-                self.current_offset = coord.Point(value, self.current_offset.y_um, "um")
+    def handleMOValueChange(self, objective, pname, value):
+        if (pname == "magnification"):
+            self.view.changeMagnification(objective, value/100.0)
+        elif (pname == "xoffset"):
             self.view.changeXOffset(objective, coord.umToPix(value))
-        elif (box_type == "yoffset"):
-            if (objective == self.current_objective):
-                self.current_offset = coord.Point(self.current_offset.x_um, value, "um")
+        elif (pname == "yoffset"):
             self.view.changeYOffset(objective, coord.umToPix(value))
-        else:
-            print "unknown box type:", box_type
-
-    ## handleObjectiveChange
+            
+    ## handleNewObjectiveData
     #
-    # Handles the currentIndexChanged signal from the combo box that lists the objectives.
+    # Handles adding a new objective to the list of available objectives.
     #
-    # @param mag_index The index of the newly selected objective.
+    # @param data An array containing the description and information for the new objective.
     #
     @hdebug.debug
-    def handleObjectiveChange(self, mag_index):
-        data = self.ui.magComboBox.itemData(mag_index).toString()
-        if data:
-            data = data.split(",")
-            if (mag_index == 0):
-                [mag, x_offset, y_offset] = map(float, data[1:])
-            else:
-                [mag, x_offset, y_offset] = findMO(data[0], self.spin_boxes)
-            mag = mag/100.0
-            self.current_objective = data[0]
-            self.current_magnification = mag
-            self.current_offset = coord.Point(x_offset, y_offset, "um")
-
+    def handleNewObjectiveData(self, data):
+        self.ui.objectivesGroupBox.addObjective(data)
+        
     ## handleOpacityChange
     #
     # Handles the valueChanged signal from the foreground opacity slider.
@@ -746,6 +651,12 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleOpacityChange(self, value):
         self.sections.changeOpacity(0.01*float(value))
+        
+    ## handleOtherComplete
+    #
+    @hdebug.debug
+    def handleOtherComplete(self):
+        self.comm.commDisconnect()
 
     ## handleSavePositions
     #
@@ -1059,14 +970,15 @@ class Window(QtGui.QMainWindow):
     def quit(self, boolean):
         self.close()
 
+
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
 
     # Load settings.
     if (len(sys.argv)==2):
-        parameters = params.Parameters(sys.argv[1])
+        parameters = params.parameters(sys.argv[1])
     else:
-        parameters = params.Parameters("settings_default.xml")
+        parameters = params.parameters("settings_default.xml")
 
     # Start logger.
     hdebug.startLogging(parameters.directory + "logs/", "steve")

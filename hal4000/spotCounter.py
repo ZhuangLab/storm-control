@@ -456,7 +456,7 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
         self.counters = [False, False]
         self.filming = 0
         self.filenames = [False, False]
-        self.frame_interval = parameters.get("interval", 1)
+        self.frame_interval = parameters.get("spotcounter.interval", 1)
         self.image_graphs = [False, False]
         self.parameters = parameters
         self.spot_counter = False
@@ -480,7 +480,7 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
                              Counter(self.ui.countsLabel3, self.ui.countsLabel4)]
 
         # Setup spot counter.
-        self.spot_counter = qtSpotCounter.QObjectCounter(parameters)
+        self.spot_counter = qtSpotCounter.QObjectCounter(parameters.get("spotcounter"))
         self.spot_counter.imageProcessed.connect(self.updateCounts)
 
         # Setup spot counts graph(s).
@@ -494,8 +494,8 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
             graph_h = parents[i].height() - 4
             self.spot_graphs[i] = QSpotGraph(graph_w,
                                              graph_h,
-                                             parameters.get("min_spots"),
-                                             parameters.get("max_spots"),
+                                             parameters.get("spotcounter.min_spots"),
+                                             parameters.get("spotcounter.max_spots"),
                                              parent = parents[i])
             self.spot_graphs[i].setGeometry(2, 2, graph_w, graph_h)
             self.spot_graphs[i].show()
@@ -656,24 +656,23 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def newParameters(self, parameters):
         self.parameters = parameters
-
+        spotc_params = parameters.get("spotcounter")
+        
         self.frame_interval = parameters.get("interval", 1)
-        self.spot_counter.newParameters(parameters)
+        self.spot_counter.newParameters(spotc_params)
 
         # Update counters, count graph(s) & STORM image(s).
         for i in range(self.number_cameras):
             self.counters[i].reset()
 
-            camera_params = parameters.get("camera" + str(i+1), parameters)
-            #if hasattr(parameters, "camera" + str(i+1)):
-            #    camera_params = getattr(parameters, "camera" + str(i+1))
-            scale_bar_len = (parameters.get("scale_bar_len") / parameters.get("nm_per_pixel")) * \
+            camera_params = parameters.get("camera" + str(i+1))
+            scale_bar_len = (spotc_params.get("scale_bar_len") / spotc_params.get("nm_per_pixel")) * \
                 float(self.image_graphs[i].width()) / float(camera_params.get("x_pixels") * camera_params.get("x_bin"))
             self.image_graphs[i].newParameters(camera_params, scale_bar_len)
 
         # UI update.
-        self.ui.maxSpinBox.setValue(parameters.get("max_spots"))
-        self.ui.minSpinBox.setValue(parameters.get("min_spots"))
+        self.ui.maxSpinBox.setValue(spotc_params.get("max_spots"))
+        self.ui.minSpinBox.setValue(spotc_params.get("min_spots"))
 
     ## updateCounts
     #
@@ -736,7 +735,7 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
             for i in range(self.number_cameras):
                 self.image_graphs[i].saveImage(self.filenames[i])
         if film_writer:
-            film_writer.setSpotCounts(self.counters[0].getCounts())
+            film_writer.getParameters().set("acquisition.spot_counts", self.counters[0].getCounts())
 
 
 ## SingleSpotCounter
@@ -803,13 +802,13 @@ if __name__ == "__main__":
 
     # Start spotCounter as a stand-alone application.
     app = QtGui.QApplication(sys.argv)
-    parameters = params.Parameters(sys.argv[1], is_HAL = True)
+    parameters = params.halParameters(sys.argv[1])
     parameters.set("setup_name", "offline")
     
-    parameters.set("x_pixels", width)
-    parameters.set("y_pixels", height)
-    parameters.set("x_bin", 1)
-    parameters.set("y_bin", 1)
+    parameters.set("camera1.x_pixels", width)
+    parameters.set("camera1.y_pixels", height)
+    parameters.set("camera1.x_bin", 1)
+    parameters.set("camera1.y_bin", 1)
 
     spotCounter = SingleSpotCounter(None, parameters)
     #spotCounter.newParameters(parameters, [[255,255,255]])

@@ -8,6 +8,7 @@
  (f) scipy (for the optimal focus lock mode)
  (g) pywinusb (for the logitech joystick)
  (h) PyBluez (for bluetooth / android)
+ (i) Pillow (or PIL).
 
 (2-3) Note: You should be able to skip the next two steps if you
  are running 64 bit windows as the compiled files are now included in

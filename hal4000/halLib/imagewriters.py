@@ -12,6 +12,7 @@ import struct
 import tiffwriter
 
 import sc_library.hgit as hgit
+import sc_library.parameters as params
 
 # Get the version of the software.
 software_version = hgit.getVersion()
@@ -73,16 +74,15 @@ def getCameraSize(parameters, camera_name):
 # the file meta-data.
 #
 # @param filename The name of the movie file.
-# @param filetype The type of the movie file, e.g. ".dax", ".spe", etc.
 # @param number_frames The number of frames in the movie.
 # @param parameters A parameters object.
 # @param camera The camera sub-object of a parameters object.
 # @param stage_position The stage position, [stage x, stage y, stage z].
 # @param lock_target The focus lock target.
 #
-def writeInfFile(filename, filetype, number_frames, parameters, camera, stage_position, lock_target):
+def writeInfFile(filename, number_frames, parameters, camera):
     c = camera
-    fp = open(filename[0:-len(filetype)] + ".inf", "w")
+    fp = open(filename + ".inf", "w")
     nl =  "\n"
     p = parameters
 
@@ -92,8 +92,8 @@ def writeInfFile(filename, filetype, number_frames, parameters, camera, stage_po
     fp.write("software version = " + software_version + nl)
     fp.write("machine name = " + p.get("setup_name") + nl)
     fp.write("parameters file = " + p.get("parameters_file") + nl)
-    fp.write("shutters file = " + p.get("shutters") + nl)
-    if p.want_big_endian:
+    fp.write("shutters file = " + p.get("illumination.shutters") + nl)
+    if p.get("film.want_big_endian"):
         fp.write("data type = 16 bit integers (binary, big endian)" + nl)
     else:
         fp.write("data type = 16 bit integers (binary, little endian)" + nl)
@@ -109,8 +109,8 @@ def writeInfFile(filename, filetype, number_frames, parameters, camera, stage_po
     fp.write("vertical shift speed = " + str(c.get("vsspeed", "NA")) + nl)
     fp.write("EMCCD Gain = " + str(c.get("emccd_gain", "NA")) + nl)
     fp.write("Preamp Gain = " + str(c.get("preampgain", "NA")) + nl)
-    fp.write("Exposure Time = " + str(c.get("exposure_value")) + nl)
-    fp.write("Frames Per Second = " + str(1.0/c.get("kinetic_value")) + nl)
+    fp.write("Exposure Time = " + str(c.get("exposure_time")) + nl)
+    fp.write("Frames Per Second = " + str(1.0/c.get("cycle_value")) + nl)
     fp.write("camera temperature (deg. C) = " + str(c.get("actual_temperature", "NA")) + nl)
     fp.write("camera head = " + str(c.get("head_model", "NA")) + nl)
     fp.write("ADChannel = " + str(c.get("adchannel", "NA")) + nl)
@@ -123,11 +123,11 @@ def writeInfFile(filename, filetype, number_frames, parameters, camera, stage_po
     fp.write("y_end = " + str(c.get("y_end")) + nl)
 
     # Additional info
-    fp.write("Stage X = {0:.2f}".format(stage_position[0]) + nl)
-    fp.write("Stage Y = {0:.2f}".format(stage_position[1]) + nl)
-    fp.write("Stage Z = {0:.2f}".format(stage_position[2]) + nl)
-    fp.write("Lock Target = " + str(lock_target) + nl)
-    fp.write("notes = " + str(p.get("notes")) + nl)
+    fp.write("Stage X = {0:.2f}".format(p.get("acquisition.stage_position")[0]) + nl)
+    fp.write("Stage Y = {0:.2f}".format(p.get("acquisition.stage_position")[1]) + nl)
+    fp.write("Stage Z = {0:.2f}".format(p.get("acquisition.stage_position")[2]) + nl)
+    fp.write("Lock Target = " + str(p.get("acquisition.lock_target")) + nl)
+    fp.write("notes = " + str(p.get("film.notes")) + nl)
     fp.close()
 
 #def writeInfFile(file_class, stage_position, lock_target):
@@ -152,13 +152,16 @@ class GenericFile:
     #
     def __init__(self, filename, parameters, cameras, extension, want_fp = True):
         self.cameras = cameras
-        self.parameters = parameters
-        self.open = True
+        self.is_open = True
+        self.parameters = parameters.copy()
+        self.parameters.set("acquisition", params.StormXMLObject([]))
 
-        self.lock_target = 0.0
-        self.spot_counts = "NA"
-        self.stage_position = [0.0, 0.0, 0.0]
+        # FIXME: different cameras could have different lock targets.
+        self.parameters.set("acquisition.lock_target", 0.0)
+        self.parameters.set("acquisition.spot_counts", "NA")
+        self.parameters.set("acquisition.stage_position", [0.0, 0.0, 0.0])
 
+        self.filename = filename
         self.filenames = []
         self.file_ptrs = []
         self.number_frames = []
@@ -187,18 +190,21 @@ class GenericFile:
             for fp in self.file_ptrs:
                 fp.close()
 
-        # Write the inf files.
+        # Write the parameters XML and .inf files.
         for i in range(len(self.filenames)):
             camera = self.parameters.get(self.cameras[i], self.parameters)
-            writeInfFile(self.filenames[i],
-                         self.parameters.get("filetype"),
+            filename = self.filenames[i][0:-len(self.parameters.get("film.filetype"))]
+            writeInfFile(filename,
                          self.number_frames[i],
                          self.parameters,
-                         camera,
-                         self.stage_position,
-                         self.lock_target)
+                         camera)
 
-        self.open = False
+            # Save the parameters.
+            self.parameters.set("acquisition.camera", "camera" + str(i+1))
+            self.parameters.set("acquisition.number_frames", self.number_frames[i])
+            self.parameters.saveToFile(filename + ".xml")
+
+        self.is_open = False
 
     ## getFilmLength()
     #
@@ -212,35 +218,42 @@ class GenericFile:
     # @return The film's lock target.
     #
     def getLockTarget(self):
-        return self.lock_target
+        return self.parameters.get("acquisition.lock_target")
 
+    ## getParameters()
+    #
+    # @return The film parameters.
+    #
+    def getParameters(self):
+        return self.parameters
+    
     ## getSpotCounts()
     #
     # @return The film's spot counts.
     #
     def getSpotCounts(self):
-        return self.spot_counts
+        return self.parameters.get("acquisition.spot_counts")
 
-    ## setLockTarget()
-    #
-    # @param lock_target The film's lock target.
-    #
-    def setLockTarget(self, lock_target):
-        self.lock_target = lock_target
-
-    ## setSpotCounts()
-    #
-    # @param spot_counts The film's spot counts (this is saved as a string).
-    #
-    def setSpotCounts(self, spot_counts):
-        self.spot_counts = spot_counts
-
-    ## setStagePosition()
-    #
-    # @param stage_position The new stage position.
-    #
-    def setStagePosition(self, stage_position):
-        self.stage_position = stage_position
+#    ## setLockTarget()
+#    #
+#    # @param lock_target The film's lock target.
+#    #
+#    def setLockTarget(self, lock_target):
+#        self.lock_target = lock_target
+#
+#    ## setSpotCounts()
+#    #
+#    # @param spot_counts The film's spot counts (this is saved as a string).
+#    #
+#    def setSpotCounts(self, spot_counts):
+#        self.spot_counts = spot_counts
+#
+#    ## setStagePosition()
+#    #
+#    # @param stage_position The new stage position.
+#    #
+#    def setStagePosition(self, stage_position):
+#        self.stage_position = stage_position
 
     ## totalFilmSize
     #
@@ -250,7 +263,7 @@ class GenericFile:
         total_size = 0.0
         for i in range(len(self.filenames)):
             temp = self.parameters.get(self.cameras[i], self.parameters)
-            total_size += self.number_frames[i] * temp.bytesPerFrame * 0.000000953674
+            total_size += self.number_frames[i] * temp.get("bytes_per_frame") * 0.000000953674
         return total_size
 
     ## __del__
@@ -258,7 +271,7 @@ class GenericFile:
     # Clean things up if this object is deleted.
     #
     def __del__(self):
-        if self.open:
+        if self.is_open:
             self.closeFile()
 
 ## DaxFile
@@ -287,7 +300,7 @@ class DaxFile(GenericFile):
         for i in range(len(self.cameras)):
             if (frame.which_camera == self.cameras[i]):
                 np_data = frame.getData()
-                if self.parameters.get("want_big_endian"):
+                if self.parameters.get("film.want_big_endian"):
                     np_data = np_data.byteswap()
                     np_data.tofile(self.file_ptrs[i])
                 else:
@@ -326,7 +339,7 @@ class DualCameraFormatFile(GenericFile):
         np_data = frame.getData().copy()
         np_data[0] = int(frame.which_camera[6:])-1
         #temp = chr(camera_int) + chr(camera_int) + copy.copy(frame.data[2:])
-        if self.parameters.get("want_big_endian"):
+        if self.parameters.get("film.want_big_endian"):
             np_data.tofile(self.file_ptrs[0]).byteswap()
             #self.file_ptrs[0].write(fconv.LEtoBE(temp))
         else:

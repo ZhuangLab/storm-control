@@ -36,6 +36,7 @@ class ACameraControl(cameraControl.CameraControl):
         self.fake_frame = 0
         self.fake_frame_size = [0,0]
         self.sleep_time = 50
+        
         self.initCamera()
 
     ## getAcquisitionTimings
@@ -47,7 +48,7 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def getAcquisitionTimings(self):
         time = 0.001 * float(self.sleep_time)
-        return [time, time, time]
+        return [time, time]
 
     ## initCamera
     #
@@ -99,21 +100,26 @@ class ACameraControl(cameraControl.CameraControl):
     #
     @hdebug.debug
     def newParameters(self, parameters):
-        #self.initCamera()
-        if (parameters.get("exposure_time") > 0.010):
-            self.sleep_time = int(1000.0 * parameters.get("exposure_time"))
+        p = parameters.get("camera1")
+        if (p.get("exposure_time") > 0.010):
+            self.sleep_time = int(1000.0 * p.get("exposure_time"))
         else:
             self.sleep_time = 10
-        size_x = parameters.get("x_pixels")
-        size_y = parameters.get("y_pixels")
+            
+        size_x = p.get("x_pixels")
+        size_y = p.get("y_pixels")
         self.fake_frame_size = [size_x, size_y]
         fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
         for i in range(size_x):
             for j in range(size_y):
                 fake_frame[i*2*size_y + j*2] = chr(i % 128 + j % 128)
         self.fake_frame = numpy.fromstring(fake_frame, dtype = numpy.uint16)
-        self.newFilmSettings(parameters, None)
-        self.parameters = parameters
+        
+        if not p.has("bytes_per_frame"):
+            p.set("bytes_per_frame", 2 * p.get("x_pixels") * p.get("y_pixels"))
+
+        self.newFilmSettings(p, None)
+        self.parameters = p
 
     ## run
     #

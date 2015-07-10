@@ -32,10 +32,10 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
         control_thread = stageOffsetControl.StageCamThread(cam,
                                                            stage,
                                                            lock_fn,
-                                                           parameters.get("qpd_sum_min", 50.0),
-                                                           parameters.get("qpd_zcenter"),
-                                                           parameters.get("is_locked_buffer_length", 3),
-                                                           parameters.get("is_locked_offset_thresh", 1))
+                                                           parameters.get("focuslock.qpd_sum_min", 50.0),
+                                                           parameters.get("focuslock.qpd_zcenter"),
+                                                           parameters.get("focuslock.is_locked_buffer_length", 3),
+                                                           parameters.get("focuslock.is_locked_offset_thresh", 1))
         
         ir_laser = LDC210.LDC210PWMLJ()
         focusLockZ.FocusLockZCam.__init__(self,

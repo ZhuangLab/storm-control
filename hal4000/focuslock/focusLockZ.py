@@ -124,7 +124,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
             vbox_layout.addWidget(button)
             self.buttons.append(button)
 
-        self.buttons[parameters.get("qpd_mode")].setChecked(True)
+        self.buttons[parameters.get("focuslock.qpd_mode")].setChecked(True)
 
         for button in self.buttons:
             button.clicked.connect(self.handleRadioButtons)
@@ -362,7 +362,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def newParameters(self, parameters):
         self.parameters = parameters
-        self.lock_display1.newParameters(self.parameters)
+        self.lock_display1.newParameters(self.parameters.get("focuslock"))
 
     ## openOffsetFile
     #
@@ -408,7 +408,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
         self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())
         self.closeOffsetFile()
         if film_writer:
-            film_writer.setLockTarget(self.lock_display1.getLockTarget())
+            film_writer.getParameters().set("acquisition.lock_target", self.lock_display1.getLockTarget())
 
     ## tcpHandleFindSum
     #
@@ -546,7 +546,7 @@ class FocusLockZQPD(FocusLockZ):
         self.ui.setupUi(self)
 
         # Add QPD lock display.
-        self.lock_display1 = lockDisplay.LockDisplayQPD(parameters,
+        self.lock_display1 = lockDisplay.LockDisplayQPD(parameters.get("focuslock"),
                                                         control_thread, 
                                                         ir_laser, 
                                                         self.ui.lockDisplayWidget)
@@ -582,7 +582,7 @@ class FocusLockZCam(FocusLockZ):
         self.ui.setupUi(self)
 
         # Add Camera lock display.
-        self.lock_display1 = lockDisplay.LockDisplayCam(parameters,
+        self.lock_display1 = lockDisplay.LockDisplayCam(parameters.get("focuslock"),
                                                         control_thread, 
                                                         ir_laser, 
                                                         self.ui.lockDisplayWidget)
@@ -617,7 +617,7 @@ class FocusLockZDualCam(FocusLockZ):
         self.ui.setupUi(self)
 
         # Add Camera1 lock display.
-        self.lock_display1 = lockDisplay.LockDisplayCam(parameters,
+        self.lock_display1 = lockDisplay.LockDisplayCam(parameters.get("focuslock"),
                                                         control_threads[0], 
                                                         ir_lasers[0], 
                                                         self.ui.lockDisplay1Widget)
@@ -627,7 +627,7 @@ class FocusLockZDualCam(FocusLockZ):
         self.lock_display1.recenteredPiezo.connect(self.handleRecenteredPiezo)
 
         # Add Camera2 lock display.
-        self.lock_display2 = lockDisplay.LockDisplayCam(parameters,
+        self.lock_display2 = lockDisplay.LockDisplayCam(parameters.get("focuslock"),
                                                         control_threads[1],
                                                         ir_lasers[1],
                                                         self.ui.lockDisplay2Widget)

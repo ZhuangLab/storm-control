@@ -154,6 +154,7 @@ class Crosshair(QtGui.QGraphicsItem):
 class MosaicView(multiView.MultifieldView):
     addPosition = QtCore.pyqtSignal(object)
     addSection = QtCore.pyqtSignal(object)
+    getObjective = QtCore.pyqtSignal()
     gotoPosition = QtCore.pyqtSignal(object)
     mouseMove = QtCore.pyqtSignal(object)
     takePictures = QtCore.pyqtSignal(object)
@@ -177,28 +178,31 @@ class MosaicView(multiView.MultifieldView):
         self.yoffset = 0.0
 
         # popup menu initializiation
+        self.extrapolateAct = QtGui.QAction(self.tr("Extrapolate"), self)
+        self.getObjAct = QtGui.QAction(self.tr("Query Objective"), self)
+        self.gotoAct = QtGui.QAction(self.tr("Goto Position"), self)
         self.pictAct = QtGui.QAction(self.tr("Take Picture"), self)
         self.posAct = QtGui.QAction(self.tr("Record Position"), self)
-        self.secAct = QtGui.QAction(self.tr("Add Section"), self)
-        self.gotoAct = QtGui.QAction(self.tr("Goto Position"), self)
         self.removeAct = QtGui.QAction(self.tr("Remove Last Picture"), self)
-        self.extrapolateAct = QtGui.QAction(self.tr("Extrapolate"), self)
+        self.secAct = QtGui.QAction(self.tr("Add Section"), self)
 
         self.popup_menu = QtGui.QMenu(self)
         self.popup_menu.addAction(self.pictAct)
+        self.popup_menu.addAction(self.gotoAct)
         self.popup_menu.addAction(self.posAct)
         self.popup_menu.addAction(self.secAct)
-        self.popup_menu.addAction(self.gotoAct)
+        self.popup_menu.addAction(self.getObjAct)
         self.popup_menu.addAction(self.removeAct)
         self.popup_menu.addAction(self.extrapolateAct)
 
         # signals
+        self.extrapolateAct.triggered.connect(self.handleExtrapolate)
+        self.getObjAct.triggered.connect(self.handleGetObjective)
+        self.gotoAct.triggered.connect(self.handleGoto)
         self.pictAct.triggered.connect(self.handlePict)
         self.posAct.triggered.connect(self.handlePos)
         self.secAct.triggered.connect(self.handleSec)
-        self.gotoAct.triggered.connect(self.handleGoto)
         self.removeAct.triggered.connect(self.handleRemoveLastItem)
-        self.extrapolateAct.triggered.connect(self.handleExtrapolate)
 
         # crosshair
         self.scene.addItem(self.cross_hair)
@@ -299,6 +303,15 @@ class MosaicView(multiView.MultifieldView):
         pic_list.extend(createSpiral(self.extrapolate_count))
         self.takePictures.emit(pic_list)
 
+    ## handleGetObjective
+    #
+    # Handles querying the current objective.
+    #
+    # @param boolean Dummy parameter.
+    #
+    def handleGetObjective(self, boolean):
+        self.getObjective.emit()
+        
     ## handleGoto
     #
     # Handles the goto (i.e. move the stage) action.

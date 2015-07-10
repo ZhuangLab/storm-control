@@ -111,6 +111,13 @@ class Channel(QtCore.QObject):
         power = self.channel_ui.getAmplitude()
         return "{0:.4f}".format((power - self.min_amplitude)/self.amplitude_range)
 
+    ## getChannelId
+    #
+    # @return The id of the channel
+    #
+    def getChannelId(self):
+        return self.channel_id
+
     ## getHeight
     #
     # @return The height of the channel UI element.
@@ -221,7 +228,7 @@ class Channel(QtCore.QObject):
         self.channel_ui.setupButtons(parameters.get("power_buttons")[self.channel_id])
 
         # Update shutter data, if available.
-        if (parameters.shutter_frames != 0):
+        if (parameters.get("shutter_frames") != -1):
             self.shutter_data = parameters.get("shutter_data")[self.channel_id]
 
         # Normalize power, if necessary.
