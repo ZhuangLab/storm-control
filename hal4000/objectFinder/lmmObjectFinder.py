@@ -11,14 +11,14 @@
 #
 
 from ctypes import *
+import numpy
+from numpy.ctypeslib import ndpointer
 import os
 import sys
 
 lmmoment = False
 
 max_locs = 1000
-loc_type = c_float * max_locs
-
 
 ## cleanup
 #
@@ -36,10 +36,25 @@ def initialize():
     global lmmoment
 
     directory = os.path.dirname(__file__)
-    if not (directory == ""):
+    if (directory == ""):
+        directory = "./"
+    else:
         directory += "/"
 
-    lmmoment = cdll.LoadLibrary(directory + "LMMoment.dll")
+    if (sys.platform == "win32"):
+        lmmoment = cdll.LoadLibrary(directory + "LMMoment.dll")
+    else:
+        lmmoment = cdll.LoadLibrary(directory + "LMMoment.so")
+
+    lmmoment.initialize.argtypes = []
+    lmmoment.cleanup.argtypes = []
+    lmmoment.numberAndLocObjects.argtypes = [ndpointer(dtype=numpy.uint16),
+                                             c_int,
+                                             c_int,
+                                             c_int,
+                                             ndpointer(dtype=numpy.float32),
+                                             ndpointer(dtype=numpy.float32),
+                                             c_void_p]
     lmmoment.initialize()
 
 ## findObjects
@@ -54,13 +69,13 @@ def initialize():
 # @return [[peak x positions], [peak y positions], number of peaks].
 # 
 def findObjects(np_image, image_x, image_y, threshold):
-        x = loc_type()
-        y = loc_type()
+        x = numpy.zeros((max_locs), dtype = numpy.float32)
+        y = numpy.zeros((max_locs), dtype = numpy.float32)
         n = c_int(max_locs)
-        lmmoment.numberAndLocObjects(np_image.ctypes.data,
-                                     c_int(image_y),
-                                     c_int(image_x),
-                                     c_int(threshold),
+        lmmoment.numberAndLocObjects(numpy.ascontiguousarray(np_image, dtype =  numpy.uint16),
+                                     image_y,
+                                     image_x,
+                                     threshold,
                                      x,
                                      y,
                                      byref(n))

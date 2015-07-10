@@ -162,8 +162,8 @@ class QObjectCounter(QtGui.QWidget):
     # @param thread_index The index of the thread that did the processing.
     # @param which_camera The camera that the image that was processed came from.
     # @param frame_number The frame number of the image that was processed.
-    # @param x_locs A Python array of localization x positions.
-    # @param y_locs A Python array of localization y positions.
+    # @param x_locs A numpy array of localization x positions.
+    # @param y_locs A numpy array of localization y positions.
     # @param spots The number of spots in the x_locs, y_locs arrays.
     #
     def returnResults(self, thread_index, which_camera, frame_number, x_locs, y_locs, spots):

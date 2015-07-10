@@ -318,14 +318,14 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
 
         if self.running_shutters:
 
-            # Stop channels.
-            for channel in self.channels:
-                channel.stopFilm()
-
             # Stop hardware.
             for name, instance in self.hardware_modules.iteritems():
                 if (instance.getStatus() == True):
                     instance.stopFilm()
+
+            # Stop channels.
+            for channel in self.channels:
+                channel.stopFilm()
 
             self.running_shutters = False
 
@@ -349,7 +349,10 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
                 channel.setHeight(new_height)
         
         # Resize the group box and the dialog box.
-        new_width = self.channels[-1].getX() + self.channels[1].getWidth() + 7
+        if (len(self.channels) > 1):
+            new_width = self.channels[-1].getX() + self.channels[1].getWidth() + 7
+        else:
+            new_width = self.channels[0].getWidth() + 7
         self.ui.powerControlBox.setGeometry(10, 0, new_width, new_height + 19)
 
         lb_width = self.ui.powerControlBox.width()

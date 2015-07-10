@@ -306,7 +306,7 @@ class Capture(QtCore.QObject):
     # to load images chosen by the user.
     #
     @hdebug.debug
-    def loadImage(self, filename):
+    def loadImage(self, filename, frame_num = 0):
         success = False
 
         # Deals with a file system race condition?
@@ -316,11 +316,11 @@ class Capture(QtCore.QObject):
         while (not success) and (tries < 4):
             try:
                 self.dax = daxspereader.DaxReader(filename, verbose = 1)
-                frame = self.dax.loadAFrame(0)
+                frame = self.dax.loadAFrame(frame_num)
                 self.dax.closeFilePtr()
                 success = True
             except:
-                print "Failed to load:", filename
+                print "Failed to load:" + filename + " frame " + str(frame_num)
                 frame = None
                 time.sleep(0.05)
             tries += 1

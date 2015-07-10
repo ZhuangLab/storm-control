@@ -9,6 +9,7 @@
 
 import os
 import sys
+import re
 from PyQt4 import QtCore, QtGui
 
 # Debugging
@@ -16,6 +17,8 @@ import sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.steve_ui as steveUi
+from qtdesigner.adjust_contrast_dialog_ui import Ui_Dialog as AdjustContrastDialog_Ui
+import qtRegexFileDialog
 
 # Graphics
 import mosaicView
@@ -29,6 +32,119 @@ import capture
 import coord
 import sc_library.parameters as params
 
+class AdjustContrastDialog(QtGui.QDialog, AdjustContrastDialog_Ui):
+    ## __init__
+    #
+    # @param title_text The text of the title of the dialog box
+    # @param default_min_max The starting minimum and maximum values
+    # @param scale_min_max The minimum and maximum allowed values
+    # @param parent (Optional) The PyQt parent of this object, default is None.
+    #
+    @hdebug.debug
+    def __init__(self, parent = None,
+                 title_text = "Adjust Contrast",
+                 default_min_max = [0, 16000],
+                 scale_min_max = [0, 16000],
+                 ):
+        QtGui.QDialog.__init__(self,parent)
+        self.setupUi(self)
+
+        # Update window title.
+        self.setWindowTitle(title_text)
+
+        # Configure the spin boxes.
+        self.high_spin_box.setRange(scale_min_max[0], scale_min_max[1])
+        self.high_spin_box.setValue(default_min_max[1])
+        self.high_spin_box.setSingleStep(1)
+        self.low_spin_box.setRange(scale_min_max[0], scale_min_max[1])
+        self.low_spin_box.setValue(default_min_max[0])
+        self.low_spin_box.setSingleStep(1)
+
+        # Configure the slider.
+        self.high_contrast_slider.setRange(scale_min_max[0], scale_min_max[1])
+        self.high_contrast_slider.setSliderPosition(default_min_max[1])
+        self.low_contrast_slider.setRange(scale_min_max[0], scale_min_max[1])
+        self.low_contrast_slider.setSliderPosition(default_min_max[0])
+
+        # Connect signals.
+        self.high_contrast_slider.sliderMoved.connect(self.handleHighSliderUpdate)
+        self.low_contrast_slider.sliderMoved.connect(self.handleLowSliderUpdate)
+        self.high_contrast_slider.sliderReleased.connect(self.handleHighSliderRelease)
+        self.low_contrast_slider.sliderReleased.connect(self.handleLowSliderRelease)
+
+        self.high_spin_box.valueChanged.connect(self.handleHighSpinBoxUpdate)
+        self.low_spin_box.valueChanged.connect(self.handleLowSpinBoxUpdate)
+
+
+   ## getValues
+    #
+    # Return the values of the directory and file filter text boxes
+    #
+    # @return The minimum and maximum contrast values set by the user
+    @hdebug.debug
+    def getValues(self):
+        return [self.low_spin_box.value(), self.high_spin_box.value()]
+
+
+    # handleHighSliderRelease
+    #
+    # Coerce slider value to new range upon release
+    #
+    @hdebug.debug
+    def handleHighSliderRelease(self):
+        new_value = self.high_contrast_slider.value()
+        low_value = self.low_spin_box.value()
+        if new_value > low_value: # Coerce to larger than low contrast
+            self.high_spin_box.setValue(new_value)
+        else:
+            self.high_contrast_slider.setValue(low_value+1)
+            self.high_spin_box.setMinimum(low_value+1)
+
+    # handleLowSliderRelease
+    #
+    # Coerce slider value to new range upon release
+    #
+    @hdebug.debug
+    def handleLowSliderRelease(self):
+        new_value = self.low_contrast_slider.value()
+        high_value = self.high_spin_box.value()
+        if new_value < high_value: # Coerce to smaller than high contrast
+            self.low_spin_box.setValue(new_value)
+        else:
+            self.low_contrast_slider.setValue(high_value-1)
+            self.low_spin_box.setMaximum(high_value-1)
+    
+    # handleHighSliderUpdate
+    #
+    # Handle movement of the high contrast slider
+    #
+    @hdebug.debug
+    def handleHighSliderUpdate(self, dummy):
+        self.high_spin_box.setValue(self.high_contrast_slider.value())
+
+    # handleLowSliderUpdate
+    #
+    # Handle movement of the low contrast slider
+    #
+    @hdebug.debug
+    def handleLowSliderUpdate(self, dummy):
+        self.low_spin_box.setValue(self.low_contrast_slider.value())
+
+    # handleHighSpinBoxUpdate
+    #
+    # Handle user adjustment of the high contrast spin box
+    #
+    @hdebug.debug
+    def handleHighSpinBoxUpdate(self, dummy):
+        self.high_contrast_slider.setValue(self.high_spin_box.value())
+    
+    # handleLowSpinBoxUpdate
+    #
+    # Handle user adjustment of the low contrast spin box
+    #
+    @hdebug.debug
+    def handleLowSpinBoxUpdate(self, dummy):
+        self.low_contrast_slider.setValue(self.low_spin_box.value())
 
 ## findMO
 #
@@ -120,11 +236,14 @@ class Window(QtGui.QMainWindow):
         self.current_objective = False
         self.current_offset = coord.Point(0.0, 0.0, "um")
         self.debug = parameters.debug
+        self.file_filter = "\S+.dax"
         self.parameters = parameters
         self.picture_queue = []
+        self.regexp_str = ""
+        self.requested_stage_pos = False
         self.stage_tracking_timer = QtCore.QTimer(self)
         self.taking_pictures = False
-
+        self.snapshot_directory = self.parameters.directory
         self.stage_tracking_timer.setInterval(500)
 
         # ui setup
@@ -142,6 +261,11 @@ class Window(QtGui.QMainWindow):
 
         self.setWindowIcon(QtGui.QIcon("steve.ico"))
 
+        # handling file drops
+        self.ui.centralwidget.__class__.dragEnterEvent = self.dragEnterEvent
+        self.ui.centralwidget.__class__.dropEvent = self.dropEvent
+        self.ui.centralwidget.setAcceptDrops(True)
+        
         # Initialize objectives.
         objectives = []
         for i in range(10):
@@ -210,8 +334,8 @@ class Window(QtGui.QMainWindow):
         self.comm = capture.Capture(parameters)
 
         # signals
-        self.ui.abortButton.clicked.connect(self.handleAbort)
         self.ui.actionQuit.triggered.connect(self.quit)
+        self.ui.actionAdjust_Contrast.triggered.connect(self.handleAdjustContrast)
         self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
         self.ui.actionLoad_Dax.triggered.connect(self.handleLoadDax)
         self.ui.actionLoad_Mosaic.triggered.connect(self.handleLoadMosaic)
@@ -221,6 +345,8 @@ class Window(QtGui.QMainWindow):
         self.ui.actionSave_Snapshot.triggered.connect(self.handleSnapshot)
         self.ui.actionSet_Working_Directory.triggered.connect(self.handleSetWorkingDirectory)
         self.ui.foregroundOpacitySlider.valueChanged.connect(self.handleOpacityChange)
+        self.ui.getStagePosButton.clicked.connect(self.handleGetStagePosButton)
+        self.ui.imageGridButton.clicked.connect(self.handleImageGrid)
         self.ui.magComboBox.currentIndexChanged.connect(self.handleObjectiveChange)
         self.ui.scaleLineEdit.textEdited.connect(self.handleScaleChange)
         self.ui.tabWidget.currentChanged.connect(self.handleTabChange)
@@ -259,7 +385,7 @@ class Window(QtGui.QMainWindow):
 
         # If image is not an object then we are done.
         if not image:
-            self.taking_pictures = False
+            self.toggleTakingPicturesStatus(False)
             self.comm.commDisconnect()
             return
 
@@ -279,7 +405,7 @@ class Window(QtGui.QMainWindow):
             self.comm.captureStart(next_x_um, next_y_um)
         else:
             if self.taking_pictures:
-                self.taking_pictures = False
+                self.toggleTakingPicturesStatus(False)
                 self.comm.commDisconnect()
 
     ## addPositions
@@ -317,6 +443,69 @@ class Window(QtGui.QMainWindow):
     def closeEvent(self, event):
         self.cleanUp()
 
+    ## dragEnterEvent
+    #
+    # This is called when a file is dragged into the main window.
+    #
+    # @param event A QEvent object.
+    #
+    @hdebug.debug
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            event.ignore()
+
+    ## dropEvent
+    #
+    # This is called when a file is dropped on the main window. 
+    #
+    # @param event A QEvent object containing the filenames.
+    #
+    @hdebug.debug
+    def dropEvent(self, event):
+        # Initialize filenames variable
+        filenames = []
+
+        # Tranfer urls to filenames
+        for url in event.mimeData().urls():
+            filenames.append(str(url.toLocalFile()))
+
+        # Sort file names
+        filenames = sorted(filenames)
+
+        # Identify first type
+        name, firstType = os.path.splitext(filenames[0])
+
+        # Check to see if all types are the same
+        sameType = []
+        for filename in filenames:
+            name, fileType = os.path.splitext(filename)
+            sameType.append(fileType == firstType)
+
+        # If not, raise an error and abort load
+        if not all(sameType):
+            hdebug.logText(" Loaded mixed file types")
+            QtGui.QMessageBox.information(self,
+                                          "Too many file types",
+                                          "")
+            return
+        
+        # Load files
+        if (firstType == '.dax'): # Load dax files
+            filenameList = QtCore.QStringList() # Convert strings to QStringList
+            for filename in filenames:
+                filenameList.append(filename)
+            self.loadDax(filenameList)
+        elif (firstType == '.msc'): # Load mosaics
+            for filename in sorted(filenames):
+                self.loadMosaic(filename)
+        else:
+            hdebug.logText(" " + firstType + " is not recognized")
+            QtGui.QMessageBox.information(self,
+                                          "File type not recognized",
+                                          "")                    
+
     ## gotoPosition
     #
     # Tell HAL to move to the specified position (if self.taking_pictures is False).
@@ -329,15 +518,32 @@ class Window(QtGui.QMainWindow):
             self.comm.commConnect()
             self.comm.gotoPosition(point.x_um - self.current_offset.x_um, point.y_um - self.current_offset.y_um)
 
-    ## handleAbort
+    ## handleAdjustContrast
     #
-    # Handles the abort pictures button.
+    # Handles a request to adjust the contrast of all imageItems.
     #
     # @param boolean Dummy parameter.
     #
     @hdebug.debug
-    def handleAbort(self, boolean):
-        self.picture_queue = []
+    def handleAdjustContrast(self, boolean):
+        # Determine the current contrast
+        current_contrast = self.view.getContrast()
+        print "Current Contrast: " + str(current_contrast)
+        if current_contrast[0] is None:
+            current_contrast = [0, 16000] # Default values for HAL: FIXME
+ 
+        # Prepare and display dialog
+        dialog = AdjustContrastDialog(self,
+                                      "Adjust Contrast",
+                                      current_contrast)
+        
+        if dialog.exec_():
+            newRange = dialog.getValues() # Get values
+            print "Adjusted Contrast: " + str(newRange)
+
+            self.view.changeContrast(newRange)
+        else:
+            return
 
     ## handleDeleteImages
     #
@@ -361,18 +567,35 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleDisconnected(self):
-        self.taking_pictures = False
+        self.toggleTakingPicturesStatus(False)
 
+    ## handleGetStagePosButton
+    #
+    # @param dummy Dummy parameter.
+    #
+    @hdebug.debug
+    def handleGetStagePosButton(self, dummy):
+        self.requested_stage_pos = True
+        self.comm.commConnect()
+        self.comm.getPosition()
+        
     ## handleGetPositionComplete
     #
     # @param a_point A coord.Point object specifying the current stage location.
     #
     @hdebug.debug
     def handleGetPositionComplete(self, a_point):
-        offset_point = coord.Point(a_point.x_um + self.current_offset.x_um,
-                                   a_point.y_um + self.current_offset.y_um,
-                                   "um")
-        self.view.setCrosshairPosition(offset_point.x_pix, offset_point.y_pix)
+        if not self.requested_stage_pos:
+            # Update cross hair
+            offset_point = coord.Point(a_point.x_um + self.current_offset.x_um,
+                                       a_point.y_um + self.current_offset.y_um,
+                                       "um")
+            self.view.setCrosshairPosition(offset_point.x_pix, offset_point.y_pix)
+        else:
+            self.requested_stage_pos = False
+            self.ui.xStartPosSpinBox.setValue(a_point.x_um)
+            self.ui.yStartPosSpinBox.setValue(a_point.y_um)
+            self.comm.commDisconnect()
 
     ## handleGotoComplete
     #
@@ -393,24 +616,55 @@ class Window(QtGui.QMainWindow):
         self.sections.gridChange(self.ui.xSpinBox.value(),
                                  self.ui.ySpinBox.value())
 
+    ## handleImageGrid
+    #
+    # Handles the press of the Image Grid button.
+    #
+    # @param num Dummy parameter.
+    #
+    @hdebug.debug
+    def handleImageGrid(self, dummy):
+        if not self.taking_pictures:
+            # Build position list
+            pos_list = mosaicView.createGrid(self.ui.xSpinBox.value(), self.ui.ySpinBox.value())
+
+            # Define first position
+            first_pos = coord.Point(self.ui.xStartPosSpinBox.value(),
+                                    self.ui.yStartPosSpinBox.value(),
+                                    "um")
+            pos_list.insert(0,first_pos)
+
+            # Take pictures
+            self.takePictures(pos_list)
+        else: # Abort button
+            self.picture_queue = []
+            # addImage will handle reseting the ui and disconnecting comm
+
     ## handleLoadDax
     #
-    # Handles loading dax files, which can be useful for retrospective analysis.
+    # Handles user request to load dax files.
     #
     # @param boolean Dummy parameter.
     #
     @hdebug.debug
     def handleLoadDax(self, boolean):
-        dax_filenames = QtGui.QFileDialog.getOpenFileNames(self,
-                                                           "Load Dax Files",
-                                                           self.parameters.directory,
-                                                           "*.dax")
-        for i in range(dax_filenames.count()):
-            self.comm.loadImage(str(dax_filenames.takeFirst()))
-    
+        # Open custom dialog to select files and frame number
+        [filenames, frame_num, file_filter] = qtRegexFileDialog.regexGetFileNames(directory = self.parameters.directory,
+                                                                                  regex = self.regexp_str,
+                                                                                  extensions = "*.dax")
+        if (filenames is not None) and (len(filenames) > 0):
+            print "Found " + str(len(filenames)) + " files matching " + str(file_filter) + " in " + os.path.dirname(filenames[0])
+            print "Loading frame: " + str(frame_num)
+
+            # Save regexp string for next time the dialog is opened
+            self.regexp_str = file_filter
+                
+            # Load dax
+            self.loadDax(filenames, frame_num)
+                                         
     ## handleLoadMosaic
     #
-    # Handles the load mosaic action.
+    # Handles a user request to load a mosaic.
     #
     # @param boolean Dummy parameter.
     #
@@ -419,56 +673,9 @@ class Window(QtGui.QMainWindow):
         mosaic_filename = str(QtGui.QFileDialog.getOpenFileName(self,
                                                                 "Load Mosaic",
                                                                 self.parameters.directory,
-                                                                "*.msc"))
-        if mosaic_filename:
-            legacy_format = True
-            dirname = os.path.dirname(mosaic_filename)
-
-            mosaic_fp = open(mosaic_filename, "r")
-
-            # First, figure out file size
-            mosaic_fp.readline()
-            number_lines = 0
-            while 1:
-                line = mosaic_fp.readline()
-                if not line: break
-                number_lines += 1
-            mosaic_fp.seek(0)
-
-            # Create progress bar
-            progress_bar = QtGui.QProgressDialog("Load Files...",
-                                                 "Abort Load",
-                                                 0,
-                                                 number_lines,
-                                                 self)
-            progress_bar.setWindowModality(QtCore.Qt.WindowModal)
-
-            mosaic_dirname = os.path.dirname(mosaic_filename)
-            file_number = 1
-            while 1:
-                if progress_bar.wasCanceled(): break
-                line = mosaic_fp.readline().rstrip()
-                if not line: break
-                data = line.split(",")
-                if (self.view.loadFromMosaicFileData(data, mosaic_dirname)):
-                    legacy_format = False
-                elif (self.positions.loadFromMosaicFileData(data, mosaic_dirname)):
-                    legacy_format = False
-                elif (self.sections.loadFromMosaicFileData(data, mosaic_dirname)):
-                    legacy_format = False
-                else:
-                    print "Unrecognized scene element:", data[0]
-                
-                progress_bar.setValue(file_number)
-                file_number += 1
-
-            progress_bar.close()
-            mosaic_fp.close()
-
-            if legacy_format:
-                # load older data formats here..
-                pass
-
+                                                                "*.msc"))    
+        self.loadMosaic(mosaic_filename)
+    
     ## handleLoadPositions
     #
     # Handles the load positions action.
@@ -602,7 +809,8 @@ class Window(QtGui.QMainWindow):
                                                                str(self.parameters.directory),
                                                                QtGui.QFileDialog.ShowDirsOnly))
         if directory:
-            self.parameters.directory = directory + "/"
+            self.parameters.directory = directory + os.path.sep
+            self.snapshot_directory = directory + os.path.sep
             print self.parameters.directory
 
     ## handleSnapshot
@@ -615,11 +823,14 @@ class Window(QtGui.QMainWindow):
     def handleSnapshot(self, boolean):
         snapshot_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
                                                                   "Save Snapshot", 
-                                                                  self.parameters.directory, 
+                                                                  self.snapshot_directory, 
                                                                   "*.png"))
         if snapshot_filename:
             pixmap = QtGui.QPixmap.grabWidget(self.view.viewport())
             pixmap.save(snapshot_filename)
+
+            self.snapshot_directory = os.path.dirname(snapshot_filename)
+            
 
     ## handleStageTrackingTimer
     #
@@ -667,6 +878,94 @@ class Window(QtGui.QMainWindow):
             self.stage_tracking_timer.stop()
             self.comm.commDisconnect()
 
+    ## loadDax
+    #
+    # Handles loading dax files, which can be useful for retrospective analysis.
+    #
+    # @param filenames A list of file names.
+    # @param frame_num The frame number to load. Starts at 0. Default is 0.
+    #
+    @hdebug.debug
+    def loadDax(self, filenames, frame_num = 0):
+
+        # Create progress bar
+        progress_bar = QtGui.QProgressDialog("Loading " + str(len(filenames)) +  " Files ...",
+                                             "Abort Load",
+                                             0,
+                                             len(filenames),
+                                             self)
+        progress_bar.setWindowTitle("Dax Load Progress")
+        progress_bar.setWindowModality(QtCore.Qt.WindowModal)
+        file_number = 1
+        
+        # Load dax files
+        for filename in filenames:
+            if progress_bar.wasCanceled(): break
+            self.comm.loadImage(filename, frame_num)
+            progress_bar.setValue(file_number)
+            file_number += 1
+
+        # Close progress bar
+        progress_bar.close()
+        
+    ## loadMosaic
+    #
+    # Handles the load mosaic action.
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def loadMosaic(self, mosaic_filename):
+        if mosaic_filename:
+            legacy_format = True
+            dirname = os.path.dirname(mosaic_filename)
+
+            mosaic_fp = open(mosaic_filename, "r")
+
+            # First, figure out file size
+            mosaic_fp.readline()
+            number_lines = 0
+            while 1:
+                line = mosaic_fp.readline()
+                if not line: break
+                number_lines += 1
+            mosaic_fp.seek(0)
+
+            # Create progress bar
+            progress_bar = QtGui.QProgressDialog("Load Files...",
+                                                 "Abort Load",
+                                                 0,
+                                                 number_lines,
+                                                 self)
+            progress_bar.setWindowModality(QtCore.Qt.WindowModal)
+
+            mosaic_dirname = os.path.dirname(mosaic_filename)
+            file_number = 1
+            while 1:
+                if progress_bar.wasCanceled(): break
+                line = mosaic_fp.readline().rstrip()
+                if not line: break
+                data = line.split(",")
+                if (self.view.loadFromMosaicFileData(data, mosaic_dirname)):
+                    legacy_format = False
+                elif (self.positions.loadFromMosaicFileData(data, mosaic_dirname)):
+                    legacy_format = False
+                elif (self.sections.loadFromMosaicFileData(data, mosaic_dirname)):
+                    legacy_format = False
+                else:
+                    print "Unrecognized scene element:", data[0]
+                
+                progress_bar.setValue(file_number)
+                file_number += 1
+
+            progress_bar.close()
+            mosaic_fp.close()
+
+            if legacy_format:
+                # load older data formats here..
+                pass
+
+
     ## setCenter
     #
     # Sets the current center (for image acquisition). If an item in the picture_queue is not
@@ -692,16 +991,44 @@ class Window(QtGui.QMainWindow):
         if self.taking_pictures:
             self.picture_queue = []
         else:
+            # Set center point
             point = picture_list[0]
             self.setCenter(point)
+            
+            # Update tile settings
+            pointInUm = point.getUm()
+            self.ui.xStartPosSpinBox.setValue(pointInUm[0])
+            self.ui.yStartPosSpinBox.setValue(pointInUm[1])
+            
+            # Set picture queue and start imaging
             self.picture_queue = picture_list[1:]
-            self.taking_pictures = True
+            self.toggleTakingPicturesStatus(True)
+            
             self.comm.commConnect()
             if self.comm.setDirectory(self.parameters.directory):
                 self.comm.captureStart(self.current_center.x_um, self.current_center.y_um)
             else:
-                self.taking_pictures = False
+                self.toggleTakingPicturesStatus(False)
                 self.picture_queue = []
+
+    ## toggleTakingPicturesStatus
+    #
+    # Takes pictures at the specified absolute or relative positions.
+    #
+    # @param status A boolean determining the imaging status.
+    #
+    @hdebug.debug
+    def toggleTakingPicturesStatus(self, status):
+        self.taking_pictures = status
+        self.ui.xSpinBox.setEnabled(not status)
+        self.ui.ySpinBox.setEnabled(not status)
+        self.ui.xStartPosSpinBox.setEnabled(not status)
+        self.ui.yStartPosSpinBox.setEnabled(not status)
+        self.ui.getStagePosButton.setEnabled(not status)
+        if status:
+            self.ui.imageGridButton.setText("Abort")
+        else:
+            self.ui.imageGridButton.setText("Acquire")
 
     ## updateMosaicLabel
     #

@@ -14,13 +14,14 @@
   <x_bin type="int">1</x_bin>
   <y_bin type="int">1</y_bin>
   <exposure_time type="float">0.01</exposure_time>
+  <defect_correct_mode type="int">1</defect_correct_mode>
 
   <!-- less common camera settings -->
   <external_trigger type="int">0</external_trigger>
 
   <!-- film settings -->
-  <want_big_endian type="int">1</want_big_endian>
-  <directory type="string">C:\Data\</directory>
+  <want_big_endian type="int">0</want_big_endian>
+  <directory type="string">E:\Data\</directory>
   <filename type="string">movie</filename>
   <acq_mode type="string">run_till_abort</acq_mode>
 <!--  <acq_mode type="string">fixed_length</acq_mode> -->
@@ -49,6 +50,7 @@
   <default_power channel="2">1.0</default_power>
   <default_power channel="3">1.0</default_power>
   <default_power channel="4">1.0</default_power>
+  <default_power channel="5">1.0</default_power>
   <button channel="0" power="1.0">Max</button>
   <button channel="0" power="0.1">Low</button>
   <button channel="1" power="1.0">Max</button>
@@ -59,6 +61,8 @@
   <button channel="3" power="0.1">Low</button>
   <button channel="4" power="1.0">Max</button>
   <button channel="4" power="0.1">Low</button>
+  <button channel="5" power="1.0">Max</button>
+  <button channel="5" power="0.1">Low</button>
 
   <!-- stage settings -->
   <small_step_size type="float">5.0</small_step_size>
@@ -70,12 +74,11 @@
   <drag_multiplier type="float">0.16</drag_multiplier>
 
   <!-- focus lock settings -->
+  <ir_power type="int">6</ir_power>
   <qpd_mode type="int">0</qpd_mode>
-  <qpd_zcenter type="float">50.0</qpd_zcenter>
-  <qpd_scale type="float">1400.0</qpd_scale>
-<!--  <qpd_scale type="float">1421.0</qpd_scale> -->
-<!--  <qpd_scale type="float">1.0</qpd_scale> -->
-  <qpd_sum_max type="int">1500</qpd_sum_max>
+  <qpd_zcenter type="float">125.0</qpd_zcenter>
+  <qpd_scale type="float">-70.0</qpd_scale>
+  <qpd_sum_max type="int">256</qpd_sum_max>
   <cal_deadtime type="int">20</cal_deadtime>
   <cal_range type="float">600</cal_range>
   <cal_step_size type="float">10</cal_step_size>
@@ -102,8 +105,11 @@
   <!-- temperature logger settings -->
 
   <!-- misc control -->
-  <filter_names type="string-array">Dy750,Al647,mEos2,Atto488,DAPI,Penta</filter_names>
+  <filter_names type="string-array">Empty,Empty,Penta,Storm,Empty,Empty</filter_names>
   <filter_position type="int">0</filter_position>
+  <em_filter type="int">0</em_filter>
+  <em_checked type="int">0</em_checked>
+  <em_period type="int">60</em_period>
 
   <!-- TCP/IP control -->
   <have_tcp_control type="int">1</have_tcp_control>

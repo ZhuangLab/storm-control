@@ -54,6 +54,8 @@ def checkStatus(status):
         print "nidaq error:", status, buf.value
         traceback.print_stack()
         print " --"
+
+        # FIXME? This error should be thrown, and caller should decide to ignore it (or not).
         #raise RuntimeError('nidaq call failed with error %d: %s'%(status, buf.value))
 
 
