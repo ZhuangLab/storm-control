@@ -50,11 +50,13 @@ for ext in [".5", ".4", ".3", ".2", ".1", ""]:
                 elapsed = "{0:6.2f}".format((cur_time - start_time).total_seconds())
                     
             # Command start.
-            if ("started" in line):
+            if (" started" in line):
                 print elapsed, " " * indent, command
                 indent += 2
 
             # Command end.
-            if ("ended" in line):
+            if (" ended" in line):
                 indent -= 2
+                if (indent < 0):
+                    indent = 0
                 print elapsed, " " * indent, command
