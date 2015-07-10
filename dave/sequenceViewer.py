@@ -41,12 +41,28 @@ class DaveActionStandardItem(QtGui.QStandardItem):
     def getDaveAction(self):
         return self.dave_action
 
+    ## getDaveActionID
+    #
+    # @return The id associated with the DaveAction associated with this item.
+    #
+    def getDaveActionID(self):
+        return self.dave_action.getID()
+
     ## isValid
     #
     # @return True/False if the command is valid.
     #
     def isValid(self):
         return self.valid
+
+    ## setUsageEstimates
+    #
+    # @param disk_usage The estimated disk_usage for the action
+    # @param duration The estimated duration of the action
+    #
+    def setUsageEstimates(self, disk_usage, duration):
+        self.dave_action.setDiskUsage(disk_usage)
+        self.dave_action.setDuration(duration)
 
     ## setValid
     #
@@ -82,7 +98,6 @@ class DaveCommandTreeViewer(QtGui.QTreeView):
     def __init__(self, parent = None):
         QtGui.QTreeView.__init__(self, parent)
 
-        #self.current_rect = None
         self.aborted = False
         self.dv_model = None
 
@@ -268,6 +283,14 @@ class DaveCommandTreeViewer(QtGui.QTreeView):
             self.dv_model.setCurrentAction(an_item)
             self.viewportUpdate()
 
+    ## setCurrentItemValidity
+    #
+    # @param is_valid True/False determines the validity of the currentItem(s)
+    #
+    def setCurrentItemValid(self, is_valid):
+        if self.dv_model is not None:
+            self.dv_model.setCurrentItemValid(is_valid)
+
     ## setModel
     #
     # @param qt_model The DaveStandardItemModel associated with the tree.
@@ -276,7 +299,20 @@ class DaveCommandTreeViewer(QtGui.QTreeView):
         self.dv_model = dv_model
         QtGui.QTreeView.setModel(self, self.dv_model)
         self.viewportUpdate()
-        #self.reset()
+
+    ## setTestMode
+    #
+    # @param test_mode True/False sets the test mode of the DaveStandardItemModel.
+    #
+    def setTestMode(self, test_mode):
+        if self.dv_model is not None:
+            self.dv_model.setTestMode(test_mode)
+
+    ## updateEstimates
+    #
+    def updateEstimates(self):
+        if self.dv_model is not None:
+            self.dv_model.updateEstimates()
         
     ## viewportUpdate
     #
@@ -301,22 +337,46 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
         QtGui.QStandardItemModel.__init__(self)
 
         self.dave_action_index = 0
-        self.dave_action_si = []
+        self.dave_actions_cur = []   # The active list of DaveActionStandardItems
+        self.dave_actions_all = []   # The full list of DaveActionStandardItems
+        
+        # Lists for fast validation.
+        self.dave_actions_test = []  # A list of actions to validate
+        self.dave_actions_test_dict = dict() # A dictionary of test ids and lists of actions that have these
+
+        self.test_mode = False
 
     ## addItem
     #
     # @param dave_action_si A DaveActionStandardItem.
     #
     def addItem(self, dave_action_si):
-        self.dave_action_si.append(dave_action_si)
+        self.dave_actions_all.append(dave_action_si)
+        self.dave_actions_cur.append(dave_action_si) # Build current actions simultaneously
+        
+        # Check if action requires validation
+        action_id = dave_action_si.getDaveAction().getID()
+        if action_id is not None:
+            # Check for existing id
+            is_present = False
+            for id_value in self.dave_actions_test_dict.keys():
+                if action_id == id_value:
+                    is_present = True
 
+            # Add to list if the id is not currently on the id list
+            if not is_present:
+                self.dave_actions_test.append(dave_action_si)
+                self.dave_actions_test_dict[action_id] = [dave_action_si] # Start list
+            else: # Add to current list of actions with the same id
+                self.dave_actions_test_dict[action_id].append(dave_action_si)
+        
     ## getActionTypes
     #
     # @return A list of DaveAction types (i.e. "hal" or "kilroy").
     #
     def getActionTypes(self):
         types = []
-        for item in self.dave_action_si:
+        for item in self.dave_actions_cur:
             type = item.getDaveAction().getActionType()
             if not type in types:
                 types.append(type)
@@ -334,7 +394,7 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
     # @return The current DaveActionStandardItem.
     #
     def getCurrentItem(self):
-        return self.dave_action_si[self.dave_action_index]
+        return self.dave_actions_cur[self.dave_action_index]
 
     ## getNextItem
     #
@@ -347,20 +407,20 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
 
         # If requested, skip over invalid commands.
         if skip_invalid:
-            while (self.dave_action_index < len(self.dave_action_si)) and (not self.dave_action_si[self.dave_action_index].isValid()):
+            while (self.dave_action_index < len(self.dave_actions_cur)) and (not self.dave_actions_cur[self.dave_action_index].isValid()):
                 self.dave_action_index += 1
 
-        if (self.dave_action_index >= len(self.dave_action_si)):
+        if (self.dave_action_index >= len(self.dave_actions_cur)):
             return None
         else:
-            return self.dave_action_si[self.dave_action_index]
+            return self.dave_actions_cur[self.dave_action_index]
 
     ## getNumberItems
     #
     # @return Then number of items in the model.
     #
     def getNumberItems(self):
-        return len(self.dave_action_si)
+        return len(self.dave_actions_cur)
 
     ## getRemainingTime
     #
@@ -371,8 +431,8 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
     def getRemainingTime(self, start = 0):
         est_time = 0
         i = start
-        while (i < len(self.dave_action_si)):
-            item = self.dave_action_si[i]
+        while (i < len(self.dave_actions_cur)):
+            item = self.dave_actions_cur[i]
             if item.isValid():
                 est_time += item.getDaveAction().getDuration()
             i += 1
@@ -384,10 +444,9 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
     #
     def getRunSize(self):
         est_space = 0
-        for item in self.dave_action_si:
+        for item in self.dave_actions_cur:
             if item.isValid():
                 est_space += item.getDaveAction().getUsage()
-        print "space", est_space
         return est_space
 
     ## haveNextItem
@@ -395,7 +454,7 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
     # @return True/False if there is a next item available.
     #
     def haveNextItem(self):
-        if ((self.dave_action_index + 1) >= len(self.dave_action_si)):
+        if ((self.dave_action_index + 1) >= len(self.dave_actions_cur)):
             return False
         else:
             return True
@@ -406,7 +465,7 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
     #
     def isAllValid(self):
         all_valid = True
-        for item in self.dave_action_si:
+        for item in self.dave_actions_cur:
             if not item.isValid():
                 all_valid = False
         return all_valid
@@ -423,7 +482,7 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
     # @param valid True/False Sets the valid status of all the items.
     #
     def setAllValid(self, valid):
-        for item in self.dave_action_si:
+        for item in self.dave_actions_all:
             item.setValid(valid)
 
     ## setCurrentItem
@@ -432,13 +491,65 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
     #
     def setCurrentAction(self, an_item):
         self.dave_action_index = 0
-        for i in range(len(self.dave_action_si)):
-            if (self.dave_action_si[i] == an_item):
+        for i in range(len(self.dave_actions_cur)):
+            if (self.dave_actions_cur[i] == an_item):
                 self.dave_action_index = i
                 break
         else:
             print "item not found!"
 
+    ## setCurrentItemValid
+    #
+    # @param is_Valid True/False determines the validity of the currentItem(s)
+    #
+    def setCurrentItemValid(self, is_valid):
+        if self.test_mode:
+            # Find current id
+            current_item = self.dave_actions_cur[self.dave_action_index]
+            current_action = current_item.getDaveAction()
+            current_id = current_action.getID()
+
+            print current_id, is_valid
+            
+            # Change validity of all actions that have this id
+            for item in self.dave_actions_test_dict[current_id]:
+                item.setValid(is_valid)
+                
+        else: # Not used
+            item = self.dave_actions_cur[self.dave_action_index]
+            item.setValid(is_valid)
+                    
+    ## setTestMode
+    #
+    # @param test_mode True/False sets the test mode.
+    #
+    def setTestMode(self, test_mode):
+        if self.test_mode:
+            if not test_mode: # Toggle off test mode
+                self.test_mode = False
+                self.dave_actions_cur = self.dave_actions_all # Recover full list
+                self.resetItemIndex()
+        else:
+            if test_mode:
+                self.test_mode = True
+                self.dave_actions_cur = self.dave_actions_test # Set to test list
+                self.resetItemIndex()
+
+    ## updateEstimates
+    #
+    def updateEstimates(self):
+        if self.test_mode: # Only needed in test mode
+
+            # Find current id and the current disk usage and duration.
+            current_item = self.dave_actions_cur[self.dave_action_index]
+            current_action = current_item.getDaveAction()
+            current_id = current_action.getID()
+            disk_usage = current_action.getUsage()
+            duration = current_action.getDuration()
+            
+            # Update usage estimated for all actions that have this id.
+            for item in self.dave_actions_test_dict[current_id]:
+                item.setUsageEstimates(disk_usage, duration)
 
 ## parseSequenceFile
 #

@@ -87,20 +87,23 @@ class Prior(RS232.RS232):
 
     ## changeFilter
     #
-    # @param filter The filter index to change to.
+    # @param filter_index The filter index to change to.
+    # @param filter_wheel (Optional) The filter wheel, defaults to 1.
     #
-    def changeFilter(self, filter):
-        if not (filter == self.getFilter()):
-            self.sendCommand("7,1," + str(filter))
+    def changeFilter(self, filter_index, filter_wheel = 1):
+        if not (filter_index == self.getFilter(filter_wheel)):
+            self.sendCommand("7," + str(filter_wheel) + "," + str(filter_index))
             self.waitResponse()
 
     ## getFilter
     #
+    # @param filter_wheel (Optional) The filter wheel, defaults to 1.
+    #
     # @return The current filter position.
     #
-    def getFilter(self):
+    def getFilter(self, filter_wheel = 1):
         try:
-            return int(self._command("7,1,F")[0])
+            return int(self._command("7," + str(filter_wheel) + ",F")[0])
         except:
             print "Error reading filter position."
             return -1
@@ -363,16 +366,19 @@ class PriorFocus(PriorZ):
 # 
 
 if __name__ == "__main__":
-    if 0:
-        stage = Prior(port = "COM10", baudrate = 9600)
-        stage.setVelocity(1.0, 1.0)
-        print stage._command("SMS")
-        print stage._command("ENCW")
+    if 1:
+        stage = Prior(port = "COM14")
+        #stage.setVelocity(1.0, 1.0)
+        #print stage._command("SMS")
+        #print "enc:", stage._command("ENCODER,X")
+        #print "res:", stage._command("RES,X")
+        print stage._command("RES,S,1")
+        print stage.position()
 
         for info in stage.info():
             print info
 
-        if 1:
+        if 0:
             print stage.getServo()
             stage.setServo(True)
             print stage.getServo()
@@ -385,18 +391,24 @@ if __name__ == "__main__":
             stage.zero()
             print stage.position()
             stage.goAbsolute(500, 500)
+            time.sleep(5)
             print stage.position()
             stage.goAbsolute(0, 0)
+            time.sleep(5)
             print stage.position()
-            stage.goRelative(-500, -5000)
+            stage.goRelative(-500, -500)
+            time.sleep(5)
             print stage.position()
             stage.goAbsolute(0, 0)
+            time.sleep(5)
             print stage.position()
+
         if 0:
             stage.zMoveTo(51.2)
             print stage.zPosition()
             stage.zMoveTo(50.0)
             print stage.zPosition()
+
     if 0:
         stage = PriorFocus(port = "COM1")
         for info in stage.info():
@@ -407,7 +419,7 @@ if __name__ == "__main__":
         stage.zMoveRelative(-5.0)
         print stage.zPosition()
 
-    if 1:
+    if 0:
         piezo = PriorZ(port = "COM19")
         for info in piezo.info():
             print info

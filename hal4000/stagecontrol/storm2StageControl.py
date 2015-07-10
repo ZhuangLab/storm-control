@@ -38,19 +38,19 @@ class QPriorFilterWheel(QtCore.QObject):
         self.mutex = prior_mutex
         self.running = self.stage.getStatus()
 
-    def getPosition(self):
+    def getPosition(self, filter_wheel):
         if self.running:
             self.mutex.lock()
-            filter = self.stage.getFilter()
+            filter = self.stage.getFilter(filter_wheel)
             self.mutex.unlock()
             return filter
         else:
             return 0
 
-    def setPosition(self, n):
+    def setPosition(self, filter_index, filter_wheel):
         if self.running:
             self.mutex.lock()
-            self.stage.changeFilter(n)
+            self.stage.changeFilter(filter_index, filter_wheel)
             self.mutex.unlock()
 
     def shutDown(self):
