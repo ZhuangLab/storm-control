@@ -333,6 +333,11 @@ class DACheckFocus(DaveAction):
     #
     def handleReply(self, message):
         focus_status = message.getResponse("focus_status")
+
+        if self.focus_scan: # Override focus issue
+            if (self.min_sum is None) or (message.getResponse("found_sum") > self.min_sum):
+                focus_status = True
+        
         if not message.isTest() and not (focus_status == True):
             error_message = "The focus is not locked."
             if self.focus_scan:

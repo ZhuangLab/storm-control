@@ -466,6 +466,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
             else: # Focus not found after the specified number of checks
                 scan_focus = self.tcp_message.getData("focus_scan")
                 if scan_focus is True:
+                    print "Scanning for the focus"
                     # Get minimum sum for FindSum scan
                     min_sum = self.tcp_message.getData("min_sum")
                     if min_sum is None: # Not provided. Use default for parameters.
