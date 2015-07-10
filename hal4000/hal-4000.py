@@ -579,7 +579,7 @@ class Window(QtGui.QMainWindow):
             
             # Check file overwrite (independence of whether the message is a test)
             if not (message.getData("overwrite") == None) and (message.getData("overwrite") == False):
-                file_path = self.directory_test_mode + os.sep + message.getData("name") + self.parameters.filetype
+                file_path = self.directory_test_mode + os.sep + message.getData("name") + self.parameters.get("film.filetype")
                 if os.path.exists(file_path):
                     message.setError(True, file_path + " will be overwritten")
                     self.tcpComplete.emit(message)
@@ -594,8 +594,8 @@ class Window(QtGui.QMainWindow):
                 
                 # Get disk usage and duration.
                 num_frames = message.getData("length")
-                message.addResponse("duration", num_frames * parameters.kinetic_value)
-                mega_bytes_per_frame = parameters.bytesPerFrame * 1.0/2**20 # Convert to megabytes.
+                message.addResponse("duration", num_frames * parameters.get("seconds_per_frame"))
+                mega_bytes_per_frame = parameters.get("camera1.bytes_per_frame") * 1.0/2**20 # Convert to megabytes.
                 message.addResponse("disk_usage", mega_bytes_per_frame * num_frames)
                 self.tcpComplete.emit(message)
 
