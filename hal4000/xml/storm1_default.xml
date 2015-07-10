@@ -95,6 +95,7 @@
 <!--  <qpd_scale type="float">1421.0</qpd_scale> -->
 <!--  <qpd_scale type="float">1.0</qpd_scale> -->
   <qpd_sum_max type="int">1500</qpd_sum_max>
+  <qpd_sum_min type="int">50</qpd_sum_min>
   <cal_deadtime type="int">20</cal_deadtime>
   <cal_range type="float">600</cal_range>
   <cal_step_size type="float">10</cal_step_size>

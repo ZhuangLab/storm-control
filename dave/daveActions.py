@@ -299,7 +299,10 @@ class DACheckFocus(DaveAction):
         DaveAction.__init__(self)
 
         self.action_type = "hal"
-
+        self.num_focus_checks = 10 # A default number of focus checks
+        self.min_sum = None # The default flag for scanning for focus
+        self.focus_scan = False # The default is to not scan for focus
+        
     ## createETree
     #
     # @param dictionary A dictionary.
@@ -307,10 +310,12 @@ class DACheckFocus(DaveAction):
     # @return A ElementTree object or None.
     #
     def createETree(self, dictionary):
-        num_focus_checks = dictionary.get("num_focus_checks") # Periodic checks every 100 ms
-        if (num_focus_checks > 0.0):
+        check_focus = dictionary.get("check_focus") # Periodic checks every 100 ms
+        if check_focus is not None:
             block = ElementTree.Element(str(type(self).__name__))
-            addField(block, "num_focus_checks", num_focus_checks)
+            for pnode in check_focus:
+                # The round trip fixes some white space issues.
+                block.append(ElementTree.fromstring(ElementTree.tostring(pnode)))
             return block
 
     ## getDescriptor
@@ -329,7 +334,10 @@ class DACheckFocus(DaveAction):
     def handleReply(self, message):
         focus_status = message.getResponse("focus_status")
         if not message.isTest() and not (focus_status == True):
-            message.setError(True, "The focus is not locked.")
+            error_message = "The focus is not locked."
+            if self.focus_scan:
+                error_message = " Minimum sum found: " + str(message.getResponse("found_sum"))
+            message.setError(True, error_message)
         DaveAction.handleReply(self, message)
 
     ## setup
@@ -338,11 +346,25 @@ class DACheckFocus(DaveAction):
     #
     # @param node The node of an ElementTree.
     #
-    def setup(self, node):
-        self.num_focus_checks = int(node.find("num_focus_checks").text)
-        self.message = tcpMessage.TCPMessage(message_type = "Check Focus Lock",
-                                             message_data = {"num_focus_checks": self.num_focus_checks})
+    def setup(self, node):        
+        # Determine the number of focus checks
+        if node.find("num_focus_checks") is not None:
+            self.num_focus_checks = int(node.find("num_focus_checks").text)
 
+        # Add minimum sum information if provided
+        if node.find("min_sum") is not None:
+            self.min_sum = int(node.find("min_sum").text)
+        
+        # Add focus_scan flag if provided
+        if node.find("focus_scan") is not None:
+            self.focus_scan = True
+
+        message_data = {"num_focus_checks": self.num_focus_checks,
+                        "min_sum": self.min_sum,
+                        "focus_scan": self.focus_scan}
+        
+        self.message = tcpMessage.TCPMessage(message_type = "Check Focus Lock",
+                                             message_data = message_data)
 
 ## DADelay
 #
@@ -445,7 +467,7 @@ class DAFindSum(DaveAction):
         DaveAction.__init__(self)
 
         self.action_type = "hal"
-
+        self.min_sum = None
     ## createETree
     #
     # @param dict A dictionary.

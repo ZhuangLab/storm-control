@@ -243,9 +243,9 @@ if __name__ == "__main__":
 
     # Load parameters
     if len(sys.argv) == 2:
-        parameters = params.Parameters(sys.argv[1])
+        parameters = params.parameters(sys.argv[1])
     else:
-        parameters = params.Parameters("kilroy_settings_default.xml")
+        parameters = params.parameters("kilroy_settings_default.xml")
 
     # Create instance of StandAlone class
     window = StandAlone(parameters)

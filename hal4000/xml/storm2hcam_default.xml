@@ -79,6 +79,7 @@
   <qpd_zcenter type="float">125.0</qpd_zcenter>
   <qpd_scale type="float">-70.0</qpd_scale>
   <qpd_sum_max type="int">256</qpd_sum_max>
+  <qpd_sum_min type="int">50</qpd_sum_min>
   <cal_deadtime type="int">20</cal_deadtime>
   <cal_range type="float">600</cal_range>
   <cal_step_size type="float">10</cal_step_size>

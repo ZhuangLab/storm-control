@@ -120,8 +120,8 @@ class SingleCamera(genericCamera.Camera):
     @hdebug.debug
     def handleGainChange(self, gain):
         self.stopCamera()
-        self.parameters.set("emccd_gain", gain)
-        self.camera_control.setEMCCDGain(self.parameters.get("emccd_gain"))
+        self.parameters.set("camera1.emccd_gain", gain)
+        self.camera_control.setEMCCDGain(self.parameters.get("camera1.emccd_gain"))
         self.startCamera()
 
     ## handleMaxFrames
@@ -159,9 +159,11 @@ class SingleCamera(genericCamera.Camera):
         self.parameters = parameters
         p = self.parameters
         self.camera_control.newParameters(parameters)
-        p.set(["exposure_value", "accumulate_value", "kinetic_value"], self.camera_control.getAcquisitionTimings())
-        self.camera_display.newParameters(parameters)
-        self.camera_params.newParameters(parameters)
+        [exposure_value, cycle_value] = self.camera_control.getAcquisitionTimings()
+        p.set(["camera1.exposure_value", "camera1.cycle_value"], [exposure_value, cycle_value])
+        p.set("seconds_per_frame", cycle_value)
+        self.camera_display.newParameters(parameters.get("camera1"))
+        self.camera_params.newParameters(parameters.get("camera1"))
 
     ## startCamera
     #
@@ -208,7 +210,7 @@ class SingleCamera(genericCamera.Camera):
     @hdebug.debug
     def stopCamera(self):
         self.camera_control.stopCamera()
-        self.updateTemperature()
+#        self.updateTemperature()
 
     ## stopFilm
     #
@@ -251,7 +253,7 @@ class SingleCamera(genericCamera.Camera):
     def updateTemperature(self):
         if self.camera_control.haveTemperature():
             cur_temp = self.camera_control.getTemperature()
-            self.parameters.set("actual_temperature", cur_temp[0])
+            self.parameters.set("camera1.actual_temperature", cur_temp[0])
             self.camera_params.newTemperature(cur_temp)
 
 #

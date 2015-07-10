@@ -199,8 +199,8 @@ class DualCamera(genericCamera.Camera):
     @hdebug.debug
     def handleGainChangeCamera1(self, gain):
         self.stopCamera()
-        self.parameters.get("camera1").set("emccd_gain", gain)
-        self.camera_control.setEMCCDGain(0, self.parameters.get("camera1").get("emccd_gain"))
+        self.parameters.set("camera1.emccd_gain", gain)
+        self.camera_control.setEMCCDGain(0, self.parameters.get("camera1.emccd_gain"))
         self.startCamera()
 
     ## handleGainChangeCamera2
@@ -212,8 +212,8 @@ class DualCamera(genericCamera.Camera):
     @hdebug.debug
     def handleGainChangeCamera2(self, gain):
         self.stopCamera()
-        self.parameters.get("camera2").set("emccd_gain", gain)
-        self.camera_control.setEMCCDGain(1, self.parameters.get("camera2").get("emccd_gain"))
+        self.parameters.get("camera2.emccd_gain", gain)
+        self.camera_control.setEMCCDGain(1, self.parameters.get("camera2.emccd_gain"))
         self.startCamera()
 
     ## handleMaxFrames
@@ -390,12 +390,12 @@ class DualCamera(genericCamera.Camera):
 
             # Get camera1 temperature
             cur_temp = self.camera_control.getTemperature(0)
-            self.parameters.get("camera1").set("actual_temperature", cur_temp[0])
+            self.parameters.set("camera1.actual_temperature", cur_temp[0])
             self.camera1.camera_params.newTemperature(cur_temp)
 
             # Get camera2 temperature
             cur_temp = self.camera_control.getTemperature(1)
-            self.parameters.get("camera2").set("actual_temperature", cur_temp[0])
+            self.parameters.set("camera2.actual_temperature", cur_temp[0])
             self.camera2.camera_params.newTemperature(cur_temp)
 
 

@@ -124,7 +124,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
             vbox_layout.addWidget(button)
             self.buttons.append(button)
 
-        self.buttons[parameters.get("qpd_mode")].setChecked(True)
+        self.buttons[parameters.get("focuslock.qpd_mode")].setChecked(True)
 
         for button in self.buttons:
             button.clicked.connect(self.handleRadioButtons)
@@ -242,6 +242,8 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def handleFoundSum(self, lock_sum):
+        focus_status = self.lock_display1.getFocusStatus()
+        self.tcp_message.addResponse("focus_status", focus_status)
         self.tcp_message.addResponse("found_sum", lock_sum)
         self.tcpComplete.emit(self.tcp_message)
 
@@ -360,7 +362,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def newParameters(self, parameters):
         self.parameters = parameters
-        self.lock_display1.newParameters(self.parameters)
+        self.lock_display1.newParameters(self.parameters.get("focuslock"))
 
     ## openOffsetFile
     #
@@ -406,7 +408,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
         self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())
         self.closeOffsetFile()
         if film_writer:
-            film_writer.setLockTarget(self.lock_display1.getLockTarget())
+            film_writer.getParameters().set("acquisition.lock_target", self.lock_display1.getLockTarget())
 
     ## tcpHandleFindSum
     #
@@ -461,10 +463,21 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
             self.accum_focus_checks += 1
             if self.accum_focus_checks < self.num_focus_checks:
                 self.focus_check_timer.start(100) # Wait one 100 ms then measure again
-            else: # Repeat
-                self.tcp_message.addResponse("focus_status", focus_status)
-                self.tcpComplete.emit(self.tcp_message)
-                
+            else: # Focus not found after the specified number of checks
+                scan_focus = self.tcp_message.getData("focus_scan")
+                if scan_focus is True:
+                    # Get minimum sum for FindSum scan
+                    min_sum = self.tcp_message.getData("min_sum")
+                    if min_sum is None: # Not provided. Use default for parameters.
+                        min_sum = self.parameters.get("qpd_sum_min", 50)
+
+                    # Send scan command
+                    self.tcpHandleFindSum(min_sum) # message is returned by handleFoundSum
+                    
+                else: # No scan, just return error
+                    self.tcp_message.addResponse("focus_status", focus_status)
+                    self.tcpComplete.emit(self.tcp_message)
+    
     ## toggleLockButtonDisplay
     #
     # Show/hide the lock button depending on the show parameter.
@@ -533,7 +546,7 @@ class FocusLockZQPD(FocusLockZ):
         self.ui.setupUi(self)
 
         # Add QPD lock display.
-        self.lock_display1 = lockDisplay.LockDisplayQPD(parameters,
+        self.lock_display1 = lockDisplay.LockDisplayQPD(parameters.get("focuslock"),
                                                         control_thread, 
                                                         ir_laser, 
                                                         self.ui.lockDisplayWidget)
@@ -569,7 +582,7 @@ class FocusLockZCam(FocusLockZ):
         self.ui.setupUi(self)
 
         # Add Camera lock display.
-        self.lock_display1 = lockDisplay.LockDisplayCam(parameters,
+        self.lock_display1 = lockDisplay.LockDisplayCam(parameters.get("focuslock"),
                                                         control_thread, 
                                                         ir_laser, 
                                                         self.ui.lockDisplayWidget)
@@ -604,7 +617,7 @@ class FocusLockZDualCam(FocusLockZ):
         self.ui.setupUi(self)
 
         # Add Camera1 lock display.
-        self.lock_display1 = lockDisplay.LockDisplayCam(parameters,
+        self.lock_display1 = lockDisplay.LockDisplayCam(parameters.get("focuslock"),
                                                         control_threads[0], 
                                                         ir_lasers[0], 
                                                         self.ui.lockDisplay1Widget)
@@ -614,7 +627,7 @@ class FocusLockZDualCam(FocusLockZ):
         self.lock_display1.recenteredPiezo.connect(self.handleRecenteredPiezo)
 
         # Add Camera2 lock display.
-        self.lock_display2 = lockDisplay.LockDisplayCam(parameters,
+        self.lock_display2 = lockDisplay.LockDisplayCam(parameters.get("focuslock"),
                                                         control_threads[1],
                                                         ir_lasers[1],
                                                         self.ui.lockDisplay2Widget)
