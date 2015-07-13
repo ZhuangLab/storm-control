@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'steve.ui'
 #
-# Created: Sun Jul  5 08:45:55 2015
-#      by: PyQt4 UI code generator 4.11.3
+# Created: Mon Jul 13 17:12:29 2015
+#      by: PyQt4 UI code generator 4.9.6
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -269,7 +269,7 @@ class Ui_MainWindow(object):
         self.sectionsScrollArea.setWidgetResizable(True)
         self.sectionsScrollArea.setObjectName(_fromUtf8("sectionsScrollArea"))
         self.scrollAreaWidgetContents_2 = QtGui.QWidget()
-        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 254, 533))
+        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 98, 28))
         self.scrollAreaWidgetContents_2.setObjectName(_fromUtf8("scrollAreaWidgetContents_2"))
         self.sectionsScrollArea.setWidget(self.scrollAreaWidgetContents_2)
         self.verticalLayout_6.addWidget(self.sectionsScrollArea)
@@ -326,7 +326,7 @@ class Ui_MainWindow(object):
         self.gridLayout_2.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1148, 25))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1148, 21))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -442,7 +442,7 @@ class Ui_MainWindow(object):
         self.actionLoad_Dax.setText(_translate("MainWindow", "Load Dax", None))
         self.actionLoad_Dax.setShortcut(_translate("MainWindow", "Ctrl+L", None))
         self.actionLoad_Dax_By_Pattern.setText(_translate("MainWindow", "Load Dax By Pattern", None))
-        self.actionAdjust_Contrast.setText(_translate("MainWindow", "Adjust Contrast (Ctrl+C)", None))
+        self.actionAdjust_Contrast.setText(_translate("MainWindow", "Adjust Contrast", None))
         self.actionAdjust_Contrast.setShortcut(_translate("MainWindow", "Ctrl+C", None))
 
 from objectives import ObjectivesGroupBox
