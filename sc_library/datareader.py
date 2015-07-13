@@ -165,7 +165,7 @@ class SpeReader(DataReader):
 # TIF reader class.
 #
 class TifReader(DataReader):
-    def __init__(self, filename):
+    def __init__(self, filename, xml):
         DataReader.__init__(self, filename, xml)
                 
         self.fileptr = False

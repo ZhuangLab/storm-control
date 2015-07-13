@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'steve.ui'
 #
-# Created: Sun Jul  5 08:45:55 2015
+# Created: Wed Jul  8 12:21:08 2015
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -356,8 +356,8 @@ class Ui_MainWindow(object):
         self.actionLoad_Positions.setObjectName(_fromUtf8("actionLoad_Positions"))
         self.actionSave_Snapshot = QtGui.QAction(MainWindow)
         self.actionSave_Snapshot.setObjectName(_fromUtf8("actionSave_Snapshot"))
-        self.actionLoad_Dax = QtGui.QAction(MainWindow)
-        self.actionLoad_Dax.setObjectName(_fromUtf8("actionLoad_Dax"))
+        self.actionLoad_Movie = QtGui.QAction(MainWindow)
+        self.actionLoad_Movie.setObjectName(_fromUtf8("actionLoad_Movie"))
         self.actionLoad_Dax_By_Pattern = QtGui.QAction(MainWindow)
         self.actionLoad_Dax_By_Pattern.setObjectName(_fromUtf8("actionLoad_Dax_By_Pattern"))
         self.actionAdjust_Contrast = QtGui.QAction(MainWindow)
@@ -365,7 +365,7 @@ class Ui_MainWindow(object):
         self.menuFile.addAction(self.actionSet_Working_Directory)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionDelete_Images)
-        self.menuFile.addAction(self.actionLoad_Dax)
+        self.menuFile.addAction(self.actionLoad_Movie)
         self.menuFile.addAction(self.actionLoad_Mosaic)
         self.menuFile.addAction(self.actionLoad_Positions)
         self.menuFile.addAction(self.actionSave_Mosaic)
@@ -439,8 +439,8 @@ class Ui_MainWindow(object):
         self.actionLoad_Positions.setShortcut(_translate("MainWindow", "Ctrl+P", None))
         self.actionSave_Snapshot.setText(_translate("MainWindow", "Save Snapshot", None))
         self.actionSave_Snapshot.setShortcut(_translate("MainWindow", "Ctrl+I", None))
-        self.actionLoad_Dax.setText(_translate("MainWindow", "Load Dax", None))
-        self.actionLoad_Dax.setShortcut(_translate("MainWindow", "Ctrl+L", None))
+        self.actionLoad_Movie.setText(_translate("MainWindow", "Load Movie", None))
+        self.actionLoad_Movie.setShortcut(_translate("MainWindow", "Ctrl+L", None))
         self.actionLoad_Dax_By_Pattern.setText(_translate("MainWindow", "Load Dax By Pattern", None))
         self.actionAdjust_Contrast.setText(_translate("MainWindow", "Adjust Contrast (Ctrl+C)", None))
         self.actionAdjust_Contrast.setShortcut(_translate("MainWindow", "Ctrl+C", None))

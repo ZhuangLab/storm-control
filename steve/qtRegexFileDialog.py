@@ -69,7 +69,7 @@ class QRegexFileDialog(QtGui.QDialog):
             self.fdialog.setDirectory(directory)
         self.fdialog.setFileMode(QtGui.QFileDialog.ExistingFiles)
         if extensions is not None:
-            self.fdialog.setFilter(extensions)
+            self.fdialog.setFilters(extensions)
         self.ui.verticalLayout.addWidget(self.fdialog)
         self.setMinimumSize(self.fdialog.width() + 20, self.fdialog.height() + 40)
 

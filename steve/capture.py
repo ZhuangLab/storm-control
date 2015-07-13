@@ -166,7 +166,6 @@ class Capture(QtCore.QObject):
         self.got_settings = False
         self.filename = parameters.image_filename
         self.messages = []
-        self.movie = None
         self.waiting_for_response = False
 
         self.tcp_client = tcpClient.TCPClient(parent = self,
@@ -258,6 +257,8 @@ class Capture(QtCore.QObject):
             hdebug.logText("getSettings: not connected to HAL.")
             return
 
+        if not self.got_settings:
+            self.messages.append(mosaicSettingsMessage())
         self.messages.append(objectiveMessage(True))
         self.sendFirstMessage()
         
@@ -391,9 +392,9 @@ class Capture(QtCore.QObject):
         tries = 0
         while (not success) and (tries < 4):
             try:
-                self.movie = datareader.reader(filename)
-                frame = self.movie.loadAFrame(frame_num)
-                self.movie.closeFilePtr()
+                movie = datareader.reader(filename)
+                frame = movie.loadAFrame(frame_num)
+                movie.closeFilePtr()
                 success = True
 
             except IOError:
@@ -403,15 +404,28 @@ class Capture(QtCore.QObject):
             tries += 1
 
         if type(frame) == type(numpy.array([])):
-            if self.movie.xml.get("mosaic.flip_horizontal"):
+
+            #
+            # If we are working off-line we might need to load the mosaic
+            # settings first.
+            #
+            if not self.got_settings:
+                coord.Point.pixels_to_um = movie.xml.get("mosaic.pixels_to_um")
+                i = 1
+                while movie.xml.has("mosaic.obj" + str(i)):
+                    obj_data = movie.xml.get("mosaic.obj" + str(i))
+                    self.newObjectiveData.emit(obj_data.split(","))
+                    i += 1
+            
+            if movie.xml.get("mosaic.flip_horizontal"):
                 frame = numpy.fliplr(frame)
-            if self.movie.xml.get("mosaic.flip_vertical"):
+            if movie.xml.get("mosaic.flip_vertical"):
                 frame = numpy.flipud(frame)
-            if self.movie.xml.get("mosaic.transpose"):
+            if movie.xml.get("mosaic.transpose"):
                 frame = numpy.transpose(frame)
             image = Image(frame,
-                          self.movie.filmSize(),
-                          self.movie.filmParameters())
+                          movie.filmSize(),
+                          movie.filmParameters())
 
             self.captureComplete.emit(image)
 
