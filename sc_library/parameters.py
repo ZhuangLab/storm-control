@@ -318,14 +318,12 @@ class StormXMLObject(object):
             elif node.attrib.get("type", False):
                 node_type = node.attrib["type"]
                 node_value = node.text
-                if (node_type == "int"):
-                    self.create(slot, int(node_value))
-                elif (node_type == "int-array"):
-                    text_array = node_value.split(",")
-                    int_array = []
-                    for elt in text_array:
-                        int_array.append(int(elt))
-                    self.create(slot, int_array)
+                if (node_type == "boolean") or (node_type == "bool"):
+                    if node_value == "True":
+                        self.create(slot, True)
+                    else:
+                        self.create(slot, False)
+                        
                 elif (node_type == "float"):
                     self.create(slot, float(node_value))
                 elif (node_type == "float-array"):
@@ -334,14 +332,22 @@ class StormXMLObject(object):
                     for elt in text_array:
                         float_array.append(float(elt))
                     self.create(slot, float_array)
+
+                elif (node_type == "int"):
+                    self.create(slot, int(node_value))
+                elif (node_type == "int-array"):
+                    text_array = node_value.split(",")
+                    int_array = []
+                    for elt in text_array:
+                        int_array.append(int(elt))
+                    self.create(slot, int_array)
+                    
+                elif (node_type == "string") or (node_type == "str"):
+                    self.create(slot, str(node_value))
                 elif (node_type == "string-array"):
                     self.create(slot, node_value.split(","))
-                elif (node_type == "boolean") or (node_type == "bool"):
-                    if node_value == "True":
-                        self.create(slot, True)
-                    else:
-                        self.create(slot, False)
-                elif (node_type == "string") or (node_type == "str"):
+                    
+                elif (node_type == "unicode"):
                     self.create(slot, str(node_value))
                 else:
                     raise ParametersException("unrecognized type, " + node_type)
