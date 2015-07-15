@@ -162,9 +162,11 @@ class Capture(QtCore.QObject):
         self.curr_x = 0.0
         self.curr_y = 0.0
         self.directory = parameters.directory
+        self.fake_got_settings = False
+        self.fake_objective = False
+        self.filename = parameters.image_filename
         self.goto = False
         self.got_settings = False
-        self.filename = parameters.image_filename
         self.messages = []
         self.waiting_for_response = False
 
@@ -406,27 +408,45 @@ class Capture(QtCore.QObject):
         if type(frame) == type(numpy.array([])):
 
             #
-            # If we are working off-line we might need to load the mosaic
-            # settings first.
+            # Check if the movie contains all the XML or if the XML is
+            # just faked, for example by generating it from a .inf file.
             #
-            if not self.got_settings:
-                coord.Point.pixels_to_um = movie.xml.get("mosaic.pixels_to_um")
-                i = 1
-                while movie.xml.has("mosaic.obj" + str(i)):
-                    obj_data = movie.xml.get("mosaic.obj" + str(i))
-                    self.newObjectiveData.emit(obj_data.split(","))
-                    i += 1
+            if movie.xml.get("faked_xml", False):
+
+                self.fake_objective = "obj1,100.0,0.0,0.0"
+                # Prompt user for settings for the first film.
+                if not self.fake_got_settings:
+                    coord.Point.pixels_to_um = 0.16
+                    self.newObjectiveData.emit(self.fake_objective.split(","))
+
+                self.fake_got_settings = True
+                movie.xml.set("mosaic.obj1", self.fake_objective)
+                movie.xml.set("mosaic.objective", "obj1")
             
-            if movie.xml.get("mosaic.flip_horizontal"):
+            else:
+                
+                #
+                # If we are working off-line we might need to load the mosaic
+                # settings first.
+                #
+                if not self.got_settings:
+                    coord.Point.pixels_to_um = movie.xml.get("mosaic.pixels_to_um")
+                    i = 1
+                    while movie.xml.has("mosaic.obj" + str(i)):
+                        obj_data = movie.xml.get("mosaic.obj" + str(i))
+                        self.newObjectiveData.emit(obj_data.split(","))
+                        i += 1
+                        
+            if movie.xml.get("mosaic.flip_horizontal", False):
                 frame = numpy.fliplr(frame)
-            if movie.xml.get("mosaic.flip_vertical"):
+            if movie.xml.get("mosaic.flip_vertical", False):
                 frame = numpy.flipud(frame)
-            if movie.xml.get("mosaic.transpose"):
+            if movie.xml.get("mosaic.transpose", False):
                 frame = numpy.transpose(frame)
             image = Image(frame,
                           movie.filmSize(),
                           movie.filmParameters())
-
+        
             self.captureComplete.emit(image)
 
         else:

@@ -15,13 +15,114 @@ import re
 import sc_library.parameters as parameters
 
 #
+# Creates a StormXMLObject from a .inf file that can be
+# used by Steve. Note that this object is missing many
+# of the properties of the standard object created from
+# a setting xml file.
+#
+def infToXmlObject(filename):
+
+    xml = parameters.StormXMLObject([])
+
+    # Mark as "fake".
+    xml.set("faked_xml", True)
+    
+    # Add acquisition sub-object.
+    xml.set("acquisition", parameters.StormXMLObject([]))
+    xml.set("acquisition.camera", "camera1")
+    
+    # Add camera1 sub-object.
+    xml.set("camera1", parameters.StormXMLObject([]))
+
+    # Add film sub-object.
+    xml.set("film", parameters.StormXMLObject([]))
+    
+    # Add mosaic sub-object.
+    xml.set("mosaic", parameters.StormXMLObject([]))
+
+    # Figure out movie type.
+    no_ext_name = os.path.splitext(filename)[0]
+    if os.path.exists(no_ext_name + ".dax"):
+        xml.set("film.filetype", ".dax")
+    elif os.path.exists(no_ext_name + ".spe"):
+        xml.set("film.filetype", ".spe")
+    elif os.path.exists(no_ext_name + ".tif"):
+        xml.set("film.filetype", ".tif")
+    else:
+        raise IOError("only .dax, .spe and .tif are supported (case sensitive..)")        
+        
+    # Extract the movie information from the associated inf file.
+    size_re = re.compile(r'frame dimensions = ([\d]+) x ([\d]+)')
+    length_re = re.compile(r'number of frames = ([\d]+)')
+    endian_re = re.compile(r' (big|little) endian')
+    stagex_re = re.compile(r'Stage X = ([\d\.\-]+)')
+    stagey_re = re.compile(r'Stage Y = ([\d\.\-]+)')
+    scalemax_re = re.compile(r'scalemax = ([\d\.\-]+)')
+    scalemin_re = re.compile(r'scalemin = ([\d\.\-]+)')
+    parameters_re = re.compile(r'parameters file = (.+)')
+
+    with open(filename) as fp:
+        for line in fp:
+            m = size_re.match(line)
+            if m:
+                xml.set("camera1.y_pixels", int(m.group(1)))
+                xml.set("camera1.x_pixels", int(m.group(2)))
+
+            m = length_re.match(line)
+            if m:
+                xml.set("acquisition.number_frames", int(m.group(1)))
+                
+            m = endian_re.search(line)
+            if m:
+                if (m.group(1) == "big"):
+                    xml.set("film.want_big_endian", True)
+                else:
+                    xml.set("film.want_big_endian", False)
+                    
+            m = stagex_re.match(line)
+            if m:
+                stage_x = float(m.group(1))
+                
+            m = stagey_re.match(line)
+            if m:
+                stage_y = float(m.group(1))
+                
+            m = scalemax_re.match(line)
+            if m:
+                xml.set("camera1.scalemax", int(m.group(1)))
+                
+            m = scalemin_re.match(line)
+            if m:
+                xml.set("camera1.scalemin", int(m.group(1)))
+                
+            m = parameters_re.match(line)
+            if m:
+                xml.set("parameters_file", m.group(1))
+                
+    xml.set("acquisition.stage_position", [stage_x, stage_y, 0.0])
+    return xml
+
+#
 # Returns the appropriate object based on the file type as
 # saved in the corresponding XML file.
 #
 def reader(filename):
-    no_ext_name = os.path.splitext(filename)[0]    
-    xml = parameters.parameters(no_ext_name + ".xml")
+    no_ext_name = os.path.splitext(filename)[0]
+
+    # Look for XML file.
+    if os.path.exists(no_ext_name + ".xml"):
+        xml = parameters.parameters(no_ext_name + ".xml")
+
+    # If it does not exist, then create the xml object
+    # from the .inf file.
+    elif os.path.exists(no_ext_name + ".inf"):
+        xml = infToXmlObject(no_ext_name + ".inf")
+
+    else:
+        raise IOError("Could not find an associated .xml or .inf file for " + filename)
+
     file_type = xml.get("film.filetype")
+
     if (file_type == ".dax"):
         return DaxReader(filename, xml)
     elif (file_type == ".spe"):
@@ -30,7 +131,8 @@ def reader(filename):
         return TifReader(filename, xml)
     else:
         print file_type, "is not a recognized file type"
-        raise IOError("only .dax, .spe and .tif are supported (case sensitive..)")
+    raise IOError("only .dax, .spe and .tif are supported (case sensitive..)")
+
 
 #
 # The superclass containing those functions that 
