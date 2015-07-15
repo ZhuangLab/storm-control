@@ -57,6 +57,7 @@ class QRegexFileDialog(QtGui.QDialog):
     def __init__(self, caption = "Select File(s)", directory = None, extensions = None, regex = "", parent = None):
         QtGui.QDialog.__init__(self, parent)
         self.files_selected = None
+        self.regex_str = regex
 
         # Create UI.
         self.ui = qtRegexFileDialogUi.Ui_Dialog()
@@ -96,7 +97,7 @@ class QRegexFileDialog(QtGui.QDialog):
     # @return The list of selected files, the frame number, the previous regex
     #
     def getOutput(self):
-        return [self.files_selected, self.ui.frameNumSpinBox.value(), str(self.ui.nameLineEdit.text())]
+        return [self.files_selected, self.ui.frameNumSpinBox.value(), self.regex_str]
 
     ## handleAccepted
     #    
@@ -115,6 +116,7 @@ class QRegexFileDialog(QtGui.QDialog):
         try:
             self.fdialog.setProxyModel(RegexFilterModel(new_regex_str))
             self.ui.nameLineEdit.setStyleSheet("color: rgb(0, 0, 0);")
+            self.regex_str = new_regex_str
         except:
             self.ui.nameLineEdit.setStyleSheet("color: rgb(255, 0, 0);")
             self.fdialog.setProxyModel(RegexFilterModel("")) # Display all files
