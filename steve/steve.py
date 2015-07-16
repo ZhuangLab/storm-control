@@ -789,36 +789,6 @@ class Window(QtGui.QMainWindow):
             self.stage_tracking_timer.stop()
             self.comm.commDisconnect()
 
-    ## loadMovie
-    #
-    # Handles loading movie files, which can be useful for retrospective analysis.
-    #
-    # @param filenames A list of file names.
-    # @param frame_num The frame number to load. Starts at 0. Default is 0.
-    #
-    @hdebug.debug
-    def loadMovie(self, filenames, frame_num = 0):
-
-        # Create progress bar
-        progress_bar = QtGui.QProgressDialog("Loading " + str(len(filenames)) +  " Files ...",
-                                             "Abort Load",
-                                             0,
-                                             len(filenames),
-                                             self)
-        progress_bar.setWindowTitle("Dax Load Progress")
-        progress_bar.setWindowModality(QtCore.Qt.WindowModal)
-        file_number = 1
-        
-        # Load dax files
-        for filename in filenames:
-            if progress_bar.wasCanceled(): break
-            self.comm.loadImage(filename, frame_num)
-            progress_bar.setValue(file_number)
-            file_number += 1
-
-        # Close progress bar
-        progress_bar.close()
-        
     ## loadMosaic
     #
     # Handles the load mosaic action.
@@ -876,6 +846,36 @@ class Window(QtGui.QMainWindow):
                 # load older data formats here..
                 pass
 
+    ## loadMovie
+    #
+    # Handles loading movie files, which can be useful for retrospective analysis.
+    #
+    # @param filenames A list of file names.
+    # @param frame_num The frame number to load. Starts at 0. Default is 0.
+    #
+    @hdebug.debug
+    def loadMovie(self, filenames, frame_num = 0):
+
+        # Create progress bar.
+        progress_bar = QtGui.QProgressDialog("Loading " + str(len(filenames)) +  " Files ...",
+                                             "Abort Load",
+                                             0,
+                                             len(filenames),
+                                             self)
+        progress_bar.setWindowTitle("Dax Load Progress")
+        progress_bar.setWindowModality(QtCore.Qt.WindowModal)
+        file_number = 1
+        
+        # Load movies.
+        self.comm.fake_got_settings = False
+        for filename in filenames:
+            if progress_bar.wasCanceled(): break
+            self.comm.loadImage(filename, frame_num)
+            progress_bar.setValue(file_number)
+            file_number += 1
+
+        # Close progress bar.
+        progress_bar.close()
 
     ## setCenter
     #
