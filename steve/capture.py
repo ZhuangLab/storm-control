@@ -27,6 +27,7 @@ import sc_library.tcpMessage as tcpMessage
 import sc_library.datareader as datareader
 
 import coord
+import mosaicDialog
 
 
 ## directoryMessage
@@ -163,7 +164,7 @@ class Capture(QtCore.QObject):
         self.curr_y = 0.0
         self.directory = parameters.directory
         self.fake_got_settings = False
-        self.fake_objective = False
+        self.fake_objective = 1
         self.filename = parameters.image_filename
         self.goto = False
         self.got_settings = False
@@ -412,17 +413,24 @@ class Capture(QtCore.QObject):
             # just faked, for example by generating it from a .inf file.
             #
             if movie.xml.get("faked_xml", False):
-
-                self.fake_objective = "obj1,100.0,0.0,0.0"
+                
                 # Prompt user for settings for the first film.
                 if not self.fake_got_settings:
-                    coord.Point.pixels_to_um = 0.16
-                    self.newObjectiveData.emit(self.fake_objective.split(","))
+                    settings = mosaicDialog.execMosaicDialog()
+                    coord.Point.pixels_to_um = settings[0]
+                    self.newObjectiveData.emit(settings[4:])
+                    self.fake_got_settings = True
+                    self.fake_objective += 1
 
-                self.fake_got_settings = True
-                movie.xml.set("mosaic.obj1", self.fake_objective)
-                movie.xml.set("mosaic.objective", "obj1")
-            
+                obj_name = "obj" + str(self.fake_objective)
+                settings = mosaicDialog.getMosaicSettings()
+                
+                movie.xml.set("mosaic." + obj_name, ",".join(map(str, settings[4:])))
+                movie.xml.set("mosaic.objective", obj_name)
+                movie.xml.set("mosaic.flip_horizontal", settings[0])
+                movie.xml.set("mosaic.flip_vertical", settings[1])
+                movie.xml.set("mosaic.transpose", settings[2])
+
             else:
                 
                 #
@@ -446,7 +454,7 @@ class Capture(QtCore.QObject):
             image = Image(frame,
                           movie.filmSize(),
                           movie.filmParameters())
-        
+
             self.captureComplete.emit(image)
 
         else:
