@@ -13,7 +13,7 @@ import qtdesigner.qt_regex_file_dialog_ui as qtRegexFileDialogUi
 def regexGetFileNames(caption = "Select File(s)", directory = None, extensions = None, regex = ""):
     fdialog = QRegexFileDialog(caption, directory, extensions, regex)
     fdialog.exec_()
-    return fdialog.getOutput()
+    return fdialog.getSelectedFiles()
 
 class RegexFilterModel(QtGui.QSortFilterProxyModel):
     ## __init__
@@ -96,7 +96,7 @@ class QRegexFileDialog(QtGui.QDialog):
     #
     # @return The list of selected files, the frame number, the previous regex
     #
-    def getOutput(self):
+    def getSelectedFiles(self):
         return [self.files_selected, self.ui.frameNumSpinBox.value(), self.regex_str]
 
     ## handleAccepted
