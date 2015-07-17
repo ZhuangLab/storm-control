@@ -216,13 +216,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         p = parameters.get("illumination")
 
         for channel in self.channels:
-            [old_on, old_power] = channel.newParameters(p)
-
-            # Save previous button state and power.
-            if self.parameters:
-                index = channel.getChannelId()
-                self.parameters.get("illumination.on_off_state")[index] = old_on
-                self.parameters.get("illumination.default_power")[index] = old_power
+            channel.newParameters(p)
 
         if (p.get("shutter_frames") > 0):
             self.newColors.emit(p.get("shutter_colors"))
