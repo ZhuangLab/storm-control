@@ -111,7 +111,7 @@ def reader(filename):
 
     # Look for XML file.
     if os.path.exists(no_ext_name + ".xml"):
-        xml = parameters.parameters(no_ext_name + ".xml")
+        xml = parameters.parameters(no_ext_name + ".xml", recurse = True)
 
     # If it does not exist, then create the xml object
     # from the .inf file.
