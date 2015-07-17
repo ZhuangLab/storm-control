@@ -332,7 +332,7 @@ class Channel(QtCore.QObject):
             else:
                 self.channel_ui.disableChannel()
                 self.filming_disabled = True
-
+                
         self.filming = True
 
     ## stopFilm
@@ -341,8 +341,9 @@ class Channel(QtCore.QObject):
     #
     def stopFilm(self):
         self.filming = False
+        
         if self.filming_disabled:
-            self.channel_ui.enableChannel()
+            self.channel_ui.enableChannel(self.was_on)
             self.filming_disabled = False
         else:
             self.channel_ui.stopFilm()
