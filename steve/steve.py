@@ -403,11 +403,8 @@ class Window(QtGui.QMainWindow):
             return
         
         # Load files
-        if (firstType == '.dax'): # Load dax files
-            filenameList = QtCore.QStringList() # Convert strings to QStringList
-            for filename in filenames:
-                filenameList.append(filename)
-            self.loadDax(filenameList)
+        if (firstType == '.dax'): # Load dax files 
+            self.loadMovie(filenames)
         elif (firstType == '.msc'): # Load mosaics
             for filename in sorted(filenames):
                 self.loadMosaic(filename)
@@ -855,7 +852,7 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def loadMovie(self, filenames, frame_num = 0):
-
+        
         # Create progress bar.
         progress_bar = QtGui.QProgressDialog("Loading " + str(len(filenames)) +  " Files ...",
                                              "Abort Load",
