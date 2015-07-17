@@ -635,7 +635,7 @@
     <addaction name="actionSet_Working_Directory"/>
     <addaction name="separator"/>
     <addaction name="actionDelete_Images"/>
-    <addaction name="actionLoad_Dax"/>
+    <addaction name="actionLoad_Movie"/>
     <addaction name="actionLoad_Mosaic"/>
     <addaction name="actionLoad_Positions"/>
     <addaction name="actionSave_Mosaic"/>
@@ -725,9 +725,9 @@
     <string>Ctrl+I</string>
    </property>
   </action>
-  <action name="actionLoad_Dax">
+  <action name="actionLoad_Movie">
    <property name="text">
-    <string>Load Dax</string>
+    <string>Load Movie</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+L</string>

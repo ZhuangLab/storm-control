@@ -27,6 +27,7 @@ import sc_library.tcpMessage as tcpMessage
 import sc_library.datareader as datareader
 
 import coord
+import mosaicDialog
 
 
 ## directoryMessage
@@ -162,11 +163,12 @@ class Capture(QtCore.QObject):
         self.curr_x = 0.0
         self.curr_y = 0.0
         self.directory = parameters.directory
+        self.fake_got_settings = False
+        self.fake_objective = 1
+        self.filename = parameters.image_filename
         self.goto = False
         self.got_settings = False
-        self.filename = parameters.image_filename
         self.messages = []
-        self.movie = None
         self.waiting_for_response = False
 
         self.tcp_client = tcpClient.TCPClient(parent = self,
@@ -258,6 +260,8 @@ class Capture(QtCore.QObject):
             hdebug.logText("getSettings: not connected to HAL.")
             return
 
+        if not self.got_settings:
+            self.messages.append(mosaicSettingsMessage())
         self.messages.append(objectiveMessage(True))
         self.sendFirstMessage()
         
@@ -391,9 +395,9 @@ class Capture(QtCore.QObject):
         tries = 0
         while (not success) and (tries < 4):
             try:
-                self.movie = datareader.reader(filename)
-                frame = self.movie.loadAFrame(frame_num)
-                self.movie.closeFilePtr()
+                movie = datareader.reader(filename)
+                frame = movie.loadAFrame(frame_num)
+                movie.closeFilePtr()
                 success = True
 
             except IOError:
@@ -403,15 +407,53 @@ class Capture(QtCore.QObject):
             tries += 1
 
         if type(frame) == type(numpy.array([])):
-            if self.movie.xml.get("mosaic.flip_horizontal"):
+
+            #
+            # Check if the movie contains all the XML or if the XML is
+            # just faked, for example by generating it from a .inf file.
+            #
+            if movie.xml.get("faked_xml", False):
+                
+                # Prompt user for settings for the first film.
+                if not self.fake_got_settings:
+                    settings = mosaicDialog.execMosaicDialog()
+                    coord.Point.pixels_to_um = settings[0]
+                    self.newObjectiveData.emit(settings[4:])
+                    self.fake_got_settings = True
+                    self.fake_objective += 1
+
+                obj_name = "obj" + str(self.fake_objective)
+                settings = mosaicDialog.getMosaicSettings()
+                
+                movie.xml.set("mosaic." + obj_name, ",".join(map(str, settings[4:])))
+                movie.xml.set("mosaic.objective", obj_name)
+                movie.xml.set("mosaic.flip_horizontal", settings[0])
+                movie.xml.set("mosaic.flip_vertical", settings[1])
+                movie.xml.set("mosaic.transpose", settings[2])
+
+            else:
+                
+                #
+                # If we are working off-line we might need to load the mosaic
+                # settings first.
+                #
+                if not self.got_settings:
+                    coord.Point.pixels_to_um = movie.xml.get("mosaic.pixels_to_um")
+                    i = 1
+                    while movie.xml.has("mosaic.obj" + str(i)):
+                        obj_data = movie.xml.get("mosaic.obj" + str(i))
+                        self.newObjectiveData.emit(obj_data.split(","))
+                        i += 1
+                        
+            if movie.xml.get("mosaic.flip_horizontal", False):
                 frame = numpy.fliplr(frame)
-            if self.movie.xml.get("mosaic.flip_vertical"):
+            if movie.xml.get("mosaic.flip_vertical", False):
                 frame = numpy.flipud(frame)
-            if self.movie.xml.get("mosaic.transpose"):
+            if movie.xml.get("mosaic.transpose", False):
                 frame = numpy.transpose(frame)
             image = Image(frame,
-                          self.movie.filmSize(),
-                          self.movie.filmParameters())
+                          movie.filmSize(),
+                          movie.filmParameters())
 
             self.captureComplete.emit(image)
 

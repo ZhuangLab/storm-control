@@ -671,7 +671,8 @@ class Window(QtGui.QMainWindow):
                                                                    str(self.parameters.get("film.directory")),
                                                                    QtGui.QFileDialog.ShowDirsOnly))
         if directory and os.path.exists(directory):
-            self.directory = directory + "/"
+            if (self.directory[-1] != "/"):
+                self.directory = directory + "/"
             self.parameters.set("film.directory", str(self.directory))
             self.ui.directoryText.setText(trimString(self.parameters.get("film.directory"), 31))
         self.updateFilenameLabel("foo")

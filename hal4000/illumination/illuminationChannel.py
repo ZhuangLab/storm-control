@@ -149,6 +149,9 @@ class Channel(QtCore.QObject):
     # Handles a request to turn the channel on / off. These all
     # come from the UI. They are ignored when we are filming.
     #
+    # As a side effect this records the on/off setting in the
+    # 'on_off_state' property of the parameters.
+    #
     # @param on True/False on/off.
     #
     def handleOnOffChange(self, on):
@@ -182,19 +185,27 @@ class Channel(QtCore.QObject):
             if self.mechanical_shutter:
                 self.mechanical_shutter.shutterOff(self.channel_id)
 
+        self.parameters.get("on_off_state")[self.channel_id] = on
+
     ## handleSetPower
     #
     # Handles requests to set the current channel power to a new value.
     # These all come from the UI. The current power is always whatever
     # the current value of the slider is.
     #
+    # As a side effect this records the current power setting in
+    # 'default_power' property of the parameters.
+    #
     # @param new_power The new channel power setting.
     #
     def handleSetPower(self, new_power):
         if self.display_normalized:
+            power = (new_power - self.min_amplitude)/self.amplitude_range
             power_string = "{0:.4f}".format((new_power - self.min_amplitude)/self.amplitude_range)
         else:
+            power = new_power
             power_string = "{0:d}".format(new_power)
+        self.parameters.get("default_power")[self.channel_id] = power
         self.channel_ui.updatePowerText(power_string)
 
         if (self.channel_ui.isOn()):
@@ -211,9 +222,8 @@ class Channel(QtCore.QObject):
     #
     # @param parameters A parameters XML object.
     #
-    # @return [old on/off setting, old power]
-    #
     def newParameters(self, parameters):
+        self.parameters = parameters
 
         # Calculate new power in slider units if necessary.
         new_power = parameters.get("default_power")[self.channel_id]
@@ -221,8 +231,8 @@ class Channel(QtCore.QObject):
             new_power = int(round(new_power * self.amplitude_range + self.min_amplitude))
 
         # Update channel settings.
-        [old_on, old_power] = self.channel_ui.newSettings(parameters.on_off_state[self.channel_id],
-                                                          new_power)
+        self.channel_ui.newSettings(parameters.on_off_state[self.channel_id],
+                                    new_power)
 
         # Update buttons.
         self.channel_ui.setupButtons(parameters.get("power_buttons")[self.channel_id])
@@ -230,12 +240,6 @@ class Channel(QtCore.QObject):
         # Update shutter data, if available.
         if (parameters.get("shutter_frames") != -1):
             self.shutter_data = parameters.get("shutter_data")[self.channel_id]
-
-        # Normalize power, if necessary.
-        if self.display_normalized:
-            old_power = float(old_power - self.min_amplitude)/self.amplitude_range
-
-        return [old_on, old_power]
 
     ## newShutters
     #
@@ -328,7 +332,7 @@ class Channel(QtCore.QObject):
             else:
                 self.channel_ui.disableChannel()
                 self.filming_disabled = True
-
+                
         self.filming = True
 
     ## stopFilm
@@ -337,8 +341,9 @@ class Channel(QtCore.QObject):
     #
     def stopFilm(self):
         self.filming = False
+        
         if self.filming_disabled:
-            self.channel_ui.enableChannel()
+            self.channel_ui.enableChannel(self.was_on)
             self.filming_disabled = False
         else:
             self.channel_ui.stopFilm()

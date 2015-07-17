@@ -1,9 +1,13 @@
 
 The Steve software is used for generating image mosaics and
-determining how your sample is laid out on a coverslip.
-
-The "settings_default.xml" is used to define the setup
-(which objectives are available, camera orientations).
+determining how your sample is laid out on a coverslip. The
+various settings such as which objectives are available,
+which objective is the current objective, camera orientation
+and pixel size are contained in the mosaic settings section
+of the HAL parameters default file. If HAL is running then
+Steve will query HAL to get this information. If HAL is not
+running then Steve will look for this information in the
+.xml file associated with the movies that are saved by HAL.
 
 "File" -> "Save Positions" will create a list of positions
 that you can use with the Dave program.

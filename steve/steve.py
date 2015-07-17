@@ -238,7 +238,7 @@ class Window(QtGui.QMainWindow):
         self.ui.actionQuit.triggered.connect(self.quit)
         self.ui.actionAdjust_Contrast.triggered.connect(self.handleAdjustContrast)
         self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
-        self.ui.actionLoad_Dax.triggered.connect(self.handleLoadDax)
+        self.ui.actionLoad_Movie.triggered.connect(self.handleLoadMovie)
         self.ui.actionLoad_Mosaic.triggered.connect(self.handleLoadMosaic)
         self.ui.actionLoad_Positions.triggered.connect(self.handleLoadPositions)
         self.ui.actionSave_Mosaic.triggered.connect(self.handleSaveMosaic)
@@ -564,28 +564,6 @@ class Window(QtGui.QMainWindow):
             self.picture_queue = []
             # addImage will handle reseting the ui and disconnecting comm
 
-    ## handleLoadDax
-    #
-    # Handles user request to load dax files.
-    #
-    # @param boolean Dummy parameter.
-    #
-    @hdebug.debug
-    def handleLoadDax(self, boolean):
-        # Open custom dialog to select files and frame number
-        [filenames, frame_num, file_filter] = qtRegexFileDialog.regexGetFileNames(directory = self.parameters.directory,
-                                                                                  regex = self.regexp_str,
-                                                                                  extensions = "*.dax")
-        if (filenames is not None) and (len(filenames) > 0):
-            print "Found " + str(len(filenames)) + " files matching " + str(file_filter) + " in " + os.path.dirname(filenames[0])
-            print "Loading frame: " + str(frame_num)
-
-            # Save regexp string for next time the dialog is opened
-            self.regexp_str = file_filter
-                
-            # Load dax
-            self.loadDax(filenames, frame_num)
-                                         
     ## handleLoadMosaic
     #
     # Handles a user request to load a mosaic.
@@ -599,7 +577,29 @@ class Window(QtGui.QMainWindow):
                                                                 self.parameters.directory,
                                                                 "*.msc"))    
         self.loadMosaic(mosaic_filename)
-    
+
+    ## handleLoadMovie
+    #
+    # Handles user request to load movie files.
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def handleLoadMovie(self, boolean):
+        # Open custom dialog to select files and frame number
+        [filenames, frame_num, file_filter] = qtRegexFileDialog.regexGetFileNames(directory = self.parameters.directory,
+                                                                                  regex = self.regexp_str,
+                                                                                  extensions = ["*.dax", "*.tif", "*.spe"])
+        if (filenames is not None) and (len(filenames) > 0):
+            print "Found " + str(len(filenames)) + " files matching " + str(file_filter) + " in " + os.path.dirname(filenames[0])
+            print "Loading frame: " + str(frame_num)
+
+            # Save regexp string for next time the dialog is opened
+            self.regexp_str = file_filter
+                
+            # Load dax
+            self.loadMovie(filenames, frame_num)
+
     ## handleLoadPositions
     #
     # Handles the load positions action.
@@ -789,36 +789,6 @@ class Window(QtGui.QMainWindow):
             self.stage_tracking_timer.stop()
             self.comm.commDisconnect()
 
-    ## loadDax
-    #
-    # Handles loading dax files, which can be useful for retrospective analysis.
-    #
-    # @param filenames A list of file names.
-    # @param frame_num The frame number to load. Starts at 0. Default is 0.
-    #
-    @hdebug.debug
-    def loadDax(self, filenames, frame_num = 0):
-
-        # Create progress bar
-        progress_bar = QtGui.QProgressDialog("Loading " + str(len(filenames)) +  " Files ...",
-                                             "Abort Load",
-                                             0,
-                                             len(filenames),
-                                             self)
-        progress_bar.setWindowTitle("Dax Load Progress")
-        progress_bar.setWindowModality(QtCore.Qt.WindowModal)
-        file_number = 1
-        
-        # Load dax files
-        for filename in filenames:
-            if progress_bar.wasCanceled(): break
-            self.comm.loadImage(filename, frame_num)
-            progress_bar.setValue(file_number)
-            file_number += 1
-
-        # Close progress bar
-        progress_bar.close()
-        
     ## loadMosaic
     #
     # Handles the load mosaic action.
@@ -876,6 +846,36 @@ class Window(QtGui.QMainWindow):
                 # load older data formats here..
                 pass
 
+    ## loadMovie
+    #
+    # Handles loading movie files, which can be useful for retrospective analysis.
+    #
+    # @param filenames A list of file names.
+    # @param frame_num The frame number to load. Starts at 0. Default is 0.
+    #
+    @hdebug.debug
+    def loadMovie(self, filenames, frame_num = 0):
+
+        # Create progress bar.
+        progress_bar = QtGui.QProgressDialog("Loading " + str(len(filenames)) +  " Files ...",
+                                             "Abort Load",
+                                             0,
+                                             len(filenames),
+                                             self)
+        progress_bar.setWindowTitle("Dax Load Progress")
+        progress_bar.setWindowModality(QtCore.Qt.WindowModal)
+        file_number = 1
+        
+        # Load movies.
+        self.comm.fake_got_settings = False
+        for filename in filenames:
+            if progress_bar.wasCanceled(): break
+            self.comm.loadImage(filename, frame_num)
+            progress_bar.setValue(file_number)
+            file_number += 1
+
+        # Close progress bar.
+        progress_bar.close()
 
     ## setCenter
     #
