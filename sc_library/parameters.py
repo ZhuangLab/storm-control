@@ -35,7 +35,7 @@ def copySettings(original, duplicate):
     settings = copy.deepcopy(original)
 
     for attr in settings.getAttrs():
-
+        
         # Sub block parameter.
         if isinstance(settings.get(attr), StormXMLObject):
             sub_settings = settings.get(attr)
@@ -59,7 +59,7 @@ def copySettings(original, duplicate):
                 settings.set(attr, duplicate.get(attr))
     
     if duplicate.hasUnused():
-        raise ParametersException("Unrecognized settings " + ",".join(map(lambda(x): "'" + str(x) + "'", duplicate.getUnused())))
+        raise ParametersException("Unrecognized settings " + ", ".join(map(lambda(x): "'" + str(x) + "'", duplicate.getUnused())))
 
     return settings
 
@@ -94,7 +94,7 @@ def fileType(xml_file):
 def halParameters(parameters_file):
 
     # Read general settings
-    xml_object = parameters(parameters_file)
+    xml_object = parameters(parameters_file, True, True)
 
     #
     # In the process of creating the complete parameters object we can
@@ -106,11 +106,6 @@ def halParameters(parameters_file):
     global default_params
     if default_params:
         xml_object = copySettings(default_params, xml_object)
-
-    if use_as_default or (not default_params):
-        default_params = copy.deepcopy(xml_object)
-    else:
-        xml_object.set("use_as_default", False)
     
     # Define some camera specific derivative parameters
     for attr in ["camera", "camera1", "camera2"]:
@@ -134,6 +129,11 @@ def halParameters(parameters_file):
     illumination_xml.set("shutter_data", [])
     illumination_xml.set("shutter_frames", -1)
     illumination_xml.set("shutter_oversampling", 0)
+
+    if use_as_default or (not default_params):
+        default_params = copy.deepcopy(xml_object)
+    else:
+        xml_object.set("use_as_default", False)
 
     return xml_object
 
@@ -190,13 +190,13 @@ def hardware(hardware_file):
 #
 # @return A parameters object.
 #
-def parameters(parameters_file):
+def parameters(parameters_file, recurse = False, skip_added = False):
     xml = ElementTree.parse(parameters_file).getroot()
     if (xml.tag != "settings"):
         raise ParameterException(parameters_file + " is not a setting file.")
 
     # Create XML object.
-    xml_object = StormXMLObject(xml, True)
+    xml_object = StormXMLObject(xml, recurse, skip_added)
     xml_object.set("parameters_file", parameters_file)
     
     return xml_object
@@ -264,7 +264,6 @@ class ParametersException(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
 
-        
 ## StormXMLObject
 #
 # A parameters object whose attributes are created dynamically
@@ -279,7 +278,7 @@ class StormXMLObject(object):
     #
     # @param nodes A list of XML nodes.
     #
-    def __init__(self, nodes, recurse = False):
+    def __init__(self, nodes, recurse = False, skip_added = False):
 
         self._recursed_ = False
         self._unused_ = {}
@@ -291,11 +290,19 @@ class StormXMLObject(object):
         for node in nodes:
             slot = node.tag
 
+            #
+            # If requested, skip added properties. These are typically
+            # properties that were programmatically added to the object
+            # later and are not an intrinsic part of a settings file.
+            #
+            if skip_added and node.attrib.get("added", False):
+                continue
+                
             # Parse default power setting.
             if (slot == "default_power"):
                 if not hasattr(self, "default_power"):
-                    self.create("on_off_state", [])
-                    self.create("default_power", [])
+                    self._create_("on_off_state", [])
+                    self._create_("default_power", [])
                     for i in range(max_channels):
                         self.default_power.append(1.0)
                         self.on_off_state.append(0)
@@ -306,7 +313,7 @@ class StormXMLObject(object):
             # Power buttons.
             elif (slot == "button"):
                 if not hasattr(self, "power_buttons"):
-                    self.create("power_buttons", [])
+                    self._create_("power_buttons", [])
                     for i in range(max_channels):
                         self.power_buttons.append([])
                 channel = int(node.attrib["channel"])
@@ -320,41 +327,41 @@ class StormXMLObject(object):
                 node_value = node.text
                 if (node_type == "boolean") or (node_type == "bool"):
                     if node_value == "True":
-                        self.create(slot, True)
+                        self._create_(slot, True)
                     else:
-                        self.create(slot, False)
+                        self._create_(slot, False)
                         
                 elif (node_type == "float"):
-                    self.create(slot, float(node_value))
+                    self._create_(slot, float(node_value))
                 elif (node_type == "float-array"):
                     text_array = node_value.split(",")
                     float_array = []
                     for elt in text_array:
                         float_array.append(float(elt))
-                    self.create(slot, float_array)
+                    self._create_(slot, float_array)
 
                 elif (node_type == "int"):
-                    self.create(slot, int(node_value))
+                    self._create_(slot, int(node_value))
                 elif (node_type == "int-array"):
                     text_array = node_value.split(",")
                     int_array = []
                     for elt in text_array:
                         int_array.append(int(elt))
-                    self.create(slot, int_array)
+                    self._create_(slot, int_array)
                     
                 elif (node_type == "string") or (node_type == "str"):
-                    self.create(slot, str(node_value))
+                    self._create_(slot, str(node_value))
                 elif (node_type == "string-array"):
-                    self.create(slot, node_value.split(","))
+                    self._create_(slot, node_value.split(","))
                     
                 elif (node_type == "unicode"):
-                    self.create(slot, str(node_value))
+                    self._create_(slot, str(node_value))
                 else:
                     raise ParametersException("unrecognized type, " + node_type)
 
             # Sub-node.
             elif recurse and (len(node) > 0):
-                setattr(self, node.tag, StormXMLObject(node, True))
+                setattr(self, node.tag, StormXMLObject(node, recurse, skip_added))
                 self._recursed_ = True
 
     ## copy()
@@ -364,15 +371,17 @@ class StormXMLObject(object):
     def copy(self):
         return copy.deepcopy(self)
 
-    ## create
+    ## _create_
     #
     # Create a property. This is basically the same as set, but it also
-    # adds the property name to the list of unused properties.
+    # adds the property name to the dictionary of unused properties. The
+    # dictionary of unused properties is also used to keep track of what
+    # was part this object originally and what was added later.
     #
     # @param pname A string containing the property name.
     # @param value The value to set the property too.
     #
-    def create(self, pname, value):
+    def _create_(self, pname, value):
         self._unused_[pname] = True
         self.set(pname, value)
 
@@ -557,6 +566,13 @@ class StormXMLObject(object):
                 # Don't save the following.
                 if attr in ["shutter_colors", "shutter_data"]:
                     continue
+
+                # Mark parameters that were added after XML object creation, as
+                # we may want to handle these differently later. These are the
+                # parameters that were created using "set" instead of "create".
+                added = False
+                if not attr in self._unused_:
+                    added = True
                 
                 # Handle default power settings.
                 if (attr == "default_power"):
@@ -591,12 +607,16 @@ class StormXMLObject(object):
 
                     field = ElementTree.SubElement(xml, attr)
                     field.set("type", list_type)
+                    if added:
+                        field.set("added", str(True))
                     field.text = ",".join(map(str, value))
                         
                 # Everything else:
                 else:
                     field = ElementTree.SubElement(xml, attr)
                     field.set("type", str(type(value).__name__))
+                    if added:
+                        field.set("added", str(True))
                     field.text = str(value)
 
         return xml
