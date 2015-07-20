@@ -634,7 +634,7 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     def newPowerFile(self, bool):
         power_filename = QtGui.QFileDialog.getOpenFileName(self,
                                                            "New Power File",
-                                                           str(self.parameters.get("directory")),
+                                                           str(self.parameters.get("film.directory")),
                                                            "*.power")
         if power_filename:
             self.ui.filenameLabel.setText(power_filename[-40:])
