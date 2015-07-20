@@ -579,7 +579,7 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
         for i in range(self.number_cameras):
             self.spot_graphs[i].changeYRange(y_max = new_max)
         self.ui.minSpinBox.setMaximum(new_max - 10)
-        self.parameters.set("max_spots", new_max)
+        self.parameters.set("spotcounter.max_spots", new_max)
 
     ## handleMinChange
     #
@@ -592,7 +592,7 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
         for i in range(self.number_cameras):
             self.spot_graphs[i].changeYRange(y_min = new_min)
         self.ui.maxSpinBox.setMinimum(new_min + 10)
-        self.parameters.set("min_spots", new_min)
+        self.parameters.set("spotcounter.min_spots", new_min)
 
     ## handleOk
     #
