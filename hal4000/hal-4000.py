@@ -673,6 +673,8 @@ class Window(QtGui.QMainWindow):
         if directory and os.path.exists(directory):
             if (self.directory[-1] != "/"):
                 self.directory = directory + "/"
+            else:
+                self.directory = directory
             self.parameters.set("film.directory", str(self.directory))
             self.ui.directoryText.setText(trimString(self.parameters.get("film.directory"), 31))
         self.updateFilenameLabel("foo")
