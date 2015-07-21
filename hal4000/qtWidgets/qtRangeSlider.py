@@ -29,7 +29,7 @@ class QRangeSlider(QtGui.QWidget):
     def __init__(self, slider_range, values, parent = None):
         QtGui.QWidget.__init__(self, parent)
         self.bar_width = 10
-        self.emit_while_moving = 0
+        self.emit_while_moving = False
         self.moving = "none"
         self.old_scale_min = 0.0
         self.old_scale_max = 0.0
@@ -117,7 +117,6 @@ class QRangeSlider(QtGui.QWidget):
     # @param event A PyQt double click event.
     #
     def mouseDoubleClickEvent(self, event):
-        #self.emit(QtCore.SIGNAL("doubleClick()"))
         self.doubleClick.emit()
 
     ## mouseMoveEvent
@@ -195,6 +194,18 @@ class QRangeSlider(QtGui.QWidget):
     def resizeEvent(self, event):
         self.updateDisplayValues()
 
+    ## setEmitWhileMoving
+    #
+    # Set whether or not to emit rangeChanged signal while the slider is being moved with the mouse.
+    #
+    # @param flag True/False emit while moving.
+    #
+    def setEmitWhileMoving(self, flag):
+        if flag:
+            self.emit_while_moving = True
+        else:
+            self.emit_while_moving = False
+
     ## setRange
     #
     # @param slider_range [min, max, step size].
@@ -214,18 +225,6 @@ class QRangeSlider(QtGui.QWidget):
         self.emitRange()
         self.updateDisplayValues()
         self.update()
-
-    ## setEmitWhileMoving
-    #
-    # Set whether or not to emit rangeChanged signal while the slider is being moved with the mouse.
-    #
-    # @param flag True/False emit while moving.
-    #
-    def setEmitWhileMoving(self, flag):
-        if flag:
-            self.emit_while_moving = 1
-        else:
-            self.emit_while_moving = 0
 
     ## updateDisplayValues
     #
@@ -267,7 +266,7 @@ class QHRangeSlider(QRangeSlider):
     def __init__(self, slider_range = None, values = None, parent = None):
         QRangeSlider.__init__(self, slider_range, values, parent)
         if (not parent):
-            self.setGeometry(200, 200, 200, 20)
+            self.setGeometry(200, 200, 200, 100)
 
     ## getPos
     #
@@ -331,7 +330,7 @@ class QVRangeSlider(QRangeSlider):
     def __init__(self, slider_range = None, values = None, parent = None):
         QRangeSlider.__init__(self, slider_range, values, parent)
         if (not parent):
-            self.setGeometry(200, 200, 20, 200)
+            self.setGeometry(200, 200, 100, 200)
 
     ## getPos
     #
