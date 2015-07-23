@@ -21,7 +21,7 @@ import sys
 # Range Slider super class.
 #
 class QRangeSlider(QtGui.QWidget):
-    doubleClick = QtCore.pyqtSignal()
+    doubleClick = QtCore.pyqtSignal(bool)
     rangeChanged = QtCore.pyqtSignal(float, float)
 
     ## __init__
@@ -121,7 +121,7 @@ class QRangeSlider(QtGui.QWidget):
     # @param event A PyQt double click event.
     #
     def mouseDoubleClickEvent(self, event):
-        self.doubleClick.emit()
+        self.doubleClick.emit(True)
 
     ## mouseMoveEvent
     #
@@ -393,7 +393,7 @@ class QVRangeSlider(QRangeSlider):
 # Range slider with two double spin boxes super class.
 #
 class QSpinBoxRangeSlider(QtGui.QWidget):
-    doubleClick = QtCore.pyqtSignal()
+    doubleClick = QtCore.pyqtSignal(bool)
     rangeChanged = QtCore.pyqtSignal(float, float)
 
     ## __init__
@@ -481,8 +481,10 @@ class QSpinBoxRangeSlider(QtGui.QWidget):
     #
     # This just passes on the double click signal from the range slider.
     #
-    def handleDoubleClick(self):
-        self.doubleClick.emit()
+    # @param boolean A dummy parameter.
+    #
+    def handleDoubleClick(self, boolean):
+        self.doubleClick.emit(boolean)
     
     ## handleMaxSpinBox
     #
