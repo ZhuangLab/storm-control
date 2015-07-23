@@ -331,7 +331,7 @@ class StormXMLObject(object):
                     else:
                         self._create_(slot, False)
                         
-                elif (node_type == "float"):
+                elif (node_type == "float") or (node_type == "float64"):
                     self._create_(slot, float(node_value))
                 elif (node_type == "float-array"):
                     text_array = node_value.split(",")
