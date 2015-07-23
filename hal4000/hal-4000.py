@@ -182,6 +182,9 @@ class Window(QtGui.QMainWindow):
         for type in file_types:
             self.ui.filetypeComboBox.addItem(type)
 
+        self.ui.framesText.setText("")
+        self.ui.sizeText.setText("")
+
         #
         # Camera
         #
@@ -760,8 +763,8 @@ class Window(QtGui.QMainWindow):
             self.ui.autoShuttersCheckBox.setChecked(False)
         self.updateFilenameLabel("foo")
 
-        # Start the camera
-        #self.startCamera()
+        # Mosaic settings.
+        self.ui.objectiveText.setText(p.get("mosaic." + p.get("mosaic.objective")).split(",")[0])
 
         # Return a Set Parameters TCP message if appropriate
         if not (self.tcp_message == None):

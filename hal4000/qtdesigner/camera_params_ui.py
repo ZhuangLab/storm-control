@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'camera-params.ui'
 #
-# Created: Fri Nov 22 08:34:06 2013
-#      by: PyQt4 UI code generator 4.9.6
+# Created: Wed Jul 22 21:53:05 2015
+#      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -26,8 +26,9 @@ except AttributeError:
 class Ui_GroupBox(object):
     def setupUi(self, GroupBox):
         GroupBox.setObjectName(_fromUtf8("GroupBox"))
-        GroupBox.resize(232, 174)
+        GroupBox.resize(276, 185)
         self.gridLayout = QtGui.QGridLayout(GroupBox)
+        self.gridLayout.setMargin(2)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.preampGainLabel = QtGui.QLabel(GroupBox)
         self.preampGainLabel.setObjectName(_fromUtf8("preampGainLabel"))
