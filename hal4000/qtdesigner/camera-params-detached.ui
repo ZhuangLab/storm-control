@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>504</width>
-    <height>95</height>
+    <width>451</width>
+    <height>72</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>414</width>
-    <height>95</height>
+    <height>0</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -420,19 +420,6 @@
     </spacer>
    </item>
   </layout>
-  <zorder>exposureTimeLabel</zorder>
-  <zorder>exposureTimeText</zorder>
-  <zorder>temperatureLabel</zorder>
-  <zorder>temperatureText</zorder>
-  <zorder>FPSLabel</zorder>
-  <zorder>FPSText</zorder>
-  <zorder>EMCCDLabel</zorder>
-  <zorder>EMCCDSlider</zorder>
-  <zorder>pictureSizeLabel</zorder>
-  <zorder>pictureSizeText</zorder>
-  <zorder>preampGainLabel</zorder>
-  <zorder>preampGainText</zorder>
-  <zorder>pictureSizeText</zorder>
   <zorder>horizontalSpacer</zorder>
  </widget>
  <resources/>

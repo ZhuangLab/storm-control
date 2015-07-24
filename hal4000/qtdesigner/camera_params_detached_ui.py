@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'camera-params-detached.ui'
 #
-# Created: Fri Jul 24 08:06:21 2015
-#      by: PyQt4 UI code generator 4.11.3
+# Created: Fri Jul 24 10:45:22 2015
+#      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -26,8 +26,8 @@ except AttributeError:
 class Ui_GroupBox(object):
     def setupUi(self, GroupBox):
         GroupBox.setObjectName(_fromUtf8("GroupBox"))
-        GroupBox.resize(504, 95)
-        GroupBox.setMinimumSize(QtCore.QSize(414, 95))
+        GroupBox.resize(451, 72)
+        GroupBox.setMinimumSize(QtCore.QSize(414, 0))
         self.horizontalLayout_7 = QtGui.QHBoxLayout(GroupBox)
         self.horizontalLayout_7.setSpacing(2)
         self.horizontalLayout_7.setMargin(2)
