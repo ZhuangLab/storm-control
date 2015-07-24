@@ -255,13 +255,15 @@ class DualCamera(genericCamera.Camera):
         # These values are used by the shutterControl class to figure out how fast 
         # to run the shutter timers. As written the shutters are driven by camera1.
         #
-        p.set(["exposure_value", "accumulate_value", "kinetic_value"], self.camera_control.getAcquisitionTimings(0))
+        [exposure_value, cycle_value] = self.camera_control.getAcquisitionTimings(0)
+        p.set("seconds_per_frame", cycle_value)
 
-        p.get("camera1").set(["exposure_value", "accumulate_value", "kinetic_value"], self.camera_control.getAcquisitionTimings(0))
+        p.set(["camera1.exposure_value", "camera1.cycle_value"], [exposure_value, cycle_value])
         self.camera1.camera_display.newParameters(parameters.get("camera1"))
         self.camera1.camera_params.newParameters(parameters.get("camera1"))
 
-        p.get("camera2").set(["exposure_value", "accumulate_value", "kinetic_value"], self.camera_control.getAcquisitionTimings(1))
+        [exposure_value, cycle_value] = self.camera_control.getAcquisitionTimings(1)
+        p.set(["camera2.exposure_value", "camera2.cycle_value"], [exposure_value, cycle_value])
         self.camera2.camera_display.newParameters(parameters.get("camera2"))
         self.camera2.camera_params.newParameters(parameters.get("camera2"))
 

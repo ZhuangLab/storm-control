@@ -54,7 +54,7 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def getAcquisitionTimings(self, which_camera):
         time = 0.001 * float(self.sleep_time)
-        return [time, time, time]
+        return [time, time]
     
     ## getTemperature
     #
@@ -117,10 +117,6 @@ class ACameraControl(cameraControl.CameraControl):
         else:
             self.sleep_time = 10
 
-        # Set acquisition timing values for camera1 and camera2
-        parameters.get("camera1").set(["exposure_value", "accumulate_value", "kinetic_value"], self.getAcquisitionTimings(0))
-        parameters.get("camera2").set(["exposure_value", "accumulate_value", "kinetic_value"], self.getAcquisitionTimings(1))
-
         # Create fake image for camera 1
         size_x = parameters.get("camera1").get("x_pixels")
         size_y = parameters.get("camera1").get("y_pixels")
@@ -141,6 +137,12 @@ class ACameraControl(cameraControl.CameraControl):
                 camera2_fake_frame[i*2*size_y + j*2] = chr(255 - (j % 128 + i % 128))
         self.camera2_fake_frame = numpy.fromstring(camera1_fake_frame, dtype = numpy.uint16)
 
+        if not parameters.has("camera1.bytes_per_frame"):
+            parameters.set("camera1.bytes_per_frame", 2 * parameters.get("camera1.x_pixels") * parameters.get("camera1.y_pixels"))
+
+        if not parameters.has("camera2.bytes_per_frame"):
+            parameters.set("camera2.bytes_per_frame", 2 * parameters.get("camera2.x_pixels") * parameters.get("camera2.y_pixels"))
+            
         self.newFilmSettings(parameters, None)
         self.parameters = parameters
 
