@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'hal4000-detached.ui'
 #
-# Created: Fri Jul 24 07:45:30 2015
+# Created: Fri Jul 24 07:52:06 2015
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(240, 822)
+        MainWindow.resize(240, 799)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -63,7 +63,7 @@ class Ui_MainWindow(object):
         self.settingsScrollArea.setWidgetResizable(True)
         self.settingsScrollArea.setObjectName(_fromUtf8("settingsScrollArea"))
         self.scrollAreaWidgetContents = QtGui.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 210, 170))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 210, 95))
         self.scrollAreaWidgetContents.setObjectName(_fromUtf8("scrollAreaWidgetContents"))
         self.settingsScrollArea.setWidget(self.scrollAreaWidgetContents)
         self.gridLayout.addWidget(self.settingsScrollArea, 0, 0, 1, 1)
@@ -249,6 +249,17 @@ class Ui_MainWindow(object):
         self.notesEdit.setObjectName(_fromUtf8("notesEdit"))
         self.horizontalLayout_3.addWidget(self.notesEdit)
         self.verticalLayout_3.addWidget(self.notesGroupBox)
+        self.widget_4 = QtGui.QWidget(self.centralwidget)
+        self.widget_4.setObjectName(_fromUtf8("widget_4"))
+        self.horizontalLayout_2 = QtGui.QHBoxLayout(self.widget_4)
+        self.horizontalLayout_2.setMargin(0)
+        self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
+        spacerItem = QtGui.QSpacerItem(110, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout_2.addItem(spacerItem)
+        self.recordButton = QtGui.QPushButton(self.widget_4)
+        self.recordButton.setObjectName(_fromUtf8("recordButton"))
+        self.horizontalLayout_2.addWidget(self.recordButton)
+        self.verticalLayout_3.addWidget(self.widget_4)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 240, 26))
@@ -318,6 +329,7 @@ class Ui_MainWindow(object):
         self.objectiveLabel.setText(_translate("MainWindow", "Objective:", None))
         self.objectiveText.setText(_translate("MainWindow", "asdf", None))
         self.notesGroupBox.setTitle(_translate("MainWindow", "Notes", None))
+        self.recordButton.setText(_translate("MainWindow", "Record", None))
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
         self.actionQuit.setText(_translate("MainWindow", "Quit", None))
         self.actionSettings.setText(_translate("MainWindow", "New Settings", None))

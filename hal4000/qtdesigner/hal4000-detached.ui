@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>240</width>
-    <height>822</height>
+    <height>799</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -99,7 +99,7 @@
             <x>0</x>
             <y>0</y>
             <width>210</width>
-            <height>170</height>
+            <height>95</height>
            </rect>
           </property>
          </widget>
@@ -498,6 +498,32 @@
            <width>10000</width>
            <height>10000</height>
           </size>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QWidget" name="widget_4" native="true">
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>110</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="recordButton">
+         <property name="text">
+          <string>Record</string>
          </property>
         </widget>
        </item>
