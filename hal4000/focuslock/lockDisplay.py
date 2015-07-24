@@ -63,7 +63,8 @@ class LockDisplay(QtGui.QWidget):
         self.parameters = parameters
         self.power = 0
         self.stage_z = 0
-
+        self.is_locked = False
+        
         # Lock modes
         self.lock_modes = [lockModes.NoLockMode(control_thread,
                                                 parameters,
@@ -80,9 +81,9 @@ class LockDisplay(QtGui.QWidget):
                            lockModes.CalibrationLockMode(control_thread,
                                                          parameters,
                                                          self),
-                           lockModes.ZScanLockMode(control_thread,
-                                                   parameters,
-                                                   self)]
+                           lockModes.ZScanLockModeV2(control_thread,
+                                                     parameters,
+                                                     self)]
         
         self.current_mode = self.lock_modes[parameters.get("qpd_mode")]
 
@@ -152,7 +153,7 @@ class LockDisplay(QtGui.QWidget):
     # @param power The current focus lock sum signal.
     # @param stage_z The current z position of the stage.
     #
-    def controlUpdate(self, x_offset, y_offset, power, stage_z):
+    def controlUpdate(self, x_offset, y_offset, power, stage_z, is_locked):
         offset = 0
         if (power > 10):
             offset = x_offset / power
@@ -161,6 +162,14 @@ class LockDisplay(QtGui.QWidget):
         self.offset = offset
         self.power = power
         self.stage_z = stage_z
+        self.is_locked = is_locked
+
+    ## getFocusStatus
+    #
+    # @return A boolean that determines the focus status, e.g. is the system in focus
+    #
+    def getFocusStatus(self):
+        return self.control_thread.getFocusStatus()
 
     ## getLockModes
     #
@@ -182,6 +191,20 @@ class LockDisplay(QtGui.QWidget):
             return "failed"
         else:
             return target * self.scale
+
+    ## getLockedStatus
+    #
+    # @return The current status of the focus lock.
+    #
+    @hdebug.debug
+    def getLockedStatus(self):
+        status = self.control_thread.getLockedStatus()
+        if (status == None):
+            return "NA"
+        elif (status == "failed"):
+            return "failed"
+        else:
+            return status
 
     ## getOffsetPowerStage
     #
@@ -455,11 +478,11 @@ class LockDisplayQPD(LockDisplay):
     # @param power The current sum signal of the focus lock.
     # @param stage_z The current z position of the piezo stage.
     #
-    def controlUpdate(self, x_offset, y_offset, power, stage_z):
-        LockDisplay.controlUpdate(self, x_offset, y_offset, power, stage_z)
+    def controlUpdate(self, x_offset, y_offset, power, stage_z, is_locked):
+        LockDisplay.controlUpdate(self, x_offset, y_offset, power, stage_z, is_locked)
 
         # Update the various displays
-        self.offsetDisplay.updateValue(self.offset * self.scale)
+        self.offsetDisplay.updateValue(self.offset * self.scale, warning = is_locked)
         self.ui.offsetText.setText("{0:.1f}".format(self.offset * self.scale))
         self.sumDisplay.updateValue(power)
         self.ui.sumText.setText("{0:.1f}".format(power))
@@ -575,11 +598,11 @@ class LockDisplayCam(LockDisplay):
     # @param power The current sum signal of the focus lock.
     # @param stage_z The current z position of the piezo stage.
     #
-    def controlUpdate(self, x_offset, y_offset, power, stage_z):
-        LockDisplay.controlUpdate(self, x_offset, y_offset, power, stage_z)
+    def controlUpdate(self, x_offset, y_offset, power, stage_z, is_locked):
+        LockDisplay.controlUpdate(self, x_offset, y_offset, power, stage_z, is_locked)
 
         # Update the various displays
-        self.offsetDisplay.updateValue(self.offset * self.scale)
+        self.offsetDisplay.updateValue(self.offset * self.scale, warning = is_locked)
         self.ui.offsetText.setText("{0:.1f}".format(self.offset * self.scale))
         self.sumDisplay.updateValue(power)
         self.ui.sumText.setText("{0:.1f}".format(power))
@@ -686,7 +709,7 @@ class LockDisplayCam(LockDisplay):
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2014 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

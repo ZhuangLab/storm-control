@@ -64,9 +64,9 @@ class ACameraControl(cameraControl.CameraControl):
     def getAcquisitionTimings(self):
         self.stopCamera()
         if self.got_camera:
-            return self.camera.getAcquisitionTimings()
+            return self.camera.getAcquisitionTimings()[:-1]
         else:
-            return [1.0, 1.0, 1.0]
+            return [1.0, 1.0]
 
     ## getTemperature
     #
@@ -207,7 +207,7 @@ class ACameraControl(cameraControl.CameraControl):
     def newFilmSettings(self, parameters, film_settings):
         self.stopCamera()
         self.mutex.lock()
-        p = parameters
+        p = parameters.get("camera1")
         if self.got_camera:
             self.reached_max_frames = False
 
@@ -236,7 +236,7 @@ class ACameraControl(cameraControl.CameraControl):
             # Due to what I can only assume is a bug in some of the
             # older Andor software you need to reset the frame
             # transfer mode after setting the aquisition mode.
-            self.camera.setFrameTransferMode(p.frame_transfer_mode)
+            self.camera.setFrameTransferMode(p.get("frame_transfer_mode"))
 
             # Set camera fan to low. This is overriden by the off option
             if p.get("low_during_filming"):
@@ -263,8 +263,7 @@ class ACameraControl(cameraControl.CameraControl):
     #
     @hdebug.debug
     def newParameters(self, parameters):
-        #self.initCamera()
-        p = parameters
+        p = parameters.get("camera1")
         self.reversed_shutter = p.get("reversed_shutter")
         try:
             hdebug.logText("Setting Read Mode", False)
@@ -294,13 +293,13 @@ class ACameraControl(cameraControl.CameraControl):
                 self.camera.setROIAndBinning(cam_roi, cam_binning)
 
             hdebug.logText("Setting Horizontal Shift Speed", False)
-            self.camera.setHSSpeed(p.get("hsspeed"))
+            p.set("hsspeed", self.camera.setHSSpeed(p.get("hsspeed")))
 
             hdebug.logText("Setting Vertical Shift Amplitude", False)
             self.camera.setVSAmplitude(p.get("vsamplitude"))
 
             hdebug.logText("Setting Vertical Shift Speed", False)
-            self.camera.setVSSpeed(p.get("vsspeed"))
+            p.set("vsspeed", self.camera.setVSSpeed(p.get("vsspeed")))
 
             hdebug.logText("Setting EM Gain Mode", False)
             self.camera.setEMGainMode(p.get("emgainmode"))
@@ -315,7 +314,7 @@ class ACameraControl(cameraControl.CameraControl):
             self.camera.setBaselineClamp(p.get("baselineclamp"))
 
             hdebug.logText("Setting Preamp Gain", False)
-            self.camera.setPreAmpGain(p.get("preampgain"))
+            p.set("preampgain", self.camera.setPreAmpGain(p.get("preampgain")))
 
             hdebug.logText("Setting Acquisition Mode", False)
             self.camera.setACQMode("run_till_abort")
@@ -342,6 +341,10 @@ class ACameraControl(cameraControl.CameraControl):
             hdebug.logText("andorCameraControl: Bad camera settings")
             print traceback.format_exc()
             self.got_camera = False
+
+        if not p.has("bytes_per_frame"):
+            p.set("bytes_per_frame", 2 * p.get("x_pixels") * p.get("y_pixels"))
+
         self.newFilmSettings(parameters, None)
         self.parameters = parameters
 

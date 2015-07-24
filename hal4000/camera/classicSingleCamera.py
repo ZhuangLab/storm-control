@@ -37,7 +37,7 @@ class ClassicSingleCamera(singleCamera.SingleCamera):
         # Set up camera display.
         camera_display_ui = cameraDisplayUi.Ui_Frame()
         self.camera_display = cameraDisplay.CameraDisplay(hardware.display,
-                                                          parameters,
+                                                          parameters.get("camera1"),
                                                           camera_display_ui,
                                                           "camera1",
                                                           show_record_button = True,

@@ -110,7 +110,7 @@ class AMiscControl(miscControl.MiscControl):
     @hdebug.debug
     def handleBFButton(self, bool):
         self.bf_shutter = not self.bf_shutter
-        self.parameters.set("bf_shutter", self.bf_shutter)
+        self.parameters.set("misc.bf_shutter", self.bf_shutter)
         self.tiu_misc.setBrightFieldShutter(self.bf_shutter)
         self.handleBFTextUpdate()
 
@@ -152,17 +152,17 @@ class AMiscControl(miscControl.MiscControl):
     @hdebug.debug
     def newParameters(self, parameters):
         self.parameters = parameters
-        self.jog_size = parameters.get("jog_size")
-        self.epi_position = parameters.get("epi_position")
-        self.tirf_position = parameters.get("tirf_position")
+        self.jog_size = parameters.get("misc.jog_size")
+        self.epi_position = parameters.get("misc.epi_position")
+        self.tirf_position = parameters.get("misc.tirf_position")
 
-        names = parameters.filter_names
+        names = parameters.get("misc.filter_names")
         if (len(names) == 6):
             for i in range(6):
                 self.filters[i].setText(names[i])
-        self.filters[self.parameters.get("filter_position")].click()
+        self.filters[self.parameters.get("misc.filter_position")].click()
 
-        if not (self.bf_shutter == parameters.get("bf_shutter")):
+        if not (self.bf_shutter == parameters.get("misc.bf_shutter")):
             self.ui.bfButton.click()
 
     def setPositionText(self):

@@ -322,7 +322,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="objectivesGroupBox">
+            <widget class="ObjectivesGroupBox" name="objectivesGroupBox">
              <property name="minimumSize">
               <size>
                <width>250</width>
@@ -338,70 +338,10 @@
              <property name="title">
               <string>Objective Settings</string>
              </property>
-             <layout class="QGridLayout" name="gridLayout_4">
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>9</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <item row="0" column="1" colspan="2">
-               <widget class="QFrame" name="objectivesFrame">
-                <property name="frameShape">
-                 <enum>QFrame::StyledPanel</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Raised</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="2">
-               <widget class="QComboBox" name="magComboBox">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::ClickFocus</enum>
-                </property>
-                <property name="editable">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <widget class="QLabel" name="objectiveLabel">
-                <property name="text">
-                 <string>Current Objective:</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <spacer name="horizontalSpacer">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="groupBox_2">
+            <widget class="QGroupBox" name="miscGroupBox">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -563,8 +503,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>26</width>
-                   <height>16</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                 </widget>
@@ -695,7 +635,7 @@
     <addaction name="actionSet_Working_Directory"/>
     <addaction name="separator"/>
     <addaction name="actionDelete_Images"/>
-    <addaction name="actionLoad_Dax"/>
+    <addaction name="actionLoad_Movie"/>
     <addaction name="actionLoad_Mosaic"/>
     <addaction name="actionLoad_Positions"/>
     <addaction name="actionSave_Mosaic"/>
@@ -704,12 +644,22 @@
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionAdjust_Contrast"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuView"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionQuit">
    <property name="text">
-    <string>Quit</string>
+    <string>Quit (Ctrl+Q)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
    </property>
   </action>
   <action name="actionConnect">
@@ -726,10 +676,16 @@
    <property name="text">
     <string>Save Positions</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
+   </property>
   </action>
   <action name="actionSave_Mosaic">
    <property name="text">
     <string>Save Mosaic</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
   <action name="actionSet_Working_Directory">
@@ -741,28 +697,64 @@
    <property name="text">
     <string>Load Mosaic</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
+   </property>
   </action>
   <action name="actionDelete_Images">
    <property name="text">
     <string>Delete Images</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
    </property>
   </action>
   <action name="actionLoad_Positions">
    <property name="text">
     <string>Load Positions</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
   </action>
   <action name="actionSave_Snapshot">
    <property name="text">
     <string>Save Snapshot</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+I</string>
+   </property>
   </action>
-  <action name="actionLoad_Dax">
+  <action name="actionLoad_Movie">
    <property name="text">
-    <string>Load Dax</string>
+    <string>Load Movie</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
+   </property>
+  </action>
+  <action name="actionLoad_Dax_By_Pattern">
+   <property name="text">
+    <string>Load Dax By Pattern</string>
+   </property>
+  </action>
+  <action name="actionAdjust_Contrast">
+   <property name="text">
+    <string>Adjust Contrast</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ObjectivesGroupBox</class>
+   <extends>QGroupBox</extends>
+   <header>objectives</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>xStartPosSpinBox</tabstop>
   <tabstop>yStartPosSpinBox</tabstop>

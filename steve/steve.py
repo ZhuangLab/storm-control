@@ -4,11 +4,16 @@
 #
 # A utility for creating image mosaics and imaging array tomography type samples.
 #
-# Hazen 07/13
+# Since we usually use a 100x objective, everything is defined relative to this
+# objective. This means among other things that internally we use a magnification
+# that is adjusted so that the magnification of the 100x objective is 1.0.
+#
+# Hazen 07/15
 #
 
 import os
 import sys
+import re
 from PyQt4 import QtCore, QtGui
 
 # Debugging
@@ -16,9 +21,12 @@ import sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.steve_ui as steveUi
+from qtdesigner.adjust_contrast_dialog_ui import Ui_Dialog as AdjustContrastDialog_Ui
+import qtRegexFileDialog
 
 # Graphics
 import mosaicView
+import objectives
 import positions
 import sections
 
@@ -29,71 +37,118 @@ import capture
 import coord
 import sc_library.parameters as params
 
-
-## findMO
-#
-# Find the magnification and offsets for the current objective.
-#
-# @param objective The microscope objective (a string).
-# @param spin_boxes A list of spin boxes.
-#
-# @return [magnification, offset in x, offset in y].
-#
-def findMO(objective, spin_boxes):
-    magnification = 1.0
-    x_offset = 0.0
-    y_offset = 0.0
-    for box in spin_boxes:
-        if (box.objective == objective):
-            if (box.box_type == "magnification"):
-                magnification = box.value()
-            elif (box.box_type == "xoffset"):
-                x_offset = box.value()
-            elif (box.box_type == "yoffset"):
-                y_offset = box.value()
-
-    return [magnification, x_offset, y_offset]
-
-## MagOffsetSpinBox
-#
-# Spin boxes that are used to update magnification & offset.
-#
-class MagOffsetSpinBox(QtGui.QDoubleSpinBox):
-    
-    moValueChange = QtCore.pyqtSignal(object, object, float)
-
+class AdjustContrastDialog(QtGui.QDialog, AdjustContrastDialog_Ui):
     ## __init__
     #
-    # @param objective The objective the spin boxes are associated with.
-    # @param box_type What kind of spin box this is, one of "magnification", "xoffset" or "yoffset".
-    # @param initial_value The initial value for the spin box.
-    # @param parent (Optional) The PyQt parent of the spin box, default is None.
+    # @param title_text The text of the title of the dialog box
+    # @param default_min_max The starting minimum and maximum values
+    # @param scale_min_max The minimum and maximum allowed values
+    # @param parent (Optional) The PyQt parent of this object, default is None.
     #
-    def __init__(self, objective, box_type, initial_value, parent = None):
-        QtGui.QDoubleSpinBox.__init__(self, parent)
+    @hdebug.debug
+    def __init__(self, parent = None,
+                 title_text = "Adjust Contrast",
+                 default_min_max = [0, 16000],
+                 scale_min_max = [0, 16000],
+                 ):
+        QtGui.QDialog.__init__(self,parent)
+        self.setupUi(self)
 
-        self.box_type = box_type
-        self.objective = objective
-        
-        if (self.box_type == "magnification"):
-            self.setDecimals(2)
-            self.setMaximum(200.0)
-            self.setMinimum(1.0)
-            self.setSingleStep(0.01)
+        # Update window title.
+        self.setWindowTitle(title_text)
+
+        # Configure the spin boxes.
+        self.high_spin_box.setRange(scale_min_max[0], scale_min_max[1])
+        self.high_spin_box.setValue(default_min_max[1])
+        self.high_spin_box.setSingleStep(1)
+        self.low_spin_box.setRange(scale_min_max[0], scale_min_max[1])
+        self.low_spin_box.setValue(default_min_max[0])
+        self.low_spin_box.setSingleStep(1)
+
+        # Configure the slider.
+        self.high_contrast_slider.setRange(scale_min_max[0], scale_min_max[1])
+        self.high_contrast_slider.setSliderPosition(default_min_max[1])
+        self.low_contrast_slider.setRange(scale_min_max[0], scale_min_max[1])
+        self.low_contrast_slider.setSliderPosition(default_min_max[0])
+
+        # Connect signals.
+        self.high_contrast_slider.sliderMoved.connect(self.handleHighSliderUpdate)
+        self.low_contrast_slider.sliderMoved.connect(self.handleLowSliderUpdate)
+        self.high_contrast_slider.sliderReleased.connect(self.handleHighSliderRelease)
+        self.low_contrast_slider.sliderReleased.connect(self.handleLowSliderRelease)
+
+        self.high_spin_box.valueChanged.connect(self.handleHighSpinBoxUpdate)
+        self.low_spin_box.valueChanged.connect(self.handleLowSpinBoxUpdate)
+
+    ## getValues
+    #
+    # Return the values of the directory and file filter text boxes
+    #
+    # @return The minimum and maximum contrast values set by the user
+    @hdebug.debug
+    def getValues(self):
+        return [self.low_spin_box.value(), self.high_spin_box.value()]
+
+
+    # handleHighSliderRelease
+    #
+    # Coerce slider value to new range upon release
+    #
+    @hdebug.debug
+    def handleHighSliderRelease(self):
+        new_value = self.high_contrast_slider.value()
+        low_value = self.low_spin_box.value()
+        if new_value > low_value: # Coerce to larger than low contrast
+            self.high_spin_box.setValue(new_value)
         else:
-            self.setMaximum(10000.0)
-            self.setMinimum(-10000.0)
+            self.high_contrast_slider.setValue(low_value+1)
+            self.high_spin_box.setMinimum(low_value+1)
 
-        self.setValue(initial_value)
-
-        self.valueChanged.connect(self.handleValueChange)
-
-    ## handleValueChange
+    # handleLowSliderRelease
     #
-    # Emits the moValueChange signal.
+    # Coerce slider value to new range upon release
     #
-    def handleValueChange(self, value):
-        self.moValueChange.emit(self.objective, self.box_type, value)
+    @hdebug.debug
+    def handleLowSliderRelease(self):
+        new_value = self.low_contrast_slider.value()
+        high_value = self.high_spin_box.value()
+        if new_value < high_value: # Coerce to smaller than high contrast
+            self.low_spin_box.setValue(new_value)
+        else:
+            self.low_contrast_slider.setValue(high_value-1)
+            self.low_spin_box.setMaximum(high_value-1)
+    
+    # handleHighSliderUpdate
+    #
+    # Handle movement of the high contrast slider
+    #
+    @hdebug.debug
+    def handleHighSliderUpdate(self, dummy):
+        self.high_spin_box.setValue(self.high_contrast_slider.value())
+
+    # handleLowSliderUpdate
+    #
+    # Handle movement of the low contrast slider
+    #
+    @hdebug.debug
+    def handleLowSliderUpdate(self, dummy):
+        self.low_spin_box.setValue(self.low_contrast_slider.value())
+
+    # handleHighSpinBoxUpdate
+    #
+    # Handle user adjustment of the high contrast spin box
+    #
+    @hdebug.debug
+    def handleHighSpinBoxUpdate(self, dummy):
+        self.high_contrast_slider.setValue(self.high_spin_box.value())
+    
+    # handleLowSpinBoxUpdate
+    #
+    # Handle user adjustment of the low contrast spin box
+    #
+    @hdebug.debug
+    def handleLowSpinBoxUpdate(self, dummy):
+        self.low_contrast_slider.setValue(self.low_spin_box.value())
 
 
 ## Window
@@ -112,19 +167,21 @@ class Window(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self, parent)
 
         # coordinate system setup
-        coord.Point.pixels_to_um = parameters.pixels_to_um
+        coord.Point.pixels_to_um = 1.0
 
         # variables
         self.current_center = coord.Point(0.0, 0.0, "um")
-        self.current_magnification = 1.0
-        self.current_objective = False
         self.current_offset = coord.Point(0.0, 0.0, "um")
         self.debug = parameters.debug
+        self.file_filter = "\S+.dax"
         self.parameters = parameters
         self.picture_queue = []
+        self.regexp_str = ""
         self.requested_stage_pos = False
         self.stage_tracking_timer = QtCore.QTimer(self)
         self.taking_pictures = False
+        self.snapshot_directory = self.parameters.directory
+        self.spin_boxes = []
         self.stage_tracking_timer.setInterval(500)
 
         # ui setup
@@ -142,46 +199,14 @@ class Window(QtGui.QMainWindow):
 
         self.setWindowIcon(QtGui.QIcon("steve.ico"))
 
-        # Initialize objectives.
-        objectives = []
-        for i in range(10):
-            mag = "mag" + str(i)
-            if hasattr(self.parameters, mag):
-                data = getattr(self.parameters, mag)
-                obj_name = data.split(",")[0]
-                objectives.append(data)
-                self.ui.magComboBox.addItem(obj_name, data)
-
-        # Create labels and spin boxes for objective settings.
-        self.spin_boxes = []
-        layout = QtGui.QGridLayout(self.ui.objectivesFrame)
-
-        for i, label_text in enumerate(["Objective", "Magnification", "X Offset", "Y Offset"]):
-            text_item = QtGui.QLabel(label_text, self.ui.objectivesFrame)
-            layout.addWidget(text_item, 0, i)
-
-        # The first objective is assumed to be the 100x & is not adjustable.
-        data = objectives[0].split(",")
-        self.current_objective = data[0]
-        for j, datum in enumerate(data):
-            text_item = QtGui.QLabel(datum, self.ui.objectivesFrame)
-            layout.addWidget(text_item, 1, j)
-
-        # The other objectives are adjustable.
-        for i, obj in enumerate(objectives[1:]):
-            data = obj.split(",")
-            text_item = QtGui.QLabel(data[0], self.ui.objectivesFrame)
-            layout.addWidget(text_item, i+2, 0)
-
-            for j, btype in enumerate(["magnification", "xoffset", "yoffset"]):
-                sbox = MagOffsetSpinBox(data[0], btype, float(data[j+1]))
-                layout.addWidget(sbox, i+2, j+1)
-                sbox.moValueChange.connect(self.handleMOValueChange)
-                self.spin_boxes.append(sbox)
+        # handling file drops
+        self.ui.centralwidget.__class__.dragEnterEvent = self.dragEnterEvent
+        self.ui.centralwidget.__class__.dropEvent = self.dropEvent
+        self.ui.centralwidget.setAcceptDrops(True)
 
         # Create a validator for scaleLineEdit.
-        self.sce_validator = QtGui.QDoubleValidator(1.0e-6, 1.0e+6, 6, self.ui.scaleLineEdit)
-        self.ui.scaleLineEdit.setValidator(self.sce_validator)
+        self.scale_validator = QtGui.QDoubleValidator(1.0e-6, 1.0e+6, 6, self.ui.scaleLineEdit)
+        self.ui.scaleLineEdit.setValidator(self.scale_validator)
 
         # Initialize view.
         self.view = mosaicView.MosaicView(parameters, self.ui.mosaicFrame)
@@ -211,8 +236,9 @@ class Window(QtGui.QMainWindow):
 
         # signals
         self.ui.actionQuit.triggered.connect(self.quit)
+        self.ui.actionAdjust_Contrast.triggered.connect(self.handleAdjustContrast)
         self.ui.actionDelete_Images.triggered.connect(self.handleDeleteImages)
-        self.ui.actionLoad_Dax.triggered.connect(self.handleLoadDax)
+        self.ui.actionLoad_Movie.triggered.connect(self.handleLoadMovie)
         self.ui.actionLoad_Mosaic.triggered.connect(self.handleLoadMosaic)
         self.ui.actionLoad_Positions.triggered.connect(self.handleLoadPositions)
         self.ui.actionSave_Mosaic.triggered.connect(self.handleSaveMosaic)
@@ -222,7 +248,6 @@ class Window(QtGui.QMainWindow):
         self.ui.foregroundOpacitySlider.valueChanged.connect(self.handleOpacityChange)
         self.ui.getStagePosButton.clicked.connect(self.handleGetStagePosButton)
         self.ui.imageGridButton.clicked.connect(self.handleImageGrid)
-        self.ui.magComboBox.currentIndexChanged.connect(self.handleObjectiveChange)
         self.ui.scaleLineEdit.textEdited.connect(self.handleScaleChange)
         self.ui.tabWidget.currentChanged.connect(self.handleTabChange)
         self.ui.trackStageCheckBox.stateChanged.connect(self.handleTrackStage)
@@ -233,6 +258,7 @@ class Window(QtGui.QMainWindow):
 
         self.view.addPosition.connect(self.addPositions)
         self.view.addSection.connect(self.addSection)
+        self.view.getObjective.connect(self.handleGetObjective)
         self.view.gotoPosition.connect(self.gotoPosition)
         self.view.mouseMove.connect(self.updateMosaicLabel)
         self.view.scaleChange.connect(self.updateScaleLineEdit)
@@ -242,12 +268,18 @@ class Window(QtGui.QMainWindow):
         self.sections.takePictures.connect(self.takePictures)
 
         self.comm.captureComplete.connect(self.addImage)
+        self.comm.changeObjective.connect(self.handleChangeObjective)
         self.comm.disconnected.connect(self.handleDisconnected)
         self.comm.getPositionComplete.connect(self.handleGetPositionComplete)
-        self.comm.gotoComplete.connect(self.handleGotoComplete)
+        self.comm.newObjectiveData.connect(self.handleNewObjectiveData)
+        self.comm.otherComplete.connect(self.handleOtherComplete)
 
-        self.handleObjectiveChange(0)
-
+        self.ui.objectivesGroupBox.valueChanged.connect(self.handleMOValueChange)
+        
+        # Try and get settings from HAL.
+        self.comm.commConnect()
+        self.comm.getSettings()
+        
     ## addImage
     #
     # Adds a capture.Image object to the graphics scene. Checks self.picture_queue to see if there
@@ -264,7 +296,11 @@ class Window(QtGui.QMainWindow):
             self.comm.commDisconnect()
             return
 
-        self.view.addImage(image, self.current_objective, self.current_magnification, self.current_offset)
+        objective = image.parameters.get("mosaic." + image.parameters.get("mosaic.objective")).split(",")[0]
+        [magnification, x_offset, y_offset] = self.ui.objectivesGroupBox.getData(objective)
+        magnification = magnification * 0.01
+        self.current_offset = coord.Point(x_offset, y_offset, "um")
+        self.view.addImage(image, objective, magnification, self.current_offset)
         self.view.setCrosshairPosition(image.x_pix, image.y_pix)
         if (len(self.picture_queue) > 0):
             next_item = self.picture_queue[0]
@@ -274,8 +310,8 @@ class Window(QtGui.QMainWindow):
                 next_y_um = self.current_center.y_um
             else:
                 [tx, ty] = next_item
-                next_x_um = self.current_center.x_um + 0.95 * float(image.width) * self.parameters.pixels_to_um * tx / self.current_magnification
-                next_y_um = self.current_center.y_um + 0.95 * float(image.height) * self.parameters.pixels_to_um * ty / self.current_magnification
+                next_x_um = self.current_center.x_um + 0.95 * float(image.width) * coord.Point.pixels_to_um * tx / magnification
+                next_y_um = self.current_center.y_um + 0.95 * float(image.height) * coord.Point.pixels_to_um * ty / magnification
             self.picture_queue = self.picture_queue[1:]
             self.comm.captureStart(next_x_um, next_y_um)
         else:
@@ -318,6 +354,66 @@ class Window(QtGui.QMainWindow):
     def closeEvent(self, event):
         self.cleanUp()
 
+    ## dragEnterEvent
+    #
+    # This is called when a file is dragged into the main window.
+    #
+    # @param event A QEvent object.
+    #
+    @hdebug.debug
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            event.ignore()
+
+    ## dropEvent
+    #
+    # This is called when a file is dropped on the main window. 
+    #
+    # @param event A QEvent object containing the filenames.
+    #
+    @hdebug.debug
+    def dropEvent(self, event):
+        # Initialize filenames variable
+        filenames = []
+
+        # Tranfer urls to filenames
+        for url in event.mimeData().urls():
+            filenames.append(str(url.toLocalFile()))
+
+        # Sort file names
+        filenames = sorted(filenames)
+
+        # Identify first type
+        name, firstType = os.path.splitext(filenames[0])
+
+        # Check to see if all types are the same
+        sameType = []
+        for filename in filenames:
+            name, fileType = os.path.splitext(filename)
+            sameType.append(fileType == firstType)
+
+        # If not, raise an error and abort load
+        if not all(sameType):
+            hdebug.logText(" Loaded mixed file types")
+            QtGui.QMessageBox.information(self,
+                                          "Too many file types",
+                                          "")
+            return
+        
+        # Load files
+        if (firstType == '.dax'): # Load dax files 
+            self.loadMovie(filenames)
+        elif (firstType == '.msc'): # Load mosaics
+            for filename in sorted(filenames):
+                self.loadMosaic(filename)
+        else:
+            hdebug.logText(" " + firstType + " is not recognized")
+            QtGui.QMessageBox.information(self,
+                                          "File type not recognized",
+                                          "")                    
+
     ## gotoPosition
     #
     # Tell HAL to move to the specified position (if self.taking_pictures is False).
@@ -329,6 +425,45 @@ class Window(QtGui.QMainWindow):
         if not self.taking_pictures:
             self.comm.commConnect()
             self.comm.gotoPosition(point.x_um - self.current_offset.x_um, point.y_um - self.current_offset.y_um)
+
+    ## handleAdjustContrast
+    #
+    # Handles a request to adjust the contrast of all imageItems.
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def handleAdjustContrast(self, boolean):
+        # Determine the current contrast
+        current_contrast = self.view.getContrast()
+        print "Current Contrast: " + str(current_contrast)
+        if current_contrast[0] is None:
+            current_contrast = [0, 16000] # Default values for HAL: FIXME
+ 
+        # Prepare and display dialog
+        dialog = AdjustContrastDialog(self,
+                                      "Adjust Contrast",
+                                      current_contrast)
+        
+        if dialog.exec_():
+            newRange = dialog.getValues() # Get values
+            print "Adjusted Contrast: " + str(newRange)
+
+            self.view.changeContrast(newRange)
+        else:
+            return
+
+    ## handleChangeObjective
+    #
+    # Handles the objective change signal from capture.
+    #
+    # @param objective The name of the objective.
+    #
+    @hdebug.debug
+    def handleChangeObjective(self, objective):
+        self.ui.objectivesGroupBox.changeObjective(objective)
+        [magnification, x_offset, y_offset] = self.ui.objectivesGroupBox.getData(objective)
+        self.current_offset = coord.Point(x_offset, y_offset, "um")
 
     ## handleDeleteImages
     #
@@ -354,6 +489,13 @@ class Window(QtGui.QMainWindow):
     def handleDisconnected(self):
         self.toggleTakingPicturesStatus(False)
 
+    ## handleGetObjective
+    #
+    @hdebug.debug
+    def handleGetObjective(self):
+        self.comm.commConnect()
+        self.comm.getObjective()
+        
     ## handleGetStagePosButton
     #
     # @param dummy Dummy parameter.
@@ -381,12 +523,6 @@ class Window(QtGui.QMainWindow):
             self.ui.xStartPosSpinBox.setValue(a_point.x_um)
             self.ui.yStartPosSpinBox.setValue(a_point.y_um)
             self.comm.commDisconnect()
-
-    ## handleGotoComplete
-    #
-    @hdebug.debug
-    def handleGotoComplete(self):
-        self.comm.commDisconnect()
 
     ## handleGridChange
     #
@@ -423,27 +559,11 @@ class Window(QtGui.QMainWindow):
             self.takePictures(pos_list)
         else: # Abort button
             self.picture_queue = []
-            self.toggleTakingPicturesStatus(False)
-            self.comm.commDisconnect()
+            # addImage will handle reseting the ui and disconnecting comm
 
-    ## handleLoadDax
-    #
-    # Handles loading dax files, which can be useful for retrospective analysis.
-    #
-    # @param boolean Dummy parameter.
-    #
-    @hdebug.debug
-    def handleLoadDax(self, boolean):
-        dax_filenames = QtGui.QFileDialog.getOpenFileNames(self,
-                                                           "Load Dax Files",
-                                                           self.parameters.directory,
-                                                           "*.dax")
-        for i in range(dax_filenames.count()):
-            self.comm.loadImage(str(dax_filenames.takeFirst()))
-    
     ## handleLoadMosaic
     #
-    # Handles the load mosaic action.
+    # Handles a user request to load a mosaic.
     #
     # @param boolean Dummy parameter.
     #
@@ -452,55 +572,30 @@ class Window(QtGui.QMainWindow):
         mosaic_filename = str(QtGui.QFileDialog.getOpenFileName(self,
                                                                 "Load Mosaic",
                                                                 self.parameters.directory,
-                                                                "*.msc"))
-        if mosaic_filename:
-            legacy_format = True
-            dirname = os.path.dirname(mosaic_filename)
+                                                                "*.msc"))    
+        self.loadMosaic(mosaic_filename)
 
-            mosaic_fp = open(mosaic_filename, "r")
+    ## handleLoadMovie
+    #
+    # Handles user request to load movie files.
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def handleLoadMovie(self, boolean):
+        # Open custom dialog to select files and frame number
+        [filenames, frame_num, file_filter] = qtRegexFileDialog.regexGetFileNames(directory = self.parameters.directory,
+                                                                                  regex = self.regexp_str,
+                                                                                  extensions = ["*.dax", "*.tif", "*.spe"])
+        if (filenames is not None) and (len(filenames) > 0):
+            print "Found " + str(len(filenames)) + " files matching " + str(file_filter) + " in " + os.path.dirname(filenames[0])
+            print "Loading frame: " + str(frame_num)
 
-            # First, figure out file size
-            mosaic_fp.readline()
-            number_lines = 0
-            while 1:
-                line = mosaic_fp.readline()
-                if not line: break
-                number_lines += 1
-            mosaic_fp.seek(0)
-
-            # Create progress bar
-            progress_bar = QtGui.QProgressDialog("Load Files...",
-                                                 "Abort Load",
-                                                 0,
-                                                 number_lines,
-                                                 self)
-            progress_bar.setWindowModality(QtCore.Qt.WindowModal)
-
-            mosaic_dirname = os.path.dirname(mosaic_filename)
-            file_number = 1
-            while 1:
-                if progress_bar.wasCanceled(): break
-                line = mosaic_fp.readline().rstrip()
-                if not line: break
-                data = line.split(",")
-                if (self.view.loadFromMosaicFileData(data, mosaic_dirname)):
-                    legacy_format = False
-                elif (self.positions.loadFromMosaicFileData(data, mosaic_dirname)):
-                    legacy_format = False
-                elif (self.sections.loadFromMosaicFileData(data, mosaic_dirname)):
-                    legacy_format = False
-                else:
-                    print "Unrecognized scene element:", data[0]
+            # Save regexp string for next time the dialog is opened
+            self.regexp_str = file_filter
                 
-                progress_bar.setValue(file_number)
-                file_number += 1
-
-            progress_bar.close()
-            mosaic_fp.close()
-
-            if legacy_format:
-                # load older data formats here..
-                pass
+            # Load dax
+            self.loadMovie(filenames, frame_num)
 
     ## handleLoadPositions
     #
@@ -522,47 +617,28 @@ class Window(QtGui.QMainWindow):
     # Handles the moValueChange signal from the magnification and offset spin boxes.
     #
     # @param objective The objective associated with the spin box that was changed.
-    # @param box_type The box type of the spin box that was changed.
+    # @param pname The box type of the spin box that was changed.
     # @param value The new value of the spin box that was changed.
     #
     @hdebug.debug
-    def handleMOValueChange(self, objective, box_type, value):
-        if (box_type == "magnification"):
-            value = value/100.0
-            if (objective == self.current_objective):
-                self.current_magnification = value
-            self.view.changeMagnification(objective, value)
-        elif (box_type == "xoffset"):
-            if (objective == self.current_objective):
-                self.current_offset = coord.Point(value, self.current_offset.y_um, "um")
+    def handleMOValueChange(self, objective, pname, value):
+        if (pname == "magnification"):
+            self.view.changeMagnification(objective, value/100.0)
+        elif (pname == "xoffset"):
             self.view.changeXOffset(objective, coord.umToPix(value))
-        elif (box_type == "yoffset"):
-            if (objective == self.current_objective):
-                self.current_offset = coord.Point(self.current_offset.x_um, value, "um")
+        elif (pname == "yoffset"):
             self.view.changeYOffset(objective, coord.umToPix(value))
-        else:
-            print "unknown box type:", box_type
-
-    ## handleObjectiveChange
+            
+    ## handleNewObjectiveData
     #
-    # Handles the currentIndexChanged signal from the combo box that lists the objectives.
+    # Handles adding a new objective to the list of available objectives.
     #
-    # @param mag_index The index of the newly selected objective.
+    # @param data An array containing the description and information for the new objective.
     #
     @hdebug.debug
-    def handleObjectiveChange(self, mag_index):
-        data = self.ui.magComboBox.itemData(mag_index).toString()
-        if data:
-            data = data.split(",")
-            if (mag_index == 0):
-                [mag, x_offset, y_offset] = map(float, data[1:])
-            else:
-                [mag, x_offset, y_offset] = findMO(data[0], self.spin_boxes)
-            mag = mag/100.0
-            self.current_objective = data[0]
-            self.current_magnification = mag
-            self.current_offset = coord.Point(x_offset, y_offset, "um")
-
+    def handleNewObjectiveData(self, data):
+        self.ui.objectivesGroupBox.addObjective(data)
+        
     ## handleOpacityChange
     #
     # Handles the valueChanged signal from the foreground opacity slider.
@@ -572,6 +648,12 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleOpacityChange(self, value):
         self.sections.changeOpacity(0.01*float(value))
+        
+    ## handleOtherComplete
+    #
+    @hdebug.debug
+    def handleOtherComplete(self):
+        self.comm.commDisconnect()
 
     ## handleSavePositions
     #
@@ -635,7 +717,8 @@ class Window(QtGui.QMainWindow):
                                                                str(self.parameters.directory),
                                                                QtGui.QFileDialog.ShowDirsOnly))
         if directory:
-            self.parameters.directory = directory + "/"
+            self.parameters.directory = directory + os.path.sep
+            self.snapshot_directory = directory + os.path.sep
             print self.parameters.directory
 
     ## handleSnapshot
@@ -648,11 +731,14 @@ class Window(QtGui.QMainWindow):
     def handleSnapshot(self, boolean):
         snapshot_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
                                                                   "Save Snapshot", 
-                                                                  self.parameters.directory, 
+                                                                  self.snapshot_directory, 
                                                                   "*.png"))
         if snapshot_filename:
             pixmap = QtGui.QPixmap.grabWidget(self.view.viewport())
             pixmap.save(snapshot_filename)
+
+            self.snapshot_directory = os.path.dirname(snapshot_filename)
+            
 
     ## handleStageTrackingTimer
     #
@@ -699,6 +785,94 @@ class Window(QtGui.QMainWindow):
             self.view.showCrosshair(False)
             self.stage_tracking_timer.stop()
             self.comm.commDisconnect()
+
+    ## loadMosaic
+    #
+    # Handles the load mosaic action.
+    #
+    # @param boolean Dummy parameter.
+    #
+    @hdebug.debug
+    def loadMosaic(self, mosaic_filename):
+        if mosaic_filename:
+            legacy_format = True
+            dirname = os.path.dirname(mosaic_filename)
+
+            mosaic_fp = open(mosaic_filename, "r")
+
+            # First, figure out file size
+            mosaic_fp.readline()
+            number_lines = 0
+            while 1:
+                line = mosaic_fp.readline()
+                if not line: break
+                number_lines += 1
+            mosaic_fp.seek(0)
+
+            # Create progress bar
+            progress_bar = QtGui.QProgressDialog("Load Files...",
+                                                 "Abort Load",
+                                                 0,
+                                                 number_lines,
+                                                 self)
+            progress_bar.setWindowModality(QtCore.Qt.WindowModal)
+
+            mosaic_dirname = os.path.dirname(mosaic_filename)
+            file_number = 1
+            while 1:
+                if progress_bar.wasCanceled(): break
+                line = mosaic_fp.readline().rstrip()
+                if not line: break
+                data = line.split(",")
+                if (self.view.loadFromMosaicFileData(data, mosaic_dirname)):
+                    legacy_format = False
+                elif (self.positions.loadFromMosaicFileData(data, mosaic_dirname)):
+                    legacy_format = False
+                elif (self.sections.loadFromMosaicFileData(data, mosaic_dirname)):
+                    legacy_format = False
+                else:
+                    print "Unrecognized scene element:", data[0]
+                
+                progress_bar.setValue(file_number)
+                file_number += 1
+
+            progress_bar.close()
+            mosaic_fp.close()
+
+            if legacy_format:
+                # load older data formats here..
+                pass
+
+    ## loadMovie
+    #
+    # Handles loading movie files, which can be useful for retrospective analysis.
+    #
+    # @param filenames A list of file names.
+    # @param frame_num The frame number to load. Starts at 0. Default is 0.
+    #
+    @hdebug.debug
+    def loadMovie(self, filenames, frame_num = 0):
+        
+        # Create progress bar.
+        progress_bar = QtGui.QProgressDialog("Loading " + str(len(filenames)) +  " Files ...",
+                                             "Abort Load",
+                                             0,
+                                             len(filenames),
+                                             self)
+        progress_bar.setWindowTitle("Dax Load Progress")
+        progress_bar.setWindowModality(QtCore.Qt.WindowModal)
+        file_number = 1
+        
+        # Load movies.
+        self.comm.fake_got_settings = False
+        for filename in filenames:
+            if progress_bar.wasCanceled(): break
+            self.comm.loadImage(filename, frame_num)
+            progress_bar.setValue(file_number)
+            file_number += 1
+
+        # Close progress bar.
+        progress_bar.close()
 
     ## setCenter
     #
@@ -793,14 +967,15 @@ class Window(QtGui.QMainWindow):
     def quit(self, boolean):
         self.close()
 
+
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
 
     # Load settings.
     if (len(sys.argv)==2):
-        parameters = params.Parameters(sys.argv[1])
+        parameters = params.parameters(sys.argv[1])
     else:
-        parameters = params.Parameters("settings_default.xml")
+        parameters = params.parameters("settings_default.xml")
 
     # Start logger.
     hdebug.startLogging(parameters.directory + "logs/", "steve")

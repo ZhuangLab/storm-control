@@ -57,7 +57,7 @@ class QCameraWidget(QtGui.QWidget):
         # Only integer values are allowed.
         self.magnification = 1
 
-        self.max_intensity = parameters.max_intensity
+        self.max_intensity = parameters.get("max_intensity")
         
         self.mouse_x = 0
         self.mouse_y = 0
@@ -276,9 +276,9 @@ class QCameraWidget(QtGui.QWidget):
         self.x_size = parameters.get("x_pixels")/parameters.get("x_bin")
         self.y_size = parameters.get("y_pixels")/parameters.get("y_bin")
         self.drag_multiplier = parameters.get("drag_multiplier", 1.0)
-        self.max_intensity = parameters.max_intensity
+        self.max_intensity = parameters.get("max_intensity")
 
-        if "_sat.ctbl" in parameters.colortable:
+        if "_sat.ctbl" in parameters.get("colortable"):
             self.display_saturated_pixels = True
         else:
             self.display_saturated_pixels = False

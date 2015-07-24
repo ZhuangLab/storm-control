@@ -29,27 +29,27 @@ class Kilroy(QtGui.QMainWindow):
         super(Kilroy, self).__init__()
 
         # Parse parameters into internal attributes
-        self.verbose = parameters.verbose
-        self.valve_com_port = parameters.valves_com_port
-        self.tcp_port = parameters.tcp_port
-        self.pump_com_port = parameters.pump_com_port
-        self.pump_ID = parameters.pump_ID
+        self.verbose = parameters.get("verbose")
+        self.valve_com_port = parameters.get("valves_com_port")
+        self.tcp_port = parameters.get("tcp_port")
+        self.pump_com_port = parameters.get("pump_com_port")
+        self.pump_ID = parameters.get("pump_ID")
         if not hasattr(parameters, "num_simulated_valves"):
             self.num_simulated_valves = 0
         else:
-            self.num_simulated_valves = parameters.num_simulated_valves
+            self.num_simulated_valves = parameters.get("num_simulated_valves")
         if not hasattr(parameters, "protocols_file"):
             self.protocols_file = "default_config.xml"
         else:
-            self.protocols_file = parameters.protocols_file
+            self.protocols_file = parameters.get("protocols_file")
         if not hasattr(parameters, "commands_file"):
             self.commands_file = "default_config.xml"
         else:
-            self.commands_file = parameters.commands_file
+            self.commands_file = parameters.get("commands_file")
         if not hasattr(parameters, "simulate_pump"):
             self.simulate_pump = False
         else:
-            self.simulate_pump = parameters.simulate_pump
+            self.simulate_pump = parameters.get("simulate_pump")
 
         # Define additional internal attributes
         self.received_message = None
@@ -123,8 +123,9 @@ class Kilroy(QtGui.QMainWindow):
     # ----------------------------------------------------------------------------------------
     def handleProtocolComplete(self, message):
         # If the protocol was sent by TCP pass on the complete signal
-        if self.received_message.getID() == message.getID():
+        if (self.received_message is not None) and self.received_message.getID() == message.getID():
             self.tcpServer.sendMessage(message)
+            self.received_message = None # Reset the received_message
 
     # ----------------------------------------------------------------------------------------
     # Handle protocol request sent via TCP server
@@ -242,9 +243,9 @@ if __name__ == "__main__":
 
     # Load parameters
     if len(sys.argv) == 2:
-        parameters = params.Parameters(sys.argv[1])
+        parameters = params.parameters(sys.argv[1])
     else:
-        parameters = params.Parameters("kilroy_settings_default.xml")
+        parameters = params.parameters("kilroy_settings_default.xml")
 
     # Create instance of StandAlone class
     window = StandAlone(parameters)

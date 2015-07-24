@@ -11,6 +11,7 @@
 # Hazen 05/14
 #
 
+import copy
 import json
 
 
@@ -38,7 +39,7 @@ class TCPMessage(object):
         #self.complete = False
         self.error = False
         self.error_message = None
-        self.message_data = message_data
+        self.message_data = copy.copy(message_data)
         self.message_type = message_type
         self.response = {}
         self.test_mode = test_mode

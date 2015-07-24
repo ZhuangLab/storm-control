@@ -35,7 +35,7 @@ class QStatusDisplay(QtGui.QWidget):
         self.scale_max = scale_max
         self.range = scale_max - scale_min
         self.value = 0
-        self.warning = 0
+        self.warning = False
 
     ## convert
     #
@@ -85,8 +85,9 @@ class QStatusDisplay(QtGui.QWidget):
     #
     # @param value The input value.
     #
-    def updateValue(self, value):
+    def updateValue(self, value, warning = False):
         self.value = self.convert(value)
+        self.warning = warning
         self.update()
 
 ## QSumDisplay
@@ -164,7 +165,7 @@ class QOffsetDisplay(QStatusDisplay):
             self.center_bar = int(0.5 * self.y_size)
         self.warning_low = self.convert(float(warning_low))
         self.warning_high = self.convert(float(warning_high))
-
+        
     ## paintEvent
     #
     # Handles redrawing the widget.
@@ -189,6 +190,8 @@ class QOffsetDisplay(QStatusDisplay):
 
         # foreground
         color = QtGui.QColor(0, 0, 0, 150)
+        if self.warning:
+            color = QtGui.QColor(0, 255, 0, 200)
         painter.setPen(color)
         painter.setBrush(color)
         painter.drawRect(2, self.y_size - self.value - 2, self.x_size - 5, 3)

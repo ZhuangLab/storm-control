@@ -37,7 +37,7 @@ class JoystickObject(QtCore.QObject, halModule.HalModule):
 
         self.button_timer = QtCore.QTimer(self)
         self.jstick = joystick
-        self.parameters = parameters
+        self.parameters = parameters.get("joystick")
         self.parameters.set("joystick_gain_index", 0)
         self.parameters.set("multiplier", 1)
         self.old_right_joystick = [0, 0]

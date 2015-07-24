@@ -52,7 +52,6 @@ class CameraParams(QtGui.QGroupBox):
 
         # connect signals
         self.ui.EMCCDSlider.valueChanged.connect(self.cameraGainChange)
-        #self.connect(self.ui.EMCCDSlider, QtCore.SIGNAL("valueChanged(int)"), self.cameraGainChange)
 
     ## cameraGainChange
     #
@@ -75,33 +74,29 @@ class CameraParams(QtGui.QGroupBox):
     @hdebug.debug        
     def newParameters(self, parameters):
         p = parameters
-        if (hasattr(p, "temperature")):
-            self.temperature = p.temperature
+        if p.has("temperature"):
+            self.temperature = p.get("temperature")
 
-        if (hasattr(p, "emgainmode")):
+        if p.has("emgainmode"):
             self.ui.EMCCDSlider.valueChanged.disconnect()
             self.ui.EMCCDSlider.setMinimum(p.get("em_gain_low", 1))
             self.ui.EMCCDSlider.setMaximum(p.get("em_gain_high", 10))
-            #print p.em_gain_low, p.em_gain_high
-            #if p.emgainmode == 0:
-            #    self.ui.EMCCDSlider.setMaximum(255)
-            #else:
-            #    self.ui.EMCCDSlider.setMaximum(100)
+            self.ui.EMCCDSlider.setValue(p.get("emccd_gain"))
+            self.ui.EMCCDLabel.setText("EMCCD Gain: %d" % p.get("emccd_gain"))
             self.ui.EMCCDSlider.valueChanged.connect(self.cameraGainChange)
-            self.ui.EMCCDSlider.setValue(p.emccd_gain)
 
-        if (hasattr(p, "preampgain")):
-            self.ui.preampGainText.setText("%.1f" % p.preampgain)
+        if p.has("preampgain"):
+            self.ui.preampGainText.setText("%.1f" % p.get("preampgain"))
 
-        self.ui.pictureSizeText.setText(str(p.x_pixels) + " x " + str(p.y_pixels) +
-                                        " (" + str(p.x_bin) + "," + str(p.y_bin) + ")")
+        self.ui.pictureSizeText.setText(str(p.get("x_pixels")) + " x " + str(p.get("y_pixels")) +
+                                        " (" + str(p.get("x_bin")) + "," + str(p.get("y_bin")) + ")")
 
-        if p.external_trigger:
+        if p.get("external_trigger", False):
             self.ui.exposureTimeText.setText("External")
             self.ui.FPSText.setText("External")
         else:
-            self.ui.exposureTimeText.setText("%.4f" % p.exposure_value)
-            self.ui.FPSText.setText("%.4f" % (1.0/p.kinetic_value))
+            self.ui.exposureTimeText.setText("%.4f" % p.get("exposure_value"))
+            self.ui.FPSText.setText("%.4f" % (1.0/p.get("cycle_value")))
 
     ## newTemperature
     #

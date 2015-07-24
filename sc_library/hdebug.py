@@ -16,7 +16,6 @@ from PyQt4 import QtCore
 a_logger = False
 logging_mutex = QtCore.QMutex()
 
-
 def objectToString(a_object, a_name, a_attrs):
     a_string = "<" + a_name
     for a_attr in a_attrs:
@@ -41,15 +40,23 @@ def debug(fn):
         if a_logger:
             logging_mutex.lock()
             if fn.__module__ == "__main__":
-                a_logger.info(fn.__module__ + "." + fn.__name__)
+                a_logger.info(fn.__module__ + "." + fn.__name__ + " started")
                 for i, arg in enumerate(args):
                     a_logger.info("    " + str(i) + " " + str(arg))
             else:
-                a_logger.info("  " + fn.__module__ + "." + fn.__name__)
+                a_logger.info("  " + fn.__module__ + "." + fn.__name__ + " started")
                 for i, arg in enumerate(args):
                     a_logger.info("      " + str(i) + " " + str(arg))
             logging_mutex.unlock()
-        return fn(*args, **kw)
+        temp = fn(*args, **kw)
+        if a_logger:
+            logging_mutex.lock()
+            if fn.__module__ == "__main__":
+                a_logger.info(fn.__module__ + "." + fn.__name__ + " ended")
+            else:
+                a_logger.info("  " + fn.__module__ + "." + fn.__name__ + " ended")
+            logging_mutex.unlock()
+        return temp
     return __wrapper
 
 ## getDebug
@@ -110,11 +117,19 @@ def startLogging(directory, program_name):
     rt_formatter = logging.Formatter('%(asctime)s:%(name)s:%(levelname)s:%(message)s')
 
     # Rotating file handle for saving output.
-    rf_handler = logging.handlers.RotatingFileHandler(directory + program_name + "_" + str(index) + ".out",
-                                                      maxBytes = 20000,
-                                                      backupCount = 5)
-    rf_handler.setFormatter(rt_formatter)
-    a_logger.addHandler(rf_handler)
+    log_filename = directory + program_name + "_" + str(index) + ".out"
+    try:
+        rf_handler = logging.handlers.RotatingFileHandler(log_filename,
+                                                          maxBytes = 200000,
+                                                          backupCount = 5)
+    except IOError:
+        print "Logging Error! Could not open", log_filename
+        print "  Logging is disabled."
+        a_logger = False
+
+    if a_logger:
+        rf_handler.setFormatter(rt_formatter)
+        a_logger.addHandler(rf_handler)
 
 #
 # The MIT License

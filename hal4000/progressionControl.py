@@ -458,7 +458,7 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
                                                self.ui.startLabel.pos().x(),
                                                self.ui.incrementLabel.pos().x(),
                                                self.ui.framesLabel.pos().x()],
-                                              self.parameters,
+                                              self.parameters.get("progressions"),
                                               self.ui.linearTab)
 
         # exponential increasing power tab setup
@@ -468,7 +468,7 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
                                                  self.ui.startLabel_2.pos().x(),
                                                  self.ui.incrementLabel_2.pos().x(),
                                                  self.ui.framesLabel_2.pos().x()],
-                                                self.parameters,
+                                                self.parameters.get("progressions"),
                                                 self.ui.expTab)
 
         # increment power as specified in a file
@@ -576,9 +576,9 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def handleProgCheck(self, state):
         if state:
-            self.parameters.set("use_progressions", True)
+            self.parameters.set("progressions.use_progressions", True)
         else:
-            self.parameters.set("use_progressions", False)
+            self.parameters.set("progressions.use_progressions", False)
 
     ## handleQuit
     #
@@ -619,7 +619,7 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def newParameters(self, parameters):
         self.parameters = parameters
-        if parameters.get("use_progressions"):
+        if parameters.get("progressions.use_progressions"):
             self.ui.progressionsCheckBox.setChecked(True)
         else:
             self.ui.progressionsCheckBox.setChecked(False)
@@ -634,7 +634,7 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     def newPowerFile(self, bool):
         power_filename = QtGui.QFileDialog.getOpenFileName(self,
                                                            "New Power File",
-                                                           str(self.parameters.get("directory")),
+                                                           str(self.parameters.get("film.directory")),
                                                            "*.power")
         if power_filename:
             self.ui.filenameLabel.setText(power_filename[-40:])
@@ -666,7 +666,7 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     #
     def startFilm(self, film_name, run_shutters):
         self.channels = False
-        if (self.isVisible() and self.parameters.get("use_progressions")):
+        if (self.isVisible() and self.parameters.get("progressions.use_progressions")):
             # determine which tab is active.
             if self.ui.linearTab.isVisible():
                 self.channels = self.linear_channels
