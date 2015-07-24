@@ -5,7 +5,6 @@
   <camera>
     <!-- <module type="string">detachedSingleCamera</module> -->
     <module type="string">classicSingleCamera</module>
-    <!-- <module type="string">noneCamera</module> -->
     <parameters>
       <control type="string">noneCameraControl</control>
       <display type="string">noneCameraWidget</display>
