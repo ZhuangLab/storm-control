@@ -874,11 +874,11 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def showHideLength(self):
         if self.ui.modeComboBox.currentIndex() == 0:
-            self.ui.lengthLabel.hide()
-            self.ui.lengthSpinBox.hide()
+            self.ui.lengthLabel.setEnabled(False)
+            self.ui.lengthSpinBox.setEnabled(False)
         else:
-            self.ui.lengthLabel.show()
-            self.ui.lengthSpinBox.show()
+            self.ui.lengthLabel.setEnabled(True)
+            self.ui.lengthSpinBox.setEnabled(True)
 
     ## startCamera
     #
@@ -1146,6 +1146,12 @@ class Window(QtGui.QMainWindow):
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
+
+    # Set default font size for linux.
+    if (sys.platform == "linux2"):
+        font = QtGui.QFont()
+        font.setPointSize(8)
+        app.setFont(font)
 
     # Splash Screen.
     pixmap = QtGui.QPixmap("splash.png")
