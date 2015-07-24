@@ -23,9 +23,9 @@ zee-calibrator - This folder contains software (main.py) that is used to generat
 ## General notes ##
 1. This software is written primarily in Python with a few C helper libraries.
 
-2. Doxygen documentation is available (for Dave, HAL and Steve), but you'll have to run doxygen to create it.
+2. The master branch should be stable. Development could be unstable.
 
-3. The different branches correspond to different setups. Ideally these are all modifications off the tip of master, but depending on update frequency some may lag a bit.
+3. Doxygen documentation is available (for Dave, HAL and Steve), but you'll have to run doxygen to create it.
 
 4. The software is provided "as is" in the hope that others might find it useful. While it is fairly stable and has been developed and used since 2009 in the Zhuang lab, we provide no guarantee that any future changes that are made will maintain backwards compatibility with older versions.
 
