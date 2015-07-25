@@ -9,8 +9,6 @@
 
 from PyQt4 import QtCore, QtGui
 
-import coord
-
 
 ## PositionItem
 #
@@ -20,9 +18,8 @@ class PositionItem():
 
     brush = QtGui.QBrush(QtGui.QColor(255,255,255,0))
     deselected_pen = QtGui.QPen(QtGui.QColor(0,0,255))
+    rectangle_size = 1
     selected_pen = QtGui.QPen(QtGui.QColor(255,0,0))
-    x_size = 1
-    y_size = 1
 
     ## __init__
     #
@@ -30,6 +27,9 @@ class PositionItem():
     #
     def __init__(self, a_point):
         self.a_point = a_point
+
+        self.x_size = self.rectangle_size / a_point.pixels_to_um
+        self.y_size = self.rectangle_size / a_point.pixels_to_um
         self.scene_position_item = ScenePositionItem(self.x_size,
                                                      self.y_size,
                                                      self.deselected_pen,
@@ -102,6 +102,10 @@ class PositionListModel(QtCore.QAbstractListModel):
     def __init__(self, parent = None):
         QtCore.QAbstractListModel.__init__(self, parent)
 
+        self.group_box = None
+        if parent is not None:
+            self.group_box = parent.parentWidget()
+            
         self.positions = []
 
     ## addPosition
@@ -113,7 +117,8 @@ class PositionListModel(QtCore.QAbstractListModel):
         self.beginInsertRows(QtCore.QModelIndex(), self.rowCount(), self.rowCount()+1)
         self.positions.append(a_position)
         self.endInsertRows()
-
+        self.updateTitle()
+        
     ## data
     #
     # @param index The index of the item to get the data of.
@@ -156,6 +161,7 @@ class PositionListModel(QtCore.QAbstractListModel):
         a_scene_position_item = self.positions[index].getScenePositionItem()
         del self.positions[index]
         self.endRemoveRows()
+        self.updateTitle()
         return a_scene_position_item
 
     ## rowCount
@@ -175,7 +181,19 @@ class PositionListModel(QtCore.QAbstractListModel):
     def setSelected(self, index, selected):
         self.positions[index].setSelected(selected)
 
+    ## updateTitle
+    #
+    # Updates the title with the current number of positions.
+    #
+    def updateTitle(self):
+        if self.group_box is not None:
+            n = len(self.positions)
+            if (n == 0):
+                self.group_box.setTitle("Positions")
+            else:
+                self.group_box.setTitle("Positions (" + str(n) + " total)")
 
+                
 ## Positions
 #
 # The position list view, this is what the user actually interacts with.
@@ -195,15 +213,9 @@ class Positions(QtGui.QListView):
         self.scene = scene
         self.step_size = parameters.step_size
 
-        PositionItem.deselected_pen.setWidth(parameters.pen_width)
-        PositionItem.selected_pen.setWidth(parameters.pen_width)
-
-        # FIXME: Need to do this properly.
-        #rectangle_size = parameters.rectangle_size/parameters.pixels_to_um
-        rectangle_size = parameters.rectangle_size/0.160
-        
-        PositionItem.x_size = rectangle_size
-        PositionItem.y_size = rectangle_size
+        PositionItem.deselected_pen.setWidth(parameters.get("pen_width"))
+        PositionItem.selected_pen.setWidth(parameters.get("pen_width"))
+        PositionItem.rectangle_size = parameters.get("rectangle_size")
 
         self.setModel(self.plist_model)
 
