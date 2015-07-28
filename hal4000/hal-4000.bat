@@ -1,2 +1,1 @@
-path=c:\Python27;
-python hal-4000.py
+python -i hal-4000.py storm5 xml\storm5_hardware.xml xml\storm5_default.xml
