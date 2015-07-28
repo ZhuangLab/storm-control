@@ -5,11 +5,7 @@
   <camera>
     <module type="string">classicSingleCamera</module>
     <parameters>
-	  <!--
       <control type="string">andorCameraControl</control>
-      <display type="string">andorCameraWidget</display>
--->
-      <control type="string">zylaCameraControl</control>
       <display type="string">andorCameraWidget</display>
     </parameters>
   </camera>
@@ -24,6 +20,13 @@
       <module_name type="string">spotCounter</module_name>
     </spotcounter>
     
+    <!-- The focus lock -->
+    <focuslock>
+      <class_name type="string">AFocusLockZ</class_name>
+      <menu_item type="string">Focus Lock</menu_item>
+      <module_name type="string">focuslock.storm5FocusLockZ</module_name>
+    </focuslock>
+
     <!-- Illumination (lasers, shutters, etc) control. -->
     <illumination>
       <class_name type="string">IlluminationControl</class_name>
