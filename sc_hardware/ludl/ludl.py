@@ -14,6 +14,15 @@ import time
 
 import httplib
 
+ludlStage = None
+
+def getLudlStage(port = "COM17"):
+    global ludlStage
+    if not ludlStage:
+	ludlStage = Ludl(port)
+    return ludlStage
+
+
 
 ## Ludl
 #
@@ -28,7 +37,7 @@ class Ludl(RS232.RS232):
     # @param baudrate (Optional) The communication baud rate, defaults to 115200.
     # @param wait_time How long to wait between polling events before it is decided that there is no new data available on the port, defaults to 20ms.
     #
-    def __init__(self, port="COM5", timeout = None, baudrate = 115200, wait_time = 0.02):
+    def __init__(self, port="COM17", timeout = None, baudrate = 115200, wait_time = 0.02):
         self.unit_to_um = 0.2
         self.um_to_unit = 1.0/self.unit_to_um
 
@@ -83,7 +92,8 @@ class Ludl(RS232.RS232):
     def goAbsolute(self, x, y):
         newx = str(int(round(x * self.um_to_unit)))
         newy = str(int(round(y * self.um_to_unit)))
-        self._commandIgnoreResponse("Move x=" + newx + ",y="+newy)
+        self._commandIgnoreResponse("Move x=" + newx)
+	self._commandIgnoreResponse("Move y=" + newy)
 
     ## goRelative
     #
@@ -188,10 +198,10 @@ class LudlTCP(Ludl):
     # @param ipAddress (Optional) The IP address, defaults to "192.168.100.1"
     #
     def __init__(self, ipAddress="192.168.100.1"):
-        self.unit_to_um = 0.2
+        self.unit_to_um = 0.05 
         self.um_to_unit = 1.0/self.unit_to_um
 
-	self.connection = httplib.HTTPConnection(ipAddress)
+	self.connection = httplib.HTTPConnection(ipAddress, timeout=1)
 
 	self.live = True
         try:
@@ -204,7 +214,7 @@ class LudlTCP(Ludl):
 	#Set to analog mode?
 	if (self.live):
 	    self._commandIgnoreResponse("CAN 3, 83, 267, 0")
-	    self._commandIgnoreResponse("stspeed x=500, y=500")
+	    self._commandIgnoreResponse("stspeed x=50000, y=50000")
 
     ## _command
     # @Override
