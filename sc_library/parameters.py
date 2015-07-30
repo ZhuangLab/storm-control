@@ -121,14 +121,15 @@ def halParameters(parameters_file):
     if not film_xml.has("extension"):
         film_xml.set("extension", film_xml.extensions[0])
 
-    illumination_xml = xml_object.get("illumination")
-    if not os.path.exists(illumination_xml.get("shutters")):
-        illumination_xml.set("shutters", os.path.dirname(parameters_file) + "/" + illumination_xml.get("shutters"))
+    illumination_xml = xml_object.get("illumination", False)
+    if illumination_xml:
+        if not os.path.exists(illumination_xml.get("shutters")):
+            illumination_xml.set("shutters", os.path.dirname(parameters_file) + "/" + illumination_xml.get("shutters"))
 
-    illumination_xml.set("shutter_colors", [])
-    illumination_xml.set("shutter_data", [])
-    illumination_xml.set("shutter_frames", -1)
-    illumination_xml.set("shutter_oversampling", 0)
+        illumination_xml.set("shutter_colors", [])
+        illumination_xml.set("shutter_data", [])
+        illumination_xml.set("shutter_frames", -1)
+        illumination_xml.set("shutter_oversampling", 0)
 
     if use_as_default or (not default_params):
         default_params = copy.deepcopy(xml_object)
@@ -213,7 +214,7 @@ def setCameraParameters(camera):
     camera.set("x_pixels", camera.get("x_end") - camera.get("x_start") + 1)
     camera.set("y_pixels", camera.get("y_end") - camera.get("y_start") + 1)
     if((camera.get("x_pixels") % 4) != 0):
-        raise ParameterException("The camera ROI must be a multiple of 4 in x!")
+        raise ParametersException("The camera ROI must be a multiple of 4 in x!")
 
     camera.set("ROI", [camera.get("x_start"),
                        camera.get("x_end"),
