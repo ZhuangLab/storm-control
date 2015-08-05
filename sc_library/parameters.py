@@ -416,8 +416,15 @@ class StormXMLObject(object):
         # Check for sub-property.
         pnames = pname.split(".")
         if (len(pnames) > 1):
-            xml_object = self.get(pnames[0])
-            return xml_object.get(".".join(pnames[1:]), default, mark_used)
+            try:
+                xml_object = self.get(pnames[0])
+            except ParametersException as e:
+                if default is not None:
+                    return default
+                else:
+                    raise e
+            else:
+                return xml_object.get(".".join(pnames[1:]), default, mark_used)
 
         if hasattr(self, pname):
             if mark_used:

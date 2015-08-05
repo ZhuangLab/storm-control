@@ -92,7 +92,7 @@ def writeInfFile(filename, number_frames, parameters, camera):
     fp.write("software version = " + software_version + nl)
     fp.write("machine name = " + p.get("setup_name") + nl)
     fp.write("parameters file = " + p.get("parameters_file") + nl)
-    fp.write("shutters file = " + p.get("illumination.shutters") + nl)
+    fp.write("shutters file = " + p.get("illumination.shutters", "NA") + nl)
     if p.get("film.want_big_endian"):
         fp.write("data type = 16 bit integers (binary, big endian)" + nl)
     else:
