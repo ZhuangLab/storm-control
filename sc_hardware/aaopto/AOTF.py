@@ -26,7 +26,7 @@ class AOTF(RS232.RS232):
     #
     # @param port The COM port that the AOTF is connected to.
     #
-    def __init__(self, port = "COM2"):
+    def __init__(self, port = "COM1"):
         self.channel = 1
         self.frequencies = []
         self.on_off = []
@@ -68,15 +68,15 @@ class AOTF(RS232.RS232):
     #
     def channelOnOff(self, channel, on):
         if on:
-            if (not self.on_off[channel]):
+            if (not self.on_off[channel-1]):
                 cmd = "L" + str(channel) + "O1"
                 self.commWithResp(cmd)
-                self.on_off[channel] = True
+                self.on_off[channel-1] = True
         else:
-            if (self.on_off[channel]):
+            if (self.on_off[channel-1]):
                 cmd = "L" + str(channel) + "O0"
                 self.commWithResp(cmd)
-                self.on_off[channel] = False
+                self.on_off[channel-1] = False
 
     ## getInfo
     #
@@ -103,7 +103,7 @@ class AOTF(RS232.RS232):
     # @param freq_offset The amount of frequency offset.
     #
     def offsetFrequency(self, channel, freq_offset):
-        cmd = "L" + str(channel) + "F{0:.3f}".format(self.frequencies[channel] + freq_offset)
+        cmd = "L" + str(channel) + "F{0:.3f}".format(self.frequencies[channel-1] + freq_offset)
         self.commWithResp(cmd)
 
     ## setAmplitude
@@ -116,8 +116,8 @@ class AOTF(RS232.RS232):
     def setAmplitude(self, channel, amplitude):
         assert channel > 0, "setAmplitude: channel out of range " + str(channel)
         assert channel <= 8, "setAmplitude: channel out of range " + str(channel)
-        cmd = "L" + str(channel) + "D{0:.2f}".format(amplitude)
-#        cmd = "L" + str(channel) + "P" + str(amplitude)
+        cmd = "L" + str(channel) + "P" + str(amplitude)
+	print cmd
         self.commWithResp(cmd)
 
     ## setFrequency
@@ -132,7 +132,7 @@ class AOTF(RS232.RS232):
         assert channel <= 8, "setFrequency: channel out of range " + str(channel)
         cmd = "L" + str(channel) + "F{0:.3f}".format(frequency)
         self.commWithResp(cmd)
-        self.frequencies[channel] = frequency
+        self.frequencies[channel-1] = frequency
 
     ## shutDown
     #
@@ -141,7 +141,7 @@ class AOTF(RS232.RS232):
     def shutdown(self):
         # reset frequencies in case the next user is using the M. Bates Labview interface.
         for i, frequency in enumerate(self.frequencies):
-            self.setFrequency(i, frequency)
+            self.setFrequency(i+1, frequency)
         RS232.RS232.shutdown()
 
 #

@@ -226,6 +226,9 @@ def setCameraParameters(camera):
     camera.set("exposure_value", 0)      # This is the actual exposure time.
     camera.set("cycle_value", 0)         # This is the time between frames.
 
+    #specific for Zyla
+    camera.frame_rate = 10
+
 ## setDefaultShutters
 #
 # This sets the shutter name parameter of the default parameters object.
