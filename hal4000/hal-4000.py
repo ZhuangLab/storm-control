@@ -380,7 +380,8 @@ class Window(QtGui.QMainWindow):
 
     ## connectSignals
     #
-    # @param signals An array of signals that we might be interested in connecting to.
+    # @param signals An array of signals that we might be interested in 
+    # connecting to.
     #
     @hdebug.debug
     def connectSignals(self, signals):
@@ -508,16 +509,19 @@ class Window(QtGui.QMainWindow):
 
         # Handle mosaic information request, pass mosaic XML data back:
         elif (message.getType() == "Get Mosaic Settings"):
-            message.addResponse("pixels_to_um", self.parameters.get("mosaic.pixels_to_um"))
+            message.addResponse("pixels_to_um", 
+                        self.parameters.get("mosaic.pixels_to_um"))
             i = 1
             while self.parameters.has("mosaic.obj" + str(i)):
-                message.addResponse("obj" + str(i), self.parameters.get("mosaic.obj" + str(i)))
+                message.addResponse("obj" + str(i), 
+                            self.parameters.get("mosaic.obj" + str(i)))
                 i += 1
             self.tcpComplete.emit(message)
             
         # Return the current objective.
         elif (message.getType() == "Get Objective"):
-            obj_data = self.parameters.get("mosaic." + self.parameters.get("mosaic.objective"))
+            obj_data = self.parameters.get("mosaic." + 
+                        self.parameters.get("mosaic.objective"))
             message.addResponse("objective", obj_data.split(",")[0])
             self.tcpComplete.emit(message)
             
@@ -528,13 +532,15 @@ class Window(QtGui.QMainWindow):
                 # Check that the directory exists.
                 self.directory_test_mode = message.getData("directory")
                 if not os.path.isdir(self.directory_test_mode):
-                    message.setError(True, str(self.directory_test_mode) + " is an invalid directory")
+                    message.setError(True, str(self.directory_test_mode) +
+                                " is an invalid directory")
 
             else:
                 # Change directory if requested.
                 new_directory = message.getData("directory")
                 if not os.path.isdir(new_directory):
-                    message.setError(True, str(new_directory) + " is an invalid directory")
+                    message.setError(True, str(new_directory) + 
+                                " is an invalid directory")
                 else:
                     self.newDirectory(new_directory)
 
@@ -545,14 +551,18 @@ class Window(QtGui.QMainWindow):
             param_index = message.getData("parameters")
             if message.isTest():
                 if not self.parameters_box.isValidParameters(param_index):
-                    message.setError(True, str(param_index) + " is an invalid parameters option")
+                    message.setError(True, str(param_index) + 
+                                " is an invalid parameters option")
                     self.tcpComplete.emit(message)
 
-                # Save parameters to keep track of parameter trajectory for accurate time and disk estimates.
+                # Save parameters to keep track of parameter trajectory for 
+                # accurate time and disk estimates.
                 else:
-                    self.parameters_test_mode = self.parameters_box.getParameters(param_index)
+                    self.parameters_test_mode = \
+                            self.parameters_box.getParameters(param_index)
                     if not self.parameters_test_mode.initialized:
-                        self.tcp_message = message # Store message so that it can be returned.
+                        # Store message so that it can be returned.
+                        self.tcp_message = message 
                         self.parameters_box.setCurrentParameters(param_index)
                     else:
                         self.tcpComplete.emit(message)
@@ -565,7 +575,8 @@ class Window(QtGui.QMainWindow):
                         self.tcp_message = None
                         self.tcpComplete.emit(message)
                 else:
-                    message.setError(True, str(param_index) + " is an invalid parameters option")
+                    message.setError(True, str(param_index) + 
+                                " is an invalid parameters option")
                     self.tcpComplete.emit(message)
         
         # Handle movie request.
@@ -578,7 +589,8 @@ class Window(QtGui.QMainWindow):
                 return
             
             # Check file overwrite (independence of whether the message is a test)
-            if not (message.getData("overwrite") == None) and (message.getData("overwrite") == False):
+            if not (message.getData("overwrite") == None) and \
+                        (message.getData("overwrite") == False):
                 file_path = self.directory_test_mode + os.sep + message.getData("name") + self.parameters.get("film.filetype")
                 if os.path.exists(file_path):
                     message.setError(True, file_path + " will be overwritten")
@@ -594,15 +606,18 @@ class Window(QtGui.QMainWindow):
                 
                 # Get disk usage and duration.
                 num_frames = message.getData("length")
-                message.addResponse("duration", num_frames * parameters.get("seconds_per_frame"))
-                mega_bytes_per_frame = parameters.get("camera1.bytes_per_frame") * 1.0/2**20 # Convert to megabytes.
+                message.addResponse("duration", num_frames * 
+                          parameters.get("seconds_per_frame"))
+                mega_bytes_per_frame = parameters.get("camera1.bytes_per_frame") * \
+                          1.0/2**20 # Convert to megabytes.
                 message.addResponse("disk_usage", mega_bytes_per_frame * num_frames)
                 self.tcpComplete.emit(message)
 
             else: # Take movie.
 
                 # Set filename.
-                self.ui.filenameLabel.setText(message.getData("name") + self.parameters.get("film.filetype"))
+                self.ui.filenameLabel.setText(message.getData("name") + 
+                          self.parameters.get("film.filetype"))
                 
                 # Record current length and set film length spin box to requested length.
                 self.current_length = self.parameters.get("film.frames")
@@ -611,7 +626,8 @@ class Window(QtGui.QMainWindow):
                 # Start the film.
                 self.tcp_requested_movie = True
                 self.tcp_message = message
-                self.startFilm(filmSettings.FilmSettings("fixed_length", message.getData("length")))
+                self.startFilm(filmSettings.FilmSettings("fixed_length", 
+                          message.getData("length")))
 
     ## handleCommStart
     #
@@ -894,13 +910,18 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def startFilm(self, film_settings = None):
+
         self.filming = True
-        self.film_name = self.parameters.get("film.directory") + str(self.ui.filenameLabel.text())
-        self.film_name = self.film_name[:-len(self.ui.filetypeComboBox.currentText())]
+
+        self.film_name = self.parameters.get("film.directory") + \
+                    str(self.ui.filenameLabel.text())
+        self.film_name = \
+                    self.film_name[:-len(self.ui.filetypeComboBox.currentText())]
 
         if not film_settings:
-            film_settings = filmSettings.FilmSettings(self.parameters.get("film.acq_mode"),
-                                                      self.parameters.get("film.frames"))
+            film_settings = filmSettings.FilmSettings(
+                            self.parameters.get("film.acq_mode"),
+                            self.parameters.get("film.frames"))
             save_film = self.ui.saveMovieCheckBox.isChecked()
         else:
             save_film = True
@@ -910,15 +931,17 @@ class Window(QtGui.QMainWindow):
         self.ui.recordButton.setText("Stop")
         if save_film:
             if (self.ui_mode == "dual"):
-                self.writer = writers.createFileWriter(self.ui.filetypeComboBox.currentText(),
-                                                       self.film_name,
-                                                       self.parameters,
-                                                       ["camera1", "camera2"])
+                self.writer = writers.createFileWriter(
+                            self.ui.filetypeComboBox.currentText(),
+                            self.film_name,
+                            self.parameters,
+                            ["camera1", "camera2"])
             else:
-                self.writer = writers.createFileWriter(self.ui.filetypeComboBox.currentText(),
-                                                       self.film_name,
-                                                       self.parameters,
-                                                       ["camera1"])
+                self.writer = writers.createFileWriter(
+                            self.ui.filetypeComboBox.currentText(),
+                            self.film_name,
+                            self.parameters,
+                            ["camera1"])
             self.camera.startFilm(self.writer, film_settings)
             self.ui.recordButton.setStyleSheet("QPushButton { color: red }")
         else:
