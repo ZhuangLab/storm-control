@@ -24,10 +24,10 @@ class MCLVZControl(object):
     # @param scale (Optional) Conversion from microns to volts (default is 10.0/250.0).
     #
     def __init__(self, board, line, scale = 10.0/250.0):
-        #self.board = board
-        #self.line = line
+        self.board = board
+        self.line = line
         self.scale = scale
-        self.ni_task = nicontrol.AnalogOutput(board, line)
+        self.ni_task = nicontrol.AnalogOutput(self.board, self.line)
         self.ni_task.startTask()
 
     ## shutDown
@@ -51,6 +51,7 @@ class MCLVZControl(object):
             print "Caught outputVoltage error:", type(e), str(e)
             self.ni_task.stopTask()
             self.ni_task.clearTask()
+            self.ni_task = nicontrol.AnalogOutput(self.board, self.line)
             self.ni_task.startTask()
 
 #
