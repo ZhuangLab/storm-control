@@ -16,42 +16,6 @@ import decimal
 from PyQt4 import QtCore, QtGui
 import sys
 
-## QRangeSliderDialog
-#
-# A dialog wrapper around a QRangeSlider
-#
-class QRangeSliderDialog(QtGui.QDialog):
-    ## __init__
-    #
-    #
-    #
-    def __init__(self, parent=None,
-                 title_text = "Range Selection",
-                 slider_range = [0, 10, 1],
-                 values = [0, 10],
-                 slider_type = "QHRangeSlider"):
-        QtGui.QDialog.__init__(self, parent)
-
-        # Update window title
-        self.setWindowTitle(title_text)
-
-        # Create and add QRange Widget
-        self.range_widget = QHSpinBoxRangeSlider(slider_range, values)
-        layout = QtGui.QGridLayout()
-        layout.addWidget(self.range_widget, 0,0)
-        self.button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
-                                                 QtGui.QDialogButtonBox.Cancel)
-        
-        self.button_box.accepted.connect(self.accept)
-        self.button_box.rejected.connect(self.reject)
-        
-        layout.addWidget(self.button_box, 1, 0)
-        self.setLayout(layout)
-        
-    # getValues
-    def getValues(self):
-        return self.range_widget.getValues()
-
 ## QRangeSlider
 #
 # Range Slider super class.
@@ -508,7 +472,7 @@ class QSpinBoxRangeSlider(QtGui.QWidget):
             self.max_val = self.max_spin_box.value()
             should_emit = True
         if should_emit:
-            if 1:
+            if 0:
                 print self.min_val, self.max_val
             self.range_slider.setValues([self.min_val, self.max_val])
             self.rangeChanged.emit(self.min_val, self.max_val)
@@ -622,7 +586,54 @@ class QVSpinBoxRangeSlider(QSpinBoxRangeSlider):
         self.layout.addWidget(self.range_slider)
         self.layout.addWidget(self.min_spin_box)
 
+## QRangeSliderDialog
+#
+# A dialog wrapper around a QRangeSlider
+#
+class QRangeSliderDialog(QtGui.QDialog):
+    ## __init__
+    #
+    # @param title_text The title of the dialog
+    # @param slider_range The range and increment of the slider [min, max, step size].
+    # @param values The initial [min, max] of the slider
+    # @param Slider type
+    #
+    def __init__(self, parent=None,
+                 title_text = "Range Selection",
+                 slider_range = [0, 10, 1],
+                 values = [0, 10],
+                 slider_type = "horizontal"):
+        QtGui.QDialog.__init__(self, parent)
+
+        # Update window title
+        self.setWindowTitle(title_text)
+
+        # Create and add QRange Widget
+        if slider_type == "horizontal":
+            self.range_widget = QHSpinBoxRangeSlider(slider_range, values)
+        else:
+            self.range_widget = QVSpinBoxRangeSlider(slider_range, values)
+
+        # Create layout, add widget, and add buttons    
+        layout = QtGui.QGridLayout()
+        layout.addWidget(self.range_widget, 0,0)
+        self.button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
+                                                 QtGui.QDialogButtonBox.Cancel)
+
+        layout.addWidget(self.button_box, 1, 0)
+        self.setLayout(layout)
         
+        # Connect buttons
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+        
+    # getValues
+    #
+    # Return the current range values
+    #
+    def getValues(self):
+        return self.range_widget.getValues()
+   
 #
 # Testing
 #
