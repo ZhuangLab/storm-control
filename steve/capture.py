@@ -24,7 +24,7 @@ import sc_library.tcpClient as tcpClient
 import sc_library.tcpMessage as tcpMessage
 
 # Reading DAX files
-#import sc_library.datareader as datareader
+import sc_library.datareader as datareader
 
 import coord
 import mosaicDialog
