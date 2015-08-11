@@ -21,7 +21,7 @@ import sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.steve_ui as steveUi
-from qtdesigner.adjust_contrast_dialog_ui import Ui_Dialog as AdjustContrastDialog_Ui
+import hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
 import qtRegexFileDialog
 
 # Graphics
@@ -36,120 +36,6 @@ import capture
 # Misc
 import coord
 import sc_library.parameters as params
-
-class AdjustContrastDialog(QtGui.QDialog, AdjustContrastDialog_Ui):
-    ## __init__
-    #
-    # @param title_text The text of the title of the dialog box
-    # @param default_min_max The starting minimum and maximum values
-    # @param scale_min_max The minimum and maximum allowed values
-    # @param parent (Optional) The PyQt parent of this object, default is None.
-    #
-    @hdebug.debug
-    def __init__(self, parent = None,
-                 title_text = "Adjust Contrast",
-                 default_min_max = [0, 16000],
-                 scale_min_max = [0, 16000],
-                 ):
-        QtGui.QDialog.__init__(self,parent)
-        self.setupUi(self)
-
-        # Update window title.
-        self.setWindowTitle(title_text)
-
-        # Configure the spin boxes.
-        self.high_spin_box.setRange(scale_min_max[0], scale_min_max[1])
-        self.high_spin_box.setValue(default_min_max[1])
-        self.high_spin_box.setSingleStep(1)
-        self.low_spin_box.setRange(scale_min_max[0], scale_min_max[1])
-        self.low_spin_box.setValue(default_min_max[0])
-        self.low_spin_box.setSingleStep(1)
-
-        # Configure the slider.
-        self.high_contrast_slider.setRange(scale_min_max[0], scale_min_max[1])
-        self.high_contrast_slider.setSliderPosition(default_min_max[1])
-        self.low_contrast_slider.setRange(scale_min_max[0], scale_min_max[1])
-        self.low_contrast_slider.setSliderPosition(default_min_max[0])
-
-        # Connect signals.
-        self.high_contrast_slider.sliderMoved.connect(self.handleHighSliderUpdate)
-        self.low_contrast_slider.sliderMoved.connect(self.handleLowSliderUpdate)
-        self.high_contrast_slider.sliderReleased.connect(self.handleHighSliderRelease)
-        self.low_contrast_slider.sliderReleased.connect(self.handleLowSliderRelease)
-
-        self.high_spin_box.valueChanged.connect(self.handleHighSpinBoxUpdate)
-        self.low_spin_box.valueChanged.connect(self.handleLowSpinBoxUpdate)
-
-    ## getValues
-    #
-    # Return the values of the directory and file filter text boxes
-    #
-    # @return The minimum and maximum contrast values set by the user
-    @hdebug.debug
-    def getValues(self):
-        return [self.low_spin_box.value(), self.high_spin_box.value()]
-
-
-    # handleHighSliderRelease
-    #
-    # Coerce slider value to new range upon release
-    #
-    @hdebug.debug
-    def handleHighSliderRelease(self):
-        new_value = self.high_contrast_slider.value()
-        low_value = self.low_spin_box.value()
-        if new_value > low_value: # Coerce to larger than low contrast
-            self.high_spin_box.setValue(new_value)
-        else:
-            self.high_contrast_slider.setValue(low_value+1)
-            self.high_spin_box.setMinimum(low_value+1)
-
-    # handleLowSliderRelease
-    #
-    # Coerce slider value to new range upon release
-    #
-    @hdebug.debug
-    def handleLowSliderRelease(self):
-        new_value = self.low_contrast_slider.value()
-        high_value = self.high_spin_box.value()
-        if new_value < high_value: # Coerce to smaller than high contrast
-            self.low_spin_box.setValue(new_value)
-        else:
-            self.low_contrast_slider.setValue(high_value-1)
-            self.low_spin_box.setMaximum(high_value-1)
-    
-    # handleHighSliderUpdate
-    #
-    # Handle movement of the high contrast slider
-    #
-    @hdebug.debug
-    def handleHighSliderUpdate(self, dummy):
-        self.high_spin_box.setValue(self.high_contrast_slider.value())
-
-    # handleLowSliderUpdate
-    #
-    # Handle movement of the low contrast slider
-    #
-    @hdebug.debug
-    def handleLowSliderUpdate(self, dummy):
-        self.low_spin_box.setValue(self.low_contrast_slider.value())
-
-    # handleHighSpinBoxUpdate
-    #
-    # Handle user adjustment of the high contrast spin box
-    #
-    @hdebug.debug
-    def handleHighSpinBoxUpdate(self, dummy):
-        self.high_contrast_slider.setValue(self.high_spin_box.value())
-    
-    # handleLowSpinBoxUpdate
-    #
-    # Handle user adjustment of the low contrast spin box
-    #
-    @hdebug.debug
-    def handleLowSpinBoxUpdate(self, dummy):
-        self.low_contrast_slider.setValue(self.low_spin_box.value())
-
 
 ## Window
 #
@@ -441,10 +327,11 @@ class Window(QtGui.QMainWindow):
             current_contrast = [0, 16000] # Default values for HAL: FIXME
  
         # Prepare and display dialog
-        dialog = AdjustContrastDialog(self,
-                                      "Adjust Contrast",
-                                      current_contrast)
-        
+        dialog = qtRangeSlider.QRangeSliderDialog(self,
+                                                  "Adjust Contrast",
+                                                  slider_range = [0, 16000,1],
+                                                  values = current_contrast)
+
         if dialog.exec_():
             newRange = dialog.getValues() # Get values
             print "Adjusted Contrast: " + str(newRange)
