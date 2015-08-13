@@ -69,6 +69,7 @@ class XMLRecipeParser(QtGui.QWidget):
         self.movie_da_actions = [daveActions.DAMoveStage(),
                                  daveActions.DASetFocusLockTarget(),
                                  daveActions.DAFindSum(),
+                                 daveActions.DACheckFocus(),
                                  daveActions.DARecenterPiezo(),
                                  daveActions.DASetParameters(),
                                  daveActions.DASetProgression(),

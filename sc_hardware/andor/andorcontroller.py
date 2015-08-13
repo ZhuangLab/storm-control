@@ -423,7 +423,7 @@ class AndorCamera:
         kinetic = c_float()
         andorCheck(andor.GetAcquisitionTimings(byref(exposure), byref(accumulate), byref(kinetic)),
                    "GetAcqisitionTimings")
-        return [exposure.value, accumulate.value, kinetic.value]
+        return [exposure.value, kinetic.value, accumulate.value]
 
     ## getCurrentSetup
     #
@@ -633,6 +633,7 @@ class AndorCamera:
                 index = i
         andorCheck(andor.SetHSSpeed(0, c_int(index)), "SetHSSpeed")
         self.hsspeed = speeds[index]
+        return self.hsspeed
 
     ## setIsolatedCropMode
     #
@@ -687,6 +688,7 @@ class AndorCamera:
                 best = cur
                 index = i
         andorCheck(andor.SetPreAmpGain(c_int(index)), "SetPreAmpGain")
+        return gains[index]
 
     ## setReadMode
     #
@@ -780,6 +782,7 @@ class AndorCamera:
                 index = i
         andorCheck(andor.SetVSSpeed(c_int(index)), "SetVSSpeed")
         self.vsspeed = speeds[index]
+        return self.vsspeed
 
         
     #

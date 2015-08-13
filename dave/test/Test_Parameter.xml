@@ -8,7 +8,7 @@
   <y_end type="int">384</y_end>
   <x_bin type="int">1</x_bin>
   <y_bin type="int">1</y_bin>
-  <exposure_time type="float">0.1</exposure_time>
+  <exposure_time type="float">0.01</exposure_time>
   <preampgain type="float">2.4</preampgain>
 
   <!-- film settings -->

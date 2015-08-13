@@ -71,18 +71,18 @@ class AMiscControl(miscControl.MiscControl):
                 filter.setStyleSheet("QPushButton { color: red}")
                 if self.filter_wheel:
                     self.filter_wheel.setPosition(i+1)
-                self.parameters.set("filter_position", i)
+                self.parameters.set("misc.filter_position", i)
             else:
                 filter.setStyleSheet("QPushButton { color: black}")
 
     @hdebug.debug
     def newParameters(self, parameters):
         self.parameters = parameters
-        names = parameters.get("filter_names")
+        names = parameters.get("misc.filter_names")
         if (len(names) == 6):
             for i in range(6):
                 self.filters[i].setText(names[i])
-        self.filters[self.parameters.get("filter_position")].click()
+        self.filters[self.parameters.get("misc.filter_position")].click()
 
 
 #

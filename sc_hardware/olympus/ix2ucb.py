@@ -81,12 +81,13 @@ class IX2UCB(RS232.RS232):
     # @param position The desired filter wheel position (1-6).
     #
     def setPosition(self, position):
-        if (position < 1):
-            position = 1
-        if (position > 6):
-            position = 6
-        self.commWithResp("1MU " + str(position))
-
+        if (position != self.position):
+            if (position < 1):
+                position = 1
+            if (position > 6):
+                position = 6
+            self.commWithResp("1MU " + str(position))
+            self.position = position
 
 #
 # Testing

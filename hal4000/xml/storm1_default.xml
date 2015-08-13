@@ -95,6 +95,7 @@
 <!--  <qpd_scale type="float">1421.0</qpd_scale> -->
 <!--  <qpd_scale type="float">1.0</qpd_scale> -->
   <qpd_sum_max type="int">1500</qpd_sum_max>
+  <qpd_sum_min type="int">50</qpd_sum_min>
   <cal_deadtime type="int">20</cal_deadtime>
   <cal_range type="float">600</cal_range>
   <cal_step_size type="float">10</cal_step_size>
@@ -108,7 +109,9 @@
   <olock_scan_step type="int">100</olock_scan_step>
   <olock_scan_hold type="int">10</olock_scan_hold>
   <olock_quality_threshold type="float">0.0</olock_quality_threshold>
-
+  <is_locked_buffer_length type="int">10</is_locked_buffer_length>
+  <is_locked_offset_thresh type="float">0.01</is_locked_offset_thresh>
+  
   <!-- spot counter -->
   <have_spot_counter type="int">1</have_spot_counter>
   <cell_size type="int">32</cell_size>

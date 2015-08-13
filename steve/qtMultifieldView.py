@@ -14,8 +14,6 @@ import os
 
 from PyQt4 import QtCore, QtGui
 
-import sc_library.daxspereader as datareader
-
 
 ## MultifieldView
 #
@@ -86,6 +84,18 @@ class MultifieldView(QtGui.QGraphicsView):
         self.centerOn(x_pix, y_pix)
         self.updateSceneRect(x_pix, y_pix)
 
+    ## changeContrast
+    #
+    # Change the contrast of all image items
+    #
+    # @param contrast_range The new minimum and maximum contrast values (which will control what is set to 0 and to 255)
+    #
+    def changeContrast(self, contrast_range):
+        for item in self.image_items:
+            item.pixmap_min = contrast_range[0]
+            item.pixmap_max = contrast_range[1]
+            item.createPixmap()
+
     ## changeImageMagnifications
     #
     # Update the magnifications of the images taken with the specified objective.
@@ -132,6 +142,18 @@ class MultifieldView(QtGui.QGraphicsView):
         #self.initSceneRect()
         self.currentz = 0.0
         self.image_items = []
+
+    ## getContrast
+    #
+    # @return The minimum and maximum pixmap values from all image items.
+    #
+    def getContrast(self):
+        if len(self.image_items) >= 1:
+            min_value = min(item.pixmap_min for item in self.image_items)
+            max_value = max(item.pixmap_max for item in self.image_items)
+            return [min_value, max_value]
+        else:
+            return [None, None]
 
     ## getImageItems
     #

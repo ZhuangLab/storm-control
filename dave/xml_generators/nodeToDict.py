@@ -50,6 +50,7 @@ def boolConv(value):
 movie_node_conversion = {"delay" : gf("delay", [int]),
                          "directory" : gf("directory", [str]),
                          "find_sum" : gf("find_sum", [float]),
+                         "check_focus": gf("check_focus", [None]),
                          "length" : gf("length", [int]),
                          "lock_target" : gf("lock_target", [float]),
                          "name" : gf("name", [str]),
