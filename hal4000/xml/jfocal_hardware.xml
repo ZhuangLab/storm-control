@@ -25,13 +25,11 @@
     -->
 
     <!-- The focus lock -->
-    <!--
     <focuslock>
       <class_name type="string">AFocusLockZ</class_name>
       <menu_item type="string">Focus Lock</menu_item>
-      <module_name type="string">focuslock.storm3FocusLockZ</module_name>
+      <module_name type="string">focuslock.jfocalFocusLockZ</module_name>
     </focuslock>
-    -->
 
     <!-- Illumination (lasers, shutters, etc) control. -->
     <!--
@@ -77,11 +75,13 @@
     </spotcounter>
 
     <!-- Motorized XY stage. -->
+    <!--
     <stage>
       <class_name type="string">AStageControl</class_name>
       <menu_item type="string">Stage Control</menu_item>
       <module_name type="string">stagecontrol.jfocalStageControl</module_name>
     </stage>
+    -->
 
     <!-- Remote control of HAL via TCP/IP. -->
     <tcpip>
