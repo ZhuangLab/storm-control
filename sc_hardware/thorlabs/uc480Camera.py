@@ -4,6 +4,10 @@
 #
 # Captures pictures from a Thorlabs uc480 (software) series cameras.
 #
+# NOTE: For reasons unclear, but perhaps due to a change in
+#       ctypes, this module only works well with (64 bit) Python 
+#       versions that are <= 2.7.8.
+#
 # Hazen 02/13
 #
 
@@ -868,46 +872,6 @@ if __name__ == "__main__":
         cam.saveParameters("cam1.ini")
 
     cam.shutDown()
-
-    #print image.shape, numpy.min(image), numpy.max(image)
-
-    #im = Image.fromarray(image)
-    #im.save("temp.png")
-    #im.show()
-
-
-# Bonus code section..
-
-#    def setSize(self, width, height):
-#        if (width > self.info.nMaxWidth) or (height > self.info.nMaxHeight):
-#            print "uc480: Width of Height are too large"
-#        else:
-#            self.im_width = width
-#            self.im_height = height
-#            self.setBuffers()
-        
-#    def waitForImage(self, timeout = 100):
-#        check(uc480.is_WaitForNextImage(self,
-#                                        ctypes.wintypes.UINT(timeout),
-#                                        ctypes.byref(self.image),
-#                                        ctypes.byref(self.id)))
-
-#        # Determine number of cameras available.
-#        c_num_cams = ctypes.wintypes.INT()
-#        check(uc480.is_GetNumberOfCameras(ctypes.byref(c_num_cams)))
-#        num_cams = int(c_num_cams.value)
-#        # Initialize camera.
-#        if(num_cams == 1):
-#
-#            check(uc480.is_InitCamera(ctypes.byref(self), ctypes.wintypes.HWND(0)))
-#        else:
-#            # We have to find the camera we want..
-#            print "Found", num_cams, "cameras"
-#            camera_data = create_camera_list(num_cams)
-#            check(uc480.is_GetCameraList(ctypes.byref(camera_data)))
-#            for camera in camera_data.Cameras:
-#                print camera.SerNo, camera.CameraID, camera.DeviceID
-#
 
 #
 # The MIT License
