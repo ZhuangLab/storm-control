@@ -87,6 +87,8 @@ def logText(a_string, to_console = False):
         if to_console:
             print a_string
         logging_mutex.unlock()
+    else:
+        print a_string
 
 
 ## startLogging
