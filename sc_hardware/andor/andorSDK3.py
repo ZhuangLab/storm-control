@@ -4,6 +4,12 @@
 #
 # A ctypes based interface to Andor SDK3.
 #
+# Note: In order for this to work you need the Andor SDK directory and the
+#       Bitflow directories in your path. Typical these are something like:
+#
+#       1. C:\Program Files\Andor Solis\
+#       2. C:\BitFlow SDK 5.70\Bin64\
+#
 # George ?/15.
 # Hazen 9/15.
 #
