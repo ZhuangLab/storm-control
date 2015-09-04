@@ -49,6 +49,10 @@
  the python install directory, e.g. C:\Python27\. 
  An example .pth file is included under hal4000\storm_control.pth.  
 
+ Note: This is no longer necessary if you only run hal, dave or steve as they
+ will automatically configure the Python path. However it can still be
+ convenient as this will let you run many of the other modules independently.
+ 
  
 (5) Create data & logs directories:
  The default directory for saving data is "c:\Data\". You can change
