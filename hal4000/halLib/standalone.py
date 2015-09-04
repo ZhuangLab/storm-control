@@ -7,6 +7,10 @@
 # Hazen 03/14
 #
 
+# Add current storm-control directory to sys.path
+import imp
+imp.load_source("setPath", "../sc_library/setPath.py")
+
 import sys
 from PyQt4 import QtGui
 
