@@ -156,6 +156,7 @@ class SDK3Camera:
         self.frame_x = 0
         self.frame_y = 0
         self.pixel_encoding = ""
+        self.raw_data = []
         self.stride = 0
 
 	check(sdk3.AT_InitialiseLibrary(), "AT_InitializeLibrary")
@@ -184,10 +185,12 @@ class SDK3Camera:
         if (frame_bytes != self.frame_bytes):
             #n_buffers = int((1.0 * 1024 * 1024 * 1024)/frame_bytes)
             n_buffers = 4
+            self.raw_data = []
             self.frame_data = []
             for i in range(n_buffers):
                 a_buffer = AndorRawData(frame_bytes)
                 sdk3.AT_QueueBuffer(self.camera_handle, a_buffer.getDataPtr(), a_buffer.size)
+                self.raw_data.append(a_buffer)
 
                 self.frame_data.append(AndorFrameData(self.frame_x * self.frame_y))
 
@@ -282,8 +285,8 @@ if (__name__ == "__main__"):
         print "ysize", cam.getProperty("SensorHeight", "int")
 
     if 1:
-        cam.setProperty("AOIWidth", "int", 512)
-        cam.setProperty("AOIHeight", "int", 512)
+        cam.setProperty("AOIWidth", "int", 1024)
+        cam.setProperty("AOIHeight", "int", 1024)
         cam.setProperty("ExposureTime", "float", 0.1)
         cam.startAcquisition()
         for i in range(20):
