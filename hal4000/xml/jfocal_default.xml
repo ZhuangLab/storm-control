@@ -6,31 +6,19 @@
 
   <!-- camera settings -->
   <camera1>
-    <emccd_gain type="int">0</emccd_gain>
+
+    <!-- AOI specification -->
     <x_start type="int">1</x_start>
-    <x_end type="int">512</x_end>
+    <x_end type="int">2048</x_end>
     <y_start type="int">1</y_start>
-    <y_end type="int">512</y_end>
+    <y_end type="int">2048</y_end>
     <x_bin type="int">1</x_bin>
     <y_bin type="int">1</y_bin>
-    <exposure_time type="float">0.0</exposure_time>
-    <frame_transfer_mode type="int">1</frame_transfer_mode>
-    <temperature type="int">-70</temperature>
 
-    <!-- less common camera settings -->
-    <preampgain type="float">1.0</preampgain>
-    <hsspeed type="float">10.0</hsspeed>
-    <vsspeed type="float">3.3</vsspeed>
-    <kinetic_cycle_time type="float">0.0</kinetic_cycle_time>
-    <adchannel type="int">0</adchannel>
-    <emgainmode type="int">2</emgainmode>
-    <baselineclamp type="int">1</baselineclamp>
-    <vsamplitude type="int">0</vsamplitude>
-    <off_during_filming type="int">0</off_during_filming>
-    <low_during_filming type="int">0</low_during_filming>
-    <head_model type="string">unknown</head_model>
-    <reversed_shutter type="int">0</reversed_shutter>
-    <external_trigger type="int">0</external_trigger>
+    <!-- actual Andor features -->
+    <ExposureTime type="float">0.1</ExposureTime>
+    <FanSpeed type="string">On</FanSpeed>
+    <SensorCooling type="boolean">True</SensorCooling>
 
     <!-- view settings -->
     <flip_horizontal type="int">0</flip_horizontal>
