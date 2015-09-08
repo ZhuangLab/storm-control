@@ -109,7 +109,7 @@ def writeInfFile(filename, number_frames, parameters, camera):
     fp.write("vertical shift speed = " + str(c.get("vsspeed", "NA")) + nl)
     fp.write("EMCCD Gain = " + str(c.get("emccd_gain", "NA")) + nl)
     fp.write("Preamp Gain = " + str(c.get("preampgain", "NA")) + nl)
-    fp.write("Exposure Time = " + str(c.get("exposure_time")) + nl)
+    fp.write("Exposure Time = " + str(c.get("exposure_value")) + nl)
     fp.write("Frames Per Second = " + str(1.0/c.get("cycle_value")) + nl)
     fp.write("camera temperature (deg. C) = " + str(c.get("actual_temperature", "NA")) + nl)
     fp.write("camera head = " + str(c.get("head_model", "NA")) + nl)
