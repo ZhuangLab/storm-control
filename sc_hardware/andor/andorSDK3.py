@@ -30,20 +30,22 @@ def loadSDK3DLL(path):
 	sdk3 = ctypes.oledll.LoadLibrary(path + "atcore.dll")
 	sdk3_utility = ctypes.oledll.LoadLibrary(path + "atutility.dll")
 
-
 # Wrapper functions for the DLL
 
-def check(value, fn_name = "??"):
+def check(value, fn_name = "??", command = "??"):
     if (value != 0):
-        print "Error", value, "when calling function", fn_name
+        print "Error", value, "when calling function", fn_name, "with command", command
         return False
     else:
         return True
 
 def getBoolean(handle, command):
     read_bool = ctypes.c_bool(False)
-    check(sdk3.AT_GetBool(handle, command, ctypes.byref(read_bool)), 
-          "AT_GetBool")
+    check(sdk3.AT_GetBool(handle,
+                          ctypes.c_wchar_p(command), 
+                          ctypes.byref(read_bool)),
+          "AT_GetBool",
+          command)
     return read_bool.value
 
 def getCameraCount():
@@ -51,7 +53,11 @@ def getCameraCount():
 
 def getEnumeratedIndex(handle, command):
     read_index = ctypes.c_longlong()
-    if check(sdk3.AT_GetEnumIndex(handle, ctypes.c_wchar_p(command), ctypes.byref(read_index)), "AT_GetEnumIndex"):
+    if check(sdk3.AT_GetEnumIndex(handle, 
+                                  ctypes.c_wchar_p(command), 
+                                  ctypes.byref(read_index)), 
+             "AT_GetEnumIndex",
+             command):
         return read_index.value
     else:
         return -1
@@ -59,56 +65,115 @@ def getEnumeratedIndex(handle, command):
 def getEnumeratedString(handle, command):
     max_size = 100
     response = ctypes.c_wchar_p(' ' * max_size)
-    if check(sdk3.AT_GetEnumStringByIndex(handle, ctypes.c_wchar_p(command), ctypes.c_longlong(getEnumeratedIndex(handle, command)), response, max_size), "AT_GetEnumStringByIndex"):
+    if check(sdk3.AT_GetEnumStringByIndex(handle, 
+                                          ctypes.c_wchar_p(command), 
+                                          ctypes.c_longlong(getEnumeratedIndex(handle, command)), 
+                                          response, 
+                                          ctypes.c_int(max_size)), 
+             "AT_GetEnumStringByIndex",
+             command):
         return response.value
     else:
         return ''
 
 def getFloat(handle, command):
     read_float = ctypes.c_double()
-    if check(sdk3.AT_GetFloat(handle, ctypes.c_wchar_p(command), ctypes.byref(read_float)), "AT_GetFloat"):
+    if check(sdk3.AT_GetFloat(handle, 
+                              ctypes.c_wchar_p(command), 
+                              ctypes.byref(read_float)), 
+             "AT_GetFloat",
+             command):
         return read_float.value
     else:
         return -1
 
 def getInteger(handle, command):
     read_int = ctypes.c_longlong()
-    if check(sdk3.AT_GetInt(handle, ctypes.c_wchar_p(command), ctypes.byref(read_int)), "AT_GetInt"):
+    if check(sdk3.AT_GetInt(handle, 
+                            ctypes.c_wchar_p(command), 
+                            ctypes.byref(read_int)), 
+             "AT_GetInt", 
+             command):
         return read_int.value
     else:
         return -1
 
 def getString(handle, command):
-    maxLength = ctypes.c_int()
-    if not check(sdk3.AT_GetStringMaxLength(handle, ctypes.c_wchar_p(command), ctypes.byref(maxLength)), "AT_GetStringMaxLength"):
+    max_length = ctypes.c_int()
+    if not check(sdk3.AT_GetStringMaxLength(handle, 
+                                            ctypes.c_wchar_p(command), 
+                                            ctypes.byref(max_length)),
+                 "AT_GetStringMaxLength",
+                 command):
         return ''
 
-    response = ctypes.c_wchar_p(' ' * maxLength.value)
-    if check(sdk3.AT_GetString(handle, ctypes.c_wchar_p(command), response, maxLength), "AT_GetString"):
+    response = ctypes.c_wchar_p(' ' * max_length.value)
+    if check(sdk3.AT_GetString(handle, 
+                               ctypes.c_wchar_p(command), 
+                               response, 
+                               max_length), 
+             "AT_GetString",
+             command):
         return response.value
     else:
         return ''
 
 def sendCommand(handle, command):
-    return check(sdk3.AT_Command(handle, ctypes.c_wchar_p(command)), "AT_Command")
+    return check(sdk3.AT_Command(handle, 
+                                 ctypes.c_wchar_p(command)), 
+                 "AT_Command",
+                 command)
 
 def setBoolean(handle, command, bool_value):
-    return check(sdk3.AT_SetBool(handle, command, ctypes.c_bool(bool_value)), "AT_SetBool")
+    return check(sdk3.AT_SetBool(handle, 
+                                 ctypes.c_wchar_p(command), 
+                                 ctypes.c_bool(bool_value)), 
+                 "AT_SetBool",
+                 command)
 
 def setEnumeratedString(handle, command, string):
-    return check(sdk3.AT_SetEnumString(handle, ctypes.c_wchar_p(command), ctypes.c_wchar_p(string)), "AT_SetEnumString")
+    return check(sdk3.AT_SetEnumString(handle, 
+                                       ctypes.c_wchar_p(command), 
+                                       ctypes.c_wchar_p(string)), 
+                 "AT_SetEnumString",
+                 command)
 
 def setEnumeratedIndex(handle, command, index):
-    return check(sdk3.AT_SetEnumIndex(handle, ctypes.c_wchar_p(command), ctypes.c_longlong(index)), "AT_SetEnumIndex")
+    return check(sdk3.AT_SetEnumIndex(handle, 
+                                      ctypes.c_wchar_p(command), 
+                                      ctypes.c_longlong(index)), 
+                 "AT_SetEnumIndex",
+                 command)
 
 def setFloat(handle, command, float_value):
-    return check(sdk3.AT_SetFloat(handle, ctypes.c_wchar_p(command), ctypes.c_double(float_value)), "AT_SetFloat")
+    return check(sdk3.AT_SetFloat(handle, 
+                                  ctypes.c_wchar_p(command), 
+                                  ctypes.c_double(float_value)), 
+                 "AT_SetFloat",
+                 command)
 
 def setInteger(handle, command, value):
-    return check(sdk3.AT_SetInt(handle, ctypes.c_wchar_p(command), ctypes.c_longlong(value)), "AT_SetInt")
+    return check(sdk3.AT_SetInt(handle, 
+                                ctypes.c_wchar_p(command), 
+                                ctypes.c_longlong(value)), 
+                 "AT_SetInt",
+                 command)
 
 def setString(handle, command, string):
-    return check(sdk3.AT_SetString(handle, ctypes.c_wchar_p(command), ctypes.c_wchar_p(string)), "AT_SetString")
+    return check(sdk3.AT_SetString(handle, 
+                                   ctypes.c_wchar_p(command), 
+                                   ctypes.c_wchar_p(string)), 
+                 "AT_SetString",
+                 command)
+
+
+## AndorException
+#
+# Camera exception.
+#
+class AndorException(Exception):
+    def __init__(self, message):
+        Exception.__init__(self, message)
 
 
 ## AndorRawData
@@ -121,7 +186,7 @@ class AndorRawData():
         #self.np_array = numpy.require(numpy.empty(size, dtype = numpy.uint8),
         #                              dtype = numpy.uint8,
         #                              requirements = ['C_CONTIGUOUS', 'ALIGNED'])
-        self.np_array = numpy.ascontiguousarray(numpy.empty(size + 100, dtype = numpy.uint8))
+        self.np_array = numpy.ascontiguousarray(numpy.empty(size, dtype = numpy.uint8))
         self.size = size
 
     def getDataPtr(self):
@@ -138,6 +203,9 @@ class AndorFrameData():
         self.np_array = numpy.ascontiguousarray(numpy.empty(size, dtype = numpy.uint16))
         self.size = size
 
+    def getData(self):
+        return self.np_array
+
     def getDataPtr(self):
         return self.np_array.ctypes.data
 
@@ -148,8 +216,36 @@ class AndorFrameData():
 #
 class SDK3Camera:
 
-    def __init__(self, cameraID = 0):
-        self.camera_handle = ctypes.c_long()
+    def __init__(self, camera_id = 0):
+        self.camera_handle = ctypes.c_void_p()
+        self.enumerated = frozenset(["AOIBinning",
+                                     "AOILayout",
+                                     "AuxiliaryOutSource",
+                                     "AuxOutSourceTwo",
+                                     "BitDepth",
+                                     "ColourFilter",
+                                     "CycleMode",
+                                     "ElectronicShutteringMode",
+                                     "EventSelector",
+                                     "FanSpeed",
+                                     "InterfaceType",
+                                     "IOControl",
+                                     "IODirection",
+                                     "IOSelector",
+                                     "PixelCorrection",
+                                     "PixelEncoding",
+                                     "PixelReadoutRate",
+                                     "PreAmpGain",
+                                     "PreAmpGainChannel",
+                                     "PreAmpGainControl",
+                                     "PreAmpGainSelector",
+                                     "SensorReadoutMode",
+                                     "SensorType",
+                                     "ShutterMode",
+                                     "ShutterOutputMode",
+                                     "SimplePreAmpGainControl",
+                                     "TemperatureStatus",
+                                     "TriggerMode"])
         self.frame_bytes = 0
         self.frame_data = []
         self.frame_data_cur = 0
@@ -161,54 +257,52 @@ class SDK3Camera:
 
 	check(sdk3.AT_InitialiseLibrary(), "AT_InitializeLibrary")
 	check(sdk3_utility.AT_InitialiseUtilityLibrary(), "AT_InitialiseUtilityLibrary")
-	check(sdk3.AT_Open(cameraID, ctypes.byref(self.camera_handle)), "AT_Open")
+	check(sdk3.AT_Open(ctypes.c_int(camera_id), ctypes.byref(self.camera_handle)), "AT_Open")
 
     def captureSetup(self):
 
         # Get current capture size.
         self.frame_x = self.getProperty("AOIWidth", "int")
         self.frame_y = self.getProperty("AOIHeight", "int")
-        self.pixel_encoding = getEnumeratedString(self.camera_handle, "PixelEncoding")
+        self.pixel_encoding = self.getProperty("PixelEncoding", "enum")
         self.stride = self.getProperty("AOIStride", "int")
         frame_bytes = self.getProperty("ImageSizeBytes", "int")
 
-        print "framex", self.frame_x
-        print "framey", self.frame_y
-        print "stride", self.stride
-        print "frame bytes", frame_bytes
-        print "pixel encoding", self.pixel_encoding
-
         #
-        # Create new buffers if the image size has changed. Allocate ~1GB
-        # of memory for this purpose.
+        # Create new buffers if the image size has changed. Allocate ~4GB
+        # of memory for this purpose (2GB for raw buffers and 2GB for the
+        # the frames). In theory we will not be able to write over active
+        # frames because they would also be active buffers..
         #
         if (frame_bytes != self.frame_bytes):
-            #n_buffers = int((1.0 * 1024 * 1024 * 1024)/frame_bytes)
-            n_buffers = 4
+            n_buffers = int((2.0 * 1024 * 1024 * 1024)/frame_bytes)
             self.raw_data = []
             self.frame_data = []
             for i in range(n_buffers):
-                a_buffer = AndorRawData(frame_bytes)
-                sdk3.AT_QueueBuffer(self.camera_handle, a_buffer.getDataPtr(), a_buffer.size)
-                self.raw_data.append(a_buffer)
-
+                self.raw_data.append(AndorRawData(frame_bytes))
                 self.frame_data.append(AndorFrameData(self.frame_x * self.frame_y))
+
+        for a_buffer in self.raw_data:
+            sdk3.AT_QueueBuffer(self.camera_handle, 
+                                ctypes.c_void_p(a_buffer.getDataPtr()), 
+                                ctypes.c_int(a_buffer.size))
 
         self.frame_data_cur = 0
         self.frame_bytes = frame_bytes
 
     def getFrames(self):
         frames = []
-        current_buffer = ctypes.POINTER(ctypes.c_char)()
+        #current_buffer = ctypes.POINTER(ctypes.c_char)()
+        current_buffer = ctypes.c_void_p()
         buffer_size = ctypes.c_longlong()
         while(self.waitBuffer(current_buffer, buffer_size)):
 
             # Convert the buffer to an image.
             check(sdk3_utility.AT_ConvertBuffer(current_buffer,
-                                                self.frame_data[self.frame_data_cur].getDataPtr(),
-                                                self.frame_x,
-                                                self.frame_y,
-                                                self.stride,
+                                                ctypes.c_void_p(self.frame_data[self.frame_data_cur].getDataPtr()),
+                                                ctypes.c_long(self.frame_x),
+                                                ctypes.c_long(self.frame_y),
+                                                ctypes.c_long(self.stride),
                                                 ctypes.c_wchar_p(self.pixel_encoding),
                                                 ctypes.c_wchar_p("Mono16")),
                   "AT_ConvertBuffer")
@@ -223,11 +317,16 @@ class SDK3Camera:
             # Re-queue the buffers.
             check(sdk3.AT_QueueBuffer(self.camera_handle, current_buffer, buffer_size))
 
-        return frames
+        return [frames, [self.frame_x, self.frame_y]]
 
     def getProperty(self, pname, ptype):
-        if (ptype == "boolean"):
+        if self.isEnumerated(pname):
+            ptype = "enum"
+
+        if (ptype == "bool"):
             return getBoolean(self.camera_handle, pname)
+        elif (ptype == "enum"):
+            return getEnumeratedString(self.camera_handle, pname)
         elif (ptype == "float"):
             return getFloat(self.camera_handle, pname)
         elif (ptype == "int"):
@@ -237,9 +336,27 @@ class SDK3Camera:
         else:
             print "Unknown type", ptype, "for", pname
 
+    def hasFeature(self, pname):
+        implemented = ctypes.c_bool(False)
+        if check(sdk3.AT_IsImplemented(self.camera_handle, ctypes.c_wchar_p(pname), ctypes.byref(implemented))):
+            return implemented.value
+        else:
+            return False
+
+    def isEnumerated(self, pname):
+        if pname in self.enumerated:
+            return True
+        else:
+            return False
+
     def setProperty(self, pname, ptype, pvalue):
-        if (ptype == "boolean"):
+        if self.isEnumerated(pname):
+            ptype = "enum"
+
+        if (ptype == "bool"):
             setBoolean(self.camera_handle, pname, pvalue)
+        elif (ptype == "enum"):
+            setEnumeratedString(self.camera_handle, pname, pvalue)
         elif (ptype == "float"):
             setFloat(self.camera_handle, pname, pvalue)
         elif (ptype == "int"):
@@ -264,7 +381,7 @@ class SDK3Camera:
 	check(sdk3.AT_Flush(self.camera_handle), "AT_Flush")
 
     def waitBuffer(self, current_buffer, buffer_size):
-        resp = sdk3.AT_WaitBuffer(self.camera_handle, ctypes.byref(current_buffer), ctypes.byref(buffer_size), 50)
+        resp = sdk3.AT_WaitBuffer(self.camera_handle, ctypes.byref(current_buffer), ctypes.byref(buffer_size), 0)
         assert (resp != 100), "Andor thinks there will be a buffer overflow, sigh.."
         if (resp == 0):
             return True
@@ -278,21 +395,23 @@ if (__name__ == "__main__"):
     loadSDK3DLL("C:/Program Files/Andor SOLIS/")
 
     cam = SDK3Camera()
-    if 0:
+    if 1:
         print "model", cam.getProperty("CameraModel", "str")
         print "name", cam.getProperty("CameraName", "str")
         print "xsize", cam.getProperty("SensorWidth", "int")
         print "ysize", cam.getProperty("SensorHeight", "int")
+        print "target", cam.getProperty("TemperatureControl", "enum")
 
-    if 1:
-        cam.setProperty("AOIWidth", "int", 1024)
-        cam.setProperty("AOIHeight", "int", 1024)
-        cam.setProperty("ExposureTime", "float", 0.1)
+    if 0:
+        cam.setProperty("AOIWidth", "int", 2048)
+        cam.setProperty("AOIHeight", "int", 2048)
+        cam.setProperty("ExposureTime", "float", 0.01)
         cam.startAcquisition()
         for i in range(20):
-            frames = cam.getFrames()
-            if (len(frames) > 0):
-                print frames[0].np_array
+            frames = cam.getFrames()[0]
+            for frame in frames:
+                print i, frame.getData()
+            time.sleep(0.1)
         cam.stopAcquisition()
 
     print "shutdown"
