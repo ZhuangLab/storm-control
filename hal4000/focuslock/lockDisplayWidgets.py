@@ -492,22 +492,22 @@ class QCamDisplay(QtGui.QWidget):
             else:
                 self.zoom_image = False
 
-            self.e_size = round(12.0*float(self.width())/float(w))
+            self.e_size = round(1.5 * data[5] * float(self.width())/float(w))
 
             # Update offsets
             if (data[1] == 0.0):
                 self.draw_e1 = False
             else:
                 self.draw_e1 = True
-                self.x_off1 = ((data[2]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size
-                self.y_off1 = ((data[1]+w/2)/float(w))*float(self.height()) - 0.5*self.e_size
+                self.x_off1 = ((data[2]+w/2)/float(w))*float(self.width())
+                self.y_off1 = ((data[1]+w/2)/float(w))*float(self.height())
             
             if (data[3] == 0.0):
                 self.draw_e2 = False
             else:
                 self.draw_e2 = True
-                self.x_off2 = ((data[4]+w/2)/float(w))*float(self.width()) - 0.5*self.e_size
-                self.y_off2 = ((data[3]+w/2)/float(w))*float(self.height()) - 0.5*self.e_size
+                self.x_off2 = ((data[4]+w/2)/float(w))*float(self.width())
+                self.y_off2 = ((data[3]+w/2)/float(w))*float(self.height())
 
             # Red dot in camera display
             self.show_dot = show_dot
