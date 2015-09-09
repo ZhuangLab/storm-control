@@ -25,13 +25,11 @@
     -->
 
     <!-- The focus lock -->
-    <!--
     <focuslock>
       <class_name type="string">AFocusLockZ</class_name>
       <menu_item type="string">Focus Lock</menu_item>
       <module_name type="string">focuslock.jfocalFocusLockZ</module_name>
     </focuslock>
-    -->
 
     <!-- Illumination (lasers, shutters, etc) control. -->
     <illumination>

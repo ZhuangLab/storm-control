@@ -86,10 +86,10 @@
 
   <!-- focus lock settings -->
   <focuslock>
-    <ir_power type="int">6</ir_power>
+    <ir_power type="int">12</ir_power>
     <qpd_mode type="int">0</qpd_mode>
     <qpd_zcenter type="float">50.0</qpd_zcenter>
-    <qpd_scale type="float">50.0</qpd_scale>
+    <qpd_scale type="float">-700.0</qpd_scale>
     <qpd_sum_max type="int">256</qpd_sum_max>
     <cal_deadtime type="int">20</cal_deadtime>
     <cal_range type="float">600</cal_range>

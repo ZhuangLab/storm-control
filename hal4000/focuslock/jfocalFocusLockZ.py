@@ -4,12 +4,12 @@
 #
 # Camera / Objective Z based focus lock control specialized for jfocal.
 #
-# Hazen 08/15
+# Hazen 09/15
 #
 
 # qpd and stage.
-#import sc_hardware.madCityLabs.mclVoltageZController as MCLVZC
-import sc_hardware.madCityLabs.mclController as mclController
+import sc_hardware.madCityLabs.mclVoltageZController as MCLVZC
+#import sc_hardware.madCityLabs.mclController as mclController
 import sc_hardware.thorlabs.uc480Camera as uc480Cam
 
 # focus lock control thread.
@@ -27,10 +27,10 @@ import focuslock.focusLockZ as focusLockZ
 #
 class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, hardware, parameters, parent = None):
-        cam = uc480Cam.CameraQPD(camera_id = 1, x_width = 600, y_width = 100)
-        #stage = MCLVZC.MCLVZControl("USB-6002", 0)
-        stage = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/")
-        lock_fn = lambda (x): 0.07 * x
+        cam = uc480Cam.CameraQPD(camera_id = 1, x_width = 340, y_width = 40, sigma = 4.0)
+        stage = MCLVZC.MCLVZControl("PCI-6229", 0, scale = 10.0/100.0)
+        #stage = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/")
+        lock_fn = lambda (x): 0.4 * x
         control_thread = stageOffsetControl.StageCamThread(cam,
                                                            stage,
                                                            lock_fn,
@@ -48,7 +48,7 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2015 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
