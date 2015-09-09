@@ -6,6 +6,7 @@
 | AOTF | RS-232 | AA Optoelectronics | Worked, not used |
 | AOTF | DLL | Crystal Technologies | Works, in use |
 | AOTF | RS-232 | Gooch and Housego | Worked, not used |
+| CMOS Camera | DLL | Andor | Works, in use |
 | CMOS Camera | DLL | Hamamatsu | Works, in use |
 | DAQ | DLL | National Instruments | Works, in use |
 | DAQ (U3) | DLL | Labjack | Works, in use |
