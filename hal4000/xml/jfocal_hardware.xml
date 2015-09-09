@@ -34,7 +34,6 @@
     -->
 
     <!-- Illumination (lasers, shutters, etc) control. -->
-    <!--
     <illumination>
       <class_name type="string">IlluminationControl</class_name>
       <menu_item type="string">Illumination</menu_item>
@@ -43,7 +42,6 @@
 	<settings_xml type="string">jfocal_illumination_settings.xml</settings_xml>
       </parameters>
     </illumination>
-    -->
 
     <!-- Joystick controller. -->
     <!--
@@ -63,13 +61,11 @@
     -->
 
     <!-- Automatic illumination power adjustment. -->
-    <!--
     <progressions>
       <class_name type="string">ProgressionControl</class_name>
       <menu_item type="string">Progressions</menu_item>
       <module_name type="string">progressionControl</module_name>
     </progressions>
-    -->
 
     <!-- The live STORM analysis and display. -->
     <!--
