@@ -31,17 +31,17 @@ class ACameraControl(cameraControl.CameraControl):
     # Create an Andor camera control object and initialize
     # the camera.
     #
-    # @param parameters A parameters object.
+    # @param hardware Camera hardware settings.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, parent = None):
-        cameraControl.CameraControl.__init__(self, parameters, parent)
+    def __init__(self, hardware, parent = None):
+        cameraControl.CameraControl.__init__(self, hardware, parent)
 
         self.stop_at_max = True
         
         andor.loadSDK3DLL("C:/Program Files/Andor SOLIS/")
-        self.camera = andor.SDK3Camera(parameters.get("camera_id", 0))
+        self.camera = andor.SDK3Camera(hardware.get("camera_id", 0))
         self.camera.setProperty("CycleMode", "enum", "Continuous")
 
     ## closeShutter

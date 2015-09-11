@@ -30,16 +30,16 @@ class ACameraControl(cameraControl.CameraControl):
     # Create a Hamamatsu camera control object and initialize
     # the camera.
     #
-    # @param parameters A parameters object.
+    # @param hardware Camera hardware settings.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, parameters, parent = None):
-        cameraControl.CameraControl.__init__(self, parameters, parent)
+    def __init__(self, hardware, parent = None):
+        cameraControl.CameraControl.__init__(self, hardware, parent)
 
         self.stop_at_max = True
 
-        self.camera = hcam.HamamatsuCameraMR(parameters.get("camera_id", 0))
+        self.camera = hcam.HamamatsuCameraMR(hardware.get("camera_id", 0))
 
     ## closeShutter
     #
