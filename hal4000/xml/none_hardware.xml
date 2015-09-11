@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <hardware>
 
-  <!-- Define the camera. -->
-  <camera>
-    <!-- <module type="string">detachedSingleCamera</module> -->
-    <module type="string">classicSingleCamera</module>
+  <!-- The UI mode, this is either "single" (window) or "detached" -->
+  <ui_mode type="string">single</ui_mode>
+    
+  <!-- Camera control. -->
+  <control>
+    <module type="string">noneCameraControl</module>
     <parameters>
-      <control type="string">noneCameraControl</control>
-      <display type="string">noneCameraWidget</display>
     </parameters>
-  </camera>
+  </control>
+
+  <!-- Camera display. (camera1, camera2, etc..) -->
+  <camera1>
+    <class_name type="string">CameraDisplay</class_name>
+    <module_name type="string">cameraDisplay</module_name>
+    <parameters>
+      <widget type="string">pyCameraWidget</widget>
+    </parameters>
+  </camera1>
 
   <!-- Define the other modules to use for this setup. -->
   <modules>
@@ -24,7 +33,7 @@
       </parameters>
     </bluetooth>
     -->
-
+    
     <!-- The focus lock -->
     <focuslock>
       <class_name type="string">AFocusLockZ</class_name>

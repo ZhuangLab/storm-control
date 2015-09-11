@@ -50,6 +50,14 @@ class ACameraControl(cameraControl.CameraControl):
         time = 0.001 * float(self.sleep_time)
         return [time, time]
 
+    ## getProperties
+    #
+    # @return The properties of the camera as a dict.
+    #
+    @hdebug.debug
+    def getProperties(self):
+        return frozenset(['have_preamp'])
+    
     ## initCamera
     #
     # Initializes the camera.
@@ -61,35 +69,6 @@ class ACameraControl(cameraControl.CameraControl):
                 print " Initializing None Camera Type"
             self.camera = True
         self.got_camera = True
-
-    ## havePreamp
-    #
-    # @return True, the emulation camera has a pre-amplifier.
-    #
-    @hdebug.debug
-    def havePreamp(self):
-        return True
-
-    ## newFilmSettings
-    #
-    # Prepare the camera for the next acquisition.
-    #
-    # @param parameters A parameters object.
-    # @param film_settings A film settings object or None.
-    #
-    @hdebug.debug
-    def newFilmSettings(self, parameters, film_settings):
-        self.stopCamera()
-        self.mutex.lock()
-        self.reached_max_frames = False
-        if film_settings:
-            self.filming = True
-            self.acq_mode = film_settings.acq_mode
-            self.frames_to_take = film_settings.frames_to_take
-        else:
-            self.filming = False
-            self.acq_mode = "run_till_abort"
-        self.mutex.unlock()
 
     ## newParameters
     #
@@ -118,7 +97,6 @@ class ACameraControl(cameraControl.CameraControl):
         if not p.has("bytes_per_frame"):
             p.set("bytes_per_frame", 2 * p.get("x_pixels") * p.get("y_pixels"))
 
-        self.newFilmSettings(p, None)
         self.parameters = p
 
     ## run
@@ -139,29 +117,8 @@ class ACameraControl(cameraControl.CameraControl):
                                      True)
                 self.frame_number += 1
 
-                if self.filming:
-                    if self.daxfile:
-                        if (self.acq_mode == "fixed_length"):
-                            if (self.frame_number <= self.frames_to_take):
-                                self.daxfile.saveFrame(aframe)
-                        else:
-                            self.daxfile.saveFrame(aframe)
-
-                    if (self.acq_mode == "fixed_length") and (self.frame_number == self.frames_to_take):
-                        self.reached_max_frames = True
-                        
                 # Emit new data signal.
                 self.newData.emit([aframe], self.key)
-
-                # Emit max frames signal.
-                #
-                # The signal is emitted here because if it is emitted before
-                # newData then you never see that last frame in the movie, which
-                # is particularly problematic for single frame movies.
-                #
-                if self.reached_max_frames:
-                    self.max_frames_sig.emit()
-
             else:
                 self.acquire.idle()
 
@@ -171,7 +128,7 @@ class ACameraControl(cameraControl.CameraControl):
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2015 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

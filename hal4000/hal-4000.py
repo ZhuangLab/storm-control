@@ -48,6 +48,7 @@ from PyQt4 import QtCore, QtGui
 import sc_library.hdebug as hdebug
 
 # Misc.
+import camera.camera as camera
 import camera.filmSettings as filmSettings
 import halLib.imagewriters as writers
 import qtWidgets.qtAppIcon as qtAppIcon
@@ -140,30 +141,19 @@ class Window(QtGui.QMainWindow):
         setup_name = parameters.get("setup_name").lower()
 
         #
-        # Load the camera module
-        #
-        # The camera module defines (to some extent) what the HAL UI
-        # will look like.
-        #
-        the_camera = halImport('camera.' + hardware.camera.module)
-        self.ui_mode = the_camera.getMode()
-
-        #
         # UI setup, this is one of:
         #
-        # 1. single: single window, single camera
-        # 2. detached: detached camera window, single camera
-        # 3. dual: detached camera windows, dual camera
+        # 1. single: single window (the classic look).
+        # 2. detached: detached camera window.
         #
+        self.ui_mode = hardware.ui_mode        
         if (self.ui_mode == "single"):
             import qtdesigner.hal4000_ui as hal4000Ui
         elif (self.ui_mode == "detached"):
             import qtdesigner.hal4000_detached_ui as hal4000Ui
-        elif (self.ui_mode == "dual"):
-            import qtdesigner.hal4000_detached_ui as hal4000Ui
         else:
             print "unrecognized mode:", self.ui_mode
-            print " mode should be one of: single, detached or dual"
+            print " mode should be either single or detached"
             exit()
 
         # Load the ui
@@ -190,45 +180,47 @@ class Window(QtGui.QMainWindow):
         self.ui.sizeText.setText("")
 
         #
-        # Camera
+        # Camera control & signals.
         #
-
-        # This is the classic single-window HAL display. To work properly, the camera 
-        # controls UI elements that "belong" to the main window and vice-versa.
-        if (self.ui_mode == "single"):
-            self.camera = the_camera.ACamera(hardware.camera.parameters,
-                                             parameters,
-                                             self.ui.cameraFrame,
-                                             self.ui.cameraParamsFrame,
-                                             parent = self)
-            self.ui.recordButton = self.camera.getRecordButton()
-
-        # Both detached and dual-modes have the proper separation of UI elements
-        else:
-            self.camera = the_camera.ACamera(hardware.camera.parameters,
-                                             parameters,
-                                             parent = self)
-
-        # Insert additional menu items for the camera(s) as necessary
-        if (self.ui_mode == "detached"):
-            self.ui.actionCamera1 = QtGui.QAction(self.tr("Camera"), self)
-            self.ui.menuFile.insertAction(self.ui.actionQuit, self.ui.actionCamera1)
-            self.ui.actionCamera1.triggered.connect(self.camera.showCamera1)
-        elif (self.ui_mode == "dual"):
-            self.ui.actionCamera1 = QtGui.QAction(self.tr("Camera1"), self)
-            self.ui.menuFile.insertAction(self.ui.actionQuit, self.ui.actionCamera1)
-            self.ui.actionCamera1.triggered.connect(self.camera.showCamera1)
-
-            self.ui.actionCamera2 = QtGui.QAction(self.tr("Camera2"), self)
-            self.ui.menuFile.insertAction(self.ui.actionQuit, self.ui.actionCamera2)
-            self.ui.actionCamera2.triggered.connect(self.camera.showCamera2)
-
-        # camera signals
+        self.camera = camera.Camera(hardware.control, parameters)
         self.camera.reachedMaxFrames.connect(self.stopFilm)
         self.camera.newFrames.connect(self.newFrames)
 
         #
-        # Hardware control modules
+        # Camera display.
+        #
+        camera_displays = []
+        index = 1
+        while (hasattr(hardware, "camera" + str(index))):
+            display_name = "camera" + str(index)
+            display_info = getattr(hardware, display_name)
+            display_module = halImport(display_info.module_name)
+            display_class = getattr(display_module, display_info.class_name)
+            camera_displays.append(display_class(self.ui_mode,
+                                                 display_name,
+                                                 display_info.parameters,
+                                                 parameters,
+                                                 self))
+            index += 1
+            
+        # This is the classic single-window HAL display. To work properly, the camera 
+        # controls UI elements that "belong" to the main window and vice-versa.
+        if (self.ui_mode == "single"):
+            assert (len(camera_displays) == 1), "You can only have one camera display in single mode."
+            self.ui.recordButton = camera_displays[0].getRecordButton()
+
+        # Insert additional menu items for the camera display(s) as necessary
+        else:
+            for camera_display in camera_displays:
+                a_action = QtGui.QAction(self.tr(camera_display.getMenuName()), self)
+                self.ui.menuFile.insertAction(self.ui.actionQuit, a_action)
+                a_action.triggered.connect(camera_display.show())
+
+        # Camera display modules are also standard HAL modules.
+        self.modules += camera_display
+
+        #
+        # Other hardware control modules
         #
 
         # Load the requested modules.
@@ -260,7 +252,8 @@ class Window(QtGui.QMainWindow):
                 to_module.connectSignals(signals)
 
         # Finish module initialization
-        for module in self.modules:
+        everything = self.modules + [self.camera]
+        for module in everything:
             module.moduleInit()
 
         #
@@ -295,28 +288,9 @@ class Window(QtGui.QMainWindow):
         #
 
         # HAL GUI settings.
-        self.gui_settings = []
         self.move(self.settings.value("main_pos", QtCore.QPoint(100, 100)).toPoint())
+        self.resize(self.settings.value("main_size", self.size()).toSize())
         self.xml_directory = str(self.settings.value("xml_directory", "").toString())
-
-        if (self.ui_mode == "single"):
-            self.resize(self.settings.value("main_size", self.size()).toSize())
-
-        elif (self.ui_mode == "detached"):
-            self.camera.resize(self.settings.value("camera_size", self.camera.size()).toSize())
-            self.gui_settings.append([self.camera, "camera1"])
-
-        elif (self.ui_mode == "dual"):
-            self.camera.camera1.resize(self.settings.value("camera1_size", self.camera.camera1.size()).toSize())
-            self.camera.camera2.resize(self.settings.value("camera2_size", self.camera.camera2.size()).toSize())
-            self.gui_settings.append([self.camera.camera1, "camera1"])
-            self.gui_settings.append([self.camera.camera2, "camera2"])
-
-        for [an_object, name] in self.gui_settings:
-            if an_object:
-                an_object.move(self.settings.value(name + "_pos", QtCore.QPoint(200, 200)).toPoint())
-                if self.settings.value(name + "_visible", False).toBool():
-                    an_object.show()
 
         # Module GUI settings.
         for module in self.modules:
@@ -345,21 +319,8 @@ class Window(QtGui.QMainWindow):
 
         # Save HAL GUI settings.
         self.settings.setValue("main_pos", self.pos())
+        self.settings.setValue("main_size", self.size())
         self.settings.setValue("xml_directory", self.xml_directory)
-        if (self.ui_mode == "single"):
-            self.settings.setValue("main_size", self.size())
-
-        elif (self.ui_mode == "detached"):
-            self.settings.setValue("camera_size", self.camera.size())
-
-        elif (self.ui_mode == "dual"):
-            self.settings.setValue("camera1_size", self.camera.camera1.size())
-            self.settings.setValue("camera2_size", self.camera.camera2.size())
-
-        for [an_object, name] in self.gui_settings:
-            if object:
-                self.settings.setValue(name + "_pos", an_object.pos())
-                self.settings.setValue(name + "_visible", an_object.isVisible())
 
         # Save module GUI settings.
         for module in self.modules:
@@ -558,7 +519,7 @@ class Window(QtGui.QMainWindow):
                 # Save parameters to keep track of parameter trajectory for accurate time and disk estimates.
                 else:
                     self.parameters_test_mode = self.parameters_box.getParameters(param_index)
-                    if not self.parameters_test_mode.initialized:
+                    if not self.parameters_test_mode.get("initialized"):
                         self.tcp_message = message # Store message so that it can be returned.
                         self.parameters_box.setCurrentParameters(param_index)
                     else:
@@ -908,7 +869,7 @@ class Window(QtGui.QMainWindow):
         self.film_name = self.parameters.get("film.directory") + str(self.ui.filenameLabel.text())
         self.film_name = self.film_name[:-len(self.ui.filetypeComboBox.currentText())]
 
-        if not film_settings:
+        if film_settings is None:
             film_settings = filmSettings.FilmSettings(self.parameters.get("film.acq_mode"),
                                                       self.parameters.get("film.frames"))
             save_film = self.ui.saveMovieCheckBox.isChecked()
@@ -916,7 +877,7 @@ class Window(QtGui.QMainWindow):
             save_film = True
 
         # Film file prep.
-        self.writer = False
+        self.writer = None
         self.ui.recordButton.setText("Stop")
         if save_film:
             if (self.ui_mode == "dual"):

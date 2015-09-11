@@ -37,8 +37,8 @@ class ACameraControl(cameraControl.CameraControl):
     def __init__(self, hardware, parent = None):
         cameraControl.CameraControl.__init__(self, hardware, parent)
         
-        if hasattr(hardware, "pci_card"):
-            self.initCamera(hardware.pci_card)
+        if hardware.has("pci_card"):
+            self.initCamera(hardware.get("pci_card"))
         else:
             self.initCamera()
 
@@ -49,7 +49,6 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def closeShutter(self):
         self.shutter = False
-        self.stopCamera()
         if self.got_camera:
             if self.reversed_shutter:
                 self.camera.openShutter()
@@ -62,63 +61,32 @@ class ACameraControl(cameraControl.CameraControl):
     #
     @hdebug.debug
     def getAcquisitionTimings(self):
-        self.stopCamera()
         if self.got_camera:
             return self.camera.getAcquisitionTimings()[:-1]
         else:
             return [1.0, 1.0]
 
+    ## getProperties
+    #
+    # @return The properties of the camera as a set.
+    #
+    @hdebug.debug
+    def getProperties(self):
+        return frozenset(['have_emccd', 'have_preamp', 'have_shutter', 'have_temperature'])
+
     ## getTemperature
     #
-    # Stop the camera and get the camera temperature.
+    # Get the current camera temperature.
+    #
+    # @param parameters A parameters object.
     #
     @hdebug.debug
-    def getTemperature(self):
-        self.stopCamera()
+    def getTemperature(self, parameters):
+        temp = [50, "unstable"]
         if self.got_camera:
-            return self.camera.getTemperature()
-        else:
-            return [50, "unstable"]
-
-    ## haveEMCCD
-    #
-    # Returns that this is a EMCCD camera.
-    #
-    # @return True, this is a EMCCD camera.
-    #
-    @hdebug.debug
-    def haveEMCCD(self):
-        return True
-
-    ## havePreamp
-    #
-    # Returns that the camera has a pre-amplifier.
-    #
-    # @return True, this camera has a pre-amplifier.
-    #
-    @hdebug.debug
-    def havePreamp(self):
-        return True
-
-    ## haveShutter
-    #
-    # Returns that the camera has a shutter.
-    #
-    # @return True, this camera has a shutter.
-    #
-    @hdebug.debug
-    def haveShutter(self):
-        return True
-
-    ## haveTemperature
-    #
-    # Returns that this camera can measure its sensor temperature.
-    #
-    # @return True, this camera can measure its sensor temperature.
-    #
-    @hdebug.debug
-    def haveTemperature(self):
-        return True
+            temp = self.camera.getTemperature()
+        parameters.set("camera1.actual_temperature", temp[0])
+        parameters.set("camera1.temperature_control", temp[1])
 
     ## initCamera
     #
@@ -321,9 +289,8 @@ class ACameraControl(cameraControl.CameraControl):
             hdebug.logText("Setting ADChannel", False)
             self.camera.setADChannel(p.get("adchannel"))
 
-            p.head_model = self.camera.getHeadModel()
-
-            [p.em_gain_low, p.em_gain_high] = self.camera.getEMGainRange()
+            p.set("head_model") = self.camera.getHeadModel()
+            p.set(["em_gain_low", "em_gain_high"], self.camera.getEMGainRange())
 
             hdebug.logText("Camera Initialized", False)
             self.got_camera = True
@@ -430,7 +397,6 @@ class ACameraControl(cameraControl.CameraControl):
     #
     @hdebug.debug
     def setEMCCDGain(self, gain):
-        self.stopCamera()
         if self.got_camera:
             self.camera.setEMCCDGain(gain)
 
