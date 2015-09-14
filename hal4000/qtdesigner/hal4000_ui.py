@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'hal4000.ui'
 #
-# Created: Thu Jul 23 15:31:50 2015
-#      by: PyQt4 UI code generator 4.10.4
+# Created: Sun Sep 13 22:13:02 2015
+#      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -92,6 +92,7 @@ class Ui_MainWindow(object):
         self.shuttersLabels.setObjectName(_fromUtf8("shuttersLabels"))
         self.verticalLayout_2.addWidget(self.shuttersLabels)
         self.horizontalLayout_9 = QtGui.QHBoxLayout()
+        self.horizontalLayout_9.setSpacing(6)
         self.horizontalLayout_9.setObjectName(_fromUtf8("horizontalLayout_9"))
         self.widget = QtGui.QWidget(self.filmGroupBox)
         self.widget.setMaximumSize(QtCore.QSize(5, 16777215))
@@ -118,6 +119,11 @@ class Ui_MainWindow(object):
         self.horizontalLayout_10.addWidget(self.directoryText)
         self.verticalLayout_2.addLayout(self.horizontalLayout_10)
         self.autoIncCheckBox = QtGui.QCheckBox(self.filmGroupBox)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.autoIncCheckBox.sizePolicy().hasHeightForWidth())
+        self.autoIncCheckBox.setSizePolicy(sizePolicy)
         self.autoIncCheckBox.setChecked(True)
         self.autoIncCheckBox.setObjectName(_fromUtf8("autoIncCheckBox"))
         self.verticalLayout_2.addWidget(self.autoIncCheckBox)

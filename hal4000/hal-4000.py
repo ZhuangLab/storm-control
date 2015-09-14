@@ -48,8 +48,9 @@ from PyQt4 import QtCore, QtGui
 import sc_library.hdebug as hdebug
 
 # Misc.
-import camera.camera as camera
+import camera.control as control
 import camera.filmSettings as filmSettings
+import display.cameraDisplay as cameraDisplay
 import halLib.imagewriters as writers
 import qtWidgets.qtAppIcon as qtAppIcon
 import qtWidgets.qtParametersBox as qtParametersBox
@@ -182,31 +183,32 @@ class Window(QtGui.QMainWindow):
         #
         # Camera control & signals.
         #
-        self.camera = camera.Camera(hardware.control, parameters)
+        self.camera = control.Camera(hardware.get("control"), parameters)
         self.camera.reachedMaxFrames.connect(self.stopFilm)
         self.camera.newFrames.connect(self.newFrames)
 
         #
         # Camera display.
         #
+        if (self.ui_mode == "single"):
+            n_cameras = 1
+        else:
+            n_cameras = self.camera.getNumberOfCameras()
+
         camera_displays = []
-        index = 1
-        while (hasattr(hardware, "camera" + str(index))):
-            display_name = "camera" + str(index)
-            display_info = getattr(hardware, display_name)
-            display_module = halImport(display_info.module_name)
-            display_class = getattr(display_module, display_info.class_name)
-            camera_displays.append(display_class(self.ui_mode,
-                                                 display_name,
-                                                 display_info.parameters,
-                                                 parameters,
-                                                 self))
-            index += 1
-            
+        for i in range(n_cameras):
+            which_camera = "camera" + str(i+1)
+            #camera_displays.append(cameraDisplay.CameraDisplay(self.ui,
+            camera_displays.append(cameraDisplay.CameraDisplay(None,
+                                                               self.ui_mode,
+                                                               which_camera,
+                                                               hardware.get("display"),
+                                                               parameters,
+                                                               self))
+
         # This is the classic single-window HAL display. To work properly, the camera 
         # controls UI elements that "belong" to the main window and vice-versa.
         if (self.ui_mode == "single"):
-            assert (len(camera_displays) == 1), "You can only have one camera display in single mode."
             self.ui.recordButton = camera_displays[0].getRecordButton()
 
         # Insert additional menu items for the camera display(s) as necessary
@@ -214,27 +216,28 @@ class Window(QtGui.QMainWindow):
             for camera_display in camera_displays:
                 a_action = QtGui.QAction(self.tr(camera_display.getMenuName()), self)
                 self.ui.menuFile.insertAction(self.ui.actionQuit, a_action)
-                a_action.triggered.connect(camera_display.show())
+                a_action.triggered.connect(camera_display.show)
 
         # Camera display modules are also standard HAL modules.
-        self.modules += camera_display
+        self.modules += camera_displays
 
         #
         # Other hardware control modules
         #
 
         # Load the requested modules.
+        #
         add_separator = False
-        for module in hardware.modules:
-            hdebug.logText("Loading: " + module.hal_type)
-            a_module = halImport(module.module_name)
-            a_class = getattr(a_module, module.class_name)
-            instance = a_class(module.parameters, parameters, self)
-            instance.hal_type = module.hal_type
-            instance.hal_gui = module.hal_gui
-            if module.hal_gui:
+        for module in hardware.get("modules").getSubXMLObjects():
+            hdebug.logText("Loading: " + module.get("hal_type"))
+            a_module = halImport(module.get("module_name"))
+            a_class = getattr(a_module, module.get("class_name"))
+            instance = a_class(module.get("parameters", False), parameters, self)
+            instance.hal_type = module.get("hal_type")
+            instance.hal_gui = module.get("hal_gui")
+            if module.get("hal_gui"):
                 add_separator = True
-                a_action = QtGui.QAction(self.tr(module.menu_item), self)
+                a_action = QtGui.QAction(self.tr(module.get("menu_item")), self)
                 self.ui.menuFile.insertAction(self.ui.actionQuit, a_action)
                 a_action.triggered.connect(instance.show)
             self.modules.append(instance)
@@ -278,7 +281,7 @@ class Window(QtGui.QMainWindow):
         self.ui.lengthSpinBox.valueChanged.connect(self.updateLength)
         self.ui.modeComboBox.currentIndexChanged.connect(self.handleModeComboBox)
         self.ui.notesEdit.textChanged.connect(self.updateNotes)
-        self.ui.recordButton.clicked.connect(self.toggleFilm)
+#        self.ui.recordButton.clicked.connect(self.toggleFilm)
 
         # other signals
         self.parameters_box.settingsToggled.connect(self.toggleSettings)

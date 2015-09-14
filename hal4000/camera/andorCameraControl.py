@@ -68,11 +68,11 @@ class ACameraControl(cameraControl.CameraControl):
 
     ## getProperties
     #
-    # @return The properties of the camera as a set.
+    # @return The properties of the camera as a dict.
     #
     @hdebug.debug
     def getProperties(self):
-        return frozenset(['have_emccd', 'have_preamp', 'have_shutter', 'have_temperature'])
+        return {"camera1" : frozenset(['have_emccd', 'have_preamp', 'have_shutter', 'have_temperature'])}
 
     ## getTemperature
     #

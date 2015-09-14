@@ -152,36 +152,45 @@ def hardware(hardware_file):
         raise ParametersException(hardware_file + " is not a hardware file.")
 
     # Create the hardware object.
-    xml_object = StormXMLObject([])
+    hardware = StormXMLObject(xml, recurse = True)
 
-    # Load camera information.
-    camera_xml = xml.find("camera")
-    xml_object.camera = StormXMLObject([])
-    xml_object.camera.module = camera_xml.find("module").text
-    xml_object.camera.parameters = StormXMLObject(camera_xml.find("parameters"))
+    modules = hardware.get("modules")
+    for module_name in modules.getAttrs():
+        module = modules.get(module_name)
+        module.set("hal_type", module_name)
+        if module.has("menu_item"):
+            module.set("hal_gui", True)
+        else:
+            module.set("hal_gui", False)
+
+            # Load camera information.
+#    camera_xml = xml.find("camera")
+#    xml_object.camera = StormXMLObject([])
+#    xml_object.camera.module = camera_xml.find("module").text
+#    xml_object.camera.parameters = StormXMLObject(camera_xml.find("parameters"))
 
     # Load modules.
-    xml_object.modules = []
-    for xml_module in xml.find("modules"):
+#    xml_object.modules = []
+#    for xml_module in xml.find("modules"):
 
         # Create module based on XML
-        module = StormXMLObject(xml_module)
-        xml_parameters = xml_module.find("parameters")
-        if xml_parameters is not None:
-            module.parameters = StormXMLObject(xml_parameters)
-        else:
-            module.parameters = None
+#        module = StormXMLObject(xml_module)
+#        xml_parameters = xml_module.find("parameters")
+#        if xml_parameters is not None:
+#            module.parameters = StormXMLObject(xml_parameters)
+#        else:
+#            module.parameters = None
 
         # Add addition properties
-        module.hal_type = xml_module.tag
-        if (hasattr(module, "menu_item")):
-            module.hal_gui = True
-        else:
-            module.hal_gui = False
+#        module.hal_type = xml_module.tag
+#        if (hasattr(module, "menu_item")):
+#            module.hal_gui = True
+#        else:
+#            module.hal_gui = False
+#
+#        xml_object.modules.append(module)
 
-        xml_object.modules.append(module)
-
-    return xml_object
+    return hardware
 
 ## parameters
 #

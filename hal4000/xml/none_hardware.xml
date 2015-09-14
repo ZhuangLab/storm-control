@@ -2,23 +2,18 @@
 <hardware>
 
   <!-- The UI mode, this is either "single" (window) or "detached" -->
-  <ui_mode type="string">single</ui_mode>
-    
+  <ui_mode type="string">detached</ui_mode>
+
   <!-- Camera control. -->
   <control>
-    <module type="string">noneCameraControl</module>
-    <parameters>
-    </parameters>
+    <module_name type="string">noneCameraControl</module_name>
   </control>
 
-  <!-- Camera display. (camera1, camera2, etc..) -->
-  <camera1>
-    <class_name type="string">CameraDisplay</class_name>
-    <module_name type="string">cameraDisplay</module_name>
-    <parameters>
-      <widget type="string">pyCameraWidget</widget>
-    </parameters>
-  </camera1>
+  <!-- Camera display. -->
+  <display>
+    <module_name type="string">cameraWidgets</module_name>
+    <class_name type="string">pyCameraWidget</class_name>
+  </display>
 
   <!-- Define the other modules to use for this setup. -->
   <modules>

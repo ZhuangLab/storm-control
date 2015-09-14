@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'camera-display.ui'
 #
-# Created: Fri Nov 22 08:34:07 2013
-#      by: PyQt4 UI code generator 4.9.6
+# Created: Sun Sep 13 21:40:38 2015
+#      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_Frame(object):
     def setupUi(self, Frame):
         Frame.setObjectName(_fromUtf8("Frame"))
-        Frame.resize(583, 541)
+        Frame.resize(583, 546)
         Frame.setFrameShape(QtGui.QFrame.NoFrame)
         Frame.setFrameShadow(QtGui.QFrame.Raised)
         self.verticalLayout_2 = QtGui.QVBoxLayout(Frame)
@@ -167,4 +167,4 @@ class Ui_Frame(object):
         self.syncLabel.setText(_translate("Frame", "Display:", None))
         self.autoScaleButton.setText(_translate("Frame", "Autoscale", None))
 
-from camera.cameraDisplay import CameraScrollArea
+from display.cameraFrameDisplay import CameraScrollArea

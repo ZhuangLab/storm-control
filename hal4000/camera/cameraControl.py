@@ -92,13 +92,21 @@ class CameraControl(QtCore.QThread):
     def getAcquisitionTimings(self):
         return [0.1, 0.1, 0.1]
 
+    ## getNumberOfCameras
+    #
+    # @return The number of cameras that this module controls.
+    #
+    @hdebug.debug
+    def getNumberOfCameras(self):
+        return 1
+    
     ## getProperties
     #
-    # @return The properties of the camera as a set.
+    # @return The properties of the cameras as a dict.
     #
     @hdebug.debug
     def getProperties(self):
-        return frozenset()
+        return {"camera1" : frozenset()}
     
     ## getTemperature
     #

@@ -19,6 +19,8 @@ class Camera(QtCore.QObject):
 
     @hdebug.debug
     def __init__(self, hardware, parameters):
+        QtCore.QObject.__init__(self)
+        
         self.acq_mode = None
         self.filming = False
         self.frames_to_take = None
@@ -27,10 +29,11 @@ class Camera(QtCore.QObject):
         self.writer = None
 
         # Setup camera control.
-        cameraControl = __import__('camera.' + hardware.module, globals(), locals(), [hardware], -1)
-        self.camera_control = cameraControl.ACameraControl(hardware.parameters, parent = self)
+        module_name = hardware.get("module_name")
+        cameraControl = __import__('camera.' + module_name, globals(), locals(), [module_name], -1)
+        self.camera_control = cameraControl.ACameraControl(hardware.get("parameters", False), parent = self)
 
-        self.camera_control.newData.connect(self.handleNewFrames)
+        self.camera_control.newData.connect(self.handleNewData)
         
     @hdebug.debug
     def cameraInit(self):
@@ -43,13 +46,17 @@ class Camera(QtCore.QObject):
     @hdebug.debug
     def connectSignals(self, signals):
         for signal in signals:
-            if (signal[1] == "toggleShutter"):
+            if (signal[1] == "cameraShutter"):
                 signal[2].connect(self.handleShutter)
-            elif (signal[1] == "gainChange"):
+            elif (signal[1] == "emGainChange"):
                 signal[2].connect(self.handleEmGain)
                 
     def getFilmSize(self):
         return self.writer.totalFilmSize()
+
+    @hdebug.debug
+    def getNumberOfCameras(self):
+        return self.camera_control.getNumberOfCameras()
 
     @hdebug.debug
     def getSignals(self):
@@ -64,7 +71,7 @@ class Camera(QtCore.QObject):
             self.parameters.set(which_camera + ".emccd_gain", em_gain)
             self.startCamera()
         
-    def handleNewFrames(self, frames, key):
+    def handleNewData(self, frames, key):
         if (key == self.key):
             reached_max_frames = False
 
@@ -82,7 +89,7 @@ class Camera(QtCore.QObject):
                     reached_max_frames = True
 
             # Send frames to HAL.
-            self.newFrames.emit(frames, key)
+            self.newFrames.emit(frames)
 
             # Emit max frames signal.
             #
@@ -109,8 +116,8 @@ class Camera(QtCore.QObject):
     def newParameters(self, parameters):
         self.camera_control.newParameters(parameters)
         [exposure_value, cycle_value] = self.camera_control.getAcquisitionTimings()
-        p.set(["camera1.exposure_value", "camera1.cycle_value"], [exposure_value, cycle_value])
-        p.set("seconds_per_frame", cycle_value)
+        parameters.set(["camera1.exposure_value", "camera1.cycle_value"], [exposure_value, cycle_value])
+        parameters.set("seconds_per_frame", cycle_value)
 
     @hdebug.debug
     def startCamera(self):
@@ -138,7 +145,7 @@ class Camera(QtCore.QObject):
         self.camera_control.stopCamera()
 
     def updateTemperature(self):
-        if self.camera_control.haveTemperature():
+        if ("have_temperature" in self.camera_control.getProperties()["camera1"]):
             self.camera_control.getTemperature(self.parameters)
 
 

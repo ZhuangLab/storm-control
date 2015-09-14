@@ -56,7 +56,7 @@ class ACameraControl(cameraControl.CameraControl):
     #
     @hdebug.debug
     def getProperties(self):
-        return frozenset(['have_preamp'])
+        return {"camera1" : frozenset(['have_preamp'])}
     
     ## initCamera
     #
