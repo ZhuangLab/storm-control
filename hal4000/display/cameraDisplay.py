@@ -67,7 +67,7 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
                                                                           which_camera,
                                                                           show_record,
                                                                           parent = camera_frame)
-        print "1"
+        
         layout = QtGui.QGridLayout(camera_frame)
         layout.setMargin(0)
         layout.addWidget(self.camera_frame_display)
@@ -78,7 +78,6 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
                                                          which_camera,
                                                          parent = camera_params_frame)
 
-        print "2"
         layout = QtGui.QGridLayout(camera_params_frame)
         layout.setMargin(0)
         layout.addWidget(self.camera_params)
