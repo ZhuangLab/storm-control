@@ -198,8 +198,7 @@ class Window(QtGui.QMainWindow):
         camera_displays = []
         for i in range(n_cameras):
             which_camera = "camera" + str(i+1)
-            #camera_displays.append(cameraDisplay.CameraDisplay(self.ui,
-            camera_displays.append(cameraDisplay.CameraDisplay(None,
+            camera_displays.append(cameraDisplay.CameraDisplay(self.ui,
                                                                self.ui_mode,
                                                                which_camera,
                                                                hardware.get("display"),

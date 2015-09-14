@@ -18,11 +18,11 @@ import display.cameraFrameDisplay as cameraFrameDisplay
 import display.paramsDisplay as paramsDisplay
 import halLib.halModule as halModule
 
-class CameraDisplay(QtGui.QMainWindow, halModule.HalModule):
+class CameraDisplay(QtGui.QDialog, halModule.HalModule):
     
     @hdebug.debug
     def __init__(self, hal_ui, hal_ui_mode, which_camera, hardware, parameters, parent):
-        QtGui.QMainWindow.__init__(self, parent)
+        QtGui.QDialog.__init__(self, parent)
         halModule.HalModule.__init__(self)
 
         self.camera_properties = None
@@ -31,7 +31,8 @@ class CameraDisplay(QtGui.QMainWindow, halModule.HalModule):
         
         # Pictures from the camera and parameters are shown in the main window.
         if (hal_ui_mode == "single"):
-
+            self.hal_gui = False
+            
             import qtdesigner.camera_display_ui as cameraDisplayUi
             import qtdesigner.camera_params_ui as cameraParamsUi
             
@@ -50,7 +51,7 @@ class CameraDisplay(QtGui.QMainWindow, halModule.HalModule):
             # Configure window.
             self.ui = cameraDetachedUi.Ui_Dialog()
             self.ui.setupUi(self)
-            self.setWindowTitle(parameters.get("setup_name") + " Camera")
+            self.setWindowTitle(parameters.get("setup_name") + " " + self.getMenuName())
 
             camera_frame = self.ui.cameraFrame
             camera_params_frame = self.ui.cameraParamsFrame
@@ -66,6 +67,7 @@ class CameraDisplay(QtGui.QMainWindow, halModule.HalModule):
                                                                           which_camera,
                                                                           show_record,
                                                                           parent = camera_frame)
+        print "1"
         layout = QtGui.QGridLayout(camera_frame)
         layout.setMargin(0)
         layout.addWidget(self.camera_frame_display)
@@ -75,7 +77,8 @@ class CameraDisplay(QtGui.QMainWindow, halModule.HalModule):
         self.camera_params = paramsDisplay.ParamsDisplay(camera_params_ui,
                                                          which_camera,
                                                          parent = camera_params_frame)
-            
+
+        print "2"
         layout = QtGui.QGridLayout(camera_params_frame)
         layout.setMargin(0)
         layout.addWidget(self.camera_params)
