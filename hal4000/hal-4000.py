@@ -280,7 +280,7 @@ class Window(QtGui.QMainWindow):
         self.ui.lengthSpinBox.valueChanged.connect(self.updateLength)
         self.ui.modeComboBox.currentIndexChanged.connect(self.handleModeComboBox)
         self.ui.notesEdit.textChanged.connect(self.updateNotes)
-#        self.ui.recordButton.clicked.connect(self.toggleFilm)
+        self.ui.recordButton.clicked.connect(self.toggleFilm)
 
         # other signals
         self.parameters_box.settingsToggled.connect(self.toggleSettings)
