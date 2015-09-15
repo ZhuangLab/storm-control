@@ -166,8 +166,8 @@ class GenericFile:
         self.file_ptrs = []
         self.number_frames = []
         if (len(cameras) > 1):
-            for i in range(len(cameras)):
-                fname = filename + "_cam" + str(i+1) + "." + extension
+            for camera in cameras:
+                fname = filename + "_" + camera + "." + extension
                 self.filenames.append(fname)
                 if want_fp:
                     self.file_ptrs.append(open(fname, "wb"))

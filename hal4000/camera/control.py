@@ -22,6 +22,7 @@ class Camera(QtCore.QObject):
         QtCore.QObject.__init__(self)
         
         self.acq_mode = None
+        self.cameras = []
         self.filming = False
         self.frames_to_take = None
         self.key = 0
@@ -34,6 +35,9 @@ class Camera(QtCore.QObject):
         self.camera_control = cameraControl.ACameraControl(hardware.get("parameters", False), parent = self)
 
         self.camera_control.newData.connect(self.handleNewData)
+
+        for i in range(self.camera_control.getNumberOfCameras()):
+            self.cameras.append("camera" + str(i+1))
         
     @hdebug.debug
     def cameraInit(self):
@@ -50,13 +54,17 @@ class Camera(QtCore.QObject):
                 signal[2].connect(self.handleShutter)
             elif (signal[1] == "emGainChange"):
                 signal[2].connect(self.handleEmGain)
-                
+
+    @hdebug.debug
+    def getCameras(self):
+        return self.cameras
+    
     def getFilmSize(self):
         return self.writer.totalFilmSize()
 
     @hdebug.debug
     def getNumberOfCameras(self):
-        return self.camera_control.getNumberOfCameras()
+        return len(self.cameras)
 
     @hdebug.debug
     def getSignals(self):
@@ -117,8 +125,7 @@ class Camera(QtCore.QObject):
     def newParameters(self, parameters):
         self.parameter = parameters
         self.camera_control.newParameters(self.parameters)
-        for i in range(self.getNumberOfCameras()):
-            which_camera = "camera" + str(i+1)
+        for which_camera in self.cameras:
             [exposure_value, cycle_value] = self.camera_control.getAcquisitionTimings(which_camera)
             self.parameters.set([which_camera + ".exposure_value", which_camera + ".cycle_value"], [exposure_value, cycle_value])
             if (which_camera == "camera1"):
@@ -150,9 +157,7 @@ class Camera(QtCore.QObject):
         self.camera_control.stopCamera()
 
     def updateTemperature(self):
-        for i in range(self.getNumberOfCameras()):
-            which_camera = "camera" + str(i+1)
+        for which_camera in self.cameras:
             if ("have_temperature" in self.camera_control.getProperties()[which_camera]):
                 self.camera_control.getTemperature(which_camera, self.parameters)
-
 

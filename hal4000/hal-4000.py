@@ -882,16 +882,10 @@ class Window(QtGui.QMainWindow):
         self.writer = None
         self.ui.recordButton.setText("Stop")
         if save_film:
-            if (self.ui_mode == "dual"):
-                self.writer = writers.createFileWriter(self.ui.filetypeComboBox.currentText(),
-                                                       self.film_name,
-                                                       self.parameters,
-                                                       ["camera1", "camera2"])
-            else:
-                self.writer = writers.createFileWriter(self.ui.filetypeComboBox.currentText(),
-                                                       self.film_name,
-                                                       self.parameters,
-                                                       ["camera1"])
+            self.writer = writers.createFileWriter(self.ui.filetypeComboBox.currentText(),
+                                                   self.film_name,
+                                                   self.parameters,
+                                                   self.camera.getCameras())
             self.camera.startFilm(self.writer, film_settings)
             self.ui.recordButton.setStyleSheet("QPushButton { color: red }")
         else:
