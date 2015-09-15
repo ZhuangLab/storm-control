@@ -132,12 +132,12 @@ class Camera(QtCore.QObject):
             self.filming = True
         self.writer = writer
         self.acq_mode = film_settings.acq_mode
-        self.frames_to_take = film_settings.frames_to_take
-        self.camera.startFilm()
+        self.frames_to_take = film_settings.frames_to_take - 1
+        self.camera_control.startFilm()
 
     @hdebug.debug
     def stopFilm(self):
-        self.camera.stopFilm()
+        self.camera_control.stopFilm()
         self.filming = False
 
     @hdebug.debug
