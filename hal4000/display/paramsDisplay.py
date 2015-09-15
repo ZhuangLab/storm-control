@@ -173,12 +173,13 @@ class ParamsDisplay(QtGui.QGroupBox):
     #
     @hdebug.debug
     def updatedParams(self):
-        if (self.parameters.get("temperature_control" == "stable")):
-            self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
-        else:
-            self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
-        actual_temp = self.parameters.get("actual_temperature")
-        self.ui.temperatureText.setText(str(actual_temp) + " (" + str(self.temperature) + ")")        
+        if self.parameters.has("temperature_control"):
+            if (self.parameters.get("temperature_control") == "stable"):
+                self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
+            else:
+                self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
+            actual_temp = self.parameters.get("actual_temperature")
+            self.ui.temperatureText.setText(str(actual_temp) + " (" + str(self.temperature) + ")")        
     
 #
 # The MIT License

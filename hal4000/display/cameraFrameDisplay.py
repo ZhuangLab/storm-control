@@ -49,7 +49,7 @@ class CameraFrameDisplay(QtGui.QFrame):
     @hdebug.debug
     def __init__(self, hardware, parameters, camera_display_ui, which_camera, show_record, parent = None):
         QtGui.QFrame.__init__(self, parent)
-
+        
         # General (alphabetically ordered).
         self.color_gradient = 0
         self.color_table = 0
@@ -432,13 +432,13 @@ class CameraFrameDisplay(QtGui.QFrame):
     #
     @hdebug.debug
     def updatedParams(self):
-        if self.parameters.get("shutter"):
+        if self.parameters.get("shutter", False):
             self.ui.cameraShutterButton.setText("Close Shutter")
             self.ui.cameraShutterButton.setStyleSheet("QPushButton { color: green }")
         else:
             self.ui.cameraShutterButton.setText("Open Shutter")
             self.ui.cameraShutterButton.setStyleSheet("QPushButton { color: black }")
-            
+
     ## updateRange
     #
     # This updates the text boxes that indicate the current range of

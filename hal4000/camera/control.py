@@ -25,7 +25,7 @@ class Camera(QtCore.QObject):
         self.filming = False
         self.frames_to_take = None
         self.key = 0
-        self.parameter = parameters
+        self.parameters = parameters
         self.writer = None
 
         # Setup camera control.
@@ -60,8 +60,8 @@ class Camera(QtCore.QObject):
 
     @hdebug.debug
     def getSignals(self):
-        return [["camera", "cameraProperties", self.cameraProperties]]
-        return [["camera", "updatedParams", self.updatedParams]]
+        return [["camera", "cameraProperties", self.cameraProperties],
+                ["camera", "updatedParams", self.updatedParams]]
 
     @hdebug.debug
     def handleEmGain(self, which_camera, em_gain):
@@ -104,8 +104,9 @@ class Camera(QtCore.QObject):
     def handleShutter(self, which_camera):
         if not self.filming:
             self.stopCamera()
-            self.parameters.set(which_camera + ".shutter",
-                                self.camera_control.toggleShutter(which_camera))
+            which_camera = str(which_camera)
+            state = self.camera_control.toggleShutter(which_camera)
+            self.parameters.set(which_camera + ".shutter", state)
             self.startCamera()
 
     @hdebug.debug
@@ -114,10 +115,14 @@ class Camera(QtCore.QObject):
     
     @hdebug.debug
     def newParameters(self, parameters):
-        self.camera_control.newParameters(parameters)
-        [exposure_value, cycle_value] = self.camera_control.getAcquisitionTimings()
-        parameters.set(["camera1.exposure_value", "camera1.cycle_value"], [exposure_value, cycle_value])
-        parameters.set("seconds_per_frame", cycle_value)
+        self.parameter = parameters
+        self.camera_control.newParameters(self.parameters)
+        for i in range(self.getNumberOfCameras()):
+            which_camera = "camera" + str(i+1)
+            [exposure_value, cycle_value] = self.camera_control.getAcquisitionTimings(which_camera)
+            self.parameters.set([which_camera + ".exposure_value", which_camera + ".cycle_value"], [exposure_value, cycle_value])
+            if (which_camera == "camera1"):
+                self.parameters.set("seconds_per_frame", cycle_value)
 
     @hdebug.debug
     def startCamera(self):
@@ -145,7 +150,9 @@ class Camera(QtCore.QObject):
         self.camera_control.stopCamera()
 
     def updateTemperature(self):
-        if ("have_temperature" in self.camera_control.getProperties()["camera1"]):
-            self.camera_control.getTemperature(self.parameters)
+        for i in range(self.getNumberOfCameras()):
+            which_camera = "camera" + str(i+1)
+            if ("have_temperature" in self.camera_control.getProperties()[which_camera]):
+                self.camera_control.getTemperature(which_camera, self.parameters)
 
 

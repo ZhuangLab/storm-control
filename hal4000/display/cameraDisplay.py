@@ -24,9 +24,9 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
     def __init__(self, hal_ui, hal_ui_mode, which_camera, hardware, parameters, parent):
         QtGui.QDialog.__init__(self, parent)
         halModule.HalModule.__init__(self)
-
+        
         self.camera_properties = None
-        self.hal_type = "display"
+        self.hal_type = "display" + which_camera[-1:]
         self.which_camera = which_camera
         
         # Pictures from the camera and parameters are shown in the main window.

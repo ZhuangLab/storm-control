@@ -72,7 +72,7 @@ class Camera(QPD):
     # @return A copy of the fake image.
     #
     def getImage(self):
-        return [self.image.copy(), 0.1, 50, -0.1, -50]
+        return [self.image.copy(), 0.1, 50, -0.1, -50, 8.0]
                 
     ## qpdScan
     #

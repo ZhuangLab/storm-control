@@ -86,11 +86,13 @@ class CameraControl(QtCore.QThread):
     #
     # Returns how fast the camera is running.
     #
+    # @param which_camera The camera to get the timing information for.
+    #
     # @return A Python array containing the time it takes to take a frame.
     #
     @hdebug.debug
-    def getAcquisitionTimings(self):
-        return [0.1, 0.1, 0.1]
+    def getAcquisitionTimings(self, which_camera):
+        return [0.1, 0.1]
 
     ## getNumberOfCameras
     #
@@ -112,13 +114,16 @@ class CameraControl(QtCore.QThread):
     #
     # Get the current camera temperature.
     #
+    # @param which_camera Which camera to get the temperature of.
     # @param parameters A parameters object.
     #
     @hdebug.debug
-    def getTemperature(self, parameters):
-        parameters.set("camera1.actual_temperature", 50)
-        parameters.set("camera1.temperature_control", "unstable")
-
+    def getTemperature(self, which_camera, parameters):
+        if (which_camera == "camera1"):
+            temp = [50, "unstable"]
+            parameters.set(which_camera + ".actual_temperature", temp[0])
+            parameters.set(which_camera + ".temperature_control", temp[1])
+            
     ## initCamera
     #
     # Initializes the camera.

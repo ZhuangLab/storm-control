@@ -48,10 +48,12 @@ class ACameraControl(cameraControl.CameraControl):
     #
     # Returns how fast the camera is running.
     #
+    # @param which_camera The camera to get the timing information for.
+    #
     # @return A Python array containing the time it takes to take a frame.
     #
     @hdebug.debug
-    def getAcquisitionTimings(self):
+    def getAcquisitionTimings(self, which_camera):
         time = 0.001 * float(self.sleep_time)
         return [time, time]
 
