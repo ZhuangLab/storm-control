@@ -29,10 +29,10 @@ import colorTables.colorTables as colorTables
 #
 class CameraFrameDisplay(QtGui.QFrame):
     cameraShutter = QtCore.pyqtSignal(str)
+    dragMove = QtCore.pyqtSignal(str, float, float)
+    dragStart = QtCore.pyqtSignal(str)
     frameCaptured = QtCore.pyqtSignal(str, object)
-    frameDragMove = QtCore.pyqtSignal(str, float, float)
-    frameDragStart = QtCore.pyqtSignal(str)
-    frameROISelection = QtCore.pyqtSignal(str, object)
+    ROISelection = QtCore.pyqtSignal(str, object)
 
     ## __init__
     #
@@ -173,16 +173,6 @@ class CameraFrameDisplay(QtGui.QFrame):
         if self.frame:
             self.camera_widget.updateImageWithFrame(self.frame)
 
-    ## getShutterButton
-    #
-    # Return the shutter button element of the UI.
-    #
-    # @return The PyQt button that controls the shutter.
-    #
-    #@hdebug.debug
-    #def getShutterButton(self):
-    #    return self.ui.cameraShutterButton
-
     ## getRecordButton
     #
     # Return the record button element of the UI.
@@ -209,7 +199,7 @@ class CameraFrameDisplay(QtGui.QFrame):
     ## handleDragStart
     #
     def handleDragStart(self):
-        self.frameDragStart.emit(self.which_camera)
+        self.dragStart.emit(self.which_camera)
 
     ## handleDragMove
     #
@@ -219,7 +209,7 @@ class CameraFrameDisplay(QtGui.QFrame):
     # @param y_disp y displacement in pixels.
     #
     def handleDragMove(self, x_disp, y_disp):
-        self.frameDragMove.emit(self.which_camera, x_disp, y_disp)
+        self.dragMove.emit(self.which_camera, x_disp, y_disp)
         
     ## handleGrid
     #
@@ -281,7 +271,7 @@ class CameraFrameDisplay(QtGui.QFrame):
     # @param select_rect The selection rectangle (QRect).
     #
     def handleROISelection(self, select_rect):
-        self.frameROISelection.emit(self.which_camera, select_rect)
+        self.ROISelection.emit(self.which_camera, select_rect)
 
     ## handleSync
     #

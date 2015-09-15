@@ -115,11 +115,11 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def getSignals(self):
         return [[self.hal_type, "cameraShutter", self.camera_frame_display.cameraShutter],
+                [self.hal_type, "dragMove", self.camera_frame_display.dragMove],
+                [self.hal_type, "dragStart", self.camera_frame_display.dragStart],
+                [self.hal_type, "emGainChange", self.camera_params.gainChange],
                 [self.hal_type, "frameCaptured", self.camera_frame_display.frameCaptured],
-                [self.hal_type, "frameDragMove", self.camera_frame_display.frameDragMove],
-                [self.hal_type, "frameDragStart", self.camera_frame_display.frameDragStart],
-                [self.hal_type, "frameROISelection", self.camera_frame_display.frameROISelection],
-                [self.hal_type, "emGainChange", self.camera_params.gainChange]]
+                [self.hal_type, "ROISelection", self.camera_frame_display.ROISelection]]
 
     ## handleCameraProperties
     #
