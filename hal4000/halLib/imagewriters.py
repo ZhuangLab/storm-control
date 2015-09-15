@@ -273,6 +273,7 @@ class GenericFile:
     def __del__(self):
         if self.is_open:
             self.closeFile()
+            
 
 ## DaxFile
 #
@@ -297,17 +298,17 @@ class DaxFile(GenericFile):
     # @param frame A frame object.
     #
     def saveFrame(self, frame):
-        for i in range(len(self.cameras)):
-            if (frame.which_camera == self.cameras[i]):
-                np_data = frame.getData()
-                if self.parameters.get("film.want_big_endian"):
-                    np_data = np_data.byteswap()
-                    np_data.tofile(self.file_ptrs[i])
-                else:
-                    np_data.tofile(self.file_ptrs[i])
+        index = self.cameras.index(frame.which_camera)
+        np_data = frame.getData()
+        if self.parameters.get("film.want_big_endian"):
+            np_data = np_data.byteswap()
+            np_data.tofile(self.file_ptrs[index])
+        else:
+            np_data.tofile(self.file_ptrs[index])
+            
+        self.number_frames[index] += 1
 
-                self.number_frames[i] += 1
-
+        
 ## DualCameraFormatFile
 #
 # Dual camera format writing class.
@@ -337,7 +338,7 @@ class DualCameraFormatFile(GenericFile):
     def saveFrame(self, frame):
         #camera_int = int(frame.which_camera[6:])-1
         np_data = frame.getData().copy()
-        np_data[0] = int(frame.which_camera[6:])-1
+        np_data[0] = int(frame.which_camera[-1:])-1
         #temp = chr(camera_int) + chr(camera_int) + copy.copy(frame.data[2:])
         if self.parameters.get("film.want_big_endian"):
             np_data.tofile(self.file_ptrs[0]).byteswap()
@@ -347,6 +348,7 @@ class DualCameraFormatFile(GenericFile):
             #self.file_ptrs[0].write(temp)
         self.number_frames[0] += 1
 
+        
 ## SPEFile
 #
 # SPE file writing class.
@@ -396,13 +398,10 @@ class SPEFile(GenericFile):
     # @param frame A frame object.
     #
     def saveFrame(self, frame):
-        for i in range(len(self.cameras)):
-            if (frame.which_camera == self.cameras[i]):
-                np_data = frame.getData()
-                np_data.tofile(self.file_ptrs[i])
-                #self.file_ptrs[i].write(frame.data)
-                
-                self.number_frames[i] += 1
+        index = self.cameras.index(frame.which_camera)
+        np_data = frame.getData()
+        np_data.tofile(self.file_ptrs[index])
+        self.number_frames[index] += 1
 
     ## closeFile
     #
@@ -416,6 +415,7 @@ class SPEFile(GenericFile):
             self.file_ptrs[i].write(struct.pack("i", self.number_frames[i]))
 
         GenericFile.closeFile(self)
+        
 
 ## TIFFile
 #
@@ -447,12 +447,11 @@ class TIFFile(GenericFile):
     # @param frame A frame object.
     #
     def saveFrame(self, frame):
-        for i in range(len(self.cameras)):
-            if (frame.which_camera == self.cameras[i]):
-                [x_pixels, y_pixels] = getCameraSize(self.parameters, self.cameras[i])
-                self.tif_writers[i].addFrame(frame.getData(), x_pixels, y_pixels)
+        index = self.cameras.index(frame.which_camera)
+        [x_pixels, y_pixels] = getCameraSize(self.parameters, self.cameras[index])
+        self.tif_writers[index].addFrame(frame.getData(), x_pixels, y_pixels)
 
-                self.number_frames[i] += 1
+        self.number_frames[index] += 1        
 
     ## closeFile
     #
