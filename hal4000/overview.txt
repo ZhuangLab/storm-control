@@ -12,27 +12,20 @@ HAL-4000 (QtGui.QMainWindow)
 
 
   Camera:
+    Control (in the camera directory):
+      control.Camera (QtCore.QObject)
 
-    Overall camera control:
-
-      genericCamera.Camera (QtGui.QDialog)
-        singleCamera.SingleCamera (genericCamera.Camera)
-          classicSingleCamera.ClassicSingleCamera (singleCamera.SingleCamera)
-          detachedSingleCamera.DetachedSingleCamera (singleCamera.SingleCamera)
-  
-        dualCamera.DualCamera (genericCamera.Camera)
-
-    Camera control:
-      cameraControl.CameraControl(QtCore.QThread)
-
-    Camera image display & display setting:
-      cameraDisplay.CameraDisplay (QtGui.QFrame)
+    Display (in the display directory):
+      cameraDisplay.CameraDisplay(QtGui.QDialog, halModule.HalModule)
+      
+      Camera image display & display setting:
+        cameraFrameDisplay.CameraFrameDisplay (QtGui.QFrame)
 
       Displaying the images from the camera:
-        qtCameraWidget.QCameraWidget (QtGui.QWidget)
+        cameraWidgets.pyCameraWidget (QtGui.QWidget)
 
-    Displaying the camera settings (exposure time, etc)
-      cameraParams.CameraParams(QtGui.QGroupBox)
+      Displaying the camera settings (exposure time, etc)
+        paramsDisplay.ParamsDisplay(QtGui.QGroupBox)
 
 
   Bluetooth:
