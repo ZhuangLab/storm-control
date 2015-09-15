@@ -7,6 +7,9 @@
   <!-- Camera control. -->
   <control>
     <module_name type="string">noneCameraControl</module_name>
+    <parameters>
+      <roll type="float">0.5</roll>
+    </parameters>
   </control>
 
   <!-- Camera display. -->

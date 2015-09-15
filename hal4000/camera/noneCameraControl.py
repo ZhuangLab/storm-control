@@ -4,7 +4,7 @@
 #
 # This class provides software emulation of a camera for testing purposes.
 #
-# Hazen 09/13
+# Hazen 09/15
 #
 
 import ctypes
@@ -36,7 +36,12 @@ class ACameraControl(cameraControl.CameraControl):
         self.fake_frame = 0
         self.fake_frame_size = [0,0]
         self.sleep_time = 50
-        
+
+        if hardware:
+            self.roll = hardware.get("roll")
+        else:
+            self.roll = 0
+            
         self.initCamera()
 
     ## getAcquisitionTimings
@@ -109,7 +114,7 @@ class ACameraControl(cameraControl.CameraControl):
         while(self.running):
             self.mutex.lock()
             if self.acquire.amActive() and self.got_camera:
-                aframe = frame.Frame(self.fake_frame, 
+                aframe = frame.Frame(numpy.roll(self.fake_frame, int(self.frame_number * self.roll)),
                                      self.frame_number,
                                      self.fake_frame_size[0],
                                      self.fake_frame_size[1],
