@@ -2,7 +2,7 @@
 <hardware>
 
   <!-- The UI mode, this is either "single" (window) or "detached" -->
-  <ui_mode type="string">detached</ui_mode>
+  <ui_mode type="string">single</ui_mode>
 
   <!-- Camera control. -->
   <control>
