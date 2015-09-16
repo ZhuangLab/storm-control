@@ -331,7 +331,7 @@ class DaxFile(GenericFile):
     # @param frame A frame object.
     #
     def saveFrame(self, frame):
-        index = self.feed_name.index(frame.which_camera)
+        index = self.feed_names.index(frame.which_camera)
         np_data = frame.getData()
         if self.parameters.get("film.want_big_endian"):
             np_data = np_data.byteswap()
