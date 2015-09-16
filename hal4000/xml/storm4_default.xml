@@ -41,7 +41,7 @@
     <colortable type="string">idl5.ctbl</colortable>
     <sync type="int">0</sync>
   </camera1>
-    
+
   <!-- film settings -->
   <film>
     <want_big_endian type="int">1</want_big_endian>
@@ -118,7 +118,7 @@
 	<is_locked_buffer_length type="int">3</is_locked_buffer_length>
     <is_locked_offset_thresh type="float">0.1</is_locked_offset_thresh>
   </focuslock>
-    
+
   <!-- spot counter -->
   <spotcounter>
     <have_spot_counter type="int">1</have_spot_counter>
