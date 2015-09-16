@@ -78,6 +78,7 @@ class Camera(QtCore.QObject):
     def handleEmGain(self, which_camera, em_gain):
         if not self.filming:
             self.stopCamera()
+            which_camera = str(which_camera)
             self.camera_control.setEMCCDGain(which_camera, em_gain)
             self.parameters.set(which_camera + ".emccd_gain", em_gain)
             self.startCamera()
@@ -94,12 +95,11 @@ class Camera(QtCore.QObject):
             # Save the frames if we are filming.
             if self.filming:
                 for feed in feeds:
-                    if self.writer:
-                        if (self.acq_mode == "fixed_length") and feed.master:
-                            if (feed.number <= self.frames_to_take):
-                                self.writer.saveFrame(feed)
-                        else:
+                    if (self.acq_mode == "fixed_length") and feed.master:
+                        if (feed.number <= self.frames_to_take):
                             self.writer.saveFrame(feed)
+                    else:
+                        self.writer.saveFrame(feed)
 
                     if (self.acq_mode == "fixed_length") and feed.master and (feed.number == self.frames_to_take):
                         reached_max_frames = True
@@ -156,7 +156,7 @@ class Camera(QtCore.QObject):
         self.writer = writer
         self.acq_mode = film_settings.acq_mode
         self.frames_to_take = film_settings.frames_to_take - 1
-        self.camera_control.startFilm()
+        self.camera_control.startFilm(film_settings)
 
     @hdebug.debug
     def stopFilm(self):

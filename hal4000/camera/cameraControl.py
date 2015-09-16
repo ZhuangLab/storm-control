@@ -59,6 +59,7 @@ class CameraControl(QtCore.QThread):
         self.frame_number = 0
         self.key = -1
         self.mutex = QtCore.QMutex()
+        self.parameters = None
         self.running = True
         self.shutter = False
 
@@ -164,7 +165,7 @@ class CameraControl(QtCore.QThread):
     # This is a place-holder, it should be sub-classed to set
     # the EMCCD gain.
     #
-    # @param which_camera The camera to open the shutter of.    
+    # @param which_camera The camera to set the gain of.
     # @param gain The desired EMCCD gain.
     #
     @hdebug.debug
@@ -189,10 +190,12 @@ class CameraControl(QtCore.QThread):
 
     ## startFilm
     #
-    # Called before filming in case the camera needs to any setup.
+    # Called before filming in case the camera needs to do any setup.
+    #
+    # @param film_settings A film settings object.
     #
     @hdebug.debug
-    def startFilm(self):
+    def startFilm(self, film_settings):
         pass
 
     ## stopCamera
