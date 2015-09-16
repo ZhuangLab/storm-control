@@ -11,6 +11,8 @@ from PyQt4 import QtCore
 
 import sc_library.hdebug as hdebug
 
+import camera.feeds as feeds
+
 class Camera(QtCore.QObject):
     cameraProperties = QtCore.pyqtSignal(object)
     newFrames = QtCore.pyqtSignal(object)
@@ -23,6 +25,7 @@ class Camera(QtCore.QObject):
         
         self.acq_mode = None
         self.cameras = []
+        self.feed_controller = None
         self.filming = False
         self.frames_to_take = None
         self.key = 0
@@ -56,8 +59,8 @@ class Camera(QtCore.QObject):
                 signal[2].connect(self.handleEmGain)
 
     @hdebug.debug
-    def getCameras(self):
-        return self.cameras
+    def getFeedNamesToSave(self):
+        return self.feed_controller.getFeedNamesToSave()
     
     def getFilmSize(self):
         return self.writer.totalFilmSize()
@@ -83,21 +86,26 @@ class Camera(QtCore.QObject):
         if (key == self.key):
             reached_max_frames = False
 
+            # Create feeds.
+            feeds = []
+            for frame in frames:
+                feeds += self.feed_controller.newFrame(frame)
+
             # Save the frames if we are filming.
             if self.filming:
-                for frame in frames:
+                for feed in feeds:
                     if self.writer:
-                        if (self.acq_mode == "fixed_length"):
-                            if (frame.number <= self.frames_to_take):
-                                self.writer.saveFrame(frame)
+                        if (self.acq_mode == "fixed_length") and feed.master:
+                            if (feed.number <= self.frames_to_take):
+                                self.writer.saveFrame(feed)
                         else:
-                            self.writer.saveFrame(frame)
+                            self.writer.saveFrame(feed)
 
-                if (self.acq_mode == "fixed_length") and (frame.number == self.frames_to_take):
-                    reached_max_frames = True
+                    if (self.acq_mode == "fixed_length") and feed.master and (feed.number == self.frames_to_take):
+                        reached_max_frames = True
 
             # Send frames to HAL.
-            self.newFrames.emit(frames)
+            self.newFrames.emit(feeds)
 
             # Emit max frames signal.
             #
@@ -123,7 +131,7 @@ class Camera(QtCore.QObject):
     
     @hdebug.debug
     def newParameters(self, parameters):
-        self.parameter = parameters
+        self.parameters = parameters
         self.camera_control.newParameters(self.parameters)
         for which_camera in self.cameras:
             [exposure_value, cycle_value] = self.camera_control.getAcquisitionTimings(which_camera)
@@ -131,10 +139,13 @@ class Camera(QtCore.QObject):
             if (which_camera == "camera1"):
                 self.parameters.set("seconds_per_frame", cycle_value)
 
+        self.feed_controller = feeds.newFeedController(self.cameras, self.parameters)
+
     @hdebug.debug
     def startCamera(self):
         self.key += 1
         self.updateTemperature()
+        self.feed_controller.startFeeds()
         self.camera_control.startCamera(self.key)
         self.updatedParams.emit()
 
@@ -155,6 +166,10 @@ class Camera(QtCore.QObject):
     @hdebug.debug
     def stopCamera(self):
         self.camera_control.stopCamera()
+
+        # When we first start, feed_controller will be None.
+        if self.feed_controller is not None:
+            self.feed_controller.stopFeeds()
 
     def updateTemperature(self):
         for which_camera in self.cameras:

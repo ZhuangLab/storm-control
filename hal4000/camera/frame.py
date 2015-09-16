@@ -3,18 +3,13 @@
 ## @file
 #
 # Class for storage of a single frame of camera data
-# and it's meta-information.
+# or the data from a feed and it's meta-information.
 #
 # Notes: 
-# 1) The which_camera field is expected to be
-#    one of the following:
-#       "camera1"
-#       "camera2"
-#
-# 2) The numpy data field (np_data) is expected to
+# 1) The numpy data field (np_data) is expected to
 #    be of type numpy.uint16.
 #
-# Hazen 10/13
+# Hazen 9/15
 #
 
 ## Frame
@@ -33,7 +28,7 @@ class Frame():
     # @param frame_number The frame number of this frame.
     # @param image_x The size of the frame in pixels in x.
     # @param image_y The size of the frame in pixels in y.
-    # @param which_camera Which camera the frame came from ("camera1" or "camera2").
+    # @param which_camera Which camera the frame came from ("camera1", "camera2", etc.).
     # @param master True/False Is this frame from the "master" (as opposed to the "slave") camera.
     #
     def __init__(self, np_data, frame_number, image_x, image_y, which_camera, master):
@@ -62,7 +57,7 @@ class Frame():
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2015 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

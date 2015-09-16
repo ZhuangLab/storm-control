@@ -885,7 +885,7 @@ class Window(QtGui.QMainWindow):
             self.writer = writers.createFileWriter(self.ui.filetypeComboBox.currentText(),
                                                    self.film_name,
                                                    self.parameters,
-                                                   self.camera.getCameras())
+                                                   self.camera.getFeedNamesToSave())
             self.camera.startFilm(self.writer, film_settings)
             self.ui.recordButton.setStyleSheet("QPushButton { color: red }")
         else:

@@ -196,7 +196,7 @@ def parameters(parameters_file, recurse = False, skip_added = False):
 # @param camera A camera XML object.
 #
 def setCameraParameters(camera):
-    
+
     camera.set("x_pixels", camera.get("x_end") - camera.get("x_start") + 1)
     camera.set("y_pixels", camera.get("y_end") - camera.get("y_start") + 1)
 
