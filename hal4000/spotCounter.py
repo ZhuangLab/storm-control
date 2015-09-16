@@ -19,6 +19,7 @@ import qtWidgets.qtAppIcon as qtAppIcon
 
 import halLib.halModule as halModule
 import sc_library.parameters as params
+import camera.feeds as feeds
 
 # Debugging.
 import sc_library.hdebug as hdebug
@@ -695,8 +696,8 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
             if self.filming:
                 self.counters[1].updateCounts(spots)
                 self.image_graphs[1].updateImage(frame_number, x_locs, y_locs, spots)
-        else:
-            print "spotCounter.update Unknown camera:", which_camera
+#        else:
+#            print "spotCounter.update Unknown camera:", which_camera
         self.imageProcessed.emit()
 
     ## startCounter
