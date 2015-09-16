@@ -48,6 +48,7 @@ class Camera(QtCore.QObject):
 
     @hdebug.debug
     def close(self):
+        self.stopCamera()
         self.camera_control.quit()
 
     @hdebug.debug

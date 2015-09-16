@@ -867,6 +867,8 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def startFilm(self, film_settings = None):
+        self.stopCamera()
+
         self.filming = True
         self.film_name = self.parameters.get("film.directory") + str(self.ui.filenameLabel.text())
         self.film_name = self.film_name[:-len(self.ui.filetypeComboBox.currentText())]
@@ -931,6 +933,7 @@ class Window(QtGui.QMainWindow):
                 print "\7\7"
 
         # Stop the camera.
+        self.stopCamera()
         self.camera.stopFilm()
 
         # Film file finishing up.
