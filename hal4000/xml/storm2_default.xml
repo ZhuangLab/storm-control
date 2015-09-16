@@ -157,7 +157,6 @@
   </joystick>
 
   <!-- mosaic settings -->
-
   <mosaic>
     <objective type="string">obj1</objective>
     <flip_horizontal type="int">0</flip_horizontal>
@@ -169,5 +168,6 @@
     <obj4 type="string">4x,4.0,-2228.0,-658.0</obj4>  
     <pixels_to_um type="float">0.3764</pixels_to_um>
     <!-- <pixels_to_um type="float">0.156</pixels_to_um> -->
-  </mosaic>    
+  </mosaic>
+
 </settings>
