@@ -353,7 +353,7 @@ class ACameraControl(cameraControl.CameraControl):
             if (film_settings.frames_to_take > 1000):
                 self.camera.setACQMode("run_till_abort")
             else:
-                self.camera.setACQMode("fixed_length", number_frames = self.frames_to_take)
+                self.camera.setACQMode("fixed_length", number_frames = film_settings.frames_to_take)
 
         else:
             self.camera.setACQMode("run_till_abort")
