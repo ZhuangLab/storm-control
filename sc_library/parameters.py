@@ -158,6 +158,7 @@ def hardware(hardware_file):
     # Create the hardware object.
     hardware = StormXMLObject(xml, recurse = True)
 
+    # Add some additional properties to the modules.
     modules = hardware.get("modules")
     for module_name in modules.getAttrs():
         module = modules.get(module_name)
