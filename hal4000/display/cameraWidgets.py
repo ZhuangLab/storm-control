@@ -12,6 +12,9 @@ from PyQt4 import QtCore, QtGui
 
 import qtWidgets.qtCameraWidget as qtCameraWidget
 
+# FIXME: Make this more generic.
+import sc_hardware.hamamatsu.scmos_image_manipulation_c as scmos_im
+
 ## PyCameraWidget
 #
 # Pure Python camera display.
@@ -40,9 +43,6 @@ class CCameraWidget(qtCameraWidget.QCameraWidget):
     #
     def __init__(self, parameters, parent = None):
         qtCameraWidget.QCameraWidget.__init__(self, parameters, parent)
-
-        # FIXME: Make this more generic.
-        import sc_hardware.hamamatsu.scmos_image_manipulation_c as scmos_im        
 
     ## updateImageWithFrame
     #
