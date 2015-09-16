@@ -300,7 +300,7 @@ class ACameraControl(cameraControl.CameraControl):
             self.got_camera = False
 
         if not p.has("bytes_per_frame"):
-            p.set("bytes_per_frame", 2 * p.get("x_pixels") * p.get("y_pixels"))
+            p.set("bytes_per_frame", 2 * p.get("x_pixels") * p.get("y_pixels") / (p.get("x_bin") * p.get("y_bin"))
 
         self.newFilmSettings(parameters, None)
         self.parameters = parameters

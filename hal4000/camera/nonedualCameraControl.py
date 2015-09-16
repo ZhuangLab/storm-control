@@ -122,8 +122,8 @@ class ACameraControl(cameraControl.CameraControl):
             self.sleep_time = 10
 
         # Create fake image for camera 1
-        size_x = parameters.get("camera1").get("x_pixels")
-        size_y = parameters.get("camera1").get("y_pixels")
+        size_x = parameters.get("camera1").get("x_pixels") / parameters.get("camera1").get("x_bin")
+        size_y = parameters.get("camera1").get("y_pixels") / parameters.get("camera1").get("y_bin")
         self.camera1_frame_size = [size_x, size_y]
         camera1_fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
         for i in range(size_x):
@@ -131,9 +131,12 @@ class ACameraControl(cameraControl.CameraControl):
                 camera1_fake_frame[i*2*size_y + j*2] = chr(i % 128 + j % 128)
         self.camera1_fake_frame = numpy.fromstring(camera1_fake_frame, dtype = numpy.uint16)
 
+        if not parameters.has("camera1.bytes_per_frame"):
+            parameters.set("camera1.bytes_per_frame", 2 * size_x * size_y
+        
         # Create fake image for camera 2
-        size_x = parameters.get("camera2").get("x_pixels")
-        size_y = parameters.get("camera2").get("y_pixels")
+        size_x = parameters.get("camera2").get("x_pixels") / parameters.get("camera2").get("x_bin")
+        size_y = parameters.get("camera2").get("y_pixels") / parameters.get("camera2").get("y_bin")
         self.camera2_frame_size = [size_x, size_y]
         camera2_fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
         for i in range(size_x):
@@ -141,11 +144,8 @@ class ACameraControl(cameraControl.CameraControl):
                 camera2_fake_frame[i*2*size_y + j*2] = chr(255 - (j % 128 + i % 128))
         self.camera2_fake_frame = numpy.fromstring(camera1_fake_frame, dtype = numpy.uint16)
 
-        if not parameters.has("camera1.bytes_per_frame"):
-            parameters.set("camera1.bytes_per_frame", 2 * parameters.get("camera1.x_pixels") * parameters.get("camera1.y_pixels"))
-
         if not parameters.has("camera2.bytes_per_frame"):
-            parameters.set("camera2.bytes_per_frame", 2 * parameters.get("camera2.x_pixels") * parameters.get("camera2.y_pixels"))
+            parameters.set("camera2.bytes_per_frame", 2 * size_x * size_y)
             
         self.parameters = parameters
 

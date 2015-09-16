@@ -92,8 +92,8 @@ class ACameraControl(cameraControl.CameraControl):
         else:
             self.sleep_time = 10
             
-        size_x = p.get("x_pixels")
-        size_y = p.get("y_pixels")
+        size_x = p.get("x_pixels")/p.get("x_bin")
+        size_y = p.get("y_pixels")/p.get("y_bin")
         self.fake_frame_size = [size_x, size_y]
         fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
         for i in range(size_x):
@@ -102,7 +102,7 @@ class ACameraControl(cameraControl.CameraControl):
         self.fake_frame = numpy.fromstring(fake_frame, dtype = numpy.uint16)
         
         if not p.has("bytes_per_frame"):
-            p.set("bytes_per_frame", 2 * p.get("x_pixels") * p.get("y_pixels"))
+            p.set("bytes_per_frame", 2 * size_x * size_y)
 
         self.parameters = p
 
