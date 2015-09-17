@@ -124,8 +124,8 @@ class Feed(object):
             x_start -= 1
             y_start -= 1
             
-            self.frame_slice = (slice(x_start, x_end),
-                                slice(y_start, y_end))
+            self.frame_slice = (slice(y_start, y_end),
+                                slice(x_start, x_end))
 
             self.x_pixels = x_end - x_start
             self.y_pixels = y_end - y_start
@@ -136,8 +136,8 @@ class Feed(object):
             self.x_pixels = parameters.get(self.which_camera + ".x_pixels")/c_x_bin
             self.y_pixels = parameters.get(self.which_camera + ".y_pixels")/c_y_bin
 
-        parameters.set("feeds." + feed_name + ".x_pixels", self.y_pixels)
-        parameters.set("feeds." + feed_name + ".y_pixels", self.x_pixels)
+        parameters.set("feeds." + feed_name + ".x_pixels", self.x_pixels)
+        parameters.set("feeds." + feed_name + ".y_pixels", self.y_pixels)
         parameters.set("feeds." + feed_name + ".x_bin", 1)
         parameters.set("feeds." + feed_name + ".y_bin", 1)
         parameters.set("feeds." + feed_name + ".bytes_per_frame", 2 * self.x_pixels * self.y_pixels)
