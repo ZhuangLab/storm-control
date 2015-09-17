@@ -85,8 +85,8 @@ class Feed(object):
 
         # Get camera binning as we'll use this either way.
         c_x_bin = parameters.get(self.which_camera + ".x_bin")
-        c_y_bin = parameters.get(self.which_camera + ".x_bin")
-        
+        c_y_bin = parameters.get(self.which_camera + ".y_bin")
+
         # See if we need to slice.
         x_start = parameters.get("feeds." + feed_name + ".x_start", 0)
         x_end = parameters.get("feeds." + feed_name + ".x_end", 0)
@@ -95,59 +95,51 @@ class Feed(object):
 
         if (x_start != 0) or (x_end != 0) or (y_start != 0) or (y_end != 0):
 
-            c_x_start = parameters.get(self.which_camera + ".x_start")
-            c_x_end = parameters.get(self.which_camera + ".x_end")
-            c_y_start = parameters.get(self.which_camera + ".y_start")
-            c_y_end = parameters.get(self.which_camera + ".y_end")
+            c_x_pixels = parameters.get(self.which_camera + ".x_pixels")/c_x_bin
+            c_y_pixels = parameters.get(self.which_camera + ".y_pixels")/c_y_bin
 
             # Set unset values to those of the corresponding camera.
             if (x_start == 0):
-                x_start = c_x_start
                 parameters.set("feeds." + feed_name + ".x_start", x_start)
             if (x_end == 0):
-                x_end = c_x_end
+                x_end = c_x_pixels
                 parameters.set("feeds." + feed_name + ".x_end", x_end)
             if (y_start == 0):
-                y_start = c_y_start
                 parameters.set("feeds." + feed_name + ".y_start", y_start)
             if (y_end == 0):
-                y_end = c_y_end
+                y_end = c_y_pixels
                 parameters.set("feeds." + feed_name + ".y_end", y_end)
 
             # Check that slices are inside the camera ROI.
-            if (x_start < c_x_start) or (x_start > c_x_end):
+            if (x_start < 1) or (x_start >= c_x_pixels) or (x_start >= x_end):
                 raise FeedException("x_start out of range in feed " + self.feed_name + " (" + str(x_start) + ")")
-            if (x_end < c_x_start) or (x_end > c_x_end):
+            if (x_end <= x_start) or (x_end > c_x_pixels):
                 raise FeedException("x_end out of range in feed " + self.feed_name + " (" + str(x_end) + ")")
-            if (y_start < c_y_start) or (y_start > c_y_end):
+            if (y_start < 1) or (y_start >= c_y_pixels) or (y_start >= y_end):
                 raise FeedException("y_start out of range in feed " + self.feed_name + " (" + str(y_start) + ")")
-            if (y_end < c_y_start) or (y_end > c_y_end):
+            if (y_end <= y_start) or (y_end > c_y_pixels):
                 raise FeedException("y_end out of range in feed " + self.feed_name + " (" + str(y_end) + ")")
 
-            # Check that slice size is a multiple of the bin size.
-            if (((x_end - x_start + 1) % c_x_bin) != 0) or (((y_end - y_start + 1) % c_y_bin) != 0):
-                raise FeedException("ROI size is not a multiple of the bin size in feed " + self.feed_name)
+            # Adjust for 0 indexing.
+            x_start -= 1
+            y_start -= 1
             
-            # Adjust for camera binning and zero based indexing.
-            x_start = (x_start - 1)/c_x_bin
-            x_end = (x_end - 1)/c_x_bin
-            y_start = (y_start - 1)/c_y_bin
-            y_end = (y_end - 1)/c_y_bin            
-                       
             self.frame_slice = (slice(x_start, x_end),
                                 slice(y_start, y_end))
 
-            self.x_pixels = x_end - x_start + 1
-            self.y_pixels = y_end - y_start + 1
+            self.x_pixels = x_end - x_start
+            self.y_pixels = y_end - y_start
 
+            print x_start, x_end, y_start, y_end
+            print self.x_pixels, self.y_pixels
         else:
             self.x_pixels = parameters.get(self.which_camera + ".x_pixels")/c_x_bin
             self.y_pixels = parameters.get(self.which_camera + ".y_pixels")/c_y_bin
 
-        parameters.set("feeds." + feed_name + ".x_pixels", self.x_pixels)
-        parameters.set("feeds." + feed_name + ".y_pixels", self.y_pixels)
-        parameters.set("feeds." + feed_name + ".x_bin", c_x_bin)
-        parameters.set("feeds." + feed_name + ".y_bin", c_y_bin)
+        parameters.set("feeds." + feed_name + ".x_pixels", self.y_pixels)
+        parameters.set("feeds." + feed_name + ".y_pixels", self.x_pixels)
+        parameters.set("feeds." + feed_name + ".x_bin", 1)
+        parameters.set("feeds." + feed_name + ".y_bin", 1)
         parameters.set("feeds." + feed_name + ".bytes_per_frame", 2 * self.x_pixels * self.y_pixels)
 
     def newFrame(self, new_frame):
