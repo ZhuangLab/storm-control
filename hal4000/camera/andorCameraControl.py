@@ -270,14 +270,12 @@ class ACameraControl(cameraControl.CameraControl):
     def quit(self):
         self.stopThread()
         self.wait()
-        if self.got_camera:
-            self.camera.shutdown()
+        self.camera.shutdown()
 
     ## run
     #
-    # This is the thread loop that handles getting the new frames from 
-    # the camera, saving them in filming mode and signaling that the
-    # camera has new data, or that the camera is idle.
+    # The camera thread. This gets images from the camera, turns
+    # them into frames and sends them out using the newData signal.
     #
     def run(self):
         while(self.running):
@@ -389,7 +387,7 @@ class ACameraControl(cameraControl.CameraControl):
 
     ## stopFilm
     #
-    # Called before filming in case the camera needs to do any teardown.
+    # Called after filming in case the camera needs to do any teardown.
     #
     @hdebug.debug
     def stopFilm(self):

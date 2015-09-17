@@ -16,6 +16,8 @@ from PyQt4 import QtCore
 # Debugging
 import sc_library.hdebug as hdebug
 
+import camera.frame as frame
+
 ## CameraControl
 #
 # Camera update thread. All camera control is done by this thread.
@@ -238,6 +240,93 @@ class CameraControl(QtCore.QThread):
         else:
             self.openShutter()
             return True
+
+
+## HWCameraControl
+#
+# This class implements what is common to all of the "hardware"
+# cameras.
+#
+class HWCameraControl(CameraControl):
+
+    ## quit
+    #
+    # Stops the camera thread and shuts down the camera.
+    #
+    @hdebug.debug
+    def quit(self):
+        self.stopThread()
+        self.wait()
+        self.camera.shutdown()
+
+    ## run
+    #
+    # The camera thread. This gets images from the camera, turns
+    # them into frames and sends them out using the newData signal.
+    #
+    def run(self):
+        while(self.running):
+            self.mutex.lock()
+            if self.acquire.amActive() and self.got_camera:
+
+                # Get data from camera and create frame objects.
+                [frames, frame_size] = self.camera.getFrames()
+
+                # Check if we got new frame data.
+                if (len(frames) > 0):
+
+                    # Create frame objects.
+                    frame_data = []
+                    for cam_frame in frames:
+                        aframe = frame.Frame(cam_frame.getData(),
+                                             self.frame_number,
+                                             frame_size[0],
+                                             frame_size[1],
+                                             "camera1",
+                                             True)
+                        frame_data.append(aframe)
+                        self.frame_number += 1
+                            
+                    # Emit new data signal.
+                    self.newData.emit(frame_data, self.key)
+            else:
+                self.acquire.idle()
+
+            self.mutex.unlock()
+            self.msleep(5)
+
+    ## startCamera
+    #
+    # Start the camera. The key parameter is for synchronizing the main
+    # process and the camera thread.
+    #
+    # @param key The ID value to use for frames from the current acquisition.
+    #
+    @hdebug.debug        
+    def startCamera(self, key):
+        self.mutex.lock()
+        self.acquire.go()
+        self.key = key
+        self.frame_number = 0
+        if self.got_camera:
+            self.camera.startAcquisition()
+        self.mutex.unlock()
+
+    ## stopCamera
+    #
+    # Stops the camera
+    #
+    @hdebug.debug
+    def stopCamera(self):
+        if self.acquire.amActive():
+            self.mutex.lock()
+            if self.got_camera:
+                self.camera.stopAcquisition()
+            self.acquire.stop()
+            self.mutex.unlock()
+            while not self.acquire.amIdle():
+                self.usleep(50)
+
 
 ## IdleActive
 #

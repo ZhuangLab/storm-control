@@ -140,9 +140,6 @@ class ACameraControl(cameraControl.CameraControl):
     #
     # The camera thread. This gets images from the camera, turns
     # them into frames and sends them out using the newData signal.
-    # If the acquisition is being recorded it saves the frame
-    # to disc. It also signals when max frames has been reached 
-    # for a fixed length  acquisition.
     #
     def run(self):
         while(self.running):
