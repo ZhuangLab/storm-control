@@ -13,7 +13,11 @@ from PyQt4 import QtCore, QtGui
 import qtWidgets.qtCameraWidget as qtCameraWidget
 
 # FIXME: Make this more generic.
-import sc_hardware.hamamatsu.scmos_image_manipulation_c as scmos_im
+try:
+    import sc_hardware.hamamatsu.scmos_image_manipulation_c as scmos_im
+except OSError:
+    print "C frame processing library not found."
+    scmos_im = None
 
 ## PyCameraWidget
 #
