@@ -21,41 +21,40 @@ import qtWidgets.qtColorGradient as qtColorGradient
 import qtWidgets.qtRangeSlider as qtRangeSlider
 
 # Misc
+import camera.feeds as feeds
 import colorTables.colorTables as colorTables
 
-## CameraFrameDisplay
+
+## CameraFeedDisplay
 #
-# The Camera frame display class.
+# This class handles displaying feeds, e.g. "camera1", etc.
 #
-class CameraFrameDisplay(QtGui.QFrame):
-    cameraShutter = QtCore.pyqtSignal(str)
-    dragMove = QtCore.pyqtSignal(str, float, float)
-    dragStart = QtCore.pyqtSignal(str)
-    frameCaptured = QtCore.pyqtSignal(str, object)
-    ROISelection = QtCore.pyqtSignal(str, object)
+class CameraFeedDisplay(QtGui.QFrame):
 
     ## __init__
     #
-    # Create a CameraFrameDisplay object. This object updates the image that it
+    # Create a CameraFeedDisplay object. This object updates the image that it
     # displays at 10Hz.
     #
     # @param hardware The display part of a hardware object.
     # @param parameters A parameters object.
     # @param camera_display_ui A camera UI object as defined by a .ui file.
-    # @param which_camera Which camera this is a display for ("camera1", "camera2", etc.).
-    # @param show_record Whether or not to show the record button.
+    # @param default_feed Which feed to use as the default for this display ("camera1", "camera2", etc.).
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, hardware, parameters, camera_display_ui, which_camera, show_record, parent = None):
+    def __init__(self, hardware, parameters, camera_display_ui, default_feed, parent = None):
         QtGui.QFrame.__init__(self, parent)
         
         # General (alphabetically ordered).
         self.color_gradient = 0
         self.color_table = 0
         self.color_tables = colorTables.ColorTables("./colorTables/all_tables/")
+        self.current_feed = default_feed
         self.cycle_length = 0
+        self.default_feed = default_feed
         self.display_timer = QtCore.QTimer(self)
+        self.feed_controller = False
         self.filming = False
         self.frame = False
         self.max_intensity = parameters.get("max_intensity")
@@ -63,7 +62,6 @@ class CameraFrameDisplay(QtGui.QFrame):
         self.show_grid = 0
         self.show_info = 1
         self.show_target = 0
-        self.which_camera = which_camera
 
         # UI setup.
         self.ui = camera_display_ui
@@ -87,9 +85,6 @@ class CameraFrameDisplay(QtGui.QFrame):
         self.ui.syncLabel.hide()
         self.ui.syncSpinBox.hide()
 
-        if not show_record:
-            self.ui.recordButton.hide()
-                
         # Camera display widget.
         display_module = hardware.get("module_name")
         a_module = __import__('display.' + display_module, globals(), locals(), [display_module], -1)
@@ -97,20 +92,12 @@ class CameraFrameDisplay(QtGui.QFrame):
         self.camera_widget = a_class(parameters, parent = self.ui.cameraScrollArea)
         self.ui.cameraScrollArea.setWidget(self.camera_widget)
 
-        # Signals
-        self.camera_widget.displayCaptured.connect(self.handleDisplayCaptured)
-        self.camera_widget.dragStart.connect(self.handleDragStart)
-        self.camera_widget.dragMove.connect(self.handleDragMove)
-        self.camera_widget.intensityInfo.connect(self.handleIntensityInfo)
-        self.camera_widget.roiSelection.connect(self.handleROISelection)
-        
-        self.ui.autoScaleButton.clicked.connect(self.autoScale)
-        self.ui.cameraShutterButton.clicked.connect(self.handleCameraShutter)
-        self.ui.colorComboBox.currentIndexChanged.connect(self.colorTableChange)
+        self.ui.autoScaleButton.clicked.connect(self.handleAutoScale)
+        self.ui.colorComboBox.currentIndexChanged.connect(self.handleColorTableChange)
         self.ui.gridAct.triggered.connect(self.handleGrid)
         self.ui.infoAct.triggered.connect(self.handleInfo)        
-        self.ui.rangeSlider.doubleClick.connect(self.autoScale)        
-        self.ui.rangeSlider.rangeChanged.connect(self.rangeChange)
+        self.ui.rangeSlider.doubleClick.connect(self.handleAutoScale)        
+        self.ui.rangeSlider.rangeChanged.connect(self.handleRangeChange)
         self.ui.syncSpinBox.valueChanged.connect(self.handleSync)
         self.ui.targetAct.triggered.connect(self.handleTarget)
 
@@ -118,40 +105,7 @@ class CameraFrameDisplay(QtGui.QFrame):
         self.display_timer.setInterval(100)
         self.display_timer.timeout.connect(self.displayFrame)
         self.display_timer.start()
-
-    #
-    # All other methods alphabetically ordered, for lack of a better system
-    #
-
-    ## autoScale
-    #
-    # Set the image display range automatically based on the current frames
-    # minimum and maximum intensity.
-    #
-    # @param bool Dummy parameter.
-    #
-    @hdebug.debug
-    def autoScale(self, bool):
-        [scalemin, scalemax] = self.camera_widget.getAutoScale()
-        if scalemin < 0:
-            scalemin = 0
-        if scalemax > self.max_intensity:
-            scalemax = self.max_intensity
-        self.ui.rangeSlider.setValues([float(scalemin), float(scalemax)])
-
-    ## colorTableChange
-    #
-    # Handles changing the color table used to display the image from the camera.
-    #
-    # @param index This parameter is ignored.
-    #
-    @hdebug.debug
-    def colorTableChange(self, index):
-        self.parameters.set("colortable", str(self.ui.colorComboBox.currentText() + ".ctbl"))
-        self.color_table = self.color_tables.getTableByName(self.parameters.get("colortable"))
-        self.camera_widget.newColorTable(self.color_table)
-        self.color_gradient.newColorTable(self.color_table)
-
+        
     ## contextMenuEvent
     #
     # This is called to create the popup menu when the use right click on the camera window.
@@ -172,44 +126,35 @@ class CameraFrameDisplay(QtGui.QFrame):
     def displayFrame(self):
         if self.frame:
             self.camera_widget.updateImageWithFrame(self.frame)
-
-    ## getRecordButton
+            
+    ## handleAutoScale
     #
-    # Return the record button element of the UI.
+    # Set the image display range automatically based on the current frames
+    # minimum and maximum intensity.
     #
-    # @return The PyQt button that controls recording.
-    #
-    @hdebug.debug
-    def getRecordButton(self):
-        return self.ui.recordButton
-
-    ## handleCameraShutter
+    # @param bool Dummy parameter.
     #
     @hdebug.debug
-    def handleCameraShutter(self, boolean):
-        self.cameraShutter.emit(self.which_camera)
-    
-    ## handleDisplayCaptured
-    #
-    # @param a_pixmap A QPixmap object containing the image currently visible on the screen.
-    #
-    def handleDisplayCaptured(self, a_pixmap):
-        self.frameCaptured.emit(self.which_camera, a_pixmap)
+    def handleAutoScale(self, bool):
+        [scalemin, scalemax] = self.camera_widget.getAutoScale()
+        if scalemin < 0:
+            scalemin = 0
+        if scalemax > self.max_intensity:
+            scalemax = self.max_intensity
+        self.ui.rangeSlider.setValues([float(scalemin), float(scalemax)])
 
-    ## handleDragStart
+    ## handleColorTableChange
     #
-    def handleDragStart(self):
-        self.dragStart.emit(self.which_camera)
-
-    ## handleDragMove
+    # Handles changing the color table used to display the image from the camera.
     #
-    # This is just a pass-through for now. It might need to be buffered?
+    # @param index This parameter is ignored.
     #
-    # @param x_disp x displacement in pixels.
-    # @param y_disp y displacement in pixels.
-    #
-    def handleDragMove(self, x_disp, y_disp):
-        self.dragMove.emit(self.which_camera, x_disp, y_disp)
+    @hdebug.debug
+    def handleColorTableChange(self, index):
+        self.parameters.set("colortable", str(self.ui.colorComboBox.currentText() + ".ctbl"))
+        self.color_table = self.color_tables.getTableByName(self.parameters.get("colortable"))
+        self.camera_widget.newColorTable(self.color_table)
+        self.color_gradient.newColorTable(self.color_table)
         
     ## handleGrid
     #
@@ -263,16 +208,24 @@ class CameraFrameDisplay(QtGui.QFrame):
         self.ui.intensityPosLabel.setText("({0:d},{1:d})".format(x, y, i))
         self.ui.intensityIntLabel.setText("{0:d}".format(i))
 
-    ## handleROISelection
+    ## handleRangeChange
     #
-    # Handles roi selection from the xCameraWidget. Basically
-    # this is a pass through that add camera information.
+    # Handles a change in the display range as specified using the range slider.
     #
-    # @param select_rect The selection rectangle (QRect).
+    # @param scale_min The camera pixel intensity that corresponds to 0.
+    # @param scale_max The camera pixel intensity that corresponds to 255.
     #
-    def handleROISelection(self, select_rect):
-        self.ROISelection.emit(self.which_camera, select_rect)
-
+    @hdebug.debug
+    def handleRangeChange(self, scale_min, scale_max):
+        if scale_max == scale_min:
+            if scale_max < float(self.max_intensity):
+                scale_max += 1.0
+            else:
+                scale_min -= 1.0
+        self.parameters.set("scalemax", int(scale_max))
+        self.parameters.set("scalemin", int(scale_min))
+        self.updateRange()
+        
     ## handleSync
     #
     # Handles setting the sync parameter. This parameter is used in
@@ -300,43 +253,20 @@ class CameraFrameDisplay(QtGui.QFrame):
             self.ui.targetAct.setText("Hide Target")
         self.camera_widget.setShowTarget(self.show_target)
 
-    ## newFrame
+    ## newFeed
     #
-    # Handles new frame object from the camera control object. First it
-    # checks that this frame is one that it should display (ie. "camera1",
-    # "camera2", etc). If filming then a reference is kept to the appropriate
-    # frame object to display. Otherwise a reference is kept to the most
-    # recent frame object.
+    # This is called when the feed that we are supposed to display
+    # is changed.
     #
-    # @param frame A frame object.
-    #
-    def newFrame(self, frame):
-        if (frame.which_camera == self.which_camera):
-            if self.filming and self.parameters.get("sync"):
-                if((frame.number % self.cycle_length) == (self.parameters.get("sync")-1)):
-                    self.frame = frame
-            else:
-                self.frame = frame
-
-    ## newParameters
-    #
-    # This is called when the current parameters change. It adjusts the various UI
-    # and camera display settings to match those specified by the parameters object.
-    #
-    # @param parameters A parameters object.
-    #
-    @hdebug.debug
-    def newParameters(self, parameters):
-        self.parameters = parameters.get(self.which_camera)
-                
-        # for conveniently accessing parameters
-        p = self.parameters
+    def newFeed(self, feed_name):
+        self.current_feed = feed_name
 
         #
         # setup the camera display widget
         #
-        self.color_table = self.color_tables.getTableByName(p.get("colortable"))
-        display_range = [p.get("scalemin"), p.get("scalemax")]
+        self.color_table = self.color_tables.getTableByName(self.feed_controller.getFeedParameter(self.current_feed, "colortable"))
+        display_range = [p.get("scalemin"),
+                         p.get("scalemax")]
         self.camera_widget.newParameters(p, self.color_table, display_range)
 
         # camera display
@@ -359,24 +289,150 @@ class CameraFrameDisplay(QtGui.QFrame):
         self.ui.rangeSlider.setRange([0.0, self.max_intensity, 1.0])
         self.ui.rangeSlider.setValues([float(p.get("scalemin")), float(p.get("scalemax"))])
         self.ui.syncSpinBox.setValue(p.get("sync"))
-
-    ## rangeChange
+        
+    ## newFrame
     #
-    # Handles a change in the display range as specified using the range slider.
+    # Handles new frame object from the camera control object. First it
+    # checks that this frame is one that it should display (ie. "camera1",
+    # "camera2", etc). If filming then a reference is kept to the appropriate
+    # frame object to display. Otherwise a reference is kept to the most
+    # recent frame object.
     #
-    # @param scale_min The camera pixel intensity that corresponds to 0.
-    # @param scale_max The camera pixel intensity that corresponds to 255.
+    # @param frame A frame object.
+    #
+    def newFrame(self, frame):
+        if (frame.which_camera == self.current_feed):
+            if self.filming and self.parameters.get("sync"):
+                if((frame.number % self.cycle_length) == (self.parameters.get("sync")-1)):
+                    self.frame = frame
+            else:
+                self.frame = frame
+                
+    ## newParameters
+    #
+    # This is called when the current parameters change. It adjusts the various UI
+    # and camera display settings to match those specified by the parameters object.
+    #
+    # @param parameters A parameters object.
     #
     @hdebug.debug
-    def rangeChange(self, scale_min, scale_max):
-        if scale_max == scale_min:
-            if scale_max < float(self.max_intensity):
-                scale_max += 1.0
-            else:
-                scale_min -= 1.0
-        self.parameters.set("scalemax", int(scale_max))
-        self.parameters.set("scalemin", int(scale_min))
-        self.updateRange()
+    def newParameters(self, parameters):
+        self.feed_controller = feeds.getFeedController(parameters)
+        self.newFeed(self.default_feed)
+
+    ## startFilm
+    #
+    # Called when filming starts to set the appropriate UI elements.
+    #
+    @hdebug.debug
+    def startFilm(self, run_shutters):
+        self.filming = True
+        if run_shutters:
+            self.ui.syncLabel.show()
+            self.ui.syncSpinBox.show()
+
+    ## stopFilm
+    #
+    # Called when filming stops to set the appropriate UI elements.
+    #
+    @hdebug.debug
+    def stopFilm(self):
+        self.filming = False
+        self.ui.syncLabel.hide()
+        self.ui.syncSpinBox.hide()
+        
+                
+## CameraFrameDisplay
+#
+# This class also handles interaction with the feeds, i.e. mouse drags,
+# ROI selection etc. 
+#
+class CameraFrameDisplay(CameraFeedDisplay):
+    cameraShutter = QtCore.pyqtSignal(str)
+    dragMove = QtCore.pyqtSignal(str, float, float)
+    dragStart = QtCore.pyqtSignal(str)
+    feedChanged = QtCore.pyqtSignal(str)
+    frameCaptured = QtCore.pyqtSignal(str, object)
+    ROISelection = QtCore.pyqtSignal(str, object)
+
+    ## __init__
+    #
+    # Create a CameraFrameDisplay object. This object updates the image that it
+    # displays at 10Hz.
+    #
+    # @param hardware The display part of a hardware object.
+    # @param parameters A parameters object.
+    # @param camera_display_ui A camera UI object as defined by a .ui file.
+    # @param default_feed Which feed to use as the default for this display ("camera1", "camera2", etc.).
+    # @param show_record Whether or not to show the record button.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
+    @hdebug.debug
+    def __init__(self, hardware, parameters, camera_display_ui, default_feed, show_record, parent = None):
+        CameraFeedDisplay.__init__(self, hardware, parameters, camera_display_ui, default_feed, parent)
+
+        self.camera_widget.setDragEnabled(True)
+        
+        if not show_record:
+            self.ui.recordButton.hide()
+                
+        # Signals
+        self.camera_widget.displayCaptured.connect(self.handleDisplayCaptured)
+        self.camera_widget.dragStart.connect(self.handleDragStart)
+        self.camera_widget.dragMove.connect(self.handleDragMove)
+        self.camera_widget.intensityInfo.connect(self.handleIntensityInfo)
+        self.camera_widget.roiSelection.connect(self.handleROISelection)
+        
+        self.ui.cameraShutterButton.clicked.connect(self.handleCameraShutter)
+
+    ## getRecordButton
+    #
+    # Return the record button element of the UI.
+    #
+    # @return The PyQt button that controls recording.
+    #
+    @hdebug.debug
+    def getRecordButton(self):
+        return self.ui.recordButton
+
+    ## handleCameraShutter
+    #
+    @hdebug.debug
+    def handleCameraShutter(self, boolean):
+        if feeds.isCamera(self.current_feed):
+            self.cameraShutter.emit(self.current_feed)
+
+    ## handleDisplayCaptured
+    #
+    # @param a_pixmap A QPixmap object containing the image currently visible on the screen.
+    #
+    def handleDisplayCaptured(self, a_pixmap):
+        self.frameCaptured.emit(self.current_feed, a_pixmap)
+
+    ## handleDragStart
+    #
+    def handleDragStart(self):
+        self.dragStart.emit(self.current_feed)
+
+    ## handleDragMove
+    #
+    # This is just a pass-through for now. It might need to be buffered?
+    #
+    # @param x_disp x displacement in pixels.
+    # @param y_disp y displacement in pixels.
+    #
+    def handleDragMove(self, x_disp, y_disp):
+        self.dragMove.emit(self.current_feed, x_disp, y_disp)
+
+    ## handleROISelection
+    #
+    # Handles roi selection from the xCameraWidget. Basically
+    # this is a pass through that add camera information.
+    #
+    # @param select_rect The selection rectangle (QRect).
+    #
+    def handleROISelection(self, select_rect):
+        self.ROISelection.emit(self.current_feed, select_rect)
 
     ## setSyncMax
     #
@@ -395,11 +451,8 @@ class CameraFrameDisplay(QtGui.QFrame):
     #
     @hdebug.debug
     def startFilm(self, run_shutters):
-        self.filming = True
+        CameraFeedDisplay.__startFilm__(self, run_shutters)
         self.ui.cameraShutterButton.setEnabled(False)
-        if run_shutters:
-            self.ui.syncLabel.show()
-            self.ui.syncSpinBox.show()
 
     ## stopFilm
     #
@@ -407,10 +460,8 @@ class CameraFrameDisplay(QtGui.QFrame):
     #
     @hdebug.debug
     def stopFilm(self):
-        self.filming = False
+        CameraFeedDisplay.__stopFilm__(self)
         self.ui.cameraShutterButton.setEnabled(True)
-        self.ui.syncLabel.hide()
-        self.ui.syncSpinBox.hide()
 
     ## updateCameraProperties
     #
@@ -418,8 +469,8 @@ class CameraFrameDisplay(QtGui.QFrame):
     #
     @hdebug.debug
     def updateCameraProperties(self, camera_properties):
-        if self.which_camera in camera_properties:
-            if "have_shutter" in camera_properties[self.which_camera]:
+        if self.current_feed in camera_properties:
+            if "have_shutter" in camera_properties[self.current_feed]:
                 self.ui.cameraShutterButton.show()
             else:
                 self.ui.cameraShutterButton.hide()
@@ -544,10 +595,11 @@ class CameraScrollBar():
     def setCurRatio(self, new_ratio):
         self.cur_ratio = new_ratio
 
+
 #
 # The MIT License
 #
-# Copyright (c) 2014 Zhuang Lab, Harvard University
+# Copyright (c) 2015 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

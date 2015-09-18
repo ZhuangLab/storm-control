@@ -38,6 +38,7 @@ class QCameraWidget(QtGui.QWidget):
 
         # These are for dragging (to move the stage).
         self.ctrl_key_down = False
+        self.drag_enabled = False
         self.drag_mode = False
         self.drag_multiplier = parameters.get("drag_multiplier", 1.0)
         self.drag_x = 0
@@ -90,7 +91,7 @@ class QCameraWidget(QtGui.QWidget):
 
     ## blank
     #
-    # Initialize the off-screen buffer for image renderin.
+    # Initialize the off-screen buffer for image rendering.
     #
     def blank(self):
         painter = QtGui.QPainter(self.buffer)
@@ -214,7 +215,7 @@ class QCameraWidget(QtGui.QWidget):
         
         self.mousePress.emit(self.x_click, self.y_click)
 
-        if self.ctrl_key_down:
+        if self.ctrl_key_down and self.drag_enabled:
             self.drag_mode = True
             self.dragStart.emit()
             self.drag_x = event.x()
@@ -352,6 +353,16 @@ class QCameraWidget(QtGui.QWidget):
             for i in range(256):
                 self.image.setColor(i,QtGui.qRgb(i,i,i))
 
+    ## setDragEnabled
+    #
+    # Allow mouse drags and emit when the ctrl key is pressed and the
+    # mouse is dragged across the screen.
+    #
+    # @param drag_enabled True / False.
+    #
+    def setDragEnabled(self, drag_enabled):
+        self.drag_enabled = drag_enabled
+                       
     ## setMagnification
     #
     # Note that the magnification of the image that is being displayed 
