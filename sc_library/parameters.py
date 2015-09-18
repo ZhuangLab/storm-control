@@ -320,7 +320,7 @@ class StormXMLObject(object):
     def __init__(self, nodes, recurse = False, skip_added = False):
 
         if isinstance(nodes, ElementTree.Element):
-            self._is_new_ = bool(nodes.attrib.get("_is_new_", False))
+            self._is_new_ = bool(nodes.attrib.get("is_new", False))
         else:
             self._is_new_ = False
         self._recursed_ = False
@@ -615,8 +615,7 @@ class StormXMLObject(object):
             value = self.get(attr)
             if isinstance(value, StormXMLObject):
                 temp = value.toXML(attr)
-                temp.set("_is_new_", str(value._is_new_))
-                print attr, value._is_new_
+                temp.set("is_new", str(value._is_new_))
                 xml.append(temp)
             else:
 
