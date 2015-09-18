@@ -151,7 +151,7 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
         
     @hdebug.debug
     def newParameters(self, parameters):
-        self.camera_frame_display.newParameters(parameters)
+        self.camera_frame_display.newParameters(parameters, self.which_camera)
         self.camera_params.newParameters(parameters)
 
     @hdebug.debug

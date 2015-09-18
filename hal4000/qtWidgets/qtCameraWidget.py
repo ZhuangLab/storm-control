@@ -268,9 +268,7 @@ class QCameraWidget(QtGui.QWidget):
     # @param colortable A color table Python array.
     # @param display_range [minimum, maximum]
     #
-    def newParameters(self, parameters, colortable, display_range):
-        self.colortable = colortable
-        self.display_range = display_range
+    def newParameters(self, parameters):
         self.flip_horizontal = parameters.get("flip_horizontal")
         self.flip_vertical = parameters.get("flip_vertical")
         self.transpose = parameters.get("transpose")
@@ -288,10 +286,10 @@ class QCameraWidget(QtGui.QWidget):
 
     ## newRange
     #
-    # @param range [minimum, maximum]
+    # @param new_range [minimum, maximum]
     #
-    def newRange(self, range):
-        self.display_range = range
+    def newRange(self, new_range):
+        self.display_range = new_range
 
     ## paintEvent
     #

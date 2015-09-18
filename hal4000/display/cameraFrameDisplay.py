@@ -39,22 +39,21 @@ class CameraFeedDisplay(QtGui.QFrame):
     # @param hardware The display part of a hardware object.
     # @param parameters A parameters object.
     # @param camera_display_ui A camera UI object as defined by a .ui file.
-    # @param default_feed Which feed to use as the default for this display ("camera1", "camera2", etc.).
+    # @param feed_name Which feed to use for this display ("camera1", "camera2", etc.).
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, hardware, parameters, camera_display_ui, default_feed, parent = None):
+    def __init__(self, hardware, parameters, camera_display_ui, feed_name, parent = None):
         QtGui.QFrame.__init__(self, parent)
-        
+
         # General (alphabetically ordered).
         self.color_gradient = 0
         self.color_table = 0
         self.color_tables = colorTables.ColorTables("./colorTables/all_tables/")
-        self.current_feed = default_feed
         self.cycle_length = 0
-        self.default_feed = default_feed
         self.display_timer = QtCore.QTimer(self)
         self.feed_controller = False
+        self.feed_name = feed_name
         self.filming = False
         self.frame = False
         self.max_intensity = parameters.get("max_intensity")
@@ -127,6 +126,20 @@ class CameraFeedDisplay(QtGui.QFrame):
         if self.frame:
             self.camera_widget.updateImageWithFrame(self.frame)
             
+    ## getParameter
+    #
+    # This simplifies getting parameters from the current feed_controller.
+    # Why? We use the feed_controller to access the parameters because the
+    # desired behavior is that we will first see if the feed has the parameter. 
+    # If it does not then we'll just use the value from the camera associated 
+    # with the feed instead.
+    #
+    # @param pname The name of the parameter.
+    # @param default_value (Optional) The value to return if the parameter is not found.
+    #
+    def getParameter(self, pname, default_value = None):
+        return self.feed_controller.getFeedParameter(self.feed_name, pname, default_value)
+
     ## handleAutoScale
     #
     # Set the image display range automatically based on the current frames
@@ -151,8 +164,9 @@ class CameraFeedDisplay(QtGui.QFrame):
     #
     @hdebug.debug
     def handleColorTableChange(self, index):
-        self.parameters.set("colortable", str(self.ui.colorComboBox.currentText() + ".ctbl"))
-        self.color_table = self.color_tables.getTableByName(self.parameters.get("colortable"))
+        self.setParameter("colortable", 
+                          str(self.ui.colorComboBox.currentText() + ".ctbl"))
+        self.color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
         self.camera_widget.newColorTable(self.color_table)
         self.color_gradient.newColorTable(self.color_table)
         
@@ -222,8 +236,8 @@ class CameraFeedDisplay(QtGui.QFrame):
                 scale_max += 1.0
             else:
                 scale_min -= 1.0
-        self.parameters.set("scalemax", int(scale_max))
-        self.parameters.set("scalemin", int(scale_min))
+        self.setParameter("scalemax", int(scale_max))
+        self.setParameter("scalemin", int(scale_min))
         self.updateRange()
         
     ## handleSync
@@ -234,7 +248,7 @@ class CameraFeedDisplay(QtGui.QFrame):
     #
     @hdebug.debug
     def handleSync(self, frame):
-        self.parameters.set("sync", frame)
+        self.setParameters("sync", frame)
 
     ## handleTarget
     #
@@ -258,18 +272,14 @@ class CameraFeedDisplay(QtGui.QFrame):
     # This is called when the feed that we are supposed to display
     # is changed.
     #
+    # @param feed_name The name of the new feed.
+    #
     def newFeed(self, feed_name):
-        self.current_feed = feed_name
+        self.feed_name = feed_name
 
-        #
-        # setup the camera display widget
-        #
-        self.color_table = self.color_tables.getTableByName(self.feed_controller.getFeedParameter(self.current_feed, "colortable"))
-        display_range = [p.get("scalemin"),
-                         p.get("scalemax")]
-        self.camera_widget.newParameters(p, self.color_table, display_range)
-
-        # camera display
+        # Setup the camera display widget
+        self.color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
+        self.camera_widget.newColorTable(self.color_table)
         self.updateRange()
 
         # color gradient
@@ -282,13 +292,14 @@ class CameraFeedDisplay(QtGui.QFrame):
             layout.setMargin(2)
             layout.addWidget(self.color_gradient)
 
-        self.ui.colorComboBox.setCurrentIndex(self.ui.colorComboBox.findText(p.get("colortable")[:-5]))
+        self.ui.colorComboBox.setCurrentIndex(self.ui.colorComboBox.findText(self.getParameter("colortable")[:-5]))
 
         # general settings
-        self.max_intensity = p.get("max_intensity")
+        self.max_intensity = self.getParameter("max_intensity")
         self.ui.rangeSlider.setRange([0.0, self.max_intensity, 1.0])
-        self.ui.rangeSlider.setValues([float(p.get("scalemin")), float(p.get("scalemax"))])
-        self.ui.syncSpinBox.setValue(p.get("sync"))
+        self.ui.rangeSlider.setValues([float(self.getParameter("scalemin")), 
+                                       float(self.getParameter("scalemax"))])
+        self.ui.syncSpinBox.setValue(self.getParameter("sync"))
         
     ## newFrame
     #
@@ -301,9 +312,9 @@ class CameraFeedDisplay(QtGui.QFrame):
     # @param frame A frame object.
     #
     def newFrame(self, frame):
-        if (frame.which_camera == self.current_feed):
-            if self.filming and self.parameters.get("sync"):
-                if((frame.number % self.cycle_length) == (self.parameters.get("sync")-1)):
+        if (frame.which_camera == self.feed_name):
+            if self.filming and self.getParameter("sync"):
+                if((frame.number % self.cycle_length) == (self.getParameter("sync")-1)):
                     self.frame = frame
             else:
                 self.frame = frame
@@ -314,11 +325,28 @@ class CameraFeedDisplay(QtGui.QFrame):
     # and camera display settings to match those specified by the parameters object.
     #
     # @param parameters A parameters object.
+    # @param feed_name The feed_name to use with these parameters.
     #
     @hdebug.debug
-    def newParameters(self, parameters):
+    def newParameters(self, parameters, feed_name):
         self.feed_controller = feeds.getFeedController(parameters)
-        self.newFeed(self.default_feed)
+
+        # Pass the parameters that are the same for all of the feeds
+        # associated with a given camera to the camera_widget.
+        self.camera_widget.newParameters(parameters.get(self.feed_controller.getCamera(feed_name)))
+
+        # Configure for this feed.
+        self.newFeed(feed_name)
+
+    ## setParameter
+    #
+    # This simplifies setting parameters for the current feed_controller.
+    #
+    # @param pname The name of the parameter.
+    # @param pvalue The new value.
+    #
+    def setParameter(self, pname, pvalue):
+        self.feed_controller.getFeedParameter(self.feed_name, pname, pvalue)
 
     ## startFilm
     #
@@ -340,8 +368,19 @@ class CameraFeedDisplay(QtGui.QFrame):
         self.filming = False
         self.ui.syncLabel.hide()
         self.ui.syncSpinBox.hide()
-        
-                
+
+    ## updateRange
+    #
+    # This updates the text boxes that indicate the current range of
+    # the display. It also updates the xCameraWidget with this range.
+    #
+    @hdebug.debug
+    def updateRange(self):
+        self.ui.scaleMax.setText(str(self.getParameter("scalemax")))
+        self.ui.scaleMin.setText(str(self.getParameter("scalemin")))
+        self.camera_widget.newRange([self.getParameter("scalemin"), self.getParameter("scalemax")])
+
+
 ## CameraFrameDisplay
 #
 # This class also handles interaction with the feeds, i.e. mouse drags,
@@ -363,7 +402,7 @@ class CameraFrameDisplay(CameraFeedDisplay):
     # @param hardware The display part of a hardware object.
     # @param parameters A parameters object.
     # @param camera_display_ui A camera UI object as defined by a .ui file.
-    # @param default_feed Which feed to use as the default for this display ("camera1", "camera2", etc.).
+    # @param feed_name Which feed to use for this display ("camera1", "camera2", etc.).
     # @param show_record Whether or not to show the record button.
     # @param parent (Optional) The PyQt parent of this object.
     #
@@ -399,20 +438,20 @@ class CameraFrameDisplay(CameraFeedDisplay):
     #
     @hdebug.debug
     def handleCameraShutter(self, boolean):
-        if feeds.isCamera(self.current_feed):
-            self.cameraShutter.emit(self.current_feed)
+        if feeds.isCamera(self.feed_name):
+            self.cameraShutter.emit(self.feed_name)
 
     ## handleDisplayCaptured
     #
     # @param a_pixmap A QPixmap object containing the image currently visible on the screen.
     #
     def handleDisplayCaptured(self, a_pixmap):
-        self.frameCaptured.emit(self.current_feed, a_pixmap)
+        self.frameCaptured.emit(self.feed_name, a_pixmap)
 
     ## handleDragStart
     #
     def handleDragStart(self):
-        self.dragStart.emit(self.current_feed)
+        self.dragStart.emit(self.feed_name)
 
     ## handleDragMove
     #
@@ -422,7 +461,7 @@ class CameraFrameDisplay(CameraFeedDisplay):
     # @param y_disp y displacement in pixels.
     #
     def handleDragMove(self, x_disp, y_disp):
-        self.dragMove.emit(self.current_feed, x_disp, y_disp)
+        self.dragMove.emit(self.feed_name, x_disp, y_disp)
 
     ## handleROISelection
     #
@@ -432,7 +471,7 @@ class CameraFrameDisplay(CameraFeedDisplay):
     # @param select_rect The selection rectangle (QRect).
     #
     def handleROISelection(self, select_rect):
-        self.ROISelection.emit(self.current_feed, select_rect)
+        self.ROISelection.emit(self.feed_name, select_rect)
 
     ## setSyncMax
     #
@@ -451,7 +490,7 @@ class CameraFrameDisplay(CameraFeedDisplay):
     #
     @hdebug.debug
     def startFilm(self, run_shutters):
-        CameraFeedDisplay.__startFilm__(self, run_shutters)
+        CameraFeedDisplay.startFilm(self, run_shutters)
         self.ui.cameraShutterButton.setEnabled(False)
 
     ## stopFilm
@@ -460,7 +499,7 @@ class CameraFrameDisplay(CameraFeedDisplay):
     #
     @hdebug.debug
     def stopFilm(self):
-        CameraFeedDisplay.__stopFilm__(self)
+        CameraFeedDisplay.stopFilm(self)
         self.ui.cameraShutterButton.setEnabled(True)
 
     ## updateCameraProperties
@@ -469,8 +508,8 @@ class CameraFrameDisplay(CameraFeedDisplay):
     #
     @hdebug.debug
     def updateCameraProperties(self, camera_properties):
-        if self.current_feed in camera_properties:
-            if "have_shutter" in camera_properties[self.current_feed]:
+        if self.feed_name in camera_properties:
+            if "have_shutter" in camera_properties[self.feed_name]:
                 self.ui.cameraShutterButton.show()
             else:
                 self.ui.cameraShutterButton.hide()
@@ -483,23 +522,12 @@ class CameraFrameDisplay(CameraFeedDisplay):
     #
     @hdebug.debug
     def updatedParams(self):
-        if self.parameters.get("shutter", False):
+        if self.getParameter("shutter", False):
             self.ui.cameraShutterButton.setText("Close Shutter")
             self.ui.cameraShutterButton.setStyleSheet("QPushButton { color: green }")
         else:
             self.ui.cameraShutterButton.setText("Open Shutter")
             self.ui.cameraShutterButton.setStyleSheet("QPushButton { color: black }")
-
-    ## updateRange
-    #
-    # This updates the text boxes that indicate the current range of
-    # the display. It also updates the xCameraWidget with this range.
-    #
-    @hdebug.debug
-    def updateRange(self):
-        self.ui.scaleMax.setText(str(self.parameters.get("scalemax")))
-        self.ui.scaleMin.setText(str(self.parameters.get("scalemin")))
-        self.camera_widget.newRange([self.parameters.get("scalemin"), self.parameters.get("scalemax")])
 
         
 ## CameraScollArea

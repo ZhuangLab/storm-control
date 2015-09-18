@@ -293,6 +293,13 @@ class FeedController(object):
                     self.feed_names_to_save.append(feed_name)
 
     @hdebug.debug
+    def getCamera(self, feed_name):
+        if isCamera(feed_name):
+            return feed_name
+        else:
+            return self.parameters.get("feeds." + feed_name + ".source")
+
+    @hdebug.debug
     def getFeedNames(self):
         return self.feed_names
 
@@ -301,11 +308,11 @@ class FeedController(object):
         return self.feed_names_to_save
     
     @hdebug.debug
-    def getFeedParameter(self, feed_name, pname):
+    def getFeedParameter(self, feed_name, pname, default_value = None):
 
         # If we are asked for a parameter for a camera just return it.
         if isCamera(feed_name):
-            return self.parameters.get(feed_name + "." + pname)
+            return self.parameters.get(feed_name + "." + pname, default_value)
 
         # If we are asked for a parameter for a feed, return it if it
         # exists, otherwise return the corresponding parameter from
@@ -315,7 +322,7 @@ class FeedController(object):
 
         else:
             which_camera = self.parameters.get("feeds." + feed_name + ".camera")
-            return self.parameters.get(which_camera + "." + pname)
+            return self.parameters.get(which_camera + "." + pname, default_value)
 
     def newFrame(self, new_frame):
         feed_frames = []
