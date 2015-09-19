@@ -130,8 +130,6 @@ class Feed(object):
             self.x_pixels = x_end - x_start
             self.y_pixels = y_end - y_start
 
-            print x_start, x_end, y_start, y_end
-            print self.x_pixels, self.y_pixels
         else:
             self.x_pixels = parameters.get(self.which_camera + ".x_pixels")/c_x_bin
             self.y_pixels = parameters.get(self.which_camera + ".y_pixels")/c_y_bin
