@@ -319,7 +319,7 @@ class FeedController(object):
             return self.parameters.get("feeds." + feed_name + "." + pname)
 
         else:
-            which_camera = self.parameters.get("feeds." + feed_name + ".camera")
+            which_camera = self.parameters.get("feeds." + feed_name + ".source")
             return self.parameters.get(which_camera + "." + pname, default_value)
 
     def newFrame(self, new_frame):

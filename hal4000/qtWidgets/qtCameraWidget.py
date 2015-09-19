@@ -272,8 +272,6 @@ class QCameraWidget(QtGui.QWidget):
         self.flip_horizontal = parameters.get("flip_horizontal")
         self.flip_vertical = parameters.get("flip_vertical")
         self.transpose = parameters.get("transpose")
-        self.x_size = parameters.get("x_pixels")/parameters.get("x_bin")
-        self.y_size = parameters.get("y_pixels")/parameters.get("y_bin")
         self.drag_multiplier = parameters.get("drag_multiplier", 1.0)
         self.max_intensity = parameters.get("max_intensity")
 
@@ -281,15 +279,22 @@ class QCameraWidget(QtGui.QWidget):
             self.display_saturated_pixels = True
         else:
             self.display_saturated_pixels = False
-
-        self.calcFinalSize()
-
+            
     ## newRange
     #
     # @param new_range [minimum, maximum]
     #
     def newRange(self, new_range):
         self.display_range = new_range
+
+    ## newSize
+    #
+    # @param new_size [x_size, y_size]
+    #
+    def newSize(self, new_size):
+        self.x_size = new_size[0]
+        self.y_size = new_size[1]
+        self.calcFinalSize()
 
     ## paintEvent
     #

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'camera-display.ui'
 #
-# Created: Sun Sep 13 21:40:38 2015
+# Created: Sat Sep 19 08:05:10 2015
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -116,6 +116,9 @@ class Ui_Frame(object):
         self.cameraShutterButton.setFocusPolicy(QtCore.Qt.NoFocus)
         self.cameraShutterButton.setObjectName(_fromUtf8("cameraShutterButton"))
         self.horizontalLayout_3.addWidget(self.cameraShutterButton)
+        self.feedComboBox = QtGui.QComboBox(self.infoWidget)
+        self.feedComboBox.setObjectName(_fromUtf8("feedComboBox"))
+        self.horizontalLayout_3.addWidget(self.feedComboBox)
         spacerItem = QtGui.QSpacerItem(185, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem)
         self.intensityPosLabel = QtGui.QLabel(self.infoWidget)

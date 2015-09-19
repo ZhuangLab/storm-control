@@ -72,6 +72,8 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
         layout.setMargin(0)
         layout.addWidget(self.camera_frame_display)
 
+        self.camera_frame_display.feedChanged.connect(self.handleFeedChanged)
+
         # Configure camera parameters display.            
         camera_params_ui = cameraParamsUi.Ui_GroupBox()
         self.camera_params = paramsDisplay.ParamsDisplay(camera_params_ui,
@@ -132,7 +134,12 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
     def handleCameraProperties(self, camera_properties):
         self.camera_properties = camera_properties
         self.updateCameraProperties()
-        
+
+    @hdebug.debug
+    def handleFeedChanged(self, feed_name):
+        feed_name = str(feed_name)
+        self.camera_frame_display.newFeed(feed_name)
+
     @hdebug.debug
     def handleOk(self, boolean):
         self.hide()

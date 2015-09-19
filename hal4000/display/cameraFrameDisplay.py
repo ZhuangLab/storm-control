@@ -30,6 +30,7 @@ import colorTables.colorTables as colorTables
 # This class handles displaying feeds, e.g. "camera1", etc.
 #
 class CameraFeedDisplay(QtGui.QFrame):
+    feedChanged = QtCore.pyqtSignal(str)
 
     ## __init__
     #
@@ -92,7 +93,8 @@ class CameraFeedDisplay(QtGui.QFrame):
         self.ui.cameraScrollArea.setWidget(self.camera_widget)
 
         self.ui.autoScaleButton.clicked.connect(self.handleAutoScale)
-        self.ui.colorComboBox.currentIndexChanged.connect(self.handleColorTableChange)
+        self.ui.colorComboBox.currentIndexChanged[str].connect(self.handleColorTableChange)
+        self.ui.feedComboBox.currentIndexChanged[str].connect(self.handleFeedChange)
         self.ui.gridAct.triggered.connect(self.handleGrid)
         self.ui.infoAct.triggered.connect(self.handleInfo)        
         self.ui.rangeSlider.doubleClick.connect(self.handleAutoScale)        
@@ -160,15 +162,22 @@ class CameraFeedDisplay(QtGui.QFrame):
     #
     # Handles changing the color table used to display the image from the camera.
     #
-    # @param index This parameter is ignored.
+    # @param table_name This parameter is ignored.
     #
     @hdebug.debug
-    def handleColorTableChange(self, index):
-        self.setParameter("colortable", 
-                          str(self.ui.colorComboBox.currentText() + ".ctbl"))
+    def handleColorTableChange(self, table_name):
+        self.setParameter("colortable", table_name + ".ctbl")
         self.color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
         self.camera_widget.newColorTable(self.color_table)
         self.color_gradient.newColorTable(self.color_table)
+
+    ## handleFeedChange
+    #
+    # @param feed_name The name of the new feed.
+    #
+    @hdebug.debug
+    def handleFeedChange(self, feed_name):
+        self.feedChanged.emit(feed_name)
         
     ## handleGrid
     #
@@ -280,6 +289,8 @@ class CameraFeedDisplay(QtGui.QFrame):
         # Setup the camera display widget
         self.color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
         self.camera_widget.newColorTable(self.color_table)
+        self.camera_widget.newSize([self.getParameter("x_pixels")/self.getParameter("x_bin"),
+                                    self.getParameter("y_pixels")/self.getParameter("y_bin")])
         self.updateRange()
 
         # color gradient
@@ -338,6 +349,19 @@ class CameraFeedDisplay(QtGui.QFrame):
         # Configure for this feed.
         self.newFeed(feed_name)
 
+        # Update feed selector combobox.
+        self.ui.feedComboBox.currentIndexChanged[str].disconnect()
+        self.ui.feedComboBox.clear()
+        feed_names = self.feed_controller.getFeedNames()
+        if (len(feed_names) > 1):
+            for name in feed_names:
+                self.ui.feedComboBox.addItem(name)
+            self.ui.feedComboBox.setCurrentIndex(self.ui.feedComboBox.findText(feed_name))                
+            self.ui.feedComboBox.show()
+        else:
+            self.ui.feedComboBox.hide()
+        self.ui.feedComboBox.currentIndexChanged[str].connect(self.handleFeedChange)
+
     ## setParameter
     #
     # This simplifies setting parameters for the current feed_controller.
@@ -390,7 +414,6 @@ class CameraFrameDisplay(CameraFeedDisplay):
     cameraShutter = QtCore.pyqtSignal(str)
     dragMove = QtCore.pyqtSignal(str, float, float)
     dragStart = QtCore.pyqtSignal(str)
-    feedChanged = QtCore.pyqtSignal(str)
     frameCaptured = QtCore.pyqtSignal(str, object)
     ROISelection = QtCore.pyqtSignal(str, object)
 
