@@ -346,7 +346,7 @@ class CameraFeedDisplay(QtGui.QFrame):
     # @param pvalue The new value.
     #
     def setParameter(self, pname, pvalue):
-        self.feed_controller.getFeedParameter(self.feed_name, pname, pvalue)
+        self.feed_controller.setFeedParameter(self.feed_name, pname, pvalue)
 
     ## startFilm
     #
