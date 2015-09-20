@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'camera-detached.ui'
 #
-# Created: Fri Jul 24 10:49:51 2015
-#      by: PyQt4 UI code generator 4.10.4
+# Created: Sat Sep 19 21:02:02 2015
+#      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -95,5 +95,5 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(_translate("Dialog", "Dialog", None))
-        self.okButton.setText(_translate("Dialog", "Ok", None))
+        self.okButton.setText(_translate("Dialog", "Close", None))
 
