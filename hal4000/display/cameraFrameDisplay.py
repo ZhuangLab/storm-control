@@ -372,6 +372,17 @@ class CameraFeedDisplay(QtGui.QFrame):
     def setParameter(self, pname, pvalue):
         self.feed_controller.setFeedParameter(self.feed_name, pname, pvalue)
 
+    ## setSyncMax
+    #
+    # Sets the maximum value for the shutter synchronization spin box.
+    #
+    # @param sync_max The new maximum value for the spin box.
+    #
+    @hdebug.debug
+    def setSyncMax(self, sync_max):
+        self.cycle_length = sync_max
+        self.ui.syncSpinBox.setMaximum(sync_max)
+        
     ## startFilm
     #
     # Called when filming starts to set the appropriate UI elements.
@@ -495,17 +506,6 @@ class CameraFrameDisplay(CameraFeedDisplay):
     #
     def handleROISelection(self, select_rect):
         self.ROISelection.emit(self.feed_name, select_rect)
-
-    ## setSyncMax
-    #
-    # Sets the maximum value for the shutter synchronization spin box.
-    #
-    # @param sync_max The new maximum value for the spin box.
-    #
-    @hdebug.debug
-    def setSyncMax(self, sync_max):
-        self.cycle_length = sync_max
-        self.ui.syncSpinBox.setMaximum(sync_max)
 
     ## startFilm
     #
