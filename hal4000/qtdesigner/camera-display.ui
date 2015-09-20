@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>583</width>
+    <width>645</width>
     <height>546</height>
    </rect>
   </property>
@@ -57,7 +57,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="CameraScrollArea" name="cameraScrollArea">
+       <widget class="QCameraScrollArea" name="cameraScrollArea">
         <property name="minimumSize">
          <size>
           <width>514</width>
@@ -75,7 +75,7 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>512</width>
+           <width>570</width>
            <height>512</height>
           </rect>
          </property>
@@ -387,9 +387,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>CameraScrollArea</class>
+   <class>QCameraScrollArea</class>
    <extends>QScrollArea</extends>
-   <header>display.cameraFrameDisplay</header>
+   <header>qtWidgets.qtCameraScrollArea</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

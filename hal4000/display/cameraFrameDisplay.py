@@ -24,6 +24,8 @@ import qtWidgets.qtRangeSlider as qtRangeSlider
 import camera.feeds as feeds
 import colorTables.colorTables as colorTables
 
+import qtdesigner.camera_display_ui as cameraDisplayUi
+
 
 ## CameraFeedDisplay
 #
@@ -39,12 +41,11 @@ class CameraFeedDisplay(QtGui.QFrame):
     #
     # @param hardware The display part of a hardware object.
     # @param parameters A parameters object.
-    # @param camera_display_ui A camera UI object as defined by a .ui file.
     # @param feed_name Which feed to use for this display ("camera1", "camera2", etc.).
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, hardware, parameters, camera_display_ui, feed_name, parent = None):
+    def __init__(self, hardware, parameters, feed_name, parent = None):
         QtGui.QFrame.__init__(self, parent)
 
         # General (alphabetically ordered).
@@ -64,7 +65,7 @@ class CameraFeedDisplay(QtGui.QFrame):
         self.show_target = 0
 
         # UI setup.
-        self.ui = camera_display_ui
+        self.ui = cameraDisplayUi.Ui_Frame()
         self.ui.setupUi(self)
 
         self.ui.cameraScrollArea.setStyleSheet("QScrollArea { background-color: black } ")
@@ -435,14 +436,13 @@ class CameraFrameDisplay(CameraFeedDisplay):
     #
     # @param hardware The display part of a hardware object.
     # @param parameters A parameters object.
-    # @param camera_display_ui A camera UI object as defined by a .ui file.
     # @param feed_name Which feed to use for this display ("camera1", "camera2", etc.).
     # @param show_record Whether or not to show the record button.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, hardware, parameters, camera_display_ui, default_feed, show_record, parent = None):
-        CameraFeedDisplay.__init__(self, hardware, parameters, camera_display_ui, default_feed, parent)
+    def __init__(self, hardware, parameters, default_feed, show_record, parent = None):
+        CameraFeedDisplay.__init__(self, hardware, parameters, default_feed, parent)
 
         self.camera_widget.setDragEnabled(True)
         
@@ -551,100 +551,6 @@ class CameraFrameDisplay(CameraFeedDisplay):
         else:
             self.ui.cameraShutterButton.setText("Open Shutter")
             self.ui.cameraShutterButton.setStyleSheet("QPushButton { color: black }")
-
-        
-## CameraScollArea
-#
-# A slightly specialized QScrollArea. This scroll area lets the user 
-# zoom in and pan around the images from the camera.
-#
-class CameraScrollArea(QtGui.QScrollArea):
-
-    ## __init__
-    #
-    # Create a camera scroll area object.
-    #
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, parent = None):
-        QtGui.QScrollArea.__init__(self, parent)
-
-        self.camera_widget = None
-        self.magnification = 1
-
-        self.h_scroll_bar = CameraScrollBar(self.horizontalScrollBar())
-        self.v_scroll_bar = CameraScrollBar(self.verticalScrollBar())
-
-    ## setWidget
-    #
-    # Sets the widget that will be displayed in the scroll area.
-    #
-    # @param camera_widget A xCameraWidget object.
-    #
-    def setWidget(self, camera_widget):
-        QtGui.QScrollArea.setWidget(self, camera_widget)
-        self.camera_widget = camera_widget
-
-    ## wheelEvent
-    #
-    # Handles mouse wheel events.
-    #
-    # @param event A PyQt wheel event object.
-    #
-    def wheelEvent(self, event):
-        if (event.delta() > 0):
-            self.magnification += 1
-        else:
-            self.magnification -= 1
-
-        if (self.magnification < 1):
-            self.magnification = 1
-        if (self.magnification > 8):
-            self.magnification = 8
-    
-        [ev_x, ev_y] = self.camera_widget.getEventLocation(event)
-        self.h_scroll_bar.setCurRatio(ev_x)
-        self.v_scroll_bar.setCurRatio(ev_y)
-        self.camera_widget.setMagnification(self.magnification)
-
-        
-## CameraSrollBar
-#
-# Wrap a scroll bar so that the camera display remains more 
-# or less centered on the wheel events as we zoom in and out.
-#
-class CameraScrollBar():
-
-    ## __init__
-    #
-    # Create a camera scroll bar object.
-    #
-    # @param scroll_bar A PyQt scroll bar object.
-    #
-    def __init__(self, scroll_bar):
-
-        self.cur_ratio = 0.5
-        self.scroll_bar = scroll_bar
-
-        self.scroll_bar.rangeChanged.connect(self.rangeChanged)
-
-    ## rangeChanged
-    #
-    # Handle scroll bar range changes.
-    #
-    # @param new_min The new minimum value for the scroll bar.
-    # @param new_max The new maximum value for the scroll bar.
-    #
-    def rangeChanged(self, new_min, new_max):
-        if (new_max > 0):
-            self.scroll_bar.setValue(int(self.cur_ratio * float(new_max)))
-
-    ## setCurRatio
-    #
-    # @param new_ratio The new ratio (or center position) for the scroll bar.
-    #
-    def setCurRatio(self, new_ratio):
-        self.cur_ratio = new_ratio
 
 
 #

@@ -35,7 +35,6 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
         if (hal_ui_mode == "single"):
             self.hal_gui = False
             
-            import qtdesigner.camera_display_ui as cameraDisplayUi
             import qtdesigner.camera_params_ui as cameraParamsUi
             
             camera_frame = hal_ui.cameraFrame
@@ -47,7 +46,6 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
             self.hal_gui = True
 
             import qtdesigner.camera_detached_ui as cameraDetachedUi
-            import qtdesigner.camera_display_ui as cameraDisplayUi
             import qtdesigner.camera_params_detached_ui as cameraParamsUi
 
             # Configure window.
@@ -62,10 +60,8 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
             self.ui.okButton.clicked.connect(self.handleOk)
 
         # Configure camera frame display.
-        camera_display_ui = cameraDisplayUi.Ui_Frame()
         self.camera_frame_display = cameraFrameDisplay.CameraFrameDisplay(hardware,
                                                                           parameters.get(which_camera),
-                                                                          camera_display_ui,
                                                                           which_camera,
                                                                           show_record,
                                                                           parent = camera_frame)

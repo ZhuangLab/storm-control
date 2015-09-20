@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'camera-display.ui'
 #
-# Created: Sat Sep 19 08:05:10 2015
+# Created: Sat Sep 19 22:35:16 2015
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_Frame(object):
     def setupUi(self, Frame):
         Frame.setObjectName(_fromUtf8("Frame"))
-        Frame.resize(583, 546)
+        Frame.resize(645, 546)
         Frame.setFrameShape(QtGui.QFrame.NoFrame)
         Frame.setFrameShadow(QtGui.QFrame.Raised)
         self.verticalLayout_2 = QtGui.QVBoxLayout(Frame)
@@ -45,13 +45,13 @@ class Ui_Frame(object):
         self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setContentsMargins(2, 0, 2, 0)
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
-        self.cameraScrollArea = CameraScrollArea(self.displayWidget)
+        self.cameraScrollArea = QCameraScrollArea(self.displayWidget)
         self.cameraScrollArea.setMinimumSize(QtCore.QSize(514, 514))
         self.cameraScrollArea.setAutoFillBackground(False)
         self.cameraScrollArea.setWidgetResizable(True)
         self.cameraScrollArea.setObjectName(_fromUtf8("cameraScrollArea"))
         self.scrollAreaWidgetContents = QtGui.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 512, 512))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 570, 512))
         self.scrollAreaWidgetContents.setObjectName(_fromUtf8("scrollAreaWidgetContents"))
         self.cameraScrollArea.setWidget(self.scrollAreaWidgetContents)
         self.horizontalLayout_2.addWidget(self.cameraScrollArea)
@@ -170,4 +170,4 @@ class Ui_Frame(object):
         self.syncLabel.setText(_translate("Frame", "Display:", None))
         self.autoScaleButton.setText(_translate("Frame", "Autoscale", None))
 
-from display.cameraFrameDisplay import CameraScrollArea
+from qtWidgets.qtCameraScrollArea import QCameraScrollArea
