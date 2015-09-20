@@ -27,7 +27,9 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
         
         self.camera_properties = None
         self.hal_type = "display" + which_camera[-1:]
+        self.parameters = parameters
         self.which_camera = which_camera
+        self.which_feed = {}
         
         # Pictures from the camera and parameters are shown in the main window.
         if (hal_ui_mode == "single"):
@@ -138,6 +140,7 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def handleFeedChanged(self, feed_name):
         feed_name = str(feed_name)
+        self.which_feed[self.parameters] = feed_name
         self.camera_frame_display.newFeed(feed_name)
 
     @hdebug.debug
@@ -155,11 +158,15 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
 
     def newFrame(self, frame, filming):
         self.camera_frame_display.newFrame(frame)
-        
+
     @hdebug.debug
     def newParameters(self, parameters):
-        self.camera_frame_display.newParameters(parameters, self.which_camera)
-        self.camera_params.newParameters(parameters)
+        self.parameters = parameters
+        if parameters in self.which_feed:
+            self.camera_frame_display.newParameters(self.parameters, self.which_feed[self.parameters])
+        else:
+            self.camera_frame_display.newParameters(self.parameters, self.which_camera)
+        self.camera_params.newParameters(self.parameters)
 
     @hdebug.debug
     def startFilm(self, film_name, run_shutters):
