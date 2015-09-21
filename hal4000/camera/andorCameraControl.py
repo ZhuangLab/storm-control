@@ -24,7 +24,7 @@ import sc_hardware.andor.andorcontroller as andor
 #
 # The CameraControl class specialized to control a Andor camera.
 #
-class ACameraControl(cameraControl.CameraControl):
+class ACameraControl(cameraControl.HWCameraControl):
 
     ## __init__
     #
@@ -35,7 +35,7 @@ class ACameraControl(cameraControl.CameraControl):
     #
     @hdebug.debug
     def __init__(self, hardware, parent = None):
-        cameraControl.CameraControl.__init__(self, hardware, parent)
+        cameraControl.HWCameraControl.__init__(self, hardware, parent)
 
         if hardware and hardware.has("pci_card"):
             self.initCamera(hardware.get("pci_card"))
@@ -44,7 +44,7 @@ class ACameraControl(cameraControl.CameraControl):
 
     ## closeShutter
     #
-    # Stop the camera and close the shutter.
+    # Close the shutter.
     #
     @hdebug.debug
     def closeShutter(self):
@@ -250,63 +250,16 @@ class ACameraControl(cameraControl.CameraControl):
 
     ## openShutter
     #
-    # Stops the camera and opens the camera shutter.
+    # Open the camera shutter.
     #
     @hdebug.debug
     def openShutter(self):
         self.shutter = True
-        self.stopCamera()
         if self.got_camera:
             if self.reversed_shutter:
                 self.camera.closeShutter()
             else:
                 self.camera.openShutter()
-
-    ## quit
-    #
-    # Stops the camera thread and closes the connection to the camera.
-    #
-    @hdebug.debug
-    def quit(self):
-        self.stopThread()
-        self.wait()
-        self.camera.shutdown()
-
-    ## run
-    #
-    # The camera thread. This gets images from the camera, turns
-    # them into frames and sends them out using the newData signal.
-    #
-    def run(self):
-        while(self.running):
-            self.mutex.lock()
-            if self.acquire.amActive() and self.got_camera:
-
-                # Get data from camera and create frame objects.
-                [frames, frame_size, state] = self.camera.getImages16()
-
-                # Check if we got new frame data.
-                if (len(frames) > 0):
-
-                    # Create frame objects.
-                    frame_data = []
-                    for raw_frame in frames:
-                        aframe = frame.Frame(numpy.fromstring(raw_frame, dtype = numpy.uint16),
-                                             self.frame_number,
-                                             frame_size[0],
-                                             frame_size[1],
-                                             "camera1",
-                                             True)
-                        frame_data.append(aframe)
-                        self.frame_number += 1
-                            
-                    # Emit new data signal.
-                    self.newData.emit(frame_data, self.key)
-            else:
-                self.acquire.idle()
-
-            self.mutex.unlock()
-            self.msleep(5)
 
     ## setEMCCDGain
     #
@@ -319,25 +272,6 @@ class ACameraControl(cameraControl.CameraControl):
     def setEMCCDGain(self, which_camera, gain):
         if self.got_camera:
             self.camera.setEMCCDGain(gain)
-
-    ## startCamera
-    #
-    # Start a new camera acquisition. The key parameter is to
-    # ensure that camera frames taken with older parameters
-    # are ignored. This can be a problem due to thread
-    # synchronization issues.
-    #
-    # @param key The ID to use for the frames from this acquisition series.
-    #
-    @hdebug.debug        
-    def startCamera(self, key):
-        self.mutex.lock()
-        self.acquire.go()
-        self.key = key
-        self.frame_number = 0
-        if self.got_camera:
-            self.camera.startAcquisition()
-        self.mutex.unlock()
 
     ## startFilm
     #
@@ -369,21 +303,6 @@ class ACameraControl(cameraControl.CameraControl):
         # the camera, adding noise to the images.
         if self.parameters.get("off_during_filming"):
             self.camera.setFanMode(2) # fan off
-
-    ## stopCamera
-    #
-    # Stop the current acquisition series.
-    #
-    @hdebug.debug
-    def stopCamera(self):
-        if self.acquire.amActive():
-            self.mutex.lock()
-            if self.got_camera:
-                self.camera.stopAcquisition()
-            self.acquire.stop()
-            self.mutex.unlock()
-            while not self.acquire.amIdle():
-                self.usleep(50)
 
     ## stopFilm
     #

@@ -9,10 +9,11 @@
 #
 # This can control more than one camera.
 #
-# Hazen 12/12
+# Hazen 09/15
 #
 
 from ctypes import *
+import numpy
 import time
 
 # Andor constants & structures.
@@ -108,6 +109,29 @@ def setCurrentCamera(camera_handle):
         if (current_handle != camera_handle):
             current_handle = camera_handle
             andorCheck(andor.SetCurrentCamera(camera_handle), "SetCurrentCamera")
+
+
+## AndorException
+#
+# Camera exception.
+#
+class AndorException(Exception):
+    def __init__(self, message):
+        Exception.__init__(self, message)
+
+
+## AndorFrameData
+#
+# This class stores the data in a single frame from the Andor camera.
+#
+class AndorFrameData():
+    
+    def __init__(self, np_array):
+        self.np_array = np_array
+
+    def getData(self):
+        return self.np_array
+
 
 ## AndorCamera
 #
@@ -254,59 +278,15 @@ class AndorCamera:
         elif state != drv_idle and state != drv_tempcycle:
             raise AssertionError, "Driver is in a bad place?: " + str(state)
 
+    ## closeShutter
     #
-    # Camera property queries
-    #
-
-    ## getDimensions
-    #
-    # Return the camera dimensions
-    #
-    # @return Returns the camera dimensions in pixels.
-    #
-    def getDimensions(self):
-        return [self._props_["XPixels"], self._props_["YPixels"]]
-
-    ## getHeadModel
-    #
-    # Return the camera head model
-    #
-    # @return Returns the camera head model.
-    #
-    def getHeadModel(self):
-        return self._props_["HeadModel"]
-
-    ## getHSSpeeds
-    #
-    # Return the camera horizontal speeds
-    #
-    # @return Returns the camera horizontal speeds.
-    #
-    def getHSSpeeds(self):
-        return self._props_["HSSpeeds"]
-
-    ## getProperties
-    #
-    # Return all the known camera properties
-    #
-    # @return Returns the camera properties.
-    #
-    def getProperties(self):
-        return self._props_
-
-    ## getVSSpeeds
-    #
-    # Return the camera vertical speeds
-    #
-    # @return Returns the camera vertical speeds.
-    #
-    def getVSSpeeds(self):
-        return self._props_["VSSpeeds"]
-
-
-    #
-    # Temperature Control
-    #
+    # Close the camera shutter. This will abort the current acquisition.
+    def closeShutter(self):
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        status = andor.SetShutter(0, 2, 0, 0)
+        if status != drv_success:
+            print "SetShutter (closed) failed: ", status
 
     ## coolerOff
     #
@@ -323,91 +303,6 @@ class AndorCamera:
     def coolerOn(self):
         setCurrentCamera(self.camera_handle)
         andorCheck(andor.CoolerON(), "CoolerOn")
-
-    ## getTemperature
-    #
-    # Return the current camera temperature.
-    #
-    # @return Return the camera temperature.
-    #
-    def getTemperature(self):
-        setCurrentCamera(self.camera_handle)
-        temperature = c_int()
-        status = andor.GetTemperature(byref(temperature))
-        if status == drv_temp_stabilized:
-            return [temperature.value, "stable"]
-        elif (status == drv_temp_off) or (status == drv_temp_not_stabilized) or (status == drv_temp_not_reached) or (status == drv_temp_drift):
-            return [temperature.value, "unstable"]
-        else:
-            print "GetTemperature failed: ", status
-            return [50, "unstable"]
-
-    ## goToTemperature
-    #
-    # Loops until the camera stabilizes at the desired temperature.
-    #
-    # @param temperature The desired temperature.
-    #
-    def goToTemperature(self, temperature):
-        setCurrentCamera(self.camera_handle)
-        self.setTemperature(temperature)
-        status = self.getTemperature()
-        while status[1] == "unstable":
-            time.sleep(5)
-            status = camera.getTemperature()
-
-    ## setTemperature
-    #
-    # Set the camera temperature.
-    #
-    # @param temperature The desired temperature.
-    #
-    def setTemperature(self, temperature):
-        setCurrentCamera(self.camera_handle)
-        self.coolerOn()
-        [t_min, t_max] = self._props_["TemperatureRange"]
-        if temperature < t_min:
-            print "setTemperature: Temperature is too low (" + str(temperature) + " < " + str(t_min)
-            temperature = t_min
-        if temperature > t_max:
-            print "setTemperature: Temperature is too high (" + str(temperature) + " > " + str(t_max)
-            temperature = t_max
-        i_temp = c_int(temperature)
-        andorCheck(andor.SetTemperature(i_temp), "SetTemperature")
-
-    #
-    # Shutter Control
-    #
-    # Calling either of these during acquisition will abort the acquisition
-    #
-
-    ## openShutter
-    #
-    # Open the camera shutter. This will abort the current acquisition.
-    #
-    def openShutter(self):
-        setCurrentCamera(self.camera_handle)
-        self._abortIfAcquiring_()
-        status = andor.SetShutter(0, 1, 0, 0)
-        if status != drv_success:
-            print "SetShutter (open) failed: ", status
-
-    ## closeShutter
-    #
-    # Close the camera shutter. This will abort the current acquisition.
-    def closeShutter(self):
-        setCurrentCamera(self.camera_handle)
-        self._abortIfAcquiring_()
-        status = andor.SetShutter(0, 2, 0, 0)
-        if status != drv_success:
-            print "SetShutter (closed) failed: ", status
-
-
-    #
-    # Acquisition Setup
-    #
-    # Calling any of these functions will abort the current acquisition
-    #
 
     ## getAcquisitionTimings
     #
@@ -445,6 +340,33 @@ class AndorCamera:
         except:
             print "getCurrentSetup: One or more parameters are not defined."
 
+    ## getDimensions
+    #
+    # Return the camera dimensions
+    #
+    # @return Returns the camera dimensions in pixels.
+    #
+    def getDimensions(self):
+        return [self._props_["XPixels"], self._props_["YPixels"]]
+
+    ## getHeadModel
+    #
+    # Return the camera head model
+    #
+    # @return Returns the camera head model.
+    #
+    def getHeadModel(self):
+        return self._props_["HeadModel"]
+
+    ## getHSSpeeds
+    #
+    # Return the camera horizontal speeds
+    #
+    # @return Returns the camera horizontal speeds.
+    #
+    def getHSSpeeds(self):
+        return self._props_["HSSpeeds"]
+
     ## getEMAdvanced
     #
     # Get the current advanced EM setting.
@@ -471,6 +393,239 @@ class AndorCamera:
         high = c_int()
         andorCheck(andor.GetEMGainRange(byref(low), byref(high)), "GetEMGainRange")
         return [low.value, high.value]
+
+    ## getFrames
+    #
+    # Gets all of the available frames.
+    #
+    # @return [frames, [frame x size, frame y size]]
+    #
+    def getFrames(self):
+        setCurrentCamera(self.camera_handle)
+        frames = []
+
+        # Check whether camera is idle or acquiring first.
+        state = self._getStatus_()
+
+        # Check to see if there is any new data, and if so, how much.
+        first = c_long(0)
+        last = c_long(0)
+        status = andor.GetNumberNewImages(byref(first), byref(last))
+
+        # There is new data.
+        if (status == drv_success):
+
+            # Allocate space & get the data.
+            diff = last.value - first.value + 1
+            buffer_size = self.pixels * diff
+            data_buffer = numpy.ascontiguousarray(numpy.empty(buffer_size, dtype = numpy.uint16))
+            valid_first = c_long(0)
+            valid_last = c_long(0)
+            status = andor.GetImages16(first, 
+                                       last, 
+                                       data_buffer.ctypes.data, 
+                                       c_ulong(buffer_size), 
+                                       byref(valid_first), 
+                                       byref(valid_last))
+
+            # FIXME: Should we raise an AndorException here? This almost always
+            #        means something has gone wrong.
+            if (first.value != valid_first.value):
+                print "getImages16 first value problem", first.value, valid_first.value
+            if (last.value != valid_last.value):
+                print "getImages16 last value problem", last.value, valid_last.value
+
+            # Got the data. Split the data buffer up into frames.
+            if (status == drv_success):
+                for i in range(diff):
+                    frames.append(AndorFrameData(data_buffer[2*i*self.pixels:2*(i+1)*self.pixels]))
+                return [frames, self.frame_size]
+                    
+            # Not sure if we can actually end up here, but just in case.
+            elif (status == drv_no_new_data):
+                return [frames, self.frame_size]
+
+            # Something bad happened.
+            else:
+                raise AndorException("andor.GetImages16 failed with error code: " + str(status))
+
+        # There is no new data.
+        elif (status == drv_no_new_data):
+            return [frames, self.frame_size]
+
+        # Something bad must have happened.
+        else:
+            raise AndorException("andor.GetNumberNewImages failed with error code: " + str(status))
+
+
+    ## getImages16
+    #
+    # This works, but it is deprecated, use getFrames().
+    #
+    # Returns all the new images in the acquisition buffer.
+    #
+    # Returns a 2 element array. The first element is an array
+    # containing the frames acquired (possibly an empty array). The 
+    # second is the current state of the camera.
+    #
+    # @return Returns the images as an array of ctypes string buffers each of which contains the frame data.
+    #
+    def getImages16(self):
+        setCurrentCamera(self.camera_handle)
+        frames = []
+
+        # Check whether camera is idle or acquiring first.
+        state = self._getStatus_()
+
+        # Check to see if there is any new data, and if so, how much.
+        first = c_long(0)
+        last = c_long(0)
+        status = andor.GetNumberNewImages(byref(first), byref(last))
+
+        # There is new data.
+        if (status == drv_success):
+
+            # Allocate space & get the data.
+            diff = last.value - first.value + 1
+            buffer_size = self.pixels * diff
+            data_buffer = create_string_buffer(2 * buffer_size)
+            valid_first = c_long(0)
+            valid_last = c_long(0)
+            status = andor.GetImages16(first, last, data_buffer, c_ulong(buffer_size), byref(valid_first), byref(valid_last))
+            if (first.value != valid_first.value):
+                print "getImages16 first value problem", first.value, valid_first.value
+            if (last.value != valid_last.value):
+                print "getImages16 last value problem", last.value, valid_last.value
+
+            # Got the data. Split the data buffer up into frames.
+            if (status == drv_success):
+                for i in range(diff):
+                    frames.append(data_buffer[2*i*self.pixels:2*(i+1)*self.pixels])
+                if (state == drv_idle):
+                    return [frames, self.frame_size, "idle"]
+                else:
+                    return [frames, self.frame_size, "acquiring"]
+
+            # Not sure if we can actually end up here, but just in case.
+            elif (status == drv_no_new_data):
+                if (state == drv_idle):
+                    return [frames, self.frame_size, "idle"]
+                else:
+                    return [frames, self.frame_size, "acquiring"]
+
+            # Something bad happened.
+            else:
+                raise AssertionError, "GetImages16 failed: " + str(status)
+
+        # There is no new data.
+        elif (status == drv_no_new_data):
+            if (state == drv_idle):
+                return [frames, self.frame_size, "idle"]
+            else:
+                return [frames, self.frame_size, "acquiring"]
+
+        # Something bad must have happened.
+        else:
+            raise AssertionError, "GetNumberNewImages failed: " + str(status)
+
+    ## getOldestImage16
+    #
+    # This works, but it is deprecated, use getFrames().
+    #
+    # Returns the oldest image in the acquisition buffer. 
+    # Call until there is no new data.
+    #
+    # Returns the a 2 element array. The first element
+    # is the frame data, or 0 if there are no new frames.
+    # The second element is the state of the camera, i.e.
+    # is it acquiring data? Or is it idle?
+    #
+    # Use this function with 16 bit cameras.
+    #
+    # @return Returns the oldest frame as a ctypes string buffer.
+    #
+    def getOldestImage16(self, check = True):
+        setCurrentCamera(self.camera_handle)
+        if check:
+            first = c_long(0)
+            last = c_long(0)
+            andor.GetNumberNewImages(byref(first), byref(last))
+            diff = first.value - last.value
+            if (diff > 1):
+                print "  warning: acquisition is", diff, "frames behind..."
+        buffer = create_string_buffer(2 * self.pixels)
+        status = andor.GetOldestImage16(buffer, c_ulong(self.pixels))
+        if status == drv_success:
+            return [buffer, self.frame_size, "acquiring"]
+        elif status == drv_no_new_data:
+            state = _getStatus_()
+            if state == drv_idle:
+                return [0, self.frame_size, "idle"]
+            else:
+                return [0, self.frame_size, "acquiring"]
+        else:
+            raise AssertionError, "GetOldestImage16 failed: " + str(status)
+
+    ## getProperties
+    #
+    # Return all the known camera properties
+    #
+    # @return Returns the camera properties.
+    #
+    def getProperties(self):
+        return self._props_
+
+    ## getTemperature
+    #
+    # Return the current camera temperature.
+    #
+    # @return Return the camera temperature.
+    #
+    def getTemperature(self):
+        setCurrentCamera(self.camera_handle)
+        temperature = c_int()
+        status = andor.GetTemperature(byref(temperature))
+        if status == drv_temp_stabilized:
+            return [temperature.value, "stable"]
+        elif (status == drv_temp_off) or (status == drv_temp_not_stabilized) or (status == drv_temp_not_reached) or (status == drv_temp_drift):
+            return [temperature.value, "unstable"]
+        else:
+            print "GetTemperature failed: ", status
+            return [50, "unstable"]
+
+    ## getVSSpeeds
+    #
+    # Return the camera vertical speeds
+    #
+    # @return Returns the camera vertical speeds.
+    #
+    def getVSSpeeds(self):
+        return self._props_["VSSpeeds"]
+
+    ## goToTemperature
+    #
+    # Loops until the camera stabilizes at the desired temperature.
+    #
+    # @param temperature The desired temperature.
+    #
+    def goToTemperature(self, temperature):
+        setCurrentCamera(self.camera_handle)
+        self.setTemperature(temperature)
+        status = self.getTemperature()
+        while status[1] == "unstable":
+            time.sleep(5)
+            status = camera.getTemperature()
+
+    ## openShutter
+    #
+    # Open the camera shutter. This will abort the current acquisition.
+    #
+    def openShutter(self):
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        status = andor.SetShutter(0, 1, 0, 0)
+        if status != drv_success:
+            print "SetShutter (open) failed: ", status
 
     ## setACQMode
     #
@@ -598,6 +753,16 @@ class AndorCamera:
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
         andorCheck(andor.SetFanMode(c_int(mode)), "SetFanMode")
+
+    ## setFastExternalTrigger
+    #
+    # Set fast external trigger.
+    #
+    # @param mode The external trigger mode.
+    def setFastExtTrigger(self, mode):
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
+        andorCheck(andor.SetFastExtTrigger(c_int(mode)), "SetFastTriggerMode")
 
     ## setFrameTransferMode
     #
@@ -741,15 +906,24 @@ class AndorCamera:
         self._abortIfAcquiring_()
         andorCheck(andor.SetTriggerMode(c_int(mode)), "SetTriggerMode")
 
-    ## setFastExternalTrigger
+    ## setTemperature
     #
-    # Set fast external trigger.
+    # Set the camera temperature.
     #
-    # @param mode The external trigger mode.
-    def setFastExtTrigger(self, mode):
+    # @param temperature The desired temperature.
+    #
+    def setTemperature(self, temperature):
         setCurrentCamera(self.camera_handle)
-        self._abortIfAcquiring_()
-        andorCheck(andor.SetFastExtTrigger(c_int(mode)), "SetFastTriggerMode")
+        self.coolerOn()
+        [t_min, t_max] = self._props_["TemperatureRange"]
+        if temperature < t_min:
+            print "setTemperature: Temperature is too low (" + str(temperature) + " < " + str(t_min)
+            temperature = t_min
+        if temperature > t_max:
+            print "setTemperature: Temperature is too high (" + str(temperature) + " > " + str(t_max)
+            temperature = t_max
+        i_temp = c_int(temperature)
+        andorCheck(andor.SetTemperature(i_temp), "SetTemperature")
 
     ## setVSAmplitude
     #
@@ -784,133 +958,6 @@ class AndorCamera:
         self.vsspeed = speeds[index]
         return self.vsspeed
 
-        
-    #
-    # Acquisition
-    #
-
-    ## startAcquisition
-    #
-    # Start the acquisition.
-    #
-    def startAcquisition(self):
-        setCurrentCamera(self.camera_handle)
-        andorCheck(andor.StartAcquisition(), "StartAcquisition")
-
-    ## stopAcquisition
-    #
-    # Stop the acquisition.
-    #
-    def stopAcquisition(self):
-        setCurrentCamera(self.camera_handle)
-        self._abortIfAcquiring_()
-
-    ## getOldestImage16
-    #
-    # Returns the oldest image in the acquisition buffer. 
-    # Call until there is no new data.
-    #
-    # Returns the a 2 element array. The first element
-    # is the frame data, or 0 if there are no new frames.
-    # The second element is the state of the camera, i.e.
-    # is it acquiring data? Or is it idle?
-    #
-    # Use this function with 16 bit cameras.
-    #
-    # @return Returns the oldest frame as a ctypes string buffer.
-    #
-    def getOldestImage16(self, check = True):
-        setCurrentCamera(self.camera_handle)
-        if check:
-            first = c_long(0)
-            last = c_long(0)
-            andor.GetNumberNewImages(byref(first), byref(last))
-            diff = first.value - last.value
-            if (diff > 1):
-                print "  warning: acquisition is", diff, "frames behind..."
-        buffer = create_string_buffer(2 * self.pixels)
-        status = andor.GetOldestImage16(buffer, c_ulong(self.pixels))
-        if status == drv_success:
-            return [buffer, self.frame_size, "acquiring"]
-        elif status == drv_no_new_data:
-            state = _getStatus_()
-            if state == drv_idle:
-                return [0, self.frame_size, "idle"]
-            else:
-                return [0, self.frame_size, "acquiring"]
-        else:
-            raise AssertionError, "GetOldestImage16 failed: " + str(status)
-
-    ## getImages16
-    #
-    # Returns all the new images in the acquisition buffer.
-    #
-    # Returns a 2 element array. The first element is an array
-    # containing the frames acquired (possibly an empty array). The 
-    # second is the current state of the camera.
-    #
-    # @return Returns the images as an array of ctypes string buffers each of which contains the frame data.
-    #
-    def getImages16(self):
-        setCurrentCamera(self.camera_handle)
-        frames = []
-
-        # Check whether camera is idle or acquiring first.
-        state = self._getStatus_()
-
-        # Check to see if there is any new data, and if so, how much.
-        first = c_long(0)
-        last = c_long(0)
-        status = andor.GetNumberNewImages(byref(first), byref(last))
-
-        # There is new data.
-        if (status == drv_success):
-
-            # Allocate space & get the data.
-            diff = last.value - first.value + 1
-            buffer_size = self.pixels * diff
-            data_buffer = create_string_buffer(2 * buffer_size)
-            valid_first = c_long(0)
-            valid_last = c_long(0)
-            status = andor.GetImages16(first, last, data_buffer, c_ulong(buffer_size), byref(valid_first), byref(valid_last))
-            if (first.value != valid_first.value):
-                print "getImages16 first value problem", first.value, valid_first.value
-            if (last.value != valid_last.value):
-                print "getImages16 last value problem", last.value, valid_last.value
-
-            # Got the data. Split the data buffer up into frames.
-            if (status == drv_success):
-                for i in range(diff):
-                    frames.append(data_buffer[2*i*self.pixels:2*(i+1)*self.pixels])
-                if (state == drv_idle):
-                    return [frames, self.frame_size, "idle"]
-                else:
-                    return [frames, self.frame_size, "acquiring"]
-
-            # Not sure if we can actually end up here, but just in case.
-            elif (status == drv_no_new_data):
-                if (state == drv_idle):
-                    return [frames, self.frame_size, "idle"]
-                else:
-                    return [frames, self.frame_size, "acquiring"]
-
-            # Something bad happened.
-            else:
-                raise AssertionError, "GetImages16 failed: " + str(status)
-
-        # There is no new data.
-        elif (status == drv_no_new_data):
-            if (state == drv_idle):
-                return [frames, self.frame_size, "idle"]
-            else:
-                return [frames, self.frame_size, "acquiring"]
-
-        # Something bad must have happened.
-        else:
-            raise AssertionError, "GetNumberNewImages failed: " + str(status)
-
-
-
     ## shutdown
     #
     # Abort the current acquisition (if acquiring), close the shutter and
@@ -931,6 +978,22 @@ class AndorCamera:
                 time.sleep(5.0)
                 current_temp = self.getTemperature()[0]
         andor.ShutDown()
+
+    ## startAcquisition
+    #
+    # Start the acquisition.
+    #
+    def startAcquisition(self):
+        setCurrentCamera(self.camera_handle)
+        andorCheck(andor.StartAcquisition(), "StartAcquisition")
+
+    ## stopAcquisition
+    #
+    # Stop the acquisition.
+    #
+    def stopAcquisition(self):
+        setCurrentCamera(self.camera_handle)
+        self._abortIfAcquiring_()
 
 
 #
@@ -979,7 +1042,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2015 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
