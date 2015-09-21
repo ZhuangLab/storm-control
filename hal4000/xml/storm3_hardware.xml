@@ -2,13 +2,19 @@
 <hardware>
   <!-- Defines the camera for storm3 -->.
 
-  <camera>
-    <module type="string">classicSingleCamera</module>
-    <parameters>
-      <control type="string">andorCameraControl</control>
-      <display type="string">andorCameraWidget</display>
-    </parameters>
-  </camera>
+  <!-- The UI mode, this is either "single" (window) or "detached" -->
+  <ui_mode type="string">single</ui_mode>
+
+  <!-- Camera control. -->
+  <control>
+    <module_name type="string">andorCameraControl</module_name>
+  </control>
+
+  <!-- Camera display. -->
+  <display>
+    <module_name type="string">cameraWidgets</module_name>
+    <class_name type="string">PyCameraWidget</class_name>
+  </display>
 
   <!-- Define the other modules to use for this setup. -->
   <modules>
@@ -21,6 +27,13 @@
 	<send_pictures type="int">1</send_pictures>
       </parameters>
     </bluetooth>
+
+    <!-- Feed viewers -->
+    <feedviewers>
+      <class_name type="string">FeedViewers</class_name>
+      <menu_item type="string">New Viewer</menu_item>
+      <module_name type="string">display.feedViewer</module_name>
+    </feedviewers>
 
     <!-- The focus lock -->
     <focuslock>
