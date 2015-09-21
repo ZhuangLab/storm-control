@@ -152,6 +152,12 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
         self.camera_frame_display.updatedParams()
         self.camera_params.updatedParams()
 
+    @hdebug.debug
+    def loadGUISettings(self, settings):
+        if self.hal_gui:
+            halModule.HalModule.loadGUISettings(self, settings)
+            self.resize(settings.value(self.hal_type + "_size", self.size()).toSize())
+
     def newFrame(self, frame, filming):
         self.camera_frame_display.newFrame(frame)
 
@@ -164,6 +170,12 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
             self.camera_frame_display.newParameters(self.parameters, self.which_camera)
         self.camera_params.newParameters(self.parameters)
 
+    @hdebug.debug
+    def saveGUISettings(self, settings):
+        if self.hal_gui:
+            halModule.HalModule.saveGUISettings(self, settings)
+            settings.setValue(self.hal_type + "_size", self.size())
+            
     @hdebug.debug
     def startFilm(self, film_name, run_shutters):
         self.camera_frame_display.startFilm(run_shutters)
