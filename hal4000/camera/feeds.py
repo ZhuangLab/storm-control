@@ -54,33 +54,51 @@ class FeedException(Exception):
 # The different kinds of feeds.
 #
 
-# Camera feeds just pass through the camera frames that they match.
-class CameraFeed(object):
+# The base class for all the feeds.
+class Feed(object):
 
     @hdebug.debug
     def __init__(self, feed_name, parameters):
         self.feed_name = feed_name
 
     def newFrame(self, new_frame):
-        if (new_frame.which_camera == self.feed_name):
-            return [new_frame]
+        pass
+
+    def sliceFrame(self, new_frame):
+        pass
 
     @hdebug.debug
     def startFeed(self):
         pass
 
     @hdebug.debug
+    def startFilm(self):
+        pass
+
+    @hdebug.debug
     def stopFeed(self):
         pass
 
+    @hdebug.debug
+    def stopFilm(self):
+        pass
 
-# The base class for feeds.    
-class Feed(object):
+
+# Camera feeds just pass through the camera frames that they match.
+class FeedCamera(Feed):
+
+    def newFrame(self, new_frame):
+        if (new_frame.which_camera == self.feed_name):
+            return [new_frame]
+
+
+# The base class for the non-camera feeds.
+class FeedNC(Feed):
 
     @hdebug.debug
     def __init__(self, feed_name, parameters):
+        Feed.__init__(self, feed_name, parameters)
         self.which_camera = parameters.get("feeds." + feed_name + ".source")
-        self.feed_name = feed_name
         self.frame_slice = None
 
         # Get camera binning as we'll use this either way.
@@ -140,9 +158,6 @@ class Feed(object):
         parameters.set("feeds." + feed_name + ".y_bin", 1)
         parameters.set("feeds." + feed_name + ".bytes_per_frame", 2 * self.x_pixels * self.y_pixels)
 
-    def newFrame(self, new_frame):
-        pass
-    
     def sliceFrame(self, new_frame):
         if (new_frame.which_camera == self.which_camera):
             if self.frame_slice is None:
@@ -152,21 +167,13 @@ class Feed(object):
                 h = new_frame.image_y
                 return numpy.reshape(new_frame.np_data, (h,w))[self.frame_slice]
 
-    @hdebug.debug
-    def startFeed(self):
-        pass
-
-    @hdebug.debug
-    def stopFeed(self):
-        pass
-
 
 # The feed for averaging frames together.
-class FeedAverage(Feed):
+class FeedAverage(FeedNC):
 
     @hdebug.debug
     def __init__(self, feed_name, parameters):
-        Feed.__init__(self, feed_name, parameters)
+        FeedNC.__init__(self, feed_name, parameters)
 
         self.average_frame = None
         self.counts = 0
@@ -174,7 +181,7 @@ class FeedAverage(Feed):
         self.frames_to_average = parameters.get("feeds." + self.feed_name + ".frames_to_average")
 
     def newFrame(self, new_frame):
-        sliced_data = Feed.sliceFrame(self, new_frame)
+        sliced_data = self.sliceFrame(new_frame)
         if sliced_data is not None:
             if self.average_frame is None:
                 self.average_frame = sliced_data.astype(numpy.uint32)
@@ -203,18 +210,18 @@ class FeedAverage(Feed):
         
 
 # Feed for picking out a sub-set of the frames.
-class FeedInterval(Feed):
+class FeedInterval(FeedNC):
 
     @hdebug.debug
     def __init__(self, feed_name, parameters):    
-        Feed.__init__(self, feed_name, parameters)
+        FeedNC.__init__(self, feed_name, parameters)
 
         self.capture_frames = parameters.get("feeds." + self.feed_name + ".capture_frames")
         self.cycle_length = parameters.get("feeds." + self.feed_name + ".cycle_length")
         self.frame_number = -1
 
     def newFrame(self, new_frame):
-        sliced_data = Feed.sliceFrame(self, new_frame)
+        sliced_data = self.sliceFrame(new_frame)
         if sliced_data is not None:
             if (new_frame.number % self.cycle_length) in self.capture_frames:
                 self.frame_number += 1
@@ -234,10 +241,10 @@ class FeedInterval(Feed):
         
 
 # Feed for slicing out sub-sets of frames.
-class FeedSlice(Feed):
+class FeedSlice(FeedNC):
 
     def newFrame(self, new_frame):
-        sliced_data = Feed.sliceFrame(self, new_frame)
+        sliced_data = self.sliceFrame(new_frame)
         if sliced_data is not None:
             return [frame.Frame(average_frame.astype(numpy.uint16),
                                 new_frame.number,
@@ -269,7 +276,7 @@ class FeedController(object):
         # Create the feeds.
         for feed_name in self.feed_names:
             if isCamera(feed_name):
-                self.feeds.append(CameraFeed(feed_name, self.parameters))
+                self.feeds.append(FeedCamera(feed_name, self.parameters))
             else:
                 feed_type = self.parameters.get("feeds." + feed_name + ".feed_type")
                 if (feed_type == "average"):
@@ -341,9 +348,17 @@ class FeedController(object):
             feed.startFeed()
 
     @hdebug.debug
+    def startFilm(self):
+        for feed in self.feeds:
+            feed.startFilm()
+
+    @hdebug.debug
     def stopFeeds(self):
         for feed in self.feeds:
             feed.stopFeed()
 
-            
+    @hdebug.debug
+    def stopFilm(self):
+        for feed in self.feeds:
+            feed.stopFilm()
 

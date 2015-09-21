@@ -152,17 +152,12 @@ class Camera(QtCore.QObject):
 
     @hdebug.debug
     def startFilm(self, writer, film_settings):
-        if writer is not None:
-            self.filming = True
+        self.filming = True
         self.writer = writer
         self.acq_mode = film_settings.acq_mode
         self.frames_to_take = film_settings.frames_to_take - 1
+        self.feed_controller.startFilm()
         self.camera_control.startFilm(film_settings)
-
-    @hdebug.debug
-    def stopFilm(self):
-        self.camera_control.stopFilm()
-        self.filming = False
 
     @hdebug.debug
     def stopCamera(self):
@@ -171,6 +166,12 @@ class Camera(QtCore.QObject):
         # When we first start, feed_controller will be None.
         if self.feed_controller is not None:
             self.feed_controller.stopFeeds()
+
+    @hdebug.debug
+    def stopFilm(self):
+        self.camera_control.stopFilm()
+        self.feed_controller.stopFilm()
+        self.filming = False
 
     def updateTemperature(self):
         for which_camera in self.cameras:
