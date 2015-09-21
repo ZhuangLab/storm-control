@@ -84,6 +84,8 @@ class CameraFeedDisplay(QtGui.QFrame):
         self.ui.infoAct = QtGui.QAction(self.tr("Hide Info"), self)
         self.ui.targetAct = QtGui.QAction(self.tr("Show Target"), self)
 
+        self.ui.cameraShutterButton.hide()
+        self.ui.recordButton.hide()
         self.ui.syncLabel.hide()
         self.ui.syncSpinBox.hide()
 
@@ -459,8 +461,8 @@ class CameraFrameDisplay(CameraFeedDisplay):
 
         self.camera_widget.setDragEnabled(True)
         
-        if not show_record:
-            self.ui.recordButton.hide()
+        if show_record:
+            self.ui.recordButton.show()
                 
         # Signals
         self.camera_widget.displayCaptured.connect(self.handleDisplayCaptured)
