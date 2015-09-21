@@ -100,9 +100,12 @@ class FeedViewers(QtCore.QObject, halModule.HalModule):
         QtCore.QObject.__init__(self, parent)
         halModule.HalModule.__init__(self)
 
+        self.am_filming = False
         self.gui_settings = None
         self.parameters = parameters
         self.parent = parent
+        self.run_shutters = False
+        self.sync_max = 0
         self.viewers = []
 
     @hdebug.debug
@@ -113,8 +116,9 @@ class FeedViewers(QtCore.QObject, halModule.HalModule):
 
     @hdebug.debug
     def handleSyncMax(self, sync_max):
+        self.sync_max = sync_max
         for viewer in self.viewers:
-            viewer.setSyncMax(sync_max)
+            viewer.setSyncMax(self.sync_max)
 
     ## loadGUISettings
     #
@@ -156,16 +160,26 @@ class FeedViewers(QtCore.QObject, halModule.HalModule):
         new_viewer.newParameters(self.parameters)
         new_viewer.move(self.gui_settings.value("feed_viewer_" + str(index) + "_pos", QtCore.QPoint(200, 200)).toPoint())
         new_viewer.resize(self.gui_settings.value("feed_viewer_" + str(index) + "_size", new_viewer.size()).toSize())
+
+        # Since we might want to create a viewer in the middle of a film we
+        # need to configure for that.
+        new_viewer.setSyncMax(self.sync_max)
+        if self.am_filming:
+            new_viewer.startFilm(self.run_shutters)
+
         new_viewer.show()
         self.viewers.append(new_viewer)
 
     @hdebug.debug
     def startFilm(self, film_name, run_shutters):
+        self.am_filming = True
+        self.run_shutters = run_shutters
         for viewer in self.viewers:
             viewer.startFilm(run_shutters)
 
     @hdebug.debug
     def stopFilm(self, film_writer):
+        self.am_filming = False
         for viewer in self.viewers:
             viewer.stopFilm()
     
