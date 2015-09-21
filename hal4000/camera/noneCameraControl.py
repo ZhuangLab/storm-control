@@ -35,7 +35,7 @@ class ACameraControl(cameraControl.CameraControl):
         cameraControl.CameraControl.__init__(self, hardware, parent)
         self.fake_frame = 0
         self.fake_frame_size = [0,0]
-        self.sleep_time = 50
+        self.sleep_time = 100
 
         if hardware:
             self.roll = hardware.get("roll")
