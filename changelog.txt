@@ -1,3 +1,13 @@
 
+2015-09-21: Implemented camera feeds and cleaned up some of the camera related
+	    stuff. At least in theory you can now do things like have multiple
+	    displays of the frames from a single camera. You can also display
+	    and/or capture average images and images at certain intervals, along
+	    with a slice from a larger image. As part of this effort, camera
+	    acquisition has been separated from camera display. Hopefully this
+	    also makes the camera code a little easier to understand.
+
+	    NOTE! This involves some changes to the layout of the hardware.xml file.
+
 2015-09-09: Implemented control of an Andor sCMOS camera using their SDK3 library.
 
