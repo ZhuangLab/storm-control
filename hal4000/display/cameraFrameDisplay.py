@@ -64,6 +64,7 @@ class CameraFeedDisplay(QtGui.QFrame):
         self.show_grid = 0
         self.show_info = 1
         self.show_target = 0
+        self.sync_value = 0
 
         # UI setup.
         self.ui = cameraDisplayUi.Ui_Frame()
@@ -105,7 +106,7 @@ class CameraFeedDisplay(QtGui.QFrame):
             default_widget = a_class
         else:
             a_class = default_widget
-        self.camera_widget = a_class(parameters, parent = self.ui.cameraScrollArea)
+        self.camera_widget = a_class(parameters, self.ui.cameraScrollArea)
         self.ui.cameraScrollArea.setWidget(self.camera_widget)
 
         self.camera_widget.intensityInfo.connect(self.handleIntensityInfo)
@@ -273,9 +274,11 @@ class CameraFeedDisplay(QtGui.QFrame):
     # shutter sequences to specify which frame in the sequence should
     # be displayed, or just any random frame.
     #
+    # @param sync_value A number specifying which frame to display (module the cycle lenth).
+    #
     @hdebug.debug
-    def handleSync(self, frame):
-        self.setParameters("sync", frame)
+    def handleSync(self, sync_value):
+        self.sync_value = sync_value
 
     ## handleTarget
     #
@@ -329,7 +332,7 @@ class CameraFeedDisplay(QtGui.QFrame):
         self.ui.rangeSlider.setValues([float(self.getParameter("scalemin")), 
                                        float(self.getParameter("scalemax"))])
         self.ui.syncSpinBox.setValue(self.getParameter("sync"))
-        
+
     ## newFrame
     #
     # Handles new frame object from the camera control object. First it
@@ -342,8 +345,8 @@ class CameraFeedDisplay(QtGui.QFrame):
     #
     def newFrame(self, frame):
         if (frame.which_camera == self.feed_name):
-            if self.filming and self.getParameter("sync"):
-                if((frame.number % self.cycle_length) == (self.getParameter("sync")-1)):
+            if self.filming and (self.sync_value != 0):
+                if((frame.number % self.cycle_length) == (self.sync_value - 1)):
                     self.frame = frame
             else:
                 self.frame = frame
@@ -522,6 +525,19 @@ class CameraFrameDisplay(CameraFeedDisplay):
     #
     def handleROISelection(self, select_rect):
         self.ROISelection.emit(self.feed_name, select_rect)
+
+    ## handleSync
+    #
+    # Handles setting the sync parameter. This parameter is used in
+    # shutter sequences to specify which frame in the sequence should
+    # be displayed, or just any random frame.
+    #
+    # @param sync_value A number specifying which frame to display (module the cycle lenth).
+    #
+    @hdebug.debug
+    def handleSync(self, sync_value):
+        CameraFeedDisplay.handleSync(self, sync_value)
+        self.setParameter("sync", sync_value)
 
     ## startFilm
     #
