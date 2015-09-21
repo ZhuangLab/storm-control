@@ -3,6 +3,7 @@
 
   <!-- The UI mode, this is either "single" (window) or "detached" -->
   <ui_mode type="string">single</ui_mode>
+  <!-- <ui_mode type="string">detached</ui_mode> -->
 
   <!-- Camera control. -->
   <control>
@@ -31,6 +32,13 @@
       </parameters>
     </bluetooth>
     -->
+
+    <!-- Feed viewers -->
+    <feedviewers>
+      <class_name type="string">FeedViewers</class_name>
+      <menu_item type="string">New Viewer</menu_item>
+      <module_name type="string">display.feedViewer</module_name>
+    </feedviewers>
     
     <!-- The focus lock -->
     <focuslock>
@@ -57,11 +65,13 @@
     </progressions>
 
     <!-- The live STORM analysis and display -->
+    <!--
     <spotcounter>
       <class_name type="string">SingleSpotCounter</class_name>
       <menu_item type="string">Spot Counter</menu_item>
       <module_name type="string">spotCounter</module_name>
     </spotcounter>
+    -->
 
     <!-- Motorized XY stage -->
     <stage>

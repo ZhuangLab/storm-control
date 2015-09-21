@@ -26,6 +26,7 @@ import colorTables.colorTables as colorTables
 
 import qtdesigner.camera_display_ui as cameraDisplayUi
 
+default_widget = None
 
 ## CameraFeedDisplay
 #
@@ -87,9 +88,21 @@ class CameraFeedDisplay(QtGui.QFrame):
         self.ui.syncSpinBox.hide()
 
         # Camera display widget.
-        display_module = hardware.get("module_name")
-        a_module = __import__('display.' + display_module, globals(), locals(), [display_module], -1)
-        a_class = getattr(a_module, hardware.get("class_name"))
+        #
+        # This is probably not the best way to do this, but the goal is to have the feed viewers
+        # use the same display widget as the camera viewers. Knowing that the camera viewers
+        # will get initialized first we save what widget they used as a global variable in this
+        # module. Then when we go to create a feed viewers (where hardware will be None), we
+        # get the widget from this global variable.
+        #
+        if hardware is not None:
+            display_module = hardware.get("module_name")
+            a_module = __import__('display.' + display_module, globals(), locals(), [display_module], -1)
+            a_class = getattr(a_module, hardware.get("class_name"))
+            global default_widget
+            default_widget = a_class
+        else:
+            a_class = default_widget
         self.camera_widget = a_class(parameters, parent = self.ui.cameraScrollArea)
         self.ui.cameraScrollArea.setWidget(self.camera_widget)
 
