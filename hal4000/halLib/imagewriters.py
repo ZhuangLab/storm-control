@@ -331,17 +331,18 @@ class DaxFile(GenericFile):
     # @param frame A frame object.
     #
     def saveFrame(self, frame):
-        index = self.feed_names.index(frame.which_camera)
-        np_data = frame.getData()
-        if self.parameters.get("film.want_big_endian"):
-            np_data = np_data.byteswap()
-            np_data.tofile(self.file_ptrs[index])
-        else:
-            np_data.tofile(self.file_ptrs[index])
+        if frame.which_camera in self.feed_names:
+            index = self.feed_names.index(frame.which_camera)
+            np_data = frame.getData()
+            if self.parameters.get("film.want_big_endian"):
+                np_data = np_data.byteswap()
+                np_data.tofile(self.file_ptrs[index])
+            else:
+                np_data.tofile(self.file_ptrs[index])
             
-        self.number_frames[index] += 1
+            self.number_frames[index] += 1
 
-        
+
 ## DualCameraFormatFile
 #
 # Dual camera format writing class.
@@ -427,10 +428,11 @@ class SPEFile(GenericFile):
     # @param frame A frame object.
     #
     def saveFrame(self, frame):
-        index = self.feed_names.index(frame.which_camera)
-        np_data = frame.getData()
-        np_data.tofile(self.file_ptrs[index])
-        self.number_frames[index] += 1
+        if frame.which_camera in self.feed_names:
+            index = self.feed_names.index(frame.which_camera)
+            np_data = frame.getData()
+            np_data.tofile(self.file_ptrs[index])
+            self.number_frames[index] += 1
 
     ## closeFile
     #
@@ -476,11 +478,12 @@ class TIFFile(GenericFile):
     # @param frame A frame object.
     #
     def saveFrame(self, frame):
-        index = self.feed_names.index(frame.which_camera)
-        [x_pixels, y_pixels] = getCameraSize(self.parameters, self.feed_names[index])
-        self.tif_writers[index].addFrame(frame.getData(), x_pixels, y_pixels)
-
-        self.number_frames[index] += 1
+        if frame.which_camera in self.feed_names:
+            index = self.feed_names.index(frame.which_camera)
+            [x_pixels, y_pixels] = getCameraSize(self.parameters, self.feed_names[index])
+            self.tif_writers[index].addFrame(frame.getData(), x_pixels, y_pixels)
+            
+            self.number_frames[index] += 1
 
     ## closeFile
     #
