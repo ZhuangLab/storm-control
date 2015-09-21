@@ -112,7 +112,15 @@ class CameraControl(QtCore.QThread):
     @hdebug.debug
     def getProperties(self):
         return {"camera1" : frozenset()}
-    
+
+    ## getShutterStage
+    #
+    # @return The current state of the shutter (True - Open, False - Closed).
+    #
+    @hdebug.debug
+    def getShutterState(self, which_camera):
+        return self.shutter
+
     ## getTemperature
     #
     # Get the current camera temperature.

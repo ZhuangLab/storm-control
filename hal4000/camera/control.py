@@ -135,10 +135,15 @@ class Camera(QtCore.QObject):
         self.parameters = parameters
         self.camera_control.newParameters(self.parameters)
         for which_camera in self.cameras:
+
+            # Get acquisition timing information.
             [exposure_value, cycle_value] = self.camera_control.getAcquisitionTimings(which_camera)
             self.parameters.set([which_camera + ".exposure_value", which_camera + ".cycle_value"], [exposure_value, cycle_value])
             if (which_camera == "camera1"):
                 self.parameters.set("seconds_per_frame", cycle_value)
+
+            # Get camera shutter stage.
+            self.parameters.set(which_camera + ".shutter", self.camera_control.getShutterState(which_camera))
 
         self.feed_controller = feeds.newFeedController(self.cameras, self.parameters)
 
