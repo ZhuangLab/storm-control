@@ -108,6 +108,8 @@ class CameraFeedDisplay(QtGui.QFrame):
         self.camera_widget = a_class(parameters, parent = self.ui.cameraScrollArea)
         self.ui.cameraScrollArea.setWidget(self.camera_widget)
 
+        self.camera_widget.intensityInfo.connect(self.handleIntensityInfo)
+
         self.ui.autoScaleButton.clicked.connect(self.handleAutoScale)
         self.ui.colorComboBox.currentIndexChanged[str].connect(self.handleColorTableChange)
         self.ui.feedComboBox.currentIndexChanged[str].connect(self.handleFeedChange)
@@ -468,7 +470,6 @@ class CameraFrameDisplay(CameraFeedDisplay):
         self.camera_widget.displayCaptured.connect(self.handleDisplayCaptured)
         self.camera_widget.dragStart.connect(self.handleDragStart)
         self.camera_widget.dragMove.connect(self.handleDragMove)
-        self.camera_widget.intensityInfo.connect(self.handleIntensityInfo)
         self.camera_widget.roiSelection.connect(self.handleROISelection)
         
         self.ui.cameraShutterButton.clicked.connect(self.handleCameraShutter)
