@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <settings>
   <!-- general -->
-  <debug type="int">1</debug>
   <use_as_default type="int">1</use_as_default>
 
   <!-- camera settings -->
