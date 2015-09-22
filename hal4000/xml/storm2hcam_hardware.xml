@@ -30,8 +30,17 @@
     </bluetooth>
     -->
 
-    <!-- The focus lock -->
-    
+    <!-- Feed viewers -->
+    <!--
+    <feedviewers>
+      <class_name type="string">FeedViewers</class_name>
+      <menu_item type="string">New Viewer</menu_item>
+      <module_name type="string">display.feedViewer</module_name>
+    </feedviewers>
+    -->
+
+    <!-- The focus lock -->    
+
     <focuslock>
       <class_name type="string">AFocusLockZ</class_name>
       <menu_item type="string">Focus Lock</menu_item>
