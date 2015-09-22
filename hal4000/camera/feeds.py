@@ -246,7 +246,7 @@ class FeedSlice(FeedNC):
     def newFrame(self, new_frame):
         sliced_data = self.sliceFrame(new_frame)
         if sliced_data is not None:
-            return [frame.Frame(average_frame.astype(numpy.uint16),
+            return [frame.Frame(sliced_data,
                                 new_frame.number,
                                 self.x_pixels,
                                 self.y_pixels,
