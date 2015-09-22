@@ -23,7 +23,7 @@ import sc_hardware.hamamatsu.hamamatsu_camera as hcam
 #
 # This class is used to control a Hamamatsu (sCMOS) camera.
 #
-class ACameraControl(cameraControl.CameraControl):
+class ACameraControl(cameraControl.HWCameraControl):
 
     ## __init__
     #
@@ -35,7 +35,7 @@ class ACameraControl(cameraControl.CameraControl):
     #
     @hdebug.debug
     def __init__(self, hardware, parent = None):
-        cameraControl.CameraControl.__init__(self, hardware, parent)
+        cameraControl.HWCameraControl.__init__(self, hardware, parent)
 
         if hardware:
             self.camera = hcam.HamamatsuCameraMR(hardware.get("camera_id", 0))
@@ -135,74 +135,6 @@ class ACameraControl(cameraControl.CameraControl):
         self.stopThread()
         self.wait()
         self.camera.shutdown()
-
-    ## run
-    #
-    # The camera thread. This gets images from the camera, turns
-    # them into frames and sends them out using the newData signal.
-    #
-    def run(self):
-        while(self.running):
-            self.mutex.lock()
-            if self.acquire.amActive() and self.got_camera:
-
-                # Get data from camera and create frame objects.
-                [frames, frame_size] = self.camera.getFrames()
-
-                # Check if we got new frame data.
-                if (len(frames) > 0):
-
-                    # Create frame objects.
-                    frame_data = []
-                    for hc_data in frames:
-                        aframe = frame.Frame(hc_data.getData(),
-                                             self.frame_number,
-                                             frame_size[0],
-                                             frame_size[1],
-                                             "camera1",
-                                             True)
-                        frame_data.append(aframe)
-                        self.frame_number += 1
-                            
-                    # Emit new data signal.
-                    self.newData.emit(frame_data, self.key)
-            else:
-                self.acquire.idle()
-
-            self.mutex.unlock()
-            self.msleep(5)
-
-    ## startCamera
-    #
-    # Start the camera. The key parameter is for synchronizing the main
-    # process and the camera thread.
-    #
-    # @param key The ID value to use for frames from the current acquisition.
-    #
-    @hdebug.debug        
-    def startCamera(self, key):
-        self.mutex.lock()
-        self.acquire.go()
-        self.key = key
-        self.frame_number = 0
-        if self.got_camera:
-            self.camera.startAcquisition()
-        self.mutex.unlock()
-
-    ## stopCamera
-    #
-    # Stops the camera
-    #
-    @hdebug.debug
-    def stopCamera(self):
-        if self.acquire.amActive():
-            self.mutex.lock()
-            if self.got_camera:
-                self.camera.stopAcquisition()
-            self.acquire.stop()
-            self.mutex.unlock()
-            while not self.acquire.amIdle():
-                self.usleep(50)
 
 #
 # The MIT License
