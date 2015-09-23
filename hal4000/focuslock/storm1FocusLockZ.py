@@ -33,11 +33,11 @@ class AFocusLockZ(focusLockZ.FocusLockZQPD):
         control_thread = stageOffsetControl.StageQPDThread(qpd,
                                                            stage,
                                                            lock_fn,
-                                                           parameters.get("qpd_sum_min", 50.0), 
-                                                           parameters.get("qpd_zcenter"),
-                                                           parameters.get("is_locked_buffer_length", 10),
-                                                           parameters.get("is_locked_offset_thresh", 0.01))
-)
+                                                           parameters.get("focuslock.qpd_sum_min", 50.0), 
+                                                           parameters.get("focuslock.qpd_zcenter"),
+                                                           parameters.get("focuslock.is_locked_buffer_length", 10),
+                                                           parameters.get("focuslock.is_locked_offset_thresh", 0.01))
+
         ir_laser = LDC210.LDC210("PCIe-6321", 1)
         focusLockZ.FocusLockZQPD.__init__(self,
                                           parameters,
