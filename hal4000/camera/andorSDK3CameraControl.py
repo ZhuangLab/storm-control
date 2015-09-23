@@ -62,7 +62,7 @@ class ACameraControl(cameraControl.HWCameraControl):
     #
     @hdebug.debug
     def getProperties(self):
-        return {"camera1" : frozenset(['have_shutter', 'have_temperature'])}
+        return {"camera1" : frozenset(['have_temperature'])}
 
     ## getTemperature
     #
