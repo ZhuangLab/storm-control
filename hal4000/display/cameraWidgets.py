@@ -14,7 +14,7 @@ import qtWidgets.qtCameraWidget as qtCameraWidget
 
 # FIXME: Make this more generic.
 try:
-    import sc_hardware.hamamatsu.scmos_image_manipulation_c as scmos_im
+    import sc_library.scmos_image_manipulation_c as scmos_im
 except OSError:
     print "C frame processing library not found."
     scmos_im = None
