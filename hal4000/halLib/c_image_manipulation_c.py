@@ -2,10 +2,10 @@
 #
 ## @file
 #
-# Python interface to the sCMOS image manipulation library. The library
+# Python interface to the C image manipulation library. The library
 # is used to speed up the rendering of the image in the UI. My experience
-# was that for the largest images using numpy to do the image scaling
-# and type conversion was not fast enough.
+# was that for large images, such as those from a sCMOS camera, using numpy
+# to do the image scaling and type conversion was not fast enough.
 #
 # Hazen 09/15
 # 
@@ -25,9 +25,9 @@ else:
 
 try:
     if (sys.platform == "win32"):
-        image_manip = ctypes.cdll.LoadLibrary(directory + "scmos_image_manipulation.dll")
+        image_manip = ctypes.cdll.LoadLibrary(directory + "c_image_manipulation.dll")
     else:
-        image_manip = ctypes.cdll.LoadLibrary(directory + "scmos_image_manipulation.so")
+        image_manip = ctypes.cdll.LoadLibrary(directory + "c_image_manipulation.so")
             
     # C interface definition.
     rescale_fn_arg_types = [ndpointer(dtype=numpy.uint8),
@@ -197,8 +197,10 @@ if (__name__ == "__main__"):
             diff = c_nim - py_nim + 128
             fim = Image.fromarray(diff.astype(numpy.uint8))
             fim.save("diff.png")
+        else:
+            print "  Ok"
 
-
+            
 #
 # The MIT License
 #

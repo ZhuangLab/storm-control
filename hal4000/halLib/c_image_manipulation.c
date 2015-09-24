@@ -12,13 +12,13 @@
  *
  *
  * Compilation (windows):
- * gcc -c scmos_image_manipulation.c -O3
- * gcc -shared -o scmos_image_manipulation.dll scmos_image_manipulation.o
+ * gcc -c c_image_manipulation.c -O3
+ * gcc -shared -o c_image_manipulation.dll c_image_manipulation.o
  *
  * Compilation (linux):
- * gcc -fPIC -g -c -Wall scmos_image_manipulation.c -O3
- * gcc -shared -Wl,-soname,scmos_image_manipulation.so.1 -o scmos_image_manipulation.so.1.0.1 scmos_image_manipulation.o -lc 
- * ln -s scmos_image_manipulation.so.1.0.1 scmos_image_manipulation.so
+ * gcc -fPIC -g -c -Wall c_image_manipulation.c -O3
+ * gcc -shared -Wl,-soname,c_image_manipulation.so.1 -o c_image_manipulation.so.1.0.1 c_image_manipulation.o -lc 
+ * ln -s c_image_manipulation.so.1.0.1 c_image_manipulation.so
  *
  */
 
