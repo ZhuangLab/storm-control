@@ -98,7 +98,7 @@ class ACameraControl(cameraControl.CameraControl):
         fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
         for i in range(size_x):
             for j in range(size_y):
-                fake_frame[i*2*size_y + j*2] = chr(i % 128 + j % 128)
+                fake_frame[j*2*size_x + i*2] = chr(i % 128 + j % 128)
         self.fake_frame = numpy.fromstring(fake_frame, dtype = numpy.uint16)
         
         if not p.has("bytes_per_frame"):
