@@ -12,6 +12,8 @@ from PyQt4 import QtCore, QtGui
 import numpy
 import sys
 
+import halLib.c_image_manipulation_c as c_image
+
 ## QCameraWidget
 #
 # The base class for displaying data from a camera.
@@ -421,40 +423,17 @@ class QCameraWidget(QtGui.QWidget):
             h = frame.image_y
             image_data = frame.getData()
             image_data = image_data.reshape((h,w))
-            self.image_min = numpy.min(image_data)
-            self.image_max = numpy.max(image_data)
 
-            reoriented = False
-            if self.flip_horizontal:
-                reoriented = True
-                image_data = numpy.fliplr(image_data)
-
-            if self.flip_vertical:
-                reoriented = True
-                image_data = numpy.flipud(image_data)
-
-            if self.transpose:
-                reoriented = True
-                image_data = numpy.transpose(image_data)
-        
-            if reoriented:
-                image_data = numpy.ascontiguousarray(image_data)
-
-            if self.display_saturated_pixels:
-                max_range = 254.0
-            else:
-                max_range = 255.0
-
-            temp = image_data.astype(numpy.float32)
-            temp = max_range *(temp - self.display_range[0])/(self.display_range[1] - self.display_range[0])
-            temp[(temp > max_range )] = max_range 
-            temp[(temp < 0.0)] = 0.0
-
-            # Check for saturated pixels
-            if self.display_saturated_pixels:
-                temp[image_data >= self.max_intensity] = 255.0
-            
-            temp = temp.astype(numpy.uint8)
+            max_intensity = self.max_intensity
+            if not self.display_saturated_pixels:
+                max_intensity = None
+                
+            [temp, self.image_min, self.image_max] = c_image.rescaleImage(image_data,
+                                                                          self.flip_horizontal,
+                                                                          self.flip_vertical,
+                                                                          self.transpose,
+                                                                          self.display_range,
+                                                                          max_intensity)
 
             # Create QImage & draw at final magnification.
             if self.transpose:

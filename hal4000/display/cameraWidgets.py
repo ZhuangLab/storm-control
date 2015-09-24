@@ -12,16 +12,10 @@ from PyQt4 import QtCore, QtGui
 
 import qtWidgets.qtCameraWidget as qtCameraWidget
 
-# FIXME: Make this more generic.
-try:
-    import sc_library.scmos_image_manipulation_c as scmos_im
-except OSError:
-    print "C frame processing library not found."
-    scmos_im = None
 
 ## PyCameraWidget
 #
-# Pure Python camera display.
+# A wrapper so thin that it may soon disappear..
 #
 class PyCameraWidget(qtCameraWidget.QCameraWidget):
 
@@ -33,59 +27,6 @@ class PyCameraWidget(qtCameraWidget.QCameraWidget):
     def __init__(self, parameters, parent = None):
         qtCameraWidget.QCameraWidget.__init__(self, parameters, parent)
 
-## CCameraWidget
-#
-# Partially C based camera display, for improved speed. This can become
-# an issue when you are using an sCMOS camera.
-#
-class CCameraWidget(qtCameraWidget.QCameraWidget):
-
-    ## __init__
-    #
-    # @param parameters A parameters object.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, parameters, parent = None):
-        qtCameraWidget.QCameraWidget.__init__(self, parameters, parent)
-
-    ## updateImageWithFrame
-    #
-    # This updates the displayed image with a frame from the camera. This
-    # version uses a C helper library to try and make things faster and
-    # less memory intensive so that we can more easily keep up with the
-    # high data rate of a sCMOS camera.
-    #
-    # FIXME: Ignores image orientation settings.
-    #
-    # @param frame A frame object.
-    #
-    def updateImageWithFrame(self, frame):
-        if frame:
-            w = frame.image_x
-            h = frame.image_y
-            image_data = frame.getData()
-            image_data = image_data.reshape((h,w))
-
-            # Use C library to scale image & also determine image min & max.
-            [temp, self.image_min, self.image_max] = scmos_im.rescaleImage(image_data,
-                                                                           self.display_range)
-
-            # Create QImage & draw at final magnification.
-            temp_image = QtGui.QImage(temp.data, w, h, QtGui.QImage.Format_Indexed8)
-            self.image = temp_image.scaled(self.x_final, self.y_final)
-            self.image.ndarray = temp
-
-            # Set the images color table.
-            self.setColorTable()
-            self.update()
-
-            if self.show_info:
-                x_loc = self.x_click
-                y_loc = self.y_click
-                value = 0
-                if ((x_loc >= 0) and (x_loc < w) and (y_loc >= 0) and (y_loc < h)):
-                    value = image_data[y_loc, x_loc]
-                    self.intensityInfo.emit(x_loc, y_loc, value)
                     
 #
 # The MIT License
