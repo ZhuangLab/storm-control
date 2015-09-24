@@ -1,4 +1,7 @@
 
+2015-09-24: Switched to doing all the image manipulation (for image display)
+	    in C, falling back to numpy of the C library is not available.
+	    
 2015-09-21: Implemented camera feeds and cleaned up some of the camera related
 	    stuff. At least in theory you can now do things like have multiple
 	    displays of the frames from a single camera. You can also display
