@@ -28,8 +28,7 @@ HAL-4000 (QtGui.QMainWindow)
         cameraFrameDisplay.CameraFrameDisplay(CameraFeedDisplay)
 
         Displaying the images from the camera:
-          cameraWidgets.pyCameraWidget(QtGui.QWidget)
-          cameraWidgets.CCameraWidget(QtGui.QWidget)
+          cameraWidgets.PyCameraWidget(QtGui.QWidget)
 
       Displaying the camera settings (exposure time, etc)
         paramsDisplay.ParamsDisplay(QtGui.QGroupBox)
