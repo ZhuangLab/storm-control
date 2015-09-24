@@ -12,7 +12,7 @@
   <!-- Camera display. -->
   <display>
     <module_name type="string">cameraWidgets</module_name>
-    <class_name type="string">CCameraWidget</class_name>
+    <class_name type="string">PyCameraWidget</class_name>
   </display>
 
   <!-- Define the other modules to use for this setup. -->
