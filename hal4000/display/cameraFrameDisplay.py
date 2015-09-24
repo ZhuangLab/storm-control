@@ -185,6 +185,7 @@ class CameraFeedDisplay(QtGui.QFrame):
     #
     @hdebug.debug
     def handleColorTableChange(self, table_name):
+        table_name = str(table_name)
         self.setParameter("colortable", table_name + ".ctbl")
         self.color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
         self.camera_widget.newColorTable(self.color_table)
@@ -196,6 +197,7 @@ class CameraFeedDisplay(QtGui.QFrame):
     #
     @hdebug.debug
     def handleFeedChange(self, feed_name):
+        feed_name = str(feed_name)
         self.feedChanged.emit(feed_name)
         
     ## handleGrid
