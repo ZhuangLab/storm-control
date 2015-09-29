@@ -2,9 +2,9 @@
 #
 ## @file
 #
-# qtCameraWidget specialized for data from a Andor camera.
+# Widgets for displaying the data from a camera
 #
-# Hazen 06/12
+# Hazen 09/15
 #
 
 import numpy
@@ -12,15 +12,14 @@ from PyQt4 import QtCore, QtGui
 
 import qtWidgets.qtCameraWidget as qtCameraWidget
 
-## ACameraWidget
+
+## PyCameraWidget
 #
-# QCameraWidget specialized for to display data from a Andor camera.
+# A wrapper so thin that it may soon disappear..
 #
-class ACameraWidget(qtCameraWidget.QCameraWidget):
+class PyCameraWidget(qtCameraWidget.QCameraWidget):
 
     ## __init__
-    #
-    # Create the Andor camera display widget.
     #
     # @param parameters A parameters object.
     # @param parent (Optional) The PyQt parent of this object.
@@ -28,10 +27,11 @@ class ACameraWidget(qtCameraWidget.QCameraWidget):
     def __init__(self, parameters, parent = None):
         qtCameraWidget.QCameraWidget.__init__(self, parameters, parent)
 
+                    
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2015 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

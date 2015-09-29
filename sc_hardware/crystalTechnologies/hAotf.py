@@ -37,6 +37,11 @@ class CrystalTechAOTF(illuminationHardware.BufferedAmplitudeModulation):
             else:
                 self.aotf.analogModulationOff()
 
+            if hasattr(parameters, "fsk_mode"):
+                self.fsk_mode = parameters.fsk_mode
+            else:
+                self.fsk_mode = 1
+
     ## amplitudeOff
     #
     # Called when the module should turn off a channel.
@@ -107,7 +112,7 @@ class CrystalTechAOTF(illuminationHardware.BufferedAmplitudeModulation):
             self.device_mutex.lock()
             self.aotf.setFrequencies(aotf_channel, frequencies)
             if self.use_fsk:
-                self.aotf.fskOn(aotf_channel)
+                self.aotf.fskOn(aotf_channel, self.fsk_mode)
             else:
                 self.aotf.fskOff(aotf_channel)
             self.device_mutex.unlock()

@@ -86,8 +86,8 @@ class AMiscControl(miscControl.MiscControl):
         if self.em_filter_wheel:
             self.em_filters[self.filter_wheel.getPosition(2)-1].click()
 
-        self.ui.emCheckBox.setChecked(parameters.get("em_checked"))
-        self.ui.emSpinBox.setValue(parameters.get("em_period"))
+        self.ui.emCheckBox.setChecked(parameters.get("misc.em_checked"))
+        self.ui.emSpinBox.setValue(parameters.get("misc.em_period"))
 
     @hdebug.debug
     def handleEmFilter(self, bool):
@@ -97,7 +97,7 @@ class AMiscControl(miscControl.MiscControl):
                 if self.em_filter_wheel:
                     self.em_filter_pos = i
                     self.em_filter_wheel.setPosition(i+1, 2)
-                self.parameters.set("em_filter", i)
+                self.parameters.set("misc.em_filter", i)
             else:
                 afilter.setStyleSheet("QPushButton { color: black}")
 
@@ -109,7 +109,7 @@ class AMiscControl(miscControl.MiscControl):
                 if self.filter_wheel:
                     self.em_filter_pos = i
                     self.filter_wheel.setPosition(i+1, 1)
-                self.parameters.set("filter_position", i)
+                self.parameters.set("misc.filter_position", i)
             else:
                 filter.setStyleSheet("QPushButton { color: black}")
 
@@ -126,15 +126,15 @@ class AMiscControl(miscControl.MiscControl):
         self.parameters.em_period = self.ui.emSpinBox.value()
 
         self.parameters = parameters
-        names = parameters.get("filter_names")
+        names = parameters.get("misc.filter_names")
         if (len(names) == 6):
             for i in range(6):
                 self.filters[i].setText(names[i])
 
-        self.filters[self.parameters.get("filter_position")].click()
-        self.em_filters[self.parameters.get("em_filter")].click()
-        self.ui.emCheckBox.setChecked(self.parameters.get("em_checked"))
-        self.ui.emSpinBox.setValue(self.parameters.get("em_period"))
+        self.filters[self.parameters.get("misc.filter_position")].click()
+        self.em_filters[self.parameters.get("misc.em_filter")].click()
+        self.ui.emCheckBox.setChecked(self.parameters.get("misc.em_checked"))
+        self.ui.emSpinBox.setValue(self.parameters.get("misc.em_period"))
 
     def startFilm(self, film_name, run_shutters):
         if self.ui.emCheckBox.isChecked():        

@@ -18,50 +18,99 @@ from xml.etree import ElementTree
 
 default_params = 0
 
-## copySettings
+## copyParameters
 #
 # Creates a new object which is a copy of the original with values
-# that also exist in duplicate replaced with the values from
-# duplicate.
+# that also exist in new_parameters replaced with the values from
+# new_parameters. This is so that you don't have to specify all of
+# the settings in new_parameters, just the ones that you want to
+# update.
 #
-# This is complicated somewhat by the fact that the duplicate
-# settings might be "old" style, i.e. flat, or new style (which
-# is only 1 level deep).
+# This is complicated somewhat by the fact that the new_parameters
+# object might be "old" style, i.e. flat, or new style, i.e. a tree.
 #
-# @param original The original settings.
-# @param duplicate The duplicate settings.
+# @param ori_parameters The original parameters.
+# @param new_parameters The new parameters.
 #
-def copySettings(original, duplicate):
-    settings = copy.deepcopy(original)
+def copyParameters(ori_parameters, new_parameters):
 
-    for attr in settings.getAttrs():
-        
-        # Sub block parameter.
-        if isinstance(settings.get(attr), StormXMLObject):
-            sub_settings = settings.get(attr)
+    # Create.
+    params = copy.deepcopy(ori_parameters)
+    copyParametersReplace("", params, new_parameters)
 
-            # Duplicate also has sub blocks, only look in the same sub block.
-            sub_duplicate = False
-            if duplicate.get("_recursed_"):
-                if duplicate.has(attr):
-                    sub_duplicate = duplicate.get(attr)
+    # Check and add any appropriately flagged new parameters.
+    copyParametersCheck(params, new_parameters, new_parameters._is_new_)
+
+    return params
+
+## copyParametersCheck
+#
+# Copy parameters in new_parameters that did not exist in
+# ori_parameters, but only if they are specifically flagged
+# with _is_new_. If they are not so flagged, throw an
+# error as this likely indicates a misspelling.
+#
+# Notes
+#  1. This assumes both parameters are tree style.
+#  2. Only sub-sections can be marked as _is_new_, not
+#     individual parameters.
+#
+def copyParametersCheck(ori_parameters, new_parameters, allow_new):
+
+    for attr in new_parameters.getAttrs():
+            
+        prop = new_parameters.get(attr, mark_used = False)
+        if isinstance(prop, StormXMLObject):
+            if not ori_parameters.has(attr):
+                if prop._is_new_ or allow_new:
+                    ori_parameters.set(attr, StormXMLObject([]))
+                    temp = ori_parameters.get(attr)
+                    temp._is_new_ = True
+                else:
+                    raise ParametersException("Unrecognized new section " + attr)
+
+            # Allow new parameters for all sub-objects.
+            if allow_new:
+                copyParametersCheck(ori_parameters.get(attr), prop, True)
             else:
-                sub_duplicate = duplicate
+                copyParametersCheck(ori_parameters.get(attr), prop, prop._is_new_)
 
-            if sub_duplicate:
-                for sub_attr in sub_settings.getAttrs():
-                    if sub_duplicate.has(sub_attr):
-                        sub_settings.set(sub_attr, sub_duplicate.get(sub_attr))
-
-        # Main block parameter.
         else:
-            if duplicate.has(attr):
-                settings.set(attr, duplicate.get(attr))
-    
-    if duplicate.hasUnused():
-        raise ParametersException("Unrecognized settings " + ", ".join(map(lambda(x): "'" + str(x) + "'", duplicate.getUnused())))
+            if not ori_parameters.has(attr):
+                if allow_new:
+                    ori_parameters._create_(attr, prop)
+                else:
+                    if attr in new_parameters.getUnused():
+                        raise ParametersException("Unrecognized new parameter " + attr)
 
-    return settings
+## copyParametersReplace
+#
+# This replaces all the parameters in original with their values
+# from new, if duplicate has a corresponding value.
+#
+# @param root The current root object, e.g, "" or "camera1", etc.
+# @param original The original parameters object.
+# @param new The new parameters object.
+#
+def copyParametersReplace(root, original, new):
+
+    for attr in original.getAttrs():
+
+        prop = original.get(attr)
+        if isinstance(prop, StormXMLObject):
+            if (len(root) > 0):
+                copyParametersReplace(root + "." + attr, prop, new)
+            else:
+                copyParametersReplace(attr, prop, new)
+                
+        else:
+            # New is also a tree.
+            if (len(root) > 0) and new.has(root + "." + attr):
+                    original.set(attr, new.get(root + "." + attr))
+
+            # New is flat.
+            elif new.has(attr):
+                original.set(attr, new.get(attr))
 
 ## fileType
 #
@@ -105,10 +154,14 @@ def halParameters(parameters_file):
     
     global default_params
     if default_params:
-        xml_object = copySettings(default_params, xml_object)
-    
-    # Define some camera specific derivative parameters
-    for attr in ["camera", "camera1", "camera2"]:
+        xml_object = copyParameters(default_params, xml_object)
+
+    # Define some camera specific derivative parameters.
+    #
+    # FIXME: We are assuming that there won't be more than 5 cameras..
+    #
+    for i in range(5):
+        attr = "camera" + str(i+1)
         if xml_object.has(attr):
             setCameraParameters(xml_object.get(attr))
 
@@ -121,14 +174,15 @@ def halParameters(parameters_file):
     if not film_xml.has("extension"):
         film_xml.set("extension", film_xml.extensions[0])
 
-    illumination_xml = xml_object.get("illumination")
-    if not os.path.exists(illumination_xml.get("shutters")):
-        illumination_xml.set("shutters", os.path.dirname(parameters_file) + "/" + illumination_xml.get("shutters"))
+    illumination_xml = xml_object.get("illumination", False)
+    if illumination_xml:
+        if not os.path.exists(illumination_xml.get("shutters")):
+            illumination_xml.set("shutters", os.path.dirname(parameters_file) + "/" + illumination_xml.get("shutters"))
 
-    illumination_xml.set("shutter_colors", [])
-    illumination_xml.set("shutter_data", [])
-    illumination_xml.set("shutter_frames", -1)
-    illumination_xml.set("shutter_oversampling", 0)
+        illumination_xml.set("shutter_colors", [])
+        illumination_xml.set("shutter_data", [])
+        illumination_xml.set("shutter_frames", -1)
+        illumination_xml.set("shutter_oversampling", 0)
 
     if use_as_default or (not default_params):
         default_params = copy.deepcopy(xml_object)
@@ -151,36 +205,19 @@ def hardware(hardware_file):
         raise ParametersException(hardware_file + " is not a hardware file.")
 
     # Create the hardware object.
-    xml_object = StormXMLObject([])
+    hardware = StormXMLObject(xml, recurse = True)
 
-    # Load camera information.
-    camera_xml = xml.find("camera")
-    xml_object.camera = StormXMLObject([])
-    xml_object.camera.module = camera_xml.find("module").text
-    xml_object.camera.parameters = StormXMLObject(camera_xml.find("parameters"))
-
-    # Load modules.
-    xml_object.modules = []
-    for xml_module in xml.find("modules"):
-
-        # Create module based on XML
-        module = StormXMLObject(xml_module)
-        xml_parameters = xml_module.find("parameters")
-        if xml_parameters is not None:
-            module.parameters = StormXMLObject(xml_parameters)
+    # Add some additional properties to the modules.
+    modules = hardware.get("modules")
+    for module_name in modules.getAttrs():
+        module = modules.get(module_name)
+        module.set("hal_type", module_name)
+        if module.has("menu_item"):
+            module.set("hal_gui", True)
         else:
-            module.parameters = None
+            module.set("hal_gui", False)
 
-        # Add addition properties
-        module.hal_type = xml_module.tag
-        if (hasattr(module, "menu_item")):
-            module.hal_gui = True
-        else:
-            module.hal_gui = False
-
-        xml_object.modules.append(module)
-
-    return xml_object
+    return hardware
 
 ## parameters
 #
@@ -209,11 +246,13 @@ def parameters(parameters_file, recurse = False, skip_added = False):
 # @param camera A camera XML object.
 #
 def setCameraParameters(camera):
-    
+
     camera.set("x_pixels", camera.get("x_end") - camera.get("x_start") + 1)
     camera.set("y_pixels", camera.get("y_end") - camera.get("y_start") + 1)
+
+    # FIXME: This is specific to Andor EMCCDs?
     if((camera.get("x_pixels") % 4) != 0):
-        raise ParameterException("The camera ROI must be a multiple of 4 in x!")
+        raise ParametersException("The camera ROI must be a multiple of 4 in x!")
 
     camera.set("ROI", [camera.get("x_start"),
                        camera.get("x_end"),
@@ -280,6 +319,10 @@ class StormXMLObject(object):
     #
     def __init__(self, nodes, recurse = False, skip_added = False):
 
+        if isinstance(nodes, ElementTree.Element):
+            self._is_new_ = bool(nodes.attrib.get("is_new", False))
+        else:
+            self._is_new_ = False
         self._recursed_ = False
         self._unused_ = {}
         self._warned_ = False
@@ -331,7 +374,7 @@ class StormXMLObject(object):
                     else:
                         self._create_(slot, False)
                         
-                elif (node_type == "float"):
+                elif (node_type == "float") or (node_type == "float64"):
                     self._create_(slot, float(node_value))
                 elif (node_type == "float-array"):
                     text_array = node_value.split(",")
@@ -376,7 +419,10 @@ class StormXMLObject(object):
     # Create a property. This is basically the same as set, but it also
     # adds the property name to the dictionary of unused properties. The
     # dictionary of unused properties is also used to keep track of what
-    # was part this object originally and what was added later.
+    # was part this object originally and what was added later. So the
+    # value in the dictionary (True/False) specifies if the property was
+    # used and the fact that it is in the dictionary at all means that
+    # it was not added later using set.
     #
     # @param pname A string containing the property name.
     # @param value The value to set the property too.
@@ -415,8 +461,15 @@ class StormXMLObject(object):
         # Check for sub-property.
         pnames = pname.split(".")
         if (len(pnames) > 1):
-            xml_object = self.get(pnames[0])
-            return xml_object.get(".".join(pnames[1:]), default, mark_used)
+            try:
+                xml_object = self.get(pnames[0])
+            except ParametersException as e:
+                if default is not None:
+                    return default
+                else:
+                    raise e
+            else:
+                return xml_object.get(".".join(pnames[1:]), default, mark_used)
 
         if hasattr(self, pname):
             if mark_used:
@@ -456,8 +509,6 @@ class StormXMLObject(object):
     #
     def getUnused(self):
         unused = filter(lambda(x): self._unused_[x], self._unused_.keys())
-        for elt in self.getSubXMLObjects():
-            unused = unused + elt.getUnused()
         return unused
                 
     ## has
@@ -473,8 +524,11 @@ class StormXMLObject(object):
         # Check for sub-property.
         pnames = pname.split(".")
         if (len(pnames) > 1):
-            xml_object = self.get(pnames[0])
-            return xml_object.has(".".join(pnames[1:]))
+            xml_object = self.get(pnames[0], False)
+            if xml_object:
+                return xml_object.has(".".join(pnames[1:]))
+            else:
+                return False
 
         if hasattr(self, pname):
             self.isUsed(pname)
@@ -560,7 +614,9 @@ class StormXMLObject(object):
         for attr in self.getAttrs():
             value = self.get(attr)
             if isinstance(value, StormXMLObject):
-                xml.append(value.toXML(attr))
+                temp = value.toXML(attr)
+                temp.set("is_new", str(value._is_new_))
+                xml.append(temp)
             else:
 
                 # Don't save the following.
@@ -633,37 +689,19 @@ class StormXMLObject(object):
 # Testing
 # 
 
-if __name__ == "__main__":
+if (__name__ == "__main__"):
 
     import sys
 
     from xml.dom import minidom
-    
-    if 0:
-        test = Parameters(sys.argv[1])
-        print test.setup_name
-        print "1:", test.unused()
-        print "2:", test.unused()
 
-    if 0:
-        test = Hardware(sys.argv[1])
-        for k,v in test.__dict__.iteritems():
-            print k
+    p1 = halParameters(sys.argv[1])
+    p2 = halParameters(sys.argv[2])
 
-        for module in test.modules:
-            for k,v in module.__dict__.iteritems():
-                print k,v
-            print ""
+    string = ElementTree.tostring(p2.toXML(), 'utf-8')
+    reparsed = minidom.parseString(string)
+    print reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1")    
 
-    if 1:
-        p1 = halParameters(sys.argv[1]).get("camera1")
-        p2 = halParameters(sys.argv[2]).get("camera1")
-        for diff in p2.diff(p1):
-            print diff, p1.get(diff), p2.get(diff)
-
-#        string = ElementTree.tostring(p2.toXML(), 'utf-8')
-#        reparsed = minidom.parseString(string)
-#        print reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1")
         
 #
 # The MIT License

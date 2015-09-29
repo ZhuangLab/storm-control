@@ -20,17 +20,16 @@ specifies how to control the hardware attached to the setup. You
 will also need to create a file called "myscope_default.xml", to 
 specify the default parameters to use when the program starts. 
 Finally, to get HAL to load your setup instead of the default 
-"none" setup you can change the setup_name field in the 
-settings_default.xml file. Alternatively you can specify a setup 
-name, hardware and parameters file at the command prompt as 
-explained below.
+"none" setup you can specify a setup name, hardware and parameters
+file at the command prompt as explained below.
 
-Option 1: This will look in the file settings_default.xml to
-  determine which setup (hardware) configuration to use.
+Option 1: This run HAL in emulation mode.
 
 > python hal-4000.py
 
-Option 2: Specify everything at the (DOS) command line.
+Option 2: This will run an actual setup.
 
 > python hal-4000.py storm3 xml\storm3_hardware.xml xml\storm3_default.xml
 
+See also the .bat files that we use to start the software on our
+setups.

@@ -5,9 +5,10 @@
 # Dummy classes for use when you have some but not all 
 # of the focus lock functionality.
 #
-# Hazen 12/09
+# Hazen 07/15
 #
 
+import numpy
 import time
 
 ## QPD
@@ -38,6 +39,49 @@ class QPD():
     def shutDown(self):
         pass
 
+## Camera
+#
+# A fake camera class.
+#
+class Camera(QPD):
+    
+    ## __init__
+    #
+    # Creates the fake camera object.
+    #
+    def __init__(self):
+        self.image = numpy.zeros((200,200), dtype = numpy.uint8)
+
+    ## adjustAOI
+    #
+    # @param dx Amount to displace the AOI in pixels in x, needs to be a multiple of 2.
+    # @param dy Amount to displace the AOI in pixels in y, needs to be a multiple of 2.
+    #
+    def adjustAOI(self, dx, dy):
+        pass
+
+    ## adjustZeroDist
+    #
+    # @param inc The amount to increment the zero distance value by.
+    #
+    def adjustZeroDist(self, inc):
+        pass
+        
+    ## getImage
+    #
+    # @return A copy of the fake image.
+    #
+    def getImage(self):
+        return [self.image.copy(), 0.1, 50, -0.1, -50, 8.0]
+                
+    ## qpdScan
+    #
+    # @return [200.0, 0.0, 0.0]
+    #
+    def qpdScan(self):
+        time.sleep(0.05)
+        return [200.0, 0.0, 0.0]
+    
 ## NanoP
 #
 # Fake nano-positioner class.
@@ -102,7 +146,7 @@ class IRLaser():
 #
 # The MIT License
 #
-# Copyright (c) 2009 Zhuang Lab, Harvard University
+# Copyright (c) 2015 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

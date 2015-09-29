@@ -4,6 +4,10 @@
 #
 # Captures pictures from a Thorlabs uc480 (software) series cameras.
 #
+# NOTE: For reasons unclear, but perhaps due to a change in
+#       ctypes, this module only works well with (64 bit) Python 
+#       versions that are <= 2.7.8.
+#
 # Hazen 02/13
 #
 
@@ -454,13 +458,15 @@ class CameraQPD():
     # @param fit_mutex (Optional) A QMutex to use for fitting (to avoid thread safety issues with numpy), defaults to False.
     # @param x_width (Optional) AOI size in x, defaults to 200.
     # @param y_width (Optional) AOI size in y, defaults to 200.
+    # @param sigma (Optional) Initial sigma for the fit, defaults to 8.0.
     #
-    def __init__(self, camera_id = 1, fit_mutex = False, x_width = 200, y_width = 200):
+    def __init__(self, camera_id = 1, fit_mutex = False, x_width = 200, y_width = 200, sigma = 8.0):
         self.file_name = "cam_offsets_" + str(camera_id) + ".txt"
         self.fit_mode = 1
         self.fit_mutex = fit_mutex
-        self.fit_size = 12
+        self.fit_size = int(1.5 * sigma)
         self.image = None
+        self.sigma = sigma
         self.x_off1 = 0.0
         self.y_off1 = 0.0
         self.x_off2 = 0.0
@@ -554,11 +560,12 @@ class CameraQPD():
             if self.fit_mutex:
                 self.fit_mutex.lock()
             #[params, status] = fitSymmetricGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
-            [params, status] = fitFixedEllipticalGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
+            #[params, status] = fitFixedEllipticalGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
+            [params, status] = fitFixedEllipticalGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], self.sigma)
             if self.fit_mutex:
                 self.fit_mutex.unlock()
-            params[2] -= self.fit_size/2
-            params[3] -= self.fit_size/2
+            params[2] -= self.fit_size
+            params[3] -= self.fit_size
             return [max_x, max_y, params, status]
         else:
             return [False, False, False, False]
@@ -568,7 +575,7 @@ class CameraQPD():
     # @return [camera image, spot 1 x fit, spot 1 y fit, spot 2 x fit, spot 2 y fit]
     #
     def getImage(self):
-        return [self.image, self.x_off1, self.y_off1, self.x_off2, self.y_off2]
+        return [self.image, self.x_off1, self.y_off1, self.x_off2, self.y_off2, self.sigma]
 
     ## getZeroDist
     #
@@ -723,99 +730,6 @@ class CameraQPD():
 
             return [power, offset, 0]
 
-## CameraQPD300
-#
-# QPD emulation class with a 300x300 pixel ROI.
-#
-class CameraQPD300(CameraQPD):
-
-    ## __init__
-    #
-    # @param camera_id (Optional) The camera id, defaults to 1.
-    # @param fit_mutex (Optional) A QMutex to use during fitting, defaults to False.
-    #
-    def __init__(self, camera_id = 1, fit_mutex = False):
-        CameraQPD.__init__(self, camera_id, fit_mutex)
-
-        # Change initial zero distance to 150.0
-        self.zero_dist = 150.0
-
-        # Change width to 300 x 300.
-        self.x_width = 300
-        self.y_width = 300
-        self.setAOI()
-
-        # Set camera to run as fast as possible
-        self.cam.setPixelClock()
-        self.cam.setFrameRate()
-        
-        # Some derived parameters
-        self.half_x = self.x_width/2
-        self.half_y = self.y_width/2
-        self.X = numpy.arange(self.y_width) - 0.5*float(self.y_width)
-
-## CameraQPD500
-#
-# QPD emulation class with a 500x500 pixel ROI.
-#
-class CameraQPD500(CameraQPD):
-
-    ## __init__
-    #
-    # @param camera_id (Optional) The camera id, defaults to 1.
-    # @param fit_mutex (Optional) A QMutex to use during fitting, defaults to False.
-    #
-    def __init__(self, camera_id = 1, fit_mutex = False):
-        CameraQPD.__init__(self, camera_id, fit_mutex)
-
-        # Change initial zero distance to 250.0
-        self.zero_dist = 250.0
-
-        # Change width to 500 x 500.
-        self.x_width = 500
-        self.y_width = 500
-        self.setAOI()
-
-        # Set camera to run as fast as possible
-        self.cam.setPixelClock()
-        self.cam.setFrameRate()
-        
-        # Some derived parameters
-        self.half_x = self.x_width/2
-        self.half_y = self.y_width/2
-        self.X = numpy.arange(self.y_width) - 0.5*float(self.y_width)
-
-
-## CameraQPD752
-#
-# QPD emulation class with a 752x752 pixel ROI.
-#
-class CameraQPD752(CameraQPD):
-
-    ## __init__
-    #
-    # @param camera_id (Optional) The camera id, defaults to 1.
-    # @param fit_mutex (Optional) A QMutex to use during fitting, defaults to False.
-    #
-    def __init__(self, camera_id = 1, fit_mutex = False):
-        CameraQPD.__init__(self, camera_id, fit_mutex)
-
-        # Change initial zero distance to 250.0
-        self.zero_dist = 376.0
-
-        # Change width to 500 x 500.
-        self.x_width = 752
-        self.y_width = 752
-        self.setAOI()
-
-        # Set camera to run as fast as possible
-        self.cam.setPixelClock()
-        self.cam.setFrameRate()
-        
-        # Some derived parameters
-        self.half_x = self.x_width/2
-        self.half_y = self.y_width/2
-        self.X = numpy.arange(self.y_width) - 0.5*float(self.y_width)
 
 # Testing
 if __name__ == "__main__":
@@ -868,46 +782,6 @@ if __name__ == "__main__":
         cam.saveParameters("cam1.ini")
 
     cam.shutDown()
-
-    #print image.shape, numpy.min(image), numpy.max(image)
-
-    #im = Image.fromarray(image)
-    #im.save("temp.png")
-    #im.show()
-
-
-# Bonus code section..
-
-#    def setSize(self, width, height):
-#        if (width > self.info.nMaxWidth) or (height > self.info.nMaxHeight):
-#            print "uc480: Width of Height are too large"
-#        else:
-#            self.im_width = width
-#            self.im_height = height
-#            self.setBuffers()
-        
-#    def waitForImage(self, timeout = 100):
-#        check(uc480.is_WaitForNextImage(self,
-#                                        ctypes.wintypes.UINT(timeout),
-#                                        ctypes.byref(self.image),
-#                                        ctypes.byref(self.id)))
-
-#        # Determine number of cameras available.
-#        c_num_cams = ctypes.wintypes.INT()
-#        check(uc480.is_GetNumberOfCameras(ctypes.byref(c_num_cams)))
-#        num_cams = int(c_num_cams.value)
-#        # Initialize camera.
-#        if(num_cams == 1):
-#
-#            check(uc480.is_InitCamera(ctypes.byref(self), ctypes.wintypes.HWND(0)))
-#        else:
-#            # We have to find the camera we want..
-#            print "Found", num_cams, "cameras"
-#            camera_data = create_camera_list(num_cams)
-#            check(uc480.is_GetCameraList(ctypes.byref(camera_data)))
-#            for camera in camera_data.Cameras:
-#                print camera.SerNo, camera.CameraID, camera.DeviceID
-#
 
 #
 # The MIT License

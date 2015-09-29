@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>583</width>
-    <height>541</height>
+    <width>645</width>
+    <height>546</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -57,7 +57,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="CameraScrollArea" name="cameraScrollArea">
+       <widget class="QCameraScrollArea" name="cameraScrollArea">
         <property name="minimumSize">
          <size>
           <width>514</width>
@@ -75,7 +75,7 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>512</width>
+           <width>570</width>
            <height>512</height>
           </rect>
          </property>
@@ -248,6 +248,9 @@
        </widget>
       </item>
       <item>
+       <widget class="QComboBox" name="feedComboBox"/>
+      </item>
+      <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -384,9 +387,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>CameraScrollArea</class>
+   <class>QCameraScrollArea</class>
    <extends>QScrollArea</extends>
-   <header>camera.cameraDisplay</header>
+   <header>qtWidgets.qtCameraScrollArea</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

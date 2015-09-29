@@ -7,6 +7,10 @@
 # Hazen 03/14
 #
 
+# Add current storm-control directory to sys.path
+import imp
+imp.load_source("setPath", "../sc_library/setPath.py")
+
 import sys
 from PyQt4 import QtGui
 
@@ -23,11 +27,11 @@ def runModule(module_type, setup_name = False):
     hardware = params.hardware("xml/" + setup_name + "_hardware.xml")
 
     found = False
-    for module in hardware.modules:
-        if (module.hal_type == module_type):
-            a_module = __import__(module.module_name, globals(), locals(), [setup_name], -1)
-            a_class = getattr(a_module, module.class_name)
-            instance = a_class(module.parameters, parameters, None)
+    for module in hardware.get("modules").getSubXMLObjects():
+        if (module.get("hal_type") == module_type):
+            a_module = __import__(module.get("module_name"), globals(), locals(), [setup_name], -1)
+            a_class = getattr(a_module, module.get("class_name"))
+            instance = a_class(module.get("parameters", False), parameters, None)
             instance.newParameters(parameters)
             instance.show()
             found = True

@@ -1,16 +1,23 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <hardware>
 
-  <!-- Define the camera. -->
-  <camera>
-    <!-- <module type="string">detachedSingleCamera</module> -->
-    <module type="string">classicSingleCamera</module>
-    <!-- <module type="string">noneCamera</module> -->
+  <!-- The UI mode, this is either "single" (window) or "detached" -->
+  <ui_mode type="string">single</ui_mode>
+  <!-- <ui_mode type="string">detached</ui_mode> -->
+
+  <!-- Camera control. -->
+  <control>
+    <module_name type="string">noneCameraControl</module_name>
     <parameters>
-      <control type="string">noneCameraControl</control>
-      <display type="string">noneCameraWidget</display>
+      <roll type="float">0.5</roll>
     </parameters>
-  </camera>
+  </control>
+
+  <!-- Camera display. -->
+  <display>
+    <module_name type="string">cameraWidgets</module_name>
+    <class_name type="string">PyCameraWidget</class_name>
+  </display>
 
   <!-- Define the other modules to use for this setup. -->
   <modules>
@@ -26,6 +33,13 @@
     </bluetooth>
     -->
 
+    <!-- Feed viewers -->
+    <feedviewers>
+      <class_name type="string">FeedViewers</class_name>
+      <menu_item type="string">New Viewer</menu_item>
+      <module_name type="string">display.feedViewer</module_name>
+    </feedviewers>
+    
     <!-- The focus lock -->
     <focuslock>
       <class_name type="string">AFocusLockZ</class_name>
@@ -51,11 +65,13 @@
     </progressions>
 
     <!-- The live STORM analysis and display -->
+    <!--
     <spotcounter>
       <class_name type="string">SingleSpotCounter</class_name>
       <menu_item type="string">Spot Counter</menu_item>
       <module_name type="string">spotCounter</module_name>
     </spotcounter>
+    -->
 
     <!-- Motorized XY stage -->
     <stage>

@@ -24,9 +24,12 @@ import sc_library.hdebug as hdebug
 #
 # QThread for communication with a bluetooth device.
 #
+# Currently this shows the same images as in the viewer for camera1
+# and it sends movement signals as if it was the viewer for camera1.
+#
 class HalBluetooth(QtCore.QThread, halModule.HalModule):
-    dragStart = QtCore.pyqtSignal()
-    dragMove = QtCore.pyqtSignal(float, float)
+    dragStart = QtCore.pyqtSignal(str)
+    dragMove = QtCore.pyqtSignal(str, float, float)
     lockJump = QtCore.pyqtSignal(float)
     newData = QtCore.pyqtSignal(object)
     stepMove = QtCore.pyqtSignal(float, float)
@@ -64,6 +67,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         self.send_pictures = hardware.send_pictures
         self.show_camera = True
         self.start_time = 0
+        self.which_camera = "camera1"
 
         # Set current image to default.
         self.current_image = self.default_image
@@ -146,7 +150,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
     @hdebug.debug
     def connectSignals(self, signals):
         for signal in signals:
-            if (signal[1] == "cameraDisplayCaptured"):
+            if (signal[1] == "frameCaptured"):
                 signal[2].connect(self.handleNewCameraPixmap)
             elif (signal[1] == "focusLockStatus"):
                 signal[2].connect(self.handleFocusLockStatus)
@@ -160,7 +164,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
     def dragUpdate(self):
         dx = self.drag_gain * self.drag_multiplier * (self.drag_x - self.click_x)
         dy = self.drag_gain * self.drag_multiplier * (self.drag_y - self.click_y)
-        self.dragMove.emit(dx, dy)
+        self.dragMove.emit(self.which_camera, dx, dy)
         
     ## getSignals
     #
@@ -182,7 +186,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
     def handleClickTimer(self):
         if self.is_down:
             self.is_drag = True
-            self.dragStart.emit()
+            self.dragStart.emit(self.which_camera)
             self.dragUpdate()
 
     ## handleFocusLockStatus
@@ -209,8 +213,8 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
     #
     # @param new_pixmap A QPixmap object from the camera display.
     #
-    def handleNewCameraPixmap(self, new_pixmap):
-        if self.show_camera:
+    def handleNewCameraPixmap(self, which_camera, new_pixmap):
+        if self.show_camera and (self.which_camera == which_camera):
             self.handleNewPixmap(new_pixmap)
 
     ## handleNewData

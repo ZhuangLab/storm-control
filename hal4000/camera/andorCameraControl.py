@@ -4,7 +4,7 @@
 #
 # Camera control specialized for a Andor camera.
 #
-# Hazen 10/13
+# Hazen 09/15
 #
 
 from PyQt4 import QtCore
@@ -24,7 +24,7 @@ import sc_hardware.andor.andorcontroller as andor
 #
 # The CameraControl class specialized to control a Andor camera.
 #
-class ACameraControl(cameraControl.CameraControl):
+class ACameraControl(cameraControl.HWCameraControl):
 
     ## __init__
     #
@@ -35,21 +35,20 @@ class ACameraControl(cameraControl.CameraControl):
     #
     @hdebug.debug
     def __init__(self, hardware, parent = None):
-        cameraControl.CameraControl.__init__(self, hardware, parent)
-        
-        if hasattr(hardware, "pci_card"):
-            self.initCamera(hardware.pci_card)
+        cameraControl.HWCameraControl.__init__(self, hardware, parent)
+
+        if hardware and hardware.has("pci_card"):
+            self.initCamera(hardware.get("pci_card"))
         else:
             self.initCamera()
 
     ## closeShutter
     #
-    # Stop the camera and close the shutter.
+    # Close the shutter.
     #
     @hdebug.debug
     def closeShutter(self):
         self.shutter = False
-        self.stopCamera()
         if self.got_camera:
             if self.reversed_shutter:
                 self.camera.openShutter()
@@ -58,67 +57,41 @@ class ACameraControl(cameraControl.CameraControl):
 
     ## getAcquisitionTimings
     #
-    # Stop the camera and get the acquisition timings (basically the frame rate)
+    # Returns how fast the camera is running.
+    #
+    # @param which_camera The camera to get the timing information for.
+    #
+    # @return A Python array containing the time it takes to take a frame.
     #
     @hdebug.debug
-    def getAcquisitionTimings(self):
-        self.stopCamera()
+    def getAcquisitionTimings(self, which_camera):
         if self.got_camera:
             return self.camera.getAcquisitionTimings()[:-1]
         else:
             return [1.0, 1.0]
 
+    ## getProperties
+    #
+    # @return The properties of the camera as a dict.
+    #
+    @hdebug.debug
+    def getProperties(self):
+        return {"camera1" : frozenset(['have_emccd', 'have_preamp', 'have_shutter', 'have_temperature'])}
+
     ## getTemperature
     #
-    # Stop the camera and get the camera temperature.
+    # Get the current camera temperature.
+    #
+    # @param which_camera Which camera to get the temperature of.
+    # @param parameters A parameters object.
     #
     @hdebug.debug
-    def getTemperature(self):
-        self.stopCamera()
+    def getTemperature(self, which_camera, parameters):
+        temp = [50, "unstable"]
         if self.got_camera:
-            return self.camera.getTemperature()
-        else:
-            return [50, "unstable"]
-
-    ## haveEMCCD
-    #
-    # Returns that this is a EMCCD camera.
-    #
-    # @return True, this is a EMCCD camera.
-    #
-    @hdebug.debug
-    def haveEMCCD(self):
-        return True
-
-    ## havePreamp
-    #
-    # Returns that the camera has a pre-amplifier.
-    #
-    # @return True, this camera has a pre-amplifier.
-    #
-    @hdebug.debug
-    def havePreamp(self):
-        return True
-
-    ## haveShutter
-    #
-    # Returns that the camera has a shutter.
-    #
-    # @return True, this camera has a shutter.
-    #
-    @hdebug.debug
-    def haveShutter(self):
-        return True
-
-    ## haveTemperature
-    #
-    # Returns that this camera can measure its sensor temperature.
-    #
-    # @return True, this camera can measure its sensor temperature.
-    #
-    @hdebug.debug
-    def haveTemperature(self):
-        return True
+            temp = self.camera.getTemperature()
+        parameters.set("camera1.actual_temperature", temp[0])
+        parameters.set("camera1.temperature_control", temp[1])
 
     ## initCamera
     #
@@ -182,69 +155,6 @@ class ACameraControl(cameraControl.CameraControl):
         handle = andor.getCameraHandles()[pci_card]
         self.camera = andor.AndorCamera(path, handle)
 
-    ## newFilmSettings
-    #
-    # This is called at the start of a acquisition to get the camera
-    # running in the right mode (fixed length or run till abort) and
-    # to set the camera fan speed. Fixed length is only used for films
-    # that are less than 1000 frames in length, otherwise they are
-    # generally too large to easily store in RAM.
-    #
-    # @param parameters The current camera settings object.
-    # @param film_settings A film settings object or None.
-    #
-    @hdebug.debug
-    def newFilmSettings(self, parameters, film_settings):
-        self.stopCamera()
-        self.mutex.lock()
-        p = parameters.get("camera1")
-        if self.got_camera:
-            self.reached_max_frames = False
-
-            if film_settings:
-                self.filming = True
-                self.acq_mode = film_settings.acq_mode
-                self.frames_to_take = film_settings.frames_to_take
-
-                if (self.acq_mode == "fixed_length"):
-
-                    # If the film is really long then we use a software stop, otherwise 
-                    # we tell the camera to take the number of frames that was requested.
-                    if (self.frames_to_take > 1000):
-                        self.camera.setACQMode("run_till_abort")
-                    else:
-                        self.camera.setACQMode("fixed_length", number_frames = self.frames_to_take)
-
-                else:
-                    self.camera.setACQMode("run_till_abort")
-
-            else:
-                self.filming = False
-                self.acq_mode = "run_till_abort"
-                self.camera.setACQMode("run_till_abort")
-
-            # Due to what I can only assume is a bug in some of the
-            # older Andor software you need to reset the frame
-            # transfer mode after setting the aquisition mode.
-            self.camera.setFrameTransferMode(p.get("frame_transfer_mode"))
-
-            # Set camera fan to low. This is overriden by the off option
-            if p.get("low_during_filming"):
-                if self.filming:
-                    self.camera.setFanMode(1) # fan on low
-                else:
-                    self.camera.setFanMode(0) # fan on full
-
-            # This is for testing whether the camera fan is shaking the
-            # the camera, adding noise to the images.
-            if p.get("off_during_filming"):
-                if self.filming:
-                    self.camera.setFanMode(2) # fan off
-                else:
-                    self.camera.setFanMode(0) # fan on full
-
-        self.mutex.unlock()
-
     ## newParameters
     #
     # Called when the user selects a new parameters file.
@@ -256,6 +166,8 @@ class ACameraControl(cameraControl.CameraControl):
         p = parameters.get("camera1")
         self.reversed_shutter = p.get("reversed_shutter")
         try:
+            self.camera.setACQMode("run_till_abort")
+
             hdebug.logText("Setting Read Mode", False)
             self.camera.setReadMode(4)
 
@@ -321,9 +233,8 @@ class ACameraControl(cameraControl.CameraControl):
             hdebug.logText("Setting ADChannel", False)
             self.camera.setADChannel(p.get("adchannel"))
 
-            p.head_model = self.camera.getHeadModel()
-
-            [p.em_gain_low, p.em_gain_high] = self.camera.getEMGainRange()
+            p.set("head_model", self.camera.getHeadModel())
+            p.set(["em_gain_low", "em_gain_high"], self.camera.getEMGainRange())
 
             hdebug.logText("Camera Initialized", False)
             self.got_camera = True
@@ -333,147 +244,80 @@ class ACameraControl(cameraControl.CameraControl):
             self.got_camera = False
 
         if not p.has("bytes_per_frame"):
-            p.set("bytes_per_frame", 2 * p.get("x_pixels") * p.get("y_pixels"))
+            p.set("bytes_per_frame", 2 * p.get("x_pixels") * p.get("y_pixels") / (p.get("x_bin") * p.get("y_bin")))
 
-        self.newFilmSettings(parameters, None)
-        self.parameters = parameters
+        self.parameters = p
 
     ## openShutter
     #
-    # Stops the camera and opens the camera shutter.
+    # Open the camera shutter.
     #
     @hdebug.debug
     def openShutter(self):
         self.shutter = True
-        self.stopCamera()
         if self.got_camera:
             if self.reversed_shutter:
                 self.camera.closeShutter()
             else:
                 self.camera.openShutter()
 
-    ## quit
-    #
-    # Stops the camera thread and closes the connection to the camera.
-    #
-    @hdebug.debug
-    def quit(self):
-        self.stopThread()
-        self.wait()
-        if self.got_camera:
-            self.camera.shutdown()
-
-    ## run
-    #
-    # This is the thread loop that handles getting the new frames from 
-    # the camera, saving them in filming mode and signaling that the
-    # camera has new data, or that the camera is idle.
-    #
-    def run(self):
-        while(self.running):
-            self.mutex.lock()
-            if self.acquire.amActive() and self.got_camera:
-
-                # Get data from camera and create frame objects.
-                [frames, frame_size, state] = self.camera.getImages16()
-
-                # Check if we got new frame data.
-                if (len(frames) > 0):
-
-                    # Create frame objects.
-                    frame_data = []
-                    for raw_frame in frames:
-                        aframe = frame.Frame(numpy.fromstring(raw_frame, dtype = numpy.uint16),
-                                             self.frame_number,
-                                             frame_size[0],
-                                             frame_size[1],
-                                             "camera1",
-                                             True)
-                        frame_data.append(aframe)
-                        self.frame_number += 1
-
-                        if self.filming:
-                            if self.daxfile:
-                                if (self.acq_mode == "fixed_length"):
-                                    if (self.frame_number <= self.frames_to_take):
-                                        self.daxfile.saveFrame(aframe)
-                                else:
-                                    self.daxfile.saveFrame(aframe)
-            
-                            if (self.acq_mode == "fixed_length") and (self.frame_number == self.frames_to_take):
-                                self.reached_max_frames = True
-                                break
-                            
-                    # Emit new data signal.
-                    self.newData.emit(frame_data, self.key)
-
-                    # Emit max frames signal.
-                    #
-                    # The signal is emitted here because if it is emitted before
-                    # newData then you never see that last frame in the movie, which
-                    # is particularly problematic for single frame movies.
-                    #
-                    if self.reached_max_frames:
-                        self.max_frames_sig.emit()
-
-            else:
-                self.acquire.idle()
-
-            self.mutex.unlock()
-            self.msleep(5)
-
     ## setEMCCDGain
     #
     # Set the EMCCD gain of the camera.
     #
+    # @param which_camera The camera to set the gain of.
     # @param gain The desired EMCCD gain value.
     #
     @hdebug.debug
-    def setEMCCDGain(self, gain):
-        self.stopCamera()
+    def setEMCCDGain(self, which_camera, gain):
         if self.got_camera:
             self.camera.setEMCCDGain(gain)
 
-    ## startCamera
+    ## startFilm
     #
-    # Start a new camera acquisition. The key parameter is to
-    # ensure that camera frames taken with older parameters
-    # are ignored. This can be a problem due to thread
-    # synchronization issues.
+    # Called before filming in case the camera needs to do any setup.
     #
-    # @param key The ID to use for the frames from this acquisition series.
-    #
-    @hdebug.debug        
-    def startCamera(self, key):
-        #if self.have_paused:
-        self.mutex.lock()
-        self.acquire.go()
-        self.key = key
-        self.frame_number = 0
-        self.max_frames_sig.reset()
-        if self.got_camera:
-            self.camera.startAcquisition()
-        self.mutex.unlock()
-
-    ## stopCamera
-    #
-    # Stop the current acquisition series.
+    # @param film_settings A film settings object.
     #
     @hdebug.debug
-    def stopCamera(self):
-        if self.acquire.amActive():
-            self.mutex.lock()
-            if self.got_camera:
-                self.camera.stopAcquisition()
-            self.acquire.stop()
-            self.mutex.unlock()
-            while not self.acquire.amIdle():
-                self.usleep(50)
+    def startFilm(self, film_settings):
+        if (film_settings.acq_mode == "fixed_length"):
+            if (film_settings.frames_to_take > 1000):
+                self.camera.setACQMode("run_till_abort")
+            else:
+                self.camera.setACQMode("fixed_length", number_frames = film_settings.frames_to_take)
+
+        else:
+            self.camera.setACQMode("run_till_abort")
+
+        # Due to what I can only assume is a bug in some of the
+        # older Andor software you need to reset the frame
+        # transfer mode after setting the aquisition mode.
+        self.camera.setFrameTransferMode(self.parameters.get("frame_transfer_mode"))
+
+        # Set camera fan to low. This is overriden by the off option
+        if self.parameters.get("low_during_filming"):
+            self.camera.setFanMode(1) # fan on low
+
+        # This is for testing whether the camera fan is shaking the
+        # the camera, adding noise to the images.
+        if self.parameters.get("off_during_filming"):
+            self.camera.setFanMode(2) # fan off
+
+    ## stopFilm
+    #
+    # Called after filming in case the camera needs to do any teardown.
+    #
+    @hdebug.debug
+    def stopFilm(self):
+        self.camera.setACQMode("run_till_abort")
+        self.camera.setFrameTransferMode(self.parameters.get("frame_transfer_mode"))
+        self.camera.setFanMode(1)
         
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2015 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

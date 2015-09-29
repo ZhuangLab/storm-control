@@ -12,34 +12,49 @@ HAL-4000 (QtGui.QMainWindow)
 
 
   Camera:
+    Control (in the camera directory):
+      control.Camera (QtCore.QObject)
 
-    Overall camera control:
+      Generating the feeds from the camera data:
+        feeds.FeedController(object)
 
-      genericCamera.Camera (QtGui.QDialog)
-        singleCamera.SingleCamera (genericCamera.Camera)
-          classicSingleCamera.ClassicSingleCamera (singleCamera.SingleCamera)
-          detachedSingleCamera.DetachedSingleCamera (singleCamera.SingleCamera)
-  
-        dualCamera.DualCamera (genericCamera.Camera)
+      Getting the camera data from the camera:
+        cameraControl.CameraControl(QtCore.QThread)
 
-    Camera control:
-      cameraControl.CameraControl(QtCore.QThread)
+    Display (in the display directory):
+      cameraDisplay.CameraDisplay(QtGui.QDialog, halModule.HalModule)
+      
+      Camera image display & display setting:
+        cameraFrameDisplay.CameraFrameDisplay(CameraFeedDisplay)
 
-    Camera image display & display setting:
-      cameraDisplay.CameraDisplay (QtGui.QFrame)
+        Displaying the images from the camera:
+          cameraWidgets.PyCameraWidget(QtGui.QWidget)
 
-      Displaying the images from the camera:
-        qtCameraWidget.QCameraWidget (QtGui.QWidget)
-
-    Displaying the camera settings (exposure time, etc)
-      cameraParams.CameraParams(QtGui.QGroupBox)
+      Displaying the camera settings (exposure time, etc)
+        paramsDisplay.ParamsDisplay(QtGui.QGroupBox)
 
 
   Bluetooth:
     halBluetooth.HalBluetooth (QtCore.QThread, halModule.HalModule)
-    
 
-  Illumination / Shutters:
+
+  Feed Viewers (in the display directory):
+
+    Creating and controlling the feed viewers:
+      feedViewer.FeedViewers(QtCore.QObject, halModule.HalModule)
+
+    Displaying a single feed:
+      feedViewer.FeedViewer(QtGui.QDialog)
+
+      Feed image display and display settings:
+        cameraFrameDisplay.CameraFeedDisplay(QtGui.QFrame)
+
+        Displaying the images from the feeds:
+          cameraWidgets.pyCameraWidget(QtGui.QWidget)
+          cameraWidgets.CCameraWidget(QtGui.QWidget)
+	  
+
+  Illumination / Shutters (in the illumination directory):
 
     Illumination control dialog:
       illuminationControl.IlluminationControl (QtGui.QDialog, halModule.HalModule)
@@ -56,14 +71,14 @@ HAL-4000 (QtGui.QMainWindow)
           sc_hardware.baseClasses.IlluminationHardware ()
 
 
-  Stage:
+  Stage (in the stagecontrol directory):
     stageControl.StageControl (QtGui.QDialog, halModule.HalModule)
 
     Thread for talking to the hardware:
       stageThread.QStageThread (QtCore.QThread)
 
 
-  Focus Lock:
+  Focus Lock (in the focuslock directory):
     focusLockZ.FocusLockZ (QtGui.QDialog, halModule.HalModule)
 
     Feedback control and current offset & position display
@@ -105,7 +120,7 @@ HAL-4000 (QtGui.QMainWindow)
       qtSpotCounter.QObjectCounter (QtGui.QWidget)
 
 
-  Miscellaneous hardware:
+  Miscellaneous hardware (in the miscControl directory):
     miscControl.MiscControl (QtGui.QDialog, halModule.HalModule)
 
 
@@ -113,7 +128,7 @@ HAL-4000 (QtGui.QMainWindow)
     progressionControl.ProgressionControl (QtGui.QDialog, halModule.HalModule)
 
 
-  Joystick:
+  Joystick (in the joystick directory):
     joystick.JoystickObject (QtCore.QObject, halModule.HalModule)
 
 

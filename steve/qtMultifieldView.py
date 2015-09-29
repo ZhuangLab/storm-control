@@ -205,6 +205,9 @@ class MultifieldView(QtGui.QGraphicsView):
             self.centerOn(a_image_item.x_pix, a_image_item.y_pix)
             self.updateSceneRect(a_image_item.x_pix, a_image_item.y_pix)        
 
+            if (self.currentz < a_image_item.zvalue):
+                self.currentz = a_image_item.zvalue + 0.01
+                
             return True
         else:
             return False

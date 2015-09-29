@@ -352,11 +352,12 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
     # displacements (in um) from the fixed point (previously recorded
     # with handleDragStart().
     #
+    # @param which_camera Which camera (display) generated the event.
     # @param drag_x_disp Offset distance in x in microns.
     # @param drag_y_disp Offset distance in y in microns.
     #
-    def handleDragMove(self, drag_x_disp, drag_y_disp):
-        if self.stage:
+    def handleDragMove(self, which_camera, drag_x_disp, drag_y_disp):
+        if self.stage and (which_camera == "camera1"):
             [dx, dy] = self.translator.translate(drag_x_disp, drag_y_disp)
             self.stage.dragMove(self.drag_start_x + dx,
                                 self.drag_start_y + dy)
@@ -365,10 +366,13 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
     #
     # Record the current stage position for drag events.
     #
+    # @param which_camera Which camera (display) generated the event.
+    #
     @hdebug.debug
-    def handleDragStart(self):
-        self.drag_start_x = self.stage_x
-        self.drag_start_y = self.stage_y
+    def handleDragStart(self, which_camera):
+        if (which_camera == "camera1"):
+            self.drag_start_x = self.stage_x
+            self.drag_start_y = self.stage_y
 
     ## handleGo
     #

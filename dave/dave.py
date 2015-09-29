@@ -10,6 +10,10 @@
 # Hazen 05/14
 #
 
+# Add current storm-control directory to sys.path
+import imp
+imp.load_source("setPath", "../sc_library/setPath.py")
+
 # Common
 import os
 import sys
@@ -762,8 +766,11 @@ class Dave(QtGui.QMainWindow):
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
-    parameters = params.parameters("settings_default.xml")
-    
+    if (len(sys.argv) == 2):
+        parameters = params.parameters(sys.argv[1])
+    else:
+        parameters = params.parameters("settings_default.xml")
+        
     # Start logger.
     hdebug.startLogging(parameters.directory + "logs/", "dave")
 

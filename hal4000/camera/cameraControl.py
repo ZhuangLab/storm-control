@@ -8,7 +8,7 @@
 # is a generic class and should be specialized for control
 # of particular camera types.
 #
-# Hazen 09/13
+# Hazen 09/15
 #
 
 from PyQt4 import QtCore
@@ -16,24 +16,13 @@ from PyQt4 import QtCore
 # Debugging
 import sc_library.hdebug as hdebug
 
+import camera.frame as frame
+
 ## CameraControl
 #
 # Camera update thread. All camera control is done by this thread.
 # Classes for controlling specific cameras should be subclasses
 # of this class that implement at least the following methods:
-#
-# getAcquisitionTimings()
-#    Returns the current acquisition timings as:
-#    [exposure time, cycle time]
-#
-# initCamera()
-#    Initializes the camera.
-#
-# newFilmSettings()
-#    Setup the camera to take the appropriate type of film.
-#
-# newParameters()
-#    Setup the camera with the new acquisition parameters.
 #
 # run()
 #    This is the main thread loop that gets data from the
@@ -54,7 +43,6 @@ import sc_library.hdebug as hdebug
 #    the signal.
 #
 class CameraControl(QtCore.QThread):
-    reachedMaxFrames = QtCore.pyqtSignal()
     newData = QtCore.pyqtSignal(object, int)
 
     ## __init__
@@ -69,17 +57,11 @@ class CameraControl(QtCore.QThread):
         QtCore.QThread.__init__(self, parent)
 
         # other class initializations
-        self.acq_mode = "run_till_abort"
         self.acquire = IdleActive()
-        self.daxfile = False
-        self.filming = False
         self.frame_number = 0
-        self.frames_to_take = 0
         self.key = -1
-        self.max_frames_sig = SingleShotSignal(self.reachedMaxFrames)
         self.mutex = QtCore.QMutex()
         self.parameters = None
-        self.reached_max_frames = False
         self.running = True
         self.shutter = False
 
@@ -107,91 +89,58 @@ class CameraControl(QtCore.QThread):
     #
     # Returns how fast the camera is running.
     #
+    # @param which_camera The camera to get the timing information for.
+    #
     # @return A Python array containing the time it takes to take a frame.
     #
     @hdebug.debug
-    def getAcquisitionTimings(self):
-        return [0.1, 0.1, 0.1]
+    def getAcquisitionTimings(self, which_camera):
+        return [0.1, 0.1]
+
+    ## getNumberOfCameras
+    #
+    # @return The number of cameras that this module controls.
+    #
+    @hdebug.debug
+    def getNumberOfCameras(self):
+        return 1
     
-    ## getFilmSize
+    ## getProperties
     #
-    # Returns the current size of the film that is being recorded.
+    # @return The properties of the cameras as a dict.
     #
-    # @return The size of the film (in bytes?).
+    @hdebug.debug
+    def getProperties(self):
+        return {"camera1" : frozenset()}
+
+    ## getShutterStage
     #
-    def getFilmSize(self):
-        film_size = 0
-        if self.daxfile:
-            self.mutex.lock()
-            film_size = self.daxfile.totalFilmSize()
-            self.mutex.unlock()
-        return film_size
+    # @return The current state of the shutter (True - Open, False - Closed).
+    #
+    @hdebug.debug
+    def getShutterState(self, which_camera):
+        return self.shutter
 
     ## getTemperature
     #
-    # Return the default temperature.
+    # Get the current camera temperature.
     #
-    # @return A two element array, [current temperature, "stable" / "unstable"]
-    #
-    @hdebug.debug
-    def getTemperature(self):
-        return [50, "unstable"]
-
-    ## haveEMCCD
-    #
-    # Return if the camera has a EMCCD.
-    #
-    # @return False, the default is that there is no EMCCD.
+    # @param which_camera Which camera to get the temperature of.
+    # @param parameters A parameters object.
     #
     @hdebug.debug
-    def haveEMCCD(self):
-        return False
-
-    ## havePreamp
-    #
-    # Return if the camera has a preamp.
-    #
-    # @return False, the default is that there is no pre-amplifier.
-    @hdebug.debug
-    def havePreamp(self):
-        return False
-
-    ## haveShutter
-    #
-    # Return if the camera has a shutter.
-    #
-    # @return False, the default is that there is no temperature.
-    @hdebug.debug
-    def haveShutter(self):
-        return False
-
-    ## haveTemperature
-    #
-    # Return if the camera can measure its sensor temperature.
-    #
-    # @return False, the default is that the camera cannot measure it's sensor temperature.
-    #
-    @hdebug.debug
-    def haveTemperature(self):
-        return False
-
+    def getTemperature(self, which_camera, parameters):
+        if (which_camera == "camera1"):
+            temp = [50, "unstable"]
+            parameters.set(which_camera + ".actual_temperature", temp[0])
+            parameters.set(which_camera + ".temperature_control", temp[1])
+            
     ## initCamera
     #
     # Initializes the camera.
     #
     @hdebug.debug
     def initCamera(self):
-        pass
-
-    ## newFilmSettings
-    #
-    # This is called at the start of a acquisition to get the camera configured properly.
-    #
-    # @param parameters A parameters object.
-    # @param film_settings A film settings object or None.
-    #
-    @hdebug.debug
-    def newFilmSettings(self, parameters, film_settings):
         pass
 
     ## newParameters
@@ -226,10 +175,11 @@ class CameraControl(QtCore.QThread):
     # This is a place-holder, it should be sub-classed to set
     # the EMCCD gain.
     #
+    # @param which_camera The camera to set the gain of.
     # @param gain The desired EMCCD gain.
     #
     @hdebug.debug
-    def setEMCCDGain(self, gain):
+    def setEMCCDGain(self, which_camera, gain):
         pass
 
     ## startCamera
@@ -246,23 +196,17 @@ class CameraControl(QtCore.QThread):
         self.acquire.go()
         self.frame_number = 0
         self.key = key
-        self.max_frames_sig.reset()
         self.mutex.unlock()
 
     ## startFilm
     #
-    # This is called prior to startCamera when the acquisition is
-    # to be recorded. If daxfile is False then the user has
-    # requested to take the film but not to save it.
+    # Called before filming in case the camera needs to do any setup.
     #
-    # @param daxfile This is a image writing object (halLib/imagewriters).
     # @param film_settings A film settings object.
     #
     @hdebug.debug
-    def startFilm(self, daxfile, film_settings):
-        if daxfile:
-            self.daxfile = daxfile
-        self.newFilmSettings(self.parameters, film_settings)
+    def startFilm(self, film_settings):
+        pass
 
     ## stopCamera
     #
@@ -273,7 +217,15 @@ class CameraControl(QtCore.QThread):
         self.mutex.lock()
         self.acquire.stop()
         self.mutex.unlock()
-
+        
+    ## stopFilm
+    #
+    # Called before filming in case the camera needs to do any teardown.
+    #
+    @hdebug.debug
+    def stopFilm(self):
+        pass
+    
     ## stopThread
     #
     # Signal the camera control thread to stop running.
@@ -282,27 +234,107 @@ class CameraControl(QtCore.QThread):
     def stopThread(self):
         self.running = False
 
-    ## stopFilm
-    #
-    # This is called when we are done filming.
-    #
-    @hdebug.debug
-    def stopFilm(self):
-        self.newFilmSettings(self.parameters, None)
-        self.daxfile = False
-
     ## toggleShutter
     #
     # Open/Close the shutter depending on the shutters current state.
     #
+    # @param which_camera The camera to open the shutter of.
+    #
     @hdebug.debug
-    def toggleShutter(self):
+    def toggleShutter(self, which_camera):
         if self.shutter:
             self.closeShutter()
             return False
         else:
             self.openShutter()
             return True
+
+
+## HWCameraControl
+#
+# This class implements what is common to all of the "hardware"
+# cameras.
+#
+class HWCameraControl(CameraControl):
+
+    ## quit
+    #
+    # Stops the camera thread and shuts down the camera.
+    #
+    @hdebug.debug
+    def quit(self):
+        self.stopThread()
+        self.wait()
+        self.camera.shutdown()
+
+    ## run
+    #
+    # The camera thread. This gets images from the camera, turns
+    # them into frames and sends them out using the newData signal.
+    #
+    def run(self):
+        while(self.running):
+            self.mutex.lock()
+            if self.acquire.amActive() and self.got_camera:
+
+                # Get data from camera and create frame objects.
+                [frames, frame_size] = self.camera.getFrames()
+
+                # Check if we got new frame data.
+                if (len(frames) > 0):
+
+                    # Create frame objects.
+                    frame_data = []
+                    for cam_frame in frames:
+                        aframe = frame.Frame(cam_frame.getData(),
+                                             self.frame_number,
+                                             frame_size[0],
+                                             frame_size[1],
+                                             "camera1",
+                                             True)
+                        frame_data.append(aframe)
+                        self.frame_number += 1
+                            
+                    # Emit new data signal.
+                    self.newData.emit(frame_data, self.key)
+            else:
+                self.acquire.idle()
+
+            self.mutex.unlock()
+            self.msleep(5)
+
+    ## startCamera
+    #
+    # Start the camera. The key parameter is for synchronizing the main
+    # process and the camera thread.
+    #
+    # @param key The ID value to use for frames from the current acquisition.
+    #
+    @hdebug.debug        
+    def startCamera(self, key):
+        self.mutex.lock()
+        self.acquire.go()
+        self.key = key
+        self.frame_number = 0
+        if self.got_camera:
+            self.camera.startAcquisition()
+        self.mutex.unlock()
+
+    ## stopCamera
+    #
+    # Stops the camera
+    #
+    @hdebug.debug
+    def stopCamera(self):
+        if self.acquire.amActive():
+            self.mutex.lock()
+            if self.got_camera:
+                self.camera.stopAcquisition()
+            self.acquire.stop()
+            self.mutex.unlock()
+            while not self.acquire.amIdle():
+                self.usleep(50)
+
 
 ## IdleActive
 #
@@ -363,47 +395,11 @@ class IdleActive():
     def stop(self):
         self.running = False
 
-## SingleShotSignal
-#
-# Single shot signal class.
-#
-# This class creates a signal that needs to be reset each time it is 
-# emitted. This is used in the camera control thread, which might
-# otherwise signal multiple times that the camera is idle before
-# the main process has a chance to respond.
-#
-class SingleShotSignal():
-
-    ## __init__
-    #
-    # Create a SingleShotSignal object.
-    #
-    # @param pyqt_signal The PyQt signal the object should emit.
-    #
-    def __init__(self, pyqt_signal):
-        self.emitted = False
-        self.pyqt_signal = pyqt_signal
-
-    ## emit
-    #
-    # Emit the PyQt signal, but only if it has not already been emitted.
-    #
-    def emit(self):
-        if not self.emitted:
-            self.pyqt_signal.emit()
-            self.emitted = True
-
-    ## reset
-    #
-    # Reset the emitted flag so that the signal can be emitted again.
-    #
-    def reset(self):
-        self.emitted = False
 
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2015 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

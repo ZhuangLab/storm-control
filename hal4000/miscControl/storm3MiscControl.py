@@ -116,7 +116,7 @@ class AMiscControl(miscControl.MiscControl):
     @hdebug.debug
     def connectSignals(self, signals):
         for signal in signals:
-            if (signal[1] == "cameraROISelection"):
+            if (signal[1] == "ROISelection"):
                 signal[2].connect(self.handleROISelection)
 
     def getIEName(self):
@@ -183,11 +183,12 @@ class AMiscControl(miscControl.MiscControl):
 
     @hdebug.debug
     def handleROISelection(self, which_camera, select_rect):
-        self.start_x = select_rect.left()
-        self.start_y = select_rect.top()
-        self.stop_x = select_rect.right()
-        self.stop_y = select_rect.bottom()
-        self.updateROIText()
+        if (which_camera == "camera1"):
+            self.start_x = select_rect.left()
+            self.start_y = select_rect.top()
+            self.stop_x = select_rect.right()
+            self.stop_y = select_rect.bottom()
+            self.updateROIText()
 
     @hdebug.debug
     def handleSave(self, bool):

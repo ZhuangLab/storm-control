@@ -18,7 +18,7 @@
 # gainChange(int gain)
 #
 #
-# Hazen 10/13
+# Hazen 09/15
 #
 
 from PyQt4 import QtCore, QtGui
@@ -26,13 +26,13 @@ from PyQt4 import QtCore, QtGui
 # Debugging
 import sc_library.hdebug as hdebug
 
-## CameraParams
+## ParamsDisplay
 #
 # This class handles displaying (some of) the current camera parameters
 # in the UI. It also handles the EMCCD gain slider.
 #
-class CameraParams(QtGui.QGroupBox):
-    gainChange = QtCore.pyqtSignal(int)
+class ParamsDisplay(QtGui.QGroupBox):
+    gainChange = QtCore.pyqtSignal(str, int)
 
     ## __init__
     #
@@ -42,18 +42,20 @@ class CameraParams(QtGui.QGroupBox):
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, camera_params_ui, parent = None):
+    def __init__(self, camera_params_ui, which_camera, parent = None):
         QtGui.QGroupBox.__init__(self, parent)
+        self.parameters = None
         self.temperature = False
+        self.which_camera = which_camera
 
         # UI setup
         self.ui = camera_params_ui
         self.ui.setupUi(self)
 
         # connect signals
-        self.ui.EMCCDSlider.valueChanged.connect(self.cameraGainChange)
+        self.ui.EMCCDSlider.valueChanged.connect(self.handleGainChange)
 
-    ## cameraGainChange
+    ## handleGainChange
     #
     # Handles camera gain changes. Updates the display and emits a gainChange signal
     # that is received by the camera control object.
@@ -61,9 +63,9 @@ class CameraParams(QtGui.QGroupBox):
     # @param new_gain The new EMCCD gain value.
     #
     @hdebug.debug
-    def cameraGainChange(self, new_gain):
+    def handleGainChange(self, new_gain):
         self.ui.EMCCDLabel.setText("EMCCD Gain: %d" % new_gain)
-        self.gainChange.emit(new_gain)
+        self.gainChange.emit(self.which_camera, new_gain)
 
     ## newParameters
     #
@@ -73,7 +75,8 @@ class CameraParams(QtGui.QGroupBox):
     #
     @hdebug.debug        
     def newParameters(self, parameters):
-        p = parameters
+        self.parameters = parameters.get(self.which_camera)
+        p = self.parameters
         if p.has("temperature"):
             self.temperature = p.get("temperature")
 
@@ -83,7 +86,7 @@ class CameraParams(QtGui.QGroupBox):
             self.ui.EMCCDSlider.setMaximum(p.get("em_gain_high", 10))
             self.ui.EMCCDSlider.setValue(p.get("emccd_gain"))
             self.ui.EMCCDLabel.setText("EMCCD Gain: %d" % p.get("emccd_gain"))
-            self.ui.EMCCDSlider.valueChanged.connect(self.cameraGainChange)
+            self.ui.EMCCDSlider.valueChanged.connect(self.handleGainChange)
 
         if p.has("preampgain"):
             self.ui.preampGainText.setText("%.1f" % p.get("preampgain"))
@@ -97,20 +100,6 @@ class CameraParams(QtGui.QGroupBox):
         else:
             self.ui.exposureTimeText.setText("%.4f" % p.get("exposure_value"))
             self.ui.FPSText.setText("%.4f" % (1.0/p.get("cycle_value")))
-
-    ## newTemperature
-    #
-    # Updates the temperature display element of the UI.
-    #
-    # @param temp_data A two element array, [camera temperature, "stable" / "unstable"].
-    #
-    @hdebug.debug
-    def newTemperature(self, temp_data):
-        if temp_data[1] == "stable":
-            self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
-        else:
-            self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
-        self.ui.temperatureText.setText(str(temp_data[0]) + " (" + str(self.temperature) + ")")
 
     ## showEMCCD
     #
@@ -155,11 +144,47 @@ class CameraParams(QtGui.QGroupBox):
             self.ui.temperatureLabel.hide()
             self.ui.temperatureText.hide()
 
+    ## startFilm
+    #
+    @hdebug.debug
+    def startFilm(self):
+        self.ui.EMCCDSlider.setEnabled(False)
+        
+    ## stopFilm
+    #
+    @hdebug.debug
+    def stopFilm(self):
+        self.ui.EMCCDSlider.setEnabled(True)
 
+    ## updateCameraProperties
+    #
+    # @param camera_properties A dictionary containing property sets for each camera.
+    #
+    @hdebug.debug
+    def updateCameraProperties(self, camera_properties):
+        properties = camera_properties[self.which_camera]
+        self.showEMCCD("have_emccd" in properties)
+        self.showPreamp("have_preamp" in properties)
+        self.showTemperature("have_temperature" in properties)
+
+    ## updatedParams
+    #
+    # The temperature and the emgain might have changed.
+    #
+    @hdebug.debug
+    def updatedParams(self):
+        if self.parameters.has("temperature_control"):
+            if (self.parameters.get("temperature_control") == "stable"):
+                self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
+            else:
+                self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
+            actual_temp = self.parameters.get("actual_temperature")
+            self.ui.temperatureText.setText(str(actual_temp) + " (" + str(self.temperature) + ")")        
+    
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2015 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

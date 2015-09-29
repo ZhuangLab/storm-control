@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'camera-detached.ui'
 #
-# Created: Wed Jan 01 10:56:40 2014
-#      by: PyQt4 UI code generator 4.9.6
+# Created: Sat Sep 19 21:02:02 2015
+#      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -26,13 +26,13 @@ except AttributeError:
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName(_fromUtf8("Dialog"))
-        Dialog.resize(586, 641)
+        Dialog.resize(586, 619)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(Dialog.sizePolicy().hasHeightForWidth())
         Dialog.setSizePolicy(sizePolicy)
-        Dialog.setMinimumSize(QtCore.QSize(586, 641))
+        Dialog.setMinimumSize(QtCore.QSize(0, 0))
         Dialog.setMaximumSize(QtCore.QSize(10000, 10000))
         self.verticalLayout = QtGui.QVBoxLayout(Dialog)
         self.verticalLayout.setSpacing(0)
@@ -44,7 +44,7 @@ class Ui_Dialog(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.cameraFrame.sizePolicy().hasHeightForWidth())
         self.cameraFrame.setSizePolicy(sizePolicy)
-        self.cameraFrame.setMinimumSize(QtCore.QSize(586, 545))
+        self.cameraFrame.setMinimumSize(QtCore.QSize(585, 543))
         self.cameraFrame.setMaximumSize(QtCore.QSize(10000, 10000))
         self.cameraFrame.setFrameShape(QtGui.QFrame.Box)
         self.cameraFrame.setFrameShadow(QtGui.QFrame.Raised)
@@ -56,20 +56,24 @@ class Ui_Dialog(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.widget.sizePolicy().hasHeightForWidth())
         self.widget.setSizePolicy(sizePolicy)
-        self.widget.setMaximumSize(QtCore.QSize(16777215, 96))
+        self.widget.setMaximumSize(QtCore.QSize(16777215, 75))
         self.widget.setObjectName(_fromUtf8("widget"))
         self.horizontalLayout = QtGui.QHBoxLayout(self.widget)
         self.horizontalLayout.setSpacing(2)
         self.horizontalLayout.setMargin(2)
         self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
         self.cameraParamsFrame = QtGui.QFrame(self.widget)
-        self.cameraParamsFrame.setMaximumSize(QtCore.QSize(16777215, 92))
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.cameraParamsFrame.sizePolicy().hasHeightForWidth())
+        self.cameraParamsFrame.setSizePolicy(sizePolicy)
+        self.cameraParamsFrame.setMinimumSize(QtCore.QSize(0, 0))
+        self.cameraParamsFrame.setMaximumSize(QtCore.QSize(16777215, 1000))
         self.cameraParamsFrame.setFrameShape(QtGui.QFrame.StyledPanel)
         self.cameraParamsFrame.setFrameShadow(QtGui.QFrame.Raised)
         self.cameraParamsFrame.setObjectName(_fromUtf8("cameraParamsFrame"))
         self.horizontalLayout.addWidget(self.cameraParamsFrame)
-        spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem)
         self.widget_3 = QtGui.QWidget(self.widget)
         self.widget_3.setMinimumSize(QtCore.QSize(100, 0))
         self.widget_3.setMaximumSize(QtCore.QSize(16777215, 92))
@@ -77,9 +81,10 @@ class Ui_Dialog(object):
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.widget_3)
         self.verticalLayout_2.setMargin(2)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
-        spacerItem1 = QtGui.QSpacerItem(20, 38, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-        self.verticalLayout_2.addItem(spacerItem1)
+        spacerItem = QtGui.QSpacerItem(20, 38, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        self.verticalLayout_2.addItem(spacerItem)
         self.okButton = QtGui.QPushButton(self.widget_3)
+        self.okButton.setMaximumSize(QtCore.QSize(100, 16777215))
         self.okButton.setObjectName(_fromUtf8("okButton"))
         self.verticalLayout_2.addWidget(self.okButton)
         self.horizontalLayout.addWidget(self.widget_3)
@@ -90,5 +95,5 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(_translate("Dialog", "Dialog", None))
-        self.okButton.setText(_translate("Dialog", "Ok", None))
+        self.okButton.setText(_translate("Dialog", "Close", None))
 

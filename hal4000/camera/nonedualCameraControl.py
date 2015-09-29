@@ -4,7 +4,7 @@
 #
 # This emulates two cameras at once.
 #
-# Hazen 01/14
+# Hazen 09/15
 #
 
 import ctypes
@@ -37,10 +37,14 @@ class ACameraControl(cameraControl.CameraControl):
         self.camera1_frame_size = [0,0]
         self.camera2_fake_frame = 0
         self.camera2_frame_size = [0,0]
-        self.frames_to_take = 0
-        self.shutter1 = False
-        self.shutter2 = False
         self.sleep_time = 50
+        self.shutter1 = False
+        
+        if hardware:
+            self.roll = hardware.get("roll")
+        else:
+            self.roll = 0
+
         self.initCamera()
 
     ## getAcquisitionTimings
@@ -54,19 +58,40 @@ class ACameraControl(cameraControl.CameraControl):
     @hdebug.debug
     def getAcquisitionTimings(self, which_camera):
         time = 0.001 * float(self.sleep_time)
-        return [time, time, time]
+        return [time, time]
+
+    ## getNumberOfCameras
+    #
+    # @return The number of cameras that this module controls.
+    #
+    @hdebug.debug
+    def getNumberOfCameras(self):
+        return 2
+    
+    ## getProperties
+    #
+    # @return The properties of the cameras as a dict.
+    #
+    @hdebug.debug
+    def getProperties(self):
+        return {"camera1" : frozenset(['have_emccd', 'have_shutter', 'have_preamp']),
+                "camera2" : frozenset(['have_temperature'])}
     
     ## getTemperature
     #
     # Returns a made up temperature from the indicated camera. Emulated cameras
     # run hot & are unstable..
     #
-    # @param camera Which camera to get the temperature of.
+    # @param which_camera Which camera to get the temperature of.
+    # @param parameters A parameters object.
     #
-#    @hdebug.debug
-#    def getTemperature(self, camera):
-#        return [40, "unstable"]
-
+    @hdebug.debug
+    def getTemperature(self, which_camera, parameters):
+        if (which_camera == "camera2"):
+            temp = [-50, "unstable"]
+            parameters.set(which_camera + ".actual_temperature", temp[0])
+            parameters.set(which_camera + ".temperature_control", temp[1])
+        
     ## initCamera
     #
     # Initialize the camera.
@@ -77,27 +102,6 @@ class ACameraControl(cameraControl.CameraControl):
                 print " Initializing None Camera Type"
             self.camera = 1
         self.got_camera = 1
-
-    ## newFilmSettings
-    #
-    # Prepare the camera for the next acquisition.
-    #
-    # @param parameters A parameters object.
-    # @param film_settings A film settings object or None.
-    #
-    @hdebug.debug
-    def newFilmSettings(self, parameters, film_settings):
-        self.stopCamera()
-        self.mutex.lock()
-        self.reached_max_frames = False
-        if film_settings:
-            self.filming = True
-            self.acq_mode = film_settings.acq_mode
-            self.frames_to_take = film_settings.frames_to_take
-        else:
-            self.filming = False
-            self.acq_mode = "run_till_abort"
-        self.mutex.unlock()
 
     ## newParameters
     #
@@ -117,13 +121,9 @@ class ACameraControl(cameraControl.CameraControl):
         else:
             self.sleep_time = 10
 
-        # Set acquisition timing values for camera1 and camera2
-        parameters.get("camera1").set(["exposure_value", "accumulate_value", "kinetic_value"], self.getAcquisitionTimings(0))
-        parameters.get("camera2").set(["exposure_value", "accumulate_value", "kinetic_value"], self.getAcquisitionTimings(1))
-
         # Create fake image for camera 1
-        size_x = parameters.get("camera1").get("x_pixels")
-        size_y = parameters.get("camera1").get("y_pixels")
+        size_x = parameters.get("camera1").get("x_pixels") / parameters.get("camera1").get("x_bin")
+        size_y = parameters.get("camera1").get("y_pixels") / parameters.get("camera1").get("y_bin")
         self.camera1_frame_size = [size_x, size_y]
         camera1_fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
         for i in range(size_x):
@@ -131,9 +131,12 @@ class ACameraControl(cameraControl.CameraControl):
                 camera1_fake_frame[i*2*size_y + j*2] = chr(i % 128 + j % 128)
         self.camera1_fake_frame = numpy.fromstring(camera1_fake_frame, dtype = numpy.uint16)
 
+        if not parameters.has("camera1.bytes_per_frame"):
+            parameters.set("camera1.bytes_per_frame", 2 * size_x * size_y
+        
         # Create fake image for camera 2
-        size_x = parameters.get("camera2").get("x_pixels")
-        size_y = parameters.get("camera2").get("y_pixels")
+        size_x = parameters.get("camera2").get("x_pixels") / parameters.get("camera2").get("x_bin")
+        size_y = parameters.get("camera2").get("y_pixels") / parameters.get("camera2").get("y_bin")
         self.camera2_frame_size = [size_x, size_y]
         camera2_fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
         for i in range(size_x):
@@ -141,7 +144,9 @@ class ACameraControl(cameraControl.CameraControl):
                 camera2_fake_frame[i*2*size_y + j*2] = chr(255 - (j % 128 + i % 128))
         self.camera2_fake_frame = numpy.fromstring(camera1_fake_frame, dtype = numpy.uint16)
 
-        self.newFilmSettings(parameters, None)
+        if not parameters.has("camera2.bytes_per_frame"):
+            parameters.set("camera2.bytes_per_frame", 2 * size_x * size_y)
+            
         self.parameters = parameters
 
     ## run
@@ -155,7 +160,7 @@ class ACameraControl(cameraControl.CameraControl):
             if self.acquire.amActive() and self.got_camera:
 
                 # Fake data from camera1
-                cam1_frame = frame.Frame(self.camera1_fake_frame, 
+                cam1_frame = frame.Frame(numpy.roll(self.camera1_fake_frame, int(self.frame_number * self.roll)),
                                          self.frame_number,
                                          self.camera1_frame_size[0],
                                          self.camera1_frame_size[1],
@@ -163,8 +168,8 @@ class ACameraControl(cameraControl.CameraControl):
                                          True)
 
                 # Fake data from camera2
-                cam2_frame = frame.Frame(self.camera2_fake_frame, 
-                                         self.frame_number,         
+                cam2_frame = frame.Frame(numpy.roll(self.camera2_fake_frame, int(-self.frame_number * self.roll)),
+                                         self.frame_number,
                                          self.camera2_frame_size[0],
                                          self.camera2_frame_size[1],
                                          "camera2",
@@ -172,31 +177,8 @@ class ACameraControl(cameraControl.CameraControl):
 
                 self.frame_number += 1
 
-                if self.filming:
-                    if self.daxfile:
-                        if (self.acq_mode == "fixed_length"):
-                            if (self.frame_number <= self.frames_to_take):
-                                self.daxfile.saveFrame(cam1_frame)
-                                self.daxfile.saveFrame(cam2_frame)
-                        else:
-                            self.daxfile.saveFrame(cam1_frame)
-                            self.daxfile.saveFrame(cam2_frame)
-
-                    if (self.acq_mode == "fixed_length") and (self.frame_number == self.frames_to_take):
-                        self.reached_max_frames = True
-                        
                 # Emit new data signal.
                 self.newData.emit([cam1_frame, cam2_frame], self.key)
-
-                # Emit max frames signal.
-                #
-                # The signal is emitted here because if it is emitted before
-                # newData then you never see that last frame in the movie, which
-                # is particularly problematic for single frame movies.
-                #
-                if self.reached_max_frames:
-                    self.max_frames_sig.emit()
-
             else:
                 self.acquire.idle()
 
@@ -207,21 +189,18 @@ class ACameraControl(cameraControl.CameraControl):
     #
     # Toggles the shutter of the indicated camera.
     #
-    # @param camera Which camera to toggle the shutter of.
+    # @param which_camera Which camera to toggle the shutter of.
     #
     @hdebug.debug
-    def toggleShutter(self, camera):
-        if (camera == 1):
+    def toggleShutter(self, which_camera):
+        if (which_camera == "camera1"):
             self.shutter1 = not self.shutter1
             return self.shutter1
-        else:
-            self.shutter2 = not self.shutter2
-            return self.shutter2
 
 #
 # The MIT License
 #
-# Copyright (c) 2014 Zhuang Lab, Harvard University
+# Copyright (c) 2015 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

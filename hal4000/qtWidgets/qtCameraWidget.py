@@ -12,6 +12,8 @@ from PyQt4 import QtCore, QtGui
 import numpy
 import sys
 
+import halLib.c_image_manipulation_c as c_image
+
 ## QCameraWidget
 #
 # The base class for displaying data from a camera.
@@ -38,6 +40,7 @@ class QCameraWidget(QtGui.QWidget):
 
         # These are for dragging (to move the stage).
         self.ctrl_key_down = False
+        self.drag_enabled = False
         self.drag_mode = False
         self.drag_multiplier = parameters.get("drag_multiplier", 1.0)
         self.drag_x = 0
@@ -90,7 +93,7 @@ class QCameraWidget(QtGui.QWidget):
 
     ## blank
     #
-    # Initialize the off-screen buffer for image renderin.
+    # Initialize the off-screen buffer for image rendering.
     #
     def blank(self):
         painter = QtGui.QPainter(self.buffer)
@@ -214,7 +217,7 @@ class QCameraWidget(QtGui.QWidget):
         
         self.mousePress.emit(self.x_click, self.y_click)
 
-        if self.ctrl_key_down:
+        if self.ctrl_key_down and self.drag_enabled:
             self.drag_mode = True
             self.dragStart.emit()
             self.drag_x = event.x()
@@ -267,14 +270,10 @@ class QCameraWidget(QtGui.QWidget):
     # @param colortable A color table Python array.
     # @param display_range [minimum, maximum]
     #
-    def newParameters(self, parameters, colortable, display_range):
-        self.colortable = colortable
-        self.display_range = display_range
+    def newParameters(self, parameters):
         self.flip_horizontal = parameters.get("flip_horizontal")
         self.flip_vertical = parameters.get("flip_vertical")
         self.transpose = parameters.get("transpose")
-        self.x_size = parameters.get("x_pixels")/parameters.get("x_bin")
-        self.y_size = parameters.get("y_pixels")/parameters.get("y_bin")
         self.drag_multiplier = parameters.get("drag_multiplier", 1.0)
         self.max_intensity = parameters.get("max_intensity")
 
@@ -282,15 +281,22 @@ class QCameraWidget(QtGui.QWidget):
             self.display_saturated_pixels = True
         else:
             self.display_saturated_pixels = False
-
-        self.calcFinalSize()
-
+            
     ## newRange
     #
-    # @param range [minimum, maximum]
+    # @param new_range [minimum, maximum]
     #
-    def newRange(self, range):
-        self.display_range = range
+    def newRange(self, new_range):
+        self.display_range = new_range
+
+    ## newSize
+    #
+    # @param new_size [x_size, y_size]
+    #
+    def newSize(self, new_size):
+        self.x_size = new_size[0]
+        self.y_size = new_size[1]
+        self.calcFinalSize()
 
     ## paintEvent
     #
@@ -352,6 +358,16 @@ class QCameraWidget(QtGui.QWidget):
             for i in range(256):
                 self.image.setColor(i,QtGui.qRgb(i,i,i))
 
+    ## setDragEnabled
+    #
+    # Allow mouse drags and emit when the ctrl key is pressed and the
+    # mouse is dragged across the screen.
+    #
+    # @param drag_enabled True / False.
+    #
+    def setDragEnabled(self, drag_enabled):
+        self.drag_enabled = drag_enabled
+                       
     ## setMagnification
     #
     # Note that the magnification of the image that is being displayed 
@@ -407,40 +423,17 @@ class QCameraWidget(QtGui.QWidget):
             h = frame.image_y
             image_data = frame.getData()
             image_data = image_data.reshape((h,w))
-            self.image_min = numpy.min(image_data)
-            self.image_max = numpy.max(image_data)
 
-            reoriented = False
-            if self.flip_horizontal:
-                reoriented = True
-                image_data = numpy.fliplr(image_data)
-
-            if self.flip_vertical:
-                reoriented = True
-                image_data = numpy.flipud(image_data)
-
-            if self.transpose:
-                reoriented = True
-                image_data = numpy.transpose(image_data)
-        
-            if reoriented:
-                image_data = numpy.ascontiguousarray(image_data)
-
-            if self.display_saturated_pixels:
-                max_range = 254.0
-            else:
-                max_range = 255.0
-
-            temp = image_data.astype(numpy.float32)
-            temp = max_range *(temp - self.display_range[0])/(self.display_range[1] - self.display_range[0])
-            temp[(temp > max_range )] = max_range 
-            temp[(temp < 0.0)] = 0.0
-
-            # Check for saturated pixels
-            if self.display_saturated_pixels:
-                temp[image_data >= self.max_intensity] = 255.0
-            
-            temp = temp.astype(numpy.uint8)
+            max_intensity = self.max_intensity
+            if not self.display_saturated_pixels:
+                max_intensity = None
+                
+            [temp, self.image_min, self.image_max] = c_image.rescaleImage(image_data,
+                                                                          self.flip_horizontal,
+                                                                          self.flip_vertical,
+                                                                          self.transpose,
+                                                                          self.display_range,
+                                                                          max_intensity)
 
             # Create QImage & draw at final magnification.
             if self.transpose:

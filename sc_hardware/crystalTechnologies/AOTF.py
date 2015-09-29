@@ -175,8 +175,8 @@ class AOTF():
     #
     # @param channel Turn FSK on for this channel.
     #
-    def fskOn(self, channel):
-        cmd = "dds fsk " + str(channel) + " 1"
+    def fskOn(self, channel, mode = 1):
+        cmd = "dds fsk " + str(channel) + " " + str(mode)
         self._sendCmd(cmd)
 
     ## getStatus

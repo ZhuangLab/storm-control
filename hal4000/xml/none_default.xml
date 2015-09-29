@@ -15,7 +15,7 @@
     <exposure_time type="float">0.0</exposure_time>
     <frame_transfer_mode type="int">1</frame_transfer_mode>
     <temperature type="int">-70</temperature>
-  
+
     <!-- less common camera settings -->
     <preampgain type="float">1.0</preampgain>
     <hsspeed type="float">10.0</hsspeed>
@@ -94,7 +94,7 @@
     <flip_axis type="int">1</flip_axis>
     <stage_speed type="float">2.0</stage_speed>
   </stage>
-  
+
   <!-- focus lock settings -->
   <focuslock>
     <qpd_mode type="int">0</qpd_mode>
@@ -131,7 +131,7 @@
     <scale_bar_len type="float">1000</scale_bar_len>
     <nm_per_pixel type="float">160</nm_per_pixel>
   </spotcounter>
-  
+
   <!-- misc control -->
   <misc>
     <jog_size type="float">0.01</jog_size>
@@ -140,7 +140,7 @@
     <filter_names type="string-array">1,2,3,4,5,6</filter_names>
     <filter_position type="int">0</filter_position>
   </misc>
-    
+
   <!-- power progression settings -->
   <progressions>
     <have_progressions type="int">1</have_progressions>
@@ -149,7 +149,7 @@
     <pinc_value type="float">0.01</pinc_value>
     <pframe_value type="int">1000</pframe_value>
   </progressions>
-  
+
   <!-- joystick setting -->
   <joystick>
     <hat_step type="float">1.0</hat_step> <!-- step size in um for hat button press -->
@@ -175,5 +175,5 @@
     <obj3 type="string">4x,4.0,0.0,0.0</obj3>
     <pixels_to_um type="float">0.160</pixels_to_um>
   </mosaic>
-  
+
 </settings>

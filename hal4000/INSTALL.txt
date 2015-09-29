@@ -1,6 +1,6 @@
 
 (1) Install Dependencies:
- (a) Mingw
+ (a) Mingw (only if you need to compile C libraries)
  (b) Python
  (c) PyQt
  (d) pywin32
@@ -49,13 +49,17 @@
  the python install directory, e.g. C:\Python27\. 
  An example .pth file is included under hal4000\storm_control.pth.  
 
+ Note: This is no longer necessary if you only run hal, dave or steve as they
+ will automatically configure the Python path. However it can still be
+ convenient as this will let you run many of the other modules independently.
+ 
  
 (5) Create data & logs directories:
- The default directory for saving data is "c:\users\data\". You can change
+ The default directory for saving data is "c:\Data\". You can change
  this is in settings xml file. You will also need to create a sub-directory
  of the default directory called "logs", which is where hal (and the other
  programs) will store their log files. If you don't change the default
- directory the full path for the log files is "c:\users\data\logs\".
+ directory the full path for the log files is "c:\Data\logs\".
 
 
 (6) Verify that the software works:
