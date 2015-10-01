@@ -250,7 +250,8 @@ def setCameraParameters(camera):
     camera.set("x_pixels", camera.get("x_end") - camera.get("x_start") + 1)
     camera.set("y_pixels", camera.get("y_end") - camera.get("y_start") + 1)
 
-    # FIXME: This is specific to Andor EMCCDs?
+    # This restriction is necessary because in order to display
+    # pictures as QImages they need to 32 bit aligned.
     if((camera.get("x_pixels") % 4) != 0):
         raise ParametersException("The camera ROI must be a multiple of 4 in x!")
 
