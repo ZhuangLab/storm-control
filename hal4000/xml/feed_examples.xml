@@ -8,7 +8,10 @@
 	 feed derives from adjusted for binning. All the feed
          types support taking a part of the overall image from
 	 the camera. They are 1 indexed, i.e. the upper left
-         hand corner of the camera is 1,1 and not 0,0. -->
+         hand corner of the camera is 1,1 and not 0,0.
+
+         Also, the feed size in x must be a multiple of 4,
+         otherwise it will not be displayed properly. -->
 
     <!-- This feed averages 10 frames from the camera together -->
     <!-- Note that the tag name for this block is arbitrary and
@@ -51,7 +54,7 @@
       <source type="string">camera1</source>
       <feed_type type="string">slice</feed_type>
       
-      <x_start type="int">64</x_start>
+      <x_start type="int">65</x_start>
       <x_end type="int">128</x_end>
       <y_start type="int">256</y_start>
       <y_end type="int">320</y_end>
