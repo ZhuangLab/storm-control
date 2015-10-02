@@ -262,11 +262,12 @@ class SDK3Camera:
     def captureSetup(self):
 
         # Get current capture size.
-        self.frame_x = self.getProperty("AOIWidth", "int")
-        self.frame_y = self.getProperty("AOIHeight", "int")
+        frame_x = self.getProperty("AOIWidth", "int")
+        frame_y = self.getProperty("AOIHeight", "int")
         self.pixel_encoding = self.getProperty("PixelEncoding", "enum")
         self.stride = self.getProperty("AOIStride", "int")
         frame_bytes = self.getProperty("ImageSizeBytes", "int")
+        n_buffers = int((2.0 * 1024 * 1024 * 1024)/frame_bytes)
 
         #
         # Create new buffers if the image size has changed. Allocate ~4GB
@@ -275,12 +276,17 @@ class SDK3Camera:
         # frames because they would also be active buffers..
         #
         if (frame_bytes != self.frame_bytes):
-            n_buffers = int((2.0 * 1024 * 1024 * 1024)/frame_bytes)
             self.raw_data = []
-            self.frame_data = []
             for i in range(n_buffers):
                 self.raw_data.append(AndorRawData(frame_bytes))
-                self.frame_data.append(AndorFrameData(self.frame_x * self.frame_y))
+
+        #
+        # frame_bytes can be the same even when the frame size is different.
+        #
+        if ((frame_x * frame_y) != (self.frame_x * self.frame_y)):
+            self.frame_data = []
+            for i in range(n_buffers):
+                self.frame_data.append(AndorFrameData(frame_x * frame_y))
 
         for a_buffer in self.raw_data:
             sdk3.AT_QueueBuffer(self.camera_handle, 
@@ -288,6 +294,8 @@ class SDK3Camera:
                                 ctypes.c_int(a_buffer.size))
 
         self.frame_data_cur = 0
+        self.frame_x = frame_x
+        self.frame_y = frame_y
         self.frame_bytes = frame_bytes
 
     def getFrames(self):
@@ -295,6 +303,7 @@ class SDK3Camera:
         #current_buffer = ctypes.POINTER(ctypes.c_char)()
         current_buffer = ctypes.c_void_p()
         buffer_size = ctypes.c_longlong()
+
         while(self.waitBuffer(current_buffer, buffer_size)):
 
             # Convert the buffer to an image.
@@ -350,6 +359,7 @@ class SDK3Camera:
             return False
 
     def setProperty(self, pname, ptype, pvalue):
+        print pname, ptype, pvalue
         if self.isEnumerated(pname):
             ptype = "enum"
 
