@@ -12,7 +12,7 @@
 
 import numpy
 
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui
 
 import sc_library.hdebug as hdebug
 
@@ -148,6 +148,10 @@ class FeedNC(Feed):
             self.x_pixels = x_end - x_start
             self.y_pixels = y_end - y_start
 
+            # Check that the feed size is a multiple of 4 in x.
+            if not ((self.x_pixels % 4) == 0):
+                raise FeedException("x size of " + str(self.x_pixels) + " is not a multiple of 4 in feed " + self.feed_name)
+            
         else:
             self.x_pixels = parameters.get(self.which_camera + ".x_pixels")/c_x_bin
             self.y_pixels = parameters.get(self.which_camera + ".y_pixels")/c_y_bin
@@ -278,16 +282,34 @@ class FeedController(object):
             if isCamera(feed_name):
                 self.feeds.append(FeedCamera(feed_name, self.parameters))
             else:
+
+                # Figure out what type of feed this is.
+                fclass = None
                 feed_type = self.parameters.get("feeds." + feed_name + ".feed_type")
                 if (feed_type == "average"):
-                    self.feeds.append(FeedAverage(feed_name, self.parameters))
+                    fclass = FeedAverage
                 elif (feed_type == "interval"):
-                    self.feeds.append(FeedInterval(feed_name, self.parameters))
+                    fclass = FeedInterval
                 elif (feed_type == "slice"):
-                    self.feeds.append(FeedSlice(feed_name, self.parameters))
+                    fclass = FeedSlice
                 else:
-                    raise FeedException("Unknown feed type " + feed_type + " in feed " + feed_name)
+                    QtGui.QMessageBox.information(None,
+                                                  "Bad Feed Settings",
+                                                  "Unknown feed type " + feed_type + " in feed " + feed_name)
+                    self.feed_names.remove(feed_name)
                     
+                # Try and create a feed of this type.
+                if fclass is not None:
+                    try:
+                        new_feed = fclass(feed_name, self.parameters)
+                    except FeedException as e:
+                        QtGui.QMessageBox.information(None,
+                                                      "Bad Feed Settings",
+                                                      str(e))
+                        self.feed_names.remove(feed_name)
+                    else:
+                        self.feeds.append(new_feed)
+                                    
         # Figure out what feed should be saved to disk during filming.
         for feed_name in self.feed_names:
             if isCamera(feed_name):

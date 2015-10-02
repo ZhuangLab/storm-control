@@ -22,7 +22,7 @@
     <vsspeed type="float">3.3</vsspeed>
     <kinetic_cycle_time type="float">0.0</kinetic_cycle_time>
     <adchannel type="int">0</adchannel>
-    <emgainmode type="int">0</emgainmode>
+    <emgainmode type="int">2</emgainmode>
     <baselineclamp type="int">1</baselineclamp>
     <vsamplitude type="int">0</vsamplitude>
     <off_during_filming type="int">0</off_during_filming>

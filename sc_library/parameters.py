@@ -16,6 +16,8 @@ import traceback
 from xml.dom import minidom
 from xml.etree import ElementTree
 
+from PyQt4 import QtCore, QtGui
+
 default_params = 0
 
 ## copyParameters
@@ -38,25 +40,36 @@ def copyParameters(ori_parameters, new_parameters):
     params = copy.deepcopy(ori_parameters)
     copyParametersReplace("", params, new_parameters)
 
-    # Check and add any appropriately flagged new parameters.
-    copyParametersCheck(params, new_parameters, new_parameters._is_new_)
+    # Check and add any new parameters.
+    unrecognized = copyParametersCheck(params, new_parameters, new_parameters._is_new_)
+    if (len(unrecognized) > 0):
+        QtGui.QMessageBox.information(None,
+                                      "Bad Parameters?",
+                                      "The following parameters were not in the default list: " + ", ".join(unrecognized))
 
     return params
 
 ## copyParametersCheck
 #
 # Copy parameters in new_parameters that did not exist in
-# ori_parameters, but only if they are specifically flagged
-# with _is_new_. If they are not so flagged, throw an
-# error as this likely indicates a misspelling.
+# ori_parameters. If they don't already exist and are not
+# flagged with _is_new_ then add them to the list of
+# unrecognized parameters.
 #
 # Notes
 #  1. This assumes both parameters are tree style.
 #  2. Only sub-sections can be marked as _is_new_, not
 #     individual parameters.
 #
+# @param ori_parameters The original parameters.
+# @param new_parameters The new parameters.
+# @param allow_new Don't add new parameters to the unrecognized list.
+#
+# @return A list of the unrecognized parameters.
+#
 def copyParametersCheck(ori_parameters, new_parameters, allow_new):
 
+    unrecognized = []
     for attr in new_parameters.getAttrs():
             
         prop = new_parameters.get(attr, mark_used = False)
@@ -67,21 +80,24 @@ def copyParametersCheck(ori_parameters, new_parameters, allow_new):
                     temp = ori_parameters.get(attr)
                     temp._is_new_ = True
                 else:
-                    raise ParametersException("Unrecognized new section " + attr)
+                    unrecognized.append(attr)
+                    #raise ParametersException("Unrecognized new section " + attr)
 
             # Allow new parameters for all sub-objects.
             if allow_new:
-                copyParametersCheck(ori_parameters.get(attr), prop, True)
+                unrecognized.extend(copyParametersCheck(ori_parameters.get(attr), prop, True))
             else:
-                copyParametersCheck(ori_parameters.get(attr), prop, prop._is_new_)
+                unrecognized.extend(copyParametersCheck(ori_parameters.get(attr), prop, prop._is_new_))
 
         else:
             if not ori_parameters.has(attr):
-                if allow_new:
-                    ori_parameters._create_(attr, prop)
-                else:
+                ori_parameters._create_(attr, prop)
+                if not allow_new:
                     if attr in new_parameters.getUnused():
-                        raise ParametersException("Unrecognized new parameter " + attr)
+                        unrecognized.append(attr)
+                        #raise ParametersException("Unrecognized new parameter " + attr)
+
+    return unrecognized
 
 ## copyParametersReplace
 #
@@ -250,7 +266,8 @@ def setCameraParameters(camera):
     camera.set("x_pixels", camera.get("x_end") - camera.get("x_start") + 1)
     camera.set("y_pixels", camera.get("y_end") - camera.get("y_start") + 1)
 
-    # FIXME: This is specific to Andor EMCCDs?
+    # This restriction is necessary because in order to display
+    # pictures as QImages they need to 32 bit aligned.
     if((camera.get("x_pixels") % 4) != 0):
         raise ParametersException("The camera ROI must be a multiple of 4 in x!")
 
