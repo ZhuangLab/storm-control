@@ -359,7 +359,6 @@ class SDK3Camera:
             return False
 
     def setProperty(self, pname, ptype, pvalue):
-        print pname, ptype, pvalue
         if self.isEnumerated(pname):
             ptype = "enum"
 
