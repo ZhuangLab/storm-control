@@ -33,7 +33,14 @@
     </average>
 
     <!-- This feed saves a frame from the previous film, frame 0
-	 by default. -->
+	 by default.
+
+         Notes:
+         1. Unlike the other kinds of feeds you should only have
+            one of these kinds of feeds per parameter set.
+         2. In order for this to work if you change parameters
+            between films the lastfilm feeds in both parameter
+            sets need to have the same dimensions. -->
     <lastfilm>
       <source type="string">camera1</source>
       <feed_type type="string">lastfilm</feed_type>
