@@ -750,11 +750,12 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def newSettings(self, parameters_filename):
+
         # parse parameters file
         is_valid_xml = True
         try:
             parameters = params.halParameters(parameters_filename)
-        except:
+        except params.ParametersException:
             is_valid_xml = False
             hdebug.logText("failed to parse parameters file " + parameters_filename)
             QtGui.QMessageBox.information(self,
