@@ -32,6 +32,14 @@
       <save type="boolean">True</save>
     </average>
 
+    <!-- This feed saves a frame from the previous film, frame 0
+	 by default. -->
+    <lastfilm>
+      <source type="string">camera1</source>
+      <feed_type type="string">lastfilm</feed_type>
+      <!-- <which_frame type="int">5</which_frame> -->
+    </lastfilm>
+	
     <!-- This feed shows the first and fifth frame of a 16 frame
          interval. It also takes only the top half of the image
          from the camera. -->
