@@ -27,6 +27,7 @@
 #include <stdint.h>
 
 /* function definitions */
+int compare(uint8_t*, uint8_t*, int);
 void rescaleImage000(uint8_t*, unsigned short *, int, int, int, int, int, double, int *, int *);
 void rescaleImage001(uint8_t*, unsigned short *, int, int, int, int, int, double, int *, int *);
 void rescaleImage010(uint8_t*, unsigned short *, int, int, int, int, int, double, int *, int *);
@@ -45,6 +46,31 @@ void rescaleImage111(uint8_t*, unsigned short *, int, int, int, int, int, double
  * premature optimization. In Lisp the problem would be solved with a macro..
  *
  */
+
+/* compare
+ *
+ * Does a bytewise comparison of two numpy arrays.
+ *
+ * @param array1 The first array.
+ * @param array2 The second array.
+ *
+ * @return The number of differences greater than 1.
+ */
+int compare(uint8_t* array1, uint8_t* array2, int n_values)
+{
+  int i,ndiff, v1, v2;
+
+  ndiff = 0;
+  for(i=0;i<n_values;i++){
+    v1 = (int)array1[i];
+    v2 = (int)array2[i];
+    if (abs(v1-v2) > 0){
+      ndiff += 1;
+    }
+  }
+
+  return ndiff;
+}
 
 /* rescaleImage000
  *
