@@ -30,6 +30,11 @@ try:
         image_manip = ctypes.cdll.LoadLibrary(directory + "c_image_manipulation.so")
             
     # C interface definition.
+    image_manip.compare.argtypes = [ndpointer(dtype=numpy.uint8),
+                                    ndpointer(dtype=numpy.uint8),
+                                    ctypes.c_int]
+    image_manip.compare.restype = ctypes.c_int
+                                                               
     rescale_fn_arg_types = [ndpointer(dtype=numpy.uint8),
                             ndpointer(dtype=numpy.uint16),
                             ctypes.c_int,
@@ -52,6 +57,23 @@ try:
 except OSError:
     print "C image manipulation library not found, reverting to numpy."
     image_manip = None
+
+## compare
+#
+# This does a bytewise comparison of two images.
+#
+# @param image1 The first image.
+# @param image2 The second image.
+#
+# @return The number of differences greater than 1.
+#
+def compare(image1, image2):
+    
+    if (image1.size != image2.size):
+        print "Images are not the same size!"
+        return
+
+    return image_manip.compare(image1, image2, image1.size)
 
 
 ## rescaleImage
@@ -140,7 +162,7 @@ def rescaleImage(image, flip_h, flip_v, transpose, display_range, saturated_valu
 
         # Convert to contiguous uint8 array.
         rescaled += 0.5
-        rescaled = rescaled.astype(numpy.uint8, order = 'C')
+        rescaled = rescaled.astype(numpy.uint8, order='C')
 
     return [rescaled, image_min, image_max]
 
@@ -182,6 +204,8 @@ if (__name__ == "__main__"):
             [c_nim, image_min, image_max] = rescaleImage(nim, flip_h, flip_v, transpose, [0, 100], 101)
             [py_nim, image_min, image_max] = rescaleImage(nim, flip_h, flip_v, transpose, [0, 100], 101, True)
 
+        print "  byte wise comparison:", compare(c_nim, py_nim), "pixels are different."
+        
         c_nim = c_nim.astype(numpy.int)
         py_nim = py_nim.astype(numpy.int)
 
