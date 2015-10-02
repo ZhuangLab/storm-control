@@ -172,7 +172,8 @@ class FeedNC(Feed):
             else:
                 w = new_frame.image_x
                 h = new_frame.image_y
-                return numpy.reshape(new_frame.np_data, (h,w))[self.frame_slice]
+                sliced_frame = numpy.reshape(new_frame.np_data, (h,w))[self.frame_slice]
+                return numpy.ascontiguousarray(sliced_frame)
 
 
 # The feed for averaging frames together.
