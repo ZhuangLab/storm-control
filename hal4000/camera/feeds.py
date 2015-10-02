@@ -113,16 +113,19 @@ class FeedNC(Feed):
 
         if (x_start != 0) or (x_end != 0) or (y_start != 0) or (y_end != 0):
 
+            # Determine the size of the camera.
             c_x_pixels = parameters.get(self.which_camera + ".x_pixels")/c_x_bin
             c_y_pixels = parameters.get(self.which_camera + ".y_pixels")/c_y_bin
 
-            # Set unset values to those of the corresponding camera.
+            # Set unset values based on the camera size.
             if (x_start == 0):
+                x_start = 1
                 parameters.set("feeds." + feed_name + ".x_start", x_start)
             if (x_end == 0):
                 x_end = c_x_pixels
                 parameters.set("feeds." + feed_name + ".x_end", x_end)
             if (y_start == 0):
+                y_start = 1
                 parameters.set("feeds." + feed_name + ".y_start", y_start)
             if (y_end == 0):
                 y_end = c_y_pixels
@@ -246,32 +249,49 @@ class FeedInterval(FeedNC):
 
 # Feed for displaying the previous film.
 class FeedLastFilm(FeedNC):
+    cur_film_frame = None
+    last_film_frame = None
 
     @hdebug.debug
     def __init__(self, feed_name, parameters):    
         FeedNC.__init__(self, feed_name, parameters)
 
-        self.cur_film_frame = None
-        self.last_film_frame = None
+        # For updates, update at 2Hz.
+        self.timer = QtCore.QTimer()
+        self.timer.setInterval(500)
+        self.timer.timeout.connect(self.handleTimer)
+        self.update = False
+
         self.which_frame = parameters.get("feeds." + self.feed_name + ".which_frame", 0)
 
+    def handleTimer(self):
+        self.update = True
+        
     def newFrame(self, new_frame):
         sliced_data = self.sliceFrame(new_frame)
         if sliced_data is not None and (new_frame.number == self.which_frame):
-            self.cur_film_frame = frame.Frame(sliced_data,
-                                              new_frame.number,
-                                              self.x_pixels,
-                                              self.y_pixels,
-                                              self.feed_name,
-                                              False)
-            
-        if self.last_film_frame is not None:
-            return [self.last_film_frame]
-        else:
-            return []
+            FeedLastFilm.cur_film_frame = frame.Frame(sliced_data,
+                                                      new_frame.number,
+                                                      self.x_pixels,
+                                                      self.y_pixels,
+                                                      self.feed_name,
+                                                      False)
 
+        if self.update and FeedLastFilm.last_film_frame is not None:
+            if (FeedLastFilm.last_film_frame.image_x == self.x_pixels) and (FeedLastFilm.last_film_frame.image_y == self.y_pixels):
+                self.update = False
+                return [FeedLastFilm.last_film_frame]
+            
+        return []
+
+    def startFeed(self):
+        self.timer.start()
+
+    def stopFeed(self):
+        self.timer.stop()
+        
     def stopFilm(self):
-        self.last_film_frame = self.cur_film_frame
+        FeedLastFilm.last_film_frame = FeedLastFilm.cur_film_frame
 
 
 # Feed for slicing out sub-sets of frames.
