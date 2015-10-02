@@ -98,9 +98,11 @@ class Camera(QtCore.QObject):
                 for feed in feeds:
                     if (self.acq_mode == "fixed_length") and feed.master:
                         if (feed.number <= self.frames_to_take):
-                            self.writer.saveFrame(feed)
+                            if self.writer is not None:
+                                self.writer.saveFrame(feed)
                     else:
-                        self.writer.saveFrame(feed)
+                        if self.writer is not None:
+                            self.writer.saveFrame(feed)
 
                     if (self.acq_mode == "fixed_length") and feed.master and (feed.number == self.frames_to_take):
                         reached_max_frames = True
