@@ -128,9 +128,9 @@ class ChannelUI(QtGui.QFrame):
     def remoteSetPower(self, new_power):
         if self.enabled:
             if (new_power > 0.5):
-                self.setOnOff(self, True)
+                self.setOnOff(True)
             else:
-                self.setOnOff(self, False)
+                self.setOnOff(False)
 
     ## setOnOff
     #
