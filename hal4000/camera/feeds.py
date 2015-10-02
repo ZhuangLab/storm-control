@@ -244,6 +244,36 @@ class FeedInterval(FeedNC):
         self.frame_number = -1
         
 
+# Feed for displaying the previous film.
+class FeedLastFilm(FeedNC):
+
+    @hdebug.debug
+    def __init__(self, feed_name, parameters):    
+        FeedNC.__init__(self, feed_name, parameters)
+
+        self.cur_film_frame = None
+        self.last_film_frame = None
+        self.which_frame = parameters.get("feeds." + self.feed_name + ".which_frame", 0)
+
+    def newFrame(self, new_frame):
+        sliced_data = self.sliceFrame(new_frame)
+        if sliced_data is not None and (new_frame.number == self.which_frame):
+            self.cur_film_frame = frame.Frame(sliced_data,
+                                              new_frame.number,
+                                              self.x_pixels,
+                                              self.y_pixels,
+                                              self.feed_name,
+                                              False)
+            
+        if self.last_film_frame is not None:
+            return [self.last_film_frame]
+        else:
+            return []
+
+    def stopFilm(self):
+        self.last_film_frame = self.cur_film_frame
+
+
 # Feed for slicing out sub-sets of frames.
 class FeedSlice(FeedNC):
 
@@ -290,6 +320,8 @@ class FeedController(object):
                     fclass = FeedAverage
                 elif (feed_type == "interval"):
                     fclass = FeedInterval
+                elif (feed_type == "lastfilm"):
+                    fclass = FeedLastFilm
                 elif (feed_type == "slice"):
                     fclass = FeedSlice
                 else:
