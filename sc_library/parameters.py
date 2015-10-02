@@ -91,9 +91,8 @@ def copyParametersCheck(ori_parameters, new_parameters, allow_new):
 
         else:
             if not ori_parameters.has(attr):
-                if allow_new:
-                    ori_parameters._create_(attr, prop)
-                else:
+                ori_parameters._create_(attr, prop)
+                if not allow_new:
                     if attr in new_parameters.getUnused():
                         unrecognized.append(attr)
                         #raise ParametersException("Unrecognized new parameter " + attr)

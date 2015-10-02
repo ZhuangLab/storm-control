@@ -313,6 +313,7 @@ class FeedController(object):
         # Figure out what feed should be saved to disk during filming.
         for feed_name in self.feed_names:
             if isCamera(feed_name):
+                print "save:", self.parameters.get(feed_name + ".save", "foo")
                 if self.parameters.get(feed_name + ".save", True):
                     self.feed_names_to_save.append(feed_name)
             else:
