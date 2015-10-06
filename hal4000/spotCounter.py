@@ -119,10 +119,9 @@ class OfflineDriver(QtCore.QObject):
     #
     def nextImage(self):
         if (self.cur_frame < self.length):
-        #if (self.cur_frame < 5):
             np_data = data_file.loadAFrame(self.cur_frame)
             np_data = numpy.ascontiguousarray(np_data, dtype=numpy.int16)
-            self.spot_counter.newFrame(frame.Frame(np_data.ctypes.data,
+            self.spot_counter.newFrame(frame.Frame(np_data,
                                                    self.cur_frame,
                                                    self.width,
                                                    self.height,
