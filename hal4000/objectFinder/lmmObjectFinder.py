@@ -72,7 +72,7 @@ def findObjects(np_image, image_x, image_y, threshold):
         x = numpy.zeros((max_locs), dtype = numpy.float32)
         y = numpy.zeros((max_locs), dtype = numpy.float32)
         n = c_int(max_locs)
-        lmmoment.numberAndLocObjects(numpy.ascontiguousarray(np_image, dtype =  numpy.uint16),
+        lmmoment.numberAndLocObjects(numpy.ascontiguousarray(np_image, dtype = numpy.uint16),
                                      image_y,
                                      image_x,
                                      threshold,
