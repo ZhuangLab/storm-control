@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<settings>
+
+  <!-- Examples of each of the different kinds of feeds -->
+  <feeds is_new="True">
+
+    <!-- Feed coordinates are relative to the camera which the
+	 feed derives from adjusted for binning. All the feed
+         types support taking a part of the overall image from
+	 the camera. They are 1 indexed, i.e. the upper left
+         hand corner of the camera is 1,1 and not 0,0.
+
+         Also, the feed size in x must be a multiple of 4,
+         otherwise it will not be displayed properly. -->
+
+    <!-- This feed averages 10 frames from the camera together -->
+    <!-- Note that the tag name for this block is arbitrary and
+	 it will be used as the name of the feed. We could for
+	 example have called this feed "average10". -->
+    <average>
+      <source type="string">camera1</source>
+      <feed_type type="string">average</feed_type>
+      
+      <frames_to_average type="int">10</frames_to_average>
+      
+      <!-- Set this to true if you want this feed to be saved when
+	   the movie is recorded.
+	   Also, if you do not want all the original images from
+	   the camera to be saved then you can add this setting
+	   with the value false to the camera section of the
+	   parameters. -->
+      <save type="boolean">True</save>
+    </average>
+
+    <!-- This feed saves a frame from the previous film, frame 0
+	 by default.
+
+         Notes:
+         1. Unlike the other kinds of feeds you should only have
+            one of these kinds of feeds per parameter set.
+         2. In order for this to work if you change parameters
+            between films the lastfilm feeds in both parameter
+            sets need to have the same dimensions. -->
+    <lastfilm>
+      <source type="string">camera1</source>
+      <feed_type type="string">lastfilm</feed_type>
+      <!-- <which_frame type="int">5</which_frame> -->
+    </lastfilm>
+	
+    <!-- This feed shows the first and fifth frame of a 16 frame
+         interval. It also takes only the top half of the image
+         from the camera. -->
+    <interval>
+      <source type="string">camera1</source>
+      <feed_type type="string">interval</feed_type>
+      
+      <cycle_length type="int">16</cycle_length>
+      <capture_frames type="int-array">0,5</capture_frames>
+      <save type="boolean">True</save>
+      <x_start type="int">1</x_start>
+      <x_end type="int">512</x_end>
+      <y_start type="int">1</y_start>
+      <y_end type="int">256</y_end>
+    </interval>
+
+    <!-- This feed takes only a small sub-section of the camera
+	 image. Note also that it is not saved. -->
+    <slice1>
+      <source type="string">camera1</source>
+      <feed_type type="string">slice</feed_type>
+      
+      <x_start type="int">65</x_start>
+      <x_end type="int">128</x_end>
+      <y_start type="int">256</y_start>
+      <y_end type="int">320</y_end>
+    </slice1>
+  </feeds>
+
+</settings>

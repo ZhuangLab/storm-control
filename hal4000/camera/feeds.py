@@ -12,7 +12,7 @@
 
 import numpy
 
-from PyQt4 import QtCore
+from PyQt4 import QtCore, QtGui
 
 import sc_library.hdebug as hdebug
 
@@ -113,16 +113,19 @@ class FeedNC(Feed):
 
         if (x_start != 0) or (x_end != 0) or (y_start != 0) or (y_end != 0):
 
+            # Determine the size of the camera.
             c_x_pixels = parameters.get(self.which_camera + ".x_pixels")/c_x_bin
             c_y_pixels = parameters.get(self.which_camera + ".y_pixels")/c_y_bin
 
-            # Set unset values to those of the corresponding camera.
+            # Set unset values based on the camera size.
             if (x_start == 0):
+                x_start = 1
                 parameters.set("feeds." + feed_name + ".x_start", x_start)
             if (x_end == 0):
                 x_end = c_x_pixels
                 parameters.set("feeds." + feed_name + ".x_end", x_end)
             if (y_start == 0):
+                y_start = 1
                 parameters.set("feeds." + feed_name + ".y_start", y_start)
             if (y_end == 0):
                 y_end = c_y_pixels
@@ -148,6 +151,10 @@ class FeedNC(Feed):
             self.x_pixels = x_end - x_start
             self.y_pixels = y_end - y_start
 
+            # Check that the feed size is a multiple of 4 in x.
+            if not ((self.x_pixels % 4) == 0):
+                raise FeedException("x size of " + str(self.x_pixels) + " is not a multiple of 4 in feed " + self.feed_name)
+            
         else:
             self.x_pixels = parameters.get(self.which_camera + ".x_pixels")/c_x_bin
             self.y_pixels = parameters.get(self.which_camera + ".y_pixels")/c_y_bin
@@ -165,7 +172,8 @@ class FeedNC(Feed):
             else:
                 w = new_frame.image_x
                 h = new_frame.image_y
-                return numpy.reshape(new_frame.np_data, (h,w))[self.frame_slice]
+                sliced_frame = numpy.reshape(new_frame.np_data, (h,w))[self.frame_slice]
+                return numpy.ascontiguousarray(sliced_frame)
 
 
 # The feed for averaging frames together.
@@ -240,6 +248,53 @@ class FeedInterval(FeedNC):
         self.frame_number = -1
         
 
+# Feed for displaying the previous film.
+class FeedLastFilm(FeedNC):
+    cur_film_frame = None
+    last_film_frame = None
+
+    @hdebug.debug
+    def __init__(self, feed_name, parameters):    
+        FeedNC.__init__(self, feed_name, parameters)
+
+        # For updates, update at 2Hz.
+        self.timer = QtCore.QTimer()
+        self.timer.setInterval(500)
+        self.timer.timeout.connect(self.handleTimer)
+        self.update = False
+
+        self.which_frame = parameters.get("feeds." + self.feed_name + ".which_frame", 0)
+
+    def handleTimer(self):
+        self.update = True
+        
+    def newFrame(self, new_frame):
+        sliced_data = self.sliceFrame(new_frame)
+        if sliced_data is not None and (new_frame.number == self.which_frame):
+            FeedLastFilm.cur_film_frame = frame.Frame(sliced_data,
+                                                      new_frame.number,
+                                                      self.x_pixels,
+                                                      self.y_pixels,
+                                                      self.feed_name,
+                                                      False)
+
+        if self.update and FeedLastFilm.last_film_frame is not None:
+            if (FeedLastFilm.last_film_frame.image_x == self.x_pixels) and (FeedLastFilm.last_film_frame.image_y == self.y_pixels):
+                self.update = False
+                return [FeedLastFilm.last_film_frame]
+            
+        return []
+
+    def startFeed(self):
+        self.timer.start()
+
+    def stopFeed(self):
+        self.timer.stop()
+        
+    def stopFilm(self):
+        FeedLastFilm.last_film_frame = FeedLastFilm.cur_film_frame
+
+
 # Feed for slicing out sub-sets of frames.
 class FeedSlice(FeedNC):
 
@@ -278,16 +333,36 @@ class FeedController(object):
             if isCamera(feed_name):
                 self.feeds.append(FeedCamera(feed_name, self.parameters))
             else:
+
+                # Figure out what type of feed this is.
+                fclass = None
                 feed_type = self.parameters.get("feeds." + feed_name + ".feed_type")
                 if (feed_type == "average"):
-                    self.feeds.append(FeedAverage(feed_name, self.parameters))
+                    fclass = FeedAverage
                 elif (feed_type == "interval"):
-                    self.feeds.append(FeedInterval(feed_name, self.parameters))
+                    fclass = FeedInterval
+                elif (feed_type == "lastfilm"):
+                    fclass = FeedLastFilm
                 elif (feed_type == "slice"):
-                    self.feeds.append(FeedSlice(feed_name, self.parameters))
+                    fclass = FeedSlice
                 else:
-                    raise FeedException("Unknown feed type " + feed_type + " in feed " + feed_name)
+                    QtGui.QMessageBox.information(None,
+                                                  "Bad Feed Settings",
+                                                  "Unknown feed type " + feed_type + " in feed " + feed_name)
+                    self.feed_names.remove(feed_name)
                     
+                # Try and create a feed of this type.
+                if fclass is not None:
+                    try:
+                        new_feed = fclass(feed_name, self.parameters)
+                    except FeedException as e:
+                        QtGui.QMessageBox.information(None,
+                                                      "Bad Feed Settings",
+                                                      str(e))
+                        self.feed_names.remove(feed_name)
+                    else:
+                        self.feeds.append(new_feed)
+                                    
         # Figure out what feed should be saved to disk during filming.
         for feed_name in self.feed_names:
             if isCamera(feed_name):

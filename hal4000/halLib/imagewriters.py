@@ -174,6 +174,11 @@ class GenericFile:
         self.filenames = []
         self.file_ptrs = []
         self.number_frames = []
+
+        # Just return if there is nothing to save.
+        if (len(self.feed_names) == 0):
+            return
+        
         if (len(self.feed_names) > 1):
             
             # Figure out if there is more than one camera.
@@ -198,7 +203,11 @@ class GenericFile:
                     self.file_ptrs.append(open(fname, "wb"))
                 self.number_frames.append(0)
         else:
-            fname = filename + "." + extension
+            feed_name = self.feed_names[0]
+            if feeds.isCamera(feed_name):
+                fname = filename + "." + extension
+            else:
+                fname = filename + "_" + feed_name + "." + extension
             self.filenames.append(fname)
             if want_fp:
                 self.file_ptrs.append(open(fname, "wb"))

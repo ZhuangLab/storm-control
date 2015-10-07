@@ -10,9 +10,10 @@
 
 from PyQt4 import QtCore, QtGui
 
+
 try:
     import objectFinder.lmmObjectFinder as lmmObjectFinder
-except:
+except ImportError:
     import sys
     sys.path.append("../")
     import objectFinder.lmmObjectFinder as lmmObjectFinder

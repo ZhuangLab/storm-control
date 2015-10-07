@@ -7,9 +7,14 @@
  * 
  * Hazen 09/13
  * 
- * Windows:
+ * Compilation (windows):
  *  gcc -c LMMoment.c
  *  gcc -shared -o LMMoment.dll LMMoment.o
+ *
+ * Compilation (linux):
+ *  gcc -fPIC -g -Wall -c LMMoment.c -O3
+ *  gcc -shared -Wl,-soname,LMMoment.so.1 -o LMMoment.so.1.0.1 LMMoment.o -lc
+ *  ln -s LMMoment.so.1.0.1 LMMoment.so
  */
 
 /* Include */
