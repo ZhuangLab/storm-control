@@ -27,11 +27,12 @@ import sc_library.hdebug as hdebug
 # The module that actually does the analysis.
 import qtWidgets.qtSpotCounter as qtSpotCounter
 
+
 ## Counter
 #
 # Widget for keeping the various count displays up to date.
 #
-class Counter():
+class Counter(object):
 
     ## __init__
     #
@@ -77,6 +78,7 @@ class Counter():
         self.q_label1.setText(str(self.counts))
         self.q_label2.setText(str(self.counts))
 
+        
 ## OfflineDriver
 #
 # Offline analysis driver widget. This is used to analyze saved films
@@ -147,6 +149,7 @@ class OfflineDriver(QtCore.QObject):
         self.begin_time = time.time()
         self.nextImage()
 
+        
 ## QSpotGraph
 #
 # Spot Count Graphing Widget.
@@ -294,6 +297,7 @@ class QSpotGraph(QtGui.QWidget):
         self.data[frame_index % self.x_points] = spots
         self.update()
 
+        
 ## QImageGraph
 #
 # STORM image display widget.
@@ -434,6 +438,7 @@ class QImageGraph(QtGui.QWidget):
                 painter.drawPoint(ix, iy)
             self.update()
 
+            
 ## SpotCounter
 #
 # Spot Counter Dialog Box
@@ -758,6 +763,7 @@ class SingleSpotCounter(SpotCounter):
         
         SpotCounter.__init__(self, parameters, parent)
 
+        
 ## DualSpotCounter
 #
 # Spot counter dialog box for a two camera setup.
@@ -811,8 +817,14 @@ if __name__ == "__main__":
     parameters.set("camera1.y_bin", 1)
 
     spotCounter = SingleSpotCounter(None, parameters)
-    #spotCounter.newParameters(parameters, [[255,255,255]])
     spotCounter.newParameters(parameters)
+
+    # Set the color.
+    #
+    # FIXME: We should parse the shutters file listed in the parameters
+    #        file. However instead we just use white.
+    #
+    spotCounter.newColors([])
 
     # Start driver.
     driver = OfflineDriver(spotCounter, data_file, sys.argv[3])
