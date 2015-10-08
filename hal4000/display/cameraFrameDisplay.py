@@ -65,6 +65,8 @@ class CameraFeedDisplay(QtGui.QFrame):
         self.show_info = 1
         self.show_target = 0
         self.sync_value = 0
+        self.sync_values_by_feedname = None
+        self.sync_values_by_params = {}
 
         # UI setup.
         self.ui = cameraDisplayUi.Ui_Frame()
@@ -281,6 +283,7 @@ class CameraFeedDisplay(QtGui.QFrame):
     @hdebug.debug
     def handleSync(self, sync_value):
         self.sync_value = sync_value
+        self.sync_values_by_feedname[self.feed_name] = sync_value
 
     ## handleTarget
     #
@@ -316,7 +319,7 @@ class CameraFeedDisplay(QtGui.QFrame):
                                     self.getParameter("y_pixels")/self.getParameter("y_bin")])
         self.updateRange()
 
-        # color gradient
+        # Color gradient
         if self.color_gradient:
             self.color_gradient.newColorTable(self.color_table)
         else:
@@ -328,12 +331,16 @@ class CameraFeedDisplay(QtGui.QFrame):
 
         self.ui.colorComboBox.setCurrentIndex(self.ui.colorComboBox.findText(self.getParameter("colortable")[:-5]))
 
-        # general settings
+        # General settings
         self.max_intensity = self.getParameter("max_intensity")
         self.ui.rangeSlider.setRange([0.0, self.max_intensity, 1.0])
         self.ui.rangeSlider.setValues([float(self.getParameter("scalemin")), 
                                        float(self.getParameter("scalemax"))])
-        self.ui.syncSpinBox.setValue(self.getParameter("sync"))
+
+        # Find correct sync value, if it exists.
+        if not feed_name in self.sync_values_by_feedname:
+            self.sync_values_by_feedname[feed_name] = self.getParameter("sync")
+        self.ui.syncSpinBox.setValue(self.sync_values_by_feedname[feed_name])
 
     ## newFrame
     #
@@ -369,6 +376,11 @@ class CameraFeedDisplay(QtGui.QFrame):
         # associated with a given camera to the camera_widget.
         self.camera_widget.newParameters(parameters.get(self.feed_controller.getCamera(feed_name)))
 
+        # Find saved sync values for these parameters (if any).
+        if not parameters in self.sync_values_by_params:
+            self.sync_values_by_params[parameters] = {}
+        self.sync_values_by_feedname = self.sync_values_by_params[parameters]
+            
         # Configure for this feed.
         self.newFeed(feed_name)
 
@@ -384,7 +396,7 @@ class CameraFeedDisplay(QtGui.QFrame):
         else:
             self.ui.feedComboBox.hide()
         self.ui.feedComboBox.currentIndexChanged[str].connect(self.handleFeedChange)
-
+        
     ## setParameter
     #
     # This simplifies setting parameters for the current feed_controller.
