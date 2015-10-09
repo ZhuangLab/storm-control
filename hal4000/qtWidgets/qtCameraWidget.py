@@ -422,7 +422,11 @@ class QCameraWidget(QtGui.QWidget):
             w = frame.image_x
             h = frame.image_y
             image_data = frame.getData()
-            image_data = image_data.reshape((h,w))
+            try:
+                image_data = image_data.reshape((h,w))
+            except ValueError as e:
+                print "Got an image with an unexpected size, ", image_data.size, "expected", h * w
+                return
 
             max_intensity = self.max_intensity
             if not self.display_saturated_pixels:
