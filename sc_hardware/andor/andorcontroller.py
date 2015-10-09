@@ -438,7 +438,7 @@ class AndorCamera:
             # Got the data. Split the data buffer up into frames.
             if (status == drv_success):
                 for i in range(diff):
-                    frames.append(AndorFrameData(data_buffer[2*i*self.pixels:2*(i+1)*self.pixels]))
+                    frames.append(AndorFrameData(data_buffer[i*self.pixels:(i+1)*self.pixels]))
                 return [frames, self.frame_size]
                     
             # Not sure if we can actually end up here, but just in case.
