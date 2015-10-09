@@ -2,7 +2,8 @@
 2015-10-09: Fix a recently introduced bug in the Andor EMCCD control software
             that caused it to drop frames and generate an error message in
 	    the updateImageWithFrame member of the QCameraWidget class. If
-	    you pulled a version in the last month an update it recommended.
+	    you pulled a version in the last month and you use an Andor
+	    EMCCD camera an update is recommended.
 
 2015-09-24: Switched to doing all the image manipulation (for image display)
 	    in C, falling back to numpy of the C library is not available.
