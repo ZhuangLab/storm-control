@@ -19,7 +19,6 @@
     <ExposureTime type="float">0.1</ExposureTime>
     <FanSpeed type="string">On</FanSpeed>
     <SensorCooling type="boolean">True</SensorCooling>
-	<SimplePreAmpGainControl type="string">16-bit</SimplePreAmpGainControl>
 
     <!-- view settings -->
     <flip_horizontal type="int">0</flip_horizontal>
