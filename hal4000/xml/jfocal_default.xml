@@ -19,6 +19,7 @@
     <ExposureTime type="float">0.1</ExposureTime>
     <FanSpeed type="string">On</FanSpeed>
     <SensorCooling type="boolean">True</SensorCooling>
+	<SimplePreAmpGainControl type="string">16-bit (low noise &amp; high well capacity)</SimplePreAmpGainControl>
 
     <!-- view settings -->
     <flip_horizontal type="int">0</flip_horizontal>
@@ -26,8 +27,8 @@
     <transpose type="int">0</transpose>
     <scalemax type="int">2000</scalemax>
     <scalemin type="int">100</scalemin>
-    <max_intensity type="int">10000</max_intensity>
-    <colortable type="string">idl5.ctbl</colortable>
+    <max_intensity type="int">65536</max_intensity>
+    <colortable type="string">ramp_sat.ctbl</colortable>
     <sync type="int">0</sync>
   </camera1>
 
