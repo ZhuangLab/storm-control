@@ -19,6 +19,7 @@
     <ExposureTime type="float">0.1</ExposureTime>
     <FanSpeed type="string">On</FanSpeed>
     <SensorCooling type="boolean">True</SensorCooling>
+	<SimplePreAmpGainControl type="string">16-bit</SimplePreAmpGainControl>
 
     <!-- view settings -->
     <flip_horizontal type="int">0</flip_horizontal>
@@ -106,6 +107,7 @@
     <olock_quality_threshold type="float">0.0</olock_quality_threshold>
     <is_locked_buffer_length type="int">10</is_locked_buffer_length>
     <is_locked_offset_thresh type="float">0.05</is_locked_offset_thresh>
+	<lockt_step type="float">0.025</lockt_step> <!-- focus lock step size in um -->
   </focuslock>
 
   <!-- spot counter -->
