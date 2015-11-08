@@ -16,10 +16,11 @@
     <y_bin type="int">1</y_bin>
 
     <!-- actual Andor features -->
-    <ExposureTime type="float">0.1</ExposureTime>
     <FanSpeed type="string">On</FanSpeed>
     <SensorCooling type="boolean">True</SensorCooling>
-	<SimplePreAmpGainControl type="string">16-bit (low noise &amp; high well capacity)</SimplePreAmpGainControl>
+    <SimplePreAmpGainControl type="string">16-bit (low noise &amp; high well capacity)</SimplePreAmpGainControl>
+    <ExposureTime type="float">0.1</ExposureTime>
+	<FrameRate type="float">7</FrameRate>
 
     <!-- view settings -->
     <flip_horizontal type="int">0</flip_horizontal>
