@@ -155,6 +155,10 @@
     <xy_swap type="int">0</xy_swap> <!-- swap x and y axises -->
   </joystick>
 
+  <!-- gavlo settings -->
+  <galvo>
+  </galvo>
+  
   <!-- steve settings -->
   <mosaic>
     <objective type="string">obj1</objective>

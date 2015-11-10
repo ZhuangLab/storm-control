@@ -42,7 +42,7 @@
       <menu_item type="string">Illumination</menu_item>
       <module_name type="string">illumination.illuminationControl</module_name>
       <parameters>
-	<settings_xml type="string">jfocal_illumination_settings.xml</settings_xml>
+	     <settings_xml type="string">jfocal_illumination_settings.xml</settings_xml>
       </parameters>
     </illumination>
 
@@ -91,10 +91,18 @@
       <class_name type="string">HalTCPControl</class_name>
       <module_name type="string">halTcpControl</module_name>
       <parameters>
-	<tcp_port type="int">9000</tcp_port>
+	     <tcp_port type="int">9000</tcp_port>
       </parameters>
     </tcpip>
 
+	
+	<!-- Add galvo control to Hal -->
+    <galvo>
+        <class_name type="string">GalvoControl</class_name>
+	    <menu_item type="string">Galvo Control</menu_item>
+		<module_name type="string">miscControl.galvoControl</module_name>
+    </galvo>
+	
   </modules>
 
 </hardware>
