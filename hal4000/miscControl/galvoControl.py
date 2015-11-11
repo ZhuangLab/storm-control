@@ -53,6 +53,8 @@ class GalvoControl(QtGui.QDialog, halModule.HalModule):
         self.running = False
         self.run_during_film = False
 
+        self.home_voltage = np.array([0.0, 0.0])
+
         self.output_limits = [-10.0, 10.0]
         self.sampleRate = 2500.0 # In Hz
         
@@ -175,7 +177,7 @@ class GalvoControl(QtGui.QDialog, halModule.HalModule):
         self.x_amp = self.ui.xAmplitudeSpinBox.value()
         self.y_amp = self.ui.yAmplitudeSpinBox.value()
         self.x_freq = self.ui.xFrequencySpinBox.value()
-        self.y_freq = self.ui.yFrequencySpinBox.value()
+        self.y_freq = self.ui.yFrequencySpinBox.value()    
 
     ## startTask
     #
@@ -185,17 +187,13 @@ class GalvoControl(QtGui.QDialog, halModule.HalModule):
     #
     def startTask(self):
         # Identify the longest period and use as the length of the buffer: NOTE: the higher frequency must be a multiple of the lowest
-        duration = min(1/self.x_freq, 1/self.y_freq)
+        duration = max(1/self.x_freq, 1/self.y_freq)
         time = np.arange(0, duration, 1/self.sampleRate)
 
         # Create waveforms
         wave_x = self.x_offset + self.x_amp * np.sin(2 * np.pi * self.x_freq * time)
         wave_y = self.y_offset + self.y_amp * np.sin(2 * np.pi * self.y_freq * time)
-        print wave_x, wave_y
-
         self.waveform = self.coerceToRange(np.concatenate((wave_x, wave_y)))
-
-        print self.waveform
 
         # Send waveform to ni card
         self.ni_task.setWaveform(self.waveform, self.sampleRate, clock = "ctr0out")
@@ -212,7 +210,25 @@ class GalvoControl(QtGui.QDialog, halModule.HalModule):
     # @param bool Dummy parameter.
     #
     def stopTask(self):
+        # Stop current task
         self.ni_task.stopTask()
+
+        # Return to home voltage
+        print "Returning home"
+        print self.home_voltage
+
+        ### FIX ME
+        ###
+
+        self.ni_task.setWaveform(self.home_voltage, 1, clock = "ctr0out")
+        self.ni_task.startTask()
+
+        ###
+
+        # Stop home task
+        self.ni_task.stopTask()
+
+        # Update internal state
         self.running = False
 
     ## handleQuit
