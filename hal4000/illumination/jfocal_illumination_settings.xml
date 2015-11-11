@@ -53,9 +53,19 @@
 
     <!-- 750 laser -->
     <channel>
-      <description>750</description>
+      <description>754</description>
       <color type="rgb">200,0,0</color>
       
+	        <digital_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6259</board>
+	  <channel type="int">0</channel>
+	</parameters>
+      </digital_modulation>
+    </channel>
+	  
+	  
       <!--
       <amplitude_modulation>
 	<uses>750wheel</uses>
@@ -74,8 +84,6 @@
 	</parameters>
       </digital_modulation>
       -->
-
-    </channel>
 
     <!-- 656 laser -->
     <channel>
