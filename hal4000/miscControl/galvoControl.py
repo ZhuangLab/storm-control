@@ -53,14 +53,12 @@ class GalvoControl(QtGui.QDialog, halModule.HalModule):
         self.running = False
         self.run_during_film = False
 
-        self.home_voltage = np.array([0.0, 0.0])
+        self.home_voltage = [0.0, 0.0]
 
         self.output_limits = [-10.0, 10.0]
         self.sampleRate = 2500.0 # In Hz
         
-        # Create NI analog tasks
-        self.ni_task = nicontrol.AnalogWaveformOutput("USB-6002", 0)
-        self.ni_task.addChannel("USB-6002", 1)
+        self.ni_task = False
 
         # Initialize waveform
         self.waveform = False
@@ -96,6 +94,9 @@ class GalvoControl(QtGui.QDialog, halModule.HalModule):
         # Update display
         self.updateDisplay()
 
+        # Initialize to home voltage
+        nicontrol.setAnalogLine("USB-6002", 0, self.home_voltage[0])
+        nicontrol.setAnalogLine("USB-6002", 1, self.home_voltage[1])
 
     ## cleanup
     #
@@ -186,6 +187,10 @@ class GalvoControl(QtGui.QDialog, halModule.HalModule):
     # @param bool Dummy parameter.
     #
     def startTask(self):
+        # Create NI analog tasks
+        self.ni_task = nicontrol.AnalogWaveformOutput("USB-6002", 0)
+        self.ni_task.addChannel("USB-6002", 1)
+
         # Identify the longest period and use as the length of the buffer: NOTE: the higher frequency must be a multiple of the lowest
         duration = max(1/self.x_freq, 1/self.y_freq)
         time = np.arange(0, duration, 1/self.sampleRate)
@@ -212,21 +217,11 @@ class GalvoControl(QtGui.QDialog, halModule.HalModule):
     def stopTask(self):
         # Stop current task
         self.ni_task.stopTask()
+        self.ni_task.clearTask()
 
         # Return to home voltage
-        print "Returning home"
-        print self.home_voltage
-
-        ### FIX ME
-        ###
-
-        self.ni_task.setWaveform(self.home_voltage, 1, clock = "ctr0out")
-        self.ni_task.startTask()
-
-        ###
-
-        # Stop home task
-        self.ni_task.stopTask()
+        nicontrol.setAnalogLine("USB-6002", 0, self.home_voltage[0])
+        nicontrol.setAnalogLine("USB-6002", 1, self.home_voltage[1])
 
         # Update internal state
         self.running = False
@@ -264,16 +259,6 @@ class GalvoControl(QtGui.QDialog, halModule.HalModule):
     @hdebug.debug
     def newParameters(self, parameters):
         pass
-    # UNDER CONSTRUCTION
-##        self.parameters = parameters
-##
-##        self.x_offset = parameters.get("x_offset")
-##        self.y_offset = parameters.get("y_offset")
-##        self.x_amp = parameters.get("x_amp")
-##        self.y_amp = parameters.get("y_amp")
-##        self.x_freq = parameters.get("x_freq")
-##        self.y_freq = parameters.get("y_freq")
-##        self.run_during_film = parameters.get("run_during_film")
 
         
 #
