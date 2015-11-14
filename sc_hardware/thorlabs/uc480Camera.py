@@ -639,8 +639,11 @@ class CameraQPD():
     #
     def singleQpdScan(self):
         data = self.capture().copy()
-        #power = numpy.max(data)
-        power = numpy.sum(data) - self.background
+
+        if self.background > 0: # Toggle between sum signal calculations
+            power = numpy.sum(data) - self.background
+        else:
+            power = numpy.max(data)
         
         if (power < 25):
             # This hack is because if you bombard the USB camera with 
