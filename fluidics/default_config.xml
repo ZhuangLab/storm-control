@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<kilroy_configuration num_valves = "2" num_pumps = "1">
+<kilroy_configuration num_valves = "3" num_pumps = "1">
   <valve_commands>
     <valve_cmd name = "Stop Valve">
        <valve_pos valve_ID = "1" port_ID = "1"></valve_pos>
