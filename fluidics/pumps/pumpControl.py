@@ -34,7 +34,6 @@ class PumpControl(QtGui.QWidget):
         self.status_repeat_time = 2000
         self.speed_units = "rpm"
 
-
         # Dynamic import of pump class
         pump_module = __import__(parameters.get("pump_class", "pumps.rainin_rp1"),
                                  globals(),

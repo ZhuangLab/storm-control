@@ -30,6 +30,7 @@ class APump():
         self.verbose = parameters.get("verbose", True)
         self.simulate = parameters.get("simulate_pump", True)
         self.serial_verbose = parameters.get("serial_verbose", False)
+        self.flip_flow_direction = parameters.get("flip_flow_direction", False)
         
         # Create serial port
         self.serial = serial.Serial(port = self.com_port, 
@@ -64,8 +65,12 @@ class APump():
     def getStatus(self):
         message = self.readDisplay()
 
-        direction = {" ": "Not Running", "+": "Forward", "-": "Reverse"}.\
-                get(message[0], "Unknown")
+        if self.flip_flow_direction:
+            direction = {" ": "Not Running", "-": "Forward", "+": "Reverse"}.\
+                    get(message[0], "Unknown")
+        else:
+            direction = {" ": "Not Running", "+": "Forward", "-": "Reverse"}.\
+                    get(message[0], "Unknown")
         
         status = "Stopped" if direction == "Not Running" else "Flowing"
 
@@ -81,11 +86,17 @@ class APump():
         self.enableRemoteControl(0)
 
     def setFlowDirection(self, forward):
-        if forward:
-            self.sendBuffered(self.pump_ID, "K>")
+        if self.flip_flow_direction:
+            if forward:
+                self.sendBuffered(self.pump_ID, "K<")
+            else:
+                self.sendBuffered(self.pump_ID, "K>")
         else:
-            self.sendBuffered(self.pump_ID, "K<")
-
+            if forward:
+                self.sendBuffered(self.pump_ID, "K>")
+            else:
+                self.sendBuffered(self.pump_ID, "K<")
+    
     def setSpeed(self, rotation_speed):
         if rotation_speed >= 0 and rotation_speed <= 48:
             rotation_int = int(rotation_speed*100)

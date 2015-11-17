@@ -10,10 +10,11 @@
   <pump_ID type="int">30</pump_ID><!-- ID of Pump -->
   <pump_class type="string">pumps.gilson_mp3</pump_class><!-- Control class for pump -->
   <simulate_pump type="boolean">False</simulate_pump><!-- Simulate pump? (Defaults to False) -->
-
+  <flip_flow_direction type="boolean">False</flip_flow_direction><!-- Flip the direction defined as forward? -->
+  
   <!-- General Kilroy parameters -->
   <verbose type="boolean">False</verbose>
-  <serial_verbose type="boolean">False></serial_verbose>  <!-- display serial commands? -->
+  <serial_verbose type="boolean">False</serial_verbose>  <!-- display serial commands? -->
   <tcp_port type="int">9500</tcp_port> <!-- TCP/IP port for local communication with Dave -->
   <protocols_file type = "">default_config.xml</protocols_file><!-- Location of default protocol -->
   <commands_file type = "">default_config.xml</commands_file><!-- Location of default commands -->

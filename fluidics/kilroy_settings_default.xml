@@ -9,6 +9,7 @@
   <pump_com_port type="int">3</pump_com_port><!-- COM port of serial connection to pump -->
   <pump_ID type="int">30</pump_ID><!-- ID of Pump -->
   <simulate_pump type="boolean">True</simulate_pump><!-- Simulate pump? (Defaults to False) -->
+  <flip_flow_direction type="boolean">False</flip_flow_direction><!-- Flip the direction defined as forward? -->
 
   <!-- General Kilroy parameters -->
   <verbose type="boolean">True</verbose>
