@@ -14,35 +14,36 @@ import serial
 import sys
 import time
 from PyQt4 import QtCore, QtGui
-from rainin_rp1 import RaininRP1
 
 # ----------------------------------------------------------------------------------------
 # PumpControl Class Definition
 # ----------------------------------------------------------------------------------------
 class PumpControl(QtGui.QWidget):
     def __init__(self,
-                 parent = None,
-                 com_port = 3,
-                 pump_ID = 30,
-                 simulate = False,
-                 verbose = True):
+                 parameters = False,
+                 parent = None):
 
         #Initialize parent class
         QtGui.QWidget.__init__(self, parent)
 
         # Define internal attributes
-        self.com_port = com_port
-        self.pump_ID = pump_ID
-        self.simulate = simulate
-        self.verbose = verbose
+        self.com_port = parameters.get("pump_com_port")
+        self.pump_ID = parameters.get("pump_id", 30)
+        self.simulate = parameters.get("simulate_pump", True)
+        self.verbose = parameters.get("verbose", True)
         self.status_repeat_time = 2000
         self.speed_units = "rpm"
-        
+
+
+        # Dynamic import of pump class
+        pump_module = __import__(parameters.get("pump_class", "pumps.rainin_rp1"),
+                                 globals(),
+                                 locals(),
+                                 [parameters.get("pump_class", "pumps.rainin_rp1")],
+                                 -1)
+
         # Create Instance of Pump
-        self.pump = RaininRP1(com_port = self.com_port,
-                              pump_ID = self.pump_ID,
-                              simulate = self.simulate,
-                              verbose = self.verbose)
+        self.pump = pump_module.APump(parameters = parameters)
 
         # Create GUI Elements
         self.createGUI()

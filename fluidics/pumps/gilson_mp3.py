@@ -1,3 +1,15 @@
+#!/usr/bin/python
+# ----------------------------------------------------------------------------------------
+# The basic I/O class for a Gibson peristaltic pump
+# ----------------------------------------------------------------------------------------
+# George Emanuel with modifications by Jeff Moffitt
+# 11/16/15
+# jeffmoffitt@gmail.com
+# ----------------------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------------------
+# Import
+# ----------------------------------------------------------------------------------------
 import serial
 import time
 
@@ -5,23 +17,33 @@ acknowledge = '\x06'
 start = '\x0A'
 stop = '\x0D'
 
+# ----------------------------------------------------------------------------------------
+# GlisonMP3 Class Definition
+# ----------------------------------------------------------------------------------------
+class APump():
+    def __init__(self,
+                 parameters = False):
 
-class GilsonMP3():
-
-    def __init__(self, com_port = "COM20"):
-
-        self.pump_ID = 30
+        # Define attributes
+        self.com_port = parameters.get("pump_com_port", 3)
+        self.pump_ID = parameters.get("pump_ID", 30)
+        self.verbose = parameters.get("verbose", True)
+        self.simulate = parameters.get("simulate_pump", True)
+        self.serial_verbose = parameters.get("serial_verbose", False)
         
-        self.serial = serial.Serial(port = "COM22", 
+        # Create serial port
+        self.serial = serial.Serial(port = self.com_port, 
                 baudrate = 19200, 
                 parity= serial.PARITY_EVEN, 
                 bytesize=serial.EIGHTBITS, 
                 stopbits=serial.STOPBITS_TWO, 
                 timeout=0.1)
 
+        # Define initial pump status
         self.flow_status = "Stopped"
         self.speed = 0.0
         self.direction = "Forward"
+        
         self.disconnect()
         self.enableRemoteControl(1)
         self.startFlow(self.speed, self.direction)
