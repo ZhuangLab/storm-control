@@ -17,20 +17,16 @@ import time
 # ----------------------------------------------------------------------------------------
 # RaininRP1 Class Definition
 # ----------------------------------------------------------------------------------------
-class RaininRP1():
+class APump():
     def __init__(self,
-                 com_port = 3,
-                 pump_ID = 30,
-                 simulate = False,
-                 verbose = True,
-                 serial_verbose = False):
+                 parameters = False):
 
         # Define attributes
-        self.com_port = com_port
-        self.pump_ID = pump_ID
-        self.verbose = verbose
-        self.simulate = simulate
-        self.serial_verbose = serial_verbose
+        self.com_port = parameters.get("pump_com_port", 3)
+        self.pump_ID = parameters.get("pump_ID", 30)
+        self.verbose = parameters.get("verbose", True)
+        self.simulate = parameters.get("simulate_pump", True)
+        self.serial_verbose = parameters.get("serial_verbose", False)
         
         # Create serial port
         if not self.simulate:
