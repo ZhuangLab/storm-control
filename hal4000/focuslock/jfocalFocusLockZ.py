@@ -30,7 +30,8 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
         # Create camera
         offset_path = "cam_offsets_jfocal_1.txt"
         
-        cam = uc480Cam.CameraQPD(camera_id = 1, x_width = 340, y_width = 50, sigma = 4.0, offset_path = offset_path)
+        cam = uc480Cam.CameraQPD(camera_id = 1, x_width = 380, y_width = 30, sigma = 4.0, offset_path = offset_path,
+                                 background = 11500)
         stage = MCLVZC.MCLVZControl("PCI-6229", 0, scale = 10.0/100.0)
         #stage = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/")
         lock_fn = lambda (x): 0.4 * x
