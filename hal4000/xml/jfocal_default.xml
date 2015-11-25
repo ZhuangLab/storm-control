@@ -45,7 +45,6 @@
     <auto_increment type="int">1</auto_increment>
     <want_bell type="int">1</want_bell>
     <auto_shutters type="int">1</auto_shutters>
-	<shutters type="string"></shutters>
     <filetype type="string">.dax</filetype>
   </film>
 

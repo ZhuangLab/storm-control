@@ -8,8 +8,13 @@
 #
 
 from ctypes import *
+import functools
+from PyQt4 import QtCore
+
 import time
 import traceback
+
+ni_mutex = QtCore.QMutex()
 
 # Load the NIDAQmx driver library.
 nidaqmx = windll.nicaiu
@@ -33,6 +38,15 @@ DAQmx_Val_PseudoDiff = 12529
 DAQmx_Val_Task_Verify = 2
 
 TaskHandle = c_ulong
+
+def mutexLock(fn):
+    @functools.wraps(fn)
+    def __wrapper(*args, **kw):
+        #ni_mutex.lock()
+        temp = fn(*args, **kw)
+        #ni_mutex.unlock()
+        return temp
+    return __wrapper
 
 
 #
@@ -122,20 +136,32 @@ class NIDAQTask():
     def __init__(self, board):
         self.board_number = getBoardDevNumber(board)
         self.taskHandle = TaskHandle(0)
-        checkStatus(nidaqmx.DAQmxCreateTask(str(NIDAQTask.ctr), byref(self.taskHandle)))
+        self.task_name = str(NIDAQTask.ctr)
         NIDAQTask.ctr += 1
+        checkStatus(nidaqmx.DAQmxCreateTask(self.task_name, byref(self.taskHandle)))
 
     ## clearTask
     #
     # Clears the task from the board.
     #
+    @mutexLock
     def clearTask(self):
         checkStatus(nidaqmx.DAQmxClearTask(self.taskHandle))
+
+    ## getTaskName
+    #
+    @mutexLock
+    def getTaskName(self):
+        c_buffer = create_string_buffer(100)
+        checkStatus(nidaqmx.DAQmxGetTaskName(self.taskHandle, c_buffer, 100))
+        self.task_name = c_buffer.value
+        return self.task_name
 
     ## startTask
     #
     # Starts the task.
     #
+    @mutexLock
     def startTask(self):
         checkStatus(nidaqmx.DAQmxStartTask(self.taskHandle))
 
@@ -143,6 +169,7 @@ class NIDAQTask():
     #
     # Stops the task.
     #
+    @mutexLock
     def stopTask(self):
         checkStatus(nidaqmx.DAQmxStopTask(self.taskHandle))
 
@@ -152,6 +179,7 @@ class NIDAQTask():
     #
     # @return 1/0 The task is done.
     #
+    @mutexLock
     def taskIsDoneP(self):
         #done = c_long(0)
         checkStatus(nidaqmx.DAQmxIsTaskDone(self.taskHandle, None))
@@ -161,6 +189,7 @@ class NIDAQTask():
     #
     # @return The status of the task.
     #
+    @mutexLock
     def verifyTask(self):
         return nidaqmx.DAQmxTaskControl(self.taskHandle, DAQmx_Val_Task_Verify)
 
@@ -178,6 +207,7 @@ class AnalogOutput(NIDAQTask):
     # @param min_val (Optional) Defaults to -10.0V.
     # @param max_val (Optional) Defaults to 10.0V.
     #
+    @mutexLock
     def __init__(self, board, channel, min_val = -10.0, max_val = 10.0):
         NIDAQTask.__init__(self, board)
         self.channel = channel
@@ -197,6 +227,7 @@ class AnalogOutput(NIDAQTask):
     #
     # @param voltage The voltage to output.
     #
+    @mutexLock
     def output(self, voltage):
         c_samples_written = c_long(0)
         c_voltage = c_double(voltage)
@@ -315,6 +346,7 @@ class AnalogWaveformOutput(NIDAQTask):
     # @param min_val (Optional) Defaults to -10.0V.
     # @param max_val (Optional) Defaults to 10.0V.
     #
+    @mutexLock
     def __init__(self, board, channel, min_val = -10.0, max_val = 10.0):
         NIDAQTask.__init__(self, board)
         self.c_waveform = False
@@ -338,6 +370,7 @@ class AnalogWaveformOutput(NIDAQTask):
     # @param board The board name.
     # @param channel The channel to use for output.
     #
+    @mutexLock
     def addChannel(self, board, channel):
         self.channels += 1
         board_number = self.board_number
@@ -368,6 +401,7 @@ class AnalogWaveformOutput(NIDAQTask):
     #
     # @return True/False For success or failure.
     #
+    @mutexLock
     def setWaveform(self, waveform, sample_rate, finite = 0, clock = "ctr0out", rising = True):
         waveform_len = len(waveform)/self.channels
 
@@ -425,6 +459,7 @@ class CounterOutput(NIDAQTask):
     # @param duty_cycle The duty cycle of the square wave.
     # @param initial_delay (Optional) The delay between the trigger signal and starting output, defaults to 0.0.
     #
+    @mutexLock
     def __init__(self, board, channel, frequency, duty_cycle, initial_delay = 0.0):
         NIDAQTask.__init__(self, board)
         self.channel = channel
@@ -442,6 +477,7 @@ class CounterOutput(NIDAQTask):
     #
     # @param number_samples Number of waveform cycles to output, zero is continuous.
     #
+    @mutexLock
     def setCounter(self, number_samples):
         if (number_samples > 0):
             checkStatus(nidaqmx.DAQmxCfgImplicitTiming(self.taskHandle,
@@ -458,6 +494,7 @@ class CounterOutput(NIDAQTask):
     # @param retriggerable (Optional) The task can be repeatedly triggered (or not), defaults to repeatedly.
     # @param board (Optional) The board the trigger pin is located on, defaults to the board specified as object creation.
     #
+    @mutexLock
     def setTrigger(self, trigger_source, retriggerable = 1, board = None):
         if retriggerable:
             checkStatus(nidaqmx.DAQmxSetStartTrigRetriggerable(self.taskHandle, 
@@ -485,6 +522,7 @@ class DigitalOutput(NIDAQTask):
     # @param board The board name.
     # @param channel The digital channel to use.
     #
+    @mutexLock
     def __init__(self, board, channel):
         NIDAQTask.__init__(self, board)
         self.channel = channel
@@ -498,6 +536,7 @@ class DigitalOutput(NIDAQTask):
     #
     # @param high True/False Output a high/low voltage.
     #
+    @mutexLock
     def output(self, high):
         if high:
             c_data = c_byte(1)
@@ -570,6 +609,7 @@ class DigitalWaveformOutput(NIDAQTask):
     # @param board The board name.
     # @param line The digital line to use for wave form output.
     #
+    @mutexLock
     def __init__(self, board, line):
         NIDAQTask.__init__(self, board)
         self.dev_line = "Dev" + str(self.board_number) + "/port0/line" + str(line)
@@ -587,6 +627,7 @@ class DigitalWaveformOutput(NIDAQTask):
     # @param board The board name.
     # @param line The digital line.
     #
+    @mutexLock
     def addChannel(self, board, line):
         self.channels += 1
         self.dev_line = "Dev" + str(self.board_number) + "/port0/line" + str(line)
@@ -611,6 +652,7 @@ class DigitalWaveformOutput(NIDAQTask):
     #
     # @return True/False For success or failure.
     #
+    @mutexLock
     def setWaveform(self, waveform, sample_rate, finite = 0, clock = "ctr0out", rising = True):
         waveform_len = len(waveform)/self.channels
 

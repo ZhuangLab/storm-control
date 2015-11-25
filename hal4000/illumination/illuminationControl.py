@@ -14,6 +14,7 @@ import qtWidgets.qtAppIcon as qtAppIcon
 import halLib.halModule as halModule
 import illumination.xmlParser as xmlParser
 import illumination.illuminationChannel as illuminationChannel
+import time
 
 # Debugging
 import sc_library.hdebug as hdebug

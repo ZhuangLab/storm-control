@@ -34,7 +34,7 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                  background = 11500)
         stage = MCLVZC.MCLVZControl("PCI-6229", 0, scale = 10.0/100.0)
         #stage = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/")
-        lock_fn = lambda (x): 0.4 * x
+        lock_fn = lambda (x): 0.1 * x
         control_thread = stageOffsetControl.StageCamThread(cam,
                                                            stage,
                                                            lock_fn,
