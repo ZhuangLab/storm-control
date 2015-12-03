@@ -188,7 +188,8 @@ class Window(QtGui.QMainWindow):
 
         objective = image.parameters.get("mosaic." + image.parameters.get("mosaic.objective")).split(",")[0]
         [magnification, x_offset, y_offset] = self.ui.objectivesGroupBox.getData(objective)
-        magnification = magnification * 0.01
+        #magnification = magnification * 0.01
+        magnification = 1 ## Magnification is now just a name for the objective. The pixels_to_um must be accurate for each objective
         self.current_offset = coord.Point(x_offset, y_offset, "um")
         self.view.addImage(image, objective, magnification, self.current_offset)
         self.view.setCrosshairPosition(image.x_pix, image.y_pix)

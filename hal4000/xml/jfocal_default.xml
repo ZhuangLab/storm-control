@@ -162,10 +162,10 @@
   <mosaic>
     <objective type="string">obj1</objective>
     <flip_horizontal type="int">0</flip_horizontal>
-    <flip_vertical type="int">0</flip_vertical>
-    <transpose type="int">1</transpose>
-    <obj1 type="string">100x,100.0,0.0,0.0</obj1>
-    <pixels_to_um type="float">0.160</pixels_to_um>
+    <flip_vertical type="int">1</flip_vertical>
+    <transpose type="int">0</transpose>
+    <obj1 type="string">40x,40.0,0.0,0.0</obj1>
+    <pixels_to_um type="float">0.1625</pixels_to_um>
   </mosaic>
 
 </settings>
