@@ -28,11 +28,11 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, hardware, parameters, parent = None):
         # Create camera
         offset_path = "cam_offsets_jfocal_1.txt"
-        
-        cam = uc480Cam.CameraQPD(camera_id = 1, x_width = 380, y_width = 30, sigma = 4.0, offset_path = offset_path,
-                                 background = 11500)
+        # 380, 30
+        cam = uc480Cam.CameraQPD(camera_id = 1, x_width = 1200, y_width = 100, sigma = 4.0, offset_path = offset_path,
+                                 background = 125000)
         stage = MCLVZC.MCLVZControl("PCI-6229", 0, scale = 10.0/100.0)
-        lock_fn = lambda (x): 0.1 * x
+        lock_fn = lambda (x): -0.1 * x
         control_thread = stageOffsetControl.StageCamThread(cam,
                                                            stage,
                                                            lock_fn,
