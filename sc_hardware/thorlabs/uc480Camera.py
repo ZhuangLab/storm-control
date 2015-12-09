@@ -460,12 +460,12 @@ class CameraQPD():
     # @param y_width (Optional) AOI size in y, defaults to 200.
     # @param sigma (Optional) Initial sigma for the fit, defaults to 8.0.
     #
-    def __init__(self, camera_id = 1, fit_mutex = False, x_width = 200, y_width = 200, sigma = 8.0, offset_path = False):
-        self.file_name = offset_path
+    def __init__(self, camera_id = 1, fit_mutex = False, x_width = 200, y_width = 200, sigma = 8.0, offset_file = False):
         self.fit_mode = 1
         self.fit_mutex = fit_mutex
         self.fit_size = int(1.5 * sigma)
         self.image = None
+        self.offset_file = offset_file
         self.sigma = sigma
         self.x_off1 = 0.0
         self.y_off1 = 0.0
@@ -480,13 +480,11 @@ class CameraQPD():
         self.cam.setTimeout(1)
 
         # Set camera AOI x_start, y_start.
-        if (os.path.exists(self.file_name)):
-            fp = open(self.file_name, "r")
-            data = fp.readline().split(",")
-            self.x_start = int(data[0])
-            self.y_start = int(data[1])
-            fp.close()
+        if self.offset_file and (os.path.exists(self.offset_file)):
+            with open(self.offset_file) as fp:
+                [self.x_start, self.y_start] = map(int, fp.readline().split(",")[:2])
         else:
+            print "Warning! No focus lock camera offset file found!", self.offset_file
             self.x_start = 0
             self.y_start = 0
 
@@ -623,10 +621,9 @@ class CameraQPD():
     # Save the current camere AOI location and offset. Shutdown the camera.
     #
     def shutDown(self):
-        fp = open(self.file_name, "w")
-        #fp.write(str(self.x_start) + "," + str(self.y_start) + "," + str(self.zero_dist))
-        fp.write(str(self.x_start) + "," + str(self.y_start))
-        fp.close()
+        if self.offset_file:
+            with open(self.offset_file, "w") as fp:
+                fp.write(str(self.x_start) + "," + str(self.y_start))
         self.cam.shutDown()
 
     ## singleQpdScan
