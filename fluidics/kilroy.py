@@ -60,10 +60,7 @@ class Kilroy(QtGui.QMainWindow):
                                      verbose = self.verbose)
 
         # Create PumpControl instance
-        self.pumpControl = PumpControl(com_port = self.pump_com_port,
-                                       pump_ID = self.pump_ID,
-                                       simulate = self.simulate_pump,
-                                       verbose = self.verbose)
+        self.pumpControl = PumpControl(parameters = parameters)
                                        
         # Create KilroyProtocols instance and connect signals
         self.kilroyProtocols = KilroyProtocols(protocol_xml_path = self.protocols_file,

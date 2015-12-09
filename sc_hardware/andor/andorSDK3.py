@@ -87,6 +87,22 @@ def getFloat(handle, command):
     else:
         return -1
 
+def getFloatRange(handle, command):
+    float_max = ctypes.c_double()
+    float_min = ctypes.c_double()
+    success_max = check(sdk3.AT_GetFloatMax(handle, 
+                    ctypes.c_wchar_p(command), 
+                    ctypes.byref(float_max)), 
+                    "AT_GetIntMax", 
+                    command)
+    success_min = check(sdk3.AT_GetFloatMin(handle, 
+                    ctypes.c_wchar_p(command), 
+                    ctypes.byref(float_min)), 
+                    "AT_GetIntMin", 
+                    command)
+
+    return [success_min and success_max, float_min.value, float_max.value]
+
 def getInteger(handle, command):
     read_int = ctypes.c_longlong()
     if check(sdk3.AT_GetInt(handle, 
@@ -97,6 +113,22 @@ def getInteger(handle, command):
         return read_int.value
     else:
         return -1
+
+def getIntegerRange(handle, command):
+    int_max = ctypes.c_longlong()
+    int_min = ctypes.c_longlong()
+    success_max = check(sdk3.AT_GetIntMax(handle, 
+                    ctypes.c_wchar_p(command), 
+                    ctypes.byref(int_max)), 
+                    "AT_GetIntMax", 
+                    command)
+    success_min = check(sdk3.AT_GetIntMin(handle, 
+                    ctypes.c_wchar_p(command), 
+                    ctypes.byref(int_min)), 
+                    "AT_GetIntMin", 
+                    command)
+
+    return [success_min and success_max, int_min.value, int_max.value]
 
 def getString(handle, command):
     max_length = ctypes.c_int()
@@ -146,6 +178,14 @@ def setEnumeratedIndex(handle, command, index):
                  command)
 
 def setFloat(handle, command, float_value):
+    success, min_value, max_value = getFloatRange(handle, command)
+    if float_value < min_value:
+        float_value = min_value
+        print "Coerced " + str(command) + " to " + str(float_value)
+    elif float_value > max_value:
+        float_value = max_value
+        print "Coerced " + str(command) + " to " + str(float_value)
+
     return check(sdk3.AT_SetFloat(handle, 
                                   ctypes.c_wchar_p(command), 
                                   ctypes.c_double(float_value)), 
@@ -153,6 +193,14 @@ def setFloat(handle, command, float_value):
                  command)
 
 def setInteger(handle, command, value):
+    success, min_value, max_value = getIntegerRange(handle, command)
+    if value < min_value:
+        value = min_value
+        print "Coerced " + str(command) + " to " + str(value)
+    elif value > max_value:
+        value = max_value
+        print "Coerced " + str(command) + " to " + str(value)
+    
     return check(sdk3.AT_SetInt(handle, 
                                 ctypes.c_wchar_p(command), 
                                 ctypes.c_longlong(value)), 
@@ -165,7 +213,6 @@ def setString(handle, command, string):
                                    ctypes.c_wchar_p(string)), 
                  "AT_SetString",
                  command)
-
 
 ## AndorException
 #
@@ -359,21 +406,33 @@ class SDK3Camera:
             return False
 
     def setProperty(self, pname, ptype, pvalue):
-        if self.isEnumerated(pname):
-            ptype = "enum"
-
-        if (ptype == "bool"):
-            setBoolean(self.camera_handle, pname, pvalue)
-        elif (ptype == "enum"):
-            setEnumeratedString(self.camera_handle, pname, pvalue)
-        elif (ptype == "float"):
+        # Handle a few special cases:
+        if pname is "ExposureTime":
             setFloat(self.camera_handle, pname, pvalue)
-        elif (ptype == "int"):
-            setInteger(self.camera_handle, pname, pvalue)
-        elif (ptype == "str"):
-            setString(self.camera_handle, pname, pvalue)
+            setFloat(self.camera_handle, "FrameRate", 1e5) # Force frame rate to highest value possible
+        elif pname is "FrameRate":
+            print "WARNING: Setting FrameRate is not supported"
+            setFloat(self.camera_handle, pname, pvalue)
+            setFloat(self.camera_handle, "ExposureTime", 0) # Force exposure time to lowest possible value
+            pass
         else:
-            print "Unknown type", ptype, "for", pname
+
+            if self.isEnumerated(pname):
+                ptype = "enum"
+
+            if (ptype == "bool"):
+                setBoolean(self.camera_handle, pname, pvalue)
+            elif (ptype == "enum"):
+                setEnumeratedString(self.camera_handle, pname, pvalue)
+            elif (ptype == "float"):
+                setFloat(self.camera_handle, pname, pvalue)
+            elif (ptype == "int"):
+                setInteger(self.camera_handle, pname, pvalue)
+            elif (ptype == "str"):
+                setString(self.camera_handle, pname, pvalue)
+            else:
+                print "Unknown type", ptype, "for", pname
+        
 
     def shutdown(self):
 	check(sdk3.AT_Close(self.camera_handle), "AT_Close")
