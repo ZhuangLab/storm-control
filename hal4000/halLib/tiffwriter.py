@@ -19,6 +19,7 @@ ImageLength = 257
 BitsPerSample = 258
 Compression = 259
 PhotometricInterpretation = 262
+ImageDescription = 270
 StripOffsets = 273
 SamplesPerPixel = 277
 RowsPerStrip = 278
@@ -40,16 +41,20 @@ class TiffWriter:
     # @param filename The name of the tif file to write.
     # @param bytes_per_pixel (Optional) This is 2 bytes (16 bits) by default.
     # @param software (Optional) The name of the program that is "creating" the tif file, defaults to "unknown".
+    # @param x_pizel_size (optional) The size of a pixel in x in microns.
+    # @param y_pizel_size (optional) The size of a pixel in y in microns.
     #
-    def __init__(self, filename, bytes_per_pixel = 2, software = "unknown"):
+    def __init__(self, filename, bytes_per_pixel = 2, software = "unknown", x_pixel_size = 1.0, y_pixel_size = 1.0):
         self.bytes_per_pixel = 2
         self.fp = open(filename, "wb")
         self.frames = 0
         self.last_ifd_offset = 0
         self.newsubfiletag_loc = 0
         self.software = software + chr(0)
+        self.x_pixel_size = x_pixel_size
+        self.y_pixel_size = y_pixel_size
 
-        # get the current time, in the correct format
+        # Get the current time, in the correct format.
         cur_time = time.localtime()
         self.date_time = "{0:04d}:{1:02d}:{2:02d} {3:02d}:{4:02d}:{5:02d}".format(cur_time.tm_year,
                                                                                   cur_time.tm_mon,
@@ -57,10 +62,11 @@ class TiffWriter:
                                                                                   cur_time.tm_hour,
                                                                                   cur_time.tm_min,
                                                                                   cur_time.tm_sec) + chr(0)
-        #print self.date_time
+        # Construct ImageJ format description.
+        self.imagej_desc = "ImageJ=1.49i\nunit=um\n"
 
         #
-        # write tiff header
+        # Write tiff header.
         #
         self.fp.write(struct.pack("2s", "II"))
         self.fp.write(struct.pack("H", 42))
@@ -76,7 +82,7 @@ class TiffWriter:
     #
     def addFrame(self, np_frame, x_size, y_size):
         cur_loc = self.fp.tell()
-        num_tags = 15
+        num_tags = 16
 
         # Update previous ifd
         if (self.last_ifd_offset != 0):
@@ -89,7 +95,8 @@ class TiffWriter:
         ifd_end = cur_loc + 2 + num_tags*12 + 4
         software_offset = ifd_end + 2*8
         datetime_offset = software_offset + len(self.software)
-        image_offset =  datetime_offset + len(self.date_time)
+        imagej_offset = datetime_offset + len(self.date_time)
+        image_offset =  imagej_offset + len(self.imagej_desc)
 
         # number of tags
         self.fp.write(struct.pack("H", num_tags))
@@ -113,18 +120,22 @@ class TiffWriter:
         self.writeTag(ResolutionUnit, "short", 1, 1)
         self.writeTag(Software, "ascii", len(self.software), software_offset)
         self.writeTag(DateTime, "ascii", len(self.date_time), datetime_offset)
+        self.writeTag(ImageDescription, "ascii", len(self.imagej_desc), imagej_offset)
 
         # Next IFD offset (4 bytes)
         self.last_ifd_offset = self.fp.tell()
         self.fp.write(struct.pack("I", 0))
 
         # X resolution (8 bytes)
-        self.fp.write(struct.pack("I", 1))
-        self.fp.write(struct.pack("I", 1))
+        denom = 1000000.0
+        numer = self.x_pixel_size * denom
+        self.fp.write(struct.pack("I", int(denom)))
+        self.fp.write(struct.pack("I", int(numer)))
 
         # Y resolution (8 bytes)
-        self.fp.write(struct.pack("I", 1))
-        self.fp.write(struct.pack("I", 1))
+        numer = self.y_pixel_size * denom
+        self.fp.write(struct.pack("I", int(denom)))
+        self.fp.write(struct.pack("I", int(numer)))
 
         # Software (arb)
         self.fp.write(struct.pack(str(len(self.software)) + "s", self.software))
@@ -132,9 +143,11 @@ class TiffWriter:
         # DateTime (arb)
         self.fp.write(struct.pack(str(len(self.date_time)) + "s", self.date_time))
 
+        # ImageDescription (arb)
+        self.fp.write(struct.pack(str(len(self.imagej_desc)) + "s", self.imagej_desc))
+        
         # Write the frame.
         np_frame.tofile(self.fp)
-        #self.fp.write(np_frame)
         self.frames += 1
 
     ## close
@@ -186,14 +199,14 @@ if __name__ == "__main__":
     import numpy
     import sys
 
-    im = TiffWriter(sys.argv[1])
+    im = TiffWriter(sys.argv[1], x_pixel_size = 0.160)
 
     frame_x = 200
     frame_y = 200
     frame = 10 * numpy.ones((frame_x, frame_y), dtype = numpy.uint16)
 
     for i in range(5):
-        frame = frame * (i + 2)
+        #frame = frame * (i + 2)
         im.addFrame(frame, frame_x, frame_y)
 
     im.close()
