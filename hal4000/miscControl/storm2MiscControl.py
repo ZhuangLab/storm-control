@@ -65,7 +65,6 @@ class AMiscControl(miscControl.MiscControl):
             self.filters[self.filter_wheel.getPosition(1)-1].click()
 
         # setup (emission) filter wheel
-        self.ui.emFilter5Button.hide()
         self.ui.emFilter6Button.hide()
         self.ui.emFilter7Button.hide()
         self.ui.emFilter8Button.hide()
@@ -118,7 +117,7 @@ class AMiscControl(miscControl.MiscControl):
             if self.ui.emCheckBox.isChecked():
                 if (((frame.number + 1) % self.ui.emSpinBox.value()) == 0):
                     self.em_filter_pos += 1
-                    self.em_filters[(self.em_filter_pos%4)].click()
+                    self.em_filters[(self.em_filter_pos%5)].click()
 
     @hdebug.debug
     def newParameters(self, parameters):
