@@ -146,7 +146,7 @@
 
   <!-- mosaic settings -->
   <mosaic>
-    <objective type="string">obj1</objective>
+    <objective type="string">obj2</objective>
     <flip_horizontal type="int">0</flip_horizontal>
     <flip_vertical type="int">1</flip_vertical>
     <transpose type="int">1</transpose>
