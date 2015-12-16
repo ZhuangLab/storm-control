@@ -163,11 +163,10 @@
     <flip_vertical type="int">1</flip_vertical>
     <transpose type="int">1</transpose>
     <obj1 type="string">100x,100.0,0.0,0.0</obj1>  
-    <obj2 type="string">60x,57.43,0.0,0.0</obj2>
+    <obj2 type="string">60x,60.0,0.0,0.0</obj2>
     <obj3 type="string">10x,10.1,-49.1,266.0</obj3>
-    <obj4 type="string">4x,4.0,-2228.0,-658.0</obj4>  
-    <pixels_to_um type="float">0.3764</pixels_to_um>
-    <!-- <pixels_to_um type="float">0.156</pixels_to_um> -->
+    <obj4 type="string">4x,4.10,96.0,108.0</obj4>  
+    <pixels_to_um type="float">0.156</pixels_to_um>
   </mosaic>
 
 </settings>
