@@ -460,14 +460,13 @@ class CameraQPD():
     # @param y_width (Optional) AOI size in y, defaults to 200.
     # @param sigma (Optional) Initial sigma for the fit, defaults to 8.0.
     #
-    def __init__(self, camera_id = 1, fit_mutex = False, x_width = 200, y_width = 200, sigma = 8.0, offset_path = False, background = 0):
-        self.file_name = offset_path
+    def __init__(self, camera_id = 1, fit_mutex = False, x_width = 200, y_width = 200, sigma = 8.0, offset_file = False, background = 0):
+        self.offset_file = offset_file
         self.background = background
         self.fit_mode = 1
         self.fit_mutex = fit_mutex
         self.fit_size = int(1.5 * sigma)
         self.image = None
-        self.offset_file = offset_file
         self.sigma = sigma
         self.x_off1 = 0.0
         self.y_off1 = 0.0
