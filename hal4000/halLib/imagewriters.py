@@ -478,8 +478,17 @@ class TIFFile(GenericFile):
         
         self.tif_writers = []
         for i in range(len(cameras)):
+
+            # Determine pixel size (if possible).
+            pixel_size = 1.0
+            cur_obj = parameters.get("mosaic.objective", False)
+            if cur_obj:
+                magnification = float(parameters.get("mosaic." + cur_obj).split(",")[1])
+                pixel_size = (100.0/magnification) * parameters.get("mosaic.pixels_to_um")
             tif_writer = tiffwriter.TiffWriter(self.filenames[i],
-                                               software = "hal4000")
+                                               software = "hal4000",
+                                               x_pixel_size = pixel_size,
+                                               y_pixel_size = pixel_size)
             self.tif_writers.append(tif_writer)
 
     ## saveFrame

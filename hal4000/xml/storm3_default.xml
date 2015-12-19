@@ -34,7 +34,7 @@
     <!-- view settings -->
     <flip_horizontal type="int">0</flip_horizontal>
     <flip_vertical type="int">0</flip_vertical>
-    <transpose type="int">1</transpose>
+    <transpose type="int">0</transpose>
     <scalemax type="int">2000</scalemax>
     <scalemin type="int">100</scalemin>
     <max_intensity type="int">10000</max_intensity>
@@ -88,8 +88,8 @@
   <stage>
     <small_step_size type="float">5.0</small_step_size>
     <large_step_size type="float">25.0</large_step_size>
-    <x_sign type="int">-1</x_sign>
-    <y_sign type="int">-1</y_sign>
+    <x_sign type="int">1</x_sign>
+    <y_sign type="int">1</y_sign>
     <flip_axis type="int">1</flip_axis>
     <stage_speed type="float">5.0</stage_speed>
     <drag_multiplier type="float">0.16</drag_multiplier>
@@ -166,8 +166,8 @@
   <!-- steve settings -->
   <mosaic>
     <objective type="string">obj1</objective>
-    <flip_horizontal type="int">0</flip_horizontal>
-    <flip_vertical type="int">0</flip_vertical>
+    <flip_horizontal type="int">1</flip_horizontal>
+    <flip_vertical type="int">1</flip_vertical>
     <transpose type="int">1</transpose>
     <obj1 type="string">100x,100.0,0.0,0.0</obj1>
     <obj2 type="string">10x,10.0,227.0,-69.0</obj2>
