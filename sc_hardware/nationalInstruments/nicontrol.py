@@ -517,13 +517,14 @@ class CounterOutput(NIDAQTask):
     # @param board (Optional) The board the trigger pin is located on, defaults to the board specified as object creation.
     #
     def setTrigger(self, trigger_source, retriggerable = 1, board = None):
-        with getLockForBoard(self.board_number):
-            if retriggerable:
-                checkStatus(nidaqmx.DAQmxSetStartTrigRetriggerable(self.taskHandle, 
-                                                               c_long(1)))
-            else:
-                checkStatus(nidaqmx.DAQmxSetStartTrigRetriggerable(self.taskHandle, 
-                                                               c_long(0)))
+        if retriggerable:
+            with getLockForBoard(self.board_number):
+                checkStatus(nidaqmx.DAQmxSetStartTrigRetriggerable(self.taskHandle,
+                                                                   c_long(1)))
+        else:
+            with getLockForBoard(self.board_number):
+                checkStatus(nidaqmx.DAQmxSetStartTrigRetriggerable(self.taskHandle,
+                                                                   c_long(0)))
         board_number = self.board_number
         if board:
             board_number = getBoardDevNumber(board)
