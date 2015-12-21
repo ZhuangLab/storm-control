@@ -66,9 +66,6 @@ def checkStatus(status):
         print "nidaq error:", status, buf.value
         traceback.print_stack()
         print " --"
-        return False
-    else:
-        return True
 
         # FIXME? This error should be thrown, and caller should decide to ignore it (or not).
         #raise RuntimeError('nidaq call failed with error %d: %s'%(status, buf.value))
@@ -521,15 +518,11 @@ class CounterOutput(NIDAQTask):
     #
     def setTrigger(self, trigger_source, retriggerable = 1, board = None):
         if retriggerable:
-            for i in range(5):
-                with getLockForBoard(self.board_number):
-                    if checkStatus(nidaqmx.DAQmxSetStartTrigRetriggerable(self.taskHandle, c_long(1))):
-                        break
+            with getLockForBoard(self.board_number):
+                checkStatus(nidaqmx.DAQmxSetStartTrigRetriggerable(self.taskHandle, c_long(1)))
         else:
-            for i in range(5):
-                with getLockForBoard(self.board_number):
-                    if checkStatus(nidaqmx.DAQmxSetStartTrigRetriggerable(self.taskHandle, c_long(0))):
-                        break
+            with getLockForBoard(self.board_number):
+                checkStatus(nidaqmx.DAQmxSetStartTrigRetriggerable(self.taskHandle, c_long(0)))
         
         board_number = self.board_number
         if board:

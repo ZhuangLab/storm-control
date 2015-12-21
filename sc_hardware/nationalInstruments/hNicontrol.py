@@ -202,12 +202,23 @@ class Nidaq(illuminationHardware.DaqModulation):
 
         # Setup the counter.
         if self.counter_board:
-            self.ct_task = nicontrol.CounterOutput(self.counter_board, 
-                                                   self.counter_id,
-                                                   frequency, 
-                                                   0.5)
-            self.ct_task.setCounter(oversampling)
-            self.ct_task.setTrigger(self.counter_trigger)
+
+            def initCtTask():
+                self.ct_task = nicontrol.CounterOutput(self.counter_board, 
+                                                       self.counter_id,
+                                                       frequency, 
+                                                       0.5)
+                self.ct_task.setCounter(oversampling)
+                self.ct_task.setTrigger(self.counter_trigger)
+                return self.ct_task
+
+            iters = 0
+            while (iters < 5) and (not initCtTask()):
+                hdebug.logText("initCtTask failed " + str(iters))
+                self.ct_task.clearTask()
+                time.sleep(0.1)
+                iters += 1
+
         else:
             self.ct_task = False
 
