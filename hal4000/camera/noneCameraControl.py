@@ -14,6 +14,7 @@ from PyQt4 import QtCore
 # Debugging
 import sc_library.hdebug as hdebug
 
+import sc_library.parameters as params
 import camera.cameraControl as cameraControl
 import camera.frame as frame
 
@@ -28,15 +29,25 @@ class ACameraControl(cameraControl.CameraControl):
     # Create the camera control object.
     #
     # @param hardware A hardware object.
+    # @param parameters A parameters object.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, hardware, parent = None):
-        cameraControl.CameraControl.__init__(self, hardware, parent)
+    def __init__(self, hardware, parameters, parent = None):
+        cameraControl.CameraControl.__init__(self, hardware, parameters, parent)
+        
         self.fake_frame = 0
         self.fake_frame_size = [0,0]
+        self.parameters = parameters.get("camera1")
         self.sleep_time = 100
 
+        # Add None Camera specific parameters.
+        self.parameters.add("max_intensity", params.ParameterInt("",
+                                                                 "max_intensity",
+                                                                 10000,
+                                                                 is_mutable = False,
+                                                                 is_saved = False))
+            
         if hardware:
             self.roll = hardware.get("roll")
         else:

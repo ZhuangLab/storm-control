@@ -41,13 +41,16 @@
     </feedviewers>
     
     <!-- The focus lock -->
+    <!--
     <focuslock>
       <class_name type="string">AFocusLockZ</class_name>
       <menu_item type="string">Focus Lock</menu_item>
       <module_name type="string">focuslock.noneFocusLockZ</module_name>
     </focuslock>
-
+    -->
+    
     <!-- Illumination (lasers, shutters, etc) control -->
+    <!--
     <illumination>
       <class_name type="string">IlluminationControl</class_name>
       <menu_item type="string">Illumination</menu_item>
@@ -55,14 +58,17 @@
       <parameters>
 	<settings_xml type="string">none_illumination_settings.xml</settings_xml>
       </parameters>
-    </illumination>
+      </illumination>
+    -->
 
     <!-- Automatic illumination power adjustment -->
+    <!--
     <progressions>
       <class_name type="string">ProgressionControl</class_name>
       <menu_item type="string">Progressions</menu_item>
       <module_name type="string">progressionControl</module_name>
-    </progressions>
+      </progressions>
+    -->
 
     <!-- The live STORM analysis and display -->
     <!--
@@ -74,11 +80,13 @@
     -->
 
     <!-- Motorized XY stage -->
+    <!--
     <stage>
       <class_name type="string">AStageControl</class_name>
       <menu_item type="string">Stage Control</menu_item>
       <module_name type="string">stagecontrol.noneStageControl</module_name>
     </stage>
+    -->
 
     <!-- Remote control of HAL via TCP/IP -->
     <tcpip>

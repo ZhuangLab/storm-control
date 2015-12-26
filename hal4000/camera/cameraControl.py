@@ -50,10 +50,11 @@ class CameraControl(QtCore.QThread):
     # Create a CameraControl object.
     #
     # @param hardware A hardware object.
+    # @param parameters A parameters object.
     # @param parent (Optional) The PyQt parent of this CameraControl object.
     #
     @hdebug.debug
-    def __init__(self, hardware, parent = None):
+    def __init__(self, hardware, parameters, parent = None):
         QtCore.QThread.__init__(self, parent)
 
         # other class initializations
@@ -61,7 +62,7 @@ class CameraControl(QtCore.QThread):
         self.frame_number = 0
         self.key = -1
         self.mutex = QtCore.QMutex()
-        self.parameters = None
+        self.parameters = parameters
         self.running = True
         self.shutter = False
 

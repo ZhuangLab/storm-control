@@ -15,6 +15,7 @@ from PyQt4 import QtCore, QtGui
 
 # Debugging
 import sc_library.hdebug as hdebug
+import sc_library.parameters as params
 
 # Camera Helper Modules
 import qtWidgets.qtColorGradient as qtColorGradient
@@ -67,6 +68,22 @@ class CameraFeedDisplay(QtGui.QFrame):
         self.sync_value = 0
         self.sync_values_by_feedname = None
         self.sync_values_by_params = {}
+
+        # Add display specific parameters
+        self.parameters.add("drag_multiplier", params.ParameterInt("",
+                                                                   "drag_multiplier",
+                                                                   0.16,
+                                                                   is_mutable = False,
+                                                                   is_saved = False))
+        self.parameters.add("scalemax", params.ParameterInt("",
+                                                            "scalemax",
+                                                            2000,
+                                                            is_mutable = False))        
+        self.parameters.add("scalemin", params.ParameterInt("",
+                                                            "scalemin",
+                                                            100,
+                                                            is_mutable = False))
+        self.parameters.add("sync", 0)
 
         # UI setup.
         self.ui = cameraDisplayUi.Ui_Frame()

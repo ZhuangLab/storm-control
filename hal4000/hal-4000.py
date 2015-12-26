@@ -147,7 +147,7 @@ class Window(QtGui.QMainWindow):
         # 1. single: single window (the classic look).
         # 2. detached: detached camera window.
         #
-        self.ui_mode = hardware.ui_mode        
+        self.ui_mode = hardware.get("ui_mode")
         if (self.ui_mode == "single"):
             import qtdesigner.hal4000_ui as hal4000Ui
         elif (self.ui_mode == "detached"):
@@ -227,7 +227,7 @@ class Window(QtGui.QMainWindow):
         # Load the requested modules.
         #
         add_separator = False
-        for module in hardware.get("modules").getSubXMLObjects():
+        for module in hardware.get("modules").getProps():
             hdebug.logText("Loading: " + module.get("hal_type"))
             a_module = halImport(module.get("module_name"))
             a_class = getattr(a_module, module.get("class_name"))
@@ -717,7 +717,7 @@ class Window(QtGui.QMainWindow):
         else:
             self.ui.autoIncCheckBox.setChecked(False)
         self.ui.extensionComboBox.clear()
-        for ext in p.get("film.extensions"):
+        for ext in p.getp("film.extension").getAllowed():
             self.ui.extensionComboBox.addItem(ext)
         self.ui.extensionComboBox.setCurrentIndex(self.ui.extensionComboBox.findText(extension))
         self.ui.filetypeComboBox.setCurrentIndex(self.ui.filetypeComboBox.findText(filetype))

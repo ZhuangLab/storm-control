@@ -32,7 +32,7 @@ class ParametersRadioButton(QtGui.QRadioButton):
     # @param parent (Optional) the PyQt parent of this object.
     #
     def __init__(self, parameters, parent = None):
-        QtGui.QRadioButton.__init__(self, getFileName(parameters.parameters_file), parent)
+        QtGui.QRadioButton.__init__(self, getFileName(parameters.get("parameters_file")), parent)
         self.delete_desired = False
         self.parameters = parameters
 
