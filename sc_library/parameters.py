@@ -512,11 +512,11 @@ class ParameterSetBoolean(ParameterSet):
 
     def __init__(self, description, name, value, order = 1, is_mutable = True, is_saved = True):
         allowed = [True, False]
-        ParameterSet.__init__(self, description, name, bool(value), allowed, order, is_mutable, is_saved)
+        ParameterSet.__init__(self, description, name, bool(int(value)), allowed, order, is_mutable, is_saved)
         self.ptype = "boolean"
 
     def setv(self, new_value):
-        ParameterSet.setv(self, bool(new_value))
+        ParameterSet.setv(self, bool(int(new_value)))
 
         
 ## ParameterSetFloat
