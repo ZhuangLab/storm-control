@@ -231,7 +231,7 @@ class Channel(QtCore.QObject):
             new_power = int(round(new_power * self.amplitude_range + self.min_amplitude))
 
         # Update channel settings.
-        self.channel_ui.newSettings(parameters.on_off_state[self.channel_id],
+        self.channel_ui.newSettings(parameters.get("on_off_state")[self.channel_id],
                                     new_power)
 
         # Update buttons.

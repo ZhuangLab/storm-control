@@ -711,9 +711,9 @@ class StormXMLObject(object):
         if (len(pnames) > 1):
             try:
                 prop = self.get(pnames[0])
-            except ParametersException:
+            except ParametersGetException:
                 self.addSubSection(pnames[0])
-            prop.add(".".join(pnames[:-1]), pvalue)
+            prop.add(".".join(pnames[1:]), pvalue)
         else:
             self.addParameter(pname, pvalue)
             

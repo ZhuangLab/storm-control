@@ -60,15 +60,22 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         self.setWindowIcon(qtAppIcon.QAppIcon())
 
         # Parse XML that describes the hardware.
-        hardware = xmlParser.parseHardwareXML("illumination/" + hardware.settings_xml)
+        hardware = xmlParser.parseHardwareXML("illumination/" + hardware.get("settings_xml"))
 
         # Add illumination specific settings.
         default_power = []
-        for i in range(len(hardware.get("channels"))):
+        on_off_state = []
+        for i in range(len(hardware.channels)):
             default_power.append(1.0)
-        self.parameters.set("default_power", default_power)
-        
-        
+            on_off_state.append(False)
+        self.parameters.set("illumination.default_power", default_power)
+        self.parameters.set("illumination.on_off_state", on_off_state)
+
+        buttons = []
+        for i in range(len(hardware.channels)):
+            buttons.append([["Max", 1.0], ["Low", 0.1]])
+        self.parameters.set("illumination.power_buttons", buttons)
+
         # Hardware modules setup.
         for module in hardware.modules:
             m_name = module.module_name
