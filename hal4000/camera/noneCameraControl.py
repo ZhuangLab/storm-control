@@ -47,6 +47,13 @@ class ACameraControl(cameraControl.CameraControl):
                                                                  10000,
                                                                  is_mutable = False,
                                                                  is_saved = False))
+        self.parameters.add("x_start", params.ParameterRangeInt("X start pixel", "x_start", 1, 1, 512))
+        self.parameters.add("x_end", params.ParameterRangeInt("X end pixel", "x_end", 512, 1, 512))
+        self.parameters.add("y_start", params.ParameterRangeInt("Y start pixel", "y_start", 1, 1, 512))
+        self.parameters.add("y_end", params.ParameterRangeInt("Y end pixel", "y_end", 512, 1, 512))
+        self.parameters.add("x_bin", params.ParameterRangeInt("Binning in X", "x_bin", 1, 1, 16))
+        self.parameters.add("y_bin", params.ParameterRangeInt("Binning in Y", "y_bin", 1, 1, 16))
+        self.parameters.add("exposure_time", params.ParameterRangeFloat("Exposure time (seconds)", "exposure_time", 0.01, 0.01, 10.0))
             
         if hardware:
             self.roll = hardware.get("roll")
@@ -103,8 +110,10 @@ class ACameraControl(cameraControl.CameraControl):
         else:
             self.sleep_time = 10
             
-        size_x = p.get("x_pixels")/p.get("x_bin")
-        size_y = p.get("y_pixels")/p.get("y_bin")
+        size_x = (p.get("x_end") - p.get("x_start") + 1)/p.get("x_bin")
+        size_y = (p.get("y_end") - p.get("y_start") + 1)/p.get("y_bin")
+        p.set("x_pixels", size_x)
+        p.set("y_pixels", size_y)
         self.fake_frame_size = [size_x, size_y]
         fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
         for i in range(size_x):

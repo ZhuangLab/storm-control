@@ -261,24 +261,20 @@ def parameters(parameters_file, recurse = False):
 #
 def setCameraParameters(camera):
 
-    camera.set("x_pixels", camera.get("x_end") - camera.get("x_start") + 1)
-    camera.set("y_pixels", camera.get("y_end") - camera.get("y_start") + 1)
-
     # This restriction is necessary because in order to display
     # pictures as QImages they need to 32 bit aligned.
-    if((camera.get("x_pixels") % 4) != 0):
-        raise ParametersException("The camera ROI must be a multiple of 4 in x!")
-
-    camera.set("ROI", [camera.get("x_start"),
-                       camera.get("x_end"),
-                       camera.get("y_start"),
-                       camera.get("y_end")])
-    camera.set("binning", [camera.get("x_bin"),
-                           camera.get("y_bin")])
+    if camera.has("x_end"):
+        x_pixels = camera.get("x_end") - camera.get("x_start") + 1
+        if((x_pixels % 4) != 0):
+            raise ParametersException("The camera ROI must be a multiple of 4 in x!")
 
     camera.set("actual_temperature", 0)
-    camera.set("exposure_value", 0)      # This is the actual exposure time.
-    camera.set("cycle_value", 0)         # This is the time between frames.
+    
+    # This is the actual exposure time as reported by the camera.
+    camera.set("exposure_value", ParameterFloat("", "exposure_value", 0, is_mutable = False))
+
+    # This is the time between frames as reported by the camera.
+    camera.set("cycle_value", ParameterFloat("", "cycle_value", 0, is_mutable = False))
 
 ## setDefaultShutters
 #

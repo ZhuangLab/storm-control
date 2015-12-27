@@ -57,7 +57,7 @@ class CameraControl(QtCore.QThread):
     def __init__(self, hardware, parameters, parent = None):
         QtCore.QThread.__init__(self, parent)
 
-        # other class initializations
+        # Other class initializations
         self.acquire = IdleActive()
         self.frame_number = 0
         self.key = -1
@@ -66,10 +66,13 @@ class CameraControl(QtCore.QThread):
         self.running = True
         self.shutter = False
 
-        # camera initialization
+        # Camera initialization
         self.camera = False
         self.got_camera = False
         self.reversed_shutter = False
+
+        # Add parameters common to all the cameras.
+
 
     ## cameraInit
     #

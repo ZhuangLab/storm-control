@@ -178,8 +178,8 @@ class ACameraControl(cameraControl.HWCameraControl):
             self.camera.setTriggerMode(0)
 
             hdebug.logText("Setting ROI and Binning", False)
-            cam_roi = p.get("ROI")
-            cam_binning = p.get("binning")
+            cam_roi = [p.get("x_start"), p.get("x_end"), p.get("y_start"), p.get("y_end")]
+            cam_binning = [p.get("x_bin"), p.get("y_bin")]
             if p.get("isolated_cropmode", False):
                 self.camera.setIsolatedCropMode(True, 
                                                 cam_roi[3] - cam_roi[2],
