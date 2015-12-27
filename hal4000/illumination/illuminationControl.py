@@ -10,10 +10,10 @@
 from PyQt4 import QtCore, QtGui
 
 import qtWidgets.qtAppIcon as qtAppIcon
-
 import halLib.halModule as halModule
 import illumination.xmlParser as xmlParser
 import illumination.illuminationChannel as illuminationChannel
+import sc_library.parameters as params
 
 # Debugging
 import sc_library.hdebug as hdebug
@@ -62,6 +62,13 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         # Parse XML that describes the hardware.
         hardware = xmlParser.parseHardwareXML("illumination/" + hardware.settings_xml)
 
+        # Add illumination specific settings.
+        default_power = []
+        for i in range(len(hardware.get("channels"))):
+            default_power.append(1.0)
+        self.parameters.set("default_power", default_power)
+        
+        
         # Hardware modules setup.
         for module in hardware.modules:
             m_name = module.module_name
