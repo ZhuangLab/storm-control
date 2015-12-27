@@ -70,6 +70,10 @@ class CameraFeedDisplay(QtGui.QFrame):
         self.sync_values_by_params = {}
 
         # Add display specific parameters
+        self.parameters.add("colortable", params.ParameterSetString("Color table",
+                                                                    "colortable",
+                                                                    "idl5.ctbl",
+                                                                    self.color_tables.getColorTableNames()))
         self.parameters.add("drag_multiplier", params.ParameterInt("",
                                                                    "drag_multiplier",
                                                                    0.16,
