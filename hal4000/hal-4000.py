@@ -174,6 +174,7 @@ class Window(QtGui.QMainWindow):
         self.parameters_box.addParameters(self.parameters)
 
         file_types = writers.availableFileFormats(self.ui_mode)
+        self.parameters.getp("film.filetype").setAllowed(file_types)
         for type in file_types:
             self.ui.filetypeComboBox.addItem(type)
 

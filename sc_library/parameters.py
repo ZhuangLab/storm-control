@@ -315,6 +315,9 @@ class ParametersException(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
 
+class ParametersExceptionGet(ParametersException):
+    pass
+
 
 ## Parameter
 #
@@ -500,12 +503,18 @@ class ParameterSet(Parameter):
     
     def isSet(self):
         return True
-    
+
+    def setAllowed(self, allowed):
+        self.allowed = allowed
+        
     def setv(self, new_value):
         if new_value in self.allowed:
             self.value = new_value
-            
+        else:
+            print "not allowed"
+            raise ParametersException(str(new_value) + " is not in the list of allowed values.")
 
+            
 ## ParameterSetBoolean
 #
 class ParameterSetBoolean(ParameterSet):
@@ -758,7 +767,7 @@ class StormXMLObject(object):
             if default is not None:
                 return default
             else:
-                raise ParametersException("Requested property " + pname + " not found and no default was specified.")
+                raise ParametersExceptionGet("Requested property " + pname + " not found and no default was specified.")
         else:
             if isinstance(prop, StormXMLObject):
                 return prop
@@ -787,7 +796,7 @@ class StormXMLObject(object):
         if pname in self.parameters:
             return self.parameters[pname]
         else:
-            raise ParametersException("Requested property " + pname + " not found")
+            raise ParametersExceptionGet("Requested property " + pname + " not found")
 
     ## getProps
     #
@@ -844,7 +853,7 @@ class StormXMLObject(object):
         # is created to hold the value of the parameter.
         try:
             self.getp(pname).setv(pvalue)
-        except ParametersException:
+        except ParametersExceptionGet:
             self.add(pname, pvalue)
         
     ## setv
