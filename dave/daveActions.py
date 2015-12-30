@@ -35,6 +35,7 @@ class DaveAction(QtCore.QObject):
     # Define custom signal
     complete_signal = QtCore.pyqtSignal(object)
     error_signal = QtCore.pyqtSignal(object)
+    warning_signal = QtCore.pyqtSignal(object)
     
     ## __init__
     #
@@ -55,9 +56,9 @@ class DaveAction(QtCore.QObject):
 
         # Define pause behaviors
         self.should_pause = False            # Pause after completion
-        self.should_pause_after_error = True # Pause after error
         self.should_pause_default = False    # Default pause state for reset
-        
+        self.should_pause_after_error = True # Pause after an error
+                
         # Initialize internal timer
         self.lost_message_timer = QtCore.QTimer(self)
         self.lost_message_timer.setSingleShot(True)
@@ -117,6 +118,15 @@ class DaveAction(QtCore.QObject):
         if (self.should_pause_after_error == True):
             self.should_pause = True
         self.error_signal.emit(message)
+
+    ## completeActionWithWarning
+    #
+    # Send a warning message if needed
+    #
+    # @param message A TCP message object
+    #
+    def completeActionWithWarning(self, message):
+        self.warning_signal.emit(message)
 
     ## getActionType
     #
@@ -179,8 +189,9 @@ class DaveAction(QtCore.QObject):
     # handle the return of a message
     #
     # @param message A TCP message object
+    # @param warning A boolean which specifies that any errors should be treated as warnings
     #
-    def handleReply(self, message):
+    def handleReply(self, message, warning = False):
 
         # Stop lost message timer
         self.lost_message_timer.stop()
@@ -190,7 +201,10 @@ class DaveAction(QtCore.QObject):
             message.setError(True, "Communication Error: Incorrect Message Returned")
             self.completeActionWithError(message)
         elif message.hasError():
-            self.completeActionWithError(message)
+            if warning:
+                self.completeActionWithWarning(message) #Treat the error as a warning
+            else:
+                self.completeActionWithError(message)
         else: # Correct message and no error
             self.completeAction(message)
 
@@ -343,7 +357,9 @@ class DACheckFocus(DaveAction):
             if self.focus_scan:
                 error_message = " Minimum sum found: " + str(message.getResponse("found_sum"))
             message.setError(True, error_message)
-        DaveAction.handleReply(self, message)
+        
+        # Handle the reply but treat errors specific to this class as warnings
+        DaveAction.handleReply(self, message, warning = True) 
 
     ## setup
     #
@@ -506,7 +522,9 @@ class DAFindSum(DaveAction):
         found_sum = message.getResponse("found_sum")
         if not (found_sum == None) and (found_sum <= self.min_sum):
             message.setError(True, "Found sum " + str(found_sum) + " is smaller than minimum sum " + str(self.min_sum))
-        DaveAction.handleReply(self, message)
+
+        # Handle any errors generated here as warnings
+        DaveAction.handleReply(self, message, warning = True)
 
     ## setup
     #
