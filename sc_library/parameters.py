@@ -41,7 +41,7 @@ def copyParameters(ori_parameters, new_parameters):
     copyParametersReplace("", params, new_parameters)
 
     # Check and add any new parameters.
-    unrecognized = copyParametersCheck(params, new_parameters, new_parameters._is_new_)
+    unrecognized = copyParametersAddNew(params, new_parameters, new_parameters._is_new_)
     if (len(unrecognized) > 0):
         if False:
             QtGui.QMessageBox.information(None,
@@ -52,12 +52,13 @@ def copyParameters(ori_parameters, new_parameters):
             
     return params
 
-## copyParametersCheck
+## copyParametersAddNew
 #
 # Copy parameters in new_parameters that did not exist in
 # ori_parameters. If they don't already exist and are not
 # flagged with _is_new_ then add them to the list of
-# unrecognized parameters.
+# unrecognized parameters so that the user will know when
+# they have accidentally created new parameters.
 #
 # Notes
 #  1. This assumes both parameters are tree style.
@@ -70,7 +71,7 @@ def copyParameters(ori_parameters, new_parameters):
 #
 # @return A list of the unrecognized parameters.
 #
-def copyParametersCheck(ori_parameters, new_parameters, allow_new):
+def copyParametersAddNew(ori_parameters, new_parameters, allow_new):
 
     unrecognized = []
     for attr in new_parameters.getAttrs():
@@ -86,9 +87,9 @@ def copyParametersCheck(ori_parameters, new_parameters, allow_new):
 
             # Allow new parameters for all sub-objects.
             if allow_new:
-                unrecognized.extend(copyParametersCheck(ori_parameters.get(attr), prop, True))
+                unrecognized.extend(copyParametersAddNew(ori_parameters.get(attr), prop, True))
             else:
-                unrecognized.extend(copyParametersCheck(ori_parameters.get(attr), prop, prop._is_new_))
+                unrecognized.extend(copyParametersAddNew(ori_parameters.get(attr), prop, prop._is_new_))
 
         else:
             if not ori_parameters.has(attr):
@@ -103,7 +104,8 @@ def copyParametersCheck(ori_parameters, new_parameters, allow_new):
 ## copyParametersReplace
 #
 # This replaces all the parameters in original with their values
-# from new, if duplicate has a corresponding value.
+# from new, if new has a corresponding value. The idea is that
+# the new parameters only need to specify what is different.
 #
 # @param root The current root object, e.g, "" or "camera1", etc.
 # @param original The original parameters object.
