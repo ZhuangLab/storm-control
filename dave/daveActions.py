@@ -327,7 +327,7 @@ class DACheckFocus(DaveAction):
                 
     ## handleReply
     #
-    # Overload of default handleReply to allow determin
+    # Overload of default handleReply
     #
     # @param message A TCP message object
     #
