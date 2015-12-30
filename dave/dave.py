@@ -53,6 +53,7 @@ class CommandEngine(QtCore.QObject):
     done = QtCore.pyqtSignal()
     paused = QtCore.pyqtSignal()
     problem = QtCore.pyqtSignal(object)
+    warning = QtCore.pyqtSignal(object)
     
     ## __init__
     #
@@ -97,7 +98,8 @@ class CommandEngine(QtCore.QObject):
         # Connect signals.
         self.command.complete_signal.connect(self.handleActionComplete)
         self.command.error_signal.connect(self.handleErrorSignal)
-            
+        self.command.warning_signal.connect(self.handleWarningSignal)
+        
         # Start command.
         if (self.command.getActionType() == "hal"):
             self.command.start(self.HALClient, test_mode)
@@ -116,6 +118,7 @@ class CommandEngine(QtCore.QObject):
         self.command.cleanUp()
         self.command.complete_signal.disconnect()
         self.command.error_signal.disconnect()
+        self.command.warning_signal.disconnect()
 
         # Configure the command engine to pause after completion of the command sequence
         if self.command.shouldPause() and not message.isTest():
@@ -130,6 +133,14 @@ class CommandEngine(QtCore.QObject):
     #
     def handleErrorSignal(self, message):
         self.problem.emit(message)
+        self.handleActionComplete(message)
+
+    ## handleWarningSignal
+    #
+    # Handle a warning signal
+    #
+    def handleWarningSignal(self, message):
+        self.warning.emit(message)
         self.handleActionComplete(message)
 
 ## Dave
