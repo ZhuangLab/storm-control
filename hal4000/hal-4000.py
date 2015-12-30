@@ -259,6 +259,9 @@ class Window(QtGui.QMainWindow):
         for module in everything:
             module.moduleInit()
 
+        # The modules can add parameters, so update the default.
+        params.setDefaultParameters(parameters)
+
         #
         # More ui stuff
         #
@@ -1138,7 +1141,7 @@ if __name__ == "__main__":
         setup_name = parameters.get("setup_name")
         hardware = params.hardware("xml/" + setup_name + "_hardware.xml")
         parameters = params.halParameters("xml/" + setup_name + "_default.xml")
-    params.setSetupName(parameters, setup_name)
+    parameters.add("setup_name", params.Parameter("", "setup_name", setup_name, 1, False, True))
 
     # Start logger.
     hdebug.startLogging(parameters.get("film.directory") + "logs/", "hal4000")

@@ -16,6 +16,7 @@ from PyQt4 import QtCore
 # Debugging
 import sc_library.hdebug as hdebug
 
+import sc_library.parameters as params
 import camera.frame as frame
 
 ## CameraControl
@@ -71,8 +72,10 @@ class CameraControl(QtCore.QThread):
         self.got_camera = False
         self.reversed_shutter = False
 
-        # Add parameters common to all the cameras.
-
+        self.parameters.add("camera1.save", params.ParameterSetBoolean("",
+                                                                       "save",
+                                                                       True,
+                                                                       is_mutable = False))
 
     ## cameraInit
     #

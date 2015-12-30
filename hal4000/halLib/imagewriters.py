@@ -163,12 +163,11 @@ class GenericFile:
         self.feed_names = feed_names
         self.is_open = True
         self.parameters = parameters.copy()
-        self.parameters.set("acquisition", params.StormXMLObject([]))
         
         # FIXME: different cameras could have different lock targets.
-        self.parameters.set("acquisition.lock_target", 0.0)
-        self.parameters.set("acquisition.spot_counts", "NA")
-        self.parameters.set("acquisition.stage_position", [0.0, 0.0, 0.0])
+        self.parameters.add("acquisition.lock_target", params.Parameter("", "lock_target", 0.0, 1, False, True))
+        self.parameters.add("acquisition.spot_counts", params.Parameter("", "spot_counts", "NA", 1, False, True))
+        self.parameters.add("acquisition.stage_position", params.Parameter("", "stage_position", [0.0, 0.0, 0.0], 1, False, True))
 
         self.filename = filename
         self.filenames = []

@@ -43,10 +43,13 @@ def copyParameters(ori_parameters, new_parameters):
     # Check and add any new parameters.
     unrecognized = copyParametersCheck(params, new_parameters, new_parameters._is_new_)
     if (len(unrecognized) > 0):
-        QtGui.QMessageBox.information(None,
-                                      "Bad Parameters?",
-                                      "The following parameters were not in the default list: " + ", ".join(unrecognized))
-
+        if False:
+            QtGui.QMessageBox.information(None,
+                                          "Bad Parameters?",
+                                          "The following parameters were not recognized: " + ", ".join(unrecognized))
+        else:
+            print "The following parameters were not recognized: " + ", ".join(unrecognized)
+            
     return params
 
 ## copyParametersCheck
@@ -91,8 +94,8 @@ def copyParametersCheck(ori_parameters, new_parameters, allow_new):
             if not ori_parameters.has(attr):
                 ori_parameters.set(attr, prop)
                 if not allow_new:
-                    if attr in new_parameters.getUnused():
-                        unrecognized.append(attr)
+                    #if attr in new_parameters.getUnused():
+                    unrecognized.append(attr)
                         #raise ParametersException("Unrecognized new parameter " + attr)
 
     return unrecognized
@@ -120,7 +123,8 @@ def copyParametersReplace(root, original, new):
         else:
             # New is also a tree.
             if (len(root) > 0) and new.has(root + "." + attr):
-                    original.set(attr, new.get(root + "." + attr))
+                print root + "." + attr, new.has(root + "." + attr)
+                original.set(attr, new.get(root + "." + attr))
 
             # New is flat.
             elif new.has(attr):
@@ -276,6 +280,14 @@ def setCameraParameters(camera):
     # This is the time between frames as reported by the camera.
     camera.set("cycle_value", ParameterFloat("", "cycle_value", 0, is_mutable = False))
 
+## setDefaultParameters
+#
+# Use a copy of the specified parameters as the default parameters.
+#
+def setDefaultParameters(parameters):
+    global default_params
+    default_params = copy.deepcopy(parameters)
+    
 ## setDefaultShutters
 #
 # This sets the shutter name parameter of the default parameters object.
@@ -294,12 +306,12 @@ def setDefaultShutter(shutters_filename):
 # @param parameters A parameters object.
 # @param setup_name The name of the setup, e.g. "none", "prism2".
 #
-def setSetupName(parameters, setup_name):
-    param = Parameter("", "setup_name", setup_name, 1, False, True)
-    parameters.set("setup_name", param)
-    global default_params
-    if default_params:
-        default_params.set("setup_name", param)
+#def setSetupName(parameters, setup_name):
+#    param = Parameter("", "setup_name", setup_name, 1, False, True)
+#    parameters.set("setup_name", param)
+#    global default_params
+#    if default_params:
+#        default_params.set("setup_name", param)
 
 
 ## ParametersException
@@ -511,7 +523,9 @@ class ParameterSet(Parameter):
         if new_value in self.allowed:
             self.value = new_value
         else:
-            print "not allowed"
+            for x in self.allowed:
+                print len(x), len(new_value)
+            print self.name, self.allowed, "-", new_value, "-"
             raise ParametersException(str(new_value) + " is not in the list of allowed values.")
 
             
@@ -521,11 +535,21 @@ class ParameterSetBoolean(ParameterSet):
 
     def __init__(self, description, name, value, order = 1, is_mutable = True, is_saved = True):
         allowed = [True, False]
-        ParameterSet.__init__(self, description, name, bool(int(value)), allowed, order, is_mutable, is_saved)
+        ParameterSet.__init__(self, description, name, self.parse(value), allowed, order, is_mutable, is_saved)
         self.ptype = "boolean"
 
+    def parse(self, value):
+        if isinstance(value, int):
+            return value
+        elif isinstance(value, bool):
+            return value
+        elif (value == "0") or (value == "False"):
+            return False
+        else:
+            return True
+            
     def setv(self, new_value):
-        ParameterSet.setv(self, bool(int(new_value)))
+        ParameterSet.setv(self, self.parse(new_value))
 
         
 ## ParameterSetFloat
@@ -560,10 +584,14 @@ class ParameterSetString(ParameterSet):
 
     def __init__(self, description, name, value, allowed, order = 1, is_mutable = True, is_saved = True):
         allowed = map(str, allowed)
+        if value is None:
+            value = ''
         ParameterSet.__init__(self, description, name, str(value), allowed, order, is_mutable, is_saved)
         self.ptype = "string"
 
     def setv(self, new_value):
+        if new_value is None:
+            new_value = ''
         ParameterSet.setv(self, str(new_value))
         
 
@@ -580,9 +608,13 @@ class ParameterSimple(Parameter):
 class ParameterString(Parameter):
 
     def __init__(self, description, name, value, order = 1, is_mutable = True, is_saved = True):
+        if value is None:
+            value = ''
         Parameter.__init__(self, description, name, str(value), order, is_mutable, is_saved)
 
     def setv(self, new_value):
+        if new_value is None:
+            new_value = ''
         Parameter.setv(self, str(new_value))
 
 
@@ -711,8 +743,9 @@ class StormXMLObject(object):
         if (len(pnames) > 1):
             try:
                 prop = self.get(pnames[0])
-            except ParametersGetException:
+            except ParametersExceptionGet:
                 self.addSubSection(pnames[0])
+            prop = self.get(pnames[0])
             prop.add(".".join(pnames[1:]), pvalue)
         else:
             self.addParameter(pname, pvalue)
@@ -820,7 +853,7 @@ class StormXMLObject(object):
     def has(self, pname):
         try:
             prop = self.getp(pname)
-        except ParametersException:
+        except ParametersExceptionGet:
             return False
         return True
 
@@ -852,7 +885,11 @@ class StormXMLObject(object):
         # If the parameter does not already exist a ParameterSimple
         # is created to hold the value of the parameter.
         try:
-            self.getp(pname).setv(pvalue)
+            temp = self.getp(pname)
+            if isinstance(pvalue, Parameter):
+                temp.setv(pvalue.getv())
+            else:
+                temp.setv(pvalue)
         except ParametersExceptionGet:
             self.add(pname, pvalue)
         
@@ -863,7 +900,7 @@ class StormXMLObject(object):
     # @param pname A string containing the Parameter name(s).
     # @param value The value(s) to set the Parameter too.
     #
-    def setv(self, pname, value):
+    def set_foo(self, pname, value):
 
         # Check for list of pnames and values.
         if isinstance(pname, list):
@@ -887,19 +924,17 @@ class StormXMLObject(object):
     #
     # @param name (optional) The tag attribute to use for the current block of XML.
     #
-    def toXML(self, name = "settings"):
-        xml = ElementTree.Element(name)
+    def toXML(self, xml = None, name = "settings"):
+        if xml is None:
+            xml = ElementTree.Element(name)
         for key in self.parameters:
-            if isinstance(self.parameters[key], StormXMLObject):
-                temp = value.toXML(key)
-                temp.set("is_new", str(value._is_new_))
-                xml.append(temp)
+            value = self.parameters[key]
+            if isinstance(value, StormXMLObject):
+                child = ElementTree.SubElement(xml, key)
+                child.set("is_new", str(value._is_new_))
+                value.toXML(child, key)
             else:
-                if isinstance(self.parameters[key], list):
-                    for elt in self.parameters[key]:
-                        elt.toXML(xml)
-                else:
-                    self.parameters[key].toXML(xml)
+                value.toXML(xml)
         return xml
 
 
@@ -913,7 +948,7 @@ if (__name__ == "__main__"):
 
     from xml.dom import minidom
 
-    if 0:
+    if 1:
         p1 = halParameters(sys.argv[1])
         p2 = halParameters(sys.argv[2])
 
@@ -921,7 +956,7 @@ if (__name__ == "__main__"):
         reparsed = minidom.parseString(string)
         print reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1")    
 
-    if 1:
+    if 0:
         pm = parameters(sys.argv[1], True)
         print pm.get("film")
         print pm.get("film.directory")
