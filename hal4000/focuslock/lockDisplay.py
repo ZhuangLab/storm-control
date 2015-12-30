@@ -169,7 +169,10 @@ class LockDisplay(QtGui.QWidget):
     # @return A boolean that determines the focus status, e.g. is the system in focus
     #
     def getFocusStatus(self):
-        return self.control_thread.getFocusStatus()
+        if self.amLocked():
+            return self.control_thread.getFocusStatus()
+        else:
+            return False # If the focus lock is not locked, return that it is not
 
     ## getLockModes
     #
