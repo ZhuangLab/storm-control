@@ -76,13 +76,11 @@
     -->
 
     <!-- Motorized XY stage -->
-    <!--
     <stage>
       <class_name type="string">AStageControl</class_name>
       <menu_item type="string">Stage Control</menu_item>
       <module_name type="string">stagecontrol.noneStageControl</module_name>
     </stage>
-    -->
 
     <!-- Remote control of HAL via TCP/IP -->
     <tcpip>
