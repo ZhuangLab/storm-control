@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dave.ui'
 #
-# Created: Wed Dec 30 14:18:39 2015
+# Created: Wed Dec 30 15:42:56 2015
 #      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(722, 723)
+        MainWindow.resize(590, 723)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -133,19 +133,19 @@ class Ui_MainWindow(object):
         self.warningsGroupBox.setObjectName(_fromUtf8("warningsGroupBox"))
         self.gridLayout_2 = QtGui.QGridLayout(self.warningsGroupBox)
         self.gridLayout_2.setObjectName(_fromUtf8("gridLayout_2"))
-        self.currentWarnings = QtGui.QListView(self.warningsGroupBox)
-        self.currentWarnings.setObjectName(_fromUtf8("currentWarnings"))
-        self.gridLayout_2.addWidget(self.currentWarnings, 0, 0, 1, 2)
         self.numWarningsToPause = QtGui.QSpinBox(self.warningsGroupBox)
         self.numWarningsToPause.setMinimum(1)
         self.numWarningsToPause.setObjectName(_fromUtf8("numWarningsToPause"))
         self.gridLayout_2.addWidget(self.numWarningsToPause, 1, 0, 1, 1)
-        self.numErrorsToPauseLabel = QtGui.QLabel(self.warningsGroupBox)
-        self.numErrorsToPauseLabel.setObjectName(_fromUtf8("numErrorsToPauseLabel"))
-        self.gridLayout_2.addWidget(self.numErrorsToPauseLabel, 1, 1, 1, 1)
+        self.numWarningsToPauseLabel = QtGui.QLabel(self.warningsGroupBox)
+        self.numWarningsToPauseLabel.setObjectName(_fromUtf8("numWarningsToPauseLabel"))
+        self.gridLayout_2.addWidget(self.numWarningsToPauseLabel, 1, 1, 1, 1)
         self.clearWarningsPushButton = QtGui.QPushButton(self.warningsGroupBox)
         self.clearWarningsPushButton.setObjectName(_fromUtf8("clearWarningsPushButton"))
         self.gridLayout_2.addWidget(self.clearWarningsPushButton, 2, 0, 1, 1)
+        self.currentWarnings = QtGui.QListWidget(self.warningsGroupBox)
+        self.currentWarnings.setObjectName(_fromUtf8("currentWarnings"))
+        self.gridLayout_2.addWidget(self.currentWarnings, 0, 0, 1, 2)
         self.gridLayout.addWidget(self.warningsGroupBox, 13, 0, 1, 2)
         self.verticalLayout_5.addWidget(self.notificationGroupBox)
         self.mainGridLayout.addWidget(self.widget, 1, 4, 1, 1)
@@ -210,7 +210,7 @@ class Ui_MainWindow(object):
         self.mainGridLayout.addWidget(self.widget_2, 1, 1, 1, 3)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 722, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 590, 21))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -262,7 +262,7 @@ class Ui_MainWindow(object):
         self.fromAddressLabel.setText(_translate("MainWindow", "From address:", None))
         self.GroupBox.setTitle(_translate("MainWindow", "Sequence Progress", None))
         self.warningsGroupBox.setTitle(_translate("MainWindow", "Warnings", None))
-        self.numErrorsToPauseLabel.setText(_translate("MainWindow", "Number of Warnings  to Pause", None))
+        self.numWarningsToPauseLabel.setText(_translate("MainWindow", "Number of Warnings  to Pause", None))
         self.clearWarningsPushButton.setText(_translate("MainWindow", "Clear Warnings", None))
         self.commandGroupBox.setTitle(_translate("MainWindow", "Command Sequence", None))
         self.groupBox.setTitle(_translate("MainWindow", "Command Details", None))

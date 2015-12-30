@@ -683,11 +683,11 @@ class Dave(QtGui.QMainWindow):
             message_str = current_item.getDaveAction().getDescriptor() + "\n" + message.getErrorMessage()
 
             # Generate a warning
-            # SOME CODE HERE TO HANDLE THE LISTVIEW (OR A CLASS DERIVED FROM
-            # SOME OBJECT VIEWER)
+            num_warnings = self.ui.currentWarnings.count()
+            self.ui.currentWarnings.insertItem(num_warnings+1, "Warning " + str(num_warnings+1)) 
 
             # Check to see if the number of warnings is larger than the allowed number
-            if ui.ListView.getNumberItems() > self.ui.numWarningsToPause.value():
+            if self.ui.currentWarnings.count() >= self.ui.numWarningsToPause.value():
                 # Update Error Message
                 message_str = "Exceeded the number of allowed warnings. The final error message is \n" + message.getErrorMessage()
                 
@@ -696,7 +696,7 @@ class Dave(QtGui.QMainWindow):
             else:
                 pass
                 # Nothing needs to be done here, Dave should continue running.
-                
+
 
     ## newSequence
     #
