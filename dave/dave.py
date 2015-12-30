@@ -235,6 +235,7 @@ class Dave(QtGui.QMainWindow):
         self.command_engine.done.connect(self.handleDone)
         self.command_engine.problem.connect(self.handleProblem)
         self.command_engine.paused.connect(self.handlePauseFromCommandEngine)
+        self.command_engine.warning.connect(self.handleWarning)
 
     ## cleanUp
     #
@@ -518,11 +519,15 @@ class Dave(QtGui.QMainWindow):
     # Displays a dialog box describing the problem.
     #
     # @param message The problem message from the movie engine.
+    # @param message_str A informative string regarding the error. Defaults to False.
     #
     @hdebug.debug
-    def handleProblem(self, message):
+    def handleProblem(self, message, message_str = False):
         current_item = self.ui.commandSequenceTreeView.getCurrentItem()
-        message_str = current_item.getDaveAction().getDescriptor() + "\n" + message.getErrorMessage()
+        # Compose message string.
+        if not message_str:
+            message_str = current_item.getDaveAction().getDescriptor() + "\n" + message.getErrorMessage()
+
         if not self.test_mode:
 
             # Pause Dave.
@@ -661,6 +666,37 @@ class Dave(QtGui.QMainWindow):
         else: 
             self.ui.commandSequenceTreeView.setAllValid(False)
             self.updateEstimates()
+
+    ## handleWarning
+    #
+    # Handles the warning signal from the command engine and determines if Dave should pause
+    # @param message The warning message from the movie engine.
+    #
+    @hdebug.debug
+    def handleWarning(self, message):
+        # Determine if Dave is in test mode, and use handleProblem if it is
+        if self.test_mode:
+            self.handleProblem(message)
+        else:
+            # Get information on the item that generated the warning
+            current_item = self.ui.commandSequenceTreeView.getCurrentItem()
+            message_str = current_item.getDaveAction().getDescriptor() + "\n" + message.getErrorMessage()
+
+            # Generate a warning
+            # SOME CODE HERE TO HANDLE THE LISTVIEW (OR A CLASS DERIVED FROM
+            # SOME OBJECT VIEWER)
+
+            # Check to see if the number of warnings is larger than the allowed number
+            if ui.ListView.getNumberItems() > self.ui.numWarningsToPause.value():
+                # Update Error Message
+                message_str = "Exceeded the number of allowed warnings. The final error message is \n" + message.getErrorMessage()
+                
+                # Handle problem and specify the message
+                self.handleProblem(message, message_str = message_str)
+            else:
+                pass
+                # Nothing needs to be done here, Dave should continue running.
+                
 
     ## newSequence
     #
