@@ -23,13 +23,16 @@ class DaveWarning(QtGui.QStandardItem):
     # @param dave_action_si The daveActionStandardItem on which the error was generated
     # @param message_str A string describing the error (Typically provided by the message)
     #
-    def __init__(self, dave_action_si, message_str = ""):
+    def __init__(self, dave_action_si,
+                 message_str = "Unknown warning",
+                 descriptor = "Unknown warning"):
         # Archive dave action corresponding to the warning
         self.dave_action_si = dave_action_si
-
-        QtGui.QStandardItem.__init__(self, self.dave_action.getDescriptor())
+        self.warning_str = message_str
+        self.descriptor = descriptor
+        
+        QtGui.QStandardItem.__init__(self, descriptor)
         self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-
     
     ## getDaveStandardItem
     #
@@ -38,46 +41,37 @@ class DaveWarning(QtGui.QStandardItem):
     def getDaveStandardItem(self):
         return self.dave_action_si
 
-## DaveWarningModel
+    ## getWarningMessage
+    #
+    # @return The warning message associated with this item.
+    #
+    def getWarningMessage(self):
+        return self.warning_str
+
+## DaveWarningsModel
 #
 # A QStandardItemModel specialized for Dave Warnings.
 #
-class DaveWarningModel(QtGui.QStandardItemModel):
+class DaveWarningsModel(QtGui.QStandardItemModel):
 
     ## __init__
     #
     def __init__(self):
         QtGui.QStandardItemModel.__init__(self)
-
-        self.dave_warning_index = 0
         self.dave_warning_sis = [] # List of all DaveWarningStandardItems
 
     ## addItem
     #
-    # @param dave_action_si A DaveActionStandardItem.
+    # @param dave_warning_si A DaveWarningStandardItem.
     #
     def addItem(self, dave_warning_si):
-        self.dave_warning_sis.append(dave_action_si)
-    
-    ## getCurrentIndex
-    #
-    # @return The current item index.
-    #
-    def getCurrentIndex(self):
-        return self.dave_warning_index
+        self.dave_warning_sis.append(dave_warning_si)
 
-    ## getCurrentItem
-    #
-    # @return The current DaveWarningStandardItem.
-    #
-    def getCurrentItem(self):
-        return self.dave_warning_sis[self.dave_warning_index]
-
-    ## getNumberItems
+    ## count
     #
     # @return Then number of items in the model.
     #
-    def getNumberItems(self):
+    def count(self):
         return len(self.dave_warning_sis)
 
     ## clearWarnings
@@ -85,8 +79,16 @@ class DaveWarningModel(QtGui.QStandardItemModel):
     # Clear all warnings
     #
     def clearWarnings(self):
-        self.dave_warning_index = 0
         self.dave_warning_sis = [] # List of all DaveWarningStandardItems
+
+    ## createSummaryMessage
+    #
+    # Create a summary message for all warnings
+    #
+    def createSummaryMessage(self):
+        summary_message = "Warnings Summary: \n"
+        for dw_item in self.dave_warning_sis:
+            summary_message = summary_message + dw_item.getWarningMessage() +"\n"
 
 ## DaveWarningsViewer
 #
@@ -102,41 +104,42 @@ class DaveWarningsViewer(QtGui.QListView):
     def __init__(self, parent = None):
         QtGui.QListView.__init__(self, parent)
 
-        self.warning_model = None
+        self.warning_model = DaveWarningsModel() # Initialized empty
 
         self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
-        self.setUniformRowHeights(True)
-        self.setHeaderHidden(True)
 
-        self.clicked.connect(self.handleClick)
         self.doubleClicked.connect(self.handleDoubleClick)
 
-    ## getCurrentIndex
+    ## addWarning
     #
-    # @return The current item index.
+    # @param dave_action_si A DaveWarningStandardItem associated with the warning
+    # @param message_str The warning message
+    # @param descriptor the displayed description
     #
-    def getCurrentIndex(self):
-        if self.warning_model is not None:
-            return self.warning_model.getCurrentIndex()
-        else:
-            return 0
+    def addWarning(self, dave_action_si,
+                 message_str = "Unknown warning",
+                 descriptor = "Unknown warning"):
 
-    ## getCurrentItem
-    #
-    # @return The current DaveWarningStandardIem or None if there are no items.
-    #
-    def getCurrentItem(self):
-        if self.warning_model is not None:
-            return self.warning_model.getCurrentItem()
-        return None
+        dave_warning_si = DaveWarning(dave_action_si,
+                                      message_str = "Unknown warning",
+                                      descriptor = "Unknown warning")
 
-    ## getNumberItems
+        self.warning_model.addItem(dave_warning_si)
+
+    ## clearWarnings
+    #
+    # Clear all warnings
+    #
+    def clearWarnings(self):
+        self.warnings_model.clearWarnings()
+
+    ## count
     #
     # @return Then number of items in the model.
     #
-    def getNumberItems(self):
+    def count(self):
         if self.warning_model is not None:
-            return self.warning_model.getNumberItems()
+            return self.warning_model.count()
         else:
             return 1
 
