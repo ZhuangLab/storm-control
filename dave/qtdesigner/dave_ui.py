@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dave.ui'
 #
-# Created: Wed Dec 30 15:42:56 2015
+# Created: Thu Dec 31 10:53:23 2015
 #      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -143,7 +143,7 @@ class Ui_MainWindow(object):
         self.clearWarningsPushButton = QtGui.QPushButton(self.warningsGroupBox)
         self.clearWarningsPushButton.setObjectName(_fromUtf8("clearWarningsPushButton"))
         self.gridLayout_2.addWidget(self.clearWarningsPushButton, 2, 0, 1, 1)
-        self.currentWarnings = QtGui.QListWidget(self.warningsGroupBox)
+        self.currentWarnings = DaveWarningsViewer(self.warningsGroupBox)
         self.currentWarnings.setObjectName(_fromUtf8("currentWarnings"))
         self.gridLayout_2.addWidget(self.currentWarnings, 0, 0, 1, 2)
         self.gridLayout.addWidget(self.warningsGroupBox, 13, 0, 1, 2)
@@ -278,4 +278,5 @@ class Ui_MainWindow(object):
         self.actionGenerateXML.setText(_translate("MainWindow", "Generate XML", None))
         self.actionSendTestEmail.setText(_translate("MainWindow", "Send Test Email", None))
 
+from daveWarnings import DaveWarningsViewer
 from sequenceViewer import DaveCommandTreeViewer

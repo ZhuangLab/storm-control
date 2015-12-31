@@ -250,7 +250,7 @@
               </widget>
              </item>
              <item row="0" column="0" colspan="2">
-              <widget class="QListWidget" name="currentWarnings"/>
+              <widget class="DaveWarningsViewer" name="currentWarnings"/>
              </item>
             </layout>
            </widget>
@@ -450,6 +450,11 @@
    <class>DaveCommandTreeViewer</class>
    <extends>QTreeView</extends>
    <header>sequenceViewer</header>
+  </customwidget>
+  <customwidget>
+   <class>DaveWarningsViewer</class>
+   <extends>QListWidget</extends>
+   <header>daveWarnings</header>
   </customwidget>
  </customwidgets>
  <resources/>
