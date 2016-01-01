@@ -374,17 +374,24 @@ class Dave(QtGui.QMainWindow):
     #
     # Handle a double click on a warnings item
     #
-    # @param item The Dave Warnings item double clicked.
+    # @param warning_item The Dave Warnings item double clicked.
     #
-    def handleWarningsDoubleClick(self, item):
+    def handleWarningsDoubleClick(self, warning_item):
         # Create a message box to display the warnings information\
         messageBox = QtGui.QMessageBox(parent = self)
         messageBox.setWindowTitle("Warning Details")
-        warning_message = item.getWarningMessage()
+        warning_message = "Warning information: \n" + warning_item.getFullInfo()
+        warning_message = warning_message + "\n" + "Would you like to go to this command?"
         messageBox.setText(warning_message)
-        messageBox.setStandardButtons(QtGui.QMessageBox.Ok)
-        messageBox.setDefaultButton(QtGui.QMessageBox.Ok)
+        messageBox.setStandardButtons(QtGui.QMessageBox.No | QtGui.QMessageBox.Yes)
+        messageBox.setDefaultButton(QtGui.QMessageBox.No)
         button_ID = messageBox.exec_()
+
+        if (button_ID == QtGui.QMessageBox.Yes):
+            dave_action_si = warning_item.getDaveActionStandardItem()
+            self.ui.commandSequenceTreeView.setCurrentAction(dave_action_si)
+        else:
+            pass 
 
     ## handleClearWarnings
     #
@@ -706,11 +713,9 @@ class Dave(QtGui.QMainWindow):
             # Get information on the item that generated the warning
             current_item = self.ui.commandSequenceTreeView.getCurrentItem()
             message_str = current_item.getDaveAction().getDescriptor() + "\n" + message.getErrorMessage()
-            print message_str
             
             # Generate a warning
             num_warnings = self.ui.currentWarnings.count()
-            print num_warnings
             self.ui.currentWarnings.addWarning(current_item,
                                                message_str = message_str,
                                                descriptor = "Warning " + str(num_warnings+1))
@@ -719,6 +724,7 @@ class Dave(QtGui.QMainWindow):
             if self.ui.currentWarnings.count() >= self.ui.numWarningsToPause.value():
                 # Update Error Message
                 message_str = self.ui.currentWarnings.getSummaryMessage()
+                print message_str
                 
                 # Handle problem and specify the message
                 self.handleProblem(message, message_str = message_str)

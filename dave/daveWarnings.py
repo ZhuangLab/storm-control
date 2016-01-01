@@ -11,6 +11,7 @@
 
 ## Imports.
 from PyQt4 import QtCore, QtGui
+from datetime import datetime
 
 ## DaveWarning
 #
@@ -30,7 +31,9 @@ class DaveWarning(QtGui.QStandardItem):
         self.dave_action_si = dave_action_si
         self.warning_str = message_str
         self.descriptor = descriptor
-        
+        self.creation_time = datetime.now()
+
+        # Initislize standard item and set display/selectability properties
         QtGui.QStandardItem.__init__(self, descriptor)
         self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
     
@@ -38,8 +41,15 @@ class DaveWarning(QtGui.QStandardItem):
     #
     # @return The DaveActionStandardItem associated with this item.
     #
-    def getDaveStandardItem(self):
+    def getDaveActionStandardItem(self):
         return self.dave_action_si
+
+    ## getDescriptor
+    #
+    # @return The name of the warning.
+    #
+    def getDescriptor(self):
+        return self.descriptor
 
     ## getWarningMessage
     #
@@ -47,6 +57,18 @@ class DaveWarning(QtGui.QStandardItem):
     #
     def getWarningMessage(self):
         return self.warning_str
+
+    ## getFullInfo
+    #
+    # Create a formatted string describing the full information around the warning
+    #
+    # @return A string describing everything about the warning
+    #
+    def getFullInfo(self):
+        warning_string = self.descriptor + ": \n"
+        warning_string = warning_string + str(self.creation_time) + "\n"
+        warning_string = warning_string + self.warning_str + "\n"
+        return warning_string
 
 ## DaveWarningsModel
 #
@@ -80,9 +102,11 @@ class DaveWarningsModel(QtGui.QStandardItemModel):
     # Create a summary message for all warnings
     #
     def createSummaryMessage(self):
-        summary_message = "Warnings Summary: \n"
+        summary_message = "Exceeded the maximum number of warnings: \n"
         for dw_item in self.dave_warning_sis:
-            summary_message = summary_message + dw_item.getWarningMessage() +"\n"
+            summary_message = summary_message + "\n"
+            summary_message = summary_message + dw_item.getFullInfo()
+        return summary_message
 
 ## DaveWarningsViewer
 #
