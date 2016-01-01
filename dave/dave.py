@@ -208,6 +208,7 @@ class Dave(QtGui.QMainWindow):
         self.ui.toAddressLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.validateSequenceButton.clicked.connect(self.handleValidateCommandSequence)
         self.ui.commandSequenceTreeView.double_clicked.connect(self.handleDoubleClick)
+        self.ui.currentWarnings.double_clicked.connect(self.handleWarningsDoubleClick)
                               
         # Load saved notifications settings.
         self.noti_settings = [[self.ui.fromAddressLineEdit, "from_address"],
@@ -367,6 +368,22 @@ class Dave(QtGui.QMainWindow):
             self.ui.commandSequenceTreeView.setCurrentAction(item)    
         else:
             pass
+
+    ## handleWarningsDoubleClick
+    #
+    # Handle a double click on a warnings item
+    #
+    # @param item The Dave Warnings item double clicked.
+    #
+    def handleWarningsDoubleClick(self, item):
+        # Create a message box to display the warnings information\
+        messageBox = QtGui.QMessageBox(parent = self)
+        messageBox.setWindowTitle("Warning Details")
+        warning_message = item.getWarningMessage()
+        messageBox.setText(warning_message)
+        messageBox.setStandardButtons(QtGui.QMessageBox.Ok)
+        messageBox.setDefaultButton(QtGui.QMessageBox.Ok)
+        button_ID = messageBox.exec_()
 
     ## handleDone
     #
@@ -693,14 +710,13 @@ class Dave(QtGui.QMainWindow):
             # Check to see if the number of warnings is larger than the allowed number
             if self.ui.currentWarnings.count() >= self.ui.numWarningsToPause.value():
                 # Update Error Message
-                message_str = "Exceeded the number of allowed warnings. The final error message is \n" + message.getErrorMessage()
+                message_str = self.ui.currentWarnings.getSummaryMessage()
                 
                 # Handle problem and specify the message
                 self.handleProblem(message, message_str = message_str)
             else:
                 pass
                 # Nothing needs to be done here, Dave should continue running.
-
 
     ## newSequence
     #

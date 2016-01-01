@@ -67,7 +67,6 @@ class DaveWarningsModel(QtGui.QStandardItemModel):
     def addItem(self, dave_warning_si):
         self.dave_warning_sis.append(dave_warning_si)
         self.appendRow(dave_warning_si)
-        print "Added item " + dave_warning_si.getWarningMessage()
 
     ## count
     #
@@ -106,8 +105,8 @@ class DaveWarningsViewer(QtGui.QListView):
     def __init__(self, parent = None):
         QtGui.QListView.__init__(self, parent)
 
-        self.warning_model = DaveWarningsModel() # Initialize the model
-        QtGui.QListView.setModel(self, self.warning_model)
+        self.warnings_model = DaveWarningsModel() # Initialize the model
+        QtGui.QListView.setModel(self, self.warnings_model)
 
         self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
 
@@ -128,8 +127,8 @@ class DaveWarningsViewer(QtGui.QListView):
                                       descriptor = descriptor)
 
         # Add the item, and scroll to it
-        self.warning_model.addItem(dave_warning_si)
-        self.scrollTo(self.warning_model.indexFromItem(dave_warning_si))
+        self.warnings_model.addItem(dave_warning_si)
+        self.scrollTo(self.warnings_model.indexFromItem(dave_warning_si))
 
         # Draw viewport
         self.viewport().update()
@@ -146,19 +145,26 @@ class DaveWarningsViewer(QtGui.QListView):
     # @return Then number of items in the model.
     #
     def count(self):
-        if self.warning_model is not None:
-            return self.warning_model.count()
+        if self.warnings_model is not None:
+            return self.warnings_model.count()
         else:
-            return 1
+            return 0
 
     ## handleDoubleClick
     #
     # @param model_index The QModelIndex of the time that was doubled clicked.
     #
     def handleDoubleClick(self, model_index):
-        if self.warning_model is not None:
-            qt_item = self.warning_model.itemFromIndex(model_index)
+        if self.warnings_model is not None:
+            qt_item = self.warnings_model.itemFromIndex(model_index)
             self.double_clicked.emit(qt_item)
+
+    ## getSummaryMessage
+    #
+    # Return the summary message
+    #
+    def getSummaryMessage(self):
+        return self.warnings_model.createSummaryMessage()
 
 #
 # The MIT License
