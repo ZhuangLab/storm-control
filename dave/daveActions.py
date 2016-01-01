@@ -177,6 +177,13 @@ class DaveAction(QtCore.QObject):
         else:
             return [None,None]
 
+    ## getMessage
+    #
+    # @return The Dave Action message object
+    #
+    def getMessage(self):
+        return self.message
+
     ## getUsage
     #
     # @return Disk usage.
@@ -296,7 +303,6 @@ class DaveAction(QtCore.QObject):
             self.lost_message_timer.start(self.lost_message_delay)
         self.tcp_client.sendMessage(self.message)
 
-
 # 
 # Specific Actions
 # 
@@ -386,6 +392,64 @@ class DACheckFocus(DaveAction):
         
         self.message = tcpMessage.TCPMessage(message_type = "Check Focus Lock",
                                              message_data = message_data)
+
+
+## DAClearWarnings
+#
+# Clear Dave Warnings.
+#
+class DAClearWarnings(DaveAction):
+
+    ## __init__
+    #
+    def __init__(self):
+        DaveAction.__init__(self)
+        self.action_type = "dave"
+
+    ## createETree
+    #
+    # @param dictionary A dictionary.
+    #
+    # @return A ElementTree object or None.
+    #
+    def createETree(self, dictionary):
+        block = ElementTree.Element(str(type(self).__name__))
+        return block
+
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        return "Clear Dave warnings"
+
+    ## setup
+    #
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
+        self.message = tcpMessage.TCPMessage(message_type = "Clear Warnings",
+                                             message_data = {})
+
+    ## start
+    #
+    # Start the action, but in this case immediately issue an all clear.
+    #
+    # @param tcp_client The TCP client to use for communication.
+    # @param test_mode Send the command in test mode.
+    #
+    def start(self, tcp_client, test_mode):
+        pass # No communication via TCP
+    
+    ## cleanUp
+    #
+    # Handle clean up of the action
+    #
+    def cleanUp(self):
+        self.resetPause() # Allow a paused action to be rerun without a pause
+
 
 ## DADelay
 #

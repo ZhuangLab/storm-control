@@ -161,6 +161,9 @@
        <variable_entry name = "Movie Loop" />
     </movie> 
 	
+	<!-- Clear warnings-->
+    <clear_warnings/>
+	
   </loop>
   <valve_protocol>Hybridize 1</valve_protocol>
   <valve_protocol>Hybridize 2</valve_protocol>

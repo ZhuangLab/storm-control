@@ -54,6 +54,7 @@ class CommandEngine(QtCore.QObject):
     paused = QtCore.pyqtSignal()
     problem = QtCore.pyqtSignal(object)
     warning = QtCore.pyqtSignal(object)
+    dave_action = QtCore.pyqtSignal(object)
     
     ## __init__
     #
@@ -105,6 +106,8 @@ class CommandEngine(QtCore.QObject):
             self.command.start(self.HALClient, test_mode)
         elif (self.command.getActionType() == "kilroy"):
             self.command.start(self.kilroyClient, test_mode)
+        elif (self.command.getActionType() == "dave"):
+            self.dave_action.emit(self.command.getMessage())
         elif (self.command.getActionType() == "NA"):
             self.command.start(False, test_mode)
         else:
@@ -238,6 +241,7 @@ class Dave(QtGui.QMainWindow):
         self.command_engine.problem.connect(self.handleProblem)
         self.command_engine.paused.connect(self.handlePauseFromCommandEngine)
         self.command_engine.warning.connect(self.handleWarning)
+        self.command_engine.dave_action.connect(self.handleDaveAction)
 
     ## cleanUp
     #
@@ -331,6 +335,17 @@ class Dave(QtGui.QMainWindow):
             else:
                 self.handleDone()
 
+    ## handleDaveAction
+    #
+    # Handle a Dave-specific action requested from the command engine.
+    # @param message A tcpMessage object used to pass information about the dave-specific dave action.
+    #
+    def handleDaveAction(self, message):
+        if (message.getType() == "Clear Warnings"):
+            self.handleClearWarnings(False) #The boolean is a dummy variable
+            self.command_engine.handleActionComplete(message) # Send message back to command engine to signal completion
+        else:
+            pass # No other options currently        
         
     ## handleDetailsUpdate
     #
@@ -380,7 +395,7 @@ class Dave(QtGui.QMainWindow):
         # Create a message box to display the warnings information\
         messageBox = QtGui.QMessageBox(parent = self)
         messageBox.setWindowTitle("Warning Details")
-        warning_message = "Warning information: \n" + warning_item.getFullInfo()
+        warning_message = warning_item.getFullInfo()
         warning_message = warning_message + "\n" + "Would you like to go to this command?"
         messageBox.setText(warning_message)
         messageBox.setStandardButtons(QtGui.QMessageBox.No | QtGui.QMessageBox.Yes)
