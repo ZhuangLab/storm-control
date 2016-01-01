@@ -75,13 +75,6 @@ class DaveWarningsModel(QtGui.QStandardItemModel):
     def count(self):
         return len(self.dave_warning_sis)
 
-    ## clearWarnings
-    #
-    # Clear all warnings
-    #
-    def clearWarnings(self):
-        self.dave_warning_sis = [] # List of all DaveWarningStandardItems
-
     ## createSummaryMessage
     #
     # Create a summary message for all warnings
@@ -138,7 +131,12 @@ class DaveWarningsViewer(QtGui.QListView):
     # Clear all warnings
     #
     def clearWarnings(self):
-        self.warnings_model.clearWarnings()
+        # Simply create a new empty model
+        self.warnings_model = DaveWarningsModel() # Initialize the model
+        QtGui.QListView.setModel(self, self.warnings_model)
+
+        # Draw viewport
+        self.viewport().update()
 
     ## count
     #

@@ -209,6 +209,7 @@ class Dave(QtGui.QMainWindow):
         self.ui.validateSequenceButton.clicked.connect(self.handleValidateCommandSequence)
         self.ui.commandSequenceTreeView.double_clicked.connect(self.handleDoubleClick)
         self.ui.currentWarnings.double_clicked.connect(self.handleWarningsDoubleClick)
+        self.ui.clearWarningsPushButton.clicked.connect(self.handleClearWarnings)
                               
         # Load saved notifications settings.
         self.noti_settings = [[self.ui.fromAddressLineEdit, "from_address"],
@@ -384,6 +385,13 @@ class Dave(QtGui.QMainWindow):
         messageBox.setStandardButtons(QtGui.QMessageBox.Ok)
         messageBox.setDefaultButton(QtGui.QMessageBox.Ok)
         button_ID = messageBox.exec_()
+
+    ## handleClearWarnings
+    #
+    # Handle requests to clear warnings
+    #
+    def handleClearWarnings(self, dummy):
+        self.ui.currentWarnings.clearWarnings()
 
     ## handleDone
     #
