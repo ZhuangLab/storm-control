@@ -66,6 +66,8 @@ class DaveWarningsModel(QtGui.QStandardItemModel):
     #
     def addItem(self, dave_warning_si):
         self.dave_warning_sis.append(dave_warning_si)
+        self.appendRow(dave_warning_si)
+        print "Added item " + dave_warning_si.getWarningMessage()
 
     ## count
     #
@@ -104,7 +106,8 @@ class DaveWarningsViewer(QtGui.QListView):
     def __init__(self, parent = None):
         QtGui.QListView.__init__(self, parent)
 
-        self.warning_model = DaveWarningsModel() # Initialized empty
+        self.warning_model = DaveWarningsModel() # Initialize the model
+        QtGui.QListView.setModel(self, self.warning_model)
 
         self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
 
@@ -121,10 +124,15 @@ class DaveWarningsViewer(QtGui.QListView):
                  descriptor = "Unknown warning"):
 
         dave_warning_si = DaveWarning(dave_action_si,
-                                      message_str = "Unknown warning",
-                                      descriptor = "Unknown warning")
+                                      message_str = message_str,
+                                      descriptor = descriptor)
 
+        # Add the item, and scroll to it
         self.warning_model.addItem(dave_warning_si)
+        self.scrollTo(self.warning_model.indexFromItem(dave_warning_si))
+
+        # Draw viewport
+        self.viewport().update()
 
     ## clearWarnings
     #

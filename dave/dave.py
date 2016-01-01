@@ -70,12 +70,12 @@ class CommandEngine(QtCore.QObject):
         # HAL Client
         self.HALClient = tcpClient.TCPClient(port = 9000,
                                              server_name = "HAL",
-                                             verbose = True)
+                                             verbose = False)
         
         # Kilroy Client
         self.kilroyClient = tcpClient.TCPClient(port = 9500,
                                                 server_name = "Kilroy",
-                                                verbose = True)
+                                                verbose = False)
     
     ## abort
     #
@@ -681,10 +681,14 @@ class Dave(QtGui.QMainWindow):
             # Get information on the item that generated the warning
             current_item = self.ui.commandSequenceTreeView.getCurrentItem()
             message_str = current_item.getDaveAction().getDescriptor() + "\n" + message.getErrorMessage()
-
+            print message_str
+            
             # Generate a warning
             num_warnings = self.ui.currentWarnings.count()
-            self.ui.currentWarnings.insertItem(num_warnings+1, "Warning " + str(num_warnings+1)) 
+            print num_warnings
+            self.ui.currentWarnings.addWarning(current_item,
+                                               message_str = message_str,
+                                               descriptor = "Warning " + str(num_warnings+1))
 
             # Check to see if the number of warnings is larger than the allowed number
             if self.ui.currentWarnings.count() >= self.ui.numWarningsToPause.value():
