@@ -32,6 +32,7 @@ class DaveWarning(QtGui.QStandardItem):
         self.warning_str = message_str
         self.descriptor = descriptor
         self.creation_time = datetime.now()
+        self.parent_name = dave_action_si.getParentName()
 
         # Initislize standard item and set display/selectability properties
         QtGui.QStandardItem.__init__(self, descriptor)
@@ -58,6 +59,13 @@ class DaveWarning(QtGui.QStandardItem):
     def getWarningMessage(self):
         return self.warning_str
 
+    ## getParentName
+    #
+    # @return The name of the parent of the Dave Action that generated the warning.
+    #
+    def getParentName(self):
+        return self.parent_name
+
     ## getFullInfo
     #
     # Create a formatted string describing the full information around the warning
@@ -66,7 +74,8 @@ class DaveWarning(QtGui.QStandardItem):
     #
     def getFullInfo(self):
         warning_string = self.descriptor + ": \n"
-        warning_string = warning_string + str(self.creation_time) + "\n"
+        warning_string = warning_string + "Created: " + str(self.creation_time) + "\n"
+        warning_string = warning_string + "Parent: " + self.parent_name + "\n"
         warning_string = warning_string + self.warning_str + "\n"
         return warning_string
 

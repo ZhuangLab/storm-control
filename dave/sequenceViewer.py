@@ -82,6 +82,16 @@ class DaveActionStandardItem(QtGui.QStandardItem):
     def type(self):
         return DaveActionType
 
+    ## getParentName
+    #
+    # @return The display text of any associated parent
+    #
+    def getParentName(self):
+        parent = self.parent()
+        if parent == 0: # No parent
+            return ""
+        else:
+            return str(parent.text())
 
 ## DaveCommandTreeViewer
 #
