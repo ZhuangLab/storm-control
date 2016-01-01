@@ -9,7 +9,6 @@
 
 # qpd and stage.
 import sc_hardware.madCityLabs.mclVoltageZController as MCLVZC
-#import sc_hardware.madCityLabs.mclController as mclController
 import sc_hardware.thorlabs.uc480Camera as uc480Cam
 
 # focus lock control thread.
@@ -28,12 +27,14 @@ import focuslock.focusLockZ as focusLockZ
 class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, hardware, parameters, parent = None):
         # Create camera
-        offset_file = "cam_offsets_jfocal_1.txt"
-        
-        cam = uc480Cam.CameraQPD(camera_id = 1, x_width = 340, y_width = 50, sigma = 4.0, offset_file = offset_file)
+        cam = uc480Cam.CameraQPD(camera_id = 1,
+                                 x_width = 800,
+                                 y_width = 50,
+                                 sigma = 4.0,
+                                 offset_file = "cam_offsets_jfocal_1.txt",
+                                 background = 125000)
         stage = MCLVZC.MCLVZControl("PCI-6229", 0, scale = 10.0/100.0)
-        #stage = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/")
-        lock_fn = lambda (x): 0.4 * x
+        lock_fn = lambda (x): 0.1 * x
         control_thread = stageOffsetControl.StageCamThread(cam,
                                                            stage,
                                                            lock_fn,

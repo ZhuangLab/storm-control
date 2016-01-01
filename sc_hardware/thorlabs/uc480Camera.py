@@ -460,12 +460,13 @@ class CameraQPD():
     # @param y_width (Optional) AOI size in y, defaults to 200.
     # @param sigma (Optional) Initial sigma for the fit, defaults to 8.0.
     #
-    def __init__(self, camera_id = 1, fit_mutex = False, x_width = 200, y_width = 200, sigma = 8.0, offset_file = False):
+    def __init__(self, camera_id = 1, fit_mutex = False, x_width = 200, y_width = 200, sigma = 8.0, offset_file = False, background = 0):
+        self.offset_file = offset_file
+        self.background = background
         self.fit_mode = 1
         self.fit_mutex = fit_mutex
         self.fit_size = int(1.5 * sigma)
         self.image = None
-        self.offset_file = offset_file
         self.sigma = sigma
         self.x_off1 = 0.0
         self.y_off1 = 0.0
@@ -634,8 +635,12 @@ class CameraQPD():
     #
     def singleQpdScan(self):
         data = self.capture().copy()
-        power = numpy.max(data)
 
+        if self.background > 0: # Toggle between sum signal calculations
+            power = numpy.sum(data) - self.background
+        else:
+            power = numpy.max(data)
+        
         if (power < 25):
             # This hack is because if you bombard the USB camera with 
             # update requests too frequently it will freeze. Or so I
@@ -677,7 +682,7 @@ class CameraQPD():
             if (total_good == 0):
                 offset = 0
             elif (total_good == 1):
-                offset = ((dist1 + dist2) - 0.5*self.zero_dist)*power
+                offset = ((dist1 + dist2) - 0.5*self.zero_dist)*power 
             else:
                 offset = ((dist1 + dist2) - self.zero_dist)*power
 
