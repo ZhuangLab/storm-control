@@ -826,6 +826,7 @@ class StormXMLObject(object):
         pnames = pname.split(".")
         if (len(pnames) > 1):
             xml_object = self.getp(pnames[0])
+            print pnames, type(xml_object)
             return xml_object.getp(".".join(pnames[1:]))
 
         if pname in self.parameters:
@@ -932,6 +933,7 @@ class StormXMLObject(object):
         for key in sorted(self.parameters):
             value = self.parameters[key]
             if isinstance(value, StormXMLObject):
+                # FIXME: Need to check for zero-length children & remove.
                 child = ElementTree.SubElement(xml, key)
                 child.set("is_new", str(value._is_new_))
                 value.toXML(child, key)
