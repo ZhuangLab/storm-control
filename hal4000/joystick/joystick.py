@@ -10,6 +10,7 @@
 from PyQt4 import QtCore
 
 import halLib.halModule as halModule
+import sc_library.parameters as params
 
 # Debugging
 import sc_library.hdebug as hdebug
@@ -38,12 +39,49 @@ class JoystickObject(QtCore.QObject, halModule.HalModule):
         self.button_timer = QtCore.QTimer(self)
         self.jstick = joystick
         self.parameters = parameters.get("joystick")
-        self.parameters.set("joystick_gain_index", 0)
-        self.parameters.set("multiplier", 1)
         self.old_right_joystick = [0, 0]
         self.old_left_joystick = [0, 0]
         self.to_emit = False
 
+        # Add joystick specific parameters.
+        self.parameters.add("joystick_gain_index", params.ParameterInt("",
+                                                                       "joystick_gain_index",
+                                                                       0,
+                                                                       is_mutable = False,
+                                                                       is_saved = False))
+        self.parameters.add("multiplier", params.ParameterInt("",
+                                                              "multiplier",
+                                                              1,
+                                                              is_mutable = False,
+                                                              is_saved = False))
+        self.parameters.add("hat_step", params.ParameterRangeFloat("Step size in um for hat button press",
+                                                                   "hat_step",
+                                                                   1.0, 0.0, 10.0))
+        self.parameters.set("joystick_gain", [25.0, 2500.0])
+        self.parameters.add("joystick_multiplier_value", params.ParameterRangeFloat("X button multiplier for joystick and focus lock",
+                                                                   "joystick_multiplier_value",
+                                                                   5.0, 0.0, 50.0))
+        self.parameters.add("joystick_mode", params.ParameterSetString("Response mode",
+                                                                       "joystick_mode",
+                                                                       "quadratic",
+                                                                       ["linear", "quadratic"]))
+        self.parameters.add("joystick_signx", params.ParameterSetFloat("Sign for x motion",
+                                                                       "joystick_signx",
+                                                                       1.0, [-1.0, 1.0]))
+        self.parameters.add("joystick_signy", params.ParameterSetFloat("Sign for y motion",
+                                                                       "joystick_signy",
+                                                                       1.0, [-1.0, 1.0]))
+        self.parameters.add("lockt_step", params.ParameterRangeFloat("Focus lock step size in um",
+                                                                     "lockt_step",
+                                                                     0.025, 0.0, 1.0))
+        self.parameters.add("min_offset", params.ParameterRangeFloat("Minimum joystick offset to be non-zero",
+                                                                     "min_offset",
+                                                                     0.1, 0.0, 1.0))
+        self.parameters.add("xy_swap", params.ParameterSetBoolean("Swap x and y axises",
+                                                                  "xy_swap",
+                                                                  False))
+        
+        
         self.jstick.start(self.joystickHandler)
 
         self.button_timer.setInterval(100)
