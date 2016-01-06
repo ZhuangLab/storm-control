@@ -63,6 +63,9 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         hardware = xmlParser.parseHardwareXML("illumination/" + hardware.get("settings_xml"))
 
         # Add illumination specific settings.
+        #
+        # FIXME: These used to be customizable.
+        #
         default_power = []
         on_off_state = []
         for i in range(len(hardware.channels)):
