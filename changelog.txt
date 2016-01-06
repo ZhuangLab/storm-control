@@ -1,4 +1,11 @@
 
+2016-01-06: Change the structure of the parameters in preparation for including
+	    a parametor editor in HAL. The dot notation will now no longer work.
+	    Simplify the parameters that are saved with a movie. These don't
+	    need any type information, etc. as they are compared against the
+	    default parameters. Move all the less commonly used parameters
+	    into the appropriate module.
+
 2015-12-09: Add pixel size metadata to .tif images in a form that ImageJ can
 	    understand.
 
