@@ -929,7 +929,7 @@ class StormXMLObject(object):
     def toXML(self, xml = None, name = "settings"):
         if xml is None:
             xml = ElementTree.Element(name)
-        for key in self.parameters:
+        for key in sorted(self.parameters):
             value = self.parameters[key]
             if isinstance(value, StormXMLObject):
                 child = ElementTree.SubElement(xml, key)
