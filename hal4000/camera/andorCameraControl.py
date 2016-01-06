@@ -2,7 +2,7 @@
 #
 ## @file
 #
-# Camera control specialized for a Andor camera.
+# Camera control specialized for an Andor ECCMD camera.
 #
 # Hazen 09/15
 #
@@ -16,6 +16,7 @@ import traceback
 # Debugging
 import sc_library.hdebug as hdebug
 
+import sc_library.parameters as params
 import camera.frame as frame
 import camera.cameraControl as cameraControl
 import sc_hardware.andor.andorcontroller as andor
@@ -31,16 +32,62 @@ class ACameraControl(cameraControl.HWCameraControl):
     # Create the CameraControl class.
     #
     # @param hardware Camera hardware settings.
+    # @param parameters A parameters object.
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, hardware, parent = None):
+    def __init__(self, hardware, parameters, parent = None):
         cameraControl.HWCameraControl.__init__(self, hardware, parent)
 
         if hardware and hardware.has("pci_card"):
             self.initCamera(hardware.get("pci_card"))
         else:
             self.initCamera()
+
+        # Add Andor EMCCD specific parameters.
+        #
+        # FIXME: We should get at least some of the values by polling the camera.
+        #
+        cam_params = parameters.get("camera1")
+        cam_params.add("frame_transfer_mode", params.ParameterSetInt("Frame transfer mode (0 = off, 1 = on)",
+                                                                     "frame_transfer_mode",
+                                                                     1, [0, 1]))
+        cam_params.add("temperature", params.ParameterRangeInt("Temperature",
+                                                               "temperature",
+                                                               -70, -70, 20))
+        cam_params.add("preampgain", params.ParameterSetFloat("Pre-amplifier gain",
+                                                              "preampgain",
+                                                              1.0, [1.0, 2.0, 5.0]))
+        cam_params.add("hsspeed", params.ParameterSetFloat("Horizontal shift speed",
+                                                           "hsspeed",
+                                                           10.0, [1.0, 2.0, 5.0, 10.0]))
+        cam_params.add("vsspeed", params.ParameterSetFloat("Vertical shift speed",
+                                                           "vsspeed",
+                                                           3.3, [1.0, 2.0, 3.3]))
+        cam_params.add("kinetic_cycle_time", params.ParameterRangeFloat("Kinetic cycle time (seconds)",
+                                                                        "kinetic_cycle_time",
+                                                                        0.0, 0.0, 100.0))
+        cam_params.add("adchannel", params.ParameterSetInt("Analog to digital converter channel",
+                                                           "adchannel",
+                                                           0, [0, 1]))
+        cam_params.add("emgainmode", params.ParameterSetInt("EMCCD gain mode",
+                                                            "emgainmode",
+                                                            0, [0, 1, 2]))
+        cam_params.add("baselineclamp", params.ParameterSetBoolean("Baseline clamp",
+                                                                   "baselineclamp",
+                                                                   True))
+        cam_params.add("vsamplitude", params.ParameterSetInt("Vertical shift amplitude",
+                                                             "vsamplitude",
+                                                             0, [0, 1, 2]))
+        cam_params.add("off_during_filming", params.ParameterSetBoolean("Fan off during filming",
+                                                                        "off_during_filming",
+                                                                        False))
+        cam_params.add("low_during_filming", params.ParameterSetBoolean("Fan low during filming",
+                                                                        "low_during_filming",
+                                                                        False))
+        cam_params.add("external_trigger", params.ParameterSetBoolean("Use an external camera trigger",
+                                                                      "external_trigger",
+                                                                      False))
 
     ## closeShutter
     #
