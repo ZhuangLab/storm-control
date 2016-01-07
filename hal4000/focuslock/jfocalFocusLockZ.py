@@ -28,8 +28,8 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, hardware, parameters, parent = None):
         # Create camera
         cam = uc480Cam.CameraQPD(camera_id = 1,
-                                 x_width = 800,
-                                 y_width = 50,
+                                 x_width = 1000,
+                                 y_width = 70,
                                  sigma = 4.0,
                                  offset_file = "cam_offsets_jfocal_1.txt",
                                  background = 125000)
