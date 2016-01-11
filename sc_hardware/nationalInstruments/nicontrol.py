@@ -34,6 +34,8 @@ DAQmx_Val_NRSE = 10078
 DAQmx_Val_Diff = 10106
 DAQmx_Val_PseudoDiff = 12529
 DAQmx_Val_Task_Verify = 2
+DAQmx_Val_Task_Reserve = 4
+DAQmx_Val_Task_Unreserve = 5
 DAQmx_Val_AdvanceTrigger = 12488
 
 TaskHandle = c_ulong
@@ -58,8 +60,10 @@ def getLockForBoard(board):
 #
 # @param status The return value from a NI library function call.
 #
+# @return The status error code.
+#
 def checkStatus(status):
-    if status < 0:
+    if (status < 0):
         buf_size = 1000
         buf = create_string_buffer(buf_size)
         nidaqmx.DAQmxGetErrorString(c_long(status), buf, buf_size)
@@ -70,6 +74,7 @@ def checkStatus(status):
         # FIXME? This error should be thrown, and caller should decide to ignore it (or not).
         #raise RuntimeError('nidaq call failed with error %d: %s'%(status, buf.value))
 
+    return status
 
 #
 # NIDAQ functions
@@ -153,7 +158,8 @@ class NIDAQTask():
     #
     def startTask(self):
         with getLockForBoard(self.board_number):
-            checkStatus(nidaqmx.DAQmxStartTask(self.taskHandle))
+            status = checkStatus(nidaqmx.DAQmxStartTask(self.taskHandle))
+        return status
 
     ## stopTask
     #
@@ -175,16 +181,6 @@ class NIDAQTask():
             checkStatus(nidaqmx.DAQmxIsTaskDone(self.taskHandle, byref(done)))
         return done.value
 
-    ## verifyTask
-    #
-    # @return The status of the task.
-    #
-    def verifyTask(self):
-        status = 0
-        with getLockForBoard(self.board_number):
-            status = nidaqmx.DAQmxTaskControl(self.taskHandle, DAQmx_Val_Task_Verify)
-        return status
-
     ## registerDoneEvent
     #
     # Registers functionToCall to be called when this event completes
@@ -197,6 +193,31 @@ class NIDAQTask():
                       DAQmxSignalEventCallbackPtr(functionToCall))
         return status
 
+    ## reserveTask
+    #
+    # reserve resources for the task.
+    #
+    def reserveTask(self):
+        with getLockForBoard(self.board_number):
+            checkStatus(nidaqmx.DAQmxTaskControl(self.taskHandle, DAQmx_Val_Task_Reserve))
+
+    ## unreserveTask
+    #
+    # Unreserve resources for the task.
+    #
+    def unreserveTask(self):
+        with getLockForBoard(self.board_number):
+            checkStatus(nidaqmx.DAQmxTaskControl(self.taskHandle, DAQmx_Val_Task_Unreserve))
+
+    ## verifyTask
+    #
+    # @return The status of the task.
+    #
+    def verifyTask(self):
+        status = 0
+        with getLockForBoard(self.board_number):
+            status = nidaqmx.DAQmxTaskControl(self.taskHandle, DAQmx_Val_Task_Verify)
+        return status
 
 
 ## AnalogOutput

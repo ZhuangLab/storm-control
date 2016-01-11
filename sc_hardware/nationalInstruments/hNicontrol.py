@@ -9,6 +9,7 @@
 # Hazen 04/14
 #
 
+import hashlib
 import time
 
 # Debugging
@@ -138,6 +139,28 @@ class Nidaq(illuminationHardware.DaqModulation):
         # frequency so that we are ready at the start of the next frame.
         frequency = (1.01 / seconds_per_frame) * float(oversampling)
 
+        # Setup the counter.
+        if self.counter_board:
+
+            def startCtTask():
+                self.ct_task = nicontrol.CounterOutput(self.counter_board, 
+                                                       self.counter_id,
+                                                       frequency, 
+                                                       0.5)
+                self.ct_task.setCounter(oversampling)
+                self.ct_task.setTrigger(self.counter_trigger)
+                return self.ct_task.startTask()
+
+            iters = 0
+            while (iters < 5) and startCtTask():
+                hdebug.logText("startCtTask failed " + str(iters))
+                self.ct_task.clearTask()
+                time.sleep(0.1)
+                iters += 1
+
+        else:
+            self.ct_task = False
+
         # Setup analog waveforms.
         if (len(self.analog_data) > 0):
 
@@ -149,7 +172,7 @@ class Nidaq(illuminationHardware.DaqModulation):
             for i in range(len(analog_data)):
                 waveform += analog_data[i][2]
 
-            def initAoTask():
+            def startAoTask():
 
                 # Create channels.
                 self.ao_task = nicontrol.AnalogWaveformOutput(analog_data[0][0], analog_data[0][1])
@@ -157,11 +180,14 @@ class Nidaq(illuminationHardware.DaqModulation):
                     self.ao_task.addChannel(analog_data[i+1][0], analog_data[i+1][1])
 
                 # Add waveform
-                return self.ao_task.setWaveform(waveform, frequency, clock = self.waveform_clock)
+                self.ao_task.setWaveform(waveform, frequency, clock = self.waveform_clock)
+
+                # Start task.
+                return self.ao_task.startTask()
 
             iters = 0
-            while (iters < 5) and (not initAoTask()):
-                hdebug.logText("initAoTask failed " + str(iters))
+            while (iters < 5) and startAoTask():
+                hdebug.logText("startAoTask failed " + str(iters))
                 self.ao_task.clearTask()
                 time.sleep(0.1)
                 iters += 1
@@ -180,7 +206,7 @@ class Nidaq(illuminationHardware.DaqModulation):
             for i in range(len(digital_data)):
                 waveform += digital_data[i][2]
 
-            def initDoTask():
+            def startDoTask():
 
                 # Create channels.
                 self.do_task = nicontrol.DigitalWaveformOutput(digital_data[0][0], digital_data[0][1])
@@ -188,11 +214,14 @@ class Nidaq(illuminationHardware.DaqModulation):
                     self.do_task.addChannel(digital_data[i+1][0], digital_data[i+1][1])
 
                 # Add waveform
-                return self.do_task.setWaveform(waveform, frequency, clock = self.waveform_clock)
+                self.do_task.setWaveform(waveform, frequency, clock = self.waveform_clock)
+
+                # Start task.
+                return self.do_task.startTask()
 
             iters = 0
-            while (iters < 5) and (not initDoTask()):
-                hdebug.logText("initDoTask failed " + str(iters))
+            while (iters < 5) and startDoTask():
+                hdebug.logText("startDoTask failed " + str(iters))
                 self.do_task.clearTask()
                 time.sleep(0.1)
                 iters += 1
@@ -200,32 +229,11 @@ class Nidaq(illuminationHardware.DaqModulation):
         else:
             self.do_task = False
 
-        # Setup the counter.
-        if self.counter_board:
-
-            def initCtTask():
-                self.ct_task = nicontrol.CounterOutput(self.counter_board, 
-                                                       self.counter_id,
-                                                       frequency, 
-                                                       0.5)
-                self.ct_task.setCounter(oversampling)
-                self.ct_task.setTrigger(self.counter_trigger)
-                return self.ct_task
-
-            iters = 0
-            while (iters < 5) and (not initCtTask()):
-                hdebug.logText("initCtTask failed " + str(iters))
-                self.ct_task.clearTask()
-                time.sleep(0.1)
-                iters += 1
-
-        else:
-            self.ct_task = False
-
         # Start tasks
-        for task in [self.ct_task, self.ao_task, self.do_task]:
-            if task:
-                task.startTask()
+#        for task in [self.ao_task, self.do_task]:
+#            #for task in [self.ct_task, self.ao_task, self.do_task]:
+#            if task:
+#                task.startTask()
 
     ## stopFilm
     #
@@ -318,6 +326,182 @@ class NidaqAmp(illuminationHardware.AmplitudeModulation):
     #
     def setAmplitude(self, channel_id, amplitude):
         self.amplitudeOn(channel_id, amplitude)
+
+## NidaqTR
+#
+# National Instruments DAQ card (modulation) with task recycling.
+# Waveforms are considered different if they have different md5
+# hashs. Hopefully hash collisions will be very rare..
+#
+class NidaqTR(Nidaq):
+
+    ## __init__
+    #
+    # @param parameters A XML object containing initial parameters.
+    # @param parent The PyQt parent of this object.
+    #
+    def __init__(self, parameters, parent):
+        Nidaq.__init__(self, parameters, parent)
+
+        self.ao_tasks = {}
+        self.ct_tasks = {}
+        self.do_tasks = {}
+
+    ## startFilm
+    #
+    # Called at the start of filming (when shutters are active).
+    #
+    # @param seconds_per_frame How many seconds it takes to acquire each frame.
+    # @param oversampling The number of values in the shutter waveform per frame.
+    #
+    def startFilm(self, seconds_per_frame, oversampling):
+        illuminationHardware.DaqModulation.startFilm(self, seconds_per_frame, oversampling)
+
+        # Calculate frequency. This is set slightly higher than the camere
+        # frequency so that we are ready at the start of the next frame.
+        frequency = (1.01 / seconds_per_frame) * float(oversampling)
+
+        # Setup analog waveforms.
+        print "analog"
+        if (len(self.analog_data) > 0):
+
+            # Sort by board, channel.
+            analog_data = sorted(self.analog_data, key = lambda x: (x[0], x[1]))
+
+            # Set waveforms.
+            waveform = []
+            for i in range(len(analog_data)):
+                waveform += analog_data[i][2]
+
+            # Check if we already have a task for this waveform.
+            waveform_hash = hashlib.md5("".join(str(elt) for elt in waveform)).hexdigest()
+            if waveform_hash in self.ao_tasks:
+                self.ao_task = self.ao_tasks[waveform_hash]
+                self.ao_task.reserveTask()
+                print "using recycled ao_task", waveform_hash
+
+            else:
+                def initAoTask():
+
+                    # Create channels.
+                    self.ao_task = nicontrol.AnalogWaveformOutput(analog_data[0][0], analog_data[0][1])
+                    for i in range(len(analog_data) - 1):
+                        self.ao_task.addChannel(analog_data[i+1][0], analog_data[i+1][1])
+
+                    # Add waveform
+                    return self.ao_task.setWaveform(waveform, frequency, clock = self.waveform_clock)
+
+                iters = 0
+                valid = initAoTask()
+                while (iters < 5) and (not valid):
+                    hdebug.logText("initAoTask failed " + str(iters))
+                    self.ao_task.clearTask()
+                    time.sleep(0.1)
+                    valid = initAoTask()                    
+                    iters += 1
+
+                if valid:
+                    self.ao_tasks[waveform_hash] = self.ao_task
+
+        else:
+            self.ao_task = False
+
+        # Setup digital waveforms
+        print "digital"
+        if (len(self.digital_data) > 0):
+
+            # Sort by board, channel.
+            digital_data = sorted(self.digital_data, key = lambda x: (x[0], x[1]))
+
+            # Set waveforms.
+            waveform = []
+            for i in range(len(digital_data)):
+                waveform += digital_data[i][2]
+
+            # Check if we already have a task for this waveform.
+            waveform_hash = hashlib.md5("".join(str(elt) for elt in waveform)).hexdigest()
+            if waveform_hash in self.do_tasks:
+                self.do_task = self.do_tasks[waveform_hash]
+                self.do_task.reserveTask()
+                print "using recycled do_task", waveform_hash
+
+            else:
+                def initDoTask():
+
+                    # Create channels.
+                    self.do_task = nicontrol.DigitalWaveformOutput(digital_data[0][0], digital_data[0][1])
+                    for i in range(len(digital_data) - 1):
+                        self.do_task.addChannel(digital_data[i+1][0], digital_data[i+1][1])
+
+                    # Add waveform
+                    return self.do_task.setWaveform(waveform, frequency, clock = self.waveform_clock)
+
+                iters = 0
+                valid = initDoTask()
+                while (iters < 5) and (not valid):
+                    hdebug.logText("initDoTask failed " + str(iters))
+                    self.do_task.clearTask()
+                    time.sleep(0.1)
+                    valid = initDoTask()
+                    iters += 1
+
+                if valid:
+                    self.do_tasks[waveform_hash] = self.do_task
+
+        else:
+            self.do_task = False
+
+        # Setup the counter.
+        print "counter"
+        if self.counter_board:
+
+            ct_hash = str(frequency) + str(oversampling)
+            if ct_hash in self.ct_tasks:
+                self.ct_task = self.ct_tasks[ct_hash]
+                self.ct_task.reserveTask()
+                print "using recycled ct_task", ct_hash
+
+            else:
+                def initCtTask():
+                    self.ct_task = nicontrol.CounterOutput(self.counter_board, 
+                                                           self.counter_id,
+                                                           frequency, 
+                                                           0.5)
+                    self.ct_task.setCounter(oversampling)
+                    self.ct_task.setTrigger(self.counter_trigger)
+                    print self.ct_task.verifyTask()
+                    return self.ct_task
+
+                iters = 0
+                valid = initCtTask()
+                while (iters < 5) and (not valid):
+                    hdebug.logText("initCtTask failed " + str(iters))
+                    self.ct_task.clearTask()
+                    time.sleep(0.1)
+                    valid = initCtTask()
+                    iters += 1
+
+                if valid:
+                    self.ct_tasks[ct_hash] = self.ct_task
+
+        else:
+            self.ct_task = False
+
+        # Start tasks
+        for task in [self.ct_task, self.ao_task, self.do_task]:
+            if task:
+                task.startTask()
+
+    ## stopFilm
+    #
+    # Called at the end of filming (when shutters are active).
+    #
+    def stopFilm(self):
+        illuminationHardware.DaqModulation.stopFilm(self)
+        for task in [self.ct_task, self.ao_task, self.do_task]:
+            if task:
+                task.stopTask()
+                task.unreserveTask()
 
 
 #
