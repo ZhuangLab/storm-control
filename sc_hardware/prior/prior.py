@@ -9,6 +9,8 @@
 
 import time
 
+import sc_library.parameters as params
+
 import sc_hardware.nationalInstruments.nicontrol as nicontrol
 import sc_hardware.serial.RS232 as RS232
 
@@ -118,6 +120,15 @@ class Prior(RS232.RS232):
     def getServo(self):
         return [self._command("SERVO,X"), self._command("SERVO,Y")]
 
+    ## getSpeed
+    #
+    # @return The stage speed parameter
+    #
+    def getSpeed(self):
+        return params.ParameterRangeFloat("Stage speed in AU",
+                                          "stage_speed",
+                                          50.0, 1.0, 100.0)
+
     ## goAbsolute
     #
     # @param x X position in um.
@@ -212,7 +223,7 @@ class Prior(RS232.RS232):
     #
     def setVelocity(self, x_vel, y_vel):
         # FIXME: units are 1-100, but not exactly sure what..
-        speed = x_vel * 10.0
+        speed = x_vel
         if (speed > 100.0):
             speed = 100.0
         self._command("SMS," + str(speed))

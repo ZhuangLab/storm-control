@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <settings>
-  <!-- general -->
-  <use_as_default type="int">1</use_as_default>
 
   <!-- camera settings -->
   <camera1>
@@ -27,69 +25,16 @@
   </film>
 
   <!-- illumination settings -->
-  <!--
   <illumination>
     <shutters type="string">shutters_default.xml</shutters>
-    <default_power channel="0">1.0</default_power>
-    <default_power channel="1">1.0</default_power>
-    <default_power channel="2">1.0</default_power>
-    <default_power channel="3">1.0</default_power>
-    <default_power channel="4">1.0</default_power>
-    <default_power channel="5">1.0</default_power>
-    <default_power channel="6">1.0</default_power>
-    <button channel="0" power="1.0">Max</button>
-    <button channel="0" power="0.1">Low</button>
-    <button channel="1" power="1.0">Max</button>
-    <button channel="1" power="0.1">Low</button>
-    <button channel="2" power="1.0">Max</button>
-    <button channel="2" power="0.1">Low</button>
-    <button channel="3" power="1.0">Max</button>
-    <button channel="3" power="0.1">Low</button>
-    <button channel="4" power="1.0">Max</button>
-    <button channel="4" power="0.1">Low</button>
-    <button channel="5" power="1.0">Max</button>
-    <button channel="5" power="0.1">Low</button>
-    <button channel="6" power="1.0">Max</button>
-    <button channel="6" power="0.1">Low</button>
   </illumination>
-  -->
 
   <!-- stage settings -->
-  <!--
   <stage>
-    <small_step_size type="float">5.0</small_step_size>
-    <large_step_size type="float">25.0</large_step_size>
-    <x_sign type="int">1</x_sign>
-    <y_sign type="int">1</y_sign>
-    <flip_axis type="int">1</flip_axis>
-    <stage_speed type="float">5.0</stage_speed>
-    <drag_multiplier type="float">0.16</drag_multiplier>
+    <x_sign desc="Reverse the direction of the X axis" type="int" values="-1,1">1</x_sign>
+    <y_sign desc="Reverse the direction of the Y axis" type="int" values="-1,1">1</y_sign>
+    <flip_axis desc="Switch X-Y stage axises" type="boolean">True</flip_axis>
   </stage>
-  -->
-
-  <!-- focus lock settings -->
-  <!--
-  <focuslock>
-    <ir_power type="int">6</ir_power>
-    <qpd_mode type="int">0</qpd_mode>
-    <qpd_zcenter type="float">50.0</qpd_zcenter>
-    <qpd_scale type="float">50.0</qpd_scale>
-    <qpd_sum_max type="int">256</qpd_sum_max>
-    <cal_deadtime type="int">20</cal_deadtime>
-    <cal_range type="float">600</cal_range>
-    <cal_step_size type="float">10</cal_step_size>
-    <cal_frames_to_pause type="int">2</cal_frames_to_pause>
-    <zscan_step type="float">0.1</zscan_step>
-    <zscan_frames_to_pause type="int">10</zscan_frames_to_pause>
-    <zscan_stop type="float">1.0</zscan_stop>
-    <olock_bracket_step type="int">1000</olock_bracket_step>
-    <olock_scan_step type="int">100</olock_scan_step>
-    <olock_scan_hold type="int">10</olock_scan_hold>
-    <olock_quality_threshold type="float">0.0</olock_quality_threshold>
-	<is_locked_buffer_length type="int">10</is_locked_buffer_length>
-    <is_locked_offset_thresh type="float">0.01</is_locked_offset_thresh>
-  </focuslock>
-  -->
 
   <!-- spot counter -->
   <!--
