@@ -4,19 +4,9 @@
 #
 # Heuristically programmed ALgorithmic STORM setup control.
 #
-# In its most basic form, this just runs a camera
-# and displays (and records) the resulting data.
-#
-# ACamera:
-#   Control, record and display the data from one (or more)
-#   camera(s).
-#
-#  The camera control class should be a subclass of
-#  camera.genericCamera, which (attempts to) encapsulate
-#  all the stuff related to the controlling and displaying
-#  the data from one or more cameras. Examples and related
-#  classes can all be found in the camera directory.
-#
+# In its most basic form, this just runs a camera and displays
+# (and records) the resulting data. Every setup must have
+# at least one camera.
 #
 # More advanced functionality is provided by various modules.
 # These are loaded dynamically in the __init__ based on
