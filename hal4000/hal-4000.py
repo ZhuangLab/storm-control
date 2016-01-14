@@ -430,7 +430,7 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleAutoInc(self, flag):
-        self.parameters.set("film.auto_increment", flag)
+        self.parameters.set("film.auto_increment", bool(flag))
 
     ## handleAutoShutters
     #
@@ -440,7 +440,7 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleAutoShutters(self, flag):
-        self.parameters.set("film.auto_shutters", flag)
+        self.parameters.set("film.auto_shutters", bool(flag))
 
     ## handleClose
     #
