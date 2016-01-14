@@ -125,7 +125,6 @@ def copyParametersReplace(root, original, new):
         else:
             # New is also a tree.
             if (len(root) > 0) and new.has(root + "." + attr):
-                print root + "." + attr, new.has(root + "." + attr)
                 original.set(attr, new.get(root + "." + attr))
 
             # New is flat.
@@ -356,12 +355,6 @@ class Parameter(object):
         
     def getv(self):
         return self.value
-
-#    def isMatch(self, other):
-#        if (other.name == self.name):
-#            return True
-#        else:
-#            return False
 
     def isMutable(self):
         return self.mutable
@@ -839,11 +832,7 @@ class StormXMLObject(object):
     # @return all the properties.
     #
     def getProps(self):
-        # FIXME: This is probably a Python builtin.
-        props = []
-        for attr in self.getAttrs():
-            props.append(self.parameters[attr])
-        return props
+        return self.parameters.values()
     
     ## has
     #
@@ -933,10 +922,11 @@ class StormXMLObject(object):
         for key in sorted(self.parameters):
             value = self.parameters[key]
             if isinstance(value, StormXMLObject):
-                # FIXME: Need to check for zero-length children & remove.
                 child = ElementTree.SubElement(xml, key)
                 child.set("is_new", str(value._is_new_))
                 value.toXML(child, key)
+                if (len(child) == 0):
+                    xml.remove(child)
             else:
                 value.toXML(xml)
         return xml
