@@ -1142,6 +1142,7 @@ if __name__ == "__main__":
         hardware = params.hardware("xml/" + setup_name + "_hardware.xml")
         parameters = params.halParameters("xml/" + setup_name + "_default.xml")
     parameters.add("setup_name", params.Parameter("", "setup_name", setup_name, 1, False, True))
+    parameters.add("use_as_default", params.Parameter("", "use_as_default", True, 1, False, False))
 
     # Start logger.
     hdebug.startLogging(parameters.get("film.directory") + "logs/", "hal4000")
