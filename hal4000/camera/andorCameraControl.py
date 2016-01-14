@@ -88,23 +88,20 @@ class ACameraControl(cameraControl.HWCameraControl):
                                                                -70, -70, 20))
 
         preamp_gains = self.camera.getPreampGains()
-        print preamp_gains
         cam_params.add("preampgain", params.ParameterSetFloat("Pre-amplifier gain",
                                                               "preampgain",
                                                               preamp_gains[0], preamp_gains))
 
         # FIXME: Need to update based on the AD channel.
         hs_speeds = self.camera.getHSSpeeds()[0]
-        print hs_speeds
         cam_params.add("hsspeed", params.ParameterSetFloat("Horizontal shift speed",
                                                            "hsspeed",
                                                            hs_speeds[0], hs_speeds))
 
         vs_speeds = self.camera.getVSSpeeds()
-        print vs_speeds
         cam_params.add("vsspeed", params.ParameterSetFloat("Vertical shift speed",
                                                            "vsspeed",
-                                                           vs_speeds[0], vs_speeds))
+                                                           vs_speeds[-1], vs_speeds))
 
         cam_params.add("exposure_time", params.ParameterRangeFloat("Exposure time (seconds)", 
                                                                    "exposure_time", 
