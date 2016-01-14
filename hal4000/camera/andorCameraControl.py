@@ -46,9 +46,9 @@ class ACameraControl(cameraControl.HWCameraControl):
 
         # Add Andor EMCCD specific parameters.
         #
-        # FIXME: We should get at least some of the values by polling the camera.
-        #
         cam_params = parameters.get("camera1")
+
+        # FIXME: Need to get this value from the camera.
         cam_params.add("max_intensity", params.ParameterInt("",
                                                             "max_intensity",
                                                             10000,
@@ -74,15 +74,22 @@ class ACameraControl(cameraControl.HWCameraControl):
         cam_params.add("y_end", params.ParameterRangeInt("AOI Y end",
                                                          "y_end",
                                                          y_size, 1, y_size))
+
+        # FIXME: Need to get binning options from the camera.
         cam_params.add("x_bin", params.ParameterRangeInt("Binning in X",
                                                          "x_bin",
                                                          1, 1, 4))
         cam_params.add("y_bin", params.ParameterRangeInt("Binning in Y",
                                                          "y_bin",
                                                          1, 1, 4))
+
+        # FIXME: Need to check if camera supports frame transfer mode.
         cam_params.add("frame_transfer_mode", params.ParameterSetInt("Frame transfer mode (0 = off, 1 = on)",
                                                                      "frame_transfer_mode",
                                                                      1, [0, 1]))
+
+        # FIXME: Need to check if camera supports temperature
+        #        control and the range if it does.
         cam_params.add("temperature", params.ParameterRangeInt("Temperature",
                                                                "temperature",
                                                                -70, -70, 20))
@@ -109,15 +116,21 @@ class ACameraControl(cameraControl.HWCameraControl):
         cam_params.add("kinetic_cycle_time", params.ParameterRangeFloat("Kinetic cycle time (seconds)",
                                                                         "kinetic_cycle_time",
                                                                         0.0, 0.0, 100.0))
+
+        # FIXME: Need to get AD channel information from the camera.
         cam_params.add("adchannel", params.ParameterSetInt("Analog to digital converter channel",
                                                            "adchannel",
                                                            0, [0, 1]))
+
+        # FIXME: Need to get EM gain modes from the camera.
         cam_params.add("emgainmode", params.ParameterSetInt("EMCCD gain mode",
                                                             "emgainmode",
                                                             0, [0, 1, 2]))
         cam_params.add("baselineclamp", params.ParameterSetBoolean("Baseline clamp",
                                                                    "baselineclamp",
                                                                    True))
+
+        # FIXME: Need to get amplitudes from the camera.
         cam_params.add("vsamplitude", params.ParameterSetInt("Vertical shift amplitude",
                                                              "vsamplitude",
                                                              0, [0, 1, 2]))
