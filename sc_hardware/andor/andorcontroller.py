@@ -320,6 +320,13 @@ class AndorCamera:
                    "GetAcqisitionTimings")
         return [exposure.value, kinetic.value, accumulate.value]
 
+    ## getCameraSize
+    #
+    # @return The size of camera in pixels
+    #
+    def getCameraSize(self):
+        return [self._props_['XPixels'], self._props_['YPixels']]
+
     ## getCurrentSetup
     #
     # Get the current camera setup.
@@ -565,6 +572,13 @@ class AndorCamera:
                 return [0, self.frame_size, "acquiring"]
         else:
             raise AssertionError, "GetOldestImage16 failed: " + str(status)
+
+    ## getPreampGains
+    #
+    # @return Return the available pre-amp gains.
+    #
+    def getPreampGains(self):
+        return self._props_["PreAmpGains"]
 
     ## getProperties
     #

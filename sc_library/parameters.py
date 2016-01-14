@@ -525,9 +525,9 @@ class ParameterSet(Parameter):
         if new_value in self.allowed:
             self.value = new_value
         else:
-            for x in self.allowed:
-                print len(x), len(new_value)
-            print self.name, self.allowed, "-", new_value, "-"
+            #for x in self.allowed:
+            #    print len(x), len(new_value)
+            #print self.name, self.allowed, "-", new_value, "-"
             raise ParametersException(str(new_value) + " is not in the list of allowed values.")
 
             
@@ -826,7 +826,7 @@ class StormXMLObject(object):
         pnames = pname.split(".")
         if (len(pnames) > 1):
             xml_object = self.getp(pnames[0])
-            print pnames, type(xml_object)
+            #print pnames, type(xml_object)
             return xml_object.getp(".".join(pnames[1:]))
 
         if pname in self.parameters:

@@ -37,7 +37,7 @@ class ACameraControl(cameraControl.HWCameraControl):
     #
     @hdebug.debug
     def __init__(self, hardware, parameters, parent = None):
-        cameraControl.HWCameraControl.__init__(self, hardware, parent)
+        cameraControl.HWCameraControl.__init__(self, hardware, parameters, parent)
 
         if hardware and hardware.has("pci_card"):
             self.initCamera(hardware.get("pci_card"))
@@ -49,21 +49,66 @@ class ACameraControl(cameraControl.HWCameraControl):
         # FIXME: We should get at least some of the values by polling the camera.
         #
         cam_params = parameters.get("camera1")
+        cam_params.add("max_intensity", params.ParameterInt("",
+                                                            "max_intensity",
+                                                            10000,
+                                                            is_mutable = False,
+                                                            is_saved = False))
+
+        # FIXME: Need to update based on the current EM gain mode.
+        [gain_low, gain_high] = self.camera.getEMGainRange()
+        cam_params.add("emccd_gain", params.ParameterRangeInt("EMCCD Gain",
+                                                              "emccd_gain",
+                                                              gain_low, gain_low, gain_high))
+
+        [x_size, y_size] = self.camera.getCameraSize()
+        cam_params.add("x_start", params.ParameterRangeInt("AOI X start",
+                                                           "x_start",
+                                                           1, 1, x_size))
+        cam_params.add("x_end", params.ParameterRangeInt("AOI X end",
+                                                         "x_end",
+                                                         x_size, 1, x_size))
+        cam_params.add("y_start", params.ParameterRangeInt("AOI Y start",
+                                                           "y_start",
+                                                           1, 1, y_size))
+        cam_params.add("y_end", params.ParameterRangeInt("AOI Y end",
+                                                         "y_end",
+                                                         y_size, 1, y_size))
+        cam_params.add("x_bin", params.ParameterRangeInt("Binning in X",
+                                                         "x_bin",
+                                                         1, 1, 4))
+        cam_params.add("y_bin", params.ParameterRangeInt("Binning in Y",
+                                                         "y_bin",
+                                                         1, 1, 4))
         cam_params.add("frame_transfer_mode", params.ParameterSetInt("Frame transfer mode (0 = off, 1 = on)",
                                                                      "frame_transfer_mode",
                                                                      1, [0, 1]))
         cam_params.add("temperature", params.ParameterRangeInt("Temperature",
                                                                "temperature",
                                                                -70, -70, 20))
+
+        preamp_gains = self.camera.getPreampGains()
+        print preamp_gains
         cam_params.add("preampgain", params.ParameterSetFloat("Pre-amplifier gain",
                                                               "preampgain",
-                                                              1.0, [1.0, 2.0, 5.0]))
+                                                              preamp_gains[0], preamp_gains))
+
+        # FIXME: Need to update based on the AD channel.
+        hs_speeds = self.camera.getHSSpeeds()[0]
+        print hs_speeds
         cam_params.add("hsspeed", params.ParameterSetFloat("Horizontal shift speed",
                                                            "hsspeed",
-                                                           10.0, [1.0, 2.0, 5.0, 10.0]))
+                                                           hs_speeds[0], hs_speeds))
+
+        vs_speeds = self.camera.getVSSpeeds()
+        print vs_speeds
         cam_params.add("vsspeed", params.ParameterSetFloat("Vertical shift speed",
                                                            "vsspeed",
-                                                           3.3, [1.0, 2.0, 3.3]))
+                                                           vs_speeds[0], vs_speeds))
+
+        cam_params.add("exposure_time", params.ParameterRangeFloat("Exposure time (seconds)", 
+                                                                   "exposure_time", 
+                                                                   0.0, 0.0, 100.0))
         cam_params.add("kinetic_cycle_time", params.ParameterRangeFloat("Kinetic cycle time (seconds)",
                                                                         "kinetic_cycle_time",
                                                                         0.0, 0.0, 100.0))
@@ -88,6 +133,8 @@ class ACameraControl(cameraControl.HWCameraControl):
         cam_params.add("external_trigger", params.ParameterSetBoolean("Use an external camera trigger",
                                                                       "external_trigger",
                                                                       False))
+        cam_params.add("head_model", params.ParameterString("Camera head model", "head_model", "",
+                                                            is_mutable = False))
 
     ## closeShutter
     #
@@ -211,6 +258,12 @@ class ACameraControl(cameraControl.HWCameraControl):
     @hdebug.debug
     def newParameters(self, parameters):
         p = parameters.get("camera1")
+
+        size_x = (p.get("x_end") - p.get("x_start") + 1)/p.get("x_bin")
+        size_y = (p.get("y_end") - p.get("y_start") + 1)/p.get("y_bin")
+        p.set("x_pixels", size_x)
+        p.set("y_pixels", size_y)
+
         self.reversed_shutter = p.get("reversed_shutter")
         try:
             self.camera.setACQMode("run_till_abort")
