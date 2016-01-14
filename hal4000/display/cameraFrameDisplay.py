@@ -74,11 +74,11 @@ class CameraFeedDisplay(QtGui.QFrame):
                                                                     "colortable",
                                                                     "idl5.ctbl",
                                                                     self.color_tables.getColorTableNames()))
-        self.parameters.add("drag_multiplier", params.ParameterInt("",
-                                                                   "drag_multiplier",
-                                                                   0.16,
-                                                                   is_mutable = False,
-                                                                   is_saved = False))
+        self.parameters.add("drag_multiplier", params.ParameterFloat("",
+                                                                     "drag_multiplier",
+                                                                     0.16,
+                                                                     is_mutable = False,
+                                                                     is_saved = False))
         self.parameters.add("scalemax", params.ParameterInt("",
                                                             "scalemax",
                                                             2000,
