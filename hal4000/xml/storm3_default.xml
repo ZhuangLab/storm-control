@@ -37,39 +37,17 @@
   </stage>
 
   <!-- spot counter -->
-  <!--
   <spotcounter>
-    <have_spot_counter type="int">1</have_spot_counter>
-    <cell_size type="int">32</cell_size>
-    <threshold type="int">250</threshold>
-    <min_spots type="int">0</min_spots>
-    <max_spots type="int">500</max_spots>
-    <scale_bar_len type="float">1000</scale_bar_len>
-    <nm_per_pixel type="float">164</nm_per_pixel>
+    <threshold type="int" min="1" max="10000">250</threshold>
+    <scale_bar_len desc="Scale bar length in nm" type="float" min="100" max="10000">1000</scale_bar_len>
+    <nm_per_pixel desc="Nanometers per pixel" type="float" min="10" max="1000">160</nm_per_pixel>
   </spotcounter>
-  -->
 
   <!-- misc control -->
-  <!--
   <misc>
-    <jog_size type="float">0.01</jog_size>
-    <epi_position type="float">17.92</epi_position>
-    <tirf_position type="float">20.36</tirf_position>
-    <filter_names type="string-array">1,2,3,4,5,6</filter_names>
-    <filter_position type="int">0</filter_position>
+    <filter_names type="string">1,2,3,4,5,6</filter_names>
+    <filter_position desc="Emission filter position" type="int" min="0" max="5">0</filter_position>
   </misc>
-  -->
-
-  <!-- power progression settings -->
-  <!--
-  <progressions>
-    <have_progressions type="int">1</have_progressions>
-    <use_progressions type="int">0</use_progressions>
-    <pstart_value type="float">0.1</pstart_value>
-    <pinc_value type="float">0.01</pinc_value>
-    <pframe_value type="int">1000</pframe_value>
-  </progressions>
-  -->
 
   <!-- steve settings -->
   <mosaic>
