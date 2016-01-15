@@ -214,7 +214,7 @@ class AndorCamera:
             index = c_int(i)
             speed = c_float()
             andorCheck(andor.GetVSSpeed(index, byref(speed)), "GetVSSpeed")
-            self._props_["VSSpeeds"][i] = speed.value
+            self._props_["VSSpeeds"][i] = round(speed.value, 4)
 
         # Determine horizontal shift speeds.
         andorCheck(andor.GetNumberADChannels(byref(number)), "GetNumberADChannels")
@@ -228,7 +228,7 @@ class AndorCamera:
                 type = c_int(j)
                 speed = c_float()
                 andorCheck(andor.GetHSSpeed(channel, 0, type, byref(speed)), "GetHSSpeed")
-                self._props_["HSSpeeds"][i][j] = speed.value
+                self._props_["HSSpeeds"][i][j] = round(speed.value, 4)
         
         # Determine temperature range.
         min_temp = c_int()
@@ -244,7 +244,7 @@ class AndorCamera:
             index = c_int(i)
             gain = c_float()
             andorCheck(andor.GetPreAmpGain(index, byref(gain)), "GetPreAmpGain")
-            self._props_["PreAmpGains"][i] = gain.value
+            self._props_["PreAmpGains"][i] = round(gain.value, 2)
 
         # Determine EM gain range.
         low = c_int()
