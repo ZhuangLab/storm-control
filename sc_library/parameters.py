@@ -164,6 +164,11 @@ def halParameters(parameters_file):
     # Read general settings
     xml_object = parameters(parameters_file, True)
 
+    # Sometimes the user might drag in a parameters file that was
+    # saved when taking a movie. Since some of the values were
+    # specific to that movie we delete them.
+    xml_object.delete("acquisition")
+
     #
     # In the process of creating the complete parameters object we can
     # overwrite the use_as_default value, so we save it and then
@@ -299,20 +304,6 @@ def setDefaultShutter(shutters_filename):
     global default_params
     if default_params:
         default_params.set("shutters", shutters_filename)
-
-## setSetupName
-#
-# This sets the setup name parameter of a parameters object and the default parameters object.
-#
-# @param parameters A parameters object.
-# @param setup_name The name of the setup, e.g. "none", "prism2".
-#
-#def setSetupName(parameters, setup_name):
-#    param = Parameter("", "setup_name", setup_name, 1, False, True)
-#    parameters.set("setup_name", param)
-#    global default_params
-#    if default_params:
-#        default_params.set("setup_name", param)
 
 
 ## ParametersException
@@ -521,7 +512,7 @@ class ParameterSet(Parameter):
             #for x in self.allowed:
             #    print len(x), len(new_value)
             #print self.name, self.allowed, "-", new_value, "-"
-            raise ParametersException(str(new_value) + " is not in the list of allowed values.")
+            raise ParametersException(str(new_value) + " is not in the list of allowed values for " + self.name + ", " + str(self.allowed))
 
             
 ## ParameterSetBoolean
@@ -777,6 +768,18 @@ class StormXMLObject(object):
     #
     def copy(self):
         return copy.deepcopy(self)
+
+    ## delete
+    #
+    # Remove a sub-section or parameter (if it exists).
+    #
+    def delete(self, name):
+        if self.has(name):
+            names = name.split(".")
+            if (len(names) > 1):
+                self.get(".".join(names[:-1])).delete(names[-1])
+            else:
+                del self.parameters[name]
 
     ## get
     #
