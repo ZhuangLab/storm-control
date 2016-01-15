@@ -49,9 +49,11 @@ class ACameraControl(cameraControl.HWCameraControl):
         cam_params = parameters.get("camera1")
 
         # FIXME: Need to get this value from the camera.
+        max_intensity = self.camera.getMaxIntensity()
+        print max_intensity
         cam_params.add("max_intensity", params.ParameterInt("",
                                                             "max_intensity",
-                                                            10000,
+                                                            max_intensity,
                                                             is_mutable = False,
                                                             is_saved = False))
 
@@ -75,24 +77,23 @@ class ACameraControl(cameraControl.HWCameraControl):
                                                          "y_end",
                                                          y_size, 1, y_size))
 
-        # FIXME: Need to get binning options from the camera.
+        [x_max_bin, y_max_bin] = self.camera.getMaxBinning()
         cam_params.add("x_bin", params.ParameterRangeInt("Binning in X",
                                                          "x_bin",
-                                                         1, 1, 4))
+                                                         1, 1, x_max_bin))
         cam_params.add("y_bin", params.ParameterRangeInt("Binning in Y",
                                                          "y_bin",
-                                                         1, 1, 4))
+                                                         1, 1, y_max_bin))
 
         # FIXME: Need to check if camera supports frame transfer mode.
         cam_params.add("frame_transfer_mode", params.ParameterSetInt("Frame transfer mode (0 = off, 1 = on)",
                                                                      "frame_transfer_mode",
                                                                      1, [0, 1]))
 
-        # FIXME: Need to check if camera supports temperature
-        #        control and the range if it does.
+        [mint, maxt] = self.camera.getTemperatureRange()
         cam_params.add("temperature", params.ParameterRangeInt("Temperature",
                                                                "temperature",
-                                                               -70, -70, 20))
+                                                               -70, mint, maxt))
 
         preamp_gains = self.camera.getPreampGains()
         cam_params.add("preampgain", params.ParameterSetFloat("Pre-amplifier gain",
@@ -110,22 +111,24 @@ class ACameraControl(cameraControl.HWCameraControl):
                                                            "vsspeed",
                                                            vs_speeds[-1], vs_speeds))
 
+        max_exposure = self.camera.getMaxExposure()
         cam_params.add("exposure_time", params.ParameterRangeFloat("Exposure time (seconds)", 
                                                                    "exposure_time", 
-                                                                   0.0, 0.0, 100.0))
+                                                                   0.0, 0.0, max_exposure))
+
         cam_params.add("kinetic_cycle_time", params.ParameterRangeFloat("Kinetic cycle time (seconds)",
                                                                         "kinetic_cycle_time",
                                                                         0.0, 0.0, 100.0))
 
-        # FIXME: Need to get AD channel information from the camera.
+        ad_channels = range(self.camera.getNumberADChannels())
         cam_params.add("adchannel", params.ParameterSetInt("Analog to digital converter channel",
                                                            "adchannel",
-                                                           0, [0, 1]))
+                                                           0, ad_channels))
 
-        # FIXME: Need to get EM gain modes from the camera.
+        n_modes = range(self.camera.getNumberEMGainModes())
         cam_params.add("emgainmode", params.ParameterSetInt("EMCCD gain mode",
                                                             "emgainmode",
-                                                            0, [0, 1, 2]))
+                                                            0, n_modes))
         cam_params.add("baselineclamp", params.ParameterSetBoolean("Baseline clamp",
                                                                    "baselineclamp",
                                                                    True))
@@ -145,6 +148,10 @@ class ACameraControl(cameraControl.HWCameraControl):
                                                                       False))
         cam_params.add("head_model", params.ParameterString("Camera head model", "head_model", "",
                                                             is_mutable = False))
+
+        cam_params.add("isolated_cropmode", params.ParameterSetBoolean("Isolated crop mode",
+                                                                       "isolated_cropmode",
+                                                                       False))
 
     ## closeShutter
     #
