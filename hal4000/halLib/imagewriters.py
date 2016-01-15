@@ -238,8 +238,8 @@ class GenericFile:
 
             # Save the parameters, but only for the cameras.
             if feeds.isCamera(self.feed_names[i]):            
-                self.parameters.set("acquisition.camera", "camera" + str(i+1))
-                self.parameters.set("acquisition.number_frames", self.number_frames[i])
+                self.parameters.add("acquisition.camera", params.Parameter("", "camera", "camera" + str(i+1), 1, False, True))
+                self.parameters.add("acquisition.number_frames", params.Parameter("", "number_frames", self.number_frames[i], 1, False, True))
                 self.parameters.saveToFile(filename + ".xml")
 
         self.is_open = False
@@ -271,27 +271,6 @@ class GenericFile:
     #
     def getSpotCounts(self):
         return self.parameters.get("acquisition.spot_counts")
-
-#    ## setLockTarget()
-#    #
-#    # @param lock_target The film's lock target.
-#    #
-#    def setLockTarget(self, lock_target):
-#        self.lock_target = lock_target
-#
-#    ## setSpotCounts()
-#    #
-#    # @param spot_counts The film's spot counts (this is saved as a string).
-#    #
-#    def setSpotCounts(self, spot_counts):
-#        self.spot_counts = spot_counts
-#
-#    ## setStagePosition()
-#    #
-#    # @param stage_position The new stage position.
-#    #
-#    def setStagePosition(self, stage_position):
-#        self.stage_position = stage_position
 
     ## totalFilmSize
     #
