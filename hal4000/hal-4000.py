@@ -478,7 +478,7 @@ class Window(QtGui.QMainWindow):
 
         # Handle mosaic information request, pass mosaic XML data back:
         elif (message.getType() == "Get Mosaic Settings"):
-            message.addResponse("pixels_to_um", self.parameters.get("mosaic.pixels_to_um"))
+            #message.addResponse("pixels_to_um", self.parameters.get("mosaic.pixels_to_um"))
             i = 1
             while self.parameters.has("mosaic.obj" + str(i)):
                 message.addResponse("obj" + str(i), self.parameters.get("mosaic.obj" + str(i)))

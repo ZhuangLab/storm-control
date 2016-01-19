@@ -36,8 +36,8 @@ class Objective(QtCore.QObject):
         # Or add adjustable elements.
         else:
             
-            # Magnification.
-            sbox = ObjDoubleSpinBox(float(data[1]), 1.0, 200.0, parent)
+            # Microns per pixel.
+            sbox = ObjDoubleSpinBox(float(data[1]), 0.01, 100.0, parent)
             sbox.setDecimals(2)
             sbox.setSingleStep(0.01)
             sbox.valueChanged.connect(self.handleMagChanged)
@@ -73,7 +73,7 @@ class Objective(QtCore.QObject):
     ## handleMagChange
     #
     def handleMagChanged(self, value):
-        self.valueChanged.emit(self.objective_name, "magnification", value)
+        self.valueChanged.emit(self.objective_name, "micron_per_pixel", value)
 
     ## handleMagChange
     #
@@ -115,7 +115,7 @@ class ObjectivesGroupBox(QtGui.QGroupBox):
         
         # Add headers if necessary.
         if (len(self.objectives) == 0):
-            for i, label_text in enumerate(["Objective", "Magnification", "X Offset", "Y Offset"]):
+            for i, label_text in enumerate(["Objective", "Um / Pixel", "X Offset", "Y Offset"]):
                 text_item = QtGui.QLabel(label_text, self)
                 self.layout.addWidget(text_item, 0, i)
 

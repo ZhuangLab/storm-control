@@ -351,7 +351,7 @@ class Capture(QtCore.QObject):
             
         if (message.getType() == "Get Mosaic Settings"):
             self.got_settings = True
-            coord.Point.pixels_to_um = message.getResponse("pixels_to_um")
+            #coord.Point.pixels_to_um = message.getResponse("pixels_to_um")
             i = 1
             while message.getResponse("obj" + str(i)) is not None:
                 self.newObjectiveData.emit(message.getResponse("obj" + str(i)).split(","))
@@ -417,7 +417,6 @@ class Capture(QtCore.QObject):
                 # Prompt user for settings for the first film.
                 if not self.fake_got_settings:
                     settings = mosaicDialog.execMosaicDialog()
-                    coord.Point.pixels_to_um = settings[0]
                     self.newObjectiveData.emit(settings[4:])
                     self.fake_got_settings = True
                     self.fake_objective += 1
@@ -438,7 +437,6 @@ class Capture(QtCore.QObject):
                 # settings first.
                 #
                 if not self.got_settings:
-                    coord.Point.pixels_to_um = movie.xml.get("mosaic.pixels_to_um")
                     i = 1
                     while movie.xml.has("mosaic.obj" + str(i)):
                         obj_data = movie.xml.get("mosaic.obj" + str(i))

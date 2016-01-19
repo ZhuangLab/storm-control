@@ -18,6 +18,7 @@ import sc_library.hdebug as hdebug
 #
 class Point(object):
 
+    # Multiplying by this value will convert pixels to microns.
     pixels_to_um = 1.0
 
     ## __init__

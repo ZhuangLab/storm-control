@@ -1,4 +1,8 @@
 
+2016-01-19: Change HAL / Steve to use an absolute pixel size for each 
+	    objective rather than a magnification relative to a 100x
+	    objective.
+
 2015-12-09: Add pixel size metadata to .tif images in a form that ImageJ can
 	    understand.
 
