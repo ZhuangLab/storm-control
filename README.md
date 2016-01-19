@@ -22,14 +22,12 @@ zee-calibrator - This folder contains software (main.py) that is used to generat
 ## General notes ##
 1. This software is written primarily in Python with a few C helper libraries.
 
-2. The master branch should be stable. Development could be unstable.
+2. Doxygen documentation is available (for Dave, HAL and Steve), but you'll have to run doxygen to create it.
 
-3. Doxygen documentation is available (for Dave, HAL and Steve), but you'll have to run doxygen to create it.
+3. The software is provided "as is" in the hope that others might find it useful. While it is fairly stable and has been developed and used since 2009 in the Zhuang lab, we provide no guarantee that any future changes that are made will maintain backwards compatibility with older versions.
 
-4. The software is provided "as is" in the hope that others might find it useful. While it is fairly stable and has been developed and used since 2009 in the Zhuang lab, we provide no guarantee that any future changes that are made will maintain backwards compatibility with older versions.
+4. We can only provide fairly limited support. You will probably have the most success adapting this software for your purposes if you are reasonably familiar with the Python programming language.
 
-5. We can only provide fairly limited support. You will probably have the most success adapting this software for your purposes if you are reasonably familiar with the Python programming language.
+5. This software can also control an NSTORM setup, with some limitations, the biggest of which is probably that shutter sequences don't work.
 
-6. This software can also control an NSTORM setup, with some limitations, the biggest of which is probably that shutter sequences don't work.
-
-7. Questions should be addressed to Hazen Babcock (hbabcock _at_ fas.harvard.edu).
+6. Questions should be addressed to Hazen Babcock (hbabcock _at_ fas.harvard.edu).
