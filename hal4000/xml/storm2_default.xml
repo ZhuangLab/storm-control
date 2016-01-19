@@ -162,13 +162,13 @@
     <flip_horizontal type="int">0</flip_horizontal>
     <flip_vertical type="int">0</flip_vertical>
     <transpose type="int">1</transpose>
-    <obj1 type="string">100x,100.0,0.0,0.0</obj1>  
-    <obj2 type="string">60x,60.0,0.0,0.0</obj2>
-    <obj3 type="string">10x,10.1,-49.1,266.0</obj3>
-    <obj4 type="string">4x,4.10,96.0,108.0</obj4> 
 
     <!-- With the 1.5x slider -->
-    <pixels_to_um type="float">0.107</pixels_to_um>
+    <obj1 type="string">100x,0.107,0.0,0.0</obj1>  
+    <obj2 type="string">60x,0.178,0.0,0.0</obj2>
+    <obj3 type="string">10x,1.070,-49.1,266.0</obj3>
+    <obj4 type="string">4x,2.675,96.0,108.0</obj4> 
+
   </mosaic>
 
 </settings>
