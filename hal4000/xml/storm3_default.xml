@@ -51,10 +51,10 @@
 
   <!-- steve settings -->
   <mosaic>
-    <objective type="string">obj1</objective>
-    <flip_horizontal type="int">1</flip_horizontal>
-    <flip_vertical type="int">1</flip_vertical>
-    <transpose type="int">1</transpose>
+    <objective desc="Current objective" type="string" values="obj1,obj2,obj3">obj1</objective>
+    <flip_horizontal desc="Flip image horizontal (mosaic)" type="boolean">True</flip_horizontal>
+    <flip_vertical desc="Flip image vertical (mosaic)" type="boolean">True</flip_vertical>
+    <transpose desc="Transpose image (mosaic)" type="boolean">True</transpose>
     <obj1 type="string">100x,100.0,0.0,0.0</obj1>
     <obj2 type="string">10x,10.0,227.0,-69.0</obj2>
     <obj3 type="string">2x,2.0,133.0,-244.0</obj3>
