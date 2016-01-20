@@ -320,8 +320,7 @@ class MultifieldView(QtGui.QGraphicsView):
 # Image handling class.
 #
 # The real position is the stage position in um where
-# the picture was taken. Magnification is relative, with
-# 100x defined as 1.0 (so 20x = 0.2).
+# the picture was taken.
 #
 class viewImageItem(QtGui.QGraphicsItem):
     #def __init__(self, pixmap, x_pix, y_pix, x_um, y_um, magnification, name, params, zvalue):
