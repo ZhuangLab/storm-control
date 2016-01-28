@@ -23,7 +23,7 @@ Finally, to get HAL to load your setup instead of the default
 "none" setup you can specify a setup name, hardware and parameters
 file at the command prompt as explained below.
 
-Option 1: This run HAL in emulation mode.
+Option 1: This runs HAL in emulation mode.
 
 > python hal-4000.py
 

@@ -35,7 +35,7 @@ class HalTCPControl(TCPServer, halModule.HalModule):
                            port = hardware.tcp_port,
                            server_name = "Hal",
                            parent = parent,
-                           verbose = True)
+                           verbose = False)
         halModule.HalModule.__init__(self)
 
     ## connectSignals

@@ -4,10 +4,6 @@
 #
 # A utility for creating image mosaics and imaging array tomography type samples.
 #
-# Since we usually use a 100x objective, everything is defined relative to this
-# objective. This means among other things that internally we use a magnification
-# that is adjusted so that the magnification of the 100x objective is 1.0.
-#
 # Hazen 07/15
 #
 
@@ -56,8 +52,8 @@ class Window(QtGui.QMainWindow):
     def __init__(self, parameters, parent = None):
         QtGui.QMainWindow.__init__(self, parent)
 
-        # coordinate system setup
-        coord.Point.pixels_to_um = 1.0
+        # Coordinate system setup, the internal scale is 1 pixel is 100nm.
+        coord.Point.pixels_to_um = 0.1
 
         # variables
         self.current_center = coord.Point(0.0, 0.0, "um")
@@ -187,8 +183,8 @@ class Window(QtGui.QMainWindow):
             return
 
         objective = image.parameters.get("mosaic." + image.parameters.get("mosaic.objective")).split(",")[0]
-        [magnification, x_offset, y_offset] = self.ui.objectivesGroupBox.getData(objective)
-        magnification = magnification * 0.01
+        [um_per_pixel, x_offset, y_offset] = self.ui.objectivesGroupBox.getData(objective)
+        magnification = coord.Point.pixels_to_um / um_per_pixel
         self.current_offset = coord.Point(x_offset, y_offset, "um")
         self.view.addImage(image, objective, magnification, self.current_offset)
         self.view.setCrosshairPosition(image.x_pix, image.y_pix)
@@ -513,8 +509,8 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleMOValueChange(self, objective, pname, value):
-        if (pname == "magnification"):
-            self.view.changeMagnification(objective, value/100.0)
+        if (pname == "micron_per_pixel"):
+            self.view.changeMagnification(coord.Point.pixels_to_um / value)
         elif (pname == "xoffset"):
             self.view.changeXOffset(objective, coord.umToPix(value))
         elif (pname == "yoffset"):

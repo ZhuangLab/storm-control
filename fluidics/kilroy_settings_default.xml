@@ -1,30 +1,21 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<settings>
-  <!-- Default kilroy settings -->
+<settings><!-- Default kilroy settings -->
+  <!-- Valve parameters -->
+  <valves_com_port type="int">2</valves_com_port>	<!-- COM port of serial connection to valves -->  
+  <num_simulated_valves type="int">3</num_simulated_valves><!-- Number of valves to simulate (Defaults to 0) -->
 
-  <!-- COM port of serial connection to valves -->
-  <valves_com_port type="int">2</valves_com_port>	  
+  <!-- Pump parameters -->
+  <pump_class type="string">pumps.rainin_rp1</pump_class><!-- Control class for pump -->
+  <pump_com_port type="int">3</pump_com_port><!-- COM port of serial connection to pump -->
+  <pump_ID type="int">30</pump_ID><!-- ID of Pump -->
+  <simulate_pump type="boolean">True</simulate_pump><!-- Simulate pump? (Defaults to False) -->
+  <flip_flow_direction type="boolean">False</flip_flow_direction><!-- Flip the direction defined as forward? -->
 
-  <!-- COM port of serial connection to pump -->
-  <pump_com_port type="int">3</pump_com_port>
-
-  <!-- ID of Pump -->
-  <pump_ID type="int">30</pump_ID>
-
-  <!-- TCP/IP port for local communication with Dave -->
-  <tcp_port type="int">9500</tcp_port>
-
-  <!-- Number of valves to simulate (Defaults to 0) -->
-  <num_simulated_valves type="int">2</num_simulated_valves>
-
-  <!-- Simulate pump? (Defaults to False) -->
-  <simulate_pump type="boolean">True</simulate_pump>
-
-  <!-- Sets verbosity of kilroy and the classes it owns. Useful for debug -->
+  <!-- General Kilroy parameters -->
   <verbose type="boolean">True</verbose>
-
-  <!-- Define location of valve commands and protocols -->
-  <protocols_file type = "">default_config.xml</protocols_file>
-  <commands_file type = "">default_config.xml</commands_file>
+  <serial_verbose type="boolean">True</serial_verbose>  <!-- display serial commands? -->
+  <tcp_port type="int">9500</tcp_port> <!-- TCP/IP port for local communication with Dave -->
+  <protocols_file type = "">default_config.xml</protocols_file><!-- Location of default protocol -->
+  <commands_file type = "">default_config.xml</commands_file><!-- Location of default commands -->
 
 </settings>

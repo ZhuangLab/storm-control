@@ -101,7 +101,7 @@
     <qpd_mode type="int">0</qpd_mode>
     <qpd_zcenter type="float">50.0</qpd_zcenter>
     <qpd_scale type="float">-150.0</qpd_scale>
-    <qpd_sum_max type="int">256</qpd_sum_max>
+    <qpd_sum_max type="int">30000</qpd_sum_max>
     <cal_deadtime type="int">20</cal_deadtime>
     <cal_range type="float">600</cal_range>
     <cal_step_size type="float">10</cal_step_size>
@@ -163,11 +163,10 @@
     <flip_horizontal type="int">0</flip_horizontal>
     <flip_vertical type="int">0</flip_vertical>
     <transpose type="int">1</transpose>
-    <obj1 type="string">100x,100.0,0.0,0.0</obj1>
-    <obj2 type="string">60x,60.0,0.0,0.0</obj2>
-    <obj3 type="string">10x,10.0,0.0,0.0</obj3>
-    <obj4 type="string">4x,3.93,28.0,362.0</obj4>
-    <pixels_to_um type="float">0.156</pixels_to_um>
+    <obj1 type="string">100x,0.156,0.0,0.0</obj1>
+    <obj2 type="string">60x,0.260,0.0,0.0</obj2>
+    <obj3 type="string">10x,0.156,0.0,0.0</obj3>
+    <obj4 type="string">4x,3.9,28.0,362.0</obj4>
   </mosaic>
 
 </settings>

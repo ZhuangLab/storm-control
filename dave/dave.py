@@ -53,6 +53,8 @@ class CommandEngine(QtCore.QObject):
     done = QtCore.pyqtSignal()
     paused = QtCore.pyqtSignal()
     problem = QtCore.pyqtSignal(object)
+    warning = QtCore.pyqtSignal(object)
+    dave_action = QtCore.pyqtSignal(object)
     
     ## __init__
     #
@@ -69,12 +71,12 @@ class CommandEngine(QtCore.QObject):
         # HAL Client
         self.HALClient = tcpClient.TCPClient(port = 9000,
                                              server_name = "HAL",
-                                             verbose = True)
+                                             verbose = False)
         
         # Kilroy Client
         self.kilroyClient = tcpClient.TCPClient(port = 9500,
                                                 server_name = "Kilroy",
-                                                verbose = True)
+                                                verbose = False)
     
     ## abort
     #
@@ -97,12 +99,15 @@ class CommandEngine(QtCore.QObject):
         # Connect signals.
         self.command.complete_signal.connect(self.handleActionComplete)
         self.command.error_signal.connect(self.handleErrorSignal)
-            
+        self.command.warning_signal.connect(self.handleWarningSignal)
+        
         # Start command.
         if (self.command.getActionType() == "hal"):
             self.command.start(self.HALClient, test_mode)
         elif (self.command.getActionType() == "kilroy"):
             self.command.start(self.kilroyClient, test_mode)
+        elif (self.command.getActionType() == "dave"):
+            self.dave_action.emit(self.command.getMessage())
         elif (self.command.getActionType() == "NA"):
             self.command.start(False, test_mode)
         else:
@@ -116,6 +121,7 @@ class CommandEngine(QtCore.QObject):
         self.command.cleanUp()
         self.command.complete_signal.disconnect()
         self.command.error_signal.disconnect()
+        self.command.warning_signal.disconnect()
 
         # Configure the command engine to pause after completion of the command sequence
         if self.command.shouldPause() and not message.isTest():
@@ -130,6 +136,14 @@ class CommandEngine(QtCore.QObject):
     #
     def handleErrorSignal(self, message):
         self.problem.emit(message)
+        self.handleActionComplete(message)
+
+    ## handleWarningSignal
+    #
+    # Handle a warning signal
+    #
+    def handleWarningSignal(self, message):
+        self.warning.emit(message)
         self.handleActionComplete(message)
 
 ## Dave
@@ -197,6 +211,8 @@ class Dave(QtGui.QMainWindow):
         self.ui.toAddressLineEdit.textChanged.connect(self.handleNotifierChange)
         self.ui.validateSequenceButton.clicked.connect(self.handleValidateCommandSequence)
         self.ui.commandSequenceTreeView.double_clicked.connect(self.handleDoubleClick)
+        self.ui.currentWarnings.double_clicked.connect(self.handleWarningsDoubleClick)
+        self.ui.clearWarningsPushButton.clicked.connect(self.handleClearWarnings)
                               
         # Load saved notifications settings.
         self.noti_settings = [[self.ui.fromAddressLineEdit, "from_address"],
@@ -224,6 +240,8 @@ class Dave(QtGui.QMainWindow):
         self.command_engine.done.connect(self.handleDone)
         self.command_engine.problem.connect(self.handleProblem)
         self.command_engine.paused.connect(self.handlePauseFromCommandEngine)
+        self.command_engine.warning.connect(self.handleWarning)
+        self.command_engine.dave_action.connect(self.handleDaveAction)
 
     ## cleanUp
     #
@@ -317,6 +335,17 @@ class Dave(QtGui.QMainWindow):
             else:
                 self.handleDone()
 
+    ## handleDaveAction
+    #
+    # Handle a Dave-specific action requested from the command engine.
+    # @param message A tcpMessage object used to pass information about the dave-specific dave action.
+    #
+    def handleDaveAction(self, message):
+        if (message.getType() == "Clear Warnings"):
+            self.handleClearWarnings(False) #The boolean is a dummy variable
+            self.command_engine.handleActionComplete(message) # Send message back to command engine to signal completion
+        else:
+            pass # No other options currently        
         
     ## handleDetailsUpdate
     #
@@ -355,6 +384,36 @@ class Dave(QtGui.QMainWindow):
             self.ui.commandSequenceTreeView.setCurrentAction(item)    
         else:
             pass
+
+    ## handleWarningsDoubleClick
+    #
+    # Handle a double click on a warnings item
+    #
+    # @param warning_item The Dave Warnings item double clicked.
+    #
+    def handleWarningsDoubleClick(self, warning_item):
+        # Create a message box to display the warnings information\
+        messageBox = QtGui.QMessageBox(parent = self)
+        messageBox.setWindowTitle("Warning Details")
+        warning_message = warning_item.getFullInfo()
+        warning_message = warning_message + "\n" + "Would you like to go to this command?"
+        messageBox.setText(warning_message)
+        messageBox.setStandardButtons(QtGui.QMessageBox.No | QtGui.QMessageBox.Yes)
+        messageBox.setDefaultButton(QtGui.QMessageBox.No)
+        button_ID = messageBox.exec_()
+
+        if (button_ID == QtGui.QMessageBox.Yes):
+            dave_action_si = warning_item.getDaveActionStandardItem()
+            self.ui.commandSequenceTreeView.setCurrentAction(dave_action_si)
+        else:
+            pass 
+
+    ## handleClearWarnings
+    #
+    # Handle requests to clear warnings
+    #
+    def handleClearWarnings(self, dummy):
+        self.ui.currentWarnings.clearWarnings()
 
     ## handleDone
     #
@@ -507,11 +566,15 @@ class Dave(QtGui.QMainWindow):
     # Displays a dialog box describing the problem.
     #
     # @param message The problem message from the movie engine.
+    # @param message_str A informative string regarding the error. Defaults to False.
     #
     @hdebug.debug
-    def handleProblem(self, message):
+    def handleProblem(self, message, message_str = False):
         current_item = self.ui.commandSequenceTreeView.getCurrentItem()
-        message_str = current_item.getDaveAction().getDescriptor() + "\n" + message.getErrorMessage()
+        # Compose message string.
+        if not message_str:
+            message_str = current_item.getDaveAction().getDescriptor() + "\n" + message.getErrorMessage()
+
         if not self.test_mode:
 
             # Pause Dave.
@@ -650,6 +713,39 @@ class Dave(QtGui.QMainWindow):
         else: 
             self.ui.commandSequenceTreeView.setAllValid(False)
             self.updateEstimates()
+
+    ## handleWarning
+    #
+    # Handles the warning signal from the command engine and determines if Dave should pause
+    # @param message The warning message from the movie engine.
+    #
+    @hdebug.debug
+    def handleWarning(self, message):
+        # Determine if Dave is in test mode, and use handleProblem if it is
+        if self.test_mode:
+            self.handleProblem(message)
+        else:
+            # Get information on the item that generated the warning
+            current_item = self.ui.commandSequenceTreeView.getCurrentItem()
+            message_str = current_item.getDaveAction().getDescriptor() + "\n" + message.getErrorMessage()
+            
+            # Generate a warning
+            num_warnings = self.ui.currentWarnings.count()
+            self.ui.currentWarnings.addWarning(current_item,
+                                               message_str = message_str,
+                                               descriptor = "Warning " + str(num_warnings+1))
+
+            # Check to see if the number of warnings is larger than the allowed number
+            if self.ui.currentWarnings.count() >= self.ui.numWarningsToPause.value():
+                # Update Error Message
+                message_str = self.ui.currentWarnings.getSummaryMessage()
+                print message_str
+                
+                # Handle problem and specify the message
+                self.handleProblem(message, message_str = message_str)
+            else:
+                pass
+                # Nothing needs to be done here, Dave should continue running.
 
     ## newSequence
     #

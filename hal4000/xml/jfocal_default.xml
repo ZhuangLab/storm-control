@@ -16,9 +16,10 @@
     <y_bin type="int">1</y_bin>
 
     <!-- actual Andor features -->
-    <ExposureTime type="float">0.1</ExposureTime>
     <FanSpeed type="string">On</FanSpeed>
     <SensorCooling type="boolean">True</SensorCooling>
+    <SimplePreAmpGainControl type="string">16-bit (low noise &amp; high well capacity)</SimplePreAmpGainControl>
+    <ExposureTime type="float">0.1</ExposureTime>
 
     <!-- view settings -->
     <flip_horizontal type="int">0</flip_horizontal>
@@ -26,8 +27,8 @@
     <transpose type="int">0</transpose>
     <scalemax type="int">2000</scalemax>
     <scalemin type="int">100</scalemin>
-    <max_intensity type="int">10000</max_intensity>
-    <colortable type="string">idl5.ctbl</colortable>
+    <max_intensity type="int">65536</max_intensity>
+    <colortable type="string">ramp_sat.ctbl</colortable>
     <sync type="int">0</sync>
   </camera1>
 
@@ -90,7 +91,7 @@
     <qpd_mode type="int">0</qpd_mode>
     <qpd_zcenter type="float">50.0</qpd_zcenter>
     <qpd_scale type="float">-700.0</qpd_scale>
-    <qpd_sum_max type="int">256</qpd_sum_max>
+    <qpd_sum_max type="int">100000</qpd_sum_max>
     <cal_deadtime type="int">20</cal_deadtime>
     <cal_range type="float">600</cal_range>
     <cal_step_size type="float">10</cal_step_size>
@@ -104,8 +105,9 @@
     <olock_scan_step type="int">100</olock_scan_step>
     <olock_scan_hold type="int">10</olock_scan_hold>
     <olock_quality_threshold type="float">0.0</olock_quality_threshold>
-    <is_locked_buffer_length type="int">10</is_locked_buffer_length>
-    <is_locked_offset_thresh type="float">0.05</is_locked_offset_thresh>
+    <is_locked_buffer_length type="int">5</is_locked_buffer_length>
+    <is_locked_offset_thresh type="float">1</is_locked_offset_thresh>
+	<lockt_step type="float">0.025</lockt_step> <!-- focus lock step size in um -->
   </focuslock>
 
   <!-- spot counter -->
@@ -152,14 +154,18 @@
     <xy_swap type="int">0</xy_swap> <!-- swap x and y axises -->
   </joystick>
 
+  <!-- gavlo settings -->
+  <galvo>
+  </galvo>
+  
   <!-- steve settings -->
   <mosaic>
     <objective type="string">obj1</objective>
     <flip_horizontal type="int">0</flip_horizontal>
-    <flip_vertical type="int">0</flip_vertical>
-    <transpose type="int">1</transpose>
-    <obj1 type="string">100x,100.0,0.0,0.0</obj1>
-    <pixels_to_um type="float">0.160</pixels_to_um>
+    <flip_vertical type="int">1</flip_vertical>
+    <transpose type="int">0</transpose>
+    <obj1 type="string">60XSi,40.0,0.0,0.0</obj1>
+    <pixels_to_um type="float">0.108</pixels_to_um>
   </mosaic>
 
 </settings>

@@ -8,6 +8,7 @@
 #
 
 import copy
+import datetime
 import struct
 import tiffwriter
 
@@ -167,6 +168,7 @@ class GenericFile:
         
         # FIXME: different cameras could have different lock targets.
         self.parameters.set("acquisition.lock_target", 0.0)
+        self.parameters.set("acquisition.time", str(datetime.datetime.now()))
         self.parameters.set("acquisition.spot_counts", "NA")
         self.parameters.set("acquisition.stage_position", [0.0, 0.0, 0.0])
 
@@ -478,8 +480,16 @@ class TIFFile(GenericFile):
         
         self.tif_writers = []
         for i in range(len(cameras)):
+
+            # Determine pixel size (if possible).
+            pixel_size = 1.0
+            cur_obj = parameters.get("mosaic.objective", False)
+            if cur_obj:
+                pixel_size = float(parameters.get("mosaic." + cur_obj).split(",")[1])
             tif_writer = tiffwriter.TiffWriter(self.filenames[i],
-                                               software = "hal4000")
+                                               software = "hal4000",
+                                               x_pixel_size = pixel_size,
+                                               y_pixel_size = pixel_size)
             self.tif_writers.append(tif_writer)
 
     ## saveFrame

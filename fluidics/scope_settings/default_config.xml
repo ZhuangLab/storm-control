@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<kilroy_configuration num_valves = "3" num_pumps = "1">
+  <valve_commands>
+    <valve_cmd name = "Stop Valve">
+       <valve_pos valve_ID = "1" port_ID = "1"></valve_pos>
+    </valve_cmd>
+    <valve_cmd name = "Flow Hybridization">
+      <valve_pos valve_ID = "1" port_ID = "2"></valve_pos>
+    </valve_cmd>
+    <valve_cmd name = "Flow Wash">
+      <valve_pos valve_ID = "1" port_ID = "3"></valve_pos>
+    </valve_cmd>
+    <valve_cmd name = "Flow STORM Buffer">
+      <valve_pos valve_ID = "1" port_ID = "4"></valve_pos>
+    </valve_cmd>
+    <valve_cmd name = "Set Hyb 1">
+      <valve_pos valve_ID = "2" port_ID = "1"></valve_pos>
+    </valve_cmd>
+    <valve_cmd name = "Set Hyb 2">
+      <valve_pos valve_ID = "2" port_ID = "2"></valve_pos>
+    </valve_cmd>
+    <valve_cmd name = "Set Hyb 3">
+      <valve_pos valve_ID = "2" port_ID = "3"></valve_pos>
+    </valve_cmd>
+    <valve_cmd name = "Set Hyb 4">
+      <valve_pos valve_ID = "2" port_ID = "4"></valve_pos>
+    </valve_cmd>
+  </valve_commands>
+
+  <pump_commands>
+     <pump_cmd name = "Normal Flow">
+       <pump_config speed = "10.0" direction = "Forward"></pump_config>
+     </pump_cmd>
+     <pump_cmd name = "Stop Flow">
+       <pump_config speed = "0.0"></pump_config>
+     </pump_cmd>
+  </pump_commands>
+
+  <kilroy_protocols>
+     <protocol name = "Extra Wash">
+	<valve duration = "0">Flow Wash</valve>
+        <pump duration = "200">Normal Flow</pump>
+	<pump duration = "0">Stop Flow</pump>
+     </protocol>
+     <protocol name = "Hybridize 1">
+        <pump duration = "0">Normal Flow</pump>
+        <valve duration = "20">Set Hyb 1</valve>
+	<valve duration = "10">Flow Hybridization</valve>
+	<valve duration = "10">Flow Wash</valve>
+	<valve duration = "10">Flow STORM Buffer</valve>
+	<pump duration = "0">Stop Flow</pump>
+     </protocol>
+     <protocol name = "Hybridize 2">
+        <pump duration = "0">Normal Flow</pump>
+        <valve duration = "20">Set Hyb 2</valve>
+	<valve duration = "10">Flow Hybridization</valve>
+	<valve duration = "10">Flow Wash</valve>
+	<valve duration = "10">Flow STORM Buffer</valve>
+	<pump duration = "0">Stop Flow</pump>
+     </protocol>
+   </kilroy_protocols>
+</kilroy_configuration>

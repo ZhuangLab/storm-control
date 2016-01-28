@@ -1,4 +1,11 @@
 
+2016-01-19: Change HAL / Steve to use an absolute pixel size for each 
+	    objective rather than a magnification relative to a 100x
+	    objective.
+
+2015-12-09: Add pixel size metadata to .tif images in a form that ImageJ can
+	    understand.
+
 2015-10-09: Fix a recently introduced bug in the Andor EMCCD control software
             that caused it to drop frames and generate an error message in
 	    the updateImageWithFrame member of the QCameraWidget class. If

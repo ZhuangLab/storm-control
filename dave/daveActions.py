@@ -35,6 +35,7 @@ class DaveAction(QtCore.QObject):
     # Define custom signal
     complete_signal = QtCore.pyqtSignal(object)
     error_signal = QtCore.pyqtSignal(object)
+    warning_signal = QtCore.pyqtSignal(object)
     
     ## __init__
     #
@@ -55,9 +56,9 @@ class DaveAction(QtCore.QObject):
 
         # Define pause behaviors
         self.should_pause = False            # Pause after completion
-        self.should_pause_after_error = True # Pause after error
         self.should_pause_default = False    # Default pause state for reset
-        
+        self.should_pause_after_error = True # Pause after an error
+                
         # Initialize internal timer
         self.lost_message_timer = QtCore.QTimer(self)
         self.lost_message_timer.setSingleShot(True)
@@ -118,6 +119,15 @@ class DaveAction(QtCore.QObject):
             self.should_pause = True
         self.error_signal.emit(message)
 
+    ## completeActionWithWarning
+    #
+    # Send a warning message if needed
+    #
+    # @param message A TCP message object
+    #
+    def completeActionWithWarning(self, message):
+        self.warning_signal.emit(message)
+
     ## getActionType
     #
     # @return The type of the action (i.e. "hal", "kilroy", ..)
@@ -167,6 +177,13 @@ class DaveAction(QtCore.QObject):
         else:
             return [None,None]
 
+    ## getMessage
+    #
+    # @return The Dave Action message object
+    #
+    def getMessage(self):
+        return self.message
+
     ## getUsage
     #
     # @return Disk usage.
@@ -179,8 +196,9 @@ class DaveAction(QtCore.QObject):
     # handle the return of a message
     #
     # @param message A TCP message object
+    # @param warning A boolean which specifies that any errors should be treated as warnings
     #
-    def handleReply(self, message):
+    def handleReply(self, message, warning = False):
 
         # Stop lost message timer
         self.lost_message_timer.stop()
@@ -190,7 +208,10 @@ class DaveAction(QtCore.QObject):
             message.setError(True, "Communication Error: Incorrect Message Returned")
             self.completeActionWithError(message)
         elif message.hasError():
-            self.completeActionWithError(message)
+            if warning:
+                self.completeActionWithWarning(message) #Treat the error as a warning
+            else:
+                self.completeActionWithError(message)
         else: # Correct message and no error
             self.completeAction(message)
 
@@ -282,7 +303,6 @@ class DaveAction(QtCore.QObject):
             self.lost_message_timer.start(self.lost_message_delay)
         self.tcp_client.sendMessage(self.message)
 
-
 # 
 # Specific Actions
 # 
@@ -327,7 +347,7 @@ class DACheckFocus(DaveAction):
                 
     ## handleReply
     #
-    # Overload of default handleReply to allow determin
+    # Overload of default handleReply
     #
     # @param message A TCP message object
     #
@@ -343,7 +363,9 @@ class DACheckFocus(DaveAction):
             if self.focus_scan:
                 error_message = " Minimum sum found: " + str(message.getResponse("found_sum"))
             message.setError(True, error_message)
-        DaveAction.handleReply(self, message)
+        
+        # Handle the reply but treat errors specific to this class as warnings
+        DaveAction.handleReply(self, message, warning = True) 
 
     ## setup
     #
@@ -370,6 +392,64 @@ class DACheckFocus(DaveAction):
         
         self.message = tcpMessage.TCPMessage(message_type = "Check Focus Lock",
                                              message_data = message_data)
+
+
+## DAClearWarnings
+#
+# Clear Dave Warnings.
+#
+class DAClearWarnings(DaveAction):
+
+    ## __init__
+    #
+    def __init__(self):
+        DaveAction.__init__(self)
+        self.action_type = "dave"
+
+    ## createETree
+    #
+    # @param dictionary A dictionary.
+    #
+    # @return A ElementTree object or None.
+    #
+    def createETree(self, dictionary):
+        block = ElementTree.Element(str(type(self).__name__))
+        return block
+
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        return "Clear Dave warnings"
+
+    ## setup
+    #
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
+        self.message = tcpMessage.TCPMessage(message_type = "Clear Warnings",
+                                             message_data = {})
+
+    ## start
+    #
+    # Start the action, but in this case immediately issue an all clear.
+    #
+    # @param tcp_client The TCP client to use for communication.
+    # @param test_mode Send the command in test mode.
+    #
+    def start(self, tcp_client, test_mode):
+        pass # No communication via TCP
+    
+    ## cleanUp
+    #
+    # Handle clean up of the action
+    #
+    def cleanUp(self):
+        self.resetPause() # Allow a paused action to be rerun without a pause
+
 
 ## DADelay
 #
@@ -506,7 +586,9 @@ class DAFindSum(DaveAction):
         found_sum = message.getResponse("found_sum")
         if not (found_sum == None) and (found_sum <= self.min_sum):
             message.setError(True, "Found sum " + str(found_sum) + " is smaller than minimum sum " + str(self.min_sum))
-        DaveAction.handleReply(self, message)
+
+        # Handle any errors generated here as warnings
+        DaveAction.handleReply(self, message, warning = True)
 
     ## setup
     #

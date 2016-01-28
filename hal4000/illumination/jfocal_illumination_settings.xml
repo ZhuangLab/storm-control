@@ -15,6 +15,7 @@
     </control_module>
     -->
     
+	<!--
     <control_module>
       <name>AOTF</name>
       <module_name>sc_hardware.crystalTechnologies.hAotf</module_name>
@@ -24,7 +25,8 @@
 	<fsk_mode type="int">3</fsk_mode>
       </parameters>
     </control_module>
-
+    -->
+	
     <control_module>
       <name>cube405</name>
       <module_name>sc_hardware.coherent.hLaser</module_name>
@@ -42,7 +44,7 @@
 	<counter_board>PCI-6259</counter_board>
 	<counter_id type="int">0</counter_id>
 	<counter_trigger type="int">0</counter_trigger>
-	<waveform_clock>ctr0out</waveform_clock>
+	<waveform_clock>PFI12</waveform_clock>
       </parameters>
     </control_module>
   </control_modules>
@@ -51,9 +53,19 @@
 
     <!-- 750 laser -->
     <channel>
-      <description>750</description>
+      <description>754</description>
       <color type="rgb">200,0,0</color>
       
+      <digital_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6259</board>
+	  <channel type="int">0</channel>
+	</parameters>
+      </digital_modulation>
+    </channel>
+	  
+	  
       <!--
       <amplitude_modulation>
 	<uses>750wheel</uses>
@@ -73,24 +85,23 @@
       </digital_modulation>
       -->
 
-    </channel>
-
     <!-- 656 laser -->
     <channel>
       <description>656</description>
       <color type="rgb">255,0,0</color>
       
-      <amplitude_modulation>
-	<uses>AOTF</uses>
-	<display_normalized type="boolean">True</display_normalized>
-	<parameters>
-	  <maximum type="int">8000</maximum>
-	  <channel type="int">0</channel>
-	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">89.19</on_frequency>
-	</parameters>
+      <!--
+	  <amplitude_modulation>
+		<uses>AOTF</uses>
+		<display_normalized type="boolean">True</display_normalized>
+		<parameters>
+			<maximum type="int">8000</maximum>
+			<channel type="int">0</channel>
+			<off_frequency type="float">20.0</off_frequency>
+			<on_frequency type="float">89.19</on_frequency>
+		</parameters>
       </amplitude_modulation>
-      
+	  
       <analog_modulation>
 	<uses>daq</uses>
 	<parameters>
@@ -100,7 +111,8 @@
 	  <min_voltage type="float">0.0</min_voltage>
 	</parameters>
       </analog_modulation>
-      
+		-->
+
       <digital_modulation>
 	<uses>daq</uses>
 	<parameters>
@@ -114,7 +126,8 @@
     <channel>
       <description>561</description>
       <color type="rgb">255,255,0</color>
-      
+		<!--
+
       <amplitude_modulation>
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
@@ -135,7 +148,7 @@
 	  <min_voltage type="float">0.0</min_voltage>
 	</parameters>
       </analog_modulation>
-      
+      -->
       <digital_modulation>
 	<uses>daq</uses>
 	<parameters>
@@ -149,7 +162,9 @@
     <channel>
       <description>488</description>
       <color type="rgb">0,255,255</color>
-      
+	
+	<!--
+
       <amplitude_modulation>
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
@@ -170,7 +185,7 @@
 	  <min_voltage type="float">0.0</min_voltage>
 	</parameters>
       </analog_modulation>
-      
+      -->
       <digital_modulation>
 	<uses>daq</uses>
 	<parameters>
