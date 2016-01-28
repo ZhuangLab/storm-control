@@ -8,6 +8,7 @@
 #
 
 import copy
+import datetime
 import struct
 import tiffwriter
 
@@ -167,6 +168,7 @@ class GenericFile:
         
         # FIXME: different cameras could have different lock targets.
         self.parameters.set("acquisition.lock_target", 0.0)
+        self.parameters.set("acquisition.time", str(datetime.datetime.now()))
         self.parameters.set("acquisition.spot_counts", "NA")
         self.parameters.set("acquisition.stage_position", [0.0, 0.0, 0.0])
 
