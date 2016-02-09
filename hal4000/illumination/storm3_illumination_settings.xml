@@ -36,6 +36,23 @@
 
   <channels>
 
+    <!-- 750 laser -->
+    <channel>
+      <description>750</description>
+      <color type="rgb">200,0,0</color>
+      
+      <analog_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6722</board>
+	  <channel type="int">7</channel>
+	  <max_voltage type="float">5.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+	</parameters>
+      </analog_modulation>
+
+    </channel>
+
     <!-- 647 laser -->
     <channel>
       <description>647</description>
