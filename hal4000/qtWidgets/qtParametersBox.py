@@ -6,6 +6,9 @@
 # representing all the currently available parameters
 # files.
 #
+# This now contains the widgets for the
+# parameters editor as well.
+#
 # Hazen 02/16
 #
 
@@ -92,38 +95,50 @@ class ParametersEditorTab(QtGui.QWidget):
     def __init__(self, parameters, parent):
         QtGui.QWidget.__init__(self, parent)
 
-        self.params_mvc = ParametersMVC(self)
+        # Create scroll area for displaying the parameters table.
+        scroll_area = QtGui.QScrollArea(self)
         layout = QtGui.QGridLayout(self)
-        layout.addWidget(self.params_mvc)
+        layout.addWidget(scroll_area)
+        #scroll_area.setBackgroundRole(QtGui.QPalette.Dark)
+
+        # Create the parameters table & add to the scroll area.
+        self.params_table = ParametersTable(scroll_area)
+        scroll_area.setWidget(self.params_table)
+        scroll_area.setWidgetResizable(True)
         
+        # Add the parameters.
         attrs = parameters.getAttrs()
         for attr in attrs:
             param = parameters.getp(attr)
             if not isinstance(param, params.StormXMLObject):
-                self.params_mvc.addParameter(param)
+                self.params_table.addParameter(param)
 
 
-## ParametersMVC
+## ParametersTable
 #
-# Encapsulates a table view specialized for parameters and it's
-# associated model. There will be one of these per tab.
+# The table where all the different parameters will get displayed.
 #
-class ParametersMVC(QtGui.QTableView):
+class ParametersTable(QtGui.QWidget):
 
     @hdebug.debug
     def __init__(self, parent):
-        QtGui.QTableView.__init__(self, parent)
-
-        self.params_model = QtGui.QStandardItemModel(self)
-        self.params_proxy_model = QtGui.QSortFilterProxyModel(self)
-        self.params_proxy_model.setSourceModel(self.params_model)
-        self.setModel(self.params_model)
+        QtGui.QWidget.__init__(self, parent)
+        #self.setFixedSize(300,300)
+        #self.setBackgroundRole(QtGui.QPalette.Dark)
+        
+        self.setLayout(QtGui.QGridLayout(self))
+        self.layout().addWidget(QtGui.QLabel("Name"), 0, 0)
+        self.layout().addWidget(QtGui.QLabel("Value"), 0, 1)
+        self.layout().addWidget(QtGui.QLabel("Order"), 0, 2)
+        self.layout().setRowMinimumHeight(0, 20)
 
     def addParameter(self, parameter):
-        self.params_model.appendRow([QtGui.QStandardItem(parameter.name),
-                                     QtGui.QStandardItem(str(parameter.value)),
-                                     QtGui.QStandardItem(str(parameter.order))])
-
+        row = self.layout().rowCount()
+        self.layout().addWidget(QtGui.QLabel(parameter.name), row, 0)
+        self.layout().addWidget(QtGui.QLabel(str(parameter.value)), row, 1)
+        self.layout().addWidget(QtGui.QLabel(str(parameter.order)), row, 2)
+        self.layout().setRowMinimumHeight(row, 20)
+        
 
 ## ParametersRadioButton
 #
