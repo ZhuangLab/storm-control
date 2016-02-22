@@ -348,7 +348,7 @@ class Parameter(object):
         return self.value
 
     def isMutable(self):
-        return self.mutable
+        return self.is_mutable
     
     def isRange(self):
         return False
