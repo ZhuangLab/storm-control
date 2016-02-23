@@ -1,4 +1,7 @@
 
+2016-02-23: Implement a (basic) parameters editor. This will make it easier
+	    for users to change (most) of the parameters.
+
 2016-01-06: Change the structure of the parameters in preparation for including
 	    a parametor editor in HAL. The dot notation will now no longer work.
 	    Simplify the parameters that are saved with a movie. These don't
