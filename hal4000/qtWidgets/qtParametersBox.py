@@ -64,7 +64,7 @@ class ParametersEditor(QtGui.QDialog):
         for i in range(self.ui.editTabWidget.count()):
             self.ui.editTabWidget.removeTab(0)
 
-        # Add tab for the parameters that are not in a sub-section.
+        # Add tab for the parameters that are not in a sub-section (i.e. "main").
         new_tab = ParametersEditorTab("", self.parameters, self)
         if (new_tab.getWidgetCount() > 0):
             new_tab.parameterChanged.connect(self.handleParameterChanged)
@@ -74,9 +74,6 @@ class ParametersEditor(QtGui.QDialog):
             new_tab.close()
         
         # Add tabs for each sub-section of the parameters.
-        #
-        # FIXME: skip feed parameters? Do they even work with the new style parameters?
-        #
         attrs = self.parameters.getAttrs()
         for attr in attrs:
             prop = self.parameters.getp(attr)
