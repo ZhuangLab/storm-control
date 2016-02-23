@@ -12,11 +12,11 @@
   <!-- film settings -->
   <film>
     <want_big_endian type="boolean">False</want_big_endian>
-    <directory type="string">/home/hbabcock/Data/</directory>
+    <directory type="directory">/home/hbabcock/Data/</directory>
     <filename type="string">movie</filename>
     <acq_mode type="string" values="run_till_abort,fixed_length">fixed_length</acq_mode>
     <frames type="int" min="1" max="1000000000">10</frames>
-    <logfile type="string">/home/hbabcock/Data/logs/image_log.txt</logfile>
+    <logfile type="filename">/home/hbabcock/Data/logs/image_log.txt</logfile>
     <extension type="string" values=",A647,Cy5,Cy3,Cy2,A405,FITC,YFP,GFP,BF"></extension>
     <auto_increment type="boolean">True</auto_increment>
     <want_bell type="boolean">True</want_bell>
@@ -26,7 +26,7 @@
 
     <!-- illumination settings -->
   <illumination>
-    <shutters type="string">shutters_default.xml</shutters>
+    <shutters type="filename">shutters_default.xml</shutters>
   </illumination>
   
   <!-- stage settings -->
