@@ -366,43 +366,17 @@ class Parameter(object):
             field.text = str(self.value)
             return field
 
+        
+## ParameterCustom
+#
+# This is a custom parameter whose behavior (i.e. it's editor)
+# will be set by whichever module creates/uses it.
+#
+class ParamaterCustom(Parameter):
 
-## ParameterButton
-#
-#class ParameterButton(Parameter):
-#
-#    def __init__(self, channel, power, label):
-#        Parameter.__init__(self, "button", "button", str(label), 1, False, True)
-#        self.channel = int(channel)
-#        self.power = float(power)
-#
-#    def toXML(self, parent):
-#        field = Parameter.toXML(self, parent)
-#        field.set("channel", str(self.channel))
-                 
-
-## ParameterDefaultPower
-#
-#class ParameterDefaultPower(Parameter):
-#
-#    def __init__(self, channel, power):
-#        Parameter.__init__(self, "default power", "default_power", float(power), 1, False, True)
-#        self.channel = int(channel)
-#        self.power = float(power)
-#
-#    def isMatch(self, other):
-#        if Parameter.isMatch(self, other):
-#            if (other.channel == self.channel):
-#                return True
-#        return False
-#        
-#    def setv(self, new_value):
-#        self.value = float(new_value)
-#
-#    def toXML(self, parent):
-#        field = Parameter.toXML(self, parent)
-#        field.set("channel", str(self.channel))
-#        field.set("power", str(self.power))
+    def __init__(self, description, name, value, order, is_mutable = True, is_saved = True):
+        Parameter.__init__(self, description, name, value, order, is_mutable, is_saved):
+        self.editor = None
 
     
 ## ParameterFloat
@@ -435,6 +409,12 @@ class ParameterRange(Parameter):
         Parameter.__init__(self, description, name, value, order, is_mutable, is_saved)
         self.min_value = min_value
         self.max_value = max_value
+
+    def getMaximum(self):
+        return self.max_value
+    
+    def getMinimum(self):
+        return self.min_value
 
     def isRange(self):
         return True
@@ -700,7 +680,11 @@ class StormXMLObject(object):
                     
                 elif (node_type == "string"):
                     param = ParameterString(description, node.tag, node.text, order)
-                        
+
+                # Custom elements.
+                elif (node_type == "custom"):
+                    param = ParameterCustom(description, node.tag, node.text, order)
+            
                 else:
                     raise ParametersException("unrecognized type, " + node_type)
 

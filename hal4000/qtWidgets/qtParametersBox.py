@@ -27,6 +27,17 @@ def getFileName(path):
     return os.path.splitext(os.path.basename(path))[0]
 
 
+## handleCustomParameter
+#
+# Returns the appropriate editor widget for a custom parameter.
+
+def handleCustomParameter(root_name, parameter, changed_signal, reverted_signal, parent):
+    if parameter.editor is not None:
+        return parameter.editor(root_name, parameter, changed_signal, reverted_signal, parent)
+    else:
+        return ParametersTableWidgetString(root_name, parameter, changed_signal, reverted_signal, parent)
+    
+
 ## ParametersEditor
 #
 # This class handles the parameters editor dialog box.
@@ -55,6 +66,7 @@ class ParametersEditor(QtGui.QDialog):
         # Add tabs for each sub-section of the parameters.
         #
         # FIXME: skip feed parameters? Do they even work with the new style parameters?
+        # FIXME: Remove tabs that don't have anything that is editable.
         #
         attrs = self.parameters.getAttrs()
         for attr in attrs:
@@ -62,7 +74,7 @@ class ParametersEditor(QtGui.QDialog):
             if isinstance(prop, params.StormXMLObject):
                 self.ui.editTabWidget.addTab(ParametersEditorTab(attr, prop, self),
                                              attr.capitalize())
-    
+
         self.ui.okButton.clicked.connect(self.handleQuit)
         self.ui.updateButton.clicked.connect(self.handleUpdate)
 
@@ -152,7 +164,11 @@ class ParametersTable(QtGui.QWidget):
         self.layout().addWidget(QtGui.QLabel(parameter.name), row, 0)
 
         # Find the matching editor widget based on the parameter type.
-        types = [[params.ParameterInt, ParametersTableWidgetInt],
+        types = [[params.ParameterCustom, handleCustomParameter],
+                 [params.ParameterFloat, ParametersTableWidgetFloat],
+                 [params.ParameterInt, ParametersTableWidgetInt],
+                 [params.ParameterRangeFloat, ParametersTableWidgetRangeFloat],                 
+                 [params.ParameterRangeInt, ParametersTableWidgetRangeInt],
                  [params.ParameterSetBoolean, ParametersTableWidgetSetBoolean],
                  [params.ParameterSetFloat, ParametersTableWidgetSetFloat],
                  [params.ParameterSetInt, ParametersTableWidgetSetInt],
@@ -190,7 +206,30 @@ class ParametersTableWidget(object):
 
         self.original_value = parameter.getv()
 
-        
+
+## ParametersTableWidgetFloat
+#
+# A widget for floats without any range.
+#
+class ParametersTableWidgetFloat(QtGui.QLineEdit, ParametersTableWidget):
+
+    @hdebug.debug
+    def __init__(self, root_name, parameter, changed_signal, reverted_signal, parent):
+        QtGui.QLineEdit.__init__(self, str(parameter.getv()), parent)
+        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal, reverted_signal)
+
+        self.setValidator(QtGui.QFloatValidator(self))
+        self.textChanged.connect(self.handleTextChanged)
+
+    @hdebug.debug        
+    def handleTextChanged(self, new_text):
+        new_flt = float(new_text)
+        if (new_flt == self.original_value):
+            print "reset"
+        else:
+            print "changed"
+
+            
 ## ParametersTableWidgetInt
 #
 # A widget for integers without any range.
@@ -214,6 +253,77 @@ class ParametersTableWidgetInt(QtGui.QLineEdit, ParametersTableWidget):
             print "changed"
 
 
+## ParametersTableWidgetString
+#
+# A widget for strings.
+#
+class ParametersTableWidgetString(QtGui.QLineEdit, ParametersTableWidget):
+
+    @hdebug.debug
+    def __init__(self, root_name, parameter, changed_signal, reverted_signal, parent):
+        QtGui.QLineEdit.__init__(self, str(parameter.getv()), parent)
+        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal, reverted_signal)
+
+        self.textChanged.connect(self.handleTextChanged)
+
+    @hdebug.debug
+    def handleTextChanged(self, new_text):
+        if (new_text == self.original_value):
+            print "reset"
+        else:
+            print "changed"
+
+            
+## ParametersTableWidgetRangeFloat
+#
+# A widget for floats with a range.
+#
+class ParametersTableWidgetRangeFloat(QtGui.QDoubleSpinBox, ParametersTableWidget):
+
+    @hdebug.debug
+    def __init__(self, root_name, parameter, changed_signal, reverted_signal, parent):
+        QtGui.QDoubleSpinBox.__init__(self, parent)
+        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal, reverted_signal)
+
+        self.setValue(parameter.getv())
+        self.setMaximum(parameter.getMaximum())
+        self.setMinimum(parameter.getMinimum())
+        
+        self.valueChanged.connect(self.handleValueChanged)
+
+    @hdebug.debug
+    def handleValueChanged(self, new_value):
+        if (new_value == self.original_value):
+            print "reset"
+        else:
+            print "changed"
+
+            
+## ParametersTableWidgetRangeInt
+#
+# A widget for integers with a range.
+#
+class ParametersTableWidgetRangeInt(QtGui.QSpinBox, ParametersTableWidget):
+
+    @hdebug.debug
+    def __init__(self, root_name, parameter, changed_signal, reverted_signal, parent):
+        QtGui.QSpinBox.__init__(self, parent)
+        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal, reverted_signal)
+
+        self.setValue(parameter.getv())
+        self.setMaximum(parameter.getMaximum())
+        self.setMinimum(parameter.getMinimum())
+        
+        self.valueChanged.connect(self.handleValueChanged)
+
+    @hdebug.debug
+    def handleValueChanged(self, new_value):
+        if (new_value == self.original_value):
+            print "reset"
+        else:
+            print "changed"
+
+    
 ## ParametersTableWidgetSet
 #
 # Base class for parameters with a set of allowed values.
