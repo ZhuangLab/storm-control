@@ -211,7 +211,7 @@ class Positions(QtGui.QListView):
 
         self.plist_model = PositionListModel(parent)
         self.scene = scene
-        self.step_size = parameters.step_size
+        self.step_size = parameters.get("step_size")
 
         PositionItem.deselected_pen.setWidth(parameters.get("pen_width"))
         PositionItem.selected_pen.setWidth(parameters.get("pen_width"))

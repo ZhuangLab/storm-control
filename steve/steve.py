@@ -62,7 +62,7 @@ class Window(QtGui.QMainWindow):
         # variables
         self.current_center = coord.Point(0.0, 0.0, "um")
         self.current_offset = coord.Point(0.0, 0.0, "um")
-        self.debug = parameters.debug
+        self.debug = parameters.get("debug")
         self.file_filter = "\S+.dax"
         self.parameters = parameters
         self.picture_queue = []
@@ -70,7 +70,7 @@ class Window(QtGui.QMainWindow):
         self.requested_stage_pos = False
         self.stage_tracking_timer = QtCore.QTimer(self)
         self.taking_pictures = False
-        self.snapshot_directory = self.parameters.directory
+        self.snapshot_directory = self.parameters.get("directory")
         self.spin_boxes = []
         self.stage_tracking_timer.setInterval(500)
 
@@ -462,7 +462,7 @@ class Window(QtGui.QMainWindow):
     def handleLoadMosaic(self, boolean):
         mosaic_filename = str(QtGui.QFileDialog.getOpenFileName(self,
                                                                 "Load Mosaic",
-                                                                self.parameters.directory,
+                                                                self.parameters.get("directory"),
                                                                 "*.msc"))    
         self.loadMosaic(mosaic_filename)
 
@@ -475,7 +475,7 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def handleLoadMovie(self, boolean):
         # Open custom dialog to select files and frame number
-        [filenames, frame_num, file_filter] = qtRegexFileDialog.regexGetFileNames(directory = self.parameters.directory,
+        [filenames, frame_num, file_filter] = qtRegexFileDialog.regexGetFileNames(directory = self.parameters.get("directory"),
                                                                                   regex = self.regexp_str,
                                                                                   extensions = ["*.dax", "*.tif", "*.spe"])
         if (filenames is not None) and (len(filenames) > 0):
@@ -498,7 +498,7 @@ class Window(QtGui.QMainWindow):
     def handleLoadPositions(self, boolean):
         positions_filename = str(QtGui.QFileDialog.getOpenFileName(self,
                                                                    "Load Positions",
-                                                                   self.parameters.directory,
+                                                                   self.parameters.get("directory"),
                                                                    "*.txt"))
         if positions_filename:
             self.positions.loadPositions(positions_filename)
@@ -556,7 +556,7 @@ class Window(QtGui.QMainWindow):
     def handleSavePositions(self, boolean):
         positions_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
                                                                    "Save Positions", 
-                                                                   self.parameters.directory, 
+                                                                   self.parameters.get("directory"), 
                                                                    "*.txt"))
         if positions_filename:
             self.positions.savePositions(positions_filename)
@@ -571,7 +571,7 @@ class Window(QtGui.QMainWindow):
     def handleSaveMosaic(self, boolean):
         mosaic_filename = str(QtGui.QFileDialog.getSaveFileName(self,
                                                                 "Save Mosaic", 
-                                                                self.parameters.directory,
+                                                                self.parameters.get("directory"),
                                                                 "*.msc"))
         if mosaic_filename:
             mosaic_fileptr = open(mosaic_filename, "w")
@@ -605,10 +605,10 @@ class Window(QtGui.QMainWindow):
     def handleSetWorkingDirectory(self, boolean):
         directory = str(QtGui.QFileDialog.getExistingDirectory(self,
                                                                "New Directory",
-                                                               str(self.parameters.directory),
+                                                               str(self.parameters.get("directory")),
                                                                QtGui.QFileDialog.ShowDirsOnly))
         if directory:
-            self.parameters.directory = directory + os.path.sep
+            self.parameters.set("directory", directory + os.path.sep)
             self.snapshot_directory = directory + os.path.sep
             print self.parameters.directory
 
@@ -804,7 +804,7 @@ class Window(QtGui.QMainWindow):
             self.toggleTakingPicturesStatus(True)
             
             self.comm.commConnect()
-            if self.comm.setDirectory(self.parameters.directory):
+            if self.comm.setDirectory(self.parameters.get("directory")):
                 self.comm.captureStart(self.current_center.x_um, self.current_center.y_um)
             else:
                 self.toggleTakingPicturesStatus(False)
@@ -869,7 +869,7 @@ if __name__ == "__main__":
         parameters = params.parameters("settings_default.xml")
 
     # Start logger.
-    hdebug.startLogging(parameters.directory + "logs/", "steve")
+    hdebug.startLogging(parameters.get("directory") + "logs/", "steve")
 
     # Load app.
     window = Window(parameters)

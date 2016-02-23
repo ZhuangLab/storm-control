@@ -162,10 +162,10 @@ class Capture(QtCore.QObject):
         self.curr_objective = None
         self.curr_x = 0.0
         self.curr_y = 0.0
-        self.directory = parameters.directory
+        self.directory = parameters.get("directory")
         self.fake_got_settings = False
         self.fake_objective = 1
-        self.filename = parameters.image_filename
+        self.filename = parameters.get("image_filename")
         self.goto = False
         self.got_settings = False
         self.messages = []
