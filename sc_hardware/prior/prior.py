@@ -125,6 +125,7 @@ class Prior(RS232.RS232):
     # @return The stage speed parameter
     #
     def getSpeed(self):
+        # FIXME: Need to figure out units for this..
         return params.ParameterRangeFloat("Stage speed in AU",
                                           "stage_speed",
                                           50.0, 1.0, 100.0)
