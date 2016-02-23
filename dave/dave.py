@@ -151,7 +151,6 @@ class Dave(QtGui.QMainWindow):
         
         # General.
         self.directory = ""
-        self.parameters = parameters
         self.notifier = notifications.Notifier("", "", "", "")
         self.running = False
         self.settings = QtCore.QSettings("Zhuang Lab", "dave")
@@ -772,7 +771,7 @@ if __name__ == "__main__":
         parameters = params.parameters("settings_default.xml")
         
     # Start logger.
-    hdebug.startLogging(parameters.directory + "logs/", "dave")
+    hdebug.startLogging(parameters.get("directory") + "logs" + os.path.sep, "dave")
 
     # Load app.
     window = Dave(parameters)
