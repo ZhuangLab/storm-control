@@ -161,11 +161,15 @@ class Nidaq(illuminationHardware.DaqModulation):
                 return False
 
             iters = 0
-            while (iters < 5) and startCtTask():
+            while (iters < 10) and startCtTask():
                 hdebug.logText("startCtTask failed " + str(iters))
                 self.ct_task.clearTask()
                 time.sleep(0.5)
                 iters += 1
+
+            if iters == 10:
+                hdebug.logText("startCtTask critical failure")
+                print "startCtTask critical failure"
 
         else:
             self.ct_task = False
