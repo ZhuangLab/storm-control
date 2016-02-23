@@ -340,6 +340,9 @@ class Parameter(object):
     
     def getDescription(self):
         return self.description
+
+    def getName(self):
+        return self.name
     
     def getOrder(self):
         return self.order
@@ -372,13 +375,13 @@ class Parameter(object):
 # This is a custom parameter whose behavior (i.e. it's editor)
 # will be set by whichever module creates/uses it.
 #
-class ParamaterCustom(Parameter):
+class ParameterCustom(Parameter):
 
     def __init__(self, description, name, value, order, is_mutable = True, is_saved = True):
-        Parameter.__init__(self, description, name, value, order, is_mutable, is_saved):
+        Parameter.__init__(self, description, name, value, order, is_mutable, is_saved)
         self.editor = None
 
-    
+        
 ## ParameterFloat
 #
 class ParameterFloat(Parameter):
@@ -584,6 +587,22 @@ class ParameterString(Parameter):
         Parameter.setv(self, str(new_value))
 
 
+## ParameterStringDirectory
+#
+# This is parameter whose contents are the name of a directory.
+#
+class ParameterStringDirectory(ParameterString):
+    pass
+
+
+## ParameterStringFilename
+#
+# This is parameter whose contents are the name of a directory.
+#
+class ParameterStringFilename(ParameterString):
+    pass
+
+
 ## StormXMLObject
 #
 # A collection of Parameters objects that are created dynamically
@@ -677,13 +696,20 @@ class StormXMLObject(object):
 
                 elif (node_type == "int"):
                     param = ParameterInt(description, node.tag, node.text, order)
+
+                # Other types of elements.
+                elif (node_type == "custom"):
+                    param = ParameterCustom(description, node.tag, node.text, order)
+
+                elif (node_type == "directory"):
+                    param = ParameterStringDirectory(description, node.tag, node.text, order)
                     
+                elif (node_type == "filename"):
+                    param = ParameterStringFilename(description, node.tag, node.text, order)
+
                 elif (node_type == "string"):
                     param = ParameterString(description, node.tag, node.text, order)
 
-                # Custom elements.
-                elif (node_type == "custom"):
-                    param = ParameterCustom(description, node.tag, node.text, order)
             
                 else:
                     raise ParametersException("unrecognized type, " + node_type)
@@ -874,28 +900,25 @@ class StormXMLObject(object):
         
     ## setv
     #
-    # Set a Parameters (or Parameters).
+    # Set a Parameters (or Parameters). This is different from
+    # set() in that it will throw an error if the parameter
+    # does not already exist.
     #
     # @param pname A string containing the Parameter name(s).
     # @param value The value(s) to set the Parameter too.
     #
-    def set_foo(self, pname, value):
+    def setv(self, pname, value):
 
         # Check for list of pnames and values.
         if isinstance(pname, list):
             if (len(pname) == len(value)):
                 for i in range(len(pname)):
-                    self.set(pname[i], value[i])
+                    self.setv(pname[i], value[i])
             else:
                 raise ParameterException("Lengths do not match in parameters multi-set. " + str(len(pname)) + ", " + str(len(value)))
             return
 
-        # If the parameter does not already exist a ParameterSimple
-        # is created to hold the value of the parameter.
-        try:
-            self.get(pname).setv(value)
-        except ParametersException:
-            self.addv(pname, value)
+        self.getp(pname).setv(value)
 
     ## toXML
     #

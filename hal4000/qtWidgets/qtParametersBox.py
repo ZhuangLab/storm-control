@@ -12,6 +12,7 @@
 # Hazen 02/16
 #
 
+import copy
 import operator
 import os
 
@@ -49,8 +50,11 @@ class ParametersEditor(QtGui.QDialog):
     @hdebug.debug
     def __init__(self, parameters, parent = None):
         QtGui.QDialog.__init__(self, parent)
-        self.modified = False
-        self.parameters = parameters
+        self.editor_widgets = {}  # This dictionary stores all the editor
+                                  # widgets indexed by the parameter name.
+        self.n_changed = 0
+        self.original_parameters = parameters
+        self.parameters = copy.deepcopy(parameters)
 
         self.ui = paramsEditorUi.Ui_Dialog()
         self.ui.setupUi(self)
@@ -61,26 +65,38 @@ class ParametersEditor(QtGui.QDialog):
             self.ui.editTabWidget.removeTab(0)
 
         # Add tab for the parameters that are not in a sub-section.
-        self.ui.editTabWidget.addTab(ParametersEditorTab("", self.parameters, self), "Main")
+        new_tab = ParametersEditorTab("", self.parameters, self)
+        if (new_tab.getWidgetCount() > 0):
+            new_tab.parameterChanged.connect(self.handleParameterChanged)
+            self.ui.editTabWidget.addTab(new_tab, "Main")
+            self.editor_widgets.update(new_tab.getWidgets())
+        else:
+            new_tab.close()
         
         # Add tabs for each sub-section of the parameters.
         #
         # FIXME: skip feed parameters? Do they even work with the new style parameters?
-        # FIXME: Remove tabs that don't have anything that is editable.
         #
         attrs = self.parameters.getAttrs()
         for attr in attrs:
             prop = self.parameters.getp(attr)
             if isinstance(prop, params.StormXMLObject):
-                self.ui.editTabWidget.addTab(ParametersEditorTab(attr, prop, self),
-                                             attr.capitalize())
+                new_tab = ParametersEditorTab(attr, prop, self)
+                if (new_tab.getWidgetCount() > 0):
+                    new_tab.parameterChanged.connect(self.handleParameterChanged)
+                    self.ui.editTabWidget.addTab(new_tab, attr.capitalize())
+                    self.editor_widgets.update(new_tab.getWidgets())
+                else:
+                    new_tab.close()
 
         self.ui.okButton.clicked.connect(self.handleQuit)
         self.ui.updateButton.clicked.connect(self.handleUpdate)
 
+        self.updateDisplay()
+
     @hdebug.debug
     def closeEvent(self, event):
-        if self.modified:
+        if (self.n_changed != 0):
             reply = QtGui.QMessageBox.question(self,
                                                "Warning!",
                                                "Parameters have been changed, close anyway?",
@@ -89,14 +105,39 @@ class ParametersEditor(QtGui.QDialog):
             if (reply == QtGui.QMessageBox.No):
                 event.ignore()
 
+    def getParameters(self):
+        return self.original_parameters
+    
+    def handleParameterChanged(self, pname, pvalue):
+        pname = str(pname)
+        self.parameters.setv(pname, pvalue)
+        is_modified = self.editor_widgets[pname].setChanged(self.parameters.get(pname) != self.original_parameters.get(pname))
+        if (is_modified == "modified"):
+            self.n_changed += 1
+        elif (is_modified == "reverted"):
+            self.n_changed -= 1
+
+        self.updateDisplay()
+
     @hdebug.debug
     def handleQuit(self, boolean):
         self.close()
 
     @hdebug.debug
     def handleUpdate(self, boolean):
+        for widget in self.editor_widgets:
+            self.editor_widgets[widget].resetChanged()
+            
+        self.original_parameters = copy.deepcopy(self.parameters)
+        self.n_changed = 0
         self.updateClicked.emit()
 
+    def updateDisplay(self):
+        if (self.n_changed == 0):
+            self.ui.updateButton.setEnabled(False)
+        else:
+            self.ui.updateButton.setEnabled(True)
+        
 
 ## ParametersEditorTab
 #
@@ -104,15 +145,13 @@ class ParametersEditor(QtGui.QDialog):
 #
 class ParametersEditorTab(QtGui.QWidget):
 
-    # This signal will be sent when a parameter is changed from it's initial value.
+    # The signal for the change of the value of a parameter.
     parameterChanged = QtCore.pyqtSignal(str, object)
-
-    # This signal will be sent when a parameter is changed back to it's initial value.
-    parameterReverted = QtCore.pyqtSignal(str, object)
     
     @hdebug.debug    
     def __init__(self, root_name, parameters, parent):
         QtGui.QWidget.__init__(self, parent)
+        self.editor_widgets = {}
 
         # Create scroll area for displaying the parameters table.
         scroll_area = QtGui.QScrollArea(self)
@@ -134,11 +173,18 @@ class ParametersEditorTab(QtGui.QWidget):
         # Sort and add to the table.
         param_props = sorted(param_props, key = operator.attrgetter('order', 'name'))
         for prop in param_props:
-            self.params_table.addParameter(root_name,
-                                           prop,
-                                           self.parameterChanged,
-                                           self.parameterReverted)
+            new_widget = self.params_table.addParameter(root_name,
+                                                        prop,
+                                                        self.parameterChanged)
+            self.editor_widgets[new_widget.p_name] = new_widget
+                                
 
+    def getWidgetCount(self):
+        return len(self.editor_widgets)
+
+    def getWidgets(self):
+        return self.editor_widgets
+    
 
 ## ParametersTable
 #
@@ -149,19 +195,29 @@ class ParametersTable(QtGui.QWidget):
     @hdebug.debug
     def __init__(self, root_name, parent):
         QtGui.QWidget.__init__(self, parent)
-        self.table_widgets = []
         self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Maximum)
 
         self.setLayout(QtGui.QGridLayout(self))
-        for i, name in enumerate(["Name", "Value", "Order"]):
+        self.layout().setColumnStretch(1, 1)
+        for i, name in enumerate(["Name", "Description", "Value", "Order"]):
             label = QtGui.QLabel(name)
             label.setStyleSheet("QLabel { font-weight: bold }")
             self.layout().addWidget(label, 0, i)
 
     @hdebug.debug
-    def addParameter(self, root_name, parameter, changed_signal, reverted_signal):
+    def addParameter(self, root_name, parameter, changed_signal):
         row = self.layout().rowCount()
-        self.layout().addWidget(QtGui.QLabel(parameter.name), row, 0)
+
+        #
+        # In order to have everything line up nicely in a grid we need
+        # separate widgets for each column. However all the widgets are
+        # related to a single parameter, so we associate the widgets
+        # together under the editor widget.
+        #
+        name_label = QtGui.QLabel(parameter.getName())
+        self.layout().addWidget(name_label, row, 0)
+        desc_label = QtGui.QLabel(parameter.getDescription())
+        self.layout().addWidget(desc_label, row, 1)
 
         # Find the matching editor widget based on the parameter type.
         types = [[params.ParameterCustom, handleCustomParameter],
@@ -172,41 +228,116 @@ class ParametersTable(QtGui.QWidget):
                  [params.ParameterSetBoolean, ParametersTableWidgetSetBoolean],
                  [params.ParameterSetFloat, ParametersTableWidgetSetFloat],
                  [params.ParameterSetInt, ParametersTableWidgetSetInt],
-                 [params.ParameterSetString, ParametersTableWidgetSetString]]
+                 [params.ParameterSetString, ParametersTableWidgetSetString],
+                 [params.ParameterString, ParametersTableWidgetString],
+                 [params.ParameterStringDirectory, ParametersTableWidgetDirectory],
+                 [params.ParameterStringFilename, ParametersTableWidgetFilename]]
         table_widget = next((a_type[1] for a_type in types if (type(parameter) is a_type[0])), None)
         if (table_widget is not None):
             new_widget = table_widget(root_name,
                                       parameter,
                                       changed_signal,
-                                      reverted_signal,
                                       self)
         else:
             print "No widget found for", type(parameter)
             new_widget = QtGui.QLabel(str(parameter.getv()))
-
-        # Not sure if we actually need to keep track of these, we probably don't..
-        self.table_widgets.append(new_widget)
-        self.layout().addWidget(new_widget, row, 1)
+        new_widget.setLabels(name_label, desc_label)
+        self.layout().addWidget(new_widget, row, 2)
         
-        self.layout().addWidget(QtGui.QLabel(str(parameter.order)), row, 2)
+        self.layout().addWidget(QtGui.QLabel(str(parameter.order)), row, 3)
+
+        return new_widget
         
 
 ## ParametersTableWidget
 #
-# A base class for parameter editting widgets.
+# A base class for parameter editing widgets.
 #
 class ParametersTableWidget(object):
 
     @hdebug.debug
-    def __init__(self, root_name, parameter, changed_signal, reverted_signal):
-        self.root_name = root_name
-        self.parameter = parameter
+    def __init__(self, root_name, parameter, changed_signal):
+        self.am_changed = False
         self.changed_signal = changed_signal
-        self.reverted_signal = reverted_signal
+        self.desc_label = None
+        self.name_label = None
+        self.p_name = root_name + "." + parameter.getName()
+        self.parameter = parameter
 
-        self.original_value = parameter.getv()
+    def resetChanged(self):
+        self.am_changed = False
+        self.name_label.setStyleSheet("QLabel { color: black }")
+        
+    def setChanged(self, changed):
+        if (changed != self.am_changed):
+            self.am_changed = changed
+            if changed:
+                self.name_label.setStyleSheet("QLabel { color: red }")
+                return "modified"
+            else:
+                self.name_label.setStyleSheet("QLabel { color: black }")
+                return "reverted"
+        return "nochange"
+    
+    # These are the other UI elements that we might want to
+    # modify that are associated with this parameter.
+    def setLabels(self, name_label, desc_label):
+        self.name_label = name_label
+        self.desc_label = desc_label
 
 
+## ParametersTableWidgetDirectory.
+#
+# A widget for choosing directories.
+#
+class ParametersTableWidgetDirectory(QtGui.QPushButton, ParametersTableWidget):
+
+    @hdebug.debug
+    def __init__(self, root_name, parameter, changed_signal, parent):
+        QtGui.QPushButton.__init__(self, str(parameter.getv()), parent)
+        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
+
+        self.setFlat(True)
+
+        self.clicked.connect(self.handleClick)
+
+    @hdebug.debug        
+    def handleClick(self,dummy):
+        directory = str(QtGui.QFileDialog.getExistingDirectory(self, 
+                                                               "Choose Directory", 
+                                                               self.text(),
+                                                               QtGui.QFileDialog.ShowDirsOnly))
+        if directory:
+            self.setText(directory)
+            self.changed_signal.emit(self.p_name, directory)
+
+
+## ParametersTableWidgetFilename.
+#
+# A widget for choosing filenames.
+#
+class ParametersTableWidgetFilename(QtGui.QPushButton, ParametersTableWidget):
+
+    @hdebug.debug
+    def __init__(self, root_name, parameter, changed_signal, parent):
+        QtGui.QPushButton.__init__(self, str(parameter.getv()), parent)
+        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
+
+        self.setFlat(True)
+
+        self.clicked.connect(self.handleClick)
+
+    @hdebug.debug        
+    def handleClick(self,dummy):
+        filename = str(QtGui.QFileDialog.getSaveFileName(self, 
+                                                         "Choose File", 
+                                                         os.path.dirname(str(self.text())),
+                                                         "*.*"))
+        if filename:
+            self.setText(filename)
+            self.changed_signal.emit(self.p_name, filename)
+
+                
 ## ParametersTableWidgetFloat
 #
 # A widget for floats without any range.
@@ -214,20 +345,16 @@ class ParametersTableWidget(object):
 class ParametersTableWidgetFloat(QtGui.QLineEdit, ParametersTableWidget):
 
     @hdebug.debug
-    def __init__(self, root_name, parameter, changed_signal, reverted_signal, parent):
+    def __init__(self, root_name, parameter, changed_signal, parent):
         QtGui.QLineEdit.__init__(self, str(parameter.getv()), parent)
-        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal, reverted_signal)
+        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
 
-        self.setValidator(QtGui.QFloatValidator(self))
+        self.setValidator(QtGui.QDoubleValidator(self))
         self.textChanged.connect(self.handleTextChanged)
 
     @hdebug.debug        
     def handleTextChanged(self, new_text):
-        new_flt = float(new_text)
-        if (new_flt == self.original_value):
-            print "reset"
-        else:
-            print "changed"
+        self.changed_signal.emit(self.p_name, float(new_text))
 
             
 ## ParametersTableWidgetInt
@@ -237,43 +364,18 @@ class ParametersTableWidgetFloat(QtGui.QLineEdit, ParametersTableWidget):
 class ParametersTableWidgetInt(QtGui.QLineEdit, ParametersTableWidget):
 
     @hdebug.debug
-    def __init__(self, root_name, parameter, changed_signal, reverted_signal, parent):
+    def __init__(self, root_name, parameter, changed_signal, parent):
         QtGui.QLineEdit.__init__(self, str(parameter.getv()), parent)
-        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal, reverted_signal)
+        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
 
         self.setValidator(QtGui.QIntValidator(self))
         self.textChanged.connect(self.handleTextChanged)
 
     @hdebug.debug        
     def handleTextChanged(self, new_text):
-        new_int = int(new_text)
-        if (new_int == self.original_value):
-            print "reset"
-        else:
-            print "changed"
+        self.changed_signal.emit(self.p_name, int(new_text))
 
-
-## ParametersTableWidgetString
-#
-# A widget for strings.
-#
-class ParametersTableWidgetString(QtGui.QLineEdit, ParametersTableWidget):
-
-    @hdebug.debug
-    def __init__(self, root_name, parameter, changed_signal, reverted_signal, parent):
-        QtGui.QLineEdit.__init__(self, str(parameter.getv()), parent)
-        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal, reverted_signal)
-
-        self.textChanged.connect(self.handleTextChanged)
-
-    @hdebug.debug
-    def handleTextChanged(self, new_text):
-        if (new_text == self.original_value):
-            print "reset"
-        else:
-            print "changed"
-
-            
+        
 ## ParametersTableWidgetRangeFloat
 #
 # A widget for floats with a range.
@@ -281,22 +383,19 @@ class ParametersTableWidgetString(QtGui.QLineEdit, ParametersTableWidget):
 class ParametersTableWidgetRangeFloat(QtGui.QDoubleSpinBox, ParametersTableWidget):
 
     @hdebug.debug
-    def __init__(self, root_name, parameter, changed_signal, reverted_signal, parent):
+    def __init__(self, root_name, parameter, changed_signal, parent):
         QtGui.QDoubleSpinBox.__init__(self, parent)
-        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal, reverted_signal)
+        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
 
-        self.setValue(parameter.getv())
         self.setMaximum(parameter.getMaximum())
         self.setMinimum(parameter.getMinimum())
+        self.setValue(parameter.getv())
         
         self.valueChanged.connect(self.handleValueChanged)
 
     @hdebug.debug
     def handleValueChanged(self, new_value):
-        if (new_value == self.original_value):
-            print "reset"
-        else:
-            print "changed"
+        self.changed_signal.emit(self.p_name, new_value)
 
             
 ## ParametersTableWidgetRangeInt
@@ -306,22 +405,19 @@ class ParametersTableWidgetRangeFloat(QtGui.QDoubleSpinBox, ParametersTableWidge
 class ParametersTableWidgetRangeInt(QtGui.QSpinBox, ParametersTableWidget):
 
     @hdebug.debug
-    def __init__(self, root_name, parameter, changed_signal, reverted_signal, parent):
+    def __init__(self, root_name, parameter, changed_signal, parent):
         QtGui.QSpinBox.__init__(self, parent)
-        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal, reverted_signal)
+        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
 
-        self.setValue(parameter.getv())
         self.setMaximum(parameter.getMaximum())
         self.setMinimum(parameter.getMinimum())
+        self.setValue(parameter.getv())
         
         self.valueChanged.connect(self.handleValueChanged)
 
     @hdebug.debug
     def handleValueChanged(self, new_value):
-        if (new_value == self.original_value):
-            print "reset"
-        else:
-            print "changed"
+        self.changed_signal.emit(self.p_name, new_value)
 
     
 ## ParametersTableWidgetSet
@@ -331,9 +427,9 @@ class ParametersTableWidgetRangeInt(QtGui.QSpinBox, ParametersTableWidget):
 class ParametersTableWidgetSet(QtGui.QComboBox, ParametersTableWidget):
 
     @hdebug.debug
-    def __init__(self, root_name, parameter, changed_signal, reverted_signal, parent):
+    def __init__(self, root_name, parameter, changed_signal, parent):
         QtGui.QComboBox.__init__(self, parent)
-        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal, reverted_signal)
+        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
 
         for allowed in parameter.getAllowed():
             self.addItem(str(allowed))
@@ -354,12 +450,7 @@ class ParametersTableWidgetSetBoolean(ParametersTableWidgetSet):
         new_value = False
         if (str(new_text) == "True"):
             new_value = True
-
-        print self.original_value, new_value
-        if (new_value == self.original_value):
-            print "reset", new_text
-        else:
-            print "changed", new_text
+        self.changed_signal.emit(self.p_name, new_value)
 
 
 ## ParametersTableWidgetSetFloat
@@ -370,11 +461,7 @@ class ParametersTableWidgetSetFloat(ParametersTableWidgetSet):
         
     @hdebug.debug
     def handleCurrentIndexChanged(self, new_text):
-        new_value = float(new_text)
-        if (new_value == self.original_value):
-            print "reset", new_value
-        else:
-            print "changed", new_value
+        self.changed_signal.emit(self.p_name, float(new_text))
             
             
 ## ParametersTableWidgetSetInt
@@ -385,11 +472,7 @@ class ParametersTableWidgetSetInt(ParametersTableWidgetSet):
         
     @hdebug.debug
     def handleCurrentIndexChanged(self, new_text):
-        new_value = int(new_text)
-        if (new_value == self.original_value):
-            print "reset", new_value
-        else:
-            print "changed", new_value
+        self.changed_signal.emit(self.p_name, int(new_text))
 
             
 ## ParametersTableWidgetSetString
@@ -400,12 +483,33 @@ class ParametersTableWidgetSetString(ParametersTableWidgetSet):
         
     @hdebug.debug
     def handleCurrentIndexChanged(self, new_text):
-        if (new_text == self.original_value):
-            print "reset", new_text
-        else:
-            print "changed", new_text
-        
+        self.changed_signal.emit(self.p_name, str(new_text))
 
+            
+## ParametersTableWidgetString
+#
+# A widget for strings.
+#
+class ParametersTableWidgetString(QtGui.QLineEdit, ParametersTableWidget):
+
+    @hdebug.debug
+    def __init__(self, root_name, parameter, changed_signal, parent):
+        QtGui.QLineEdit.__init__(self, str(parameter.getv()), parent)
+        ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
+        
+        self.metrics = QtGui.QFontMetrics(QtGui.QApplication.font())
+
+        self.textChanged.connect(self.handleTextChanged)
+
+    @hdebug.debug
+    def handleTextChanged(self, new_text):
+        self.changed_signal.emit(self.p_name, str(new_text))
+
+    def sizeHint(self):
+        text = self.text() + "----"
+        return self.metrics.size(QtCore.Qt.TextSingleLine, text)
+
+    
 ## ParametersRadioButton
 #
 # This class encapsulates a set of parameters and it's
@@ -414,7 +518,7 @@ class ParametersTableWidgetSetString(ParametersTableWidgetSet):
 class ParametersRadioButton(QtGui.QRadioButton):
 
     deleteSelected = QtCore.pyqtSignal()
-    updateSelected = QtCore.pyqtSignal()
+    updateClicked = QtCore.pyqtSignal(object)
 
     ## __init__
     #
@@ -448,9 +552,16 @@ class ParametersRadioButton(QtGui.QRadioButton):
     @hdebug.debug
     def contextMenuEvent(self, event):
         menu = QtGui.QMenu(self)
+
+        # If it is not the current button it can be deleted.
         if not self.isChecked():
             menu.addAction(self.delAct)
-        menu.addAction(self.editAct)
+
+        # If it is the current button it's parameters can be edited.
+        else:
+            menu.addAction(self.editAct)
+
+        # If it has been changed then it can be saved.
         if self.changed:
             menu.addAction(self.saveAct)
         menu.exec_(event.globalPos())
@@ -481,6 +592,7 @@ class ParametersRadioButton(QtGui.QRadioButton):
         if self.editor_dialog is None:
             self.editor_dialog = ParametersEditor(self.parameters, self)
             self.editor_dialog.destroyed.connect(self.handleEditorDestroyed)
+            self.editor_dialog.updateClicked.connect(self.handleUpdate)
         self.editor_dialog.show()
 
     ## handleEditorDestroyed
@@ -495,9 +607,25 @@ class ParametersRadioButton(QtGui.QRadioButton):
     # Handles the save action.
     #
     @hdebug.debug
-    def handleSave(self):
-        pass
-        #self.saveSelected.emit()
+    def handleSave(self, boolean):
+        filename = str(QtGui.QFileDialog.getSaveFileName(self, 
+                                                         "Choose File", 
+                                                         os.path.dirname(str(self.parameters.get("parameters_file"))),
+                                                         "*.xml"))
+        if filename:
+            self.changed = False
+            self.setText(getFileName(filename))
+            self.parameters.set("parameters_file", filename)
+            self.parameters.saveToFile(filename)
+
+    ## handleUpdate
+    #
+    # Handles when the update button is clicked in the parameters editor.
+    #
+    def handleUpdate(self):
+        self.changed = True
+        self.parameters = self.editor_dialog.getParameters()
+        self.updateClicked.emit(self)
 
 
 ## QParametersBox
@@ -542,6 +670,7 @@ class QParametersBox(QtGui.QWidget):
         self.layout.insertWidget(0, radio_button)
         radio_button.clicked.connect(self.toggleParameters)
         radio_button.deleteSelected.connect(self.handleDeleteSelected)
+        radio_button.updateClicked.connect(self.handleUpdateClicked)
         if (len(self.radio_buttons) == 1):
             radio_button.click()
 
@@ -603,6 +732,15 @@ class QParametersBox(QtGui.QWidget):
                 self.radio_buttons.remove(button)
                 button.close()
 
+    ## handleUpdateClicked
+    #
+    # Handles an updating of the radio buttons parameters event.
+    #
+    @hdebug.debug
+    def handleUpdateClicked(self, button):
+        self.current_parameters = button.getParameters()
+        self.settings_toggled.emit()
+        
     ## isValidParameters
     #
     # Returns true if the requested parameters exist.
