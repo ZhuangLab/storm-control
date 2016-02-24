@@ -11,22 +11,22 @@
 
   <!-- film settings -->
   <film>
-    <want_big_endian type="boolean">False</want_big_endian>
-    <directory type="string">C:\Data\</directory>
-    <filename type="string">movie</filename>
-    <acq_mode type="string" values="run_till_abort,fixed_length">fixed_length</acq_mode>
-    <frames type="int" min="1" max="1000000000">10</frames>
-    <logfile type="string">C:\Data\image_log.txt</logfile>
-    <extension type="string" values=",A647,Cy5,Cy3,Cy2,A405,FITC,YFP,GFP,BF"></extension>
-    <auto_increment type="boolean">True</auto_increment>
-    <want_bell type="boolean">True</want_bell>
-    <auto_shutters type="boolean">True</auto_shutters>
-    <filetype type="string" values=".dax">.dax</filetype>
+    <want_big_endian desc="Save movies using a big endian format" type="boolean">False</want_big_endian>
+    <directory desc="Current working directory" type="string">C:\Data\</directory>
+    <filename desc="Current movie file name" type="string">movie</filename>
+    <acq_mode desc="Acquisition mode" type="string" values="run_till_abort,fixed_length">fixed_length</acq_mode>
+    <frames desc="Movie length in frames" type="int" min="1" max="1000000000">10</frames>
+    <logfile desc="Image log file" type="string">C:\Data\image_log.txt</logfile>
+    <extension desc="Movie file name extension" type="string" values=",A647,Cy5,Cy3,Cy2,A405,FITC,YFP,GFP,BF"></extension>
+    <auto_increment desc="Automatically increment movie counter between movies" type="boolean">True</auto_increment>
+    <want_bell desc="Sound bell at the end of long movies" type="boolean">True</want_bell>
+    <auto_shutters desc="Run shutters during the movie" type="boolean">True</auto_shutters>
+    <filetype desc="Movie file type" type="string" values=".dax">.dax</filetype>
   </film>
 
   <!-- illumination settings -->
   <illumination>
-    <shutters type="string">shutters_default.xml</shutters>
+    <shutters desc="Shutters file to use when taking a movie" type="string">shutters_default.xml</shutters>
   </illumination>
 
   <!-- stage settings -->
@@ -55,10 +55,10 @@
     <flip_horizontal desc="Flip image horizontal (mosaic)" type="boolean">True</flip_horizontal>
     <flip_vertical desc="Flip image vertical (mosaic)" type="boolean">True</flip_vertical>
     <transpose desc="Transpose image (mosaic)" type="boolean">True</transpose>
-    <obj1 type="string">100x,100.0,0.0,0.0</obj1>
-    <obj2 type="string">10x,10.0,227.0,-69.0</obj2>
-    <obj3 type="string">2x,2.0,133.0,-244.0</obj3>
-    <pixels_to_um type="float">0.160</pixels_to_um>
+    <obj1 desc="100x objective" type="string">100x,100.0,0.0,0.0</obj1>
+    <obj2 desc="10x objective" type="string">10x,10.0,227.0,-69.0</obj2>
+    <obj3 desc="2x objective" type="string">2x,2.0,133.0,-244.0</obj3>
+    <pixels_to_um desc="Pixel size of the 100x objective in microns" type="float">0.160</pixels_to_um>
   </mosaic>
 
 </settings>
