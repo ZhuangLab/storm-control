@@ -60,6 +60,9 @@ class ParametersEditor(QtGui.QDialog):
         self.ui.setupUi(self)
         self.setWindowTitle(parameters.get("setup_name") + " Parameter Editor")
 
+        # Set parameters name.
+        self.updateParametersNameLabel()
+                                            
         # Remove all tabs.
         for i in range(self.ui.editTabWidget.count()):
             self.ui.editTabWidget.removeTab(0)
@@ -74,7 +77,7 @@ class ParametersEditor(QtGui.QDialog):
             new_tab.close()
         
         # Add tabs for each sub-section of the parameters.
-        attrs = self.parameters.getAttrs()
+        attrs = sorted(self.parameters.getAttrs())
         for attr in attrs:
             prop = self.parameters.getp(attr)
             if isinstance(prop, params.StormXMLObject):
@@ -102,9 +105,27 @@ class ParametersEditor(QtGui.QDialog):
             if (reply == QtGui.QMessageBox.No):
                 event.ignore()
 
+    def enableUpdateButton(self, state):
+        if state:
+            self.ui.updateButton.setEnabled(True)
+        else:
+            self.ui.updateButton.setEnabled(False)
+
+    ## getParameters
+    #
+    # Returns the original parameters. The original parameters are
+    # not changed unless the update button is pressed.
+    #
     def getParameters(self):
         return self.original_parameters
-    
+
+    ## handleParameterChanged
+    #
+    # Handles the parameterChanged signals from the various parameter
+    # editor widgets. Basically this just keeps track of how many
+    # parameters have been changed, if any and updates the enabled/disabled
+    # state of the update button.
+    #
     def handleParameterChanged(self, pname, pvalue):
         pname = str(pname)
         self.parameters.setv(pname, pvalue)
@@ -120,6 +141,11 @@ class ParametersEditor(QtGui.QDialog):
     def handleQuit(self, boolean):
         self.close()
 
+    ## handleUpdate
+    #
+    # Overwrites the original parameters with the modified
+    # parameters and sends the updateClicked signal.
+    #
     @hdebug.debug
     def handleUpdate(self, boolean):
         for widget in self.editor_widgets:
@@ -129,12 +155,33 @@ class ParametersEditor(QtGui.QDialog):
         self.n_changed = 0
         self.updateClicked.emit()
 
+    ## updateDisplay
+    #
+    # Changes the state of the editor display depending on
+    # whether or not there are changed parameters.
+    #
     def updateDisplay(self):
-        if (self.n_changed == 0):
-            self.ui.updateButton.setEnabled(False)
-        else:
-            self.ui.updateButton.setEnabled(True)
-        
+        self.enableUpdateButton(self.n_changed != 0)
+
+    ## updateParameters
+    #
+    # Once the update parameters has been pressed, HAL and the
+    # various modules may change some of the parameter values
+    # in their newParameters() methods. This function is used so
+    # that these changes are reflected in the individual editor
+    # widgets.
+    #
+    # Note that the self.original_parameters object is what
+    # was passed to HAL.
+    #
+    def updateParameters(self):
+        for widget_name in self.editor_widgets:
+            prop = self.original_parameters.getp(widget_name)
+            self.editor_widgets[widget_name].updateParameter(prop)
+
+    def updateParametersNameLabel(self):
+        self.ui.parametersNameLabel.setText(getFileName(self.original_parameters.get("parameters_file")))
+
 
 ## ParametersEditorTab
 #
@@ -168,6 +215,10 @@ class ParametersEditorTab(QtGui.QWidget):
                 param_props.append(prop)
 
         # Sort and add to the table.
+        #
+        # The keys in the widget dictionary correspond to the full name of
+        # the parameter, e.g. "camera1.exposure_time".
+        #
         param_props = sorted(param_props, key = operator.attrgetter('order', 'name'))
         for prop in param_props:
             new_widget = self.params_table.addParameter(root_name,
@@ -259,7 +310,6 @@ class ParametersTableWidget(object):
         self.desc_label = None
         self.name_label = None
         self.p_name = root_name + "." + parameter.getName()
-        self.parameter = parameter
 
     def resetChanged(self):
         self.am_changed = False
@@ -281,6 +331,9 @@ class ParametersTableWidget(object):
     def setLabels(self, name_label, desc_label):
         self.name_label = name_label
         self.desc_label = desc_label
+
+    def updateParameter(self, new_parameter):
+        pass
 
 
 ## ParametersTableWidgetDirectory.
@@ -308,6 +361,9 @@ class ParametersTableWidgetDirectory(QtGui.QPushButton, ParametersTableWidget):
             self.setText(directory)
             self.changed_signal.emit(self.p_name, directory)
 
+    def updateParameter(self, new_parameter):
+        self.setText(str(new_parameter.getv()))
+
 
 ## ParametersTableWidgetFilename.
 #
@@ -334,6 +390,9 @@ class ParametersTableWidgetFilename(QtGui.QPushButton, ParametersTableWidget):
             self.setText(filename)
             self.changed_signal.emit(self.p_name, filename)
 
+    def updateParameter(self, new_parameter):
+        self.setText(str(new_parameter.getv()))
+
                 
 ## ParametersTableWidgetFloat
 #
@@ -352,6 +411,9 @@ class ParametersTableWidgetFloat(QtGui.QLineEdit, ParametersTableWidget):
     @hdebug.debug        
     def handleTextChanged(self, new_text):
         self.changed_signal.emit(self.p_name, float(new_text))
+
+    def updateParameter(self, new_parameter):
+        self.setText(str(new_parameter.getv()))
 
             
 ## ParametersTableWidgetInt
@@ -372,6 +434,9 @@ class ParametersTableWidgetInt(QtGui.QLineEdit, ParametersTableWidget):
     def handleTextChanged(self, new_text):
         self.changed_signal.emit(self.p_name, int(new_text))
 
+    def updateParameter(self, new_parameter):
+        self.setText(str(new_parameter.getv()))
+        
         
 ## ParametersTableWidgetRangeFloat
 #
@@ -393,6 +458,13 @@ class ParametersTableWidgetRangeFloat(QtGui.QDoubleSpinBox, ParametersTableWidge
     @hdebug.debug
     def handleValueChanged(self, new_value):
         self.changed_signal.emit(self.p_name, new_value)
+
+    def updateParameter(self, new_parameter):
+        self.valueChanged.disconnect()
+        self.setMaximum(new_parameter.getMaximum())
+        self.setMinimum(new_parameter.getMinimum())
+        self.setValue(new_parameter.getv())
+        self.valueChanged.connect(self.handleValueChanged)
 
             
 ## ParametersTableWidgetRangeInt
@@ -416,6 +488,13 @@ class ParametersTableWidgetRangeInt(QtGui.QSpinBox, ParametersTableWidget):
     def handleValueChanged(self, new_value):
         self.changed_signal.emit(self.p_name, new_value)
 
+    def updateParameter(self, new_parameter):
+        self.valueChanged.disconnect()
+        self.setMaximum(new_parameter.getMaximum())
+        self.setMinimum(new_parameter.getMinimum())
+        self.setValue(new_parameter.getv())
+        self.valueChanged.connect(self.handleValueChanged)        
+
     
 ## ParametersTableWidgetSet
 #
@@ -435,7 +514,14 @@ class ParametersTableWidgetSet(QtGui.QComboBox, ParametersTableWidget):
 
         self.currentIndexChanged[str].connect(self.handleCurrentIndexChanged)
 
+    def updateParameter(self, new_parameter):        
+        self.currentIndexChanged[str].disconnect()
+        for allowed in new_parameter.getAllowed():
+            self.addItem(str(allowed))
+        self.setCurrentIndex(self.findText(str(new_parameter.getv())))
+        self.currentIndexChanged[str].connect(self.handleCurrentIndexChanged)
 
+        
 ## ParametersTableWidgetSetBoolean
 #
 # Boolean set.
@@ -506,6 +592,11 @@ class ParametersTableWidgetString(QtGui.QLineEdit, ParametersTableWidget):
         text = self.text() + "----"
         return self.metrics.size(QtCore.Qt.TextSingleLine, text)
 
+    def updateParameter(self, new_parameter):        
+        self.textChanged.disconnect()
+        self.setText(str(new_parameter.getv()))
+        self.textChanged.connect(self.handleTextChanged)
+        
     
 ## ParametersRadioButton
 #
@@ -563,6 +654,12 @@ class ParametersRadioButton(QtGui.QRadioButton):
             menu.addAction(self.saveAct)
         menu.exec_(event.globalPos())
 
+    ## enableEditor
+    #
+    def enableEditor(self):
+        if self.editor_dialog is not None:
+            self.editor_dialog.enableUpdateButton(self.isChecked())
+        
     ## getParameters
     #
     # @return The parameters associated with this radio button.
@@ -613,7 +710,9 @@ class ParametersRadioButton(QtGui.QRadioButton):
             self.changed = False
             self.setText(getFileName(filename))
             self.parameters.set("parameters_file", filename)
+            self.editor_dialog.updateParametersNameLabel()
             self.parameters.saveToFile(filename)
+            self.updateDisplay()
 
     ## handleUpdate
     #
@@ -623,8 +722,29 @@ class ParametersRadioButton(QtGui.QRadioButton):
         self.changed = True
         self.parameters = self.editor_dialog.getParameters()
         self.updateClicked.emit(self)
+        self.updateDisplay()
 
+    ## updateDisplay
+    #
+    def updateDisplay(self):
+        if self.changed:
+            #
+            # FIXME: I really wanted to change the text color but for reasons that
+            #        are completely opaque to me this appears to be impossible short
+            #        of creating a custom radio button widget.
+            #
+            self.setStyleSheet("QRadioButton { background-color: rgb(255,200,200); }")
+        else:
+            self.setStyleSheet("")
+        self.update()
 
+    ## updateParameters
+    #
+    def updateParameters(self):
+        if self.editor_dialog is not None:
+            self.editor_dialog.updateParameters()
+
+        
 ## QParametersBox
 #
 # This class handles displaying and interacting with
@@ -802,11 +922,21 @@ class QParametersBox(QtGui.QWidget):
     @hdebug.debug
     def toggleParameters(self, bool):
         for button in self.radio_buttons:
+            button.enableEditor()
             if button.isChecked() and (button != self.current_button):
                 self.current_button = button
                 self.current_parameters = button.getParameters()
                 self.settings_toggled.emit()
 
+    ## updateParameters
+    #
+    # This is called by HAL after calling newParameters so that any changes
+    # to the parameters can flow back to the parameter editor (if it exists).
+    #
+    def updateParameters(self):
+        for button in self.radio_buttons:
+            if button.isChecked():
+                button.updateParameters()
 
 #
 # The MIT License

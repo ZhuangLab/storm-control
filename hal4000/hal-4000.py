@@ -1028,11 +1028,14 @@ class Window(QtGui.QMainWindow):
         self.stopCamera()
         try:
             self.newParameters()
+
+        # FIXME: This should not catch all errors.
         except:
             hdebug.logText("bad parameters")
             QtGui.QMessageBox.information(self,
                                           "Bad parameters",
                                           traceback.format_exc())
+        self.parameters_box.updateParameters()
         self.startCamera()
 
     ## updateFilenameLabel

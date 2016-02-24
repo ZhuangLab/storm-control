@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'params-editor.ui'
 #
-# Created: Thu Feb 18 15:07:06 2016
+# Created: Wed Feb 24 09:37:44 2016
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -58,9 +58,14 @@ class Ui_Dialog(object):
         self.okButton.setObjectName(_fromUtf8("okButton"))
         self.horizontalLayout.addWidget(self.okButton)
         self.verticalLayout.addLayout(self.horizontalLayout)
-        self.gridLayout.addLayout(self.verticalLayout, 0, 0, 1, 1)
+        self.gridLayout.addLayout(self.verticalLayout, 1, 0, 1, 1)
+        self.parametersNameLabel = QtGui.QLabel(Dialog)
+        self.parametersNameLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.parametersNameLabel.setObjectName(_fromUtf8("parametersNameLabel"))
+        self.gridLayout.addWidget(self.parametersNameLabel, 0, 0, 1, 1)
 
         self.retranslateUi(Dialog)
+        self.editTabWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
@@ -69,4 +74,5 @@ class Ui_Dialog(object):
         self.editTabWidget.setTabText(self.editTabWidget.indexOf(self.tab2), _translate("Dialog", "Tab 2", None))
         self.updateButton.setText(_translate("Dialog", "Update", None))
         self.okButton.setText(_translate("Dialog", "Ok", None))
+        self.parametersNameLabel.setText(_translate("Dialog", "NA", None))
 

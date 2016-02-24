@@ -32,7 +32,7 @@
    <string>HAL-4000 Parameters Editor</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
+   <item row="1" column="0">
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
       <widget class="QTabWidget" name="editTabWidget">
@@ -83,6 +83,16 @@
       </layout>
      </item>
     </layout>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="parametersNameLabel">
+     <property name="text">
+      <string>NA</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
