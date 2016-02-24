@@ -516,6 +516,7 @@ class ParametersTableWidgetSet(QtGui.QComboBox, ParametersTableWidget):
 
     def updateParameter(self, new_parameter):        
         self.currentIndexChanged[str].disconnect()
+        self.clear()
         for allowed in new_parameter.getAllowed():
             self.addItem(str(allowed))
         self.setCurrentIndex(self.findText(str(new_parameter.getv())))
