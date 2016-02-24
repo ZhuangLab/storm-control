@@ -421,7 +421,13 @@ class ParameterRange(Parameter):
 
     def isRange(self):
         return True
-    
+
+    def setMaximum(self, new_maximum):
+        self.max_value = new_maximum
+
+    def setMinimum(self, new_minimum):
+        self.min_value = new_minimum
+
     def setv(self, new_value):
         if (new_value < self.min_value):
             self.value = self.min_value
