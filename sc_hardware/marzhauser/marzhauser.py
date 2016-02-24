@@ -68,9 +68,9 @@ class MarzhauserRS232(RS232.RS232):
     #
     def getSpeed(self):
         # FIXME: Need to figure out units for this..
-        return params.ParameterRangeFloat("Stage speed in AU",
+        return params.ParameterRangeFloat("Stage speed in revolutions/second",
                                           "stage_speed",
-                                          50.0, 1.0, 100.0)
+                                          2.0, 0.01, 200.0)
 
     ## getStatus
     #
