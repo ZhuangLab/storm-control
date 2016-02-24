@@ -351,7 +351,17 @@ class ACameraControl(cameraControl.HWCameraControl):
             self.camera.setADChannel(p.get("adchannel"))
 
             p.set("head_model", self.camera.getHeadModel())
-            p.set(["em_gain_low", "em_gain_high"], self.camera.getEMGainRange())
+
+            # Update parameters as necessary based on settings.
+            [gain_low, gain_high] = self.camera.getEMGainRange()
+            prop = p.getp("emccd_gain")
+            prop.setMinimum(gain_low)
+            prop.setMaximum(gain_high)
+            p.set(["em_gain_low", "em_gain_high"], [gain_low, gain_high])
+
+            hs_speeds = self.camera.getHSSpeeds()[p.get("adchannel")]
+            prop = p.getp("hsspeed")
+            prop.setAllowed(hs_speeds)
 
             hdebug.logText("Camera Initialized", False)
             self.got_camera = True
