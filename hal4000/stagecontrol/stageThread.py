@@ -45,7 +45,9 @@ from PyQt4 import QtCore
 #   Returns [x, y, z] stage position (in um).
 #
 # setVelocity(vx, vy)
-#   Set maximum stage velocity in x and y (in mm/sec).
+#   Set maximum stage velocity in x and y. Ideally this would be
+#   in mm/sec but this is not done very consistently and/or is 
+#   not possible for some stages.
 #
 # shutDown()
 #   Cleanup prior to the program quitting.
