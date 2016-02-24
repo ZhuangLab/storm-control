@@ -44,7 +44,11 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
         lock_params.add("ir_power", params.ParameterInt("", "ir_power", 6, is_mutable = False))
 
         # STORM4 Initialization
-        cam = uc480Cam.CameraQPD(camera_id = 1, x_width = 300, y_width = 50)
+        cam = uc480Cam.CameraQPD(camera_id = 1, 
+                                 x_width = 300, 
+                                 y_width = 50,
+                                 offset_file = "cam_offsets_storm4_1.txt")
+
         stage = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/")
         lock_fn = lambda (x): 0.09 * x
         control_thread = stageOffsetControl.StageCamThread(cam,
