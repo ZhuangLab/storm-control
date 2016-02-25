@@ -334,7 +334,7 @@ class Window(QtGui.QMainWindow):
         # Prepare and display dialog
         dialog = qtRangeSlider.QRangeSliderDialog(self,
                                                   "Adjust Contrast",
-                                                  slider_range = [0, 16000,1],
+                                                  slider_range = [0, 65000,1],
                                                   values = current_contrast)
 
         if dialog.exec_():
