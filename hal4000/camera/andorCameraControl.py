@@ -50,7 +50,6 @@ class ACameraControl(cameraControl.HWCameraControl):
 
         # FIXME: Need to get this value from the camera.
         max_intensity = self.camera.getMaxIntensity()
-        print max_intensity
         cam_params.add("max_intensity", params.ParameterInt("",
                                                             "max_intensity",
                                                             max_intensity,
