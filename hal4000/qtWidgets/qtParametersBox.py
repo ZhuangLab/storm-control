@@ -376,16 +376,22 @@ class ParametersTableWidgetFilename(QtGui.QPushButton, ParametersTableWidget):
         QtGui.QPushButton.__init__(self, str(parameter.getv()), parent)
         ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
 
+        if parameter.use_save_dialog:
+            self.fdialog = QtGui.QFileDialog.getSaveFileName
+        else:
+            self.fdialog = QtGui.QFileDialog.getOpenFileName
+
         self.setFlat(True)
 
         self.clicked.connect(self.handleClick)
 
     @hdebug.debug        
     def handleClick(self,dummy):
-        filename = str(QtGui.QFileDialog.getSaveFileName(self, 
-                                                         "Choose File", 
-                                                         os.path.dirname(str(self.text())),
-                                                         "*.*"))
+        
+        filename = str(self.fdialog(self, 
+                                    "Choose File", 
+                                    os.path.dirname(str(self.text())),
+                                    "*.*"))
         if filename:
             self.setText(filename)
             self.changed_signal.emit(self.p_name, filename)
