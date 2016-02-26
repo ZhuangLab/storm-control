@@ -32,12 +32,12 @@ def getFileName(path):
 #
 # Returns the appropriate editor widget for a custom parameter.
 
-def handleCustomParameter(root_name, parameter, changed_signal, reverted_signal, parent):
+def handleCustomParameter(root_name, parameter, changed_signal, parent):
     if parameter.editor is not None:
-        return parameter.editor(root_name, parameter, changed_signal, reverted_signal, parent)
+        return parameter.editor(root_name, parameter, changed_signal, parent)
     else:
-        return ParametersTableWidgetString(root_name, parameter, changed_signal, reverted_signal, parent)
-    
+        return ParametersTableWidgetString(root_name, parameter, changed_signal, parent)
+
 
 ## ParametersEditor
 #
