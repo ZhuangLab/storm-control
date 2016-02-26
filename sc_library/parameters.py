@@ -767,7 +767,7 @@ class StormXMLObject(object):
             prop.add(".".join(pnames[1:]), pvalue)
         else:
             self.addParameter(pname, pvalue)
-            
+
     ## addParameter
     #
     # Handles adding Parameters.
@@ -919,7 +919,7 @@ class StormXMLObject(object):
                 temp.setv(pvalue)
         except ParametersExceptionGet:
             self.add(pname, pvalue)
-        
+
     ## setv
     #
     # Set a Parameters (or Parameters). This is different from
