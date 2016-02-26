@@ -674,7 +674,7 @@ class ParametersRadioButton(QtGui.QRadioButton):
     # Handles the delete action.
     #
     @hdebug.debug
-    def handleDelete(self):
+    def handleDelete(self, boolean):
         self.delete_desired = True
         self.deleteSelected.emit()
 
