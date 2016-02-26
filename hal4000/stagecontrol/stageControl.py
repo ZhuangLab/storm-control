@@ -577,7 +577,8 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
     def stopFilm(self, film_writer):
         self.stopLockout()
         if film_writer:
-            film_writer.getParameters().set("acquisition.stage_position", [self.stage_x, self.stage_y, self.stage_z])
+            pos_string = "{0:.2f},{1:.2f},{2:.2f}".format(self.stage_x, self.stage_y, self.stage_z)
+            film_writer.getParameters().set("acquisition.stage_position", pos_string)
 
     ## stopLockout
     #

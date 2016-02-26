@@ -335,7 +335,7 @@ class Parameter(object):
         self.is_mutable = is_mutable
         self.name = name
         self.order = order
-        self.ptype = None
+        self.ptype = "string"
         self.value = value
     
     def getDescription(self):
@@ -362,10 +362,10 @@ class Parameter(object):
     def setv(self, new_value):
         self.value = new_value
 
-    # Should we also save any/all of the tags?
     def toXML(self, parent):
         if self.is_saved:
             field = ElementTree.SubElement(parent, self.name)
+            field.set("type", self.ptype)
             field.text = str(self.value)
             return field
 
@@ -379,6 +379,7 @@ class ParameterCustom(Parameter):
 
     def __init__(self, description, name, value, order, is_mutable = True, is_saved = True):
         Parameter.__init__(self, description, name, value, order, is_mutable, is_saved)
+        self.ptype = "custom"
         self.editor = None
 
         
@@ -388,6 +389,7 @@ class ParameterFloat(Parameter):
 
     def __init__(self, description, name, value, order = 1, is_mutable = True, is_saved = True):
         Parameter.__init__(self, description, name, float(value), order, is_mutable, is_saved)
+        self.ptype = "float"
 
     def setv(self, new_value):
         self.value = float(new_value)
@@ -399,6 +401,7 @@ class ParameterInt(Parameter):
 
     def __init__(self, description, name, value, order = 1, is_mutable = True, is_saved = True):
         Parameter.__init__(self, description, name, int(value), order, is_mutable, is_saved)
+        self.ptype = "int"
 
     def setv(self, new_value):
         self.value = int(new_value)
@@ -518,7 +521,7 @@ class ParameterSetBoolean(ParameterSet):
             return value
         elif isinstance(value, bool):
             return value
-        elif (value == "0") or (value == "False"):
+        elif (value == "0") or (value.lower() == "false"):
             return False
         else:
             return True
@@ -534,7 +537,7 @@ class ParameterSetFloat(ParameterSet):
     def __init__(self, description, name, value, allowed, order = 1, is_mutable = True, is_saved = True):
         allowed = map(float, allowed)
         ParameterSet.__init__(self, description, name, float(value), allowed, order, is_mutable, is_saved)
-        self.ptype = "int"
+        self.ptype = "float"
 
     def setv(self, new_value):
         ParameterSet.setv(self, float(new_value))
@@ -547,7 +550,7 @@ class ParameterSetInt(ParameterSet):
     def __init__(self, description, name, value, allowed, order = 1, is_mutable = True, is_saved = True):
         allowed = map(int, allowed)
         ParameterSet.__init__(self, description, name, int(value), allowed, order, is_mutable, is_saved)
-        self.ptype = "float"
+        self.ptype = "int"
         
     def setv(self, new_value):
         ParameterSet.setv(self, int(new_value))
@@ -562,7 +565,6 @@ class ParameterSetString(ParameterSet):
         if value is None:
             value = ''
         ParameterSet.__init__(self, description, name, str(value), allowed, order, is_mutable, is_saved)
-        self.ptype = "string"
 
     def setv(self, new_value):
         if new_value is None:
