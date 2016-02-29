@@ -247,6 +247,17 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
         self.tcp_message.addResponse("found_sum", lock_sum)
         self.tcpComplete.emit(self.tcp_message)
 
+    ## handleFoundFocus
+    #
+    # Notify external program (via TCP/IP) that the focus has been found.
+    #
+    # @param focus_status The focus status.
+    #
+    @hdebug.debug
+    def handleFoundFocus(self, focus_status):
+        self.tcp_message.addResponse("focus_status", focus_status)
+        self.tcpComplete.emit(self.tcp_message)
+
     ## handleJumpPButton
     #
     # Handles the jump+ button.
@@ -410,13 +421,21 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
         if film_writer:
             film_writer.getParameters().set("acquisition.lock_target", self.lock_display1.getLockTarget())
 
+    ## tcpHandleFindFocus
+    #
+    # Handle find sum requests that come via TCP/IP.
+    #
+    @hdebug.debug
+    def tcpHandleFindFocus(self, min_sum):
+        self.lock_display1.tcpHandleFindFocus(min_sum)
+
     ## tcpHandleFindSum
     #
     # Handle find sum requests that come via TCP/IP.
     #
     @hdebug.debug
-    def tcpHandleFindSum(self, min_sum):
-        self.lock_display1.tcpHandleFindSum(min_sum)
+    def tcpHandleFindSum(self):
+        self.lock_display1.tcpHandleFindSum()
 
     ## tcpHandleOptimizeSum
     #
@@ -468,12 +487,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
                 if scan_focus is True:
                     print "Scanning for the focus"
                     # Get minimum sum for FindSum scan
-                    min_sum = self.tcp_message.getData("min_sum")
-                    if min_sum is None: # Not provided. Use default for parameters.
-                        min_sum = self.parameters.get("qpd_sum_min", 50)
-
-                    # Send scan command
-                    self.tcpHandleFindSum(min_sum) # message is returned by handleFoundSum
+                    self.tcpHandleFindFocus() # If no min sum is provided, run FindFocus
                     
                 else: # No scan, just return error
                     self.tcp_message.addResponse("focus_status", focus_status)
@@ -553,6 +567,7 @@ class FocusLockZQPD(FocusLockZ):
                                                         self.ui.lockDisplayWidget)
         self.lock_display1.foundOptimal.connect(self.handleFoundOptimal)
         self.lock_display1.foundSum.connect(self.handleFoundSum)
+        self.lock_display1.foundFocus.connect(self.handleFoundFocus)
         self.lock_display1.recenteredPiezo.connect(self.handleRecenteredPiezo)
 
         FocusLockZ.configureUI(self)
@@ -589,6 +604,7 @@ class FocusLockZCam(FocusLockZ):
                                                         self.ui.lockDisplayWidget)
         self.lock_display1.foundOptimal.connect(self.handleFoundOptimal)
         self.lock_display1.foundSum.connect(self.handleFoundSum)
+        self.lock_display1.foundFocus.connect(self.handleFoundFocus)
         self.lock_display1.recenteredPiezo.connect(self.handleRecenteredPiezo)
 
         FocusLockZ.configureUI(self)

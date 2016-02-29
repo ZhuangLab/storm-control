@@ -30,6 +30,7 @@ import focuslock.lockModes as lockModes
 class LockDisplay(QtGui.QWidget):
     foundOptimal = QtCore.pyqtSignal(float)
     foundSum = QtCore.pyqtSignal(float)
+    foundFocus = QtCore.pyqtSignal(bool)
     lockDisplay = QtCore.pyqtSignal(object)
     lockStatus = QtCore.pyqtSignal(float, float)
     recenteredPiezo = QtCore.pyqtSignal()
@@ -234,6 +235,14 @@ class LockDisplay(QtGui.QWidget):
     def handleFoundSum(self, sum):
         self.foundSum.emit(sum)
 
+    ## handleFoundFocus
+    #
+    # Handles the foundFocus signal from the focus lock control thread.
+    #
+    @hdebug.debug
+    def handleFoundFocus(self, focus_status):
+        self.foundSum.emit(focus_status)
+
     ## handleIrButton
     #
     # Handles the IR laser button. Turns the laser on/off and
@@ -364,6 +373,13 @@ class LockDisplay(QtGui.QWidget):
     @hdebug.debug
     def stopLock(self):
         self.current_mode.stopLock()
+
+    ## tcpHandleFindFocus
+    #
+    # Tell the control thread to execute the find focus signal procedure.
+    #
+    def tcpHandleFindFocus(self):
+        self.control_thread.findFocus()
 
     ## tcpHandleFindSum
     #
