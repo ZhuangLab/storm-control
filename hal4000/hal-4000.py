@@ -694,7 +694,7 @@ class Window(QtGui.QMainWindow):
         # then update shutter data using the shutter file specified by 
         # the parameters file.
         if p.get("illumination", False):
-            if (p.get("illumination.shutter_frames") == -1):
+            if (p.get("illumination.shutters") != p.get("illumination.last_shutters")):
                 self.newShutters(p.get("illumination.shutters"))
             else:
                 self.ui.shuttersText.setText(getFileName(p.get("illumination.shutters")))
@@ -807,6 +807,7 @@ class Window(QtGui.QMainWindow):
             self.parameters.set("illumination.shutters", self.old_shutters_file)
         if new_shutters:
             self.parameters.set("illumination.shutters", shutters_filename)
+            self.parameters.set("illumination.last_shutters", shutters_filename)
             self.old_shutters_file = shutters_filename
             self.ui.shuttersText.setText(getFileName(self.parameters.get("illumination.shutters")))
             params.setDefaultShutter(shutters_filename)

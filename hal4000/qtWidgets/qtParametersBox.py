@@ -32,12 +32,12 @@ def getFileName(path):
 #
 # Returns the appropriate editor widget for a custom parameter.
 
-def handleCustomParameter(root_name, parameter, changed_signal, reverted_signal, parent):
+def handleCustomParameter(root_name, parameter, changed_signal, parent):
     if parameter.editor is not None:
-        return parameter.editor(root_name, parameter, changed_signal, reverted_signal, parent)
+        return parameter.editor(root_name, parameter, changed_signal, parent)
     else:
-        return ParametersTableWidgetString(root_name, parameter, changed_signal, reverted_signal, parent)
-    
+        return ParametersTableWidgetString(root_name, parameter, changed_signal, parent)
+
 
 ## ParametersEditor
 #
@@ -376,16 +376,22 @@ class ParametersTableWidgetFilename(QtGui.QPushButton, ParametersTableWidget):
         QtGui.QPushButton.__init__(self, str(parameter.getv()), parent)
         ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
 
+        if parameter.use_save_dialog:
+            self.fdialog = QtGui.QFileDialog.getSaveFileName
+        else:
+            self.fdialog = QtGui.QFileDialog.getOpenFileName
+
         self.setFlat(True)
 
         self.clicked.connect(self.handleClick)
 
     @hdebug.debug        
     def handleClick(self,dummy):
-        filename = str(QtGui.QFileDialog.getSaveFileName(self, 
-                                                         "Choose File", 
-                                                         os.path.dirname(str(self.text())),
-                                                         "*.*"))
+        
+        filename = str(self.fdialog(self, 
+                                    "Choose File", 
+                                    os.path.dirname(str(self.text())),
+                                    "*.*"))
         if filename:
             self.setText(filename)
             self.changed_signal.emit(self.p_name, filename)
@@ -674,7 +680,7 @@ class ParametersRadioButton(QtGui.QRadioButton):
     # Handles the delete action.
     #
     @hdebug.debug
-    def handleDelete(self):
+    def handleDelete(self, boolean):
         self.delete_desired = True
         self.deleteSelected.emit()
 

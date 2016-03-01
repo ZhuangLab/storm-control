@@ -117,7 +117,7 @@ class Image():
         self.parameters_file = params.get("parameters_file")
         self.width = size[1]
 
-        location = params.get("acquisition.stage_position")
+        location = map(float, params.get("acquisition.stage_position").split(","))
         self.x_um = location[0]
         self.y_um = location[1]
 

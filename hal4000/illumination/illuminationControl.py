@@ -79,6 +79,14 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
             buttons.append([["Max", 1.0], ["Low", 0.1]])
         self.parameters.set("illumination.power_buttons", buttons)
 
+        # This parameter is used to be able to tell when the shutters file
+        # has been changed for a given set of parameters.
+        self.parameters.add("illumination.last_shutters", params.ParameterString("Last shutters file name",
+                                                                                "last_shutters",
+                                                                                "",
+                                                                                is_mutable = False,
+                                                                                is_saved = False))
+
         # Hardware modules setup.
         for module in hardware.modules:
             m_name = module.module_name

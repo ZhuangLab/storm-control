@@ -335,7 +335,7 @@ class Parameter(object):
         self.is_mutable = is_mutable
         self.name = name
         self.order = order
-        self.ptype = None
+        self.ptype = "string"
         self.value = value
     
     def getDescription(self):
@@ -362,10 +362,10 @@ class Parameter(object):
     def setv(self, new_value):
         self.value = new_value
 
-    # Should we also save any/all of the tags?
     def toXML(self, parent):
         if self.is_saved:
             field = ElementTree.SubElement(parent, self.name)
+            field.set("type", self.ptype)
             field.text = str(self.value)
             return field
 
@@ -379,6 +379,7 @@ class ParameterCustom(Parameter):
 
     def __init__(self, description, name, value, order, is_mutable = True, is_saved = True):
         Parameter.__init__(self, description, name, value, order, is_mutable, is_saved)
+        self.ptype = "custom"
         self.editor = None
 
         
@@ -388,6 +389,7 @@ class ParameterFloat(Parameter):
 
     def __init__(self, description, name, value, order = 1, is_mutable = True, is_saved = True):
         Parameter.__init__(self, description, name, float(value), order, is_mutable, is_saved)
+        self.ptype = "float"
 
     def setv(self, new_value):
         self.value = float(new_value)
@@ -399,6 +401,7 @@ class ParameterInt(Parameter):
 
     def __init__(self, description, name, value, order = 1, is_mutable = True, is_saved = True):
         Parameter.__init__(self, description, name, int(value), order, is_mutable, is_saved)
+        self.ptype = "int"
 
     def setv(self, new_value):
         self.value = int(new_value)
@@ -518,7 +521,7 @@ class ParameterSetBoolean(ParameterSet):
             return value
         elif isinstance(value, bool):
             return value
-        elif (value == "0") or (value == "False"):
+        elif (value == "0") or (value.lower() == "false"):
             return False
         else:
             return True
@@ -534,7 +537,7 @@ class ParameterSetFloat(ParameterSet):
     def __init__(self, description, name, value, allowed, order = 1, is_mutable = True, is_saved = True):
         allowed = map(float, allowed)
         ParameterSet.__init__(self, description, name, float(value), allowed, order, is_mutable, is_saved)
-        self.ptype = "int"
+        self.ptype = "float"
 
     def setv(self, new_value):
         ParameterSet.setv(self, float(new_value))
@@ -547,7 +550,7 @@ class ParameterSetInt(ParameterSet):
     def __init__(self, description, name, value, allowed, order = 1, is_mutable = True, is_saved = True):
         allowed = map(int, allowed)
         ParameterSet.__init__(self, description, name, int(value), allowed, order, is_mutable, is_saved)
-        self.ptype = "float"
+        self.ptype = "int"
         
     def setv(self, new_value):
         ParameterSet.setv(self, int(new_value))
@@ -562,7 +565,6 @@ class ParameterSetString(ParameterSet):
         if value is None:
             value = ''
         ParameterSet.__init__(self, description, name, str(value), allowed, order, is_mutable, is_saved)
-        self.ptype = "string"
 
     def setv(self, new_value):
         if new_value is None:
@@ -603,10 +605,15 @@ class ParameterStringDirectory(ParameterString):
 
 ## ParameterStringFilename
 #
-# This is parameter whose contents are the name of a directory.
+# This is parameter whose contents are the name of a file.
 #
 class ParameterStringFilename(ParameterString):
-    pass
+
+    def __init__(self, description, name, value, use_save_dialog, order = 1, is_mutable = True, is_saved = True):
+
+        # Whether we should use a file open or a file save dialog.
+        self.use_save_dialog = use_save_dialog
+        ParameterString.__init__(self, description, name, value, order, is_mutable, is_saved)
 
 
 ## StormXMLObject
@@ -641,6 +648,7 @@ class StormXMLObject(object):
             #
             if node.attrib.get("type", False):
                 description = node.attrib.get("desc", "None")
+                mutable = (node.attrib.get("mutable", "true").lower() == "true")
                 node_type = node.attrib.get("type")
                 order = int(node.attrib.get("order", 1))
 
@@ -649,7 +657,8 @@ class StormXMLObject(object):
                     param = ParameterSetBoolean(description,
                                                 node.tag,
                                                 node.text,
-                                                order)
+                                                order,
+                                                mutable)
 
                 # Ranges.
                 elif node.attrib.get("min", False):
@@ -661,14 +670,16 @@ class StormXMLObject(object):
                                                     node.text,
                                                     min_value,
                                                     max_value,
-                                                    order)
+                                                    order,
+                                                    mutable)
                     elif (node_type == "int"):
                         param = ParameterRangeInt(description,
                                                   node.tag,
                                                   node.text,
                                                   min_value,
                                                   max_value,
-                                                  order)
+                                                  order,
+                                                  mutable)
                     else:
                         raise ParametersException("unrecognized range type, " + node_type)
 
@@ -680,42 +691,47 @@ class StormXMLObject(object):
                                                   node.tag,
                                                   node.text,
                                                   allowed,
-                                                  order)
+                                                  order,
+                                                  mutable)
                     elif (node_type == "int"):
                         param = ParameterSetInt(description,
                                                 node.tag,
                                                 node.text,
                                                 allowed,
-                                                order)
+                                                order,
+                                                mutable)
                     elif (node_type == "string"):
                         param = ParameterSetString(description,
                                                    node.tag,
                                                    node.text,
                                                    allowed,
-                                                   order)
+                                                   order,
+                                                   mutable)
                     else:
                         raise ParametersException("unrecognized set type, " + node_type)
 
                 # The fallback if the element is not a set or a range.
                 elif (node_type == "float"):
-                    param = ParameterFloat(description, node.tag, node.text, order)
+                    param = ParameterFloat(description, node.tag, node.text, order, mutable)
 
                 elif (node_type == "int"):
-                    param = ParameterInt(description, node.tag, node.text, order)
+                    param = ParameterInt(description, node.tag, node.text, order, mutable)
 
                 # Other types of elements.
                 elif (node_type == "custom"):
-                    param = ParameterCustom(description, node.tag, node.text, order)
+                    param = ParameterCustom(description, node.tag, node.text, order, mutable)
 
                 elif (node_type == "directory"):
-                    param = ParameterStringDirectory(description, node.tag, node.text, order)
+                    param = ParameterStringDirectory(description, node.tag, node.text, order, mutable)
                     
                 elif (node_type == "filename"):
-                    param = ParameterStringFilename(description, node.tag, node.text, order)
+                    if (node.attrib.get("use_save_dialog", "false").lower() == "true"):
+                        param = ParameterStringFilename(description, node.tag, node.text, True, order, mutable)
+                    else:
+                        param = ParameterStringFilename(description, node.tag, node.text, False, order, mutable)
 
                 elif (node_type == "string"):
-                    param = ParameterString(description, node.tag, node.text, order)
-
+                    param = ParameterString(description, node.tag, node.text, order, mutable)
             
                 else:
                     raise ParametersException("unrecognized type, " + node_type)
@@ -751,7 +767,7 @@ class StormXMLObject(object):
             prop.add(".".join(pnames[1:]), pvalue)
         else:
             self.addParameter(pname, pvalue)
-            
+
     ## addParameter
     #
     # Handles adding Parameters.
@@ -903,7 +919,7 @@ class StormXMLObject(object):
                 temp.setv(pvalue)
         except ParametersExceptionGet:
             self.add(pname, pvalue)
-        
+
     ## setv
     #
     # Set a Parameters (or Parameters). This is different from
