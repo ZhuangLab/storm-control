@@ -12,11 +12,11 @@
   <!-- film settings -->
   <film>
     <want_big_endian desc="Save movies using a big endian format" type="boolean">False</want_big_endian>
-    <directory desc="Current working directory" type="string">C:\Data\</directory>
+    <directory desc="Current working directory" type="directory">C:\Data\</directory>
     <filename desc="Current movie file name" type="string">movie</filename>
     <acq_mode desc="Acquisition mode" type="string" values="run_till_abort,fixed_length">fixed_length</acq_mode>
     <frames desc="Movie length in frames" type="int" min="1" max="1000000000">10</frames>
-    <logfile desc="Image log file" type="string">C:\Data\image_log.txt</logfile>
+    <logfile desc="Image log file" type="filename">C:\Data\image_log.txt</logfile>
     <extension desc="Movie file name extension" type="string" values=",A647,Cy5,Cy3,Cy2,A405,FITC,YFP,GFP,BF"></extension>
     <auto_increment desc="Automatically increment movie counter between movies" type="boolean">True</auto_increment>
     <want_bell desc="Sound bell at the end of long movies" type="boolean">True</want_bell>
@@ -26,7 +26,7 @@
 
   <!-- illumination settings -->
   <illumination>
-    <shutters desc="Shutters file to use when taking a movie" type="string">shutters_default.xml</shutters>
+    <shutters desc="Shutters file to use when taking a movie" type="filename">shutters_default.xml</shutters>
   </illumination>
 
   <!-- stage settings -->
