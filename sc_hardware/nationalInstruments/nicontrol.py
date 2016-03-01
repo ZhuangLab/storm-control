@@ -49,6 +49,16 @@ def getLockForBoard(board):
         niLocks[board] = threading.RLock()
     return niLocks[board]
 
+## NIException
+#
+# National instruments error.
+#
+class NIException(Exception):
+
+    def __init__(self, message):
+        Exception.__init__(self, message)
+
+
 #
 # Utility functions
 #
@@ -72,7 +82,7 @@ def checkStatus(status):
         print " --"
 
         # FIXME? This error should be thrown, and caller should decide to ignore it (or not).
-        #raise RuntimeError('nidaq call failed with error %d: %s'%(status, buf.value))
+        raise NIException(str(status) + " " + buf.value)
 
     return status
 

@@ -181,10 +181,8 @@ def setFloat(handle, command, float_value):
     success, min_value, max_value = getFloatRange(handle, command)
     if float_value < min_value:
         float_value = min_value
-        print "Coerced " + str(command) + " to " + str(float_value)
     elif float_value > max_value:
         float_value = max_value
-        print "Coerced " + str(command) + " to " + str(float_value)
 
     return check(sdk3.AT_SetFloat(handle, 
                                   ctypes.c_wchar_p(command), 
