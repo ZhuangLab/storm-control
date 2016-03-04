@@ -23,10 +23,11 @@
 
     <control_module>
       <name>wheel1</name>
-      <module_name>sc_hardware.thorlabs.FW212C</module_name>
+      <module_name>sc_hardware.thorlabs.FW102C</module_name>
       <class_name>HalFW102C</class_name>
       <parameters>
 	<port>COM23</port>
+	<baud_rate>115200</baud_rate>
       </parameters>
     </control_module>
 
