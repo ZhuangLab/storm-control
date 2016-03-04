@@ -43,10 +43,11 @@ def copyParameters(ori_parameters, new_parameters):
     # Check and add any new parameters.
     unrecognized = copyParametersAddNew(params, new_parameters, new_parameters._is_new_)
     if (len(unrecognized) > 0):
-        if False:
+        if True:
             QtGui.QMessageBox.information(None,
                                           "Bad Parameters?",
-                                          "The following parameters were not recognized: " + ", ".join(unrecognized))
+                                          "The following parameters were not recognized: " + ", ".join(unrecognized) + ". Perhaps they are not in the correct sub-section?")
+            #raise ParametersException("Unrecognized parameters.")
         else:
             print "The following parameters were not recognized: " + ", ".join(unrecognized)
             
@@ -93,11 +94,10 @@ def copyParametersAddNew(ori_parameters, new_parameters, allow_new):
 
         else:
             if not ori_parameters.has(attr):
-                ori_parameters.set(attr, prop)
-                if not allow_new:
-                    #if attr in new_parameters.getUnused():
+                if allow_new:
+                    ori_parameters.set(attr, prop)
+                else:
                     unrecognized.append(attr)
-                        #raise ParametersException("Unrecognized new parameter " + attr)
 
     return unrecognized
 
