@@ -132,9 +132,10 @@ def writeInfFile(filename, number_frames, parameters, camera):
         fp.write("y_end = " + str(c.get("y_end")) + nl)
 
         # Additional info
-        fp.write("Stage X = {0:.2f}".format(p.get("acquisition.stage_position")[0]) + nl)
-        fp.write("Stage Y = {0:.2f}".format(p.get("acquisition.stage_position")[1]) + nl)
-        fp.write("Stage Z = {0:.2f}".format(p.get("acquisition.stage_position")[2]) + nl)
+        stage_pos = p.get("acquisition.stage_position").split(",")
+        fp.write("Stage X = " + stage_pos[0] + nl)
+        fp.write("Stage Y = " + stage_pos[1] + nl)
+        fp.write("Stage Z = " + stage_pos[2] + nl)
         fp.write("Lock Target = " + str(p.get("acquisition.lock_target")) + nl)
          
     fp.write("notes = " + str(p.get("film.notes")) + nl)
@@ -164,13 +165,12 @@ class GenericFile:
         self.feed_names = feed_names
         self.is_open = True
         self.parameters = parameters.copy()
-        self.parameters.set("acquisition", params.StormXMLObject([]))
         
         # FIXME: different cameras could have different lock targets.
-        self.parameters.set("acquisition.lock_target", 0.0)
-        self.parameters.set("acquisition.time", str(datetime.datetime.now()))
-        self.parameters.set("acquisition.spot_counts", "NA")
-        self.parameters.set("acquisition.stage_position", [0.0, 0.0, 0.0])
+        self.parameters.add("acquisition.lock_target", params.Parameter("", "lock_target", 0.0, 1, False, True))
+        self.parameters.add("acquisition.spot_counts", params.Parameter("", "spot_counts", "NA", 1, False, True))
+        self.parameters.add("acquisition.stage_position", params.ParameterCustom("", "stage_position", "0.0,0.0,0.0", 1, False, True))
+        self.parameters.add("acquisition.time", str(datetime.datetime.now()))
 
         self.filename = filename
         self.filenames = []
@@ -241,8 +241,8 @@ class GenericFile:
 
             # Save the parameters, but only for the cameras.
             if feeds.isCamera(self.feed_names[i]):            
-                self.parameters.set("acquisition.camera", "camera" + str(i+1))
-                self.parameters.set("acquisition.number_frames", self.number_frames[i])
+                self.parameters.add("acquisition.camera", params.Parameter("", "camera", "camera" + str(i+1), 1, False, True))
+                self.parameters.add("acquisition.number_frames", params.Parameter("", "number_frames", self.number_frames[i], 1, False, True))
                 self.parameters.saveToFile(filename + ".xml")
 
         self.is_open = False
@@ -274,27 +274,6 @@ class GenericFile:
     #
     def getSpotCounts(self):
         return self.parameters.get("acquisition.spot_counts")
-
-#    ## setLockTarget()
-#    #
-#    # @param lock_target The film's lock target.
-#    #
-#    def setLockTarget(self, lock_target):
-#        self.lock_target = lock_target
-#
-#    ## setSpotCounts()
-#    #
-#    # @param spot_counts The film's spot counts (this is saved as a string).
-#    #
-#    def setSpotCounts(self, spot_counts):
-#        self.spot_counts = spot_counts
-#
-#    ## setStagePosition()
-#    #
-#    # @param stage_position The new stage position.
-#    #
-#    def setStagePosition(self, stage_position):
-#        self.stage_position = stage_position
 
     ## totalFilmSize
     #

@@ -27,7 +27,7 @@ def runModule(module_type, setup_name = False):
     hardware = params.hardware("xml/" + setup_name + "_hardware.xml")
 
     found = False
-    for module in hardware.get("modules").getSubXMLObjects():
+    for module in hardware.get("modules").getProps():
         if (module.get("hal_type") == module_type):
             a_module = __import__(module.get("module_name"), globals(), locals(), [setup_name], -1)
             a_class = getattr(a_module, module.get("class_name"))

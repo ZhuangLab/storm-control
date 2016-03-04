@@ -21,6 +21,7 @@ from PyQt4 import QtCore, QtGui
 
 import halLib.halModule as halModule
 import qtWidgets.qtAppIcon as qtAppIcon
+import sc_library.parameters as params
 
 # Debugging
 import sc_library.hdebug as hdebug
@@ -412,6 +413,38 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
         self.use_was_checked = False
         self.which_checked = []
 
+        # Add progression parameters.
+        self.parameters.add("progressions.use_progressions",
+                            params.ParameterSetBoolean("",
+                                                       "use_progressions",
+                                                       False,
+                                                       is_mutable = False,
+                                                       is_saved = False))
+        self.parameters.add("progressions.pstart_value",
+                            params.ParameterRangeFloat("",
+                                                       "pstart_value",
+                                                       0.1,
+                                                       0.0,
+                                                       1.0,
+                                                       is_mutable = False,
+                                                       is_saved = False))
+        self.parameters.add("progressions.pinc_value",
+                            params.ParameterRangeFloat("",
+                                                       "pinc_value",
+                                                       0.01,
+                                                       0.0,
+                                                       1.0,
+                                                       is_mutable = False,
+                                                       is_saved = False))
+        self.parameters.add("progressions.pframe_value",
+                            params.ParameterRangeInt("",
+                                                     "pframe_value",
+                                                     1000,
+                                                     100,
+                                                     100000,
+                                                     is_mutable = False,
+                                                     is_saved = False))
+        
         if parent:
             self.have_parent = 1
         else:

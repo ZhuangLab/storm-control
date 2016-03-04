@@ -16,6 +16,7 @@ from PyQt4 import QtCore
 # Debugging
 import sc_library.hdebug as hdebug
 
+import sc_library.parameters as params
 import camera.frame as frame
 
 ## CameraControl
@@ -50,25 +51,41 @@ class CameraControl(QtCore.QThread):
     # Create a CameraControl object.
     #
     # @param hardware A hardware object.
+    # @param parameters A parameters object.
     # @param parent (Optional) The PyQt parent of this CameraControl object.
     #
     @hdebug.debug
-    def __init__(self, hardware, parent = None):
+    def __init__(self, hardware, parameters, parent = None):
         QtCore.QThread.__init__(self, parent)
 
-        # other class initializations
+        # Other class initializations
         self.acquire = IdleActive()
         self.frame_number = 0
         self.key = -1
         self.mutex = QtCore.QMutex()
-        self.parameters = None
+        self.parameters = parameters
         self.running = True
         self.shutter = False
 
-        # camera initialization
+        # Camera initialization
         self.camera = False
         self.got_camera = False
         self.reversed_shutter = False
+
+        self.parameters.add("camera1.save", params.ParameterSetBoolean("",
+                                                                       "save",
+                                                                       True,
+                                                                       is_mutable = False))
+        self.parameters.add("camera1.x_pixels", params.ParameterInt("",
+                                                                    "x_pixels",
+                                                                    1,
+                                                                    is_mutable = False,
+                                                                    is_saved = True))
+        self.parameters.add("camera1.y_pixels", params.ParameterInt("",
+                                                                    "y_pixels",
+                                                                    1,
+                                                                    is_mutable = False,
+                                                                    is_saved = True))
 
     ## cameraInit
     #
