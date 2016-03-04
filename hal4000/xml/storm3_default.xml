@@ -17,7 +17,7 @@
     <acq_mode desc="Acquisition mode" type="string" values="run_till_abort,fixed_length">fixed_length</acq_mode>
     <frames desc="Movie length in frames" type="int" min="1" max="1000000000">10</frames>
     <logfile desc="Image log file" type="filename">C:\Data\image_log.txt</logfile>
-    <extension desc="Movie file name extension" type="string" values=",A647,Cy5,Cy3,Cy2,A405,FITC,YFP,GFP,BF"></extension>
+    <extension desc="Movie file name extension" type="string" values=",A750,A647,Cy5,Cy3,Cy2,A405,FITC,YFP,GFP,BF"></extension>
     <auto_increment desc="Automatically increment movie counter between movies" type="boolean">True</auto_increment>
     <want_bell desc="Sound bell at the end of long movies" type="boolean">True</want_bell>
     <auto_shutters desc="Run shutters during the movie" type="boolean">True</auto_shutters>
