@@ -111,6 +111,10 @@ def copyParametersAddNew(ori_parameters, new_parameters, allow_new):
 # @param original The original parameters object.
 # @param new The new parameters object.
 #
+# Notes
+#  1. For now this will also handle "old" flat style parameter
+#     lists, thought that may change in the future.
+#
 def copyParametersReplace(root, original, new):
 
     for attr in original.getAttrs():
