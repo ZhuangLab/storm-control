@@ -316,10 +316,13 @@ class StageQPDThread(QtCore.QThread):
             self.unacknowledged = 0
 
             # Determine focus lock status and update buffer
-            is_locked_now = (abs(self.offset - self.target) < self.offset_thresh) and (power > self.sum_thresh)
-            self.is_locked_buffer.popleft()
-            self.is_locked_buffer.append(is_locked_now)
-            self.is_locked = (self.is_locked_buffer.count(True) == self.buffer_length)
+            if self.locked:
+                is_locked_now = (abs(self.offset - self.target) < self.offset_thresh) and (power > self.sum_thresh)
+                self.is_locked_buffer.popleft()
+                self.is_locked_buffer.append(is_locked_now)
+                self.is_locked = (self.is_locked_buffer.count(True) == self.buffer_length)
+            else:
+                self.is_locked = False
 
             # Handle movement/requested scans
 
@@ -349,7 +352,9 @@ class StageQPDThread(QtCore.QThread):
                     self.find_focus = False # Reset status
                     self.foundFocus.emit(is_locked_now)
                 elif self.stage_z >= (2*self.z_center): # If the maximimum scan limit has been exceeded
-                    self.foundFocus.emit(is_locked_now) # Return False
+                    self.find_focus = False
+                    self.foundFocus.emit(False) # Return False
+                    print "Scan was unsuccessful"
                 else:
                     self.moveStageRel(1.0) # Otherwise step up by one unit
 

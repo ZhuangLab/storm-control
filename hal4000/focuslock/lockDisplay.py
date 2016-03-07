@@ -107,6 +107,7 @@ class LockDisplay(QtGui.QWidget):
         self.control_thread.start(QtCore.QThread.NormalPriority)
         self.control_thread.controlUpdate.connect(self.controlUpdate)
         self.control_thread.foundSum.connect(self.handleFoundSum)
+        self.control_thread.foundFocus.connect(self.handleFoundFocus)
         self.control_thread.recenteredPiezo.connect(self.handleRecenteredPiezo)
 
         # connect to the ir laser & turn it off.
@@ -241,7 +242,8 @@ class LockDisplay(QtGui.QWidget):
     #
     @hdebug.debug
     def handleFoundFocus(self, focus_status):
-        self.foundSum.emit(focus_status)
+        print "Received found focus signal in lockDisplay, relaying"
+        self.foundFocus.emit(focus_status)
 
     ## handleIrButton
     #

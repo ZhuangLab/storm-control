@@ -426,8 +426,8 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     # Handle find sum requests that come via TCP/IP.
     #
     @hdebug.debug
-    def tcpHandleFindFocus(self, min_sum):
-        self.lock_display1.tcpHandleFindFocus(min_sum)
+    def tcpHandleFindFocus(self):
+        self.lock_display1.tcpHandleFindFocus()
 
     ## tcpHandleFindSum
     #
@@ -486,8 +486,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
                 scan_focus = self.tcp_message.getData("focus_scan")
                 if scan_focus is True:
                     print "Scanning for the focus"
-                    # Get minimum sum for FindSum scan
-                    self.tcpHandleFindFocus() # If no min sum is provided, run FindFocus
+                    self.tcpHandleFindFocus()
                     
                 else: # No scan, just return error
                     self.tcp_message.addResponse("focus_status", focus_status)
@@ -641,6 +640,7 @@ class FocusLockZDualCam(FocusLockZ):
         self.lock_display1.ui.statusBox.setTitle("Lock1 Status")
         self.lock_display1.foundOptimal.connect(self.handleFoundOptimal)
         self.lock_display1.foundSum.connect(self.handleFoundSum)
+        self.lock_display1.foundFocus.connect(self.handleFoundFocus)
         self.lock_display1.recenteredPiezo.connect(self.handleRecenteredPiezo)
 
         # Add Camera2 lock display.
