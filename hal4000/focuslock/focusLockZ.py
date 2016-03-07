@@ -478,7 +478,6 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
             self.tcpComplete.emit(self.tcp_message)
 
         else:
-            print "Focus check " + str(self.accum_focus_checks) + ": not in focus"
             self.accum_focus_checks += 1
             if self.accum_focus_checks < self.num_focus_checks:
                 self.focus_check_timer.start(100) # Wait one 100 ms then measure again
