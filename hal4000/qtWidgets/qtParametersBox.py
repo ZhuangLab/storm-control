@@ -612,7 +612,8 @@ class ParametersTableWidgetString(QtGui.QLineEdit, ParametersTableWidget):
 #
 class ParametersRadioButton(QtGui.QRadioButton):
 
-    deleteSelected = QtCore.pyqtSignal()
+    deleteSelected = QtCore.pyqtSignal(object)
+    duplicateSelected = QtCore.pyqtSignal(object)
     updateClicked = QtCore.pyqtSignal(object)
 
     ## __init__
@@ -624,12 +625,14 @@ class ParametersRadioButton(QtGui.QRadioButton):
     def __init__(self, parameters, parent = None):
         QtGui.QRadioButton.__init__(self, getFileName(parameters.get("parameters_file")), parent)
         self.changed = False
-        self.delete_desired = False
         self.editor_dialog = None
         self.parameters = parameters
 
         self.delAct = QtGui.QAction(self.tr("Delete"), self)
         self.delAct.triggered.connect(self.handleDelete)
+
+        self.duplicateAct = QtGui.QAction(self.tr("Duplicate"), self)
+        self.duplicateAct.triggered.connect(self.handleDuplicate)
 
         self.editAct = QtGui.QAction(self.tr("Edit"), self)
         self.editAct.triggered.connect(self.handleEdit)
@@ -651,14 +654,17 @@ class ParametersRadioButton(QtGui.QRadioButton):
         # If it is not the current button it can be deleted.
         if not self.isChecked():
             menu.addAction(self.delAct)
-
+            menu.addAction(self.duplicateAct)
+        
         # If it is the current button it's parameters can be edited.
         else:
             menu.addAction(self.editAct)
+            menu.addAction(self.duplicateAct)
 
         # If it has been changed then it can be saved.
         if self.changed:
             menu.addAction(self.saveAct)
+            
         menu.exec_(event.globalPos())
 
     ## enableEditor
@@ -681,9 +687,16 @@ class ParametersRadioButton(QtGui.QRadioButton):
     #
     @hdebug.debug
     def handleDelete(self, boolean):
-        self.delete_desired = True
-        self.deleteSelected.emit()
+        self.deleteSelected.emit(self)
 
+    ## handleDuplicate
+    #
+    # Handles the duplicate action.
+    #
+    @hdebug.debug
+    def handleDuplicate(self, boolean):
+        self.duplicateSelected.emit(self)
+    
     ## handleEdit
     #
     # Handles the edit action.
@@ -793,8 +806,9 @@ class QParametersBox(QtGui.QWidget):
         self.radio_buttons.append(radio_button)
         self.layout.insertWidget(0, radio_button)
         radio_button.clicked.connect(self.toggleParameters)
-        radio_button.deleteSelected.connect(self.handleDeleteSelected)
-        radio_button.updateClicked.connect(self.handleUpdateClicked)
+        radio_button.deleteSelected.connect(self.handleDelete)
+        radio_button.duplicateSelected.connect(self.handleDuplicate)
+        radio_button.updateClicked.connect(self.handleUpdate)
         if (len(self.radio_buttons) == 1):
             radio_button.click()
 
@@ -844,24 +858,31 @@ class QParametersBox(QtGui.QWidget):
         else:
             return None
 
-    ## handleDeleteSelected
+    ## handleDelete
     #
-    # Handles the deleteSelected action from a parameters radio button.
+    # Handles the deleteSelected signal from a parameters radio button.
     #
     @hdebug.debug
-    def handleDeleteSelected(self):
-        for [button_ID, button] in enumerate(self.radio_buttons):
-            if button.delete_desired:
-                self.layout.removeWidget(button)
-                self.radio_buttons.remove(button)
-                button.close()
+    def handleDelete(self, button):
+        self.layout.removeWidget(button)
+        self.radio_buttons.remove(button)
+        button.close()
 
-    ## handleUpdateClicked
+    ## handleDuplicate
     #
-    # Handles an updating of the radio buttons parameters event.
+    # Handles the duplicateSelected signal from a parameters radio button.
     #
     @hdebug.debug
-    def handleUpdateClicked(self, button):
+    def handleDuplicate(self, button):
+        parameters = button.getParameters()
+        self.addParameters(copy.deepcopy(parameters))
+
+    ## handleUpdate
+    #
+    # Handles the updateClicked signal from a parameters radio button.
+    #
+    @hdebug.debug
+    def handleUpdate(self, button):
         self.current_parameters = button.getParameters()
         self.settings_toggled.emit()
         
