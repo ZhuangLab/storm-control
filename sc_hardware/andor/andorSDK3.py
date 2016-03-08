@@ -17,6 +17,7 @@
 import ctypes
 import numpy
 import time
+import sc_library.halExceptions as halExceptions
 
 sdk3 = None
 sdk3_utility = None
@@ -34,7 +35,10 @@ def loadSDK3DLL(path):
 
 def check(value, fn_name = "??", command = "??"):
     if (value != 0):
-        print "Error", value, "when calling function", fn_name, "with command", command
+        error_message = "Error", value, "when calling function", fn_name, "with command", command
+        print error_message
+        raise AndorException(error_message) # Raise a hardware error
+        
         return False
     else:
         return True
@@ -216,7 +220,7 @@ def setString(handle, command, string):
 #
 # Camera exception.
 #
-class AndorException(Exception):
+class AndorException(halExceptions.HarwareException):
     def __init__(self, message):
         Exception.__init__(self, message)
 
