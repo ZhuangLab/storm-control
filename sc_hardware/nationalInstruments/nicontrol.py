@@ -56,7 +56,7 @@ def getLockForBoard(board):
 #
 # National instruments error.
 #
-class NIException(exceptions.HarwareException):
+class NIException(exceptions.HardwareException):
 
     def __init__(self, message):
         Exception.__init__(self, message)

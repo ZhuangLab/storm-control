@@ -18,7 +18,7 @@ import sc_library.hdebug as hdebug
 
 import camera.cameraControl as cameraControl
 import sc_hardware.andor.andorSDK3 as andor
-import halLab.halModule as halModule
+import halLib.halModule as halModule
 
 ## ACameraControl
 #
@@ -140,7 +140,7 @@ class ACameraControl(cameraControl.HWCameraControl):
 ##            print traceback.format_exc()
 ##            self.got_camera = False
             self.got_camera = False
-            error_message = "startFilm error in AndorSDK3: /n" + error.strerror
+            error_message = "startFilm error in AndorSDK3: \n" + str(error)
             hdebug.logText(error_message)
             raise halModule.NewParametersException(error_message)
 
@@ -169,7 +169,7 @@ class ACameraControl(cameraControl.HWCameraControl):
             else:
                 self.camera.setProperty("CycleMode", "enum", "Continuous")
         except andor.AndorException as error:
-            error_message = "startFilm error in AndorSDK3: /n" + error.strerror
+            error_message = "startFilm error in AndorSDK3: \n" + str(error)
             hdebug.logText(error_message)
             raise halModule.StartFilmException(error_message)
 

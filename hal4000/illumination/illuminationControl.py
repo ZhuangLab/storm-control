@@ -304,7 +304,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
                 for channel in self.channels:
                     channel.startFilm()
             except halExceptions.HardwareException as error:
-                error_message = "startFilm in illumination control encountered an error: \n" + error.strerror
+                error_message = "startFilm in illumination control encountered an error: \n" + str(error)
                 hdebug.logText(error_message)
                 raise halModule.StartFilmException(error_message)
 
