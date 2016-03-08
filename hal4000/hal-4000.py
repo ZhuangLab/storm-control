@@ -52,6 +52,7 @@ import camera.control as control
 import camera.filmSettings as filmSettings
 import display.cameraDisplay as cameraDisplay
 import halLib.imagewriters as writers
+import halLib.halModule as halModule
 import qtWidgets.qtAppIcon as qtAppIcon
 import qtWidgets.qtParametersBox as qtParametersBox
 
@@ -897,8 +898,17 @@ class Window(QtGui.QMainWindow):
             self.film_name = False
 
         # Modules.
-        for module in self.modules:
-            module.startFilm(self.film_name, self.ui.autoShuttersCheckBox.isChecked())
+        try:
+            for module in self.modules:
+                module.startFilm(self.film_name, self.ui.autoShuttersCheckBox.isChecked())
+        except halModule.StartFilmException as error: # Handle any start Film errors
+            error_message = "startFilm in hal encountered an error: \n" + error.strerror
+            hdebug.logText(error_message)
+
+            # Handle error returning to Dave. The subsequent call to stopFilm will handle sending this message
+            if self.tcp_requested_movie:
+                message = self.tcp_message
+                message.setError(True, error_message)
 
         # Disable parameters radio buttons.
         self.parameters_box.startFilm()
@@ -941,8 +951,16 @@ class Window(QtGui.QMainWindow):
         if self.writer:
 
             # Stop modules.
-            for module in self.modules:
-                module.stopFilm(self.writer)
+            try:
+                for module in self.modules:
+                    module.stopFilm(self.writer)
+            except halModule.StopFilmException as error: # Handle any stopFilm exceptions
+                error_message = "stopFilm in hal encountered an error: \n" + error.strerror
+                hdebug.logText(error_message)
+                # Handle error returning to Dave. The subsequent call to stopFilm will handle sending this message
+                if self.tcp_requested_movie:
+                    message = self.tcp_message
+                    message.setError(True, error_message)
 
             # Close film file.
             self.writer.closeFile()
@@ -956,9 +974,17 @@ class Window(QtGui.QMainWindow):
                 self.ui.indexSpinBox.setValue(self.ui.indexSpinBox.value() + 1)
             self.updateFilenameLabel("foo")
         else:
-            # Stop modules.
-            for module in self.modules:
-                module.stopFilm(False)
+            # Stop modules without writer.
+            try:
+                for module in self.modules:
+                    module.stopFilm(False)
+            except halModule.StopFilmException as error: # Handle any stopFilm exceptions
+                error_message = "stopFilm in hal encountered an error: \n" + error.strerror
+                hdebug.logText(error_message)
+                # Handle error returning to Dave. The subsequent call to stopFilm will handle sending this message
+                if self.tcp_requested_movie:
+                    message = self.tcp_message
+                    message.setError(True, error_message)
 
         # Enable parameters radio buttons.
         self.parameters_box.stopFilm()
