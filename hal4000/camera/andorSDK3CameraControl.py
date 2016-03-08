@@ -135,10 +135,14 @@ class ACameraControl(cameraControl.HWCameraControl):
 
             self.got_camera = True
 
-        except andor.AndorException:
-            hdebug.logText("QCameraThread: Bad camera settings")
-            print traceback.format_exc()
+        except andor.AndorException as error:
+##            hdebug.logText("QCameraThread: Bad camera settings")
+##            print traceback.format_exc()
+##            self.got_camera = False
             self.got_camera = False
+            error_message = "startFilm error in AndorSDK3: /n" + error.strerror
+            hdebug.logText(error_message)
+            raise halModule.NewParametersException(error_message)
 
         if not p.has("bytes_per_frame"):
             p.set("bytes_per_frame", 2 * p.get("x_pixels") * p.get("y_pixels"))

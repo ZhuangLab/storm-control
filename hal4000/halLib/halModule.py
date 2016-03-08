@@ -28,6 +28,13 @@ class StopFilmException(exceptions.ModuleException):
     def __init__(self, message):
         Exception.__init__(self, message)
 
+## NewParametersException.
+#
+# An exception issued for errors encountered during execution of the newParameters method
+#
+class NewParametersException(exceptions.ModuleException):
+    def __init__(self, message):
+        Exception.__init__(self, message)
 
 ## HalModule class.
 #
