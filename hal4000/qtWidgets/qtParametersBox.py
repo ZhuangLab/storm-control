@@ -457,6 +457,7 @@ class ParametersTableWidgetRangeFloat(QtGui.QDoubleSpinBox, ParametersTableWidge
 
         self.setMaximum(parameter.getMaximum())
         self.setMinimum(parameter.getMinimum())
+        self.setDecimals(3)
         self.setValue(parameter.getv())
         
         self.valueChanged.connect(self.handleValueChanged)
