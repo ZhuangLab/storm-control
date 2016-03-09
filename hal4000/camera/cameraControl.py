@@ -75,7 +75,8 @@ class CameraControl(QtCore.QThread):
         self.parameters.add("camera1.save", params.ParameterSetBoolean("",
                                                                        "save",
                                                                        True,
-                                                                       is_mutable = False))
+                                                                       is_mutable = False,
+                                                                       is_saved = False))
         self.parameters.add("camera1.x_pixels", params.ParameterInt("",
                                                                     "x_pixels",
                                                                     1,
