@@ -4,19 +4,9 @@
 #
 # Heuristically programmed ALgorithmic STORM setup control.
 #
-# In its most basic form, this just runs a camera
-# and displays (and records) the resulting data.
-#
-# ACamera:
-#   Control, record and display the data from one (or more)
-#   camera(s).
-#
-#  The camera control class should be a subclass of
-#  camera.genericCamera, which (attempts to) encapsulate
-#  all the stuff related to the controlling and displaying
-#  the data from one or more cameras. Examples and related
-#  classes can all be found in the camera directory.
-#
+# In its most basic form, this just runs a camera and displays
+# (and records) the resulting data. Every setup must have
+# at least one camera.
 #
 # More advanced functionality is provided by various modules.
 # These are loaded dynamically in the __init__ based on
@@ -147,7 +137,7 @@ class Window(QtGui.QMainWindow):
         # 1. single: single window (the classic look).
         # 2. detached: detached camera window.
         #
-        self.ui_mode = hardware.ui_mode        
+        self.ui_mode = hardware.get("ui_mode")
         if (self.ui_mode == "single"):
             import qtdesigner.hal4000_ui as hal4000Ui
         elif (self.ui_mode == "detached"):
@@ -174,6 +164,7 @@ class Window(QtGui.QMainWindow):
         self.parameters_box.addParameters(self.parameters)
 
         file_types = writers.availableFileFormats(self.ui_mode)
+        self.parameters.getp("film.filetype").setAllowed(file_types)
         for type in file_types:
             self.ui.filetypeComboBox.addItem(type)
 
@@ -227,7 +218,7 @@ class Window(QtGui.QMainWindow):
         # Load the requested modules.
         #
         add_separator = False
-        for module in hardware.get("modules").getSubXMLObjects():
+        for module in hardware.get("modules").getProps():
             hdebug.logText("Loading: " + module.get("hal_type"))
             a_module = halImport(module.get("module_name"))
             a_class = getattr(a_module, module.get("class_name"))
@@ -257,6 +248,9 @@ class Window(QtGui.QMainWindow):
         everything = self.modules + [self.camera]
         for module in everything:
             module.moduleInit()
+
+        # The modules can add parameters, so update the default.
+        params.setDefaultParameters(parameters)
 
         #
         # More ui stuff
@@ -426,7 +420,7 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleAutoInc(self, flag):
-        self.parameters.set("film.auto_increment", flag)
+        self.parameters.set("film.auto_increment", bool(flag))
 
     ## handleAutoShutters
     #
@@ -436,7 +430,7 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleAutoShutters(self, flag):
-        self.parameters.set("film.auto_shutters", flag)
+        self.parameters.set("film.auto_shutters", bool(flag))
 
     ## handleClose
     #
@@ -700,7 +694,7 @@ class Window(QtGui.QMainWindow):
         # then update shutter data using the shutter file specified by 
         # the parameters file.
         if p.get("illumination", False):
-            if (p.get("illumination.shutter_frames") == -1):
+            if (p.get("illumination.shutters") != p.get("illumination.last_shutters")):
                 self.newShutters(p.get("illumination.shutters"))
             else:
                 self.ui.shuttersText.setText(getFileName(p.get("illumination.shutters")))
@@ -717,7 +711,7 @@ class Window(QtGui.QMainWindow):
         else:
             self.ui.autoIncCheckBox.setChecked(False)
         self.ui.extensionComboBox.clear()
-        for ext in p.get("film.extensions"):
+        for ext in p.getp("film.extension").getAllowed():
             self.ui.extensionComboBox.addItem(ext)
         self.ui.extensionComboBox.setCurrentIndex(self.ui.extensionComboBox.findText(extension))
         self.ui.filetypeComboBox.setCurrentIndex(self.ui.filetypeComboBox.findText(filetype))
@@ -813,6 +807,7 @@ class Window(QtGui.QMainWindow):
             self.parameters.set("illumination.shutters", self.old_shutters_file)
         if new_shutters:
             self.parameters.set("illumination.shutters", shutters_filename)
+            self.parameters.set("illumination.last_shutters", shutters_filename)
             self.old_shutters_file = shutters_filename
             self.ui.shuttersText.setText(getFileName(self.parameters.get("illumination.shutters")))
             params.setDefaultShutter(shutters_filename)
@@ -1034,11 +1029,14 @@ class Window(QtGui.QMainWindow):
         self.stopCamera()
         try:
             self.newParameters()
+
+        # FIXME: This should not catch all errors.
         except:
             hdebug.logText("bad parameters")
             QtGui.QMessageBox.information(self,
                                           "Bad parameters",
                                           traceback.format_exc())
+        self.parameters_box.updateParameters()
         self.startCamera()
 
     ## updateFilenameLabel
@@ -1137,7 +1135,8 @@ if __name__ == "__main__":
         setup_name = parameters.get("setup_name")
         hardware = params.hardware("xml/" + setup_name + "_hardware.xml")
         parameters = params.halParameters("xml/" + setup_name + "_default.xml")
-    params.setSetupName(parameters, setup_name)
+    parameters.add("setup_name", params.Parameter("", "setup_name", setup_name, 1, False, True))
+    parameters.add("use_as_default", params.Parameter("", "use_as_default", True, 1, False, False))
 
     # Start logger.
     hdebug.startLogging(parameters.get("film.directory") + "logs/", "hal4000")

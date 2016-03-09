@@ -12,6 +12,7 @@ import sys
 import time
 
 import sc_library.hdebug as hdebug
+import sc_library.parameters as params
 
 import sc_hardware.serial.RS232 as RS232
 
@@ -60,6 +61,16 @@ class MarzhauserRS232(RS232.RS232):
             self.live = False
         if not self.live:
             print "Marzhauser Stage is not connected? Stage is not on?"
+
+    ## getSpeed
+    #
+    # @return The stage speed parameter
+    #
+    def getSpeed(self):
+        # FIXME: Need to figure out units for this..
+        return params.ParameterRangeFloat("Stage speed in revolutions/second",
+                                          "stage_speed",
+                                          2.0, 0.01, 200.0)
 
     ## getStatus
     #

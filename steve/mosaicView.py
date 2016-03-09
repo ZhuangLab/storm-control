@@ -169,7 +169,7 @@ class MosaicView(multiView.MultifieldView):
 
         # class variables
         self.cross_hair = Crosshair()
-        self.extrapolate_count = parameters.extrapolate_picture_count
+        self.extrapolate_count = parameters.get("extrapolate_picture_count")
         self.extrapolate_start = None
         self.number_x = 5
         self.number_y = 3
