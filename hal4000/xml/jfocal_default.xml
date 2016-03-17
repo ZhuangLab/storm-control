@@ -164,7 +164,7 @@
     <flip_horizontal type="int">0</flip_horizontal>
     <flip_vertical type="int">1</flip_vertical>
     <transpose type="int">0</transpose>
-    <obj1 type="string">60XSi,40.0,0.0,0.0</obj1>
+    <obj1 type="string">60XSi,0.1083,0.0,0.0</obj1>
     <pixels_to_um type="float">0.108</pixels_to_um>
   </mosaic>
 

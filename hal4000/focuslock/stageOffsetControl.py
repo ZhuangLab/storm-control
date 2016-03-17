@@ -104,6 +104,7 @@ import sc_library.hdebug as hdebug
 class StageQPDThread(QtCore.QThread):
     controlUpdate = QtCore.pyqtSignal(float, float, float, float, bool)
     foundSum = QtCore.pyqtSignal(float)
+    foundFocus = QtCore.pyqtSignal(bool)
     lockStatusRequest = QtCore.pyqtSignal(bool)
     recenteredPiezo = QtCore.pyqtSignal()
 
@@ -130,6 +131,7 @@ class StageQPDThread(QtCore.QThread):
         self.count = 0
         self.debug = 1
         self.find_sum = False
+        self.find_focus = False # A flag to indicate focus scan mode
         self.locked = 0
         self.max_pos = 0
         self.max_sum = 0
@@ -203,6 +205,18 @@ class StageQPDThread(QtCore.QThread):
         else:
             print "QPD/Camera are frozen?"
             return "failed"
+
+    ## findFocus
+    #
+    # Start a search for the focus
+    #
+    @hdebug.debug
+    def findFocus(self):
+        self.qpd_mutex.lock()
+        self.find_focus = True
+        self.moveStageAbs(0)
+        self.resetBuffer()
+        self.qpd_mutex.unlock()
 
     ## findSumSignal
     #
@@ -291,6 +305,7 @@ class StageQPDThread(QtCore.QThread):
     #
     def run(self):
         while(self.running):
+            # get current focus lock measurements
             [power, x_offset, y_offset] = self.qpdScan()
 
             self.qpd_mutex.lock()
@@ -299,6 +314,17 @@ class StageQPDThread(QtCore.QThread):
             if (power > 0):
                 self.offset = x_offset / power
             self.unacknowledged = 0
+
+            # Determine focus lock status and update buffer
+            if self.locked:
+                is_locked_now = (abs(self.offset - self.target) < self.offset_thresh) and (power > self.sum_thresh)
+                self.is_locked_buffer.popleft()
+                self.is_locked_buffer.append(is_locked_now)
+                self.is_locked = (self.is_locked_buffer.count(True) == self.buffer_length)
+            else:
+                self.is_locked = False
+
+            # Handle movement/requested scans
 
             # scan for sum signal.
             if self.find_sum:
@@ -320,6 +346,18 @@ class StageQPDThread(QtCore.QThread):
                     else:
                         self.moveStageRel(1.0)
 
+            # scan for focus lock position.
+            elif self.find_focus:
+                if is_locked_now: # If focused, stop scan
+                    self.find_focus = False # Reset status
+                    self.foundFocus.emit(is_locked_now)
+                elif self.stage_z >= (2*self.z_center): # If the maximimum scan limit has been exceeded
+                    self.find_focus = False
+                    self.foundFocus.emit(False) # Return False
+                    print "Scan was unsuccessful"
+                else:
+                    self.moveStageRel(1.0) # Otherwise step up by one unit
+
             # update position, if locked.
             else:
                 if self.locked and (power > self.sum_min):
@@ -330,12 +368,6 @@ class StageQPDThread(QtCore.QThread):
                             self.moveStageRel(self.lock_fn(self.offset - self.target))
                     else:
                         self.moveStageRel(self.lock_fn(self.offset - self.target))
-
-                    # Set buffer and determined lock status
-                    is_locked_now = (abs(self.offset - self.target) < self.offset_thresh) and (power > self.sum_thresh)
-                    self.is_locked_buffer.popleft()
-                    self.is_locked_buffer.append(is_locked_now)
-                    self.is_locked = (self.is_locked_buffer.count(True) == self.buffer_length) # 3/4: Kludge to account for periodic jumps in camera based focus lock
                     
             #self.emit(QtCore.SIGNAL("controlUpdate(float, float, float, float)"), x_offset, y_offset, power, self.stage_z)
             self.controlUpdate.emit(x_offset, y_offset, power, self.stage_z, self.is_locked)

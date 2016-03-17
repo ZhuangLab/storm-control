@@ -20,7 +20,14 @@
 	<port>COM9</port>
       </parameters>
     </control_module>
-
+    <control_module>
+      <name>wheel1</name>
+      <module_name>sc_hardware.thorlabs.FW212C</module_name>
+      <class_name>HalFW102C</class_name>
+      <parameters>
+	<port>COM23</port>
+      </parameters>
+    </control_module>
     <control_module>
       <name>daq</name>
       <module_name>sc_hardware.nationalInstruments.hNicontrol</module_name>
@@ -35,6 +42,32 @@
   </control_modules>
 
   <channels>
+
+    <!-- 750 laser -->
+    <channel>
+      <description>750</description>
+      <color type="rgb">200,0,0</color>
+      
+      <amplitude_modulation>
+	<uses>wheel1</uses>
+	<display_normalized type="boolean">False</display_normalized>
+	<parameters>
+	  <minimum type="int">1</minimum>
+	  <maximum type="int">6</maximum>
+	</parameters>
+      </amplitude_modulation>
+
+      <analog_modulation>
+	<uses>daq</uses>
+	<parameters>
+	  <board>PCI-6722</board>
+	  <channel type="int">7</channel>
+	  <max_voltage type="float">5.0</max_voltage>
+	  <min_voltage type="float">0.0</min_voltage>
+	</parameters>
+      </analog_modulation>
+
+    </channel>
 
     <!-- 647 laser -->
     <channel>
