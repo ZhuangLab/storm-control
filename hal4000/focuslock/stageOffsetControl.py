@@ -356,7 +356,7 @@ class StageQPDThread(QtCore.QThread):
                     self.foundFocus.emit(False) # Return False
                     print "Scan was unsuccessful"
                 else:
-                    self.moveStageRel(1.0) # Otherwise step up by one unit
+                    self.moveStageRel(0.1) # Otherwise step up by 1/10 unit
 
             # update position, if locked.
             else:

@@ -242,7 +242,6 @@ class LockDisplay(QtGui.QWidget):
     #
     @hdebug.debug
     def handleFoundFocus(self, focus_status):
-        print "Received found focus signal in lockDisplay, relaying"
         self.foundFocus.emit(focus_status)
 
     ## handleIrButton
