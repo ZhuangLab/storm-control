@@ -317,7 +317,10 @@ class StageQPDThread(QtCore.QThread):
 
             # Determine focus lock status and update buffer
             if self.locked:
-                is_locked_now = (abs(self.offset - self.target) < self.offset_thresh) and (power > self.sum_thresh)
+                is_locked_now = ( (abs(self.offset - self.target) < self.offset_thresh) and
+                                  (power > self.sum_thresh) and
+                                  (self.stage_z > 0) and
+                                  (self.stage_z < 2*self.z_center) )
                 self.is_locked_buffer.popleft()
                 self.is_locked_buffer.append(is_locked_now)
                 self.is_locked = (self.is_locked_buffer.count(True) == self.buffer_length)
