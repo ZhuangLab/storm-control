@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <settings><!-- Default kilroy settings for jfocal -->
   <!-- Valve parameters -->
-  <valves_com_port type="int">7</valves_com_port>	<!-- COM port of serial connection to valves -->  
+  <valves_com_port type="int">10</valves_com_port>	<!-- COM port of serial connection to valves -->  
   <num_simulated_valves type="int">0</num_simulated_valves><!-- Number of valves to simulate (Defaults to 0) -->
 
   <!-- Pump parameters -->
   <pump_class type="string">pumps.gilson_mp3</pump_class><!-- Control class for pump -->
-  <pump_com_port type="int">5</pump_com_port><!-- COM port of serial connection to pump -->
+  <pump_com_port type="int">9</pump_com_port><!-- COM port of serial connection to pump -->
   <pump_ID type="int">30</pump_ID><!-- ID of Pump -->
-  <pump_class type="string">pumps.gilson_mp3</pump_class><!-- Control class for pump -->
   <simulate_pump type="boolean">False</simulate_pump><!-- Simulate pump? (Defaults to False) -->
   <flip_flow_direction type="boolean">False</flip_flow_direction><!-- Flip the direction defined as forward? -->
   
