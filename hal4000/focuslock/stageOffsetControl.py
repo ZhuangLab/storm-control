@@ -355,9 +355,9 @@ class StageQPDThread(QtCore.QThread):
                     self.find_focus = False # Reset status
                     self.foundFocus.emit(is_locked_now)
                 elif self.stage_z >= (2*self.z_center): # If the maximimum scan limit has been exceeded
+                    print "Scan was unsuccessful"
                     self.find_focus = False
                     self.foundFocus.emit(False) # Return False
-                    print "Scan was unsuccessful"
                 else:
                     self.moveStageRel(0.1) # Otherwise step up by 1/10 unit
 
