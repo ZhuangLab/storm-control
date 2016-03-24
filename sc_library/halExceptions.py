@@ -8,34 +8,38 @@
 # Jeffrey Moffitt 3/16
 #
 
+
+class HalException(Exception):
+    pass
+
 ## Hardware Exception
 #
 # A generic hardware exception.
 #
-class HardwareException(Exception):
+class HardwareException(HalException):
 
     def __init__(self, message):
-        Exception.__init__(self, message)
+        HalException.__init__(self, message)
 
 
 ## Module Exception
 #
 # A generic hal module exception.
 #
-class ModuleException(Exception):
+class ModuleException(HalException):
 
     def __init__(self, message):
-        Exception.__init__(self, message)
+        HalException.__init__(self, message)
 
 ## GUI Exception
 #
 # A generic hal gui exception.
 #
-class GUIException(Exception):
+class GUIException(HalException):
 
     def __init__(self, message):
-        Exception.__init__(self, message)
-        
+        HalException.__init__(self, message)
+
 #
 # The MIT License
 #
