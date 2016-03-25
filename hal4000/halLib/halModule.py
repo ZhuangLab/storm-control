@@ -18,7 +18,7 @@ import sc_library.halExceptions as exceptions
 #
 class StartFilmException(exceptions.ModuleException):
     def __init__(self, message):
-        Exception.__init__(self, message)
+        exceptions.ModuleException.__init__(self, message)
 
 ## StopFilmException.
 #
@@ -26,7 +26,7 @@ class StartFilmException(exceptions.ModuleException):
 #
 class StopFilmException(exceptions.ModuleException):
     def __init__(self, message):
-        Exception.__init__(self, message)
+        exceptions.ModuleException.__init__(self, message)
 
 ## NewParametersException.
 #
@@ -34,7 +34,7 @@ class StopFilmException(exceptions.ModuleException):
 #
 class NewParametersException(exceptions.ModuleException):
     def __init__(self, message):
-        Exception.__init__(self, message)
+        exceptions.ModuleException.__init__(self, message)
 
 ## HalModule class.
 #

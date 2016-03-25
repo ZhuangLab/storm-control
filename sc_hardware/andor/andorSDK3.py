@@ -221,7 +221,7 @@ def setString(handle, command, string):
 #
 class AndorException(halExceptions.HardwareException):
     def __init__(self, message):
-        Exception.__init__(self, message)
+        halExceptions.HardwareException.__init__(self, message)
 
 
 ## AndorRawData

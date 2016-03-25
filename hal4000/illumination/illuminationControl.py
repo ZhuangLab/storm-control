@@ -42,7 +42,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     def __init__(self, hardware, parameters, parent = None):
         QtGui.QDialog.__init__(self, parent)
         halModule.HalModule.__init__(self)
-
+        
         self.channels = []
         self.hardware_modules = {}
         self.fp = False
@@ -293,16 +293,17 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
             for channel in self.channels:
                 channel.setupFilm()
 
-            # Start hardware.
-            for name, instance in self.hardware_modules.iteritems():
-                if (instance.getStatus() == True):
-                    instance.startFilm(self.parameters.get("seconds_per_frame"),
-                                       self.parameters.get("illumination.shutter_oversampling"))
-
-            # Start channels.
             try:
+                # Start hardware.
+                for name, instance in self.hardware_modules.iteritems():
+                    if (instance.getStatus() == True):
+                        instance.startFilm(self.parameters.get("seconds_per_frame"),
+                                           self.parameters.get("illumination.shutter_oversampling"))
+
+                # Start channels.
                 for channel in self.channels:
                     channel.startFilm()
+                    
             except halExceptions.HardwareException as error:
                 error_message = "startFilm in illumination control encountered an error: \n" + str(error)
                 hdebug.logText(error_message)

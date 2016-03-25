@@ -59,7 +59,7 @@ def getLockForBoard(board):
 class NIException(exceptions.HardwareException):
 
     def __init__(self, message):
-        Exception.__init__(self, message)
+        exceptions.HardwareException.__init__(self, message)
 
 
 #
