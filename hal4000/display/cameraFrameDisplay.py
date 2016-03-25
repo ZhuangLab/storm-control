@@ -69,25 +69,32 @@ class CameraFeedDisplay(QtGui.QFrame):
         self.sync_values_by_feedname = None
         self.sync_values_by_params = {}
 
-        # Add display specific parameters
-        self.parameters.add("colortable", params.ParameterSetString("Color table",
-                                                                    "colortable",
-                                                                    "idl5.ctbl",
-                                                                    self.color_tables.getColorTableNames()))
-        self.parameters.add("drag_multiplier", params.ParameterFloat("",
-                                                                     "drag_multiplier",
-                                                                     0.16,
-                                                                     is_mutable = False,
-                                                                     is_saved = False))
-        self.parameters.add("scalemax", params.ParameterInt("",
-                                                            "scalemax",
-                                                            2000,
-                                                            is_mutable = False))        
-        self.parameters.add("scalemin", params.ParameterInt("",
-                                                            "scalemin",
-                                                            100,
-                                                            is_mutable = False))
-        self.parameters.add("sync", 0)
+        #
+        # Add display specific parameters, if they are not already present.
+        # 
+        # Note these parameters are feed specific and not display specific so two
+        # different viewers that are displaying the same feed will be changing
+        # the same parameters.
+        #
+        if not self.parameters.has("colortable"):
+            self.parameters.add("colortable", params.ParameterSetString("Color table",
+                                                                        "colortable",
+                                                                        "idl5.ctbl",
+                                                                        self.color_tables.getColorTableNames()))
+            self.parameters.add("drag_multiplier", params.ParameterFloat("",
+                                                                         "drag_multiplier",
+                                                                         0.16,
+                                                                         is_mutable = False,
+                                                                         is_saved = False))
+            self.parameters.add("scalemax", params.ParameterInt("",
+                                                                "scalemax",
+                                                                2000,
+                                                                is_mutable = False))        
+            self.parameters.add("scalemin", params.ParameterInt("",
+                                                                "scalemin",
+                                                                100,
+                                                                is_mutable = False))
+            self.parameters.add("sync", 0)
 
         # UI setup.
         self.ui = cameraDisplayUi.Ui_Frame()
