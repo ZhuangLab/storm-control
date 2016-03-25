@@ -18,6 +18,7 @@ import sc_library.hdebug as hdebug
 
 import camera.cameraControl as cameraControl
 import sc_hardware.andor.andorSDK3 as andor
+import halLib.halModule as halModule
 
 ## ACameraControl
 #
@@ -134,10 +135,14 @@ class ACameraControl(cameraControl.HWCameraControl):
 
             self.got_camera = True
 
-        except andor.AndorException:
-            hdebug.logText("QCameraThread: Bad camera settings")
-            print traceback.format_exc()
+        except andor.AndorException as error:
+##            hdebug.logText("QCameraThread: Bad camera settings")
+##            print traceback.format_exc()
+##            self.got_camera = False
             self.got_camera = False
+            error_message = "startFilm error in AndorSDK3: \n" + str(error)
+            hdebug.logText(error_message)
+            raise halModule.NewParametersException(error_message)
 
         if not p.has("bytes_per_frame"):
             p.set("bytes_per_frame", 2 * p.get("x_pixels") * p.get("y_pixels"))
@@ -157,11 +162,16 @@ class ACameraControl(cameraControl.HWCameraControl):
     #
     @hdebug.debug
     def startFilm(self, film_settings):
-        if (film_settings.acq_mode == "fixed_length"):
-            self.camera.setProperty("CycleMode", "enum", "Fixed")
-            self.camera.setProperty("FrameCount", "int", film_settings.frames_to_take)
-        else:
-            self.camera.setProperty("CycleMode", "enum", "Continuous")
+        try:
+            if (film_settings.acq_mode == "fixed_length"):
+                self.camera.setProperty("CycleMode", "enum", "Fixed")
+                self.camera.setProperty("FrameCount", "int", film_settings.frames_to_take)
+            else:
+                self.camera.setProperty("CycleMode", "enum", "Continuous")
+        except andor.AndorException as error:
+            error_message = "startFilm error in AndorSDK3: \n" + str(error)
+            hdebug.logText(error_message)
+            raise halModule.StartFilmException(error_message)
 
     ## stopFilm
     #

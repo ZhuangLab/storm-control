@@ -161,15 +161,15 @@ class Nidaq(illuminationHardware.DaqModulation):
                 return False
 
             iters = 0
-            while (iters < 10) and startCtTask():
+            while (iters < 5) and startCtTask():
                 hdebug.logText("startCtTask failed " + str(iters))
                 self.ct_task.clearTask()
                 time.sleep(0.5)
                 iters += 1
 
-            if iters == 10:
+            if iters == 5:
                 hdebug.logText("startCtTask critical failure")
-                print "startCtTask critical failure"
+                raise nicontrol.NIException("NIException: startCtTask critical failure")
 
         else:
             self.ct_task = False
@@ -210,6 +210,10 @@ class Nidaq(illuminationHardware.DaqModulation):
                 time.sleep(0.1)
                 iters += 1
 
+            if iters == 5:
+                hdebug.logText("startAoTask critical failure")
+                raise nicontrol.NIException("NIException: startAoTask critical failure")
+
         else:
             self.ao_task = False
 
@@ -248,6 +252,10 @@ class Nidaq(illuminationHardware.DaqModulation):
                 self.do_task.clearTask()
                 time.sleep(0.1)
                 iters += 1
+
+            if iters == 5:
+                hdebug.logText("startDoTask critical failure")
+                raise nicontrol.NIException("NIException: startDoTask critical failure")
 
         else:
             self.do_task = False

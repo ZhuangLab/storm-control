@@ -14,6 +14,7 @@ import qtWidgets.qtAppIcon as qtAppIcon
 import halLib.halModule as halModule
 import illumination.xmlParser as xmlParser
 import illumination.illuminationChannel as illuminationChannel
+import sc_library.halExceptions as halExceptions
 import time
 
 # Debugging
@@ -299,8 +300,13 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
                                        self.parameters.get("illumination.shutter_oversampling"))
 
             # Start channels.
-            for channel in self.channels:
-                channel.startFilm()
+            try:
+                for channel in self.channels:
+                    channel.startFilm()
+            except halExceptions.HardwareException as error:
+                error_message = "startFilm in illumination control encountered an error: \n" + str(error)
+                hdebug.logText(error_message)
+                raise halModule.StartFilmException(error_message)
 
     ## stopFilm
     #

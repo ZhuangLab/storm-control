@@ -10,6 +10,31 @@
 from PyQt4 import QtCore
 
 import sc_library.hdebug as hdebug
+import sc_library.halExceptions as exceptions
+
+## StartFilmException.
+#
+# An exception issued for errors encountered during execution of the start film method
+#
+class StartFilmException(exceptions.ModuleException):
+    def __init__(self, message):
+        Exception.__init__(self, message)
+
+## StopFilmException.
+#
+# An exception issued for errors encountered during execution of the stop film method
+#
+class StopFilmException(exceptions.ModuleException):
+    def __init__(self, message):
+        Exception.__init__(self, message)
+
+## NewParametersException.
+#
+# An exception issued for errors encountered during execution of the newParameters method
+#
+class NewParametersException(exceptions.ModuleException):
+    def __init__(self, message):
+        Exception.__init__(self, message)
 
 ## HalModule class.
 #

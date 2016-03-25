@@ -17,10 +17,10 @@
 import ctypes
 import numpy
 import time
+import sc_library.halExceptions as halExceptions
 
 sdk3 = None
 sdk3_utility = None
-
 
 # Loading the DLL
 
@@ -34,7 +34,10 @@ def loadSDK3DLL(path):
 
 def check(value, fn_name = "??", command = "??"):
     if (value != 0):
-        print "Error", value, "when calling function", fn_name, "with command", command
+        error_message = "Error", value, "when calling function", fn_name, "with command", command
+        print error_message
+        raise AndorException(error_message) # Raise a hardware error
+        
         return False
     else:
         return True
@@ -216,7 +219,7 @@ def setString(handle, command, string):
 #
 # Camera exception.
 #
-class AndorException(Exception):
+class AndorException(halExceptions.HardwareException):
     def __init__(self, message):
         Exception.__init__(self, message)
 
@@ -412,7 +415,8 @@ class SDK3Camera:
             print "WARNING: Setting FrameRate is not supported"
             setFloat(self.camera_handle, pname, pvalue)
             setFloat(self.camera_handle, "ExposureTime", 0) # Force exposure time to lowest possible value
-            pass
+            raise AndorException("FrameRate is not supported") # Raise a hardware error
+
         else:
 
             if self.isEnumerated(pname):

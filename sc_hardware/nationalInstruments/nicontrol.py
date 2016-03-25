@@ -14,6 +14,9 @@ import threading
 
 from threading import Lock
 
+# Exceptions
+import sc_library.halExceptions as exceptions
+
 # Load the NIDAQmx driver library.
 nidaqmx = windll.nicaiu
 
@@ -53,7 +56,7 @@ def getLockForBoard(board):
 #
 # National instruments error.
 #
-class NIException(Exception):
+class NIException(exceptions.HardwareException):
 
     def __init__(self, message):
         Exception.__init__(self, message)
