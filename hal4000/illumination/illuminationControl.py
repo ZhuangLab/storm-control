@@ -280,10 +280,10 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         # Recording the power.
         if film_name:
             self.fp = open(film_name + ".power", "w")
-            str = "frame"
+            frame_base = "frame"
             for channel in self.channels:
-                str = str + " " + channel.getName()
-            self.fp.write(str + "\n")
+                frame_base = frame_base + " " + channel.getName()
+            self.fp.write(frame_base + "\n")
 
         # Running the shutters.
         if run_shutters:
