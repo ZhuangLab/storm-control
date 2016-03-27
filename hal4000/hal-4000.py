@@ -900,7 +900,6 @@ class Window(QtGui.QMainWindow):
 
             # Modules.
             for module in self.modules:
-                print module
                 module.startFilm(self.film_name, self.ui.autoShuttersCheckBox.isChecked())
                 
         except halModule.StartFilmException as error: # Handle any start Film errors
@@ -974,7 +973,7 @@ class Window(QtGui.QMainWindow):
             error_message = "stopFilm in hal encountered an error: \n" + str(error)
             hdebug.logText(error_message)
             
-            # Handle error returning to Dave. The subsequent call to stopFilm will handle sending this message
+            # Handle error returning to Dave. The message will be returned below.
             if self.tcp_requested_movie:
                 message = self.tcp_message
                 message.setError(True, error_message)
