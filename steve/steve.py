@@ -606,7 +606,7 @@ class Window(QtGui.QMainWindow):
         if directory:
             self.parameters.set("directory", directory + os.path.sep)
             self.snapshot_directory = directory + os.path.sep
-            print self.parameters.directory
+            print self.parameters.get("directory")
 
     ## handleSnapshot
     #
