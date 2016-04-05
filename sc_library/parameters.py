@@ -737,34 +737,14 @@ class StormXMLObject(object):
                 elif (node_type == "string"):
                     param = ParameterString(description, node.tag, node.text, order, mutable)
 
-                # These are deprecated and may disappear.
-                elif (node_type == "float64"):
-                    param = ParameterCustom(description, node.tag, node.text, order, mutable)
-                    print "Found deprecated parameter type: " + node_type
-
+                # These are deprecated and may disappear. They only remain so
+                # that current Steve can read older data.
                 elif (node_type == "float-array"):
                     param = ParameterCustom(description, node.tag, node.text, order, mutable)
-                    print "Found deprecated parameter type: " + node_type
+                    print "Found deprecated parameter type: ", node_type 
 
-                elif (node_type == "int-array"):
-                    param = ParameterCustom(description, node.tag, node.text, order, mutable)
-                    print "Found deprecated parameter type: " + node_type
-
-                elif (node_type == "str"):
-                    param = ParameterCustom(description, node.tag, node.text, order, mutable)
-                    print "Found deprecated parameter type: " + node_type
-
-                elif (node_type == "string-array"):
-                    param = ParameterCustom(description, node.tag, node.text, order, mutable)
-                    print "Found deprecated parameter type: " + node_type
-
-                elif (node_type == "unicode"):
-                    param = ParameterCustom(description, node.tag, node.text, order, mutable)
-                    print "Found deprecated parameter type: " + node_type
-
-                elif (node_type == "bool"):
-                    param = ParameterCustom(description, node.tag, node.text, order, mutable)
-                    print "Found deprecated parameter type: " + node_type
+                elif (node_type in ["float64", "int-array", "str", "string-array", "unicode", "bool"]):
+                    print "Found deprecated parameter type: ", node_type, " ignoring."
 
                 else:
                     raise ParametersException("unrecognized type, " + node_type)
