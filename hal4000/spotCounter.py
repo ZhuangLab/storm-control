@@ -119,7 +119,7 @@ class OfflineDriver(QtCore.QObject):
     # This is called when the spot counter finishes processing a frame. It
     # loads the next frame from the file and passes it to the spot counter.
     #
-    def nextImage(self):
+    def nextImage(self, camera, frame_number, counts):
         if (self.cur_frame < self.length):
             np_data = data_file.loadAFrame(self.cur_frame)
             np_data = numpy.ascontiguousarray(np_data, dtype=numpy.int16)
@@ -446,7 +446,7 @@ class QImageGraph(QtGui.QWidget):
 # Spot Counter Dialog Box
 #
 class SpotCounter(QtGui.QDialog, halModule.HalModule):
-    imageProcessed = QtCore.pyqtSignal()
+    imageProcessed = QtCore.pyqtSignal(str, int, int)
 
     ## __init__
     #
@@ -587,14 +587,14 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
             if (signal[1] == "newColors"):
                 signal[2].connect(self.newColors)
 
-    ## getCounts
+
+    ## getSignals
     #
-    # Returns the number of objects detected. If the movie is requested
-    # by TCP/IP this number is passed back to the calling program.
+    # @return An array of signals provided by the module.
     #
-    #@hdebug.debug
-    #def getCounts(self):
-    #    return self.counters[0].getCounts()
+    @hdebug.debug
+    def getSignals(self):
+        return [[self.hal_type, "imageProcessed", self.imageProcessed]]
 
     ## handleMaxChange
     #
@@ -723,9 +723,8 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
             if self.filming:
                 self.counters[1].updateCounts(spots)
                 self.image_graphs[1].updateImage(frame_number, x_locs, y_locs, spots)
-#        else:
-#            print "spotCounter.update Unknown camera:", which_camera
-        self.imageProcessed.emit()
+
+        self.imageProcessed.emit(which_camera, frame_number, spots)
 
     ## startCounter
     #
