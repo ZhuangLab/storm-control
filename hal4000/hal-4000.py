@@ -111,6 +111,7 @@ class Window(QtGui.QMainWindow):
         self.directory_test_mode = False
         self.filename = ""
         self.filming = False
+        self.live_view = True   # Whether the camera continuously displays when not filming
         self.logfile_fp = open(parameters.get("film.logfile"), "a")
         self.modules = []
         self.old_shutters_file = ""
@@ -275,6 +276,7 @@ class Window(QtGui.QMainWindow):
         self.ui.modeComboBox.currentIndexChanged.connect(self.handleModeComboBox)
         self.ui.notesEdit.textChanged.connect(self.updateNotes)
         self.ui.recordButton.clicked.connect(self.toggleFilm)
+        self.ui.liveModeButton.clicked.connect(self.toggleLiveMode)
 
         # other signals
         self.parameters_box.settingsToggled.connect(self.toggleSettings)
@@ -297,6 +299,8 @@ class Window(QtGui.QMainWindow):
         #
         self.camera.cameraInit()
 
+        ## NEED TO REMOVE STARTING THE CAMERA RUNNING FROM cameraInit()
+        
 
     ## cleanUp
     #
@@ -863,7 +867,9 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def startFilm(self, film_settings = None):
-        self.stopCamera()
+        # Stop the camera if in live view mode
+        if self.live_view:
+            self.stopCamera()
 
         self.filming = True
         self.film_name = self.parameters.get("film.directory") + str(self.ui.filenameLabel.text())
@@ -958,11 +964,14 @@ class Window(QtGui.QMainWindow):
         # Enable parameters radio buttons.
         self.parameters_box.stopFilm()
 
-        # Restart the camera.
-        self.startCamera()
+        # Update record button status.
         self.ui.recordButton.setText("Record")
         self.ui.recordButton.setStyleSheet("QPushButton { color: black }")
 
+        # Restart the camera if in live view
+        if self.live_view:
+            self.startCamera()
+        
         # Notify tcp/ip client that the movie is finished
         # if the client requested the movie.
         if self.tcp_requested_movie:
@@ -1018,6 +1027,23 @@ class Window(QtGui.QMainWindow):
             if (reply == QtGui.QMessageBox.Yes):
                 self.startFilm()
 
+
+    ## toggleLiveMode
+    #
+    # Turn on/off live mode. When on the camera runs continuously, without recording, using
+    # the current parameters.
+    #
+    # @ param boolean Dummy parameter.
+    3
+    @hdebug.debug
+    def toggleLiveMode(self, boolean):
+        if self.live_mode:
+            self.live_mode = False
+            self.stopCamera()
+        else:
+            self.live_mode = True
+            self.startCamera()
+
     ## toggleSettings
     #
     # This is called when the user changes the parameters in the parameters GUI.
@@ -1026,7 +1052,12 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def toggleSettings(self):
         self.parameters = self.parameters_box.getCurrentParameters()
-        self.stopCamera()
+
+        # Only start and stop the camera if live view is engaged
+        if self.live_view:
+            self.stopCamera()
+
+        # Try setting the parameters
         try:
             self.newParameters()
 
@@ -1037,7 +1068,10 @@ class Window(QtGui.QMainWindow):
                                           "Bad parameters",
                                           traceback.format_exc())
         self.parameters_box.updateParameters()
-        self.startCamera()
+
+        # Restart the camera if in live view
+        if self.live_view:
+            self.startCamera()
 
     ## updateFilenameLabel
     #
