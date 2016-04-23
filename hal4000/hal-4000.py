@@ -278,6 +278,10 @@ class Window(QtGui.QMainWindow):
         self.ui.recordButton.clicked.connect(self.toggleFilm)
         self.ui.liveModeButton.clicked.connect(self.toggleLiveMode)
 
+        # live view mode button
+        self.ui.liveModeButton.setStyleSheet("QPushButton { color: green }")
+        self.ui.liveModeButton.setEnabled(True)
+        
         # other signals
         self.parameters_box.settingsToggled.connect(self.toggleSettings)
 
@@ -297,10 +301,7 @@ class Window(QtGui.QMainWindow):
         #
         # start the camera
         #
-        self.camera.cameraInit()
-
-        ## NEED TO REMOVE STARTING THE CAMERA RUNNING FROM cameraInit()
-        
+        self.camera.cameraInit()        
 
     ## cleanUp
     #
@@ -867,6 +868,9 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def startFilm(self, film_settings = None):
+        # Disable live mode button
+        self.ui.liveModeButton.setEnabled(False)
+        
         # Stop the camera if in live view mode
         if self.live_view:
             self.stopCamera()
@@ -997,6 +1001,9 @@ class Window(QtGui.QMainWindow):
 
                 self.ui.lengthSpinBox.setValue(self.current_length)
 
+        # Reenable live mode button
+        self.ui.liveModeButton.setEnabled(True)
+
     ## toggleFilm
     #
     # Start/stop filming. If this file already exists this will warn that
@@ -1040,9 +1047,12 @@ class Window(QtGui.QMainWindow):
         if self.live_mode:
             self.live_mode = False
             self.stopCamera()
+            self.ui.liveModeButton.setStyleSheet("QPushButton { color: red }")
+
         else:
             self.live_mode = True
             self.startCamera()
+            self.ui.liveModeButton.setStyleSheet("QPushButton { color: green }")
 
     ## toggleSettings
     #
