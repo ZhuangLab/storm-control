@@ -919,6 +919,21 @@ class Window(QtGui.QMainWindow):
         # go...
         self.startCamera()
 
+    ## startLiveView
+    #
+    # Turn on live view mode in hal and the modules
+    #
+    @hdebug.debug
+    def startLiveView(self):
+        if self.live_view: # Only call if live view is on
+            
+            # Stop the camera
+            self.startCamera()
+
+            # Stop live view mode in all modules
+            for module in self.modules:
+                module.startLiveView()
+
     ## stopCamera
     #
     # Stop the camera.
@@ -972,13 +987,6 @@ class Window(QtGui.QMainWindow):
         # Enable parameters radio buttons.
         self.parameters_box.stopFilm()
 
-        # Update record button status.
-        self.ui.recordButton.setText("Record")
-        self.ui.recordButton.setStyleSheet("QPushButton { color: black }")
-
-        # Restart live view (if it was previously running)
-        self.startLiveView()        
-
         # Notify tcp/ip client that the movie is finished
         # if the client requested the movie.
         if self.tcp_requested_movie:
@@ -1004,8 +1012,32 @@ class Window(QtGui.QMainWindow):
 
                 self.ui.lengthSpinBox.setValue(self.current_length)
 
+        # Update record button status.
+        self.ui.recordButton.setText("Record")
+        self.ui.recordButton.setStyleSheet("QPushButton { color: black }")
+
         # Reenable live mode button
         self.ui.liveViewButton.setEnabled(True)
+
+        # Restart live view (if it was previously running)
+        self.startLiveView()        
+
+    ## stopLiveView
+    #
+    # Turn off live view mode in hal and the modules
+    #
+    @hdebug.debug
+    def stopLiveView(self):
+
+        if self.live_view: # Only toggle live view off if it is on already
+            
+            # Stop the camera
+            self.stopCamera()
+
+            # Stop live view mode in all modules
+            for module in self.modules:
+                module.stopLiveView()
+
 
     ## toggleFilm
     #
@@ -1060,40 +1092,6 @@ class Window(QtGui.QMainWindow):
             self.ui.liveViewButton.setStyleSheet("QPushButton { color: green }")
             # Start live view (call after setting live_view to true)
             self.startLiveView() 
-
-    ## stopLiveView
-    #
-    # Turn off live view mode in hal and the modules
-    #
-    @hdebug.debug
-    def stopLiveView(self):
-
-        if self.live_view: # Only toggle live view off if it is on already
-            
-            # Stop the camera
-            self.stopCamera()
-
-            # Stop live view mode in all modules
-            for module in self.modules:
-                module.stopLiveView()
-
-    ## startLiveView
-    #
-    # Turn on live view mode in hal and the modules
-    #
-    @hdebug.debug
-    def startLiveView(self):
-        print "Start Live View: " + str(self.live_view)
-
-        if self.live_view: # Only call if live view is on
-            print "Starting"
-            
-            # Stop the camera
-            self.startCamera()
-
-            # Stop live view mode in all modules
-            for module in self.modules:
-                module.startLiveView()
 
     ## toggleSettings
     #
