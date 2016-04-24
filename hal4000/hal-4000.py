@@ -278,10 +278,6 @@ class Window(QtGui.QMainWindow):
         self.ui.notesEdit.textChanged.connect(self.updateNotes)
         self.ui.recordButton.clicked.connect(self.toggleFilm)
         self.ui.liveViewButton.clicked.connect(self.toggleLiveView)
-
-        # live view mode button
-        self.ui.liveViewButton.setStyleSheet("QPushButton { color: green }")
-        self.ui.liveViewButton.setEnabled(True)
         
         # other signals
         self.parameters_box.settingsToggled.connect(self.toggleSettings)
@@ -298,6 +294,10 @@ class Window(QtGui.QMainWindow):
         # Module GUI settings.
         for module in self.modules:
             module.loadGUISettings(self.settings)
+
+        # live view mode button
+        self.ui.liveViewButton.setStyleSheet("QPushButton { color: green }")
+        self.ui.liveViewButton.setEnabled(True)
 
         #
         # start the camera
@@ -872,10 +872,9 @@ class Window(QtGui.QMainWindow):
         # Disable live mode button
         self.ui.liveViewButton.setEnabled(False)
         
-        # Stop the camera if in live view mode
-        if self.live_view:
-            self.stopCamera()
-
+        # Pause live view mode (if running)
+        self.stopLiveView()
+        
         self.filming = True
         self.film_name = self.parameters.get("film.directory") + str(self.ui.filenameLabel.text())
         self.film_name = self.film_name[:-len(self.ui.filetypeComboBox.currentText())]
@@ -973,10 +972,9 @@ class Window(QtGui.QMainWindow):
         self.ui.recordButton.setText("Record")
         self.ui.recordButton.setStyleSheet("QPushButton { color: black }")
 
-        # Restart the camera if in live view
-        if self.live_view:
-            self.startCamera()
-        
+        # Restart live view (if it was previously running)
+        self.startLiveView()        
+
         # Notify tcp/ip client that the movie is finished
         # if the client requested the movie.
         if self.tcp_requested_movie:
@@ -1055,18 +1053,19 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def stopLiveView(self):
-        # Update the internal state
-        self.live_view = False 
-        
-        # Stop the camera
-        self.stopCamera()
+        if self.live_view: # Only toggle live view off if it is on already
+            # Update the internal state
+            self.live_view = False 
+            
+            # Stop the camera
+            self.stopCamera()
 
-        # Stop live view mode in all modules
-        for module in self.modules:
-            module.stopLiveView()
+            # Stop live view mode in all modules
+            for module in self.modules:
+                module.stopLiveView()
 
-        # Configure button display
-        self.ui.liveViewButton.setStyleSheet("QPushButton { color: red }")
+            # Configure button display
+            self.ui.liveViewButton.setStyleSheet("QPushButton { color: red }")
 
     ## startLiveView
     #
@@ -1074,18 +1073,19 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def startLiveView(self):
-        # Update the internal state
-        self.live_view = True 
-        
-        # Stop the camera
-        self.startCamera()
+        if not self.live_view: # only toggle live view on if it is already off
+            # Update the internal state
+            self.live_view = True 
+            
+            # Stop the camera
+            self.startCamera()
 
-        # Stop live view mode in all modules
-        for module in self.modules:
-            module.startLiveView()
+            # Stop live view mode in all modules
+            for module in self.modules:
+                module.startLiveView()
 
-        # Configure button display
-        self.ui.liveViewButton.setStyleSheet("QPushButton { color: green }")
+            # Configure button display
+            self.ui.liveViewButton.setStyleSheet("QPushButton { color: green }")
 
     ## toggleSettings
     #
@@ -1096,10 +1096,9 @@ class Window(QtGui.QMainWindow):
     def toggleSettings(self):
         self.parameters = self.parameters_box.getCurrentParameters()
 
-        # Only start and stop the camera if live view is engaged
-        if self.live_view:
-            self.stopCamera()
-
+        # Stop live view
+        self.stopLiveView()
+        
         # Try setting the parameters
         try:
             self.newParameters()
@@ -1112,9 +1111,8 @@ class Window(QtGui.QMainWindow):
                                           traceback.format_exc())
         self.parameters_box.updateParameters()
 
-        # Restart the camera if in live view
-        if self.live_view:
-            self.startCamera()
+        # Restart live view
+        self.startLiveView()
 
     ## updateFilenameLabel
     #
