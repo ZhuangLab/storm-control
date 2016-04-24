@@ -1042,18 +1042,50 @@ class Window(QtGui.QMainWindow):
     # the current parameters.
     #
     # @ param boolean Dummy parameter.
-    3
     @hdebug.debug
     def toggleLiveView(self, boolean):
         if self.live_view:
-            self.live_view = False
-            self.stopCamera()
-            self.ui.liveViewButton.setStyleSheet("QPushButton { color: red }")
-
+            self.stopLiveView() # Stop live view
         else:
-            self.live_view = True
-            self.startCamera()
-            self.ui.liveViewButton.setStyleSheet("QPushButton { color: green }")
+            self.startLiveView() # Start live view
+
+    ## stopLiveView
+    #
+    # Turn off live view mode in hal and the modules
+    #
+    @hdebug.debug
+    def stopLiveView(self):
+        # Update the internal state
+        self.live_view = False 
+        
+        # Stop the camera
+        self.stopCamera()
+
+        # Stop live view mode in all modules
+        for module in self.modules:
+            module.stopLiveView()
+
+        # Configure button display
+        self.ui.liveViewButton.setStyleSheet("QPushButton { color: red }")
+
+    ## startLiveView
+    #
+    # Turn on live view mode in hal and the modules
+    #
+    @hdebug.debug
+    def startLiveView(self):
+        # Update the internal state
+        self.live_view = True 
+        
+        # Stop the camera
+        self.startCamera()
+
+        # Stop live view mode in all modules
+        for module in self.modules:
+            module.startLiveView()
+
+        # Configure button display
+        self.ui.liveViewButton.setStyleSheet("QPushButton { color: green }")
 
     ## toggleSettings
     #
