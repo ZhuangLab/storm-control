@@ -295,14 +295,18 @@ class Window(QtGui.QMainWindow):
         for module in self.modules:
             module.loadGUISettings(self.settings)
 
+        #
+        # start the camera
+        #
+
         # live view mode button
         self.ui.liveViewButton.setStyleSheet("QPushButton { color: green }")
         self.ui.liveViewButton.setEnabled(True)
 
-        #
-        # start the camera
-        #
-        self.camera.cameraInit()        
+        self.camera.cameraInit()
+
+        # Start live view
+        #self.startLiveView()
 
     ## cleanUp
     #
@@ -1036,16 +1040,26 @@ class Window(QtGui.QMainWindow):
 
     ## toggleLiveView
     #
-    # Turn on/off live mode. When on the camera runs continuously, without recording, using
-    # the current parameters.
+    # Turn on/off live mode. This is the only method that can change the internal attribute
+    # 'live_view'
     #
     # @ param boolean Dummy parameter.
     @hdebug.debug
     def toggleLiveView(self, boolean):
         if self.live_view:
-            self.stopLiveView() # Stop live view
+            # Stop live view (call before reseting state since nothing is done if live_view is false)
+            self.stopLiveView() 
+            # Set internal state
+            self.live_view = False
+            # Configure button display
+            self.ui.liveViewButton.setStyleSheet("QPushButton { color: red }")
         else:
-            self.startLiveView() # Start live view
+            # Set internal state
+            self.live_view = True
+            # Configure button display
+            self.ui.liveViewButton.setStyleSheet("QPushButton { color: green }")
+            # Start live view (call after setting live_view to true)
+            self.startLiveView() 
 
     ## stopLiveView
     #
@@ -1053,9 +1067,8 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def stopLiveView(self):
+
         if self.live_view: # Only toggle live view off if it is on already
-            # Update the internal state
-            self.live_view = False 
             
             # Stop the camera
             self.stopCamera()
@@ -1064,18 +1077,16 @@ class Window(QtGui.QMainWindow):
             for module in self.modules:
                 module.stopLiveView()
 
-            # Configure button display
-            self.ui.liveViewButton.setStyleSheet("QPushButton { color: red }")
-
     ## startLiveView
     #
     # Turn on live view mode in hal and the modules
     #
     @hdebug.debug
     def startLiveView(self):
-        if not self.live_view: # only toggle live view on if it is already off
-            # Update the internal state
-            self.live_view = True 
+        print "Start Live View: " + str(self.live_view)
+
+        if self.live_view: # Only call if live view is on
+            print "Starting"
             
             # Stop the camera
             self.startCamera()
@@ -1083,9 +1094,6 @@ class Window(QtGui.QMainWindow):
             # Stop live view mode in all modules
             for module in self.modules:
                 module.startLiveView()
-
-            # Configure button display
-            self.ui.liveViewButton.setStyleSheet("QPushButton { color: green }")
 
     ## toggleSettings
     #
