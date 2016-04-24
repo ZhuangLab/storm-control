@@ -201,6 +201,7 @@ class Window(QtGui.QMainWindow):
         # controls UI elements that "belong" to the main window and vice-versa.
         if (self.ui_mode == "single"):
             self.ui.recordButton = camera_displays[0].getRecordButton()
+            self.ui.liveViewButton = camera_displays[0].getLiveViewButton()
 
         # Insert additional menu items for the camera display(s) as necessary
         else:

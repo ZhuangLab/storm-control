@@ -512,6 +512,7 @@ class CameraFrameDisplay(CameraFeedDisplay):
         
         if show_record:
             self.ui.recordButton.show()
+            self.ui.liveViewButton.show()
                 
         # Signals
         self.camera_widget.displayCaptured.connect(self.handleDisplayCaptured)
@@ -529,7 +530,7 @@ class CameraFrameDisplay(CameraFeedDisplay):
     #
     @hdebug.debug
     def getLiveViewButton(self):
-        return self.ui.getLiveViewButton
+        return self.ui.liveViewButton
 
     ## getRecordButton
     #
