@@ -320,10 +320,12 @@ class Channel(QtCore.QObject):
     # Called at the start of filming.
     #
     def startFilm(self):
-        if self.channel_ui.isEnabled():
-            self.was_on = self.channel_ui.isOn()
+        if not self.bad_module:
+            if self.channel_ui.isEnabled(): # Enabled only if live view
+                self.was_on = self.channel_ui.isOn() # Record state to restore after movie
 
             if self.used_for_film:
+                self.channel_ui.enableChannel() # Turn on channel (if live view turned it off)
                 self.channel_ui.setOnOff(True)
                 self.channel_ui.startFilm()
                 if self.amplitude_modulation:
@@ -339,11 +341,14 @@ class Channel(QtCore.QObject):
     #
     # Configure illumination for live view
     #
-    def startLiveView(self):
-        if not self.bad_module:
+    def startLiveView(self, live_view):
+        if not self.bad_module and live_view:
             # Enable the channel
             self.channel_ui.enableChannel()
             self.channel_ui.setOnOff(self.was_on)
+
+        if not live_view:
+            self.channel_ui.disableChannel()
     
     ## stopFilm
     #
@@ -363,8 +368,8 @@ class Channel(QtCore.QObject):
     #
     # Cleanup illumination settings at the end of the live view
     #
-    def stopLiveView(self):
-        if not self.bad_module:
+    def stopLiveView(self, live_view):
+        if not self.bad_module and live_view:
             # record state of the channel
             self.was_on = self.channel_ui.isOn()
             self.channel_ui.disableChannel()

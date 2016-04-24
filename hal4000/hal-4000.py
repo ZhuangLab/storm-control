@@ -926,13 +926,12 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def startLiveView(self):
         if self.live_view: # Only call if live view is on
-            
             # Stop the camera
             self.startCamera()
 
-            # Stop live view mode in all modules
-            for module in self.modules:
-                module.startLiveView()
+        # Stop live view mode in all modules
+        for module in self.modules:
+            module.startLiveView(self.live_view)
 
     ## stopCamera
     #
@@ -1030,13 +1029,12 @@ class Window(QtGui.QMainWindow):
     def stopLiveView(self):
 
         if self.live_view: # Only toggle live view off if it is on already
-            
             # Stop the camera
             self.stopCamera()
 
-            # Stop live view mode in all modules
-            for module in self.modules:
-                module.stopLiveView()
+        # Stop live view mode in all modules
+        for module in self.modules:
+            module.stopLiveView(self.live_view)
 
 
     ## toggleFilm

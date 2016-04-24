@@ -144,7 +144,10 @@ class HalModule(object):
     #
     # Called to configure the module for the live view mode.
     #
-    def startLiveView(self):
+    # @param live_view A boolean describing whether or not the live view is running
+    #
+    @hdebug.debug
+    def startLiveView(self, live_view):
         pass
 
     ## stopFilm
@@ -163,7 +166,10 @@ class HalModule(object):
     #
     # Called to cleanup the module after live view.
     #
-    def stopLiveView(self):
+    # @param live_view A boolean describing whether or not the live view is running
+    #
+    @hdebug.debug
+    def stopLiveView(self, live_view):
         pass
 
 #
