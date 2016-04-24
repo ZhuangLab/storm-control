@@ -276,11 +276,11 @@ class Window(QtGui.QMainWindow):
         self.ui.modeComboBox.currentIndexChanged.connect(self.handleModeComboBox)
         self.ui.notesEdit.textChanged.connect(self.updateNotes)
         self.ui.recordButton.clicked.connect(self.toggleFilm)
-        self.ui.liveModeButton.clicked.connect(self.toggleLiveMode)
+        self.ui.liveViewButton.clicked.connect(self.toggleLiveView)
 
         # live view mode button
-        self.ui.liveModeButton.setStyleSheet("QPushButton { color: green }")
-        self.ui.liveModeButton.setEnabled(True)
+        self.ui.liveViewButton.setStyleSheet("QPushButton { color: green }")
+        self.ui.liveViewButton.setEnabled(True)
         
         # other signals
         self.parameters_box.settingsToggled.connect(self.toggleSettings)
@@ -869,7 +869,7 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def startFilm(self, film_settings = None):
         # Disable live mode button
-        self.ui.liveModeButton.setEnabled(False)
+        self.ui.liveViewButton.setEnabled(False)
         
         # Stop the camera if in live view mode
         if self.live_view:
@@ -1002,7 +1002,7 @@ class Window(QtGui.QMainWindow):
                 self.ui.lengthSpinBox.setValue(self.current_length)
 
         # Reenable live mode button
-        self.ui.liveModeButton.setEnabled(True)
+        self.ui.liveViewButton.setEnabled(True)
 
     ## toggleFilm
     #
@@ -1035,7 +1035,7 @@ class Window(QtGui.QMainWindow):
                 self.startFilm()
 
 
-    ## toggleLiveMode
+    ## toggleLiveView
     #
     # Turn on/off live mode. When on the camera runs continuously, without recording, using
     # the current parameters.
@@ -1043,16 +1043,16 @@ class Window(QtGui.QMainWindow):
     # @ param boolean Dummy parameter.
     3
     @hdebug.debug
-    def toggleLiveMode(self, boolean):
-        if self.live_mode:
-            self.live_mode = False
+    def toggleLiveView(self, boolean):
+        if self.live_view:
+            self.live_view = False
             self.stopCamera()
-            self.ui.liveModeButton.setStyleSheet("QPushButton { color: red }")
+            self.ui.liveViewButton.setStyleSheet("QPushButton { color: red }")
 
         else:
-            self.live_mode = True
+            self.live_view = True
             self.startCamera()
-            self.ui.liveModeButton.setStyleSheet("QPushButton { color: green }")
+            self.ui.liveViewButton.setStyleSheet("QPushButton { color: green }")
 
     ## toggleSettings
     #

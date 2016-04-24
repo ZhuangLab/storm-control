@@ -117,6 +117,8 @@ class CameraFeedDisplay(QtGui.QFrame):
 
         self.ui.cameraShutterButton.hide()
         self.ui.recordButton.hide()
+        self.ui.liveViewButton.hide()
+
         self.ui.syncLabel.hide()
         self.ui.syncSpinBox.hide()
 
@@ -516,8 +518,18 @@ class CameraFrameDisplay(CameraFeedDisplay):
         self.camera_widget.dragStart.connect(self.handleDragStart)
         self.camera_widget.dragMove.connect(self.handleDragMove)
         self.camera_widget.roiSelection.connect(self.handleROISelection)
-        
+
         self.ui.cameraShutterButton.clicked.connect(self.handleCameraShutter)
+
+    ## getLiveViewButton
+    #
+    # Return the live view button element of the UI.
+    #
+    # @return The PyQt button that controls live view mode.
+    #
+    @hdebug.debug
+    def getLiveViewButton(self):
+        return self.ui.getLiveViewButton
 
     ## getRecordButton
     #
