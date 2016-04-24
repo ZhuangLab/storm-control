@@ -42,10 +42,10 @@ class Channel(QtCore.QObject):
         self.shutter_data = []
         self.used_for_film = False
         self.was_on = False
+        self.bad_module = False
 
         # Create variables for communication with the various hardware modules.
         # This will add the attributes in the list to this class.
-        bad_module = False
         for name in ["amplitude_modulation", "analog_modulation", "digital_modulation", "mechanical_shutter"]:
 
             h_module = False
@@ -64,7 +64,7 @@ class Channel(QtCore.QObject):
 
                 # Check if the hardware / control module actual works.
                 if not h_module.getStatus():
-                    bad_module = True
+                    self.bad_module = True
 
             # Add the attribute to the class.
             setattr(self, name, h_module)
@@ -89,7 +89,7 @@ class Channel(QtCore.QObject):
                                                               channel.color,
                                                               channels_box)
 
-        if bad_module:
+        if self.bad_module:
             self.channel_ui.disableChannel()
         else:
             self.channel_ui.onOffChange.connect(self.handleOnOffChange)
@@ -335,6 +335,16 @@ class Channel(QtCore.QObject):
                 
         self.filming = True
 
+    ## startLiveView
+    #
+    # Configure illumination for live view
+    #
+    def startLiveView(self):
+        if not self.bad_module:
+            # Enable the channel
+            self.channel_ui.enableChannel()
+            self.channel_ui.setOnOff(self.was_on)
+    
     ## stopFilm
     #
     # Called at the end of filming to reset things.
@@ -348,6 +358,16 @@ class Channel(QtCore.QObject):
         else:
             self.channel_ui.stopFilm()
             self.channel_ui.setOnOff(self.was_on)
+
+    ## stopLiveView
+    #
+    # Cleanup illumination settings at the end of the live view
+    #
+    def stopLiveView(self):
+        if not self.bad_module:
+            # record state of the channel
+            self.was_on = self.channel_ui.isOn()
+            self.channel_ui.disableChannel()
 
 #
 # The MIT License

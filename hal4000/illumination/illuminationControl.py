@@ -327,6 +327,24 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
             for channel in self.channels:
                 channel.startFilm()
 
+    ## startLiveView
+    #
+    # Setup the illumination for live view
+    #
+    @hdebug.debug
+    def startLiveView(self):
+        for channel in self.channels:
+            channel.startLiveView()
+
+    ## stopLiveView
+    #
+    # Cleanup the illumination when live view mode is toggled off
+    #
+    @hdebug.debug
+    def stopLiveView(self):
+        for channel in self.channels:
+            channel.stopLiveView()
+
     ## stopFilm
     #
     # Called at the end of filming.
