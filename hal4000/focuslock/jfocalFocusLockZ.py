@@ -33,7 +33,7 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                  sigma = 4.0,
                                  offset_file = "cam_offsets_jfocal_1.txt",
                                  background = 125000)
-        stage = MCLVZC.MCLVZControl("PCI-6259", 0, scale = 10.0/100.0)
+        stage = MCLVZC.MCLVZControl("PCIe-6351", 0, scale = 10.0/100.0)
         lock_fn = lambda (x): 0.1 * x
         control_thread = stageOffsetControl.StageCamThread(cam,
                                                            stage,
@@ -42,7 +42,7 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                                            parameters.get("focuslock.qpd_zcenter"),
                                                            parameters.get("focuslock.is_locked_buffer_length", 10),
                                                            parameters.get("focuslock.is_locked_offset_thresh", 0.01))
-        ir_laser = LDC210.LDC210PWMNI("PCI-6259", 0)
+        ir_laser = LDC210.LDC210PWMNI("PCIe-6351", 0)
         focusLockZ.FocusLockZCam.__init__(self,
                                           parameters,
                                           control_thread,
