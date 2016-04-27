@@ -7,6 +7,8 @@
 # Hazen 09/15
 #
 
+import sc_library.parameters as params
+
 # qpd and stage.
 import sc_hardware.madCityLabs.mclVoltageZController as MCLVZC
 import sc_hardware.thorlabs.uc480Camera as uc480Cam
@@ -26,6 +28,20 @@ import focuslock.focusLockZ as focusLockZ
 #
 class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, hardware, parameters, parent = None):
+        # STORM3 specific focus lock parameters
+        lock_params = parameters.addSubSection("focuslock")
+        lock_params.add("qpd_zcenter", params.ParameterRangeFloat("Piezo center position in microns",
+                                                                  "qpd_zcenter",
+                                                                  100.0, 0.0, 200.0))
+        lock_params.add("qpd_scale", params.ParameterRangeFloat("Offset to nm calibration value",
+                                                                "qpd_scale",
+                                                                -700.0, 0.1, 1000.0))
+        lock_params.add("qpd_sum_min", 50.0)
+        lock_params.add("qpd_sum_max", 100000.0)
+        lock_params.add("is_locked_buffer_length", 10)
+        lock_params.add("is_locked_offset_thresh", 0.01)
+        lock_params.add("ir_power", params.ParameterInt("", "ir_power", 6, is_mutable = False))
+
         # Create camera
         cam = uc480Cam.CameraQPD(camera_id = 1,
                                  x_width = 1000,
@@ -33,7 +49,7 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                  sigma = 4.0,
                                  offset_file = "cam_offsets_jfocal_1.txt",
                                  background = 125000)
-        stage = MCLVZC.MCLVZControl("PCI-6259", 0, scale = 10.0/100.0)
+        stage = MCLVZC.MCLVZControl("PCIe-6351", 0, scale = 10.0/100.0)
         lock_fn = lambda (x): 0.1 * x
         control_thread = stageOffsetControl.StageCamThread(cam,
                                                            stage,
@@ -42,7 +58,7 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                                            parameters.get("focuslock.qpd_zcenter"),
                                                            parameters.get("focuslock.is_locked_buffer_length", 10),
                                                            parameters.get("focuslock.is_locked_offset_thresh", 0.01))
-        ir_laser = LDC210.LDC210PWMNI("PCI-6259", 0)
+        ir_laser = LDC210.LDC210PWMNI("PCIe-6351", 0)
         focusLockZ.FocusLockZCam.__init__(self,
                                           parameters,
                                           control_thread,
