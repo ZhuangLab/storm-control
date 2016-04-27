@@ -16,6 +16,7 @@ import traceback
 # Debugging
 import sc_library.hdebug as hdebug
 
+import sc_library.parameters as params
 import camera.cameraControl as cameraControl
 import sc_hardware.andor.andorSDK3 as andor
 import halLib.halModule as halModule
@@ -35,8 +36,8 @@ class ACameraControl(cameraControl.HWCameraControl):
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, hardware, parent = None):
-        cameraControl.HWCameraControl.__init__(self, hardware, parent)
+    def __init__(self, hardware, parameters, parent = None):
+        cameraControl.HWCameraControl.__init__(self, hardware, parameters, parent)
 
         andor.loadSDK3DLL("C:/Program Files/Andor SOLIS/")
         if hardware:
@@ -44,6 +45,58 @@ class ACameraControl(cameraControl.HWCameraControl):
         else:
             self.camera = andor.SDK3Camera()
         self.camera.setProperty("CycleMode", "enum", "Continuous")
+
+        # Add Andor SDK3 specific parameters.
+        #
+        cam_params = parameters.get("camera1")
+
+        max_intensity = 2**16
+        cam_params.add("max_intensity", params.ParameterInt("",
+                                                            "max_intensity",
+                                                            max_intensity,
+                                                            is_mutable = False,
+                                                            is_saved = False))
+
+        [x_size, y_size] = [2048, 2048]
+        cam_params.add("x_start", params.ParameterRangeInt("AOI X start",
+                                                           "x_start",
+                                                           1, 1, x_size))
+        cam_params.add("x_end", params.ParameterRangeInt("AOI X end",
+                                                         "x_end",
+                                                         x_size, 1, x_size))
+        cam_params.add("y_start", params.ParameterRangeInt("AOI Y start",
+                                                           "y_start",
+                                                           1, 1, y_size))
+        cam_params.add("y_end", params.ParameterRangeInt("AOI Y end",
+                                                         "y_end",
+                                                         y_size, 1, y_size))
+
+        [x_max_bin, y_max_bin] = [4,4]
+        cam_params.add("x_bin", params.ParameterRangeInt("Binning in X",
+                                                         "x_bin",
+                                                         1, 1, x_max_bin))
+        cam_params.add("y_bin", params.ParameterRangeInt("Binning in Y",
+                                                         "y_bin",
+                                                         1, 1, y_max_bin))
+
+        cam_params.add("FanSpeed", params.ParameterSetString("Fan Speed",
+                                                              "FanSpeed",
+                                                              "On",
+                                                              ["On", "Off"]))
+
+        cam_params.add("SensorCooling", params.ParameterSetBoolean("Sensor cooling",
+                                                                   "SensorCooling",
+                                                                   True))
+
+        cam_params.add("SimplePreAmpGainControl", params.ParameterSetString("Pre-amp gain control",
+                                                                             "SimplePreAmpGainControl",
+                                                                             "16-bit (low noise &amp; high well capacity)",
+                                                                             ["16-bit (low noise &amp; high well capacity)", 
+                                                                              "Something else.."]))
+
+        cam_params.add("ExposureTime", params.ParameterRangeFloat("Exposure time (seconds)", 
+                                                                  "ExposureTime", 
+                                                                  0.1, 0.0, 10.0))
 
     ## getAcquisitionTimings
     #
@@ -91,6 +144,11 @@ class ACameraControl(cameraControl.HWCameraControl):
     @hdebug.debug
     def newParameters(self, parameters):
         p = parameters.get("camera1")
+
+        size_x = (p.get("x_end") - p.get("x_start") + 1)/p.get("x_bin")
+        size_y = (p.get("y_end") - p.get("y_start") + 1)/p.get("y_bin")
+        p.set("x_pixels", size_x)
+        p.set("y_pixels", size_y)
 
         try:
 

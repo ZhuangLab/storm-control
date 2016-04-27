@@ -15,6 +15,7 @@ import traceback
 # Debugging
 import sc_library.hdebug as hdebug
 
+import sc_library.parameters as params
 import camera.frame as frame
 import camera.cameraControl as cameraControl
 import sc_hardware.hamamatsu.hamamatsu_camera as hcam
@@ -34,13 +35,56 @@ class ACameraControl(cameraControl.HWCameraControl):
     # @param parent (Optional) The PyQt parent of this object.
     #
     @hdebug.debug
-    def __init__(self, hardware, parent = None):
-        cameraControl.HWCameraControl.__init__(self, hardware, parent)
+    def __init__(self, hardware, parameters, parent = None):
+        cameraControl.HWCameraControl.__init__(self, hardware, parameters, parent)
 
         if hardware:
             self.camera = hcam.HamamatsuCameraMR(hardware.get("camera_id", 0))
         else:
             self.camera = hcam.HamamatsuCameraMR(0)
+
+        # Add Hamatsu Flash4 specific camera parameters.
+        cam_params = parameters.get("camera1")
+
+        # FIXME: These should all be obtained by querying the camere.
+        cam_params.add("max_intensity", params.ParameterInt("",
+                                                            "max_intensity",
+                                                            4096,
+                                                            is_mutable = False,
+                                                            is_saved = False))
+
+        cam_params.add("x_start", params.ParameterRangeInt("AOI X start",
+                                                           "x_start",
+                                                           768, 0, 2046))
+        cam_params.add("x_end", params.ParameterRangeInt("AOI X end",
+                                                         "x_end",
+                                                         1279, 1, 2047))
+        cam_params.add("y_start", params.ParameterRangeInt("AOI Y start",
+                                                           "y_start",
+                                                           768, 0, 2046))
+        cam_params.add("y_end", params.ParameterRangeInt("AOI Y end",
+                                                         "y_end",
+                                                         1279, 1, 2047))
+
+        cam_params.add("x_bin", params.ParameterRangeInt("Binning in X",
+                                                         "x_bin",
+                                                         1, 1, 4))
+        cam_params.add("y_bin", params.ParameterRangeInt("Binning in Y",
+                                                         "y_bin",
+                                                         1, 1, 4))
+
+        cam_params.add("exposure_time", params.ParameterRangeFloat("Exposure time (seconds)", 
+                                                                   "exposure_time", 
+                                                                   0.01, 0.0, 60.0))
+
+        cam_params.add("defect_correct_mode", params.ParameterSetInt("Defect correction mode",
+                                                                     "defect_correct_mode",
+                                                                     1, [0, 1]))
+
+        cam_params.add("external_trigger", params.ParameterSetInt("Use external trigger",
+                                                                  "external_trigger",
+                                                                  0, [0, 1]))
+
 
     ## getAcquisitionTimings
     #
@@ -79,6 +123,11 @@ class ACameraControl(cameraControl.HWCameraControl):
     def newParameters(self, parameters):
         p = parameters.get("camera1")
 
+        size_x = (p.get("x_end") - p.get("x_start") + 1)/p.get("x_bin")
+        size_y = (p.get("y_end") - p.get("y_start") + 1)/p.get("y_bin")
+        p.set("x_pixels", size_x)
+        p.set("y_pixels", size_y)
+
         try:
             # Set ROI location and size.
             self.camera.setPropertyValue("subarray_hpos", p.get("x_start"))
@@ -105,17 +154,16 @@ class ACameraControl(cameraControl.HWCameraControl):
             #   file then "subarray_hpos" will overwrite "x_start". Trouble
             #   may follow if they are not set to the same value.
             #
-            for key, value in p.__dict__.iteritems():
+            for key in p.getAttrs():
                 if (key == "binning"): # sigh..
                     continue
                 if self.camera.isCameraProperty(key):
-                    self.camera.setPropertyValue(key, value)
+                    self.camera.setPropertyValue(key, p.get(key))
 
             # Set camera sub-array mode so that it will return the correct frame rate.
             self.camera.setSubArrayMode()
 
-            if not p.has("bytes_per_frame"):
-                p.set("bytes_per_frame", 2 * p.get("x_pixels") * p.get("y_pixels") / (p.get("x_bin") * p.get("y_bin")))
+            p.set("bytes_per_frame", 2 * p.get("x_pixels") * p.get("y_pixels") / (p.get("x_bin") * p.get("y_bin")))
 
             self.got_camera = True
 

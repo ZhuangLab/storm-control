@@ -8,6 +8,8 @@
 # Hazen 03/12
 #
 
+import sc_library.parameters as params
+
 # qpd and stage.
 import sc_hardware.madCityLabs.mclVoltageZController as MCLVZC
 import sc_hardware.thorlabs.uc480Camera as uc480Cam
@@ -27,11 +29,27 @@ import focuslock.focusLockZ as focusLockZ
 #
 class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, hardware, parameters, parent = None):
-        #cam = uc480Cam.CameraQPD752(camera_id = 1)
+        
+        # STORM2 specific focus lock parameters.
+        lock_params = parameters.addSubSection("focuslock")
+        lock_params.add("qpd_zcenter", params.ParameterRangeFloat("Piezo center position in microns",
+                                                                  "qpd_zcenter",
+                                                                  125.0, 0.0, 250.0))
+        lock_params.add("qpd_scale", params.ParameterRangeFloat("Offset to nm calibration value",
+                                                                "qpd_scale",
+                                                                45.0, 0.1, 1000.0))
+        lock_params.add("qpd_sum_min", 50.0)
+        lock_params.add("qpd_sum_max", 256.0)
+        lock_params.add("is_locked_buffer_length", 10)
+        lock_params.add("is_locked_offset_thresh", 0.01)
+        lock_params.add("ir_power", params.ParameterInt("", "ir_power", 6, is_mutable = False))
+
+        # STORM2 Initialization.
         cam = uc480Cam.CameraQPD(camera_id = 1,
-                                 x_width = 752,
+                                 x_width = 552,
                                  y_width = 80,
                                  offset_file = "cam_offsets_storm2_1.txt")
+
         stage = MCLVZC.MCLVZControl("USB-6002", 0)
         lock_fn = lambda (x): 0.07 * x
         control_thread = stageOffsetControl.StageCamThread(cam,

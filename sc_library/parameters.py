@@ -41,20 +41,25 @@ def copyParameters(ori_parameters, new_parameters):
     copyParametersReplace("", params, new_parameters)
 
     # Check and add any new parameters.
-    unrecognized = copyParametersCheck(params, new_parameters, new_parameters._is_new_)
+    unrecognized = copyParametersAddNew(params, new_parameters, new_parameters._is_new_)
     if (len(unrecognized) > 0):
-        QtGui.QMessageBox.information(None,
-                                      "Bad Parameters?",
-                                      "The following parameters were not in the default list: " + ", ".join(unrecognized))
-
+        if True:
+            QtGui.QMessageBox.information(None,
+                                          "Bad Parameters?",
+                                          "The following parameters were not recognized: " + ", ".join(unrecognized) + ". Perhaps they are not in the correct sub-section?")
+            #raise ParametersException("Unrecognized parameters.")
+        else:
+            print "The following parameters were not recognized: " + ", ".join(unrecognized)
+            
     return params
 
-## copyParametersCheck
+## copyParametersAddNew
 #
 # Copy parameters in new_parameters that did not exist in
 # ori_parameters. If they don't already exist and are not
 # flagged with _is_new_ then add them to the list of
-# unrecognized parameters.
+# unrecognized parameters so that the user will know when
+# they have accidentally created new parameters.
 #
 # Notes
 #  1. This assumes both parameters are tree style.
@@ -67,46 +72,48 @@ def copyParameters(ori_parameters, new_parameters):
 #
 # @return A list of the unrecognized parameters.
 #
-def copyParametersCheck(ori_parameters, new_parameters, allow_new):
+def copyParametersAddNew(ori_parameters, new_parameters, allow_new):
 
     unrecognized = []
     for attr in new_parameters.getAttrs():
-            
-        prop = new_parameters.get(attr, mark_used = False)
+
+        prop = new_parameters.get(attr)
         if isinstance(prop, StormXMLObject):
             if not ori_parameters.has(attr):
                 if prop._is_new_ or allow_new:
-                    ori_parameters.set(attr, StormXMLObject([]))
-                    temp = ori_parameters.get(attr)
-                    temp._is_new_ = True
+                    ori_parameters.addSubSection(attr)._is_new_ = True
                 else:
                     unrecognized.append(attr)
                     #raise ParametersException("Unrecognized new section " + attr)
 
             # Allow new parameters for all sub-objects.
             if allow_new:
-                unrecognized.extend(copyParametersCheck(ori_parameters.get(attr), prop, True))
+                unrecognized.extend(copyParametersAddNew(ori_parameters.get(attr), prop, True))
             else:
-                unrecognized.extend(copyParametersCheck(ori_parameters.get(attr), prop, prop._is_new_))
+                unrecognized.extend(copyParametersAddNew(ori_parameters.get(attr), prop, prop._is_new_))
 
         else:
             if not ori_parameters.has(attr):
-                ori_parameters._create_(attr, prop)
-                if not allow_new:
-                    if attr in new_parameters.getUnused():
-                        unrecognized.append(attr)
-                        #raise ParametersException("Unrecognized new parameter " + attr)
+                if allow_new:
+                    ori_parameters.set(attr, prop)
+                else:
+                    unrecognized.append(attr)
 
     return unrecognized
 
 ## copyParametersReplace
 #
 # This replaces all the parameters in original with their values
-# from new, if duplicate has a corresponding value.
+# from new, if new has a corresponding value. The idea is that
+# the new parameters only need to specify what is different.
 #
 # @param root The current root object, e.g, "" or "camera1", etc.
 # @param original The original parameters object.
 # @param new The new parameters object.
+#
+# Notes
+#  1. For now this will also handle "old" flat style parameter
+#     lists, thought that may change in the future.
 #
 def copyParametersReplace(root, original, new):
 
@@ -122,7 +129,7 @@ def copyParametersReplace(root, original, new):
         else:
             # New is also a tree.
             if (len(root) > 0) and new.has(root + "." + attr):
-                    original.set(attr, new.get(root + "." + attr))
+                original.set(attr, new.get(root + "." + attr))
 
             # New is flat.
             elif new.has(attr):
@@ -159,7 +166,12 @@ def fileType(xml_file):
 def halParameters(parameters_file):
 
     # Read general settings
-    xml_object = parameters(parameters_file, True, True)
+    xml_object = parameters(parameters_file, True)
+
+    # Sometimes the user might drag in a parameters file that was
+    # saved when taking a movie. Since some of the values were
+    # specific to that movie we delete them.
+    xml_object.delete("acquisition")
 
     #
     # In the process of creating the complete parameters object we can
@@ -223,7 +235,7 @@ def hardware(hardware_file):
     # Create the hardware object.
     hardware = StormXMLObject(xml, recurse = True)
 
-    # Add some additional properties to the modules.
+    # Add some additional parameters to the modules.
     modules = hardware.get("modules")
     for module_name in modules.getAttrs():
         module = modules.get(module_name)
@@ -243,13 +255,13 @@ def hardware(hardware_file):
 #
 # @return A parameters object.
 #
-def parameters(parameters_file, recurse = False, skip_added = False):
+def parameters(parameters_file, recurse = False):
     xml = ElementTree.parse(parameters_file).getroot()
     if (xml.tag != "settings"):
         raise ParameterException(parameters_file + " is not a setting file.")
 
     # Create XML object.
-    xml_object = StormXMLObject(xml, recurse, skip_added)
+    xml_object = StormXMLObject(xml, recurse)
     xml_object.set("parameters_file", parameters_file)
     
     return xml_object
@@ -263,25 +275,29 @@ def parameters(parameters_file, recurse = False, skip_added = False):
 #
 def setCameraParameters(camera):
 
-    camera.set("x_pixels", camera.get("x_end") - camera.get("x_start") + 1)
-    camera.set("y_pixels", camera.get("y_end") - camera.get("y_start") + 1)
-
     # This restriction is necessary because in order to display
     # pictures as QImages they need to 32 bit aligned.
-    if((camera.get("x_pixels") % 4) != 0):
-        raise ParametersException("The camera ROI must be a multiple of 4 in x!")
-
-    camera.set("ROI", [camera.get("x_start"),
-                       camera.get("x_end"),
-                       camera.get("y_start"),
-                       camera.get("y_end")])
-    camera.set("binning", [camera.get("x_bin"),
-                           camera.get("y_bin")])
+    if camera.has("x_end"):
+        x_pixels = camera.get("x_end") - camera.get("x_start") + 1
+        if((x_pixels % 4) != 0):
+            raise ParametersException("The camera ROI must be a multiple of 4 in x!")
 
     camera.set("actual_temperature", 0)
-    camera.set("exposure_value", 0)      # This is the actual exposure time.
-    camera.set("cycle_value", 0)         # This is the time between frames.
+    
+    # This is the actual exposure time as reported by the camera.
+    camera.set("exposure_value", ParameterFloat("", "exposure_value", 0, is_mutable = False))
 
+    # This is the time between frames as reported by the camera.
+    camera.set("cycle_value", ParameterFloat("", "cycle_value", 0, is_mutable = False))
+
+## setDefaultParameters
+#
+# Use a copy of the specified parameters as the default parameters.
+#
+def setDefaultParameters(parameters):
+    global default_params
+    default_params = copy.deepcopy(parameters)
+    
 ## setDefaultShutters
 #
 # This sets the shutter name parameter of the default parameters object.
@@ -291,20 +307,7 @@ def setCameraParameters(camera):
 def setDefaultShutter(shutters_filename):
     global default_params
     if default_params:
-        default_params.shutters = shutters_filename
-
-## setSetupName
-#
-# This sets the setup name parameter of a parameters object and the default parameters object.
-#
-# @param parameters A parameters object.
-# @param setup_name The name of the setup, e.g. "none", "prism2".
-#
-def setSetupName(parameters, setup_name):
-    parameters.set("setup_name", setup_name)
-    global default_params
-    if default_params:
-        default_params.set("setup_name", setup_name)
+        default_params.set("shutters", shutters_filename)
 
 
 ## ParametersException
@@ -320,11 +323,308 @@ class ParametersException(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
 
+class ParametersExceptionGet(ParametersException):
+    pass
+
+
+## Parameter
+#
+# A single parameter.
+#
+class Parameter(object):
+
+    def __init__(self, description, name, value, order, is_mutable, is_saved):
+        self.description = description
+        self.is_saved = is_saved
+        self.is_mutable = is_mutable
+        self.name = name
+        self.order = order
+        self.ptype = "string"
+        self.value = value
+    
+    def getDescription(self):
+        return self.description
+
+    def getName(self):
+        return self.name
+    
+    def getOrder(self):
+        return self.order
+        
+    def getv(self):
+        return self.value
+
+    def isMutable(self):
+        return self.is_mutable
+    
+    def isRange(self):
+        return False
+    
+    def isSet(self):
+        return False
+
+    def setv(self, new_value):
+        self.value = new_value
+
+    def toXML(self, parent):
+        if self.is_saved:
+            field = ElementTree.SubElement(parent, self.name)
+            field.set("type", self.ptype)
+            field.text = str(self.value)
+            return field
+
+        
+## ParameterCustom
+#
+# This is a custom parameter whose behavior (i.e. it's editor)
+# will be set by whichever module creates/uses it.
+#
+class ParameterCustom(Parameter):
+
+    def __init__(self, description, name, value, order, is_mutable = True, is_saved = True):
+        Parameter.__init__(self, description, name, value, order, is_mutable, is_saved)
+        self.ptype = "custom"
+        self.editor = None
+
+        
+## ParameterFloat
+#
+class ParameterFloat(Parameter):
+
+    def __init__(self, description, name, value, order = 1, is_mutable = True, is_saved = True):
+        Parameter.__init__(self, description, name, float(value), order, is_mutable, is_saved)
+        self.ptype = "float"
+
+    def setv(self, new_value):
+        self.value = float(new_value)
+
+        
+## ParameterInt
+#
+class ParameterInt(Parameter):
+
+    def __init__(self, description, name, value, order = 1, is_mutable = True, is_saved = True):
+        Parameter.__init__(self, description, name, int(value), order, is_mutable, is_saved)
+        self.ptype = "int"
+
+    def setv(self, new_value):
+        self.value = int(new_value)
+
+
+## ParameterRange
+#
+class ParameterRange(Parameter):
+
+    def __init__(self, description, name, value, min_value, max_value, order, is_mutable, is_saved):
+        Parameter.__init__(self, description, name, value, order, is_mutable, is_saved)
+        self.min_value = min_value
+        self.max_value = max_value
+
+    def getMaximum(self):
+        return self.max_value
+    
+    def getMinimum(self):
+        return self.min_value
+
+    def isRange(self):
+        return True
+
+    def setMaximum(self, new_maximum):
+        self.max_value = new_maximum
+
+    def setMinimum(self, new_minimum):
+        self.min_value = new_minimum
+
+    def setv(self, new_value):
+        if (new_value < self.min_value):
+            self.value = self.min_value
+        elif (new_value > self.max_value):
+            self.value = self.max_value
+        else:
+            self.value = new_value
+
+
+## ParameterRangeFloat
+#
+class ParameterRangeFloat(ParameterRange):
+
+    def __init__(self, description, name, value, min_value, max_value, order = 1, is_mutable = True, is_saved = True):
+        ParameterRange.__init__(self,
+                                description,
+                                name,
+                                float(value),
+                                float(min_value),
+                                float(max_value),
+                                order,
+                                is_mutable,
+                                is_saved)
+        self.ptype = "float"
+        
+    def setv(self, new_value):
+        ParameterRange.setv(self, float(new_value))
+        
+        
+## ParameterRangeInt
+#
+class ParameterRangeInt(ParameterRange):
+    
+    def __init__(self, description, name, value, min_value, max_value, order = 1, is_mutable = True, is_saved = True):
+        ParameterRange.__init__(self,
+                                description,
+                                name,
+                                int(value),
+                                int(min_value),
+                                int(max_value),
+                                order,
+                                is_mutable,
+                                is_saved)
+        self.ptype = "int"
+
+    def setv(self, new_value):
+        ParameterRange.setv(self, int(new_value))
+
+    
+## ParameterSet
+#
+class ParameterSet(Parameter):
+
+    def __init__(self, description, name, value, allowed, order, is_mutable, is_saved):
+        Parameter.__init__(self, description, name, value, order, is_mutable, is_saved)
+        self.allowed = allowed
+
+    def getAllowed(self):
+        return self.allowed
+    
+    def isSet(self):
+        return True
+
+    def setAllowed(self, allowed):
+        self.allowed = allowed
+        
+    def setv(self, new_value):
+        if new_value in self.allowed:
+            self.value = new_value
+        else:
+            #for x in self.allowed:
+            #    print len(x), len(new_value)
+            #print self.name, self.allowed, "-", new_value, "-"
+            raise ParametersException(str(new_value) + " is not in the list of allowed values for " + self.name + ", " + str(self.allowed))
+
+            
+## ParameterSetBoolean
+#
+class ParameterSetBoolean(ParameterSet):
+
+    def __init__(self, description, name, value, order = 1, is_mutable = True, is_saved = True):
+        allowed = [True, False]
+        ParameterSet.__init__(self, description, name, self.parse(value), allowed, order, is_mutable, is_saved)
+        self.ptype = "boolean"
+
+    def parse(self, value):
+        if isinstance(value, int):
+            return value
+        elif isinstance(value, bool):
+            return value
+        elif (value == "0") or (value.lower() == "false"):
+            return False
+        else:
+            return True
+            
+    def setv(self, new_value):
+        ParameterSet.setv(self, self.parse(new_value))
+
+        
+## ParameterSetFloat
+#
+class ParameterSetFloat(ParameterSet):
+
+    def __init__(self, description, name, value, allowed, order = 1, is_mutable = True, is_saved = True):
+        allowed = map(float, allowed)
+        ParameterSet.__init__(self, description, name, float(value), allowed, order, is_mutable, is_saved)
+        self.ptype = "float"
+
+    def setv(self, new_value):
+        ParameterSet.setv(self, float(new_value))
+        
+    
+## ParameterSetInt
+#
+class ParameterSetInt(ParameterSet):
+
+    def __init__(self, description, name, value, allowed, order = 1, is_mutable = True, is_saved = True):
+        allowed = map(int, allowed)
+        ParameterSet.__init__(self, description, name, int(value), allowed, order, is_mutable, is_saved)
+        self.ptype = "int"
+        
+    def setv(self, new_value):
+        ParameterSet.setv(self, int(new_value))
+
+
+## ParameterSetString
+#
+class ParameterSetString(ParameterSet):
+
+    def __init__(self, description, name, value, allowed, order = 1, is_mutable = True, is_saved = True):
+        allowed = map(str, allowed)
+        if value is None:
+            value = ''
+        ParameterSet.__init__(self, description, name, str(value), allowed, order, is_mutable, is_saved)
+
+    def setv(self, new_value):
+        if new_value is None:
+            new_value = ''
+        ParameterSet.setv(self, str(new_value))
+        
+
+## ParameterSimple
+#
+class ParameterSimple(Parameter):
+
+    def __init__(self, name, value):
+        Parameter.__init__(self, "", name, value, 1, False, False)
+
+        
+## ParameterString
+#
+class ParameterString(Parameter):
+
+    def __init__(self, description, name, value, order = 1, is_mutable = True, is_saved = True):
+        if value is None:
+            value = ''
+        Parameter.__init__(self, description, name, str(value), order, is_mutable, is_saved)
+
+    def setv(self, new_value):
+        if new_value is None:
+            new_value = ''
+        Parameter.setv(self, str(new_value))
+
+
+## ParameterStringDirectory
+#
+# This is parameter whose contents are the name of a directory.
+#
+class ParameterStringDirectory(ParameterString):
+    pass
+
+
+## ParameterStringFilename
+#
+# This is parameter whose contents are the name of a file.
+#
+class ParameterStringFilename(ParameterString):
+
+    def __init__(self, description, name, value, use_save_dialog, order = 1, is_mutable = True, is_saved = True):
+
+        # Whether we should use a file open or a file save dialog.
+        self.use_save_dialog = use_save_dialog
+        ParameterString.__init__(self, description, name, value, order, is_mutable, is_saved)
+
+
 ## StormXMLObject
 #
-# A parameters object whose attributes are created dynamically
-# by parsing an XML file. The use of the get() and set() methods
-# is encouraged instead of direct property access via the dot.
+# A collection of Parameters objects that are created dynamically
+# by parsing an XML file. All parameter names must be unique for
+# each section.
 #
 class StormXMLObject(object):
 
@@ -334,258 +634,272 @@ class StormXMLObject(object):
     #
     # @param nodes A list of XML nodes.
     #
-    def __init__(self, nodes, recurse = False, skip_added = False):
+    def __init__(self, nodes, recurse = False):
 
+        self.parameters = {}
+        
         if isinstance(nodes, ElementTree.Element):
             self._is_new_ = bool(nodes.attrib.get("is_new", False))
         else:
             self._is_new_ = False
-        self._recursed_ = False
-        self._unused_ = {}
-        self._warned_ = False
-
-        # FIXME: someday this is going to cause a problem..
-        max_channels = 8
 
         for node in nodes:
-            slot = node.tag
-
+            param = None
+            
             #
-            # If requested, skip added properties. These are typically
-            # properties that were programmatically added to the object
-            # later and are not an intrinsic part of a settings file.
+            # These are settings as specified in the defaul xml file. This will
+            # (hopefully) provide a complete specification for each Parameter.
             #
-            if skip_added and node.attrib.get("added", False):
-                continue
-                
-            # Parse default power setting.
-            if (slot == "default_power"):
-                if not hasattr(self, "default_power"):
-                    self._create_("on_off_state", [])
-                    self._create_("default_power", [])
-                    for i in range(max_channels):
-                        self.default_power.append(1.0)
-                        self.on_off_state.append(0)
-                power = float(node.text)
-                channel = int(node.attrib["channel"])
-                self.default_power[channel] = power
+            if node.attrib.get("type", False):
+                description = node.attrib.get("desc", "None")
+                mutable = (node.attrib.get("mutable", "true").lower() == "true")
+                node_type = node.attrib.get("type")
+                order = int(node.attrib.get("order", 1))
 
-            # Power buttons.
-            elif (slot == "button"):
-                if not hasattr(self, "power_buttons"):
-                    self._create_("power_buttons", [])
-                    for i in range(max_channels):
-                        self.power_buttons.append([])
-                channel = int(node.attrib["channel"])
-                name = node.text
-                power = float(node.attrib["power"])
-                self.power_buttons[channel].append([name, power])
+                # Boolean
+                if (node_type == "boolean"):
+                    param = ParameterSetBoolean(description,
+                                                node.tag,
+                                                node.text,
+                                                order,
+                                                mutable)
 
-            # All the other settings.
-            elif node.attrib.get("type", False):
-                node_type = node.attrib["type"]
-                node_value = node.text
-                if (node_type == "boolean") or (node_type == "bool"):
-                    if node_value == "True":
-                        self._create_(slot, True)
+                # Ranges.
+                elif node.attrib.get("min", False):
+                    min_value = node.attrib.get("min")
+                    max_value = node.attrib.get("max")
+                    if (node_type == "float"):
+                        param = ParameterRangeFloat(description,
+                                                    node.tag,
+                                                    node.text,
+                                                    min_value,
+                                                    max_value,
+                                                    order,
+                                                    mutable)
+                    elif (node_type == "int"):
+                        param = ParameterRangeInt(description,
+                                                  node.tag,
+                                                  node.text,
+                                                  min_value,
+                                                  max_value,
+                                                  order,
+                                                  mutable)
                     else:
-                        self._create_(slot, False)
-                        
-                elif (node_type == "float") or (node_type == "float64"):
-                    self._create_(slot, float(node_value))
-                elif (node_type == "float-array"):
-                    text_array = node_value.split(",")
-                    float_array = []
-                    for elt in text_array:
-                        float_array.append(float(elt))
-                    self._create_(slot, float_array)
+                        raise ParametersException("unrecognized range type, " + node_type)
+
+                # Sets.
+                elif node.attrib.get("values", False):
+                    allowed = node.attrib.get("values").split(",")
+                    if (node_type == "float"):
+                        param = ParameterSetFloat(description,
+                                                  node.tag,
+                                                  node.text,
+                                                  allowed,
+                                                  order,
+                                                  mutable)
+                    elif (node_type == "int"):
+                        param = ParameterSetInt(description,
+                                                node.tag,
+                                                node.text,
+                                                allowed,
+                                                order,
+                                                mutable)
+                    elif (node_type == "string"):
+                        param = ParameterSetString(description,
+                                                   node.tag,
+                                                   node.text,
+                                                   allowed,
+                                                   order,
+                                                   mutable)
+                    else:
+                        raise ParametersException("unrecognized set type, " + node_type)
+
+                # The fallback if the element is not a set or a range.
+                elif (node_type == "float"):
+                    param = ParameterFloat(description, node.tag, node.text, order, mutable)
 
                 elif (node_type == "int"):
-                    self._create_(slot, int(node_value))
-                elif (node_type == "int-array"):
-                    text_array = node_value.split(",")
-                    int_array = []
-                    for elt in text_array:
-                        int_array.append(int(elt))
-                    self._create_(slot, int_array)
+                    param = ParameterInt(description, node.tag, node.text, order, mutable)
+
+                # Other types of elements.
+                elif (node_type == "custom"):
+                    param = ParameterCustom(description, node.tag, node.text, order, mutable)
+
+                elif (node_type == "directory"):
+                    param = ParameterStringDirectory(description, node.tag, node.text, order, mutable)
                     
-                elif (node_type == "string") or (node_type == "str"):
-                    self._create_(slot, str(node_value))
-                elif (node_type == "string-array"):
-                    self._create_(slot, node_value.split(","))
-                    
-                elif (node_type == "unicode"):
-                    self._create_(slot, str(node_value))
+                elif (node_type == "filename"):
+                    if (node.attrib.get("use_save_dialog", "false").lower() == "true"):
+                        param = ParameterStringFilename(description, node.tag, node.text, True, order, mutable)
+                    else:
+                        param = ParameterStringFilename(description, node.tag, node.text, False, order, mutable)
+
+                elif (node_type == "string"):
+                    param = ParameterString(description, node.tag, node.text, order, mutable)
+
+                # These are deprecated and may disappear. They only remain so
+                # that current Steve can read older data.
+                elif (node_type == "float-array"):
+                    param = ParameterCustom(description, node.tag, node.text, order, mutable)
+                    print "Found deprecated parameter type: ", node_type 
+
+                elif (node_type in ["float64", "int-array", "str", "string-array", "unicode", "bool"]):
+                    print "Found deprecated parameter type: ", node_type, " ignoring."
+
                 else:
                     raise ParametersException("unrecognized type, " + node_type)
 
-            # Sub-node.
-            elif recurse and (len(node) > 0):
-                setattr(self, node.tag, StormXMLObject(node, recurse, skip_added))
-                self._recursed_ = True
+            # 
+            # Settings from a saved XML file, such as created when taking a movie. These
+            # must match an existing setting to be handled properly.
+            #
+            elif (len(node) == 0):
+                param = Parameter("non_default", node.tag, node.text, 1, True, True)
 
-    ## copy()
+            # This handles sub-nodes.
+            elif recurse and (len(node) > 0):
+                self.parameters[node.tag] = StormXMLObject(node, True)
+
+            # Handle the possibility of non-unique parameters. If there is more than one
+            # parameter with the same name then an array will be created with all the parameters.
+            if param is not None:
+                self.addParameter(node.tag, param)
+
+    ## add
+    #
+    # Add a new Parameter to the parameters.
+    #
+    def add(self, pname, pvalue):
+        pnames = pname.split(".")
+        if (len(pnames) > 1):
+            try:
+                prop = self.get(pnames[0])
+            except ParametersExceptionGet:
+                self.addSubSection(pnames[0])
+            prop = self.get(pnames[0])
+            prop.add(".".join(pnames[1:]), pvalue)
+        else:
+            self.addParameter(pname, pvalue)
+
+    ## addParameter
+    #
+    # Handles adding Parameters.
+    #
+    def addParameter(self, pname, pvalue):
+        if pname in self.parameters:
+            raise ParametersException("Parameter " + pname + " already exists.")
+        else:
+            if isinstance(pvalue, Parameter):
+                self.parameters[pname] = pvalue
+            else:
+                self.parameters[pname] = ParameterSimple(pname, pvalue)
+
+    ## addSubSection
+    #
+    # Add a sub-section if it doesn't already exist.
+    #
+    def addSubSection(self, sname):
+        snames = sname.split(".")
+        if (len(snames) > 1):
+            self.get(".".join(snames[:-1])).addSubSection(sname[-1])
+        else:
+            if not sname in self.parameters:
+                self.parameters[sname] = StormXMLObject([])
+        return self.parameters[sname]
+            
+    ## copy
     #
     # @return A deep copy of this object.
     #
     def copy(self):
         return copy.deepcopy(self)
 
-    ## _create_
+    ## delete
     #
-    # Create a property. This is basically the same as set, but it also
-    # adds the property name to the dictionary of unused properties. The
-    # dictionary of unused properties is also used to keep track of what
-    # was part this object originally and what was added later. So the
-    # value in the dictionary (True/False) specifies if the property was
-    # used and the fact that it is in the dictionary at all means that
-    # it was not added later using set.
+    # Remove a sub-section or parameter (if it exists).
     #
-    # @param pname A string containing the property name.
-    # @param value The value to set the property too.
-    #
-    def _create_(self, pname, value):
-        self._unused_[pname] = True
-        self.set(pname, value)
+    def delete(self, name):
+        if self.has(name):
+            names = name.split(".")
+            if (len(names) > 1):
+                self.get(".".join(names[:-1])).delete(names[-1])
+            else:
+                del self.parameters[name]
 
-    ## diff
-    #
-    # Return the parameters that are different in another StormXMLObject from
-    # those in the current object. This does not check recursively.
-    #
-    # @param other The other StormXMLObject.
-    #
-    # @return The names of the properties that are different.
-    #
-    def diff(self, other):
-        diffs = []
-        for pname in filter(lambda(x): not isinstance(self.get(x, mark_used = False), StormXMLObject), self.getAttrs()):
-            if (self.get(pname) != other.get(pname)):
-                diffs.append(pname)
-        return diffs
-                        
     ## get
     #
-    # Get a property of this object.
+    # Returns either the value of the Parameter object specified by pname or
+    # the corresponding StormXMLObject.
     #
     # @param pname A string containing the property name.
-    # @param default (Optional) The value to use if the property is not found.
+    # @param default (Optional) The value to use if the Parameter is not found.
     #
-    # @return The propery if found, otherwise default.
+    # @return The value if found, otherwise default.
     #
-    def get(self, pname, default = None, mark_used = True):
-
-        # Check for sub-property.
-        pnames = pname.split(".")
-        if (len(pnames) > 1):
-            try:
-                xml_object = self.get(pnames[0])
-            except ParametersException as e:
-                if default is not None:
-                    return default
-                else:
-                    raise e
-            else:
-                return xml_object.get(".".join(pnames[1:]), default, mark_used)
-
-        if hasattr(self, pname):
-            if mark_used:
-                self.isUsed(pname)
-            return getattr(self, pname)
-        else:
+    def get(self, pname, default = None):
+        try:
+            prop = self.getp(pname)
+        except ParametersException:
             if default is not None:
                 return default
             else:
-                raise ParametersException("Requested property " + pname + " not found and no default was specified.")
+                raise ParametersExceptionGet("Requested property " + pname + " not found and no default was specified.")
+        else:
+            if isinstance(prop, StormXMLObject):
+                return prop
+            else:
+                return prop.getv()
 
     ## getAttrs
     #
-    # Return the "relevant" attributes of the object, i.e. the ones that
-    # are not internal or callable.
-    #
-    # @return A list of attributes.
+    # @return a list of the properties.
     #
     def getAttrs(self):
-        attrs = filter(lambda(x): x[0] != "_", sorted(dir(self)))
-        return filter(lambda(x): not callable(self.get(x, mark_used = False)), attrs)
-
-    ## getSubXMLObjects
-    #
-    # Return a list of the sub StormXMLObjects of the current object.
-    #
-    # @return A list of StormXMLObjects.
-    #
-    def getSubXMLObjects(self):
-        return map(lambda(x): self.get(x), filter(lambda(y): isinstance(self.get(y, mark_used = False), StormXMLObject), self.getAttrs()))
-
-    ## getUnused
-    #
-    # Returns a list of all unused parameters.
-    #
-    # @return The list of unused parameters.
-    #
-    def getUnused(self):
-        unused = filter(lambda(x): self._unused_[x], self._unused_.keys())
-        return unused
+        return self.parameters.keys()
                 
+    ## getp
+    #
+    # @return the property specified by pname.
+    #
+    def getp(self, pname):
+        
+        # Check for sub-property.
+        pnames = pname.split(".")
+        if (len(pnames) > 1):
+            xml_object = self.getp(pnames[0])
+            #print pnames, type(xml_object)
+            return xml_object.getp(".".join(pnames[1:]))
+
+        if pname in self.parameters:
+            return self.parameters[pname]
+        else:
+            raise ParametersExceptionGet("Requested property " + pname + " not found")
+
+    ## getProps
+    #
+    # @return all the properties.
+    #
+    def getProps(self):
+        return self.parameters.values()
+    
     ## has
     #
-    # Return true if this object has a particular property.
+    # Return true if this object has a particular Parameter.
     #
     # @param pname A string containing the property name.
     #
     # @return True if found, otherwise False.
     #
     def has(self, pname):
-
-        # Check for sub-property.
-        pnames = pname.split(".")
-        if (len(pnames) > 1):
-            xml_object = self.get(pnames[0], False)
-            if xml_object:
-                return xml_object.has(".".join(pnames[1:]))
-            else:
-                return False
-
-        if hasattr(self, pname):
-            self.isUsed(pname)
-            return True
-        else:
+        try:
+            prop = self.getp(pname)
+        except ParametersExceptionGet:
             return False
-
-    ## hasUnused
-    #
-    # Returns True is there are unused parameters.
-    #
-    # @return True / False
-    #
-    def hasUnused(self):
-
-        # Check current level.
-        for key in self._unused_:
-            if self._unused_[key]:
-                return True
-
-        # Check lower levels.
-        for elt in self.getSubXMLObjects():
-            if elt.hasUnused():
-                return True
-            
-        return False
-    
-    ## isUsed
-    #
-    # Remove a property from the _unused_ list.
-    #
-    # @param pname The name of the property.
-    #
-    def isUsed(self, pname):
-        if pname in self._unused_:
-            self._unused_[pname] = False
+        return True
 
     ## saveToFile
     #
-    # Save the settings as XML in a file.
+    # Save the Parameters as XML in a file.
     #
     # @param filename The name of the file to save settings in.
     #
@@ -594,31 +908,52 @@ class StormXMLObject(object):
         reparsed = minidom.parseString(rough_string)
         with open(filename, "w") as fp:
             fp.write(reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1"))
-    
+
     ## set
     #
-    # Set a property (or properties) of this object.
+    def set(self, pname, pvalue):
+
+        # Check for list of pnames and values.
+        if isinstance(pname, list):
+            if (len(pname) == len(pvalue)):
+                for i in range(len(pname)):
+                    self.set(pname[i], pvalue[i])
+            else:
+                raise ParameterException("Lengths do not match in parameters multi-set. " + str(len(pname)) + ", " + str(len(pvalue)))
+            return
+
+        # If the parameter does not already exist a ParameterSimple
+        # is created to hold the value of the parameter.
+        try:
+            temp = self.getp(pname)
+            if isinstance(pvalue, Parameter):
+                temp.setv(pvalue.getv())
+            else:
+                temp.setv(pvalue)
+        except ParametersExceptionGet:
+            self.add(pname, pvalue)
+
+    ## setv
     #
-    # @param pname A string containing the property name.
-    # @param value The value to set the property too.
+    # Set a Parameters (or Parameters). This is different from
+    # set() in that it will throw an error if the parameter
+    # does not already exist.
     #
-    def set(self, pname, value):
+    # @param pname A string containing the Parameter name(s).
+    # @param value The value(s) to set the Parameter too.
+    #
+    def setv(self, pname, value):
 
         # Check for list of pnames and values.
         if isinstance(pname, list):
             if (len(pname) == len(value)):
                 for i in range(len(pname)):
-                    self.set(pname[i], value[i])
+                    self.setv(pname[i], value[i])
             else:
                 raise ParameterException("Lengths do not match in parameters multi-set. " + str(len(pname)) + ", " + str(len(value)))
             return
-        
-        # Check for sub-property.
-        pnames = pname.split(".")
-        if (len(pnames) > 1):
-            self.get(pnames[0]).set(".".join(pnames[1:]), value)
-        else:
-            setattr(self, pname, value)
+
+        self.getp(pname).setv(value)
 
     ## toXML
     #
@@ -626,80 +961,20 @@ class StormXMLObject(object):
     #
     # @param name (optional) The tag attribute to use for the current block of XML.
     #
-    def toXML(self, name = "settings"):
-        xml = ElementTree.Element(name)
-        for attr in self.getAttrs():
-            value = self.get(attr)
+    def toXML(self, xml = None, name = "settings"):
+        if xml is None:
+            xml = ElementTree.Element(name)
+        for key in sorted(self.parameters):
+            value = self.parameters[key]
             if isinstance(value, StormXMLObject):
-                temp = value.toXML(attr)
-                temp.set("is_new", str(value._is_new_))
-                xml.append(temp)
+                child = ElementTree.SubElement(xml, key)
+                child.set("is_new", str(value._is_new_))
+                value.toXML(child, key)
+                if (len(child) == 0):
+                    xml.remove(child)
             else:
-
-                # Don't save the following.
-                if attr in ["shutter_colors", "shutter_data"]:
-                    continue
-
-                # Mark parameters that were added after XML object creation, as
-                # we may want to handle these differently later. These are the
-                # parameters that were created using "set" instead of "create".
-                added = False
-                if not attr in self._unused_:
-                    added = True
-                
-                # Handle default power settings.
-                if (attr == "default_power"):
-                    for i, elt in enumerate(value):
-                        field = ElementTree.SubElement(xml, attr)
-                        field.set("channel", str(i))
-                        field.text = str(elt)
-
-                # Handle button on / off state.
-                elif (attr == "on_off_state"):
-                    field = ElementTree.SubElement(xml, attr)
-                    field.set("type", "int-array")
-                    field.text = ",".join(map(lambda(x): str(int(x)), value))
-                    
-                # Handle power buttons.
-                elif (attr == "power_buttons"):
-                    for i, elt in enumerate(value):
-                        for sub_elt in elt:
-                            field = ElementTree.SubElement(xml, "button")
-                            field.set("channel", str(i))
-                            field.set("power", str(sub_elt[1]))
-                            field.text = sub_elt[0]
-
-                # Lists.
-                elif isinstance(value, list):
-                    if (len(value) > 0) and isinstance(value[0], int):
-                        list_type = "int-array"
-                    elif (len(value) > 0) and isinstance(value[0], float):
-                        list_type = "float-array"
-                    else:
-                        list_type = "string-array"
-
-                    field = ElementTree.SubElement(xml, attr)
-                    field.set("type", list_type)
-                    if added:
-                        field.set("added", str(True))
-                    field.text = ",".join(map(str, value))
-                        
-                # Everything else:
-                else:
-                    field = ElementTree.SubElement(xml, attr)
-                    field.set("type", str(type(value).__name__))
-                    if added:
-                        field.set("added", str(True))
-                    field.text = str(value)
-
+                value.toXML(xml)
         return xml
-
-    ## unused
-    #
-    # @return A list of the attributes in the instance that were never used.
-    # 
-    def unused(self):
-        return []
 
 
 #
@@ -712,14 +987,23 @@ if (__name__ == "__main__"):
 
     from xml.dom import minidom
 
-    p1 = halParameters(sys.argv[1])
-    p2 = halParameters(sys.argv[2])
+    if 1:
+        p1 = halParameters(sys.argv[1])
+        p2 = halParameters(sys.argv[2])
 
-    string = ElementTree.tostring(p2.toXML(), 'utf-8')
-    reparsed = minidom.parseString(string)
-    print reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1")    
+        string = ElementTree.tostring(p2.toXML(), 'utf-8')
+        reparsed = minidom.parseString(string)
+        print reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1")    
 
+    if 0:
+        pm = parameters(sys.argv[1], True)
+        print pm.get("film")
+        print pm.get("film.directory")
         
+#        string = ElementTree.tostring(pm.toXML(), 'utf-8')
+#        reparsed = minidom.parseString(string)
+#        print reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1")
+
 #
 # The MIT License
 #

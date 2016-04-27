@@ -119,7 +119,7 @@ class OfflineDriver(QtCore.QObject):
     # This is called when the spot counter finishes processing a frame. It
     # loads the next frame from the file and passes it to the spot counter.
     #
-    def nextImage(self):
+    def nextImage(self, camera, frame_number, counts):
         if (self.cur_frame < self.length):
             np_data = data_file.loadAFrame(self.cur_frame)
             np_data = numpy.ascontiguousarray(np_data, dtype=numpy.int16)
@@ -361,16 +361,18 @@ class QImageGraph(QtGui.QWidget):
     # @param scale_bar_len The length of the scale bar (in pixels).
     #
     def newParameters(self, camera_params, scale_bar_len):
-        self.flip_horizontal = camera_params.flip_horizontal
-        self.flip_vertical = camera_params.flip_vertical
+        self.flip_horizontal = camera_params.get("flip_horizontal")
+        self.flip_vertical = camera_params.get("flip_vertical")
         self.scale_bar_len = int(round(scale_bar_len))
-        self.transpose = camera_params.transpose
+        self.transpose = camera_params.get("transpose")
 
         self.x_end = self.x_size
         self.y_end = self.y_size
 
-        self.x_scale = float(self.x_size)/float(camera_params.x_pixels / camera_params.x_bin)
-        self.y_scale = float(self.y_size)/float(camera_params.y_pixels / camera_params.y_bin)
+        x_pixels = camera_params.get("x_end") - camera_params.get("x_start") + 1
+        y_pixels = camera_params.get("y_end") - camera_params.get("y_start") + 1
+        self.x_scale = float(self.x_size)/float(x_pixels / camera_params.get("x_bin"))
+        self.y_scale = float(self.y_size)/float(y_pixels / camera_params.get("y_bin"))
 
         if (self.x_scale > self.y_scale):
             self.p_scale = self.y_scale
@@ -444,7 +446,7 @@ class QImageGraph(QtGui.QWidget):
 # Spot Counter Dialog Box
 #
 class SpotCounter(QtGui.QDialog, halModule.HalModule):
-    imageProcessed = QtCore.pyqtSignal()
+    imageProcessed = QtCore.pyqtSignal(str, int, int)
 
     ## __init__
     #
@@ -471,6 +473,27 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
             self.have_parent = True
         else:
             self.have_parent = False
+
+        # Add spot counter specific parameters.
+        #
+        # FIXME: We should just use a pixel length scale bar and drop the nm stuff, or
+        #        we should get the nm_per_pixel from the mosaic settings and the current
+        #        objective.
+        #
+        spotc_params = self.parameters.get("spotcounter")
+        spotc_params.add("cell_size", params.ParameterRangeInt("Cell size for background subtraction",
+                                                               "cell_size", 32, 8, 128,
+                                                               is_mutable = False,
+                                                               is_saved = False))
+        spotc_params.add("min_spots", params.ParameterRangeInt("Minimum counts for the spotcounter graph",
+                                                               "min_spots", 0, 0, 1000,
+                                                               is_mutable = False,
+                                                               is_saved = False))
+        spotc_params.add("max_spots", params.ParameterRangeInt("Maximum counts for the spotcounter graph",
+                                                               "max_spots", 500, 0, 1000,
+                                                               is_mutable = False,
+                                                               is_saved = False))
+
 
         # UI setup.
         self.ui.setupUi(self)
@@ -564,14 +587,14 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
             if (signal[1] == "newColors"):
                 signal[2].connect(self.newColors)
 
-    ## getCounts
+
+    ## getSignals
     #
-    # Returns the number of objects detected. If the movie is requested
-    # by TCP/IP this number is passed back to the calling program.
+    # @return An array of signals provided by the module.
     #
-    #@hdebug.debug
-    #def getCounts(self):
-    #    return self.counters[0].getCounts()
+    @hdebug.debug
+    def getSignals(self):
+        return [[self.hal_type, "imageProcessed", self.imageProcessed]]
 
     ## handleMaxChange
     #
@@ -700,9 +723,8 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
             if self.filming:
                 self.counters[1].updateCounts(spots)
                 self.image_graphs[1].updateImage(frame_number, x_locs, y_locs, spots)
-#        else:
-#            print "spotCounter.update Unknown camera:", which_camera
-        self.imageProcessed.emit()
+
+        self.imageProcessed.emit(which_camera, frame_number, spots)
 
     ## startCounter
     #

@@ -7,6 +7,8 @@
 # Hazen 09/15
 #
 
+import sc_library.parameters as params
+
 # qpd and stage.
 import sc_hardware.madCityLabs.mclVoltageZController as MCLVZC
 import sc_hardware.thorlabs.uc480Camera as uc480Cam
@@ -26,6 +28,20 @@ import focuslock.focusLockZ as focusLockZ
 #
 class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, hardware, parameters, parent = None):
+        # STORM3 specific focus lock parameters
+        lock_params = parameters.addSubSection("focuslock")
+        lock_params.add("qpd_zcenter", params.ParameterRangeFloat("Piezo center position in microns",
+                                                                  "qpd_zcenter",
+                                                                  100.0, 0.0, 200.0))
+        lock_params.add("qpd_scale", params.ParameterRangeFloat("Offset to nm calibration value",
+                                                                "qpd_scale",
+                                                                -700.0, 0.1, 1000.0))
+        lock_params.add("qpd_sum_min", 50.0)
+        lock_params.add("qpd_sum_max", 100000.0)
+        lock_params.add("is_locked_buffer_length", 10)
+        lock_params.add("is_locked_offset_thresh", 0.01)
+        lock_params.add("ir_power", params.ParameterInt("", "ir_power", 6, is_mutable = False))
+
         # Create camera
         cam = uc480Cam.CameraQPD(camera_id = 1,
                                  x_width = 1000,

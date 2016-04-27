@@ -10,12 +10,12 @@
 from PyQt4 import QtCore, QtGui
 
 import qtWidgets.qtAppIcon as qtAppIcon
-
 import halLib.halModule as halModule
 import illumination.xmlParser as xmlParser
 import illumination.illuminationChannel as illuminationChannel
 import sc_library.halExceptions as halExceptions
 import time
+import sc_library.parameters as params
 
 # Debugging
 import sc_library.hdebug as hdebug
@@ -62,7 +62,32 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         self.setWindowIcon(qtAppIcon.QAppIcon())
 
         # Parse XML that describes the hardware.
-        hardware = xmlParser.parseHardwareXML("illumination/" + hardware.settings_xml)
+        hardware = xmlParser.parseHardwareXML("illumination/" + hardware.get("settings_xml"))
+
+        # Add illumination specific settings.
+        #
+        # FIXME: These used to be customizable.
+        #
+        default_power = []
+        on_off_state = []
+        for i in range(len(hardware.channels)):
+            default_power.append(1.0)
+            on_off_state.append(False)
+        self.parameters.set("illumination.default_power", default_power)
+        self.parameters.set("illumination.on_off_state", on_off_state)
+
+        buttons = []
+        for i in range(len(hardware.channels)):
+            buttons.append([["Max", 1.0], ["Low", 0.1]])
+        self.parameters.set("illumination.power_buttons", buttons)
+
+        # This parameter is used to be able to tell when the shutters file
+        # has been changed for a given set of parameters.
+        self.parameters.add("illumination.last_shutters", params.ParameterString("Last shutters file name",
+                                                                                "last_shutters",
+                                                                                "",
+                                                                                is_mutable = False,
+                                                                                is_saved = False))
 
         # Hardware modules setup.
         for module in hardware.modules:

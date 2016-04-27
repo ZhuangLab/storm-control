@@ -8,6 +8,8 @@
 # Hazen 5/14
 #
 
+import sc_library.parameters as params
+
 # qpd and stage.
 import sc_hardware.madCityLabs.mclController as mclController
 import sc_hardware.phreshPhotonics.phreshQPD as phreshQPD
@@ -27,6 +29,21 @@ import focuslock.focusLockZ as focusLockZ
 #
 class AFocusLockZ(focusLockZ.FocusLockZQPD):
     def __init__(self, hardware, parameters, parent = None):
+
+        # STORM1 specific focus lock parameters.
+        lock_params = parameters.addSubSection("focuslock")
+        lock_params.add("qpd_zcenter", params.ParameterRangeFloat("Piezo center position in microns",
+                                                                  "qpd_zcenter",
+                                                                  30.0, 0.0, 100.0))
+        lock_params.add("qpd_scale", params.ParameterRangeFloat("Offset to nm calibration value",
+                                                                "qpd_scale",
+                                                                3200.0, 0.1, 6000.0))
+        lock_params.add("qpd_sum_min", 50.0)
+        lock_params.add("qpd_sum_max", 1500.0)
+        lock_params.add("is_locked_buffer_length", 10)
+        lock_params.add("is_locked_offset_thresh", 0.01)
+
+        # STORM1 Initialization.
         qpd = phreshQPD.PhreshQPDPRISM2()
         stage = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/")
         lock_fn = lambda (x): -1.75 * x

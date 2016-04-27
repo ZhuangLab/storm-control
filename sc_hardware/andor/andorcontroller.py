@@ -30,6 +30,8 @@ drv_temp_off = 20034
 drv_temp_stabilized = 20036
 drv_temp_not_reached = 20037
 drv_temp_drift = 20040
+drv_p1invalid = 20066
+
 
 ## AndorCapabilities
 #
@@ -175,6 +177,13 @@ class AndorCamera:
         self._props_['EMGainCapability'] = caps.ulEMGainCapability
         self._props_['FTReadModes'] = caps.ulFTReadModes
 
+        # Determine camera bit depth.
+
+        # FIXME: Use andor.GetBitDepth()
+        for i in [[1, 2**8], [2, 2**14], [4, 2**16], [8, 2**32]]:
+            if (i[0] & self._props_['PixelMode']):
+                self._props_['MaxIntensity'] = i[1]
+
         # Determine camera pixel size.
         x_pixels = c_long()
         y_pixels = c_long()
@@ -214,7 +223,7 @@ class AndorCamera:
             index = c_int(i)
             speed = c_float()
             andorCheck(andor.GetVSSpeed(index, byref(speed)), "GetVSSpeed")
-            self._props_["VSSpeeds"][i] = speed.value
+            self._props_["VSSpeeds"][i] = round(speed.value, 4)
 
         # Determine horizontal shift speeds.
         andorCheck(andor.GetNumberADChannels(byref(number)), "GetNumberADChannels")
@@ -228,7 +237,7 @@ class AndorCamera:
                 type = c_int(j)
                 speed = c_float()
                 andorCheck(andor.GetHSSpeed(channel, 0, type, byref(speed)), "GetHSSpeed")
-                self._props_["HSSpeeds"][i][j] = speed.value
+                self._props_["HSSpeeds"][i][j] = round(speed.value, 4)
         
         # Determine temperature range.
         min_temp = c_int()
@@ -244,13 +253,32 @@ class AndorCamera:
             index = c_int(i)
             gain = c_float()
             andorCheck(andor.GetPreAmpGain(index, byref(gain)), "GetPreAmpGain")
-            self._props_["PreAmpGains"][i] = gain.value
+            self._props_["PreAmpGains"][i] = round(gain.value, 2)
 
         # Determine EM gain range.
         low = c_int()
         high = c_int()
         andorCheck(andor.GetEMGainRange(byref(low), byref(high)), "GetEMGainRange")
         self._props_["EMGainRange"] = [low.value, high.value]
+
+        # Determine number of EM gain modes.
+        n_modes = 0
+        while (self.setEMGainMode(n_modes)):
+            n_modes += 1
+        self._props_["NumberEMGainModes"] = n_modes - 1
+        self.setEMGainMode(0)
+
+        # Determine the maximum binning values.
+        max_binning = c_int()
+        andorCheck(andor.GetMaximumBinning(4, 0, byref(max_binning)), "GetMaximumBinning")
+        self._props_["MaxBinning"] = [max_binning.value]
+        andorCheck(andor.GetMaximumBinning(4, 1, byref(max_binning)), "GetMaximumBinning")
+        self._props_["MaxBinning"].append(max_binning.value)
+        
+        # Determine maximum exposure time.
+        max_exp = c_float()
+        andorCheck(andor.GetMaximumExposure(byref(max_exp)), "GetMaximumExposure")
+        self._props_["MaxExposure"] = max_exp.value
 
     #
     # Helper functions.
@@ -319,6 +347,13 @@ class AndorCamera:
         andorCheck(andor.GetAcquisitionTimings(byref(exposure), byref(accumulate), byref(kinetic)),
                    "GetAcqisitionTimings")
         return [exposure.value, kinetic.value, accumulate.value]
+
+    ## getCameraSize
+    #
+    # @return The size of camera in pixels
+    #
+    def getCameraSize(self):
+        return [self._props_['XPixels'], self._props_['YPixels']]
 
     ## getCurrentSetup
     #
@@ -528,6 +563,40 @@ class AndorCamera:
         else:
             raise AssertionError, "GetNumberNewImages failed: " + str(status)
 
+    ## getMaxBinning
+    #
+    # @return [max binning in x, max binning in y]
+    #
+    def getMaxBinning(self):
+        return self._props_["MaxBinning"]
+
+    ## getMaxExposure
+    #
+    # @return The maximum exposure time (in seconds)
+    #
+    def getMaxExposure(self):
+        return self._props_["MaxExposure"]
+
+    ## getMaxIntensity
+    #
+    # @return The maximum intensity the camera can record.
+    def getMaxIntensity(self):
+        return self._props_['MaxIntensity']
+
+    ## getNumberADChannels
+    #
+    # @return The number of AD channels available
+    #
+    def getNumberADChannels(self):
+        return self._props_["NumberADChannels"]
+
+    ## getNumberEMGainModes
+    #
+    # @return How many EM gain modes the camera supports.
+    #
+    def getNumberEMGainModes(self):
+        return self._props_["NumberEMGainModes"]
+
     ## getOldestImage16
     #
     # This works, but it is deprecated, use getFrames().
@@ -566,6 +635,13 @@ class AndorCamera:
         else:
             raise AssertionError, "GetOldestImage16 failed: " + str(status)
 
+    ## getPreampGains
+    #
+    # @return Return the available pre-amp gains.
+    #
+    def getPreampGains(self):
+        return self._props_["PreAmpGains"]
+
     ## getProperties
     #
     # Return all the known camera properties
@@ -592,6 +668,13 @@ class AndorCamera:
         else:
             print "GetTemperature failed: ", status
             return [50, "unstable"]
+
+    ## getTemperatureRange
+    #
+    # @return [min temperature, max_temperature]
+    #
+    def getTemperatureRange(self):
+        return self._props_["TemperatureRange"]
 
     ## getVSSpeeds
     #
@@ -720,7 +803,9 @@ class AndorCamera:
     #
     # Set the camera EM gain mode (i.e. linear, real, etc..)
     #
-    # param mode The EM gain mode.
+    # @param mode The EM gain mode.
+    #
+    # @returns Whether the mode could be set or not.
     #
     def setEMGainMode(self, mode):
         setCurrentCamera(self.camera_handle)
@@ -728,8 +813,12 @@ class AndorCamera:
         status = andor.SetEMGainMode(c_int(mode))
         if (status == drv_not_supported):
             print "Warning: Setting EM Gain Mode is not supported by this camera."
+            return False
+        elif (status == drv_p1invalid):
+            return False
         else:
             andorCheck(status, "SetEMGainMode")
+            return True
 
     ## setExposureTime
     #

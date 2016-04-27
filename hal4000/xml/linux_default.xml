@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<settings>
+
+  <!-- camera settings -->
+  <camera1>
+    <!-- camera view settings -->
+    <flip_horizontal desc="Flip image horizontal" type="boolean">False</flip_horizontal>
+    <flip_vertical desc="Flip image vertical" type="boolean">False</flip_vertical>
+    <transpose desc="Transpose image" type="boolean">False</transpose>
+  </camera1>
+
+  <!-- film settings -->
+  <film>
+    <want_big_endian type="boolean">False</want_big_endian>
+    <directory type="directory">/home/hbabcock/Data/</directory>
+    <filename type="string">movie</filename>
+    <acq_mode type="string" values="run_till_abort,fixed_length">fixed_length</acq_mode>
+    <frames type="int" min="1" max="1000000000">10</frames>
+    <logfile type="filename" mutable="False">/home/hbabcock/Data/logs/image_log.txt</logfile>
+    <extension type="string" values=",A647,Cy5,Cy3,Cy2,A405,FITC,YFP,GFP,BF"></extension>
+    <auto_increment type="boolean">True</auto_increment>
+    <want_bell type="boolean">True</want_bell>
+    <auto_shutters type="boolean">True</auto_shutters>
+    <filetype type="string" values=".dax">.dax</filetype>
+  </film>
+
+  <!-- illumination settings -->
+  <illumination>
+    <shutters type="filename">shutters_default.xml</shutters>
+  </illumination>
+  
+  <!-- stage settings -->
+  <stage>
+    <x_sign desc="Reverse the sign of the X axis" type="int" values="-1,1">-1</x_sign>
+    <y_sign desc="Reverse the sign of the Y axis" type="int" values="-1,1">1</y_sign>
+    <flip_axis desc="Switch X-Y stage axises" type="boolean">True</flip_axis>
+  </stage>
+
+  <!-- focus lock settings -->
+  <focuslock>
+    <qpd_zcenter desc="Piezo center position in microns" type="float" min="0.0" max="1000.0">50.0</qpd_zcenter>
+    <qpd_scale desc="Offset to nm calibration value" type="float" min="0.0" max="10000.0">50.0</qpd_scale>
+    <qpd_sum_max desc="Maximum sum signal" type="float" min="1.0" max="10000.0">1500</qpd_sum_max>
+  </focuslock>
+  
+  <!-- spot counter -->
+  <spotcounter>
+    <threshold type="int" min="1" max="10000">250</threshold>
+    <scale_bar_len desc="Scale bar length in nm" type="float" min="100" max="10000">1000</scale_bar_len>
+    <nm_per_pixel desc="Nanometers per pixel" type="float" min="10" max="1000">160</nm_per_pixel>
+  </spotcounter>
+  
+  <!-- steve settings -->
+  <mosaic>
+    <objective desc="Current objective" type="string" values="obj1,obj2,obj3">obj1</objective>
+    <flip_horizontal desc="Flip image horizontal (mosaic)" type="boolean">False</flip_horizontal>
+    <flip_vertical desc="Flip image vertical (mosaic)" type="boolean">False</flip_vertical>
+    <transpose desc="Transpose image (mosaic)" type="boolean">True</transpose>
+    <obj1 type="custom">100x,0.1,0.0,0.0</obj1>
+    <obj2 type="custom">10x,1.0,0.0,0.0</obj2>
+    <obj3 type="custom">4x,4.0,0.0,0.0</obj3>
+  </mosaic>
+
+</settings>

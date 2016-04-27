@@ -224,7 +224,8 @@ class FeedInterval(FeedNC):
     def __init__(self, feed_name, parameters):    
         FeedNC.__init__(self, feed_name, parameters)
 
-        self.capture_frames = parameters.get("feeds." + self.feed_name + ".capture_frames")
+        temp = parameters.get("feeds." + self.feed_name + ".capture_frames")
+        self.capture_frames = map(int, temp.split(","))
         self.cycle_length = parameters.get("feeds." + self.feed_name + ".cycle_length")
         self.frame_number = -1
 
