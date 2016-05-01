@@ -6,7 +6,7 @@
 
   <!-- Pump parameters -->
   <pump_class type="string">pumps.gilson_mp3</pump_class><!-- Control class for pump -->
-  <pump_com_port type="int">2</pump_com_port><!-- COM port of serial connection to pump -->
+  <pump_com_port type="int">9</pump_com_port><!-- COM port of serial connection to pump -->
   <pump_ID type="int">30</pump_ID><!-- ID of Pump -->
   <simulate_pump type="boolean">False</simulate_pump><!-- Simulate pump? (Defaults to False) -->
   <flip_flow_direction type="boolean">False</flip_flow_direction><!-- Flip the direction defined as forward? -->
