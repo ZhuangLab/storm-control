@@ -186,7 +186,12 @@ class ACameraControl(cameraControl.HWCameraControl):
             #   file then "AOILeft" will overwrite "x_start". Trouble
             #   may follow if they are not set to the same value.
             #
-            for key, value in p.__dict__.iteritems():
+            #for key, value in p.__dict__.iteritems():
+            for key, value_obj in p.parameters.iteritems():
+                value = value_obj.getv()
+                value_type = str(type(value).__name__)
+                print key, value_obj, value_type, value
+
                 if self.camera.hasFeature(key):
                     value_type = str(type(value).__name__)
                     self.camera.setProperty(key, value_type, value)

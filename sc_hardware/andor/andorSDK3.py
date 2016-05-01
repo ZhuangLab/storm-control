@@ -407,6 +407,7 @@ class SDK3Camera:
             return False
 
     def setProperty(self, pname, ptype, pvalue):
+        print "Setting: " + str(pname) + " " + str(ptype)
         # Handle a few special cases:
         if pname is "ExposureTime":
             setFloat(self.camera_handle, pname, pvalue)
