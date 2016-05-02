@@ -50,6 +50,7 @@ class ButtonEditorRow(QtGui.QWidget):
         self.power_sbox.setValue(power)
         self.power_sbox.setMinimum(0.0)
         self.power_sbox.setMaximum(1.0)
+        self.power_sbox.setSingleStep(0.1)
         self.power_sbox.setMaximumWidth(100)
         self.power_sbox.setMinimumWidth(100)
         self.layout().addWidget(self.power_sbox)
