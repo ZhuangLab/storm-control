@@ -477,6 +477,8 @@ class QParametersBox(QtGui.QWidget):
         self.current_parameters = None
         self.current_button = False
         self.radio_buttons = []
+
+        self.button_group = QtGui.QButtonGroup(self)
         
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.setMargin(4)
@@ -496,8 +498,11 @@ class QParametersBox(QtGui.QWidget):
     def addParameters(self, parameters):
         self.current_parameters = parameters
         radio_button = ParametersRadioButton(parameters)
-        self.radio_buttons.append(radio_button)
+        
+        self.button_group.addButton(radio_button)
         self.layout.insertWidget(0, radio_button)
+        self.radio_buttons.append(radio_button)
+
         radio_button.clicked.connect(self.toggleParameters)
         radio_button.deleteSelected.connect(self.handleDelete)
         radio_button.duplicateSelected.connect(self.handleDuplicate)
@@ -557,6 +562,7 @@ class QParametersBox(QtGui.QWidget):
     #
     @hdebug.debug
     def handleDelete(self, button):
+        self.button_group.removeButton(button)
         self.layout.removeWidget(button)
         self.radio_buttons.remove(button)
         button.close()
