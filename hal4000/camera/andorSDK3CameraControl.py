@@ -90,8 +90,8 @@ class ACameraControl(cameraControl.HWCameraControl):
 
         cam_params.add("SimplePreAmpGainControl", params.ParameterSetString("Pre-amp gain control",
                                                                              "SimplePreAmpGainControl",
-                                                                             "16-bit (low noise &amp; high well capacity)",
-                                                                             ["16-bit (low noise &amp; high well capacity)", 
+                                                                             "16-bit (low noise & high well capacity)",
+                                                                             ["16-bit (low noise & high well capacity)", 
                                                                               "Something else.."]))
 
         cam_params.add("ExposureTime", params.ParameterRangeFloat("Exposure time (seconds)", 
@@ -187,21 +187,15 @@ class ACameraControl(cameraControl.HWCameraControl):
             #   may follow if they are not set to the same value.
             #
             #for key, value in p.__dict__.iteritems():
-            for key, value_obj in p.parameters.iteritems():
-                value = value_obj.getv()
-                value_type = str(type(value).__name__)
-                print key, value_obj, value_type, value
-
+            for key in p.getAttrs():
                 if self.camera.hasFeature(key):
+                    value = p.get(key)
                     value_type = str(type(value).__name__)
                     self.camera.setProperty(key, value_type, value)
 
             self.got_camera = True
 
         except andor.AndorException as error:
-##            hdebug.logText("QCameraThread: Bad camera settings")
-##            print traceback.format_exc()
-##            self.got_camera = False
             self.got_camera = False
             error_message = "startFilm error in AndorSDK3: \n" + str(error)
             hdebug.logText(error_message)
