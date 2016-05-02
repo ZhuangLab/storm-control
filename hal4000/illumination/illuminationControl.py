@@ -7,6 +7,7 @@
 # Hazen 04/14
 #
 
+import ast
 from PyQt4 import QtCore, QtGui
 import qtWidgets.qtAppIcon as qtAppIcon
 
@@ -76,8 +77,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         self.parameters.set("illumination.default_power", default_power)
         self.parameters.set("illumination.on_off_state", on_off_state)
 
-        #
-        # FIXME: We also need to be able to save and load these.
+        # Check for button settings, use defaults if they do not exist.
         #
         buttons = []
         for i in range(len(hardware.channels)):
@@ -87,7 +87,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
                                                buttons,
                                                1,
                                                is_mutable = True,
-                                               is_saved = False)
+                                               is_saved = True)
         power_buttons.editor = buttonEditor.ParametersTablePowerButtonEditor
         self.parameters.add("illumination.power_buttons", power_buttons)
 
@@ -256,6 +256,15 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     def newParameters(self, parameters):
         p = parameters.get("illumination")
 
+        #
+        # Convert string representation of a power buttons list to an actual list
+        # if necessary. This would happen for example the first time that a
+        # settings file is loaded that contains save power button information.
+        #
+        if isinstance(p.get("power_buttons"), str):
+            buttons = ast.literal_eval(p.get("power_buttons"))
+            p.setv("power_buttons", buttons)
+            
         for channel in self.channels:
             channel.newParameters(p)
 
