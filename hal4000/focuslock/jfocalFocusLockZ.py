@@ -38,8 +38,8 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                                                 -700.0, 0.1, 1000.0))
         lock_params.add("qpd_sum_min", 50.0)
         lock_params.add("qpd_sum_max", 100000.0)
-        lock_params.add("is_locked_buffer_length", 10)
-        lock_params.add("is_locked_offset_thresh", 0.01)
+        lock_params.add("is_locked_buffer_length", 3)
+        lock_params.add("is_locked_offset_thresh", 0.1)
         lock_params.add("ir_power", params.ParameterInt("", "ir_power", 6, is_mutable = False))
 
         # Create camera
@@ -49,15 +49,15 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                  sigma = 4.0,
                                  offset_file = "cam_offsets_jfocal_1.txt",
                                  background = 125000)
-        stage = MCLVZC.MCLVZControl("PCIe-6351", 0, scale = 10.0/100.0)
+        stage = MCLVZC.MCLVZControl("PCIe-6351", 0, scale = 10.0/200.0)
         lock_fn = lambda (x): 0.1 * x
         control_thread = stageOffsetControl.StageCamThread(cam,
                                                            stage,
                                                            lock_fn,
                                                            parameters.get("focuslock.qpd_sum_min", 50.0), 
                                                            parameters.get("focuslock.qpd_zcenter"),
-                                                           parameters.get("focuslock.is_locked_buffer_length", 10),
-                                                           parameters.get("focuslock.is_locked_offset_thresh", 0.01))
+                                                           parameters.get("focuslock.is_locked_buffer_length", 3),
+                                                           parameters.get("focuslock.is_locked_offset_thresh", 0.1))
         ir_laser = LDC210.LDC210PWMNI("PCIe-6351", 0)
         focusLockZ.FocusLockZCam.__init__(self,
                                           parameters,
