@@ -13,7 +13,8 @@ import qtWidgets.qtAppIcon as qtAppIcon
 import halLib.halModule as halModule
 import illumination.xmlParser as xmlParser
 import illumination.illuminationChannel as illuminationChannel
-
+import sc_library.halExceptions as halExceptions
+import time
 import sc_library.parameters as params
 
 # Debugging
@@ -41,7 +42,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     def __init__(self, hardware, parameters, parent = None):
         QtGui.QDialog.__init__(self, parent)
         halModule.HalModule.__init__(self)
-
+        
         self.channels = []
         self.hardware_modules = {}
         self.fp = False
@@ -304,10 +305,10 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         # Recording the power.
         if film_name:
             self.fp = open(film_name + ".power", "w")
-            str = "frame"
+            frame_base = "frame"
             for channel in self.channels:
-                str = str + " " + channel.getName()
-            self.fp.write(str + "\n")
+                frame_base = frame_base + " " + channel.getName()
+            self.fp.write(frame_base + "\n")
 
         # Running the shutters.
         if run_shutters:
@@ -317,15 +318,21 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
             for channel in self.channels:
                 channel.setupFilm()
 
-            # Start hardware.
-            for name, instance in self.hardware_modules.iteritems():
-                if (instance.getStatus() == True):
-                    instance.startFilm(self.parameters.get("seconds_per_frame"),
-                                       self.parameters.get("illumination.shutter_oversampling"))
+            try:
+                # Start hardware.
+                for name, instance in self.hardware_modules.iteritems():
+                    if (instance.getStatus() == True):
+                        instance.startFilm(self.parameters.get("seconds_per_frame"),
+                                           self.parameters.get("illumination.shutter_oversampling"))
 
-            # Start channels.
-            for channel in self.channels:
-                channel.startFilm()
+                # Start channels.
+                for channel in self.channels:
+                    channel.startFilm()
+                    
+            except halExceptions.HardwareException as error:
+                error_message = "startFilm in illumination control encountered an error: \n" + str(error)
+                hdebug.logText(error_message)
+                raise halModule.StartFilmException(error_message)
 
     ## startLiveView
     #

@@ -30,6 +30,7 @@ import focuslock.lockModes as lockModes
 class LockDisplay(QtGui.QWidget):
     foundOptimal = QtCore.pyqtSignal(float)
     foundSum = QtCore.pyqtSignal(float)
+    foundFocus = QtCore.pyqtSignal(bool)
     lockDisplay = QtCore.pyqtSignal(object)
     lockStatus = QtCore.pyqtSignal(float, float)
     recenteredPiezo = QtCore.pyqtSignal()
@@ -106,6 +107,7 @@ class LockDisplay(QtGui.QWidget):
         self.control_thread.start(QtCore.QThread.NormalPriority)
         self.control_thread.controlUpdate.connect(self.controlUpdate)
         self.control_thread.foundSum.connect(self.handleFoundSum)
+        self.control_thread.foundFocus.connect(self.handleFoundFocus)
         self.control_thread.recenteredPiezo.connect(self.handleRecenteredPiezo)
 
         # connect to the ir laser & turn it off.
@@ -233,6 +235,14 @@ class LockDisplay(QtGui.QWidget):
     @hdebug.debug
     def handleFoundSum(self, sum):
         self.foundSum.emit(sum)
+
+    ## handleFoundFocus
+    #
+    # Handles the foundFocus signal from the focus lock control thread.
+    #
+    @hdebug.debug
+    def handleFoundFocus(self, focus_status):
+        self.foundFocus.emit(focus_status)
 
     ## handleIrButton
     #
@@ -364,6 +374,13 @@ class LockDisplay(QtGui.QWidget):
     @hdebug.debug
     def stopLock(self):
         self.current_mode.stopLock()
+
+    ## tcpHandleFindFocus
+    #
+    # Tell the control thread to execute the find focus signal procedure.
+    #
+    def tcpHandleFindFocus(self):
+        self.control_thread.findFocus()
 
     ## tcpHandleFindSum
     #

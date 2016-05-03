@@ -42,6 +42,7 @@ import camera.control as control
 import camera.filmSettings as filmSettings
 import display.cameraDisplay as cameraDisplay
 import halLib.imagewriters as writers
+import halLib.halModule as halModule
 import qtWidgets.qtAppIcon as qtAppIcon
 import qtWidgets.qtParametersBox as qtParametersBox
 
@@ -890,31 +891,37 @@ class Window(QtGui.QMainWindow):
         else:
             save_film = True
 
-        # Film file prep.
         self.writer = None
         self.ui.recordButton.setText("Stop")
-        if save_film:
-            self.writer = writers.createFileWriter(self.ui.filetypeComboBox.currentText(),
-                                                   self.film_name,
-                                                   self.parameters,
-                                                   self.camera.getFeedNamesToSave())
-            self.camera.startFilm(self.writer, film_settings)
-            self.ui.recordButton.setStyleSheet("QPushButton { color: red }")
-        else:
-            self.camera.startFilm(None, film_settings)
-            self.ui.recordButton.setStyleSheet("QPushButton { color: orange }")
-            self.film_name = False
+        try:
+            # Film file prep
+            if save_film:
+                self.writer = writers.createFileWriter(self.ui.filetypeComboBox.currentText(),
+                                                       self.film_name,
+                                                       self.parameters,
+                                                       self.camera.getFeedNamesToSave())
+                self.camera.startFilm(self.writer, film_settings)
+                self.ui.recordButton.setStyleSheet("QPushButton { color: red }")
+            else:
+                self.camera.startFilm(None, film_settings)
+                self.ui.recordButton.setStyleSheet("QPushButton { color: orange }")
+                self.film_name = False
 
-        # Modules.
-        for module in self.modules:
-            module.startFilm(self.film_name, self.ui.autoShuttersCheckBox.isChecked())
+            # Modules.
+            for module in self.modules:
+                module.startFilm(self.film_name, self.ui.autoShuttersCheckBox.isChecked())
+                
+        except halModule.StartFilmException as error: # Handle any start Film errors
+            error_message = "startFilm() in HAL encountered an error: \n" + str(error)
+            hdebug.logText(error_message)
+
+            # Handle error returning to Dave. The subsequent call to stopFilm() will handle sending this message
+            if self.tcp_requested_movie:
+                message = self.tcp_message
+                message.setError(True, error_message)
 
         # Disable parameters radio buttons.
         self.parameters_box.startFilm()
-
-        # Enable record button so that TCP requested films can be stopped.
-        #if self.tcp_requested_movie:
-        #    self.ui.recordButton.setEnabled(True)
 
         # go...
         self.startCamera()
@@ -958,31 +965,42 @@ class Window(QtGui.QMainWindow):
 
         # Stop the camera.
         self.stopCamera()
-        self.camera.stopFilm()
+        try:
+            self.camera.stopFilm()
 
-        # Film file finishing up.
-        if self.writer:
+            # Film file finishing up.
+            if self.writer:
 
-            # Stop modules.
-            for module in self.modules:
-                module.stopFilm(self.writer)
+                # Stop modules.
+                for module in self.modules:
+                    module.stopFilm(self.writer)
 
-            # Close film file.
-            self.writer.closeFile()
 
-            # Get any changes to the notes made during filming and update log file.
-            self.updateNotes() 
-            self.logfile_fp.write(str(datetime.datetime.now()) + "," + self.film_name + "," + str(self.parameters.get("film.notes")) + "\r\n")
-            self.logfile_fp.flush()
+                # Close film file.
+                self.writer.closeFile()
 
-            if self.ui.autoIncCheckBox.isChecked() and (not self.tcp_requested_movie):
-                self.ui.indexSpinBox.setValue(self.ui.indexSpinBox.value() + 1)
-            self.updateFilenameLabel("foo")
-        else:
-            # Stop modules.
-            for module in self.modules:
-                module.stopFilm(False)
+                # Get any changes to the notes made during filming and update log file.
+                self.updateNotes() 
+                self.logfile_fp.write(str(datetime.datetime.now()) + "," + self.film_name + "," + str(self.parameters.get("film.notes")) + "\r\n")
+                self.logfile_fp.flush()
 
+                if self.ui.autoIncCheckBox.isChecked() and (not self.tcp_requested_movie):
+                    self.ui.indexSpinBox.setValue(self.ui.indexSpinBox.value() + 1)
+                self.updateFilenameLabel("foo")
+            else:
+                # Stop modules without writer.
+                for module in self.modules:
+                    module.stopFilm(False)
+
+        except halModule.StopFilmException as error: # Handle any stopFilm exceptions
+            error_message = "stopFilm in hal encountered an error: \n" + str(error)
+            hdebug.logText(error_message)
+            
+            # Handle error returning to Dave. The message will be returned below.
+            if self.tcp_requested_movie:
+                message = self.tcp_message
+                message.setError(True, error_message)
+                        
         # Enable parameters radio buttons.
         self.parameters_box.stopFilm()
 
