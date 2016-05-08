@@ -7,20 +7,21 @@
 # Hazen 04/14
 #
 
+import ast
 from PyQt4 import QtCore, QtGui
-
 import qtWidgets.qtAppIcon as qtAppIcon
-import halLib.halModule as halModule
-import illumination.xmlParser as xmlParser
-import illumination.illuminationChannel as illuminationChannel
+
 import sc_library.halExceptions as halExceptions
-import time
+import sc_library.hdebug as hdebug
 import sc_library.parameters as params
 
-# Debugging
-import sc_library.hdebug as hdebug
+import halLib.halModule as halModule
 
-# UIs.
+import illumination.buttonEditor as buttonEditor
+import illumination.illuminationChannel as illuminationChannel
+import illumination.xmlParser as xmlParser
+
+# UI.
 import qtdesigner.illumination_ui as illuminationUi
 
 ## IlluminationControl
@@ -76,10 +77,19 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         self.parameters.set("illumination.default_power", default_power)
         self.parameters.set("illumination.on_off_state", on_off_state)
 
+        # Check for button settings, use defaults if they do not exist.
+        #
         buttons = []
         for i in range(len(hardware.channels)):
             buttons.append([["Max", 1.0], ["Low", 0.1]])
-        self.parameters.set("illumination.power_buttons", buttons)
+        power_buttons = params.ParameterCustom("Illumination power buttons",
+                                               "power_buttons",
+                                               buttons,
+                                               1,
+                                               is_mutable = True,
+                                               is_saved = True)
+        power_buttons.editor = buttonEditor.ParametersTablePowerButtonEditor
+        self.parameters.add("illumination.power_buttons", power_buttons)
 
         # This parameter is used to be able to tell when the shutters file
         # has been changed for a given set of parameters.
@@ -101,6 +111,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
 
         # Illumination channels setup.
         x = 7
+        names = []
         for i, channel in enumerate(hardware.channels):
             a_instance = illuminationChannel.Channel(i,
                                                      channel,
@@ -109,6 +120,9 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
                                                      self.ui.powerControlBox)
             x += a_instance.setPosition(x, 14) + self.spacing
             self.channels.append(a_instance)
+            names.append(a_instance.getName())
+            
+        power_buttons.channel_names = names
 
         # Connect signals.
         if self.have_parent:
@@ -242,6 +256,15 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     def newParameters(self, parameters):
         p = parameters.get("illumination")
 
+        #
+        # Convert string representation of a power buttons list to an actual list
+        # if necessary. This would happen for example the first time that a
+        # settings file is loaded that contains save power button information.
+        #
+        if isinstance(p.get("power_buttons"), str):
+            buttons = ast.literal_eval(p.get("power_buttons"))
+            p.setv("power_buttons", buttons)
+            
         for channel in self.channels:
             channel.newParameters(p)
 
@@ -410,6 +433,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         lb_height = self.ui.powerControlBox.height()
         self.ui.okButton.setGeometry(lb_width - 65, lb_height + 4, 75, 24)
         self.setFixedSize(lb_width + 18, lb_height + 36)
+
 
 #
 # The MIT License
