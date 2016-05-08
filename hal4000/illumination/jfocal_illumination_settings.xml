@@ -8,7 +8,7 @@
       <module_name>sc_hardware.coherent.hLaser</module_name>
       <class_name>CoherentCube</class_name>
       <parameters>
-	<port>COM4</port>
+	<port>COM10</port>
       </parameters>
     </control_module>
     
