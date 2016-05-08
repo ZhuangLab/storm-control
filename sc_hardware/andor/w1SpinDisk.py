@@ -34,7 +34,7 @@ class W1SpinningDisk:
             raise W1Exception("W1 Spinning Disk Initialization Error \n" + " Could not properly initialize com_port: " + str(com_port))
 
         # Create a local copy of the current W1 configuration
-        self.params = {} # Create empty dictionary
+        self.params = params.StormXMLObject([]) # Create empty parameters object
 
         # Record internal verbosity (debug purposes only)
         self.verbose = verbose
@@ -113,8 +113,8 @@ class W1SpinningDisk:
                                                                   1,1,3))
 
         # Aperature settings
-        sd_params.add("aperature", params.ParameterRangeInt("Aperature value (1-10; small to large)",
-                                                            "aperature",
+        sd_params.add("aperture", params.ParameterRangeInt("Aperture value (1-10; small to large)",
+                                                            "aperture",
                                                             10,1,10))
 
         # Run new parameters to configure the spinning disk with these defaults
@@ -128,48 +128,36 @@ class W1SpinningDisk:
         p = parameters.get("spinning_disk")
 
         # Update all parameters of the spinning disk, checking to see if parameters need updated
-
-        # Set bright field bypass
-        if not(self.params.get("bright_field_bypass", []) == p.get("bright_field_bypass")):
-            if p.get("bright_field_bypass"):
-                self.writeAndReadResponse("BF_ON\r")
-            else:
-                self.writeAndReadResponse("BF_OFF\r")
-
-        # Spin disk
-        if not(self.params.get("spin_disk", []) == p.get("spin_disk")):
-            if p.get("spin_disk"):
-                self.writeAndReadResponse("MS_RUN\r")
-            else:
-                self.writeAndReadResponse("MS_STOP\r")
-
-        # Disk properties
-        if not(self.params.get("disk", []) == p.get("disk")):
-            if p.get("disk") == "50-micron pinholes":
-                self.writeAndReadResponse("DC_SLCT,1\r")
-            elif p.get("disk") == "25-micron pinholes":
-                self.writeAndReadResponse("DC_SLCT,2\r")
-
-        if not(self.params.get("disk_speed", []) == p.get("disk_speed")):
-            self.writeAndReadResponse("MS,"+str(p.get("disk_speed"))+"\r")
-
-        # Dichroic mirror position
-        if not(self.params.get("dichroic_mirror", []) == p.get("dichroic_mirror")):
-            self.writeAndReadResponse("DMM_POS,1,"+str(p.get("dichroic_mirror"))+"\r")
-        
-        # Filter wheel positions (They can be changed together)
-        if (not(self.params.get("filter_wheel_pos1",[]) == p.get("filter_wheel_pos1"))) or \
-           (not(self.params.get("filter_wheel_pos2",[]) == p.get("filter_wheel_pos2"))):
-            self.writeAndReadResponse("FW_POS,0," + str(p.get("filter_wheel_pos1")) + "," + 
-                                      str(p.get("filter_wheel_pos2")) + "\r")
-                                                                    
-        # Camera dichroic position
-        if not(self.params.get("camera_dichroic_mirror", []) == p.get("camera_dichroic_mirror")):
-            self.writeAndReadResponse("PT_POS,1," + str(p.get("camera_dichroic_mirror")) + "\r")
-
-        # Aperature settings
-        if not(self.params.get("aperature", []) == p.get("aperature")):
-            self.writeAndReadResponse("AP_WIDTH,1,"+str(p.get("aperature"))+"\r")
+        for key in p.getAttrs():
+            if not (key in self.params.getAttrs()) or not (self.params.get(key) == p.get(key)):
+                if key == "bright_field_bypass":
+                    if p.get("bright_field_bypass"):
+                        self.writeAndReadResponse("BF_ON\r")
+                    else:
+                        self.writeAndReadResponse("BF_OFF\r")
+                elif key == "spin_disk":
+                    if p.get("spin_disk"):
+                        self.writeAndReadResponse("MS_RUN\r")
+                    else:
+                        self.writeAndReadResponse("MS_STOP\r")
+                elif key == "disk":
+                    if p.get("disk") == "50-micron pinholes":
+                        self.writeAndReadResponse("DC_SLCT,1\r")
+                    elif p.get("disk") == "25-micron pinholes":
+                        self.writeAndReadResponse("DC_SLCT,2\r")
+                elif key == "disk_speed":
+                    self.writeAndReadResponse("MS,"+str(p.get("disk_speed"))+"\r")
+                elif key == "dichroic_mirror":
+                    self.writeAndReadResponse("DMM_POS,1,"+str(p.get("dichroic_mirror"))+"\r")
+                elif key == "filter_wheel_pos1" or key == "filter_wheel_pos2":
+                    self.writeAndReadResponse("FW_POS,0," + str(p.get("filter_wheel_pos1")) + "," + 
+                                              str(p.get("filter_wheel_pos2")) + "\r")
+                elif key == "camera_dichroic_mirror":
+                    self.writeAndReadResponse("PT_POS,1," + str(p.get("camera_dichroic_mirror")) + "\r")
+                elif key == "aperture":
+                    self.writeAndReadResponse("AP_WIDTH,1,"+str(p.get("aperture"))+"\r")
+                else:
+                    print str(key) + " is not a valid parameter for the W1"
 
         # Make deep copy of the passed parameters so that the spinning disk remembers its current configuration
         self.params = copy.deepcopy(p)
