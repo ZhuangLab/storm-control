@@ -22,7 +22,7 @@ class W1Exception(halExceptions.HardwareException):
 
 class W1SpinningDisk:
 
-    def __init__(self, com_port, parameters):
+    def __init__(self, com_port, parameters, verbose = False):
 
         # Create serial port
         try:
@@ -36,6 +36,9 @@ class W1SpinningDisk:
         # Create a local copy of the current W1 configuration
         self.params = {} # Create empty dictionary
 
+        # Record internal verbosity (debug purposes only)
+        self.verbose = verbose
+        
         # Define error codes
         self.error_codes = {"30005": "Command name error",
                             "30006": "Command argument number error",
@@ -60,6 +63,9 @@ class W1SpinningDisk:
                             "30302": "Shutter unopenable error"}
 
         self.initializeParameters(parameters)
+
+    def cleanup(self):
+        self.com.close()
 
     def initializeParameters(self, parameters):
         # Add spinning disk sub section
@@ -107,18 +113,14 @@ class W1SpinningDisk:
                                                             "aperature",
                                                             10,1,10))
 
-        print "Here! Initialized default parameters"
-
         # Run new parameters to configure the spinning disk with these defaults
         self.newParameters(parameters)
 
     def getMaxSpeed(self):
         [success, value] = self.writeAndReadResponse("MS_MAX,?\r")
         return int(value)
-
         
     def newParameters(self, parameters):
-        print "Running new parameters"
         p = parameters.get("spinning_disk")
 
         # Update all parameters of the spinning disk, checking to see if parameters need updated
@@ -153,7 +155,7 @@ class W1SpinningDisk:
         
         # Filter wheel positions (They can be changed together)
         if (not(self.params.get("filter_wheel_pos1",[]) == p.get("filter_wheel_pos1"))) or \
-           (not(self.params.get("filter_wheel_pos2",[]) == p.get("filter_wheel_pos1"))):
+           (not(self.params.get("filter_wheel_pos2",[]) == p.get("filter_wheel_pos2"))):
             self.writeAndReadResponse("FW_POS,0," + str(p.get("filter_wheel_pos1")) + "," + 
                                       str(p.get("filter_wheel_pos2")) + "\r")
                                                                     
@@ -169,16 +171,25 @@ class W1SpinningDisk:
         self.params = copy.deepcopy(p)
 
     def writeAndReadResponse(self, message):
+        if self.verbose:
+            print "Writing: " + message
+        
         self.com.write(message)
         response = self.com.readline()
+
+        if self.verbose:
+            print "Response: " + response
 
         # Handle empty response
         if len(response) == 0:
             return [False, ""]
 
         # Split response and look for proper acknowledge
-        [value, acknow] = response.split(":")
-
+        try:
+            [value, acknow] = response.split(":")
+        except:
+            print response
+        
         # Handle error codes
         if acknow == "N\r":
             error_message = self.error_codes.get(value, "Unknown error")

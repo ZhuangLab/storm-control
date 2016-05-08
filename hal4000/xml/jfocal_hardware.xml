@@ -109,6 +109,7 @@
 		<module_name type="string">miscControl.spinningDiskControl</module_name>
 		<parameters>
 			<com_port>COM6</com_port>
+			<verbose>True</verbose>
 		</parameters>
     </spinning_disk>
 	
