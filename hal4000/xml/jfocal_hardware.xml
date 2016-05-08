@@ -103,6 +103,16 @@
       <module_name type="string">miscControl.galvoControl</module_name>
     </galvo>
 	
+    <!-- Add spinning disk control -->
+    <spinning_disk>
+		<class_name type="string">SpinningDiskControl</class_name>
+		<module_name type="string">miscControl.spinningDiskControl</module_name>
+		<parameters>
+			<com_port>COM6</com_port>
+		</parameters>
+    </spinning_disk>
+	
+	
   </modules>
 
 </hardware>
