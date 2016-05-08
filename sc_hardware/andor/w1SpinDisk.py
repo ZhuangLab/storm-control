@@ -28,7 +28,7 @@ class W1SpinningDisk:
         try:
             self.com = serial.Serial(port = com_port,
                                      baudrate = 115200,
-                                     timeout = 0.1)
+                                     timeout = .5) # The timeout duration needs to be set to allow sufficient time for long commands to run
         except:
             print "Could not create serial port for spinning disk. Is it connected properly?"
             raise W1Exception("W1 Spinning Disk Initialization Error \n" + " Could not properly initialize com_port: " + str(com_port))
@@ -38,6 +38,10 @@ class W1SpinningDisk:
 
         # Record internal verbosity (debug purposes only)
         self.verbose = verbose
+
+        # Set number of reads before issueing a serial communication error
+        self.max_num_reads = 30 # This number in combination with the timeout for the serial port needs to produce a long enough delay
+                                # for the longest command
         
         # Define error codes
         self.error_codes = {"30005": "Command name error",
@@ -171,24 +175,30 @@ class W1SpinningDisk:
         self.params = copy.deepcopy(p)
 
     def writeAndReadResponse(self, message):
+        # Debug code
         if self.verbose:
-            print "Writing: " + message
-        
-        self.com.write(message)
-        response = self.com.readline()
+            print "Wrote: " + message
 
+        # Write the message
+        self.com.write(message)
+
+        # Poll for a response (it could be longer than the timeout period of the port)
+        response = []
+        num_checks = 0
+        while len(response) == 0 and num_checks < self.max_num_reads:
+            response = self.com.readline()
+            num_checks = num_checks + 1
+
+        # Debug code
         if self.verbose:
-            print "Response: " + response
+            print "Response (" + str(num_checks) + "): " + response
 
         # Handle empty response
-        if len(response) == 0:
-            return [False, ""]
+        if num_checks >= self.max_num_reads:
+            raise W1Exception("Serial communication error with W1")
 
         # Split response and look for proper acknowledge
-        try:
-            [value, acknow] = response.split(":")
-        except:
-            print response
+        [value, acknow] = response.split(":")
         
         # Handle error codes
         if acknow == "N\r":
