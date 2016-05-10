@@ -108,8 +108,12 @@
 		<class_name type="string">SpinningDiskControl</class_name>
 		<module_name type="string">miscControl.spinningDiskControl</module_name>
 		<parameters>
-			<com_port>COM6</com_port>
-			<verbose>True</verbose>
+			<com_port type="string">COM6</com_port>
+			<verbose type="boolean">True</verbose>
+			<filter_wheel_1 type="string">et595/50m,et690/50m,et780lp,zet405/488/561/647-656/752m,525/50m,blocked,,,,</filter_wheel_1>
+			<filter_wheel_2 type="string">blocked,,,,,,,,,</filter_wheel_2>
+			<dichroic_mirror type = "string">DMPT405/488/561/640/755,,</dichroic_mirror>
+			<camera_dichroic type = "string">Glass,100% Mirror,</camera_dichroic>
 		</parameters>
     </spinning_disk>
 	

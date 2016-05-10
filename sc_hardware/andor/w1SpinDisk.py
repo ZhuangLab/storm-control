@@ -22,11 +22,11 @@ class W1Exception(halExceptions.HardwareException):
 
 class W1SpinningDisk:
 
-    def __init__(self, com_port, parameters, verbose = False):
+    def __init__(self, parameters, hardware_config):
 
         # Create serial port
         try:
-            self.com = serial.Serial(port = com_port,
+            self.com = serial.Serial(port = hardware_config.get("com_port"),
                                      baudrate = 115200,
                                      timeout = .5) # The timeout duration needs to be set to allow sufficient time for long commands to run
         except:
@@ -37,12 +37,44 @@ class W1SpinningDisk:
         self.params = params.StormXMLObject([]) # Create empty parameters object
 
         # Record internal verbosity (debug purposes only)
-        self.verbose = verbose
+        self.verbose = hardware_config.get("verbose")
 
-        # Set number of reads before issueing a serial communication error
+        # Set number of reads before issuing a serial communication error
         self.max_num_reads = 30 # This number in combination with the timeout for the serial port needs to produce a long enough delay
                                 # for the longest command
-        
+
+        # Create dictionaries for the configuration of the filter wheels and two dichroic mirror sets
+        self.filter_wheel_1_config = {}
+        values = hardware_config.get("filter_wheel_1")
+        filter_names = values.split(",")
+        for pos, filter_name in enumerate(filter_names):
+            self.filter_wheel_1_config[filter_name] = pos + 1
+
+        self.filter_wheel_2_config = {}
+        values = hardware_config.get("filter_wheel_2")
+        filter_names = values.split(",")
+        for pos, filter_name in enumerate(filter_names):
+            self.filter_wheel_2_config[filter_name] = pos + 1
+
+        self.dichroic_mirror_config = {}
+        values = hardware_config.get("dichroic_mirror")
+        dichroic_names = values.split(",")
+        for pos, dichroic_name in enumerate(dichroic_names):
+            self.dichroic_mirror_config[dichroic_name] = pos + 1
+
+        self.camera_dichroic_config = {}
+        values = hardware_config.get("camera_dichroic")
+        camera_dichroic_names = values.split(",")
+        for pos, camera_dichroic in enumerate(camera_dichroic_names):
+            self.camera_dichroic_config[camera_dichroic] = pos + 1
+
+        if self.verbose:
+            print "W1 Configuration: "
+            print self.filter_wheel_1_config
+            print self.filter_wheel_2_config
+            print self.camera_dichroic_config
+            print self.dichroic_mirror_config
+
         # Define error codes
         self.error_codes = {"30005": "Command name error",
                             "30006": "Command argument number error",
@@ -94,23 +126,27 @@ class W1SpinningDisk:
                                                              max_speed, 1, max_speed))
 
         # Dichroic mirror position
-        sd_params.add("dichroic_mirror", params.ParameterRangeInt("Dichroic mirror position (1-3)",
-                                                                  "dichroic_mirror",
-                                                                  1,1,3))
+        sd_params.add("dichroic_mirror", params.ParameterSetString("Dichroic mirror position",
+                                                                   "dichroic_mirror",
+                                                                   "DMPT405/488/561/640/755",
+                                                                   self.dichroic_mirror_config.keys()))
 
         # Filter wheel positions
-        sd_params.add("filter_wheel_pos1", params.ParameterRangeInt("Camera 1 Filter Wheel Position (1-10)",
+        sd_params.add("filter_wheel_pos1", params.ParameterSetString("Camera 1 Filter Wheel Position (1-10)",
                                                                     "filter_wheel_pos1",
-                                                                    3,1,10))
+                                                                    "zet405/488/561/647-656/752m",
+                                                                    self.filter_wheel_1_config.keys()))
 
-        sd_params.add("filter_wheel_pos2", params.ParameterRangeInt("Camera 2 Filter Wheel Position (1-10)",
+        sd_params.add("filter_wheel_pos2", params.ParameterSetString("Camera 2 Filter Wheel Position (1-10)",
                                                                     "filter_wheel_pos2",
-                                                                    1,1,10))
+                                                                    "blocked",
+                                                                    self.filter_wheel_2_config.keys()))
 
         # Camera dichroic positions
-        sd_params.add("camera_dichroic_mirror", params.ParameterRangeInt("Camera dichroic mirror position (1-3)",
-                                                                  "camera_dichroic_mirror",
-                                                                  1,1,3))
+        sd_params.add("camera_dichroic_mirror", params.ParameterSetString("Camera dichroic mirror position (1-3)",
+                                                                          "camera_dichroic_mirror",
+                                                                          "Glass",
+                                                                          self.camera_dichroic_config.keys()))
 
         # Aperature settings
         sd_params.add("aperture", params.ParameterRangeInt("Aperture value (1-10; small to large)",
@@ -146,14 +182,17 @@ class W1SpinningDisk:
                     elif p.get("disk") == "25-micron pinholes":
                         self.writeAndReadResponse("DC_SLCT,2\r")
                 elif key == "disk_speed":
-                    self.writeAndReadResponse("MS,"+str(p.get("disk_speed"))+"\r")
+                      self.writeAndReadResponse("MS,"+str(p.get("disk_speed"))+"\r")
                 elif key == "dichroic_mirror":
-                    self.writeAndReadResponse("DMM_POS,1,"+str(p.get("dichroic_mirror"))+"\r")
+                      dichroic_num = self.dichroic_mirror_config[p.get("dichroic_mirror")]
+                      self.writeAndReadResponse("DMM_POS,1,"+str(dichroic_num)+"\r")
                 elif key == "filter_wheel_pos1" or key == "filter_wheel_pos2":
-                    self.writeAndReadResponse("FW_POS,0," + str(p.get("filter_wheel_pos1")) + "," + 
-                                              str(p.get("filter_wheel_pos2")) + "\r")
+                      filter1_num = self.filter_wheel_1_config[p.get("filter_wheel_pos1")]
+                      filter2_num = self.filter_wheel_2_config[p.get("filter_wheel_pos2")]
+                      self.writeAndReadResponse("FW_POS,0," + str(filter1_num) + "," + str(filter2_num) + "\r")
                 elif key == "camera_dichroic_mirror":
-                    self.writeAndReadResponse("PT_POS,1," + str(p.get("camera_dichroic_mirror")) + "\r")
+                      camera_dichroic_num = self.camera_dichroic_config[p.get("camera_dichroic_mirror")]
+                      self.writeAndReadResponse("PT_POS,1," + str(camera_dichroic_num) + "\r")
                 elif key == "aperture":
                     self.writeAndReadResponse("AP_WIDTH,1,"+str(p.get("aperture"))+"\r")
                 else:

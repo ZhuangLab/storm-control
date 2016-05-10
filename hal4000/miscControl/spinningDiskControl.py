@@ -38,8 +38,7 @@ class SpinningDiskControl(halModule.HalModule):
         halModule.HalModule.__init__(self)
 
         # Create spinning disk
-        self.spinning_disk = w1SpinDisk.W1SpinningDisk(hardware.get("com_port"), parameters,
-                                                       verbose = hardware.get("verbose", False))
+        self.spinning_disk = w1SpinDisk.W1SpinningDisk(parameters, hardware)
                 
         if parent:
             self.have_parent = True
