@@ -68,13 +68,6 @@ class W1SpinningDisk:
         for pos, camera_dichroic in enumerate(camera_dichroic_names):
             self.camera_dichroic_config[camera_dichroic] = pos + 1
 
-        if self.verbose:
-            print "W1 Configuration: "
-            print self.filter_wheel_1_config
-            print self.filter_wheel_2_config
-            print self.camera_dichroic_config
-            print self.dichroic_mirror_config
-
         # Define error codes
         self.error_codes = {"30005": "Command name error",
                             "30006": "Command argument number error",
