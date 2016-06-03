@@ -41,15 +41,16 @@
     <scale_bar_len desc="Scale bar length in nm" type="float" min="100" max="10000">1000</scale_bar_len>
     <nm_per_pixel desc="Nanometers per pixel" type="float" min="10" max="1000">160</nm_per_pixel>
   </spotcounter>
-
+    
   <!-- steve settings -->
   <mosaic>
     <objective desc="Current objective" type="string" values="obj1,obj2">obj1</objective>
     <flip_horizontal desc="Flip image horizontal (mosaic)" type="boolean">True</flip_horizontal>
     <flip_vertical desc="Flip image vertical (mosaic)" type="boolean">True</flip_vertical>
     <transpose desc="Transpose image (mosaic)" type="boolean">False</transpose>
-    <obj1 desc="60x Si objective" type="string">60xSi,0.1092,0.0,0.0</obj1>
-    <obj2 desc="10x objective" type="string">60x,0.650,0.0,0.0</obj2>
+	<obj1 desc="60x oil objective" type="string">60xOil,0.1092,0.0,0.0</obj1>
+    <obj2 desc="10x objective" type="string">10x,0.650,0.0,0.0</obj2>
+    <obj3 desc="60x Si objective" type="string">60xSi,0.1092,0.0,0.0</obj3>
 
   </mosaic>
 
