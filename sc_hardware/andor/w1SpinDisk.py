@@ -119,27 +119,31 @@ class W1SpinningDisk:
                                                              max_speed, 1, max_speed))
 
         # Dichroic mirror position
+        values = sorted(self.dichroic_mirror_config.keys())
         sd_params.add("dichroic_mirror", params.ParameterSetString("Dichroic mirror position",
                                                                    "dichroic_mirror",
-                                                                   "DMPT405/488/561/640/755",
-                                                                   self.dichroic_mirror_config.keys()))
+                                                                   values[0],
+                                                                   values))
 
         # Filter wheel positions
+        values = sorted(self.filter_wheel_1_config.keys())
         sd_params.add("filter_wheel_pos1", params.ParameterSetString("Camera 1 Filter Wheel Position (1-10)",
                                                                     "filter_wheel_pos1",
-                                                                    "zet405/488/561/647-656/752m",
-                                                                    self.filter_wheel_1_config.keys()))
+                                                                    values[0],
+                                                                    values))
 
+        values = sorted(self.filter_wheel_2_config.keys())
         sd_params.add("filter_wheel_pos2", params.ParameterSetString("Camera 2 Filter Wheel Position (1-10)",
                                                                     "filter_wheel_pos2",
-                                                                    "blocked",
-                                                                    self.filter_wheel_2_config.keys()))
+                                                                    values[0],
+                                                                    values))
 
         # Camera dichroic positions
+        values = sorted(self.camera_dichroic_config.keys())
         sd_params.add("camera_dichroic_mirror", params.ParameterSetString("Camera dichroic mirror position (1-3)",
                                                                           "camera_dichroic_mirror",
-                                                                          "Glass",
-                                                                          self.camera_dichroic_config.keys()))
+                                                                          values[0],
+                                                                          values))
 
         # Aperature settings
         sd_params.add("aperture", params.ParameterRangeInt("Aperture value (1-10; small to large)",
