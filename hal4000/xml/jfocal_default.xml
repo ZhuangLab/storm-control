@@ -32,7 +32,7 @@
   <stage>
     <x_sign desc="Reverse the direction of the X axis" type="int" values="-1,1">-1</x_sign>
     <y_sign desc="Reverse the direction of the Y axis" type="int" values="-1,1">-1</y_sign>
-    <flip_axis desc="Switch X-Y stage axises" type="boolean">True</flip_axis>
+    <flip_axis desc="Switch X-Y stage axises" type="boolean">False</flip_axis>
   </stage>
 
   <!-- spot counter -->
@@ -45,8 +45,8 @@
   <!-- steve settings -->
   <mosaic>
     <objective desc="Current objective" type="string" values="obj1,obj2">obj1</objective>
-    <flip_horizontal desc="Flip image horizontal (mosaic)" type="boolean">True</flip_horizontal>
-    <flip_vertical desc="Flip image vertical (mosaic)" type="boolean">True</flip_vertical>
+    <flip_horizontal desc="Flip image horizontal (mosaic)" type="boolean">False</flip_horizontal>
+    <flip_vertical desc="Flip image vertical (mosaic)" type="boolean">False</flip_vertical>
     <transpose desc="Transpose image (mosaic)" type="boolean">False</transpose>
 	<obj1 desc="60x oil objective" type="string">60xOil,0.1092,0.0,0.0</obj1>
     <obj2 desc="10x objective" type="string">10x,0.650,0.0,0.0</obj2>

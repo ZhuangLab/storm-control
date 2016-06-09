@@ -44,8 +44,8 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
 
         # Create camera
         cam = uc480Cam.CameraQPD(camera_id = 1,
-                                 x_width = 1000,
-                                 y_width = 70,
+                                 x_width = 900,
+                                 y_width = 50,
                                  sigma = 4.0,
                                  offset_file = "cam_offsets_jfocal_1.txt",
                                  background = 125000)
