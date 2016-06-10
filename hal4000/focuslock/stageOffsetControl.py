@@ -154,6 +154,7 @@ class StageQPDThread(QtCore.QThread):
         self.sum_thresh = self.sum_min
         self.is_locked_buffer = deque([False]*self.buffer_length)
         self.is_locked = False
+        self.last_locked_pos = False
         
         # center the stage
         # self.newZCenter(z_center)
@@ -321,12 +322,14 @@ class StageQPDThread(QtCore.QThread):
             # Determine focus lock status and update buffer
             if self.locked:
                 is_locked_now = ( (abs(self.offset - self.target) < self.offset_thresh) and
-                                  (power > self.sum_thresh) and
-                                  (self.stage_z > 0) and
-                                  (self.stage_z < 2*self.z_center) )
+                                  (power > self.sum_thresh) 
                 self.is_locked_buffer.popleft()
                 self.is_locked_buffer.append(is_locked_now)
                 self.is_locked = (self.is_locked_buffer.count(True) == self.buffer_length)
+
+                # Record lock position if locked
+                if self.is_locked:
+                    self.last_locked_pos = self.stage_z
             else:
                 self.is_locked = False
 
