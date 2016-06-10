@@ -244,6 +244,9 @@ class StageQPDThread(QtCore.QThread):
     def moveStageAbs(self, new_z):
         self.stage_mutex.lock()
         if new_z != self.stage_z:
+            # Coerce requested value to stage range
+            new_z = max(min(new_z,2*self.z_center),0)
+            # Update stage value
             self.stage_z = new_z
             self.stage.zMoveTo(self.stage_z)
         self.stage_mutex.unlock()
