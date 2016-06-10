@@ -41,7 +41,7 @@ DAQmx_Val_Task_Reserve = 4
 DAQmx_Val_Task_Unreserve = 5
 DAQmx_Val_AdvanceTrigger = 12488
 
-TaskHandle = c_ulong
+TaskHandle = c_void_p
 DAQmxSignalEventCallbackPtr = CFUNCTYPE(c_int, TaskHandle, c_int, c_void_p)
 
 niLocks = {}
