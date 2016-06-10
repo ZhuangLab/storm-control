@@ -523,7 +523,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
                 if scan_focus is True:
                     print "Scanning for the focus"
                     if scan_range is None:
-                        scan_range = Inf # Scan the full range
+                        scan_range = float('inf') # Scan the full range by setting the range to infinity
                     self.tcpHandleFindFocus(scan_range)
                     
                 else: # No scan, just return error
