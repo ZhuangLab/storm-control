@@ -212,10 +212,10 @@ class StageQPDThread(QtCore.QThread):
     # Start a search for the focus
     #
     @hdebug.debug
-    def findFocus(self):
+    def findFocus(self, scan_range):
         self.qpd_mutex.lock()
         self.find_focus = True
-        self.moveStageAbs(0)
+        self.moveStageAbs(self.stage_z - scan_range)
         self.resetBuffer()
         self.qpd_mutex.unlock()
 

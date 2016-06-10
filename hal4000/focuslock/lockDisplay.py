@@ -379,8 +379,8 @@ class LockDisplay(QtGui.QWidget):
     #
     # Tell the control thread to execute the find focus signal procedure.
     #
-    def tcpHandleFindFocus(self):
-        self.control_thread.findFocus()
+    def tcpHandleFindFocus(self, scan_range):
+        self.control_thread.findFocus(scan_range)
 
     ## tcpHandleFindSum
     #

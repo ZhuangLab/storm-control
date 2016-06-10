@@ -462,8 +462,8 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     # Handle find sum requests that come via TCP/IP.
     #
     @hdebug.debug
-    def tcpHandleFindFocus(self):
-        self.lock_display1.tcpHandleFindFocus()
+    def tcpHandleFindFocus(self, scan_range):
+        self.lock_display1.tcpHandleFindFocus(scan_range)
 
     ## tcpHandleFindSum
     #
@@ -519,9 +519,12 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
                 self.focus_check_timer.start(100) # Wait one 100 ms then measure again
             else: # Focus not found after the specified number of checks
                 scan_focus = self.tcp_message.getData("focus_scan")
+                scan_range = self.tcp_message.getData("scan_range")
                 if scan_focus is True:
                     print "Scanning for the focus"
-                    self.tcpHandleFindFocus()
+                    if scan_range is None:
+                        scan_range = Inf # Scan the full range
+                    self.tcpHandleFindFocus(scan_range)
                     
                 else: # No scan, just return error
                     self.tcp_message.addResponse("focus_status", focus_status)
