@@ -321,7 +321,7 @@ class DACheckFocus(DaveAction):
         self.action_type = "hal"
         self.num_focus_checks = 10 # A default number of focus checks
         self.focus_scan = False # The default is to not scan for focus
-        self.scan_range = None # The range to scan for focus
+        self.scan_range = False # The range to scan for focus in microns
         
     ## createETree
     #
