@@ -155,6 +155,7 @@ class StageQPDThread(QtCore.QThread):
         self.is_locked_buffer = deque([False]*self.buffer_length)
         self.is_locked = False
         self.last_locked_pos = False
+        self.scan_range = float('inf') # The range for a focus lock scan
         
         # center the stage
         # self.newZCenter(z_center)
@@ -360,12 +361,13 @@ class StageQPDThread(QtCore.QThread):
                 if is_locked_now: # If focused, stop scan
                     self.find_focus = False # Reset status
                     self.foundFocus.emit(is_locked_now)
-                elif self.stage_z >= (2*self.z_center): # If the maximimum scan limit has been exceeded
+                elif self.stage_z >= min((2*self.z_center), self.last_locked_pos + self.scan_range): # Stop the scan if the maximimum scan limit has been exceeded
                     print "Scan was unsuccessful"
+                    self.moveStageAbs(self.last_locked_pos) # Return to the last locked position
                     self.find_focus = False
                     self.foundFocus.emit(False) # Return False
                 else:
-                    self.moveStageRel(0.1) # Otherwise step up by 1/10 unit
+                    self.moveStageRel(0.05) # Otherwise step up 50 nm
 
             # update position, if locked.
             else:
