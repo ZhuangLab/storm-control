@@ -105,6 +105,8 @@ class ParametersEditor(QtGui.QDialog):
                                                QtGui.QMessageBox.No)
             if (reply == QtGui.QMessageBox.No):
                 event.ignore()
+                
+        self.accept()
 
     def enableUpdateButton(self, state):
         if state:
@@ -398,15 +400,14 @@ class ParametersRadioButton(QtGui.QRadioButton):
     def handleEdit(self, boolean):
         if self.editor_dialog is None:
             self.editor_dialog = ParametersEditor(self.parameters, self)
-            self.editor_dialog.destroyed.connect(self.handleEditorDestroyed)
+            self.editor_dialog.finished.connect(self.handleEditorDestroyed)
             self.editor_dialog.updateClicked.connect(self.handleUpdate)
         self.editor_dialog.show()
 
     ## handleEditorDestroyed
     #
     @hdebug.debug
-    def handleEditorDestroyed(self):
-        print "destroyed"
+    def handleEditorDestroyed(self, temp):
         self.editor_dialog = None
         
     ## handleSave
