@@ -7,6 +7,7 @@
 # Hazen 05/16
 #
 
+import os
 from PyQt4 import QtCore, QtGui
 
 import sc_library.hdebug as hdebug
