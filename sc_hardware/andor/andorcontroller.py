@@ -12,7 +12,7 @@
 # Hazen 09/15
 #
 
-from ctypes import *
+import ctypes
 import numpy
 import time
 
@@ -38,18 +38,18 @@ drv_p1invalid = 20066
 # The Andor camera capabilities structure.
 #
 class AndorCapabilities(Structure):
-    _fields_ = [("ulSize", c_ulong),
-                ("ulAcqModes", c_ulong),
-                ("ulReadModes", c_ulong),
-                ("ulTriggerModes", c_ulong),
-                ("ulCameraType", c_ulong),
-                ("ulPixelMode", c_ulong),
-                ("ulSetFunctions", c_ulong),
-                ("ulGetFunctions", c_ulong),
-                ("ulFeatures", c_ulong),
-                ("ulPCICard", c_ulong),
-                ("ulEMGainCapability", c_ulong),
-                ("ulFTReadModes", c_ulong)]
+    _fields_ = [("ulSize", ctypes.c_ulong),
+                ("ulAcqModes", ctypes.c_ulong),
+                ("ulReadModes", ctypes.c_ulong),
+                ("ulTriggerModes", ctypes.c_ulong),
+                ("ulCameraType", ctypes.c_ulong),
+                ("ulPixelMode", ctypes.c_ulong),
+                ("ulSetFunctions", ctypes.c_ulong),
+                ("ulGetFunctions", ctypes.c_ulong),
+                ("ulFeatures", ctypes.c_ulong),
+                ("ulPCICard", ctypes.c_ulong),
+                ("ulEMGainCapability", ctypes.c_ulong),
+                ("ulFTReadModes", ctypes.c_ulong)]
 
 ## loadAndorDLL
 #
@@ -61,7 +61,7 @@ andor = 0
 def loadAndorDLL(andor_dll):
     global andor
     if(andor == 0):
-        andor = oledll.LoadLibrary(andor_dll)
+        andor = ctypes.oledll.LoadLibrary(andor_dll)
 
 ## andorCheck
 #
@@ -79,7 +79,7 @@ def andorCheck(status, message):
 # Dealing with multiple cameras.
 #
 def getAvailableCameras():
-    number_cameras = c_long()
+    number_cameras = ctypes.c_long()
     andorCheck(andor.GetAvailableCameras(byref(number_cameras)), "GetAvailableCameras")
     return number_cameras.value
 
@@ -91,7 +91,7 @@ def getCameraHandles():
     number_cameras = getAvailableCameras()
     assert number_cameras > 0, "No Andor cameras detected!!"
     handles = []
-    temp = c_long()
+    temp = ctypes.c_void_p()
     for i in range(getAvailableCameras()):
         andorCheck(andor.GetCameraHandle(i, byref(temp)), "GetCameraHandle")
         handles.append(temp.value)
@@ -163,7 +163,7 @@ class AndorCamera:
         andorCheck(andor.Initialize(andor_path + "Detector.ini"), "Initialize")
 
         # Determine camera capabilities (useful??).
-        caps = AndorCapabilities(sizeof(c_ulong)*12,0,0,0,0,0,0,0,0,0,0,0)
+        caps = AndorCapabilities(ctypes.sizeof(ctypes.c_ulong)*12,0,0,0,0,0,0,0,0,0,0,0)
         andorCheck(andor.GetCapabilities(byref(caps)), "GetCapabilities")
         self._props_['AcqModes'] = caps.ulAcqModes
         self._props_['ReadModes'] = caps.ulReadModes
@@ -185,24 +185,24 @@ class AndorCamera:
                 self._props_['MaxIntensity'] = i[1]
 
         # Determine camera pixel size.
-        x_pixels = c_long()
-        y_pixels = c_long()
+        x_pixels = ctypes.c_long()
+        y_pixels = ctypes.c_long()
         andorCheck(andor.GetDetector(byref(x_pixels), byref(y_pixels)), "GetDetector")
         self._props_['XPixels'] = x_pixels.value
         self._props_['YPixels'] = y_pixels.value
 
         # Determine camera head model.
-        head_model = create_string_buffer(32)
+        head_model = cytpes.create_string_buffer(32)
         andorCheck(andor.GetHeadModel(head_model), "GetHeadModel")
         self._props_['HeadModel'] = head_model.value
 
         # Determine hardware version.
-        plug_in_card_version = c_uint()
-        flex_10k_file_version = c_uint()
-        dummy1 = c_uint()
-        dummy2 = c_uint()
-        camera_firmware_version = c_uint()
-        camera_firmware_build = c_uint()
+        plug_in_card_version = ctypes.c_uint()
+        flex_10k_file_version = ctypes.c_uint()
+        dummy1 = ctypes.c_uint()
+        dummy2 = ctypes.c_uint()
+        camera_firmware_version = ctypes.c_uint()
+        camera_firmware_build = ctypes.c_uint()
         andorCheck(andor.GetHardwareVersion(byref(plug_in_card_version),
                                             byref(flex_10k_file_version),
                                             byref(dummy1),
@@ -216,12 +216,12 @@ class AndorCamera:
         self._props_["CameraFirmwareBuild"] = camera_firmware_build.value
 
         # Determine vertical shift speeds.
-        number = c_int()
+        number = ctypes.c_int()
         andorCheck(andor.GetNumberVSSpeeds(byref(number)), "GetNumberVSSpeeds")
         self._props_["VSSpeeds"] = range(number.value)
         for i in range(number.value):
-            index = c_int(i)
-            speed = c_float()
+            index = ctypes.c_int(i)
+            speed = ctypes.c_float()
             andorCheck(andor.GetVSSpeed(index, byref(speed)), "GetVSSpeed")
             self._props_["VSSpeeds"][i] = round(speed.value, 4)
 
@@ -230,34 +230,34 @@ class AndorCamera:
         self._props_["NumberADChannels"] = number.value
         self._props_["HSSpeeds"] = range(number.value)
         for i in range(number.value):
-            channel = c_int(i)
+            channel = ctypes.c_int(i)
             andorCheck(andor.GetNumberHSSpeeds(channel, 0, byref(number)), "GetNumberHSSpeeds")
             self._props_["HSSpeeds"][i] = range(number.value)
             for j in range(number.value):
-                type = c_int(j)
-                speed = c_float()
+                type = ctypes.c_int(j)
+                speed = ctypes.c_float()
                 andorCheck(andor.GetHSSpeed(channel, 0, type, byref(speed)), "GetHSSpeed")
                 self._props_["HSSpeeds"][i][j] = round(speed.value, 4)
         
         # Determine temperature range.
-        min_temp = c_int()
-        max_temp = c_int()
+        min_temp = ctypes.c_int()
+        max_temp = ctypes.c_int()
         andorCheck(andor.GetTemperatureRange(byref(min_temp), byref(max_temp)), "GetTemperatureRange")
         self._props_["TemperatureRange"] = [min_temp.value, max_temp.value]
 
         # Determine preamp gains available.
-        number = c_int()
+        number = ctypes.c_int()
         andorCheck(andor.GetNumberPreAmpGains(byref(number)), "GetNumberPreAmpGains")
         self._props_["PreAmpGains"] = range(number.value)
         for i in range(number.value):
-            index = c_int(i)
-            gain = c_float()
+            index = ctypes.c_int(i)
+            gain = ctypes.c_float()
             andorCheck(andor.GetPreAmpGain(index, byref(gain)), "GetPreAmpGain")
             self._props_["PreAmpGains"][i] = round(gain.value, 2)
 
         # Determine EM gain range.
-        low = c_int()
-        high = c_int()
+        low = ctypes.c_int()
+        high = ctypes.c_int()
         andorCheck(andor.GetEMGainRange(byref(low), byref(high)), "GetEMGainRange")
         self._props_["EMGainRange"] = [low.value, high.value]
 
@@ -269,14 +269,14 @@ class AndorCamera:
         self.setEMGainMode(0)
 
         # Determine the maximum binning values.
-        max_binning = c_int()
+        max_binning = ctypes.c_int()
         andorCheck(andor.GetMaximumBinning(4, 0, byref(max_binning)), "GetMaximumBinning")
         self._props_["MaxBinning"] = [max_binning.value]
         andorCheck(andor.GetMaximumBinning(4, 1, byref(max_binning)), "GetMaximumBinning")
         self._props_["MaxBinning"].append(max_binning.value)
         
         # Determine maximum exposure time.
-        max_exp = c_float()
+        max_exp = ctypes.c_float()
         andorCheck(andor.GetMaximumExposure(byref(max_exp)), "GetMaximumExposure")
         self._props_["MaxExposure"] = max_exp.value
 
@@ -291,7 +291,7 @@ class AndorCamera:
     # @return Returns the camera status.
     #
     def _getStatus_(self):
-        i_state = c_int()
+        i_state = ctypes.c_int()
         andorCheck(andor.GetStatus(byref(i_state)), "GetStatus")
         return i_state.value
 
@@ -341,9 +341,9 @@ class AndorCamera:
     def getAcquisitionTimings(self):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        exposure = c_float()
-        accumulate = c_float()
-        kinetic = c_float()
+        exposure = ctypes.c_float()
+        accumulate = ctypes.c_float()
+        kinetic = ctypes.c_float()
         andorCheck(andor.GetAcquisitionTimings(byref(exposure), byref(accumulate), byref(kinetic)),
                    "GetAcqisitionTimings")
         return [exposure.value, kinetic.value, accumulate.value]
@@ -411,7 +411,7 @@ class AndorCamera:
     def getEMAdvanced(self):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        state = c_int()
+        state = ctypes.c_int()
         andorCheck(andor.GetEMAdvanced(byref(state)), "GetEMAdvanced")
         return state.value
 
@@ -424,8 +424,8 @@ class AndorCamera:
     def getEMGainRange(self):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        low = c_int()
-        high = c_int()
+        low = ctypes.c_int()
+        high = ctypes.c_int()
         andorCheck(andor.GetEMGainRange(byref(low), byref(high)), "GetEMGainRange")
         return [low.value, high.value]
 
@@ -443,8 +443,8 @@ class AndorCamera:
         state = self._getStatus_()
 
         # Check to see if there is any new data, and if so, how much.
-        first = c_long(0)
-        last = c_long(0)
+        first = ctypes.c_long(0)
+        last = ctypes.c_long(0)
         status = andor.GetNumberNewImages(byref(first), byref(last))
 
         # There is new data.
@@ -454,12 +454,12 @@ class AndorCamera:
             diff = last.value - first.value + 1
             buffer_size = self.pixels * diff
             data_buffer = numpy.ascontiguousarray(numpy.empty(buffer_size, dtype = numpy.uint16))
-            valid_first = c_long(0)
-            valid_last = c_long(0)
+            valid_first = ctypes.c_long(0)
+            valid_last = ctypes.c_long(0)
             status = andor.GetImages16(first, 
                                        last, 
                                        data_buffer.ctypes.data, 
-                                       c_ulong(buffer_size), 
+                                       ctypes.c_ulong(buffer_size), 
                                        byref(valid_first), 
                                        byref(valid_last))
 
@@ -513,8 +513,8 @@ class AndorCamera:
         state = self._getStatus_()
 
         # Check to see if there is any new data, and if so, how much.
-        first = c_long(0)
-        last = c_long(0)
+        first = ctypes.c_long(0)
+        last = ctypes.c_long(0)
         status = andor.GetNumberNewImages(byref(first), byref(last))
 
         # There is new data.
@@ -523,10 +523,10 @@ class AndorCamera:
             # Allocate space & get the data.
             diff = last.value - first.value + 1
             buffer_size = self.pixels * diff
-            data_buffer = create_string_buffer(2 * buffer_size)
-            valid_first = c_long(0)
-            valid_last = c_long(0)
-            status = andor.GetImages16(first, last, data_buffer, c_ulong(buffer_size), byref(valid_first), byref(valid_last))
+            data_buffer = ctypes.create_string_buffer(2 * buffer_size)
+            valid_first = ctypes.c_long(0)
+            valid_last = ctypes.c_long(0)
+            status = andor.GetImages16(first, last, data_buffer, ctypes.c_ulong(buffer_size), byref(valid_first), byref(valid_last))
             if (first.value != valid_first.value):
                 print "getImages16 first value problem", first.value, valid_first.value
             if (last.value != valid_last.value):
@@ -616,16 +616,16 @@ class AndorCamera:
     def getOldestImage16(self, check = True):
         setCurrentCamera(self.camera_handle)
         if check:
-            first = c_long(0)
-            last = c_long(0)
+            first = ctypes.c_long(0)
+            last = ctypes.c_long(0)
             andor.GetNumberNewImages(byref(first), byref(last))
             diff = first.value - last.value
             if (diff > 1):
                 print "  warning: acquisition is", diff, "frames behind..."
-        buffer = create_string_buffer(2 * self.pixels)
-        status = andor.GetOldestImage16(buffer, c_ulong(self.pixels))
+        c_buffer = ctypes.create_string_buffer(2 * self.pixels)
+        status = andor.GetOldestImage16(c_buffer, ctypes.c_ulong(self.pixels))
         if status == drv_success:
-            return [buffer, self.frame_size, "acquiring"]
+            return [c_buffer, self.frame_size, "acquiring"]
         elif status == drv_no_new_data:
             state = _getStatus_()
             if state == drv_idle:
@@ -659,7 +659,7 @@ class AndorCamera:
     #
     def getTemperature(self):
         setCurrentCamera(self.camera_handle)
-        temperature = c_int()
+        temperature = ctypes.c_int()
         status = andor.GetTemperature(byref(temperature))
         if status == drv_temp_stabilized:
             return [temperature.value, "stable"]
@@ -727,7 +727,7 @@ class AndorCamera:
             andorCheck(andor.SetAcquisitionMode(3), "SetAcquisitionMode")
             andorCheck(andor.SetNumberAccumulations(1), "SetNumberAccumulations")
             andorCheck(andor.SetAccumulationCycleTime(0), "SetAccumulationCycleTime")
-            andorCheck(andor.SetNumberKinetics(c_int(number_frames)), "SetNumberKinetics")
+            andorCheck(andor.SetNumberKinetics(ctypes.c_int(number_frames)), "SetNumberKinetics")
         elif mode == "run_till_abort":
             andorCheck(andor.SetAcquisitionMode(5), "SetAcquisitionMode")
         else:
@@ -745,8 +745,8 @@ class AndorCamera:
         setCurrentCamera(self.camera_handle)
         if (channel >= 0) and (channel < self._props_["NumberADChannels"]):
             self._abortIfAcquiring_()
-            andorCheck(andor.SetADChannel(c_int(channel)), "SetADChannel")
-            andorCheck(andor.SetOutputAmplifier(c_int(channel)), "SetOutputAmplifier")
+            andorCheck(andor.SetADChannel(ctypes.c_int(channel)), "SetADChannel")
+            andorCheck(andor.SetOutputAmplifier(ctypes.c_int(channel)), "SetOutputAmplifier")
             self.adchannel = channel
         else:
             print "Invalid channel: ", channel
@@ -763,7 +763,7 @@ class AndorCamera:
             active = 1
         else:
             active = 0
-        andorCheck(andor.SetBaselineClamp(c_int(active)), "SetBaselineClamp")
+        andorCheck(andor.SetBaselineClamp(ctypes.c_int(active)), "SetBaselineClamp")
 
     ## setEMAdvanced
     #
@@ -778,7 +778,7 @@ class AndorCamera:
             enable = 1
         else:
             enable = 0
-        status = andor.SetEMAdvanced(c_int(enable))
+        status = andor.SetEMAdvanced(ctypes.c_int(enable))
         if (enable == 1):
             andorCheck(status, "SetEMAdvanced")
         else:
@@ -797,7 +797,7 @@ class AndorCamera:
     def setEMCCDGain(self, gain):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        andorCheck(andor.SetEMCCDGain(c_int(gain)), "SetEMCCDGain")
+        andorCheck(andor.SetEMCCDGain(ctypes.c_int(gain)), "SetEMCCDGain")
 
     ## setEMGainMode
     #
@@ -810,7 +810,7 @@ class AndorCamera:
     def setEMGainMode(self, mode):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        status = andor.SetEMGainMode(c_int(mode))
+        status = andor.SetEMGainMode(ctypes.c_int(mode))
         if (status == drv_not_supported):
             print "Warning: Setting EM Gain Mode is not supported by this camera."
             return False
@@ -829,7 +829,7 @@ class AndorCamera:
     def setExposureTime(self, exposure_time):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        andorCheck(andor.SetExposureTime(c_float(exposure_time)), "SetExposureTime")
+        andorCheck(andor.SetExposureTime(ctypes.c_float(exposure_time)), "SetExposureTime")
         self.exposure_time = exposure_time
 
     ## setFanMode
@@ -841,7 +841,7 @@ class AndorCamera:
     def setFanMode(self, mode):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        andorCheck(andor.SetFanMode(c_int(mode)), "SetFanMode")
+        andorCheck(andor.SetFanMode(ctypes.c_int(mode)), "SetFanMode")
 
     ## setFastExternalTrigger
     #
@@ -851,7 +851,7 @@ class AndorCamera:
     def setFastExtTrigger(self, mode):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        andorCheck(andor.SetFastExtTrigger(c_int(mode)), "SetFastTriggerMode")
+        andorCheck(andor.SetFastExtTrigger(ctypes.c_int(mode)), "SetFastTriggerMode")
 
     ## setFrameTransferMode
     #
@@ -862,7 +862,7 @@ class AndorCamera:
     def setFrameTransferMode(self, mode):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        andorCheck(andor.SetFrameTransferMode(c_int(mode)), "SetFrameTransferMode")
+        andorCheck(andor.SetFrameTransferMode(ctypes.c_int(mode)), "SetFrameTransferMode")
         self.frame_transfer_mode = mode
 
     ## setHSSpeed
@@ -885,7 +885,7 @@ class AndorCamera:
             if cur < best:
                 best = cur
                 index = i
-        andorCheck(andor.SetHSSpeed(0, c_int(index)), "SetHSSpeed")
+        andorCheck(andor.SetHSSpeed(0, ctypes.c_int(index)), "SetHSSpeed")
         self.hsspeed = speeds[index]
         return self.hsspeed
 
@@ -900,11 +900,11 @@ class AndorCamera:
             active = 1
         else:
             active = 0
-        status = andor.SetIsolatedCropMode(c_int(active),
-                                           c_int(height),
-                                           c_int(width),
-                                           c_int(vbin),
-                                           c_int(hbin))
+        status = andor.SetIsolatedCropMode(ctypes.c_int(active),
+                                           ctypes.c_int(height),
+                                           ctypes.c_int(width),
+                                           ctypes.c_int(vbin),
+                                           ctypes.c_int(hbin))
         if (active == 1):
             andorCheck(status, "SetIsolatedCropMode")
         else:
@@ -920,7 +920,7 @@ class AndorCamera:
     def setKineticCycleTime(self, kinetic_time):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        andorCheck(andor.SetKineticCycleTime(c_float(kinetic_time)), "SetKineticCycleTime")
+        andorCheck(andor.SetKineticCycleTime(ctypes.c_float(kinetic_time)), "SetKineticCycleTime")
         self.kinetic_cycle_time = kinetic_time
 
     ## setPreAmpGain
@@ -941,7 +941,7 @@ class AndorCamera:
             if cur < best:
                 best = cur
                 index = i
-        andorCheck(andor.SetPreAmpGain(c_int(index)), "SetPreAmpGain")
+        andorCheck(andor.SetPreAmpGain(ctypes.c_int(index)), "SetPreAmpGain")
         return gains[index]
 
     ## setReadMode
@@ -954,7 +954,7 @@ class AndorCamera:
     def setReadMode(self, mode):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        andorCheck(andor.SetReadMode(c_int(mode)), "SetReadMode")
+        andorCheck(andor.SetReadMode(ctypes.c_int(mode)), "SetReadMode")
 
     ## setROIAndBinning
     #
@@ -974,8 +974,8 @@ class AndorCamera:
             raise AssertionError, "Invalid y range: " + str(ROI[2]) + "," +str(ROI[3])
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        andorCheck(andor.SetImage(c_int(binning[0]), c_int(binning[1]),
-                                  c_int(ROI[0]), c_int(ROI[1]), c_int(ROI[2]), c_int(ROI[3])),
+        andorCheck(andor.SetImage(cytpes.c_int(binning[0]), ctypes.c_int(binning[1]),
+                                  ctypes.c_int(ROI[0]), ctypes.c_int(ROI[1]), ctypes.c_int(ROI[2]), ctypes.c_int(ROI[3])),
                    "SetImage")
         self.ROI = ROI
         self.binning = binning
@@ -993,7 +993,7 @@ class AndorCamera:
     def setTriggerMode(self, mode):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        andorCheck(andor.SetTriggerMode(c_int(mode)), "SetTriggerMode")
+        andorCheck(andor.SetTriggerMode(ctypes.c_int(mode)), "SetTriggerMode")
 
     ## setTemperature
     #
@@ -1011,7 +1011,7 @@ class AndorCamera:
         if temperature > t_max:
             print "setTemperature: Temperature is too high (" + str(temperature) + " > " + str(t_max)
             temperature = t_max
-        i_temp = c_int(temperature)
+        i_temp = ctypes.c_int(temperature)
         andorCheck(andor.SetTemperature(i_temp), "SetTemperature")
 
     ## setVSAmplitude
@@ -1023,7 +1023,7 @@ class AndorCamera:
     def setVSAmplitude(self, amplitude):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        andorCheck(andor.SetVSAmplitude(c_int(amplitude)), "SetVSAmplitude")
+        andorCheck(andor.SetVSAmplitude(ctypes.c_int(amplitude)), "SetVSAmplitude")
 
     ## setVSSpeed
     #
@@ -1043,7 +1043,7 @@ class AndorCamera:
             if cur < best:
                 best = cur
                 index = i
-        andorCheck(andor.SetVSSpeed(c_int(index)), "SetVSSpeed")
+        andorCheck(andor.SetVSSpeed(ctypes.c_int(index)), "SetVSSpeed")
         self.vsspeed = speeds[index]
         return self.vsspeed
 
