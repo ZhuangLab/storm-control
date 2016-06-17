@@ -436,6 +436,11 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
                                                        1.0,
                                                        is_mutable = False,
                                                        is_saved = False))
+        self.parameters.add("progressions.pfile_name",
+                            params.ParameterStringFilename("Progression file name",
+                                                           "pfile_name",
+                                                           "",
+                                                           False))
         self.parameters.add("progressions.pframe_value",
                             params.ParameterRangeInt("",
                                                      "pframe_value",
@@ -657,6 +662,10 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
         else:
             self.ui.progressionsCheckBox.setChecked(False)
 
+        power_filename = parameters.get("progressions.pfile_name")
+        self.ui.filenameLabel.setText(power_filename[-40:])
+        self.file_channels.newFile(power_filename)
+
     ## newPowerFile
     #
     # Opens a file dialog where the user can specify a new power file.
@@ -670,6 +679,7 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
                                                            str(self.parameters.get("film.directory")),
                                                            "*.power")
         if power_filename:
+            self.parameters.set("progressions.pfile_name", power_filename)
             self.ui.filenameLabel.setText(power_filename[-40:])
             self.file_channels.newFile(power_filename)
 
