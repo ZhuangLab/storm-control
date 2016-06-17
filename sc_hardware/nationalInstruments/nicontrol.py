@@ -7,7 +7,7 @@
 # Hazen 3/12
 #
 
-from ctypes import *
+import ctypes
 import time
 import traceback
 import threading
@@ -18,7 +18,7 @@ from threading import Lock
 import sc_library.halExceptions as exceptions
 
 # Load the NIDAQmx driver library.
-nidaqmx = windll.nicaiu
+nidaqmx = ctypes.windll.nicaiu
 
 # Constants
 DAQmx_Val_ChanForAllLines = 1
@@ -41,8 +41,9 @@ DAQmx_Val_Task_Reserve = 4
 DAQmx_Val_Task_Unreserve = 5
 DAQmx_Val_AdvanceTrigger = 12488
 
-TaskHandle = c_ulonglong
-DAQmxSignalEventCallbackPtr = CFUNCTYPE(c_int, TaskHandle, c_int, c_void_p)
+TaskHandle = ctypes.c_void_p
+DAQmxSignalEventCallbackPtr = ctypes.CFUNCTYPE(ctypes.c_int, TaskHandle, ctypes.c_int, ctypes.c_void_p)
+
 
 niLocks = {}
 
@@ -78,8 +79,8 @@ class NIException(exceptions.HardwareException):
 def checkStatus(status):
     if (status < 0):
         buf_size = 1000
-        buf = create_string_buffer(buf_size)
-        nidaqmx.DAQmxGetErrorString(c_long(status), buf, buf_size)
+        buf = ctypes.create_string_buffer(buf_size)
+        nidaqmx.DAQmxGetErrorString(ctypes.c_long(status), buf, buf_size)
         print "nidaq error:", status, buf.value
         traceback.print_stack()
         print " --"
@@ -100,13 +101,13 @@ def checkStatus(status):
 def getDAQBoardInfo():
     daq_boards = []
     devices_len = 100
-    devices = create_string_buffer(devices_len)
+    devices = ctypes.create_string_buffer(devices_len)
     checkStatus(nidaqmx.DAQmxGetSysDevNames(devices, devices_len))
     devices_string = devices.value
     for dev in devices_string.split(", "):
         dev_data_len = 100
-        dev_data = create_string_buffer(dev_data_len)
-        c_dev = c_char_p(dev)
+        dev_data = ctypes.create_string_buffer(dev_data_len)
+        c_dev = ctypes.c_char_p(dev)
         checkStatus(nidaqmx.DAQmxGetDevProductType(c_dev, dev_data, dev_data_len))
         daq_boards.append([dev_data.value, dev[-1:]])
     return daq_boards
@@ -154,7 +155,7 @@ class NIDAQTask():
         self.board_number = getBoardDevNumber(board)
         self.taskHandle = TaskHandle(0)
         with getLockForBoard(self.board_number):
-            checkStatus(nidaqmx.DAQmxCreateTask(str(NIDAQTask.ctr), byref(self.taskHandle)))
+            checkStatus(nidaqmx.DAQmxCreateTask(str(NIDAQTask.ctr), ctypes.byref(self.taskHandle)))
         NIDAQTask.ctr += 1
 
     ## clearTask
@@ -189,9 +190,9 @@ class NIDAQTask():
     # @return 1/0 The task is done.
     #
     def taskIsDone(self):
-        done = c_long(0)
+        done = ctypes.c_long(0)
         with getLockForBoard(self.board_number):
-            checkStatus(nidaqmx.DAQmxIsTaskDone(self.taskHandle, byref(done)))
+            checkStatus(nidaqmx.DAQmxIsTaskDone(self.taskHandle, ctypes.byref(done)))
         return done.value
 
     ## registerDoneEvent
@@ -252,11 +253,11 @@ class AnalogOutput(NIDAQTask):
         self.dev_and_channel = "Dev" + str(self.board_number) + "/ao" + str(self.channel)
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxCreateAOVoltageChan(self.taskHandle, 
-                                                     c_char_p(self.dev_and_channel),
+                                                     ctypes.c_char_p(self.dev_and_channel),
                                                      "", 
-                                                     c_double(min_val), 
-                                                     c_double(max_val), 
-                                                     c_int(DAQmx_Val_Volts), 
+                                                     ctypes.c_double(min_val), 
+                                                     ctypes.c_double(max_val), 
+                                                     ctypes.c_int(DAQmx_Val_Volts), 
                                                      ""))
 
     ## output
@@ -267,16 +268,16 @@ class AnalogOutput(NIDAQTask):
     # @param voltage The voltage to output.
     #
     def output(self, voltage):
-        c_samples_written = c_long(0)
-        c_voltage = c_double(voltage)
+        c_samples_written = ctypes.c_long(0)
+        c_voltage = ctypes.c_double(voltage)
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxWriteAnalogF64(self.taskHandle, 
-                                                c_long(1),
-                                                c_long(1),
-                                                c_double(10.0),
-                                                c_long(DAQmx_Val_GroupByChannel),
-                                                byref(c_voltage),
-                                                byref(c_samples_written), 
+                                                ctypes.c_long(1),
+                                                ctypes.c_long(1),
+                                                ctypes.c_double(10.0),
+                                                ctypes.c_long(DAQmx_Val_GroupByChannel),
+                                                ctypes.byref(c_voltage),
+                                                ctypes.byref(c_samples_written), 
                                                 None))
         assert c_samples_written.value == 1, "outputVoltage failed: " + str(c_samples_written.value) + " 1"
 
@@ -306,12 +307,12 @@ class AnalogWaveformInput(NIDAQTask):
         self.channels = 1
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxCreateAIVoltageChan(self.taskHandle, 
-                                                     c_char_p(self.dev_and_channel),
+                                                     ctypes.c_char_p(self.dev_and_channel),
                                                      "",
-                                                     c_int(DAQmx_Val_RSE),
-                                                     c_double(self.min_val), 
-                                                     c_double(self.max_val), 
-                                                     c_int(DAQmx_Val_Volts),
+                                                     ctypes.c_int(DAQmx_Val_RSE),
+                                                     ctypes.c_double(self.min_val), 
+                                                     ctypes.c_double(self.max_val), 
+                                                     ctypes.c_int(DAQmx_Val_Volts),
                                                      None))
 
     ## addChannel
@@ -326,12 +327,12 @@ class AnalogWaveformInput(NIDAQTask):
         self.dev_and_channel = "Dev" + str(self.board_number) + "/ai" + str(channel)        
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxCreateAIVoltageChan(self.taskHandle, 
-                                                     c_char_p(self.dev_and_channel),
+                                                     ctypes.c_char_p(self.dev_and_channel),
                                                      "",
-                                                     c_int(DAQmx_Val_RSE),
-                                                     c_double(self.min_val), 
-                                                     c_double(self.max_val), 
-                                                     c_int(DAQmx_Val_Volts),
+                                                     ctypes.c_int(DAQmx_Val_RSE),
+                                                     ctypes.c_double(self.min_val), 
+                                                     ctypes.c_double(self.max_val), 
+                                                     ctypes.c_int(DAQmx_Val_Volts),
                                                      None))
 
     ## configureAcquisition
@@ -346,10 +347,10 @@ class AnalogWaveformInput(NIDAQTask):
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxCfgSampClkTiming(self.taskHandle,
                                                   "",
-                                                  c_double(sample_rate_Hz),
-                                                  c_long(DAQmx_Val_Rising),
-                                                  c_long(DAQmx_Val_FiniteSamps),
-                                                  c_ulonglong(self.samples)))
+                                                  ctypes.c_double(sample_rate_Hz),
+                                                  ctypes.c_long(DAQmx_Val_Rising),
+                                                  ctypes.c_long(DAQmx_Val_FiniteSamps),
+                                                  ctypes.c_ulonglong(self.samples)))
 
     ## getData
     #
@@ -359,18 +360,18 @@ class AnalogWaveformInput(NIDAQTask):
     #
     def getData(self):
         # allocate space to store the data.
-        c_data_type = c_double * (self.samples * self.channels)
+        c_data_type = ctypes.c_double * (self.samples * self.channels)
         data = c_data_type()
         # acquire the data.
-        c_samples_read = c_long(0)
+        c_samples_read = ctypes.c_long(0)
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxReadAnalogF64(self.taskHandle,
-                                               c_long(self.samples),
-                                               c_double(10.0),
-                                               c_long(DAQmx_Val_GroupByChannel),
-                                               byref(data),
-                                               c_ulong(self.channels*self.samples),
-                                               byref(c_samples_read),
+                                               ctypes.c_long(self.samples),
+                                               ctypes.c_double(10.0),
+                                               ctypes.c_long(DAQmx_Val_GroupByChannel),
+                                               ctypes.byref(data),
+                                               ctypes.c_ulong(self.channels*self.samples),
+                                               ctypes.byref(c_samples_read),
                                                None))
         assert c_samples_read.value == self.samples, "Failed to read the right number of samples " + str(c_samples_read.value) + " " + str(self.samples)
         return data
@@ -398,11 +399,11 @@ class AnalogWaveformOutput(NIDAQTask):
         self.channels = 1
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxCreateAOVoltageChan(self.taskHandle, 
-                                                     c_char_p(self.dev_and_channel),
+                                                     ctypes.c_char_p(self.dev_and_channel),
                                                      "", 
-                                                     c_double(self.min_val), 
-                                                     c_double(self.max_val), 
-                                                     c_int(DAQmx_Val_Volts), 
+                                                     ctypes.c_double(self.min_val), 
+                                                     ctypes.c_double(self.max_val), 
+                                                     ctypes.c_int(DAQmx_Val_Volts), 
                                                      ""))
 
     ## addChannel
@@ -421,11 +422,11 @@ class AnalogWaveformOutput(NIDAQTask):
         self.dev_and_channel = "Dev" + str(board_number) + "/ao" + str(channel)
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxCreateAOVoltageChan(self.taskHandle, 
-                                                     c_char_p(self.dev_and_channel),
+                                                     ctypes.c_char_p(self.dev_and_channel),
                                                      "", 
-                                                     c_double(self.min_val), 
-                                                     c_double(self.max_val), 
-                                                     c_int(DAQmx_Val_Volts), 
+                                                     ctypes.c_double(self.min_val), 
+                                                     ctypes.c_double(self.max_val), 
+                                                     ctypes.c_int(DAQmx_Val_Volts), 
                                                      ""))
 
     ## setWaveform
@@ -455,35 +456,35 @@ class AnalogWaveformOutput(NIDAQTask):
         sample_mode = DAQmx_Val_ContSamps
         if finite:
             sample_mode = DAQmx_Val_FiniteSamps
-        c_rising = c_long(DAQmx_Val_Rising)
+        c_rising = ctypes.c_long(DAQmx_Val_Rising)
         if (not rising):
-            c_rising = c_long(DAQmx_Val_Falling)
+            c_rising = ctypes.c_long(DAQmx_Val_Falling)
         
 
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxCfgSampClkTiming(self.taskHandle,
-                                                  c_char_p(clock_source),
-                                                  c_double(sample_rate),
+                                                  ctypes.c_char_p(clock_source),
+                                                  ctypes.c_double(sample_rate),
                                                   c_rising,
-                                                  c_long(sample_mode),
-                                                  c_ulonglong(waveform_len)))
+                                                  ctypes.c_long(sample_mode),
+                                                  ctypes.c_ulonglong(waveform_len)))
 
         # Transfer the waveform data to the DAQ board buffer.
         data_len = len(waveform)
-        c_samples_written = c_long(data_len)
-        c_wave_form_type = c_double * data_len
+        c_samples_written = ctypes.c_long(data_len)
+        c_wave_form_type = ctypes.c_double * data_len
         self.c_waveform = c_wave_form_type()
         for i in range(data_len):
-            self.c_waveform[i] = c_double(waveform[i])
+            self.c_waveform[i] = ctypes.c_double(waveform[i])
 
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxWriteAnalogF64(self.taskHandle, 
-                                                c_long(waveform_len),
-                                                c_long(0),
-                                                c_double(10.0),
-                                                c_long(DAQmx_Val_GroupByChannel),
-                                                byref(self.c_waveform), 
-                                                byref(c_samples_written), 
+                                                ctypes.c_long(waveform_len),
+                                                ctypes.c_long(0),
+                                                ctypes.c_double(10.0),
+                                                ctypes.c_long(DAQmx_Val_GroupByChannel),
+                                                ctypes.byref(self.c_waveform), 
+                                                ctypes.byref(c_samples_written), 
                                                 None))
 
         if (c_samples_written.value == waveform_len):
@@ -512,13 +513,13 @@ class CounterOutput(NIDAQTask):
         self.dev_and_channel = "Dev" + str(self.board_number) + "/ctr" + str(self.channel)
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxCreateCOPulseChanFreq(self.taskHandle,
-                                                       c_char_p(self.dev_and_channel),
+                                                       ctypes.c_char_p(self.dev_and_channel),
                                                        "",
-                                                       c_long(DAQmx_Val_Hz),
-                                                       c_long(DAQmx_Val_Low),
-                                                       c_double(initial_delay),
-                                                       c_double(frequency),
-                                                       c_double(duty_cycle)))
+                                                       ctypes.c_long(DAQmx_Val_Hz),
+                                                       ctypes.c_long(DAQmx_Val_Low),
+                                                       ctypes.c_double(initial_delay),
+                                                       ctypes.c_double(frequency),
+                                                       ctypes.c_double(duty_cycle)))
 
     ## setCounter
     #
@@ -528,12 +529,12 @@ class CounterOutput(NIDAQTask):
         with getLockForBoard(self.board_number):
             if (number_samples > 0):
                 checkStatus(nidaqmx.DAQmxCfgImplicitTiming(self.taskHandle,
-                                                       c_long(DAQmx_Val_FiniteSamps),
-                                                       c_ulonglong(number_samples)))
+                                                       ctypes.c_long(DAQmx_Val_FiniteSamps),
+                                                       ctypes.c_ulonglong(number_samples)))
             else:
                 checkStatus(nidaqmx.DAQmxCfgImplicitTiming(self.taskHandle,
-                                                       c_long(DAQmx_Val_ContSamps),
-                                                       c_ulonglong(1000)))
+                                                       ctypes.c_long(DAQmx_Val_ContSamps),
+                                                       ctypes.c_ulonglong(1000)))
 
 
     ## removeTrigger
@@ -553,10 +554,10 @@ class CounterOutput(NIDAQTask):
     def setTrigger(self, trigger_source, retriggerable = 1, board = None):
         if retriggerable:
             with getLockForBoard(self.board_number):
-                checkStatus(nidaqmx.DAQmxSetStartTrigRetriggerable(self.taskHandle, c_long(1)))
+                checkStatus(nidaqmx.DAQmxSetStartTrigRetriggerable(self.taskHandle, ctypes.c_long(1)))
         else:
             with getLockForBoard(self.board_number):
-                checkStatus(nidaqmx.DAQmxSetStartTrigRetriggerable(self.taskHandle, c_long(0)))
+                checkStatus(nidaqmx.DAQmxSetStartTrigRetriggerable(self.taskHandle, ctypes.c_long(0)))
         
         board_number = self.board_number
         if board:
@@ -564,8 +565,8 @@ class CounterOutput(NIDAQTask):
         trigger = "/Dev" + str(board_number) + "/PFI" + str(trigger_source)
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxCfgDigEdgeStartTrig(self.taskHandle,
-                                                     c_char_p(trigger),
-                                                     c_long(DAQmx_Val_Rising)))
+                                                     ctypes.c_char_p(trigger),
+                                                     ctypes.c_long(DAQmx_Val_Rising)))
 
     def trigger(self):
         with getLockForBoard(self.board_number):
@@ -591,9 +592,9 @@ class DigitalOutput(NIDAQTask):
         self.dev_and_channel = "Dev" + str(self.board_number) + "/port" + str(port) + "/line" + str(self.channel)
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxCreateDOChan(self.taskHandle,
-                                              c_char_p(self.dev_and_channel),
+                                              ctypes.c_char_p(self.dev_and_channel),
                                               "",
-                                              c_long(DAQmx_Val_ChanPerLine)))
+                                              ctypes.c_long(DAQmx_Val_ChanPerLine)))
 
     ## output
     #
@@ -601,18 +602,18 @@ class DigitalOutput(NIDAQTask):
     #
     def output(self, high):
         if high:
-            c_data = c_byte(1)
+            c_data = ctypes.c_byte(1)
         else:
-            c_data = c_byte(0)
-        c_written = c_long(0)
+            c_data = ctypes.c_byte(0)
+        c_written = ctypes.c_long(0)
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxWriteDigitalLines(self.taskHandle,
-                                                   c_long(1),
-                                                   c_long(1),
-                                                   c_double(10.0),
-                                                   c_long(DAQmx_Val_GroupByChannel),
-                                                   byref(c_data),
-                                                   byref(c_written),
+                                                   ctypes.c_long(1),
+                                                   ctypes.c_long(1),
+                                                   ctypes.c_double(10.0),
+                                                   ctypes.c_long(DAQmx_Val_GroupByChannel),
+                                                   ctypes.byref(c_data),
+                                                   ctypes.byref(c_written),
                                                    None))
         assert c_written.value == 1, "Digital output failed"
 
@@ -634,27 +635,27 @@ class DigitalInput(NIDAQTask):
         self.dev_and_channel = "Dev" + str(self.board_number) + "/port0/line" + str(self.channel)
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxCreateDIChan(self.taskHandle,
-                                              c_char_p(self.dev_and_channel),
+                                              ctypes.c_char_p(self.dev_and_channel),
                                               "",
-                                              c_long(DAQmx_Val_ChanPerLine)))
+                                              ctypes.c_long(DAQmx_Val_ChanPerLine)))
 
     ## input
     #
     # @return True/False the input line is high/low.
     #
     def input(self):
-        c_read = c_byte(0)
-        c_samps_read = c_long(0)
-        c_bytes_per_samp = c_long(0)
+        c_read = ctypes.c_byte(0)
+        c_samps_read = ctypes.c_long(0)
+        c_bytes_per_samp = ctypes.c_long(0)
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxReadDigitalLines(self.taskHandle,
-                                                  c_long(-1),
-                                                  c_double(10.0),
-                                                  c_long(DAQmx_Val_GroupByChannel),
-                                                  byref(c_read),
-                                                  c_long(1),
-                                                  byref(c_samps_read),
-                                                  byref(c_bytes_per_samp),
+                                                  ctypes.c_long(-1),
+                                                  ctypes.c_double(10.0),
+                                                  ctypes.c_long(DAQmx_Val_GroupByChannel),
+                                                  ctypes.byref(c_read),
+                                                  ctypes.c_long(1),
+                                                  ctypes.byref(c_samps_read),
+                                                  ctypes.byref(c_bytes_per_samp),
                                                   None))
         assert c_samps_read.value == 1, "Digital input failed"
         if c_read.value == 1:
@@ -680,9 +681,9 @@ class DigitalWaveformOutput(NIDAQTask):
         self.channels = 1
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxCreateDOChan(self.taskHandle,
-                                              c_char_p(self.dev_line),
+                                              ctypes.c_char_p(self.dev_line),
                                               "",
-                                              c_int(DAQmx_Val_ChanPerLine)))
+                                              ctypes.c_int(DAQmx_Val_ChanPerLine)))
 
     ## addChannel
     #
@@ -697,9 +698,9 @@ class DigitalWaveformOutput(NIDAQTask):
         self.dev_line = "Dev" + str(self.board_number) + "/port0/line" + str(line)
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxCreateDOChan(self.taskHandle,
-                                              c_char_p(self.dev_line),
+                                              ctypes.c_char_p(self.dev_line),
                                               "",
-                                              c_int(DAQmx_Val_ChanPerLine)))
+                                              ctypes.c_int(DAQmx_Val_ChanPerLine)))
 
     ## setWaveform
     #
@@ -728,39 +729,39 @@ class DigitalWaveformOutput(NIDAQTask):
         sample_mode = DAQmx_Val_ContSamps
         if finite:
             sample_mode = DAQmx_Val_FiniteSamps
-        c_rising = c_long(DAQmx_Val_Rising)
+        c_rising = ctypes.c_long(DAQmx_Val_Rising)
         if (not rising):
-            c_rising = c_long(DAQmx_Val_Falling)
+            c_rising = ctypes.c_long(DAQmx_Val_Falling)
         
 
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxCfgSampClkTiming(self.taskHandle,
-                                                  c_char_p(clock_source),
-                                                  c_double(sample_rate),
+                                                  ctypes.c_char_p(clock_source),
+                                                  ctypes.c_double(sample_rate),
                                                   c_rising,
-                                                  c_long(sample_mode),
-                                                  c_ulonglong(waveform_len)))
+                                                  ctypes.c_long(sample_mode),
+                                                  ctypes.c_ulonglong(waveform_len)))
 
 
         # transfer the waveform data to the DAQ board buffer.
         data_len = len(waveform)
-        c_samples_written = c_int(data_len)
-        c_wave_form_type = c_uint8 * data_len
+        c_samples_written = ctypes.c_int(data_len)
+        c_wave_form_type = ctypes.c_uint8 * data_len
         self.c_waveform = c_wave_form_type()
         for i in range(data_len):
             if (waveform[i] > 0):
-                self.c_waveform[i] = c_uint8(1)
+                self.c_waveform[i] = ctypes.c_uint8(1)
             else:
-                self.c_waveform[i] = c_uint8(0)
+                self.c_waveform[i] = ctypes.c_uint8(0)
 
         with getLockForBoard(self.board_number):
             checkStatus(nidaqmx.DAQmxWriteDigitalLines(self.taskHandle,
-                                                   c_int(waveform_len),
-                                                   c_int(0),
-                                                   c_double(10.0),
-                                                   c_int(DAQmx_Val_GroupByChannel),
-                                                   byref(self.c_waveform), 
-                                                   byref(c_samples_written), 
+                                                   ctypes.c_int(waveform_len),
+                                                   ctypes.c_int(0),
+                                                   ctypes.c_double(10.0),
+                                                   ctypes.c_int(DAQmx_Val_GroupByChannel),
+                                                   ctypes.byref(self.c_waveform), 
+                                                   ctypes.byref(c_samples_written), 
                                                    None))
 
         if (c_samples_written.value == waveform_len):
