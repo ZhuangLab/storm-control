@@ -418,8 +418,7 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
                             params.ParameterSetBoolean("",
                                                        "use_progressions",
                                                        False,
-                                                       is_mutable = False,
-                                                       is_saved = False))
+                                                       is_mutable = False))
         self.parameters.add("progressions.pstart_value",
                             params.ParameterRangeFloat("",
                                                        "pstart_value",
