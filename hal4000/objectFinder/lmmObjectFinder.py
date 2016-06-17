@@ -10,7 +10,7 @@
 # Hazen 09/13
 #
 
-from ctypes import *
+import ctypes
 import numpy
 from numpy.ctypeslib import ndpointer
 import os
@@ -42,19 +42,19 @@ def initialize():
         directory += "/"
 
     if (sys.platform == "win32"):
-        lmmoment = cdll.LoadLibrary(directory + "LMMoment.dll")
+        lmmoment = ctypes.cdll.LoadLibrary(directory + "LMMoment.dll")
     else:
-        lmmoment = cdll.LoadLibrary(directory + "LMMoment.so")
+        lmmoment = ctypes.cdll.LoadLibrary(directory + "LMMoment.so")
 
     lmmoment.initialize.argtypes = []
     lmmoment.cleanup.argtypes = []
     lmmoment.numberAndLocObjects.argtypes = [ndpointer(dtype=numpy.uint16),
-                                             c_int,
-                                             c_int,
-                                             c_int,
+                                             ctypes.c_int,
+                                             ctypes.c_int,
+                                             ctypes.c_int,
                                              ndpointer(dtype=numpy.float32),
                                              ndpointer(dtype=numpy.float32),
-                                             c_void_p]
+                                             ctypes.c_void_p]
     lmmoment.initialize()
 
 ## findObjects
@@ -71,7 +71,7 @@ def initialize():
 def findObjects(np_image, image_x, image_y, threshold):
         x = numpy.zeros((max_locs), dtype = numpy.float32)
         y = numpy.zeros((max_locs), dtype = numpy.float32)
-        n = c_int(max_locs)
+        n = ctypes.c_int(max_locs)
         lmmoment.numberAndLocObjects(numpy.ascontiguousarray(np_image, dtype = numpy.uint16),
                                      image_y,
                                      image_x,
