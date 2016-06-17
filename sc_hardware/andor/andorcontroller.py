@@ -91,7 +91,7 @@ def getCameraHandles():
     number_cameras = getAvailableCameras()
     assert number_cameras > 0, "No Andor cameras detected!!"
     handles = []
-    temp = ctypes.c_void_p()
+    temp = ctypes.c_long()
     for i in range(getAvailableCameras()):
         andorCheck(andor.GetCameraHandle(i, byref(temp)), "GetCameraHandle")
         handles.append(temp.value)
