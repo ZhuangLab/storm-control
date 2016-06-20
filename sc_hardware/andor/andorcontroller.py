@@ -37,7 +37,7 @@ drv_p1invalid = 20066
 #
 # The Andor camera capabilities structure.
 #
-class AndorCapabilities(Structure):
+class AndorCapabilities(ctypes.Structure):
     _fields_ = [("ulSize", ctypes.c_ulong),
                 ("ulAcqModes", ctypes.c_ulong),
                 ("ulReadModes", ctypes.c_ulong),
@@ -95,6 +95,7 @@ def getCameraHandles():
     for i in range(getAvailableCameras()):
         andorCheck(andor.GetCameraHandle(i, ctypes.byref(temp)), "GetCameraHandle")
         handles.append(temp.value)
+    print "handles", handles
     return handles
 
 ## setCurrentCamera
@@ -192,7 +193,7 @@ class AndorCamera:
         self._props_['YPixels'] = y_pixels.value
 
         # Determine camera head model.
-        head_model = cytpes.create_string_buffer(32)
+        head_model = ctypes.create_string_buffer(32)
         andorCheck(andor.GetHeadModel(head_model), "GetHeadModel")
         self._props_['HeadModel'] = head_model.value
 
@@ -974,7 +975,7 @@ class AndorCamera:
             raise AssertionError, "Invalid y range: " + str(ROI[2]) + "," +str(ROI[3])
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        andorCheck(andor.SetImage(cytpes.c_int(binning[0]), ctypes.c_int(binning[1]),
+        andorCheck(andor.SetImage(ctypes.c_int(binning[0]), ctypes.c_int(binning[1]),
                                   ctypes.c_int(ROI[0]), ctypes.c_int(ROI[1]), ctypes.c_int(ROI[2]), ctypes.c_int(ROI[3])),
                    "SetImage")
         self.ROI = ROI

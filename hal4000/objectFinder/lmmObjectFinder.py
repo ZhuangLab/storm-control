@@ -78,7 +78,7 @@ def findObjects(np_image, image_x, image_y, threshold):
                                      threshold,
                                      x,
                                      y,
-                                     byref(n))
+                                     ctypes.byref(n))
         return [x, y, n.value]
 
 

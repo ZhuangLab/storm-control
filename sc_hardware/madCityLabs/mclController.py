@@ -15,7 +15,7 @@ import time
 #
 # The Mad City Labs product information structure.
 #
-class ProductInformation(Structure):
+class ProductInformation(ctypes.Structure):
     _fields_ = [("axis_bitmap", ctypes.c_ubyte),
                 ("ADC_resolution", ctypes.c_short),
                 ("DAC_resolution", ctypes.c_short),
