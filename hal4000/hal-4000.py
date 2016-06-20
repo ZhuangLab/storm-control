@@ -112,6 +112,7 @@ class Window(QtGui.QMainWindow):
         self.directory_test_mode = False
         self.filename = ""
         self.filming = False
+        self.live_view = True   # Whether the camera continuously displays when not filming
         self.logfile_fp = open(parameters.get("film.logfile"), "a")
         self.modules = []
         self.old_shutters_file = ""
@@ -201,6 +202,7 @@ class Window(QtGui.QMainWindow):
         # controls UI elements that "belong" to the main window and vice-versa.
         if (self.ui_mode == "single"):
             self.ui.recordButton = camera_displays[0].getRecordButton()
+            self.ui.liveViewButton = camera_displays[0].getLiveViewButton()
 
         # Insert additional menu items for the camera display(s) as necessary
         else:
@@ -276,7 +278,8 @@ class Window(QtGui.QMainWindow):
         self.ui.modeComboBox.currentIndexChanged.connect(self.handleModeComboBox)
         self.ui.notesEdit.textChanged.connect(self.updateNotes)
         self.ui.recordButton.clicked.connect(self.toggleFilm)
-
+        self.ui.liveViewButton.clicked.connect(self.toggleLiveView)
+        
         # other signals
         self.parameters_box.settingsToggled.connect(self.toggleSettings)
 
@@ -296,8 +299,15 @@ class Window(QtGui.QMainWindow):
         #
         # start the camera
         #
+
+        # live view mode button
+        self.ui.liveViewButton.setStyleSheet("QPushButton { color: green }")
+        self.ui.liveViewButton.setEnabled(True)
+
         self.camera.cameraInit()
 
+        # Start live view
+        #self.startLiveView()
 
     ## cleanUp
     #
@@ -864,8 +874,12 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def startFilm(self, film_settings = None):
-        self.stopCamera()
-
+        # Disable live mode button
+        self.ui.liveViewButton.setEnabled(False)
+        
+        # Pause live view mode (if running)
+        self.stopLiveView()
+        
         self.filming = True
         self.film_name = self.parameters.get("film.directory") + str(self.ui.filenameLabel.text())
         self.film_name = self.film_name[:-len(self.ui.filetypeComboBox.currentText())]
@@ -911,6 +925,20 @@ class Window(QtGui.QMainWindow):
 
         # go...
         self.startCamera()
+
+    ## startLiveView
+    #
+    # Turn on live view mode in hal and the modules
+    #
+    @hdebug.debug
+    def startLiveView(self):
+        if self.live_view: # Only call if live view is on
+            # Stop the camera
+            self.startCamera()
+
+        # Stop live view mode in all modules
+        for module in self.modules:
+            module.startLiveView(self.live_view)
 
     ## stopCamera
     #
@@ -976,11 +1004,6 @@ class Window(QtGui.QMainWindow):
         # Enable parameters radio buttons.
         self.parameters_box.stopFilm()
 
-        # Restart the camera.
-        self.startCamera()
-        self.ui.recordButton.setText("Record")
-        self.ui.recordButton.setStyleSheet("QPushButton { color: black }")
-
         # Notify tcp/ip client that the movie is finished
         # if the client requested the movie.
         if self.tcp_requested_movie:
@@ -1005,6 +1028,32 @@ class Window(QtGui.QMainWindow):
                 self.tcpComplete.emit(message)
 
                 self.ui.lengthSpinBox.setValue(self.current_length)
+
+        # Update record button status.
+        self.ui.recordButton.setText("Record")
+        self.ui.recordButton.setStyleSheet("QPushButton { color: black }")
+
+        # Reenable live mode button
+        self.ui.liveViewButton.setEnabled(True)
+
+        # Restart live view (if it was previously running)
+        self.startLiveView()        
+
+    ## stopLiveView
+    #
+    # Turn off live view mode in hal and the modules
+    #
+    @hdebug.debug
+    def stopLiveView(self):
+
+        if self.live_view: # Only toggle live view off if it is on already
+            # Stop the camera
+            self.stopCamera()
+
+        # Stop live view mode in all modules
+        for module in self.modules:
+            module.stopLiveView(self.live_view)
+
 
     ## toggleFilm
     #
@@ -1036,6 +1085,30 @@ class Window(QtGui.QMainWindow):
             if (reply == QtGui.QMessageBox.Yes):
                 self.startFilm()
 
+
+    ## toggleLiveView
+    #
+    # Turn on/off live mode. This is the only method that can change the internal attribute
+    # 'live_view'
+    #
+    # @ param boolean Dummy parameter.
+    @hdebug.debug
+    def toggleLiveView(self, boolean):
+        if self.live_view:
+            # Stop live view (call before reseting state since nothing is done if live_view is false)
+            self.stopLiveView() 
+            # Set internal state
+            self.live_view = False
+            # Configure button display
+            self.ui.liveViewButton.setStyleSheet("QPushButton { color: red }")
+        else:
+            # Set internal state
+            self.live_view = True
+            # Configure button display
+            self.ui.liveViewButton.setStyleSheet("QPushButton { color: green }")
+            # Start live view (call after setting live_view to true)
+            self.startLiveView() 
+
     ## toggleSettings
     #
     # This is called when the user changes the parameters in the parameters GUI.
@@ -1044,7 +1117,11 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def toggleSettings(self):
         self.parameters = self.parameters_box.getCurrentParameters()
-        self.stopCamera()
+
+        # Stop live view
+        self.stopLiveView()
+        
+        # Try setting the parameters
         try:
             self.newParameters()
 
@@ -1055,7 +1132,9 @@ class Window(QtGui.QMainWindow):
                                           "Bad parameters",
                                           traceback.format_exc())
         self.parameters_box.updateParameters()
-        self.startCamera()
+
+        # Restart live view
+        self.startLiveView()
 
     ## updateFilenameLabel
     #

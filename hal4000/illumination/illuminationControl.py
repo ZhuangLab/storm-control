@@ -357,6 +357,27 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
                 hdebug.logText(error_message)
                 raise halModule.StartFilmException(error_message)
 
+    ## startLiveView
+    #
+    # Setup the illumination for live view
+    # @param live_view A boolean describing whether or not the live view is running
+    #
+    @hdebug.debug
+    def startLiveView(self, live_view):
+        for channel in self.channels:
+            channel.startLiveView(live_view)
+
+    ## stopLiveView
+    #
+    # Cleanup the illumination when live view mode is toggled off
+    #
+    # @param live_view A boolean describing whether or not the live view is running
+    #
+    @hdebug.debug
+    def stopLiveView(self, live_view):
+        for channel in self.channels:
+            channel.stopLiveView(live_view)
+
     ## stopFilm
     #
     # Called at the end of filming.

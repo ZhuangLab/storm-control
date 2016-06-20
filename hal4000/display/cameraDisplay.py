@@ -107,6 +107,13 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
 
     def getRecordButton(self):
         return self.camera_frame_display.getRecordButton()
+
+    ## getLiveViewButton
+    #
+    # @return The live view button.
+    #
+    def getLiveViewButton(self):
+        return self.camera_frame_display.getLiveViewButton()
     
     ## getSignals
     #
