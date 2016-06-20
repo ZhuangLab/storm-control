@@ -72,21 +72,36 @@ class CameraControl(QtCore.QThread):
         self.got_camera = False
         self.reversed_shutter = False
 
+        # Default camera parameters.
         self.parameters.add("camera1.save", params.ParameterSetBoolean("",
                                                                        "save",
                                                                        True,
                                                                        is_mutable = False,
                                                                        is_saved = False))
+        
         self.parameters.add("camera1.x_pixels", params.ParameterInt("",
                                                                     "x_pixels",
                                                                     1,
                                                                     is_mutable = False,
                                                                     is_saved = True))
+        
         self.parameters.add("camera1.y_pixels", params.ParameterInt("",
                                                                     "y_pixels",
                                                                     1,
                                                                     is_mutable = False,
                                                                     is_saved = True))
+        
+        self.parameters.add("camera1.flip_horizontal", params.ParameterSetBoolean("Flip image horizontal",
+                                                                                  "flip_horizontal",
+                                                                                  False)
+                            
+        self.parameters.add("camera1.flip_vertical", params.ParameterSetBoolean("Flip image vertical",
+                                                                                "flip_vertical",
+                                                                                False)
+                            
+        self.parameters.add("camera1.transpose", params.ParameterSetBoolean("Transpose image",
+                                                                            "transpose",
+                                                                            False)
 
     ## cameraInit
     #

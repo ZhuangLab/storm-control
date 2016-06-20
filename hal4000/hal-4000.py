@@ -162,12 +162,12 @@ class Window(QtGui.QMainWindow):
         self.parameters_box = qtParametersBox.QParametersBox(self.ui.settingsScrollArea)
         self.ui.settingsScrollArea.setWidget(self.parameters_box)
         self.ui.settingsScrollArea.setWidgetResizable(True)
-        self.parameters_box.addParameters(self.parameters)
+        #self.parameters_box.addParameters(self.parameters)
 
         file_types = writers.availableFileFormats(self.ui_mode)
         self.parameters.getp("film.filetype").setAllowed(file_types)
-        for type in file_types:
-            self.ui.filetypeComboBox.addItem(type)
+        for ftype in file_types:
+            self.ui.filetypeComboBox.addItem(ftype)
 
         self.ui.framesText.setText("")
         self.ui.sizeText.setText("")
@@ -251,7 +251,7 @@ class Window(QtGui.QMainWindow):
             module.moduleInit()
 
         # The modules can add parameters, so update the default.
-        params.setDefaultParameters(parameters)
+        #params.setDefaultParameters(parameters)
 
         #
         # More ui stuff
@@ -1139,25 +1139,46 @@ if __name__ == "__main__":
     splash.show()
     app.processEvents()
 
-    # Load settings.
+    # Load general settings.
+    general_parameters = params.halParameters("settings_default.xml")
+
+    # Load setup specific settings, just to get access to the
+    # setup name and the film (and logging) directory.
     if (len(sys.argv) == 4):
         setup_name = sys.argv[1]
         hardware = params.hardware(sys.argv[2])
-        parameters = params.halParameters(sys.argv[3])
+        setup_parameters_filename = sys.argv[3]
     else:
-        parameters = params.parameters("settings_default.xml")
-        setup_name = parameters.get("setup_name")
+        setup_name = gen_parameters.get("setup_name")
         hardware = params.hardware("xml/" + setup_name + "_hardware.xml")
-        parameters = params.halParameters("xml/" + setup_name + "_default.xml")
-    parameters.add("setup_name", params.Parameter("", "setup_name", setup_name, 1, False, True))
-    parameters.add("use_as_default", params.Parameter("", "use_as_default", True, 1, False, False))
+        setup_parameters_filename = "xml/" + setup_name + "_default.xml")
+
+    setup_parameters = params.parameters(setup_parameters_filename)    
+
+    # Update general parameters with specific settings.
+    general_parameters.set("setup_name", setup_name)
+    general_parameters.set("film.directory", setup_parameters.get("film.directory"))
+    general_parameters.set("film.logfile", setup_parameters.get("film.logfile"))
 
     # Start logger.
-    hdebug.startLogging(parameters.get("film.directory") + "logs/", "hal4000")
+    hdebug.startLogging(setup_parameters.get("film.directory") + "logs/", "hal4000")
 
-    # Load app.
-    window = Window(hardware, parameters)
+    # Setup HAL and all the modules.
+    window = Window(hardware, general_parameters)
+
+    # Re-load setup specific parameters as HAL specific parameters.
+    setup_parameters = params.halParameters(setup_parameters_filename)
+
+    # Set the specific parameters as the default.
+    params.setDefaultParameters(setup_parameters)
+    
+    # Add the specific parameters to the parameters box.
+    window.parameters_box.addParameters(setup_parameters)
+
+    # Initialize with these parameters.
     window.toggleSettings()
+
+    # Hide splash screen and start.
     splash.hide()
     window.show()
 
