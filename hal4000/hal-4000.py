@@ -636,10 +636,6 @@ class Window(QtGui.QMainWindow):
                                                                    str(self.parameters.get("film.directory")),
                                                                    QtGui.QFileDialog.ShowDirsOnly))
         if directory and os.path.exists(directory):
-            if (directory[-1] != "/"):
-                self.directory = directory + "/"
-            else:
-                self.directory = directory
             self.parameters.set("film.directory", str(self.directory))
             self.ui.directoryText.setText(trimString(self.parameters.get("film.directory"), 31))
         self.updateFilenameLabel("foo")
@@ -867,7 +863,7 @@ class Window(QtGui.QMainWindow):
         self.stopCamera()
 
         self.filming = True
-        self.film_name = self.parameters.get("film.directory") + str(self.ui.filenameLabel.text())
+        self.film_name = os.path.join(self.parameters.get("film.directory"), str(self.ui.filenameLabel.text()))
         self.film_name = self.film_name[:-len(self.ui.filetypeComboBox.currentText())]
 
         if film_settings is None:
@@ -1082,7 +1078,7 @@ class Window(QtGui.QMainWindow):
         name += self.parameters.get("film.filetype")
 
         self.ui.filenameLabel.setText(name)
-        if os.path.exists(self.parameters.get("film.directory") + name):
+        if os.path.exists(os.path.join(self.parameters.get("film.directory"), name)):
             self.will_overwrite = True
             self.ui.filenameLabel.setStyleSheet("QLabel { color: red}")
         else:
