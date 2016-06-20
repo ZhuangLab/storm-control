@@ -95,7 +95,6 @@ def getCameraHandles():
     for i in range(getAvailableCameras()):
         andorCheck(andor.GetCameraHandle(i, ctypes.byref(temp)), "GetCameraHandle")
         handles.append(temp.value)
-    print "handles", handles
     return handles
 
 ## setCurrentCamera
