@@ -533,7 +533,7 @@ class CameraFrameDisplay(CameraFeedDisplay):
     #
     @hdebug.debug
     def handleCameraShutter(self, boolean):
-        self.cameraShutter.emit(self.feed_controller.getCamera(feed_name))
+        self.cameraShutter.emit(self.feed_controller.getCamera(self.feed_name))
 
     ## handleDisplayCaptured
     #
