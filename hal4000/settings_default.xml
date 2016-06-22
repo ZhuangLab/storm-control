@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <settings>
   <!-- The default HAL settings common to all the setups. -->
-  <setup_name type="string">none</setup_name>
+  <setup_name type="string" mutable="false">none</setup_name>
 
   <!-- default film settings -->
   <!-- film settings -->
@@ -26,10 +26,9 @@
     <transpose desc="Transpose image (mosaic)" type="boolean">False</transpose>
 
     <objective desc="Current objective" type="string" values="obj1,obj2,obj3">obj1</objective>
-    <obj1 type="custom">100x,100.0,0.0,0.0</obj1>
-    <obj2 type="custom">10x,10.0,0.0,0.0</obj2>
-    <obj3 type="custom">4x,4.0,0.0,0.0</obj3>
-    <pixels_to_um type="float">0.160</pixels_to_um>
+    <obj1 desc="Objective 1" type="custom">100x,0.160,0.0,0.0</obj1>
+    <obj2 desc="Objective 2" type="custom">10x,1.60,0.0,0.0</obj2>
+    <obj3 desc="Objective 3" type="custom">4x,4.0,0.0,0.0</obj3>
   </mosaic>
 
 </settings>
