@@ -149,6 +149,10 @@ class ACameraControl(cameraControl.HWCameraControl):
                                                                        "isolated_cropmode",
                                                                        False))
 
+        cam_params.add("reversed_shutter", params.ParameterSetBoolean("Camera shutter response is backward",
+                                                                       "reversed_shutter",
+                                                                       False))
+
     ## closeShutter
     #
     # Close the shutter.
