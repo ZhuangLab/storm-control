@@ -100,10 +100,10 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
                                                                                 is_saved = False))
 
         # Default camera parameters.
-        self.parameters.add("illumination.shutters", params.ParameterStringBoolean("Shutters file name",
-                                                                                   "shutters",
-                                                                                   "shutters_default.xml",
-                                                                                   False)
+        self.parameters.add("illumination.shutters", params.ParameterStringFilename("Shutters file name",
+                                                                                    "shutters",
+                                                                                    "shutters_default.xml",
+                                                                                    False))
 
         # Hardware modules setup.
         for module in hardware.modules:

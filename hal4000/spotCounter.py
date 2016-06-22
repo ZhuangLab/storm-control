@@ -480,19 +480,30 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
         #        we should get the nm_per_pixel from the mosaic settings and the current
         #        objective.
         #
-        spotc_params = self.parameters.get("spotcounter")
+        spotc_params = self.parameters.addSubSection("spotcounter")
         spotc_params.add("cell_size", params.ParameterRangeInt("Cell size for background subtraction",
                                                                "cell_size", 32, 8, 128,
                                                                is_mutable = False,
                                                                is_saved = False))
-        spotc_params.add("min_spots", params.ParameterRangeInt("Minimum counts for the spotcounter graph",
-                                                               "min_spots", 0, 0, 1000,
-                                                               is_mutable = False,
-                                                               is_saved = False))
+        
         spotc_params.add("max_spots", params.ParameterRangeInt("Maximum counts for the spotcounter graph",
                                                                "max_spots", 500, 0, 1000,
                                                                is_mutable = False,
                                                                is_saved = False))
+        
+        spotc_params.add("min_spots", params.ParameterRangeInt("Minimum counts for the spotcounter graph",
+                                                               "min_spots", 0, 0, 1000,
+                                                               is_mutable = False,
+                                                               is_saved = False))
+
+        spotc_params.add("nm_per_pixel", params.ParameterRangeFloat("Camera pixel size in nanometers",
+                                                                    "nm_per_pixel", 160, 10, 1000))
+        
+        spotc_params.add("scale_bar_len", params.ParameterRangeFloat("Scale bar length in nm",
+                                                                     "scale_bar_len", 1000, 100, 10000))
+        
+        spotc_params.add("threshold", params.ParameterRangeInt("Spot detection threshold (camera counts)",
+                                                               "threshold", 250, 1, 10000))
 
 
         # UI setup.

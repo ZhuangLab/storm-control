@@ -1149,27 +1149,35 @@ if __name__ == "__main__":
         hardware = params.hardware(sys.argv[2])
         setup_parameters_filename = sys.argv[3]
     else:
-        setup_name = gen_parameters.get("setup_name")
+        setup_name = general_parameters.get("setup_name")
         hardware = params.hardware("xml/" + setup_name + "_hardware.xml")
-        setup_parameters_filename = "xml/" + setup_name + "_default.xml")
+        setup_parameters_filename = "xml/" + setup_name + "_default.xml"
 
-    setup_parameters = params.parameters(setup_parameters_filename)    
+    setup_parameters = params.parameters(setup_parameters_filename)
 
-    # Update general parameters with specific settings.
+    # Update general parameters with specific settings that are needed at startup.
     general_parameters.set("setup_name", setup_name)
-    general_parameters.set("film.directory", setup_parameters.get("film.directory"))
-    general_parameters.set("film.logfile", setup_parameters.get("film.logfile"))
+    general_parameters.set("film.directory",
+                           setup_parameters.get("film.directory",
+                                                general_parameters.get("film.directory")))
+    general_parameters.set("film.logfile",
+                           setup_parameters.get("film.logfile",
+                                                general_parameters.get("film.logfile")))
 
     # Start logger.
-    hdebug.startLogging(setup_parameters.get("film.directory") + "logs/", "hal4000")
+    hdebug.startLogging(general_parameters.get("film.directory") + "logs/", "hal4000")
 
     # Setup HAL and all the modules.
     window = Window(hardware, general_parameters)
 
-    # Re-load setup specific parameters as HAL specific parameters.
+    # Set the general parameters with the additional values
+    # added by HAL and the modules as the default parameters.
+    params.setDefaultParameters(general_parameters)
+
+    # Re-load setup specific parameters as HAL parameters.
     setup_parameters = params.halParameters(setup_parameters_filename)
 
-    # Set the specific parameters as the default.
+    # Set the specific parameters as the new default.
     params.setDefaultParameters(setup_parameters)
     
     # Add the specific parameters to the parameters box.
