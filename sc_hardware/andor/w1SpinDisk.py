@@ -11,6 +11,12 @@ import sc_library.halExceptions as halExceptions
 import serial
 import copy
 import sc_library.parameters as params
+from collections import deque
+from PyQt4 import QtCore
+
+# Debugging
+import sc_library.hdebug as hdebug
+
 
 ## W1Exception
 #
@@ -20,6 +26,26 @@ class W1Exception(halExceptions.HardwareException):
     def __init__(self, message):
         halExceptions.HardwareException.__init__(self, message)
 
+## SerialObject
+#
+#
+#
+class SerialObject:
+    _COUNTER = 0 # A unique id for each sent serial command
+    
+    def __init__(self, command):
+        self.command = command
+        self.response = None
+        self.id = SerialObject._COUNTER
+
+        # Increment counter
+        SerialObject._COUNTER += 1
+    
+
+## W1SpinningDisk
+#
+# The W1 spinning disk main control class
+#
 class W1SpinningDisk:
 
     def __init__(self, parameters, hardware_config):
@@ -32,6 +58,11 @@ class W1SpinningDisk:
         except:
             print "Could not create serial port for spinning disk. Is it connected properly?"
             raise W1Exception("W1 Spinning Disk Initialization Error \n" + " Could not properly initialize com_port: " + str(com_port))
+
+        # Create thread
+        self.serial_thread = W1SerialThread(self.com)
+        # Start thread
+        self.serial_thread.start(QtCore.QThread.NormalPriority)
 
         # Create a local copy of the current W1 configuration
         self.params = params.StormXMLObject([]) # Create empty parameters object
@@ -89,7 +120,8 @@ class W1SpinningDisk:
                             "30201": "External SYNC signal is under use",
                             "30204": "Disk rotation stopped",
                             "30301": "Shutter error",
-                            "30302": "Shutter unopenable error"}
+                            "30302": "Shutter unopenable error",
+                            "1": "Unknown serial communication error"}
 
         self.initializeParameters(parameters)
 
@@ -156,7 +188,21 @@ class W1SpinningDisk:
     def getMaxSpeed(self):
         [success, value] = self.writeAndReadResponse("MS_MAX,?\r")
         return int(value)
-        
+
+    # handleSerialError
+    #
+    # Handle an error signal from the serial port thread
+    #
+    # @param error The error string
+    def handleSerialError(self, error):
+        error_message = self.error_codes.get(value, "Unknown error")
+        raise W1Exception("W1 Error " + value + ": " + error_message)
+
+    # newParameters
+    #
+    # Update the spinning disk parameters (if different from current configuration)
+    #
+    # @param parameters A parameters object
     def newParameters(self, parameters):
         p = parameters.get("spinning_disk")
 
@@ -196,43 +242,65 @@ class W1SpinningDisk:
                     print str(key) + " is not a valid parameter for the W1"
 
         # Make deep copy of the passed parameters so that the spinning disk remembers its current configuration
-        self.params = copy.deepcopy(p)
+        self.params = copy.deepcopy(p)   
 
-    def writeAndReadResponse(self, message):
-        # Debug code
-        if self.verbose:
-            print "Wrote: " + message
+class W1SerialThread(QtCore.QThread):
+    error = QtCore.pyqtSignal(obj)
+    
+    ## __init__
+    #
+    # @param com A serial object used for reading/writing serial commands to the W1
+    #
+    #
+    @hdebug.debug
+    def __init__(self, com, parent = None):
+        QtCore.QThread.__init__(self, parent)
 
-        # Write the message
-        self.com.write(message)
+        self.com = com # The com_port for serial communication
 
-        # Poll for a response (it could be longer than the timeout period of the port)
-        response = []
-        num_checks = 0
-        while len(response) == 0 and num_checks < self.max_num_reads:
-            response = self.com.readline()
-            num_checks = num_checks + 1
+        self.command_queue = deque() # A list of serial commands to write
 
-        # Debug code
-        if self.verbose:
-            print "Response (" + str(num_checks) + "): " + response
+    # run
+    #
+    # The major command for reading/writing to the 
+    def run(self):
 
-        # Handle empty response
-        if num_checks >= self.max_num_reads:
-            raise W1Exception("Serial communication error with W1")
+        if len(self.command_queue) > 0:
+            new_command = self.command_queue.popleft() # Remove from the front of the list
 
-        # Split response and look for proper acknowledge
-        [value, acknow] = response.split(":")
-        
-        # Handle error codes
-        if acknow == "N\r":
-            error_message = self.error_codes.get(value, "Unknown error")
+            # Write the message
+            self.com.write(message)
 
-            raise W1Exception("W1 Error " + value + ": " + error_message)
+            # Poll for a response (it could be longer than the timeout period of the port)
+            response = []
+            num_checks = 0
+            while len(response) == 0 and num_checks < self.max_num_reads:
+                response = self.com.readline()
+                num_checks = num_checks + 1
+
+            # Handle empty response
+            if num_checks >= self.max_num_reads:
+                self.error.emit("1")
+
+            # Split response and look for proper acknowledge
+            [value, acknow] = response.split(":")
+            
+            # Handle error codes
+            if acknow == "N\r":
+                self.error.emit(value)
 
         else:
-            return [True, value]
+            self.msleep(1) # Wait for a few ms before trying another command
 
+    # addToQueue
+    #
+    # Add a serial command to the serial port queue
+    #
+    # @param command A serial command
+    #
+    def addToQueue(self, command):
+        self.command_queue.append(command)
+        
 
 #
 # The MIT License
