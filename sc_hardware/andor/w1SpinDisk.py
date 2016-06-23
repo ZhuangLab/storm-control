@@ -13,6 +13,7 @@ import copy
 import sc_library.parameters as params
 from collections import deque
 from PyQt4 import QtCore
+from time import sleep
 
 # Debugging
 import sc_library.hdebug as hdebug
@@ -232,32 +233,43 @@ class W1SpinningDisk:
                 if key == "bright_field_bypass":
                     if p.get("bright_field_bypass"):
                         self.serial_thread.addToQueue(SerialObject("BF_ON\r"))
+                        sleep(1)
                     else:
                         self.serial_thread.addToQueue(SerialObject("BF_OFF\r"))
+                        sleep(1)
                 elif key == "spin_disk":
                     if p.get("spin_disk"):
                         self.serial_thread.addToQueue(SerialObject("MS_RUN\r"))
+                        sleep(3)
                     else:
                         self.serial_thread.addToQueue(SerialObject("MS_STOP\r"))
+                        sleep(1)
                 elif key == "disk":
                     if p.get("disk") == "50-micron pinholes":
                         self.serial_thread.addToQueue(SerialObject("DC_SLCT,1\r"))
+                        sleep(3)
                     elif p.get("disk") == "25-micron pinholes":
                         self.serial_thread.addToQueue(SerialObject("DC_SLCT,2\r"))
+                        sleep(3)
                 elif key == "disk_speed":
                     self.serial_thread.addToQueue(SerialObject("MS,"+str(p.get("disk_speed"))+"\r"))
+                    sleep(1)
                 elif key == "dichroic_mirror":
                     dichroic_num = self.dichroic_mirror_config[p.get("dichroic_mirror")]
                     self.serial_thread.addToQueue(SerialObject("DMM_POS,1,"+str(dichroic_num)+"\r"))
+                    sleep(1)
                 elif key == "filter_wheel_pos1" or key == "filter_wheel_pos2":
                     filter1_num = self.filter_wheel_1_config[p.get("filter_wheel_pos1")]
                     filter2_num = self.filter_wheel_2_config[p.get("filter_wheel_pos2")]
                     self.serial_thread.addToQueue(SerialObject("FW_POS,0," + str(filter1_num) + "," + str(filter2_num) + "\r"))
+                    sleep(0.1)
                 elif key == "camera_dichroic_mirror":
                     camera_dichroic_num = self.camera_dichroic_config[p.get("camera_dichroic_mirror")]
                     self.serial_thread.addToQueue(SerialObject("PT_POS,1," + str(camera_dichroic_num) + "\r"))
+                    sleep(1)
                 elif key == "aperture":
                     self.serial_thread.addToQueue(SerialObject("AP_WIDTH,1,"+str(p.get("aperture"))+"\r"))
+                    sleep(0.5)
                 else:
                     print str(key) + " is not a valid parameter for the W1"
 
