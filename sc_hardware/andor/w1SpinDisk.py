@@ -76,6 +76,8 @@ class W1SpinningDisk:
 
         # Create thread
         self.serial_thread = W1SerialThread(self.com)
+        self.serial_thread.response.connect(self.handleSerialThreadResponse)
+        
         # Start thread
         self.serial_thread.start(QtCore.QThread.NormalPriority)
 
@@ -200,18 +202,21 @@ class W1SpinningDisk:
         # Run new parameters to configure the spinning disk with these defaults
         self.newParameters(parameters)
 
+    ### FIX ME! The current thread configuration does not yet handle response/requests
     def getMaxSpeed(self):
-        [success, value] = self.writeAndReadResponse("MS_MAX,?\r")
-        return int(value)
+        #[success, value] = self.writeAndReadResponse("MS_MAX,?\r")
+        #return int(value)
+        return 4000
 
-    # handleSerialError
+    # handleSerialThreadResponse
     #
-    # Handle an error signal from the serial port thread
+    # Handle a response from the serial system.... good only for raising serial errors at this point
     #
-    # @param error The error string
-    def handleSerialError(self, error):
-        error_message = self.error_codes.get(value, "Unknown error")
-        raise W1Exception("W1 Error " + value + ": " + error_message)
+    # @param serial_message The SerialObject
+    def handleSerialThreadResponse(self, serial_message):
+        if serial_message.getError() is not None:
+            error_message = self.error_codes.get(serial_message.getError(), "Unknown error")
+            raise W1Exception("W1 Error " + value + ": " + error_message)
 
     # newParameters
     #
@@ -281,10 +286,10 @@ class W1SerialThread(QtCore.QThread):
     def run(self):
 
         if len(self.command_queue) > 0:
-            new_command = self.command_queue.popleft() # Remove from the front of the list
+            message = self.command_queue.popleft() # Remove from the front of the list
 
             # Write the message
-            self.com.write(new_command.getCommand())
+            self.com.write(message.getCommand())
 
             # Poll for a response (it could be longer than the timeout period of the port)
             response = []
@@ -295,7 +300,7 @@ class W1SerialThread(QtCore.QThread):
 
             # Handle empty response
             if num_checks >= self.max_num_reads:
-                new_command.setError("1")
+                message.setError("1")
             else:
 
                 # Split response and look for proper acknowledge
@@ -303,19 +308,19 @@ class W1SerialThread(QtCore.QThread):
                 
                 # Handle error codes
                 if acknow == "N\r":
-                    new_command.setError(value)
+                    message.setError(value)
                 else:
-                    new_command.setResponse(value)
+                    message.setResponse(value)
 
             # Emit a signal that a response has been generated
-            self.response.emt(new_command)
+            self.response.emit(message)
 
         else:
             self.msleep(1) # Wait for a few ms before trying another command
 
     # addToQueue
     #
-    # Add a serial command to the serial port queue
+    # Add a serial message to the serial port queue
     #
     # @param command A serial command
     #
