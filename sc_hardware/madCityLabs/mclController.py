@@ -7,7 +7,7 @@
 # Hazen 3/09
 #
 
-from ctypes import *
+import ctypes
 import time
 
 
@@ -15,13 +15,13 @@ import time
 #
 # The Mad City Labs product information structure.
 #
-class ProductInformation(Structure):
-    _fields_ = [("axis_bitmap", c_ubyte),
-                ("ADC_resolution", c_short),
-                ("DAC_resolution", c_short),
-                ("Product_id", c_short),
-                ("FirmwareVersion", c_short),
-                ("FirmwareProfile", c_short)]
+class ProductInformation(ctypes.Structure):
+    _fields_ = [("axis_bitmap", ctypes.c_ubyte),
+                ("ADC_resolution", ctypes.c_short),
+                ("DAC_resolution", ctypes.c_short),
+                ("Product_id", ctypes.c_short),
+                ("FirmwareVersion", ctypes.c_short),
+                ("FirmwareProfile", ctypes.c_short)]
 
 
 ## loadMCLDLL
@@ -32,7 +32,7 @@ mcl = False
 def loadMCLDLL(mcl_path):
     global mcl
     if(mcl == False):
-        mcl = cdll.LoadLibrary(mcl_path + "Madlib")
+        mcl = ctypes.cdll.LoadLibrary(mcl_path + "Madlib")
 
 
 ## MCLStage
@@ -66,8 +66,8 @@ class MCLStage:
         self._props_ = {}
 
         # define the return types of some the functions
-        mcl.MCL_GetCalibration.restype = c_double
-        mcl.MCL_SingleReadN.restype = c_double
+        mcl.MCL_GetCalibration.restype = ctypes.c_double
+        mcl.MCL_SingleReadN.restype = ctypes.c_double
 
         #
         # Get a stage handle.
@@ -90,7 +90,7 @@ class MCLStage:
         # get the stage information
         caps = ProductInformation(0, 0, 0, 0, 0, 0)
         if self.handle:
-            assert mcl.MCL_GetProductInfo(byref(caps), self.handle) == 0, "MCL_GetProductInfo failed."
+            assert mcl.MCL_GetProductInfo(ctypes.byref(caps), self.handle) == 0, "MCL_GetProductInfo failed."
             self._props_['axis_bitmap'] = caps.axis_bitmap
             self._props_['ADC_resolution'] = caps.ADC_resolution
             self._props_['DAC_resolution'] = caps.DAC_resolution
@@ -123,7 +123,7 @@ class MCLStage:
     #
     def _getCalibration(self, axis):
         if self.handle and self.valid_axises[axis]:
-            return mcl.MCL_GetCalibration(c_ulong(axis), self.handle)
+            return mcl.MCL_GetCalibration(ctypes.c_ulong(axis), self.handle)
         else:
             return 0
 
@@ -149,7 +149,7 @@ class MCLStage:
         if not(self.valid_axises[axis]):
             print "getPosition: invalid axis", axis
         if self.handle:
-            return mcl.MCL_SingleReadN(c_ulong(axis), self.handle)
+            return mcl.MCL_SingleReadN(ctypes.c_ulong(axis), self.handle)
 
     ## getProperties
     #
@@ -174,7 +174,7 @@ class MCLStage:
         if not(position <= self.axis_range[axis]):
             print "moveTo: position too large", position
         if self.handle:
-            mcl.MCL_SingleWriteN(c_double(position), c_ulong(axis), self.handle)
+            mcl.MCL_SingleWriteN(ctypes.c_double(position), ctypes.c_ulong(axis), self.handle)
 
     ## printDeviceInfo
     #
@@ -196,9 +196,9 @@ class MCLStage:
     def readWaveForm(self, axis, points):
         if self.handle:
             if points < 1000:
-                wave_form_data_type = c_double * points
+                wave_form_data_type = ctypes.c_double * points
                 wave_form_data = wave_form_data_type()
-                mcl.MCL_ReadWaveFormN(c_ulong(axis), c_ulong(points), c_double(4.0), wave_form_data, self.handle)
+                mcl.MCL_ReadWaveFormN(ctypes.c_ulong(axis), ctypes.c_ulong(points), ctypes.c_double(4.0), wave_form_data, self.handle)
                 return wave_form_data
             else:
                 print "MCL stage can only acquire a maximum of 999 points"

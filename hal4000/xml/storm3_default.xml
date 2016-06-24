@@ -1,63 +1,27 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <settings>
 
-  <!-- camera settings -->
-  <camera1>
-    <reversed_shutter desc="Shutter response is backwards" type="boolean">False</reversed_shutter>
-    <flip_horizontal desc="Flip image horizontal" type="boolean">False</flip_horizontal>
-    <flip_vertical desc="Flip image vertical" type="boolean">False</flip_vertical>
-    <transpose desc="Transpose image" type="boolean">False</transpose>
-  </camera1>
-
-  <!-- film settings -->
-  <film>
-    <want_big_endian desc="Save movies using a big endian format" type="boolean">False</want_big_endian>
-    <directory desc="Current working directory" type="directory">C:\Data\</directory>
-    <filename desc="Current movie file name" type="string">movie</filename>
-    <acq_mode desc="Acquisition mode" type="string" values="run_till_abort,fixed_length">fixed_length</acq_mode>
-    <frames desc="Movie length in frames" type="int" min="1" max="1000000000">10</frames>
-    <logfile desc="Image log file" type="filename">C:\Data\image_log.txt</logfile>
-    <extension desc="Movie file name extension" type="string" values=",A750,A647,Cy5,Cy3,Cy2,A405,FITC,YFP,GFP,BF"></extension>
-    <auto_increment desc="Automatically increment movie counter between movies" type="boolean">True</auto_increment>
-    <want_bell desc="Sound bell at the end of long movies" type="boolean">True</want_bell>
-    <auto_shutters desc="Run shutters during the movie" type="boolean">True</auto_shutters>
-    <filetype desc="Movie file type" type="string" values=".dax">.dax</filetype>
-  </film>
-
-  <!-- illumination settings -->
-  <illumination>
-    <shutters desc="Shutters file to use when taking a movie" type="filename">shutters_default.xml</shutters>
-  </illumination>
-
   <!-- stage settings -->
   <stage>
-    <x_sign desc="Reverse the direction of the X axis" type="int" values="-1,1">1</x_sign>
-    <y_sign desc="Reverse the direction of the Y axis" type="int" values="-1,1">1</y_sign>
-    <flip_axis desc="Switch X-Y stage axises" type="boolean">True</flip_axis>
+    <x_sign type="int">1</x_sign>
+    <y_sign type="int">1</y_sign>
+    <flip_axis type="boolean">True</flip_axis>
   </stage>
-
-  <!-- spot counter -->
-  <spotcounter>
-    <threshold type="int" min="1" max="10000">250</threshold>
-    <scale_bar_len desc="Scale bar length in nm" type="float" min="100" max="10000">1000</scale_bar_len>
-    <nm_per_pixel desc="Nanometers per pixel" type="float" min="10" max="1000">160</nm_per_pixel>
-  </spotcounter>
 
   <!-- misc control -->
   <misc>
     <filter_names type="string">1,2,3,4,5,6</filter_names>
-    <filter_position desc="Emission filter position" type="int" min="0" max="5">0</filter_position>
+    <filter_position type="int">0</filter_position>
   </misc>
 
   <!-- steve settings -->
   <mosaic>
-    <objective desc="Current objective" type="string" values="obj1,obj2,obj3">obj1</objective>
-    <flip_horizontal desc="Flip image horizontal (mosaic)" type="boolean">True</flip_horizontal>
-    <flip_vertical desc="Flip image vertical (mosaic)" type="boolean">True</flip_vertical>
-    <transpose desc="Transpose image (mosaic)" type="boolean">True</transpose>
-    <obj1 desc="100x objective" type="string">100x,0.160,0.0,0.0</obj1>
-    <obj2 desc="10x objective" type="string">10x,1.60,227.0,-69.0</obj2>
-    <obj3 desc="2x objective" type="string">2x,8.0,133.0,-244.0</obj3>
+    <flip_horizontal type="boolean">True</flip_horizontal>
+    <flip_vertical type="boolean">True</flip_vertical>
+    <transpose type="boolean">True</transpose>
+    <obj1 type="string">100x,0.160,0.0,0.0</obj1>
+    <obj2 type="string">10x,1.60,227.0,-69.0</obj2>
+    <obj3 type="string">2x,8.0,133.0,-244.0</obj3>
   </mosaic>
 
 </settings>

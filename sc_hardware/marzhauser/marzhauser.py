@@ -7,7 +7,7 @@
 # Hazen 04/12
 #
 
-from ctypes import *
+import ctypes
 import sys
 import time
 
@@ -26,7 +26,7 @@ tango = 0
 def loadTangoDLL():
     global tango
     if (tango == 0):
-        tango = windll.LoadLibrary("C:\Program Files\SwitchBoard\Tango_DLL")
+        tango = ctypes.windll.LoadLibrary("C:\Program Files\SwitchBoard\Tango_DLL")
 
 instantiated = 0
 
@@ -170,7 +170,7 @@ class MarzhauserRS232(RS232.RS232):
 #
 # Marzhauser DLL interface class.
 #
-class MarzhauserDLL():
+class MarzhauserDLL(object):
 
     ## __init__
     #
@@ -193,8 +193,8 @@ class MarzhauserDLL():
 
         # Connect to the stage.
         self.good = 1
-        temp = c_int(-1)
-        tango.LSX_CreateLSID(byref(temp))
+        temp = ctypes.c_int(-1)
+        tango.LSX_CreateLSID(ctypes.byref(temp))
         self.LSID = temp.value
         error = tango.LSX_ConnectSimple(self.LSID, 1, port, 57600, 0)
         if error:
@@ -219,9 +219,9 @@ class MarzhauserDLL():
             # and then you try to do a positional move everything
             # will freeze, so we stop the stage first.
             self.jog(0.0,0.0)
-            X = c_double(x * self.um_to_unit)
-            Y = c_double(y * self.um_to_unit)
-            ZA = c_double(0.0)
+            X = ctypes.c_double(x * self.um_to_unit)
+            Y = ctypes.c_double(y * self.um_to_unit)
+            ZA = ctypes.c_double(0.0)
             tango.LSX_MoveAbs(self.LSID, X, Y, ZA, ZA, self.wait)
 
     ## goRelative
@@ -232,9 +232,9 @@ class MarzhauserDLL():
     def goRelative(self, dx, dy):
         if self.good:
             self.jog(0.0,0.0)
-            dX = c_double(dx * self.um_to_unit)
-            dY = c_double(dy * self.um_to_unit)
-            dZA = c_double(0.0)
+            dX = ctypes.c_double(dx * self.um_to_unit)
+            dY = ctypes.c_double(dy * self.um_to_unit)
+            dZA = ctypes.c_double(0.0)
             tango.LSX_MoveRel(self.LSID, dX, dY, dZA, dZA, self.wait)
 
     ## jog
@@ -244,9 +244,9 @@ class MarzhauserDLL():
     #
     def jog(self, x_speed, y_speed):
         if self.good:
-            c_xs = c_double(x_speed * self.um_to_unit)
-            c_ys = c_double(y_speed * self.um_to_unit)
-            c_zr = c_double(0.0)
+            c_xs = ctypes.c_double(x_speed * self.um_to_unit)
+            c_ys = ctypes.c_double(y_speed * self.um_to_unit)
+            c_zr = ctypes.c_double(0.0)
             tango.LSX_SetDigJoySpeed(self.LSID, c_xs, c_ys, c_zr, c_zr)
 
     ## joystickOnOff
@@ -275,11 +275,11 @@ class MarzhauserDLL():
     #
     def position(self):
         if self.good:
-            pdX = c_double()
-            pdY = c_double()
-            pdZ = c_double()
-            pdA = c_double()
-            tango.LSX_GetPos(self.LSID, byref(pdX), byref(pdY), byref(pdZ), byref(pdA))
+            pdX = ctypes.c_double()
+            pdY = ctypes.c_double()
+            pdZ = ctypes.c_double()
+            pdA = ctypes.c_double()
+            tango.LSX_GetPos(self.LSID, ctypes.byref(pdX), ctypes.byref(pdY), ctypes.byref(pdZ), ctypes.byref(pdA))
             return [pdX.value * self.unit_to_um, 
                     pdY.value * self.unit_to_um,
                     pdZ.value * self.unit_to_um]
@@ -293,7 +293,7 @@ class MarzhauserDLL():
     def serialNumber(self):
         # Get stage serial number
         if self.good:
-            serial_number = create_string_buffer(256)
+            serial_number = ctypes.create_string_buffer(256)
             tango.LSX_GetSerialNr(self.LSID, serial_number, 256)
             return repr(serial_number.value)
         else:
@@ -326,7 +326,7 @@ class MarzhauserDLL():
     def zero(self):
         if self.good:
             self.jog(0.0,0.0)
-            x = c_double(0)
+            x = ctypes.c_double(0)
             tango.LSX_SetPos(self.LSID, x, x, x, x)
 
 
