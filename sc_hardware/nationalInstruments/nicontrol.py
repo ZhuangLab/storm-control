@@ -44,7 +44,6 @@ DAQmx_Val_AdvanceTrigger = 12488
 TaskHandle = ctypes.c_void_p
 DAQmxSignalEventCallbackPtr = ctypes.CFUNCTYPE(ctypes.c_int, TaskHandle, ctypes.c_int, ctypes.c_void_p)
 
-
 niLocks = {}
 
 def getLockForBoard(board):

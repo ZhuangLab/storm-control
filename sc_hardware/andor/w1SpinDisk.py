@@ -11,6 +11,11 @@ import sc_library.halExceptions as halExceptions
 import serial
 import copy
 import sc_library.parameters as params
+from PyQt4 import QtCore
+from time import sleep
+
+# Debugging
+import sc_library.hdebug as hdebug
 
 ## W1Exception
 #
@@ -20,28 +25,33 @@ class W1Exception(halExceptions.HardwareException):
     def __init__(self, message):
         halExceptions.HardwareException.__init__(self, message)
 
-class W1SpinningDisk:
+## W1SpinningDisk
+#
+# The W1 spinning disk main control class
+#
+class W1SpinningDisk(object):
 
     def __init__(self, parameters, hardware_config):
 
-        # Create serial port
+        # Create serial control thread
         try:
-            self.com = serial.Serial(port = hardware_config.get("com_port"),
-                                     baudrate = 115200,
-                                     timeout = .5) # The timeout duration needs to be set to allow sufficient time for long commands to run
+            self.serial_thread = W1SerialThread(hardware_config.get("com_port"), baudrate=115200, timeout = 0.01,
+                                                verbose = hardware_config.get("verbose", False))
         except:
             print "Could not create serial port for spinning disk. Is it connected properly?"
-            raise W1Exception("W1 Spinning Disk Initialization Error \n" + " Could not properly initialize com_port: " + str(com_port))
+            raise W1Exception("W1 Spinning Disk Initialization Error \n" + " Could not properly initialize com_port: " + str(hardware_config.get("com_port")))
+
+        # Connect error signal from serial control thread
+        self.serial_thread.error.connect(self.handleSerialThreadError)
+
+        # Start thread
+        self.serial_thread.start(QtCore.QThread.NormalPriority)
 
         # Create a local copy of the current W1 configuration
         self.params = params.StormXMLObject([]) # Create empty parameters object
 
         # Record internal verbosity (debug purposes only)
         self.verbose = hardware_config.get("verbose")
-
-        # Set number of reads before issuing a serial communication error
-        self.max_num_reads = 30 # This number in combination with the timeout for the serial port needs to produce a long enough delay
-                                # for the longest command
 
         # Create dictionaries for the configuration of the filter wheels and two dichroic mirror sets
         self.filter_wheel_1_config = {}
@@ -89,14 +99,10 @@ class W1SpinningDisk:
                             "30201": "External SYNC signal is under use",
                             "30204": "Disk rotation stopped",
                             "30301": "Shutter error",
-                            "30302": "Shutter unopenable error"}
+                            "30302": "Shutter unopenable error",
+                            "1": "Unknown serial communication error"}
 
-        self.initializeParameters(parameters)
-
-    def cleanup(self):
-        self.com.close()
-
-    def initializeParameters(self, parameters):
+        # Initialize spinning disk parameters
         # Add spinning disk sub section
         sd_params = parameters.addSubSection("spinning_disk")
 
@@ -149,14 +155,39 @@ class W1SpinningDisk:
         sd_params.add("aperture", params.ParameterRangeInt("Aperture value (1-10; small to large)",
                                                             "aperture",
                                                             10,1,10))
+    ## cleanup
+    #
+    # Cleanup class
+    #
+    def cleanup(self):
+        self.serial_thread.cleanup()
 
-        # Run new parameters to configure the spinning disk with these defaults
-        self.newParameters(parameters)
-
+    # getMaxSpeed
+    #
+    # Return the maximum speed of the disk
+    #
     def getMaxSpeed(self):
-        [success, value] = self.writeAndReadResponse("MS_MAX,?\r")
-        return int(value)
-        
+        [value, error] = self.serial_thread.sendCommandGetResponse("MS_MAX,?\r")
+        if not error:
+            return int(value)
+        else:
+            error_message = self.error_codes.get(value, "Unknown error")
+            raise W1Exception("W1 Error " + value + ": " + error_message)
+
+    # handleSerialThreadError
+    #
+    # Handle an error message from the serial thread
+    #
+    # @param error_code
+    def handleSerialThreadError(self, error_code):
+        error_message = self.error_codes.get(error_code, "Unknown error")
+        raise W1Exception("W1 Error " + value + ": " + error_message)
+
+    # newParameters
+    #
+    # Update the spinning disk parameters (if different from current configuration)
+    #
+    # @param parameters A parameters object
     def newParameters(self, parameters):
         p = parameters.get("spinning_disk")
 
@@ -165,46 +196,132 @@ class W1SpinningDisk:
             if not (key in self.params.getAttrs()) or not (self.params.get(key) == p.get(key)):
                 if key == "bright_field_bypass":
                     if p.get("bright_field_bypass"):
-                        self.writeAndReadResponse("BF_ON\r")
+                        self.serial_thread.sendCommand("BF_ON\r")
+                        sleep(1)
                     else:
-                        self.writeAndReadResponse("BF_OFF\r")
+                        self.serial_thread.sendCommand("BF_OFF\r")
+                        sleep(1)
                 elif key == "spin_disk":
                     if p.get("spin_disk"):
-                        self.writeAndReadResponse("MS_RUN\r")
+                        self.serial_thread.sendCommand("MS_RUN\r")
+                        sleep(3)
                     else:
-                        self.writeAndReadResponse("MS_STOP\r")
+                        self.serial_thread.sendCommand("MS_STOP\r")
+                        sleep(1)
                 elif key == "disk":
                     if p.get("disk") == "50-micron pinholes":
-                        self.writeAndReadResponse("DC_SLCT,1\r")
+                        self.serial_thread.sendCommand("DC_SLCT,1\r")
+                        sleep(3)
                     elif p.get("disk") == "25-micron pinholes":
-                        self.writeAndReadResponse("DC_SLCT,2\r")
+                        self.serial_thread.sendCommand("DC_SLCT,2\r")
+                        sleep(3)
                 elif key == "disk_speed":
-                      self.writeAndReadResponse("MS,"+str(p.get("disk_speed"))+"\r")
+                    self.serial_thread.sendCommand("MS,"+str(p.get("disk_speed"))+"\r")
+                    sleep(1)
                 elif key == "dichroic_mirror":
-                      dichroic_num = self.dichroic_mirror_config[p.get("dichroic_mirror")]
-                      self.writeAndReadResponse("DMM_POS,1,"+str(dichroic_num)+"\r")
+                    dichroic_num = self.dichroic_mirror_config[p.get("dichroic_mirror")]
+                    self.serial_thread.sendCommand("DMM_POS,1,"+str(dichroic_num)+"\r")
+                    sleep(1)
                 elif key == "filter_wheel_pos1" or key == "filter_wheel_pos2":
-                      filter1_num = self.filter_wheel_1_config[p.get("filter_wheel_pos1")]
-                      filter2_num = self.filter_wheel_2_config[p.get("filter_wheel_pos2")]
-                      self.writeAndReadResponse("FW_POS,0," + str(filter1_num) + "," + str(filter2_num) + "\r")
+                    filter1_num = self.filter_wheel_1_config[p.get("filter_wheel_pos1")]
+                    filter2_num = self.filter_wheel_2_config[p.get("filter_wheel_pos2")]
+                    self.serial_thread.sendCommand("FW_POS,0," + str(filter1_num) + "," + str(filter2_num) + "\r")
+                    sleep(0.1)
                 elif key == "camera_dichroic_mirror":
-                      camera_dichroic_num = self.camera_dichroic_config[p.get("camera_dichroic_mirror")]
-                      self.writeAndReadResponse("PT_POS,1," + str(camera_dichroic_num) + "\r")
+                    camera_dichroic_num = self.camera_dichroic_config[p.get("camera_dichroic_mirror")]
+                    self.serial_thread.sendCommand("PT_POS,1," + str(camera_dichroic_num) + "\r")
+                    sleep(1)
                 elif key == "aperture":
-                    self.writeAndReadResponse("AP_WIDTH,1,"+str(p.get("aperture"))+"\r")
+                    self.serial_thread.sendCommand("AP_WIDTH,1,"+str(p.get("aperture"))+"\r")
+                    sleep(0.5)
                 else:
                     print str(key) + " is not a valid parameter for the W1"
 
         # Make deep copy of the passed parameters so that the spinning disk remembers its current configuration
-        self.params = copy.deepcopy(p)
+        self.params = copy.deepcopy(p)   
 
-    def writeAndReadResponse(self, message):
-        # Debug code
+## W1SerialThread
+#
+# A thread to allow asynchronous monitoring of the serial port.
+#
+class W1SerialThread(QtCore.QThread):
+    error = QtCore.pyqtSignal(object) # Signal that an error message was detected on serial port
+    
+    ## __init__
+    #
+    # @param com_port The com port for W1 serial communication
+    # @param baudrate The baudrate of the com port
+    # @param timeout The timeout for the serial port
+    # @param parent
+    # @param verbose Display progress for debuggin purposes
+    #
+    def __init__(self, com_port, baudrate = 115200, timeout = 0.001, parent = None, verbose = False):
+        QtCore.QThread.__init__(self, parent)
+
+        # Create serial port
+        self.com = serial.Serial(port = com_port,
+                                 baudrate = baudrate,
+                                 timeout = timeout) 
+
+        self.verbose = verbose # For debugging purposes
+        self.running = True # Flag for running the loop
+
+        # Create a com port mutex
+        self.com_mutex = QtCore.QMutex()
+
+        # Maximum number of reads to check for a com response
+        self.max_num_reads = 10
+        self.pause_time = 0.1 # time in seconds to wait between com checks for response
+
         if self.verbose:
-            print "Wrote: " + message
+            print "Created W1 Serial Thread"
 
-        # Write the message
+    ## cleanup
+    def cleanup(self):
+        self.stopThread()
+        self.com.close()
+
+    ## sendCommand
+    #
+    # Send a serial command
+    #
+    # @param message The message to send on the com port
+    #
+    def sendCommand(self, message):
+        # Lock the com port
+        self.com_mutex.lock()
+
+        # Send command
         self.com.write(message)
+
+        # Debug
+        if self.verbose:
+            print "W1 Serial Thread: Wrote " + message
+
+        # Unlock mutex
+        self.com_mutex.unlock()
+
+    ## sendCommandGetResponse
+    #
+    # Send a serial command and wait for the response
+    #
+    # @param message The message to send on the com port
+    #
+    def sendCommandGetResponse(self, message):
+        # Lock the com port
+        self.com_mutex.lock()
+
+        # Flush previous com port responses
+        response = []
+        while len(response) > 0:
+            response = self.com.readline()
+
+        # Send command
+        self.com.write(message)
+
+        # Debug
+        if self.verbose:
+            print "W1 Serial Thread: Wrote " + message
 
         # Poll for a response (it could be longer than the timeout period of the port)
         response = []
@@ -212,28 +329,67 @@ class W1SpinningDisk:
         while len(response) == 0 and num_checks < self.max_num_reads:
             response = self.com.readline()
             num_checks = num_checks + 1
+            #sleep(self.pause_time) # Wait before checking again
 
-        # Debug code
+        # Debug
         if self.verbose:
-            print "Response (" + str(num_checks) + "): " + response
+            print "W1 Received Response: " + str(response)
 
-        # Handle empty response
+        # Unlock mutex
+        self.com_mutex.unlock()
+
+        # Check to see if no response was found
         if num_checks >= self.max_num_reads:
-            raise W1Exception("Serial communication error with W1")
-
-        # Split response and look for proper acknowledge
-        [value, acknow] = response.split(":")
-        
-        # Handle error codes
-        if acknow == "N\r":
-            error_message = self.error_codes.get(value, "Unknown error")
-
-            raise W1Exception("W1 Error " + value + ": " + error_message)
-
+            return [None, True] # Response, did an error occur?
         else:
-            return [True, value]
+            # Split response and look for proper acknowledge
+            split_values = response.split(":")
+            value = split_values[0] # Handle rare case that two response are found during timeout
+            acknow = split_values[1]
+            # Handle error codes
+            if acknow == "N\r":
+                return [value, True]
+            else:
+                return [value, False]
+    
+    # run
+    #
+    # The major command for reading/writing to the 
+    def run(self):
+        if self.verbose:
+            print "Started W1 Serial Thread"
+        while self.running:
+            # Lock mutex
+            self.com_mutex.lock()
 
+            # Look for a response
+            response = self.com.readline()
 
+            # Debug
+            if self.verbose:
+                print "W1 Serial Thread Monitor: Read " + response
+
+            # If there is one, look for an error code
+            if len(response) > 0:
+                [value, acknow] = response.split(":")
+
+                if acknow == "N\r":
+                    self.error.emit(value) # Send pyqt signal that an error has occurred
+
+            # Release mutex
+            self.com_mutex.unlock()
+
+            # Sleep
+            self.msleep(100)
+
+    ## stopThread
+    #
+    # Stop the focus lock control thread.
+    #
+    def stopThread(self):
+        self.com_mutex.lock()
+        self.running = False
+        self.com_mutex.unlock()
 #
 # The MIT License
 #
