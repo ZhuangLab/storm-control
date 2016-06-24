@@ -48,7 +48,6 @@ class ACameraControl(cameraControl.HWCameraControl):
         #
         cam_params = parameters.get("camera1")
 
-        # FIXME: Need to get this value from the camera.
         max_intensity = self.camera.getMaxIntensity()
         cam_params.add("max_intensity", params.ParameterInt("",
                                                             "max_intensity",
@@ -56,7 +55,6 @@ class ACameraControl(cameraControl.HWCameraControl):
                                                             is_mutable = False,
                                                             is_saved = False))
 
-        # FIXME: Need to update based on the current EM gain mode.
         [gain_low, gain_high] = self.camera.getEMGainRange()
         cam_params.add("emccd_gain", params.ParameterRangeInt("EMCCD Gain",
                                                               "emccd_gain",
@@ -99,7 +97,6 @@ class ACameraControl(cameraControl.HWCameraControl):
                                                               "preampgain",
                                                               preamp_gains[0], preamp_gains))
 
-        # FIXME: Need to update based on the AD channel.
         hs_speeds = self.camera.getHSSpeeds()[0]
         cam_params.add("hsspeed", params.ParameterSetFloat("Horizontal shift speed",
                                                            "hsspeed",
@@ -150,6 +147,10 @@ class ACameraControl(cameraControl.HWCameraControl):
 
         cam_params.add("isolated_cropmode", params.ParameterSetBoolean("Isolated crop mode",
                                                                        "isolated_cropmode",
+                                                                       False))
+
+        cam_params.add("reversed_shutter", params.ParameterSetBoolean("Camera shutter response is backward",
+                                                                       "reversed_shutter",
                                                                        False))
 
     ## closeShutter

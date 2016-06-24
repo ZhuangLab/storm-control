@@ -76,33 +76,36 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
                                                               0, 0, 6,
                                                               is_mutable = False,
                                                               is_saved = False))
+        
+        flock_params.add("cal_frames_to_pause", params.ParameterRangeInt("Frames to pause between steps (z-calibration)",
+                                                                         "cal_frames_to_pause", 2, 1, 100))        
         flock_params.add("cal_deadtime", params.ParameterRangeInt("Frames before to pause at start (z-calibration)",
                                                                   "cal_deadtime", 20, 1, 100))
         flock_params.add("cal_range", params.ParameterRangeFloat("Distance +- z to move in nanometers (z-calibration)",
                                                                  "cal_range", 600, 100, 5000))
         flock_params.add("cal_step_size", params.ParameterRangeFloat("Step size in z in nanometers (z-calibration)",
                                                                      "cal_step_size", 10, 1, 100))
-        flock_params.add("cal_frames_to_pause", params.ParameterRangeInt("Frames to pause between steps (z-calibration)",
-                                                                         "cal_frames_to_pause", 2, 1, 100))
-        flock_params.add("zscan_start", params.ParameterRangeFloat("Piezo starting position in micros (z-scan)",
-                                                                   "zscan_start", 50.0, 0.0, 1000.0))
-        flock_params.add("zscan_step", params.ParameterRangeFloat("Piezo step size in microns (z-scan)",
-                                                                   "zscan_step", 0.1, 0.0, 100.0))
-        flock_params.add("zscan_frames_to_pause", params.ParameterRangeInt("Frames to pause between steps (z-scan)",
-                                                                           "zscan_frames_to_pause", 100, 1, 100000))
-        flock_params.add("zscan_stop", params.ParameterRangeFloat("Piezo stopping position (z-scan)",
-                                                                  "zscan_stop", 51.0, 0.0, 1000.0))
-        flock_params.add("zscan_focus_lock", params.ParameterSetBoolean("Lock focus between steps (z-scan)",
-                                                                        "zscan_focus_lock", False))
+        
         flock_params.add("olock_bracket_step", params.ParameterRangeFloat("Distance +- z in nanometers (optimal lock)",
                                                                           "olock_bracket_step", 1000.0, 10.0, 10000.0))
+        flock_params.add("olock_quality_threshold", params.ParameterRangeFloat("Minimum 'quality' signal (optimal lock)",
+                                                                       "olock_quality_threshold", 0.0, 0.0, 1000.0))        
         flock_params.add("olock_scan_step", params.ParameterRangeFloat("Step size in z in nanometers (optimal lock)",
                                                                        "olock_scan_step", 100.0, 10.0, 1000.0))
         flock_params.add("olock_scan_hold", params.ParameterRangeInt("Frames to pause between steps (optimal lock)",
                                                                      "olock_scan_hold", 10, 1, 100))
-        flock_params.add("olock_quality_threshold", params.ParameterRangeFloat("Minimum 'quality' signal (optimal lock)",
-                                                                       "olock_quality_threshold", 0.0, 0.0, 1000.0))
-        
+
+        flock_params.add("zscan_focus_lock", params.ParameterSetBoolean("Lock focus between steps (z-scan)",
+                                                                        "zscan_focus_lock", False))        
+        flock_params.add("zscan_frames_to_pause", params.ParameterRangeInt("Frames to pause between steps (z-scan)",
+                                                                           "zscan_frames_to_pause", 100, 1, 100000))
+        flock_params.add("zscan_start", params.ParameterRangeFloat("Piezo starting position in micros (z-scan)",
+                                                                   "zscan_start", 50.0, 0.0, 1000.0))
+        flock_params.add("zscan_step", params.ParameterRangeFloat("Piezo step size in microns (z-scan)",
+                                                                   "zscan_step", 0.1, 0.0, 100.0))
+        flock_params.add("zscan_stop", params.ParameterRangeFloat("Piezo stopping position (z-scan)",
+                                                                  "zscan_stop", 51.0, 0.0, 1000.0))
+
         
     ## cleanup
     #

@@ -173,15 +173,31 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
         self.translator = Translator()
 
         # Add stage parameters.
-        parameters.add("stage.small_step_size", params.ParameterRangeFloat("Small step size",
-                                                                           "small_step_size",
-                                                                           5.0, 1.0, 50.0))
+        parameters.add("stage.flip_axis", params.ParameterSetBoolean("Switch X-Y stage axises",
+                                                                     "flip_axis",
+                                                                     False))
+                                                                     
         parameters.add("stage.large_step_size", params.ParameterRangeFloat("Large step size",
                                                                            "large_step_size",
                                                                            25.0, 1.0, 500.0))
+        
+        parameters.add("stage.small_step_size", params.ParameterRangeFloat("Small step size",
+                                                                           "small_step_size",
+                                                                           5.0, 1.0, 50.0))
+
         parameters.add("stage.stage_speed", self.stage.getSpeed())
         self.stage_speed = parameters.get("stage.stage_speed")
         
+        parameters.add("stage.x_sign", params.ParameterSetInt("Reverse the sign of the X axis",
+                                                              "x_sign",
+                                                              1,
+                                                              [-1, 1]))
+        
+        parameters.add("stage.y_sign", params.ParameterSetInt("Reverse the sign of the Y axis",
+                                                              "y_sign",
+                                                              1,
+                                                              [-1, 1]))
+
         if parent:
             self.have_parent = True
         else:

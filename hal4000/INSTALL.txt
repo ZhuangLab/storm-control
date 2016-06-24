@@ -63,9 +63,9 @@
 
 
 (6) Verify that the software works:
- The settings_default.xml file contains all the options related to program
- setup and etc. As a first step to verify that the software runs absent
- any hardware issues do the following:
+ The settings_default.xml file contains some of the options related to
+ program setup and etc. As a first step to verify that the software runs
+ absent any hardware issues do the following:
 
  (a) Set setup_name to none
 
