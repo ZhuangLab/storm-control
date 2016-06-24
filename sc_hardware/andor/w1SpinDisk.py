@@ -36,10 +36,10 @@ class W1SpinningDisk(object):
         # Create serial control thread
         try:
             self.serial_thread = W1SerialThread(hardware_config.get("com_port"), baudrate=115200, timeout = 0.01,
-                                                verbose = True)
+                                                verbose = hardware_config.get("verbose", False))
         except:
             print "Could not create serial port for spinning disk. Is it connected properly?"
-            raise W1Exception("W1 Spinning Disk Initialization Error \n" + " Could not properly initialize com_port: " + str(com_port))
+            raise W1Exception("W1 Spinning Disk Initialization Error \n" + " Could not properly initialize com_port: " + str(hardware_config.get("com_port")))
 
         # Connect error signal from serial control thread
         self.serial_thread.error.connect(self.handleSerialThreadError)
@@ -160,7 +160,7 @@ class W1SpinningDisk(object):
     # Cleanup class
     #
     def cleanup(self):
-        self.com.close()
+        self.serial_thread.cleanup()
 
     # getMaxSpeed
     #
@@ -276,6 +276,11 @@ class W1SerialThread(QtCore.QThread):
         if self.verbose:
             print "Created W1 Serial Thread"
 
+    ## cleanup
+    def cleanup(self):
+        self.stopThread()
+        self.com.close()
+
     ## sendCommand
     #
     # Send a serial command
@@ -338,8 +343,9 @@ class W1SerialThread(QtCore.QThread):
             return [None, True] # Response, did an error occur?
         else:
             # Split response and look for proper acknowledge
-            [value, acknow] = response.split(":")
-                    
+            split_values = response.split(":")
+            value = split_values[0] # Handle rare case that two response are found during timeout
+            acknow = split_values[1]
             # Handle error codes
             if acknow == "N\r":
                 return [value, True]
@@ -381,7 +387,9 @@ class W1SerialThread(QtCore.QThread):
     # Stop the focus lock control thread.
     #
     def stopThread(self):
+        self.com_mutex.lock()
         self.running = False
+        self.com_mutex.unlock()
 #
 # The MIT License
 #
