@@ -497,7 +497,7 @@ class TIFFile(GenericFile):
 # 
 
 if __name__ == "__main__":
-    from ctypes import *
+    import ctypes
 
     class Parameters:
         def __init__(self, x_pixels, y_pixels, x_bin, y_bin):
@@ -508,7 +508,7 @@ if __name__ == "__main__":
 
     parameters = Parameters(100, 100, 1, 1)
     daxfile = DaxFile("test", parameters)
-    frame = create_string_buffer(parameters.get("x_pixels") * parameters.get("y_pixels"))
+    frame = ctypes.create_string_buffer(parameters.get("x_pixels") * parameters.get("y_pixels"))
     daxfile.saveFrame(frame)
     daxfile.closeFile()
 

@@ -13,7 +13,7 @@
 # Hazen 12/13
 #
 
-from ctypes import *
+import ctypes
 import os
 import socket
 import subprocess
@@ -53,9 +53,9 @@ class AOTF():
             # Load the AOTF driver library library.
             global aotf
             if os.path.exists('C:\Program Files\Crystal Technology\AOTF Utilities\AotfLibrary\LegacyAotfLibrary\DLL\AotfLibrary.dll'):
-                aotf = cdll.LoadLibrary('C:\Program Files\Crystal Technology\AOTF Utilities\AotfLibrary\LegacyAotfLibrary\DLL\AotfLibrary')
+                aotf = ctypes.cdll.LoadLibrary('C:\Program Files\Crystal Technology\AOTF Utilities\AotfLibrary\LegacyAotfLibrary\DLL\AotfLibrary')
             elif os.path.exists('C:\Program Files\Crystal Technology\Developer\AotfLibrary\DLL\AotfLibrary.dll'):
-                aotf = cdll.LoadLibrary('C:\Program Files\Crystal Technology\Developer\AotfLibrary\DLL\AotfLibrary')
+                aotf = ctypes.cdll.LoadLibrary('C:\Program Files\Crystal Technology\Developer\AotfLibrary\DLL\AotfLibrary')
             else:
                 print "Failed to load AotfLibrary.dll"
 
@@ -79,9 +79,9 @@ class AOTF():
             time.sleep(response_time)
             have_data = aotf.AotfIsReadDataAvailable(self.aotf_handle)
             while have_data:
-                c_resp = create_string_buffer(b_size)
-                c_read = c_uint(0)
-                assert aotf.AotfRead(self.aotf_handle, c_uint(b_size), c_resp, byref(c_read))
+                c_resp = ctypes.create_string_buffer(b_size)
+                c_read = ctypes.c_uint(0)
+                assert aotf.AotfRead(self.aotf_handle, ctypes.c_uint(b_size), c_resp, ctypes.byref(c_read))
                 temp = c_resp.value
                 response += temp[:c_read.value]
                 time.sleep(response_time)
@@ -114,7 +114,7 @@ class AOTF():
     def _aotfSendCmd(self, cmd):
         if self.live:
             cmd += "\n"
-            assert aotf.AotfWrite(self.aotf_handle, c_uint(len(cmd)), c_char_p(cmd)) == 1, "aotfSendCMD failed!"
+            assert aotf.AotfWrite(self.aotf_handle, ctypes.c_uint(len(cmd)), ctypes.c_char_p(cmd)) == 1, "aotfSendCMD failed!"
 
     ## _sendCmd
     #
