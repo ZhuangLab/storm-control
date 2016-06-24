@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <settings>
 
+  <!-- film settings -->
+  <film>
+    <extension type="string" values=",A647,Cy5,Cy3,Cy2,A405,FITC,YFP,GFP,BF"></extension>
+  </film>
+  
   <!-- stage settings -->
   <stage>
     <x_sign type="int">1</x_sign>
