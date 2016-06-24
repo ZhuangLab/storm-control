@@ -203,6 +203,8 @@ class ACameraControl(cameraControl.HWCameraControl):
         p.set("y_bin", int(p.get("AOIBinning")[0]))
         p.set("x_start", p.get("AOILeft"))
         p.set("y_start", p.get("AOITop"))
+        p.set("x_end", p.get("AOILeft") + p.get("AOIWidth") - 1)
+        p.set("y_end", p.get("AOITop") + p.get("AOIHeight") - 1)
         p.set("x_pixels", p.get("AOIWidth"))
         p.set("y_pixels", p.get("AOIHeight"))
 
