@@ -201,6 +201,8 @@ class ACameraControl(cameraControl.HWCameraControl):
         # Translate AOI information to values used by other hal modules
         p.set("x_bin", int(p.get("AOIBinning")[0]))
         p.set("y_bin", int(p.get("AOIBinning")[0]))
+        p.set("x_start", p.get("AOILeft"))
+        p.set("y_start", p.get("AOITop"))
         p.set("x_pixels", p.get("AOIWidth"))
         p.set("y_pixels", p.get("AOIHeight"))
 
