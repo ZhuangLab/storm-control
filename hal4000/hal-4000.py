@@ -162,7 +162,6 @@ class Window(QtGui.QMainWindow):
         self.parameters_box = qtParametersBox.QParametersBox(self.ui.settingsScrollArea)
         self.ui.settingsScrollArea.setWidget(self.parameters_box)
         self.ui.settingsScrollArea.setWidgetResizable(True)
-        #self.parameters_box.addParameters(self.parameters)
 
         file_types = writers.availableFileFormats(self.ui_mode)
         self.parameters.getp("film.filetype").setAllowed(file_types)
@@ -250,13 +249,15 @@ class Window(QtGui.QMainWindow):
         for module in everything:
             module.moduleInit()
 
-        # The modules can add parameters, so update the default.
-        #params.setDefaultParameters(parameters)
-
         #
         # More ui stuff
         #
 
+        # Configure extensions combo-box.
+        self.ui.extensionComboBox.clear()
+        for ext in parameters.getp("film.extension").getAllowed():
+            self.ui.extensionComboBox.addItem(ext)
+        
         # handling file drops
         self.ui.centralwidget.__class__.dragEnterEvent = self.dragEnterEvent
         self.ui.centralwidget.__class__.dropEvent = self.dropEvent
@@ -708,10 +709,9 @@ class Window(QtGui.QMainWindow):
             self.ui.autoIncCheckBox.setChecked(True)
         else:
             self.ui.autoIncCheckBox.setChecked(False)
-        self.ui.extensionComboBox.clear()
-        for ext in p.getp("film.extension").getAllowed():
-            self.ui.extensionComboBox.addItem(ext)
+
         self.ui.extensionComboBox.setCurrentIndex(self.ui.extensionComboBox.findText(extension))
+        
         self.ui.filetypeComboBox.setCurrentIndex(self.ui.filetypeComboBox.findText(filetype))
         if p.get("film.acq_mode") == "run_till_abort":
             self.ui.modeComboBox.setCurrentIndex(0)
@@ -719,6 +719,7 @@ class Window(QtGui.QMainWindow):
             self.ui.modeComboBox.setCurrentIndex(1)
         self.ui.lengthSpinBox.setValue(p.get("film.frames"))
         self.showHideLength()
+        
         if p.get("film.auto_shutters"):
             self.ui.autoShuttersCheckBox.setChecked(True)
         else:
@@ -1154,13 +1155,16 @@ if __name__ == "__main__":
         hardware = params.hardware("xml/" + setup_name + "_hardware.xml")
         setup_parameters_filename = "xml/" + setup_name + "_default.xml"
 
-    setup_parameters = params.parameters(setup_parameters_filename)
+    setup_parameters = params.parameters(setup_parameters_filename, True)
 
     # Update general parameters with specific settings that are needed at startup.
     general_parameters.set("setup_name", setup_name)
     general_parameters.set("film.directory",
                            setup_parameters.get("film.directory",
                                                 general_parameters.get("film.directory")))
+    extension = general_parameters.getp("film.extension")
+    if setup_parameters.has("film.extension"):
+        extension.setAllowed(setup_parameters.getp("film.extension").getAllowed())
     general_parameters.set("film.logfile",
                            setup_parameters.get("film.logfile",
                                                 general_parameters.get("film.logfile")))
