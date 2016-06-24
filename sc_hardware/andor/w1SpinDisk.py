@@ -371,7 +371,9 @@ class W1SerialThread(QtCore.QThread):
 
             # If there is one, look for an error code
             if len(response) > 0:
-                [value, acknow] = response.split(":")
+                split_values = response.split(":")
+                value = split_values[0] # Handle rare case that two response are found during timeout
+                acknow = split_values[1]
 
                 if acknow == "N\r":
                     self.error.emit(value) # Send pyqt signal that an error has occurred

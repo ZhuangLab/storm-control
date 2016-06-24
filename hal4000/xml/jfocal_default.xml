@@ -13,9 +13,9 @@
     <flip_horizontal type="boolean">False</flip_horizontal>
     <flip_vertical type="boolean">False</flip_vertical>
     <transpose type="boolean">False</transpose>
-	<obj1 desc="60x oil objective" type="string">60xOil,0.1092,0.0,0.0</obj1>
-    <obj2 desc="10x objective" type="string">10x,0.650,0.0,0.0</obj2>
-    <obj3 desc="60x Si objective" type="string">60xSi,0.1092,0.0,0.0</obj3>
+	<obj1 type="string">60xOil,0.1092,0.0,0.0</obj1>
+    <obj2 type="string">10x,0.650,0.0,0.0</obj2>
+    <obj3 type="string">60xSi,0.1092,0.0,0.0</obj3>
 
   </mosaic>
 
