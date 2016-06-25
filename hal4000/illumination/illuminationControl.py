@@ -370,8 +370,9 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def startLiveView(self, live_view):
-        for channel in self.channels:
-            channel.startLiveView(live_view)
+        pass
+##        for channel in self.channels:
+##            channel.startLiveView(live_view)
 
     ## stopLiveView
     #
@@ -381,8 +382,9 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def stopLiveView(self, live_view):
-        for channel in self.channels:
-            channel.stopLiveView(live_view)
+        pass
+##        for channel in self.channels:
+##            channel.stopLiveView(live_view)
 
     ## stopFilm
     #

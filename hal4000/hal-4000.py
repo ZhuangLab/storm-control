@@ -934,7 +934,7 @@ class Window(QtGui.QMainWindow):
             # Stop the camera
             self.startCamera()
 
-        # Stop live view mode in all modules
+        # Start live view mode in all modules
         for module in self.modules:
             module.startLiveView(self.live_view)
 
@@ -1119,7 +1119,7 @@ class Window(QtGui.QMainWindow):
         # Stop live view
         self.stopLiveView()
         
-        # Try setting the parameters
+        # Try setting the parametersc
         try:
             self.newParameters()
 
