@@ -48,7 +48,7 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                  y_width = 50,
                                  sigma = 4.0,
                                  offset_file = "cam_offsets_jfocal_1.txt",
-                                 background = 125000)
+                                 background = 50000)
         stage = MCLVZC.MCLVZControl("PCIe-6351", 0, scale = 10.0/200.0)
         lock_fn = lambda (x): 0.1 * x
         control_thread = stageOffsetControl.StageCamThread(cam,
