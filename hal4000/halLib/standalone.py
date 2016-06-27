@@ -19,7 +19,7 @@ import sc_library.parameters as params
 def runModule(module_type, setup_name = False):
     app = QtGui.QApplication(sys.argv)
 
-    parameters = params.parameters("settings_default.xml")
+    parameters = params.halParameters("settings_default.xml")
     if not setup_name:
         setup_name = parameters.get("setup_name")
     parameters = params.halParameters("xml/" + setup_name + "_default.xml")

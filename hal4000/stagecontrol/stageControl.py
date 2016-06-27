@@ -97,7 +97,12 @@ class Translator():
         self.x_sign = parameters.get("stage.x_sign")
         self.y_sign = parameters.get("stage.y_sign")
 
-        parameters = parameters.get("camera1")
+        parameters = parameters.get("camera1", False)
+
+        # This is here so that stand-alone mode will work.
+        if not parameters:
+            print "camera1 parameters not found."
+            return
 
         self.camera_x_sign = 1
         if (parameters.get("flip_horizontal")):

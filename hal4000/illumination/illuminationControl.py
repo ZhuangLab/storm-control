@@ -274,7 +274,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         for channel in self.channels:
             channel.newParameters(p)
 
-        if (p.get("shutter_frames") > 0):
+        if (p.get("shutter_frames", 0) > 0):
             self.newColors.emit(p.get("shutter_colors"))
             self.newCycleLength.emit(p.get("shutter_frames"))
 

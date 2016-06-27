@@ -238,7 +238,7 @@ class Channel(QtCore.QObject):
         self.channel_ui.setupButtons(parameters.get("power_buttons")[self.channel_id])
 
         # Update shutter data, if available.
-        if (parameters.get("shutter_frames") != -1):
+        if (parameters.get("shutter_frames", -1) != -1):
             self.shutter_data = parameters.get("shutter_data")[self.channel_id]
 
     ## newShutters
