@@ -57,7 +57,7 @@ class JoystickObject(QtCore.QObject, halModule.HalModule):
         js_params.add("hat_step", params.ParameterRangeFloat("Step size in um for hat button press",
                                                              "hat_step",
                                                              1.0, 0.0, 10.0))
-        js_params.add("joystick_gain", [25.0, 2500.0])
+        js_params.add("joystick_gain", [25.0, 250.0, 2500.0])
         js_params.add("joystick_multiplier_value", params.ParameterRangeFloat("X button multiplier for joystick and focus lock",
                                                                               "joystick_multiplier_value",
                                                                               5.0, 0.0, 50.0))
