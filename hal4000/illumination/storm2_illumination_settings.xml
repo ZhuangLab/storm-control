@@ -14,7 +14,7 @@
       </parameters>
     </control_module>
     -->
-
+<!--
     <control_module>
       <name>750wheel</name>
       <module_name>sc_hardware.thorlabs.FW102C</module_name>
@@ -24,7 +24,7 @@
 	<baud_rate type="int">9600</baud_rate>
       </parameters>
     </control_module>
-
+	-->
     <control_module>
       <name>AOTF</name>
       <module_name>sc_hardware.crystalTechnologies.hAotf</module_name>
@@ -39,7 +39,7 @@
       <module_name>sc_hardware.coherent.hLaser</module_name>
       <class_name>CoherentCube</class_name>
       <parameters>
-	<port>COM4</port>
+	<port>COM12</port>
 	<baud_rate>9600</baud_rate>
       </parameters>
     </control_module>

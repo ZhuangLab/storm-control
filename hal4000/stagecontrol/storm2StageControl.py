@@ -22,7 +22,7 @@ import stagecontrol.stageControl as stageControl
 # STORM2 also uses the Prior stage for filter wheel control.
 #
 
-prior_stage = prior.Prior(port = "COM14")
+prior_stage = prior.Prior(port = "COM6")
 #prior_stage = prior.Prior(port = "COM14", baudrate = 9600)
 prior_mutex = QtCore.QMutex()
 
