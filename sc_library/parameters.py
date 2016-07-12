@@ -84,6 +84,7 @@ def copyParametersAddNew(ori_parameters, new_parameters, allow_new):
                     ori_parameters.addSubSection(attr)._is_new_ = True
                 else:
                     unrecognized.append(attr)
+                    continue
                     #raise ParametersException("Unrecognized new section " + attr)
 
             # Allow new parameters for all sub-objects.
