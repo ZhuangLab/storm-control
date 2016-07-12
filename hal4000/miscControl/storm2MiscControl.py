@@ -39,7 +39,13 @@ class AMiscControl(miscControl.MiscControl):
         self.filter_wheel = filterWheel.QPriorFilterWheel()
         
         # Add parameters.
-        misc_params = parameters.get("misc")
+        misc_params = parameters.addSubSection("misc")
+        misc_params.add("filter_names", params.ParameterString("Filter names",
+                                                               "filter_names",
+                                                               "1,2,3,4,5,6"))
+        misc_params.add("filter_position", params.ParameterRangeInt("Filter position",
+                                                                    "filter_position",
+                                                                    0, 0, 5))
         misc_params.add("em_checked", params.ParameterSetBoolean("Change emission filter position during filming",
                                                                  "em_checked",
                                                                  False))
