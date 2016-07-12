@@ -17,6 +17,7 @@ import time
 import traceback
 
 import halLib.halModule as halModule
+import sc_library.parameters as params
 
 import sc_library.hdebug as hdebug
 
@@ -64,10 +65,14 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
         self.lock_jump_size = 0.025
         self.messages = []
         self.mutex = QtCore.QMutex()
-        self.send_pictures = hardware.send_pictures
+        self.send_pictures = hardware.get("send_pictures")
         self.show_camera = True
         self.start_time = 0
         self.which_camera = "camera1"
+
+        parameters.add("bluetooth.z_step", params.ParameterRangeFloat("Z step size in um",
+                                                                      "z_step",
+                                                                      0.025, 0.0, 1.0))
 
         # Set current image to default.
         self.current_image = self.default_image
@@ -380,7 +385,7 @@ class HalBluetooth(QtCore.QThread, halModule.HalModule):
     # @param parameters A parameters object.
     #
     def newParameters(self, parameters):
-        self.lock_jump_size = parameters.get("joystick.lockt_step")
+        self.lock_jump_size = parameters.get("bluetooth.z_step")
 
     ## run
     #

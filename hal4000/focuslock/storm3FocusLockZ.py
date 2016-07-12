@@ -8,6 +8,8 @@
 # Hazen 3/12
 #
 
+import sc_library.parameters as params
+
 # qpd, stage and motor.
 import sc_hardware.madCityLabs.mclController as mclController
 import sc_hardware.thorlabs.uc480Camera as uc480Cam
@@ -29,6 +31,22 @@ import focuslock.focusLockZ as focusLockZ
 #
 class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, hardware, parameters, parent = None):
+
+        # STORM3 specific focus lock parameters
+        lock_params = parameters.addSubSection("focuslock")
+        lock_params.add("qpd_zcenter", params.ParameterRangeFloat("Piezo center position in microns",
+                                                                  "qpd_zcenter",
+                                                                  50.0, 0.0, 100.0))
+        lock_params.add("qpd_scale", params.ParameterRangeFloat("Offset to nm calibration value",
+                                                                "qpd_scale",
+                                                                50.0, 0.1, 1000.0))
+        lock_params.add("qpd_sum_min", 50.0)
+        lock_params.add("qpd_sum_max", 256.0)
+        lock_params.add("is_locked_buffer_length", 10)
+        lock_params.add("is_locked_offset_thresh", 0.01)
+        lock_params.add("ir_power", params.ParameterInt("", "ir_power", 6, is_mutable = False))
+
+        # STORM3 Initialization.
         cam = uc480Cam.CameraQPD(camera_id = 1, 
                                  x_width = 200, 
                                  y_width = 50, 
@@ -39,10 +57,10 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
         control_thread = stageOffsetControl.StageCamThread(cam,
                                                            stage,
                                                            lock_fn,
-                                                           parameters.get("focuslock.qpd_sum_min", 50.0),
-                                                           parameters.get("focuslock.qpd_zcenter"),
-                                                           parameters.get("focuslock.is_locked_buffer_length", 10),
-                                                           parameters.get("focuslock.is_locked_offset_thresh", 0.01))
+                                                           lock_params.get("qpd_sum_min"),
+                                                           lock_params.get("qpd_zcenter"),
+                                                           lock_params.get("is_locked_buffer_length"),
+                                                           lock_params.get("is_locked_offset_thresh"))
 
         #ir_laser = LDC210.LDC210("PCI-6722", 1)
         ir_laser = LDC210.LDC210PWMNI("PCI-MIO-16E-4", 0)
@@ -51,27 +69,6 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                           control_thread,
                                           ir_laser,
                                           parent)
-
-
-#class AFocusLockZ(focusLockZ.FocusLockZQPD:)
-#    def __init__(self, parameters, tcp_control, parent = None):
-#        qpd = phreshQPD.PhreshQPDSTORM3()
-#        stage = mclController.MCLStage("c:/Program Files/Mad City Labs/NanoDrive/")
-#        motor = prior.PriorFocus()
-#        lock_fn = lambda (x): -1.75 * x
-#        control_thread = stageOffsetControl.motorStageQPDThread(qpd,
-#                                                                stage,
-#                                                                motor,
-#                                                                lock_fn,
-#                                                                50.0,
-#                                                                parameters.qpd_zcenter)
-#        ir_laser = LDC210.LDC210("PCI-6722", 1)
-#        focusLockZ.FocusLockZQPD.__init__(self,
-#                                          parameters,
-#                                          tcp_control,
-#                                          control_thread,
-#                                          ir_laser,
-#                                          parent)
 
 
 #

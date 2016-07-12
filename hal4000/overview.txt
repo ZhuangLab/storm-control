@@ -50,8 +50,7 @@ HAL-4000 (QtGui.QMainWindow)
         cameraFrameDisplay.CameraFeedDisplay(QtGui.QFrame)
 
         Displaying the images from the feeds:
-          cameraWidgets.pyCameraWidget(QtGui.QWidget)
-          cameraWidgets.CCameraWidget(QtGui.QWidget)
+          cameraWidgets.PyCameraWidget(QtGui.QWidget)
 	  
 
   Illumination / Shutters (in the illumination directory):

@@ -208,10 +208,10 @@ class Channel(QtCore.QObject):
         self.parameters.get("default_power")[self.channel_id] = power
         self.channel_ui.updatePowerText(power_string)
 
-        if (self.channel_ui.isOn()):
-            if self.amplitude_modulation:
-                self.amplitude_modulation.setAmplitude(self.channel_id, new_power)
+        if self.amplitude_modulation:
+            self.amplitude_modulation.setAmplitude(self.channel_id, new_power)
 
+        if (self.channel_ui.isOn()):
             if self.mechanical_shutter:
                 if (new_power == self.min_amplitude):
                     self.mechanical_shutter.shutterOff(self.channel_id)
@@ -231,14 +231,14 @@ class Channel(QtCore.QObject):
             new_power = int(round(new_power * self.amplitude_range + self.min_amplitude))
 
         # Update channel settings.
-        self.channel_ui.newSettings(parameters.on_off_state[self.channel_id],
+        self.channel_ui.newSettings(parameters.get("on_off_state")[self.channel_id],
                                     new_power)
 
         # Update buttons.
         self.channel_ui.setupButtons(parameters.get("power_buttons")[self.channel_id])
 
         # Update shutter data, if available.
-        if (parameters.get("shutter_frames") != -1):
+        if (parameters.get("shutter_frames", -1) != -1):
             self.shutter_data = parameters.get("shutter_data")[self.channel_id]
 
     ## newShutters

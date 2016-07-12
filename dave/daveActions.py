@@ -320,8 +320,8 @@ class DACheckFocus(DaveAction):
 
         self.action_type = "hal"
         self.num_focus_checks = 10 # A default number of focus checks
-        self.min_sum = None # The default flag for scanning for focus
         self.focus_scan = False # The default is to not scan for focus
+        self.scan_range = False # The range to scan for focus in microns
         
     ## createETree
     #
@@ -353,15 +353,9 @@ class DACheckFocus(DaveAction):
     #
     def handleReply(self, message):
         focus_status = message.getResponse("focus_status")
-
-        if self.focus_scan: # Override focus issue
-            if (self.min_sum is None) or (message.getResponse("found_sum") > self.min_sum):
-                focus_status = True
         
         if not message.isTest() and not (focus_status == True):
             error_message = "The focus is not locked."
-            if self.focus_scan:
-                error_message = " Minimum sum found: " + str(message.getResponse("found_sum"))
             message.setError(True, error_message)
         
         # Handle the reply but treat errors specific to this class as warnings
@@ -377,18 +371,18 @@ class DACheckFocus(DaveAction):
         # Determine the number of focus checks
         if node.find("num_focus_checks") is not None:
             self.num_focus_checks = int(node.find("num_focus_checks").text)
-
-        # Add minimum sum information if provided
-        if node.find("min_sum") is not None:
-            self.min_sum = int(node.find("min_sum").text)
         
         # Add focus_scan flag if provided
         if node.find("focus_scan") is not None:
             self.focus_scan = True
 
+        # Add range if provided
+        if node.find("scan_range") is not None:
+            self.scan_range = float(node.find("scan_range").text)
+
         message_data = {"num_focus_checks": self.num_focus_checks,
-                        "min_sum": self.min_sum,
-                        "focus_scan": self.focus_scan}
+                        "focus_scan": self.focus_scan,
+                        "scan_range": self.scan_range}
         
         self.message = tcpMessage.TCPMessage(message_type = "Check Focus Lock",
                                              message_data = message_data)

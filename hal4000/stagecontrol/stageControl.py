@@ -11,9 +11,9 @@ import math
 
 from PyQt4 import QtCore, QtGui
 
-import qtWidgets.qtAppIcon as qtAppIcon
-
 import halLib.halModule as halModule
+import qtWidgets.qtAppIcon as qtAppIcon
+import sc_library.parameters as params
 
 # Debugging
 import sc_library.hdebug as hdebug
@@ -97,7 +97,12 @@ class Translator():
         self.x_sign = parameters.get("stage.x_sign")
         self.y_sign = parameters.get("stage.y_sign")
 
-        parameters = parameters.get("camera1")
+        parameters = parameters.get("camera1", False)
+
+        # This is here so that stand-alone mode will work.
+        if not parameters:
+            print "camera1 parameters not found."
+            return
 
         self.camera_x_sign = 1
         if (parameters.get("flip_horizontal")):
@@ -161,17 +166,42 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
         QtGui.QMainWindow.__init__(self, parent)
         halModule.HalModule.__init__(self)
         #self.setFocusPolicy(QtCore.Qt.ClickFocus)
-
+    
         self.directory = ""
         self.drag_start_x = 0
         self.drag_start_y = 0
         self.move_timer = QtCore.QTimer()
-        self.stage_speed = parameters.get("stage.stage_speed")
         self.stage_x = 0
         self.stage_y = 0
         self.stage_z = 0
         self.tcp_message = False
         self.translator = Translator()
+
+        # Add stage parameters.
+        parameters.add("stage.flip_axis", params.ParameterSetBoolean("Switch X-Y stage axises",
+                                                                     "flip_axis",
+                                                                     False))
+                                                                     
+        parameters.add("stage.large_step_size", params.ParameterRangeFloat("Large step size",
+                                                                           "large_step_size",
+                                                                           25.0, 1.0, 500.0))
+        
+        parameters.add("stage.small_step_size", params.ParameterRangeFloat("Small step size",
+                                                                           "small_step_size",
+                                                                           5.0, 1.0, 50.0))
+
+        parameters.add("stage.stage_speed", self.stage.getSpeed())
+        self.stage_speed = parameters.get("stage.stage_speed")
+        
+        parameters.add("stage.x_sign", params.ParameterSetInt("Reverse the sign of the X axis",
+                                                              "x_sign",
+                                                              1,
+                                                              [-1, 1]))
+        
+        parameters.add("stage.y_sign", params.ParameterSetInt("Reverse the sign of the Y axis",
+                                                              "y_sign",
+                                                              1,
+                                                              [-1, 1]))
 
         if parent:
             self.have_parent = True
@@ -568,7 +598,8 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
     def stopFilm(self, film_writer):
         self.stopLockout()
         if film_writer:
-            film_writer.getParameters().set("acquisition.stage_position", [self.stage_x, self.stage_y, self.stage_z])
+            pos_string = "{0:.2f},{1:.2f},{2:.2f}".format(self.stage_x, self.stage_y, self.stage_z)
+            film_writer.getParameters().set("acquisition.stage_position", pos_string)
 
     ## stopLockout
     #

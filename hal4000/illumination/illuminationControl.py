@@ -7,19 +7,21 @@
 # Hazen 04/14
 #
 
+import ast
 from PyQt4 import QtCore, QtGui
-
 import qtWidgets.qtAppIcon as qtAppIcon
 
-import halLib.halModule as halModule
-import illumination.xmlParser as xmlParser
-import illumination.illuminationChannel as illuminationChannel
-import time
-
-# Debugging
+import sc_library.halExceptions as halExceptions
 import sc_library.hdebug as hdebug
+import sc_library.parameters as params
 
-# UIs.
+import halLib.halModule as halModule
+
+import illumination.buttonEditor as buttonEditor
+import illumination.illuminationChannel as illuminationChannel
+import illumination.xmlParser as xmlParser
+
+# UI.
 import qtdesigner.illumination_ui as illuminationUi
 
 ## IlluminationControl
@@ -41,7 +43,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     def __init__(self, hardware, parameters, parent = None):
         QtGui.QDialog.__init__(self, parent)
         halModule.HalModule.__init__(self)
-
+        
         self.channels = []
         self.hardware_modules = {}
         self.fp = False
@@ -61,7 +63,47 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         self.setWindowIcon(qtAppIcon.QAppIcon())
 
         # Parse XML that describes the hardware.
-        hardware = xmlParser.parseHardwareXML("illumination/" + hardware.settings_xml)
+        hardware = xmlParser.parseHardwareXML("illumination/" + hardware.get("settings_xml"))
+
+        # Add illumination specific settings.
+        #
+        # FIXME: These used to be customizable.
+        #
+        default_power = []
+        on_off_state = []
+        for i in range(len(hardware.channels)):
+            default_power.append(1.0)
+            on_off_state.append(False)
+        self.parameters.set("illumination.default_power", default_power)
+        self.parameters.set("illumination.on_off_state", on_off_state)
+
+        # Check for button settings, use defaults if they do not exist.
+        #
+        buttons = []
+        for i in range(len(hardware.channels)):
+            buttons.append([["Max", 1.0], ["Low", 0.1]])
+        power_buttons = params.ParameterCustom("Illumination power buttons",
+                                               "power_buttons",
+                                               buttons,
+                                               1,
+                                               is_mutable = True,
+                                               is_saved = True)
+        power_buttons.editor = buttonEditor.ParametersTablePowerButtonEditor
+        self.parameters.add("illumination.power_buttons", power_buttons)
+
+        # This parameter is used to be able to tell when the shutters file
+        # has been changed for a given set of parameters.
+        self.parameters.add("illumination.last_shutters", params.ParameterString("Last shutters file name",
+                                                                                "last_shutters",
+                                                                                "",
+                                                                                is_mutable = False,
+                                                                                is_saved = False))
+
+        # Default camera parameters.
+        self.parameters.add("illumination.shutters", params.ParameterStringFilename("Shutters file name",
+                                                                                    "shutters",
+                                                                                    "shutters_default.xml",
+                                                                                    False))
 
         # Hardware modules setup.
         for module in hardware.modules:
@@ -75,6 +117,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
 
         # Illumination channels setup.
         x = 7
+        names = []
         for i, channel in enumerate(hardware.channels):
             a_instance = illuminationChannel.Channel(i,
                                                      channel,
@@ -83,6 +126,9 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
                                                      self.ui.powerControlBox)
             x += a_instance.setPosition(x, 14) + self.spacing
             self.channels.append(a_instance)
+            names.append(a_instance.getName())
+            
+        power_buttons.channel_names = names
 
         # Connect signals.
         if self.have_parent:
@@ -216,10 +262,19 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     def newParameters(self, parameters):
         p = parameters.get("illumination")
 
+        #
+        # Convert string representation of a power buttons list to an actual list
+        # if necessary. This would happen for example the first time that a
+        # settings file is loaded that contains save power button information.
+        #
+        if isinstance(p.get("power_buttons"), str):
+            buttons = ast.literal_eval(p.get("power_buttons"))
+            p.setv("power_buttons", buttons)
+            
         for channel in self.channels:
             channel.newParameters(p)
 
-        if (p.get("shutter_frames") > 0):
+        if (p.get("shutter_frames", 0) > 0):
             self.newColors.emit(p.get("shutter_colors"))
             self.newCycleLength.emit(p.get("shutter_frames"))
 
@@ -279,10 +334,10 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         # Recording the power.
         if film_name:
             self.fp = open(film_name + ".power", "w")
-            str = "frame"
+            frame_base = "frame"
             for channel in self.channels:
-                str = str + " " + channel.getName()
-            self.fp.write(str + "\n")
+                frame_base = frame_base + " " + channel.getName()
+            self.fp.write(frame_base + "\n")
 
         # Running the shutters.
         if run_shutters:
@@ -292,15 +347,21 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
             for channel in self.channels:
                 channel.setupFilm()
 
-            # Start hardware.
-            for name, instance in self.hardware_modules.iteritems():
-                if (instance.getStatus() == True):
-                    instance.startFilm(self.parameters.get("seconds_per_frame"),
-                                       self.parameters.get("illumination.shutter_oversampling"))
+            try:
+                # Start hardware.
+                for name, instance in self.hardware_modules.iteritems():
+                    if (instance.getStatus() == True):
+                        instance.startFilm(self.parameters.get("seconds_per_frame"),
+                                           self.parameters.get("illumination.shutter_oversampling"))
 
-            # Start channels.
-            for channel in self.channels:
-                channel.startFilm()
+                # Start channels.
+                for channel in self.channels:
+                    channel.startFilm()
+                    
+            except halExceptions.HardwareException as error:
+                error_message = "startFilm in illumination control encountered an error: \n" + str(error)
+                hdebug.logText(error_message)
+                raise halModule.StartFilmException(error_message)
 
     ## stopFilm
     #
@@ -357,6 +418,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         lb_height = self.ui.powerControlBox.height()
         self.ui.okButton.setGeometry(lb_width - 65, lb_height + 4, 75, 24)
         self.setFixedSize(lb_width + 18, lb_height + 36)
+
 
 #
 # The MIT License

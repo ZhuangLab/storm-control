@@ -24,7 +24,7 @@
       <class_name type="string">HalBluetooth</class_name>
       <module_name type="string">halBluetooth</module_name>
       <parameters>
-	<send_pictures type="int">1</send_pictures>
+	<send_pictures type="boolean">True</send_pictures>
       </parameters>
     </bluetooth>
 

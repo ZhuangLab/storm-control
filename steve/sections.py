@@ -621,10 +621,10 @@ class Sections(QtGui.QWidget):
         self.scene = scene
         self.sections = []
 
-        Section.deselected_pen.setWidth(parameters.pen_width)
-        Section.selected_pen.setWidth(parameters.pen_width)
-        Section.x_size = parameters.ellipse_size
-        Section.y_size = parameters.ellipse_size
+        Section.deselected_pen.setWidth(parameters.get("pen_width"))
+        Section.selected_pen.setWidth(parameters.get("pen_width"))
+        Section.x_size = parameters.get("ellipse_size")
+        Section.y_size = parameters.get("ellipse_size")
 
         self.sections_controls_list = SectionControlsList(scroll_area)
         scroll_area.setWidget(self.sections_controls_list)

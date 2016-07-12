@@ -12,6 +12,7 @@ import sys
 from PyQt4 import QtCore, QtGui
 
 import miscControl
+import sc_library.parameters as params
 
 # Debugging
 import sc_library.hdebug as hdebug
@@ -35,9 +36,25 @@ class AMiscControl(miscControl.MiscControl):
 
         self.em_filter_pos = 0
         self.em_filter_wheel = filterWheel.QPriorFilterWheel()
-        #if not self.em_filter_wheel.live:
-        #    self.em_filter_wheel = False
         self.filter_wheel = filterWheel.QPriorFilterWheel()
+        
+        # Add parameters.
+        misc_params = parameters.addSubSection("misc")
+        misc_params.add("filter_names", params.ParameterString("Filter names",
+                                                               "filter_names",
+                                                               "1,2,3,4,5,6"))
+        misc_params.add("filter_position", params.ParameterRangeInt("Filter position",
+                                                                    "filter_position",
+                                                                    0, 0, 5))
+        misc_params.add("em_checked", params.ParameterSetBoolean("Change emission filter position during filming",
+                                                                 "em_checked",
+                                                                 False))
+        misc_params.add("em_filter", params.ParameterRangeInt("Emission filter position",
+                                                              "em_filter",
+                                                              0, 0, 5))
+        misc_params.add("em_period", params.ParameterInt("Emission filter update period in frames",
+                                                         "em_period",
+                                                         60))
 
         # UI setup
         self.ui = miscControlsUi.Ui_Dialog()

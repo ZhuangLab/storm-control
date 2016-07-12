@@ -45,19 +45,19 @@
 
   <channels>
 
-    <!-- 640 laser -->
+    <!-- 656 laser -->
     <channel>
-      <description>640</description>
+      <description>656</description>
       <color type="rgb">255,0,0</color>
       
       <amplitude_modulation>
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <maximum type="int">7600</maximum>
+	  <maximum type="int">7500</maximum>
 	  <channel type="int">0</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">91.47</on_frequency>
+	  <on_frequency type="float">88.55</on_frequency>
 	</parameters>
       </amplitude_modulation>
       

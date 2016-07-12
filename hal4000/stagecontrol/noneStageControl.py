@@ -9,6 +9,8 @@
 
 from PyQt4 import QtCore
 
+import sc_library.parameters as params
+
 # stage control thread
 import stagecontrol.stageThread as stageThread
 
@@ -23,6 +25,11 @@ class Stage():
         self.x = 0.0
         self.y = 0.0
 
+    def getSpeed(self):
+        return params.ParameterRangeFloat("Stage speed in mm/sec",
+                                          "stage_speed",
+                                          2.0, 0.1, 50.0)
+    
     def getStatus(self):
         return True
 

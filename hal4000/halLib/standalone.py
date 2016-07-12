@@ -19,20 +19,24 @@ import sc_library.parameters as params
 def runModule(module_type, setup_name = False):
     app = QtGui.QApplication(sys.argv)
 
-    parameters = params.parameters("settings_default.xml")
-    if not setup_name:
-        setup_name = parameters.get("setup_name")
-    parameters = params.halParameters("xml/" + setup_name + "_default.xml")
-    parameters.set("setup_name", setup_name)
+    general_parameters = params.halParameters("settings_default.xml")
+    if setup_name:
+        general_parameters.set("setup_name", setup_name)
+    else:
+        setup_name = general_parameters.get("setup_name")
     hardware = params.hardware("xml/" + setup_name + "_hardware.xml")
 
     found = False
-    for module in hardware.get("modules").getSubXMLObjects():
+    for module in hardware.get("modules").getProps():
         if (module.get("hal_type") == module_type):
             a_module = __import__(module.get("module_name"), globals(), locals(), [setup_name], -1)
             a_class = getattr(a_module, module.get("class_name"))
-            instance = a_class(module.get("parameters", False), parameters, None)
-            instance.newParameters(parameters)
+            instance = a_class(module.get("parameters", False), general_parameters, None)
+
+            params.setDefaultParameters(general_parameters)
+            setup_parameters = params.halParameters("xml/" + setup_name + "_default.xml")
+
+            instance.newParameters(setup_parameters)
             instance.show()
             found = True
             break

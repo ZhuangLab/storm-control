@@ -3,28 +3,6 @@
 
   <control_modules>
 
-    <!--
-    <control_module>
-      <name>Emissionwheel</name>
-      <module_name>sc_hardware.thorlabs.FW102C</module_name>
-      <class_name>HalFW102C</class_name>
-      <parameters>
-	<port>COM9</port>
-	<baud_rate type="int">115200</baud_rate>
-      </parameters>
-    </control_module>
-    -->
-<!--
-    <control_module>
-      <name>750wheel</name>
-      <module_name>sc_hardware.thorlabs.FW102C</module_name>
-      <class_name>HalFW102C</class_name>
-      <parameters>
-	<port>COM10</port>
-	<baud_rate type="int">9600</baud_rate>
-      </parameters>
-    </control_module>
-	-->
     <control_module>
       <name>AOTF</name>
       <module_name>sc_hardware.crystalTechnologies.hAotf</module_name>
