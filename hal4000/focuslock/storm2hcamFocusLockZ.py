@@ -29,7 +29,7 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, hardware, parameters, parent = None):
         #cam = uc480Cam.CameraQPD752(camera_id = 1)
         cam = uc480Cam.CameraQPD(camera_id = 1,
-                                 x_width = 752,
+                                 x_width = 452,
                                  y_width = 80,
                                  offset_file = "cam_offsets_storm2_1.txt")
         stage = MCLVZC.MCLVZControl("USB-6002", 0)
