@@ -751,8 +751,8 @@ class StormXMLObject(object):
                     raise ParametersException("unrecognized type, " + node_type)
 
             # 
-            # Settings from a saved XML file, such as created when taking a movie. These
-            # must match an existing setting to be handled properly.
+            # Settings from an (older) saved movie XML file which might not have parameter
+            # type specifications. These must match an existing setting to be handled properly.
             #
             elif (len(node) == 0):
                 param = Parameter("non_default", node.tag, node.text, 1, True, True)
@@ -761,8 +761,7 @@ class StormXMLObject(object):
             elif recurse and (len(node) > 0):
                 self.parameters[node.tag] = StormXMLObject(node, True)
 
-            # Handle the possibility of non-unique parameters. If there is more than one
-            # parameter with the same name then an array will be created with all the parameters.
+            # If we were able to make a parameter object add it to the record.
             if param is not None:
                 self.addParameter(node.tag, param)
 
