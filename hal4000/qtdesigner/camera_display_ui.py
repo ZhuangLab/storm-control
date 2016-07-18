@@ -2,8 +2,7 @@
 
 # Form implementation generated from reading ui file 'camera-display.ui'
 #
-# Created: Sat Sep 19 22:35:16 2015
-#      by: PyQt4 UI code generator 4.11.3
+# Created by: PyQt4 UI code generator 4.11.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -26,12 +25,12 @@ except AttributeError:
 class Ui_Frame(object):
     def setupUi(self, Frame):
         Frame.setObjectName(_fromUtf8("Frame"))
-        Frame.resize(645, 546)
+        Frame.resize(797, 726)
         Frame.setFrameShape(QtGui.QFrame.NoFrame)
         Frame.setFrameShadow(QtGui.QFrame.Raised)
         self.verticalLayout_2 = QtGui.QVBoxLayout(Frame)
-        self.verticalLayout_2.setSpacing(0)
         self.verticalLayout_2.setMargin(0)
+        self.verticalLayout_2.setSpacing(0)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
         self.displayWidget = QtGui.QWidget(Frame)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
@@ -42,8 +41,8 @@ class Ui_Frame(object):
         self.displayWidget.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.displayWidget.setObjectName(_fromUtf8("displayWidget"))
         self.horizontalLayout_2 = QtGui.QHBoxLayout(self.displayWidget)
-        self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setContentsMargins(2, 0, 2, 0)
+        self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
         self.cameraScrollArea = QCameraScrollArea(self.displayWidget)
         self.cameraScrollArea.setMinimumSize(QtCore.QSize(514, 514))
@@ -51,7 +50,7 @@ class Ui_Frame(object):
         self.cameraScrollArea.setWidgetResizable(True)
         self.cameraScrollArea.setObjectName(_fromUtf8("cameraScrollArea"))
         self.scrollAreaWidgetContents = QtGui.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 570, 512))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 726, 697))
         self.scrollAreaWidgetContents.setObjectName(_fromUtf8("scrollAreaWidgetContents"))
         self.cameraScrollArea.setWidget(self.scrollAreaWidgetContents)
         self.horizontalLayout_2.addWidget(self.cameraScrollArea)
@@ -70,7 +69,6 @@ class Ui_Frame(object):
         self.slideWidget = QtGui.QWidget(self.scaleWidget)
         self.slideWidget.setObjectName(_fromUtf8("slideWidget"))
         self.horizontalLayout = QtGui.QHBoxLayout(self.slideWidget)
-        self.horizontalLayout.setMargin(0)
         self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
         self.rangeSliderWidget = QtGui.QWidget(self.slideWidget)
         self.rangeSliderWidget.setMinimumSize(QtCore.QSize(9, 0))

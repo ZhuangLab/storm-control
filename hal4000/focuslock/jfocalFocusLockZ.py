@@ -35,11 +35,21 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                                                   100.0, 0.0, 200.0))
         lock_params.add("qpd_scale", params.ParameterRangeFloat("Offset to nm calibration value",
                                                                 "qpd_scale",
-                                                                -700.0, 0.1, 1000.0))
+                                                                -1000.0, -10000, 10000.0))
         lock_params.add("qpd_sum_min", 50.0)
         lock_params.add("qpd_sum_max", 100000.0)
-        lock_params.add("is_locked_buffer_length", 3)
-        lock_params.add("is_locked_offset_thresh", 0.1)
+        lock_params.add("is_locked_buffer_length", params.ParameterRangeInt("Length of in focus buffer",
+                                                                "is_locked_buffer_length",
+                                                                3, 1, 100))
+        lock_params.add("is_locked_offset_thresh", params.ParameterRangeFloat("Offset distance still considered in focus",
+                                                                "is_locked_offset_thresh",
+                                                                1, 0.001, 1000))
+
+        lock_params.add("focus_rate", params.ParameterRangeFloat("Proportionality constant for focus",
+                                                                "focus_rate",
+                                                                0.1, -1000, 1000))
+
+        
         lock_params.add("ir_power", params.ParameterInt("", "ir_power", 6, is_mutable = False))
 
         # Create camera
@@ -48,9 +58,9 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                  y_width = 50,
                                  sigma = 4.0,
                                  offset_file = "cam_offsets_jfocal_1.txt",
-                                 background = 125000)
+                                 background = 50000)
         stage = MCLVZC.MCLVZControl("PCIe-6351", 0, scale = 10.0/200.0)
-        lock_fn = lambda (x): 0.1 * x
+        lock_fn = lambda (x): lock_params.get("focus_rate") * x
         control_thread = stageOffsetControl.StageCamThread(cam,
                                                            stage,
                                                            lock_fn,

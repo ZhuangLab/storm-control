@@ -277,7 +277,12 @@ class Window(QtGui.QMainWindow):
         self.ui.modeComboBox.currentIndexChanged.connect(self.handleModeComboBox)
         self.ui.notesEdit.textChanged.connect(self.updateNotes)
         self.ui.recordButton.clicked.connect(self.toggleFilm)
+        self.ui.liveModeCheckBox.stateChanged.connect(self.toggleLiveView)
 
+        # live view mode button
+        self.ui.liveModeCheckBox.setChecked(True) # Turn on live mode at initialization
+        self.ui.liveModeCheckBox.setEnabled(True) # Enable the check box for user control
+        
         # other signals
         self.parameters_box.settingsToggled.connect(self.toggleSettings)
 
@@ -297,8 +302,8 @@ class Window(QtGui.QMainWindow):
         #
         # start the camera
         #
-        self.camera.cameraInit()
 
+        self.camera.cameraInit()
 
     ## cleanUp
     #
@@ -862,8 +867,14 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def startFilm(self, film_settings = None):
-        self.stopCamera()
-
+        # Disable live mode check box
+        self.ui.liveModeCheckBox.setEnabled(False)
+        
+        # Pause live view mode (if running)
+        if self.ui.liveModeCheckBox.isChecked():
+            self.stopCamera()
+        self.stopLiveView()
+        
         self.filming = True
         self.film_name = os.path.join(self.parameters.get("film.directory"), str(self.ui.filenameLabel.text()))
         self.film_name = self.film_name[:-len(self.ui.filetypeComboBox.currentText())]
@@ -909,6 +920,18 @@ class Window(QtGui.QMainWindow):
 
         # go...
         self.startCamera()
+
+    ## startLiveView
+    #
+    # Turn on live view mode in hal and the modules
+    #
+    @hdebug.debug
+    def startLiveView(self):
+        is_live_view = self.ui.liveModeCheckBox.isChecked()
+
+        # Start live view mode in all modules
+        for module in self.modules:
+            module.startLiveView(is_live_view)
 
     ## stopCamera
     #
@@ -974,11 +997,6 @@ class Window(QtGui.QMainWindow):
         # Enable parameters radio buttons.
         self.parameters_box.stopFilm()
 
-        # Restart the camera.
-        self.startCamera()
-        self.ui.recordButton.setText("Record")
-        self.ui.recordButton.setStyleSheet("QPushButton { color: black }")
-
         # Notify tcp/ip client that the movie is finished
         # if the client requested the movie.
         if self.tcp_requested_movie:
@@ -1003,6 +1021,31 @@ class Window(QtGui.QMainWindow):
                 self.tcpComplete.emit(message)
 
                 self.ui.lengthSpinBox.setValue(self.current_length)
+
+        # Update record button status.
+        self.ui.recordButton.setText("Record")
+        self.ui.recordButton.setStyleSheet("QPushButton { color: black }")
+
+        # Reenable live mode button
+        self.ui.liveModeCheckBox.setEnabled(True)
+
+        # Restart live view (if it was previously running)
+        if self.ui.liveModeCheckBox.isChecked():
+            self.startCamera() # Restart camera if in live mode
+        self.startLiveView()        
+
+    ## stopLiveView
+    #
+    # Turn off live view mode in hal and the modules
+    #
+    @hdebug.debug
+    def stopLiveView(self):
+        # Get the current state of the live mode check box
+        is_live_view = self.ui.liveModeCheckBox.isChecked()
+        
+        # Stop live view mode in all modules
+        for module in self.modules:
+            module.stopLiveView(is_live_view)
 
     ## toggleFilm
     #
@@ -1034,6 +1077,28 @@ class Window(QtGui.QMainWindow):
             if (reply == QtGui.QMessageBox.Yes):
                 self.startFilm()
 
+
+    ## toggleLiveView
+    #
+    # Turn on/off live mode. This is the only method that can change the internal attribute
+    # 'live_view'
+    #
+    # @ param boolean Dummy parameter.
+    @hdebug.debug
+    def toggleLiveView(self, boolean):        
+        # Get the state of the check box
+        is_live_view = self.ui.liveModeCheckBox.isChecked()
+        
+        if is_live_view:
+            # Start the camera
+            self.startCamera()
+            self.startLiveView() 
+
+        else:
+            # Stop the camera
+            self.stopCamera()
+            self.stopLiveView() 
+
     ## toggleSettings
     #
     # This is called when the user changes the parameters in the parameters GUI.
@@ -1042,7 +1107,13 @@ class Window(QtGui.QMainWindow):
     @hdebug.debug
     def toggleSettings(self):
         self.parameters = self.parameters_box.getCurrentParameters()
-        self.stopCamera()
+
+        # Stop live view
+        if self.ui.liveModeCheckBox.isChecked():
+            self.stopCamera()
+        self.stopLiveView()
+        
+        # Try setting the parametersc
         try:
             self.newParameters()
 
@@ -1053,7 +1124,11 @@ class Window(QtGui.QMainWindow):
                                           "Bad parameters",
                                           traceback.format_exc())
         self.parameters_box.updateParameters()
-        self.startCamera()
+
+        # Restart live view
+        if self.ui.liveModeCheckBox.isChecked():
+            self.startCamera()
+        self.startLiveView()
 
     ## updateFilenameLabel
     #

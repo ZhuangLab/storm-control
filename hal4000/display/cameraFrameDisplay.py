@@ -117,6 +117,7 @@ class CameraFeedDisplay(QtGui.QFrame):
 
         self.ui.cameraShutterButton.hide()
         self.ui.recordButton.hide()
+
         self.ui.syncLabel.hide()
         self.ui.syncSpinBox.hide()
 
@@ -516,7 +517,7 @@ class CameraFrameDisplay(CameraFeedDisplay):
         self.camera_widget.dragStart.connect(self.handleDragStart)
         self.camera_widget.dragMove.connect(self.handleDragMove)
         self.camera_widget.roiSelection.connect(self.handleROISelection)
-        
+
         self.ui.cameraShutterButton.clicked.connect(self.handleCameraShutter)
 
     ## getRecordButton

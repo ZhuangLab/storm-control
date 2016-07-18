@@ -165,6 +165,16 @@ class HalModule(object):
     def startFilm(self, film_name, run_shutters):
         pass
 
+    ## startLiveView
+    #
+    # Called to configure the module for the live view mode.
+    #
+    # @param live_view A boolean describing whether or not the live view is running
+    #
+    @hdebug.debug
+    def startLiveView(self, live_view):
+        pass
+
     ## stopFilm
     #
     # Called at when filming is complete. The writer is passed to the modules
@@ -177,6 +187,15 @@ class HalModule(object):
     def stopFilm(self, film_writer):
         pass
 
+    ## stopLiveView
+    #
+    # Called to cleanup the module after live view.
+    #
+    # @param live_view A boolean describing whether or not the live view is running
+    #
+    @hdebug.debug
+    def stopLiveView(self, live_view):
+        pass
 
 #
 # The MIT License
