@@ -545,14 +545,14 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_12">
             <item>
-             <widget class="QLabel" name="objectiveLabel_2">
+             <widget class="QLabel" name="objectiveLabel">
               <property name="text">
                <string>Objective:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="objectiveText_2">
+             <widget class="QLabel" name="objectiveText">
               <property name="text">
                <string>asdf</string>
               </property>
