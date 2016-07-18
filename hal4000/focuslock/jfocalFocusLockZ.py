@@ -52,6 +52,11 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
         
         lock_params.add("ir_power", params.ParameterInt("", "ir_power", 6, is_mutable = False))
 
+        # Add parameters for hardware timed z offsets
+        lock_params.add("z_offsets", params.ParameterString("Comma separated list of offset positions per frame",
+                                                            "z_offsets",
+                                                            ""))
+
         # Create camera
         cam = uc480Cam.CameraQPD(camera_id = 1,
                                  x_width = 900,
@@ -59,7 +64,7 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                  sigma = 4.0,
                                  offset_file = "cam_offsets_jfocal_1.txt",
                                  background = 50000)
-        stage = MCLVZC.MCLVZControl("PCIe-6351", 0, scale = 10.0/200.0, trigger_source = "PFI12")
+        stage = MCLVZC.MCLVZControl("PCIe-6351", 0, scale = 10.0/200.0, trigger_source = "PFI0")
         lock_fn = lambda (x): lock_params.get("focus_rate") * x
         control_thread = stageOffsetControl.StageCamThread(cam,
                                                            stage,

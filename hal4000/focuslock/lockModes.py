@@ -917,6 +917,111 @@ class ZScanLockModeV2(AlwaysOnLockMode):
         AlwaysOnLockMode.stopLock(self)
 
 
+## HardareZScanLockMode
+#
+# When the lock button is pressed this mode acts as if it was 'Always On'; however, when
+# a film is started/stopped it will execute a defined set of z_offsets, hardware timed,
+# based on values provided in the parameters file
+class HardareZScanLockMode(JumpLockMode):
+
+    ## __init__
+    #
+    # @param control_thread A thread object that controls the focus lock.
+    # @param parameters A parameters object.
+    # @param parent (Optional) The PyQt parent of this object.
+    #
+    def __init__(self, control_thread, parameters, parent):
+        JumpLockMode.__init__(self, control_thread, parameters, parent)
+        self.button_locked = False
+        self.name = "Hardware Z Scan"
+        self.z_offsets = None
+        self.stage = None
+        
+    ## lockButtonToggle
+    #
+    # Sets the button_locked flag and start/stops the focus lock.
+    #
+    def lockButtonToggle(self):
+        if self.button_locked:
+            if not self.locked:
+                self.control_thread.startLock()
+                self.locked = True
+            self.button_locked = False
+        else:
+            if self.locked and (not self.button_locked):
+                self.control_thread.stopLock()
+                self.control_thread.recenter()
+                self.locked = False
+            self.button_locked = True
+
+    ## newParameters
+    #
+    # Update the z offsets.
+    #
+    # @param parameters A parameters object.
+    #
+    def newParameters(self, parameters):
+        z_offsets_string = parameters.get("z_offsets", "")
+
+        if len(z_offsets_string) < 1:
+            self.z_offsets = None
+        else:
+            split_strings = z_offsets_string.split(",")
+            converted_values = []
+            for split_value in split_strings:
+                converted_values.append(float(split_value))
+
+            self.z_offsets = converted_values
+
+        print "Updated z_offsets to " + str(self.z_offsets)
+
+    ## reset
+    #
+    # Turn the lock off it was turned on using the lock button.
+    #
+    def reset(self):
+        if self.button_locked:
+            self.lockButtonToggle()
+
+    ## shouldDisplayLockButton
+    #
+    # @return True
+    #
+    def shouldDisplayLockButton(self):
+        return True
+
+    ## startLock
+    #
+    # Starts the focus lock.  (But overloaded so that only when startFilm is called)
+    #
+    def startLock(self):
+        # Handle the case that no z_offsets were provided
+        if self.z_offsets == None:
+            self.control_thread.startLock()
+        else:
+            # Request stage from the control thread
+            self.stage = self.control_thread.getStage()
+            current_stage_z = self.control_thread.getStageZ()
+            
+            # Issue command to start hardware-timed movements
+            self.stage.startHardwareTimedMove(current_stage_z + self.z_offsets)
+
+    ## stopLock
+    #
+    # Stops the focus lock.
+    #
+    def stopLock(self):
+        # Handle the case that no z_offsets were provided
+        if self.z_offsets == None:
+            self.control_thread.stopLock()
+        else:
+            # Close stage
+            self.stage.cleanupHardwareTimedMove()
+            self.stage = None
+
+            # Tell the control thread that the stage has been returned
+            self.control_thread.releaseStage()
+
 #
 # The MIT License
 #

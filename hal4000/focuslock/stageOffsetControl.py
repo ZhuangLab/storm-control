@@ -156,6 +156,9 @@ class StageQPDThread(QtCore.QThread):
         self.is_locked = False
         self.last_locked_pos = False
         self.scan_range = float('inf') # The range for a focus lock scan
+
+        self.num_checkedout_stages = 0
+        self.was_locked = False
         
         # center the stage
         # self.newZCenter(z_center)
@@ -207,6 +210,39 @@ class StageQPDThread(QtCore.QThread):
         else:
             print "QPD/Camera are frozen?"
             return "failed"
+
+    ## getStage
+    #
+    # @return stage The stage class instance
+    #
+    def getStage(self):
+        # First check for outstanding stages. Debug purposes only
+        if self.num_checkedout_stages > 0:
+            print "ERROR: More than one request for a stage!!!"
+
+        # Return stage
+        self.num_checkedout_stages += 1 # Increment checkedout stages
+        self.stage_mutex.lock() # Lock the stage mutex
+        self.was_locked = self.locked # Store the current state of the focuslock
+        self.locked = False # Send flag to run method to stop updating stage
+        return self.stage
+
+    ## releaseStage
+    #
+    # Release a checkedout stage
+    #
+    def releaseStage(self):
+        self.stage_mutex.unlock() # Release the stage mutex
+        self.num_checkedout_stages -= 1
+        self.locked = self.was_locked # Return the focus lock to its previous state
+
+    ## getStageZ
+    #
+    # @return The current z position (in um)
+    #
+    @hdebug.debug
+    def getStageZ(self):
+        return self.stage_z
 
     ## findFocus
     #

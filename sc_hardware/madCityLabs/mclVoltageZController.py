@@ -68,7 +68,15 @@ class MCLVZControl(object):
 
         # Set waveform
         voltages = z_positions * self.scale
-        self.setWaveform(voltages, 1, clock = self.trigger_source)
+
+        # Display voltages
+        print "Requested positions: " + str(z_positions)
+        print "Voltages to write: " + str(voltages)
+        print self.trigger_source
+        
+        # Convert to a list of channel values and write
+        self.ni_task.setWaveform(voltages, 100, clock = self.trigger_source)
+        # NOTE: the frequency is hardcoded to a maximum allowed value (arbitrary)
 
         self.ni_task.startTask()
 
@@ -78,13 +86,12 @@ class MCLVZControl(object):
     def cleanupHardwareTimedMove(self):
         # Clean up the previous task
         self.ni_task.stopTask()
-        self.ni_task.clearTask
+        self.ni_task.clearTask()
 
         # Create the original single-write task
         self.ni_task = nicontrol.AnalogOutput(self.board, self.line)
         self.ni_task.startTask()
             
-
 #
 # Testing
 # 

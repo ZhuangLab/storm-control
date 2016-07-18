@@ -70,9 +70,6 @@ class LockDisplay(QtGui.QWidget):
         self.lock_modes = [lockModes.NoLockMode(control_thread,
                                                 parameters,
                                                 self),
-                           lockModes.AutoLockMode(control_thread,
-                                                  parameters,
-                                                  self),
                            lockModes.AlwaysOnLockMode(control_thread,
                                                       parameters,
                                                       self),
@@ -84,7 +81,10 @@ class LockDisplay(QtGui.QWidget):
                                                          self),
                            lockModes.ZScanLockModeV2(control_thread,
                                                      parameters,
-                                                     self)]
+                                                     self),
+                           lockModes.HardareZScanLockMode(control_thread,
+                                                          parameters,
+                                                          self)]
         
         self.current_mode = self.lock_modes[parameters.get("qpd_mode")]
 
