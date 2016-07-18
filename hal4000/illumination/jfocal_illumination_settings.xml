@@ -84,17 +84,23 @@
 
     <!-- 405 laser -->
     <channel>
-      <description>405</description>
-      <color type="rgb">255,0,255</color>
+		<description>405</description>
+		<color type="rgb">255,0,255</color>
       
-      <amplitude_modulation>
-	<uses>cube405</uses>
-	<display_normalized type="boolean">True</display_normalized>
-	<parameters>
-	  <maximum type="int">5000</maximum>
-	</parameters>
-      </amplitude_modulation>
-      
+		<amplitude_modulation>
+			<uses>cube405</uses>
+			<display_normalized type="boolean">True</display_normalized>
+			<parameters>
+				<maximum type="int">5000</maximum>
+			</parameters>
+		</amplitude_modulation>
+		<digital_modulation>
+			<uses>daq</uses>
+			<parameters>
+				<board>PCIe-6351</board>
+				<channel type="int">4</channel>
+			</parameters>
+		</digital_modulation>
 
 	 <!-- Remove the analog modulation. It is not used, and this channel is needed for controlling the focus lock
       <analog_modulation>
