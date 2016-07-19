@@ -68,11 +68,6 @@ class MCLVZControl(object):
 
         # Set waveform
         voltages = z_positions * self.scale
-
-        # Display voltages
-        print "Requested positions: " + str(z_positions)
-        print "Voltages to write: " + str(voltages)
-        print self.trigger_source
         
         # Convert to a list of channel values and write
         self.ni_task.setWaveform(voltages, 100, clock = self.trigger_source)
