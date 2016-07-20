@@ -973,8 +973,6 @@ class HardareZScanLockMode(JumpLockMode):
 
             self.z_offsets = converted_values
 
-        print "Updated z_offsets to " + str(self.z_offsets)
-
     ## reset
     #
     # Turn the lock off it was turned on using the lock button.
