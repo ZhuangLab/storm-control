@@ -40,7 +40,7 @@
 | Stage | DLL | Marzhauser | Works, in use |
 | Thum  | File | Practical Design Group | Worked, not used |
 | USB Camera | DLL | Multiple | Worked, not used |
-| USB Camera | DLL | Thorlabs | Works, in use |
+| USB Camera | DLL | Thorlabs | Works, in use (requires uc480 Version 4.20)|
 
 #### Interface Notes ####
 
