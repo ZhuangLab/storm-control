@@ -101,10 +101,12 @@ class CameraFeedDisplay(QtGui.QFrame):
         self.ui.setupUi(self)
 
         self.ui.cameraScrollArea.setStyleSheet("QScrollArea { background-color: black } ")
-        self.ui.rangeSlider = qtRangeSlider.QVRangeSlider(parent = self.ui.rangeSliderWidget)
+        
+        self.ui.rangeSlider = qtRangeSlider.QVRangeSlider()
         layout = QtGui.QGridLayout(self.ui.rangeSliderWidget)
+        layout.setMargin(1)
         layout.addWidget(self.ui.rangeSlider)
-        self.ui.rangeSlider.setGeometry(0, 0, self.ui.rangeSliderWidget.width(), self.ui.rangeSliderWidget.height())
+        self.ui.rangeSliderWidget.setLayout(layout)
         self.ui.rangeSlider.setRange([0.0, self.max_intensity, 1.0])
         self.ui.rangeSlider.setEmitWhileMoving(True)
 
