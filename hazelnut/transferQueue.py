@@ -31,6 +31,12 @@ class TransferQueueListViewDelegate(QtWidgets.QStyledItemDelegate):
         item_rect = option.rect
         
         # Draw correct background.
+        if (tq_item.getStatus() == "in_transfer"):
+            color = QtGui.QColor(255, 255, 128)
+            painter.setPen(color)
+            painter.setBrush(color)
+            painter.drawRect(item_rect)
+        
         #style = option.widget.style()
         #style.drawControl(QtGui.QStyle.CE_ItemViewItem, option, painter, option.widget)
 
@@ -42,6 +48,7 @@ class TransferQueueListViewDelegate(QtWidgets.QStyledItemDelegate):
         result = QtWidgets.QStyledItemDelegate.sizeHint(self, option, index)
         result.setHeight(1.2 * result.height())
         return result
+
 
 class TransferQueueSortFilterProxyModel(QtCore.QSortFilterProxyModel):
     """
@@ -66,6 +73,9 @@ class TransferQueueStandardItem(QtGui.QStandardItem):
     def getFileObject(self):
         return self.file_object
 
+    def getProgress(self):
+        return self.progress
+    
     def getStatus(self):
         return self.status
 
@@ -74,6 +84,7 @@ class TransferQueueStandardItem(QtGui.QStandardItem):
 
     def setStatus(self, status):
         self.status = status
+        #self.emitDataChanged()
         
     
 class TransferQueueStandardItemModel(QtGui.QStandardItemModel):
