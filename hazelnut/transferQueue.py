@@ -38,6 +38,10 @@ class TransferQueueListViewDelegate(QtWidgets.QStyledItemDelegate):
         painter.drawText(item_rect, QtCore.Qt.AlignLeft, " " + fo_object.getPartialPathName())
         painter.drawText(item_rect, QtCore.Qt.AlignRight, fo_object.getMTime().strftime("%c") + " ")
 
+    def sizeHint(self, option, index):
+        result = QtWidgets.QStyledItemDelegate.sizeHint(self, option, index)
+        result.setHeight(1.2 * result.height())
+        return result
 
 class TransferQueueSortFilterProxyModel(QtCore.QSortFilterProxyModel):
     """
@@ -91,6 +95,8 @@ class TransferQueueMVC(QtWidgets.QListView):
         self.max_threads = 1
         self.running_threads = []
         self.tr_timer = QtCore.QTimer(self)
+
+        self.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
 
         # Configure transfer timer.
         self.tr_timer.setInterval(100)
