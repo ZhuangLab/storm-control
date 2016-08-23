@@ -13,6 +13,9 @@ import datetime
 import os
 import shutil
 import sys
+import watchdog
+import watchdog.events
+import watchdog.observers
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -20,11 +23,12 @@ import qtdesigner.hazelnut_ui as hazelnutUi
 
 
 class DirObject(object):
+    movie_extensions = (".dax", ".inf", ".off", ".power", ".spe", ".tif", ".xml")
     """
     A class for doing several things.
     1. Source directory:
-       a. List existing files in the directory.
-       b. Keep track of new files / folders that appear in the directory.
+       a. Get list of files in directory on startup.
+       b. Get new files that are added.
        c. Get creation / modification time of the files.
 
     2. Transfer directory.
@@ -34,23 +38,17 @@ class DirObject(object):
     """
     def __init__(self):
         self.directory = ""
-        self.new_files = []
-        self.old_files = []
+        self.files = []
         
-    def getAllFiles(self):
-        return self.old_files + self.new_files
-
     def getDirectory(self):
         return self.directory
 
-    def getNewFiles(self):
-        return self.new_files
-
-    def updateNewFiles(self):
-        self.old_files += self.new_files
-        self.new_files = []
-
-
+    def getFiles(self):
+        temp = self.files
+        self.files = []
+        return temp
+    
+    
 class DirObjectFileSystem(DirObject):
     """
     Specialized for the file system protocol.
@@ -60,35 +58,38 @@ class DirObjectFileSystem(DirObject):
         self.directory = directory
         self.watcher = None
 
-        # Don't get an initial list of files for the remote directory.
+        # Don't watchdog remote directories.
         if not local:
             return
-        
-        # Get all the current files in the directory (and it's sub-directories).
-        for (path_original, dirs, files) in os.walk(directory):
-            for filename in files:
 
-                fullpath_name = os.path.join(path_original, filename)
-                partialpath_name = fullpath_name[(len(directory)+1):]
+        self.watchDirectory(True)
+                
+    def addFile(self, fullpath_name):
 
-                # If this is a movie file, check for it's xml file
-                # before adding it to the list of files.
-                basename, ext = os.path.splitext(fullpath_name)
-                ext = ext.lower()
-                if ext in [".dax", ".spe", ".tif"]:
-                    if not os.path.exists(basename + ".xml"):
-                        continue
+        # Check to see that this is an xml file.
+        [basename, ext] = os.path.splitext(fullpath_name)
+        ext = ext.lower()
+        if not (ext == ".xml"):
+            return
 
+        # If it is, add it and any related files to the current list of files.
+        for ext in DirObject.movie_extensions:
+            fullpath_name = basename + ext
+            if os.path.exists(fullpath_name):
+                partialpath_name = fullpath_name[(len(self.directory)+1):]
                 f_object = FileObject(fullpath_name,
                                       partialpath_name,
                                       datetime.datetime.fromtimestamp(os.path.getmtime(fullpath_name)))
-                self.old_files.append(f_object)
+                self.files.append(f_object)
 
+    def getCurrentFiles(self):
+        """
+        Get all the current files in the directory (and it's sub-directories).
+        """
+        for (path_original, dirs, files) in os.walk(self.directory):
+            for filename in files:
+                self.addFile(os.path.join(path_original, filename))
                 
-    def __del__(self):
-        # Stop watchdog handler.
-        pass                
-
     def shouldTransfer(self, file_object):
         dest_file = os.path.join(self.directory, file_object.getPartialPathName())
         if os.path.exists(dest_file):
@@ -110,9 +111,19 @@ class DirObjectFileSystem(DirObject):
         # Copy the file.
         shutil.copyfile(file_object.getFullPathName(), dest_file)
         
-    def watchDirectory(self):
-        # Register watchdog handler for new file/directory events & start.
-        pass
+    def watchDirectory(self, start):
+
+        # Start directory watchdog.
+        if start:
+            self.watcher = watchdog.observers.Observer()
+            self.watcher.schedule(FileSystemWatcher(self),
+                                  self.directory,
+                                  recursive = True)
+            self.watcher.start()
+
+        # Stop directory watchdog.            
+        else:
+            self.watcher.stop()
 
 
 class DirObjectSFTP(DirObject):
@@ -152,13 +163,23 @@ class FileObject(object):
         return (self.mtime > a_time)
 
 
+class FileSystemWatcher(watchdog.events.FileSystemEventHandler):
+
+    def __init__(self, dir_object):
+        watchdog.events.FileSystemEventHandler.__init__(self)
+        self.dir_object = dir_object
+        
+    def on_created(self, event):
+        self.dir_object.addFile(event.src_path)
+
+
 class Window(QtWidgets.QMainWindow):
 
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
         self.destination_dir_obj = None
-        self.transfer_object = None
         self.source_dir_obj = None
+        self.update_timer = QtCore.QTimer(self)
 
         self.settings = QtCore.QSettings("Zhuang Lab", "hazelnut")
         
@@ -180,20 +201,17 @@ class Window(QtWidgets.QMainWindow):
 
         self.ui.transferQueueMVC.transferStarted.connect(self.handleStarted)
         self.ui.transferQueueMVC.transferStopped.connect(self.handleStopped)
+
+        # Configure update timer.
+        self.update_timer.setInterval(500)
+        self.update_timer.timeout.connect(self.handleUpdateTimer)
         
     def closeEvent(self, event):
+        if self.source_dir_obj is not None:
+            self.source_dir_obj.watchDirectory(False)
+            
         self.settings.setValue("MainWindow/Size", self.size())
         self.settings.setValue("MainWindow/Position", self.pos())
-
-    def doUpdate(self):
-        if self.source_dir_obj is not None:
-            self.ui.transferQueueMVC.clearFileObjects()
-            for src_file in self.source_dir_obj.getAllFiles():
-                self.ui.transferQueueMVC.addFileObject(src_file)
-
-            if self.destination_dir_obj is not None:
-                self.ui.transferQueueMVC.addDestination(self.destination_dir_obj)
-                self.ui.startPushButton.setEnabled(True)
 
     def handleDestination(self, boolean):
         current_directory = ""
@@ -207,7 +225,9 @@ class Window(QtWidgets.QMainWindow):
         if new_directory:
             self.destination_dir_obj = DirObjectFileSystem(new_directory, local = False)
             self.ui.destinationLabel.setText(new_directory)
-            self.doUpdate()
+            self.ui.transferQueueMVC.addDestination(self.destination_dir_obj)
+            if self.source_dir_obj is not None:
+                self.ui.startPushButton.setEnabled(True)
     
     def handleQuit(self, boolean):
         self.close()
@@ -219,6 +239,8 @@ class Window(QtWidgets.QMainWindow):
             self.ui.transferQueueMVC.stopTransfer()
         else:
             self.ui.transferQueueMVC.startTransfer()
+            self.ui.actionDestination.setEnabled(False)
+            self.ui.actionSource.setEnabled(False)
 
     def handleSource(self, boolean):
         current_directory = ""
@@ -230,9 +252,17 @@ class Window(QtWidgets.QMainWindow):
                                                                        current_directory,
                                                                        QtWidgets.QFileDialog.ShowDirsOnly))
         if new_directory:
+
+            # Stop old directory watcher.
+            if self.source_dir_obj is not None:
+                self.source_dir_obj.watchDirectory(False)
+            
             self.source_dir_obj = DirObjectFileSystem(new_directory)
+            self.source_dir_obj.getCurrentFiles()
             self.ui.sourceLabel.setText(new_directory)
-            self.doUpdate()
+            self.ui.transferQueueMVC.clearFileObjects()
+            self.handleUpdateTimer()
+            self.update_timer.start()
 
     def handleStarted(self):
         self.ui.startPushButton.setText("Stop")
@@ -241,7 +271,13 @@ class Window(QtWidgets.QMainWindow):
     def handleStopped(self):
         self.ui.startPushButton.setText("Start")
         self.ui.startPushButton.setEnabled(True)
-        
+        self.ui.actionDestination.setEnabled(True)
+        self.ui.actionSource.setEnabled(True)
+
+    def handleUpdateTimer(self):
+        for src_file in self.source_dir_obj.getFiles():
+            self.ui.transferQueueMVC.addFileObject(src_file)        
+
         
 if (__name__ == '__main__'):
 
