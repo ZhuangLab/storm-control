@@ -24,6 +24,20 @@ class TransferQueueListViewDelegate(QtWidgets.QStyledItemDelegate):
         source_index = self.proxy_model.mapToSource(proxy_index)
         return self.model.itemFromIndex(source_index)
     
+    def paint(self, painter, option, index):
+        tq_item = self.itemFromProxyIndex(index)
+        fo_object = tq_item.getFileObject()
+
+        item_rect = option.rect
+        
+        # Draw correct background.
+        #style = option.widget.style()
+        #style.drawControl(QtGui.QStyle.CE_ItemViewItem, option, painter, option.widget)
+
+        # Draw text.
+        painter.drawText(item_rect, QtCore.Qt.AlignLeft, " " + fo_object.getPartialPathName())
+        painter.drawText(item_rect, QtCore.Qt.AlignRight, fo_object.getMTime().strftime("%c") + " ")
+
 
 class TransferQueueSortFilterProxyModel(QtCore.QSortFilterProxyModel):
     """
