@@ -11,6 +11,7 @@
 
 import datetime
 import os
+import shutil
 import sys
 
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -99,7 +100,15 @@ class DirObjectFileSystem(DirObject):
         return True
         
     def transferFile(self, file_object):
-        print "transferring", file_object
+        dest_file = os.path.join(self.directory, file_object.getPartialPathName())
+
+        # Make a directory if necessary first.
+        dest_dir = os.path.dirname(dest_file)
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
+
+        # Copy the file.
+        shutil.copyfile(file_object.getFullPathName(), dest_file)
         
     def watchDirectory(self):
         # Register watchdog handler for new file/directory events & start.
