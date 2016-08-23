@@ -23,7 +23,7 @@ import qtdesigner.hazelnut_ui as hazelnutUi
 
 
 class DirObject(object):
-    movie_extensions = (".dax", ".inf", ".off", ".power", ".spe", ".tif", ".xml")
+    movie_extensions = (".dax", ".inf", ".off", ".png", ".power", ".spe", ".tif", ".xml")
     """
     A class for doing several things.
     1. Source directory:

@@ -5,6 +5,8 @@
 # Hazen 08/16
 #
 
+import time
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
@@ -30,13 +32,17 @@ class TransferQueueListViewDelegate(QtWidgets.QStyledItemDelegate):
 
         item_rect = option.rect
         
-        # Draw correct background.
+        # Draw background.
         if (tq_item.getStatus() == "in_transfer"):
-            color = QtGui.QColor(255, 255, 128)
+            color = QtGui.QColor(100, 100, 255)
             painter.setPen(color)
             painter.setBrush(color)
             painter.drawRect(item_rect)
         
+            color = QtGui.QColor(0,0,0)
+            painter.setPen(color)
+            painter.setBrush(color)
+            
         #style = option.widget.style()
         #style.drawControl(QtGui.QStyle.CE_ItemViewItem, option, painter, option.widget)
 
@@ -84,8 +90,8 @@ class TransferQueueStandardItem(QtGui.QStandardItem):
 
     def setStatus(self, status):
         self.status = status
-        #self.emitDataChanged()
-        
+        self.emitDataChanged()
+
     
 class TransferQueueStandardItemModel(QtGui.QStandardItemModel):
     """
@@ -148,6 +154,7 @@ class TransferQueueMVC(QtWidgets.QListView):
             proxy_index = self.tq_proxy_model.index(i, 0)
             source_index = self.tq_proxy_model.mapToSource(proxy_index)
             source_item = self.tq_model.itemFromIndex(source_index)
+            source_item.setStatus("in_transfer")
             tr_thread = TransferThread(self.destination_dir_obj, source_item)
             tr_thread.transferComplete.connect(self.handleTransferComplete)            
             tr_thread.start(QtCore.QThread.NormalPriority)
@@ -196,10 +203,9 @@ class TransferThread(QtCore.QThread):
         return self.tq_item
     
     def run(self):
-        self.tq_item.setStatus("in_transfer")
         file_object = self.tq_item.getFileObject()
         if self.dir_object.shouldTransfer(file_object):
             self.dir_object.transferFile(file_object)
-        self.tq_item.setStatus("complete")
+            time.sleep(0.5)
         self.transferComplete.emit(self)
 
