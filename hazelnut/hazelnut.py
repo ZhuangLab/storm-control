@@ -20,6 +20,7 @@ import watchdog.observers
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+import destination
 import qtdesigner.hazelnut_ui as hazelnutUi
 
 
@@ -102,6 +103,10 @@ class DirObjectFileSystem(DirObject):
         return True
         
     def transferFile(self, file_object, callback):
+        """
+        The callback function expects an integer in the range 0-100 that
+        indicates the current progress of the transfer.
+        """
         dest_file = os.path.join(self.directory, file_object.getPartialPathName())
 
         # For GUI testing.
@@ -112,6 +117,9 @@ class DirObjectFileSystem(DirObject):
             return
 
         # Make a directory if necessary first.
+        #
+        # FIXME: Limited to a single level?
+        #
         dest_dir = os.path.dirname(dest_file)
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
@@ -138,11 +146,37 @@ class DirObjectSFTP(DirObject):
     """
     Specialized for a SFTP protocol.
     """
-    def __init__(self, sftp_client):
+    def __init__(self, sftp_tranport):
         DirObject.__init__(self)
-        self.sftp_client = sftp_client
+        self.sftp_transport = sftp_transport
+        self.sftp_client = self.ftps_transort.open_sftp_client()
 
+    def shouldTransfer(self, file_object):
+        try:
+            f_stat = self.sftp_client(file_object.getPartialPathName())
+        except IOError:
+            return True
 
+        # FIXME: Compare file modification times here..
+        print f_stat
+        
+        return True
+        
+    def transferFile(self, file_object, callback):
+        
+        # Make a directory if necessary first.
+        dest_dir = os.path.dirname(dest_file)
+        try:
+            f_stat = self.sftp_client(dest_dir)
+        except IOError:
+            self.sftp_client.mkdir(dest_dir)
+
+        sftp_callback = lambda(bytes_trans, bytes_total) : callback(int(100.0 * bytes_trans/bytes_total))
+        self.sftp_client.put(file_object.getFullPathName(),
+                             file_object.getPartialPathName(),
+                             callback = sftp_callback)
+
+        
 class FileObject(object):
     """
     A class for keeping track of the relevant details of a single file.
@@ -186,6 +220,7 @@ class Window(QtWidgets.QMainWindow):
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
         self.destination_dir_obj = None
+        self.dhandler = destination.DestinationDialogHandler()
         self.source_dir_obj = None
         self.update_timer = QtCore.QTimer(self)
 
@@ -222,21 +257,18 @@ class Window(QtWidgets.QMainWindow):
         self.settings.setValue("MainWindow/Position", self.pos())
 
     def handleDestination(self, boolean):
-        current_directory = ""
-        if self.destination_dir_obj is not None:
-            current_directory = self.destination_dir_obj.getDirectory()
-
-        new_directory = str(QtWidgets.QFileDialog.getExistingDirectory(self,
-                                                                       "Destination Directory",
-                                                                       current_directory,
-                                                                       QtWidgets.QFileDialog.ShowDirsOnly))
-        if new_directory:
-            self.destination_dir_obj = DirObjectFileSystem(new_directory, local = False)
-            self.ui.destinationLabel.setText(new_directory)
+        dest = self.dhandler.getDestination()
+        if dest is not None:
+            if (dest[0] == "file"):
+                self.destination_dir_obj = DirObjectFileSystem(dest[1], local = False)
+                self.ui.destinationLabel.setText(dest[1])
+            if (dest[0] == "sftp"):
+                self.destination_dir_obj = DirObjectSFTP(dest[1])
+                self.ui.destinationLabel.setText(str(dest[1]))
             self.ui.transferQueueMVC.addDestination(self.destination_dir_obj)
             if self.source_dir_obj is not None:
                 self.ui.startPushButton.setEnabled(True)
-    
+
     def handleQuit(self, boolean):
         self.close()
 
