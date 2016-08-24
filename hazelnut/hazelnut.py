@@ -13,6 +13,7 @@ import datetime
 import os
 import shutil
 import sys
+import time
 import watchdog
 import watchdog.events
 import watchdog.observers
@@ -102,6 +103,13 @@ class DirObjectFileSystem(DirObject):
         
     def transferFile(self, file_object, callback):
         dest_file = os.path.join(self.directory, file_object.getPartialPathName())
+
+        # For GUI testing.
+        if True:
+            for i in range(10):
+                callback(10 * i)
+                time.sleep(0.1)
+            return
 
         # Make a directory if necessary first.
         dest_dir = os.path.dirname(dest_file)

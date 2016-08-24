@@ -198,6 +198,8 @@ class TransferQueueMVC(QtWidgets.QListView):
         self.tq_model.removeRow(source_index.row())
 
         # Throw away this thread.
+        tr_thread.transferComplete.disconnect()
+        tr_thread.transferProgress.disconnect()
         self.running_threads.remove(tr_thread)
 
         # Check if the timer has stopped and no other threads are running.
@@ -240,9 +242,6 @@ class TransferThread(QtCore.QThread):
         file_object = self.tq_item.getFileObject()
         if self.dir_object.shouldTransfer(file_object):
             callback = lambda x: self.transferProgress.emit(self.tq_item, x)
-            #self.dir_object.transferFile(file_object, callback)
-            for i in range(10):
-                callback(10 * i)
-                time.sleep(0.1)
+            self.dir_object.transferFile(file_object, callback)
         self.transferComplete.emit(self)
 
