@@ -31,28 +31,56 @@ class TransferQueueListViewDelegate(QtWidgets.QStyledItemDelegate):
         fo_object = tq_item.getFileObject()
 
         item_rect = option.rect
+
+        painter.setPen(QtGui.QColor(224, 224, 224))
+        painter.setBrush(QtGui.QColor(255, 255, 255))
+        painter.drawRect(item_rect)
         
-        # Draw background.
         if (tq_item.getStatus() == "in_transfer"):
-            color = QtGui.QColor(100, 100, 255)
-            painter.setPen(color)
-            painter.setBrush(color)
-            painter.drawRect(item_rect)
-        
-            color = QtGui.QColor(0,0,0)
-            painter.setPen(color)
-            painter.setBrush(color)
+
+            # Draw background.
+            #color = QtGui.QColor(100, 100, 255)
+            #painter.setPen(color)
+            #painter.setBrush(color)
+            #painter.drawRect(item_rect)
+
+            # Draw progress.
+            painter.setPen(QtGui.QColor(224, 224, 224))
+            painter.setBrush(QtGui.QColor(30, 144, 255))
+
+            total_divisions = 20
+            step = int((1.0/total_divisions) * item_rect.width())
             
+            pr_height = item_rect.height()
+            pr_left = item_rect.left() + 1
+            pr_width = int((1.0/total_divisions) * item_rect.width() - 2)
+            pr_top = item_rect.top()
+
+            num_divisions = int(total_divisions * 0.01 * tq_item.getProgress())
+            for i in range(num_divisions):
+                progress_rect = QtCore.QRect(pr_left + step*i,
+                                             pr_top,
+                                             pr_width,
+                                             pr_height)
+            
+                painter.drawRoundedRect(progress_rect, 2.0, 2.0)
+                        
         #style = option.widget.style()
         #style.drawControl(QtGui.QStyle.CE_ItemViewItem, option, painter, option.widget)
 
         # Draw text.
-        painter.drawText(item_rect, QtCore.Qt.AlignLeft, " " + fo_object.getPartialPathName())
-        painter.drawText(item_rect, QtCore.Qt.AlignRight, fo_object.getMTime().strftime("%c") + " ")
+        color = QtGui.QColor(0,0,0)
+        painter.setPen(color)
+        painter.setBrush(color)
+
+        text_rect = QtCore.QRect(item_rect)
+        text_rect.setTop(text_rect.top() + 2)
+        painter.drawText(text_rect, QtCore.Qt.AlignLeft, " " + fo_object.getPartialPathName())
+        painter.drawText(text_rect, QtCore.Qt.AlignRight, fo_object.getMTime().strftime("%c") + " ")
 
     def sizeHint(self, option, index):
         result = QtWidgets.QStyledItemDelegate.sizeHint(self, option, index)
-        result.setHeight(1.2 * result.height())
+        result.setHeight(1.4 * result.height())
         return result
 
 
@@ -87,7 +115,8 @@ class TransferQueueStandardItem(QtGui.QStandardItem):
 
     def setProgress(self, progress):
         self.progress = progress
-
+        self.emitDataChanged()
+        
     def setStatus(self, status):
         self.status = status
         self.emitDataChanged()
@@ -156,7 +185,8 @@ class TransferQueueMVC(QtWidgets.QListView):
             source_item = self.tq_model.itemFromIndex(source_index)
             source_item.setStatus("in_transfer")
             tr_thread = TransferThread(self.destination_dir_obj, source_item)
-            tr_thread.transferComplete.connect(self.handleTransferComplete)            
+            tr_thread.transferComplete.connect(self.handleTransferComplete)
+            tr_thread.transferProgress.connect(self.handleTransferProgress)
             tr_thread.start(QtCore.QThread.NormalPriority)
             self.running_threads.append(tr_thread)
 
@@ -174,7 +204,10 @@ class TransferQueueMVC(QtWidgets.QListView):
         if not self.amTransferring():
             if (len(self.running_threads) == 0):
                 self.transferStopped.emit()
-        
+
+    def handleTransferProgress(self, tq_item, progress):
+        tq_item.setProgress(progress)
+                               
     def setMaxThreads(self, new_max):
         self.max_threads = new_max
         
@@ -193,6 +226,7 @@ class TransferQueueMVC(QtWidgets.QListView):
 #
 class TransferThread(QtCore.QThread):
     transferComplete = QtCore.pyqtSignal(object)
+    transferProgress = QtCore.pyqtSignal(object, int)
 
     def __init__(self, dir_object, tq_item):
         QtCore.QThread.__init__(self)
@@ -205,7 +239,10 @@ class TransferThread(QtCore.QThread):
     def run(self):
         file_object = self.tq_item.getFileObject()
         if self.dir_object.shouldTransfer(file_object):
-            self.dir_object.transferFile(file_object)
-            time.sleep(0.5)
+            callback = lambda x: self.transferProgress.emit(self.tq_item, x)
+            #self.dir_object.transferFile(file_object, callback)
+            for i in range(10):
+                callback(10 * i)
+                time.sleep(0.1)
         self.transferComplete.emit(self)
 

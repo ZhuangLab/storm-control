@@ -100,7 +100,7 @@ class DirObjectFileSystem(DirObject):
                 return False
         return True
         
-    def transferFile(self, file_object):
+    def transferFile(self, file_object, callback):
         dest_file = os.path.join(self.directory, file_object.getPartialPathName())
 
         # Make a directory if necessary first.
