@@ -157,10 +157,12 @@ class DirObjectSFTP(DirObject):
         except IOError:
             return True
 
-        # FIXME: Compare file modification times here..
         print f_stat
-        
-        return True
+        dest_file_time = datetime.datetime.fromtimestamp(f_stat.mtime)
+        if file_object.isNewerThan(dest_file_time):
+            return True
+        else:
+            return False
         
     def transferFile(self, file_object, callback):
         
