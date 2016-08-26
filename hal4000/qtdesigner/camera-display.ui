@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>797</width>
-    <height>726</height>
+    <width>645</width>
+    <height>545</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,16 +23,7 @@
    <property name="spacing">
     <number>0</number>
    </property>
-   <property name="leftMargin">
-    <number>0</number>
-   </property>
-   <property name="topMargin">
-    <number>0</number>
-   </property>
-   <property name="rightMargin">
-    <number>0</number>
-   </property>
-   <property name="bottomMargin">
+   <property name="margin">
     <number>0</number>
    </property>
    <item>
@@ -84,8 +75,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>726</width>
-           <height>697</height>
+           <width>569</width>
+           <height>512</height>
           </rect>
          </property>
         </widget>
@@ -95,13 +86,13 @@
        <widget class="QWidget" name="scaleWidget" native="true">
         <property name="minimumSize">
          <size>
-          <width>65</width>
+          <width>70</width>
           <height>0</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>16777215</width>
+          <width>70</width>
           <height>16777215</height>
          </size>
         </property>
@@ -141,7 +132,7 @@
              <widget class="QWidget" name="rangeSliderWidget" native="true">
               <property name="minimumSize">
                <size>
-                <width>9</width>
+                <width>10</width>
                 <height>0</height>
                </size>
               </property>
@@ -149,6 +140,12 @@
             </item>
             <item>
              <widget class="QFrame" name="colorFrame">
+              <property name="minimumSize">
+               <size>
+                <width>10</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="maximumSize">
                <size>
                 <width>20</width>
