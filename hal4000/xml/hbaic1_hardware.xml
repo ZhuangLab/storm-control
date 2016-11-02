@@ -31,13 +31,11 @@
     -->
 
     <!-- Feed viewers -->
-    <!--
     <feedviewers>
       <class_name type="string">FeedViewers</class_name>
       <menu_item type="string">New Viewer</menu_item>
       <module_name type="string">display.feedViewer</module_name>
     </feedviewers>
-    -->
 
     <!-- The focus lock -->    
 
@@ -51,16 +49,14 @@
 
     <!-- Illumination (lasers, shutters, etc) control. -->
 
-    <!--
     <illumination>
       <class_name type="string">IlluminationControl</class_name>
       <menu_item type="string">Illumination</menu_item>
       <module_name type="string">illumination.illuminationControl</module_name>
       <parameters>
-	<settings_xml type="string">storm2_illumination_settings.xml</settings_xml>
+	<settings_xml type="string">hbaic1_illumination_settings.xml</settings_xml>
       </parameters>
-      </illumination>
-    -->
+    </illumination>
    
     <!-- Joystick controller. -->
     <!--
@@ -85,13 +81,11 @@
       -->
 
     <!-- Automatic illumination power adjustment. -->
-    <!--
     <progressions>
       <class_name type="string">ProgressionControl</class_name>
       <menu_item type="string">Progressions</menu_item>
       <module_name type="string">progressionControl</module_name>
-      </progressions>
-      -->
+    </progressions>
 
     <!-- The live STORM analysis and display. -->
     <!--
@@ -101,15 +95,13 @@
       <module_name type="string">spotCounter</module_name>
     </spotcounter>
     -->
-    <!-- Motorized XY stage. -->
     
-    <!--
+    <!-- Motorized XY stage. -->
     <stage>
       <class_name type="string">AStageControl</class_name>
       <menu_item type="string">Stage Control</menu_item>
-      <module_name type="string">stagecontrol.storm2StageControl</module_name>
-      </stage>
-      -->
+      <module_name type="string">stagecontrol.hbaic1StageControl</module_name>
+    </stage>
     
     <!-- Remote control of HAL via TCP/IP. -->
 
