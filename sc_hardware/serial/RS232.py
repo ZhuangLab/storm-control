@@ -7,7 +7,7 @@
 # Hazen 3/09
 #
 
-import uspp.uspp as uspp
+import serial
 import time
 
 ## RS232
@@ -27,7 +27,7 @@ class RS232():
     #
     def __init__(self, port, timeout, baudrate, end_of_line, wait_time):
         try:
-            self.tty = uspp.SerialPort(port, timeout, baudrate)
+            self.tty = serial.Serial(port, baudrate, timeout = timeout)
             self.tty.flush()
             self.end_of_line = end_of_line
             self.wait_time = wait_time
