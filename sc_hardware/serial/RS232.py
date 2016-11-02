@@ -2,7 +2,7 @@
 #
 ## @file
 #
-# Wraps the uspp library for RS232 communication.
+# Wraps the pySerial library for RS232 communication.
 #
 # Hazen 3/09
 #
