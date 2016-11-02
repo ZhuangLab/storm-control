@@ -140,7 +140,6 @@ class Ludl(RS232.RS232):
     # @param y_vel The maximum stage velocity allowed in y in um/s units.
     #
     def setVelocity(self, x_vel, y_vel):
-        print("sv", x_vel, y_vel)
         self._command("Speed x=" + str(x_vel*self.um_to_unit))
         self._command("Speed y=" + str(y_vel*self.um_to_unit))
 
