@@ -10,6 +10,7 @@
 import sc_hardware.serial.RS232 as RS232
 import time
 
+import sc_library.parameters as params
 
 ## Ludl
 #
@@ -19,13 +20,13 @@ class Ludl(RS232.RS232):
 
     ## __init__
     #
-    # @param port (Optional) The RS-232 port to use, defaults to "COM2".
+    # @param port The RS-232 port to use.
     # @param timeout (Optional) The time out value for communication, defaults to None.
     # @param baudrate (Optional) The communication baud rate, defaults to 9600.
-    # @param wait_time How long to wait between polling events before it is decided that there is no new data available on the port, defaults to 20ms.
+    # @param wait_time (Optional) How long to wait between polling events before it is decided that there is no new data available on the port, defaults to 20ms.
     #
     def __init__(self, port, timeout = None, baudrate = 9600, wait_time = 0.02):
-        self.unit_to_um = 0.2
+        self.unit_to_um = 0.05
         self.um_to_unit = 1.0/self.unit_to_um
         self.x = 0.0
         self.y = 0.0
@@ -51,6 +52,16 @@ class Ludl(RS232.RS232):
         if response:
             return response.split("\r")
 
+    ## getSpeed
+    #
+    # @return The stage speed parameter.
+    #
+    def getSpeed(self):
+        # FIXME: Is this really um/s?
+        return params.ParameterRangeFloat("Stage speed in um/s",
+                                          "stage_speed",
+                                          10000.0, 100.0, 10000.0)
+    
     ## getStatus
     #
     # @return True/False if we are actually connected to the stage.
@@ -95,7 +106,8 @@ class Ludl(RS232.RS232):
     # @param y_speed Speed the stage should be moving at in y in um/s.
     #
     def jog(self, x_speed, y_speed):
-        #print "VS {0:.1f},{1:.1f}".format(x_speed,y_speed)
+        x_speed = x_speed * self.um_to_unit
+        y_speed = y_speed * self.um_to_unit
         self._command("VS {0:.1f},{1:.1f}".format(x_speed,y_speed))
 
     ## joystickOnOff
@@ -113,24 +125,24 @@ class Ludl(RS232.RS232):
     # @return [stage x (um), stage y (um), stage z (um)].
     #
     def position(self):
-#        try:
-        self.x = float(self._command("Where X")[0].split(" ")[1])
-        self.y = float(self._command("Where Y")[0].split(" ")[1])
-#            [self.x, self.y, self.z] = map(int, response.split(","))
-#        except:
-#            pass
+        try:
+            self.x = float(self._command("Where X")[0].split(" ")[1])
+            self.y = float(self._command("Where Y")[0].split(" ")[1])
+        except TypeError:
+            pass
         return [self.x * self.unit_to_um,
                 self.y * self.unit_to_um,
                 0.0]
 
     ## setVelocity
     #
-    # @param x_vel The maximum stage velocity allowed in x in Ludl units.
-    # @param y_vel The maximum stage velocity allowed in y in Ludl units.
+    # @param x_vel The maximum stage velocity allowed in x in um/s units.
+    # @param y_vel The maximum stage velocity allowed in y in um/s units.
     #
     def setVelocity(self, x_vel, y_vel):
-        self._command("Speed x=" + str(x_vel))
-        self._command("Speed y=" + str(y_vel))
+        print("sv", x_vel, y_vel)
+        self._command("Speed x=" + str(x_vel*self.um_to_unit))
+        self._command("Speed y=" + str(y_vel*self.um_to_unit))
 
     ## zero
     #
@@ -145,7 +157,7 @@ class Ludl(RS232.RS232):
 # 
 
 if __name__ == "__main__":
-    stage = Ludl("COM1")
+    stage = Ludl("COM8")
     print stage.position()
     stage.zero()
     time.sleep(0.1)
