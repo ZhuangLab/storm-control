@@ -38,17 +38,13 @@
     </feedviewers>
 
     <!-- The focus lock -->    
-
-    <!--
     <focuslock>
       <class_name type="string">AFocusLockZ</class_name>
       <menu_item type="string">Focus Lock</menu_item>
-      <module_name type="string">focuslock.storm2hcamFocusLockZ</module_name>
+      <module_name type="string">focuslock.hbaic1FocusLockZ</module_name>
     </focuslock>
-    -->
 
     <!-- Illumination (lasers, shutters, etc) control. -->
-
     <illumination>
       <class_name type="string">IlluminationControl</class_name>
       <menu_item type="string">Illumination</menu_item>
@@ -68,17 +64,15 @@
     -->
 	
     <!-- Control of miscellaneous hardware. -->
-    <!--
     <misc_control>
       <class_name type="string">AMiscControl</class_name>
       <menu_item type="string">Misc. Control</menu_item>
-      <module_name type="string">miscControl.storm2MiscControl</module_name>
+      <module_name type="string">miscControl.hbaic1MiscControl</module_name>
       <parameters>
-	<port type="string">COM9</port>
+	<port type="string">COM7</port>
 	<baud_rate type="int">115200</baud_rate>
       </parameters>
-      </misc_control>
-      -->
+    </misc_control>
 
     <!-- Automatic illumination power adjustment. -->
     <progressions>
@@ -102,6 +96,13 @@
       <menu_item type="string">Stage Control</menu_item>
       <module_name type="string">stagecontrol.hbaic1StageControl</module_name>
     </stage>
+
+    <!-- Galvo control -->
+    <galvo>
+      <class_name type="string">GalvoControl</class_name>
+      <menu_item type="string">Galvo Control</menu_item>
+      <module_name type="string">miscControl.galvoControl</module_name>
+    </galvo>
     
     <!-- Remote control of HAL via TCP/IP. -->
 

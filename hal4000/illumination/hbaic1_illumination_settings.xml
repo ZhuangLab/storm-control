@@ -12,26 +12,24 @@
       </parameters>
     </control_module>
 
-    <!--
     <control_module>
-      <name>cube405</name>
+      <name>obis405</name>
       <module_name>sc_hardware.coherent.hLaser</module_name>
-      <class_name>CoherentCube</class_name>
+      <class_name>CoherentObis</class_name>
       <parameters>
-	<port>COM9</port>
+	<port>COM19</port>
       </parameters>
-      </control_module>
-      -->
+    </control_module>
 
     <control_module>
       <name>daq</name>
       <module_name>sc_hardware.nationalInstruments.hNicontrol</module_name>
       <class_name>Nidaq</class_name>
       <parameters>
-	<counter_board>PCI-6323</counter_board>
+	<counter_board>PCIe-6323</counter_board>
 	<counter_id type="int">0</counter_id>
 	<counter_trigger type="int">8</counter_trigger>
-	<waveform_clock>ctr0out</waveform_clock>
+	<waveform_clock>PFI12</waveform_clock>
       </parameters>
     </control_module>
   </control_modules>
@@ -125,10 +123,10 @@
 	<uses>AOTF</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
-	  <maximum type="int">6143</maximum>
+	  <maximum type="int">5700</maximum>
 	  <channel type="int">3</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">130.58</on_frequency>
+	  <on_frequency type="float">130.24</on_frequency>
 	</parameters>
       </amplitude_modulation>
       
@@ -143,13 +141,13 @@
     </channel>
 
     <!-- 405 laser -->
-    <!--
+    
     <channel>
       <description>405</description>
       <color type="rgb">255,0,255</color>
 
       <amplitude_modulation>
-	<uses>cube405</uses>
+	<uses>obis405</uses>
 	<display_normalized type="boolean">True</display_normalized>
 	<parameters>
 	  <maximum type="int">5000</maximum>
@@ -165,7 +163,6 @@
       </digital_modulation>
  
     </channel>
-    -->
     
   </channels>
 
