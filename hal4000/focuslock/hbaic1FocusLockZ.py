@@ -37,7 +37,7 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                                                   50.0, 0.0, 100.0))
         lock_params.add("qpd_scale", params.ParameterRangeFloat("Offset to nm calibration value",
                                                                 "qpd_scale",
-                                                                400.0, 0.1, 1000.0))
+                                                                500.0, 0.1, 1000.0))
         lock_params.add("qpd_sum_min", 50.0)
         lock_params.add("qpd_sum_max", 256.0)
         lock_params.add("is_locked_buffer_length", 10)
@@ -47,7 +47,8 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
         # STORM2 Initialization.
         cam = uc480Cam.CameraQPD(camera_id = 1,
                                  x_width = 700,
-                                 y_width = 100,
+                                 y_width = 50,
+                                 sigma = 12.0,
                                  offset_file = "cam_offsets_hbaic1_1.txt")
 
         stage = MCLVZC.MCLVZControl("PCIe-6323", 0)
