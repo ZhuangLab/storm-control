@@ -15,7 +15,7 @@ import time
 # The basic RS-232 communication object which is used by all the objects
 # that communicate with their associated hardware using RS-232.
 #
-class RS232():
+class RS232(object):
 
     ## __init__
     #
