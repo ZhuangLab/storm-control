@@ -10,6 +10,7 @@
 # George Emanuel 5/15
 #
 
+import sys
 
 ## Ludl
 #
@@ -41,7 +42,7 @@ class Ludl(object):
     def goAbsolute(self, x, y):
         newx = str(int(round(x * self.um_to_unit)))
         newy = str(int(round(y * self.um_to_unit)))
-        self._commandIgnoreResponse("Move x=" + newx + ",y=" + newy)
+        self._command("Move x=" + newx + ",y=" + newy)
 
     ## goRelative
     #
@@ -51,7 +52,7 @@ class Ludl(object):
     def goRelative(self, dx, dy):
         newx = str(int(round(dx * self.um_to_unit)))
         newy = str(int(round(dy * self.um_to_unit)))
-        self._commandIgnoreResponse("Movrel x=" + newx + ",y="+newy)
+        self._command("Movrel x=" + newx + ",y="+newy)
 
     ## info
     #
@@ -66,9 +67,11 @@ class Ludl(object):
     # @param y_speed Speed the stage should be moving at in y in um/s.
     #
     def jog(self, x_speed, y_speed):
-	print 'not implemented for Ludl stage'
-        #print "VS {0:.1f},{1:.1f}".format(x_speed,y_speed)
-        #self._command("VS {0:.1f},{1:.1f}".format(x_speed,y_speed))
+
+        # FIXME: Not sure if this works..
+        x_speed = x_speed * self.um_to_unit
+        y_speed = y_speed * self.um_to_unit
+        self._command("VS {0:.1f},{1:.1f}".format(x_speed,y_speed))
 
     ## joystickOnOff
     #
@@ -76,9 +79,9 @@ class Ludl(object):
     #
     def joystickOnOff(self, on):
         if on:
-            self._commandIgnoreResponse("Joystick X+ Y+")
+            self._command("Joystick X+ Y+")
         else:
-            self._commandIgnoreResponse("Joystick X- Y-")
+            self._command("Joystick X- Y-")
      
     ## position
     #
@@ -90,8 +93,12 @@ class Ludl(object):
 	    self.x = int(response[1]) * self.unit_to_um
 	    self.y = int(response[2]) * self.unit_to_um
 	    self.z = int(response[3]) * self.unit_to_um
-        except:
+        except ValueError:
+            # Ignore these. One common source is the stage not having a z-axis.
             pass
+        except:
+            print "Error in Ludl position:", sys.exc_info()[0]
+            print "Response was:", response
 
         return [self.x, self.y, self.z]
 
@@ -101,28 +108,28 @@ class Ludl(object):
     # @param y_vel The maximum stage velocity allowed in y in Ludl units.
     #
     def setVelocity(self, x_vel, y_vel):
-        self._commandIgnoreResponse("Speed x=" + str(x_vel) + ",y=" + str(y_vel))
+        self._command("Speed x=" + str(x_vel) + ",y=" + str(y_vel))
 
     ## zero
     #
     # Set the current position as the stage zero position.
     #
     def zero(self):
-        self._commandIgnoreResponse("Here x=0 y=0 b=0")
+        self._command("Here x=0 y=0 b=0")
 
     ## zMoveTo
     #
     # @param z The z value to move to the (piezo) stage to, in microns.
     #
     def zMoveTo(self, z):
-        self._commandIgnoreResponse("Move B=" + str(int(round(z * self.um_to_unit))))
+        self._command("Move B=" + str(int(round(z * self.um_to_unit))))
 
     ## zMoveRelative
     #
     # @param dz Amount to move piezo (in um).
     #
     def zMoveRelative(self, dz):
-        self._commandIgnoreResponse("Moverel B=" + str(int(round(dz * self.um_to_unit))))
+        self._command("Moverel B=" + str(int(round(dz * self.um_to_unit))))
 
     ## zPosition
     #
@@ -144,7 +151,7 @@ class LudlRS232(Ludl):
     # @param baudrate (Optional) The communication baud rate, defaults to 115200.
     # @param wait_time How long to wait between polling events before it is decided that there is no new data available on the port, defaults to 20ms.
     #
-    def __init__(self, port="COM19", timeout = None, baudrate = 38400, wait_time = 0.02):
+    def __init__(self, port="COM19", timeout = None, baudrate = 115200, wait_time = 0.02):
         Ludl.__init__(self)
 
         import sc_hardware.serial.RS232 as RS232
@@ -179,13 +186,6 @@ class LudlRS232(Ludl):
         if response:
             return response.split("\r")
 
-    ## _commandIgnoreResponse
-    #
-    # @param command The command string to send
-    #
-    def _commandIgnoreResponse(self, command):
-	self.connection.sendCommand(command)
-
     ## shutDown
     #
     # Closes the RS-232 port.
@@ -218,14 +218,15 @@ class LudlTCP(Ludl):
         try:
             test = self._command("Ver")
         except:
+            print "Error in LudlTCP init:", sys.exc_info()[0]
             self.live = False
         if not self.live:
             print "Ludl Stage is not connected? Stage is not on?"
 
 	#Set to analog mode?
 	if (self.live):
-	    self._commandIgnoreResponse("CAN 3, 83, 267, 0")
-	    self._commandIgnoreResponse("stspeed x=50000, y=50000")
+	    self._command("CAN 3, 83, 267, 0")
+	    self._command("stspeed x=50000, y=50000")
 
     ## _command
     # @Override
@@ -235,22 +236,21 @@ class LudlTCP(Ludl):
     # @return The response to the command.
     #
     def _command(self, command):
-	formCommand = "/conajx.asp?&ECMD1=\"" + command + "\""
-	self.connection.request("GET", "/conajx.asp?&ECMD1=\"" + command + "\"")
+	self.connection.request("GET", self.formCommand(command))
 	response = self.connection.getresponse().read().split("\r")[2].strip()
-
 	return ["A: " + response]
 
-    ## _commandIgnoreResponse
-    # @Override
+    ## formCommand
     #
-    # @param command The command string to send
+    # Creates a properly formatted command.
     #
-    def _commandIgnoreResponse(self, command):
-	t = time.time()
-	self.connection.request("GET", "/conajx.asp?&ECMD1=\"" + command+ "\"")
-	self.connection.getresponse().read()
-
+    # @param command The command to send.
+    #
+    # @return The command formatted for HTTP.
+    #
+    def formCommand(self, command):
+	return "/conajx.asp?&ECMD1=\"" + command + "\""
+        
     ## shutDown
     #
     # Closes the HTTP connection.
@@ -267,21 +267,21 @@ class LudlTCP(Ludl):
 if __name__ == "__main__":
     import time
 
-    #stage = LudlRS232("COM25")
-    stage = LudlTCP()
+    stage = LudlRS232("COM8")
+    #stage = LudlTCP()
     
     if stage.getStatus():
         print stage.position()
 
         if True:
             stage.zero()
-            time.sleep(0.1)
-            print stage.position()
+            time.sleep(0.5)
             stage.goRelative(1000.0, 1000.0)
-            time.sleep(0.1)
+            time.sleep(1.0)
             print stage.position()
             stage.goAbsolute(0.0, 0.0)
-            time.sleep(0.1)
+            time.sleep(1.0)
+            print(stage.position())
         
     stage.shutDown()
 
