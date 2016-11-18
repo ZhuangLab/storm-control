@@ -33,7 +33,7 @@
 | QPD | DLL | Thorlabs | Worked, not used |
 | Servo | DLL | Phidgets | Worked, not used |
 | SLM | Video | Holoeye | Works, in use |
-| Stage | RS-232 | LUDL | Worked, not used |
+| Stage | RS-232 /Ethernet | LUDL | Works, in use |
 | Stage | RS-232 | Applied Scientific Instrumentation | Worked, not used |
 | Stage | RS-232 | Marzhauser | Works, in use |
 | Stage | RS-232 | Prior | Works, in use |

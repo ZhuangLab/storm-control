@@ -8,80 +8,23 @@
 #
 # Edited 5/15 to add Z piezo and TCP/IP protocol
 # George Emanuel 5/15
-
-import sc_hardware.serial.RS232 as RS232
-import time
-
-import httplib
-
-ludlStage = None
-
-def getLudlStage(port = "COM17"):
-    print 'find ludl stage'
-    global ludlStage
-    if not ludlStage:
-	ludlStage = Ludl(port)
-    return ludlStage
-
+#
 
 
 ## Ludl
 #
 # Encapsulates control of a XY Ludl stage, communicating through serial.
 #
-class Ludl(RS232.RS232):
+class Ludl(object):
 
     ## __init__
     #
-    # @param port (Optional) The RS-232 port to use, defaults to "COM5".
-    # @param timeout (Optional) The time out value for communication, defaults to None.
-    # @param baudrate (Optional) The communication baud rate, defaults to 115200.
-    # @param wait_time How long to wait between polling events before it is decided that there is no new data available on the port, defaults to 20ms.
-    #
-    def __init__(self, port="COM19", timeout = None, baudrate = 38400, wait_time = 0.02):
+    def __init__(self):
         self.unit_to_um = 0.05
         self.um_to_unit = 1.0/self.unit_to_um
-
-        # RS232 stuff
-        RS232.RS232.__init__(self, port, timeout, baudrate, "\r", wait_time)
-
-	self.live = True
-        try:
-            test = self.commWithResp("Ver")
-        except:
-            self.live = False
-        if not self.live:
-            print "Ludl Stage is not connected? Stage is not on?"
-
         self.x = 0
         self.y = 0
         self.z = 0
-
-	#Set to analog mode?
-	if (self.live):
-            #set z piezo to be controlled by serial	
-	    #self._command("CAN 3, 83, 267, 0")
-	    self._command("stspeed x=50000, y=50000")
-	    self._command("speed x=10000, y=10000")
-
-    ## _command
-    #
-    # @param command The command string to send.
-    #
-    # @return The response to the command.
-    #
-    def _command(self, command):
-        response = self.commWithResp(command)
-        if response:
-            return response.split("\r")
-
-    ## _commandIgnoreResponse
-    # @Override
-    #
-    # @param command The command string to send
-    #
-    def _commandIgnoreResponse(self, command):
-	self.sendCommand(command)
 
     ## getStatus
     #
@@ -187,12 +130,74 @@ class Ludl(RS232.RS232):
     def zPosition(self):
         return int(self._command("WHERE B")[0].split(" ")[1])*self.unit_to_um
 
+
+## Ludl
+#
+# Encapsulates control of a XY Ludl stage, communicating through serial.
+#
+class LudlRS232(Ludl):
+
+    ## __init__
+    #
+    # @param port (Optional) The RS-232 port to use, defaults to "COM5".
+    # @param timeout (Optional) The time out value for communication, defaults to None.
+    # @param baudrate (Optional) The communication baud rate, defaults to 115200.
+    # @param wait_time How long to wait between polling events before it is decided that there is no new data available on the port, defaults to 20ms.
+    #
+    def __init__(self, port="COM19", timeout = None, baudrate = 38400, wait_time = 0.02):
+        Ludl.__init__(self)
+
+        import sc_hardware.serial.RS232 as RS232
+
+        # Open connection.
+        self.connection = RS232.RS232(port, timeout, baudrate, "\r", wait_time)
+
+        # Test connection.
+	self.live = True
+        try:
+            test = self._command("Ver")
+        except AttributeError:
+            self.live = False
+        if not self.live:
+            print "Ludl Stage is not connected? Stage is not on?"
+
+	#Set to analog mode?
+	if (self.live):
+            #set z piezo to be controlled by serial	
+	    #self._command("CAN 3, 83, 267, 0")
+	    self._command("stspeed x=50000, y=50000")
+	    self._command("speed x=10000, y=10000")
+
+    ## _command
+    #
+    # @param command The command string to send.
+    #
+    # @return The response to the command.
+    #
+    def _command(self, command):
+        response = self.connection.commWithResp(command)
+        if response:
+            return response.split("\r")
+
+    ## _commandIgnoreResponse
+    #
+    # @param command The command string to send
+    #
+    def _commandIgnoreResponse(self, command):
+	self.connection.sendCommand(command)
+
+    ## shutDown
+    #
+    # Closes the RS-232 port.
+    #
+    def shutDown(self):
+        if self.live:
+            self.connection.shutDown()
+        
+        
 ## LudlTCP
 #
 # Encapsulates control of a XY Ludl stage, communicating through TCP/IP.
-# Ideally this should be done through a more abstract Ludl class, not
-# one that already communicates through serial, but I don't want to break
-# other code.
 #
 class LudlTCP(Ludl):
 
@@ -201,11 +206,14 @@ class LudlTCP(Ludl):
     # @param ipAddress (Optional) The IP address, defaults to "192.168.100.1"
     #
     def __init__(self, ipAddress="192.168.100.1"):
-        self.unit_to_um = 0.05 
-        self.um_to_unit = 1.0/self.unit_to_um
+        Ludl.__init__(self)
 
+        import httplib
+
+        # Open connection.
 	self.connection = httplib.HTTPConnection(ipAddress, timeout=1)
 
+        # Test connection.
 	self.live = True
         try:
             test = self._command("Ver")
@@ -243,20 +251,38 @@ class LudlTCP(Ludl):
 	self.connection.request("GET", "/conajx.asp?&ECMD1=\"" + command+ "\"")
 	self.connection.getresponse().read()
 
+    ## shutDown
+    #
+    # Closes the HTTP connection.
+    #
+    def shutDown(self):
+        if self.live:
+            self.connection.close()
+
 
 #
 # Testing
 # 
 
 if __name__ == "__main__":
-    stage = Ludl("COM5")
-    print stage.position()
-    stage.zero()
-    time.sleep(0.1)
-    print stage.position()
-    stage.goRelative(100.0, 100.0)
-    time.sleep(0.1)
-    print stage.position()
+    import time
+
+    #stage = LudlRS232("COM25")
+    stage = LudlTCP()
+    
+    if stage.getStatus():
+        print stage.position()
+
+        if True:
+            stage.zero()
+            time.sleep(0.1)
+            print stage.position()
+            stage.goRelative(1000.0, 1000.0)
+            time.sleep(0.1)
+            print stage.position()
+            stage.goAbsolute(0.0, 0.0)
+            time.sleep(0.1)
+        
     stage.shutDown()
 
 #
