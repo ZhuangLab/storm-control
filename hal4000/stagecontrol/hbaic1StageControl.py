@@ -24,7 +24,7 @@ import stagecontrol.stageControl as stageControl
 #
 class AStageControl(stageControl.StageControl):
     def __init__(self, hardware, parameters, parent = None):
-        self.stage = stageThread.QStageThread(ludl.Ludl("COM8", wait_time = 1.0e-3))
+        self.stage = stageThread.QStageThread(ludl.LudlTCP())
         self.stage.start(QtCore.QThread.NormalPriority)
         stageControl.StageControl.__init__(self, 
                                            parameters,
