@@ -79,11 +79,12 @@ class Ludl(object):
     # @param y_speed Speed the stage should be moving at in y in um/s.
     #
     def jog(self, x_speed, y_speed):
-
-        # FIXME: Not sure if this works..
-        x_speed = x_speed * self.um_to_unit
-        y_speed = y_speed * self.um_to_unit
-        self._command("VS {0:.1f},{1:.1f}".format(x_speed,y_speed))
+        # FIXME: It looks like this stage does not support this type of movement?
+        pass
+    
+#        x_speed = x_speed * self.um_to_unit
+#        y_speed = y_speed * self.um_to_unit
+#        self._command("VS {0:.1f},{1:.1f}".format(x_speed,y_speed))
 
     ## joystickOnOff
     #
