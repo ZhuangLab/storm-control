@@ -12,6 +12,8 @@
 
 import sys
 
+import sc_library.parameters as params
+
 ## Ludl
 #
 # Encapsulates control of a XY Ludl stage, communicating through serial.
@@ -27,6 +29,16 @@ class Ludl(object):
         self.y = 0
         self.z = 0
 
+    ## getSpeed
+    #
+    # @return The stage speed parameter.
+    #
+    def getSpeed(self):
+        # FIXME: Is this really um/s?
+        return params.ParameterRangeFloat("Stage speed in um/s",
+                                          "stage_speed",
+                                          10000.0, 100.0, 10000.0)
+    
     ## getStatus
     #
     # @return True/False if we are actually connected to the stage.
