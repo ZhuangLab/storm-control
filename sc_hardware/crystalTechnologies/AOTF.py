@@ -17,6 +17,7 @@ import ctypes
 import os
 import socket
 import subprocess
+import telnetlib
 import time
 
 aotf = None
@@ -31,7 +32,7 @@ instantiated = 0
 # For now, you have to make sure shutdown is called or the process will
 # lock (or at least it will lock the DOS prompt).
 #
-class AOTF():
+class AOTF(object):
 
     ## __init__
     #
@@ -258,9 +259,6 @@ class AOTF():
         self._shutDown()
         self.aotf_handle = False
 
-#    def __del__(self):
-#        if self.aotf_handle:
-#            self.shutDown()
 
 ## AOTF64Bit
 #
@@ -346,16 +344,99 @@ class AOTF64Bit(AOTF):
         self._sendCmd("shutdown")
         self.aotf_conn.close()
         self.aotf_proc.terminate()
+
+
+## AOTFTelnet
+#
+# This class communicates with the AOTF over the ethernet using telnet.
+#
+class AOTFTelnet(AOTF):
+
+    ## __init__
+    #
+    # Open telnet connection and verify that it works.
+    #
+    def __init__(self, ip_address, timeout = 1.0):
+
+        # Open connection.
+        self.aotf_conn = telnetlib.Telnet(ip_address)
+        self.timeout = timeout
+
+        # Login.
+        print(self.aotf_conn.read_until("login: ", self.timeout))
+        self.aotf_conn.write("root\n")
+        print(self.aotf_conn.read_until("Password: ", self.timeout))
+        with open('aotf_pass.txt', 'r') as fp:
+            password = fp.readline()
+        self.aotf_conn.write(password + "\n")
+        print(self.aotf_conn.read_until("root:~> ", self.timeout))
+
+        # Start Aotf control program.
+        self.aotf_conn.write("/bin/Aotf\n")
+        print(self.aotf_conn.read_until("* ", self.timeout))
+
+        # Verify that we can talk to the Aotf.
+        self.live = True
+        if not self._aotfOpen():
+            self.live = False
         
+    ## _aotfOpen
+    #
+    # @return True/False we can talk to the AOTF.
+    #
+    def _aotfOpen(self):
+        response = self._sendCmd("dau en")
+        if ("Invalid" in response):
+            return False
+        else:
+            self._sendCmd("dau gain * 255")
+            return True
+
+    ## _sendCmd
+    #
+    # Send a command to the AOTF using IPC.
+    #
+    # @param cmd The command to send (a string).
+    #
+    # @return The response of "Invalid" if there was a problem.
+    #    
+    def _sendCmd(self, cmd):
+        if self.live:
+            #print("sent", cmd)
+            self.aotf_conn.write(cmd + "\n")
+            #resp = self.aotf_conn.read_until("\r\n* ", self.timeout)
+            resp = self.aotf_conn.read_until("* ", self.timeout)
+            #print("got", resp)
+            return resp
+        else:
+            return "Invalid"
+
+    ## shutDown
+    #
+    # Reset the AOTF and shutdown IPC.
+    #
+    def shutDown(self):
+        self._sendCmd("shutdown")
+        self.aotf_conn.close()
+        
+
 #
 # Testing.
 #
-
 if __name__ == "__main__":
-    my_aotf = AOTF64Bit()
+    my_aotf = AOTFTelnet("192.168.10.3")
+    #my_aotf = AOTF64Bit()
     print my_aotf._sendCmd("BoardID ID")
     print my_aotf._sendCmd("dds f 0 88.6")
-    print my_aotf._sendCmd("dds a 0 6100")
+
+    start_time = time.time()
+    for i in range(100):
+        for j in range(8):
+            my_aotf._sendCmd("dds a " + str(j) + " 6100")
+            my_aotf._sendCmd("dds a " + str(j) + " 0")
+            #print my_aotf._sendCmd("dds a " + str(j) + " 6100")
+            #print my_aotf._sendCmd("dds a " + str(j) + " 0")
+    print("elapsed time ", time.time() - start_time)
     time.sleep(1.0)
     my_aotf.shutDown()
 
