@@ -363,17 +363,22 @@ class AOTFTelnet(AOTF):
         self.timeout = timeout
 
         # Login.
-        print(self.aotf_conn.read_until("login: ", self.timeout))
+        self.aotf_conn.read_until("login: ", self.timeout)
         self.aotf_conn.write("root\n")
-        print(self.aotf_conn.read_until("Password: ", self.timeout))
-        with open('aotf_pass.txt', 'r') as fp:
+        self.aotf_conn.read_until("Password: ", self.timeout)
+
+        dirname = os.path.dirname(__file__)
+        if (len(dirname) == 0):
+            dirname = "."
+        #print(dirname)
+        with open(dirname + '/aotf_pass.txt', 'r') as fp:
             password = fp.readline()
         self.aotf_conn.write(password + "\n")
-        print(self.aotf_conn.read_until("root:~> ", self.timeout))
+        self.aotf_conn.read_until("root:~> ", self.timeout)
 
         # Start Aotf control program.
         self.aotf_conn.write("/bin/Aotf\n")
-        print(self.aotf_conn.read_until("* ", self.timeout))
+        self.aotf_conn.read_until("* ", self.timeout)
 
         # Verify that we can talk to the Aotf.
         self.live = True
