@@ -156,6 +156,25 @@ class CrystalTechAOTF64Bit(CrystalTechAOTF):
         CrystalTechAOTF.__init__(self, parameters, parent)
 
 
+## CrystalTechAOTFTelnet
+#
+# Crystal Technologies AOTF control by telnet.
+#
+class CrystalTechAOTFTelnet(CrystalTechAOTF):
+
+    ## __init__
+    #
+    # @param parameters A XML object containing initial parameters.
+    # @param parent The PyQt parent of this object.
+    #
+    def __init__(self, parameters, parent):
+
+        import sc_hardware.crystalTechnologies.AOTF as AOTF
+        self.aotf = AOTF.AOTFTelnet("192.168.10.3")
+
+        CrystalTechAOTF.__init__(self, parameters, parent)
+
+
 #
 # The MIT License
 #
