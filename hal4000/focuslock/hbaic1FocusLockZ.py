@@ -40,14 +40,20 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                                                 500.0, 0.1, 1000.0))
         lock_params.add("qpd_sum_min", 50.0)
         lock_params.add("qpd_sum_max", 256.0)
-        lock_params.add("is_locked_buffer_length", 10)
-        lock_params.add("is_locked_offset_thresh", 0.01)
+
+        lock_params.add("is_locked_buffer_length", params.ParameterRangeInt("Length of in focus buffer",
+                                                                "is_locked_buffer_length",
+                                                                3, 1, 100))
+        lock_params.add("is_locked_offset_thresh", params.ParameterRangeFloat("Offset distance still considered in focus",
+                                                                "is_locked_offset_thresh",
+                                                                1, 0.001, 1000))
+
         lock_params.add("ir_power", params.ParameterInt("", "ir_power", 6, is_mutable = False))
 
         # STORM2 Initialization.
         cam = uc480Cam.CameraQPD(camera_id = 1,
                                  x_width = 700,
-                                 y_width = 50,
+                                 y_width = 100,
                                  sigma = 12.0,
                                  offset_file = "cam_offsets_hbaic1_1.txt")
 
