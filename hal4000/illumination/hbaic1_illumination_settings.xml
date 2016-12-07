@@ -6,7 +6,7 @@
     <control_module>
       <name>AOTF</name>
       <module_name>sc_hardware.crystalTechnologies.hAotf</module_name>
-      <class_name>CrystalTechAOTF64Bit</class_name>
+      <class_name>CrystalTechAOTFTelnet</class_name>
       <parameters>
 	<use_fsk type="boolean">true</use_fsk>
       </parameters>
