@@ -38,7 +38,8 @@ class Cube(RS232.RS232):
             self.setExtControl(0)
             if (not self.getLaserOnOff()):
                 self.setLaserOnOff(True)
-        except:
+        except Exception as e:
+            print "RS232 Error:", type(e), str(e)
             self.live = False
             print "Failed to connect to Cube Laser at port", port
             print "Perhaps it is turned off or the COM ports have"
@@ -165,7 +166,7 @@ class Cube(RS232.RS232):
 #
 
 if __name__ == "__main__":
-    cube = Cube("COM1")
+    cube = Cube("COM9")
     if cube.getStatus():
         print cube.getPowerRange()
         print cube.getLaserOnOff()
