@@ -256,9 +256,8 @@ class AOTF(object):
     def shutDown(self):
         global instantiated
         instantiated = False
-        if self.live:
-            self._shutDown()
-            self.aotf_handle = False
+        self._shutDown()
+        self.aotf_handle = False
 
 
 ## AOTF64Bit
