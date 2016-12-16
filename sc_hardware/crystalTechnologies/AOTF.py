@@ -256,8 +256,9 @@ class AOTF(object):
     def shutDown(self):
         global instantiated
         instantiated = False
-        self._shutDown()
-        self.aotf_handle = False
+        if self.live:
+            self._shutDown()
+            self.aotf_handle = False
 
 
 ## AOTF64Bit
@@ -341,9 +342,10 @@ class AOTF64Bit(AOTF):
     # Reset the AOTF and shutdown IPC.
     #
     def shutDown(self):
-        self._sendCmd("shutdown")
-        self.aotf_conn.close()
-        self.aotf_proc.terminate()
+        if self.live:
+            self._sendCmd("shutdown")
+            self.aotf_conn.close()
+            self.aotf_proc.terminate()
 
 
 ## AOTFTelnet
@@ -359,7 +361,13 @@ class AOTFTelnet(AOTF):
     def __init__(self, ip_address, timeout = 1.0):
 
         # Open connection.
-        self.aotf_conn = telnetlib.Telnet(ip_address)
+        try:
+            self.aotf_conn = telnetlib.Telnet(ip_address, timeout = 0.1)
+        except socket.timeout:
+            print("AOTF not found")
+            self.live = False
+            return
+        
         self.timeout = timeout
 
         # Login.
@@ -421,8 +429,9 @@ class AOTFTelnet(AOTF):
     # Reset the AOTF and shutdown IPC.
     #
     def shutDown(self):
-        self._sendCmd("shutdown")
-        self.aotf_conn.close()
+        if self.live:
+            self._sendCmd("shutdown")
+            self.aotf_conn.close()
         
 
 #
