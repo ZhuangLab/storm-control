@@ -21,31 +21,31 @@ if (len(sys.argv) != 3):
 hcam = hc.HamamatsuCameraMR(0)
 
 # Set camera parameters.
-cam_offset = 100
+cam_offset = 0
 hcam.setPropertyValue("defect_correct_mode", "OFF")
 hcam.setPropertyValue("exposure_time", 0.01)
 hcam.setPropertyValue("binning", "1x1")
 hcam.setPropertyValue("readout_speed", 2)
 
-if 1:
+if True:
     cam_x = 2048
     cam_y = 2048
     hcam.setPropertyValue("subarray_hsize", cam_x)
     hcam.setPropertyValue("subarray_vsize", cam_y)
 
-if 0:
-    cam_x = 1024
-    cam_y = 1024
-    hcam.setPropertyValue("subarray_hpos", 512)
-    hcam.setPropertyValue("subarray_vpos", 512)
+if False:
+    cam_x = 512
+    cam_y = 512
+    hcam.setPropertyValue("subarray_hpos", 768)
+    hcam.setPropertyValue("subarray_vpos", 768)
     hcam.setPropertyValue("subarray_hsize", cam_x)
     hcam.setPropertyValue("subarray_vsize", cam_y)
 
 print "integration time (seconds):", 1.0/hcam.getPropertyValue("internal_frame_rate")[0]
 
 # Create numpy arrays.
-mean = numpy.zeros(cam_x * cam_y, dtype = numpy.int64)
-var = numpy.zeros(cam_x * cam_y, dtype = numpy.int64)
+mean = numpy.zeros((cam_x, cam_y), dtype = numpy.int64)
+var = numpy.zeros((cam_x, cam_y), dtype = numpy.int64)
 
 # Acquire data.
 #break_on_next_loop = False
@@ -65,6 +65,7 @@ while (processed < n_frames):
     
     if (len(frames) > 0):
         aframe = frames[0].getData().astype(numpy.int32) - cam_offset
+        aframe = numpy.reshape(aframe, (cam_x, cam_y))
         mean += aframe
         var += aframe * aframe
         processed += 1
