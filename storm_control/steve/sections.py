@@ -283,8 +283,8 @@ class SectionControls(QtWidgets.QWidget):
         self.x_pos = x_pos
         self.y_pos = y_pos
 
-        self.layout = QtGui.QHBoxLayout(self)
-        self.layout.setMargin(4)
+        self.layout = QtWidgets.QHBoxLayout(self)
+        self.layout.setContentsMargins(4,4,4,4)
         self.layout.setSpacing(2)
 
         self.check_box = SectionCheckBox(self)
@@ -447,13 +447,13 @@ class SectionControlsList(QtWidgets.QWidget):
     def __init__(self, parent):
         QtWidgets.QListWidget.__init__(self, parent)
 
-        self.layout = QtGui.QVBoxLayout(self)
-        self.layout.setMargin(4)
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(4,4,4,4)
         self.layout.setSpacing(2)
-        self.layout.addSpacerItem(QtGui.QSpacerItem(20,
-                                                    12,
-                                                    QtGui.QSizePolicy.Minimum,
-                                                    QtGui.QSizePolicy.Expanding))
+        self.layout.addSpacerItem(QtWidgets.QSpacerItem(20,
+                                                        12,
+                                                        QtWidgets.QSizePolicy.Minimum,
+                                                        QtWidgets.QSizePolicy.Expanding))
 
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
 
@@ -627,7 +627,7 @@ class Sections(QtWidgets.QWidget):
         scroll_area.setWidgetResizable(True)
 
         self.sections_view = SectionsView(display_frame)
-        layout = QtGui.QGridLayout(display_frame)
+        layout = QtWidgets.QGridLayout(display_frame)
         layout.addWidget(self.sections_view)
         self.sections_view.show()
 
@@ -1007,10 +1007,10 @@ class SectionsView(QtWidgets.QWidget):
         self.old_width = self.width()
         self.old_height = self.height()
         
-        self.pictAct = QtGui.QAction(self.tr("Take Pictures"), self)
-        self.posAct = QtGui.QAction(self.tr("Record Positions"), self)
+        self.pictAct = QtWidgets.QAction(self.tr("Take Pictures"), self)
+        self.posAct = QtWidgets.QAction(self.tr("Record Positions"), self)
 
-        self.popup_menu = QtGui.QMenu(self)
+        self.popup_menu = QtWidgets.QMenu(self)
         self.popup_menu.addAction(self.pictAct)
         self.popup_menu.addAction(self.posAct)
 

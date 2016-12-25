@@ -108,7 +108,7 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
         self.layout = QtWidgets.QGridLayout(self)
         self.objectives = {}
 
-        self.layout.setMargin(4)
+        self.layout.setContentsMargins(4,4,4,4)
         self.layout.setSpacing(0)
 
     def addObjective(self, data):

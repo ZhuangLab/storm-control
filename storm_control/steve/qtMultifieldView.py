@@ -51,7 +51,7 @@ class MultifieldView(QtWidgets.QGraphicsView):
         self.setBackgroundBrush(self.bg_brush)
 
         # scene initialization
-        self.scene = QtGui.QGraphicsScene()
+        self.scene = QtWidgets.QGraphicsScene()
         self.setScene(self.scene)
 
         self.updateSceneRect(0, 0, True)

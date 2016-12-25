@@ -97,7 +97,7 @@ class Window(QtWidgets.QMainWindow):
 
         # Initialize view.
         self.view = mosaicView.MosaicView(parameters, self.ui.mosaicFrame)
-        layout = QtGui.QGridLayout(self.ui.mosaicFrame)
+        layout = QtWidgets.QGridLayout(self.ui.mosaicFrame)
         layout.addWidget(self.view)
         self.ui.mosaicFrame.setLayout(layout)
         self.view.show()
@@ -106,7 +106,7 @@ class Window(QtWidgets.QMainWindow):
         self.positions = positions.Positions(parameters,
                                              self.view.getScene(),
                                              self.ui.positionsFrame)
-        layout = QtGui.QGridLayout(self.ui.positionsFrame)
+        layout = QtWidgets.QGridLayout(self.ui.positionsFrame)
         layout.addWidget(self.positions)
         self.ui.positionsFrame.setLayout(layout)
         self.positions.show()

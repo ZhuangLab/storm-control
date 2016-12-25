@@ -178,15 +178,15 @@ class MosaicView(multiView.MultifieldView):
         self.yoffset = 0.0
 
         # popup menu initializiation
-        self.extrapolateAct = QtGui.QAction(self.tr("Extrapolate"), self)
-        self.getObjAct = QtGui.QAction(self.tr("Query Objective"), self)
-        self.gotoAct = QtGui.QAction(self.tr("Goto Position"), self)
-        self.pictAct = QtGui.QAction(self.tr("Take Picture"), self)
-        self.posAct = QtGui.QAction(self.tr("Record Position"), self)
-        self.removeAct = QtGui.QAction(self.tr("Remove Last Picture"), self)
-        self.secAct = QtGui.QAction(self.tr("Add Section"), self)
+        self.extrapolateAct = QtWidgets.QAction(self.tr("Extrapolate"), self)
+        self.getObjAct = QtWidgets.QAction(self.tr("Query Objective"), self)
+        self.gotoAct = QtWidgets.QAction(self.tr("Goto Position"), self)
+        self.pictAct = QtWidgets.QAction(self.tr("Take Picture"), self)
+        self.posAct = QtWidgets.QAction(self.tr("Record Position"), self)
+        self.removeAct = QtWidgets.QAction(self.tr("Remove Last Picture"), self)
+        self.secAct = QtWidgets.QAction(self.tr("Add Section"), self)
 
-        self.popup_menu = QtGui.QMenu(self)
+        self.popup_menu = QtWidgets.QMenu(self)
         self.popup_menu.addAction(self.pictAct)
         self.popup_menu.addAction(self.gotoAct)
         self.popup_menu.addAction(self.posAct)
