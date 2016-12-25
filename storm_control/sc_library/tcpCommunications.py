@@ -11,8 +11,9 @@
 # Hazen 05/14
 #
 
-from PyQt4 import QtCore, QtNetwork
-from sc_library.tcpMessage import TCPMessage
+from PyQt5 import QtCore, QtNetwork
+
+from storm_control.sc_library.tcpMessage import TCPMessage
 
 ## TCPCommunications
 #
@@ -54,7 +55,8 @@ class TCPCommunications(QtCore.QObject):
     def close(self):
         if self.socket:
             self.socket.close()
-            if self.verbose: print "Closing TCP communications: " + self.server_name
+            if self.verbose:
+                print("Closing TCP communications: " + self.server_name)
             
     ## handleBusy
     #
@@ -75,7 +77,8 @@ class TCPCommunications(QtCore.QObject):
 
         # Create message.
         message = TCPMessage.fromJSON(message_str)
-        if self.verbose: print "Received: \n" + str(message)
+        if self.verbose:
+            print("Received: \n" + str(message))
 
         if message.getType() == "Busy":
             self.handleBusy()
@@ -105,11 +108,12 @@ class TCPCommunications(QtCore.QObject):
             #message_str = pickle.dumps(message)
             self.socket.write(message.toJSON() + "\n")
             self.socket.flush()
-            if self.verbose: print "Sent: \n" + str(message)
+            if self.verbose:
+                print("Sent: \n" + str(message))
         else:
-            print self.server_name + " socket not connected. \nDid not send:" 
+            print(self.server_name + " socket not connected. \nDid not send:" )
             message.setError(True, "Communication Error: " + self.server_name + " socket not connected")
-            print message
+            print(message)
             self.messageReceived.emit(message) # Return message with error
 
 #

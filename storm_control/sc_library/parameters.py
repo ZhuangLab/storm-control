@@ -16,7 +16,7 @@ import traceback
 from xml.dom import minidom
 from xml.etree import ElementTree
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui
 
 default_params = 0
 
@@ -49,7 +49,7 @@ def copyParameters(ori_parameters, new_parameters):
                                           "The following parameters were not recognized: " + ", ".join(unrecognized) + ". Perhaps they are not in the correct sub-section?")
             #raise ParametersException("Unrecognized parameters.")
         else:
-            print "The following parameters were not recognized: " + ", ".join(unrecognized)
+            print("The following parameters were not recognized: " + ", ".join(unrecognized))
             
     return params
 
@@ -742,10 +742,10 @@ class StormXMLObject(object):
                 # that current Steve can read older data.
                 elif (node_type == "float-array"):
                     param = ParameterCustom(description, node.tag, node.text, order, mutable)
-                    print "Found deprecated parameter type: ", node_type 
+                    print("Found deprecated parameter type: ", node_type )
 
                 elif (node_type in ["float64", "int-array", "str", "string-array", "unicode", "bool"]):
-                    print "Found deprecated parameter type: ", node_type, " ignoring."
+                    print("Found deprecated parameter type: ", node_type, " ignoring.")
 
                 else:
                     raise ParametersException("unrecognized type, " + node_type)
@@ -987,18 +987,18 @@ if (__name__ == "__main__"):
 
     from xml.dom import minidom
 
-    if 1:
+    if True:
         p1 = halParameters(sys.argv[1])
         p2 = halParameters(sys.argv[2])
 
         string = ElementTree.tostring(p2.toXML(), 'utf-8')
         reparsed = minidom.parseString(string)
-        print reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1")    
+        print(reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1"))
 
-    if 0:
+    if False:
         pm = parameters(sys.argv[1], True)
-        print pm.get("film")
-        print pm.get("film.directory")
+        print(pm.get("film"))
+        print(pm.get("film.directory"))
         
 #        string = ElementTree.tostring(pm.toXML(), 'utf-8')
 #        reparsed = minidom.parseString(string)

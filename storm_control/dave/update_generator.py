@@ -16,7 +16,7 @@
 import time
 import tinydav
 
-class HTMLUpdate():
+class HTMLUpdate(object):
     def __init__(self, parameters):
         self.directory = parameters.directory
         self.password = parameters.password

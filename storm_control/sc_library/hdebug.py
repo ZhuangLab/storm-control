@@ -11,7 +11,7 @@ import functools
 import logging
 import logging.handlers
 
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 
 a_logger = False
 logging_mutex = QtCore.QMutex()
@@ -85,10 +85,10 @@ def logText(a_string, to_console = False):
         a_logger.info("message:")
         a_logger.info("  " + a_string)
         if to_console:
-            print a_string
+            print(a_string)
         logging_mutex.unlock()
     else:
-        print a_string
+        print(a_string)
 
 
 ## startLogging
@@ -105,7 +105,7 @@ def startLogging(directory, program_name):
 
     # Get logger index (to allow logging from several programs with the same name).
     settings = QtCore.QSettings("Zhuang Lab", "hdebug logger")
-    index = settings.value("current index", 1).toInt()[0]
+    index = int(settings.value("current index", 1))
     new_index = index + 1
     if (new_index > 100):
         new_index = 1
@@ -125,8 +125,8 @@ def startLogging(directory, program_name):
                                                           maxBytes = 200000,
                                                           backupCount = 5)
     except IOError:
-        print "Logging Error! Could not open", log_filename
-        print "  Logging is disabled."
+        print("Logging Error! Could not open", log_filename)
+        print("  Logging is disabled.")
         a_logger = False
 
     if a_logger:

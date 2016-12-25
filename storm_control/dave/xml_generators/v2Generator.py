@@ -14,19 +14,23 @@
 # 
 # Import
 # 
-import os, sys
+import os
+import sys
+import traceback
 from xml.etree import ElementTree
 from xml.dom import minidom
-from PyQt4 import QtCore, QtGui
-import xml_generators.nodeToDict as nodeToDict
-import traceback
-import daveActions
+
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+import storm_control.dave.xml_generators.nodeToDict as nodeToDict
+
+import storm_control.dave.daveActions as daveActions
 
 ## XMLRecipeParser
 # 
 # A class for parsing the version 2 dave files and generating dave primitive sequences
 #
-class XMLRecipeParser(QtGui.QWidget):
+class XMLRecipeParser(QtWidgets.QWidget):
 
     ## __init__
     #
@@ -40,7 +44,7 @@ class XMLRecipeParser(QtGui.QWidget):
                  output_filename = "",
                  verbose = True,
                  parent = None):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         
         # Initialize local attributes
         self.xml_filename = xml_filename
@@ -85,8 +89,8 @@ class XMLRecipeParser(QtGui.QWidget):
     #
     def convertToDaveXMLPrimitives(self, primitives_xml, flat_sequence):
         if self.verbose:
-            print "---------------------------------------------------------"
-            print "Converting to Dave Primitives"
+            print("---------------------------------------------------------")
+            print("Converting to Dave Primitives")
         
         # Loop over all children
         for child in flat_sequence:
@@ -223,10 +227,13 @@ class XMLRecipeParser(QtGui.QWidget):
         try:
             # Parse xml
             xml = ElementTree.parse(xml_file_path)
-            if self.verbose: print "Parsing: " + xml_file_path
+            if self.verbose:
+                print("Parsing: " + xml_file_path)
             return (xml, xml_file_path)
+
+        # FIXME: Make this more specific. The error might not only be a path problem.
         except:
-            print "Invalid xml file: " + xml_file_path
+            print("Invalid xml file: " + xml_file_path)
             return (None, xml_file_path)
 
     ## parseLoopVariables
@@ -283,7 +290,7 @@ class XMLRecipeParser(QtGui.QWidget):
                 for loop_variable in loop_variables:
                     loop.append(loop_variable)
                 if self.verbose:
-                    print "Extracted loop variables from " + path_to_loop_variable_xml
+                    print("Extracted loop variables from " + path_to_loop_variable_xml)
 
     ## parseXML
     #
@@ -313,7 +320,7 @@ class XMLRecipeParser(QtGui.QWidget):
         elif self.main_element.tag == "experiment": # old version
             self.parseXMLExperiment()
         else:
-            print "Unexpected contents: " + self.xml_filename
+            print("Unexpected contents: " + self.xml_filename)
             return ""
 
         return self.xml_sequence_file_path
@@ -434,7 +441,7 @@ class XMLRecipeParser(QtGui.QWidget):
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
 # ----------------------------------------------------------------------------------------
-class StandAlone(QtGui.QMainWindow):
+class StandAlone(QtWidgets.QMainWindow):
     def __init__(self, parent = None):
         super(StandAlone, self).__init__(parent)
 
@@ -445,11 +452,12 @@ class StandAlone(QtGui.QMainWindow):
 # ----------------------------------------------------------------------------------------
 # Test Code
 # ----------------------------------------------------------------------------------------
-if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+if (__name__ == "__main__"):
+    app = QtWidgets.QApplication(sys.argv)
     window = StandAlone()
     window.show()
-    app.exec_()  
+    app.exec_()
+    
 #
 # The MIT License
 #

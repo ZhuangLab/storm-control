@@ -15,7 +15,7 @@ import traceback
 #
 # The notification class.
 #
-class Notifier:
+class Notifier(object):
 
     ## __init__
     #
@@ -73,10 +73,10 @@ class Notifier:
                 server.quit()
                 
             except:
-                print "Failed to send e-mail."
-                print traceback.format_exc()
+                print("Failed to send e-mail.")
+                print(traceback.format_exc())
         else:
-            print "One or more notification fields are empty."
+            print("One or more notification fields are empty.")
 
     ## setFields
     #
@@ -104,11 +104,11 @@ class Notifier:
 # Testing
 # 
 
-if __name__ == "__main__":
+if (__name__ == "__main__"):
     import sys
 
     if (len(sys.argv) != 5):
-        print "usage: <smtp_server> <from_address> <from_password> <to_address>"
+        print("usage: <smtp_server> <from_address> <from_password> <to_address>")
         exit()
 
     noti = Notifier(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])

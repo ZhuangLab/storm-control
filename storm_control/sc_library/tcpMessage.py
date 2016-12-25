@@ -206,34 +206,34 @@ class TCPMessage(object):
 # 
 # Test of Class
 #                         
-if __name__ == "__main__":
+if (__name__ == "__main__"):
 
-    if 0:
+    if False:
         message = TCPMessage(message_type="findSum",
                              message_data={"find_sum":200},
                              test_mode=False)
 
-        print "-"*40
-        print message
-        print "-"*40
-        print message.getData("find_sum")
+        print("-"*40)
+        print(message)
+        print("-"*40)
+        print(message.getData("find_sum"))
         message.setError(True, "Could not find focus")
-        print "-"*40
-        print message
+        print("-"*40)
+        print(message)
 
         message = TCPMessage(message_type="movie",
                              message_data={"name":"Test_0_0.dax", "length":1000, "parameters":1},
                              test_mode=False)
-        print "-"*40
-        print message
+        print("-"*40)
+        print(message)
 
-    if 1:
+    if True:
         message = TCPMessage(message_type="findSum",
                              message_data={"find_sum":200},
                              test_mode=False)
         temp = message.toJSON()
-        print temp
-        print type(temp)
+        print(temp)
+        print(type(temp))
 
         #print message
         #print ""

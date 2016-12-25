@@ -11,9 +11,9 @@
 #
 
 from xml.etree import ElementTree
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 
-import sc_library.tcpMessage as tcpMessage
+import storm_control.sc_library.tcpMessage as tcpMessage
 
 ## addField
 #
@@ -531,7 +531,7 @@ class DADelay(DaveAction):
             self.completeAction(self.message)
         else:
             self.delay_timer.start(self.delay)
-            print "Delaying " + str(self.delay) + " ms"
+            print("Delaying " + str(self.delay) + " ms")
 
 
 ## DAFindSum

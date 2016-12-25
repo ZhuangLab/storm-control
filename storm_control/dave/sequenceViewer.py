@@ -8,7 +8,7 @@
 #
 
 from xml.etree import ElementTree
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 import daveActions
 
@@ -97,7 +97,7 @@ class DaveActionStandardItem(QtGui.QStandardItem):
 #
 # This class wraps the tree view and it's associated model.
 #
-class DaveCommandTreeViewer(QtGui.QTreeView):
+class DaveCommandTreeViewer(QtWidgets.QTreeView):
     double_clicked = QtCore.pyqtSignal(object)
     update = QtCore.pyqtSignal(object)
 
@@ -106,12 +106,12 @@ class DaveCommandTreeViewer(QtGui.QTreeView):
     # @param parent (Optional) defaults to none.
     #
     def __init__(self, parent = None):
-        QtGui.QTreeView.__init__(self, parent)
+        QtWidgets.QTreeView.__init__(self, parent)
 
         self.aborted = False
         self.dv_model = None
 
-        self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.setUniformRowHeights(True)
         self.setHeaderHidden(True)
 
@@ -248,7 +248,7 @@ class DaveCommandTreeViewer(QtGui.QTreeView):
     # @param p_event A QPaintEvent object
     #
     def paintEvent(self, p_event):
-        QtGui.QTreeView.paintEvent(self, p_event)
+        QtWidgets.QTreeView.paintEvent(self, p_event)
 
         if self.dv_model is not None:
             cur_item = self.dv_model.getCurrentItem()
@@ -307,7 +307,7 @@ class DaveCommandTreeViewer(QtGui.QTreeView):
     #
     def setModel(self, dv_model):
         self.dv_model = dv_model
-        QtGui.QTreeView.setModel(self, self.dv_model)
+        QtWidgets.QTreeView.setModel(self, self.dv_model)
         self.viewportUpdate()
 
     ## setTestMode
@@ -506,7 +506,7 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
                 self.dave_action_index = i
                 break
         else:
-            print "item not found!"
+            print("item not found!")
 
     ## setCurrentItemValid
     #
@@ -519,7 +519,7 @@ class DaveStandardItemModel(QtGui.QStandardItemModel):
             current_action = current_item.getDaveAction()
             current_id = current_action.getID()
 
-            print current_id, is_valid
+            print(current_id, is_valid)
             
             # Change validity of all actions that have this id
             for item in self.dave_actions_test_dict[current_id]:

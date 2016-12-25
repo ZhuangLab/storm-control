@@ -25,24 +25,24 @@ import time
 #from xml.dom import minidom, Node
 
 # PyQt
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 # General
-import notifications
-import sequenceGenerator
-import sequenceViewer
+import storm_control.dave.notifications as notifications
+import storm_control.dave.sequenceGenerator as sequenceGenerator
+import storm_control.dave.sequenceViewer as sequenceViewer
 
 # Communication
-import sc_library.tcpClient as tcpClient
+import storm_control.sc_library.tcpClient as tcpClient
 
 # UI
-import qtdesigner.dave_ui as daveUi
+import storm_control.dave.qtdesigner.dave_ui as daveUi
 
 # Parameter loading
-import sc_library.parameters as params
+import storm_control.sc_library.parameters as params
 
 
 ## CommandEngine
@@ -150,7 +150,7 @@ class CommandEngine(QtCore.QObject):
 #
 # The main window of Dave.
 #
-class Dave(QtGui.QMainWindow):
+class Dave(QtWidgets.QMainWindow):
 
     ## __init__
     #
@@ -161,8 +161,8 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def __init__(self, parameters, parent = None):
-        QtGui.QMainWindow.__init__(self, parent)
-        
+        QtWidgets.QMainWindow.__init__(self, parent)
+
         # General.
         self.directory = ""
         self.notifier = notifications.Notifier("", "", "", "")
@@ -184,6 +184,10 @@ class Dave(QtGui.QMainWindow):
         self.ui.spaceLabel.setText("")
         self.ui.timeLabel.setText("")
 
+        self.directory = str(self.settings.value("directory", ""))
+        self.move(self.settings.value("position", self.pos()))
+        self.resize(self.settings.value("size", self.size()))
+        
         # Hide widgets
         self.ui.frequencyLabel.hide()
         self.ui.frequencySpinBox.hide()
@@ -218,8 +222,8 @@ class Dave(QtGui.QMainWindow):
                               [self.ui.fromPasswordLineEdit, "from_password"],
                               [self.ui.smtpServerLineEdit, "smtp_server"]]
 
-        for [object, name] in self.noti_settings:
-            object.setText(self.settings.value(name, "").toString())
+        for [elt, name] in self.noti_settings:
+            elt.setText(self.settings.value(name, ""))
 
         # Configure command details table.
         #self.ui.commandTableView.setHeaderHidden(True)
@@ -248,9 +252,13 @@ class Dave(QtGui.QMainWindow):
     #
     @hdebug.debug
     def cleanUp(self):
+        self.settings.setValue("directory", self.directory)
+        self.settings.setValue("position", self.pos())
+        self.settings.setValue("size", self.size())
+
         # Save notification settings.
-        for [object, name] in self.noti_settings:
-            self.settings.setValue(name, object.text())
+        for [elt, name] in self.noti_settings:
+            self.settings.setValue(name, elt.text())
 
     ## closeEvent
     #
@@ -296,19 +304,19 @@ class Dave(QtGui.QMainWindow):
     def handleAbortButton(self, boolean):
         if not self.test_mode:
             # Force manual conformation of abort
-            messageBox = QtGui.QMessageBox(parent = self)
+            messageBox = QtWidgets.QMessageBox(parent = self)
             messageBox.setWindowTitle("Abort?")
             messageBox.setText("Are you sure you want to abort the current run?")
-            messageBox.setStandardButtons(QtGui.QMessageBox.Cancel |
-                                          QtGui.QMessageBox.Ok)
-            messageBox.setDefaultButton(QtGui.QMessageBox.Cancel)
+            messageBox.setStandardButtons(QtWidgets.QMessageBox.Cancel |
+                                          QtWidgets.QMessageBox.Ok)
+            messageBox.setDefaultButton(QtWidgets.QMessageBox.Cancel)
             button_ID = messageBox.exec_()
 
             # Handle response
-            if (button_ID == QtGui.QMessageBox.Ok):
+            if (button_ID == QtWidgets.QMessageBox.Ok):
                 abort_text =  "Aborted current run at command " + str(self.ui.commandSequenceTreeView.getCurrentIndex())
                 abort_text += ": " + str(self.ui.commandSequenceTreeView.getCurrentItem().getDaveAction().getDescriptor())
-                print abort_text
+                print(abort_text)
                 self.ui.commandSequenceTreeView.abort()
 
                 # Set flag to signal reset to handleDone when called.
@@ -334,6 +342,13 @@ class Dave(QtGui.QMainWindow):
             else:
                 self.handleDone()
 
+    ## handleClearWarnings
+    #
+    # Handle requests to clear warnings
+    #
+    def handleClearWarnings(self, dummy):
+        self.ui.currentWarnings.clearWarnings()
+                
     ## handleDaveAction
     #
     # Handle a Dave-specific action requested from the command engine.
@@ -371,48 +386,18 @@ class Dave(QtGui.QMainWindow):
     #
     def handleDoubleClick(self, item):
         # Confirm that you want to change to the current command
-        messageBox = QtGui.QMessageBox(parent = self)
+        messageBox = QtWidgets.QMessageBox(parent = self)
         messageBox.setWindowTitle("Change Command?")
         messageBox.setText("Are you sure you want to change the command?")
-        messageBox.setStandardButtons(QtGui.QMessageBox.Cancel |
-                                      QtGui.QMessageBox.Ok)
-        messageBox.setDefaultButton(QtGui.QMessageBox.Cancel)
+        messageBox.setStandardButtons(QtWidgets.QMessageBox.Cancel |
+                                      QtWidgets.QMessageBox.Ok)
+        messageBox.setDefaultButton(QtWidgets.QMessageBox.Cancel)
         button_ID = messageBox.exec_()
 
-        if (button_ID == QtGui.QMessageBox.Ok):
+        if (button_ID == QtWidgets.QMessageBox.Ok):
             self.ui.commandSequenceTreeView.setCurrentAction(item)    
         else:
             pass
-
-    ## handleWarningsDoubleClick
-    #
-    # Handle a double click on a warnings item
-    #
-    # @param warning_item The Dave Warnings item double clicked.
-    #
-    def handleWarningsDoubleClick(self, warning_item):
-        # Create a message box to display the warnings information\
-        messageBox = QtGui.QMessageBox(parent = self)
-        messageBox.setWindowTitle("Warning Details")
-        warning_message = warning_item.getFullInfo()
-        warning_message = warning_message + "\n" + "Would you like to go to this command?"
-        messageBox.setText(warning_message)
-        messageBox.setStandardButtons(QtGui.QMessageBox.No | QtGui.QMessageBox.Yes)
-        messageBox.setDefaultButton(QtGui.QMessageBox.No)
-        button_ID = messageBox.exec_()
-
-        if (button_ID == QtGui.QMessageBox.Yes):
-            dave_action_si = warning_item.getDaveActionStandardItem()
-            self.ui.commandSequenceTreeView.setCurrentAction(dave_action_si)
-        else:
-            pass 
-
-    ## handleClearWarnings
-    #
-    # Handle requests to clear warnings
-    #
-    def handleClearWarnings(self, dummy):
-        self.ui.currentWarnings.clearWarnings()
 
     ## handleDone
     #
@@ -483,22 +468,22 @@ class Dave(QtGui.QMainWindow):
     @hdebug.debug
     def handleGenerateXML(self, boolean):
         if self.running:
-            QtGui.QMessageBox.information(self,
-                                          "New Sequence Request",
-                                          "Please pause or abort current")
+            QtWidgets.QMessageBox.information(self,
+                                              "New Sequence Request",
+                                              "Please pause or abort current")
         else:
-            recipe_xml_file = str(QtGui.QFileDialog.getOpenFileName(self, 
+            recipe_xml_file = QtWidgets.QFileDialog.getOpenFileName(self, 
                                                                     "Open XML File", 
                                                                     self.directory, 
-                                                                    "XML (*.xml)"))
+                                                                    "XML (*.xml)")[0]
             if (len(recipe_xml_file)>0):
                 try:
                     generated_xml_file = sequenceGenerator.generate(self, recipe_xml_file)
                 except:
                     generated_xml_file = None
-                    QtGui.QMessageBox.information(self,
-                                                  "Error Generating XML",
-                                                  traceback.format_exc())
+                    QtWidgets.QMessageBox.information(self,
+                                                      "Error Generating XML",
+                                                      traceback.format_exc())
 
                 if generated_xml_file is not None:
                     self.directory = os.path.dirname(recipe_xml_file)
@@ -513,11 +498,11 @@ class Dave(QtGui.QMainWindow):
     @hdebug.debug
     def handleNewSequenceFile(self, boolean):
         if self.running:
-            QtGui.QMessageBox.information(self,
-                                          "New Sequence Request",
-                                          "Please pause or abort current")
+            QtWidgets.QMessageBox.information(self,
+                                              "New Sequence Request",
+                                              "Please pause or abort current")
         else:
-            sequence_filename = str(QtGui.QFileDialog.getOpenFileName(self, "New Sequence", self.directory, "*.xml"))
+            sequence_filename = QtWidgets.QFileDialog.getOpenFileName(self, "New Sequence", self.directory, "*.xml")[0]
             if sequence_filename:
                 self.directory = os.path.dirname(sequence_filename)
                 self.newSequence(sequence_filename)
@@ -542,7 +527,7 @@ class Dave(QtGui.QMainWindow):
     @hdebug.debug
     def handlePause(self):
         self.running = False
-        print "\7\7" # Provide audible acknowledgement of pause.
+        print("\7\7") # Provide audible acknowledgement of pause.
 
         # Update run button text and status.
         self.ui.runButton.setEnabled(True)
@@ -589,26 +574,26 @@ class Dave(QtGui.QMainWindow):
             if (self.ui.errorMsgCheckBox.isChecked()):
                 self.notifier.sendMessage("Acquisition Problem",
                                           message_str)
-            QtGui.QMessageBox.information(self,
-                                          "Acquisition Problem",
-                                          message_str)
+            QtWidgets.QMessageBox.information(self,
+                                              "Acquisition Problem",
+                                              message_str)
 
         else: # Test mode
             self.ui.commandSequenceTreeView.setCurrentItemValid(False)
             message_str += "\nSuppress remaining warnings?"
             if not self.skip_warning:
-                messageBox = QtGui.QMessageBox(parent = self)
+                messageBox = QtWidgets.QMessageBox(parent = self)
                 messageBox.setWindowTitle("Invalid Command")
                 messageBox.setText(message_str)
                 messageBox.setStandardButtons(QtGui.QMessageBox.No |
                                               QtGui.QMessageBox.YesToAll)
-                messageBox.setIcon(QtGui.QMessageBox.Warning)
-                messageBox.setDefaultButton(QtGui.QMessageBox.YesToAll)
+                messageBox.setIcon(QtWidgets.QMessageBox.Warning)
+                messageBox.setDefaultButton(QtWidgets.QMessageBox.YesToAll)
                 button_ID = messageBox.exec_()
-                if button_ID == QtGui.QMessageBox.YesToAll:
+                if button_ID == QtWidgets.QMessageBox.YesToAll:
                     self.skip_warning = True # Skip additional warnings
 
-            print "Invalid command: " + current_item.getDaveAction().getDescriptor()
+            print("Invalid command: " + current_item.getDaveAction().getDescriptor())
 
     ## handleRunButton
     #
@@ -631,28 +616,28 @@ class Dave(QtGui.QMainWindow):
 
             # Confirm run in the presence of invalid commands
             if not self.ui.commandSequenceTreeView.isAllValid():
-                messageBox = QtGui.QMessageBox(parent = self)
+                messageBox = QtWidgets.QMessageBox(parent = self)
                 messageBox.setWindowTitle("Invalid Commands")
                 box_text = "There are invalid commands. Are you sure you want to start?\n"
                 box_text += "Invalid commands will be skipped."
                 messageBox.setText(box_text)
-                messageBox.setStandardButtons(QtGui.QMessageBox.No |
-                                              QtGui.QMessageBox.Yes)
-                messageBox.setDefaultButton(QtGui.QMessageBox.No)
+                messageBox.setStandardButtons(QtWidgets.QMessageBox.No |
+                                              QtWidgets.QMessageBox.Yes)
+                messageBox.setDefaultButton(QtWidgets.QMessageBox.No)
                 button_ID = messageBox.exec_()
-                if not (button_ID == QtGui.QMessageBox.Yes):
+                if not (button_ID == QtWidgets.QMessageBox.Yes):
                     return
 
             if not self.sequence_validated:
-                messageBox = QtGui.QMessageBox(parent = self)
+                messageBox = QtWidgets.QMessageBox(parent = self)
                 messageBox.setWindowTitle("Unvalidated Sequence")
                 box_text = "The current sequence has not been validated. Are you sure you want to start?\n"
                 messageBox.setText(box_text)
-                messageBox.setStandardButtons(QtGui.QMessageBox.No |
-                                              QtGui.QMessageBox.Yes)
-                messageBox.setDefaultButton(QtGui.QMessageBox.No)
+                messageBox.setStandardButtons(QtWidgets.QMessageBox.No |
+                                              QtWidgets.QMessageBox.Yes)
+                messageBox.setDefaultButton(QtWidgets.QMessageBox.No)
                 button_ID = messageBox.exec_()
-                if not (button_ID == QtGui.QMessageBox.Yes):
+                if not (button_ID == QtWidgets.QMessageBox.Yes):
                     return
 
             # Start TCP communication
@@ -738,13 +723,36 @@ class Dave(QtGui.QMainWindow):
             if self.ui.currentWarnings.count() >= self.ui.numWarningsToPause.value():
                 # Update Error Message
                 message_str = self.ui.currentWarnings.getSummaryMessage()
-                print message_str
+                print(message_str)
                 
                 # Handle problem and specify the message
                 self.handleProblem(message, message_str = message_str)
             else:
                 pass
                 # Nothing needs to be done here, Dave should continue running.
+
+    ## handleWarningsDoubleClick
+    #
+    # Handle a double click on a warnings item
+    #
+    # @param warning_item The Dave Warnings item double clicked.
+    #
+    def handleWarningsDoubleClick(self, warning_item):
+        # Create a message box to display the warnings information\
+        messageBox = QtWidgets.QMessageBox(parent = self)
+        messageBox.setWindowTitle("Warning Details")
+        warning_message = warning_item.getFullInfo()
+        warning_message = warning_message + "\n" + "Would you like to go to this command?"
+        messageBox.setText(warning_message)
+        messageBox.setStandardButtons(QtWidgets.QMessageBox.No | QtGui.QMessageBox.Yes)
+        messageBox.setDefaultButton(QtWidgets.QMessageBox.No)
+        button_ID = messageBox.exec_()
+
+        if (button_ID == QtWidgets.QMessageBox.Yes):
+            dave_action_si = warning_item.getDaveActionStandardItem()
+            self.ui.commandSequenceTreeView.setCurrentAction(dave_action_si)
+        else:
+            pass 
 
     ## newSequence
     #
@@ -755,9 +763,9 @@ class Dave(QtGui.QMainWindow):
     @hdebug.debug
     def newSequence(self, sequence_filename):
         if self.running:
-            QtGui.QMessageBox.information(self,
-                                          "New Sequence Request",
-                                          "Please pause or abort current run")
+            QtWidgets.QMessageBox.information(self,
+                                              "New Sequence Request",
+                                              "Please pause or abort current run")
         if not self.running:
             model = False
             no_error = True
@@ -769,9 +777,9 @@ class Dave(QtGui.QMainWindow):
                     generated_xml_file = sequenceGenerator.generate(self, sequence_filename)
                     model = sequenceViewer.parseSequenceFile(generated_xml_file)
                 except:         
-                    QtGui.QMessageBox.information(self,
-                                                  "Error Loading Sequence",
-                                                  traceback.format_exc())
+                    QtWidgets.QMessageBox.information(self,
+                                                      "Error Loading Sequence",
+                                                      traceback.format_exc())
                     no_error = False
             if no_error:
                 self.ui.commandSequenceTreeView.setModel(model)
@@ -835,17 +843,17 @@ class Dave(QtGui.QMainWindow):
                 tcp_ready = False
                 err_message = "This sequence requires communication with Hal.\n"
                 err_message += "Please start Hal!"
-                QtGui.QMessageBox.information(self,
-                                              "TCP Communication Error",
-                                              err_message)
+                QtWidgets.QMessageBox.information(self,
+                                                  "TCP Communication Error",
+                                                  err_message)
         if self.needs_kilroy:
             if not self.command_engine.kilroyClient.startCommunication():
                 tcp_ready = False
                 err_message = "This sequence requires communication with Kilroy.\n"
                 err_message += "Please start Kilroy!"
-                QtGui.QMessageBox.information(self,
-                                              "TCP Communication Error",
-                                             err_message)
+                QtWidgets.QMessageBox.information(self,
+                                                  "TCP Communication Error",
+                                                  err_message)
         return tcp_ready
 
     ## quit
@@ -860,7 +868,7 @@ class Dave(QtGui.QMainWindow):
 
 
 if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     if (len(sys.argv) == 2):
         parameters = params.parameters(sys.argv[1])
     else:

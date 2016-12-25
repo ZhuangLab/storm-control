@@ -10,7 +10,7 @@
 #
 
 ## Imports.
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 from datetime import datetime
 
 ## DaveWarning
@@ -121,7 +121,7 @@ class DaveWarningsModel(QtGui.QStandardItemModel):
 #
 # This class wraps the list view and it's associated model.
 #
-class DaveWarningsViewer(QtGui.QListView):
+class DaveWarningsViewer(QtWidgets.QListView):
     double_clicked = QtCore.pyqtSignal(object)
 
     ## __init__
@@ -129,12 +129,12 @@ class DaveWarningsViewer(QtGui.QListView):
     # @param parent (Optional) defaults to none.
     #
     def __init__(self, parent = None):
-        QtGui.QListView.__init__(self, parent)
+        QtWidgets.QListView.__init__(self, parent)
 
         self.warnings_model = DaveWarningsModel() # Initialize the model
-        QtGui.QListView.setModel(self, self.warnings_model)
+        QtWidgets.QListView.setModel(self, self.warnings_model)
 
-        self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
 
         self.doubleClicked.connect(self.handleDoubleClick)
 
@@ -166,7 +166,7 @@ class DaveWarningsViewer(QtGui.QListView):
     def clearWarnings(self):
         # Simply create a new empty model
         self.warnings_model = DaveWarningsModel() # Initialize the model
-        QtGui.QListView.setModel(self, self.warnings_model)
+        QtWidgets.QListView.setModel(self, self.warnings_model)
 
         # Draw viewport
         self.viewport().update()

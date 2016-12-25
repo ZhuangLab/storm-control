@@ -14,9 +14,10 @@
 # 
 import sys
 import time
-from PyQt4 import QtCore, QtGui, QtNetwork
-from sc_library.tcpMessage import TCPMessage
-import sc_library.tcpCommunications as tcpCommunications
+from PyQt5 import QtCore, QtGui, QtNetwork, QtWidgets
+
+from storm_control.sc_library.tcpMessage import TCPMessage
+import storm_control.sc_library.tcpCommunications as tcpCommunications
 
 ## TCPClient
 #
@@ -59,17 +60,17 @@ class TCPClient(tcpCommunications.TCPCommunications):
     #
     def connectToServer(self):
         if self.verbose:
-            print "-"*50
+            print("-"*50)
             string = "Looking for " + self.server_name + " server at: \n"
             string += "    Address: " + self.address.toString() + "\n"
             string += "    Port: " + str(self.port)
-            print string
+            print(string)
 
         # Attempt to connect to host.
         self.socket.connectToHost(self.address, self.port)
 
         if not self.socket.waitForConnected(1000):
-            print self.server_name + " server not found"        
+            print(self.server_name + " server not found")
 
     ## handleDisconnect
     #
@@ -101,7 +102,7 @@ class TCPClient(tcpCommunications.TCPCommunications):
 # 
 # Stand Alone Test Class
 #                                                               
-class StandAlone(QtGui.QMainWindow):
+class StandAlone(QtWidgets.QMainWindow):
 
     ## __init__
     #
@@ -149,10 +150,10 @@ class StandAlone(QtGui.QMainWindow):
         # Handle responses to messages
         if self.sent_message.getID() == message.getID():
             if message.isComplete():
-                print "Completed message: "
-                print message
+                print("Completed message: ")
+                print(message)
         else:
-            print "Received an unexpected message"
+            print("Received an unexpected message")
 
         self.sendTestMessage()
 
@@ -169,8 +170,8 @@ class StandAlone(QtGui.QMainWindow):
 # 
 # Test/Demo of Class
 #                         
-if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+if (__name__ == "__main__"):
+    app = QtWidgets.QApplication(sys.argv)
     window = StandAlone()
     window.show()
     sys.exit(app.exec_())

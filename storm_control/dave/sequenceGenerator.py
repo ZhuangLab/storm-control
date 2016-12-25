@@ -12,10 +12,10 @@
 import os
 
 from xml.etree import ElementTree
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-import xml_generators.v1Generator as v1Generator
-import xml_generators.v2Generator as v2Generator
+import storm_control.dave.xml_generators.v1Generator as v1Generator
+import storm_control.dave.xml_generators.v2Generator as v2Generator
 
 
 ## generate
@@ -33,15 +33,15 @@ def generate(parent, xml_file):
 
     # Version 1 XML format.
     if (root_element == "experiment"):
-        position_file = str(QtGui.QFileDialog.getOpenFileName(parent,
+        position_file = QtWidgets.QFileDialog.getOpenFileName(parent,
                                                               "Positions File", 
                                                               directory, 
-                                                              "*.txt"))
+                                                              "*.txt")[0]
         if (len(position_file)>0):
-            generated_file = str(QtGui.QFileDialog.getSaveFileName(parent,
+            generated_file = QtWidgets.QFileDialog.getSaveFileName(parent,
                                                                    "Generated File", 
                                                                    directory, 
-                                                                   "*.xml"))
+                                                                   "*.xml")[0]
             if (len(generated_file)>0):
                 is_good = v1Generator.generate(parent, xml_file, position_file, generated_file)
 

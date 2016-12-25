@@ -13,10 +13,10 @@ import os
 
 from xml.dom import minidom
 from xml.etree import ElementTree
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui
 
-import xml_generators.nodeToDict as nodeToDict
-import daveActions
+import storm_control.dave.xml_generators.nodeToDict as nodeToDict
+import storm_control.dave.daveActions as daveActions
 
 ## generate
 #

@@ -11,7 +11,9 @@
 import os
 import sys
 
-sc_directory = os.path.split(os.path.split(os.path.abspath(__file__))[0])[0]
+sc_directory = os.path.abspath(__file__)
+for i in range(3):
+    sc_directory = os.path.split(sc_directory)[0]
 
 # Remove the default storm-control directories (if it exists).
 for elt in sys.path:
