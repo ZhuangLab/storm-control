@@ -136,7 +136,7 @@ def generate(parent, xml_file, position_file, generated_file):
     rough_string = ElementTree.tostring(xml_out, 'utf-8')
 
     reparsed = minidom.parseString(rough_string)
-    out_fp.write(reparsed.toprettyxml(indent="  ", encoding = "ISO-8859-1"))
+    out_fp.write(reparsed.toprettyxml(indent="  ", encoding = "ISO-8859-1").decode())
     out_fp.close()
 
     return generated_file
