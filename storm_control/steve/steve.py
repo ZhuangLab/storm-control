@@ -14,34 +14,34 @@ imp.load_source("setPath", "../sc_library/setPath.py")
 import os
 import sys
 import re
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 # UIs.
-import qtdesigner.steve_ui as steveUi
-import hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
-import qtRegexFileDialog
-
+import storm_control.steve.qtdesigner.steve_ui as steveUi
+import storm_control.hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
+import storm_control.steve.qtRegexFileDialog as qtRegexFileDialog
+ 
 # Graphics
-import mosaicView
-import objectives
-import positions
-import sections
+import storm_control.steve.mosaicView as mosaicView
+import storm_control.steve.objectives as objectives
+import storm_control.steve.positions as positions
+import storm_control.steve.sections as sections
 
 # Communications
-import capture
+import storm_control.steve.capture as capture
 
 # Misc
-import coord
-import sc_library.parameters as params
+import storm_control.steve.coord as coord
+import storm_control.sc_library.parameters as params
 
 ## Window
 #
 # The main window of the Steve program.
 #
-class Window(QtGui.QMainWindow):
+class Window(QtWidgets.QMainWindow):
 
     ## __init__
     #
@@ -50,7 +50,7 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def __init__(self, parameters, parent = None):
-        QtGui.QMainWindow.__init__(self, parent)
+        QtWidgets.QMainWindow.__init__(self, parent)
 
         # Coordinate system setup, the internal scale is 1 pixel is 100nm.
         coord.Point.pixels_to_um = 0.1
@@ -64,10 +64,11 @@ class Window(QtGui.QMainWindow):
         self.picture_queue = []
         self.regexp_str = ""
         self.requested_stage_pos = False
-        self.stage_tracking_timer = QtCore.QTimer(self)
-        self.taking_pictures = False
         self.snapshot_directory = self.parameters.get("directory")
         self.spin_boxes = []
+        self.stage_tracking_timer = QtCore.QTimer(self)
+        self.taking_pictures = False
+        
         self.stage_tracking_timer.setInterval(500)
 
         # ui setup
@@ -322,7 +323,7 @@ class Window(QtGui.QMainWindow):
     def handleAdjustContrast(self, boolean):
         # Determine the current contrast
         current_contrast = self.view.getContrast()
-        print "Current Contrast: " + str(current_contrast)
+        print("Current Contrast: " + str(current_contrast))
         if current_contrast[0] is None:
             current_contrast = [0, 16000] # Default values for HAL: FIXME
  
@@ -334,8 +335,7 @@ class Window(QtGui.QMainWindow):
 
         if dialog.exec_():
             newRange = dialog.getValues() # Get values
-            print "Adjusted Contrast: " + str(newRange)
-
+            print("Adjusted Contrast: " + str(newRange))
             self.view.changeContrast(newRange)
         else:
             return
@@ -360,12 +360,12 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleDeleteImages(self, boolean):
-        reply = QtGui.QMessageBox.question(self,
-                                           "Warning!",
-                                           "Delete Images?",
-                                           QtGui.QMessageBox.Yes,
-                                           QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+        reply = QtWidgets.QMessageBox.question(self,
+                                               "Warning!",
+                                               "Delete Images?",
+                                               QtWidgets.QMessageBox.Yes,
+                                               QtWidgets.QMessageBox.No)
+        if (reply == QtWidgets.QMessageBox.Yes):
             self.view.clearMosaic()
 
     ## handleDisconnected
@@ -456,10 +456,10 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleLoadMosaic(self, boolean):
-        mosaic_filename = str(QtGui.QFileDialog.getOpenFileName(self,
+        mosaic_filename = QtWidgets.QFileDialog.getOpenFileName(self,
                                                                 "Load Mosaic",
                                                                 self.parameters.get("directory"),
-                                                                "*.msc"))    
+                                                                "*.msc")[0]
         self.loadMosaic(mosaic_filename)
 
     ## handleLoadMovie
@@ -475,8 +475,8 @@ class Window(QtGui.QMainWindow):
                                                                                   regex = self.regexp_str,
                                                                                   extensions = ["*.dax", "*.tif", "*.spe"])
         if (filenames is not None) and (len(filenames) > 0):
-            print "Found " + str(len(filenames)) + " files matching " + str(file_filter) + " in " + os.path.dirname(filenames[0])
-            print "Loading frame: " + str(frame_num)
+            print("Found " + str(len(filenames)) + " files matching " + str(file_filter) + " in " + os.path.dirname(filenames[0]))
+            print("Loading frame: " + str(frame_num))
 
             # Save regexp string for next time the dialog is opened
             self.regexp_str = file_filter
@@ -492,10 +492,10 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleLoadPositions(self, boolean):
-        positions_filename = str(QtGui.QFileDialog.getOpenFileName(self,
+        positions_filename = QtWidgets.QFileDialog.getOpenFileName(self,
                                                                    "Load Positions",
                                                                    self.parameters.get("directory"),
-                                                                   "*.txt"))
+                                                                   "*.txt")[0]
         if positions_filename:
             self.positions.loadPositions(positions_filename)
 
@@ -550,10 +550,10 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleSavePositions(self, boolean):
-        positions_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
+        positions_filename = QtWidgets.QFileDialog.getSaveFileName(self, 
                                                                    "Save Positions", 
                                                                    self.parameters.get("directory"), 
-                                                                   "*.txt"))
+                                                                   "*.txt")[0]
         if positions_filename:
             self.positions.savePositions(positions_filename)
 
@@ -565,10 +565,10 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleSaveMosaic(self, boolean):
-        mosaic_filename = str(QtGui.QFileDialog.getSaveFileName(self,
+        mosaic_filename = QtWidgets.QFileDialog.getSaveFileName(self,
                                                                 "Save Mosaic", 
                                                                 self.parameters.get("directory"),
-                                                                "*.msc"))
+                                                                "*.msc")[0]
         if mosaic_filename:
             mosaic_fileptr = open(mosaic_filename, "w")
             self.view.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
@@ -599,14 +599,14 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleSetWorkingDirectory(self, boolean):
-        directory = str(QtGui.QFileDialog.getExistingDirectory(self,
+        directory = QtWidgets.QFileDialog.getExistingDirectory(self,
                                                                "New Directory",
                                                                str(self.parameters.get("directory")),
-                                                               QtGui.QFileDialog.ShowDirsOnly))
+                                                               QtWidgets.QFileDialog.ShowDirsOnly)[0]
         if directory:
             self.parameters.set("directory", directory + os.path.sep)
             self.snapshot_directory = directory + os.path.sep
-            print self.parameters.get("directory")
+            print(self.parameters.get("directory"))
 
     ## handleSnapshot
     #
@@ -616,10 +616,10 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def handleSnapshot(self, boolean):
-        snapshot_filename = str(QtGui.QFileDialog.getSaveFileName(self, 
+        snapshot_filename = QtWidgets.QFileDialog.getSaveFileName(self, 
                                                                   "Save Snapshot", 
                                                                   self.snapshot_directory, 
-                                                                  "*.png"))
+                                                                  "*.png")[0]
         if snapshot_filename:
             pixmap = QtGui.QPixmap.grabWidget(self.view.viewport())
             pixmap.save(snapshot_filename)
@@ -718,7 +718,7 @@ class Window(QtGui.QMainWindow):
                 elif (self.sections.loadFromMosaicFileData(data, mosaic_dirname)):
                     legacy_format = False
                 else:
-                    print "Unrecognized scene element:", data[0]
+                    print("Unrecognized scene element:", data[0])
                 
                 progress_bar.setValue(file_number)
                 file_number += 1
@@ -741,11 +741,11 @@ class Window(QtGui.QMainWindow):
     def loadMovie(self, filenames, frame_num = 0):
         
         # Create progress bar.
-        progress_bar = QtGui.QProgressDialog("Loading " + str(len(filenames)) +  " Files ...",
-                                             "Abort Load",
-                                             0,
-                                             len(filenames),
-                                             self)
+        progress_bar = QtWidgets.QProgressDialog("Loading " + str(len(filenames)) +  " Files ...",
+                                                 "Abort Load",
+                                                 0,
+                                                 len(filenames),
+                                                 self)
         progress_bar.setWindowTitle("Dax Load Progress")
         progress_bar.setWindowModality(QtCore.Qt.WindowModal)
         file_number = 1
@@ -856,7 +856,7 @@ class Window(QtGui.QMainWindow):
 
 
 if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
 
     # Load settings.
     if (len(sys.argv)==2):

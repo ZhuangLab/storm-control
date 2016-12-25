@@ -14,20 +14,20 @@ import numpy
 import os
 import time
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 # Communication with the acquisition software
-import sc_library.tcpClient as tcpClient
-import sc_library.tcpMessage as tcpMessage
+import storm_control.sc_library.tcpClient as tcpClient
+import storm_control.sc_library.tcpMessage as tcpMessage
 
 # Reading DAX files
-import sc_library.datareader as datareader
+import storm_control.sc_library.datareader as datareader
 
-import coord
-import mosaicDialog
+import storm_control.steve.coord as coord
+import storm_control.steve.mosaicDialog as mosaicDialog
 
 
 ## directoryMessage
@@ -99,7 +99,7 @@ def objectiveMessage(is_other = False):
 #
 # Image class for temporary storage of image data.
 #
-class Image():
+class Image(object):
 
     ## __init__
     #
@@ -189,8 +189,8 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def captureDone(self):
-        print "captureDone"
-
+        print("captureDone")
+        
         # Load image.
         self.loadImage(self.fullname())
 
@@ -205,7 +205,7 @@ class Capture(QtCore.QObject):
     @hdebug.debug
     def captureStart(self, stagex, stagey):
 
-        print stagex, stagey
+        print(stagex, stagey)
         
         if os.path.exists(self.fullname()):
             os.remove(self.fullname())
@@ -227,7 +227,7 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def commConnect(self):
-        print "connect"
+        print("connect")
         self.tcp_client.startCommunication()
 
     ## commDisconnect
@@ -236,7 +236,7 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def commDisconnect(self):
-        print "disconnect"
+        print("disconnect")
         self.tcp_client.stopCommunication()
 
     ## fullname
@@ -401,7 +401,7 @@ class Capture(QtCore.QObject):
                 success = True
 
             except IOError:
-                print "Failed to load:" + filename + " frame " + str(frame_num)
+                print("Failed to load:" + filename + " frame " + str(frame_num))
                 frame = None
                 time.sleep(0.05)
             tries += 1

@@ -9,10 +9,10 @@
 
 import os
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-import qtMultifieldView as multiView
-import coord
+import storm_control.steve.qtMultifieldView as multiView
+import storm_control.steve.coord as coord
 
 ## createGrid
 #
@@ -83,14 +83,14 @@ def createSpiral(number):
 #
 # The cross-hair item to indicate the current stage position.
 #
-class Crosshair(QtGui.QGraphicsItem):
+class Crosshair(QtWidgets.QGraphicsItem):
 
     ## __init__
     #
     # Create a Crosshair object.
     #
     def __init__(self):
-        QtGui.QGraphicsItem.__init__(self)
+        QtWidgets.QGraphicsItem.__init__(self)
 
         self.ch_size = 15.0
         self.r_size = self.ch_size

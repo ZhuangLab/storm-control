@@ -10,7 +10,7 @@
 #
 
 import sys
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 import qtdesigner.mosaic_dialog_ui as mosaic_dialog_ui
 
@@ -31,14 +31,14 @@ def getMosaicSettings():
 #
 # Misc Control Dialog Box
 #
-class MosaicDialog(QtGui.QDialog):
+class MosaicDialog(QtWidgets.QDialog):
 
     ## __init__
     #
     # @param parent (Optional) The PyQt parent of this object.
     #
     def __init__(self, initial_values, parent = None):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
 
         self.ui = mosaic_dialog_ui.Ui_Dialog()
         self.ui.setupUi(self)
@@ -79,8 +79,8 @@ class MosaicDialog(QtGui.QDialog):
 
 
 ## Stand alone test
-if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+if (__name__ == "__main__"):
+    app = QtWidgets.QApplication(sys.argv)
     dialog = MosaicDialog(values)
     dialog.show()
     app.exec_()

@@ -3,7 +3,7 @@
 # File dialog that allows for regex filtering.
 #
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 import re
 import sys
@@ -15,7 +15,7 @@ def regexGetFileNames(caption = "Select File(s)", directory = None, extensions =
     fdialog.exec_()
     return fdialog.getSelectedFiles()
 
-class RegexFilterModel(QtGui.QSortFilterProxyModel):
+class RegexFilterModel(QtCore.QSortFilterProxyModel):
     ## __init__
     #
     # @param regex_string The default regular expression
@@ -45,7 +45,7 @@ class RegexFilterModel(QtGui.QSortFilterProxyModel):
         else:
             return False
         
-class QRegexFileDialog(QtGui.QDialog):
+class QRegexFileDialog(QtWidgets.QDialog):
     ## __init__
     #
     # @param caption The title of the dialog
@@ -55,7 +55,7 @@ class QRegexFileDialog(QtGui.QDialog):
     # @param parent (Optional) The PyQt parent of this object, default is None.
     #
     def __init__(self, caption = "Select File(s)", directory = None, extensions = None, regex = "", parent = None):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
         self.files_selected = None
         self.regex_str = regex
 

@@ -12,7 +12,7 @@ import pickle
 import numpy
 import os
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 ## MultifieldView
@@ -23,7 +23,7 @@ from PyQt4 import QtCore, QtGui
 # responsible for keeping track (or not) of object
 # locations in microns.
 #
-class MultifieldView(QtGui.QGraphicsView):
+class MultifieldView(QtWidgets.QGraphicsView):
     scaleChange = QtCore.pyqtSignal(float)
 
     ## __init__
@@ -32,7 +32,7 @@ class MultifieldView(QtGui.QGraphicsView):
     # @param parent (Optional) The PyQt parent of this object.
     # 
     def __init__(self, parameters, parent = None):
-        QtGui.QGraphicsView.__init__(self, parent)
+        QtWidgets.QGraphicsView.__init__(self, parent)
 
         # class variables
         self.bg_brush = QtGui.QBrush(QtGui.QColor(255,255,255))
@@ -322,7 +322,7 @@ class MultifieldView(QtGui.QGraphicsView):
 # The real position is the stage position in um where
 # the picture was taken.
 #
-class viewImageItem(QtGui.QGraphicsItem):
+class viewImageItem(QtWidgets.QGraphicsItem):
     #def __init__(self, pixmap, x_pix, y_pix, x_um, y_um, magnification, name, params, zvalue):
 
     ## __init__
@@ -336,7 +336,7 @@ class viewImageItem(QtGui.QGraphicsItem):
     # @param zvalue The z position of this image.
     #
     def __init__(self, x_pix, y_pix, x_offset_pix, y_offset_pix, objective_name, magnification, zvalue):
-        QtGui.QGraphicsItem.__init__(self, None)
+        QtWidgets.QGraphicsItem.__init__(self, None)
 
         self.data = False
         self.height = 0

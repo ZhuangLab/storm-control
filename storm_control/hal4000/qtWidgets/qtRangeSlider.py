@@ -13,14 +13,14 @@
 #
 
 import decimal
-from PyQt4 import QtCore, QtGui
 import sys
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 ## QRangeSlider
 #
 # Range Slider super class.
 #
-class QRangeSlider(QtGui.QWidget):
+class QRangeSlider(QtWidgets.QWidget):
     doubleClick = QtCore.pyqtSignal(bool)
     rangeChanged = QtCore.pyqtSignal(float, float)
 
@@ -31,7 +31,7 @@ class QRangeSlider(QtGui.QWidget):
     # @param parent (Optional) The PyQt parent of this widget.
     #
     def __init__(self, slider_range, values, parent = None):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         self.bar_width = 10
         self.emit_while_moving = False
         self.moving = "none"
@@ -61,8 +61,8 @@ class QRangeSlider(QtGui.QWidget):
             self.rangeChanged.emit(self.scale_min, self.scale_max)
             self.old_scale_min = self.scale_min
             self.old_scale_max = self.scale_max
-            if 0:
-                print "Range change:", self.scale_min, self.scale_max
+            if False:
+                print("Range change:", self.scale_min, self.scale_max)
 
     ## getValues
     #
@@ -393,7 +393,7 @@ class QVRangeSlider(QRangeSlider):
 #
 # Range slider with two double spin boxes super class.
 #
-class QSpinBoxRangeSlider(QtGui.QWidget):
+class QSpinBoxRangeSlider(QtWidgets.QWidget):
     doubleClick = QtCore.pyqtSignal(bool)
     rangeChanged = QtCore.pyqtSignal(float, float)
 
@@ -404,7 +404,7 @@ class QSpinBoxRangeSlider(QtGui.QWidget):
     # @param parent (Optional) The PyQt parent of this widget.
     #
     def __init__(self, slider_range, values, parent = None):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         self.max_val = values[1]
         self.min_val = values[0]
         self.range_slider = False
@@ -473,8 +473,8 @@ class QSpinBoxRangeSlider(QtGui.QWidget):
             self.max_val = self.max_spin_box.value()
             should_emit = True
         if should_emit:
-            if 0:
-                print self.min_val, self.max_val
+            if False:
+                print(self.min_val, self.max_val)
             self.range_slider.setValues([self.min_val, self.max_val])
             self.rangeChanged.emit(self.min_val, self.max_val)
 
@@ -591,7 +591,7 @@ class QVSpinBoxRangeSlider(QSpinBoxRangeSlider):
 #
 # A dialog wrapper around a QRangeSlider
 #
-class QRangeSliderDialog(QtGui.QDialog):
+class QRangeSliderDialog(QtWidgets.QDialog):
     ## __init__
     #
     # @param title_text The title of the dialog
@@ -604,7 +604,7 @@ class QRangeSliderDialog(QtGui.QDialog):
                  slider_range = [0, 10, 1],
                  values = [0, 10],
                  slider_type = "horizontal"):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
 
         # Update window title
         self.setWindowTitle(title_text)
@@ -645,7 +645,7 @@ if __name__ == "__main__":
             self.x_pixels = 200
             self.y_pixels = 200
 
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     if 0:
         hslider = QHRangeSlider(slider_range = [-5.0, 5.0, 0.5], values = [-2.5, 2.5])
         hslider.setEmitWhileMoving(True)
@@ -667,7 +667,7 @@ if __name__ == "__main__":
                                     slider_range = [-10,10,0.5],
                                     values = [-5, 5])
         if dialog.exec_():
-            print dialog.getValues()
+            print(dialog.getValues())
 
     sys.exit(app.exec_())
 

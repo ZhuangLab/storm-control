@@ -12,7 +12,7 @@ import os
 from PIL import Image
 import re
 
-import sc_library.parameters as parameters
+import storm_control.sc_library.parameters as parameters
 
 #
 # Creates a StormXMLObject from a .inf file that can be
@@ -131,7 +131,7 @@ def reader(filename):
     elif (file_type == ".tif"): 
         return TifReader(filename, xml)
     else:
-        print file_type, "is not a recognized file type"
+        print(file_type, "is not a recognized file type")
     raise IOError("only .dax, .spe and .tif are supported (case sensitive..)")
 
 
@@ -250,7 +250,7 @@ class SpeReader(DataReader):
             self.image_size = 2 * self.image_width * self.image_height
             self.image_mode = numpy.uint16
         else:
-            print "unrecognized spe image format: ", image_mode
+            print("unrecognized spe image format: ", image_mode)
 
     # load a frame & return it as a numpy array
     def loadAFrame(self, frame_number, cast_to_int16 = True):

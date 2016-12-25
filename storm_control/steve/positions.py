@@ -7,15 +7,15 @@
 # Hazen 07/13
 #
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-import coord
+import storm_control.steve.coord as coord
 
 ## PositionItem
 #
 # This class encapsulates a position item.
 #
-class PositionItem():
+class PositionItem(object):
 
     brush = QtGui.QBrush(QtGui.QColor(255,255,255,0))
     deselected_pen = QtGui.QPen(QtGui.QColor(0,0,255))
@@ -199,7 +199,7 @@ class PositionListModel(QtCore.QAbstractListModel):
 #
 # The position list view, this is what the user actually interacts with.
 #
-class Positions(QtGui.QListView):
+class Positions(QtWidgets.QListView):
 
     ## __init__
     #
@@ -208,7 +208,7 @@ class Positions(QtGui.QListView):
     # @param parent (Optional) The PyQt parent of this object, defaults to None.
     #
     def __init__(self, parameters, scene, parent = None):
-        QtGui.QListView.__init__(self, parent)
+        QtWidgets.QListView.__init__(self, parent)
 
         self.plist_model = PositionListModel(parent)
         self.scene = scene
@@ -332,7 +332,7 @@ class Positions(QtGui.QListView):
 #
 # This class handles the display of the PositionItems in a QGraphicsScene.
 #
-class ScenePositionItem(QtGui.QGraphicsRectItem):
+class ScenePositionItem(QtWidgets.QGraphicsRectItem):
 
     visible = True
 
@@ -344,11 +344,7 @@ class ScenePositionItem(QtGui.QGraphicsRectItem):
     # @param brush The QBrush to use when rendering this ScenePositionItem in the scene.
     #
     def __init__(self, x_size, y_size, pen, brush):
-        QtGui.QGraphicsRectItem.__init__(self,
-                                         0,
-                                         0,
-                                         x_size,
-                                         y_size)
+        QtWidgets.QGraphicsRectItem.__init__(self, 0, 0, x_size, y_size)
         self.setPen(pen)
         self.setBrush(brush)
         self.setZValue(1000.0)
@@ -364,7 +360,7 @@ class ScenePositionItem(QtGui.QGraphicsRectItem):
     #
     def paint(self, painter, options, widget):
         if self.visible:
-            QtGui.QGraphicsRectItem.paint(self, painter, options, widget)
+            QtWidgets.QGraphicsRectItem.paint(self, painter, options, widget)
 
 
 #

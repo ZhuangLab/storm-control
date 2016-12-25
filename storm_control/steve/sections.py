@@ -9,16 +9,16 @@
 #
 
 import numpy
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-import coord
-import mosaicView
+import storm_control.steve.coord as coord
+import storm_control.steve.mosaicView as mosaicView
 
 ## SceneEllipseItem
 #
 # Section ellipse rendering in the QGraphicsScene
 #
-class SceneEllipseItem(QtGui.QGraphicsEllipseItem):
+class SceneEllipseItem(QtWidgets.QGraphicsEllipseItem):
 
     visible = True
 
@@ -30,11 +30,7 @@ class SceneEllipseItem(QtGui.QGraphicsEllipseItem):
     # @param brush The QBrush to use when rendering the ellipse.
     #
     def __init__(self, x_size, y_size, pen, brush):
-        QtGui.QGraphicsEllipseItem.__init__(self,
-                                            0,
-                                            0,
-                                            x_size,
-                                            y_size)
+        QtWidgets.QGraphicsEllipseItem.__init__(self, 0, 0, x_size, y_size)
         self.setPen(pen)
         self.setBrush(brush)
         self.setZValue(999.0)
@@ -50,14 +46,14 @@ class SceneEllipseItem(QtGui.QGraphicsEllipseItem):
     #
     def paint(self, painter, options, widget):
         if self.visible:
-            QtGui.QGraphicsEllipseItem.paint(self, painter, options, widget)
+            QtWidgets.QGraphicsEllipseItem.paint(self, painter, options, widget)
 
 
 ## Section
 #
 # A Section
 #
-class Section(QtGui.QWidget):
+class Section(QtWidgets.QWidget):
 
     # Variables.
     brush = QtGui.QBrush(QtGui.QColor(255,255,255,0))
@@ -80,7 +76,7 @@ class Section(QtGui.QWidget):
     # @param parent The PyQt parent object of this object.
     #
     def __init__(self, section_number, x_pos, y_pos, angle, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
 
         self.section_number = section_number
 
@@ -244,7 +240,7 @@ class Section(QtGui.QWidget):
 #
 # Slightly specialized check box.
 #
-class SectionCheckBox(QtGui.QCheckBox):
+class SectionCheckBox(QtWidgets.QCheckBox):
     checkBoxSelected = QtCore.pyqtSignal()
 
     ## __init__
@@ -252,7 +248,7 @@ class SectionCheckBox(QtGui.QCheckBox):
     # @param parent The PyQt parent of this checkbox.
     #
     def __init__(self, parent):
-        QtGui.QCheckBox.__init__(self, parent)
+        QtWidgets.QCheckBox.__init__(self, parent)
 
     #def mousePressEvent(self, event):
     #    QtGui.QCheckBox.mousePressEvent(self, event)
@@ -265,7 +261,7 @@ class SectionCheckBox(QtGui.QCheckBox):
 # current section angle and position, as well as being editable so that
 # the user can change these values.
 #
-class SectionControls(QtGui.QWidget):
+class SectionControls(QtWidgets.QWidget):
     sectionChanged = QtCore.pyqtSignal()
     sectionCheckBoxChange = QtCore.pyqtSignal()
     sectionSelected = QtCore.pyqtSignal()
@@ -278,7 +274,7 @@ class SectionControls(QtGui.QWidget):
     # @param parent The PyQt parent of the section.
     #
     def __init__(self, x_pos, y_pos, angle, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
 
         self.angle = 0.0
         self.angle_step = 1.0
@@ -441,7 +437,7 @@ class SectionControls(QtGui.QWidget):
 #
 # Handles display of the list of section controls.
 #
-class SectionControlsList(QtGui.QWidget):
+class SectionControlsList(QtWidgets.QWidget):
     keyEvent = QtCore.pyqtSignal(int)
 
     ## __init__
@@ -449,7 +445,7 @@ class SectionControlsList(QtGui.QWidget):
     # @param parent The PyQt parent of this object.
     #
     def __init__(self, parent):
-        QtGui.QListWidget.__init__(self, parent)
+        QtWidgets.QListWidget.__init__(self, parent)
 
         self.layout = QtGui.QVBoxLayout(self)
         self.layout.setMargin(4)
@@ -500,7 +496,7 @@ class SectionControlsList(QtGui.QWidget):
 #
 # This object is not actual visible in the UI.
 #
-class SectionRenderer(QtGui.QGraphicsView):
+class SectionRenderer(QtWidgets.QGraphicsView):
     sceneChanged = QtCore.pyqtSignal()
 
     ## __init__
@@ -511,7 +507,7 @@ class SectionRenderer(QtGui.QGraphicsView):
     # @param parent The PyQt parent of this object.
     #
     def __init__(self, scene, width, height, parent):
-        QtGui.QGraphicsView.__init__(self, parent)
+        QtWidgets.QGraphicsView.__init__(self, parent)
 
         self.index = 0
         self.scale = 1.0
@@ -599,7 +595,7 @@ class SectionRenderer(QtGui.QGraphicsView):
 # interacts with. It is not directly visible, it orchestrates displaying the
 # section(s) and the section control(s) in the appropriate places in the UI.
 #
-class Sections(QtGui.QWidget):
+class Sections(QtWidgets.QWidget):
     addPositions = QtCore.pyqtSignal(object)
     takePictures = QtCore.pyqtSignal(object)
 
@@ -612,7 +608,7 @@ class Sections(QtGui.QWidget):
     # @param parent The PyQt parent of this object.
     #
     def __init__(self, parameters, scene, display_frame, scroll_area, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
 
         self.active_section = False
         self.number_x = 5
@@ -947,7 +943,7 @@ class Sections(QtGui.QWidget):
                     numpy_background = temp
                     counts += 1.0
                 else:
-                    print "updateBackgroundPixmap: conversion problem."
+                    print("updateBackgroundPixmap: conversion problem.")
 
         pixmap = False
         if(type(numpy_background) == type(numpy.array([]))):
@@ -991,7 +987,7 @@ class Sections(QtGui.QWidget):
 #
 # Displays the various sections.
 #
-class SectionsView(QtGui.QWidget):
+class SectionsView(QtWidgets.QWidget):
     keyEvent = QtCore.pyqtSignal(int)
     pictureEvent = QtCore.pyqtSignal(int)
     positionEvent = QtCore.pyqtSignal()
@@ -1003,7 +999,7 @@ class SectionsView(QtGui.QWidget):
     # @param parent The PyQt parent of this object.
     #
     def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
 
         self.background_pixmap = None
         self.foreground_opacity = 0.5
@@ -1174,7 +1170,7 @@ class SectionsView(QtGui.QWidget):
 #
 # Slightly specialized double spin box
 #
-class SectionSpinBox(QtGui.QDoubleSpinBox):
+class SectionSpinBox(QtWidgets.QDoubleSpinBox):
     spinBoxSelected = QtCore.pyqtSignal()
 
     ## __init__
@@ -1184,7 +1180,7 @@ class SectionSpinBox(QtGui.QDoubleSpinBox):
     # @param parent The PyQt parent of the spin box.
     #
     def __init__(self, min_value, max_value, cur_value, parent):
-        QtGui.QDoubleSpinBox.__init__(self, parent)
+        QtWidgets.QDoubleSpinBox.__init__(self, parent)
 
         self.setMinimum(min_value)
         self.setMaximum(max_value)

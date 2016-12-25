@@ -8,7 +8,7 @@
 # Hazen 02/13
 #
 
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 ## Point
 #
@@ -39,7 +39,7 @@ class Point(object):
             self.x_um = xval * self.pixels_to_um
             self.y_um = yval * self.pixels_to_um
         else:
-            print "(Point) Unknown type:", valtype
+            print("(Point) Unknown type:", valtype)
 
     ## __repr__
     #

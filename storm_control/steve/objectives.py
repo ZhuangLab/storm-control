@@ -7,7 +7,7 @@
 # Hazen 07/15
 #
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 ## Objective
@@ -61,7 +61,7 @@ class Objective(QtCore.QObject):
         if self.fixed:
             return map(float, self.data[1:])
         else:
-            return map(lambda(x): x.value(), self.qt_widgets[1:])
+            return map(lambda x: x.value(), self.qt_widgets[1:])
 
     ## getQtWidgets
     #
@@ -98,14 +98,14 @@ class Objective(QtCore.QObject):
 #
 # Handle display and interaction with all the objectives.
 #
-class ObjectivesGroupBox(QtGui.QGroupBox):
+class ObjectivesGroupBox(QtWidgets.QGroupBox):
     valueChanged = QtCore.pyqtSignal(str, str, float)
     
     def __init__(self, parent):
-        QtGui.QGroupBox.__init__(self, parent)
+        QtWidgets.QGroupBox.__init__(self, parent)
 
         self.last_objective = None
-        self.layout = QtGui.QGridLayout(self)
+        self.layout = QtWidgets.QGridLayout(self)
         self.objectives = {}
 
         self.layout.setMargin(4)
@@ -157,11 +157,11 @@ class ObjectivesGroupBox(QtGui.QGroupBox):
 # This is just a QDoubleSpinBox with a border around it that we can
 # paint to indicate that it is selected.
 #
-class ObjDoubleSpinBox(QtGui.QWidget):
+class ObjDoubleSpinBox(QtWidgets.QWidget):
     valueChanged = QtCore.pyqtSignal(float)
 
     def __init__(self, val, minimum, maximum, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         self.selected = False
         self.spin_box = QtGui.QDoubleSpinBox(self)
         
@@ -215,10 +215,10 @@ class ObjDoubleSpinBox(QtGui.QWidget):
 #
 # This is just a QLabel that we can paint to indicate that it is selected.
 #
-class ObjLabel(QtGui.QLabel):
+class ObjLabel(QtWidgets.QLabel):
 
     def __init__(self, text, parent):
-        QtGui.QLabel.__init__(self, text, parent)
+        QtWidgets.QLabel.__init__(self, text, parent)
         self.selected = False
 
     ## paintEvent
