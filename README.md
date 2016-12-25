@@ -1,28 +1,10 @@
 ## storm-control ##
 This is a repository of code developed in the [Zhuang Lab](http://zhuang.harvard.edu) for the acquisition of STORM movies.
 
+The is located in the storm_control folder.
+
 ## Installation ##
 You will need Python and PyQt as well as a number of other libraries. Please see the Install.txt file in the hal4000 folder.
-
-## Directory Layout ##
-
-These directories are all in the storm_control directory.
-
-dave - This folder contains software (dave.py) that is used to control hal for automated acquisition of multiple images and/or STORM movies. Dave controls Hal and Kilroy via TCP/IP.
-
-fluidics - This folder contains software (kilroy.py) to control a series of pumps and valves so that fluid control can be integrated with imaging. 
-
-hal4000 - This folder contains the hal-4000 microscope control and image acquisition software (hal-4000.py).
-
-hazelnut - This folder contains software (hazelnut.py) for transferring files from the acquisition computer to remote storage.
-
-sc_hardware - This folder contains classes for interfacing with various bits of hardware. Folders are (usually) the manufacturers name.
-
-sc_library - This folder contains the modules that are used in multiple different programs.
-
-steve - This folder contains software (steve.py) that is used to take and assemble image mosaics. This is useful for array tomography experiments, among other things. Steve also controls Hal via TCP/IP.
-
-zee-calibrator - This folder contains software (main.py) that is used to generate calibration curves for astigmatism based 3D STORM imaging. Calibration data acquired using Hal needs to be analyzed by STORM image analysis software like Insight3 (available by request from the Zhuang Lab) or 3D-DAOSTORM before it can be processed using zee-calibrator.
 
 ## General notes ##
 1. This software is written primarily in Python with a few C helper libraries.
