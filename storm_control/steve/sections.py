@@ -567,7 +567,7 @@ class SectionRenderer(QtWidgets.QGraphicsView):
         transform.rotate(a_angle)
         transform.scale(self.scale, self.scale)
         self.setTransform(transform)
-        a_pixmap = QtGui.QPixmap.grabWidget(self.viewport())
+        a_pixmap = self.grab()
         #mosaicView.displayEllipseRect(True)
 
         #a_pixmap.save("RSP" + str(self.index) + ".png")
@@ -1161,10 +1161,11 @@ class SectionsView(QtWidgets.QWidget):
     # @param event A PyQt wheel event.
     #
     def wheelEvent(self, event):
-        if (event.delta() > 0):
-            self.zoomEvent.emit(1.2)
-        else:
-            self.zoomEvent.emit(1.0/1.2)
+        if not event.angleDelta().isNull():
+            if (event.angleDelta().y() > 0):
+                self.zoomEvent.emit(1.2)
+            else:
+                self.zoomEvent.emit(1.0/1.2)
 
 ## SectionSpinBox
 #
@@ -1193,7 +1194,7 @@ class SectionSpinBox(QtWidgets.QDoubleSpinBox):
     # @param event A PyQt focus event.
     #
     def focusInEvent(self, event):
-        QtGui.QDoubleSpinBox.focusInEvent(self, event)
+        QtWidgets.QDoubleSpinBox.focusInEvent(self, event)
         self.spinBoxSelected.emit()
 
     ## mousePressEvent
@@ -1203,7 +1204,7 @@ class SectionSpinBox(QtWidgets.QDoubleSpinBox):
     # @param event A PyQt mouse press event.
     #
     def mousePressEvent(self, event):
-        QtGui.QDoubleSpinBox.mousePressEvent(self, event)
+        QtWidgets.QDoubleSpinBox.mousePressEvent(self, event)
         self.spinBoxSelected.emit()
 
 

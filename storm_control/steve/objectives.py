@@ -116,7 +116,7 @@ class ObjectivesGroupBox(QtWidgets.QGroupBox):
         # Add headers if necessary.
         if (len(self.objectives) == 0):
             for i, label_text in enumerate(["Objective", "Um / Pixel", "X Offset", "Y Offset"]):
-                text_item = QtGui.QLabel(label_text, self)
+                text_item = QtWidgets.QLabel(label_text, self)
                 self.layout.addWidget(text_item, 0, i)
 
         # Create objective managing object.
@@ -163,15 +163,15 @@ class ObjDoubleSpinBox(QtWidgets.QWidget):
     def __init__(self, val, minimum, maximum, parent):
         QtWidgets.QWidget.__init__(self, parent)
         self.selected = False
-        self.spin_box = QtGui.QDoubleSpinBox(self)
+        self.spin_box = QtWidgets.QDoubleSpinBox(self)
         
         self.spin_box.setMaximum(maximum)
         self.spin_box.setMinimum(minimum)
         self.spin_box.setValue(val)
         self.spin_box.valueChanged.connect(self.handleValueChanged)
 
-        layout = QtGui.QHBoxLayout(self)
-        layout.setMargin(2)
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(2,2,2,2)
         layout.addWidget(self.spin_box)
 
     def handleValueChanged(self, value):
@@ -236,7 +236,7 @@ class ObjLabel(QtWidgets.QLabel):
         painter.setPen(color)
         painter.setBrush(color)
         painter.drawRect(0, 0, self.width(), self.height())
-        QtGui.QLabel.paintEvent(self, event)
+        QtWidgets.QLabel.paintEvent(self, event)
 
     ## select
     #

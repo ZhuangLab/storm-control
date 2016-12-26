@@ -64,6 +64,7 @@ class Window(QtWidgets.QMainWindow):
         self.picture_queue = []
         self.regexp_str = ""
         self.requested_stage_pos = False
+        self.settings = QtCore.QSettings("Zhuang Lab", "steve")
         self.snapshot_directory = self.parameters.get("directory")
         self.spin_boxes = []
         self.stage_tracking_timer = QtCore.QTimer(self)
@@ -74,6 +75,9 @@ class Window(QtWidgets.QMainWindow):
         # ui setup
         self.ui = steveUi.Ui_MainWindow()
         self.ui.setupUi(self)
+
+        self.move(self.settings.value("position", self.pos()))
+        self.resize(self.settings.value("size", self.size()))
 
         # hide some things that we don't currently use & resize group-box.
         self.ui.backgroundComboBox.hide()
@@ -229,7 +233,8 @@ class Window(QtWidgets.QMainWindow):
     #
     @hdebug.debug
     def cleanUp(self):
-        pass
+        self.settings.setValue("position", self.pos())
+        self.settings.setValue("size", self.size())
 
     ## closeEvent
     #

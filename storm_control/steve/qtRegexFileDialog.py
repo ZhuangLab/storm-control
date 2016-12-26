@@ -22,7 +22,7 @@ class RegexFilterModel(QtCore.QSortFilterProxyModel):
     # @param parent (Optional) The PyQt parent of this object, default is None.
     #
     def __init__(self, regex_string, parent = None):
-        QtGui.QSortFilterProxyModel.__init__(self, parent)
+        QtCore.QSortFilterProxyModel.__init__(self, parent)
         self.regex = re.compile(regex_string)
 
     ## filterAcceptsRow
@@ -65,12 +65,12 @@ class QRegexFileDialog(QtWidgets.QDialog):
         self.setWindowTitle(caption)
 
         # Insert standard file dialog.
-        self.fdialog = QtGui.QFileDialog()
+        self.fdialog = QtWidgets.QFileDialog()
         if directory is not None:
             self.fdialog.setDirectory(directory)
-        self.fdialog.setFileMode(QtGui.QFileDialog.ExistingFiles)
+        self.fdialog.setFileMode(QtWidgets.QFileDialog.ExistingFiles)
         if extensions is not None:
-            self.fdialog.setFilters(extensions)
+            self.fdialog.setNameFilters(extensions)
         self.ui.verticalLayout.addWidget(self.fdialog)
         self.setMinimumSize(self.fdialog.width() + 20, self.fdialog.height() + 40)
 
@@ -129,7 +129,8 @@ class QRegexFileDialog(QtWidgets.QDialog):
     ## handleSelected
     #     
     def handleSelected(self, files_selected):
-        self.files_selected = map(str, files_selected)
+        self.files_selected = files_selected
+
 
 ## Stand alone test
 if __name__ == "__main__":

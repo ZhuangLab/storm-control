@@ -261,9 +261,9 @@ class MultifieldView(QtWidgets.QGraphicsView):
     #
     def setScale(self, scale):
         self.view_scale = scale
-        a_matrix = QtGui.QMatrix()
-        a_matrix.scale(scale, scale)
-        self.setMatrix(a_matrix)
+        transform = QtGui.QTransform()
+        transform.scale(scale, scale)
+        self.setTransform(transform)
 
     ## updateSceneRect
     #
@@ -306,13 +306,15 @@ class MultifieldView(QtWidgets.QGraphicsView):
     # @param event A PyQt mouse wheel event.
     #
     def wheelEvent(self, event):
-        if event.delta() > 0:
-            self.view_scale = self.view_scale * self.zoom_in
-            self.setScale(self.view_scale)
-        else:
-            self.view_scale = self.view_scale * self.zoom_out
-            self.setScale(self.view_scale)
-        self.scaleChange.emit(self.view_scale)
+        if not event.angleDelta().isNull():
+            if (event.angleDelta().y() > 0):
+                self.view_scale = self.view_scale * self.zoom_in
+                self.setScale(self.view_scale)
+            else:
+                self.view_scale = self.view_scale * self.zoom_out
+                self.setScale(self.view_scale)
+            self.scaleChange.emit(self.view_scale)
+            event.accept()
 
 
 ## viewImageItem

@@ -148,7 +148,7 @@ def reader(filename):
 #  2. loadAFrame(self, frame_number)
 #     Load the requested frame and return it as numpy array.
 #
-class DataReader:
+class DataReader(object):
 
     def __init__(self, filename, xml):
         self.fileptr = False
@@ -197,7 +197,12 @@ class DaxReader(DataReader):
         self.bigendian = self.xml.get("film.want_big_endian")
         self.image_height = self.xml.get(self.camera + ".y_pixels")
         self.image_width = self.xml.get(self.camera + ".x_pixels")
-        self.number_frames = self.xml.get("acquisition.number_frames")
+
+        #
+        # For a long time, HAL was recording the number of frames as a string, so
+        # we need to make sure this is int or this will cause trouble in Python3.
+        #
+        self.number_frames = int(self.xml.get("acquisition.number_frames"))
         
         # open the dax file
         self.fileptr = open(filename, "rb")
