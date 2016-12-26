@@ -6,7 +6,7 @@
 #
 
 import os, sys
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 # UIs.
 import mainwindow_ui
@@ -20,9 +20,9 @@ import zcal
 #
 # Main window
 #
-class Window(QtGui.QMainWindow):
+class Window(QtWidgets.QMainWindow):
     def __init__(self, parent = None):
-        QtGui.QMainWindow.__init__(self, parent)
+        QtWidgets.QMainWindow.__init__(self, parent)
 
         self.binned_points = []
         self.directory = ""
@@ -60,7 +60,7 @@ class Window(QtGui.QMainWindow):
 
         # plots
         self.wxwyvz_plot = plot.PlotWindow("Z (nm)", [-500.0, 500.0, 100.0], "Wx, Wy (pixels)", [0.0, 6.0, 1.0], self.ui.wxwyvzTab)
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.wxwyvz_plot)
         self.ui.wxwyvzTab.setLayout(layout)
 
@@ -70,12 +70,12 @@ class Window(QtGui.QMainWindow):
         #self.ui.wxvwyPlotWidget.heightForWidth = lambda(x): x
 
         self.wxvwy_plot = plot.SquarePlotWindow("Wx (pixels)", [0.0, 6.0, 1.0], "Wy (pixels)", [0.0, 6.0, 1.0], self.ui.wxvwyPlotWidget)
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.wxvwy_plot)
         self.ui.wxvwyPlotWidget.setLayout(layout)
 
         self.stage_plot = plot.PlotWindow("Stage Position (um)", [-1.0, 1.0, 0.2], "QPD offset (au)", [-0.5, 0.5, 0.1], self.ui.stageTab)
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.stage_plot)
         self.ui.stageTab.setLayout(layout)
 
@@ -83,11 +83,10 @@ class Window(QtGui.QMainWindow):
         #self.handleTabChanges(0)
 
         # load settings.
-        self.directory = str(self.settings.value("directory", "").toString())
-        self.move(self.settings.value("position", QtCore.QPoint(100, 100)).toPoint())
-        self.resize(self.settings.value("size", self.size()).toSize())
-        self.ui.pixelSpinBox.setValue(self.settings.value("pix_per_nm", 160.0).toFloat()[0])
-
+        self.directory = str(self.settings.value("directory", ""))
+        self.move(self.settings.value("position", self.pos()))
+        self.resize(self.settings.value("size", self.size()))
+        self.ui.pixelSpinBox.setValue(float(self.settings.value("pix_per_nm", 160.0)))
 
     def analyzeData(self, filename):
         self.ui.plotTabWidget.setCurrentIndex(0)
@@ -197,19 +196,19 @@ class Window(QtGui.QMainWindow):
         self.analyzeData(filename)
 
     def errorMessageBox(self, info):
-        QtGui.QMessageBox.critical(self,
-                                   "Calibrator",
-                                   info,
-                                   QtGui.QMessageBox.Ok)
+        QtWidgets.QMessageBox.critical(self,
+                                       "Calibrator",
+                                       info,
+                                       QtWidgets.QMessageBox.Ok)
 
     def handleLoad(self):
-        filename = str(QtGui.QFileDialog.getOpenFileName(self, "New Molecule List", self.directory, "*.bin"))
+        filename = QtWidgets.QFileDialog.getOpenFileName(self, "New Molecule List", self.directory, "*.bin")[0]
         if filename:
             self.directory = os.path.dirname(filename)
             self.analyzeData(filename)
 
     def handleLoadCalibration(self):
-        filename = str(QtGui.QFileDialog.getOpenFileName(self, "Load Calibration", self.directory, "Files (*.txt *.ini)"))
+        filename = QtWidgets.QFileDialog.getOpenFileName(self, "Load Calibration", self.directory, "Files (*.txt *.ini)")[0]
         if filename:
             self.ui.plotTabWidget.setCurrentIndex(0)
             self.directory = os.path.dirname(filename)
@@ -226,7 +225,7 @@ class Window(QtGui.QMainWindow):
             self.wxvwy_plot.plotWxWyFit(self.fit_values[1], self.fit_values[2])
 
     def handleLoadData(self):
-        filename = str(QtGui.QFileDialog.getOpenFileName(self, "Load Data", self.directory, "*.bin"))
+        filename = QtWidgets.QFileDialog.getOpenFileName(self, "Load Data", self.directory, "*.bin")[0]
         if filename:
             self.directory = os.path.dirname(filename)
             if self.z_calib:
@@ -241,56 +240,26 @@ class Window(QtGui.QMainWindow):
                 self.wxvwy_plot.plotWxWyData(*self.wx_wy_cat)
                 self.wxvwy_plot.plotWxWyFit(self.fit_values[1], self.fit_values[2])
             else:
-                print "You need to load a calibration curve first."
+                print("You need to load a calibration curve first.")
 
     def handleRedo(self):
         if self.filename:
             self.analyzeData(str(self.filename))
 
     def handleSaveCalibration(self):
-        filename = str(QtGui.QFileDialog.getSaveFileName(self, "Save Calibration", self.directory, "*.txt"))
+        filename = QtWidgets.QFileDialog.getSaveFileName(self, "Save Calibration", self.directory, "*.txt")[0]
         if filename:
             self.directory = os.path.dirname(filename)
             self.z_calib.saveCalibration(filename)
-
-#    def handleTabChanges(self, index):
-#        if (index == 0):
-#            self.ui.wxwyvzTab.setLayout(self.plot_layout)
-#            self.plot_widget.plotInit("z_graph")
-#            if(len(self.points)>0):
-#                self.plot_widget.plotData(*self.points)
-#            if(len(self.binned_points)>0):
-#                self.plot_widget.plotBinnedData(*self.binned_points)
-#            if(len(self.fit_values)>0):
-#                self.plot_widget.plotFit(*self.fit_values)
-#            self.plot_widget.update()
-#        elif (index == 1):
-#            self.ui.wxvwyTab.setLayout(self.plot_layout)
-#            self.plot_widget.plotInit("wx_vs_wy")
-#            if(len(self.wx_wy_cat)>0):
-#                self.plot_widget.plotWxWyData(*self.wx_wy_cat)
-#            if(len(self.fit_values)>0):
-#                self.plot_widget.plotWxWyFit(self.fit_values[1], self.fit_values[2])
-#            self.plot_widget.update()
-#        elif (index == 2):
-#            self.ui.stageTab.setLayout(self.plot_layout)
-#            self.plot_widget.plotInit("stage")
-#            if(len(self.stage_qpd)>0):
-#                self.plot_widget.plotStageQPD(self.stage_qpd[0],
-#                                              self.stage_qpd[1],
-#                                              self.stage_fit[0],
-#                                              self.stage_fit[1])
-#            self.plot_widget.update()
 
     def quit(self):
         self.close()
 
 if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     window = Window()
     window.show()
     app.exec_()
-
 
 #
 # The MIT License

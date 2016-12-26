@@ -94,7 +94,10 @@ zcalibs = [zcalib0, zcalib1, zcalib2, zcalib3, zcalib4]
 
 
 #
-# insight3 file reading
+# Insight3 file reading
+#
+# This was lifted from the storm-analysis project. If you are looking
+# for a Insight3 file reader you should use that project and not this.
 #
 
 ## getV
@@ -174,12 +177,12 @@ def readHeader(fp):
     frames = getV(fp, "i", 4)
     status = getV(fp, "i", 4)
     molecules = getV(fp, "i", 4)
-    if 0:
-        print "Version:", version
-        print "Frames:", frames
-        print "Status:", status
-        print "Molecules:", molecules
-        print ""
+    if False:
+        print("Version:", version)
+        print("Frames:", frames)
+        print("Status:", status)
+        print("Molecules:", molecules)
+        print("")
     return [frames, molecules, version, status]
 
 ## readI3File
@@ -192,7 +195,7 @@ def readHeader(fp):
 # @return The localization data.
 #
 def readI3File(filename, nm_per_pixel):
-    print "nm_per_pixel", nm_per_pixel
+    print("nm_per_pixel", nm_per_pixel)
     fp = open(filename, "rb")
 
     # Read header
@@ -204,15 +207,6 @@ def readI3File(filename, nm_per_pixel):
     fp.close()
 
     return data
-
-#    return [data,
-#            data['x'],
-#            data['y'],
-#            data['c'],
-#            data['i'],
-#            data['fr'],
-#            numpy.sqrt(data['w']*data['w']/data['ax'])/nm_per_pixel,
-#            numpy.sqrt(data['w']*data['w']*data['ax'])/nm_per_pixel]
 
 
 ## ZCalibration
@@ -306,7 +300,7 @@ class ZCalibration():
                 self.calcQuickZ()
                 return True
             else:
-                print "fitDefocusing: power", self.fit_power, "fit failed!"
+                print("fitDefocusing: power", self.fit_power, "fit failed!")
                 return False
 
     # Fits for the stage tilt
@@ -331,10 +325,10 @@ class ZCalibration():
         params = [scipy.mean(rz), 0.0, 0.0]
         [results, success] = scipy.optimize.leastsq(fitfn, params)
         if (success < 1) or (success > 4):
-            print "fitTilt: fit failed!"
+            print("fitTilt: fit failed!")
             return False
         else:
-            print results
+            print(results)
             self.tilt = results
             return True
 
@@ -619,13 +613,13 @@ class ZCalibration():
                 self.mask[i] = 1
             if (i > 0) and (not found_edge):
                 if abs(self.offsets[i-1,2] - self.offsets[i,2]) > 0.1:
-                    print "Start", i
+                    print("Start", i)
                     self.edge_loc = i - 2
                     found_edge = 1
                     i += 2
             if (i < self.frames - 4) and found_edge:
                 if abs(self.offsets[i+2,2] - self.offsets[i+3,2]) > 0.1:
-                    print "End", i
+                    print("End", i)
                     i = self.frames
             i += 1
 
@@ -642,7 +636,7 @@ class ZCalibration():
     
         # perform a linear to fit to convert offset to nm
         self.fit = numpy.polyfit(self.good_offsetp, self.good_stagep, 1)
-        print "stageCalibration:", self.fit
+        print("stageCalibration:", self.fit)
         
         return True
 

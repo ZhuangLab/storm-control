@@ -5,7 +5,7 @@
 # Hazen 02/13
 #
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui
 import pyqtgraph
 
 import numpy
@@ -40,41 +40,41 @@ class PlotWindow(pyqtgraph.PlotWidget):
             painter.drawStaticText(70, 10, self.static_text)
 
     def plotBinnedData(self, b_sz, b_wx, b_wy):
-        a_pen = QtGui.QPen(QtCore.Qt.black)
-        a_pen.setWidth(2)
-        a_brush = QtGui.QBrush(QtGui.QColor(255,255,255,0))
+        a_pen = pyqtgraph.mkPen(0,0,0)
+        a_pen.setWidth(1)
+        a_brush = pyqtgraph.mkBrush(255,255,255)
         self.plot(b_sz, b_wx, 
                   pen = None,
                   symbol = 'o',
                   symbolPen = a_pen,
                   symbolBrush = a_brush,
-                  symbolSize = 9)
+                  symbolSize = 12)
 
         self.plot(b_sz, b_wy,
                   pen = None,
                   symbol = 'o',
                   symbolPen = a_pen,
                   symbolBrush = a_brush,
-                  symbolSize = 9)
+                  symbolSize = 12)
         saveData("binned.txt", b_sz, b_wx, b_wy)
 
     def plotData(self, sz, wx, wy):
         self.plot(sz, wx, 
                   pen = None,
                   symbol = 'o',
-                  symbolPen = QtGui.QPen(QtCore.Qt.red),
-                  symbolBrush = QtGui.QBrush(QtCore.Qt.blue),
-                  symbolSize = 3)
+                  symbolPen = pyqtgraph.mkPen(255,0,0),
+                  symbolBrush = pyqtgraph.mkBrush(0,0,255),
+                  symbolSize = 6)
 
         self.plot(sz, wy, 
                   pen = None,
                   symbol = 'o',
-                  symbolPen = QtGui.QPen(QtCore.Qt.green),
-                  symbolBrush = QtGui.QBrush(QtCore.Qt.blue),
-                  symbolSize = 3)
+                  symbolPen = pyqtgraph.mkPen(0,255,0),
+                  symbolBrush = pyqtgraph.mkBrush(0,0,255),
+                  symbolSize = 6)
 
     def plotFit(self, sz, xfit, yfit):
-        a_pen = QtGui.QPen(QtCore.Qt.black)
+        a_pen = pyqtgraph.mkPen(0,0,0)
         self.plot(sz, xfit, pen = a_pen)
         self.plot(sz, yfit, pen = a_pen)
         saveData("fit.txt", sz, xfit, yfit)
@@ -86,13 +86,13 @@ class PlotWindow(pyqtgraph.PlotWidget):
         self.plot(stage, qpd,
                   pen = None,
                   symbol = 'o',
-                  symbolPen = QtGui.QPen(QtCore.Qt.black),
-                  symbolBrush = QtGui.QBrush(QtCore.Qt.white),
-                  symbolSize = 7)
+                  symbolPen = pyqtgraph.mkPen(0,0,0),
+                  symbolBrush = pyqtgraph.mkBrush(255,255,255),
+                  symbolSize = 6)
 
         x_vals = numpy.array([-1.0, 1.0])
         y_vals = (x_vals - offset)/slope
-        self.plot(x_vals, y_vals, pen = QtGui.QPen(QtCore.Qt.black))
+        self.plot(x_vals, y_vals, pen = pyqtgraph.mkPen(0,0,0))
 
         self.static_text = QtGui.QStaticText("slope = {0:.3f} au/um".format(-1.0/slope))
 
@@ -100,13 +100,14 @@ class PlotWindow(pyqtgraph.PlotWidget):
         self.plot(wx, wy,
                   pen = None,
                   symbol = 'o',
-                  symbolPen = QtGui.QPen(QtCore.Qt.red),
-                  symbolBrush = QtGui.QBrush(QtCore.Qt.blue),
-                  symbolSize = 3)
+                  symbolPen = pyqtgraph.mkPen(255,0,0),
+                  symbolBrush = pyqtgraph.mkBrush(0,0,255),
+                  symbolSize = 6)
 
     def plotWxWyFit(self, wxfit, wyfit):
-        a_pen = QtGui.QPen(QtCore.Qt.black)
+        a_pen = pyqtgraph.mkPen(0,0,0)
         self.plot(wxfit, wyfit, pen = a_pen)
+
 
 class SquarePlotWindow(PlotWindow):
 
