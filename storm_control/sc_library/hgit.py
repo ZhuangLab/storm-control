@@ -14,7 +14,9 @@ version = ""
 
 try:
     directory = os.path.abspath(__file__)
-    git_dir = os.path.join(os.path.split(os.path.split(directory)[0])[0], ".git")
+    for i in range(3):
+        directory = os.path.split(directory)[0]
+    git_dir = os.path.join(directory, ".git")
 
     fp = open(os.path.join(git_dir, "HEAD"))
     ref = fp.readline().rstrip().split(" ")[1]
@@ -24,18 +26,20 @@ try:
     fp = open(os.path.join(git_dir, ref))
     version = fp.readline().rstrip()
     fp.close()
-except:
-    print "Did not find .git directory here:", git_dir
+    
+except FileNotFoundError:
+    print("Did not find .git directory here:", git_dir)
 
+    
 def getBranch():
     return branch
 
 def getVersion():
     return version
 
-if __name__ == "__main__":
-    print "Branch:", branch
-    print "Version:", version
+if (__name__ == "__main__"):
+    print("Branch:", branch)
+    print("Version:", version)
 
 #
 # The MIT License
