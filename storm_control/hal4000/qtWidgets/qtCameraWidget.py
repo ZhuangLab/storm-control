@@ -7,18 +7,18 @@
 # Hazen 09/13
 #
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 import numpy
 import sys
 
-import halLib.c_image_manipulation_c as c_image
+import storm_control.hal4000.halLib.c_image_manipulation_c as c_image
 
 ## QCameraWidget
 #
 # The base class for displaying data from a camera.
 #
-class QCameraWidget(QtGui.QWidget):
+class QCameraWidget(QtWidgets.QWidget):
     displayCaptured = QtCore.pyqtSignal(object)
     dragStart = QtCore.pyqtSignal()
     dragMove = QtCore.pyqtSignal(float, float)
@@ -32,7 +32,7 @@ class QCameraWidget(QtGui.QWidget):
     # @param parent (Optional) The PyQt parent of this object.
     #
     def __init__(self, parameters, parent = None):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.setMouseTracking(True)
 
@@ -425,7 +425,7 @@ class QCameraWidget(QtGui.QWidget):
             try:
                 image_data = image_data.reshape((h,w))
             except ValueError as e:
-                print "Got an image with an unexpected size, ", image_data.size, "expected", h * w
+                print("Got an image with an unexpected size, ", image_data.size, "expected", h * w)
                 return
 
             max_intensity = self.max_intensity
@@ -465,14 +465,14 @@ class QCameraWidget(QtGui.QWidget):
 # Testing
 #
 
-if __name__ == "__main__":
+if (__name__ == "__main__"):
     class Parameters:
         def __init__(self):
             self.x_pixels = 200
             self.y_pixels = 200
 
     parameters = Parameters()
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     viewer = QCameraWidget(parameters, [200,400])
     viewer.show()
 

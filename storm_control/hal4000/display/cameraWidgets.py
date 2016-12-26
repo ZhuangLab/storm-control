@@ -8,9 +8,8 @@
 #
 
 import numpy
-from PyQt4 import QtCore, QtGui
 
-import qtWidgets.qtCameraWidget as qtCameraWidget
+import storm_control.hal4000.qtWidgets.qtCameraWidget as qtCameraWidget
 
 
 ## PyCameraWidget

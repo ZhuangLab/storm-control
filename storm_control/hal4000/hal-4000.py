@@ -27,27 +27,28 @@
 import imp
 imp.load_source("setPath", "../sc_library/setPath.py")
 
+import importlib
 import os
 import sys
 import datetime
 import traceback
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 # Misc.
-import camera.control as control
-import camera.filmSettings as filmSettings
-import display.cameraDisplay as cameraDisplay
-import halLib.imagewriters as writers
-import halLib.halModule as halModule
-import qtWidgets.qtAppIcon as qtAppIcon
-import qtWidgets.qtParametersBox as qtParametersBox
+import storm_control.hal4000.camera.control as control
+import storm_control.hal4000.camera.filmSettings as filmSettings
+import storm_control.hal4000.display.cameraDisplay as cameraDisplay
+import storm_control.hal4000.halLib.imagewriters as writers
+import storm_control.hal4000.halLib.halModule as halModule
+import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
+import storm_control.hal4000.qtWidgets.qtParametersBox as qtParametersBox
 
-import sc_library.parameters as params
-import sc_library.hgit as hgit
+import storm_control.sc_library.parameters as params
+import storm_control.sc_library.hgit as hgit
 
 ## getFileName
 #
@@ -69,7 +70,8 @@ def getFileName(path):
 # @return Returns the module
 #
 def halImport(module_name):
-    return __import__(module_name, globals(), locals(), [module_name], -1)
+    #return __import__(module_name, globals(), locals(), [module_name], -1)
+    return importlib.import_module(module_name)
 
 ## trimString
 #
@@ -90,7 +92,7 @@ def trimString(string, max_len):
 #
 # The main window.
 #
-class Window(QtGui.QMainWindow):
+class Window(QtWidgets.QMainWindow):
     tcpComplete = QtCore.pyqtSignal(object)
 
     ## __init__
@@ -103,7 +105,7 @@ class Window(QtGui.QMainWindow):
     #
     @hdebug.debug
     def __init__(self, hardware, parameters, parent = None):
-        QtGui.QMainWindow.__init__(self, parent)
+        QtWidgets.QMainWindow.__init__(self, parent)
 
         # General (alphabetically ordered)
         self.current_directory = False
@@ -144,8 +146,8 @@ class Window(QtGui.QMainWindow):
         elif (self.ui_mode == "detached"):
             import qtdesigner.hal4000_detached_ui as hal4000Ui
         else:
-            print "unrecognized mode:", self.ui_mode
-            print " mode should be either single or detached"
+            print("unrecognized mode:", self.ui_mode)
+            print(" mode should be either single or detached")
             exit()
 
         # Load the ui
@@ -291,9 +293,9 @@ class Window(QtGui.QMainWindow):
         #
 
         # HAL GUI settings.
-        self.move(self.settings.value("main_pos", QtCore.QPoint(100, 100)).toPoint())
-        self.resize(self.settings.value("main_size", self.size()).toSize())
-        self.xml_directory = str(self.settings.value("xml_directory", "").toString())
+        self.move(self.settings.value("main_pos", self.pos()))
+        self.resize(self.settings.value("main_size", self.size()))
+        self.xml_directory = str(self.settings.value("xml_directory", ""))
 
         # Module GUI settings.
         for module in self.modules:
@@ -317,8 +319,8 @@ class Window(QtGui.QMainWindow):
         if self.filming:
             self.stopFilm()
 
-        print " Dave? What are you doing Dave?"
-        print "  ..."
+        print(" Dave? What are you doing Dave?")
+        print("  ...")
 
         # Save HAL GUI settings.
         self.settings.setValue("main_pos", self.pos())
@@ -954,7 +956,7 @@ class Window(QtGui.QMainWindow):
         # fixed length films during which they might have passed out.
         if self.parameters.get("film.want_bell") and (self.parameters.get("film.acq_mode") == "fixed_length"):
             if (self.parameters.get("film.frames") > 1000):
-                print "\7\7"
+                print("\7\7")
 
         # Stop the camera.
         self.stopCamera()
@@ -1202,7 +1204,7 @@ class Window(QtGui.QMainWindow):
 
 
 if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
 
     # Set default font size for linux.
     if (sys.platform == "linux2"):
@@ -1212,7 +1214,7 @@ if __name__ == "__main__":
 
     # Splash Screen.
     pixmap = QtGui.QPixmap("splash.png")
-    splash = QtGui.QSplashScreen(pixmap)
+    splash = QtWidgets.QSplashScreen(pixmap)
     splash.show()
     app.processEvents()
 

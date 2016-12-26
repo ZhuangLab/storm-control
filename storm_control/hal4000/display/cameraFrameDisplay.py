@@ -11,21 +11,22 @@
 # Hazen 09/15
 #
 
-from PyQt4 import QtCore, QtGui
+import importlib
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 # Debugging
-import sc_library.hdebug as hdebug
-import sc_library.parameters as params
+import storm_control.sc_library.hdebug as hdebug
+import storm_control.sc_library.parameters as params
 
 # Camera Helper Modules
-import qtWidgets.qtColorGradient as qtColorGradient
-import qtWidgets.qtRangeSlider as qtRangeSlider
+import storm_control.hal4000.qtWidgets.qtColorGradient as qtColorGradient
+import storm_control.hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
 
 # Misc
-import camera.feeds as feeds
-import colorTables.colorTables as colorTables
+import storm_control.hal4000.camera.feeds as feeds
+import storm_control.hal4000.colorTables.colorTables as colorTables
 
-import qtdesigner.camera_display_ui as cameraDisplayUi
+import storm_control.hal4000.qtdesigner.camera_display_ui as cameraDisplayUi
 
 default_widget = None
 
@@ -33,7 +34,7 @@ default_widget = None
 #
 # This class handles displaying feeds, e.g. "camera1", etc.
 #
-class CameraFeedDisplay(QtGui.QFrame):
+class CameraFeedDisplay(QtWidgets.QFrame):
     feedChanged = QtCore.pyqtSignal(str)
 
     ## __init__
@@ -48,7 +49,7 @@ class CameraFeedDisplay(QtGui.QFrame):
     #
     @hdebug.debug
     def __init__(self, hardware, parameters, feed_name, parent = None):
-        QtGui.QFrame.__init__(self, parent)
+        QtWidgets.QFrame.__init__(self, parent)
 
         # General (alphabetically ordered).
         self.color_gradient = 0
@@ -103,8 +104,8 @@ class CameraFeedDisplay(QtGui.QFrame):
         self.ui.cameraScrollArea.setStyleSheet("QScrollArea { background-color: black } ")
         
         self.ui.rangeSlider = qtRangeSlider.QVRangeSlider()
-        layout = QtGui.QGridLayout(self.ui.rangeSliderWidget)
-        layout.setMargin(1)
+        layout = QtWidgets.QGridLayout(self.ui.rangeSliderWidget)
+        layout.setContentsMargins(1,1,1,1)
         layout.addWidget(self.ui.rangeSlider)
         self.ui.rangeSliderWidget.setLayout(layout)
         self.ui.rangeSlider.setRange([0.0, self.max_intensity, 1.0])
@@ -113,9 +114,9 @@ class CameraFeedDisplay(QtGui.QFrame):
         for color_name in self.color_tables.getColorTableNames():
             self.ui.colorComboBox.addItem(color_name[:-5])
 
-        self.ui.gridAct = QtGui.QAction(self.tr("Show Grid"), self)
-        self.ui.infoAct = QtGui.QAction(self.tr("Hide Info"), self)
-        self.ui.targetAct = QtGui.QAction(self.tr("Show Target"), self)
+        self.ui.gridAct = QtWidgets.QAction(self.tr("Show Grid"), self)
+        self.ui.infoAct = QtWidgets.QAction(self.tr("Hide Info"), self)
+        self.ui.targetAct = QtWidgets.QAction(self.tr("Show Target"), self)
 
         self.ui.cameraShutterButton.hide()
         self.ui.recordButton.hide()
@@ -133,7 +134,8 @@ class CameraFeedDisplay(QtGui.QFrame):
         #
         if hardware is not None:
             display_module = hardware.get("module_name")
-            a_module = __import__('display.' + display_module, globals(), locals(), [display_module], -1)
+            #a_module = __import__('display.' + display_module, globals(), locals(), [display_module], -1)
+            a_module = importlib.import_module('display.' + display_module)
             a_class = getattr(a_module, hardware.get("class_name"))
             global default_widget
             default_widget = a_class

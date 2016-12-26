@@ -7,7 +7,7 @@
 # Hazen 02/13
 #
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui
 
 ## QAppIcon
 #

@@ -10,12 +10,12 @@
 import copy
 import datetime
 import struct
-import tiffwriter
 
-import sc_library.hgit as hgit
-import sc_library.parameters as params
+import storm_control.sc_library.hgit as hgit
+import storm_control.sc_library.parameters as params
 
-import camera.feeds as feeds
+import storm_control.hal4000.camera.feeds as feeds
+import storm_control.hal4000.halLib.tiffwriter as tiffwriter
 
 # Get the version of the software.
 software_version = hgit.getVersion()
@@ -54,7 +54,7 @@ def createFileWriter(filetype, filename, parameters, cameras):
     elif (filetype == ".tif"):
         return TIFFile(filename, parameters, cameras)
     else:
-        print "Unknown output file format, defaulting to .dax"
+        print("Unknown output file format, defaulting to .dax")
         return DaxFile(filename, parameters, cameras)
 
 ## getCameraSize
@@ -242,7 +242,7 @@ class GenericFile:
             # Save the parameters, but only for the cameras.
             if feeds.isCamera(self.feed_names[i]):            
                 self.parameters.add("acquisition.camera", params.Parameter("", "camera", "camera" + str(i+1), 1, False, True))
-                self.parameters.add("acquisition.number_frames", params.Parameter("", "number_frames", self.number_frames[i], 1, False, True))
+                self.parameters.add("acquisition.number_frames", params.ParameterInt("", "number_frames", self.number_frames[i], 1, False, True))
                 self.parameters.saveToFile(filename + ".xml")
 
         self.is_open = False

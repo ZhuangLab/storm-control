@@ -21,17 +21,17 @@
 # Hazen 09/15
 #
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 ## ParamsDisplay
 #
 # This class handles displaying (some of) the current camera parameters
 # in the UI. It also handles the EMCCD gain slider.
 #
-class ParamsDisplay(QtGui.QGroupBox):
+class ParamsDisplay(QtWidgets.QGroupBox):
     gainChange = QtCore.pyqtSignal(str, int)
 
     ## __init__
@@ -43,7 +43,7 @@ class ParamsDisplay(QtGui.QGroupBox):
     #
     @hdebug.debug
     def __init__(self, camera_params_ui, which_camera, parent = None):
-        QtGui.QGroupBox.__init__(self, parent)
+        QtWidgets.QGroupBox.__init__(self, parent)
         self.parameters = None
         self.temperature = False
         self.which_camera = which_camera

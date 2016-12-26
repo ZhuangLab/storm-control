@@ -5,7 +5,7 @@
 # Specialized QScollArea
 #
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 ## QCameraScollArea
@@ -13,7 +13,7 @@ from PyQt4 import QtCore, QtGui
 # A slightly specialized QScrollArea. This scroll area lets the user 
 # zoom in and pan around the images from the camera.
 #
-class QCameraScrollArea(QtGui.QScrollArea):
+class QCameraScrollArea(QtWidgets.QScrollArea):
 
     ## __init__
     #
@@ -22,7 +22,7 @@ class QCameraScrollArea(QtGui.QScrollArea):
     # @param parent (Optional) The PyQt parent of this object.
     #
     def __init__(self, parent = None):
-        QtGui.QScrollArea.__init__(self, parent)
+        QtWidgets.QScrollArea.__init__(self, parent)
 
         self.camera_widget = None
         self.magnification = 1
@@ -37,7 +37,7 @@ class QCameraScrollArea(QtGui.QScrollArea):
     # @param camera_widget A xCameraWidget object.
     #
     def setWidget(self, camera_widget):
-        QtGui.QScrollArea.setWidget(self, camera_widget)
+        QtWidgets.QScrollArea.setWidget(self, camera_widget)
         self.camera_widget = camera_widget
 
     ## wheelEvent
@@ -68,7 +68,7 @@ class QCameraScrollArea(QtGui.QScrollArea):
 # Wrap a scroll bar so that the camera display remains more 
 # or less centered on the wheel events as we zoom in and out.
 #
-class QCameraScrollBar():
+class QCameraScrollBar(object):
 
     ## __init__
     #

@@ -191,10 +191,10 @@ class TiffWriter:
             self.fp.write(struct.pack("I", count))  
             self.fp.write(struct.pack("I", value))
         else:
-            print "unknown tag_type", tag_type, "this tiff file will be mal-formed"
+            print("unknown tag_type", tag_type, "this tiff file will be mal-formed")
 
     
-if __name__ == "__main__":
+if (__name__ == "__main__"):
 
     import numpy
     import sys

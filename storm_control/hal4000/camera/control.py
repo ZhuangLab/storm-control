@@ -7,11 +7,13 @@
 # Hazen 09/15
 #
 
-from PyQt4 import QtCore
+import importlib
 
-import sc_library.hdebug as hdebug
+from PyQt5 import QtCore
 
-import camera.feeds as feeds
+import storm_control.sc_library.hdebug as hdebug
+
+import storm_control.hal4000.camera.feeds as feeds
 
 class Camera(QtCore.QObject):
     cameraProperties = QtCore.pyqtSignal(object)
@@ -34,7 +36,8 @@ class Camera(QtCore.QObject):
 
         # Setup camera control.
         module_name = hardware.get("module_name")
-        cameraControl = __import__('camera.' + module_name, globals(), locals(), [module_name], -1)
+        #cameraControl = __import__('camera.' + module_name, globals(), locals(), [module_name], -1)
+        cameraControl = importlib.import_module('camera.' + module_name)
         self.camera_control = cameraControl.ACameraControl(hardware.get("parameters", False), parameters, parent = self)
 
         self.camera_control.newData.connect(self.handleNewData)

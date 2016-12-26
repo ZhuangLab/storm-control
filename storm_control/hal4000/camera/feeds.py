@@ -12,11 +12,11 @@
 
 import numpy
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
-import camera.frame as frame
+import storm_control.hal4000.camera.frame as frame
 
 #
 # We save all the controllers in a dictionary keyed on the
@@ -347,9 +347,9 @@ class FeedController(object):
                 elif (feed_type == "slice"):
                     fclass = FeedSlice
                 else:
-                    QtGui.QMessageBox.information(None,
-                                                  "Bad Feed Settings",
-                                                  "Unknown feed type " + feed_type + " in feed " + feed_name)
+                    QtWidgets.QMessageBox.information(None,
+                                                      "Bad Feed Settings",
+                                                      "Unknown feed type " + feed_type + " in feed " + feed_name)
                     self.feed_names.remove(feed_name)
                     
                 # Try and create a feed of this type.
@@ -357,9 +357,9 @@ class FeedController(object):
                     try:
                         new_feed = fclass(feed_name, self.parameters)
                     except FeedException as e:
-                        QtGui.QMessageBox.information(None,
-                                                      "Bad Feed Settings",
-                                                      str(e))
+                        QtWidgets.QMessageBox.information(None,
+                                                          "Bad Feed Settings",
+                                                          str(e))
                         self.feed_names.remove(feed_name)
                     else:
                         self.feeds.append(new_feed)

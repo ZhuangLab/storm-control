@@ -8,10 +8,10 @@
 #
 
 import os
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-import sc_library.hdebug as hdebug
-import sc_library.parameters as params
+import storm_control.sc_library.hdebug as hdebug
+import storm_control.sc_library.parameters as params
 
 
 ## ParametersTableWidget
@@ -57,11 +57,11 @@ class ParametersTableWidget(object):
 #
 # A widget for choosing directories.
 #
-class ParametersTableWidgetDirectory(QtGui.QPushButton, ParametersTableWidget):
+class ParametersTableWidgetDirectory(QtWidgets.QPushButton, ParametersTableWidget):
 
     @hdebug.debug
     def __init__(self, root_name, parameter, changed_signal, parent):
-        QtGui.QPushButton.__init__(self, str(parameter.getv()), parent)
+        QtWidgets.QPushButton.__init__(self, str(parameter.getv()), parent)
         ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
 
         self.setFlat(True)
@@ -70,10 +70,10 @@ class ParametersTableWidgetDirectory(QtGui.QPushButton, ParametersTableWidget):
 
     @hdebug.debug        
     def handleClick(self,dummy):
-        directory = str(QtGui.QFileDialog.getExistingDirectory(self, 
+        directory = QtWidgets.QFileDialog.getExistingDirectory(self, 
                                                                "Choose Directory", 
                                                                self.text(),
-                                                               QtGui.QFileDialog.ShowDirsOnly))
+                                                               QtWidgets.QFileDialog.ShowDirsOnly)[0]
         if directory:
             self.setText(directory)
             self.changed_signal.emit(self.p_name, directory)
@@ -86,17 +86,17 @@ class ParametersTableWidgetDirectory(QtGui.QPushButton, ParametersTableWidget):
 #
 # A widget for choosing filenames.
 #
-class ParametersTableWidgetFilename(QtGui.QPushButton, ParametersTableWidget):
+class ParametersTableWidgetFilename(QtWidgets.QPushButton, ParametersTableWidget):
 
     @hdebug.debug
     def __init__(self, root_name, parameter, changed_signal, parent):
-        QtGui.QPushButton.__init__(self, str(parameter.getv()), parent)
+        QtWidgets.QPushButton.__init__(self, str(parameter.getv()), parent)
         ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
 
         if parameter.use_save_dialog:
-            self.fdialog = QtGui.QFileDialog.getSaveFileName
+            self.fdialog = QtWidgets.QFileDialog.getSaveFileName
         else:
-            self.fdialog = QtGui.QFileDialog.getOpenFileName
+            self.fdialog = QtWidgets.QFileDialog.getOpenFileName
 
         self.setFlat(True)
 
@@ -105,10 +105,7 @@ class ParametersTableWidgetFilename(QtGui.QPushButton, ParametersTableWidget):
     @hdebug.debug        
     def handleClick(self,dummy):
         
-        filename = str(self.fdialog(self, 
-                                    "Choose File", 
-                                    os.path.dirname(str(self.text())),
-                                    "*.*"))
+        filename = self.fdialog(self, "Choose File", os.path.dirname(str(self.text())), "*.*")[0]
         if filename:
             self.setText(filename)
             self.changed_signal.emit(self.p_name, filename)
@@ -121,11 +118,11 @@ class ParametersTableWidgetFilename(QtGui.QPushButton, ParametersTableWidget):
 #
 # A widget for floats without any range.
 #
-class ParametersTableWidgetFloat(QtGui.QLineEdit, ParametersTableWidget):
+class ParametersTableWidgetFloat(QtWidgets.QLineEdit, ParametersTableWidget):
 
     @hdebug.debug
     def __init__(self, root_name, parameter, changed_signal, parent):
-        QtGui.QLineEdit.__init__(self, str(parameter.getv()), parent)
+        QtWidgets.QLineEdit.__init__(self, str(parameter.getv()), parent)
         ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
 
         self.setValidator(QtGui.QDoubleValidator(self))
@@ -143,11 +140,11 @@ class ParametersTableWidgetFloat(QtGui.QLineEdit, ParametersTableWidget):
 #
 # A widget for integers without any range.
 #
-class ParametersTableWidgetInt(QtGui.QLineEdit, ParametersTableWidget):
+class ParametersTableWidgetInt(QtWidgets.QLineEdit, ParametersTableWidget):
 
     @hdebug.debug
     def __init__(self, root_name, parameter, changed_signal, parent):
-        QtGui.QLineEdit.__init__(self, str(parameter.getv()), parent)
+        QtWidgets.QLineEdit.__init__(self, str(parameter.getv()), parent)
         ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
 
         self.setValidator(QtGui.QIntValidator(self))
@@ -165,11 +162,11 @@ class ParametersTableWidgetInt(QtGui.QLineEdit, ParametersTableWidget):
 #
 # A widget for floats with a range.
 #
-class ParametersTableWidgetRangeFloat(QtGui.QDoubleSpinBox, ParametersTableWidget):
+class ParametersTableWidgetRangeFloat(QtWidgets.QDoubleSpinBox, ParametersTableWidget):
 
     @hdebug.debug
     def __init__(self, root_name, parameter, changed_signal, parent):
-        QtGui.QDoubleSpinBox.__init__(self, parent)
+        QtWidgets.QDoubleSpinBox.__init__(self, parent)
         ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
 
         self.setMaximum(parameter.getMaximum())
@@ -195,11 +192,11 @@ class ParametersTableWidgetRangeFloat(QtGui.QDoubleSpinBox, ParametersTableWidge
 #
 # A widget for integers with a range.
 #
-class ParametersTableWidgetRangeInt(QtGui.QSpinBox, ParametersTableWidget):
+class ParametersTableWidgetRangeInt(QtWidgets.QSpinBox, ParametersTableWidget):
 
     @hdebug.debug
     def __init__(self, root_name, parameter, changed_signal, parent):
-        QtGui.QSpinBox.__init__(self, parent)
+        QtWidgets.QSpinBox.__init__(self, parent)
         ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
 
         self.setMaximum(parameter.getMaximum())
@@ -224,11 +221,11 @@ class ParametersTableWidgetRangeInt(QtGui.QSpinBox, ParametersTableWidget):
 #
 # Base class for parameters with a set of allowed values.
 #
-class ParametersTableWidgetSet(QtGui.QComboBox, ParametersTableWidget):
+class ParametersTableWidgetSet(QtWidgets.QComboBox, ParametersTableWidget):
 
     @hdebug.debug
     def __init__(self, root_name, parameter, changed_signal, parent):
-        QtGui.QComboBox.__init__(self, parent)
+        QtWidgets.QComboBox.__init__(self, parent)
         ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
 
         for allowed in parameter.getAllowed():
@@ -298,11 +295,11 @@ class ParametersTableWidgetSetString(ParametersTableWidgetSet):
 #
 # A widget for strings.
 #
-class ParametersTableWidgetString(QtGui.QLineEdit, ParametersTableWidget):
+class ParametersTableWidgetString(QtWidgets.QLineEdit, ParametersTableWidget):
 
     @hdebug.debug
     def __init__(self, root_name, parameter, changed_signal, parent):
-        QtGui.QLineEdit.__init__(self, str(parameter.getv()), parent)
+        QtWidgets.QLineEdit.__init__(self, str(parameter.getv()), parent)
         ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
         
         self.metrics = QtGui.QFontMetrics(QtGui.QApplication.font())

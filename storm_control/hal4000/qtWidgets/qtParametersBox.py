@@ -16,14 +16,14 @@ import copy
 import operator
 import os
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-import qtdesigner.params_editor_ui as paramsEditorUi
+import storm_control.hal4000.qtdesigner.params_editor_ui as paramsEditorUi
 
-import sc_library.hdebug as hdebug
-import sc_library.parameters as params
+import storm_control.sc_library.hdebug as hdebug
+import storm_control.sc_library.parameters as params
 
-import halLib.parameterEditors as pEditors
+import storm_control.hal4000.halLib.parameterEditors as pEditors
 
 def getFileName(path):
     return os.path.splitext(os.path.basename(path))[0]
@@ -44,13 +44,13 @@ def handleCustomParameter(root_name, parameter, changed_signal, parent):
 #
 # This class handles the parameters editor dialog box.
 #
-class ParametersEditor(QtGui.QDialog):
+class ParametersEditor(QtWidgets.QDialog):
 
     updateClicked = QtCore.pyqtSignal()
     
     @hdebug.debug
     def __init__(self, parameters, parent = None):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
         self.editor_widgets = {}  # This dictionary stores all the editor
                                   # widgets indexed by the parameter name.
         self.n_changed = 0
@@ -98,12 +98,12 @@ class ParametersEditor(QtGui.QDialog):
     @hdebug.debug
     def closeEvent(self, event):
         if (self.n_changed != 0):
-            reply = QtGui.QMessageBox.question(self,
-                                               "Warning!",
-                                               "Parameters have been changed, close anyway?",
-                                               QtGui.QMessageBox.Yes,
-                                               QtGui.QMessageBox.No)
-            if (reply == QtGui.QMessageBox.No):
+            reply = QtWidgets.QMessageBox.question(self,
+                                                   "Warning!",
+                                                   "Parameters have been changed, close anyway?",
+                                                   QtWidgets.QMessageBox.Yes,
+                                                   QtWidgets.QMessageBox.No)
+            if (reply == QtWidgets.QMessageBox.No):
                 event.ignore()
                 
         self.accept()
@@ -190,19 +190,19 @@ class ParametersEditor(QtGui.QDialog):
 #
 # This class handles a tab in the parameters editor dialog box.
 #
-class ParametersEditorTab(QtGui.QWidget):
+class ParametersEditorTab(QtWidgets.QWidget):
 
     # The signal for the change of the value of a parameter.
     parameterChanged = QtCore.pyqtSignal(str, object)
     
     @hdebug.debug    
     def __init__(self, root_name, parameters, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         self.editor_widgets = {}
 
         # Create scroll area for displaying the parameters table.
-        scroll_area = QtGui.QScrollArea(self)
-        layout = QtGui.QGridLayout(self)
+        scroll_area = QtWidgets.QScrollArea(self)
+        layout = QtWidgets.QGridLayout(self)
         layout.addWidget(scroll_area)
 
         # Create the parameters table & add to the scroll area.
@@ -241,17 +241,17 @@ class ParametersEditorTab(QtGui.QWidget):
 #
 # The table where all the different parameters will get displayed.
 #
-class ParametersTable(QtGui.QWidget):
+class ParametersTable(QtWidgets.QWidget):
 
     @hdebug.debug
     def __init__(self, root_name, parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Maximum)
+        QtWidgets.QWidget.__init__(self, parent)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtGui.QSizePolicy.Maximum)
 
-        self.setLayout(QtGui.QGridLayout(self))
+        self.setLayout(QtWidgets.QGridLayout(self))
         self.layout().setColumnStretch(1, 1)
         for i, name in enumerate(["Name", "Description", "Value", "Order"]):
-            label = QtGui.QLabel(name)
+            label = QtWidgets.QLabel(name)
             label.setStyleSheet("QLabel { font-weight: bold }")
             self.layout().addWidget(label, 0, i)
 
@@ -265,9 +265,9 @@ class ParametersTable(QtGui.QWidget):
         # related to a single parameter, so we associate the widgets
         # together under the editor widget.
         #
-        name_label = QtGui.QLabel(parameter.getName())
+        name_label = QtWidgets.QLabel(parameter.getName())
         self.layout().addWidget(name_label, row, 0)
-        desc_label = QtGui.QLabel(parameter.getDescription())
+        desc_label = QtWidgets.QLabel(parameter.getDescription())
         self.layout().addWidget(desc_label, row, 1)
 
         # Find the matching editor widget based on the parameter type.
@@ -290,12 +290,12 @@ class ParametersTable(QtGui.QWidget):
                                       changed_signal,
                                       self)
         else:
-            print "No widget found for", type(parameter)
-            new_widget = QtGui.QLabel(str(parameter.getv()))
+            print("No widget found for", type(parameter))
+            new_widget = QtWidgets.QLabel(str(parameter.getv()))
         new_widget.setLabels(name_label, desc_label)
         self.layout().addWidget(new_widget, row, 2)
         
-        self.layout().addWidget(QtGui.QLabel(str(parameter.order)), row, 3)
+        self.layout().addWidget(QtWidgets.QLabel(str(parameter.order)), row, 3)
 
         return new_widget
         
@@ -305,7 +305,7 @@ class ParametersTable(QtGui.QWidget):
 # This class encapsulates a set of parameters and it's
 # associated radio button.
 #
-class ParametersRadioButton(QtGui.QRadioButton):
+class ParametersRadioButton(QtWidgets.QRadioButton):
 
     deleteSelected = QtCore.pyqtSignal(object)
     duplicateSelected = QtCore.pyqtSignal(object)
@@ -318,21 +318,21 @@ class ParametersRadioButton(QtGui.QRadioButton):
     #
     @hdebug.debug
     def __init__(self, parameters, parent = None):
-        QtGui.QRadioButton.__init__(self, getFileName(parameters.get("parameters_file")), parent)
+        QtWidgets.QRadioButton.__init__(self, getFileName(parameters.get("parameters_file")), parent)
         self.changed = False
         self.editor_dialog = None
         self.parameters = parameters
 
-        self.delAct = QtGui.QAction(self.tr("Delete"), self)
+        self.delAct = QtWidgets.QAction(self.tr("Delete"), self)
         self.delAct.triggered.connect(self.handleDelete)
 
-        self.duplicateAct = QtGui.QAction(self.tr("Duplicate"), self)
+        self.duplicateAct = QtWidgets.QAction(self.tr("Duplicate"), self)
         self.duplicateAct.triggered.connect(self.handleDuplicate)
 
-        self.editAct = QtGui.QAction(self.tr("Edit"), self)
+        self.editAct = QtWidgets.QAction(self.tr("Edit"), self)
         self.editAct.triggered.connect(self.handleEdit)
 
-        self.saveAct = QtGui.QAction(self.tr("Save"), self)
+        self.saveAct = QtWidgets.QAction(self.tr("Save"), self)
         self.saveAct.triggered.connect(self.handleSave)
 
 
@@ -344,7 +344,7 @@ class ParametersRadioButton(QtGui.QRadioButton):
     #
     @hdebug.debug
     def contextMenuEvent(self, event):
-        menu = QtGui.QMenu(self)
+        menu = QtWidgets.QMenu(self)
 
         # If it is not the current button it can be deleted.
         if not self.isChecked():
@@ -415,10 +415,10 @@ class ParametersRadioButton(QtGui.QRadioButton):
     #
     @hdebug.debug
     def handleSave(self, boolean):
-        filename = str(QtGui.QFileDialog.getSaveFileName(self, 
+        filename = QtWidgets.QFileDialog.getSaveFileName(self, 
                                                          "Choose File", 
                                                          os.path.dirname(str(self.parameters.get("parameters_file"))),
-                                                         "*.xml"))
+                                                         "*.xml")[0]
         if filename:
             self.changed = False
             self.setText(getFileName(filename))
@@ -464,7 +464,7 @@ class ParametersRadioButton(QtGui.QRadioButton):
 # This class handles displaying and interacting with
 # the various parameter files that the user has loaded.
 #
-class QParametersBox(QtGui.QWidget):
+class QParametersBox(QtWidgets.QWidget):
 
     settings_toggled = QtCore.pyqtSignal(name = 'settingsToggled')
 
@@ -474,20 +474,20 @@ class QParametersBox(QtGui.QWidget):
     #
     @hdebug.debug
     def __init__(self, parent = None):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         self.current_parameters = None
         self.current_button = False
         self.radio_buttons = []
 
-        self.button_group = QtGui.QButtonGroup(self)
+        self.button_group = QtWidgets.QButtonGroup(self)
         
-        self.layout = QtGui.QVBoxLayout(self)
-        self.layout.setMargin(4)
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(4,4,4,4)
         self.layout.setSpacing(2)
-        self.layout.addSpacerItem(QtGui.QSpacerItem(20, 
-                                                    12,
-                                                    QtGui.QSizePolicy.Minimum,
-                                                    QtGui.QSizePolicy.Expanding))
+        self.layout.addSpacerItem(QtWidgets.QSpacerItem(20, 
+                                                        12,
+                                                        QtWidgets.QSizePolicy.Minimum,
+                                                        QtWidgets.QSizePolicy.Expanding))
 
     ## addParameters
     #
@@ -517,7 +517,7 @@ class QParametersBox(QtGui.QWidget):
     #
     @hdebug.debug
     def getButtonNames(self):
-        return map(lambda(x): x.text(), self.radio_buttons)
+        return list(map(lambda x: x.text(), self.radio_buttons))
 
     ## getCurrentParameters
     #
@@ -618,7 +618,7 @@ class QParametersBox(QtGui.QWidget):
                 self.radio_buttons[index].click()
                 return False
         else:
-            print "Requested parameter index not available", param_index
+            print("Requested parameter index not available", param_index)
             return True
 
     ## startFilm

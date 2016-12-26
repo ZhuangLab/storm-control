@@ -7,14 +7,14 @@
 # Hazen 3/09
 #
 
-from PyQt4 import QtGui
+from PyQt5 import QtWidgets
 import sys
 
 ## QColorGradient
 #
 # This class handles displaying a color scale based on the current color table.
 #
-class QColorGradient(QtGui.QWidget):
+class QColorGradient(QtWidgets.QWidget):
 
     ## __init__
     #
@@ -22,7 +22,7 @@ class QColorGradient(QtGui.QWidget):
     # @param parent (Optional) the PyQt parent of this object.
     #
     def __init__(self, colortable = 0, parent = None):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         self.min = 0
         self.max = 256
         self.image = QtGui.QImage(1, self.max - self.min, QtGui.QImage.Format_Indexed8)
@@ -69,13 +69,13 @@ class QColorGradient(QtGui.QWidget):
 # Testing
 #
 
-if __name__ == "__main__":
+if (__name__ == "__main__"):
     class Parameters:
         def __init__(self):
             self.x_pixels = 200
             self.y_pixels = 200
 
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     width = 120
     height = 500
     gradient = QColorGradient(x_size = width, y_size = height)

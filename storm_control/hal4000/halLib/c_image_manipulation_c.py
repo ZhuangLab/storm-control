@@ -55,7 +55,7 @@ try:
     image_manip.rescaleImage111.argtypes = rescale_fn_arg_types
 
 except OSError:
-    print "C image manipulation library not found, reverting to numpy."
+    print("C image manipulation library not found, reverting to numpy.")
     image_manip = None
 
 ## compare
@@ -70,7 +70,7 @@ except OSError:
 def compare(image1, image2):
     
     if (image1.size != image2.size):
-        print "Images are not the same size!"
+        print("Images are not the same size!")
         return
 
     return image_manip.compare(image1, image2, image1.size)
@@ -176,7 +176,7 @@ if (__name__ == "__main__"):
     from PIL import Image
 
     if (len(sys.argv)!=2):
-        print "Usage <image_file>"
+        print("Usage <image_file>")
         exit()
         
     im = Image.open(sys.argv[1])
@@ -194,7 +194,7 @@ if (__name__ == "__main__"):
     #all_ori = [[False, False, False]]
     
     for ori in all_ori:
-        print "Testing:", ori
+        print("Testing:", ori)
         [flip_h, flip_v, transpose] = ori
 
         if False:
@@ -204,7 +204,7 @@ if (__name__ == "__main__"):
             [c_nim, image_min, image_max] = rescaleImage(nim, flip_h, flip_v, transpose, [0, 100], 101)
             [py_nim, image_min, image_max] = rescaleImage(nim, flip_h, flip_v, transpose, [0, 100], 101, True)
 
-        print "  byte wise comparison:", compare(c_nim, py_nim), "pixels are different."
+        print("  byte wise comparison:", compare(c_nim, py_nim), "pixels are different.")
         
         c_nim = c_nim.astype(numpy.int)
         py_nim = py_nim.astype(numpy.int)
@@ -213,7 +213,7 @@ if (__name__ == "__main__"):
         mask = (numpy.abs(c_nim - py_nim) > 1)
         
         if (numpy.count_nonzero(mask) > 0):
-            print "  Failed", numpy.count_nonzero(mask), numpy.max(numpy.abs(c_nim - py_nim))
+            print("  Failed", numpy.count_nonzero(mask), numpy.max(numpy.abs(c_nim - py_nim)))
             
             fim = Image.fromarray(c_nim.astype(numpy.uint8))
             fim.save("out.png")
@@ -222,7 +222,7 @@ if (__name__ == "__main__"):
             fim = Image.fromarray(diff.astype(numpy.uint8))
             fim.save("diff.png")
         else:
-            print "  Ok"
+            print("  Ok")
 
             
 #

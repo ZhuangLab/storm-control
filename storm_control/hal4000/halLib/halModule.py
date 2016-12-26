@@ -7,10 +7,10 @@
 # Hazen 02/14
 #
 
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 
-import sc_library.hdebug as hdebug
-import sc_library.halExceptions as exceptions
+import storm_control.sc_library.hdebug as hdebug
+import storm_control.sc_library.halExceptions as exceptions
 
 ## StartFilmException.
 #
@@ -152,7 +152,7 @@ class HalModule(object):
     #
     @hdebug.debug
     def show(self):
-        print "show error!"
+        print("show error!")
 
     ## startFilm
     #

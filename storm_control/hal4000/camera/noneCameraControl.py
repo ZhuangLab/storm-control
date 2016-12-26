@@ -9,14 +9,14 @@
 
 import ctypes
 import numpy
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
-import sc_library.parameters as params
-import camera.cameraControl as cameraControl
-import camera.frame as frame
+import storm_control.sc_library.parameters as params
+import storm_control.hal4000.camera.cameraControl as cameraControl
+import storm_control.hal4000.camera.frame as frame
 
 ## ACameraControl
 #
@@ -91,7 +91,7 @@ class ACameraControl(cameraControl.CameraControl):
     def initCamera(self):
         if not self.camera:
             if hdebug.getDebug():
-                print " Initializing None Camera Type"
+                print(" Initializing None Camera Type")
             self.camera = True
         self.got_camera = True
 

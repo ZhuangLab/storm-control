@@ -9,20 +9,20 @@
 #    like the temperature, EMGain, etc..
 #
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
-import display.cameraFrameDisplay as cameraFrameDisplay
-import display.paramsDisplay as paramsDisplay
-import halLib.halModule as halModule
+import storm_control.hal4000.display.cameraFrameDisplay as cameraFrameDisplay
+import storm_control.hal4000.display.paramsDisplay as paramsDisplay
+import storm_control.hal4000.halLib.halModule as halModule
 
-class CameraDisplay(QtGui.QDialog, halModule.HalModule):
+class CameraDisplay(QtWidgets.QDialog, halModule.HalModule):
     
     @hdebug.debug
     def __init__(self, hal_ui, hal_ui_mode, which_camera, hardware, parameters, parent):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
         halModule.HalModule.__init__(self)
         
         self.camera_properties = None
@@ -66,8 +66,8 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
                                                                           show_record,
                                                                           parent = camera_frame)
         
-        layout = QtGui.QGridLayout(camera_frame)
-        layout.setMargin(0)
+        layout = QtWidgets.QGridLayout(camera_frame)
+        layout.setContentsMargins(0,0,0,0)
         layout.addWidget(self.camera_frame_display)
 
         self.camera_frame_display.feedChanged.connect(self.handleFeedChanged)
@@ -78,8 +78,8 @@ class CameraDisplay(QtGui.QDialog, halModule.HalModule):
                                                          which_camera,
                                                          parent = camera_params_frame)
 
-        layout = QtGui.QGridLayout(camera_params_frame)
-        layout.setMargin(0)
+        layout = QtWidgets.QGridLayout(camera_params_frame)
+        layout.setContentsMargins(0,0,0,0)
         layout.addWidget(self.camera_params)
 
     @hdebug.debug

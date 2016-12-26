@@ -27,7 +27,7 @@ def getColorTables(directory):
 #
 # This class encapsulates color table handling.
 #
-class ColorTables:
+class ColorTables(object):
 
     ## __init__
     #
@@ -87,7 +87,7 @@ class ColorTables:
         try:
             index = self.table_names.index(name)
         except:
-            print " ", name, "not found"
+            print(" ", name, "not found")
         if not index == -1:
             self.index = index
             self.table_name = self.table_names[self.index]
@@ -114,12 +114,12 @@ class ColorTables:
 # Testing
 # 
 
-if __name__ == "__main__":
+if (__name__ == "__main__"):
     test = ColorTables("./all_tables/")
     [table, name] = test.currentTable()
-    print name
+    print(name)
     [table, name] = test.getTableByName("idl5.ctbl")
-    print name
+    print(name)
 
 
 #
