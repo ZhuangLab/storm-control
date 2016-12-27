@@ -6,25 +6,25 @@
 # display(s) except that they can only view the feeds.
 #
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
-import display.cameraFrameDisplay as cameraFrameDisplay
-import halLib.halModule as halModule
+import storm_control.hal4000.display.cameraFrameDisplay as cameraFrameDisplay
+import storm_control.hal4000.halLib.halModule as halModule
 
-import qtdesigner.feed_viewer_ui as feedViewerUi
+import storm_control.hal4000.qtdesigner.feed_viewer_ui as feedViewerUi
 
 ## FeedViewer
 #
 # This handles the display of single feed.
 #
-class FeedViewer(QtGui.QDialog):
+class FeedViewer(QtWidgets.QDialog):
 
     @hdebug.debug
     def __init__(self, default_feed, parameters, parent):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
 
         self.default_feed = default_feed
         self.parameters = parameters
@@ -40,8 +40,8 @@ class FeedViewer(QtGui.QDialog):
                                                                        default_feed,
                                                                        self.ui.cameraFrame)
 
-        layout = QtGui.QGridLayout(self.ui.cameraFrame)
-        layout.setMargin(0)
+        layout = QtWidgets.QGridLayout(self.ui.cameraFrame)
+        layout.setContentsMargins(0,0,0,0)
         layout.addWidget(self.feed_frame_display)
 
         self.feed_frame_display.feedChanged.connect(self.handleFeedChanged)
@@ -158,8 +158,8 @@ class FeedViewers(QtCore.QObject, halModule.HalModule):
         index = len(self.viewers)
         new_viewer = FeedViewer("camera1", self.parameters, self.parent)
         new_viewer.newParameters(self.parameters)
-        new_viewer.move(self.gui_settings.value("feed_viewer_" + str(index) + "_pos", QtCore.QPoint(200, 200)).toPoint())
-        new_viewer.resize(self.gui_settings.value("feed_viewer_" + str(index) + "_size", new_viewer.size()).toSize())
+        new_viewer.move(self.gui_settings.value("feed_viewer_" + str(index) + "_pos", QtCore.QPoint(200, 200)))
+        new_viewer.resize(self.gui_settings.value("feed_viewer_" + str(index) + "_size", new_viewer.size()))
 
         # Since we might want to create a viewer in the middle of a film we
         # need to configure for that.

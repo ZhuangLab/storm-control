@@ -540,7 +540,7 @@ class ParameterSetBoolean(ParameterSet):
 class ParameterSetFloat(ParameterSet):
 
     def __init__(self, description, name, value, allowed, order = 1, is_mutable = True, is_saved = True):
-        allowed = map(float, allowed)
+        allowed = list(map(float, allowed))
         ParameterSet.__init__(self, description, name, float(value), allowed, order, is_mutable, is_saved)
         self.ptype = "float"
 
@@ -553,7 +553,7 @@ class ParameterSetFloat(ParameterSet):
 class ParameterSetInt(ParameterSet):
 
     def __init__(self, description, name, value, allowed, order = 1, is_mutable = True, is_saved = True):
-        allowed = map(int, allowed)
+        allowed = list(map(int, allowed))
         ParameterSet.__init__(self, description, name, int(value), allowed, order, is_mutable, is_saved)
         self.ptype = "int"
         
@@ -566,7 +566,7 @@ class ParameterSetInt(ParameterSet):
 class ParameterSetString(ParameterSet):
 
     def __init__(self, description, name, value, allowed, order = 1, is_mutable = True, is_saved = True):
-        allowed = map(str, allowed)
+        allowed = list(map(str, allowed))
         if value is None:
             value = ''
         ParameterSet.__init__(self, description, name, str(value), allowed, order, is_mutable, is_saved)
@@ -907,7 +907,7 @@ class StormXMLObject(object):
         rough_string = ElementTree.tostring(self.toXML())
         reparsed = minidom.parseString(rough_string)
         with open(filename, "w") as fp:
-            fp.write(reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1"))
+            fp.write(reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1").decode())
 
     ## set
     #

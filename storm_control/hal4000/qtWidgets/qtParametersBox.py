@@ -246,7 +246,7 @@ class ParametersTable(QtWidgets.QWidget):
     @hdebug.debug
     def __init__(self, root_name, parent):
         QtWidgets.QWidget.__init__(self, parent)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtGui.QSizePolicy.Maximum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
 
         self.setLayout(QtWidgets.QGridLayout(self))
         self.layout().setColumnStretch(1, 1)

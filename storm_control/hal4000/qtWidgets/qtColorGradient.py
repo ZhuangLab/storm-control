@@ -7,7 +7,7 @@
 # Hazen 3/09
 #
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtGui, QtWidgets
 import sys
 
 ## QColorGradient

@@ -9,8 +9,8 @@
 
 import halLib.halModule as halModule
 
-import sc_library.hdebug as hdebug
-from sc_library.tcpServer import TCPServer
+import storm_control.sc_library.hdebug as hdebug
+from storm_control.sc_library.tcpServer import TCPServer
 
 ## TCP/IP Control Class
 #

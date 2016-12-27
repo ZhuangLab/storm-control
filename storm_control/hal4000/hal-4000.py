@@ -206,7 +206,7 @@ class Window(QtWidgets.QMainWindow):
         # Insert additional menu items for the camera display(s) as necessary
         else:
             for camera_display in camera_displays:
-                a_action = QtGui.QAction(self.tr(camera_display.getMenuName()), self)
+                a_action = QtWidgets.QAction(self.tr(camera_display.getMenuName()), self)
                 self.ui.menuFile.insertAction(self.ui.actionQuit, a_action)
                 a_action.triggered.connect(camera_display.show)
 
@@ -229,7 +229,7 @@ class Window(QtWidgets.QMainWindow):
             instance.hal_gui = module.get("hal_gui")
             if module.get("hal_gui"):
                 add_separator = True
-                a_action = QtGui.QAction(self.tr(module.get("menu_item")), self)
+                a_action = QtWidgets.QAction(self.tr(module.get("menu_item")), self)
                 self.ui.menuFile.insertAction(self.ui.actionQuit, a_action)
                 a_action.triggered.connect(instance.show)
             self.modules.append(instance)
@@ -1061,24 +1061,21 @@ class Window(QtWidgets.QMainWindow):
         if self.filming:
             self.stopFilm()
         else:
-            reply = QtGui.QMessageBox.Yes
+            reply = QtWidgets.QMessageBox.Yes
             if self.will_overwrite and self.ui.saveMovieCheckBox.isChecked():
-                reply = QtGui.QMessageBox.question(self,
-                                                   #QtCore.QString(u"\u5C0F\u5FC3"),
-                                                   "Warning!",
-                                                   "Overwrite Existing Movie?",
-                                                   QtGui.QMessageBox.Yes,
-                                                   QtGui.QMessageBox.No)
+                reply = QtWidgets.QMessageBox.question(self,
+                                                       "Warning!",
+                                                       "Overwrite Existing Movie?",
+                                                       QtWidgets.QMessageBox.Yes,
+                                                       QtWidgets.QMessageBox.No)
             if not self.ui.saveMovieCheckBox.isChecked():
-                reply = QtGui.QMessageBox.question(self,
-                                                   #QtCore.QString(u"\u5C0F\u5FC3"),
-                                                   "Warning!",
-                                                   "Do you know that the movie will not be saved?",
-                                                   QtGui.QMessageBox.Yes,
-                                                   QtGui.QMessageBox.No)
-            if (reply == QtGui.QMessageBox.Yes):
+                reply = QtWidgets.QMessageBox.question(self,
+                                                       "Warning!",
+                                                       "Do you know that the movie will not be saved?",
+                                                       QtWidgets.QMessageBox.Yes,
+                                                       QtWidgets.QMessageBox.No)
+            if (reply == QtWidgets.QMessageBox.Yes):
                 self.startFilm()
-
 
     ## toggleLiveView
     #
@@ -1122,9 +1119,9 @@ class Window(QtWidgets.QMainWindow):
         # FIXME: This should not catch all errors.
         except:
             hdebug.logText("bad parameters")
-            QtGui.QMessageBox.information(self,
-                                          "Bad parameters",
-                                          traceback.format_exc())
+            QtWidgets.QMessageBox.information(self,
+                                              "Bad parameters",
+                                              traceback.format_exc())
         self.parameters_box.updateParameters()
 
         # Restart live view

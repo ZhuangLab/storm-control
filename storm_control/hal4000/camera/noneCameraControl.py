@@ -110,16 +110,21 @@ class ACameraControl(cameraControl.CameraControl):
         else:
             self.sleep_time = 10
             
-        size_x = (p.get("x_end") - p.get("x_start") + 1)/p.get("x_bin")
-        size_y = (p.get("y_end") - p.get("y_start") + 1)/p.get("y_bin")
+        size_x = int((p.get("x_end") - p.get("x_start") + 1)/p.get("x_bin"))
+        size_y = int((p.get("y_end") - p.get("y_start") + 1)/p.get("y_bin"))
         p.set("x_pixels", size_x)
         p.set("y_pixels", size_y)
         self.fake_frame_size = [size_x, size_y]
-        fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
+        self.fake_frame = numpy.zeros(size_x * size_y, dtype = numpy.uint16)
         for i in range(size_x):
             for j in range(size_y):
-                fake_frame[j*2*size_x + i*2] = chr(i % 128 + j % 128)
-        self.fake_frame = numpy.fromstring(fake_frame, dtype = numpy.uint16)
+                self.fake_frame[j*size_x+i] = i % 128 + j % 128
+        
+#        fake_frame = ctypes.create_string_buffer(2 * size_x * size_y)
+#        for i in range(size_x):
+#            for j in range(size_y):
+#                fake_frame[j*2*size_x + i*2] = chr(i % 128 + j % 128)
+#        self.fake_frame = numpy.fromstring(fake_frame, dtype = numpy.uint16)
         
         if not p.has("bytes_per_frame"):
             p.set("bytes_per_frame", 2 * size_x * size_y)

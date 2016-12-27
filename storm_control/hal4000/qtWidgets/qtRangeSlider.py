@@ -196,7 +196,7 @@ class QRangeSlider(QtWidgets.QWidget):
     # @param event A PyQt event.
     #
     def resizeEvent(self, event):
-        QtGui.QWidget.resizeEvent(self, event)
+        QtWidgets.QWidget.resizeEvent(self, event)
         self.updateDisplayValues()
 
     ## setEmitWhileMoving

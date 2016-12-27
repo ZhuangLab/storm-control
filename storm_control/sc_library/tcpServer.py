@@ -11,9 +11,10 @@
 #
 
 import sys
-from PyQt4 import QtCore, QtGui, QtNetwork
-from sc_library.tcpMessage import TCPMessage
-import sc_library.tcpCommunications as tcpCommunications
+from PyQt5 import QtCore, QtGui, QtWidgets, QtNetwork
+
+from storm_control.sc_library.tcpMessage import TCPMessage
+import storm_control.sc_library.tcpCommunications as tcpCommunications
 
 ## TCPServer
 #
@@ -63,7 +64,7 @@ class TCPServer(QtNetwork.QTcpServer, tcpCommunications.TCPCommunications):
             string = "Listening for new clients at: \n"
             string += "    Address: " + self.address.toString() + "\n"
             string += "    Port: " + str(self.port)
-            print string
+            print(string)
         self.listen(self.address, self.port)
         self.comGotConnection.emit()
         
@@ -73,7 +74,7 @@ class TCPServer(QtNetwork.QTcpServer, tcpCommunications.TCPCommunications):
     #
     def disconnectFromClients(self):
         if self.verbose:
-            print "Force disconnect from clients"
+            print("Force disconnect from clients")
         if self.isConnected():
             self.socket.disconnectFromHost()
             self.socket.waitForDisconnect()
@@ -94,10 +95,12 @@ class TCPServer(QtNetwork.QTcpServer, tcpCommunications.TCPCommunications):
             self.socket.readyRead.connect(self.handleReadyRead)
             self.socket.disconnected.connect(self.handleClientDisconnect)
             self.comGotConnection.emit()
-            if self.verbose: print "Connected new client"
+            if self.verbose:
+                print("Connected new client")
         else: # Refuse new socket if one already exists
             message = TCPMessage(message_type = "Busy") # from tcpMessage.TCPMessage
-            if self.verbose: print "Sent: \n" + str(message)
+            if self.verbose:
+                print("Sent: \n" + str(message))
             socket.write(message.toJSON() + "\n")
             socket.disconnectFromHost()
             socket.close()
@@ -111,13 +114,15 @@ class TCPServer(QtNetwork.QTcpServer, tcpCommunications.TCPCommunications):
         self.socket.close()
         self.socket = None
         self.comLostConnection.emit()
-        if self.verbose: print "Client disconnected"
+        if self.verbose:
+            print("Client disconnected")
+            
         
 ## StandAlone
 # 
 # Stand Alone Test Class
 #                                                               
-class StandAlone(QtGui.QMainWindow):
+class StandAlone(QtWidgets.QMainWindow):
 
     ## __init__
     #
@@ -139,14 +144,14 @@ class StandAlone(QtGui.QMainWindow):
     # Handle New Connection.
     # 
     def handleNewConnection(self):
-        print "Established connection"
+        print("Established connection")
 
     ## handleLostConnection
     # 
     # Handle Lost Connection.
     # 
     def handleLostConnection(self):
-        print "Lost connection"
+        print("Lost connection")
 
     ## handleMessageReady
     # 
@@ -157,11 +162,11 @@ class StandAlone(QtGui.QMainWindow):
     def handleMessageReady(self, message):
         # Parse Based on Message Type
         if message.getType() == "Stage Position":
-            print "Stage X: ", message.getData("Stage_X"), "Stage Y: ", message.getData("Stage_Y")
+            print("Stage X: ", message.getData("Stage_X"), "Stage Y: ", message.getData("Stage_Y"))
             self.server.sendMessage(message)
             
         elif message.getType() == "Movie":
-            print "Movie: ", "Name: ", message.getData("Name"), "Parameters: ", message.getData("Parameters")
+            print("Movie: ", "Name: ", message.getData("Name"), "Parameters: ", message.getData("Parameters"))
             self.server.sendMessage(message)
 
     ## closeEvent
@@ -173,12 +178,13 @@ class StandAlone(QtGui.QMainWindow):
     def closeEvent(self, event):
         self.server.close()
         self.close()
-            
+
+
 # 
 # Test/Demo of Class
 #                        
-if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+if (__name__ == "__main__"):
+    app = QtWidgets.QApplication(sys.argv)
     window = StandAlone()
     window.show()
     sys.exit(app.exec_())

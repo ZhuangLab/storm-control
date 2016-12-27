@@ -47,20 +47,21 @@ class QCameraScrollArea(QtWidgets.QScrollArea):
     # @param event A PyQt wheel event object.
     #
     def wheelEvent(self, event):
-        if (event.delta() > 0):
-            self.magnification += 1
-        else:
-            self.magnification -= 1
+        if not event.angleDelta().isNull():
+            if (event.angleDelta().y() > 0):
+                self.magnification += 1
+            else:
+                self.magnification -= 1
 
-        if (self.magnification < 1):
-            self.magnification = 1
-        if (self.magnification > 8):
-            self.magnification = 8
+            if (self.magnification < 1):
+                self.magnification = 1
+            if (self.magnification > 8):
+                self.magnification = 8
     
-        [ev_x, ev_y] = self.camera_widget.getEventLocation(event)
-        self.h_scroll_bar.setCurRatio(ev_x)
-        self.v_scroll_bar.setCurRatio(ev_y)
-        self.camera_widget.setMagnification(self.magnification)
+            [ev_x, ev_y] = self.camera_widget.getEventLocation(event)
+            self.h_scroll_bar.setCurRatio(ev_x)
+            self.v_scroll_bar.setCurRatio(ev_y)
+            self.camera_widget.setMagnification(self.magnification)
 
         
 ## QCameraScrollBar

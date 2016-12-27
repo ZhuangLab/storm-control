@@ -358,8 +358,8 @@ class CameraFeedDisplay(QtWidgets.QFrame):
         else:
             self.color_gradient = qtColorGradient.QColorGradient(colortable = self.color_table,
                                                                  parent = self.ui.colorFrame)
-            layout = QtGui.QGridLayout(self.ui.colorFrame)
-            layout.setMargin(2)
+            layout = QtWidgets.QGridLayout(self.ui.colorFrame)
+            layout.setContentsMargins(2,2,2,2)
             layout.addWidget(self.color_gradient)
 
         self.ui.colorComboBox.setCurrentIndex(self.ui.colorComboBox.findText(self.getParameter("colortable")[:-5]))

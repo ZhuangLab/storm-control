@@ -207,8 +207,8 @@ class QCameraWidget(QtWidgets.QWidget):
     def mousePressEvent(self, event):
 
         # Point/pixel selection.
-        self.x_click = event.x() * self.x_size / self.x_final
-        self.y_click = event.y() * self.y_size / self.y_final
+        self.x_click = int(event.x() * self.x_size / self.x_final)
+        self.y_click = int(event.y() * self.y_size / self.y_final)
         
         if (self.x_click >= self.x_size):
             self.x_click = self.x_size - 1
@@ -227,7 +227,7 @@ class QCameraWidget(QtWidgets.QWidget):
         # ROI selection rubber band.
         else:
             if not self.roi_rubber_band:
-                self.roi_rubber_band = QtGui.QRubberBand(QtGui.QRubberBand.Rectangle, self)
+                self.roi_rubber_band = QtWidgets.QRubberBand(QtWidgets.QRubberBand.Rectangle, self)
             self.roi_rubber_band.setGeometry(QtCore.QRect(event.pos(), QtCore.QSize()))
             self.roi_rubber_band.show()
 
@@ -240,9 +240,9 @@ class QCameraWidget(QtWidgets.QWidget):
         if self.drag_mode:
             self.drag_mode = False
             if self.ctrl_key_down:
-                QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
+                QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
             else:
-                QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+                QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
         else:
             self.roi_rubber_band.hide()
