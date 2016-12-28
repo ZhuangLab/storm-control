@@ -274,7 +274,7 @@ class ParametersTable(QtWidgets.QWidget):
         types = [[params.ParameterCustom, handleCustomParameter],
                  [params.ParameterFloat, pEditors.ParametersTableWidgetFloat],
                  [params.ParameterInt, pEditors.ParametersTableWidgetInt],
-                 [params.ParameterRangeFloat, pEditors.ParametersTableWidgetRangeFloat],                 
+                 [params.ParameterRangeFloat, pEditors.ParametersTableWidgetRangeFloat],
                  [params.ParameterRangeInt, pEditors.ParametersTableWidgetRangeInt],
                  [params.ParameterSetBoolean, pEditors.ParametersTableWidgetSetBoolean],
                  [params.ParameterSetFloat, pEditors.ParametersTableWidgetSetFloat],
@@ -293,8 +293,8 @@ class ParametersTable(QtWidgets.QWidget):
             print("No widget found for", type(parameter))
             new_widget = QtWidgets.QLabel(str(parameter.getv()))
         new_widget.setLabels(name_label, desc_label)
-        self.layout().addWidget(new_widget, row, 2)
-        
+        self.layout().addWidget(new_widget.getQtWidget(), row, 2)
+
         self.layout().addWidget(QtWidgets.QLabel(str(parameter.order)), row, 3)
 
         return new_widget
