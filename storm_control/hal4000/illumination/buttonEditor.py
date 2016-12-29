@@ -8,31 +8,30 @@
 #
 
 from operator import itemgetter
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui, QtWidgets
 
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
-import halLib.parameterEditors as pEditors
-
-import button_editor_ui as buttonEditorUi
+import storm_control.hal4000.halLib.parameterEditors as parameterEditors
+import storm_control.hal4000.illumination.button_editor_ui as buttonEditorUi
 
 
 ## ButtonEditorRow
 #
 # A single row in the button editor table.
 #
-class ButtonEditorRow(QtGui.QWidget):
+class ButtonEditorRow(QtWidgets.QWidget):
 
     delete = QtCore.pyqtSignal(object)
 
     def __init__(self, channel, name, power, channel_names, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
 
-        self.setLayout(QtGui.QHBoxLayout(self))
-        self.layout().setMargin(0)
+        self.setLayout(QtWidgets.QHBoxLayout(self))
+        self.layout().setContentsMargins(0,0,0,0)
 
         # Channel selector combo box.
-        self.channel_cbox = QtGui.QComboBox(self)
+        self.channel_cbox = QtWidgets.QComboBox(self)
         self.channel_cbox.addItems(channel_names)
         self.channel_cbox.setCurrentIndex(channel)
         self.channel_cbox.setMaximumWidth(100)
@@ -40,13 +39,13 @@ class ButtonEditorRow(QtGui.QWidget):
         self.layout().addWidget(self.channel_cbox)
 
         # Button name editor.
-        self.name_editor = QtGui.QLineEdit(name, self)
+        self.name_editor = QtWidgets.QLineEdit(name, self)
         self.name_editor.setMaximumWidth(100)
         self.name_editor.setMinimumWidth(100)
         self.layout().addWidget(self.name_editor)
                 
         # Button value spin box.
-        self.power_sbox = QtGui.QDoubleSpinBox(self)
+        self.power_sbox = QtWidgets.QDoubleSpinBox(self)
         self.power_sbox.setValue(power)
         self.power_sbox.setMinimum(0.0)
         self.power_sbox.setMaximum(1.0)
@@ -56,7 +55,7 @@ class ButtonEditorRow(QtGui.QWidget):
         self.layout().addWidget(self.power_sbox)
 
         # Delete button
-        self.delete_button = QtGui.QPushButton("Delete")
+        self.delete_button = QtWidgets.QPushButton("Delete")
         self.delete_button.setMaximumWidth(100)
         self.delete_button.setMinimumWidth(100)
         self.delete_button.clicked.connect(self.handleDeleteAction)
@@ -77,21 +76,21 @@ class ButtonEditorRow(QtGui.QWidget):
 #
 # The table where all the different buttons will get displayed.
 #
-class ButtonEditorTable(QtGui.QWidget):
+class ButtonEditorTable(QtWidgets.QWidget):
 
     def __init__(self, buttons, channel_names, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Maximum)
 
         self.channel_names = channel_names
         
-        self.setLayout(QtGui.QVBoxLayout(self))
+        self.setLayout(QtWidgets.QVBoxLayout(self))
 
         # Add header row.
-        widget = QtGui.QWidget(self)
-        widget.setLayout(QtGui.QHBoxLayout(widget))
+        widget = QtWidgets.QWidget(self)
+        widget.setLayout(QtWidgets.QHBoxLayout(widget))
         for i, name in enumerate(["Channel", "Name", "Power"]):
-            label = QtGui.QLabel(name, widget)
+            label = QtWidgets.QLabel(name, widget)
             label.setStyleSheet("QLabel { font-weight: bold }")
             label.setMaximumWidth(100)
             label.setMinimumWidth(100)
@@ -114,7 +113,7 @@ class ButtonEditorTable(QtGui.QWidget):
                 self.be_rows.append(be_row)
 
         # The add element a row button.
-        self.add_button = QtGui.QPushButton("Add Button")
+        self.add_button = QtWidgets.QPushButton("Add Button")
         self.add_button.clicked.connect(self.handleAddRow)
         self.layout().addWidget(self.add_button)
 
@@ -152,17 +151,18 @@ class ButtonEditorTable(QtGui.QWidget):
 #
 # A widget for editting power buttons.
 #
-class ParametersTablePowerButtonEditor(QtGui.QPushButton, pEditors.ParametersTableWidget):
+class ParametersTablePowerButtonEditor(parameterEditors.ParametersTableWidget):
 
     @hdebug.debug
     def __init__(self, root_name, parameter, changed_signal, parent):
-        QtGui.QPushButton.__init__(self, "Edit Buttons", parent)
-        pEditors.ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
+        parameterEditors.ParametersTableWidget.__init__(self, root_name, parameter, changed_signal)
+
+        self.qt_widget = QtWidgets.QPushButton.__init__(self, "Edit Buttons", parent)
 
         self.buttons = parameter.getv()
         self.channel_names = parameter.channel_names
 
-        self.clicked.connect(self.handleClick)
+        self.qt_widget.clicked.connect(self.handleClick)
 
     @hdebug.debug
     def handleClick(self, dummy):
@@ -178,10 +178,10 @@ class ParametersTablePowerButtonEditor(QtGui.QPushButton, pEditors.ParametersTab
 #
 # The button editor dialog box.
 #
-class QButtonEditorDialog(QtGui.QDialog):
+class QButtonEditorDialog(QtWidgets.QDialog):
 
     def __init__(self, buttons, channel_names):
-        QtGui.QDialog.__init__(self)
+        QtWidgets.QDialog.__init__(self)
 
         self.was_accepted = False
 
