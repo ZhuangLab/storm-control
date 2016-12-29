@@ -412,7 +412,7 @@ class QSpinBoxRangeSlider(QtWidgets.QWidget):
         # Attempt to calculate the appropriate number of decimal points.
         dec_pnts = abs(decimal.Decimal(slider_range[2]).as_tuple().exponent)
 
-        self.min_spin_box = QtGui.QDoubleSpinBox()
+        self.min_spin_box = QtWidgets.QDoubleSpinBox()
         self.min_spin_box.setDecimals(dec_pnts)
         self.min_spin_box.setMinimum(slider_range[0])
         self.min_spin_box.setMaximum(slider_range[1])
@@ -420,7 +420,7 @@ class QSpinBoxRangeSlider(QtWidgets.QWidget):
         self.min_spin_box.setValue(values[0])
         self.min_spin_box.valueChanged.connect(self.handleMinSpinBox)
 
-        self.max_spin_box = QtGui.QDoubleSpinBox()
+        self.max_spin_box = QtWidgets.QDoubleSpinBox()
         self.max_spin_box.setDecimals(dec_pnts)
         self.max_spin_box.setMinimum(slider_range[0])
         self.max_spin_box.setMaximum(slider_range[1])
@@ -438,7 +438,7 @@ class QSpinBoxRangeSlider(QtWidgets.QWidget):
         self.range_slider = range_slider
 
         # Make range slider take as much of the space as possible.
-        size_policy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding)
+        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
         self.range_slider.setSizePolicy(size_policy)
 
         # Connect signals/
@@ -557,7 +557,7 @@ class QHSpinBoxRangeSlider(QSpinBoxRangeSlider):
         if (not parent):
             self.setGeometry(200, 200, 300, 100)
 
-        self.layout = QtGui.QHBoxLayout(self)
+        self.layout = QtWidgets.QHBoxLayout(self)
         self.layout.addWidget(self.min_spin_box)
         self.layout.addWidget(self.range_slider)
         self.layout.addWidget(self.max_spin_box)
@@ -582,7 +582,7 @@ class QVSpinBoxRangeSlider(QSpinBoxRangeSlider):
         if (not parent):
             self.setGeometry(200, 200, 100, 300)
 
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.max_spin_box)
         self.layout.addWidget(self.range_slider)
         self.layout.addWidget(self.min_spin_box)
@@ -616,10 +616,10 @@ class QRangeSliderDialog(QtWidgets.QDialog):
             self.range_widget = QVSpinBoxRangeSlider(slider_range, values)
 
         # Create layout, add widget, and add buttons    
-        layout = QtGui.QGridLayout()
+        layout = QtWidgets.QGridLayout()
         layout.addWidget(self.range_widget, 0,0)
-        self.button_box = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok |
-                                                 QtGui.QDialogButtonBox.Cancel)
+        self.button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok |
+                                                     QtWidgets.QDialogButtonBox.Cancel)
 
         layout.addWidget(self.button_box, 1, 0)
         self.setLayout(layout)
@@ -634,35 +634,35 @@ class QRangeSliderDialog(QtWidgets.QDialog):
     #
     def getValues(self):
         return self.range_widget.getValues()
-   
+
+    
 #
 # Testing
 #
-
-if __name__ == "__main__":
+if (__name__ == "__main__"):
     class Parameters:
         def __init__(self):
             self.x_pixels = 200
             self.y_pixels = 200
 
     app = QtWidgets.QApplication(sys.argv)
-    if 0:
+    if False:
         hslider = QHRangeSlider(slider_range = [-5.0, 5.0, 0.5], values = [-2.5, 2.5])
         hslider.setEmitWhileMoving(True)
         hslider.show()
-    if 0:
+    if False:
         vslider = QVRangeSlider(slider_range = [-5.0, 5.0, 0.5], values = [-2.5, 2.5])
         vslider.setEmitWhileMoving(True)
         vslider.show()
-    if 0:
+    if False:
         dhslider = QHSpinBoxRangeSlider(slider_range = [-5.0, 5.0, 0.5], values = [-2.5, 2.5])
         dhslider.setEmitWhileMoving(True)
         dhslider.show()
-    if 0:
+    if False:
         dhslider = QVSpinBoxRangeSlider(slider_range = [-10, 10, 0.5], values = [-2, 2])
         dhslider.setEmitWhileMoving(True)
         dhslider.show()        
-    if 1:
+    if True:
         dialog = QRangeSliderDialog(title_text = "Range Slider",
                                     slider_range = [-10,10,0.5],
                                     values = [-5, 5])
