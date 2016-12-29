@@ -11,13 +11,14 @@
 import imp
 imp.load_source("setPath", "../sc_library/setPath.py")
 
+import importlib
 import sys
-from PyQt4 import QtGui
+from PyQt5 import QtWidgets
 
-import sc_library.parameters as params
+import storm_control.sc_library.parameters as params
 
 def runModule(module_type, setup_name = False):
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
 
     general_parameters = params.halParameters("settings_default.xml")
     if setup_name:
@@ -29,7 +30,7 @@ def runModule(module_type, setup_name = False):
     found = False
     for module in hardware.get("modules").getProps():
         if (module.get("hal_type") == module_type):
-            a_module = __import__(module.get("module_name"), globals(), locals(), [setup_name], -1)
+            a_module = importlib.import_module(module.get("module_name"))
             a_class = getattr(a_module, module.get("class_name"))
             instance = a_class(module.get("parameters", False), general_parameters, None)
 
@@ -45,7 +46,7 @@ def runModule(module_type, setup_name = False):
         app.exec_()
         instance.cleanup()
     else:
-        print module_type, "not found for", setup_name, "setup"
+        print(module_type, "not found for", setup_name, "setup")
 
 #
 # The MIT License

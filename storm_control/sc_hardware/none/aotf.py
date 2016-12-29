@@ -7,7 +7,7 @@
 # Hazen 04/14
 #
 
-import sc_hardware.baseClasses.illuminationHardware as illuminationHardware
+import storm_control.sc_hardware.baseClasses.illuminationHardware as illuminationHardware
 
 
 ## NoneAOTF

@@ -8,7 +8,7 @@
 #
 
 from operator import itemgetter
-from PyQt4 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 import storm_control.sc_library.hdebug as hdebug
 

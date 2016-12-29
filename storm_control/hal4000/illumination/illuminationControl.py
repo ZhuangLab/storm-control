@@ -8,27 +8,29 @@
 #
 
 import ast
-from PyQt4 import QtCore, QtGui
-import qtWidgets.qtAppIcon as qtAppIcon
+import importlib
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-import sc_library.halExceptions as halExceptions
-import sc_library.hdebug as hdebug
-import sc_library.parameters as params
+import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
 
-import halLib.halModule as halModule
+import storm_control.sc_library.halExceptions as halExceptions
+import storm_control.sc_library.hdebug as hdebug
+import storm_control.sc_library.parameters as params
 
-import illumination.buttonEditor as buttonEditor
-import illumination.illuminationChannel as illuminationChannel
-import illumination.xmlParser as xmlParser
+import storm_control.hal4000.halLib.halModule as halModule
+
+import storm_control.hal4000.illumination.buttonEditor as buttonEditor
+import storm_control.hal4000.illumination.illuminationChannel as illuminationChannel
+import storm_control.hal4000.illumination.xmlParser as xmlParser
 
 # UI.
-import qtdesigner.illumination_ui as illuminationUi
+import storm_control.hal4000.qtdesigner.illumination_ui as illuminationUi
 
 ## IlluminationControl
 #
 # Illumination power control.
 #
-class IlluminationControl(QtGui.QDialog, halModule.HalModule):
+class IlluminationControl(QtWidgets.QDialog, halModule.HalModule):
     channelNames = QtCore.pyqtSignal(object)
     newColors = QtCore.pyqtSignal(object)
     newCycleLength = QtCore.pyqtSignal(int)
@@ -41,7 +43,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def __init__(self, hardware, parameters, parent = None):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
         halModule.HalModule.__init__(self)
         
         self.channels = []
@@ -108,7 +110,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         # Hardware modules setup.
         for module in hardware.modules:
             m_name = module.module_name
-            a_module = __import__(m_name, globals(), locals(), [m_name], -1)
+            a_module =  importlib.import_module(m_name)
             a_class = getattr(a_module, module.class_name)
             a_instance = a_class(module.parameters, self)
             if a_instance.isBuffered():
@@ -145,7 +147,7 @@ class IlluminationControl(QtGui.QDialog, halModule.HalModule):
         for channel in self.channels:
             channel.cleanup()
 
-        for name, instance in self.hardware_modules.iteritems():
+        for name, instance in self.hardware_modules.items():
             instance.cleanup()
 
     ## closeEvent

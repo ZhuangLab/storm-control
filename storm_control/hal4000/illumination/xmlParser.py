@@ -10,7 +10,7 @@
 import xml.etree.ElementTree as ElementTree
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 
 ## HardwareXMLObject
@@ -195,13 +195,13 @@ def parseShuttersXML(number_channels, shutters_file, oversampling = 100):
 #
 # Testing
 #
-if __name__ == "__main__":
+if (__name__ == "__main__"):
     import sys
 
     if 1:
         xh = parseHardwareXML(sys.argv[1])
-        print xh.modules[0].name
-        print xh.channels[0].description
+        print(xh.modules[0].name)
+        print(xh.channels[0].description)
 
         #print len(xh.modules)
         #print len(xh.channels)

@@ -7,7 +7,7 @@
 # Hazen 04/14
 #
 
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 
 import illumination.illuminationChannelUI as illuminationChannelUI
 

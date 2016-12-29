@@ -10,7 +10,7 @@
 # Hazen 04/14
 #
 
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 
 #
 # Helper functions.
@@ -230,7 +230,7 @@ class BufferedAmplitudeModulation(QtCore.QThread, AmplitudeModulation):
     #
     def deviceSetAmplitude(self, channel, amplitude):
         self.device_mutex.lock()
-        print "deviceSetAmplitude should have been over-ridden.."
+        print("deviceSetAmplitude should have been over-ridden..")
         self.device_mutex.unlock()
 
     ## run

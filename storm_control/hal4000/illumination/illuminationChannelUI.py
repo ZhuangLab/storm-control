@@ -7,14 +7,14 @@
 # Hazen 04/14
 #
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 ## ChannelUI
 #
 # A QWidget for displaying the UI elements associated with
 # an illumination channel.
 #
-class ChannelUI(QtGui.QFrame):
+class ChannelUI(QtWidgets.QFrame):
     onOffChange = QtCore.pyqtSignal(object)
     powerChange = QtCore.pyqtSignal(int)
 
@@ -25,25 +25,25 @@ class ChannelUI(QtGui.QFrame):
     # @param parent The PyQt parent of this object.
     #
     def __init__(self, name, color, parent):
-        QtGui.QFrame.__init__(self, parent)
+        QtWidgets.QFrame.__init__(self, parent)
 
         self.color = color
         self.enabled = True
 
         self.setLineWidth(2)
         self.setStyleSheet("background-color: rgb(" + self.color + ");")
-        self.setFrameShape(QtGui.QFrame.Panel)
-        self.setFrameShadow(QtGui.QFrame.Raised)
+        self.setFrameShape(QtWidgets.QFrame.Panel)
+        self.setFrameShadow(QtWidgets.QFrame.Raised)
         self.resize(48, 204)
 
         # Text label.
-        self.wavelength_label = QtGui.QLabel(self)
+        self.wavelength_label = QtWidgets.QLabel(self)
         self.wavelength_label.setGeometry(5, 5, 40, 10)
         self.wavelength_label.setText(name)
         self.wavelength_label.setAlignment(QtCore.Qt.AlignCenter)
 
         # Power on/off radio button.
-        self.on_off_button = QtGui.QRadioButton(self)
+        self.on_off_button = QtWidgets.QRadioButton(self)
         self.on_off_button.setGeometry(18, self.height() - 24, 18, 18)
 
         # Connect signals
@@ -56,7 +56,7 @@ class ChannelUI(QtGui.QFrame):
     def disableChannel(self):
         self.setOnOff(False)
         self.setStyleSheet("background-color: rgb(128,128,128);")
-        self.setFrameShadow(QtGui.QFrame.Sunken)
+        self.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.wavelength_label.setStyleSheet("QLabel { color: rgb(200,200,200)}")
         self.on_off_button.setCheckable(False)
         self.enabled = False
@@ -67,7 +67,7 @@ class ChannelUI(QtGui.QFrame):
     #
     def enableChannel(self, was_on = False):
         self.setStyleSheet("background-color: rgb(" + self.color + ");")
-        self.setFrameShadow(QtGui.QFrame.Raised)
+        self.setFrameShadow(QtWidgets.QFrame.Raised)
         self.wavelength_label.setStyleSheet("QLabel { color: black}")
         self.on_off_button.setCheckable(True)
         self.setOnOff(was_on)
@@ -191,13 +191,13 @@ class ChannelUIAdjustable(ChannelUI):
         self.min_amplitude = minimum
 
         # Current power label.
-        self.power_label = QtGui.QLabel(self)
+        self.power_label = QtWidgets.QLabel(self)
         self.power_label.setGeometry(5, 19, 40, 10)
         self.power_label.setText("")
         self.power_label.setAlignment(QtCore.Qt.AlignCenter)
 
         # Slider for controlling the power.
-        self.powerslider = QtGui.QSlider(self)
+        self.powerslider = QtWidgets.QSlider(self)
         self.powerslider.setGeometry(13, 34, 24, 141)
         self.powerslider.setMinimum(minimum)
         self.powerslider.setMaximum(maximum)
@@ -315,7 +315,7 @@ class ChannelUIAdjustable(ChannelUI):
 #
 # A push button specialized for amplitude / power control.
 #
-class PowerButton(QtGui.QPushButton):
+class PowerButton(QtWidgets.QPushButton):
     powerChange = QtCore.pyqtSignal(int)
 
     ## __init__
@@ -324,7 +324,7 @@ class PowerButton(QtGui.QPushButton):
     # @param parent The PyQt parent of the button.
     #
     def __init__(self, y_loc, parent):
-        QtGui.QPushButton.__init__(self, parent)
+        QtWidgets.QPushButton.__init__(self, parent)
 
         self.value = 0.0
         self.setGeometry(6, y_loc, 38, 20)

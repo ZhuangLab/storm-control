@@ -4,25 +4,25 @@
   <control_modules>
     <control_module>
       <name>wheel1</name>
-      <module_name>sc_hardware.none.filterWheel</module_name>
+      <module_name>storm_control.sc_hardware.none.filterWheel</module_name>
       <class_name>NoneFilterWheel</class_name>
     </control_module>
 
     <control_module>
       <name>aotf1</name>
-      <module_name>sc_hardware.none.aotf</module_name>
+      <module_name>storm_control.sc_hardware.none.aotf</module_name>
       <class_name>NoneAOTF</class_name>
     </control_module>
     
     <control_module>
       <name>laser1</name>
-      <module_name>sc_hardware.none.laser</module_name>
+      <module_name>storm_control.sc_hardware.none.laser</module_name>
       <class_name>NoneLaser</class_name>
     </control_module>
 
     <control_module>
       <name>daq1</name>
-      <module_name>sc_hardware.none.daq</module_name>
+      <module_name>storm_control.sc_hardware.none.daq</module_name>
       <class_name>NoneDaq</class_name>
     </control_module>
   </control_modules>
