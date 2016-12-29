@@ -77,8 +77,7 @@ class ParametersTableWidgetDirectory(ParametersTableWidget):
         directory = QtWidgets.QFileDialog.getExistingDirectory(self.qt_widget, 
                                                                "Choose Directory", 
                                                                self.qt_widget.text(),
-                                                               QtWidgets.QFileDialog.ShowDirsOnly)[0]
-        print("dir", directory)
+                                                               QtWidgets.QFileDialog.ShowDirsOnly)
         if directory:
             self.qt_widget.setText(directory)
             self.changed_signal.emit(self.p_name, directory)

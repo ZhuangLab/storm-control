@@ -639,10 +639,10 @@ class Window(QtWidgets.QMainWindow):
     @hdebug.debug            
     def newDirectory(self, directory = False):
         if (not directory):
-            directory = str(QtGui.QFileDialog.getExistingDirectory(self, 
+            directory = QtWidgets.QFileDialog.getExistingDirectory(self, 
                                                                    "New Directory", 
                                                                    str(self.parameters.get("film.directory")),
-                                                                   QtGui.QFileDialog.ShowDirsOnly))
+                                                                   QtWidgets.QFileDialog.ShowDirsOnly)
         if directory and os.path.exists(directory):
             self.directory = directory
             self.parameters.set("film.directory", str(self.directory))
@@ -758,9 +758,9 @@ class Window(QtWidgets.QMainWindow):
         except params.ParametersException:
             is_valid_xml = False
             hdebug.logText("failed to parse parameters file " + parameters_filename)
-            QtGui.QMessageBox.information(self,
-                                          "Parameter file parsing error",
-                                          traceback.format_exc())
+            QtWidgets.QMessageBox.information(self,
+                                              "Parameter file parsing error",
+                                              traceback.format_exc())
         if is_valid_xml:
             self.parameters_box.addParameters(parameters)
 
@@ -776,10 +776,10 @@ class Window(QtWidgets.QMainWindow):
     def newSettingsFile(self, boolean):
         if self.filming:
             return
-        parameters_filename = str(QtGui.QFileDialog.getOpenFileName(self, 
+        parameters_filename = QtWidgets.QFileDialog.getOpenFileName(self, 
                                                                     "New Settings",
                                                                     self.xml_directory, 
-                                                                    "*.xml"))
+                                                                    "*.xml")[0]
         if parameters_filename:
             self.xml_directory = os.path.dirname(parameters_filename)
             self.newSettings(parameters_filename)
@@ -804,9 +804,9 @@ class Window(QtWidgets.QMainWindow):
                 module.newShutters(shutters_filename)
             new_shutters = True
         except:
-            QtGui.QMessageBox.information(self,
-                                          "Shutter file parsing error",
-                                          traceback.format_exc())
+            QtWidgets.QMessageBox.information(self,
+                                              "Shutter file parsing error",
+                                              traceback.format_exc())
             hdebug.logText("failed to parse shutter file " + shutters_filename)
             for module in self.modules:
                 module.newShutters(self.old_shutters_file)
@@ -830,10 +830,10 @@ class Window(QtWidgets.QMainWindow):
     def newShuttersFile(self, bool):
         if self.filming:
             return
-        shutters_filename = str(QtGui.QFileDialog.getOpenFileName(self, 
+        shutters_filename = QtWidgets.QFileDialog.getOpenFileName(self, 
                                                                   "New Shutter Sequence", 
                                                                   self.xml_directory, 
-                                                                  "*.xml"))
+                                                                  "*.xml")[0]
         if shutters_filename:
             self.xml_directory = os.path.dirname(shutters_filename)
             self.newShutters(shutters_filename)
