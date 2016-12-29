@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>811</width>
-    <height>671</height>
+    <width>806</width>
+    <height>676</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -134,8 +134,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>200</width>
-               <height>191</height>
+               <width>194</width>
+               <height>141</height>
               </rect>
              </property>
             </widget>
@@ -492,16 +492,7 @@
           <property name="spacing">
            <number>2</number>
           </property>
-          <property name="leftMargin">
-           <number>2</number>
-          </property>
-          <property name="topMargin">
-           <number>2</number>
-          </property>
-          <property name="rightMargin">
-           <number>2</number>
-          </property>
-          <property name="bottomMargin">
+          <property name="margin">
            <number>2</number>
           </property>
           <item>
@@ -530,16 +521,7 @@
           <property name="spacing">
            <number>2</number>
           </property>
-          <property name="leftMargin">
-           <number>2</number>
-          </property>
-          <property name="topMargin">
-           <number>2</number>
-          </property>
-          <property name="rightMargin">
-           <number>2</number>
-          </property>
-          <property name="bottomMargin">
+          <property name="margin">
            <number>2</number>
           </property>
           <item>
@@ -581,8 +563,8 @@
         </property>
         <property name="minimumSize">
          <size>
-          <width>583</width>
-          <height>541</height>
+          <width>588</width>
+          <height>540</height>
          </size>
         </property>
         <property name="maximumSize">
@@ -657,8 +639,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>811</width>
-     <height>21</height>
+     <width>806</width>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

@@ -111,8 +111,6 @@ class CameraFeedDisplay(QtWidgets.QFrame):
         self.ui.rangeSlider.setRange([0.0, self.max_intensity, 1.0])
         self.ui.rangeSlider.setEmitWhileMoving(True)
 
-        print("wi", self.ui.rangeSliderWidget.width(), self.ui.rangeSliderWidget.height())
-
         for color_name in self.color_tables.getColorTableNames():
             self.ui.colorComboBox.addItem(color_name[:-5])
 
