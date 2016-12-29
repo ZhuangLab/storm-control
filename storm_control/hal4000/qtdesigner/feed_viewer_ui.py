@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(585, 579)
+        Dialog.resize(588, 575)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -29,7 +29,7 @@ class Ui_Dialog(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.cameraFrame.sizePolicy().hasHeightForWidth())
         self.cameraFrame.setSizePolicy(sizePolicy)
-        self.cameraFrame.setMinimumSize(QtCore.QSize(585, 543))
+        self.cameraFrame.setMinimumSize(QtCore.QSize(588, 544))
         self.cameraFrame.setMaximumSize(QtCore.QSize(10000, 10000))
         self.cameraFrame.setFrameShape(QtWidgets.QFrame.Box)
         self.cameraFrame.setFrameShadow(QtWidgets.QFrame.Raised)
