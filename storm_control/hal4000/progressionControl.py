@@ -17,24 +17,24 @@
 
 import os
 import sys
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 
-import halLib.halModule as halModule
-import qtWidgets.qtAppIcon as qtAppIcon
-import sc_library.parameters as params
+import storm_control.hal4000.halLib.halModule as halModule
+import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
+import storm_control.sc_library.parameters as params
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 # UIs.
-import qtdesigner.progression_ui as progressionUi
+import storm_control.hal4000.qtdesigner.progression_ui as progressionUi
 
 ## Channels
 #
 # Channels class which is specialized for various
 # types of channel power progressions.
 #
-class Channels():
+class Channels(object):
 
     ## __init__
     #
@@ -96,20 +96,20 @@ class MathChannels(Channels):
         for channel in channels:
             self.powers.append(0.0)
             self.which_checked.append(False)
-            channel_frame = QtGui.QFrame(parent)
+            channel_frame = QtWidgets.QFrame(parent)
             channel_frame.setGeometry(0, y, 340, 24)
 
             # channel number
-            channel_text = QtGui.QLabel(channel_frame)
+            channel_text = QtWidgets.QLabel(channel_frame)
             channel_text.setGeometry(x_positions[0], 2, 25, 18)
             channel_text.setText(channel)
 
             # check box
-            channel_active_check_box = QtGui.QCheckBox(channel_frame)
+            channel_active_check_box = QtWidgets.QCheckBox(channel_frame)
             channel_active_check_box.setGeometry(x_positions[1], 2, 18, 18)
 
             # initial value
-            channel_initial_spin_box = QtGui.QDoubleSpinBox(channel_frame)
+            channel_initial_spin_box = QtWidgets.QDoubleSpinBox(channel_frame)
             channel_initial_spin_box.setGeometry(x_positions[2], 2, 68, 18)
             channel_initial_spin_box.setDecimals(4)
             channel_initial_spin_box.setMaximum(1.0)
@@ -117,14 +117,14 @@ class MathChannels(Channels):
             channel_initial_spin_box.setSingleStep(0.0001)
 
             # increment
-            channel_inc_spin_box = QtGui.QDoubleSpinBox(channel_frame)
+            channel_inc_spin_box = QtWidgets.QDoubleSpinBox(channel_frame)
             channel_inc_spin_box.setGeometry(x_positions[3], 2, 68, 18)
             channel_inc_spin_box.setDecimals(4)
             channel_inc_spin_box.setValue(parameters.get("pinc_value"))
             channel_inc_spin_box.setSingleStep(0.0001)
 
             # time to increment
-            channel_time_spin_box = QtGui.QSpinBox(channel_frame)
+            channel_time_spin_box = QtWidgets.QSpinBox(channel_frame)
             channel_time_spin_box.setGeometry(x_positions[4], 2, 68, 18)
             channel_time_spin_box.setMinimum(100)
             channel_time_spin_box.setMaximum(100000)
@@ -387,7 +387,7 @@ class FileChannels(Channels):
 #
 # Progression control dialog box
 #
-class ProgressionControl(QtGui.QDialog, halModule.HalModule):
+class ProgressionControl(QtWidgets.QDialog, halModule.HalModule):
     incPower = QtCore.pyqtSignal(int, float)
     setPower = QtCore.pyqtSignal(int, float)
     tcpComplete = QtCore.pyqtSignal(object)
@@ -403,7 +403,7 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def __init__(self, hardware, parameters, parent):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
         halModule.HalModule.__init__(self)
         self.channels = False
         self.exp_channels = False
@@ -673,10 +673,10 @@ class ProgressionControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def newPowerFile(self, bool):
-        power_filename = QtGui.QFileDialog.getOpenFileName(self,
-                                                           "New Power File",
-                                                           str(self.parameters.get("film.directory")),
-                                                           "*.power")
+        power_filename = QtWidgets.QFileDialog.getOpenFileName(self,
+                                                               "New Power File",
+                                                               str(self.parameters.get("film.directory")),
+                                                               "*.power")[0]
         if power_filename:
             self.parameters.set("progressions.pfile_name", power_filename)
             self.ui.filenameLabel.setText(power_filename[-40:])

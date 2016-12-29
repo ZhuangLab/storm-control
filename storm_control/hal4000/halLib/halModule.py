@@ -86,8 +86,8 @@ class HalModule(object):
     @hdebug.debug
     def loadGUISettings(self, settings):
         if self.hal_gui:
-            self.move(settings.value(self.hal_type + "_pos", QtCore.QPoint(200, 200)).toPoint())
-            if settings.value(self.hal_type + "_visible", False).toBool():
+            self.move(settings.value(self.hal_type + "_pos", QtCore.QPoint(200, 200)))
+            if (settings.value(self.hal_type + "_visible", "false") == "true"):
                 self.show()
 
     ## moduleInit
