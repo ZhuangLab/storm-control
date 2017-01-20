@@ -8,7 +8,7 @@
 # Hazen 03/14
 #
 
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 
 ## QStageThread
 #
@@ -164,15 +164,15 @@ class QStageThread(QtCore.QThread):
             self.mutex.lock()
             if ((counter % self.move_update_freq) == 0):
                 if (len(self.motion_buffer) > 0):
-                    [type, mx, my] = self.motion_buffer
-                    if (type == "jog"):
+                    [mtype, mx, my] = self.motion_buffer
+                    if (mtype == "jog"):
                         self.stage.jog(mx, my)
-                    elif (type == "mover"):
+                    elif (mtype == "mover"):
                         self.stage.goRelative(mx, my)
-                    elif (type == "drag"):
+                    elif (mtype == "drag"):
                         self.stage.goAbsolute(mx, my)
                     else:
-                        print "QStageThread: unknown type", type
+                        print("QStageThread: unknown type", mtype)
                     self.motion_buffer = []
 
             if ((counter % self.pos_update_freq) == 0):

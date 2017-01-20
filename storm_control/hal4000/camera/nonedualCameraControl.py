@@ -9,13 +9,14 @@
 
 import ctypes
 import numpy
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
-import camera.cameraControl as cameraControl
-import camera.frame as frame
+import storm_control.hal4000.camera.cameraControl as cameraControl
+import storm_control.hal4000.camera.frame as frame
+
 
 ## ACameraControl
 #

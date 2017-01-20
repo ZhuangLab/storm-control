@@ -7,16 +7,15 @@
 # Jeff Moffitt 5/16
 #
 
-from PyQt4 import QtCore, QtGui
-import qtWidgets.qtAppIcon as qtAppIcon
-import halLib.halModule as halModule
-import sc_library.halExceptions as halExceptions
+import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
+import storm_control.hal4000.halLib.halModule as halModule
+import storm_control.sc_library.halExceptions as halExceptions
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 # spinning disk
-import sc_hardware.andor.w1SpinDisk as w1SpinDisk
+import storm_control.sc_hardware.andor.w1SpinDisk as w1SpinDisk
 
 ## SpinningDiskControl
 #

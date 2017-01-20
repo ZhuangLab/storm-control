@@ -9,19 +9,19 @@
 
 import time
 import sys
-from PyQt4 import QtCore, QtGui
 
-import miscControl
-import sc_library.parameters as params
+
+import storm_control.hal4000.miscControl.miscControl as miscControl
+import storm_control.sc_library.parameters as params
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 # UIs.
-import qtdesigner.hbaic1_misc_ui as miscControlsUi
+import storm_control.hal4000.qtdesigner.hbaic1_misc_ui as miscControlsUi
 
 # Prior filter wheel
-import sc_hardware.prior.prior as prior
+import storm_control.sc_hardware.prior.prior as prior
 
 #
 # Misc Control Dialog Box

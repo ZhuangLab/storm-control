@@ -7,15 +7,15 @@
 # Hazen 11/09
 #
 
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 
-import sc_library.parameters as params
+import storm_control.sc_library.parameters as params
 
 # stage control thread
-import stagecontrol.stageThread as stageThread
+import storm_control.hal4000.stagecontrol.stageThread as stageThread
 
 # stage control dialog.
-import stagecontrol.stageControl as stageControl
+import storm_control.hal4000.stagecontrol.stageControl as stageControl
 
 #
 # Dummy stage class

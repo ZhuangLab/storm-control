@@ -8,15 +8,10 @@
 # Hazen 09/13
 #
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore
 
 
-try:
-    import objectFinder.lmmObjectFinder as lmmObjectFinder
-except ImportError:
-    import sys
-    sys.path.append("../")
-    import objectFinder.lmmObjectFinder as lmmObjectFinder
+import storm_control.hal4000.objectFinder.lmmObjectFinder as lmmObjectFinder
 
 
 ## QObjectCounterThread
@@ -96,7 +91,7 @@ class QObjectCounterThread(QtCore.QThread):
 #
 # The front end.
 #
-class QObjectCounter(QtGui.QWidget):
+class QObjectCounter(QtCore.QObject):
     imageProcessed = QtCore.pyqtSignal(object, int, object, object, int)
 
     ## __init__
@@ -106,7 +101,7 @@ class QObjectCounter(QtGui.QWidget):
     # @param parent (Optional) The PyQt parent of this object.
     #
     def __init__(self, parameters, number_threads = 16, parent = None):
-        QtGui.QWidget.__init__(self, parent)
+        QtCore.QObject.__init__(self, parent)
 
         self.dropped = 0
         self.number_threads = number_threads
@@ -189,7 +184,7 @@ class QObjectCounter(QtGui.QWidget):
         for thread in self.threads:
             thread.stopThread()
             thread.wait()
-        print "Spot counter dropped", self.dropped, "images out of", self.total, "total images"
+        print("Spot counter dropped", self.dropped, "images out of", self.total, "total images")
 
 
 #

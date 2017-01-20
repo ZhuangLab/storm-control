@@ -7,20 +7,20 @@
 # Hazen 12/12
 #
 
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 
 # camera and stage.
-import sc_hardware.madCityLabs.mclController as mclController
-import sc_hardware.thorlabs.uc480Camera as uc480Cam
+import storm_control.sc_hardware.madCityLabs.mclController as mclController
+import storm_control.sc_hardware.thorlabs.uc480Camera as uc480Cam
 
 # focus lock control thread.
-import focuslock.stageOffsetControl as stageOffsetControl
+import storm_control.hal4000.focuslock.stageOffsetControl as stageOffsetControl
 
 # ir laser control
-import sc_hardware.thorlabs.LDC210 as LDC210
+import storm_control.sc_hardware.thorlabs.LDC210 as LDC210
 
 # focus lock dialog.
-import focuslock.focusLockZ as focusLockZ
+import storm_control.hal4000.focuslock.focusLockZ as focusLockZ
 
 #
 # Focus Lock Dialog Box specialized for the dual objective Storm4 

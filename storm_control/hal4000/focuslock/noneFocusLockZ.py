@@ -7,16 +7,16 @@
 # Hazen 11/09
 #
 
-import sc_library.parameters as params
+import storm_control.sc_library.parameters as params
 
 # none widgets
-import focuslock.noneWidgets as noneWidgets
+import storm_control.hal4000.focuslock.noneWidgets as noneWidgets
 
 # focus lock control thread.
-import focuslock.stageOffsetControl as stageOffsetControl
+import storm_control.hal4000.focuslock.stageOffsetControl as stageOffsetControl
 
 # focus lock dialog.
-import focuslock.focusLockZ as focusLockZ
+import storm_control.hal4000.focuslock.focusLockZ as focusLockZ
 
 #
 # Focus Lock Dialog Box specialized for pseudo setup.
@@ -40,7 +40,7 @@ class AFocusLockZ(focusLockZ.FocusLockZQPD):
         # None Initialization.
         qpd = noneWidgets.QPD()
         stage = noneWidgets.NanoP()
-        lock_fn = lambda (x): 0.0 * x
+        lock_fn = lambda x: 0.0 * x
         control_thread = stageOffsetControl.StageQPDThread(qpd,
                                                            stage,
                                                            lock_fn,

@@ -11,21 +11,21 @@
 #
 
 import sys
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 import sip
 import time
 
 import qtWidgets.qtAppIcon as qtAppIcon
 
-import halLib.halModule as halModule
-import sc_library.parameters as params
-import camera.feeds as feeds
+import storm_control.hal4000.halLib.halModule as halModule
+import storm_control.sc_library.parameters as params
+import storm_control.hal4000.camera.feeds as feeds
 
 # Debugging.
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 # The module that actually does the analysis.
-import qtWidgets.qtSpotCounter as qtSpotCounter
+import storm_control.hal4000.qtWidgets.qtSpotCounter as qtSpotCounter
 
 
 ## Counter
@@ -132,12 +132,12 @@ class OfflineDriver(QtCore.QObject):
                                        True)
             self.cur_frame += 1
             if ((self.cur_frame % 100) == 0):
-                print "Frame:", self.cur_frame, "(", self.length, ")"
+                print("Frame:", self.cur_frame, "(", self.length, ")")
         else:
             elapsed_time = time.time() - self.begin_time
             self.spot_counter.stopFilm(False)
-            print "Finished Analysis"
-            print self.length, "Frames analyzed in", elapsed_time, "seconds (", float(self.length)/elapsed_time, ") FPS."
+            print("Finished Analysis")
+            print(self.length, "Frames analyzed in", elapsed_time, "seconds (", float(self.length)/elapsed_time, ") FPS.")
 
     ## startAnalysis
     #
@@ -154,7 +154,7 @@ class OfflineDriver(QtCore.QObject):
 #
 # Spot Count Graphing Widget.
 #
-class QSpotGraph(QtGui.QWidget):
+class QSpotGraph(QtWidgets.QWidget):
 
     ## __init__
     #
@@ -167,7 +167,7 @@ class QSpotGraph(QtGui.QWidget):
     # @param parent (Optional) The PyQt parent of this object.
     #
     def __init__(self, x_size, y_size, y_min, y_max, parent = None):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         self.range = y_max - y_min
         self.x_size = x_size
         self.y_size = y_size
@@ -302,7 +302,7 @@ class QSpotGraph(QtGui.QWidget):
 #
 # STORM image display widget.
 #
-class QImageGraph(QtGui.QWidget):
+class QImageGraph(QtWidgets.QWidget):
 
     ## __init__
     #
@@ -313,7 +313,7 @@ class QImageGraph(QtGui.QWidget):
     # @param parent The PyQt parent of this widget.
     #
     def __init__(self, x_size, y_size, parent = None):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
 
         self.buffer = QtGui.QPixmap(x_size, y_size)
         self.flip_horizontal = False
@@ -445,7 +445,7 @@ class QImageGraph(QtGui.QWidget):
 #
 # Spot Counter Dialog Box
 #
-class SpotCounter(QtGui.QDialog, halModule.HalModule):
+class SpotCounter(QtWidgets.QDialog, halModule.HalModule):
     imageProcessed = QtCore.pyqtSignal(str, int, int)
 
     ## __init__
@@ -457,7 +457,7 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def __init__(self, parameters, parent = None):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
         halModule.HalModule.__init__(self)
 
         self.counters = [False, False]
@@ -822,7 +822,7 @@ class DualSpotCounter(SpotCounter):
 #
 #   Load a movie file, analyze it & save the result.
 #
-if __name__ == "__main__":
+if (__name__ == "__main__"):
 
     import numpy
 
@@ -832,7 +832,7 @@ if __name__ == "__main__":
     import sa_library.datareader as datareader
 
     if (len(sys.argv) != 4):
-        print "usage: <settings> <movie_in> <png_out>"
+        print("usage: <settings> <movie_in> <png_out>")
         exit()
 
     # Open movie & get size.
@@ -840,7 +840,7 @@ if __name__ == "__main__":
     [width, height, length] = data_file.filmSize()
 
     # Start spotCounter as a stand-alone application.
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     parameters = params.halParameters(sys.argv[1])
     parameters.set("setup_name", "offline")
     

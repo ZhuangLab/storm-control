@@ -8,20 +8,21 @@
 #
 
 import sys
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-import qtWidgets.qtAppIcon as qtAppIcon
 
-import halLib.halModule as halModule
+import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
+
+import storm_control.hal4000.halLib.halModule as halModule
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 ## MiscControl
 #
 # Misc Control Dialog Box
 #
-class MiscControl(QtGui.QDialog, halModule.HalModule):
+class MiscControl(QtWidgets.QDialog, halModule.HalModule):
 
     ## __init__
     #
@@ -30,7 +31,7 @@ class MiscControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def __init__(self, parameters, parent = None):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
         halModule.HalModule.__init__(self)
         
         self.parameters = parameters

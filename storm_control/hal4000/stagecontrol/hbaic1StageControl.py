@@ -7,16 +7,16 @@
 # Hazen 11/16
 #
 
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 
 # stage.
-import sc_hardware.ludl.ludl as ludl
+import storm_control.sc_hardware.ludl.ludl as ludl
 
 # stage control thread
-import stagecontrol.stageThread as stageThread
+import storm_control.hal4000.stagecontrol.stageThread as stageThread
 
 # stage control dialog.
-import stagecontrol.stageControl as stageControl
+import storm_control.hal4000.stagecontrol.stageControl as stageControl
 
 #
 # Stage control dialog specialized for Storm4

@@ -8,14 +8,14 @@
 # Hazen 03/12
 #
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 ## QStatusDisplay
 #
 # Base class class for the status display widgets.
 #
-class QStatusDisplay(QtGui.QWidget):
+class QStatusDisplay(QtWidgets.QWidget):
 
     ## __init__
     #
@@ -28,7 +28,7 @@ class QStatusDisplay(QtGui.QWidget):
     # @param parent (Optional) The PyQt parent of this object.
     #
     def __init__(self, x_size, y_size, scale_min, scale_max, parent = None):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         self.x_size = x_size
         self.y_size = y_size
         self.scale_min = scale_min

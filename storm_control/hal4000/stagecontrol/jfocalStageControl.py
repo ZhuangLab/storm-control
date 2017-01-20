@@ -7,16 +7,16 @@
 # Hazen 08/15
 #
 
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 
 # stage.
-import sc_hardware.marzhauser.marzhauser as marzhauser
+import storm_control.sc_hardware.marzhauser.marzhauser as marzhauser
 
 # stage control thread
-import stagecontrol.stageThread as stageThread
+import storm_control.hal4000.stagecontrol.stageThread as stageThread
 
 # stage control dialog.
-import stagecontrol.stageControl as stageControl
+import storm_control.hal4000.stagecontrol.stageControl as stageControl
 
 #
 # Stage control dialog specialized for Prism2

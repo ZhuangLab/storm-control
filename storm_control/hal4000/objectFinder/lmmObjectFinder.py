@@ -83,7 +83,7 @@ def findObjects(np_image, image_x, image_y, threshold):
 
 
 # testing
-if __name__ == "__main__":
+if (__name__ == "__main__"):
 
     import numpy
     import time
@@ -99,9 +99,9 @@ if __name__ == "__main__":
     for i in range(repeats):
         [x, y, n] = findObjects(image, image_x, image_y, 100)
         if ((i % 10) == 0):
-            print i, n
+            print(i, n)
     end = time.time()
-    print "Time to process an image: ", ((end - start)/repeats), " seconds"
+    print("Time to process an image: ", ((end - start)/repeats), " seconds")
 
 #
 # The MIT License

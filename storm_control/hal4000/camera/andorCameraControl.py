@@ -7,19 +7,19 @@
 # Hazen 09/15
 #
 
-from PyQt4 import QtCore
 import numpy
 import os
 import platform
+from PyQt5 import QtCore
 import traceback
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
-import sc_library.parameters as params
-import camera.frame as frame
-import camera.cameraControl as cameraControl
-import sc_hardware.andor.andorcontroller as andor
+import storm_control.sc_library.parameters as params
+import storm_control.hal4000.camera.frame as frame
+import storm_control.hal4000.camera.cameraControl as cameraControl
+import storm_control.sc_hardware.andor.andorcontroller as andor
 
 ## ACameraControl
 #

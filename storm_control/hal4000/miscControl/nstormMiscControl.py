@@ -8,18 +8,17 @@
 # Hazen 04/15
 #
 
-from PyQt4 import QtCore, QtGui
 
-import miscControl
+import storm_control.hal4000.miscControl.miscControl as miscControl
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 # UIs.
-import qtdesigner.nstorm_misc_ui as miscControlsUi
+import storm_control.hal4000.qtdesigner.nstorm_misc_ui as miscControlsUi
 
 # Nikon TiU hardware control.
-import sc_hardware.nikon.tiUMisc as tiUMisc
+import storm_control.sc_hardware.nikon.tiUMisc as tiUMisc
 
 
 #
@@ -67,8 +66,8 @@ class AMiscControl(miscControl.MiscControl):
                         self.ui.filter4Button,
                         self.ui.filter5Button,
                         self.ui.filter6Button]
-        for filter in self.filters:
-            filter.clicked.connect(self.handleFilter)
+        for afilter in self.filters:
+            afilter.clicked.connect(self.handleFilter)
         self.filters[self.tiu_misc.getFilterWheel()].click()
 
         # setup bright field shutter

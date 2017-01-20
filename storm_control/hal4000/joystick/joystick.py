@@ -7,13 +7,13 @@
 # Hazen 09/12
 # Jeff 09/12
 
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 
-import halLib.halModule as halModule
-import sc_library.parameters as params
+import storm_control.hal4000.halLib.halModule as halModule
+import storm_control.sc_library.parameters as params
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 ## JoystickObject
 #

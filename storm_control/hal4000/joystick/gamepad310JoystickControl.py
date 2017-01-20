@@ -7,13 +7,12 @@
 # Hazen 01/14
 #
 
-from PyQt4 import QtCore
 
-import joystick
-import sc_hardware.logitech.gamepad310 as gamepad310
+import storm_control.hal4000.joystick
+import storm_control.sc_hardware.logitech.gamepad310 as gamepad310
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 class AJoystick(joystick.JoystickObject):
     @hdebug.debug

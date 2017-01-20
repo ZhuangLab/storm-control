@@ -13,22 +13,21 @@ from PIL import Image
 import numpy
 import os
 import sys
-from PyQt4 import QtCore, QtGui
 
-import miscControl
-import sc_library.parameters as params
+import storm_control.hal4000.miscControl.miscControl as miscControl
+import storm_control.sc_library.parameters as params
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 # UIs.
-import qtdesigner.storm3_misc_ui as miscControlsUi
+import storm_control.hal4000.qtdesigner.storm3_misc_ui as miscControlsUi
 
 # SMC100 motor (for EPI/TIRF)
-import sc_hardware.newport.SMC100 as SMC100
+import storm_control.sc_hardware.newport.SMC100 as SMC100
 
 # Prior filter wheel
-import stagecontrol.storm3StageControl as filterWheel
+import storm_control.stagecontrol.storm3StageControl as filterWheel
 
 
 #
@@ -91,8 +90,8 @@ class AMiscControl(miscControl.MiscControl):
                         self.ui.filter4Button,
                         self.ui.filter5Button,
                         self.ui.filter6Button]
-        for filter in self.filters:
-            filter.clicked.connect(self.handleFilter)
+        for afilter in self.filters:
+            afilter.clicked.connect(self.handleFilter)
         self.filters[self.filter_wheel.getPosition()-1].click()
 
         # Imagine Eyes stuff

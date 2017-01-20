@@ -7,22 +7,22 @@
 # Jeff Moffitt 11/15
 #
 
-from PyQt4 import QtCore, QtGui
-
-import qtWidgets.qtAppIcon as qtAppIcon
-
-import halLib.halModule as halModule
-
 import numpy as np
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+
+import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
+
+import storm_control.hal4000.halLib.halModule as halModule
 
 # National instruments control
-import sc_hardware.nationalInstruments.nicontrol as nicontrol
+import storm_control.sc_hardware.nationalInstruments.nicontrol as nicontrol
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 # UIs.
-import qtdesigner.galvo_ui as galvoUi
+import storm_control.hal4000.qtdesigner.galvo_ui as galvoUi
 
 ## GavloControl
 #
@@ -31,7 +31,7 @@ import qtdesigner.galvo_ui as galvoUi
 # This is the UI for controlling a set of galvonometer mirrors.
 # In its general form, this class could control any sort of XY scan system.
 #
-class GalvoControl(QtGui.QDialog, halModule.HalModule):
+class GalvoControl(QtWidgets.QDialog, halModule.HalModule):
 
     ## __init__
     #
@@ -40,7 +40,7 @@ class GalvoControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def __init__(self, hardware, parameters, parent):
-        QtGui.QMainWindow.__init__(self, parent)
+        QtWidgets.QMainWindow.__init__(self, parent)
         halModule.HalModule.__init__(self)
 
         # Define default values

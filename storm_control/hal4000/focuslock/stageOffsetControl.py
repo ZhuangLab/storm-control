@@ -66,11 +66,11 @@
 #
 # Jeff 9/14: Added focus lock buffers to track performance to determine if locked
 
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 from collections import deque 
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 ## StageQPDThread
 #
@@ -183,7 +183,7 @@ class StageQPDThread(QtCore.QThread):
             self.qpd_mutex.unlock()
             return target
         else:
-            print "QPD/Camera are frozen?"
+            print("QPD/Camera are frozen?")
             return "failed"
 
     ## getOffset
@@ -208,7 +208,7 @@ class StageQPDThread(QtCore.QThread):
             self.qpd_mutex.unlock()
             return is_locked
         else:
-            print "QPD/Camera are frozen?"
+            print("QPD/Camera is frozen?")
             return "failed"
 
     ## getStage
@@ -218,7 +218,7 @@ class StageQPDThread(QtCore.QThread):
     def getStage(self):
         # First check for outstanding stages. Debug purposes only
         if self.num_checkedout_stages > 0:
-            print "ERROR: More than one request for a stage!!!"
+            print("ERROR: More than one request for a stage!!!")
 
         # Return stage
         self.num_checkedout_stages += 1 # Increment checkedout stages
@@ -398,7 +398,7 @@ class StageQPDThread(QtCore.QThread):
                     self.find_focus = False # Reset status
                     self.foundFocus.emit(is_locked_now)
                 elif self.stage_z >= min((2*self.z_center), self.last_locked_pos + self.scan_range): # Stop the scan if the maximimum scan limit has been exceeded
-                    print "Scan was unsuccessful"
+                    print("Scan was unsuccessful")
                     self.moveStageAbs(self.last_locked_pos) # Return to the last locked position
                     self.find_focus = False
                     self.foundFocus.emit(False) # Return False
@@ -566,7 +566,7 @@ class MotorStageQPDThread(StageQPDThread):
     # The net effect of this is to recenter the piezo to it's zero position.
     #
     def recenterPiezo(self):
-        print "recenter", self.stage_z, self.z_center
+        print("recenter", self.stage_z, self.z_center)
         if self.motor.live:
             offset = self.z_center - self.stage_z
             self.moveStageAbs(self.z_center)

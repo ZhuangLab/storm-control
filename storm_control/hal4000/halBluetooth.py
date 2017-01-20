@@ -12,14 +12,14 @@
 
 import bluetooth
 from cStringIO import StringIO
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore
 import time
 import traceback
 
-import halLib.halModule as halModule
-import sc_library.parameters as params
+import storm_control.hal4000.halLib.halModule as halModule
+import storm_control.sc_library.parameters as params
 
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 ## HalBluetooth
 #

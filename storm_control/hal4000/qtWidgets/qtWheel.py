@@ -7,14 +7,14 @@
 # Hazen 11/13
 #
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 
 ## QAbstractWheel
 #
 # Wheel super class.
 #
-class QAbstractWheel(QtGui.QWidget):
+class QAbstractWheel(QtWidgets.QWidget):
     valueChanged = QtCore.pyqtSignal(float)
 
     ## __init__
@@ -22,7 +22,7 @@ class QAbstractWheel(QtGui.QWidget):
     # @param parent (Optional) The PyQt parent of this widget.
     #
     def __init__(self, parent = None):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
 
         self.current_pos = 0.0
         self.display_pos = 0
@@ -169,8 +169,8 @@ class QVWheel(QAbstractWheel):
 #
 # Testing
 #
-if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+if (__name__ == "__main__"):
+    app = QtWidgets.QApplication(sys.argv)
     vwheel = QVWheel()
     vwheel.setRange([0.0, 6000.0, 0.01, 0.1])
     vwheel.setPosition(0.0)

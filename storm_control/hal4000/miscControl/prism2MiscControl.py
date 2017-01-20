@@ -8,15 +8,14 @@
 #
 
 import sys
-from PyQt4 import QtCore, QtGui
 
-import miscControl
+import storm_control.hal4000.miscControl.miscControl as miscControl
 
 # UIs.
-import qtdesigner.prism2_misc_ui as miscControlsUi
+import storm_control.hal4000.qtdesigner.prism2_misc_ui as miscControlsUi
 
 # mgmotor (for EPI/TIRF)
-import sc_hardware.thorlabs.mgmotorAX as mgmotorAX
+import storm_control.sc_hardware.thorlabs.mgmotorAX as mgmotorAX
 
 #
 # Misc Control Dialog Box
@@ -58,17 +57,17 @@ class AMiscControl(miscControl.MiscControl):
 
     def goToEPI(self, bool):
         if self.debug:
-            print " goToEPI"
+            print(" goToEPI")
         self.moveStage(self.epi_position)
 
     def goToTIRF(self, bool):
         if self.debug:
-            print " goToTIRF"
+            print(" goToTIRF")
         self.moveStage(self.tirf_position)
 
     def handleOk(self, bool):
         if self.debug:
-            print " handleOk"
+            print(" handleOk")
         self.hide()
 
     def moveStage(self, pos):
@@ -76,7 +75,7 @@ class AMiscControl(miscControl.MiscControl):
 
     def newParameters(self, parameters):
         if self.debug:
-            print " newParameters"
+            print(" newParameters")
         self.debug = parameters.debug
         self.epi_position = parameters.epi_position
         self.tirf_position = parameters.tirf_position

@@ -9,18 +9,18 @@
 
 import time
 import sys
-from PyQt4 import QtCore, QtGui
 
-import miscControl
+
+import storm_control.hal4000.miscControl.miscControl as miscControl
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 # UIs.
-import qtdesigner.storm4_misc_ui as miscControlsUi
+import storm_control.hal4000.qtdesigner.storm4_misc_ui as miscControlsUi
 
 # Control
-import sc_hardware.olympus.ix2ucb as ix2ucb
+import storm_control.sc_hardware.olympus.ix2ucb as ix2ucb
 
 #
 # Misc Control Dialog Box
@@ -54,8 +54,8 @@ class AMiscControl(miscControl.MiscControl):
                         self.ui.filter4Button,
                         self.ui.filter5Button,
                         self.ui.filter6Button]
-        for filter in self.filters:
-            filter.clicked.connect(self.handleFilter)
+        for afilter in self.filters:
+            afilter.clicked.connect(self.handleFilter)
         if self.filter_wheel:
             self.filters[self.filter_wheel.getPosition()-1].click()
 

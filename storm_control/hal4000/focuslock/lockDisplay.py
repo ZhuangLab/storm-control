@@ -11,23 +11,23 @@
 #
 
 import numpy
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 # UIs.
-import qtdesigner.lockdisplay_ui as lockdisplayUi
+import storm_control.hal4000.qtdesigner.lockdisplay_ui as lockdisplayUi
 
 # Widgets
-import focuslock.lockDisplayWidgets as lockDisplayWidgets
-import focuslock.lockModes as lockModes
+import storm_control.hal4000.focuslock.lockDisplayWidgets as lockDisplayWidgets
+import storm_control.hal4000.focuslock.lockModes as lockModes
 
 ## LockDisplay
 #
 # The lock display UI and lock control base class.
 #
-class LockDisplay(QtGui.QWidget):
+class LockDisplay(QtWidgets.QWidget):
     foundOptimal = QtCore.pyqtSignal(float)
     foundSum = QtCore.pyqtSignal(float)
     foundFocus = QtCore.pyqtSignal(bool)
@@ -54,7 +54,7 @@ class LockDisplay(QtGui.QWidget):
     #
     @hdebug.debug
     def __init__(self, parameters, control_thread, ir_laser, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
 
         # general
         self.ir_laser = ir_laser

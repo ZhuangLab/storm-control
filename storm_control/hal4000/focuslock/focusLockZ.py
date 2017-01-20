@@ -19,24 +19,24 @@
 #
 
 import numpy
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-import qtWidgets.qtAppIcon as qtAppIcon
+import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
 
-import halLib.halModule as halModule
-import sc_library.parameters as params
+import storm_control.hal4000.halLib.halModule as halModule
+import storm_control.sc_library.parameters as params
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 # Widgets
-import focuslock.lockDisplay as lockDisplay
+import storm_control.hal4000.focuslock.lockDisplay as lockDisplay
 
 ## FocusLockZ
 #
 # This class controls the focus lock GUI.
 #
-class FocusLockZ(QtGui.QDialog, halModule.HalModule):
+class FocusLockZ(QtWidgets.QDialog, halModule.HalModule):
     tcpComplete = QtCore.pyqtSignal(object)
 
     ## __init__
@@ -48,7 +48,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def __init__(self, parameters, parent):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
         halModule.HalModule.__init__(self)
 
         if parent:
@@ -524,7 +524,7 @@ class FocusLockZ(QtGui.QDialog, halModule.HalModule):
                 scan_focus = self.tcp_message.getData("focus_scan")
                 scan_range = self.tcp_message.getData("scan_range")
                 if scan_focus is True:
-                    print "Scanning for the focus"
+                    print("Scanning for the focus")
                     if scan_range is None:
                         scan_range = float('inf') # Scan the full range by setting the range to infinity
                     self.tcpHandleFindFocus(scan_range)

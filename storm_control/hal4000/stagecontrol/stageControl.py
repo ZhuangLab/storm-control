@@ -9,14 +9,14 @@
 
 import math
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-import halLib.halModule as halModule
-import qtWidgets.qtAppIcon as qtAppIcon
-import sc_library.parameters as params
+import storm_control.hal4000.halLib.halModule as halModule
+import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
+import storm_control.sc_library.parameters as params
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 # UIs.
 import qtdesigner.stage_ui as stageUi
@@ -74,8 +74,8 @@ class MotionButton(QtCore.QObject):
 # Encapsulate going from the camera coordinate system to
 # the stage coordinate system.
 #
-class Translator():
-    
+class Translator(object):
+
     ## __init__
     #
     # Create default translator object.
@@ -101,7 +101,7 @@ class Translator():
 
         # This is here so that stand-alone mode will work.
         if not parameters:
-            print "camera1 parameters not found."
+            print("camera1 parameters not found.")
             return
 
         self.camera_x_sign = 1
@@ -153,7 +153,7 @@ class Translator():
 # as property (self.stage). Typically the self.stage
 # will be a QStageThread object for buffering purposes.
 #
-class StageControl(QtGui.QDialog, halModule.HalModule):
+class StageControl(QtWidgets.QDialog, halModule.HalModule):
     tcpComplete = QtCore.pyqtSignal(object)
 
     ## __init__
@@ -163,7 +163,7 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
     #
     @hdebug.debug
     def __init__(self, parameters, parent):
-        QtGui.QMainWindow.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
         halModule.HalModule.__init__(self)
         #self.setFocusPolicy(QtCore.Qt.ClickFocus)
     
@@ -254,7 +254,7 @@ class StageControl(QtGui.QDialog, halModule.HalModule):
 
         # open connection to the stage
         if not(self.stage.getStatus()):
-            print "Failed to connect to the microscope stage. Perhaps it is turned off?"
+            print("Failed to connect to the microscope stage. Perhaps it is turned off?")
             self.stage.shutDown()
             self.stage = False
         else:

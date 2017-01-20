@@ -9,22 +9,21 @@
 
 import time
 import sys
-from PyQt4 import QtCore, QtGui
 
-import miscControl
-import sc_library.parameters as params
+import storm_control.hal4000.miscControl.miscControl as miscControl
+import storm_control.sc_library.parameters as params
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 # UIs.
-import qtdesigner.storm2_misc_ui as miscControlsUi
+import storm_control.hal4000.qtdesigner.storm2_misc_ui as miscControlsUi
 
 # Emission filter wheel
-import sc_hardware.thorlabs.FW102C as FW102C
+import storm_control.sc_hardware.thorlabs.FW102C as FW102C
 
 # Prior filter wheel
-import stagecontrol.storm2StageControl as filterWheel
+import storm_control.hal4000.stagecontrol.storm2StageControl as filterWheel
 
 #
 # Misc Control Dialog Box

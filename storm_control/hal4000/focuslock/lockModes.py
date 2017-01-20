@@ -7,12 +7,13 @@
 # Hazen 05/15
 #
 
-from PyQt4 import QtCore
+import numpy
+from PyQt5 import QtCore
+import scipy.optimize
+
 
 # Focus quality determination for the optimal lock.
-import numpy
-import scipy.optimize
-import focuslock.focusQuality as focusQuality
+import storm_control.hal4000.focuslock.focusQuality as focusQuality
 
 ## LockMode
 #
