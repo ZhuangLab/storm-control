@@ -2,8 +2,8 @@
 #
 ## @file
 #
-# Class for rendering multiple images in taken at different magnifications. This is used
-# by the steve software and others for image display.
+# Class for rendering multiple images in taken at different magnifications.
+# This is used by the steve software and others for image display.
 #
 # Hazen 07/13
 #
@@ -19,7 +19,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 #
 # Handles user interaction with the microscope images.
 #
-# The units here are all in pixels. Subclasses are 
+# The units here are all in pixels. Subclasses are
 # responsible for keeping track (or not) of object
 # locations in microns.
 #
@@ -31,11 +31,11 @@ class MultifieldView(QtWidgets.QGraphicsView):
     # @param parameters A parameters object.
     # @param parent (Optional) The PyQt parent of this object.
     # 
-    def __init__(self, parameters, parent = None):
+    def __init__(self, parameters, parent=None):
         QtWidgets.QGraphicsView.__init__(self, parent)
 
         # class variables
-        self.bg_brush = QtGui.QBrush(QtGui.QColor(255,255,255))
+        self.bg_brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
         self.currentz = 0.0
         self.directory = ""
         self.image_items = []
@@ -43,7 +43,7 @@ class MultifieldView(QtWidgets.QGraphicsView):
         self.scene_rect = [-self.margin, -self.margin, self.margin, self.margin]
         self.view_scale = 1.0
         self.zoom_in = 1.2
-        self.zoom_out = 1.0/self.zoom_in
+        self.zoom_out = 1.0 / self.zoom_in
 
         self.setMinimumSize(QtCore.QSize(200, 200))
 
