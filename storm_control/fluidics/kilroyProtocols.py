@@ -48,7 +48,7 @@ class KilroyProtocols(QtWidgets.QMainWindow):
         self.issued_command = []
         self.received_message = None
 
-        print "----------------------------------------------------------------------"
+        print("----------------------------------------------------------------------")
         
         # Create instance of ValveCommands class
         self.valveCommands = ValveCommands(xml_file_path = self.command_xml_path,
@@ -105,7 +105,7 @@ class KilroyProtocols(QtWidgets.QMainWindow):
     # ------------------------------------------------------------------------------------                                                
     def close(self):
         self.stopProtocol()
-        if self.verbose: print "Closing valve protocols"
+        if self.verbose: print("Closing valve protocols")
         self.valveCommands.close()
         
     # ------------------------------------------------------------------------------------
@@ -191,7 +191,7 @@ class KilroyProtocols(QtWidgets.QMainWindow):
             command_ID = self.command_names.index(command_name)
             return self.commands[command_ID]
         except:
-            print "Did not find " + command_name
+            print("Did not find " + command_name)
             return [-1]*self.num_valves # Return no change command
 
     # ------------------------------------------------------------------------------------
@@ -212,7 +212,7 @@ class KilroyProtocols(QtWidgets.QMainWindow):
             text = "Issued " + command_data[0] + ": " + command_data[1]
             if command_duration > 0:
                 text += ": " + str(command_duration) + " s"
-            print text
+            print(text)
             
         self.command_ready_signal.emit()
 
@@ -240,7 +240,7 @@ class KilroyProtocols(QtWidgets.QMainWindow):
             return True
         except ValueError:
             if self.verbose:
-                print protocol_name + " is not a valid protocol"
+                print(protocol_name + " is not a valid protocol")
             return False
 
     # ------------------------------------------------------------------------------------
@@ -258,7 +258,7 @@ class KilroyProtocols(QtWidgets.QMainWindow):
             xml_file_path = QtGui.QFileDialog.getOpenFileName(self, "Open File", "\home")
             if not os.path.isfile(xml_file_path):
                 xml_file_path = "default_config.xml"
-                print "Not a valid path. Restoring: " + xml_file_path
+                print("Not a valid path. Restoring: " + xml_file_path)
                 
         self.protocol_xml_path = xml_file_path
         
@@ -276,14 +276,14 @@ class KilroyProtocols(QtWidgets.QMainWindow):
     # Short function to load both commands and protocols in a single file
     # ------------------------------------------------------------------------------------                        
     def loadFullConfiguration(self, xml_file_path = ""):
-        print "----------------------------------------------------------------------"
+        print("----------------------------------------------------------------------")
 
         # Set Configuration XML (load if needed)
         if not xml_file_path:
             xml_file_path = QtGui.QFileDialog.getOpenFileName(self, "Open File", "\home")
             if not os.path.isfile(xml_file_path):
                 xml_file_path = "default_config.xml"
-                print "Not a valid path. Restoring: " + xml_file_path
+                print("Not a valid path. Restoring: " + xml_file_path)
 
         self.protocol_xml_path = xml_file_path
         self.command_xml_path = xml_file_path
@@ -309,11 +309,11 @@ class KilroyProtocols(QtWidgets.QMainWindow):
     # ------------------------------------------------------------------------------------                                        
     def parseProtocolXML(self):
         try:
-            print "Parsing for protocols: " + self.protocol_xml_path
+            print("Parsing for protocols: " + self.protocol_xml_path)
             self.xml_tree = elementTree.parse(self.protocol_xml_path)
             self.kilroy_configuration = self.xml_tree.getroot()
         except:
-            print "Valid xml file not loaded"
+            print("Valid xml file not loaded")
             return
 
         # Clear previous commands
@@ -333,7 +333,7 @@ class KilroyProtocols(QtWidgets.QMainWindow):
                     new_protocol_durations.append(int(command.get("duration")))
                     new_protocol_commands.append([command.tag,command.text]) # [Instrument Type, Command Name]
                     if (not (command.tag == "pump")) and (not (command.tag == "valve")):
-                        print "Unknown command tag: " + command.tag
+                        print("Unknown command tag: " + command.tag)
                 self.protocol_commands.append(new_protocol_commands)
                 self.protocol_durations.append(new_protocol_durations)
 
@@ -344,13 +344,14 @@ class KilroyProtocols(QtWidgets.QMainWindow):
     # Display loaded protocols
     # ------------------------------------------------------------------------------------                                                
     def printProtocols(self):
-        print "Current protocols:"
+        print("Current protocols:")
         for protocol_ID in range(self.num_protocols):
-            print self.protocol_names[protocol_ID]
+            print(self.protocol_names[protocol_ID])
             for command_ID, command in enumerate(self.protocol_commands[protocol_ID]):
                 textString = "    " + command[0] + ": " + command[1] + ": "
                 textString += str(self.protocol_durations[protocol_ID][command_ID]) + " s"
-                print textString
+                print(textString)
+                
     # ------------------------------------------------------------------------------------
     # Display loaded protocols
     # ------------------------------------------------------------------------------------                                                
@@ -384,7 +385,7 @@ class KilroyProtocols(QtWidgets.QMainWindow):
         self.status_change_signal.emit() # emit status change signal
         
         if self.verbose:
-            print "Starting " + self.protocol_names[protocol_ID]
+            print("Starting " + self.protocol_names[protocol_ID])
 
         # Issue command signal
         self.issueCommand(command_data, command_duration)
@@ -409,7 +410,7 @@ class KilroyProtocols(QtWidgets.QMainWindow):
         if self.isValidProtocol(protocol_name):
             if self.isRunningProtocol():
                 if self.verbose:
-                    print "Stopped In Progress: " + self.protocol_names[self.status[0]]
+                    print("Stopped In Progress: " + self.protocol_names[self.status[0]])
                 self.stopProtocol() # Abort protocol in progress
 
             # Find protocol and set as active element 
@@ -435,7 +436,7 @@ class KilroyProtocols(QtWidgets.QMainWindow):
         if self.isValidProtocol(protocol_name):
             if self.isRunningProtocol():
                 if self.verbose:
-                    print "Stopped In Progress: " + self.protocol_names[self.status[0]]
+                    print("Stopped In Progress: " + self.protocol_names[self.status[0]])
                 self.stopProtocol() # Abort protocol in progress
 
             # Find protocol and set as active element 
@@ -452,7 +453,7 @@ class KilroyProtocols(QtWidgets.QMainWindow):
     def stopProtocol(self):
         # Get name of current protocol
         if self.status[0] >= 0:
-            if self.verbose: print "Stopped Protocol"
+            if self.verbose: print("Stopped Protocol")
             self.completed_protocol_signal.emit(self.received_message)
         
         # Reset status and emit status change signal

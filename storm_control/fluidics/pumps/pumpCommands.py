@@ -46,7 +46,7 @@ class PumpCommands(QtWidgets.QMainWindow):
     # Create display and control widgets
     # ------------------------------------------------------------------------------------
     def close(self):
-        if self.verbose: print "Closing pump commands"
+        if self.verbose: print("Closing pump commands")
 
     # ------------------------------------------------------------------------------------
     # Create display and control widgets
@@ -96,7 +96,7 @@ class PumpCommands(QtWidgets.QMainWindow):
         try:
             return self.commands[command_ID]
         except:
-            print "Invalvid command index: " + command_ID
+            print("Invalvid command index: " + command_ID)
             return [-1]*self.num_valves # return default
 
     # ------------------------------------------------------------------------------------
@@ -107,7 +107,7 @@ class PumpCommands(QtWidgets.QMainWindow):
             command_ID = self.command_names.index(command_name)
             return self.commands[command_ID]
         except:
-            print "Did not find " + command_name
+            print("Did not find " + command_name)
             return [-1]*self.num_valves # Return no change command
 
     # ------------------------------------------------------------------------------------
@@ -131,7 +131,7 @@ class PumpCommands(QtWidgets.QMainWindow):
             xml_file_path = QtGui.QFileDialog.getOpenFileName(self, "Open File", "\home")
             if not os.path.isfile(xml_file_path):
                 xml_file_path = "default_config.xml"
-                print "Not a valid path. Restoring: " + xml_file_path
+                print("Not a valid path. Restoring: " + xml_file_path)
         self.file_name = xml_file_path
         
         # Parse XML
@@ -150,11 +150,11 @@ class PumpCommands(QtWidgets.QMainWindow):
     def parseCommandXML(self):
         # Try loading file
         try:
-            print "Parsing for commands: " + self.file_name
+            print("Parsing for commands: " + self.file_name)
             self.xml_tree = elementTree.parse(self.file_name)
             self.kilroy_configuration = self.xml_tree.getroot()
         except:
-            print "Valid xml file not loaded"
+            print("Valid xml file not loaded")
             return
 
         # Clear previous commands
@@ -165,7 +165,7 @@ class PumpCommands(QtWidgets.QMainWindow):
         # Load number of valves
         self.num_pumps = int(self.kilroy_configuration.get("num_pumps"))
         if not (self.num_pumps>0):
-            print "Number of pumps not specified"
+            print("Number of pumps not specified")
         
         # Load commands
         for pump_command in self.kilroy_configuration.findall("pump_commands"):
@@ -190,14 +190,14 @@ class PumpCommands(QtWidgets.QMainWindow):
     # Display loaded commands
     # ------------------------------------------------------------------------------------                
     def printCommands(self):
-        print "Current commands:"
+        print("Current commands:")
         for command_ID in range(self.num_commands):
-            print self.command_names[command_ID]
+            print(self.command_names[command_ID])
             direction = self.commands[command_ID][0]
             speed = self.commands[command_ID][1]
             text_string = "    " + "Flow Direction: " + direction + "\n"
             text_string += "    " + "Speed: " + str(speed) +"\n"
-            print text_string
+            print(text_string)
 
     # ------------------------------------------------------------------------------------
     # Update active command on GUI

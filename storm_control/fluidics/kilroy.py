@@ -89,7 +89,7 @@ class Kilroy(QtWidgets.QMainWindow):
         self.tcpServer.close()
         self.valveChain.close()
         self.pumpControl.close()
-        print "\nKilroy was here!"
+        print("\nKilroy was here!")
 
     # ----------------------------------------------------------------------------------------
     # Create master GUI
@@ -155,7 +155,7 @@ class Kilroy(QtWidgets.QMainWindow):
         elif command_data[0] == "pump":
             self.pumpControl.receiveCommand(command_data[1])
         else:
-            print "Received command of unknown type: " + str(command_data[0])
+            print("Received command of unknown type: " + str(command_data[0]))
 
 # ----------------------------------------------------------------------------------------
 # Stand Alone Kilroy Class

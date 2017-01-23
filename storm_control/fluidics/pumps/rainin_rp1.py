@@ -65,18 +65,18 @@ class APump(object):
     # ------------------------------------------------------------------------------------ 
     def connectPump(self):
         if not self.simulate:
-            print "----------------------------------------------------------------------"
-            print "Opening a Rainin RP1 Pump"
+            print("----------------------------------------------------------------------")
+            print("Opening a Rainin RP1 Pump")
             self.write(self.disconnect_signal)
             time.sleep(0.1)
             self.read(1)
             self.write(chr(self.pump_ID + 128))
             self.read(1)
         else:
-            print "Simulating a Rainin RP1 Pump"
+            print("Simulating a Rainin RP1 Pump")
 
-        print "   " + "COM Port: " + str(self.com_port)
-        print "   " + "Pump ID: " + str(self.pump_ID)
+        print("   " + "COM Port: " + str(self.com_port))
+        print("   " + "Pump ID: " + str(self.pump_ID))
 
         # Place pump in remote control
         self.enableRemoteControl(True)
@@ -101,9 +101,9 @@ class APump(object):
         self.disconnectPump()
         if not self.simulate:
             self.serial.close()
-            print "Closed Rainin RP1 communication"
+            print("Closed Rainin RP1 communication")
         else: ## simulation code
-            print "Closed Simulated Raining RP1"
+            print("Closed Simulated Raining RP1")
             
     # ------------------------------------------------------------------------------------
     # Toggle Remote Control Status
@@ -119,17 +119,17 @@ class APump(object):
             else: self.control_status == "Keypad"
         if self.verbose:
             if self.control_status == "Remote":
-                print "Enabled Remote Control"
+                print("Enabled Remote Control")
             elif self.control_status == "Keypad":
-                print "Disabled Remote Control"
+                print("Disabled Remote Control")
             else:
-                print "Unknown Status"
+                print("Unknown Status")
             
     # ------------------------------------------------------------------------------------
     # Get Pump Identification
     # ------------------------------------------------------------------------------------ 
     def getPumpIdentification(self):
-        if self.verbose: print "Requesting Pump ID"
+        if self.verbose: print("Requesting Pump ID")
         if not self.simulate:
             message = self.sendImmediateCommand("%")
             self.identification = message
@@ -230,13 +230,13 @@ class APump(object):
             if response == self.ready_signal:
                 ready = True
                 self.read(10) # Clear buffer
-                if self.serial_verbose: print "Received Ready Signal"
+                if self.serial_verbose: print("Received Ready Signal")
             else:
                 attempt_number += 1
-                if self.serial_verbose: print "Received Busy Signal"
+                if self.serial_verbose: print("Received Busy Signal")
             if attempt_number > self.max_attempt_number:
                 ready = True
-                print "Error in sending buffered command: Pump not ready"
+                print("Error in sending buffered command: Pump not ready")
         
         # Write buffered command
         attempt_number = 0
@@ -248,7 +248,7 @@ class APump(object):
                 if response == character:
                     received = True
                 else:
-                    if self.verbose: print "Error in transmission of " + str((character, ''))
+                    if self.verbose: print("Error in transmission of " + str((character, '')))
 
         # Update the pump status after a buffered command
         self.getStatus()
@@ -292,7 +292,7 @@ class APump(object):
         if forward: self.direction = "Forward"
         else: self.direction = "Reverse"
         if self.verbose:
-            print "   " + "Set Direction: " + str(self.direction)
+            print("   " + "Set Direction: " + str(self.direction))
         return True
     
     # ------------------------------------------------------------------------------------
@@ -311,19 +311,19 @@ class APump(object):
                 ## NEED CODE HERE
 
             else:
-                print "The provided speed, " + rotation_speed + ", is too large"
+                print("The provided speed, " + rotation_speed + ", is too large")
                 return False
 
         if rotation_speed >= 0 and rotation_speed <= 48:
             if self.verbose:
-                print "   " + "Set Speed: " + str(self.speed)
+                print("   " + "Set Speed: " + str(self.speed))
         return True
 
     # ------------------------------------------------------------------------------------
     # Start pump
     # ------------------------------------------------------------------------------------ 
     def startFlow(self, speed, direction = "Forward"):
-        if self.verbose: print "Starting pump"
+        if self.verbose: print("Starting pump")
 
         # Handle the reverse direction case
         if not (self.direction == direction):
@@ -357,49 +357,49 @@ class APump(object):
     # ------------------------------------------------------------------------------------ 
     def write(self, message):
         self.serial.write(message)
-        if self.serial_verbose: print "Wrote: " + str(("", message))
+        if self.serial_verbose: print("Wrote: " + str(("", message)))
 
     # ------------------------------------------------------------------------------------
     # Read from Serial Port
     # ------------------------------------------------------------------------------------ 
     def read(self, num_char):
         response = self.serial.read(num_char)
-        if self.serial_verbose: print "Read: " + str(("", response))
+        if self.serial_verbose: print("Read: " + str(("", response)))
         return response
     
 # ----------------------------------------------------------------------------------------
 # Test/Demo of Classs
 # ----------------------------------------------------------------------------------------
-if __name__ == '__main__':
+if (__name__ == '__main__'):
 
     rainin = RaininRP1(com_port = 4, pump_ID = 30, simulate = False, verbose = True, serial_verbose = False)
-    print rainin
+    print(rainin)
 
     rainin.stopFlow()
     time.sleep(5)
-    print rainin
+    print(rainin)
     rainin.startFlow(10.00, direction = "Forward")
     time.sleep(5)
-    print rainin
+    print(rainin)
 
     rainin.stopFlow()
     time.sleep(5)
-    print rainin
+    print(rainin)
 
     rainin.startFlow(5.00, direction = "Reverse")
     time.sleep(5)
-    print rainin
+    print(rainin)
 
     rainin.startFlow(10.00, direction = "Reverse")
     time.sleep(5)
-    print rainin
+    print(rainin)
 
     rainin.startFlow(10.00, direction = "Forward")
     time.sleep(5)
-    print rainin
+    print(rainin)
 
     rainin.stopFlow()
-    print rainin    
+    print(rainin)
 
     rainin.close()
     

@@ -71,7 +71,7 @@ class ValveChain(QtWidgets.QWidget):
             text_string = "Changing Valve " + str(valve_ID)
             text_string += " Port " + str(port_ID)
             text_string += " Direction " + str(rotation_direction)
-            print text_string 
+            print(text_string)
         
         self.valve_chain.changePort(valve_ID = valve_ID,
                                     port_ID = port_ID,
