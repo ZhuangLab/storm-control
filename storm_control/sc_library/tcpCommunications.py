@@ -73,7 +73,7 @@ class TCPCommunications(QtCore.QObject):
         message_str = ""
         while self.socket.canReadLine():
             # Read data line
-            message_str += str(self.socket.readLine())
+            message_str += str(self.socket.readLine(), 'ascii')
 
         # Create message.
         message = TCPMessage.fromJSON(message_str)
@@ -105,8 +105,8 @@ class TCPCommunications(QtCore.QObject):
     #
     def sendMessage(self, message):
         if self.isConnected():
-            #message_str = pickle.dumps(message)
-            self.socket.write(message.toJSON() + "\n")
+            message_str = message.toJSON() + "\n"
+            self.socket.write(message_str.encode('ascii'))
             self.socket.flush()
             if self.verbose:
                 print("Sent: \n" + str(message))
