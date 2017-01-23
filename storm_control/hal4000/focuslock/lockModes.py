@@ -151,7 +151,7 @@ class JumpLockMode(LockMode):
         self.relock_timer = QtCore.QTimer(self)
         self.relock_timer.setInterval(200)
         self.relock_timer.setSingleShot(True)
-        self.connect(self.relock_timer, QtCore.SIGNAL("timeout()"), self.restartLock)
+        self.relock_timer.timeout.connect(self.restartLock)
 
     ## handleJump
     # 
@@ -455,11 +455,11 @@ class OptimalLockMode(JumpLockMode):
                                 if success == 1:
                                     optimum = p1[2]
                                 else:
-                                    print "Fit for optimal lock failed."
+                                    print("Fit for optimal lock failed.")
                                     # hope that this is close enough
                                     optimum = zvalues[numpy.argmax(fvalues)]
 
-                                print "Optimal Target:", optimum
+                                print("Optimal Target:", optimum)
                                 self.control_thread.setTarget(optimum)
                             else:
                                 self.cur_z += self.scan_step

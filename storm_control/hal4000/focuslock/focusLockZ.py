@@ -154,12 +154,12 @@ class FocusLockZ(QtWidgets.QDialog, halModule.HalModule):
         self.toggleLockLabelDisplay(self.lock_display1.shouldDisplayLockLabel())
 
         # Setup mode radio buttons.
-        vbox_layout = QtGui.QVBoxLayout(self.ui.modeWidget)
+        vbox_layout = QtWidgets.QVBoxLayout(self.ui.modeWidget)
         self.ui.modeWidget.setLayout(vbox_layout)
         lock_modes = self.lock_display1.getLockModes()
         self.buttons = []
         for i, mode in enumerate(lock_modes):
-            button = QtGui.QRadioButton(mode.getName(), self.ui.modeWidget)
+            button = QtWidgets.QRadioButton(mode.getName(), self.ui.modeWidget)
             vbox_layout.addWidget(button)
             self.buttons.append(button)
 

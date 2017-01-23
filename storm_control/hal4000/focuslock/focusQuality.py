@@ -7,7 +7,7 @@
 # Hazen 10/13
 #
 
-from ctypes import *
+import ctypes
 import numpy
 from numpy.ctypeslib import ndpointer
 import os
@@ -30,16 +30,16 @@ def loadFocusQualityDLL():
             directory += "/"
 
         if (sys.platform == "win32"):
-            focus_quality = cdll.LoadLibrary(directory + "focus_quality.dll")
+            focus_quality = ctypes.cdll.LoadLibrary(directory + "focus_quality.dll")
         else:
-            focus_quality = cdll.LoadLibrary(directory + "focus_quality.so")
+            focus_quality = ctypes.cdll.LoadLibrary(directory + "focus_quality.so")
 
 loadFocusQualityDLL()
 c_imageGradient = focus_quality.imageGradient
 c_imageGradient.argtypes = [ndpointer(dtype=numpy.uint16),
-                            c_int,
-                            c_int]
-c_imageGradient.restype = c_float
+                            ctypes.c_int,
+                            ctypes.c_int]
+c_imageGradient.restype = ctypes.c_float
 
 ## imageGradient
 #
@@ -55,7 +55,7 @@ def imageGradient(frame):
 # Testing
 # 
 
-if __name__ == "__main__":
+if (__name__ == "__main__"):
 
     import camera.frame as frame
     import numpy
@@ -75,7 +75,8 @@ if __name__ == "__main__":
     for i in range(repeats):
         imageGradient(aframe)
     end = time.time()
-    print "Time to process an image: ", ((end - start)/repeats), " seconds"
+    print("Time to process an image: ", ((end - start)/repeats), " seconds")
+
 
 #
 # The MIT License

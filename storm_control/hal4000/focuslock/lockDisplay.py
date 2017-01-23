@@ -517,7 +517,7 @@ class LockDisplayQPD(LockDisplay):
                              self.sumDisplay.getValue())
 
         # Send current lock picture.
-        self.lockDisplay.emit(QtGui.QPixmap.grabWidget(self.qpdDisplay))
+        self.lockDisplay.emit(self.qpdDisplay.grab())
 
 
 ## LockDisplayCam
@@ -653,7 +653,7 @@ class LockDisplayCam(LockDisplay):
                              self.sumDisplay.getValue())
 
         # Send current lock picture.
-        self.lockDisplay.emit(QtGui.QPixmap.grabWidget(self.camDisplay))
+        self.lockDisplay.emit(self.camDisplay.grab())
 
     ## handleAdjustAOI
     #

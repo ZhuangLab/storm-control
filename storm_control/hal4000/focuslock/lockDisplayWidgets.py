@@ -332,7 +332,7 @@ class QQPDDisplay(QStatusDisplay):
 #
 # USB camera image display.
 #
-class QCamDisplay(QtGui.QWidget):    
+class QCamDisplay(QtWidgets.QWidget):
     adjustCamera = QtCore.pyqtSignal(int, int)
     adjustOffset = QtCore.pyqtSignal(float)
     changeFitMode = QtCore.pyqtSignal(int)
@@ -342,7 +342,7 @@ class QCamDisplay(QtGui.QWidget):
     # @param parent (Optional) The PyQt parent of this object.
     #
     def __init__(self, parent = None):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         self.adjust_mode = False
         self.background = QtGui.QColor(0,0,0)
         self.camera_image = None
