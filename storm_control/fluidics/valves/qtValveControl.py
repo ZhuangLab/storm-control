@@ -13,7 +13,7 @@
 # Import
 # ----------------------------------------------------------------------------------------
 import sys
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 from ui_layouts.ui_qt_valve import QtValveControlWidget
 
 # ----------------------------------------------------------------------------------------
@@ -168,7 +168,7 @@ class QtValveControl(QtValveControlWidget):
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
 # ----------------------------------------------------------------------------------------
-class StandAlone(QtGui.QMainWindow):
+class StandAlone(QtWidgets.QMainWindow):
     def __init__(self, parent = None):
         super(StandAlone, self).__init__(parent)
 
@@ -216,11 +216,11 @@ class StandAlone(QtGui.QMainWindow):
 # ----------------------------------------------------------------------------------------
 # Test/Demo of Classs
 # ----------------------------------------------------------------------------------------
-if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+if (__name__ == "__main__"):
+    app = QtWidgets.QApplication(sys.argv)
     window = StandAlone()
     window.show()
-    app.exec_()                              
+    app.exec_()
 
 
 #

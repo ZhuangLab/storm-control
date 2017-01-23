@@ -17,7 +17,7 @@ import time
 # ----------------------------------------------------------------------------------------
 # HamiltonMVP Class Definition
 # ----------------------------------------------------------------------------------------
-class HamiltonMVP():
+class HamiltonMVP(object):
     def __init__(self,
                  com_port = 2,
                  num_simulated_valves = 0,

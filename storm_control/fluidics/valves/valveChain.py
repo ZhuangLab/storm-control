@@ -13,14 +13,14 @@
 # Import
 # ----------------------------------------------------------------------------------------
 import sys
-from PyQt4 import QtCore, QtGui
-from qtValveControl import QtValveControl
-from hamilton import HamiltonMVP
+from PyQt5 import QtCore, QtGui, QtWidgets
+from storm_control.fluidics.valves.qtValveControl import QtValveControl
+from storm_control.fluidics.valves.hamilton import HamiltonMVP
 
 # ----------------------------------------------------------------------------------------
 # ValveChain Class Definition
 # ----------------------------------------------------------------------------------------
-class ValveChain(QtGui.QWidget):
+class ValveChain(QtWidgets.QWidget):
     def __init__(self,
                  parent = None,
                  com_port = 2,
@@ -29,7 +29,7 @@ class ValveChain(QtGui.QWidget):
                  ):
 
         # Initialize parent class
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
 
         # Define local attributes
         self.com_port = com_port
@@ -160,7 +160,7 @@ class ValveChain(QtGui.QWidget):
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
 # ----------------------------------------------------------------------------------------
-class StandAlone(QtGui.QMainWindow):
+class StandAlone(QtWidgets.QMainWindow):
     def __init__(self, parent = None):
         super(StandAlone, self).__init__(parent)
 
@@ -203,8 +203,8 @@ class StandAlone(QtGui.QMainWindow):
 # ----------------------------------------------------------------------------------------
 # Test/Demo of Classs
 # ----------------------------------------------------------------------------------------        
-if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+if (__name__ == "__main__"):
+    app = QtWidgets.QApplication(sys.argv)
     window = StandAlone()
     window.show()
     app.exec_()                              

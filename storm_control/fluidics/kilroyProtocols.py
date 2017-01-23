@@ -16,14 +16,14 @@
 import sys
 import os
 import xml.etree.ElementTree as elementTree
-from PyQt4 import QtCore, QtGui
-from valves.valveCommands import ValveCommands
-from pumps.pumpCommands import PumpCommands
+from PyQt5 import QtCore, QtGui, QtWidgets
+from storm_control.fluidics.valves.valveCommands import ValveCommands
+from storm_control.fluidics.pumps.pumpCommands import PumpCommands
 
 # ----------------------------------------------------------------------------------------
 # KilroyProtocols Class Definition
 # ----------------------------------------------------------------------------------------
-class KilroyProtocols(QtGui.QMainWindow):
+class KilroyProtocols(QtWidgets.QMainWindow):
 
     # Define custom command ready signal
     command_ready_signal = QtCore.pyqtSignal() # A command is ready to be issued
@@ -531,7 +531,7 @@ class KilroyProtocols(QtGui.QMainWindow):
 # ----------------------------------------------------------------------------------------
 # Stand Alone Test Class
 # ----------------------------------------------------------------------------------------                                                                
-class StandAlone(QtGui.QMainWindow):
+class StandAlone(QtWidgets.QMainWindow):
     def __init__(self, parent = None):
         super(StandAlone, self).__init__(parent)
 
@@ -583,8 +583,8 @@ class StandAlone(QtGui.QMainWindow):
 # ----------------------------------------------------------------------------------------
 # Test/Demo of Class
 # ----------------------------------------------------------------------------------------                        
-if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+if (__name__ == "__main__"):
+    app = QtWidgets.QApplication(sys.argv)
     window = StandAlone()
     window.show()
     sys.exit(app.exec_())

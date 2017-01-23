@@ -14,17 +14,17 @@
 import sys
 import os
 import time
-from PyQt4 import QtCore, QtGui
-from valves.valveChain import ValveChain
-from pumps.pumpControl import PumpControl
-from kilroyProtocols import KilroyProtocols
-from sc_library.tcpServer import TCPServer
-import sc_library.parameters as params
+from PyQt5 import QtCore, QtGui, QtWidgets
+from storm_control.fluidics.valves.valveChain import ValveChain
+from storm_control.fluidics.pumps.pumpControl import PumpControl
+from storm_control.fluidics.kilroyProtocols import KilroyProtocols
+from storm_control.sc_library.tcpServer import TCPServer
+import storm_control.sc_library.parameters as params
 
 # ----------------------------------------------------------------------------------------
 # Kilroy Class Definition
 # ----------------------------------------------------------------------------------------
-class Kilroy(QtGui.QMainWindow):
+class Kilroy(QtWidgets.QMainWindow):
     def __init__(self, parameters):
         super(Kilroy, self).__init__()
 
@@ -160,7 +160,7 @@ class Kilroy(QtGui.QMainWindow):
 # ----------------------------------------------------------------------------------------
 # Stand Alone Kilroy Class
 # ----------------------------------------------------------------------------------------                                                                   
-class StandAlone(QtGui.QMainWindow):
+class StandAlone(QtWidgets.QMainWindow):
     def __init__(self, parameters, parent = None):
         super(StandAlone, self).__init__(parent)
 
@@ -228,11 +228,11 @@ class StandAlone(QtGui.QMainWindow):
 # Runtime code: Kilroy is meant to be run as a stand alone
 # ----------------------------------------------------------------------------------------                                
 if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
 
     # Show splash screen (to allow for valve initialization)
-    splash_pix = QtGui.QPixmap("kilroy_splash.jpg")
-    splash = QtGui.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
+    splash_pix = QtWidgets.QPixmap("kilroy_splash.jpg")
+    splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
     splash.setMask(splash_pix.mask())
     splash.show()
     app.processEvents()
