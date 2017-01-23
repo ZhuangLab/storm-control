@@ -28,9 +28,10 @@ def test_hal_starts(qtbot):
 
     hal.parameters_box.addParameters(none_parameters)
     hal.toggleSettings()
+    hal.show()
 
     # Test
     qtbot.addWidget(hal)
-    qtbot.mouseClick(hal.ui.actionQuit, QtCore.Qt.LeftButton)
+    qtbot.mouseClick(hal.ui.menuFile, QtCore.Qt.LeftButton, delay = 2000)
     
 
