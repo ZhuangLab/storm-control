@@ -7,14 +7,14 @@
 # Hazen 07/14
 #
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 
 ## HoloeyeThumbnail
 #
 # This is used to show a reduced version of what is being shown
 # on the Holoeye device.
 #
-class HoloeyeThumbnail(QtGui.QWidget):
+class HoloeyeThumbnail(QtWidgets.QWidget):
     changeScreen = QtCore.pyqtSignal(int)
     newImage = QtCore.pyqtSignal(object)
 
@@ -23,7 +23,7 @@ class HoloeyeThumbnail(QtGui.QWidget):
     # @param parent The parent widget of this dialog.
     #
     def __init__(self, parent = None):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
 
         self.num_screens = 0
         self.q_image = None

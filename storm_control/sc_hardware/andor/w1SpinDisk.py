@@ -11,11 +11,11 @@ import sc_library.halExceptions as halExceptions
 import serial
 import copy
 import sc_library.parameters as params
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 from time import sleep
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 ## W1Exception
 #
@@ -392,6 +392,7 @@ class W1SerialThread(QtCore.QThread):
         self.com_mutex.lock()
         self.running = False
         self.com_mutex.unlock()
+
 #
 # The MIT License
 #

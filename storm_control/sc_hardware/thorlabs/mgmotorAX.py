@@ -7,7 +7,7 @@
 # Hazen 8/09
 #
 
-from PyQt4 import QtCore, QtGui, QAxContainer
+from PyQt5 import QtCore, QtGui, QAxContainer
 
 import sys
 import time
@@ -33,8 +33,8 @@ class APTUser(QAxContainer.QAxWidget):
 # Testing
 #
 
-if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+if (__name__ == "__main__"):
+    app = QtWidgets.QApplication(sys.argv)
     aptUser = APTUser()
     aptUser.show()
     sys.exit(app.exec_())

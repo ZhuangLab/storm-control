@@ -10,26 +10,26 @@
 import numpy
 import sys
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui
 
-import sc_library.parameters as parameters
-import sc_hardware.holoeye.holoeyeSLM as holoeyeSLM
+import storm_control.sc_library.parameters as parameters
+import storm_control.sc_hardware.holoeye.holoeyeSLM as holoeyeSLM
 
-import sc_hardware.holoeye.holoeye_ui as holoeyeUi
+import storm_control.sc_hardware.holoeye.holoeye_ui as holoeyeUi
 
 
 ## HoloeyeDialog
 #
 # The GUI for controlling what is displayed on the Holoeye.
 #
-class HoloeyeDialog(QtGui.QDialog):
+class HoloeyeDialog(QtWidgets.QDialog):
 
     ## __init__
     #
     # @param parent (Optional) default is none.
     #
     def __init__(self, hardware, parent = None):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
 
         self.grayscale_only = hardware.get("grayscale_only", True)
         self.screen_id = hardware.get("screen_id", -1)
@@ -199,8 +199,8 @@ def monochrome(screen_size, color):
     return image
 
 
-if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
+if (__name__ == '__main__'):
+    app = QtWidgets.QApplication(sys.argv)
     if (len(sys.argv) == 2):
         hardware = parameters.Parameters(sys.argv[1])
     else:

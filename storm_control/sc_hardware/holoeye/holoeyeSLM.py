@@ -10,13 +10,13 @@
 # Hazen 07/14
 #
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 ## HoloeyeSLM
 #
 # This uses a full screen dialog to take over a display.
 #
-class HoloeyeSLM(QtGui.QDialog):
+class HoloeyeSLM(QtWidgets.QDialog):
     grabbedScreen = QtCore.pyqtSignal(int)
     rightSize = QtCore.pyqtSignal(bool)
 
@@ -25,9 +25,9 @@ class HoloeyeSLM(QtGui.QDialog):
     # @param parent The parent widget of this dialog.
     #
     def __init__(self, parent = None):
-        QtGui.QDialog.__init__(self, parent)
+        QtWidgets.QDialog.__init__(self, parent)
 
-        self.desktop = QtGui.QDesktopWidget()
+        self.desktop = QtWidgets.QDesktopWidget()
         self.q_image = None
         self.screen_id = None
 
