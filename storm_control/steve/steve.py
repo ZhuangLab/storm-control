@@ -626,7 +626,7 @@ class Window(QtWidgets.QMainWindow):
                                                                   self.snapshot_directory, 
                                                                   "*.png")[0]
         if snapshot_filename:
-            pixmap = QtGui.QPixmap.grabWidget(self.view.viewport())
+            pixmap = self.view.grab()
             pixmap.save(snapshot_filename)
 
             self.snapshot_directory = os.path.dirname(snapshot_filename)
