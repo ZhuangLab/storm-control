@@ -10,7 +10,6 @@
 # ----------------------------------------------------------------------------------------
 # Import
 # ----------------------------------------------------------------------------------------
-import serial
 import sys
 import time
 
@@ -30,6 +29,7 @@ class APump(object):
         
         # Create serial port
         if not self.simulate:
+            import serial
             self.serial = serial.Serial(port = self.com_port,
                                         baudrate = 19200,
                                         bytesize = serial.EIGHTBITS,
@@ -346,7 +346,7 @@ class APump(object):
     # Stop Pump
     # ------------------------------------------------------------------------------------ 
     def stopFlow(self):
-        if self.verbose: print "Stopping pump"
+        if self.verbose: print("Stopping pump")
         self.setSpeed(0.0)
         if self.simulate:
             self.flow_status = "Stopped"

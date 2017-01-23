@@ -53,24 +53,24 @@ class ValveCommands(QtWidgets.QMainWindow):
     # Create display and control widgets
     # ------------------------------------------------------------------------------------
     def createGUI(self):
-        self.mainWidget = QtGui.QGroupBox()
+        self.mainWidget = QtWidgets.QGroupBox()
         self.mainWidget.setTitle("Valve Commands")
-        self.mainWidgetLayout = QtGui.QVBoxLayout(self.mainWidget)
+        self.mainWidgetLayout = QtWidgets.QVBoxLayout(self.mainWidget)
 
-        self.fileLabel = QtGui.QLabel()
+        self.fileLabel = QtWidgets.QLabel()
         self.fileLabel.setText("")
 
-        self.commandListWidget = QtGui.QListWidget()
+        self.commandListWidget = QtWidgets.QListWidget()
         self.commandListWidget.currentItemChanged.connect(self.updateCommandDisplay)
         
-        self.sendCommandButton = QtGui.QPushButton("Send Command")
+        self.sendCommandButton = QtWidgets.QPushButton("Send Command")
         self.sendCommandButton.clicked.connect(self.transmitCommandIndex)
 
-        self.currentCommandGroupBox = QtGui.QGroupBox()
+        self.currentCommandGroupBox = QtWidgets.QGroupBox()
         self.currentCommandGroupBox.setTitle("Current Command")
-        self.currentCommandGroupBoxLayout = QtGui.QVBoxLayout(self.currentCommandGroupBox)
+        self.currentCommandGroupBoxLayout = QtWidgets.QVBoxLayout(self.currentCommandGroupBox)
 
-        self.currentCommandLabel = QtGui.QLabel()
+        self.currentCommandLabel = QtWidgets.QLabel()
         self.currentCommandLabel.setText("")
         self.currentCommandGroupBoxLayout.addWidget(self.currentCommandLabel)
 
@@ -82,11 +82,11 @@ class ValveCommands(QtWidgets.QMainWindow):
         self.mainWidgetLayout.addStretch(1)
 
         # Menu items (may not be used)
-        self.exit_action = QtGui.QAction("Exit", self)
+        self.exit_action = QtWidgets.QAction("Exit", self)
         self.exit_action.setShortcut("Ctrl+Q")
         self.exit_action.triggered.connect(self.closeEvent)
 
-        self.load_commands_action = QtGui.QAction("Load New Commands", self)
+        self.load_commands_action = QtWidgets.QAction("Load New Commands", self)
         self.load_commands_action.triggered.connect(self.loadCommands)
         self.load_commands_action_menu_name = "File"
 
@@ -136,7 +136,7 @@ class ValveCommands(QtWidgets.QMainWindow):
     def loadCommands(self, xml_file_path = ""):
         # Set Configuration XML (load if needed)
         if not xml_file_path:
-            xml_file_path = QtGui.QFileDialog.getOpenFileName(self, "Open File", "\home")
+            xml_file_path = QtWidgets.QFileDialog.getOpenFileName(self, "Open File", "\home")[0]
             if not os.path.isfile(xml_file_path):
                 xml_file_path = "default_config.xml"
                 print("Not a valid path. Restoring: " + xml_file_path)

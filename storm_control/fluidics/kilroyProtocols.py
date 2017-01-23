@@ -112,31 +112,31 @@ class KilroyProtocols(QtWidgets.QMainWindow):
     # Create display and control widgets
     # ------------------------------------------------------------------------------------                                                
     def createGUI(self):
-        self.mainWidget = QtGui.QGroupBox()
+        self.mainWidget = QtWidgets.QGroupBox()
         self.mainWidget.setTitle("Protocols")
-        self.mainWidgetLayout = QtGui.QVBoxLayout(self.mainWidget)
+        self.mainWidgetLayout = QtWidgets.QVBoxLayout(self.mainWidget)
 
-        self.fileLabel = QtGui.QLabel()
+        self.fileLabel = QtWidgets.QLabel()
         self.fileLabel.setText("")
 
-        self.protocolListWidget = QtGui.QListWidget()
+        self.protocolListWidget = QtWidgets.QListWidget()
         self.protocolListWidget.currentItemChanged.connect(self.updateProtocolDescriptor)
 
-        self.elapsedTimeLabel = QtGui.QLabel()
+        self.elapsedTimeLabel = QtWidgets.QLabel()
         self.elapsedTimeLabel.setText("Elapsed Time: ")
 
-        self.protocolDetailsList =  QtGui.QListWidget()
+        self.protocolDetailsList =  QtWidgets.QListWidget()
         
-        self.startProtocolButton = QtGui.QPushButton("Start Protocol")
+        self.startProtocolButton = QtWidgets.QPushButton("Start Protocol")
         self.startProtocolButton.clicked.connect(self.startProtocolLocally)
-        self.skipCommandButton = QtGui.QPushButton("Skip Command")
+        self.skipCommandButton = QtWidgets.QPushButton("Skip Command")
         self.skipCommandButton.clicked.connect(self.skipCommand)
-        self.stopProtocolButton = QtGui.QPushButton("Stop Protocol")
+        self.stopProtocolButton = QtWidgets.QPushButton("Stop Protocol")
         self.stopProtocolButton.clicked.connect(self.stopProtocol)
         
-        self.protocolStatusGroupBox = QtGui.QGroupBox()
+        self.protocolStatusGroupBox = QtWidgets.QGroupBox()
         self.protocolStatusGroupBox.setTitle("Command In Progress")
-        self.protocolStatusGroupBoxLayout = QtGui.QVBoxLayout(self.protocolStatusGroupBox)
+        self.protocolStatusGroupBoxLayout = QtWidgets.QVBoxLayout(self.protocolStatusGroupBox)
         
         self.mainWidgetLayout.addWidget(self.fileLabel)
         self.mainWidgetLayout.addWidget(self.protocolListWidget)
@@ -148,10 +148,10 @@ class KilroyProtocols(QtWidgets.QMainWindow):
         self.mainWidgetLayout.addStretch(1)
 
         # Configure menu items
-        self.load_fullconfig_action = QtGui.QAction("Load Full Configuration", self)
+        self.load_fullconfig_action = QtWidgets.QAction("Load Full Configuration", self)
         self.load_fullconfig_action.triggered.connect(self.loadFullConfiguration)
         
-        self.load_protocols_action = QtGui.QAction("Load New Protocols", self)
+        self.load_protocols_action = QtWidgets.QAction("Load New Protocols", self)
         self.load_protocols_action.triggered.connect(self.loadProtocols)
 
         self.load_commands_action = self.valveCommands.load_commands_action
@@ -255,7 +255,7 @@ class KilroyProtocols(QtWidgets.QMainWindow):
     def loadProtocols(self, xml_file_path = ""):
         # Set Configuration XML (load if needed)
         if not xml_file_path:
-            xml_file_path = QtGui.QFileDialog.getOpenFileName(self, "Open File", "\home")
+            xml_file_path = QtWidgets.QFileDialog.getOpenFileName(self, "Open File", "\home")[0]
             if not os.path.isfile(xml_file_path):
                 xml_file_path = "default_config.xml"
                 print("Not a valid path. Restoring: " + xml_file_path)
@@ -280,7 +280,7 @@ class KilroyProtocols(QtWidgets.QMainWindow):
 
         # Set Configuration XML (load if needed)
         if not xml_file_path:
-            xml_file_path = QtGui.QFileDialog.getOpenFileName(self, "Open File", "\home")
+            xml_file_path = QtWidgets.QFileDialog.getOpenFileName(self, "Open File", "\home")[0]
             if not os.path.isfile(xml_file_path):
                 xml_file_path = "default_config.xml"
                 print("Not a valid path. Restoring: " + xml_file_path)
@@ -525,7 +525,7 @@ class KilroyProtocols(QtWidgets.QMainWindow):
             text_string += ": "
             text_string += str(current_protocol_durations[ID]) + " s"
 
-            wid = QtGui.QListWidgetItem(text_string)
+            wid = QtWidgets.QListWidgetItem(text_string)
             wid.setFlags(wid.flags() & QtCore.Qt.ItemIsSelectable)
             self.protocolDetailsList.insertItem(ID, wid)
 

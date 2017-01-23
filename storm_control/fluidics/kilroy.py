@@ -34,19 +34,23 @@ class Kilroy(QtWidgets.QMainWindow):
         self.tcp_port = parameters.get("tcp_port")
         self.pump_com_port = parameters.get("pump_com_port")
         self.pump_ID = parameters.get("pump_ID")
-        if not hasattr(parameters, "num_simulated_valves"):
+        
+        if not parameters.has("num_simulated_valves"):
             self.num_simulated_valves = 0
         else:
             self.num_simulated_valves = parameters.get("num_simulated_valves")
-        if not hasattr(parameters, "protocols_file"):
+            
+        if not parameters.has("protocols_file"):
             self.protocols_file = "default_config.xml"
         else:
             self.protocols_file = parameters.get("protocols_file")
-        if not hasattr(parameters, "commands_file"):
+            
+        if not parameters.has("commands_file"):
             self.commands_file = "default_config.xml"
         else:
             self.commands_file = parameters.get("commands_file")
-        if not hasattr(parameters, "simulate_pump"):
+            
+        if not parameters.has("simulate_pump"):
             self.simulate_pump = False
         else:
             self.simulate_pump = parameters.get("simulate_pump")
@@ -95,7 +99,7 @@ class Kilroy(QtWidgets.QMainWindow):
     # Create master GUI
     # ----------------------------------------------------------------------------------------
     def createGUI(self):
-        self.mainLayout = QtGui.QGridLayout()
+        self.mainLayout = QtWidgets.QGridLayout()
         self.mainLayout.addWidget(self.kilroyProtocols.mainWidget, 0, 0, 2, 2)
         self.mainLayout.addWidget(self.kilroyProtocols.valveCommands.mainWidget, 2, 0, 1, 1)
         self.mainLayout.addWidget(self.kilroyProtocols.pumpCommands.mainWidget, 2, 1, 1, 1)
@@ -168,7 +172,7 @@ class StandAlone(QtWidgets.QMainWindow):
         self.kilroy = Kilroy(parameters)
                                           
         # central widget
-        self.centralWidget = QtGui.QWidget()
+        self.centralWidget = QtWidgets.QWidget()
         self.centralWidget.setLayout(self.kilroy.mainLayout)
 
         # This is for handling file drops.
@@ -186,7 +190,7 @@ class StandAlone(QtWidgets.QMainWindow):
         self.setGeometry(50, 50, 1200, 800)
 
         # Define close menu item
-        exit_action = QtGui.QAction("Exit", self)
+        exit_action = QtWidgets.QAction("Exit", self)
         exit_action.setShortcut("Ctrl+Q")
         exit_action.triggered.connect(self.close)
 
@@ -231,7 +235,7 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
 
     # Show splash screen (to allow for valve initialization)
-    splash_pix = QtWidgets.QPixmap("kilroy_splash.jpg")
+    splash_pix = QtGui.QPixmap("kilroy_splash.jpg")
     splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
     splash.setMask(splash_pix.mask())
     splash.show()

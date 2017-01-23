@@ -91,9 +91,9 @@ class ValveChain(QtWidgets.QWidget):
     # ------------------------------------------------------------------------------------  
     def createGUI(self):
         # Define display widget
-        self.valveChainGroupBox = QtGui.QGroupBox()
+        self.valveChainGroupBox = QtWidgets.QGroupBox()
         self.valveChainGroupBox.setTitle("Valve Controls")
-        self.valveChainGroupBoxLayout = QtGui.QVBoxLayout(self.valveChainGroupBox)
+        self.valveChainGroupBoxLayout = QtWidgets.QVBoxLayout(self.valveChainGroupBox)
 
         for valve_ID in range(self.num_valves):
             valve_widget = QtValveControl(self,
@@ -117,7 +117,7 @@ class ValveChain(QtWidgets.QWidget):
         self.mainWidget = self.valveChainGroupBox
 
         # Define menu items
-        self.valve_reset_action = QtGui.QAction("Valve Chain Reset", self)
+        self.valve_reset_action = QtWidgets.QAction("Valve Chain Reset", self)
         self.valve_reset_action.triggered.connect(self.reinitializeChain)
 
         self.menu_names = ["Valve"]
@@ -170,8 +170,8 @@ class StandAlone(QtWidgets.QMainWindow):
                                       num_simulated_valves = 2)
         
         # central widget
-        self.centralWidget = QtGui.QWidget()
-        self.mainLayout = QtGui.QVBoxLayout(self.centralWidget)
+        self.centralWidget = QtWidgets.QWidget()
+        self.mainLayout = QtWidgets.QVBoxLayout(self.centralWidget)
         self.mainLayout.addWidget(self.valve_chain.mainWidget)
         
         # set central widget
@@ -187,7 +187,7 @@ class StandAlone(QtWidgets.QMainWindow):
         menubar = self.menuBar()
         file_menu = menubar.addMenu("File")
 
-        exit_action = QtGui.QAction("Exit", self)
+        exit_action = QtWidgets.QAction("Exit", self)
         exit_action.setShortcut("Ctrl+Q")
         exit_action.triggered.connect(self.closeEvent)
 

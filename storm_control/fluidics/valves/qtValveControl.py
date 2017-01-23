@@ -60,7 +60,7 @@ class QtValveControl(QtWidgets.QWidget):
         self.setError(error)
 
         # Connect signal to change port button
-        self.changePortButton.clicked.connect(self.changePortSignal)
+        self.ui.changePortButton.clicked.connect(self.changePortSignal)
 
     # ------------------------------------------------------------------------------------
     # Emit custom signal when a change port command is issued
