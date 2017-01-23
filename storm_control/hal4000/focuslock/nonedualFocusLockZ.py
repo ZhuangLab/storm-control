@@ -8,13 +8,13 @@
 #
 
 # none widgets
-import focuslock.noneWidgets as noneWidgets
+import storm_control.hal4000.focuslock.noneWidgets as noneWidgets
 
 # focus lock control thread.
-import focuslock.stageOffsetControl as stageOffsetControl
+import storm_control.hal4000.focuslock.stageOffsetControl as stageOffsetControl
 
 # focus lock dialog.
-import focuslock.focusLockZ as focusLockZ
+import storm_control.hal4000.focuslock.focusLockZ as focusLockZ
 
 #
 # Focus Lock Dialog Box specialized for pseudo setup.

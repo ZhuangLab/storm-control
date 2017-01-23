@@ -9,17 +9,17 @@
 #
 
 # qpd and stage.
-import stagecontrol.storm2StageControl as zstage
-import sc_hardware.phreshPhotonics.phreshQPD as phreshQPD
+import storm_control.hal4000.stagecontrol.storm2StageControl as zstage
+import storm_control.sc_hardware.phreshPhotonics.phreshQPD as phreshQPD
 
 # focus lock control thread.
-import focuslock.stageOffsetControl as stageOffsetControl
+import storm_control.hal4000.focuslock.stageOffsetControl as stageOffsetControl
 
 # ir laser control
-import sc_hardware.thorlabs.LDC210 as LDC210
+import storm_control.sc_hardware.thorlabs.LDC210 as LDC210
 
 # focus lock dialog.
-import focuslock.focusLockZ as focusLockZ
+import storm_control.hal4000.focuslock.focusLockZ as focusLockZ
 
 #
 # Focus Lock Dialog Box specialized for STORM3

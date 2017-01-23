@@ -7,20 +7,20 @@
 # Hazen 03/12
 #
 
-import sc_library.parameters as params
+import storm_control.sc_library.parameters as params
 
 # camera and stage.
-import sc_hardware.madCityLabs.mclController as mclController
-import sc_hardware.thorlabs.uc480Camera as uc480Cam
+import storm_control.sc_hardware.madCityLabs.mclController as mclController
+import storm_control.sc_hardware.thorlabs.uc480Camera as uc480Cam
 
 # focus lock control thread.
-import focuslock.stageOffsetControl as stageOffsetControl
+import storm_control.hal4000.focuslock.stageOffsetControl as stageOffsetControl
 
 # ir laser control
-import sc_hardware.thorlabs.LDC210 as LDC210
+import storm_control.sc_hardware.thorlabs.LDC210 as LDC210
 
 # focus lock dialog.
-import focuslock.focusLockZ as focusLockZ
+import storm_control.hal4000.focuslock.focusLockZ as focusLockZ
 
 #
 # Focus Lock Dialog Box specialized for STORM4 with 
@@ -34,9 +34,11 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
         lock_params.add("qpd_zcenter", params.ParameterRangeFloat("Piezo center position in microns",
                                                                   "qpd_zcenter",
                                                                   50.0, 0.0, 100.0))
+
         lock_params.add("qpd_scale", params.ParameterRangeFloat("Offset to nm calibration value",
                                                                 "qpd_scale",
                                                                 50.0, 0.1, 1000.0))
+
         lock_params.add("qpd_sum_min", 50.0)
         lock_params.add("qpd_sum_max", 256.0)
         lock_params.add("is_locked_buffer_length", 3)
@@ -59,6 +61,7 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                                            parameters.get("focuslock.qpd_zcenter"),
                                                            parameters.get("focuslock.is_locked_buffer_length", 3),
                                                            parameters.get("focuslock.is_locked_offset_thresh", 1))
+
         
         ir_laser = LDC210.LDC210PWMLJ()
         focusLockZ.FocusLockZCam.__init__(self,
@@ -66,6 +69,7 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                           control_thread,
                                           ir_laser,
                                           parent)
+
 
 #
 # The MIT License
@@ -90,3 +94,4 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+

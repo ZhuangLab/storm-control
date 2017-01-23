@@ -8,20 +8,20 @@
 # Hazen 03/12
 #
 
-import sc_library.parameters as params
+import storm_control.sc_library.parameters as params
 
 # qpd and stage.
-import sc_hardware.madCityLabs.mclVoltageZController as MCLVZC
-import sc_hardware.thorlabs.uc480Camera as uc480Cam
+import storm_control.sc_hardware.madCityLabs.mclVoltageZController as MCLVZC
+import storm_control.sc_hardware.thorlabs.uc480Camera as uc480Cam
 
 # focus lock control thread.
-import focuslock.stageOffsetControl as stageOffsetControl
+import storm_control.hal4000.focuslock.stageOffsetControl as stageOffsetControl
 
 # ir laser control
-import sc_hardware.thorlabs.LDC210 as LDC210
+import storm_control.sc_hardware.thorlabs.LDC210 as LDC210
 
 # focus lock dialog.
-import focuslock.focusLockZ as focusLockZ
+import storm_control.hal4000.focuslock.focusLockZ as focusLockZ
 
 #
 # Focus Lock Dialog Box specialized for STORM2

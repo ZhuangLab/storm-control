@@ -9,16 +9,16 @@
 #
 
 # none widgets
-import focuslock.noneWidgets as noneWidgets
+import storm_control.hal4000.focuslock.noneWidgets as noneWidgets
 
 # piezo control.
-import sc_hardware.thorlabs.TPZ001 as TPZ001
+import storm_control.sc_hardware.thorlabs.TPZ001 as TPZ001
 
 # focus lock control thread.
-import focuslock.stageQPDControl as stageQPDControl
+import storm_control.hal4000.focuslock.stageQPDControl as stageQPDControl
 
 # focus lock dialog.
-import focuslock.focusLockZ as focusLockZ
+import storm_control.hal4000.focuslock.focusLockZ as focusLockZ
 
 #
 # Focus Lock Dialog Box specialized for STORM4PI

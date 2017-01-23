@@ -9,7 +9,7 @@
 
 import sys
 
-import halLib.standalone as standalone
+import storm_control.hal4000.halLib.standalone as standalone
 
 if (len(sys.argv)==2):
     standalone.runModule("misc_control", sys.argv[1])
