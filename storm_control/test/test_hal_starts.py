@@ -3,6 +3,7 @@
 #
 
 from PyQt5 import QtCore
+import time
 
 import pytestqt
 
@@ -32,6 +33,9 @@ def test_hal_starts(qtbot):
 
     # Test
     qtbot.addWidget(hal)
-    qtbot.mouseClick(hal.ui.menuFile, QtCore.Qt.LeftButton, delay = 2000)
+    qtbot.mouseClick(hal.ui.menuFile, QtCore.Qt.LeftButton)
+    qtbot.keyClick(hal.ui.menuFile, QtCore.Qt.Key_Up)
+    qtbot.keyClick(hal.ui.menuFile, QtCore.Qt.Key_Enter)
+    qtbot.waitSignal(hal.destroyed, 10000)
     
 
