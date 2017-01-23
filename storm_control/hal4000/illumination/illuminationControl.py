@@ -351,7 +351,7 @@ class IlluminationControl(QtWidgets.QDialog, halModule.HalModule):
 
             try:
                 # Start hardware.
-                for name, instance in self.hardware_modules.iteritems():
+                for name, instance in self.hardware_modules.items():
                     if (instance.getStatus() == True):
                         instance.startFilm(self.parameters.get("seconds_per_frame"),
                                            self.parameters.get("illumination.shutter_oversampling"))
@@ -403,7 +403,7 @@ class IlluminationControl(QtWidgets.QDialog, halModule.HalModule):
         if self.running_shutters:
 
             # Stop hardware.
-            for name, instance in self.hardware_modules.iteritems():
+            for name, instance in self.hardware_modules.items():
                 if (instance.getStatus() == True):
                     instance.stopFilm()
 
