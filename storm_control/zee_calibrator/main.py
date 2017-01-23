@@ -9,13 +9,13 @@ import os, sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 # UIs.
-import mainwindow_ui
+import storm_control.zee_calibrator.mainwindow_ui as mainwindow_ui
 
 # Plotting
-import plot
+import storm_control.zee_calibrator.plot as plot
 
 # Calibration fitting
-import zcal
+import storm_control.zee_calibrator.zcal as zcal
 
 #
 # Main window

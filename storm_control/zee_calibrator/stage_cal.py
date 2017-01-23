@@ -18,7 +18,7 @@ if (len(sys.argv)!=3):
     print "usage: <offset.off file> <results.txt>"
     exit()
 
-import zcal
+import storm_control.zee_calibrator.zcal as zcal
 
 # Determine stage calibration.
 zc = zcal.ZCalibration(None, None, None, None)
