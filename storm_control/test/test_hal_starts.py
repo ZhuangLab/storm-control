@@ -31,11 +31,8 @@ def test_hal_starts(qtbot):
     hal.toggleSettings()
     hal.show()
 
-    # Test
     qtbot.addWidget(hal)
-    qtbot.mouseClick(hal.ui.menuFile, QtCore.Qt.LeftButton)
-    qtbot.keyClick(hal.ui.menuFile, QtCore.Qt.Key_Up)
-    qtbot.keyClick(hal.ui.menuFile, QtCore.Qt.Key_Enter)
-    qtbot.waitSignal(hal.destroyed, 10000)
-    
+
+    # Run for about 0.5 seconds.
+    qtbot.wait(500)
 
