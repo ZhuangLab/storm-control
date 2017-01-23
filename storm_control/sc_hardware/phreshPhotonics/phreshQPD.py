@@ -10,7 +10,7 @@ import os
 import sys
 
 
-import sc_hardware.nationalInstruments.nicontrol as nicontrol
+import storm_control.sc_hardware.nationalInstruments.nicontrol as nicontrol
 
 
 directory = os.path.dirname(__file__)

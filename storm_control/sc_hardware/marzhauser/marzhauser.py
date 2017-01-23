@@ -11,10 +11,10 @@ import ctypes
 import sys
 import time
 
-import sc_library.hdebug as hdebug
-import sc_library.parameters as params
+import storm_control.sc_library.hdebug as hdebug
+import storm_control.sc_library.parameters as params
 
-import sc_hardware.serial.RS232 as RS232
+import storm_control.sc_hardware.serial.RS232 as RS232
 
 
 ## loadTangoDLL

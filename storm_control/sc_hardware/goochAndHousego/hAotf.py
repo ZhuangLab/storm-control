@@ -8,9 +8,9 @@
 # Hazen 06/14
 #
 
-import sc_hardware.baseClasses.illuminationHardware as illuminationHardware
+import storm_control.sc_hardware.baseClasses.illuminationHardware as illuminationHardware
 
-import sc_hardware.goochAndHousego.AOTF as AOTF
+import storm_control.sc_hardware.goochAndHousego.AOTF as AOTF
 
 ## GoochHousegoAOTF
 #

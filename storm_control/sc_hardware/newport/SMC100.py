@@ -9,7 +9,7 @@
 
 import time
 
-import sc_hardware.serial.RS232 as RS232
+import storm_control.sc_hardware.serial.RS232 as RS232
 
 ## SMC100
 #

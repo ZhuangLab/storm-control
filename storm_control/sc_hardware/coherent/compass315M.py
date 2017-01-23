@@ -13,7 +13,7 @@ import sys
 import time
 
 
-import sc_hardware.nationalInstruments.nicontrol as nicontrol
+import storm_control.sc_hardware.nationalInstruments.nicontrol as nicontrol
 
 ## Compass315M
 #

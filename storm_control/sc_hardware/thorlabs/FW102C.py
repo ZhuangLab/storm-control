@@ -8,8 +8,8 @@
 # Josh  6/26/2013
 #
 
-import sc_hardware.baseClasses.illuminationHardware as illuminationHardware
-import sc_hardware.serial.RS232 as RS232
+import storm_control.sc_hardware.baseClasses.illuminationHardware as illuminationHardware
+import storm_control.sc_hardware.serial.RS232 as RS232
 
 
 ## FW102C

@@ -15,7 +15,7 @@ import threading
 from threading import Lock
 
 # Exceptions
-import sc_library.halExceptions as exceptions
+import storm_control.sc_library.halExceptions as exceptions
 
 # Load the NIDAQmx driver library.
 nidaqmx = ctypes.windll.nicaiu

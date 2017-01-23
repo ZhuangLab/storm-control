@@ -7,9 +7,10 @@
 # Hazen 7/10
 #
 
-import sc_hardware.serial.RS232 as RS232
 import time
 import traceback
+
+import storm_control.sc_hardware.serial.RS232 as RS232
 
 ## Obis
 #

@@ -8,7 +8,7 @@
 # Hazen 11/14
 #
 
-import sc_hardware.nationalInstruments.nicontrol as nicontrol
+import storm_control.sc_hardware.nationalInstruments.nicontrol as nicontrol
 
 
 ## MCLVZControl

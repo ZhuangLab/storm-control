@@ -7,8 +7,9 @@
 # Hazen 09/13
 #
 
-import sc_hardware.serial.RS232 as RS232
 import time
+
+import storm_control.sc_hardware.serial.RS232 as RS232
 
 ## IX2UCB
 #

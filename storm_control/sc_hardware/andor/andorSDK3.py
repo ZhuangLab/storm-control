@@ -17,7 +17,7 @@
 import ctypes
 import numpy
 import time
-import sc_library.halExceptions as halExceptions
+import storm_control.sc_library.halExceptions as halExceptions
 
 sdk3 = None
 sdk3_utility = None

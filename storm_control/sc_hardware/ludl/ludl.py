@@ -12,7 +12,7 @@
 
 import sys
 
-import sc_library.parameters as params
+import storm_control.sc_library.parameters as params
 
 ## Ludl
 #
@@ -167,7 +167,7 @@ class LudlRS232(Ludl):
     def __init__(self, port="COM19", timeout = None, baudrate = 115200, wait_time = 0.02):
         Ludl.__init__(self)
 
-        import sc_hardware.serial.RS232 as RS232
+        import storm_control.sc_hardware.serial.RS232 as RS232
 
         # Open connection.
         self.connection = RS232.RS232(port, timeout, baudrate, "\r", wait_time)
@@ -277,7 +277,7 @@ class LudlTCP(Ludl):
 # Testing
 # 
 
-if __name__ == "__main__":
+if (__name__ == "__main__"):
     import time
 
     stage = LudlRS232("COM8")

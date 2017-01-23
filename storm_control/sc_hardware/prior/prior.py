@@ -9,10 +9,10 @@
 
 import time
 
-import sc_library.parameters as params
+import storm_control.sc_library.parameters as params
 
-import sc_hardware.nationalInstruments.nicontrol as nicontrol
-import sc_hardware.serial.RS232 as RS232
+import storm_control.sc_hardware.nationalInstruments.nicontrol as nicontrol
+import storm_control.sc_hardware.serial.RS232 as RS232
 
 ## Prior
 #

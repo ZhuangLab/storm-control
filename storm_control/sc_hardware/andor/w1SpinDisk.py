@@ -7,12 +7,13 @@
 # Jeffrey Moffitt 5/16
 #
 
-import sc_library.halExceptions as halExceptions
 import serial
 import copy
-import sc_library.parameters as params
 from PyQt5 import QtCore
 from time import sleep
+
+import storm_control.sc_library.halExceptions as halExceptions
+import storm_control.sc_library.parameters as params
 
 # Debugging
 import storm_control.sc_library.hdebug as hdebug

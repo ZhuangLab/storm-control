@@ -13,10 +13,10 @@ import hashlib
 import time
 
 # Debugging
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
-import sc_hardware.baseClasses.illuminationHardware as illuminationHardware
-import sc_hardware.nationalInstruments.nicontrol as nicontrol
+import storm_control.sc_hardware.baseClasses.illuminationHardware as illuminationHardware
+import storm_control.sc_hardware.nationalInstruments.nicontrol as nicontrol
 
 ## Nidaq
 #

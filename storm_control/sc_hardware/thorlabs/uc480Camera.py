@@ -25,7 +25,7 @@ import scipy
 import scipy.optimize
 import time
 
-import sc_library.hdebug as hdebug
+import storm_control.sc_library.hdebug as hdebug
 
 Handle = ctypes.wintypes.HANDLE
 
