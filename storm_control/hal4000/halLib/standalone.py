@@ -30,7 +30,7 @@ def runModule(module_type, setup_name = False):
     found = False
     for module in hardware.get("modules").getProps():
         if (module.get("hal_type") == module_type):
-            a_module = importlib.import_module(module.get("module_name"))
+            a_module = importlib.import_module("storm_control.hal4000." + module.get("module_name"))
             a_class = getattr(a_module, module.get("class_name"))
             instance = a_class(module.get("parameters", False), general_parameters, None)
 

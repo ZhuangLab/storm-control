@@ -19,7 +19,7 @@ import storm_control.sc_library.parameters as params
 import storm_control.sc_library.hdebug as hdebug
 
 # UIs.
-import qtdesigner.stage_ui as stageUi
+import storm_control.hal4000.qtdesigner.stage_ui as stageUi
 
 
 ## MotionButton

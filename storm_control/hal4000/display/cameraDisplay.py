@@ -35,7 +35,7 @@ class CameraDisplay(QtWidgets.QDialog, halModule.HalModule):
         if (hal_ui_mode == "single"):
             self.hal_gui = False
             
-            import qtdesigner.camera_params_ui as cameraParamsUi
+            import storm_control.hal4000.qtdesigner.camera_params_ui as cameraParamsUi
             
             camera_frame = hal_ui.cameraFrame
             camera_params_frame = hal_ui.cameraParamsFrame
@@ -45,8 +45,8 @@ class CameraDisplay(QtWidgets.QDialog, halModule.HalModule):
         else:
             self.hal_gui = True
 
-            import qtdesigner.camera_detached_ui as cameraDetachedUi
-            import qtdesigner.camera_params_detached_ui as cameraParamsUi
+            import storm_control.hal4000.qtdesigner.camera_detached_ui as cameraDetachedUi
+            import storm_control.hal4000.qtdesigner.camera_params_detached_ui as cameraParamsUi
 
             # Configure window.
             self.ui = cameraDetachedUi.Ui_Dialog()

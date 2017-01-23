@@ -12,6 +12,7 @@
 #
 
 import importlib
+import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 # Debugging
@@ -54,7 +55,7 @@ class CameraFeedDisplay(QtWidgets.QFrame):
         # General (alphabetically ordered).
         self.color_gradient = 0
         self.color_table = 0
-        self.color_tables = colorTables.ColorTables("./colorTables/all_tables/")
+        self.color_tables = colorTables.ColorTables(os.path.dirname(__file__) + "/../colorTables/all_tables/")
         self.cycle_length = 0
         self.display_timer = QtCore.QTimer(self)
         self.feed_controller = False
@@ -135,7 +136,7 @@ class CameraFeedDisplay(QtWidgets.QFrame):
         if hardware is not None:
             display_module = hardware.get("module_name")
             #a_module = __import__('display.' + display_module, globals(), locals(), [display_module], -1)
-            a_module = importlib.import_module('display.' + display_module)
+            a_module = importlib.import_module('storm_control.hal4000.display.' + display_module)
             a_class = getattr(a_module, hardware.get("class_name"))
             global default_widget
             default_widget = a_class

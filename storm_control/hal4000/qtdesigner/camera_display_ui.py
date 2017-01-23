@@ -168,4 +168,4 @@ class Ui_Frame(object):
         self.syncLabel.setText(_translate("Frame", "Display:"))
         self.autoScaleButton.setText(_translate("Frame", "Autoscale"))
 
-from qtWidgets.qtCameraScrollArea import QCameraScrollArea
+from storm_control.hal4000.qtWidgets.qtCameraScrollArea import QCameraScrollArea

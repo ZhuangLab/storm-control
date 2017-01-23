@@ -9,7 +9,7 @@
 
 from PyQt5 import QtCore
 
-import illumination.illuminationChannelUI as illuminationChannelUI
+import storm_control.hal4000.illumination.illuminationChannelUI as illuminationChannelUI
 
 ## Channel
 #

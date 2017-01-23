@@ -24,8 +24,8 @@
 #
 
 # Add current storm-control directory to sys.path
-import imp
-imp.load_source("setPath", "../sc_library/setPath.py")
+#import imp
+#imp.load_source("setPath", "../sc_library/setPath.py")
 
 import importlib
 import os
@@ -142,9 +142,9 @@ class Window(QtWidgets.QMainWindow):
         #
         self.ui_mode = hardware.get("ui_mode")
         if (self.ui_mode == "single"):
-            import qtdesigner.hal4000_ui as hal4000Ui
+            import storm_control.hal4000.qtdesigner.hal4000_ui as hal4000Ui
         elif (self.ui_mode == "detached"):
-            import qtdesigner.hal4000_detached_ui as hal4000Ui
+            import storm_control.hal4000.qtdesigner.hal4000_detached_ui as hal4000Ui
         else:
             print("unrecognized mode:", self.ui_mode)
             print(" mode should be either single or detached")
@@ -222,7 +222,7 @@ class Window(QtWidgets.QMainWindow):
         add_separator = False
         for module in hardware.get("modules").getProps():
             hdebug.logText("Loading: " + module.get("hal_type"))
-            a_module = halImport(module.get("module_name"))
+            a_module = halImport("storm_control.hal4000." + module.get("module_name"))
             a_class = getattr(a_module, module.get("class_name"))
             instance = a_class(module.get("parameters", False), parameters, self)
             instance.hal_type = module.get("hal_type")

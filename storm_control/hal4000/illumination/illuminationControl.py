@@ -9,6 +9,7 @@
 
 import ast
 import importlib
+import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
@@ -65,7 +66,7 @@ class IlluminationControl(QtWidgets.QDialog, halModule.HalModule):
         self.setWindowIcon(qtAppIcon.QAppIcon())
 
         # Parse XML that describes the hardware.
-        hardware = xmlParser.parseHardwareXML("illumination/" + hardware.get("settings_xml"))
+        hardware = xmlParser.parseHardwareXML(os.path.dirname(__file__) + "/" + hardware.get("settings_xml"))
 
         # Add illumination specific settings.
         #

@@ -7,7 +7,7 @@
 # Hazen 02/14
 #
 
-import halLib.halModule as halModule
+import storm_control.hal4000.halLib.halModule as halModule
 
 import storm_control.sc_library.hdebug as hdebug
 from storm_control.sc_library.tcpServer import TCPServer

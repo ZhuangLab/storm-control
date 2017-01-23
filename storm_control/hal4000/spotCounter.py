@@ -15,7 +15,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import sip
 import time
 
-import qtWidgets.qtAppIcon as qtAppIcon
+import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
 
 import storm_control.hal4000.halLib.halModule as halModule
 import storm_control.sc_library.parameters as params
@@ -791,7 +791,7 @@ class SingleSpotCounter(SpotCounter):
     def __init__(self, hardware, parameters, parent = None):
         self.number_cameras = 1
         
-        import qtdesigner.spotcounter_ui as spotCounterUi
+        import storm_control.hal4000.qtdesigner.spotcounter_ui as spotCounterUi
         self.ui = spotCounterUi.Ui_Dialog()
         
         SpotCounter.__init__(self, parameters, parent)
@@ -812,7 +812,7 @@ class DualSpotCounter(SpotCounter):
     def __init__(self, hardware, parameters, parent = None):
         self.number_cameras = 2
         
-        import qtdesigner.dualspotcounter_ui as spotCounterUi
+        import storm_control.hal4000.qtdesigner.dualspotcounter_ui as spotCounterUi
         self.ui = spotCounterUi.Ui_Dialog()
         
         SpotCounter.__init__(self, parameters, parent)
@@ -826,10 +826,10 @@ if (__name__ == "__main__"):
 
     import numpy
 
-    import camera.frame as frame
+    import storm_control.hal4000.camera.frame as frame
 
     # This file is available in the ZhuangLab storm-analysis project on github.
-    import sa_library.datareader as datareader
+    import storm_control.sa_library.datareader as datareader
 
     if (len(sys.argv) != 4):
         print("usage: <settings> <movie_in> <png_out>")

@@ -23,7 +23,16 @@
    <property name="spacing">
     <number>0</number>
    </property>
-   <property name="margin">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
     <number>0</number>
    </property>
    <item>
@@ -413,7 +422,7 @@
   <customwidget>
    <class>QCameraScrollArea</class>
    <extends>QScrollArea</extends>
-   <header>qtWidgets.qtCameraScrollArea</header>
+   <header>storm_control.hal4000.qtWidgets.qtCameraScrollArea</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

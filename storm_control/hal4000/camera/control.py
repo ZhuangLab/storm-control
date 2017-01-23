@@ -37,7 +37,7 @@ class Camera(QtCore.QObject):
         # Setup camera control.
         module_name = hardware.get("module_name")
         #cameraControl = __import__('camera.' + module_name, globals(), locals(), [module_name], -1)
-        cameraControl = importlib.import_module('camera.' + module_name)
+        cameraControl = importlib.import_module('storm_control.hal4000.camera.' + module_name)
         self.camera_control = cameraControl.ACameraControl(hardware.get("parameters", False), parameters, parent = self)
 
         self.camera_control.newData.connect(self.handleNewData)

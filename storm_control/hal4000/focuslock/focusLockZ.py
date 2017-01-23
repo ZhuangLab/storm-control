@@ -595,7 +595,7 @@ class FocusLockZQPD(FocusLockZ):
         FocusLockZ.__init__(self, parameters, parent)
 
         # Setup UI.
-        import qtdesigner.focuslock_ui as focuslockUi
+        import storm_control.hal4000.qtdesigner.focuslock_ui as focuslockUi
 
         self.ui = focuslockUi.Ui_Dialog()
         self.ui.setupUi(self)
@@ -632,7 +632,7 @@ class FocusLockZCam(FocusLockZ):
         FocusLockZ.__init__(self, parameters, parent)
 
         # Setup UI.
-        import qtdesigner.focuslock_ui as focuslockUi
+        import storm_control.hal4000.qtdesigner.focuslock_ui as focuslockUi
 
         self.ui = focuslockUi.Ui_Dialog()
         self.ui.setupUi(self)
@@ -668,7 +668,7 @@ class FocusLockZDualCam(FocusLockZ):
         FocusLockZ.__init__(self, parameters, parent)
 
         # Setup UI.
-        import qtdesigner.dualfocuslock_ui as dualfocuslockUi
+        import storm_control.hal4000.qtdesigner.dualfocuslock_ui as dualfocuslockUi
 
         self.ui = dualfocuslockUi.Ui_Dialog()
         self.ui.setupUi(self)
