@@ -24,7 +24,7 @@ def test_hal_starts(qtbot):
     params.setDefaultParameters(general_parameters)
 
     # Load 'none' parameters.
-    none_parameters = params.parameters("../hal4000/xml/linux_default.xml")
+    none_parameters = params.halParameters("./linux_default.xml")
 
     hal.parameters_box.addParameters(none_parameters)
     hal.toggleSettings()
