@@ -1,5 +1,5 @@
 #
-# A very simple test of HAL (in emulation mode).
+# A very simple test of Steve.
 #
 
 from PyQt5 import QtCore

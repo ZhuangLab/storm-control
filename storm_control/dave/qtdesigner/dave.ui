@@ -30,7 +30,16 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="mainGridLayout" rowstretch="0,0">
-    <property name="margin">
+    <property name="leftMargin">
+     <number>2</number>
+    </property>
+    <property name="topMargin">
+     <number>2</number>
+    </property>
+    <property name="rightMargin">
+     <number>2</number>
+    </property>
+    <property name="bottomMargin">
      <number>2</number>
     </property>
     <property name="spacing">
@@ -58,7 +67,16 @@
        <property name="spacing">
         <number>0</number>
        </property>
-       <property name="margin">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
         <number>0</number>
        </property>
        <item>
@@ -267,7 +285,16 @@
        <property name="spacing">
         <number>2</number>
        </property>
-       <property name="margin">
+       <property name="leftMargin">
+        <number>2</number>
+       </property>
+       <property name="topMargin">
+        <number>2</number>
+       </property>
+       <property name="rightMargin">
+        <number>2</number>
+       </property>
+       <property name="bottomMargin">
         <number>2</number>
        </property>
        <item>
@@ -282,7 +309,16 @@
           <string>Command Sequence</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
-          <property name="margin">
+          <property name="leftMargin">
+           <number>4</number>
+          </property>
+          <property name="topMargin">
+           <number>4</number>
+          </property>
+          <property name="rightMargin">
+           <number>4</number>
+          </property>
+          <property name="bottomMargin">
            <number>4</number>
           </property>
           <item>
@@ -309,7 +345,16 @@
           <string>Command Details</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_6">
-          <property name="margin">
+          <property name="leftMargin">
+           <number>4</number>
+          </property>
+          <property name="topMargin">
+           <number>4</number>
+          </property>
+          <property name="rightMargin">
+           <number>4</number>
+          </property>
+          <property name="bottomMargin">
            <number>4</number>
           </property>
           <item>
@@ -391,12 +436,12 @@
      <x>0</x>
      <y>0</y>
      <width>590</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
-     <string>File</string>
+     <string>Fi&amp;le</string>
     </property>
     <addaction name="actionNew_Sequence"/>
     <addaction name="separator"/>
@@ -404,13 +449,13 @@
    </widget>
    <widget class="QMenu" name="menuXML">
     <property name="title">
-     <string>XML</string>
+     <string>&amp;XML</string>
     </property>
     <addaction name="actionGenerateXML"/>
    </widget>
    <widget class="QMenu" name="menuNotifications">
     <property name="title">
-     <string>Notifications</string>
+     <string>&amp;Notifications</string>
     </property>
     <addaction name="actionSendTestEmail"/>
    </widget>
@@ -421,12 +466,12 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionNew_Sequence">
    <property name="text">
-    <string>Load Sequence</string>
+    <string>&amp;Load Sequence</string>
    </property>
   </action>
   <action name="actionQuit">
    <property name="text">
-    <string>Quit</string>
+    <string>&amp;Quit</string>
    </property>
   </action>
   <action name="actionGenerate">
@@ -436,12 +481,12 @@
   </action>
   <action name="actionGenerateXML">
    <property name="text">
-    <string>Generate XML</string>
+    <string>&amp;Generate XML</string>
    </property>
   </action>
   <action name="actionSendTestEmail">
    <property name="text">
-    <string>Send Test Email</string>
+    <string>&amp;Send Test Email</string>
    </property>
   </action>
  </widget>
@@ -449,12 +494,12 @@
   <customwidget>
    <class>DaveCommandTreeViewer</class>
    <extends>QTreeView</extends>
-   <header>sequenceViewer</header>
+   <header>storm_control.dave.sequenceViewer</header>
   </customwidget>
   <customwidget>
    <class>DaveWarningsViewer</class>
    <extends>QListWidget</extends>
-   <header>daveWarnings</header>
+   <header>storm_control.dave.daveWarnings</header>
   </customwidget>
  </customwidgets>
  <resources/>

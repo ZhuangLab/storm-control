@@ -15,7 +15,7 @@ def test_hal_starts(qtbot):
     # Load 'none' hardware configuration.
     none_hardware = params.hardware("./hal_xml/test_hardware.xml")
 
-    # Load general parameters.
+    # Load HAL initialization parameters.
     general_parameters = params.halParameters("./hal_xml/test_settings.xml")
 
     # Start HAL.

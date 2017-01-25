@@ -195,7 +195,7 @@ class Ui_MainWindow(object):
         self.mainGridLayout.addWidget(self.widget_2, 1, 1, 1, 3)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 590, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 590, 25))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -255,14 +255,14 @@ class Ui_MainWindow(object):
         self.runButton.setText(_translate("MainWindow", "Run"))
         self.abortButton.setText(_translate("MainWindow", "Abort"))
         self.validateSequenceButton.setText(_translate("MainWindow", "Validate"))
-        self.menuFile.setTitle(_translate("MainWindow", "File"))
-        self.menuXML.setTitle(_translate("MainWindow", "XML"))
-        self.menuNotifications.setTitle(_translate("MainWindow", "Notifications"))
-        self.actionNew_Sequence.setText(_translate("MainWindow", "Load Sequence"))
-        self.actionQuit.setText(_translate("MainWindow", "Quit"))
+        self.menuFile.setTitle(_translate("MainWindow", "Fi&le"))
+        self.menuXML.setTitle(_translate("MainWindow", "&XML"))
+        self.menuNotifications.setTitle(_translate("MainWindow", "&Notifications"))
+        self.actionNew_Sequence.setText(_translate("MainWindow", "&Load Sequence"))
+        self.actionQuit.setText(_translate("MainWindow", "&Quit"))
         self.actionGenerate.setText(_translate("MainWindow", "Generate (Version 1.0)"))
-        self.actionGenerateXML.setText(_translate("MainWindow", "Generate XML"))
-        self.actionSendTestEmail.setText(_translate("MainWindow", "Send Test Email"))
+        self.actionGenerateXML.setText(_translate("MainWindow", "&Generate XML"))
+        self.actionSendTestEmail.setText(_translate("MainWindow", "&Send Test Email"))
 
-from daveWarnings import DaveWarningsViewer
-from sequenceViewer import DaveCommandTreeViewer
+from storm_control.dave.daveWarnings import DaveWarningsViewer
+from storm_control.dave.sequenceViewer import DaveCommandTreeViewer
