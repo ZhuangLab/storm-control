@@ -7,6 +7,9 @@
   <!-- The name to use for this setup. -->
   <name type="string">none</name>
 
+  <!-- The starting directory. -->
+  <name type="directory">/home/hbabcock/Data/</name>
+
   <!-- The UI mode, this is either "single" (window) or "detached" -->
   <ui_mode type="string">single</ui_mode>
   <!-- <ui_mode type="string">detached</ui_mode> -->
