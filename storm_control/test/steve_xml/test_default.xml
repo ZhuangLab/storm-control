@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<settings>
+
+  <!-- general -->
+  <debug type="int">1</debug>
+  <use_as_default type="int">1</use_as_default>
+  <extrapolate_picture_count type="int">9</extrapolate_picture_count>
+
+  <!-- capture -->
+  <directory type="string">./data/</directory>
+  <image_filename type="string">steve</image_filename>
+
+  <!-- position rectangles & section circles -->
+  <rectangle_size type="float">43.0</rectangle_size>
+  <ellipse_size type="float">10</ellipse_size>
+  <pen_width type="int">20</pen_width>
+  <step_size type="float">0.5</step_size>
+
+</settings>

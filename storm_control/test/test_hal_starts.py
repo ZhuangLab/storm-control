@@ -7,7 +7,7 @@ import time
 
 import pytestqt
 
-import storm_control.hal4000.hal_4000 as hal4000
+import storm_control.hal4000.hal4000 as hal4000
 import storm_control.sc_library.parameters as params
 
 def test_hal_starts(qtbot):
@@ -17,17 +17,13 @@ def test_hal_starts(qtbot):
 
     # Load general parameters.
     general_parameters = params.halParameters("./hal_xml/settings_default.xml")
-    general_parameters.set("film.logfile", "./data/logfile.txt")
 
     # Start HAL.
     hal = hal4000.Window(none_hardware, general_parameters)
     
     params.setDefaultParameters(general_parameters)
 
-    # Load 'none' parameters.
-    none_parameters = params.halParameters("./hal_xml/test_default.xml")
-
-    hal.parameters_box.addParameters(none_parameters)
+    hal.parameters_box.addParameters(general_parameters)
     hal.toggleSettings()
     hal.show()
 

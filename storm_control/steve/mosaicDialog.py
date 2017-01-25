@@ -12,7 +12,7 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-import qtdesigner.mosaic_dialog_ui as mosaic_dialog_ui
+import storm_control.steve.qtdesigner.mosaic_dialog_ui as mosaic_dialog_ui
 
 values = [0.16, False, False, False, "100x", 100.0, 0.0, 0.0]
 

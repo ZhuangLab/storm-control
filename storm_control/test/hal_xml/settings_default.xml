@@ -9,12 +9,12 @@
     <acq_mode desc="Acquisition mode" type="string" values="run_till_abort,fixed_length">fixed_length</acq_mode>
     <auto_increment desc="Automatically increment movie counter between movies" type="boolean">True</auto_increment>
     <auto_shutters desc="Run shutters during the movie" type="boolean">True</auto_shutters>
-    <directory desc="Current working directory" type="directory">C:\Data\</directory>
+    <directory desc="Current working directory" type="directory">./data/</directory>
     <extension desc="Movie file name extension" type="string" values=",Red,Green,Blue"></extension>
     <filename desc="Current movie file name" type="string">movie</filename>
     <filetype desc="Movie file type" type="string" values=".dax">.dax</filetype>
     <frames desc="Movie length in frames" type="int" min="1" max="1000000000">10</frames>
-    <logfile desc="Image log file" type="filename" mutable="False">C:\Data\image_log.txt</logfile>
+    <logfile desc="Image log file" type="filename" mutable="False">./data/image_log.txt</logfile>
     <want_bell desc="Sound bell at the end of long movies" type="boolean">True</want_bell>    
     <want_big_endian desc="Save movies using a big endian format" type="boolean">False</want_big_endian>
   </film>
