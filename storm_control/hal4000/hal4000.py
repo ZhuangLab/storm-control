@@ -1145,9 +1145,8 @@ if (__name__ == "__main__"):
 
     args = parser.parse_args()
 
-    print(args.config)
-    print(sys.argv)
-
+    # FIXME: Should allow an (optional) initial setup file name.
+    
     # Start..
     app = QtWidgets.QApplication(sys.argv)
 
