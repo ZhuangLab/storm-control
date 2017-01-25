@@ -1,2 +1,0 @@
-compile interfaces with: 
-c:\python26\lib\site-packages\pyqt4\uic\pyuic.py int.ui > int.py
