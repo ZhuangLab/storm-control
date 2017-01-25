@@ -18,7 +18,7 @@
     <want_bell desc="Sound bell at the end of long movies" type="boolean">True</want_bell>    
     <want_big_endian desc="Save movies using a big endian format" type="boolean">False</want_big_endian>
   </film>
-  
+
   <!-- default settings for steve -->
   <mosaic>
     <flip_horizontal desc="Flip image horizontal (mosaic)" type="boolean">False</flip_horizontal>
