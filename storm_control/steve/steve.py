@@ -7,10 +7,6 @@
 # Hazen 07/15
 #
 
-# Add current storm-control directory to sys.path
-import imp
-imp.load_source("setPath", "../sc_library/setPath.py")
-
 import os
 import sys
 import re
