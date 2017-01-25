@@ -1,107 +1,44 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Heuristically programmed ALgorithmic STORM setup control.
-#
-# In its most basic form, this just runs a camera and displays
-# (and records) the resulting data. Every setup must have
-# at least one camera.
-#
-# More advanced functionality is provided by various modules.
-# These are loaded dynamically in the __init__ based on
-# the contents of the hardware.xml file. Examples of modules
-# include spotCounter.py, illumination/illuminationControl.py
-# and tcpServer.py
-#
-# Each module must implement the methods described in the
-# HalModule class in halLib.halModule, or be a sub-class
-# of this class.
-#
-#
-# Hazen 02/14
-# Jeff 03/14
-#
+#!/usr/bin/env python
+"""
+
+Heuristically programmed ALgorithmic STORM setup control.
+
+This module handles setup, clean up and message passing
+between the various sub-modules that define the 
+behavior. Each of these modules must be a sub-class of
+the HalModule class in halLib.halModule. Setup specific
+configuration is provided by a 'XX_config.xml' file
+examples of which can be found in the xml folder.
+
+In addition this module handles drag/drops and
+the film notes QTextEdit.
+
+Jeff 03/14
+Hazen 01/17
+
+"""
 
 import importlib
 import os
-import sys
-import datetime
-import traceback
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtGui, QtWidgets
 
 # Debugging
 import storm_control.sc_library.hdebug as hdebug
 
 # Misc.
-import storm_control.hal4000.camera.control as control
-import storm_control.hal4000.camera.filmSettings as filmSettings
-import storm_control.hal4000.display.cameraDisplay as cameraDisplay
-import storm_control.hal4000.halLib.imagewriters as writers
-import storm_control.hal4000.halLib.halModule as halModule
-import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
-import storm_control.hal4000.qtWidgets.qtParametersBox as qtParametersBox
-
 import storm_control.sc_library.parameters as params
 import storm_control.sc_library.hgit as hgit
 
-## getFileName
-#
-# Returns the filename given a path
-#
-# @param path The full path with the file name.
-#
-# @return Returns the file name.
-#
-def getFileName(path):
-    return os.path.splitext(os.path.basename(path))[0]
 
-## halImport
-#
-# Wrap __import__ to make dynamic import a little simpler.
-#
-# @param module_name The name of the module to import.
-#
-# @return Returns the module
-#
-def halImport(module_name):
-    #return __import__(module_name, globals(), locals(), [module_name], -1)
-    return importlib.import_module(module_name)
-
-## trimString
-#
-# Trims string to max_len characters if string is longer than max_len.
-#
-# @param string The string to trim.
-# @param max_len The maximum string length.
-#
-# @return Returns the trimmed string.
-#
-def trimString(string, max_len):
-    if len(string) > max_len:
-        return "..." + string[-(max_len-3):]
-    else:
-        return string
-
-## Window
-#
-# The main window.
-#
 class Window(QtWidgets.QMainWindow):
-    tcpComplete = QtCore.pyqtSignal(object)
 
-    ## __init__
-    #
-    # Set up the main window, connect and initialize all the hardware.
-    #
-    # @param hardware The hardware associated with this setup.
-    # @param parameters The initial (and default) parameters for the hardware.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
     @hdebug.debug
-    def __init__(self, hardware, parameters, parent = None):
-        QtWidgets.QMainWindow.__init__(self, parent)
+    def __init__(self, config, **kwds):
+        """
+        Set up the GUI, initialize and connect the various modules.
+        """
+        super(asdf, kwds)
 
         # General (alphabetically ordered)
         self.current_directory = False
@@ -1196,7 +1133,22 @@ class Window(QtWidgets.QMainWindow):
         self.parameters.set("film.notes", str(self.ui.notesEdit.toPlainText()))
 
 
-if __name__ == "__main__":
+if (__name__ == "__main__"):
+
+    # Use both so that we can pass sys.argv to QApplication.
+    import argparse
+    import sys
+
+    # Get command line arguments..
+    parser = argparse.ArgumentParser(description = 'STORM microscope control software')
+    parser.add_argument('config', type=str, help = "The name of the configuration file to use.")
+
+    args = parser.parse_args()
+
+    print(args.config)
+    print(sys.argv)
+
+    # Start..
     app = QtWidgets.QApplication(sys.argv)
 
     # Set default font size for linux.
@@ -1211,59 +1163,15 @@ if __name__ == "__main__":
     splash.show()
     app.processEvents()
 
-    # Load general settings.
-    general_parameters = params.halParameters("settings_default.xml")
+    # Load configuration.
+    config = params.config(args.config)
 
-    # Load setup specific settings, just to get access to the
-    # setup name and the film (and logging) directory.
-    if (len(sys.argv) == 4):
-        setup_name = sys.argv[1]
-        hardware = params.hardware(sys.argv[2])
-        setup_parameters_filename = sys.argv[3]
-    else:
-        setup_name = general_parameters.get("setup_name")
-        hardware = params.hardware("xml/" + setup_name + "_hardware.xml")
-        setup_parameters_filename = "xml/" + setup_name + "_default.xml"
-
-    setup_parameters = params.parameters(setup_parameters_filename, True)
-
-    # Update general parameters with specific settings that are needed at startup.
-    general_parameters.set("setup_name", setup_name)
-    general_parameters.set("film.directory",
-                           setup_parameters.get("film.directory",
-                                                general_parameters.get("film.directory")))
-    extension = general_parameters.getp("film.extension")
-    if setup_parameters.has("film.extension"):
-        extension.setAllowed(setup_parameters.getp("film.extension").getAllowed())
-    general_parameters.set("film.logfile",
-                           setup_parameters.get("film.logfile",
-                                                general_parameters.get("film.logfile")))
-
-    # Start logger.
-    hdebug.startLogging(general_parameters.get("film.directory") + "logs/", "hal4000")
-
-    # Setup HAL and all the modules.
-    window = Window(hardware, general_parameters)
-
-    # Set the general parameters with the additional values
-    # added by HAL and the modules as the default parameters.
-    params.setDefaultParameters(general_parameters)
-
-    # Re-load setup specific parameters as HAL parameters.
-    setup_parameters = params.halParameters(setup_parameters_filename)
-
-    # Set the specific parameters as the new default.
-    params.setDefaultParameters(setup_parameters)
-    
-    # Add the specific parameters to the parameters box.
-    window.parameters_box.addParameters(setup_parameters)
-
-    # Initialize with these parameters.
-    window.toggleSettings()
+    # Setup HAL and all of the modules.
+    hal = Window(config)
 
     # Hide splash screen and start.
     splash.hide()
-    window.show()
+    hal.show()
 
     app.exec_()
 
@@ -1271,7 +1179,7 @@ if __name__ == "__main__":
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2017 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

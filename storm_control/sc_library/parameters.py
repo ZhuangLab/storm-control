@@ -1,13 +1,10 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Handles parsing settings xml files and getting/setting 
-# the resulting settings. Primarily designed for use
-# by the hal acquisition program.
-#
-# Hazen 06/15
-#
+#!/usr/bin/env python
+"""
+Handles parsing settings xml files and getting/setting 
+the resulting settings.
+
+Hazen 06/15
+"""
 
 import copy
 import os
@@ -19,6 +16,31 @@ from xml.etree import ElementTree
 from PyQt5 import QtCore, QtGui
 
 default_params = 0
+
+
+def config(config_file):
+    """
+    Parse a configuration file for a setup.
+    """
+    xml = ElementTree.parse(config_file).getroot()
+    if (xml.tag != "config"):
+        raise ParametersException(hardware_file + " is not a configuration file.")
+
+    # Create the configuration object.
+    config = StormXMLObject(xml, recurse = True)
+
+#    # Add some additional parameters to the modules.
+#    modules = hardware.get("modules")
+#    for module_name in modules.getAttrs():
+#        module = modules.get(module_name)
+#        module.set("hal_type", module_name)
+#        if module.has("menu_item"):
+#            module.set("hal_gui", True)
+#        else:
+#            module.set("hal_gui", False)
+
+    return config
+
 
 ## copyParameters
 #
@@ -219,34 +241,6 @@ def halParameters(parameters_file):
         xml_object.set("use_as_default", False)
 
     return xml_object
-
-## hardware
-#
-# Parses a hardware file to create a hardware object.
-#
-# @param hardware_file The name of the XML file containing the hardware definitions.
-#
-# @return A hardware object.
-#
-def hardware(hardware_file):
-    xml = ElementTree.parse(hardware_file).getroot()
-    if (xml.tag != "hardware"):
-        raise ParametersException(hardware_file + " is not a hardware file.")
-
-    # Create the hardware object.
-    hardware = StormXMLObject(xml, recurse = True)
-
-    # Add some additional parameters to the modules.
-    modules = hardware.get("modules")
-    for module_name in modules.getAttrs():
-        module = modules.get(module_name)
-        module.set("hal_type", module_name)
-        if module.has("menu_item"):
-            module.set("hal_gui", True)
-        else:
-            module.set("hal_gui", False)
-
-    return hardware
 
 ## parameters
 #
