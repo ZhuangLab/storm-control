@@ -35,7 +35,7 @@ class PumpControl(QtWidgets.QWidget):
         self.speed_units = "rpm"
 
         # Dynamic import of pump class
-        pump_module = importlib.import_module(parameters.get("pump_class", "pumps.rainin_rp1"))
+        pump_module = importlib.import_module(parameters.get("pump_class", "storm_control.fluidics.pumps.rainin_rp1"))
 
         # Create Instance of Pump
         self.pump = pump_module.APump(parameters = parameters)

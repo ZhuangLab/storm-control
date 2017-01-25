@@ -125,7 +125,7 @@ class KilroyProtocols(QtWidgets.QMainWindow):
         self.elapsedTimeLabel = QtWidgets.QLabel()
         self.elapsedTimeLabel.setText("Elapsed Time: ")
 
-        self.protocolDetailsList =  QtWidgets.QListWidget()
+        self.protocolDetailsList = QtWidgets.QListWidget()
         
         self.startProtocolButton = QtWidgets.QPushButton("Start Protocol")
         self.startProtocolButton.clicked.connect(self.startProtocolLocally)
