@@ -163,7 +163,7 @@ class Dave(QtWidgets.QMainWindow):
         self.directory = ""
         self.notifier = notifications.Notifier("", "", "", "")
         self.running = False
-        self.settings = QtCore.QSettings("Zhuang Lab", "dave")
+        self.settings = QtCore.QSettings("storm-control", "dave")
         self.sequence_filename = ""
         self.sequence_validated = False
         self.test_mode = False

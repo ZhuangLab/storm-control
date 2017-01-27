@@ -60,7 +60,7 @@ class Window(QtWidgets.QMainWindow):
         self.picture_queue = []
         self.regexp_str = ""
         self.requested_stage_pos = False
-        self.settings = QtCore.QSettings("Zhuang Lab", "steve")
+        self.settings = QtCore.QSettings("storm-control", "steve")
         self.snapshot_directory = self.parameters.get("directory")
         self.spin_boxes = []
         self.stage_tracking_timer = QtCore.QTimer(self)
