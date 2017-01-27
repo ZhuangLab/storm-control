@@ -5,11 +5,14 @@ The messages that are passed between modules.
 Hazen 01/17
 """
 
+import storm_control.sc_library.hdebug as hdebug
+
+
 class HalMessage(object):
 
-    def __init__(self, source, mtype, data, sync = False, level = 1, finalizer = None, **kwds):
+    def __init__(self, source = None, m_type = "", data = None, sync = False, level = 1, finalizer = None, **kwds):
         """
-        source - String that identifies the module where this message originated.
+        source - HalModule object that sent the message.
 
         mtype - String that defines the message type.
 
@@ -32,17 +35,62 @@ class HalMessage(object):
         self.data = data
         self.finalizer = finalizer
         self.level = level
-        self.mtype = mtype
+        self.m_errors = []
+        self.m_type = m_type
         self.source = source
         self.sync = sync
 
         self.ref_count = 0
 
+        # Log when message was created.
+        hdebug.logText(",".join(["created", str(id(self)), self.source.module_name, self.m_type]))
+
+    def addError(self, hal_message_error):
+        self.m_errors.append(hal_message_error)
+        
     def finalize(self):
+
+        # Log when message was destroyed. This is primarily for profiling.
+        hdebug.logText(",".join(["destroyed", str(id(self)), self.m_type]))
+        
         if self.finalizer is not None:
             self.finalizer()
-        
 
+    def getErrors(self):
+        return self.m_errors
+
+    def getSource(self):
+        return self.source
+
+    def hasErrors(self):
+        return len(self.m_errors) > 0
+
+
+class HalMessageError(object):
+    """
+    If a module has a problem with a message that it can't handle then
+    it should append one of these objects to the message merrors field.
+    """
+    def __init__(self, source = "", message = "", m_exception = None, **kwds):
+        """
+        source - String identifier of the message source.
+        message - The warning / error message as a String.
+        m_exception - The exception for the source to raise if can't handle
+                      this error.
+        """
+        super().__init__(**kwds)
+
+        self.source = source
+        self.message = message
+        self.m_exception = m_exception
+
+    def getException(self):
+        return self.m_exception
+    
+    def hasException(self):
+        return self.m_exception is not None
+
+                 
 #
 # The MIT License
 #

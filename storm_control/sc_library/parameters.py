@@ -24,7 +24,7 @@ def config(config_file):
     """
     xml = ElementTree.parse(config_file).getroot()
     if (xml.tag != "config"):
-        raise ParametersException(hardware_file + " is not a configuration file.")
+        raise ParametersException(config_file + " is not a configuration file.")
 
     # Create the configuration object.
     config = StormXMLObject(xml, recurse = True)
@@ -846,7 +846,7 @@ class StormXMLObject(object):
 
     ## getAttrs
     #
-    # @return a list of the properties.
+    # @return a list of the property names.
     #
     def getAttrs(self):
         return self.parameters.keys()

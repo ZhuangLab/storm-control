@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<hardware>
-
-  <!--
-      General parameters
-  -->
-  <!-- The name to use for this setup. -->
-  <setup_name type="string">none</setup_name>
+<config>
 
   <!-- The starting directory. -->
   <directory type="directory">/home/hbabcock/Data/</directory>
 
+  <!-- The setup name -->
+  <setup_name type="string">none</setup_name>
+  
   <!--
       Define the modules to use for this setup.
   -->
@@ -25,7 +22,7 @@
     </hal>
 
     <!--
-	You want these in this order..
+	You also want these in this order.
     -->
     <!--
     <settings>
@@ -176,4 +173,4 @@
 
   </modules>
   
-</hardware>
+</config>

@@ -7,8 +7,10 @@ Hazen 01/17
 
 from collections import deque
 
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtWidgets
 
+import storm_control.hal4000.halLib.halMessage as halMessage
+import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 
 class HalModule(QtCore.QThread):
     """
@@ -16,21 +18,49 @@ class HalModule(QtCore.QThread):
     will execute on the millisecond time frame. If this is not the
     case then use the HalModuleBuffered class instead.
     """
-    new_frame = QtCore.pyqtSignal(object)
-    new_message = QtCore.pyqtSignal(object)
+    newFrame = QtCore.pyqtSignal(object)
+    newMessage = QtCore.pyqtSignal(object)
 
-    def __init__(self, **kwds):
+    def __init__(self, module_name = "", **kwds):
         super().__init__(**kwds)
+        self.module_name = module_name
 
     def cleanup(self):
         pass
 
+    def handleError(self, m_error):
+        """
+        Override with class specific error handling.
+        """
+        return False
+    
     def handleFrame(self, new_frame):
         pass
 
     def handleMessage(self, message):
         self.processMessage(message)
 
+    def handleWarning(self, m_warning):
+        """
+        Override with class specific warning handling.
+        """
+        return False
+    
+    def messageError(self, m_errors):
+        """
+        Implement class specific error / warning handling by
+        overriding handleError and/or handleWarning.
+        """
+        for m_error in m_errors:
+            data = m_error.source + ": " + m_error.message
+            if m_error.hasException():
+                if not self.handleError(m_error):
+                    halMessageBox.halMessageBox(message.data, is_error = True)
+                    raise m_error.getException()
+            else:
+                if not self.handleWarning(m_warning):
+                    halMessageBox.halMessageBox(message.data)
+    
     def processMessage(self, message):
         message.ref_count -= 1
 
@@ -60,6 +90,8 @@ class HalModuleBuffered(HalModule):
             self.queue_mutex.unlock()
             self.processMessage(next_message)
 
+
+    
 #
 # The MIT License
 #
