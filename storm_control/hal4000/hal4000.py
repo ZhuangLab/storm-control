@@ -18,6 +18,7 @@ Hazen 01/17
 
 """
 
+from collections import deque
 import importlib
 import os
 
@@ -1133,6 +1134,100 @@ class Window(QtWidgets.QMainWindow):
         self.parameters.set("film.notes", str(self.ui.notesEdit.toPlainText()))
 
 
+class HALCore(QtCore.QObject):
+    """
+    The core of it all. It sets everything else up, handles the message passing
+    and tears everything down.
+    """
+    def __init__(self, config, **kwds):
+        super().__init__(**kwds)
+
+        self.modules = []
+        self.queued_messages = deque()
+        self.sent_messages = []
+        self.settings = QtCore.QSettings("storm-control", "hal4000" + config.get("setup_name").lower())
+        self.sync_timer = QtCore.QTimer(self)
+
+        self.sync_timer.setInterval(50)
+        self.sync_timer.timeout.connect(self.handleMessage)
+        self.sync_timer.setSingleShot(True)
+
+        # Load all the modules.
+        for module in config.get("modules").getProps():
+            a_module = importlib.import_module("storm_control.hal4000." + module.get("module_name"))
+            a_class = getattr(a_module, module.get("class_name"))
+            self.modules.append(a_class(module, self.settings, self))
+
+        # Connect signals.
+        for module in self.modules:
+            module.newFrame.connect(self.handleNewFrame)
+            module.newMessage.connect(self.handleNewMessage)
+
+        # Configure
+        self.handleMessage(halMessage.HalMessage(source = "core",
+                                                 mtype = "configure",
+                                                 sync = False))
+
+        # Start
+        self.handleMessage(halMessage.HalMessage(source = "core",
+                                                 mtype = "start",
+                                                 sync = True))
+        
+    def cleanup(self):
+        for module in self.modules:
+            module.cleanup(self.settings)
+
+    def handleFrame(self, new_frame):
+        """
+        I was split on whether or not these should also just be messages.
+        However, since there will likely be a lot of them I decided they 
+        should be handled separately.
+        """
+        for module in self.modules:
+            module.handleFrame(new_frame)
+            
+    def handleMessage(self, message = None):
+
+        # Remove all the messages that have already been
+        # handled from the list of sent messages.
+        for sent_message in self.sent_messages:
+            if (sent_message.ref_count == 0):
+                self.sent_messages.remove(sent_message)
+                sent_message.finalize()
+
+        # Add this message to the queue.
+        if message is not None:
+            self.queued_messages.append(message)
+
+        # Process the next message.
+        if (len(self.queued_messages) > 0):
+            cur_message = self.queued_message.popleft()
+
+            #
+            # If this message requested synchronization and there are
+            # pending messages then push it back into the queue and wait.
+            #
+            if cur_message.sync and (len(self.sent_messages) > 0):
+                self.queued_messages.appendleft(cur_message)
+                self.sync_timer.start()
+
+            #
+            # Otherwise send the message.
+            #
+            else:
+                for module in self.modules:
+                    cur_message.ref_count += 1
+                    module.handleMessage(cur_message)
+
+                # Process any remaining messages.
+                #
+                # Maybe use a timer here so that there is time to
+                # do something else between the messages?
+                #
+                if (len(self.queued_messages) > 0):
+                    self.handleMessage()
+
+    
 if (__name__ == "__main__"):
 
     # Use both so that we can pass sys.argv to QApplication.
