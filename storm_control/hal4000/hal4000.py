@@ -114,13 +114,17 @@ class HalView(QtWidgets.QMainWindow):
     def __init__(self, module_name = "", module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
-        import storm_control.hal4000.qtdesigner.hal4000_ui as hal4000Ui
+        if self.classic_view:
+            import storm_control.hal4000.qtdesigner.hal4000_ui as hal4000Ui
+        else:
+            import storm_control.hal4000.qtdesigner.hal4000_detached_ui as hal4000Ui
         self.ui = hal4000Ui.Ui_MainWindow()
         self.ui.setupUi(self)
 
         self.close_now = False
+        self.close_timer = QtCore.QTimer(self)
         self.module_name = module_name
-
+                
         # Set icon.
         self.setWindowIcon(qtAppIcon.QAppIcon())
 
@@ -134,6 +138,11 @@ class HalView(QtWidgets.QMainWindow):
         self.ui.actionSettings.triggered.connect(self.handleSettings)
         self.ui.actionShutter.triggered.connect(self.handleShutters)
         self.ui.actionQuit.triggered.connect(self.handleQuit)
+
+        # Configure close timer.
+        self.close_timer.setInterval(5)
+        self.close_timer.timeout.connect(self.handleCloseTimer)
+        self.close_timer.setSingleShot(True)
         
     def cleanUp(self, qt_settings):
         """
@@ -143,15 +152,24 @@ class HalView(QtWidgets.QMainWindow):
         qt_settings.setValue(self.module_name + ".main", self.size())
         qt_settings.setValue(self.module_name + ".xml_directory", self.xml_directory)
 
-        print("trying to close")
         self.close()
 
     def closeEvent(self, event):
-        print("closeEvent", self.close_now)
+        #
+        # This is a little fiddly. Basically the problem is that we'll get event
+        # if the user clicks on the X in the upper right corner of the window.
+        # In that case we don't want to close right away as core needs some
+        # time to clean up the modules. However we also get this event when
+        # we call close() and at that point we do want to close.
+        #
+        # We use a timer with a small delay because without it it appeared
+        # that this method was getting called twice with same event object when
+        # we clicked on the X, and this meant that you had to click the X
+        # twice.
+        #
         if not self.close_now:
             event.ignore()
-            self.close_now = True
-            self.guiMessage.emit("closeEvent", "")
+            self.close_timer.start()
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
@@ -167,7 +185,10 @@ class HalView(QtWidgets.QMainWindow):
             filenames.append(str(url.toLocalFile()))
         for filename in sorted(filenames):
             self.guiMessage.emit("dropEvent", filename)
-                    
+
+    def handleCloseTimer(self):
+        self.guiMessage.emit("closeEvent", "")
+            
     def handleDirectory(self, boolean):
         pass
 
@@ -191,17 +212,18 @@ class ClassicView(HalView):
     """
     The 'classic' main window view.
     """
-    def __init__(self, **kwds):        
-        import storm_control.hal4000.qtdesigner.hal4000_ui as hal4000Ui
+    def __init__(self, **kwds):
+        self.classic_view = True
         super().__init__(**kwds)
 
 
 class DetachedView(HalView):
     """
-    The 'detached' main window view.
+    The 'detached' main window view. This includes a record
+    button that this view has to handle.
     """
     def __init__(self, **kwds):
-        import storm_control.hal4000.qtdesigner.hal4000_detached_ui as hal4000Ui
+        self.classic_view = False
         super().__init__(**kwds)
 
 
@@ -241,13 +263,13 @@ class HalCore(QtCore.QObject):
             module.newFrame.connect(self.handleFrame)
             module.newMessage.connect(self.handleMessage)
 
-        # Configure
+        # Configure the modules.
         self.handleMessage(halMessage.HalMessage(source = self,
                                                  m_type = "configure",
                                                  data = {"directory" : config.get("directory"),
                                                          "setup_name" : config.get("setup_name")}))
 
-        # Start
+        # Tell the modules to start.
         self.handleMessage(halMessage.HalMessage(source = self,
                                                  m_type = "start",
                                                  sync = True))
