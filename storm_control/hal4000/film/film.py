@@ -33,9 +33,11 @@ class Film(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
-        self.ui_parent = module_params.get("ui_parent")
-
         self.view = FilmBox()
+
+        self.configure_dict = {"ui_order" : module_params.get("ui_order"),
+                               "ui_parent" : module_params.get("ui_parent"),
+                               "ui_widget" : self.view}
 
     def processMessage(self, message):
         super().processMessage(message)
@@ -43,6 +45,5 @@ class Film(halModule.HalModule):
             if (message.m_type == "configure"):
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "add to ui",
-                                                           data = {"ui_parent" : self.ui_parent,
-                                                                   "ui_widget" : self.view}))
+                                                           data = self.configure_dict))
 

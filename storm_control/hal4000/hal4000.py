@@ -67,7 +67,9 @@ class HalController(halModule.HalModule):
             if (message.m_type == "add to ui"):
                 [module, parent_widget] = message.data["ui_parent"].split(".")
                 if (module == self.module_name):
-                    self.view.addUiWidget(parent_widget, message.data["ui_widget"])
+                    self.view.addUiWidget(parent_widget,
+                                          message.data["ui_widget"],
+                                          message.data.get("ui_order"))
                     
             elif (message.m_type == "new directory"):
                 self.view.setFilmDirectory(message.data)
@@ -146,14 +148,17 @@ class HalView(QtWidgets.QMainWindow):
         self.close_timer.timeout.connect(self.handleCloseTimer)
         self.close_timer.setSingleShot(True)
 
-    def addUiWidget(self, parent_widget_name, ui_widget):
+    def addUiWidget(self, parent_widget_name, ui_widget, ui_order):
         """
         A UI widget (from another module) to the main display.
         """
         hal_widget = getattr(self.ui, parent_widget_name)
         ui_widget.setParent(hal_widget)
         layout = hal_widget.layout()
-        layout.addWidget(ui_widget)
+        if ui_order is None:
+            layout.addWidget(ui_widget)
+        else:
+            layout.insertWidget(ui_order, ui_widget)
     
     def cleanUp(self, qt_settings):
         """
@@ -403,7 +408,7 @@ class HalCore(QtCore.QObject):
         # Process the next message.
         if (len(self.queued_messages) > 0):
             cur_message = self.queued_messages.popleft()
-            print(cur_message.source.module_name, cur_message.m_type, cur_message.ref_count)
+            print(cur_message.source.module_name + " '" + cur_message.m_type + "' " + str(cur_message.ref_count))
 
             #
             # If this message requested synchronization and there are

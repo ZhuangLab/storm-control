@@ -1,79 +1,43 @@
 #!/usr/bin/python
-#
-## @file
-#
-# Handles the display of the current parameters for a given camera.
-#
-# Methods:
-#
-# newParameters(parameters)
-#    Update the display with new parametes.
-#
-# newTemperature(temperature_data)
-#    Update the temperature display data.
-#
-#
-# Signals:
-# 
-# gainChange(int gain)
-#
-#
-# Hazen 09/15
-#
+"""
+Handles the display of the current parameters for a given camera.
 
+Hazen 01/17
+"""
+
+import importlib
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-# Debugging
-import storm_control.sc_library.hdebug as hdebug
+import storm_control.hal4000.halLib.halMessage as halMessage
+import storm_control.hal4000.halLib.halModule as halModule
 
-## ParamsDisplay
-#
-# This class handles displaying (some of) the current camera parameters
-# in the UI. It also handles the EMCCD gain slider.
-#
-class ParamsDisplay(QtWidgets.QGroupBox):
+
+class ParamsView(QtWidgets.QGroupBox):
+    """
+    This class handles displaying (some of) the current camera parameters
+    in the UI. It also handles the EMCCD gain slider (if the camera has
+    an EMCCD).
+    """
+    
     gainChange = QtCore.pyqtSignal(str, int)
 
-    ## __init__
-    #
-    # Create a camera parameters object.
-    #
-    # @param camera_params_ui The UI object like what would be created from a .ui file.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    @hdebug.debug
-    def __init__(self, camera_params_ui, which_camera, parent = None):
-        QtWidgets.QGroupBox.__init__(self, parent)
-        self.parameters = None
+    def __init__(self, camera_params_ui = None, **kwds):
+        super().__init__(**kwds)
+
         self.temperature = False
-        self.which_camera = which_camera
+        self.current_camera = None
 
         # UI setup
-        self.ui = camera_params_ui
+        self.ui = camera_params_ui.Ui_GroupBox()
         self.ui.setupUi(self)
 
         # connect signals
         self.ui.EMCCDSlider.valueChanged.connect(self.handleGainChange)
 
-    ## handleGainChange
-    #
-    # Handles camera gain changes. Updates the display and emits a gainChange signal
-    # that is received by the camera control object.
-    #
-    # @param new_gain The new EMCCD gain value.
-    #
-    @hdebug.debug
     def handleGainChange(self, new_gain):
         self.ui.EMCCDLabel.setText("EMCCD Gain: %d" % new_gain)
-        self.gainChange.emit(self.which_camera, new_gain)
+        self.gainChange.emit(self.current_camera, new_gain)
 
-    ## newParameters
-    #
-    # Update the displayed camera parameters based on the new parameters object.
-    #
-    # @param parameters A parameters object.
-    #
-    @hdebug.debug        
     def newParameters(self, parameters):
         self.parameters = parameters.get(self.which_camera)
         p = self.parameters
@@ -101,13 +65,6 @@ class ParamsDisplay(QtWidgets.QGroupBox):
             self.ui.exposureTimeText.setText("%.4f" % p.get("exposure_value"))
             self.ui.FPSText.setText("%.4f" % (1.0/p.get("cycle_value")))
 
-    ## showEMCCD
-    #
-    # Show or hide the UI fields associated with EM gain.
-    #
-    # @param visible True/False.
-    #
-    @hdebug.debug
     def showEMCCD(self, visible):
         if visible:
             self.ui.EMCCDLabel.show()
@@ -116,13 +73,6 @@ class ParamsDisplay(QtWidgets.QGroupBox):
             self.ui.EMCCDLabel.hide()
             self.ui.EMCCDSlider.hide()
 
-    ## showPreamp
-    #
-    # Show or hide the UI fields associated with pre-amplifier gain.
-    #
-    # @param visible True/False.
-    #
-    @hdebug.debug
     def showPreamp(self, visible):
         if visible:
             self.ui.preampGainLabel.show()
@@ -131,11 +81,6 @@ class ParamsDisplay(QtWidgets.QGroupBox):
             self.ui.preampGainLabel.hide()
             self.ui.preampGainText.hide()
 
-    ## showTemperature
-    #
-    # Show or hide the UI fields associated with camera sensor temperature.
-    #
-    @hdebug.debug
     def showTemperature(self, visible):
         if visible:
             self.ui.temperatureLabel.show()
@@ -144,34 +89,18 @@ class ParamsDisplay(QtWidgets.QGroupBox):
             self.ui.temperatureLabel.hide()
             self.ui.temperatureText.hide()
 
-    ## startFilm
-    #
-    @hdebug.debug
     def startFilm(self):
         self.ui.EMCCDSlider.setEnabled(False)
         
-    ## stopFilm
-    #
-    @hdebug.debug
     def stopFilm(self):
         self.ui.EMCCDSlider.setEnabled(True)
 
-    ## updateCameraProperties
-    #
-    # @param camera_properties A dictionary containing property sets for each camera.
-    #
-    @hdebug.debug
     def updateCameraProperties(self, camera_properties):
         properties = camera_properties[self.which_camera]
         self.showEMCCD("have_emccd" in properties)
         self.showPreamp("have_preamp" in properties)
         self.showTemperature("have_temperature" in properties)
 
-    ## updatedParams
-    #
-    # The temperature and the emgain might have changed.
-    #
-    @hdebug.debug
     def updatedParams(self):
         if self.parameters.has("temperature_control"):
             if (self.parameters.get("temperature_control") == "stable"):
@@ -180,11 +109,43 @@ class ParamsDisplay(QtWidgets.QGroupBox):
                 self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
             actual_temp = self.parameters.get("actual_temperature")
             self.ui.temperatureText.setText(str(actual_temp) + " (" + str(self.temperature) + ")")        
+
+
+class Params(halModule.HalModule):
+
+    def __init__(self, module_params = None, qt_settings = None, **kwds):
+        super().__init__(**kwds)
+
+        self.configure_dict = {"ui_order" : module_params.get("ui_order"),
+                               "ui_parent" : module_params.get("ui_parent"),
+                               "ui_widget" : self.view}
+
+    def processMessage(self, message):
+        super().processMessage(message)
+        if (message.level == 1):
+            if (message.m_type == "configure"):
+                self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                           m_type = "add to ui",
+                                                           data = self.configure_dict))
+
+class ParamsClassic(Params):
+
+    def __init__(self, **kwds):
+        self.view = ParamsView(importlib.import_module("storm_control.hal4000.qtdesigner.camera_params_ui"))
+        super().__init__(**kwds)
+
+        
+class ParamsDetached(Params):
+
+    def __init__(self, **kwds):
+        self.view = ParamsView(importlib.import_module("storm_control.hal4000.qtdesigner.camera_params_detached_ui"))
+        super().__init__(**kwds)
+
     
 #
 # The MIT License
 #
-# Copyright (c) 2015 Zhuang Lab, Harvard University
+# Copyright (c) 2017 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
