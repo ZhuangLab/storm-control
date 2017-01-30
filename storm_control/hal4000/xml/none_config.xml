@@ -3,7 +3,7 @@
 
   <!-- The starting directory. -->
   <directory type="directory">/home/hbabcock/Data/</directory>
-
+  
   <!-- The setup name -->
   <setup_name type="string">none</setup_name>
   
@@ -15,7 +15,9 @@
     <!--
 	This is the main window, you must have this.
 	Your choices are "Classic" or "Detached".
-	You will also probably want to change camera_params.
+	
+	You will also probably want to change camera_params,
+	see below.
     -->
     <hal>
       <module_name type="string">hal4000</module_name>
@@ -23,7 +25,8 @@
     </hal>
 
     <!--
-	You also want these.
+	You also want all of these. The ui_order parameter
+	specifies the order in which they are displayed.
     -->
     <settings>
       <class_name type="string">Settings</class_name>
@@ -37,14 +40,19 @@
       <module_name type="string">film.film</module_name>
       <ui_parent type="string">hal.containerWidget</ui_parent>
       <ui_order type="int">1</ui_order>
+
+      <!-- Film parameters specific to this setup go here. -->
+      <parameters>
+      </parameters>
     </film>
 
     <!--
-	Camera parameter display, choices are paramsClassic
-	and paramsDetached.
+	Camera parameter display, choices are "Classic"
+	and "Detached". You will also need to change the
+	ui_parent parameter.
     -->
     <camera_params>
-      <class_name type="string">ParamsClassic</class_name>
+      <class_name type="string">Classic</class_name>
       <module_name type="string">display.paramsDisplay</module_name>
       <ui_parent type="string">hal.containerWidget</ui_parent>
       <ui_order type="int">2</ui_order>
@@ -55,31 +63,36 @@
       <module_name type="string">mosaic.mosaic</module_name>
       <ui_parent type="string">hal.containerWidget</ui_parent>
       <ui_order type="int">3</ui_order>
+
+      <!-- List objectives available on this setup here. -->
+      <parameters>
+      </parameters>
     </mosaic>
 
     <!--
 	Camera display.
 	
-	You also want this, but it's location in this file is not important.
-	
-	This tells HAL which module to use for processing and displaying
-	camera images.
+	You also want this, it tells HAL which module to use for
+	processing and displaying camera images.
     -->
     <!--
     <display>
       <class_name type="string">CameraDisplay</class_name>
-      <module_name type="string">display.cameraWidgets</module_name>
-      <class_name type="string">PyCameraWidget</class_name>
+      <module_name type="string">display.cameraDisplay</module_name>
+      <ui_parent type="string">hal.containerWidget</ui_parent>
+      <parameters>
+	<widget_name type="string">PyCameraWidget</widget_name>
+      </parameters>
     </display>
     -->
-   
+    
     <!--
 	Everything else is optional, but you probably want at least one camera.
     -->
 
     <!-- Camera control. -->
     <!--
-	Note that camera should have names like "camera1", "camera2", etc..
+	Note that cameras should have names like "camera1", "camera2", etc..
 	
 	Cameras are either "master" (they provide their own hardware timing)
 	or "slave" they are timed by another camera. Each time the cameras

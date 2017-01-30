@@ -128,17 +128,17 @@ class Params(halModule.HalModule):
                                                            m_type = "add to ui",
                                                            data = self.configure_dict))
 
-class ParamsClassic(Params):
+class Classic(Params):
 
     def __init__(self, **kwds):
-        self.view = ParamsView(importlib.import_module("storm_control.hal4000.qtdesigner.camera_params_ui"))
+        self.view = ParamsView(camera_params_ui = importlib.import_module("storm_control.hal4000.qtdesigner.camera_params_ui"))
         super().__init__(**kwds)
 
-        
-class ParamsDetached(Params):
+
+class Detached(Params):
 
     def __init__(self, **kwds):
-        self.view = ParamsView(importlib.import_module("storm_control.hal4000.qtdesigner.camera_params_detached_ui"))
+        self.view = ParamsView(camera_params_ui = importlib.import_module("storm_control.hal4000.qtdesigner.camera_params_detached_ui"))
         super().__init__(**kwds)
 
     
