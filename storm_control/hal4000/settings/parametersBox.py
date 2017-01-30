@@ -1,16 +1,12 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Widget containing variable number of radio buttons
-# representing all the currently available parameters
-# files.
-#
-# This now contains the widgets for the
-# parameters editor as well.
-#
-# Hazen 02/16
-#
+#!/usr/bin/env python
+"""
+Group box containing a variable number of radio buttons
+representing all the currently available parameters files.
+
+This now contains the widgets for the parameters editor as well.
+
+Hazen 01/17
+"""
 
 import copy
 import operator
@@ -18,39 +14,36 @@ import os
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-import storm_control.hal4000.qtdesigner.params_editor_ui as paramsEditorUi
-
-import storm_control.sc_library.hdebug as hdebug
 import storm_control.sc_library.parameters as params
 
+import storm_control.hal4000.qtdesigner.params_editor_ui as paramsEditorUi
+import storm_control.hal4000.qtdesigner.settings_ui as settingsUi
 import storm_control.hal4000.halLib.parameterEditors as pEditors
+
 
 def getFileName(path):
     return os.path.splitext(os.path.basename(path))[0]
 
 
-## handleCustomParameter
-#
-# Returns the appropriate editor widget for a custom parameter.
-
 def handleCustomParameter(root_name, parameter, changed_signal, parent):
+    """
+    Returns the appropriate editor widget for a custom parameter.
+    """
     if parameter.editor is not None:
         return parameter.editor(root_name, parameter, changed_signal, parent)
     else:
         return pEditors.ParametersTableWidgetString(root_name, parameter, changed_signal, parent)
 
 
-## ParametersEditor
-#
-# This class handles the parameters editor dialog box.
-#
 class ParametersEditor(QtWidgets.QDialog):
-
+    """
+    This class handles the parameters editor dialog box.
+    """
     updateClicked = QtCore.pyqtSignal()
     
-    @hdebug.debug
-    def __init__(self, parameters, parent = None):
-        QtWidgets.QDialog.__init__(self, parent)
+    def __init__(self, parameters = None, **kwds):
+        super().__init__(**kwds)
+
         self.editor_widgets = {}  # This dictionary stores all the editor
                                   # widgets indexed by the parameter name.
         self.n_changed = 0
@@ -95,7 +88,6 @@ class ParametersEditor(QtWidgets.QDialog):
 
         self.updateDisplay()
 
-    @hdebug.debug
     def closeEvent(self, event):
         if (self.n_changed != 0):
             reply = QtWidgets.QMessageBox.question(self,
@@ -114,22 +106,20 @@ class ParametersEditor(QtWidgets.QDialog):
         else:
             self.ui.updateButton.setEnabled(False)
 
-    ## getParameters
-    #
-    # Returns the original parameters. The original parameters are
-    # not changed unless the update button is pressed.
-    #
     def getParameters(self):
+        """
+        Returns the original parameters. The original parameters are
+        not changed unless the update button is pressed.
+        """
         return self.original_parameters
 
-    ## handleParameterChanged
-    #
-    # Handles the parameterChanged signals from the various parameter
-    # editor widgets. Basically this just keeps track of how many
-    # parameters have been changed, if any and updates the enabled/disabled
-    # state of the update button.
-    #
     def handleParameterChanged(self, pname, pvalue):
+        """
+        Handles the parameterChanged signals from the various parameter
+        editor widgets. Basically this just keeps track of how many
+        parameters have been changed, if any and updates the enabled/disabled
+        state of the update button.
+        """
         pname = str(pname)
         self.parameters.setv(pname, pvalue)
         is_modified = self.editor_widgets[pname].setChanged(self.parameters.get(pname) != self.original_parameters.get(pname))
@@ -140,17 +130,14 @@ class ParametersEditor(QtWidgets.QDialog):
 
         self.updateDisplay()
 
-    @hdebug.debug
     def handleQuit(self, boolean):
         self.close()
 
-    ## handleUpdate
-    #
-    # Overwrites the original parameters with the modified
-    # parameters and sends the updateClicked signal.
-    #
-    @hdebug.debug
     def handleUpdate(self, boolean):
+        """
+        Overwrites the original parameters with the modified
+        parameters and sends the updateClicked signal.
+        """
         for widget in self.editor_widgets:
             self.editor_widgets[widget].resetChanged()
             
@@ -158,26 +145,27 @@ class ParametersEditor(QtWidgets.QDialog):
         self.n_changed = 0
         self.updateClicked.emit()
 
-    ## updateDisplay
-    #
-    # Changes the state of the editor display depending on
-    # whether or not there are changed parameters.
-    #
     def updateDisplay(self):
+        """
+        Changes the state of the editor display depending on
+        whether or not there are changed parameters.
+        """
         self.enableUpdateButton(self.n_changed != 0)
 
-    ## updateParameters
-    #
-    # Once the update parameters has been pressed, HAL and the
-    # various modules may change some of the parameter values
-    # in their newParameters() methods. This function is used so
-    # that these changes are reflected in the individual editor
-    # widgets.
-    #
-    # Note that the self.original_parameters object is what
-    # was passed to HAL.
-    #
     def updateParameters(self):
+        """
+        FIXME: HAL should not work this way! Pass changes to
+               the parameters back as messages!
+
+        Once the update parameters has been pressed, HAL and the
+        various modules may change some of the parameter values
+        in their newParameters() methods. This function is used so
+        that these changes are reflected in the individual editor
+        widgets.
+        
+        Note that the self.original_parameters object is what
+        was passed to HAL.
+        """
         for widget_name in self.editor_widgets:
             prop = self.original_parameters.getp(widget_name)
             self.editor_widgets[widget_name].updateParameter(prop)
@@ -186,18 +174,17 @@ class ParametersEditor(QtWidgets.QDialog):
         self.ui.parametersNameLabel.setText(getFileName(self.original_parameters.get("parameters_file")))
 
 
-## ParametersEditorTab
-#
-# This class handles a tab in the parameters editor dialog box.
-#
 class ParametersEditorTab(QtWidgets.QWidget):
+    """
+    This class handles a tab in the parameters editor dialog box.
+    """
 
     # The signal for the change of the value of a parameter.
     parameterChanged = QtCore.pyqtSignal(str, object)
     
-    @hdebug.debug    
-    def __init__(self, root_name, parameters, parent):
-        QtWidgets.QWidget.__init__(self, parent)
+    def __init__(self, root_name = "", parameters = None, **kwds):
+        super().__init__(**kwds)
+
         self.editor_widgets = {}
 
         # Create scroll area for displaying the parameters table.
@@ -237,15 +224,13 @@ class ParametersEditorTab(QtWidgets.QWidget):
         return self.editor_widgets
     
 
-## ParametersTable
-#
-# The table where all the different parameters will get displayed.
-#
 class ParametersTable(QtWidgets.QWidget):
+    """
+    The table where all the different parameters will get displayed.
+    """
+    def __init__(self, root_name = "", **kwds):
+        super().__init__(**kwds)
 
-    @hdebug.debug
-    def __init__(self, root_name, parent):
-        QtWidgets.QWidget.__init__(self, parent)
         self.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
 
         self.setLayout(QtWidgets.QGridLayout(self))
@@ -255,7 +240,6 @@ class ParametersTable(QtWidgets.QWidget):
             label.setStyleSheet("QLabel { font-weight: bold }")
             self.layout().addWidget(label, 0, i)
 
-    @hdebug.debug
     def addParameter(self, root_name, parameter, changed_signal):
         row = self.layout().rowCount()
 
@@ -299,29 +283,24 @@ class ParametersTable(QtWidgets.QWidget):
 
         return new_widget
         
-    
-## ParametersRadioButton
-#
-# This class encapsulates a set of parameters and it's
-# associated radio button.
-#
-class ParametersRadioButton(QtWidgets.QRadioButton):
 
+class ParametersRadioButton(QtWidgets.QRadioButton):
+    """
+    This class encapsulates a set of parameters and it's
+    associated radio button.
+    """
     deleteSelected = QtCore.pyqtSignal(object)
     duplicateSelected = QtCore.pyqtSignal(object)
     updateClicked = QtCore.pyqtSignal(object)
 
-    ## __init__
-    #
-    # @param parameters The parameters object to associate with this radio button.
-    # @param parent (Optional) the PyQt parent of this object.
-    #
-    @hdebug.debug
-    def __init__(self, parameters, parent = None):
-        QtWidgets.QRadioButton.__init__(self, getFileName(parameters.get("parameters_file")), parent)
+    def __init__(self, parameters = None, **kwds):
+        super().__init__(**kwds)
+                
         self.changed = False
         self.editor_dialog = None
         self.parameters = parameters
+
+        self.setText(getFileName(parameters.get("parameters_file")))
 
         self.delAct = QtWidgets.QAction(self.tr("Delete"), self)
         self.delAct.triggered.connect(self.handleDelete)
@@ -336,14 +315,10 @@ class ParametersRadioButton(QtWidgets.QRadioButton):
         self.saveAct.triggered.connect(self.handleSave)
 
 
-    ## contextMenuEvent
-    #
-    # This is called to create the popup menu when the use right click on the parameters box.
-    #
-    # @param event A PyQt event object.
-    #
-    @hdebug.debug
     def contextMenuEvent(self, event):
+        """
+        This is called to create the popup menu when the use right click on the parameters box.
+        """
         menu = QtWidgets.QMenu(self)
 
         # If it is not the current button it can be deleted.
@@ -362,58 +337,28 @@ class ParametersRadioButton(QtWidgets.QRadioButton):
             
         menu.exec_(event.globalPos())
 
-    ## enableEditor
-    #
     def enableEditor(self):
         if self.editor_dialog is not None:
             self.editor_dialog.enableUpdateButton(self.isChecked())
         
-    ## getParameters
-    #
-    # @return The parameters associated with this radio button.
-    #
-    @hdebug.debug
     def getParameters(self):
         return self.parameters
 
-    ## handleDelete
-    #
-    # Handles the delete action.
-    #
-    @hdebug.debug
     def handleDelete(self, boolean):
         self.deleteSelected.emit(self)
 
-    ## handleDuplicate
-    #
-    # Handles the duplicate action.
-    #
-    @hdebug.debug
     def handleDuplicate(self, boolean):
         self.duplicateSelected.emit(self)
-    
-    ## handleEdit
-    #
-    # Handles the edit action.
-    #
-    @hdebug.debug
+
     def handleEdit(self, boolean):
         self.editor_dialog = ParametersEditor(self.parameters, self)
         self.editor_dialog.updateClicked.connect(self.handleUpdate)
         self.editor_dialog.finished.connect(self.handleEditorDestroyed)
         self.editor_dialog.show()
 
-    ## handleEditorDestroyed
-    #
-    @hdebug.debug
     def handleEditorDestroyed(self, temp):
         self.editor_dialog = None
-        
-    ## handleSave
-    #
-    # Handles the save action.
-    #
-    @hdebug.debug
+
     def handleSave(self, boolean):
         filename = QtWidgets.QFileDialog.getSaveFileName(self, 
                                                          "Choose File", 
@@ -428,18 +373,12 @@ class ParametersRadioButton(QtWidgets.QRadioButton):
             self.parameters.saveToFile(filename)
             self.updateDisplay()
 
-    ## handleUpdate
-    #
-    # Handles when the update button is clicked in the parameters editor.
-    #
     def handleUpdate(self):
         self.changed = True
         self.parameters = self.editor_dialog.getParameters()
         self.updateClicked.emit(self)
         self.updateDisplay()
 
-    ## updateDisplay
-    #
     def updateDisplay(self):
         if self.changed:
             #
@@ -452,36 +391,33 @@ class ParametersRadioButton(QtWidgets.QRadioButton):
             self.setStyleSheet("")
         self.update()
 
-    ## updateParameters
-    #
     def updateParameters(self):
         if self.editor_dialog is not None:
             self.editor_dialog.updateParameters()
 
-        
-## QParametersBox
-#
-# This class handles displaying and interacting with
-# the various parameter files that the user has loaded.
-#
-class QParametersBox(QtWidgets.QWidget):
 
+class ParametersBox(QtWidgets.QGroupBox):
+    """
+    This class handles displaying and interacting with
+    the various parameter files that the user has loaded.
+    """
+    
     settings_toggled = QtCore.pyqtSignal(name = 'settingsToggled')
 
-    ## __init__
-    #
-    # @param parent (Optional) the PyQt parent of this object.
-    #
-    @hdebug.debug
-    def __init__(self, parent = None):
-        QtWidgets.QWidget.__init__(self, parent)
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        
         self.current_parameters = None
         self.current_button = False
         self.radio_buttons = []
 
-        self.button_group = QtWidgets.QButtonGroup(self)
+        self.ui = settingsUi.Ui_GroupBox()
+        self.ui.setupUi(self)
+        self.ui.settingsScrollArea.setWidgetResizable(True)
         
-        self.layout = QtWidgets.QVBoxLayout(self)
+        self.button_group = QtWidgets.QButtonGroup(self.ui.scrollAreaWidgetContents)
+        
+        self.layout = QtWidgets.QVBoxLayout(self.ui.scrollAreaWidgetContents)
         self.layout.setContentsMargins(4,4,4,4)
         self.layout.setSpacing(2)
         self.layout.addSpacerItem(QtWidgets.QSpacerItem(20, 
@@ -489,13 +425,7 @@ class QParametersBox(QtWidgets.QWidget):
                                                         QtWidgets.QSizePolicy.Minimum,
                                                         QtWidgets.QSizePolicy.Expanding))
 
-    ## addParameters
-    #
-    # Add a set of parameters to the parameters box.
-    #
-    # @param parameters A parameters object.
-    #
-    @hdebug.debug
+
     def addParameters(self, parameters):
         self.current_parameters = parameters
         radio_button = ParametersRadioButton(parameters)
@@ -511,29 +441,12 @@ class QParametersBox(QtWidgets.QWidget):
         if (len(self.radio_buttons) == 1):
             radio_button.click()
 
-    ## getButtonNames
-    #
-    # @return A list containing the names of each of the buttons.
-    #
-    @hdebug.debug
     def getButtonNames(self):
         return list(map(lambda x: x.text(), self.radio_buttons))
 
-    ## getCurrentParameters
-    #
-    # @return The current parameters object.
-    #
-    @hdebug.debug
     def getCurrentParameters(self):
         return self.current_parameters
 
-    ## getIndexOfParameters
-    #
-    # @param param_index An integer or a string specifying the identifier of the parameters.
-    # 
-    # @return The index of the requested parameters.
-    #
-    @hdebug.debug
     def getIndexOfParameters(self, param_index):
         button_names = self.getButtonNames()
         if param_index in button_names:
@@ -543,13 +456,6 @@ class QParametersBox(QtWidgets.QWidget):
         else:
             return -1
 
-    ## getParameters
-    #
-    # Returns the requested parameters if the request is valid.
-    #
-    # @param param_index An integer or a string specifying the identify of the parameters
-    #
-    @hdebug.debug
     def getParameters(self, param_index):
         index = self.getIndexOfParameters(param_index)
         if (index != -1):
@@ -557,59 +463,34 @@ class QParametersBox(QtWidgets.QWidget):
         else:
             return None
 
-    ## handleDelete
-    #
-    # Handles the deleteSelected signal from a parameters radio button.
-    #
-    @hdebug.debug
     def handleDelete(self, button):
         self.button_group.removeButton(button)
         self.layout.removeWidget(button)
         self.radio_buttons.remove(button)
         button.close()
 
-    ## handleDuplicate
-    #
-    # Handles the duplicateSelected signal from a parameters radio button.
-    #
-    @hdebug.debug
     def handleDuplicate(self, button):
         parameters = button.getParameters()
         self.addParameters(copy.deepcopy(parameters))
 
-    ## handleUpdate
-    #
-    # Handles the updateClicked signal from a parameters radio button.
-    #
-    @hdebug.debug
     def handleUpdate(self, button):
         self.current_parameters = button.getParameters()
         self.settings_toggled.emit()
         
-    ## isValidParameters
-    #
-    # Returns true if the requested parameters exist.
-    #
-    # @param param_index An integer or a string specifying the identify of the parameters
-    #
-    @hdebug.debug
     def isValidParameters(self, param_index):
+        """
+        Returns true if the requested parameters exist.
+        """
         # Warn if there are multiple parameters with the same name?
         if (self.getIndexOfParameters(param_index) != -1):
             return True
         else:
             return False
         
-    ## setCurrentParameters
-    #
-    # Select one of the parameter choices in the parameters box.
-    #
-    # @param param_index The name or index of the requested parameters
-    #
-    # @return True/False is the selected parameters are the current parameters.
-    #
-    @hdebug.debug
     def setCurrentParameters(self, param_index):
+        """
+        Select one of the parameter choices in the parameters box.
+        """
         index = self.getIndexOfParameters(param_index)
         if (index != -1):
             if (self.radio_buttons[index] == self.current_button):
@@ -621,34 +502,26 @@ class QParametersBox(QtWidgets.QWidget):
             print("Requested parameter index not available", param_index)
             return True
 
-    ## startFilm
-    #
-    # Called at the start of filming to disable the radio buttons.
-    #
-    @hdebug.debug
     def startFilm(self):
+        """
+        Called at the start of filming to disable the radio buttons.
+        """
         for button in self.radio_buttons:
             button.setEnabled(False)
 
-    ## stopFilm
-    #
-    # Called at the end of filming to enable the radio buttons.
-    #
-    @hdebug.debug
     def stopFilm(self):
+        """
+        Called at the end of filming to enable the radio buttons.
+        """
         for button in self.radio_buttons:
             button.setEnabled(True)
-            
-    ## toggleParameters
-    #
-    # This is called when one of the radio buttons is clicked to figure out
-    # which parameters were selected. It emits a settings_toggled signal to
-    # indicate that the settings have been changed.
-    #
-    # @param bool Dummy parameter.
-    #
-    @hdebug.debug
+
     def toggleParameters(self, bool):
+        """
+        This is called when one of the radio buttons is clicked to figure out
+        which parameters were selected. It emits a settings_toggled signal to
+        indicate that the settings have been changed.
+        """
         for button in self.radio_buttons:
             button.enableEditor()
             if button.isChecked() and (button != self.current_button):
@@ -656,12 +529,13 @@ class QParametersBox(QtWidgets.QWidget):
                 self.current_parameters = button.getParameters()
                 self.settings_toggled.emit()
 
-    ## updateParameters
-    #
-    # This is called by HAL after calling newParameters so that any changes
-    # to the parameters can flow back to the parameter editor (if it exists).
-    #
     def updateParameters(self):
+        """
+        FIXME: This is a bad model..
+
+        This is called by HAL after calling newParameters so that any changes
+        to the parameters can flow back to the parameter editor (if it exists).
+        """
         for button in self.radio_buttons:
             if button.isChecked():
                 button.updateParameters()
@@ -669,7 +543,7 @@ class QParametersBox(QtWidgets.QWidget):
 #
 # The MIT License
 #
-# Copyright (c) 2016 Zhuang Lab, Harvard University
+# Copyright (c) 2017 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

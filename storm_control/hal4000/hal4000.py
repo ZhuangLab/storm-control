@@ -64,16 +64,21 @@ class HalController(halModule.HalModule):
     def processMessage(self, message):
         super().processMessage(message)
         if (message.level == 1):
-            if (message.m_type == "setup name"):
-                self.view.setTitle(message.data)
-
+            if (message.m_type == "add to ui"):
+                [module, parent_widget] = message.data["ui_parent"].split(".")
+                if (module == self.module_name):
+                    self.view.addUiWidget(parent_widget, message.data["ui_widget"])
+                    
             elif (message.m_type == "new directory"):
                 self.view.setFilmDirectory(message.data)
-
+                
+            elif (message.m_type == "setup name"):
+                self.view.setTitle(message.data)
+                
             elif (message.m_type == "start"):
                 self.view.show()
 
-                    
+
 class Classic(HalController):
     """
     The 'classic' main window controller.
@@ -104,6 +109,7 @@ class HalView(QtWidgets.QMainWindow):
     def __init__(self, module_name = "", module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
+        # Configure UI.
         if self.classic_view:
             import storm_control.hal4000.qtdesigner.hal4000_ui as hal4000Ui
         else:
@@ -115,6 +121,11 @@ class HalView(QtWidgets.QMainWindow):
         self.close_timer = QtCore.QTimer(self)
         self.film_directory = ""
         self.module_name = module_name
+
+        vbox_layout = QtWidgets.QVBoxLayout(self.ui.containerWidget)
+        vbox_layout.setContentsMargins(0,0,0,0)
+        vbox_layout.setSpacing(0)
+        self.ui.containerWidget.setLayout(vbox_layout)
                 
         # Set icon.
         self.setWindowIcon(qtAppIcon.QAppIcon())
@@ -134,7 +145,16 @@ class HalView(QtWidgets.QMainWindow):
         self.close_timer.setInterval(5)
         self.close_timer.timeout.connect(self.handleCloseTimer)
         self.close_timer.setSingleShot(True)
-        
+
+    def addUiWidget(self, parent_widget_name, ui_widget):
+        """
+        A UI widget (from another module) to the main display.
+        """
+        hal_widget = getattr(self.ui, parent_widget_name)
+        ui_widget.setParent(hal_widget)
+        layout = hal_widget.layout()
+        layout.addWidget(ui_widget)
+    
     def cleanUp(self, qt_settings):
         """
         Save GUI settings and close.
@@ -250,7 +270,8 @@ class HalView(QtWidgets.QMainWindow):
         
 class ClassicView(HalView):
     """
-    The 'classic' main window view.
+    The 'classic' main window view. The record button is handled
+    by the camera view.
     """
     def __init__(self, **kwds):
         self.classic_view = True
@@ -320,16 +341,16 @@ class HalCore(QtCore.QObject):
                                                  m_type = "new directory",
                                                  data = config.get("directory")))
         
-        # Tell modules to finish configuration
-        #
-        # FIXME: Do we need this? Or can we roll it into 'start'
-        #
+        # Tell modules to finish configuration.
         self.handleMessage(halMessage.HalMessage(source = self,
                                                  m_type = "configure",
                                                  data = {"directory" : config.get("directory"),
                                                          "setup_name" : config.get("setup_name")}))
 
         # Tell the modules to start.
+        #
+        # This is the point where any GUI modules that are visible should call show().
+        #
         self.handleMessage(halMessage.HalMessage(source = self,
                                                  m_type = "start",
                                                  sync = True))

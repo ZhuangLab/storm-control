@@ -12,6 +12,7 @@ import storm_control.sc_library.hdebug as hdebug
 valid_messages = {
     
     # HAL/core
+    'add to ui' : True,
     'close event' : True,
     'configure' : True,
     'new directory' : True,

@@ -18,6 +18,10 @@ class HalModule(QtCore.QThread):
     Use this if you can guarantee that your processMessage() function 
     will execute on the millisecond time frame. If this is not the
     case then use the HalModuleBuffered class instead.
+
+    Other conventions:
+       self.view is the GUI view, if any that is associated with this module.
+
     """
     newFrame = QtCore.pyqtSignal(object)
     newMessage = QtCore.pyqtSignal(object)
@@ -26,7 +30,7 @@ class HalModule(QtCore.QThread):
         super().__init__(**kwds)
         self.module_name = module_name
 
-    def cleanup(self):
+    def cleanUp(self, qt_settings):
         pass
 
     def handleError(self, m_error):
