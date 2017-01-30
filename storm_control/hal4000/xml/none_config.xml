@@ -15,6 +15,7 @@
     <!--
 	This is the main window, you must have this.
 	Your choices are "Classic" or "Detached".
+	You will also probably want to change camera_params.
     -->
     <hal>
       <module_name type="string">hal4000</module_name>
@@ -37,18 +38,20 @@
     </film>
 
     <!--
+	Camera parameter display, choices are paramsClassic
+	and paramsDetached.
+    -->
     <camera_params>
-      <class_name type="string">ParamsDisplay</class_name>
+      <class_name type="string">ParamsClassic</class_name>
       <module_name type="string">display.paramsDisplay</module_name>
       <ui_parent type="string">hal.containerWidget</ui_parent>
     </camera_params>
 
-    <camera_params>
+    <mosaic>
       <class_name type="string">Mosaic</class_name>
       <module_name type="string">mosaic.mosaic</module_name>
       <ui_parent type="string">hal.containerWidget</ui_parent>
-    </camera_params>
-    -->
+    </mosaic>
 
     <!--
 	Camera display.
@@ -72,7 +75,7 @@
 
     <!-- Camera control. -->
     <!--
-	Note that cameras modules should have names like "camera1", "camera2", etc..
+	Note that camera should have names like "camera1", "camera2", etc..
 	
 	Cameras are either "master" (they provide their own hardware timing)
 	or "slave" they are timed by another camera. Each time the cameras
@@ -82,12 +85,13 @@
 	(software) synchronize to this camera.
     -->
     <!--
-    <camera1>
+    <camera>
       <module_name type="string">camera.noneCameraControl</module_name>
       <parameters>
-	<roll type="float">0.5</roll>
+      <roll type="float">0.5</roll>
+      <camera_name>camera1</camera_name>
       </parameters>
-    </camera1>
+    </camera>
     -->
 
     <!-- Bluetooth communication -->
