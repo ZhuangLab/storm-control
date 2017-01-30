@@ -12,6 +12,7 @@ from PyQt5 import QtCore, QtWidgets
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 
+
 class HalModule(QtCore.QThread):
     """
     Use this if you can guarantee that your processMessage() function 
@@ -40,6 +41,9 @@ class HalModule(QtCore.QThread):
     def handleMessage(self, message):
         self.processMessage(message)
 
+    def handleResponse(self, response):
+        pass
+
     def handleWarning(self, m_warning):
         """
         Override with class specific warning handling.
@@ -60,7 +64,15 @@ class HalModule(QtCore.QThread):
             else:
                 if not self.handleWarning(m_warning):
                     halMessageBox.halMessageBox(message.data)
-    
+
+    def messageResponse(self, responses):
+        """
+        Implement class specific response handling by overriding
+        handleResponse().
+        """
+        for response in responses:
+            self.handleResponse(response)
+        
     def processMessage(self, message):
         message.ref_count -= 1
 

@@ -8,9 +8,25 @@ Hazen 01/17
 import storm_control.sc_library.hdebug as hdebug
 
 
-class HalMessage(object):
+class HalMessageBase(object):
+    """
+    Base class for the HalMessage as well as for various response
+    such as errors, warnings or data.
+    """
+    def __init__(self, source = None, **kwds):
+        super().__init__(**kwds)
+        self.source = source
+        
+    def getSource(self):
+        return self.source
 
-    def __init__(self, source = None, m_type = "", data = None, sync = False, level = 1, finalizer = None, **kwds):
+    def getSourceName(self):
+        return self.source.module_name
+
+
+class HalMessage(HalMessageBase):
+
+    def __init__(self, m_type = "", data = None, sync = False, level = 1, finalizer = None, **kwds):
         """
         source - HalModule object that sent the message.
 
@@ -37,7 +53,7 @@ class HalMessage(object):
         self.level = level
         self.m_errors = []
         self.m_type = m_type
-        self.source = source
+        self.responses = []
         self.sync = sync
 
         self.ref_count = 0
@@ -47,10 +63,13 @@ class HalMessage(object):
 
     def addError(self, hal_message_error):
         self.m_errors.append(hal_message_error)
+
+    def addResponse(self, hal_message_response):
+        self.responses.append(hal_message_response)
         
     def finalize(self):
 
-        # Log when message was destroyed. This is primarily for profiling.
+        # Log when message was destroyed.
         hdebug.logText(",".join(["destroyed", str(id(self)), self.m_type]))
         
         if self.finalizer is not None:
@@ -59,28 +78,30 @@ class HalMessage(object):
     def getErrors(self):
         return self.m_errors
 
-    def getSource(self):
-        return self.source
+    def getResponses(self):
+        return self.responses
 
     def hasErrors(self):
         return len(self.m_errors) > 0
+
+    def hasResponses(self):
+        return len(self.responses) > 0
 
 
 class HalMessageError(object):
     """
     If a module has a problem with a message that it can't handle then
-    it should append one of these objects to the message merrors field.
+    it should call the message's addError() method with one of these objects.
     """
-    def __init__(self, source = "", message = "", m_exception = None, **kwds):
+    def __init__(self, message = "", m_exception = None, **kwds):
         """
-        source - String identifier of the message source.
+        source - The halmodule that created the error/warning.
         message - The warning / error message as a String.
         m_exception - The exception for the source to raise if can't handle
                       this error.
         """
         super().__init__(**kwds)
 
-        self.source = source
         self.message = message
         self.m_exception = m_exception
 
@@ -90,7 +111,25 @@ class HalMessageError(object):
     def hasException(self):
         return self.m_exception is not None
 
+
+class HalMessageResponse(object):
+    """
+    If a module wants to send some information back to the message sender then
+    it should call the message's addResponse() method with one of the objects.
+    """
+    def __init__(self, response_data = None, **kwds):
+        """
+        source - The halmodule that created the error/warning.
+        response_data - Python object containing the response.
+        """
+        super().__init__(**kwds)
+
+        self.response_data = response_data
+
+    def getData(self):
+        return self.response_data
                  
+    
 #
 # The MIT License
 #

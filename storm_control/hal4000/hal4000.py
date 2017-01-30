@@ -23,13 +23,14 @@ import importlib
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+import storm_control.sc_library.hdebug as hdebug
+import storm_control.sc_library.hgit as hgit
+import storm_control.sc_library.parameters as params
+
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 import storm_control.hal4000.halLib.halModule as halModule
 import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
-
-import storm_control.sc_library.parameters as params
-import storm_control.sc_library.hgit as hgit
 
 
 #
@@ -88,7 +89,6 @@ class Classic(HalController):
     """
     def __init__(self, **kwds):
         self.view = ClassicView(**kwds)
-
         super().__init__(**kwds)
         
               
@@ -97,8 +97,7 @@ class Detached(HalController):
     The 'detached' main window controller.
     """
     def __init__(self, **kwds):
-        self.view = DetachedView(**kwds)
-        
+        self.view = DetachedView(**kwds)        
         super().__init__(**kwds)
 
 
@@ -309,6 +308,10 @@ class HalCore(QtCore.QObject):
                 if sent_message.hasErrors():
                     sent_message.getSource().messageError(sent_message.getErrors())
 
+                # Notify the sender of any responses to the message.
+                if sent_message.hasResponses():
+                    sent_message.getSource().messageResponse(sent_message.getResponses())
+                
         # Add this message to the queue.
         if message is not None:
             self.queued_messages.append(message)
@@ -349,6 +352,7 @@ class HalCore(QtCore.QObject):
                     if (len(self.queued_messages) > 0):
                         self.handleMessage()
 
+
     
 if (__name__ == "__main__"):
 
@@ -382,6 +386,9 @@ if (__name__ == "__main__"):
     # Load configuration.
     config = params.config(args.config)
 
+    # Start logger.
+    hdebug.startLogging(config.get("directory") + "logs/", "hal4000")
+    
     # Setup HAL and all of the modules.
     hal = HalCore(config)
 
