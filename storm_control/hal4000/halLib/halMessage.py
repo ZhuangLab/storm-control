@@ -30,7 +30,8 @@ class HalMessage(HalMessageBase):
         """
         source - HalModule object that sent the message.
 
-        mtype - String that defines the message type.
+        mtype - String that defines the message type. This should be a space 
+                separated lower case string.
 
         data - Python object containing the message data.
 

@@ -20,6 +20,7 @@ Hazen 01/17
 
 from collections import deque
 import importlib
+import os
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -39,6 +40,12 @@ import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
 class HalController(halModule.HalModule):
     """
     HAL main window controller.
+
+    This sends the following message:
+    'close event'
+    'new directory'
+    'new parameters file'
+    'new shutters file'
     """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
@@ -47,39 +54,22 @@ class HalController(halModule.HalModule):
     def cleanUp(self, qt_settings):
         self.view.cleanUp(qt_settings)
 
-    def handleGuiMessage(self, m_type, m_data):
+    def handleGuiMessage(self, message):
         """
-        m_type and m_data are both strings.
+        This just passes through the messages from the GUI.
         """
-
-        # View was told to close.
-        if (m_type == "closeEvent"):
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "closeEvent",
-                                                       sync = True))
-
-        # View file drop event.
-        elif (m_type == "dropEvent"):
-            [file_type, error_text] = params.fileType(m_data)
-            if (file_type == "parameters"):
-                self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "newParametersFile",
-                                                           data = m_data))
-            elif (file_type == "shutters"):
-                self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "newShuttersFile",
-                                                           data = m_data))
-            else:
-                if error_text:
-                    halMessageBox.halMessageBox("XML file parsing error " + error_text)
-                else:
-                    halMessageBox.halMessageBox("File type not recognized")
+        self.newMessage.emit(message)
 
     def processMessage(self, message):
         super().processMessage(message)
         if (message.level == 1):
-            if (message.m_type == "configure"):
-                self.view.setTitle(message.data["setup_name"])
+            if (message.m_type == "setup name"):
+                self.view.setTitle(message.data)
+
+            elif (message.m_type == "new directory"):
+                self.view.setFilmDirectory(message.data)
+
+            elif (message.m_type == "start"):
                 self.view.show()
 
                     
@@ -108,8 +98,8 @@ class HalView(QtWidgets.QMainWindow):
     """
     HAL main window view.
     """
-    guiMessage = QtCore.pyqtSignal(str, str)
-    
+    guiMessage = QtCore.pyqtSignal(object)
+
     def __init__(self, module_name = "", module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
@@ -122,6 +112,7 @@ class HalView(QtWidgets.QMainWindow):
 
         self.close_now = False
         self.close_timer = QtCore.QTimer(self)
+        self.film_directory = ""
         self.module_name = module_name
                 
         # Set icon.
@@ -177,29 +168,78 @@ class HalView(QtWidgets.QMainWindow):
             event.ignore()
             
     def dropEvent(self, event):
-        if self.filming:
-            return
+
+        # Get filename(s)
         filenames = []
         for url in event.mimeData().urls():
             filenames.append(str(url.toLocalFile()))
+
+        # Send message(s) with filenames.
         for filename in sorted(filenames):
-            self.guiMessage.emit("dropEvent", filename)
+            [file_type, error_text] = params.fileType(filename)
+            if (file_type == "parameters"):
+                self.guiMessage.emit(halMessage.HalMessage(source = self,
+                                                           m_type = "new parameters file",
+                                                           data = filename))
+            elif (file_type == "shutters"):
+                self.guiMessage.emit(halMessage.HalMessage(source = self,
+                                                           m_type = "new shutters file",
+                                                           data = filename))
+            else:
+                if error_text:
+                    halMessageBox.halMessageBox("XML file parsing error " + error_text)
+                else:
+                    halMessageBox.halMessageBox("File type not recognized")
 
     def handleCloseTimer(self):
-        self.guiMessage.emit("closeEvent", "")
+        self.guiMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "close event",
+                                                   sync = True))
             
     def handleDirectory(self, boolean):
-        pass
+        new_directory = QtWidgets.QFileDialog.getExistingDirectory(self, 
+                                                                   "New Directory",
+                                                                   self.film_directory,
+                                                                   QtWidgets.QFileDialog.ShowDirsOnly)
+        #
+        # FIXME: Why do we have the existence check? Is it possible to get a directory that does not exist?
+        #
+        if new_directory and os.path.exists(new_directory):
+            self.film_directory = new_directory
+            self.guiMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "new directory",
+                                                       data = self.film_directory))
 
     def handleSettings(self, boolean):
-        pass    
+        parameters_filename = QtWidgets.QFileDialog.getOpenFileName(self,
+                                                                    "New Settings",
+                                                                    self.xml_directory, 
+                                                                    "*.xml")[0]
+        if parameters_filename:
+            self.xml_directory = os.path.dirname(parameters_filename)
+            self.guiMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "new parameters file",
+                                                       data = parameters_filename))
 
     def handleShutters(self, boolean):
-        pass
-    
+        shutters_filename = QtWidgets.QFileDialog.getOpenFileName(self, 
+                                                                  "New Shutter Sequence", 
+                                                                  self.xml_directory, 
+                                                                  "*.xml")[0]
+        if shutters_filename:
+            self.xml_directory = os.path.dirname(shutters_filename)
+            self.guiMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "new shutters file",
+                                                       data = shutters_filename))
+
     def handleQuit(self, boolean):
         self.close_now = True
-        self.guiMessage.emit("closeEvent", "")
+        self.guiMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "close event",
+                                                   sync = True))
+
+    def setFilmDirectory(self, film_directory):
+        self.film_directory = film_directory
 
     def setTitle(self, title):
         if (hgit.getBranch().lower() != "master"):
@@ -233,6 +273,13 @@ class HalCore(QtCore.QObject):
     """
     The core of it all. It sets everything else up, handles 
     the message passing and tears everything down.
+
+    This sends the following messages:
+    'configure'
+    'new directory'
+    'new parameters file'
+    'setup name'
+    'start'
     """
     def __init__(self, config = None, parameters_file_name = None, **kwds):
         super().__init__(**kwds)
@@ -262,7 +309,20 @@ class HalCore(QtCore.QObject):
             module.newFrame.connect(self.handleFrame)
             module.newMessage.connect(self.handleMessage)
 
-        # Configure the modules.
+        # Broadcast setup name.
+        self.handleMessage(halMessage.HalMessage(source = self,
+                                                 m_type = "setup name",
+                                                 data = config.get("setup_name")))
+
+        # Broadcast starting directory.
+        self.handleMessage(halMessage.HalMessage(source = self,
+                                                 m_type = "new directory",
+                                                 data = config.get("directory")))
+        
+        # Tell modules to finish configuration
+        #
+        # FIXME: Do we need this? Or can we roll it into 'start'
+        #
         self.handleMessage(halMessage.HalMessage(source = self,
                                                  m_type = "configure",
                                                  data = {"directory" : config.get("directory"),
@@ -334,7 +394,7 @@ class HalCore(QtCore.QObject):
             #
             else:
                 # Check for "closeEvent" message from the main window.
-                if (cur_message.source.module_name == "hal") and (cur_message.m_type == "closeEvent"):
+                if (cur_message.getSourceName() == "hal") and (cur_message.m_type == "close event"):
                     self.cleanup()
 
                 # Otherwise send the message.
