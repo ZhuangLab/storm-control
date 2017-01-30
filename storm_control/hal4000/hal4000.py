@@ -24,6 +24,7 @@ import os
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.hdebug as hdebug
 import storm_control.sc_library.hgit as hgit
 import storm_control.sc_library.parameters as params
@@ -374,6 +375,8 @@ class HalCore(QtCore.QObject):
                 
         # Add this message to the queue.
         if message is not None:
+            if not message.m_type in halMessage.valid_messages:
+                raise halExceptions.HalException("Invalid message type '" + message.m_type + "' received from " + message.getSourceName())
             self.queued_messages.append(message)
 
         # Process the next message.

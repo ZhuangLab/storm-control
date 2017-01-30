@@ -8,6 +8,21 @@ Hazen 01/17
 import storm_control.sc_library.hdebug as hdebug
 
 
+# This dictionary contains all of the valid message types.
+valid_messages = {
+    
+    # HAL/core
+    'close event' : True,
+    'configure' : True,
+    'new directory' : True,
+    'new parameters file' : True,
+    'new shutters file' : True,
+    'setup name' : True,
+    'start' : True,
+    
+    }
+
+
 class HalMessageBase(object):
     """
     Base class for the HalMessage as well as for various response
@@ -30,7 +45,7 @@ class HalMessage(HalMessageBase):
         """
         source - HalModule object that sent the message.
 
-        mtype - String that defines the message type. This should be a space 
+        m_type - String that defines the message type. This should be a space 
                 separated lower case string.
 
         data - Python object containing the message data.
