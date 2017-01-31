@@ -440,13 +440,13 @@ class HalCore(QtCore.QObject):
                 # Otherwise send the message.
                 else:
                     self.sent_messages.append(cur_message)
-                    print("-- start --")
+                    #print("-- start --")
                     for module in self.modules:
-                        print(module.module_name)
+                        #print(module.module_name)
                         cur_message.ref_count += 1
                         module.handleMessage(cur_message)
-                    print("-- stop  --")
-                    print("")
+                    #print("-- stop  --")
+                    #print("")
 
                     # Process any remaining messages with immediate timeout.
                     if (len(self.queued_messages) > 0):
