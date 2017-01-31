@@ -6,6 +6,9 @@
   
   <!-- The setup name -->
   <setup_name type="string">none</setup_name>
+
+  <!-- The ui type, this is 'classic' or 'detached' -->
+  <ui_type type="string">classic</ui_type>
   
   <!--
       Define the modules to use for this setup.
@@ -14,25 +17,18 @@
 
     <!--
 	This is the main window, you must have this.
-	Your choices are "Classic" or "Detached".
-	
-	You will also probably want to change camera_params,
-	see below.
     -->
     <hal>
       <module_name type="string">hal4000</module_name>
-      <class_name type="string">Classic</class_name>
+      <class_name type="string">HalController</class_name>
     </hal>
 
     <!--
-	You also want all of these. The ui_order parameter
-	specifies the order in which they are displayed.
+	You also want all of these.
     -->
     <settings>
       <class_name type="string">Settings</class_name>
       <module_name type="string">settings.settings</module_name>
-      <ui_parent type="string">hal.containerWidget</ui_parent>
-      <ui_order type="int">0</ui_order>
     </settings>
 
     <film>
@@ -45,24 +41,18 @@
       <parameters>
       </parameters>
     </film>
-
+    
     <!--
-	Camera parameter display, choices are "Classic"
-	and "Detached". You will also need to change the
-	ui_parent parameter.
+	Camera parameter display.
     -->
     <camera_params>
-      <class_name type="string">Classic</class_name>
+      <class_name type="string">Params</class_name>
       <module_name type="string">display.paramsDisplay</module_name>
-      <ui_parent type="string">hal.containerWidget</ui_parent>
-      <ui_order type="int">2</ui_order>
     </camera_params>
 
     <mosaic>
       <class_name type="string">Mosaic</class_name>
       <module_name type="string">mosaic.mosaic</module_name>
-      <ui_parent type="string">hal.containerWidget</ui_parent>
-      <ui_order type="int">3</ui_order>
 
       <!-- List objectives available on this setup here. -->
       <parameters>

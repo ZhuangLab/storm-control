@@ -50,6 +50,17 @@ class HalController(halModule.HalModule):
     """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
+
+        if (module_params.get("ui_type") == "classic"):
+            self.view = ClassicView(module_params = module_params,
+                                    qt_settings = qt_settings,
+                                    **kwds)
+        else:
+            self.view = DetachedView(module_params = module_params,
+                                     qt_settings = qt_settings,
+                                     **kwds)
+
+        self.view.setTitle(module_params.get("setup_name"))
         self.view.guiMessage.connect(self.handleGuiMessage)
 
     def cleanUp(self, qt_settings):
@@ -74,29 +85,26 @@ class HalController(halModule.HalModule):
             elif (message.m_type == "new directory"):
                 self.view.setFilmDirectory(message.data)
                 
-            elif (message.m_type == "setup name"):
-                self.view.setTitle(message.data)
-                
             elif (message.m_type == "start"):
                 self.view.show()
 
 
-class Classic(HalController):
-    """
-    The 'classic' main window controller.
-    """
-    def __init__(self, **kwds):
-        self.view = ClassicView(**kwds)
-        super().__init__(**kwds)
+#class Classic(HalController):
+#    """
+#    The 'classic' main window controller.
+#    """
+#    def __init__(self, **kwds):
+#        self.view = ClassicView(**kwds)
+#        super().__init__(**kwds)
         
               
-class Detached(HalController):
-    """
-    The 'detached' main window controller.
-    """
-    def __init__(self, **kwds):
-        self.view = DetachedView(**kwds)        
-        super().__init__(**kwds)
+#class Detached(HalController):
+#    """
+#    The 'detached' main window controller.
+#    """
+#    def __init__(self, **kwds):
+#        self.view = DetachedView(**kwds)        
+#        super().__init__(**kwds)
 
 
 #
@@ -324,7 +332,17 @@ class HalCore(QtCore.QObject):
 
         # Load all the modules.
         for module_name in config.get("modules").getAttrs():
+
+            # Get module specific parameters.
             module_params = config.get("modules").get(module_name)
+
+            # Add the 'root' parameters to this module parameters
+            # so that they are visible to the module.
+            for root_param in config.getAttrs():
+                if (root_param != "modules"):
+                    module_params.add(root_param, config.getp(root_param))
+
+            # Load the module.
             a_module = importlib.import_module("storm_control.hal4000." + module_params.get("module_name"))
             a_class = getattr(a_module, module_params.get("class_name"))
             self.modules.append(a_class(module_name = module_name,
@@ -337,9 +355,9 @@ class HalCore(QtCore.QObject):
             module.newMessage.connect(self.handleMessage)
 
         # Broadcast setup name.
-        self.handleMessage(halMessage.HalMessage(source = self,
-                                                 m_type = "setup name",
-                                                 data = config.get("setup_name")))
+#        self.handleMessage(halMessage.HalMessage(source = self,
+#                                                 m_type = "setup name",
+#                                                 data = config.get("setup_name")))
 
         # Broadcast starting directory.
         self.handleMessage(halMessage.HalMessage(source = self,
@@ -348,9 +366,9 @@ class HalCore(QtCore.QObject):
         
         # Tell modules to finish configuration.
         self.handleMessage(halMessage.HalMessage(source = self,
-                                                 m_type = "configure",
-                                                 data = {"directory" : config.get("directory"),
-                                                         "setup_name" : config.get("setup_name")}))
+                                                 m_type = "configure"))
+#                                                 data = {"directory" : config.get("directory"),
+#                                                         "setup_name" : config.get("setup_name")}))
 
         # Tell the modules to start.
         #

@@ -18,7 +18,7 @@ valid_messages = {
     'new directory' : True,
     'new parameters file' : True,
     'new shutters file' : True,
-    'setup name' : True,
+#    'setup name' : True,
     'start' : True,
     
     }

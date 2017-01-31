@@ -31,8 +31,8 @@ class Settings(halModule.HalModule):
 
         self.view = parametersBox.ParametersBox()
 
-        self.configure_dict = {"ui_order" : module_params.get("ui_order"),
-                               "ui_parent" : module_params.get("ui_parent"),
+        self.configure_dict = {"ui_order" : 0,
+                               "ui_parent" : "hal.containerWidget",
                                "ui_widget" : self.view}
         
     def processMessage(self, message):

@@ -32,9 +32,9 @@ class Mosaic(halModule.HalModule):
 
         self.view = MosaicBox()
 
-        self.configure_dict = {"ui_order" : module_params.get("ui_order"),
-                               "ui_parent" : module_params.get("ui_parent"),
-                               "ui_widget" : self.view}        
+        self.configure_dict = {"ui_order" : 3,
+                               "ui_parent" : "hal.containerWidget",
+                               "ui_widget" : self.view}
 
     def processMessage(self, message):
         super().processMessage(message)
