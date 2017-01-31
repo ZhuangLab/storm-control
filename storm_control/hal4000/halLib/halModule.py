@@ -9,6 +9,8 @@ from collections import deque
 
 from PyQt5 import QtCore, QtWidgets
 
+import storm_control.sc_library.halExceptions as halExceptions
+
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 
@@ -19,8 +21,8 @@ class HalModule(QtCore.QThread):
     will execute on the millisecond time frame. If this is not the
     case then use the HalModuleBuffered class instead.
 
-    Other conventions:
-       self.view is the GUI view, if any that is associated with this module.
+    Conventions:
+       1. self.view is the GUI view, if any that is associated with this module.
 
     """
     newFrame = QtCore.pyqtSignal(object)
@@ -47,7 +49,7 @@ class HalModule(QtCore.QThread):
 
     def handleResponse(self, response):
         pass
-
+        
     def handleWarning(self, m_warning):
         """
         Override with class specific warning handling.
@@ -80,20 +82,20 @@ class HalModule(QtCore.QThread):
     def processMessage(self, message):
         message.ref_count -= 1
 
-
+        
 class HalModuleBuffered(HalModule):
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
         self.queued_messages = deque()
-        self.queue_mutex = QtCore.QMutex()
+        self.queued_messages_mutex = QtCore.QMutex()
 
     def addMessageToQueue(self, message):
         # Add the message to the queue.
-        self.queue_mutex.lock()
+        self.queued_messages_mutex.lock()
         self.queued_messages.append(message)
-        self.queue_mutex.unlock()
+        self.queued_messages_mutex.unlock()
 
         # Start message processing, if it is not already running.
         if not self.isRunning():
@@ -101,9 +103,9 @@ class HalModuleBuffered(HalModule):
         
     def run(self):
         while (len(self.queued_message) > 0):
-            self.queue_mutex.lock()
+            self.queued_messages_mutex.lock()
             next_message = self.queued_messages.popleft()
-            self.queue_mutex.unlock()
+            self.queued_messages_mutex.unlock()
             self.processMessage(next_message)
 
 

@@ -315,12 +315,12 @@ class HalCore(QtCore.QObject):
         self.module_name = "core"
         self.qt_settings = QtCore.QSettings("storm-control", "hal4000" + config.get("setup_name").lower())
         self.queued_messages = deque()
+        self.queued_messages_timer = QtCore.QTimer(self)
         self.sent_messages = []
-        self.sync_timer = QtCore.QTimer(self)
 
-        self.sync_timer.setInterval(50)
-        self.sync_timer.timeout.connect(self.handleMessage)
-        self.sync_timer.setSingleShot(True)
+        self.queued_messages_timer.setInterval(0)
+        self.queued_messages_timer.timeout.connect(self.handleSendMessage)
+        self.queued_messages_timer.setSingleShot(True)
 
         # Load all the modules.
         for module_name in config.get("modules").getAttrs():
@@ -382,8 +382,24 @@ class HalCore(QtCore.QObject):
         for module in self.modules:
             module.handleFrame(new_frame)
             
-    def handleMessage(self, message = None):
+    def handleMessage(self, message):
+        """
+        Adds a message to the queue of images to send.
+        """
 
+        # Check the message and it to the queue.
+        if not message.m_type in halMessage.valid_messages:
+            raise halExceptions.HalException("Invalid message type '" + message.m_type + "' received from " + message.getSourceName())
+        self.queued_messages.append(message)
+
+        # Start the message timer, if it is not already running.
+        self.startMessageTimer()
+
+    def handleSendMessage(self):
+        """
+        Handle sending the current message to all the modules.
+        """
+        
         # Remove all the messages that have already been
         # handled from the list of sent messages.
         for sent_message in self.sent_messages:
@@ -398,12 +414,6 @@ class HalCore(QtCore.QObject):
                 # Notify the sender of any responses to the message.
                 if sent_message.hasResponses():
                     sent_message.getSource().messageResponse(sent_message.getResponses())
-                
-        # Add this message to the queue.
-        if message is not None:
-            if not message.m_type in halMessage.valid_messages:
-                raise halExceptions.HalException("Invalid message type '" + message.m_type + "' received from " + message.getSourceName())
-            self.queued_messages.append(message)
 
         # Process the next message.
         if (len(self.queued_messages) > 0):
@@ -412,11 +422,12 @@ class HalCore(QtCore.QObject):
 
             #
             # If this message requested synchronization and there are
-            # pending messages then push it back into the queue and wait.
+            # pending messages then push it back into the queue and
+            # wait ~50 milliseconds.
             #
             if cur_message.sync and (len(self.sent_messages) > 0):
                 self.queued_messages.appendleft(cur_message)
-                self.sync_timer.start()
+                self.startMessageTimer(interval = 50)
             
             #
             # Otherwise process the message.
@@ -429,18 +440,22 @@ class HalCore(QtCore.QObject):
                 # Otherwise send the message.
                 else:
                     self.sent_messages.append(cur_message)
+                    print("-- start --")
                     for module in self.modules:
+                        print(module.module_name)
                         cur_message.ref_count += 1
                         module.handleMessage(cur_message)
+                    print("-- stop  --")
+                    print("")
 
-                    # Process any remaining messages.
-                    #
-                    # Maybe use a timer here so that there is time to
-                    # do something else between the messages?
-                    #
+                    # Process any remaining messages with immediate timeout.
                     if (len(self.queued_messages) > 0):
-                        self.handleMessage()
+                        self.startMessageTimer()
 
+    def startMessageTimer(self, interval = 0):
+        if not self.queued_messages_timer.isActive():
+            self.queued_messages_timer.setInterval(interval)
+            self.queued_messages_timer.start()            
 
     
 if (__name__ == "__main__"):
