@@ -60,7 +60,6 @@ class HalController(halModule.HalModule):
                                      qt_settings = qt_settings,
                                      **kwds)
 
-        self.view.setTitle(module_params.get("setup_name"))
         self.view.guiMessage.connect(self.handleGuiMessage)
 
     def cleanUp(self, qt_settings):
@@ -89,24 +88,6 @@ class HalController(halModule.HalModule):
                 self.view.show()
 
 
-#class Classic(HalController):
-#    """
-#    The 'classic' main window controller.
-#    """
-#    def __init__(self, **kwds):
-#        self.view = ClassicView(**kwds)
-#        super().__init__(**kwds)
-        
-              
-#class Detached(HalController):
-#    """
-#    The 'detached' main window controller.
-#    """
-#    def __init__(self, **kwds):
-#        self.view = DetachedView(**kwds)        
-#        super().__init__(**kwds)
-
-
 #
 # Main window View.
 #
@@ -116,9 +97,9 @@ class HalView(QtWidgets.QMainWindow):
     """
     guiMessage = QtCore.pyqtSignal(object)
 
-    def __init__(self, module_name = "", module_params = None, qt_settings = None, **kwds):
+    def __init__(self, module_name = None, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
-
+        
         # Configure UI.
         if self.classic_view:
             import storm_control.hal4000.qtdesigner.hal4000_ui as hal4000Ui
@@ -139,6 +120,12 @@ class HalView(QtWidgets.QMainWindow):
                 
         # Set icon.
         self.setWindowIcon(qtAppIcon.QAppIcon())
+
+        # Set title
+        title = module_params.get("setup_name")
+        if (hgit.getBranch().lower() != "master"):
+            title += " (" + hgit.getBranch() + ")"
+        self.setWindowTitle(title)
 
         # Configure based on saved settings.
         self.move(qt_settings.value(self.module_name + ".pos", self.pos()))
@@ -274,11 +261,6 @@ class HalView(QtWidgets.QMainWindow):
 
     def setFilmDirectory(self, film_directory):
         self.film_directory = film_directory
-
-    def setTitle(self, title):
-        if (hgit.getBranch().lower() != "master"):
-            title += " (" + hgit.getBranch() + ")"
-        self.setWindowTitle(title)
         
         
 class ClassicView(HalView):
@@ -354,11 +336,6 @@ class HalCore(QtCore.QObject):
             module.newFrame.connect(self.handleFrame)
             module.newMessage.connect(self.handleMessage)
 
-        # Broadcast setup name.
-#        self.handleMessage(halMessage.HalMessage(source = self,
-#                                                 m_type = "setup name",
-#                                                 data = config.get("setup_name")))
-
         # Broadcast starting directory.
         self.handleMessage(halMessage.HalMessage(source = self,
                                                  m_type = "new directory",
@@ -367,8 +344,6 @@ class HalCore(QtCore.QObject):
         # Tell modules to finish configuration.
         self.handleMessage(halMessage.HalMessage(source = self,
                                                  m_type = "configure"))
-#                                                 data = {"directory" : config.get("directory"),
-#                                                         "setup_name" : config.get("setup_name")}))
 
         # Tell the modules to start.
         #
@@ -451,6 +426,7 @@ class HalCore(QtCore.QObject):
             # Otherwise process the message.
             #
             else:
+
                 # Check for "closeEvent" message from the main window.
                 if (cur_message.getSourceName() == "hal") and (cur_message.m_type == "close event"):
                     self.cleanup()

@@ -117,16 +117,17 @@ class Params(halModule.HalModule):
         super().__init__(**kwds)
 
         if (module_params.get("ui_type") == "classic"):
-            self.view = ParamsView(camera_params_ui = importlib.import_module("storm_control.hal4000.qtdesigner.camera_params_ui"))
+            pv_ui = importlib.import_module("storm_control.hal4000.qtdesigner.camera_params_ui"))
+            self.view = ParamsView(camera_params_ui = pv_ui)
             self.configure_dict = {"ui_order" : 2,
                                    "ui_parent" : "hal.containerWidget",
                                    "ui_widget" : self.view}
         else:
-            self.view = ParamsView(camera_params_ui = importlib.import_module("storm_control.hal4000.qtdesigner.camera_params_detached_ui"))
-            self.configure_dict = {"ui_order" : 2,
-                                   "ui_parent" : "hal.containerWidget",
+            pv_ui = importlib.import_module("storm_control.hal4000.qtdesigner.camera_params_detached_ui"))
+            self.view = ParamsView(camera_params_ui = pv_ui)
+            self.configure_dict = {"ui_parent" : "display.cameraParamsFrame",
                                    "ui_widget" : self.view}
-            
+
     def processMessage(self, message):
         super().processMessage(message)
         if (message.level == 1):

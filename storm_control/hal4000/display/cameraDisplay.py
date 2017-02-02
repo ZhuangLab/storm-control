@@ -1,201 +1,109 @@
-#!/usr/bin/python
-#
-## @file
-#
-# A thin layer between HAL and:
-#
-# 1. A CameraFrameDisplay object which actually handles displaying the frames, etc.
-# 2. A ParamsDisplay object which handles displaying (some of) the camera parameters
-#    like the temperature, EMGain, etc..
-#
+#!/usr/bin/env python
+"""
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+Handles the primary camera display. In detached mode
+this is the one with the record button.
 
-# Debugging
-import storm_control.sc_library.hdebug as hdebug
+Hazen 2/17
+
+"""
+
+from PyQt5 import QtWidgets
 
 import storm_control.hal4000.display.cameraFrameDisplay as cameraFrameDisplay
-import storm_control.hal4000.display.paramsDisplay as paramsDisplay
+import storm_control.hal4000.halLib.halDialog as halDialog
 import storm_control.hal4000.halLib.halModule as halModule
+import storm_control.hal4000.qtdesigner.camera_detached_ui as cameraDetachedUi
 
-class CameraDisplay(QtWidgets.QDialog, halModule.HalModule):
-    
-    @hdebug.debug
-    def __init__(self, hal_ui, hal_ui_mode, which_camera, hardware, parameters, parent):
-        QtWidgets.QDialog.__init__(self, parent)
-        halModule.HalModule.__init__(self)
+
+class DisplayDialog(halDialog.HalDialog):
+    """
+    In detached view mode this is the dialog that shows the camera image.
+    """
+    def __init__(self, module_params = None, qt_settings = None, camera_view = None, **kwds):
+        super().__init__(**kwds)
+
+        # Create UI
+        self.ui = cameraDetachedUi.Ui_Dialog()
+        self.ui.setupUi(self)
+
+        # Configure UI.
+        self.setWindowTitle(module_params.get("setup_name") + " Main Display")
+        super().halDialogInit(qt_settings)
+
+        camera_layout = QtWidgets.QGridLayout(self.ui.cameraFrame)
+        camera_layout.setContentsMargins(0,0,0,0)
+        camera_layout.addWidget(camera_view)
+
+        self.params_layout = QtWidgets.QGridLayout(self.ui.cameraParamsFrame)
+        self.params_layout.setContentsMargins(0,0,0,0)
+
+    def addParamsWidget(self, camera_params_widget):
+        """
+        Add the camera params widget to the UI.
+        """
+        self.params_layout.addWidget(camera_params_widget)
+
+
+class Display(halModule.HalModule):
+
+    def __init__(self, module_params = None, qt_settings = None, **kwds):
+        super().__init__(**kwds)
         
-        self.camera_properties = None
-        self.hal_type = "display" + which_camera[-1:]
-        self.parameters = parameters
-        self.which_camera = which_camera
-        self.which_feed = {}
-        
-        # Pictures from the camera and parameters are shown in the main window.
-        if (hal_ui_mode == "single"):
-            self.hal_gui = False
-            
-            import storm_control.hal4000.qtdesigner.camera_params_ui as cameraParamsUi
-            
-            camera_frame = hal_ui.cameraFrame
-            camera_params_frame = hal_ui.cameraParamsFrame
-            show_record = True
-            
-        # Pictures from the camera and parameters are shown in their own window.
+        if module_params.get("ui_type") == "classic")
+            self.view = cameraFrameDisplay.CameraFrameDisplay(module_params = None,
+                                                              show_record = True,
+                                                              **kwds)
+            self.dialog = None
         else:
-            self.hal_gui = True
-
-            import storm_control.hal4000.qtdesigner.camera_detached_ui as cameraDetachedUi
-            import storm_control.hal4000.qtdesigner.camera_params_detached_ui as cameraParamsUi
-
-            # Configure window.
-            self.ui = cameraDetachedUi.Ui_Dialog()
-            self.ui.setupUi(self)
-            self.setWindowTitle(parameters.get("setup_name") + " " + self.getMenuName())
-
-            camera_frame = self.ui.cameraFrame
-            camera_params_frame = self.ui.cameraParamsFrame
-            show_record = False
-
-            self.ui.okButton.clicked.connect(self.handleOk)
-
-        # Configure camera frame display.
-        self.camera_frame_display = cameraFrameDisplay.CameraFrameDisplay(hardware,
-                                                                          parameters.get(which_camera),
-                                                                          which_camera,
-                                                                          show_record,
-                                                                          parent = camera_frame)
+            self.view = cameraFrameDisplay.CameraFrameDisplay(module_params = None,
+                                                              show_record = True,
+                                                              **kwds)
+            self.dialog = DisplayDialog(module_name = module_name,
+                                        module_params = module_params,
+                                        qt_settings = qt_settings,
+                                        camera_view = self.view,
+                                        **kwds)
         
-        layout = QtWidgets.QGridLayout(camera_frame)
-        layout.setContentsMargins(0,0,0,0)
-        layout.addWidget(self.camera_frame_display)
+        self.view.guiMessage.connect(self.handleGuiMessage)
 
-        self.camera_frame_display.feedChanged.connect(self.handleFeedChanged)
+    def handleGuiMessage(self, message):
+        self.newMessage.emit(message)
 
-        # Configure camera parameters display.            
-        camera_params_ui = cameraParamsUi.Ui_GroupBox()
-        self.camera_params = paramsDisplay.ParamsDisplay(camera_params_ui,
-                                                         which_camera,
-                                                         parent = camera_params_frame)
-
-        layout = QtWidgets.QGridLayout(camera_params_frame)
-        layout.setContentsMargins(0,0,0,0)
-        layout.addWidget(self.camera_params)
-
-    @hdebug.debug
-    def closeEvent(self, event):
-        event.ignore()
-        self.hide()
-
-    ## connectSignals
-    #
-    # @param signals An array of signals that we might be interested in connecting to.
-    #
-    @hdebug.debug
-    def connectSignals(self, signals):
-        for signal in signals:
-            if (signal[1] == "cameraProperties"):
-                signal[2].connect(self.handleCameraProperties)
-            elif (signal[1] == "updatedParams"):
-                signal[2].connect(self.handleUpdatedParams)
-            elif (signal[1] == "newCycleLength"):
-                signal[2].connect(self.camera_frame_display.setSyncMax)
-
-    @hdebug.debug
-    def getMenuName(self):
-        return "C" + self.which_camera[1:]
-
-    def getRecordButton(self):
-        return self.camera_frame_display.getRecordButton()
-
-    ## getLiveViewButton
-    #
-    # @return The live view button.
-    #
-    def getLiveViewButton(self):
-        return self.camera_frame_display.getLiveViewButton()
-    
-    ## getSignals
-    #
-    # @return The signals this module provides.
-    #
-    @hdebug.debug
-    def getSignals(self):
-        return [[self.hal_type, "cameraShutter", self.camera_frame_display.cameraShutter],
-                [self.hal_type, "dragMove", self.camera_frame_display.dragMove],
-                [self.hal_type, "dragStart", self.camera_frame_display.dragStart],
-                [self.hal_type, "emGainChange", self.camera_params.gainChange],
-                [self.hal_type, "frameCaptured", self.camera_frame_display.frameCaptured],
-                [self.hal_type, "ROISelection", self.camera_frame_display.ROISelection]]
-
-    ## handleCameraProperties
-    #
-    # The camera properties are whether or not it is in an EMCCD camera,
-    # if it has a preamp, a shutter and temperature control.
-    #
-    # @param camera_properties A dictionary containing property sets for each camera.
-    #
-    @hdebug.debug
-    def handleCameraProperties(self, camera_properties):
-        self.camera_properties = camera_properties
-        self.updateCameraProperties()
-
-    @hdebug.debug
-    def handleFeedChanged(self, feed_name):
-        feed_name = str(feed_name)
-        self.which_feed[self.parameters] = feed_name
-        self.camera_frame_display.newFeed(feed_name)
-
-    @hdebug.debug
-    def handleOk(self, boolean):
-        self.hide()
-
-    ## handleUpdatedParams
-    #
-    # This signal is sent by the camera when the emgain, shutter state or temperature changes.
-    #
-    @hdebug.debug
-    def handleUpdatedParams(self):
-        self.camera_frame_display.updatedParams()
-        self.camera_params.updatedParams()
-
-    @hdebug.debug
-    def loadGUISettings(self, settings):
-        if self.hal_gui:
-            halModule.HalModule.loadGUISettings(self, settings)
-            self.resize(settings.value(self.hal_type + "_size", self.size()).toSize())
-
-    def newFrame(self, frame, filming):
-        self.camera_frame_display.newFrame(frame)
-
-    @hdebug.debug
-    def newParameters(self, parameters):
-        self.parameters = parameters
-        if parameters in self.which_feed:
-            self.camera_frame_display.newParameters(self.parameters, self.which_feed[self.parameters])
-        else:
-            self.camera_frame_display.newParameters(self.parameters, self.which_camera)
-        self.camera_params.newParameters(self.parameters)
-
-    @hdebug.debug
-    def saveGUISettings(self, settings):
-        if self.hal_gui:
-            halModule.HalModule.saveGUISettings(self, settings)
-            settings.setValue(self.hal_type + "_size", self.size())
+    def processMessage(self, message):
+        super().processMessage(message)
+        if (message.level == 1):
             
-    @hdebug.debug
-    def startFilm(self, film_name, run_shutters):
-        self.camera_frame_display.startFilm(run_shutters)
-        self.camera_params.startFilm()
+            if (message.m_type == "add to ui"):
+                if self.dialog is not None:
+                    [module, parent_widget] = message.data["ui_parent"].split(".")
+                    if (module == self.module_name):
+                        self.dialog.addParamsWidget(message.data["ui_widget"])
 
-    @hdebug.debug
-    def stopFilm(self, film_writer):
-        self.camera_frame_display.stopFilm()
-        self.camera_params.stopFilm()
+            elif (message.m_type == "configure"):
+                if self.dialog is not None:
+                    self.dialog.showIfVisible()
 
-    @hdebug.debug
-    def updateCameraProperties(self):
-        self.camera_frame_display.updateCameraProperties(self.camera_properties)
-        self.camera_params.updateCameraProperties(self.camera_properties)
-
-
+#
+# The MIT License
+#
+# Copyright (c) 2017 Zhuang Lab, Harvard University
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
