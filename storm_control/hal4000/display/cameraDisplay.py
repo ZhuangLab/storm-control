@@ -8,7 +8,7 @@ Hazen 2/17
 
 from PyQt5 import QtWidgets
 
-import storm_control.hal4000.display.cameraFrameDisplay as cameraFrameDisplay
+import storm_control.hal4000.display.frameDisplay as frameDisplay
 import storm_control.hal4000.halLib.halDialog as halDialog
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
@@ -52,9 +52,9 @@ class Display(halModule.HalModule):
         
         if (module_params.get("ui_type") == "classic"):
             self.dialog = None
-            self.view = cameraFrameDisplay.CameraFrameDisplay(show_record = True)
+            self.view = frameDisplay.CameraFrameDisplay(show_record = True)
         else:
-            self.view = cameraFrameDisplay.CameraFrameDisplay(show_record = False)
+            self.view = frameDisplay.CameraFrameDisplay(show_record = False)
             self.dialog = DisplayDialog(module_name = module_name,
                                         module_params = module_params,
                                         qt_settings = qt_settings,

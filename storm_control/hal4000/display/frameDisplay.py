@@ -26,9 +26,9 @@ import storm_control.hal4000.qtdesigner.camera_display_ui as cameraDisplayUi
 default_widget = None
 
 
-class CameraFeedDisplay(QtWidgets.QFrame):
+class FeedFrameDisplay(QtWidgets.QFrame):
     """
-    The base camera display class.
+    The base frame display class.
 
     Handles the qtCameraWidget which displays the image as well as other
     GUI elements such as the display range slide, color table chooser, etc..
@@ -264,7 +264,7 @@ class CameraFeedDisplay(QtWidgets.QFrame):
         self.camera_widget.newRange([self.getParameter("scalemin"), self.getParameter("scalemax")])
 
 
-class CameraFrameDisplay(CameraFeedDisplay):
+class CameraFrameDisplay(FeedFrameDisplay):
     """
     Add handling of interaction with the feeds, i.e. mouse drags,
     ROI selection, etc..
