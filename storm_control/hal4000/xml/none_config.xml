@@ -75,9 +75,7 @@
       <class_name type="string">Settings</class_name>
       <module_name type="string">settings.settings</module_name>
     </settings>
-
-    
-    
+  
     <!--
 	Everything else is optional, but you probably want at least one camera.
     -->
@@ -93,15 +91,19 @@
 	Also, "camera1" is assumed to be a master camera and many other modules
 	(software) synchronize to this camera.
     -->
-    <!--
-    <camera>
-      <module_name type="string">camera.noneCameraControl</module_name>
-      <parameters>
-      <roll type="float">0.5</roll>
-      <camera_name>camera1</camera_name>
-      </parameters>
-    </camera>
-    -->
+    
+    <camera1>
+      <class_name type="string">Camera</class_name>
+      <module_name type="string">camera.camera</module_name>
+      <camera>
+	<master type="boolean">True</master>
+	<class_name type="string">NoneCameraControl</class_name>
+	<module_name type="string">camera.noneCameraControl</module_name>
+	<parameters>
+	  <roll type="float">0.5</roll>
+	</parameters>
+      </camera>
+    </camera1>
 
     <!-- Bluetooth communication -->
     <!--

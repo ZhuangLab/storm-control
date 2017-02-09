@@ -109,7 +109,6 @@ class HalModuleBuffered(HalModule):
             self.processMessage(next_message)
 
 
-    
 #
 # The MIT License
 #
