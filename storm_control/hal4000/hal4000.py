@@ -102,9 +102,10 @@ class HalView(QtWidgets.QMainWindow):
         
         # Configure UI.
         if self.classic_view:
-            import storm_control.hal4000.qtdesigner.hal4000_ui as hal4000Ui
+            import storm_control.hal4000.qtdesigner.hal4000_ui as hal4000Ui            
         else:
             import storm_control.hal4000.qtdesigner.hal4000_detached_ui as hal4000Ui
+            
         self.ui = hal4000Ui.Ui_MainWindow()
         self.ui.setupUi(self)
 
@@ -113,6 +114,14 @@ class HalView(QtWidgets.QMainWindow):
         self.film_directory = ""
         self.module_name = module_name
 
+        # Create layout for the cameraFrame.
+        if self.classic_view:
+            vbox_layout = QtWidgets.QVBoxLayout(self.ui.cameraFrame)
+            vbox_layout.setContentsMargins(0,0,0,0)
+            vbox_layout.setSpacing(0)
+            self.ui.cameraFrame.setLayout(vbox_layout)
+
+        # Create layout for settings, film, etc..
         vbox_layout = QtWidgets.QVBoxLayout(self.ui.containerWidget)
         vbox_layout.setContentsMargins(0,0,0,0)
         vbox_layout.setSpacing(0)

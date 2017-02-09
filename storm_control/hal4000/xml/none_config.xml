@@ -24,13 +24,31 @@
     </hal>
 
     <!--
-	You also want all of these.
+	You also need all of these.
     -->
-    <settings>
-      <class_name type="string">Settings</class_name>
-      <module_name type="string">settings.settings</module_name>
-    </settings>
 
+    <!-- Camera parameter display. -->
+    <camera_params>
+      <class_name type="string">Params</class_name>
+      <module_name type="string">display.paramsDisplay</module_name>
+    </camera_params>
+
+    <!-- Camera display. -->
+    <display>
+      <class_name type="string">Display</class_name>
+      <module_name type="string">display.cameraDisplay</module_name>
+    </display>
+    
+    <!-- Feeds and additional viewers. -->
+    <!--
+    <feeds>
+      <class_name type="string">FeedViewers</class_name>
+      <menu_item type="string">New Viewer</menu_item>
+      <module_name type="string">display.feedViewer</module_name>
+      </feeds>
+    -->
+    
+    <!-- Filming and starting/stopping the camera. -->
     <film>
       <class_name type="string">Film</class_name>
       <module_name type="string">film.film</module_name>
@@ -41,15 +59,8 @@
       <parameters>
       </parameters>
     </film>
-    
-    <!--
-	Camera parameter display.
-    -->
-    <camera_params>
-      <class_name type="string">Params</class_name>
-      <module_name type="string">display.paramsDisplay</module_name>
-    </camera_params>
 
+    <!-- Which objective is being used, etc. -->
     <mosaic>
       <class_name type="string">Mosaic</class_name>
       <module_name type="string">mosaic.mosaic</module_name>
@@ -59,16 +70,13 @@
       </parameters>
     </mosaic>
 
-    <!--
-	Camera display.
-	
-	You also want this, it tells HAL which module
-	to use for displaying camera images.
-    -->
-    <display>
-      <class_name type="string">Display</class_name>
-      <module_name type="string">display.cameraDisplay</module_name>
-    </display>
+    <!-- Loading, changing and editting settings/parameters -->
+    <settings>
+      <class_name type="string">Settings</class_name>
+      <module_name type="string">settings.settings</module_name>
+    </settings>
+
+    
     
     <!--
 	Everything else is optional, but you probably want at least one camera.

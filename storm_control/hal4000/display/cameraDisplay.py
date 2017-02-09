@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 """
-
 Handles the primary camera display. In detached mode
 this is the one with the record button.
 
 Hazen 2/17
-
 """
 
 from PyQt5 import QtWidgets
 
 import storm_control.hal4000.display.cameraFrameDisplay as cameraFrameDisplay
 import storm_control.hal4000.halLib.halDialog as halDialog
+import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 import storm_control.hal4000.qtdesigner.camera_detached_ui as cameraDetachedUi
 
@@ -34,6 +33,7 @@ class DisplayDialog(halDialog.HalDialog):
         camera_layout = QtWidgets.QGridLayout(self.ui.cameraFrame)
         camera_layout.setContentsMargins(0,0,0,0)
         camera_layout.addWidget(camera_view)
+        camera_view.setParent(self.ui.cameraFrame)
 
         self.params_layout = QtWidgets.QGridLayout(self.ui.cameraParamsFrame)
         self.params_layout.setContentsMargins(0,0,0,0)
@@ -50,20 +50,15 @@ class Display(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
         
-        if module_params.get("ui_type") == "classic")
-            self.view = cameraFrameDisplay.CameraFrameDisplay(module_params = None,
-                                                              show_record = True,
-                                                              **kwds)
+        if (module_params.get("ui_type") == "classic"):
             self.dialog = None
+            self.view = cameraFrameDisplay.CameraFrameDisplay(show_record = True)
         else:
-            self.view = cameraFrameDisplay.CameraFrameDisplay(module_params = None,
-                                                              show_record = True,
-                                                              **kwds)
+            self.view = cameraFrameDisplay.CameraFrameDisplay(show_record = False)
             self.dialog = DisplayDialog(module_name = module_name,
                                         module_params = module_params,
                                         qt_settings = qt_settings,
-                                        camera_view = self.view,
-                                        **kwds)
+                                        camera_view = self.view)
         
         self.view.guiMessage.connect(self.handleGuiMessage)
 
@@ -83,6 +78,11 @@ class Display(halModule.HalModule):
             elif (message.m_type == "configure"):
                 if self.dialog is not None:
                     self.dialog.showIfVisible()
+                else:
+                    self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                               m_type = "add to ui",
+                                                               data = {"ui_parent" : "hal.cameraFrame",
+                                                                       "ui_widget" : self.view}))
 
 #
 # The MIT License

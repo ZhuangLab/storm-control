@@ -1,11 +1,9 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Qt Widget for handling the display of camera data.
-#
-# Hazen 09/13
-#
+#!/usr/bin/env python
+"""
+Qt Widget for handling the display of camera data.
+
+Hazen 02/17
+"""
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -14,25 +12,21 @@ import sys
 
 import storm_control.hal4000.halLib.c_image_manipulation_c as c_image
 
-## QCameraWidget
-#
-# The base class for displaying data from a camera.
-#
+
 class QCameraWidget(QtWidgets.QWidget):
+    """
+    Class for displaying images from the camera.
+    """
     displayCaptured = QtCore.pyqtSignal(object)
     dragStart = QtCore.pyqtSignal()
-    dragMove = QtCore.pyqtSignal(float, float)
+    dragMove = QtCore.pyqtSignal(int, int)
     intensityInfo = QtCore.pyqtSignal(int, int, int)
     mousePress = QtCore.pyqtSignal(int, int)
     roiSelection = QtCore.pyqtSignal(object)
 
-    ## __init__
-    #
-    # @param parameters A parameters object.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, parameters, parent = None):
-        QtWidgets.QWidget.__init__(self, parent)
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.setMouseTracking(True)
 
@@ -42,15 +36,16 @@ class QCameraWidget(QtWidgets.QWidget):
         self.ctrl_key_down = False
         self.drag_enabled = False
         self.drag_mode = False
-        self.drag_multiplier = parameters.get("drag_multiplier", 1.0)
+        self.drag_multiplier = None
         self.drag_x = 0
         self.drag_y = 0
 
-        self.display_saturated_pixels = False # Boolean to control pixel display.
+        # Boolean to control pixel display.
+        self.display_saturated_pixels = False 
 
-        self.flip_horizontal = parameters.get("flip_horizontal")
-        self.flip_vertical = parameters.get("flip_vertical")
-        self.transpose = parameters.get("transpose")
+        self.flip_horizontal = False
+        self.flip_vertical = False
+        self.transpose = False
 
         self.image = False
         self.image_min = 0
@@ -60,7 +55,7 @@ class QCameraWidget(QtWidgets.QWidget):
         # Only integer values are allowed.
         self.magnification = 1
 
-        self.max_intensity = parameters.get("max_intensity")
+        self.max_intensity = None
         
         self.mouse_x = 0
         self.mouse_y = 0
@@ -91,28 +86,25 @@ class QCameraWidget(QtWidgets.QWidget):
         self.y_size = 0
         self.y_view = 512
 
-    ## blank
-    #
-    # Initialize the off-screen buffer for image rendering.
-    #
     def blank(self):
+        """
+        Initialize the off-screen buffer for image rendering.
+        """
         painter = QtGui.QPainter(self.buffer)
         color = QtGui.QColor(0, 0, 0)
         painter.setPen(color)
         painter.setBrush(color)
         painter.drawRect(0, 0, self.width(), self.height())
 
-    ## calcFinalSize
-    #
-    # "Final" is the size at which to draw the pixmap that will actually 
-    # be shown in the window.
-    #
-    # Based on the final size, determine the best size for a square window. 
-    # Set the widget size to this & create a buffer of this size. We'll
-    # draw in the buffer first, then copy to the window.
-    #
     def calcFinalSize(self):
-
+        """  
+        'Final' is the size at which to draw the pixmap that will actually 
+        be shown in the window.
+        
+        Based on the final size, determine the best size for a square window. 
+        Set the widget size to this & create a buffer of this size. We'll
+        draw in the buffer first, then copy to the window.
+        """
         self.x_final = self.x_view
         self.y_final = self.y_view
         if (self.x_size > self.y_size):
@@ -132,54 +124,34 @@ class QCameraWidget(QtWidgets.QWidget):
 
         self.blank()
 
-    ## getAutoScale
-    #
-    # This returns the minimum and maximum values to use for automatically
-    # re-scaling the image based on the most recent camera data.
-    #
-    # @return [camera data value to use as zero, camera data value to use as 255]
-    #
     def getAutoScale(self):
+        """
+        Returns the minimum and maximum values to use for automatically
+        re-scaling the image based on the most recent camera data.
+        """
         margin = int(0.1 * float(self.image_max - self.image_min))
         return [self.image_min - margin, self.image_max + margin]
 
-    ## getEventLocation
-    #
-    # Returns the location of an external event in the window, normalized
-    # to 0.0 - 1.0.
-    #
-    # @param event A PyQt event object.
-    #
-    # @return [event x (0.0 - 1.0), event y (0.0 - 1.0)]
-    #
     def getEventLocation(self, event):
+        """
+        Returns the location of an external event in the window, normalized
+        to 0.0 - 1.0.
+        """
         event_pos = self.mapFromGlobal(event.globalPos())
         return [float(event_pos.x())/float(self.x_final),
                 float(event_pos.y())/float(self.y_final)]
 
-    ## keyPressEvent
-    #
-    # @param event A PyQt key press event.
-    #
     def keyPressEvent(self, event):
         if (event.key() == QtCore.Qt.Key_Control):
             self.ctrl_key_down = True
             QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
 
-    ## keyReleaseEvent
-    #
-    # @param event A PyQt key release event
-    #
     def keyReleaseEvent(self, event):
         if (event.key() == QtCore.Qt.Key_Control):
             self.ctrl_key_down = False
             if not self.drag_mode:
                 QtGui.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         
-    ## mouseMoveEvent
-    #
-    # @param event A PyQt mouse move event.
-    #
     def mouseMoveEvent(self, event):
         self.mouse_x = event.x()
         self.mouse_y = event.y()
@@ -195,17 +167,13 @@ class QCameraWidget(QtWidgets.QWidget):
             dy = self.drag_multiplier * (self.mouse_y - self.drag_y)
             self.dragMove.emit(dx, dy)
 
-    ## mousePressEvent
-    #
-    # Convert the mouse click location into camera pixels. The xy 
-    # coordinates of the event are correctly adjusted for the scroll 
-    # bar position, we just need to scale them correctly. This causes
-    # a mousePress event to be emitted.
-    #
-    # @param event A PyQt mouse press event.
-    #
     def mousePressEvent(self, event):
-
+        """
+        Convert the mouse click location into camera pixels. The xy 
+        coordinates of the event are correctly adjusted for the scroll 
+        bar position, we just need to scale them correctly. This causes
+        a mousePress event to be emitted.
+        """
         # Point/pixel selection.
         self.x_click = int(event.x() * self.x_size / self.x_final)
         self.y_click = int(event.y() * self.y_size / self.y_final)
@@ -231,10 +199,6 @@ class QCameraWidget(QtWidgets.QWidget):
             self.roi_rubber_band.setGeometry(QtCore.QRect(event.pos(), QtCore.QSize()))
             self.roi_rubber_band.show()
 
-    ## mouseReleaseEvent
-    #
-    # @param event A PyQt mouse move event.
-    #
     def mouseReleaseEvent(self, event):
 
         if self.drag_mode:
@@ -254,22 +218,13 @@ class QCameraWidget(QtWidgets.QWidget):
                 height = rect.height() * self.y_size / self.y_final
                 self.roiSelection.emit(QtCore.QRect(left, top, width, height))
         
-    ## newColorTable
-    #
-    # Note that the color table of the image that is being displayed 
-    # will not actually change until updateImageWithFrame() is called.
-    #
-    # @param colortable A python array of color table values.
-    #
     def newColorTable(self, colortable):
+        """
+        Note that the color table of the image that is being displayed 
+        will not actually change until updateImageWithFrame() is called.
+        """
         self.colortable = colortable
 
-    ## newParameters
-    #
-    # @param parameters A parameters object.
-    # @param colortable A color table Python array.
-    # @param display_range [minimum, maximum]
-    #
     def newParameters(self, parameters):
         self.flip_horizontal = parameters.get("flip_horizontal")
         self.flip_vertical = parameters.get("flip_vertical")
@@ -282,33 +237,21 @@ class QCameraWidget(QtWidgets.QWidget):
         else:
             self.display_saturated_pixels = False
             
-    ## newRange
-    #
-    # @param new_range [minimum, maximum]
-    #
     def newRange(self, new_range):
         self.display_range = new_range
 
-    ## newSize
-    #
-    # @param new_size [x_size, y_size]
-    #
     def newSize(self, new_size):
         self.x_size = new_size[0]
         self.y_size = new_size[1]
         self.calcFinalSize()
 
-    ## paintEvent
-    #
-    # self.image is the image from the camera scaled to the buffer
-    #    size.
-    #
-    # self.buffer is where the image is temporarily re-drawn prior 
-    #    to final display. In theory this reduces display flickering.
-    #
-    # @param event A PyQt paint event.
-    #
     def paintEvent(self, event):
+        """
+        self.image is the image from the camera scaled to the buffer size.
+        
+        self.buffer is where the image is temporarily re-drawn prior 
+        to final display. In theory this reduces display flickering.
+        """
         if self.image:
             painter = QtGui.QPainter(self.buffer)
 
@@ -344,11 +287,10 @@ class QCameraWidget(QtWidgets.QWidget):
             painter.drawImage(a_pixmap.rect(), self.image, vr)
             self.displayCaptured.emit(a_pixmap)
 
-    ## setColorTable
-    #
-    # Changes the color table of the current image.
-    #
     def setColorTable(self):
+        """
+        Changes the color table of the current image.
+        """
         if self.colortable:
             for i in range(256):
                 self.image.setColor(i, QtGui.qRgb(self.colortable[i][0], 
@@ -358,131 +300,109 @@ class QCameraWidget(QtWidgets.QWidget):
             for i in range(256):
                 self.image.setColor(i,QtGui.qRgb(i,i,i))
 
-    ## setDragEnabled
-    #
-    # Allow mouse drags and emit when the ctrl key is pressed and the
-    # mouse is dragged across the screen.
-    #
-    # @param drag_enabled True / False.
-    #
     def setDragEnabled(self, drag_enabled):
+        """
+        Allow mouse drags and emit when the ctrl key is pressed and the
+        mouse is dragged across the screen.
+        """
         self.drag_enabled = drag_enabled
                        
-    ## setMagnification
-    #
-    # Note that the magnification of the image that is being displayed 
-    # will not actually change until updateImageWithFrame() is called.
-    #
-    # @param new_magnification The new magnification factor, an integer > 0.
-    #
     def setMagnification(self, new_magnification):
+        """
+        Note that the magnification of the image that is being displayed 
+        will not actually change until updateImageWithFrame() is called.
+        """
         self.magnification = new_magnification
         self.calcFinalSize()
 
-    ## setShowGrid
-    #
-    # @param bool True/False Overlay a grid on the image from the camera.
-    #
-    def setShowGrid(self, bool):
-        if bool:
-            self.show_grid = True
-        else:
-            self.show_grid = False
+    def setShowGrid(self, show_grid):
+        """
+        Overlay a grid on the image from the camera.
+        """
+        self.show_grid = show_grid
 
-    ## setShowInfo
-    #
-    # @param bool True/False Display intensity information for the last pixel that was clicked on.
-    #
-    def setShowInfo(self, bool):
-        if bool:
-            self.show_info = True
-        else:
-            self.show_info = False
+    def setShowInfo(self, show_info):
+        """
+        Display intensity information for the last pixel that was clicked on.
+        """
+        self.show_info = show_info
 
-    ## setShowTarget
-    #
-    # @param bool True/False Overlay a circle in the center of the image from the camera.
-    #
-    def setShowTarget(self, bool):
-        if bool:
-            self.show_target = True
-        else:
-            self.show_target = False
+    def setShowTarget(self, show_target):
+        """
+        Overlay a circle in the center of the image from the camera.
+        """
+        self.show_targe = show_target
 
-    ## updateImageWithFrame
-    #
-    # This takes the image from the camera, scales it, resizes it and converts it
-    # into a QImage that can be drawn in the display. It also emits the intensityInfo
-    # signal with the current intensity of the pixel of interest.
-    #
-    # @param frame A frame object.
-    #
     def updateImageWithFrame(self, frame):
-        if frame:
-            w = frame.image_x
-            h = frame.image_y
-            image_data = frame.getData()
-            try:
-                image_data = image_data.reshape((h,w))
-            except ValueError as e:
-                print("Got an image with an unexpected size, ", image_data.size, "expected", h * w)
-                return
+        """
+        This takes the image from the camera, scales it, resizes it and converts it
+        into a QImage that can be drawn in the display. It also emits the intensityInfo
+        signal with the current intensity of the pixel of interest.
+        """
+        w = frame.image_x
+        h = frame.image_y
+        image_data = frame.getData()
+        try:
+            image_data = image_data.reshape((h,w))
+        except ValueError as e:
+            print("Got an image with an unexpected size, ", image_data.size, "expected", h * w)
+            return
 
-            max_intensity = self.max_intensity
-            if not self.display_saturated_pixels:
-                max_intensity = None
+        max_intensity = self.max_intensity
+        if not self.display_saturated_pixels:
+            max_intensity = None
                 
-            [temp, self.image_min, self.image_max] = c_image.rescaleImage(image_data,
-                                                                          self.flip_horizontal,
-                                                                          self.flip_vertical,
-                                                                          self.transpose,
-                                                                          self.display_range,
-                                                                          max_intensity)
+        [temp, self.image_min, self.image_max] = c_image.rescaleImage(image_data,
+                                                                      self.flip_horizontal,
+                                                                      self.flip_vertical,
+                                                                      self.transpose,
+                                                                      self.display_range,
+                                                                      max_intensity)
 
-            # Create QImage & draw at final magnification.
-            if self.transpose:
-                temp_image = QtGui.QImage(temp.data, h, w, QtGui.QImage.Format_Indexed8)
-                self.image = temp_image.scaled(self.y_final, self.x_final)
-            else:
-                temp_image = QtGui.QImage(temp.data, w, h, QtGui.QImage.Format_Indexed8)
-                self.image = temp_image.scaled(self.x_final, self.y_final)
-            self.image.ndarray = temp
+        # Create QImage & draw at final magnification.
+        if self.transpose:
+            temp_image = QtGui.QImage(temp.data, h, w, QtGui.QImage.Format_Indexed8)
+            self.image = temp_image.scaled(self.y_final, self.x_final)
+        else:
+            temp_image = QtGui.QImage(temp.data, w, h, QtGui.QImage.Format_Indexed8)
+            self.image = temp_image.scaled(self.x_final, self.y_final)
+        self.image.ndarray = temp
 
-            # Set the images color table.
-            self.setColorTable()
-            self.update()
+        # Set the images color table.
+        self.setColorTable()
+        self.update()
 
-            if self.show_info:
-                x_loc = self.x_click
-                y_loc = self.y_click
-                value = 0
-                if ((x_loc >= 0) and (x_loc < w) and (y_loc >= 0) and (y_loc < h)):
-                    value = image_data[y_loc, x_loc]
-                    self.intensityInfo.emit(x_loc, y_loc, value)
+        if self.show_info:
+            x_loc = self.x_click
+            y_loc = self.y_click
+            value = 0
+            if ((x_loc >= 0) and (x_loc < w) and (y_loc >= 0) and (y_loc < h)):
+                value = image_data[y_loc, x_loc]
+                self.intensityInfo.emit(x_loc, y_loc, value)
 
 
 #
 # Testing
 #
 
-if (__name__ == "__main__"):
-    class Parameters:
-        def __init__(self):
-            self.x_pixels = 200
-            self.y_pixels = 200
-
-    parameters = Parameters()
-    app = QtWidgets.QApplication(sys.argv)
-    viewer = QCameraWidget(parameters, [200,400])
-    viewer.show()
-
-    sys.exit(app.exec_())
+#if (__name__ == "__main__"):
+#    class Parameters:
+#        def __init__(self):
+#            self.x_pixels = 200
+#            self.y_pixels = 200
+#
+#    parameters = Parameters()
+#    app = QtWidgets.QApplication(sys.argv)
+#    viewer = QCameraWidget(parameters, [200,400])
+#    viewer.show()
+#
+#    sys.exit(app.exec_())
 
 
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2017 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
