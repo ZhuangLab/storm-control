@@ -81,8 +81,8 @@ class HalController(halModule.HalModule):
                                           message.data["ui_widget"],
                                           message.data.get("ui_order"))
                     
-            elif (message.m_type == "new directory"):
-                self.view.setFilmDirectory(message.data)
+#            elif (message.m_type == "new directory"):
+#                self.view.setFilmDirectory(message.data)
                 
             elif (message.m_type == "start"):
                 self.view.show()
@@ -111,7 +111,7 @@ class HalView(QtWidgets.QMainWindow):
 
         self.close_now = False
         self.close_timer = QtCore.QTimer(self)
-        self.film_directory = ""
+        self.film_directory = module_params.get("directory")
         self.module_name = module_name
 
         # Create layout for the cameraFrame.
@@ -139,7 +139,8 @@ class HalView(QtWidgets.QMainWindow):
         # Configure based on saved settings.
         self.move(qt_settings.value(self.module_name + ".pos", self.pos()))
         self.resize(qt_settings.value(self.module_name + ".size", self.size()))
-        self.xml_directory = str(qt_settings.value(self.module_name + ".xml_directory", ""))
+        self.xml_directory = str(qt_settings.value(self.module_name + ".xml_directory",
+                                                   self.film_directory))
         
         # ui signals
         self.ui.actionDirectory.triggered.connect(self.handleDirectory)
@@ -208,10 +209,12 @@ class HalView(QtWidgets.QMainWindow):
         for filename in sorted(filenames):
             [file_type, error_text] = params.fileType(filename)
             if (file_type == "parameters"):
+                self.xml_directory = os.path.dirname(filename)
                 self.guiMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "new parameters file",
                                                            data = filename))
             elif (file_type == "shutters"):
+                self.xml_directory = os.path.dirname(filename)
                 self.guiMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "new shutters file",
                                                            data = filename))
@@ -268,9 +271,9 @@ class HalView(QtWidgets.QMainWindow):
                                                    m_type = "close event",
                                                    sync = True))
 
-    def setFilmDirectory(self, film_directory):
-        self.film_directory = film_directory
-        
+#    def setFilmDirectory(self, film_directory):
+#        self.film_directory = film_directory
+
         
 class ClassicView(HalView):
     """
@@ -302,9 +305,7 @@ class HalCore(QtCore.QObject):
 
     This sends the following messages:
     'configure'
-    'new directory'
     'new parameters file'
-    'setup name'
     'start'
     """
     def __init__(self, config = None, parameters_file_name = None, **kwds):
@@ -345,11 +346,11 @@ class HalCore(QtCore.QObject):
             module.newFrame.connect(self.handleFrame)
             module.newMessage.connect(self.handleMessage)
 
-        # Broadcast starting directory.
-        self.handleMessage(halMessage.HalMessage(source = self,
-                                                 m_type = "new directory",
-                                                 data = config.get("directory")))
-        
+#        # Broadcast starting directory.
+#        self.handleMessage(halMessage.HalMessage(source = self,
+#                                                 m_type = "new directory",
+#                                                 data = config.get("directory")))
+
         # Tell modules to finish configuration.
         self.handleMessage(halMessage.HalMessage(source = self,
                                                  m_type = "configure"))
