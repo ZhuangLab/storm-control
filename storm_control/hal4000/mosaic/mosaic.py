@@ -23,6 +23,9 @@ class MosaicBox(QtWidgets.QGroupBox):
 
         self.ui = mosaicUi.Ui_GroupBox()
         self.ui.setupUi(self)
+
+    def setObjectiveText(self, param_objective):
+        self.ui.objectiveText.setText(param_objective.getv())
         
     
 class Mosaic(halModule.HalModule):
@@ -30,8 +33,9 @@ class Mosaic(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
+        self.parameters = module_params.getp("parameters")
+        
         self.view = MosaicBox()
-
         self.configure_dict = {"ui_order" : 3,
                                "ui_parent" : "hal.containerWidget",
                                "ui_widget" : self.view}
@@ -40,7 +44,14 @@ class Mosaic(halModule.HalModule):
         super().processMessage(message)
         if (message.level == 1):
             if (message.m_type == "configure"):
+
+                # Initial UI configuration.
+                self.view.setObjectiveText(self.parameters.getp("objective"))
+
+                # Add view to HAL UI display.
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "add to ui",
                                                            data = self.configure_dict))
+
+
 
