@@ -534,6 +534,69 @@ class DADelay(DaveAction):
             print "Delaying " + str(self.delay) + " ms"
 
 
+## DAEmail
+#
+# Send an email to user.
+#
+class DAEmail(DaveAction):
+
+    ## __init__
+    #
+    def __init__(self):
+        DaveAction.__init__(self)
+        self.action_type = "dave"
+        self.email_subject = ""
+        self.email_message = ""
+        
+    ## createETree
+    #
+    # @param dictionary A dictionary.
+    #
+    # @return A ElementTree object or None.
+    #
+    def createETree(self, dictionary):
+        block = ElementTree.Element(str(type(self).__name__))
+        return block
+
+    ## getDescriptor
+    #
+    # @return A string that describes the action.
+    #
+    def getDescriptor(self):
+        return "Email: " + self.email_subject
+
+    ## setup
+    #
+    # Perform post creation initialization.
+    #
+    # @param node The node of an ElementTree.
+    #
+    def setup(self, node):
+
+        # Look for message data
+        if node.find("subject") is not None:
+            self.email_subject = node.find("subject").text
+        if node.find("message") is not None:
+            self.email_message = node.find("message").text
+
+        # Create message data
+        message_data = {"subject": self.email_subject,
+                        "message": self.email_message}
+        
+        self.message = tcpMessage.TCPMessage(message_type = "Email",
+                                             message_data = message_data)
+
+    ## start
+    #
+    # Start the action, but in this case immediately issue an all clear.
+    #
+    # @param tcp_client The TCP client to use for communication.
+    # @param test_mode Send the command in test mode.
+    #
+    def start(self, tcp_client, test_mode):
+        pass # No communication via TCP
+    
+
 ## DAFindSum
 #
 # The find sum action.
