@@ -479,12 +479,6 @@ if (__name__ == "__main__"):
     # Start..
     app = QtWidgets.QApplication(sys.argv)
 
-    # Set default font size for linux.
-    if (sys.platform == "linux2"):
-        font = QtGui.QFont()
-        font.setPointSize(8)
-        app.setFont(font)
-
     # Splash Screen.
     pixmap = QtGui.QPixmap("splash.png")
     splash = QtWidgets.QSplashScreen(pixmap)
@@ -502,7 +496,6 @@ if (__name__ == "__main__"):
 
     # Hide splash screen and start.
     splash.hide()
-    #hal.show()
 
     app.exec_()
 
