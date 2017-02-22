@@ -546,7 +546,7 @@ class DAEmail(DaveAction):
         DaveAction.__init__(self)
         self.action_type = "dave"
         self.email_subject = ""
-        self.email_message = ""
+        self.email_body = ""
         
     ## createETree
     #
@@ -555,8 +555,23 @@ class DAEmail(DaveAction):
     # @return A ElementTree object or None.
     #
     def createETree(self, dictionary):
-        block = ElementTree.Element(str(type(self).__name__))
-        return block
+
+        # Extract subject line and message
+        email_subject = dictionary.get("subject")
+        email_body = dictionary.get("body")
+
+        # Create block
+        if email_subject is not None: # A subject line is required to be considered as a valid command
+            block = ElementTree.Element(str(type(self).__name__))
+
+            # Add subject
+            addField(block, "subject", email_subject)
+
+            # Add  message
+            addField(block, "body", email_body)
+
+            # Return block
+            return block
 
     ## getDescriptor
     #
@@ -576,14 +591,14 @@ class DAEmail(DaveAction):
         # Look for message data
         if node.find("subject") is not None:
             self.email_subject = node.find("subject").text
-        if node.find("message") is not None:
-            self.email_message = node.find("message").text
+        if node.find("body") is not None:
+            self.email_body = node.find("body").text
 
         # Create message data
         message_data = {"subject": self.email_subject,
-                        "message": self.email_message}
+                        "body": self.email_body}
         
-        self.message = tcpMessage.TCPMessage(message_type = "Email",
+        self.message = tcpMessage.TCPMessage(message_type = "Dave Email",
                                              message_data = message_data)
 
     ## start
@@ -596,6 +611,8 @@ class DAEmail(DaveAction):
     def start(self, tcp_client, test_mode):
         pass # No communication via TCP
     
+    def cleanUp(self):
+        pass
 
 ## DAFindSum
 #
