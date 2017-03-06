@@ -5,29 +5,44 @@ The messages that are passed between modules.
 Hazen 01/17
 """
 
+import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.hdebug as hdebug
 
 
-# This dictionary contains all of the valid message types.
+#
+# This dictionary contains all of the valid message types. Modules
+# may dynamically add to this dictionary using addMessage().
+#
 valid_messages = {
     
-    # HAL/core
+    # HAL/core messages.
     'add to ui' : True,
     'close event' : True,
     'configure' : True,
+    'module' : True
     'new directory' : True,
     'new parameters file' : True,
     'new shutters file' : True,
-#    'setup name' : True,
     'start' : True,
     
     }
+
+def addMessage(name):
+    """
+    Modules should call this function at initialization to add additional messages.
+    """
+    global valid_messages
+    if name in valid_messages:
+        raise halExceptions.HalException("Message " + name + " already exists!")
+    valid_messages[name] = True
 
 
 class HalMessageBase(object):
     """
     Base class for the HalMessage as well as for various response
     such as errors, warnings or data.
+
+    FIXME: Do we need this?
     """
     def __init__(self, source = None, **kwds):
         super().__init__(**kwds)
@@ -49,7 +64,8 @@ class HalMessage(HalMessageBase):
         m_type - String that defines the message type. This should be a space 
                 separated lower case string.
 
-        data - Python object containing the message data.
+        data - Python object containing the message data. In general this should
+               be a dictionary or a Parameters object.
 
         sync - Boolean that indicates whether or not this message should be 
                processed by all the modules before continuing to the next message.
@@ -76,7 +92,7 @@ class HalMessage(HalMessageBase):
         self.ref_count = 0
 
         # Log when message was created.
-        hdebug.logText(",".join(["created", str(id(self)), self.source.module_name, self.m_type]))
+        self.logEvent("created")
 
     def addError(self, hal_message_error):
         self.m_errors.append(hal_message_error)
@@ -87,10 +103,13 @@ class HalMessage(HalMessageBase):
     def finalize(self):
 
         # Log when message was destroyed.
-        hdebug.logText(",".join(["destroyed", str(id(self)), self.m_type]))
-        
+        self.logEvent("destroyed")
+
         if self.finalizer is not None:
             self.finalizer()
+
+    def getData(self):
+        return self.data
 
     def getErrors(self):
         return self.m_errors
@@ -103,6 +122,9 @@ class HalMessage(HalMessageBase):
 
     def hasResponses(self):
         return len(self.responses) > 0
+
+    def logEvent(self, event_name):
+        hdebug.logText(",".join([event_name, str(id(self)), self.source.module_name, self.m_type]))
 
 
 class HalMessageError(object):

@@ -21,6 +21,7 @@ Hazen 01/17
 from collections import deque
 import importlib
 import os
+import time
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -323,7 +324,9 @@ class HalCore(QtCore.QObject):
         self.queued_messages_timer.setSingleShot(True)
 
         # Load all the modules.
+        module_names = {}
         for module_name in config.get("modules").getAttrs():
+            module_names[module_name] = True
 
             # Get module specific parameters.
             module_params = config.get("modules").get(module_name)
@@ -346,14 +349,10 @@ class HalCore(QtCore.QObject):
             module.newFrame.connect(self.handleFrame)
             module.newMessage.connect(self.handleMessage)
 
-#        # Broadcast starting directory.
-#        self.handleMessage(halMessage.HalMessage(source = self,
-#                                                 m_type = "new directory",
-#                                                 data = config.get("directory")))
-
         # Tell modules to finish configuration.
         self.handleMessage(halMessage.HalMessage(source = self,
-                                                 m_type = "configure"))
+                                                 m_type = "configure",
+                                                 data = module_names))
 
         # Tell the modules to start.
         #
@@ -389,7 +388,7 @@ class HalCore(QtCore.QObject):
         """
         Adds a message to the queue of images to send.
         """
-
+        
         # Check the message and it to the queue.
         if not message.m_type in halMessage.valid_messages:
             raise halExceptions.HalException("Invalid message type '" + message.m_type + "' received from " + message.getSourceName())
@@ -443,14 +442,11 @@ class HalCore(QtCore.QObject):
 
                 # Otherwise send the message.
                 else:
+                    cur_message.logEvent("sent")
                     self.sent_messages.append(cur_message)
-                    #print("-- start --")
                     for module in self.modules:
-                        #print(module.module_name)
                         cur_message.ref_count += 1
                         module.handleMessage(cur_message)
-                    #print("-- stop  --")
-                    #print("")
 
                     # Process any remaining messages with immediate timeout.
                     if (len(self.queued_messages) > 0):
@@ -459,9 +455,9 @@ class HalCore(QtCore.QObject):
     def startMessageTimer(self, interval = 0):
         if not self.queued_messages_timer.isActive():
             self.queued_messages_timer.setInterval(interval)
-            self.queued_messages_timer.start()            
+            self.queued_messages_timer.start()
 
-    
+
 if (__name__ == "__main__"):
 
     # Use both so that we can pass sys.argv to QApplication.
