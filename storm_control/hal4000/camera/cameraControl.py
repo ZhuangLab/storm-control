@@ -28,24 +28,24 @@ class CameraControl(QtCore.QThread):
         self.acquire = IdleActive()
         self.camera = False
         self.frame_number = 0
-        self.is_master = config.get("master")
+        self.is_master = None
         self.key = None
         self.mutex = QtCore.QMutex()
-        self.parameters = StormXMLObject()
+        self.parameters = params.StormXMLObject()
         self.running = True
         self.shutter_state = False  # True = open
 
         # Default (hardware) configuration. The remaining values
         # for the camera are stored in it's parameters.
-        self.config_dict = {"have_emccd" : False,
-                            "have_preamp" : False,
-                            "have_shutter" : False,
-                            "have_temp" : False}
+        self.hw_dict = {"have_emccd" : False,
+                        "have_preamp" : False,
+                        "have_shutter" : False,
+                        "have_temp" : False}
 
         # Parameters common to every camera.
 
         # This is frames per second as reported by the camera.
-        self.parameters.add("fps", ParameterFloat("", "fps", 0, is_mutable = False))
+        self.parameters.add("fps", params.ParameterFloat("", "fps", 0, is_mutable = False))
 
         # Camera AOI size.
         x_size = 512
@@ -63,8 +63,8 @@ class CameraControl(QtCore.QThread):
                                                               "y_end",
                                                               y_size, 1, y_size))
 
-        self.parameters.add("x_pixels", ParameterInt("", "x_pixels", x_size, is_mutable = False))
-        self.parameters.add("y_pixels", ParameterInt("", "y_pixels", y_size, is_mutable = False))
+        self.parameters.add("x_pixels", params.ParameterInt("", "x_pixels", x_size, is_mutable = False))
+        self.parameters.add("y_pixels", params.ParameterInt("", "y_pixels", y_size, is_mutable = False))
 
         self.parameters.add("x_bin", params.ParameterRangeInt("Binning in X",
                                                               "x_bin",
@@ -74,7 +74,10 @@ class CameraControl(QtCore.QThread):
                                                               1, 1, 4))
 
         # Frame size in bytes.
-        self.parameters.add("bytes_per_frame", ParameterInt("", "bytes_per_frame", 0, is_mutable = False))
+        self.parameters.add("bytes_per_frame", params.ParameterInt("", "bytes_per_frame", 0, is_mutable = False))
+
+    def addToHWConfig(self, key, value):
+        self.hw_dict[key] = value
         
     def cameraInit(self):
         self.start(QtCore.QThread.NormalPriority)
@@ -83,25 +86,23 @@ class CameraControl(QtCore.QThread):
         self.running = False
         self.wait()
 
-    def getCameraConfig(self, camera_name):
-        self.config_dict["camera"] = camera_name
-        self.config_dict["is_master"] = self.is_master
-        self.config_dict["shutter_state"] = self.shutter_state
-        self.config_dict["parameters"] = self.parameters.copy()
-        return self.config_dict
+    def getCameraConfig(self):
+        self.hw_dict["shutter_state"] = self.shutter_state
+        self.hw_dict["parameters"] = self.parameters.copy()
+        return self.hw_dict
 
-    def getTemperature(self, camera_name):
+    def getTemperature(self):
         """
         Non-sensical defaults. Cameras that have this 
         feature should override this method.
         """
-        return = {"camera" : camera_name,
-                  "temperature" : 50.0,
-                  "state" : "unstable"}
+        return {"camera" : self.hw_dict["camera"],
+                "temperature" : 50.0,
+                "state" : "unstable"}
 
     def haveTemperature(self):
-        return self.config_dict["have_temp"]
-    
+        return self.hw_dict["have_temp"]
+
     def newParameters(self, parameters):
         """
         Note: The parameters that the camera receives are already
@@ -118,7 +119,7 @@ class CameraControl(QtCore.QThread):
 
     def setEMCCDGain(self, gain):
         pass
-
+    
     def setShutter(self, shutter_state):
         self.shutter_state = shutter_state
 

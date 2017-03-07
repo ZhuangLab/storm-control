@@ -598,6 +598,9 @@ class StormXMLObject(object):
     def __init__(self, nodes = None, recurse = False):
 
         self.parameters = {}
+
+        if nodes is None:
+            return
         
         if isinstance(nodes, ElementTree.Element):
             self._is_new_ = bool(nodes.attrib.get("is_new", False))

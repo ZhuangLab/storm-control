@@ -37,6 +37,8 @@ class Camera(halModule.HalModuleBuffered):
         a_module = importlib.import_module("storm_control.hal4000." + camera_params.get("module_name"))
         a_class = getattr(a_module, camera_params.get("class_name"))
         self.camera_control = a_class(camera_params.get("parameters"))
+        self.camera_control.addToHWConfig("camera", self.module_name)
+        self.camera_control.addToHWConfig("master", camera_params.get("master"))
 
         self.camera_control.newFrame.connect(self.handleNewFrame)
 
@@ -62,7 +64,7 @@ class Camera(halModule.HalModuleBuffered):
                 # Broadcast initial parameters and configuration.
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "default parameters",
-                                                           data = self.camera_control.getConfig(self.module_name)))
+                                                           data = self.camera_control.getCameraConfig()))
                 
             # This message comes from display.cameraDisplay when the feed is changed. The
             # response is broadcast because display.paramsDisplay also needs this information.
@@ -70,7 +72,7 @@ class Camera(halModule.HalModuleBuffered):
                 if (message.getData()["camera"] == self.module_name):
                     self.newMessage.emit(halMessage.HalMessage(source = self,
                                                                m_type = "camera config",
-                                                               data = self.camera_control.getConfig(self.module_name)))
+                                                               data = self.camera_control.getCameraConfig()))
 
             # This message comes from settings.settings.
             elif (message.getType() == "new parameters"):
@@ -97,7 +99,7 @@ class Camera(halModule.HalModuleBuffered):
                     if self.camera_control.haveTemperature():
                         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                                    m_type = "camera temperature",
-                                                                   data = self.camera_control.getTemperature(self.module_name)))
+                                                                   data = self.camera_control.getTemperature()))
 
                     # Start the camera.
                     self.camera_control.startCamera(message.getData()["key"])
