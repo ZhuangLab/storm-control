@@ -15,11 +15,12 @@ import storm_control.sc_library.hdebug as hdebug
 #
 valid_messages = {
     
-    # HAL/core messages.
+    # HAL/core/general messages.
     'add to ui' : True,
     'close event' : True,
     'configure' : True,
-    'module' : True
+    'default parameters' : True,
+    'module' : True,
     'new directory' : True,
     'new parameters file' : True,
     'new shutters file' : True,
@@ -27,12 +28,12 @@ valid_messages = {
     
     }
 
-def addMessage(name):
+def addMessage(name, check_exists = True):
     """
     Modules should call this function at initialization to add additional messages.
     """
     global valid_messages
-    if name in valid_messages:
+    if check_exists and name in valid_messages:
         raise halExceptions.HalException("Message " + name + " already exists!")
     valid_messages[name] = True
 
@@ -117,6 +118,9 @@ class HalMessage(HalMessageBase):
     def getResponses(self):
         return self.responses
 
+    def getType(self):
+        return self.m_type
+        
     def hasErrors(self):
         return len(self.m_errors) > 0
 

@@ -1,6 +1,20 @@
 #!/usr/bin/env python
 """
-Handles a single camera.
+Handles a single camera. 
+
+Notes:
+ 1. There is one of these per camera.
+
+ 2. The name of the camera is the name of the module.
+
+
+Responsibilities:
+ 
+ 1. Operate the camera.
+ 
+ 2. Return the camera configuration when requested. This includes
+    things like the camera maximum value, whether it has a shutter,
+    temperature control, EM gain, etc..
 
 Hazen 02/17
 """
@@ -14,7 +28,7 @@ import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
 
-class Camera(halModule.HalModule):
+class Camera(halModule.HalModuleBuffered):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
@@ -26,6 +40,9 @@ class Camera(halModule.HalModule):
 
         self.camera_control.newFrame.connect(self.handleNewFrame)
 
+        halMessage.addMessage("camera config", check_exists = False)
+        halMessage.addMessage("camera temperature", check_exists = False)
+
     def cleanUp(self, qt_settings):
         self.camera_control.cleanUp()
 
@@ -35,7 +52,68 @@ class Camera(halModule.HalModule):
 
     def processMessage(self, message):
         super().processMessage(message)
+        if (message.level == 1):
+                    
+            if (message.getType() == "configure"):
 
+                # Start the camera control thread.
+                self.camera_control.cameraInit()
+
+                # Broadcast initial parameters and configuration.
+                self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                           m_type = "default parameters",
+                                                           data = self.camera_control.getConfig(self.module_name)))
+                
+            # This message comes from display.cameraDisplay when the feed is changed. The
+            # response is broadcast because display.paramsDisplay also needs this information.
+            elif (message.getType() == "get camera config"):
+                if (message.getData()["camera"] == self.module_name):
+                    self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                               m_type = "camera config",
+                                                               data = self.camera_control.getConfig(self.module_name)))
+
+            # This message comes from settings.settings.
+            elif (message.getType() == "new parameters"):
+                p = message.getData().get(self.module_name).copy()
+                self.camera_control.newParameters(p)
+
+            # This message comes from display.paramsDisplay.
+            elif (message.getType() == "set emccd gain"):
+                if (message.getData()["camera"] == self.module_name):
+                    self.camera_control.setEMCCDGain(message.getData()["gain"])
+
+            # This message comes from the shutter button.
+            elif (message.getType() == "set shutter"):
+                if (message.getData()["camera"] == self.module_name):
+                    self.camera_control.setShutter(message.getData()["state"])
+
+            # This message comes from film.film, it is camera specific as
+            # slave cameras need to be started before master camera(s).
+            elif (message.getType() == "start camera"):
+                if (message.getData()["camera"] == self.module_name):
+
+                    # Broadcast the camera temperature, if available. We do this here because at least
+                    # with some cameras this can only be measured when the camera is not running.
+                    if self.camera_control.haveTemperature():
+                        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                                   m_type = "camera temperature",
+                                                                   data = self.camera_control.getTemperature(self.module_name)))
+
+                    # Start the camera.
+                    self.camera_control.startCamera(message.getData()["key"])
+
+            # This message comes from film.film, it goes to all cameras at once.
+            elif (message.getType() == "start film"):
+                self.camera_control.startCamera(message.getData()["film_settings"])
+
+            # This message comes from film.film.
+            elif (message.getType() == "stop camera"):
+                if (message.getData()["camera"] == self.module_name):
+                    self.camera_control.stopCamera()
+
+            # This message comes from film.film, it goes to all camera at once.
+            elif (message.getType() == "stop film"):
+                self.camera_control.stopFilm()
 
 #
 # The MIT License

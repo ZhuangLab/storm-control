@@ -13,29 +13,42 @@ import storm_control.sc_library.parameters as params
 import storm_control.hal4000.camera.cameraControl as cameraControl
 import storm_control.hal4000.camera.frame as frame
 
+
 class NoneCameraControl(cameraControl.CameraControl):
 
     def __init__(self, config = None, **kwds):
+        kwds["config"] = config
         super().__init__(**kwds)
 
         self.camera = True
-        self.camera_working = True
         
         self.fake_frame = 0
         self.fake_frame_size = [0,0]
-        self.roll = config.get("roll")
-        self.sleep_time = 100
+        self.sleep_time = 0
 
-    def getAcquisitionTimings(self, which_camera):
-        return 0.001 * float(self.sleep_time)
+        # Default parameters.
+        self.parameters.add("exposure_time", params.ParameterRangeFloat("Exposure time (seconds)", 
+                                                                        "exposure_time", 
+                                                                        0.0, 0.0, 10.0))
+        self.parameters.add("roll", params.ParameterRangeFloat("Camera rolling constant", 
+                                                               "roll", 
+                                                               0.1, 0.0, 1.0))
+
+        self.parameters.set("roll", config.get("roll"))
 
     def newParameters(self, parameters):
-        p = parameters.get("camera1")
-        if (p.get("exposure_time") > 0.010):
-            self.sleep_time = int(1000.0 * p.get("exposure_time"))
-        else:
-            self.sleep_time = 10
-            
+        super().newParameters(parameters)
+        p = self.parameters
+
+        # Update parameters.
+        for pname in ["exposure_time", "roll", "x_bin", "x_end", "x_start", "y_bin", "y_end", "y_start"]:
+            p.set(pname, parameters.get(pname))
+        
+        if (p.get("exposure_time") < 0.010):
+            p.set("exposure_time", 0.010)
+
+        p.set("fps", 1.0/p.get("exposure_time"))
+
         size_x = int((p.get("x_end") - p.get("x_start") + 1)/p.get("x_bin"))
         size_y = int((p.get("y_end") - p.get("y_start") + 1)/p.get("y_bin"))
         p.set("x_pixels", size_x)
@@ -45,17 +58,15 @@ class NoneCameraControl(cameraControl.CameraControl):
         for i in range(size_x):
             for j in range(size_y):
                 self.fake_frame[j*size_x+i] = i % 128 + j % 128
-        
-        if not p.has("bytes_per_frame"):
-            p.set("bytes_per_frame", 2 * size_x * size_y)
 
-        self.parameters = p
+        p.set("bytes_per_frame", 2 * size_x * size_y)
 
     def run(self):
         while(self.running):
             self.mutex.lock()
-            if self.acquire.amActive() and self.camera_working:
-                aframe = frame.Frame(numpy.roll(self.fake_frame, int(self.frame_number * self.roll)),
+            if self.acquire.amActive():
+                aframe = frame.Frame(numpy.roll(self.fake_frame,
+                                                int(self.frame_number * self.parameters.get("roll"))),
                                      self.frame_number,
                                      self.fake_frame_size[0],
                                      self.fake_frame_size[1],
@@ -69,7 +80,7 @@ class NoneCameraControl(cameraControl.CameraControl):
                 self.acquire.idle()
 
             self.mutex.unlock()
-            self.msleep(self.sleep_time)
+            self.msleep(int(1000.0 * self.parameters.get("exposure_time")))
 
 #
 # The MIT License

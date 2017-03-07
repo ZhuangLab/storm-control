@@ -69,13 +69,13 @@ class Display(halModule.HalModule):
         super().processMessage(message)
         if (message.level == 1):
             
-            if (message.m_type == "add to ui"):
+            if (message.getType() == "add to ui"):
                 if self.dialog is not None:
                     [module, parent_widget] = message.data["ui_parent"].split(".")
                     if (module == self.module_name):
                         self.dialog.addParamsWidget(message.data["ui_widget"])
 
-            elif (message.m_type == "configure"):
+            elif (message.getType() == "configure"):
                 if self.dialog is not None:
                     self.dialog.showIfVisible()
                 else:

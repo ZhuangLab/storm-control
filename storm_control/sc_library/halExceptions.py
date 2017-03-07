@@ -12,33 +12,24 @@
 class HalException(Exception):
     pass
 
-## Hardware Exception
-#
-# A generic hardware exception.
-#
 class HardwareException(HalException):
+    """
+    A generic hardware exception.
+    """
+    pass
 
-    def __init__(self, message):
-        HalException.__init__(self, message)
-
-
-## Module Exception
-#
-# A generic hal module exception.
-#
 class ModuleException(HalException):
+    """
+    A generic hal module exception.
+    """
+    pass
 
-    def __init__(self, message):
-        HalException.__init__(self, message)
-
-## GUI Exception
-#
-# A generic hal gui exception.
-#
 class GUIException(HalException):
+    """
+    A generic hal gui exception.
+    """
+    pass
 
-    def __init__(self, message):
-        HalException.__init__(self, message)
 
 #
 # The MIT License

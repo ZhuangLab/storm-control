@@ -9,63 +9,118 @@ Hazen 2/17
 
 from PyQt5 import QtCore
 
+import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
+
 import storm_control.hal4000.camera.frame as frame
+
+
+class CameraException(halExceptions.HardwareException):
+    pass
 
 
 class CameraControl(QtCore.QThread):
     newFrame = QtCore.pyqtSignal(object, int)
 
-    def __init__(self, **kwds):
+    def __init__(self, config = None, **kwds):
         super().__init__(**kwds)
 
-        # Other class initializations
         self.acquire = IdleActive()
-        self.frame_number = 0
-        self.key = -1
-        self.mutex = QtCore.QMutex()
-        self.running = True
-        self.shutter = False
-
-        # Camera initialization
         self.camera = False
-        self.camera_working = False
+        self.frame_number = 0
+        self.is_master = config.get("master")
+        self.key = None
+        self.mutex = QtCore.QMutex()
+        self.parameters = StormXMLObject()
+        self.running = True
+        self.shutter_state = False  # True = open
 
+        # Default (hardware) configuration. The remaining values
+        # for the camera are stored in it's parameters.
+        self.config_dict = {"have_emccd" : False,
+                            "have_preamp" : False,
+                            "have_shutter" : False,
+                            "have_temp" : False}
+
+        # Parameters common to every camera.
+
+        # This is frames per second as reported by the camera.
+        self.parameters.add("fps", ParameterFloat("", "fps", 0, is_mutable = False))
+
+        # Camera AOI size.
+        x_size = 512
+        y_size = 512
+        self.parameters.add("x_start", params.ParameterRangeInt("AOI X start",
+                                                                "x_start",
+                                                                1, 1, x_size))
+        self.parameters.add("x_end", params.ParameterRangeInt("AOI X end",
+                                                              "x_end",
+                                                              x_size, 1, x_size))
+        self.parameters.add("y_start", params.ParameterRangeInt("AOI Y start",
+                                                                "y_start",
+                                                                1, 1, y_size))
+        self.parameters.add("y_end", params.ParameterRangeInt("AOI Y end",
+                                                              "y_end",
+                                                              y_size, 1, y_size))
+
+        self.parameters.add("x_pixels", ParameterInt("", "x_pixels", x_size, is_mutable = False))
+        self.parameters.add("y_pixels", ParameterInt("", "y_pixels", y_size, is_mutable = False))
+
+        self.parameters.add("x_bin", params.ParameterRangeInt("Binning in X",
+                                                              "x_bin",
+                                                              1, 1, 4))
+        self.parameters.add("y_bin", params.ParameterRangeInt("Binning in Y",
+                                                              "y_bin",
+                                                              1, 1, 4))
+
+        # Frame size in bytes.
+        self.parameters.add("bytes_per_frame", ParameterInt("", "bytes_per_frame", 0, is_mutable = False))
+        
     def cameraInit(self):
         self.start(QtCore.QThread.NormalPriority)
 
     def cleanUp(self):
         self.running = False
         self.wait()
-        
-    def closeShutter(self):
-        self.shutter = False
 
-    def getAcquisitionTimings(self):
+    def getCameraConfig(self, camera_name):
+        self.config_dict["camera"] = camera_name
+        self.config_dict["is_master"] = self.is_master
+        self.config_dict["shutter_state"] = self.shutter_state
+        self.config_dict["parameters"] = self.parameters.copy()
+        return self.config_dict
+
+    def getTemperature(self, camera_name):
         """
-        Return the time that it takes to capture a frame in seconds.
+        Non-sensical defaults. Cameras that have this 
+        feature should override this method.
         """
-        return 0.1
+        return = {"camera" : camera_name,
+                  "temperature" : 50.0,
+                  "state" : "unstable"}
 
-    def getShutterState(self, which_camera):
-        return self.shutter
-
-#    def getTemperature(self, which_camera, parameters):
-#        if (which_camera == "camera1"):
-#            temp = [50, "unstable"]
-#            parameters.set(which_camera + ".actual_temperature", temp[0])
-#            parameters.set(which_camera + ".temperature_control", temp[1])
-    def initCamera(self):
-        pass
-
+    def haveTemperature(self):
+        return self.config_dict["have_temp"]
+    
     def newParameters(self, parameters):
+        """
+        Note: The parameters that the camera receives are already
+              a copy so there is no need to make another copy.
+        """
+        #
+        # This restriction is necessary because in order to display
+        # pictures as QImages they need to 32 bit aligned.
+        #
+        if parameters.has("x_end"):
+            x_pixels = parameters.get("x_end") - parameters.get("x_start") + 1
+            if((x_pixels % 4) != 0):
+                raise CameraException("The camera ROI must be a multiple of 4 in x!")
+
+    def setEMCCDGain(self, gain):
         pass
 
-    def openShutter(self):
-        self.shutter = True
-
-    def setEMCCDGain(self, which_camera, gain):
-        pass
+    def setShutter(self, shutter_state):
+        self.shutter_state = shutter_state
 
     def startCamera(self, key):
         self.mutex.lock()

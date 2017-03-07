@@ -75,17 +75,14 @@ class HalController(halModule.HalModule):
     def processMessage(self, message):
         super().processMessage(message)
         if (message.level == 1):
-            if (message.m_type == "add to ui"):
+            if (message.getType() == "add to ui"):
                 [module, parent_widget] = message.data["ui_parent"].split(".")
                 if (module == self.module_name):
                     self.view.addUiWidget(parent_widget,
                                           message.data["ui_widget"],
                                           message.data.get("ui_order"))
-                    
-#            elif (message.m_type == "new directory"):
-#                self.view.setFilmDirectory(message.data)
                 
-            elif (message.m_type == "start"):
+            elif (message.getType() == "start"):
                 self.view.show()
 
 
@@ -350,6 +347,9 @@ class HalCore(QtCore.QObject):
             module.newMessage.connect(self.handleMessage)
 
         # Tell modules to finish configuration.
+        #
+        # The message includes a dictionary of the names of all modules that were loaded.
+        #
         self.handleMessage(halMessage.HalMessage(source = self,
                                                  m_type = "configure",
                                                  data = module_names))
@@ -437,7 +437,7 @@ class HalCore(QtCore.QObject):
             else:
 
                 # Check for "closeEvent" message from the main window.
-                if (cur_message.getSourceName() == "hal") and (cur_message.m_type == "close event"):
+                if (cur_message.getSourceName() == "hal") and (cur_message.getType() == "close event"):
                     self.cleanup()
 
                 # Otherwise send the message.

@@ -27,17 +27,7 @@ def config(config_file):
         raise ParametersException(config_file + " is not a configuration file.")
 
     # Create the configuration object.
-    config = StormXMLObject(xml, recurse = True)
-
-#    # Add some additional parameters to the modules.
-#    modules = hardware.get("modules")
-#    for module_name in modules.getAttrs():
-#        module = modules.get(module_name)
-#        module.set("hal_type", module_name)
-#        if module.has("menu_item"):
-#            module.set("hal_gui", True)
-#        else:
-#            module.set("hal_gui", False)
+    config = StormXMLObject(nodes = xml, recurse = True)
 
     return config
 
@@ -260,30 +250,6 @@ def parameters(parameters_file, recurse = False):
     xml_object.set("parameters_file", parameters_file)
     
     return xml_object
-
-## setCameraParameters
-#
-# This sets some derived properties as well as some default properties of
-# the camera part of the parameters object.
-#
-# @param camera A camera XML object.
-#
-def setCameraParameters(camera):
-
-    # This restriction is necessary because in order to display
-    # pictures as QImages they need to 32 bit aligned.
-    if camera.has("x_end"):
-        x_pixels = camera.get("x_end") - camera.get("x_start") + 1
-        if((x_pixels % 4) != 0):
-            raise ParametersException("The camera ROI must be a multiple of 4 in x!")
-
-    camera.set("actual_temperature", 0)
-    
-    # This is the actual exposure time as reported by the camera.
-    camera.set("exposure_value", ParameterFloat("", "exposure_value", 0, is_mutable = False))
-
-    # This is the time between frames as reported by the camera.
-    camera.set("cycle_value", ParameterFloat("", "cycle_value", 0, is_mutable = False))
 
 ## setDefaultParameters
 #
@@ -629,7 +595,7 @@ class StormXMLObject(object):
     #
     # @param nodes A list of XML nodes.
     #
-    def __init__(self, nodes, recurse = False):
+    def __init__(self, nodes = None, recurse = False):
 
         self.parameters = {}
         
