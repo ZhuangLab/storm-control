@@ -18,14 +18,10 @@ class ParamsView(QtWidgets.QGroupBox):
     in the UI. It also handles the EMCCD gain slider (if the camera has
     an EMCCD).
     """
-    
-    gainChange = QtCore.pyqtSignal(str, int)
+    gainChange = QtCore.pyqtSignal(int)
 
     def __init__(self, camera_params_ui = None, **kwds):
         super().__init__(**kwds)
-
-        self.temperature = False
-        self.current_camera = None
 
         # UI setup
         self.ui = camera_params_ui.Ui_GroupBox()
@@ -34,16 +30,39 @@ class ParamsView(QtWidgets.QGroupBox):
         # connect signals
         self.ui.EMCCDSlider.valueChanged.connect(self.handleGainChange)
 
+    def configureUi(self, camera_config):
+        self.setTitle(camera_config["camera"].title())
+        
+        if camera_config["have_emccd"]:
+            self.ui.EMCCDLabel.show()
+            self.ui.EMCCDSlider.show()
+        else:
+            self.ui.EMCCDLabel.hide()
+            self.ui.EMCCDSlider.hide()
+
+        if camera_config["have_preamp"]:
+            self.ui.preampGainLabel.show()
+            self.ui.preampGainText.show()
+        else:
+            self.ui.preampGainLabel.hide()
+            self.ui.preampGainText.hide()
+
+        if camera_config["have_temp"]:
+            self.ui.temperatureLabel.show()
+            self.ui.temperatureText.show()
+        else:
+            self.ui.temperatureLabel.hide()
+            self.ui.temperatureText.hide()
+
+    def enableEMCCDSlider(self, enable):
+        self.ui.EMCCDSlider.setEnabled(enable)
+
     def handleGainChange(self, new_gain):
         self.ui.EMCCDLabel.setText("EMCCD Gain: %d" % new_gain)
-        self.gainChange.emit(self.current_camera, new_gain)
+        self.gainChange.emit(new_gain)
 
     def newParameters(self, parameters):
-        self.parameters = parameters.get(self.which_camera)
-        p = self.parameters
-        if p.has("temperature"):
-            self.temperature = p.get("temperature")
-
+        p = parameters
         if p.has("emgainmode"):
             self.ui.EMCCDSlider.valueChanged.disconnect()
             self.ui.EMCCDSlider.setMinimum(p.get("em_gain_low", 1))
@@ -65,56 +84,22 @@ class ParamsView(QtWidgets.QGroupBox):
             self.ui.exposureTimeText.setText("%.4f" % p.get("exposure_value"))
             self.ui.FPSText.setText("%.4f" % (1.0/p.get("cycle_value")))
 
-    def showEMCCD(self, visible):
-        if visible:
-            self.ui.EMCCDLabel.show()
-            self.ui.EMCCDSlider.show()
+    def updateTemperature(self, temp_data):
+        if (temp_data["state"] == "stable"):
+            self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
         else:
-            self.ui.EMCCDLabel.hide()
-            self.ui.EMCCDSlider.hide()
-
-    def showPreamp(self, visible):
-        if visible:
-            self.ui.preampGainLabel.show()
-            self.ui.preampGainText.show()
-        else:
-            self.ui.preampGainLabel.hide()
-            self.ui.preampGainText.hide()
-
-    def showTemperature(self, visible):
-        if visible:
-            self.ui.temperatureLabel.show()
-            self.ui.temperatureText.show()
-        else:
-            self.ui.temperatureLabel.hide()
-            self.ui.temperatureText.hide()
-
-    def startFilm(self):
-        self.ui.EMCCDSlider.setEnabled(False)
-        
-    def stopFilm(self):
-        self.ui.EMCCDSlider.setEnabled(True)
-
-    def updateCameraProperties(self, camera_properties):
-        properties = camera_properties[self.which_camera]
-        self.showEMCCD("have_emccd" in properties)
-        self.showPreamp("have_preamp" in properties)
-        self.showTemperature("have_temperature" in properties)
-
-    def updatedParams(self):
-        if self.parameters.has("temperature_control"):
-            if (self.parameters.get("temperature_control") == "stable"):
-                self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
-            else:
-                self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
-            actual_temp = self.parameters.get("actual_temperature")
-            self.ui.temperatureText.setText(str(actual_temp) + " (" + str(self.temperature) + ")")        
+            self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
+            
+        actual_temp = temp_data["temperature"]
+        self.ui.temperatureText.setText(str(actual_temp) + " (" + str(self.temperature) + ")")        
 
 
 class Params(halModule.HalModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
+
+        self.current_camera = None
 
         if (module_params.get("ui_type") == "classic"):
             pv_ui = importlib.import_module("storm_control.hal4000.qtdesigner.camera_params_ui")
@@ -128,13 +113,40 @@ class Params(halModule.HalModule):
             self.configure_dict = {"ui_parent" : "display.cameraParamsFrame",
                                    "ui_widget" : self.view}
 
+        self.view.gainChange.connect(self.handleGainChange)
+        halMessage.addMessage("set emccd gain")
+
+    def handleGainChange(self, new_gain):
+        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "set emccd gain",
+                                                   data = {"camera" : self.current_camera,
+                                                           "gain" : new_gain}))
+        
     def processMessage(self, message):
         super().processMessage(message)
         if (message.level == 1):
-            if (message.m_type == "configure"):
+
+            # The current camera has changed.
+            if (message.getType() == "camera config"):
+                data = message.getData()
+                self.current_camera = data["camera"]
+                self.view.configureUi(data)
+
+            elif (message.getType() == "camera temperature"):
+                data = message.getData()
+                if (self.current_camera == data["camera"]):
+                    self.view.updateTemperature(data)
+
+            elif (message.getType() == "configure"):
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "add to ui",
                                                            data = self.configure_dict))
+
+            elif (message.getType() == "new parameters"):
+                p = message.getData().get(self.current_camera).copy()
+                self.view.newParameters(p)
+
+
 
 
 #

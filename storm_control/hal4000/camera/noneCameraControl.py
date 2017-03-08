@@ -33,7 +33,6 @@ class NoneCameraControl(cameraControl.CameraControl):
         self.parameters.add("roll", params.ParameterRangeFloat("Camera rolling constant", 
                                                                "roll", 
                                                                0.1, 0.0, 1.0))
-
         self.parameters.set("roll", config.get("roll"))
 
     def newParameters(self, parameters):
