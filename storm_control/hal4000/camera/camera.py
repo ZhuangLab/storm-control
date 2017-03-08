@@ -77,7 +77,6 @@ class Camera(halModule.HalModuleBuffered):
                                                                m_type = "camera config",
                                                                data = self.camera_control.getCameraConfig()))
 
-
             # This message comes from settings.settings.
             elif (message.getType() == "new parameters"):
                 p = message.getData().get(self.module_name).copy()

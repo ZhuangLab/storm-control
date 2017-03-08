@@ -114,6 +114,7 @@ class Params(halModule.HalModule):
                                    "ui_widget" : self.view}
 
         self.view.gainChange.connect(self.handleGainChange)
+        
         halMessage.addMessage("set emccd gain")
 
     def handleGainChange(self, new_gain):
