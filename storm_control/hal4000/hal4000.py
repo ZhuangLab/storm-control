@@ -420,7 +420,7 @@ class HalCore(QtCore.QObject):
         # Process the next message.
         if (len(self.queued_messages) > 0):
             cur_message = self.queued_messages.popleft()
-            print(cur_message.source.module_name + " '" + cur_message.m_type + "' " + str(cur_message.ref_count))
+            print(cur_message.source.module_name + " '" + cur_message.m_type + "'")
 
             #
             # If this message requested synchronization and there are

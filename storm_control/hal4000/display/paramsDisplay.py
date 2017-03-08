@@ -147,8 +147,6 @@ class Params(halModule.HalModule):
                 self.view.newParameters(p)
 
 
-
-
 #
 # The MIT License
 #
