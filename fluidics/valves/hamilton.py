@@ -207,7 +207,11 @@ class HamiltonMVP():
 
         # Write message and read response
         self.write(message)
-        response = self.read()
+        try:
+            response = self.read()
+        except serial.SerialTimeoutException:
+            print "The valves encountered a read timeout when writing: " + message
+            return ("Negative Acknowledge", False, response)
         
         # Parse response into sent message and response
         repeated_message = response[:(response.find(self.carriage_return)-1)]

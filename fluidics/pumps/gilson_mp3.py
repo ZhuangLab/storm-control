@@ -148,7 +148,13 @@ class APump():
         self.serial.write(string)
 
     def getResponse(self):
-        return self.serial.read()
+        response = None
+        try:
+            response =self.serial.read()
+        except serial.SerialTimeoutException:
+            print "Gilson pump encountered a read timeout"
+
+        return response
 
 
 
