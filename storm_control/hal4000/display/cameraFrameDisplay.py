@@ -79,6 +79,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.ui = cameraDisplayUi.Ui_Frame()
         self.ui.setupUi(self)
 
+        # Display range slider.
         self.ui.rangeSlider = qtRangeSlider.QVRangeSlider()
         layout = QtWidgets.QGridLayout(self.ui.rangeSliderWidget)
         layout.setContentsMargins(1,1,1,1)
@@ -87,6 +88,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         #self.ui.rangeSlider.setRange([0.0, self.max_intensity, 1.0])
         self.ui.rangeSlider.setEmitWhileMoving(True)
 
+        # Color tables combo box.
         for color_name in self.color_tables.getColorTableNames():
             self.ui.colorComboBox.addItem(color_name[:-5])
 
