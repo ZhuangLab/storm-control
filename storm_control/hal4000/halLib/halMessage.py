@@ -42,11 +42,17 @@ class HalMessageBase(object):
     """
     Base class for the HalMessage as well as for various response
     such as errors, warnings or data.
-
-    FIXME: Do we need this?
     """
-    def __init__(self, source = None, **kwds):
+    def __init__(self, m_type = "", source = None, **kwds):
+        """
+        m_type - String that defines the message type. This should be a space 
+                 separated lower case string.
+
+        source - HalModule object that sent the message.
+        """
         super().__init__(**kwds)
+
+        self.m_type = m_type
         self.source = source
         
     def getSource(self):
@@ -55,16 +61,14 @@ class HalMessageBase(object):
     def getSourceName(self):
         return self.source.module_name
 
+    def getType(self):
+        return self.m_type
+    
 
 class HalMessage(HalMessageBase):
 
-    def __init__(self, m_type = "", data = None, sync = False, level = 1, finalizer = None, **kwds):
+    def __init__(self, data = None, sync = False, level = 1, finalizer = None, **kwds):
         """
-        source - HalModule object that sent the message.
-
-        m_type - String that defines the message type. This should be a space 
-                separated lower case string.
-
         data - Python object containing the message data. In general this should
                be a dictionary or a Parameters object.
 
@@ -86,7 +90,6 @@ class HalMessage(HalMessageBase):
         self.finalizer = finalizer
         self.level = level
         self.m_errors = []
-        self.m_type = m_type
         self.responses = []
         self.sync = sync
 
@@ -118,9 +121,6 @@ class HalMessage(HalMessageBase):
     def getResponses(self):
         return self.responses
 
-    def getType(self):
-        return self.m_type
-        
     def hasErrors(self):
         return len(self.m_errors) > 0
 
@@ -155,14 +155,17 @@ class HalMessageError(object):
         return self.m_exception is not None
 
 
-class HalMessageResponse(object):
+class HalMessageResponse(HalMessageBase):
     """
     If a module wants to send some information back to the message sender then
     it should call the message's addResponse() method with one of the objects.
+
+    Note: This is probably not the optimal design as the m_type should probably
+          be determined automatically somehow, but for now you should specify what
+          the message type that this is response to is.
     """
     def __init__(self, response_data = None, **kwds):
         """
-        source - The halmodule that created the error/warning.
         response_data - Python object containing the response.
         """
         super().__init__(**kwds)

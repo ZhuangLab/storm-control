@@ -51,7 +51,7 @@ class HalDialog(QtWidgets.QDialog):
 
     def showIfVisible(self):
         """
-        Show the dialog if visible, this is called at the configuration stage.
+        Show the dialog if visible, this is called at the "start" stage.
         """
         if self.am_visible:
             self.show()        

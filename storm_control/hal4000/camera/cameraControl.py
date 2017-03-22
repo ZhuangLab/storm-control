@@ -44,7 +44,8 @@ class CameraControl(QtCore.QThread):
 
         # Parameters common to every camera.
 
-        # This is frames per second as reported by the camera.
+        # This is frames per second as reported by the camera. It is used
+        # by the illumination module for timing the shutters.
         self.parameters.add("fps", params.ParameterFloat("", "fps", 0, is_mutable = False))
 
         # Camera AOI size.
@@ -74,7 +75,53 @@ class CameraControl(QtCore.QThread):
                                                               1, 1, 4))
 
         # Frame size in bytes.
-        self.parameters.add("bytes_per_frame", params.ParameterInt("", "bytes_per_frame", 0, is_mutable = False))
+        self.parameters.add("bytes_per_frame", params.ParameterInt("",
+                                                                   "bytes_per_frame",
+                                                                   x_size * y_size * 2,
+                                                                   is_mutable = False,
+                                                                   is_saved = False))
+
+        #
+        # Camera display orientation. Values can only be changed by
+        # changing the config.xml file.
+        #
+        self.parameters.add("flip_horizontal", params.ParameterSetBoolean("Flip image horizontal",
+                                                                          "flip_horizontal",
+                                                                          False,
+                                                                          is_mutable = False))
+                            
+        self.parameters.add("flip_vertical", params.ParameterSetBoolean("Flip image vertical",
+                                                                        "flip_vertical",
+                                                                        False,
+                                                                        is_mutable = False))
+
+        self.parameters.add("transpose", params.ParameterSetBoolean("Transpose image",
+                                                                    "transpose",
+                                                                    False,
+                                                                    is_mutable = False))
+        
+        self.parameters.set("flip_horizontal", config.get("flip_horizontal", False))
+        self.parameters.set("flip_vertical", config.get("flip_vertical", False))
+        self.parameters.set("transpose", config.get("transpose", False))
+
+        #
+        # Camera default display minimum and maximum.
+        #
+        # These are the values the display will use by default. They can
+        # only be changed by changing the config.xml file.
+        #
+        self.parameters.add("default_max", params.ParameterInt("",
+                                                               "default_max",
+                                                               2000,
+                                                               is_mutable = False))
+        
+        self.parameters.add("default_min", params.ParameterInt("",
+                                                               "default_min",
+                                                               100,
+                                                               is_mutable = False))
+        
+        self.parameters.set("default_max", config.get("default_max", 2000))
+        self.parameters.set("default_min", config.get("default_min", 100))
 
     def addToHWConfig(self, key, value):
         self.hw_dict[key] = value

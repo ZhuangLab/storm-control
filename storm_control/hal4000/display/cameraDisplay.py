@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 """
-Handles the primary camera display. In detached mode
-this is the one with the record button.
+Handles the management of one or more camera / feed displays.
 
-Hazen 2/17
+Hazen 3/17
 """
 
 from PyQt5 import QtWidgets
 
-import storm_control.hal4000.display.frameDisplay as frameDisplay
+import storm_control.hal4000.display.cameraFrameDisplay as cameraFrameDisplay
 import storm_control.hal4000.halLib.halDialog as halDialog
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
@@ -17,7 +16,8 @@ import storm_control.hal4000.qtdesigner.camera_detached_ui as cameraDetachedUi
 
 class DisplayDialog(halDialog.HalDialog):
     """
-    In detached view mode this is the dialog that shows the camera image.
+    These are the dialog boxes that show the camera image. In detached mode
+    there is at least one of these.
     """
     def __init__(self, module_params = None, qt_settings = None, camera_view = None, **kwds):
         super().__init__(**kwds)
@@ -38,6 +38,8 @@ class DisplayDialog(halDialog.HalDialog):
         self.params_layout = QtWidgets.QGridLayout(self.ui.cameraParamsFrame)
         self.params_layout.setContentsMargins(0,0,0,0)
 
+        self.halDialogInit(qt_settings)
+
     def addParamsWidget(self, camera_params_widget):
         """
         Add the camera params widget to the UI.
@@ -50,39 +52,91 @@ class Display(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
         
-        if (module_params.get("ui_type") == "classic"):
-            self.dialog = None
-            self.view = frameDisplay.CameraFrameDisplay(show_record = True)
-        else:
-            self.view = frameDisplay.CameraFrameDisplay(show_record = False)
-            self.dialog = DisplayDialog(module_name = module_name,
-                                        module_params = module_params,
-                                        qt_settings = qt_settings,
-                                        camera_view = self.view)
+        self.parameters = module_params.get("parameters")
         
-        self.view.guiMessage.connect(self.handleGuiMessage)
+        self.dialogs = []
+        self.views = []
 
+        #
+        # There is always at least one display by default. Also, this display
+        # has additional functionality that the other displays won't have.
+        #
+        view_name = self.getNextViewName()
+        if (module_params.get("ui_type") == "classic"):
+            self.views.append(cameraFrameDisplay.CameraFrameDisplay(display_name = view_name,
+                                                                    show_record = True))
+            self.dialogs.append(None)
+        else:
+            self.views.append(cameraFrameDisplay.CameraFrameDisplay(display_name = view_name,
+                                                                    show_record = False))
+            self.dialogs.append(DisplayDialog(module_name = view_name,
+                                              module_params = module_params,
+                                              qt_settings = qt_settings,
+                                              camera_view = self.views[0]))
+        
+        self.views[0].guiMessage.connect(self.handleGuiMessage)
+
+        # This message comes from the viewers, it is used to get the initial
+        # display settings for a camera or feed.
+        halMessage.addMessage("get feed config", check_exists = False)
+
+        # This message only comes from view[0], the default display.
+        halMessage.addMessage("set current camera")
+
+    def getNextViewName(self):
+        return "display{0:02d}".format(len(self.views))
+    
     def handleGuiMessage(self, message):
         self.newMessage.emit(message)
+
+    def handleResponse(self, response):
+        """
+        The only message that we expect a response for is a 'get feed config' message.
+        """
+        if (response.getType() == "get feed config"):
+            self.viewFeedConfig(response)
 
     def processMessage(self, message):
         super().processMessage(message)
         if (message.level == 1):
             
             if (message.getType() == "add to ui"):
-                if self.dialog is not None:
+                if self.dialogs[0] is not None:
                     [module, parent_widget] = message.data["ui_parent"].split(".")
                     if (module == self.module_name):
-                        self.dialog.addParamsWidget(message.data["ui_widget"])
+                        self.dialogs[0].addParamsWidget(message.data["ui_widget"])
 
             elif (message.getType() == "configure"):
-                if self.dialog is not None:
-                    self.dialog.showIfVisible()
-                else:
+                if self.dialogs[0] is None:
                     self.newMessage.emit(halMessage.HalMessage(source = self,
                                                                m_type = "add to ui",
                                                                data = {"ui_parent" : "hal.cameraFrame",
-                                                                       "ui_widget" : self.view}))
+                                                                       "ui_widget" : self.views[0]}))
+
+                #
+                # Broadcasting this message tells all the modules that camera1 is the
+                # 'current camera', this is primarily for the benefit of display.paramsDisplay.
+                #
+                self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                           m_type = "set current camera",
+                                                           data = {"camera" : "camera1"}))
+                
+            elif (message.getType() == "current camera"):
+                self.viewFeedConfig(message)
+
+            elif (message.getType() == "start"):
+                if self.dialogs[0] is not None:
+                    self.dialogs[0].showIfVisible()
+
+    def viewFeedConfig(self, message):
+        data = message.getData()
+
+        # Add default color table information.
+        data["colortable"] = self.parameters.get("colortable")
+        
+        for view in self.views:
+            view.feedConfig(data)
+
 
 #
 # The MIT License

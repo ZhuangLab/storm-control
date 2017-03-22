@@ -2,7 +2,8 @@
 """
 This class handles handles displaying camera data using the
 appropriate qtCameraWidget class. It is also responsible for 
-displaying the camera record and shutter buttons.
+displaying the camera record and shutter buttons as well as
+choosing the color table, scaling, etc..
 
 Hazen 2/17
 """
@@ -18,7 +19,6 @@ import storm_control.hal4000.qtWidgets.qtCameraWidget as qtCameraWidget
 import storm_control.hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
 
 # Misc
-import storm_control.hal4000.camera.feeds as feeds
 import storm_control.hal4000.colorTables.colorTables as colorTables
 
 import storm_control.hal4000.qtdesigner.camera_display_ui as cameraDisplayUi
@@ -26,25 +26,51 @@ import storm_control.hal4000.qtdesigner.camera_display_ui as cameraDisplayUi
 default_widget = None
 
 
-class FeedFrameDisplay(QtWidgets.QFrame):
+class BaseFrameDisplay(QtWidgets.QFrame):
     """
     The base frame display class.
 
     Handles the qtCameraWidget which displays the image as well as other
     GUI elements such as the display range slide, color table chooser, etc..
+
+    This class also keeps track of the display settings for every camera
+    and every feed. It is responsible for the 'display' sections of the
+    parameters file.
+
+    <displayn>
+      <cameran>
+        <colortable></colortable>
+        <display_max></display_max>
+        <display_min></display_min>
+        <sync></sync>
+      <cameran>
+      ..
+      <feedn>
+        <colortable></colortable>
+        <display_max></display_max>
+        <display_min></display_min>
+        <sync></sync>
+      </feedn>
+    </displayn>
+
+    I'm not sure whether these shouldn't be feed specific instead of 
+    display specific? That would also make it easier to include them
+    in the parameters editor.
     """
     guiMessage = QtCore.pyqtSignal(object)
 
-    def __init__(self, **kwds):
+    def __init__(self, display_name = None, feed_name = "camera1", **kwds):
         super().__init__(**kwds)
 
         # General (alphabetically ordered).
         self.color_gradient = None
         self.color_tables = colorTables.ColorTables(os.path.dirname(__file__) + "/../colorTables/all_tables/")
         self.cycle_length = None
+        self.display_name = None
         self.display_timer = QtCore.QTimer(self)
-        self.feed_name = None
+        self.feed_name = feed_name
         self.frame = False
+        self.parameters = params.StormXMLObject()
         self.show_grid = False
         self.show_info = True
         self.show_target = False
@@ -96,12 +122,80 @@ class FeedFrameDisplay(QtWidgets.QFrame):
         self.display_timer.start()
         
     def contextMenuEvent(self, event):
-        menu = QtGui.QMenu(self)
+        menu = QtWidgets.QMenu(self)
         menu.addAction(self.ui.infoAct)
         menu.addAction(self.ui.targetAct)
         menu.addAction(self.ui.gridAct)
         menu.exec_(event.globalPos())
 
+    def feedConfig(self, data):
+        cam_params = data["parameters"]
+
+        # Add a sub-section for this camera / feed if we don't already have one.
+        if not self.parameters.has(data["camera"]):
+
+            # Create a sub-section for this camera / feed.
+            p = self.parameters.addSubSection(data["camera"])
+
+            # Add display specific parameters.
+            p.add("colortable", params.ParameterSetString("Color table",
+                                                          "colortable",
+                                                          data["colortable"],
+                                                          self.color_tables.getColorTableNames()))
+                        
+            p.add("display_max", params.ParameterInt("Display maximum",
+                                                     "display_max",
+                                                     cam_params.get("default_max")))
+
+            p.add("display_min", params.ParameterInt("Display minimum",
+                                                     "display_min",
+                                                     cam_params.get("default_min")))
+
+            p.add("max_intensity", params.ParameterInt("", "max_intensity",
+                                                       cam_params.get("max_intensity"),
+                                                       is_mutable = False,
+                                                       is_saved = False))
+
+            p.add("sync", params.ParameterInt("Frame to display when filming with a shutter sequence",
+                                              "sync", 0))
+
+        #
+        # Update UI settings if the feed / camera that we got configuration
+        # information for is the current feed / camera.
+        #
+        if (self.feed_name == data["camera"]):
+
+            # Setup the camera display widget
+            color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
+            self.camera_widget.newColorTable(color_table)
+            self.camera_widget.newSize([cam_params.get("x_pixels")/cam_params.get("x_bin"),
+                                        cam_params.get("y_pixels")/cam_params.get("y_bin")])
+            self.updateRange()
+
+            # Color gradient
+            if self.color_gradient is not None:
+                self.color_gradient.newColorTable(color_table)
+            else:
+                self.color_gradient = qtColorGradient.QColorGradient(colortable = color_table,
+                                                                     parent = self.ui.colorFrame)
+                layout = QtWidgets.QGridLayout(self.ui.colorFrame)
+                layout.setContentsMargins(2,2,2,2)
+                layout.addWidget(self.color_gradient)
+                
+            self.ui.colorComboBox.setCurrentIndex(self.ui.colorComboBox.findText(self.getParameter("colortable")[:-5]))
+
+            # General settings
+            self.ui.rangeSlider.setRange([0.0, self.getParameter("max_intensity"), 1.0])
+            self.ui.rangeSlider.setValues([float(self.getParameter("display_min")),
+                                           float(self.getParameter("display_max"))])
+            self.ui.syncSpinBox.setValue(self.getParameter("sync"))
+
+    def getParameter(self, pname):
+        """
+        Wrapper to make it easier to get the appropriate parameter value.
+        """
+        return self.parameters.get(self.feed_name).get(pname)
+    
     def handleAutoScale(self, bool):
         [scalemin, scalemax] = self.camera_widget.getAutoScale()
         if scalemin < 0:
@@ -152,13 +246,13 @@ class FeedFrameDisplay(QtWidgets.QFrame):
         self.ui.intensityIntLabel.setText("{0:d}".format(i))
 
     def handleRangeChange(self, scale_min, scale_max):
-        if scale_max == scale_min:
-            if scale_max < float(self.max_intensity):
+        if (scale_max == scale_min):
+            if (scale_max < float(self.getParameter("max_intensity"))):
                 scale_max += 1.0
             else:
                 scale_min -= 1.0
-        self.setParameter("scalemax", int(scale_max))
-        self.setParameter("scalemin", int(scale_min))
+        self.setParameter("display_max", int(scale_max))
+        self.setParameter("display_min", int(scale_min))
         self.updateRange()
 
     def handleSync(self, sync_value):
@@ -174,38 +268,38 @@ class FeedFrameDisplay(QtWidgets.QFrame):
             self.ui.targetAct.setText("Hide Target")
         self.camera_widget.setShowTarget(self.show_target)
 
-    def newFeed(self, feed_name):
-        self.feed_name = feed_name
-
-        # Setup the camera display widget
-        self.color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
-        self.camera_widget.newColorTable(self.color_table)
-        self.camera_widget.newSize([self.getParameter("x_pixels")/self.getParameter("x_bin"),
-                                    self.getParameter("y_pixels")/self.getParameter("y_bin")])
-        self.updateRange()
-
-        # Color gradient
-        if self.color_gradient:
-            self.color_gradient.newColorTable(self.color_table)
-        else:
-            self.color_gradient = qtColorGradient.QColorGradient(colortable = self.color_table,
-                                                                 parent = self.ui.colorFrame)
-            layout = QtWidgets.QGridLayout(self.ui.colorFrame)
-            layout.setContentsMargins(2,2,2,2)
-            layout.addWidget(self.color_gradient)
-
-        self.ui.colorComboBox.setCurrentIndex(self.ui.colorComboBox.findText(self.getParameter("colortable")[:-5]))
-
-        # General settings
-        self.max_intensity = self.getParameter("max_intensity")
-        self.ui.rangeSlider.setRange([0.0, self.max_intensity, 1.0])
-        self.ui.rangeSlider.setValues([float(self.getParameter("scalemin")), 
-                                       float(self.getParameter("scalemax"))])
-
-        # Find correct sync value, if it exists.
-        if not feed_name in self.sync_values_by_feedname:
-            self.sync_values_by_feedname[feed_name] = self.getParameter("sync")
-        self.ui.syncSpinBox.setValue(self.sync_values_by_feedname[feed_name])
+#    def newFeed(self, feed_name):
+#        self.feed_name = feed_name
+#
+#        # Setup the camera display widget
+#        self.color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
+#        self.camera_widget.newColorTable(self.color_table)
+#        self.camera_widget.newSize([self.getParameter("x_pixels")/self.getParameter("x_bin"),
+#                                    self.getParameter("y_pixels")/self.getParameter("y_bin")])
+#        self.updateRange()
+#
+#        # Color gradient
+#        if self.color_gradient:
+#            self.color_gradient.newColorTable(self.color_table)
+#        else:
+#            self.color_gradient = qtColorGradient.QColorGradient(colortable = self.color_table,
+#                                                                 parent = self.ui.colorFrame)
+#            layout = QtWidgets.QGridLayout(self.ui.colorFrame)
+#            layout.setContentsMargins(2,2,2,2)
+#            layout.addWidget(self.color_gradient)
+#
+#        self.ui.colorComboBox.setCurrentIndex(self.ui.colorComboBox.findText(self.getParameter("colortable")[:-5]))
+#
+#        # General settings
+#        self.max_intensity = self.getParameter("max_intensity")
+#        self.ui.rangeSlider.setRange([0.0, self.max_intensity, 1.0])
+#        self.ui.rangeSlider.setValues([float(self.getParameter("scalemin")), 
+#                                       float(self.getParameter("scalemax"))])
+#
+#        # Find correct sync value, if it exists.
+#        if not feed_name in self.sync_values_by_feedname:
+#            self.sync_values_by_feedname[feed_name] = self.getParameter("sync")
+#        self.ui.syncSpinBox.setValue(self.sync_values_by_feedname[feed_name])
 
     def newFrame(self, frame):
         if (frame.which_camera == self.feed_name):
@@ -215,37 +309,45 @@ class FeedFrameDisplay(QtWidgets.QFrame):
             else:
                 self.frame = frame
 
-    def newParameters(self, parameters, feed_name):
-        self.feed_controller = feeds.getFeedController(parameters)
+#    def newParameters(self, parameters, feed_name):
+#        self.feed_controller = feeds.getFeedController(parameters)
+#
+#        # Pass the parameters that are the same for all of the feeds
+#        # associated with a given camera to the camera_widget.
+#        self.camera_widget.newParameters(parameters.get(self.feed_controller.getCamera(feed_name)))
+#
+#        # Find saved sync values for these parameters (if any).
+#        if not parameters in self.sync_values_by_params:
+#            self.sync_values_by_params[parameters] = {}
+#        self.sync_values_by_feedname = self.sync_values_by_params[parameters]
+#            
+#        # Configure for this feed.
+#        self.newFeed(feed_name)
+#
+#        # Update feed selector combobox.
+#        self.ui.feedComboBox.currentIndexChanged[str].disconnect()
+#        self.ui.feedComboBox.clear()
+#        feed_names = self.feed_controller.getFeedNames()
+#        if (len(feed_names) > 1):
+#            for name in feed_names:
+#                self.ui.feedComboBox.addItem(name)
+#            self.ui.feedComboBox.setCurrentIndex(self.ui.feedComboBox.findText(feed_name))                
+#            self.ui.feedComboBox.show()
+#        else:
+#            self.ui.feedComboBox.hide()
+#        self.ui.feedComboBox.currentIndexChanged[str].connect(self.handleFeedChange)
 
-        # Pass the parameters that are the same for all of the feeds
-        # associated with a given camera to the camera_widget.
-        self.camera_widget.newParameters(parameters.get(self.feed_controller.getCamera(feed_name)))
-
-        # Find saved sync values for these parameters (if any).
-        if not parameters in self.sync_values_by_params:
-            self.sync_values_by_params[parameters] = {}
-        self.sync_values_by_feedname = self.sync_values_by_params[parameters]
+    def setParameter(self, pname, pvalue):
+        """
+        Wrapper to make it easier to set the appropriate parameter value.
+        """
+        feed_params = self.parameters.get(self.feed_name)
+        feed_params.set(pname, pvalue)
+        return pvalue
             
-        # Configure for this feed.
-        self.newFeed(feed_name)
-
-        # Update feed selector combobox.
-        self.ui.feedComboBox.currentIndexChanged[str].disconnect()
-        self.ui.feedComboBox.clear()
-        feed_names = self.feed_controller.getFeedNames()
-        if (len(feed_names) > 1):
-            for name in feed_names:
-                self.ui.feedComboBox.addItem(name)
-            self.ui.feedComboBox.setCurrentIndex(self.ui.feedComboBox.findText(feed_name))                
-            self.ui.feedComboBox.show()
-        else:
-            self.ui.feedComboBox.hide()
-        self.ui.feedComboBox.currentIndexChanged[str].connect(self.handleFeedChange)
-        
-    def setSyncMax(self, sync_max):
-        self.cycle_length = sync_max
-        self.ui.syncSpinBox.setMaximum(sync_max)
+#    def setSyncMax(self, sync_max):
+#        self.cycle_length = sync_max
+#        self.ui.syncSpinBox.setMaximum(sync_max)
         
 #    def startFilm(self, run_shutters):
 #        self.filming = True
@@ -258,13 +360,14 @@ class FeedFrameDisplay(QtWidgets.QFrame):
 #        self.ui.syncLabel.hide()
 #        self.ui.syncSpinBox.hide()
 
+                
     def updateRange(self):
-        self.ui.scaleMax.setText(str(self.getParameter("scalemax")))
-        self.ui.scaleMin.setText(str(self.getParameter("scalemin")))
-        self.camera_widget.newRange([self.getParameter("scalemin"), self.getParameter("scalemax")])
+        self.ui.scaleMax.setText(str(self.getParameter("display_max")))
+        self.ui.scaleMin.setText(str(self.getParameter("display_min")))
+        self.camera_widget.newRange([self.getParameter("display_min"), self.getParameter("display_max")])
 
 
-class CameraFrameDisplay(FeedFrameDisplay):
+class CameraFrameDisplay(BaseFrameDisplay):
     """
     Add handling of interaction with the feeds, i.e. mouse drags,
     ROI selection, etc..

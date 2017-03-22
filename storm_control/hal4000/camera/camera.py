@@ -42,8 +42,8 @@ class Camera(halModule.HalModuleBuffered):
 
         self.camera_control.newFrame.connect(self.handleNewFrame)
 
-        halMessage.addMessage("camera config", check_exists = False)
         halMessage.addMessage("camera temperature", check_exists = False)
+        halMessage.addMessage("current camera", check_exists = False)
 
     def cleanUp(self, qt_settings):
         self.camera_control.cleanUp()
@@ -65,23 +65,31 @@ class Camera(halModule.HalModuleBuffered):
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "default parameters",
                                                            data = self.camera_control.getCameraConfig()))
-                
-            # This message comes from display.cameraDisplay when the feed is changed. The
-            # response is broadcast because display.paramsDisplay also needs this information.
-            #
-            # FIXME: Should also broadcast current temperature?
-            #
-            elif (message.getType() == "get camera config"):
+
+            # This message comes from display.cameraDisplay to get information about a camera.
+            elif (message.getType() == "get feed config"):
                 if (message.getData()["camera"] == self.module_name):
-                    self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                               m_type = "camera config",
-                                                               data = self.camera_control.getCameraConfig()))
+                    message.addResponse(halMessage.HalMessageResponse(source = self,
+                                                                      m_type = message.getType(),
+                                                                      response_data = self.camera_control.getCameraConfig()))
 
             # This message comes from settings.settings.
             elif (message.getType() == "new parameters"):
                 p = message.getData().get(self.module_name).copy()
                 self.camera_control.newParameters(p)
 
+            #
+            # This message comes from display.cameraDisplay when the feed is changed. The
+            # response is broadcast because display.paramsDisplay also needs this information.
+            #
+            # FIXME: Should also broadcast current temperature?
+            #
+            elif (message.getType() == "set current camera"):
+                if (message.getData()["camera"] == self.module_name):
+                    self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                               m_type = "current camera",
+                                                               data = self.camera_control.getCameraConfig()))
+                    
             # This message comes from display.paramsDisplay.
             elif (message.getType() == "set emccd gain"):
                 if (message.getData()["camera"] == self.module_name):

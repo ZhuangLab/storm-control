@@ -30,7 +30,7 @@ class ParamsView(QtWidgets.QGroupBox):
         # connect signals
         self.ui.EMCCDSlider.valueChanged.connect(self.handleGainChange)
 
-    def configureUi(self, camera_config):
+    def configureAndUpdateUi(self, camera_config):
         self.setTitle(camera_config["camera"].title())
         
         if camera_config["have_emccd"]:
@@ -54,11 +54,17 @@ class ParamsView(QtWidgets.QGroupBox):
             self.ui.temperatureLabel.hide()
             self.ui.temperatureText.hide()
 
+        self.newParameters(camera_config["parameters"])
+
     def enableEMCCDSlider(self, enable):
         self.ui.EMCCDSlider.setEnabled(enable)
 
     def handleGainChange(self, new_gain):
-        self.ui.EMCCDLabel.setText("EMCCD Gain: %d" % new_gain)
+        #
+        # FIXME: The camera should respond with whatever the actual EMCCD
+        #        gain ends up being after the set operation.
+        #
+        self.ui.EMCCDLabel.setText("EMCCD Gain: {0:d}".format(new_gain))
         self.gainChange.emit(new_gain)
 
     def newParameters(self, parameters):
@@ -68,11 +74,11 @@ class ParamsView(QtWidgets.QGroupBox):
             self.ui.EMCCDSlider.setMinimum(p.get("em_gain_low", 1))
             self.ui.EMCCDSlider.setMaximum(p.get("em_gain_high", 10))
             self.ui.EMCCDSlider.setValue(p.get("emccd_gain"))
-            self.ui.EMCCDLabel.setText("EMCCD Gain: %d" % p.get("emccd_gain"))
+            self.ui.EMCCDLabel.setText("EMCCD Gain: {0:d}".format(p.get("emccd_gain")))
             self.ui.EMCCDSlider.valueChanged.connect(self.handleGainChange)
 
         if p.has("preampgain"):
-            self.ui.preampGainText.setText("%.1f" % p.get("preampgain"))
+            self.ui.preampGainText.setText("{0:1f}".format(p.get("preampgain")))
 
         self.ui.pictureSizeText.setText(str(p.get("x_pixels")) + " x " + str(p.get("y_pixels")) +
                                         " (" + str(p.get("x_bin")) + "," + str(p.get("y_bin")) + ")")
@@ -81,8 +87,8 @@ class ParamsView(QtWidgets.QGroupBox):
             self.ui.exposureTimeText.setText("External")
             self.ui.FPSText.setText("External")
         else:
-            self.ui.exposureTimeText.setText("%.4f" % p.get("exposure_value"))
-            self.ui.FPSText.setText("%.4f" % (1.0/p.get("cycle_value")))
+            self.ui.exposureTimeText.setText("{0:04f}".format(p.get("exposure_time")))
+            self.ui.FPSText.setText("{0:04f}".format(p.get("fps")))
 
     def updateTemperature(self, temp_data):
         if (temp_data["state"] == "stable"):
@@ -127,13 +133,7 @@ class Params(halModule.HalModule):
         super().processMessage(message)
         if (message.level == 1):
 
-            # The current camera has changed.
-            if (message.getType() == "camera config"):
-                data = message.getData()
-                self.current_camera = data["camera"]
-                self.view.configureUi(data)
-
-            elif (message.getType() == "camera temperature"):
+            if (message.getType() == "camera temperature"):
                 data = message.getData()
                 if (self.current_camera == data["camera"]):
                     self.view.updateTemperature(data)
@@ -143,6 +143,12 @@ class Params(halModule.HalModule):
                                                            m_type = "add to ui",
                                                            data = self.configure_dict))
 
+            # The current camera has changed.
+            elif (message.getType() == "current camera"):
+                data = message.getData()
+                self.current_camera = data["camera"]
+                self.view.configureAndUpdateUi(data)
+                
             elif (message.getType() == "new parameters"):
                 p = message.getData().get(self.current_camera).copy()
                 self.view.newParameters(p)
