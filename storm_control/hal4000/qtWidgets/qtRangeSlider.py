@@ -16,6 +16,9 @@ import decimal
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+class QRangeSliderException(Exception):
+    pass
+
 ## QRangeSlider
 #
 # Range Slider super class.
@@ -223,7 +226,7 @@ class QRangeSlider(QtWidgets.QWidget):
         # Check that the range is a multiple of the step size.
         steps = self.scale / self.single_step
         if (abs(steps - round(steps)) > 0.01 * self.single_step):
-            raise Exception("Slider range is not a multiple of the step size!")
+            raise QRangeSliderException("Slider range is not a multiple of the step size!")
 
     ## setValues
     #
