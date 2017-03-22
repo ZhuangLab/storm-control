@@ -1,22 +1,22 @@
-#!/usr/bin/python
-#
-## @file
-#
-# This module provides a layer between the camera and HAL
-# enabling the conversion of a single camera frame into
-# several independent "feeds" that can be displayed and
-# saved.
-#
-# Hazen 09/15
-#
+#!/usr/bin/env python
+"""
+This module enables the processing of camera frame(s) with
+operations like averaging, slicing, etc..
+
+It is also responsible for keeping tracking of how many
+different cameras and feeds are available for each parameter
+file.
+
+Hazen 03/17
+"""
 
 import numpy
 
-from PyQt5 import QtCore, QtGui, QtWidgets
-
-import storm_control.sc_library.hdebug as hdebug
+#from PyQt5 import QtCore, QtGui, QtWidgets
 
 import storm_control.hal4000.camera.frame as frame
+import storm_control.hal4000.halLib.halMessage as halMessage
+import storm_control.hal4000.halLib.halModule as halModule
 
 #
 # We save all the controllers in a dictionary keyed on the
@@ -32,7 +32,9 @@ def getFeedController(parameters):
     return feed_controllers[parameters]
 
 def isCamera(feed_name):
-    return (feed_name[:6] == "camera")
+    if (len(feed_name) > 6):
+        return (feed_name[:6] == "camera") and feed_name[6].isdigit()
+    return False
 
 def newFeedController(cameras, parameters):
     global feed_controllers
@@ -53,12 +55,12 @@ class FeedException(Exception):
 #
 # The different kinds of feeds.
 #
-
-# The base class for all the feeds.
 class Feed(object):
+    """
+    The base class for all the feeds.
+    """
 
-    @hdebug.debug
-    def __init__(self, feed_name, parameters):
+    def __init__(self, feed_name = None):
         self.feed_name = feed_name
 
     def newFrame(self, new_frame):
@@ -67,38 +69,36 @@ class Feed(object):
     def sliceFrame(self, new_frame):
         pass
 
-    @hdebug.debug
     def startFeed(self):
         pass
 
-    @hdebug.debug
     def startFilm(self):
         pass
 
-    @hdebug.debug
     def stopFeed(self):
         pass
 
-    @hdebug.debug
     def stopFilm(self):
         pass
 
-
-# Camera feeds just pass through the camera frames that they match.
+# Remove this?
 class FeedCamera(Feed):
-
+    """
+    Camera feeds just pass through the camera frames that they match.
+    """
     def newFrame(self, new_frame):
         if (new_frame.which_camera == self.feed_name):
             return [new_frame]
 
 
-# The base class for the non-camera feeds.
-class FeedNC(Feed):
 
-    @hdebug.debug
-    def __init__(self, feed_name, parameters):
-        Feed.__init__(self, feed_name, parameters)
-        self.which_camera = parameters.get("feeds." + feed_name + ".source")
+class FeedNC(Feed):
+    """
+    The base class for the non-camera feeds.
+    """
+    def __init__(self, parameters = None, **kwds):
+        super().__init__(**kwds)
+        self.which_camera = parameters.get("feeds." + self.feed_name + ".source")
         self.frame_slice = None
 
         # Get camera binning as we'll use this either way.
@@ -106,10 +106,10 @@ class FeedNC(Feed):
         c_y_bin = parameters.get(self.which_camera + ".y_bin")
 
         # See if we need to slice.
-        x_start = parameters.get("feeds." + feed_name + ".x_start", 0)
-        x_end = parameters.get("feeds." + feed_name + ".x_end", 0)
-        y_start = parameters.get("feeds." + feed_name + ".y_start", 0)
-        y_end = parameters.get("feeds." + feed_name + ".y_end", 0)
+        x_start = parameters.get("feeds." + self.feed_name + ".x_start", 0)
+        x_end = parameters.get("feeds." + self.feed_name + ".x_end", 0)
+        y_start = parameters.get("feeds." + self.feed_name + ".y_start", 0)
+        y_end = parameters.get("feeds." + self.feed_name + ".y_end", 0)
 
         if (x_start != 0) or (x_end != 0) or (y_start != 0) or (y_end != 0):
 
@@ -120,16 +120,16 @@ class FeedNC(Feed):
             # Set unset values based on the camera size.
             if (x_start == 0):
                 x_start = 1
-                parameters.set("feeds." + feed_name + ".x_start", x_start)
+                parameters.set("feeds." + self.feed_name + ".x_start", x_start)
             if (x_end == 0):
                 x_end = c_x_pixels
-                parameters.set("feeds." + feed_name + ".x_end", x_end)
+                parameters.set("feeds." + self.feed_name + ".x_end", x_end)
             if (y_start == 0):
                 y_start = 1
-                parameters.set("feeds." + feed_name + ".y_start", y_start)
+                parameters.set("feeds." + self.feed_name + ".y_start", y_start)
             if (y_end == 0):
                 y_end = c_y_pixels
-                parameters.set("feeds." + feed_name + ".y_end", y_end)
+                parameters.set("feeds." + self.feed_name + ".y_end", y_end)
 
             # Check that slices are inside the camera ROI.
             if (x_start < 1) or (x_start >= c_x_pixels) or (x_start >= x_end):
@@ -159,11 +159,11 @@ class FeedNC(Feed):
             self.x_pixels = parameters.get(self.which_camera + ".x_pixels")/c_x_bin
             self.y_pixels = parameters.get(self.which_camera + ".y_pixels")/c_y_bin
 
-        parameters.set("feeds." + feed_name + ".x_pixels", self.x_pixels)
-        parameters.set("feeds." + feed_name + ".y_pixels", self.y_pixels)
-        parameters.set("feeds." + feed_name + ".x_bin", 1)
-        parameters.set("feeds." + feed_name + ".y_bin", 1)
-        parameters.set("feeds." + feed_name + ".bytes_per_frame", 2 * self.x_pixels * self.y_pixels)
+        parameters.set("feeds." + self.feed_name + ".x_pixels", self.x_pixels)
+        parameters.set("feeds." + self.feed_name + ".y_pixels", self.y_pixels)
+        parameters.set("feeds." + self.feed_name + ".x_bin", 1)
+        parameters.set("feeds." + self.feed_name + ".y_bin", 1)
+        parameters.set("feeds." + self.feed_name + ".bytes_per_frame", 2 * self.x_pixels * self.y_pixels)
 
     def sliceFrame(self, new_frame):
         if (new_frame.which_camera == self.which_camera):
@@ -176,17 +176,18 @@ class FeedNC(Feed):
                 return numpy.ascontiguousarray(sliced_frame)
 
 
-# The feed for averaging frames together.
 class FeedAverage(FeedNC):
+    """
+    The feed for averaging frames together.
+    """
 
-    @hdebug.debug
-    def __init__(self, feed_name, parameters):
-        FeedNC.__init__(self, feed_name, parameters)
+    def __init__(self, **kwds):
+        super().__init__(self, **kwds)
 
         self.average_frame = None
         self.counts = 0
         self.frame_number = -1
-        self.frames_to_average = parameters.get("feeds." + self.feed_name + ".frames_to_average")
+        self.frames_to_average = self.parameters.get("feeds." + self.feed_name + ".frames_to_average")
 
     def newFrame(self, new_frame):
         sliced_data = self.sliceFrame(new_frame)
@@ -217,16 +218,16 @@ class FeedAverage(FeedNC):
         self.frame_number = -1
         
 
-# Feed for picking out a sub-set of the frames.
 class FeedInterval(FeedNC):
+    """
+    Feed for picking out a sub-set of the frames.
+    """
+    def __init__(self, **kwds):
+        super().__init__(self, **kwds)
 
-    @hdebug.debug
-    def __init__(self, feed_name, parameters):    
-        FeedNC.__init__(self, feed_name, parameters)
-
-        temp = parameters.get("feeds." + self.feed_name + ".capture_frames")
+        temp = self.parameters.get("feeds." + self.feed_name + ".capture_frames")
         self.capture_frames = map(int, temp.split(","))
-        self.cycle_length = parameters.get("feeds." + self.feed_name + ".cycle_length")
+        self.cycle_length = self.parameters.get("feeds." + self.feed_name + ".cycle_length")
         self.frame_number = -1
 
     def newFrame(self, new_frame):
@@ -249,14 +250,16 @@ class FeedInterval(FeedNC):
         self.frame_number = -1
         
 
-# Feed for displaying the previous film.
+# This one is a bad idea??
 class FeedLastFilm(FeedNC):
+    """
+    Feed for displaying the previous film.
+    """
     cur_film_frame = None
     last_film_frame = None
 
-    @hdebug.debug
-    def __init__(self, feed_name, parameters):    
-        FeedNC.__init__(self, feed_name, parameters)
+    def __init__(self, **kwds):
+        super().__init__(self, **kwds)
 
         # For updates, update at 2Hz.
         self.timer = QtCore.QTimer()
@@ -264,7 +267,7 @@ class FeedLastFilm(FeedNC):
         self.timer.timeout.connect(self.handleTimer)
         self.update = False
 
-        self.which_frame = parameters.get("feeds." + self.feed_name + ".which_frame", 0)
+        self.which_frame = self.parameters.get("feeds." + self.feed_name + ".which_frame", 0)
 
     def handleTimer(self):
         self.update = True
@@ -296,9 +299,10 @@ class FeedLastFilm(FeedNC):
         FeedLastFilm.last_film_frame = FeedLastFilm.cur_film_frame
 
 
-# Feed for slicing out sub-sets of frames.
 class FeedSlice(FeedNC):
-
+    """
+    Feed for slicing out sub-sets of frames.
+    """
     def newFrame(self, new_frame):
         sliced_data = self.sliceFrame(new_frame)
         if sliced_data is not None:
@@ -312,12 +316,10 @@ class FeedSlice(FeedNC):
             return []
 
         
-#
-# Feed controller
-#
 class FeedController(object):
-
-    @hdebug.debug
+    """
+    Feed controller
+    """
     def __init__(self, cameras, parameters):
 
         self.feed_names = list(cameras)
@@ -373,22 +375,18 @@ class FeedController(object):
                 if self.parameters.get("feeds." + feed_name + ".save", False):
                     self.feed_names_to_save.append(feed_name)
 
-    @hdebug.debug
     def getCamera(self, feed_name):
         if isCamera(feed_name):
             return feed_name
         else:
             return self.parameters.get("feeds." + feed_name + ".source")
 
-    @hdebug.debug
     def getFeedNames(self):
         return self.feed_names
 
-    @hdebug.debug
     def getFeedNamesToSave(self):
         return self.feed_names_to_save
     
-    @hdebug.debug
     def getFeedParameter(self, feed_name, pname, default_value = None):
 
         # If we are asked for a parameter for a camera just return it.
@@ -411,30 +409,50 @@ class FeedController(object):
             feed_frames += feed.newFrame(new_frame)
         return feed_frames
     
-    @hdebug.debug
     def setFeedParameter(self, feed_name, pname, pvalue):
         if isCamera(feed_name):
             self.parameters.set(feed_name + "." + pname, pvalue)
         else:
             self.parameters.set("feeds." + feed_name + "." + pname, pvalue)
 
-    @hdebug.debug
     def startFeeds(self):
         for feed in self.feeds:
             feed.startFeed()
 
-    @hdebug.debug
     def startFilm(self):
         for feed in self.feeds:
             feed.startFilm()
 
-    @hdebug.debug
     def stopFeeds(self):
         for feed in self.feeds:
             feed.stopFeed()
 
-    @hdebug.debug
     def stopFilm(self):
         for feed in self.feeds:
             feed.stopFilm()
+
+
+class Feeds(halModule.HalModule):
+
+    def __init__(self, module_params = None, qt_settings = None, **kwds):
+        super().__init__(**kwds)
+        self.camera_feeds = []
+
+        halMessage.addMessage("feed list")
+        
+    def processMessage(self, message):
+        super().processMessage(message)
+        if (message.level == 1):
+
+            if (message.getType() == "configure"):
+
+                # At startup the only feeds are the cameras.
+                for module_name in message.getData()["module_names"]:
+                    if isCamera(module_name):
+                        self.camera_feeds.append(module_name)
+
+                # Broadcast the names of the cameras.
+                self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                           m_type = "feed list",
+                                                           data = {"feeds" : self.camera_feeds}))
 

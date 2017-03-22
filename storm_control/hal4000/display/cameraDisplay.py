@@ -124,6 +124,10 @@ class Display(halModule.HalModule):
             elif (message.getType() == "current camera"):
                 self.viewFeedConfig(message)
 
+            elif (message.getType() == "feed list"):
+                for view in self.views:
+                    view.setFeeds(message.getData()["feeds"])
+
             elif (message.getType() == "start"):
                 if self.dialogs[0] is not None:
                     self.dialogs[0].showIfVisible()

@@ -45,15 +45,12 @@
       </parameters>
     </display>
     
-    <!-- Feeds and additional viewers. -->
-    <!--
+    <!-- Feeds. -->
     <feeds>
-      <class_name type="string">FeedViewers</class_name>
-      <menu_item type="string">New Viewer</menu_item>
-      <module_name type="string">display.feedViewer</module_name>
-      </feeds>
-    -->
-    
+      <class_name type="string">Feeds</class_name>
+      <module_name type="string">feeds.feeds</module_name>
+    </feeds>
+
     <!-- Filming and starting/stopping the camera. -->
     <film>
       <class_name type="string">Film</class_name>

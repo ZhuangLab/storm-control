@@ -339,6 +339,27 @@ class BaseFrameDisplay(QtWidgets.QFrame):
 #            self.ui.feedComboBox.hide()
 #        self.ui.feedComboBox.currentIndexChanged[str].connect(self.handleFeedChange)
 
+    def setFeeds(self, feed_names):
+        """
+        This updates feed selector combo box with a list of 
+        the feeds that are currently available.
+        """
+        # Disconnect signal.
+        self.ui.feedComboBox.currentIndexChanged[str].disconnect()
+
+        # Update combo box with the new feed names.
+        self.ui.feedComboBox.clear()
+        if (len(feed_names) > 1):
+            for name in feed_names:
+                self.ui.feedComboBox.addItem(name)
+            self.ui.feedComboBox.setCurrentIndex(self.ui.feedComboBox.findText(self.feed_name))
+            self.ui.feedComboBox.show()
+        else:
+            self.ui.feedComboBox.hide()
+
+        # Reconnect signal.
+        self.ui.feedComboBox.currentIndexChanged[str].connect(self.handleFeedChange)
+
     def setParameter(self, pname, pvalue):
         """
         Wrapper to make it easier to set the appropriate parameter value.
