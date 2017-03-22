@@ -210,12 +210,12 @@ class HalView(QtWidgets.QMainWindow):
                 self.xml_directory = os.path.dirname(filename)
                 self.guiMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "new parameters file",
-                                                           data = filename))
+                                                           data = {"filename" : filename}))
             elif (file_type == "shutters"):
                 self.xml_directory = os.path.dirname(filename)
                 self.guiMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "new shutters file",
-                                                           data = filename))
+                                                           data = {"filename" : filename}))
             else:
                 if error_text:
                     halMessageBox.halMessageBox("XML file parsing error " + error_text)
@@ -239,7 +239,7 @@ class HalView(QtWidgets.QMainWindow):
             self.film_directory = new_directory
             self.guiMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "new directory",
-                                                       data = self.film_directory))
+                                                       data = {"directory" : self.film_directory}))
 
     def handleSettings(self, boolean):
         parameters_filename = QtWidgets.QFileDialog.getOpenFileName(self,
@@ -250,7 +250,7 @@ class HalView(QtWidgets.QMainWindow):
             self.xml_directory = os.path.dirname(parameters_filename)
             self.guiMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "new parameters file",
-                                                       data = parameters_filename))
+                                                       data = {"filename" : parameters_filename}))
 
     def handleShutters(self, boolean):
         shutters_filename = QtWidgets.QFileDialog.getOpenFileName(self, 
@@ -261,7 +261,7 @@ class HalView(QtWidgets.QMainWindow):
             self.xml_directory = os.path.dirname(shutters_filename)
             self.guiMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "new shutters file",
-                                                       data = shutters_filename))
+                                                       data = {"filename" : shutters_filename}))
 
     def handleQuit(self, boolean):
         self.close_now = True
@@ -321,9 +321,9 @@ class HalCore(QtCore.QObject):
         self.queued_messages_timer.setSingleShot(True)
 
         # Load all the modules.
-        module_names = {}
+        module_names = []
         for module_name in config.get("modules").getAttrs():
-            module_names[module_name] = True
+            module_names.append(module_name)
 
             # Get module specific parameters.
             module_params = config.get("modules").get(module_name)
@@ -352,7 +352,7 @@ class HalCore(QtCore.QObject):
         #
         self.handleMessage(halMessage.HalMessage(source = self,
                                                  m_type = "configure",
-                                                 data = module_names))
+                                                 data = {"module_names" : module_names}))
 
         # Tell the modules to start.
         #
@@ -366,7 +366,7 @@ class HalCore(QtCore.QObject):
         if parameters_file_name is not None:
             self.handleMessage(halMessage.HalMessage(source = self,
                                                      m_type = "new parameters file",
-                                                     data = parameters_file_name))
+                                                     data = {"filename" : parameters_file_name}))
                                                      
             
     def cleanup(self):
