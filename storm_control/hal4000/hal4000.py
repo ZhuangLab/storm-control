@@ -160,7 +160,6 @@ class HalView(QtWidgets.QMainWindow):
         if ui_order is None:
             ui_order = 0
         self.widgets_to_add.append([parent_widget_name, ui_widget, ui_order])
-        print(len(self.widgets_to_add))
 
     def addWidgets(self):
         """
