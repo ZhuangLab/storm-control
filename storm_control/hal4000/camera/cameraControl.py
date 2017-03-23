@@ -20,7 +20,7 @@ class CameraException(halExceptions.HardwareException):
 
 
 class CameraControl(QtCore.QThread):
-    newFrame = QtCore.pyqtSignal(object, int)
+    newData = QtCore.pyqtSignal(object)
 
     def __init__(self, config = None, **kwds):
         super().__init__(**kwds)
@@ -29,7 +29,6 @@ class CameraControl(QtCore.QThread):
         self.camera = False
         self.frame_number = 0
         self.is_master = None
-        self.key = None
         self.mutex = QtCore.QMutex()
         self.parameters = params.StormXMLObject()
         self.running = True
@@ -80,6 +79,18 @@ class CameraControl(QtCore.QThread):
                                                                    x_size * y_size * 2,
                                                                    is_mutable = False,
                                                                    is_saved = False))
+
+        #
+        # How/if data from this camera is saved.
+        #
+        self.parameters.add("filename_ext", params.ParameterString("Camera save filename extension",
+                                                                   "filename_ext",
+                                                                   ""))
+        self.parameters.add("is_saved", params.ParameterSetBoolean("Save data from this camera when filming",
+                                                                   "is_saved",
+                                                                   True))
+        self.parameters.set("filename_ext", config.get("filename_ext", ""))
+        self.parameters.set("is_saved", config.get("is_saved", True))
 
         #
         # Camera display orientation. Values can only be changed by
@@ -164,17 +175,19 @@ class CameraControl(QtCore.QThread):
             if((x_pixels % 4) != 0):
                 raise CameraException("The camera ROI must be a multiple of 4 in x!")
 
+        self.parameters.set("filename_ext", parameters.get("filename_ext"))
+        self.parameters.set("is_saved", parameters.get("is_saved"))
+
     def setEMCCDGain(self, gain):
         pass
     
     def setShutter(self, shutter_state):
         self.shutter_state = shutter_state
 
-    def startCamera(self, key):
+    def startCamera(self):
         self.mutex.lock()
         self.acquire.go()
         self.frame_number = 0
-        self.key = key
         self.mutex.unlock()
 
     def startFilm(self, film_settings):
@@ -230,17 +243,16 @@ class HWCameraControl(CameraControl):
                         self.frame_number += 1
                             
                     # Emit new data signal.
-                    self.newFrame.emit(frame_data, self.key)
+                    self.newData.emit(frame_data)
             else:
                 self.acquire.idle()
 
             self.mutex.unlock()
             self.msleep(5)
 
-    def startCamera(self, key):
+    def startCamera(self):
         self.mutex.lock()
         self.acquire.go()
-        self.key = key
         self.frame_number = 0
         if self.got_camera:
             self.camera.startAcquisition()

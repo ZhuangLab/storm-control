@@ -65,10 +65,11 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         # General (alphabetically ordered).
         self.color_gradient = None
         self.color_tables = colorTables.ColorTables(os.path.dirname(__file__) + "/../colorTables/all_tables/")
-        self.cycle_length = None
+        self.cycle_length = 1
         self.display_name = None
         self.display_timer = QtCore.QTimer(self)
         self.feed_name = feed_name
+        self.filming = False
         self.frame = False
         self.parameters = params.StormXMLObject()
         self.show_grid = False
@@ -168,6 +169,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         if (self.feed_name == data["camera"]):
 
             # Setup the camera display widget
+            print("cfd", cam_params.get("x_pixels"), cam_params.get("y_pixels"))
             color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
             self.camera_widget.newColorTable(color_table)
             self.camera_widget.newSize([cam_params.get("x_pixels")/cam_params.get("x_bin"),
@@ -305,8 +307,8 @@ class BaseFrameDisplay(QtWidgets.QFrame):
 
     def newFrame(self, frame):
         if (frame.which_camera == self.feed_name):
-            if self.filming and (self.sync_value != 0):
-                if((frame.number % self.cycle_length) == (self.sync_value - 1)):
+            if self.filming and (self.getParameter("sync") != 0):
+                if((frame.number % self.cycle_length) == (self.getParameter("sync") - 1)):
                     self.frame = frame
             else:
                 self.frame = frame
@@ -339,7 +341,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
 #            self.ui.feedComboBox.hide()
 #        self.ui.feedComboBox.currentIndexChanged[str].connect(self.handleFeedChange)
 
-    def setFeeds(self, feed_names):
+    def setFeeds(self, feed_list):
         """
         This updates feed selector combo box with a list of 
         the feeds that are currently available.
@@ -349,9 +351,9 @@ class BaseFrameDisplay(QtWidgets.QFrame):
 
         # Update combo box with the new feed names.
         self.ui.feedComboBox.clear()
-        if (len(feed_names) > 1):
-            for name in feed_names:
-                self.ui.feedComboBox.addItem(name)
+        if (len(feed_list) > 1):
+            for feed in feed_list:
+                self.ui.feedComboBox.addItem(feed["feed_name"])
             self.ui.feedComboBox.setCurrentIndex(self.ui.feedComboBox.findText(self.feed_name))
             self.ui.feedComboBox.show()
         else:

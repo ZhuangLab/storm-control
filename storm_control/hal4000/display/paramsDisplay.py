@@ -101,7 +101,12 @@ class ParamsView(QtWidgets.QGroupBox):
 
 
 class Params(halModule.HalModule):
+    """
+    Camera parameter display controller.
 
+    This sends the following messages:
+     'set emccd gain'
+    """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
@@ -120,7 +125,8 @@ class Params(halModule.HalModule):
                                    "ui_widget" : self.view}
 
         self.view.gainChange.connect(self.handleGainChange)
-        
+
+        # Change the EMCCD gain.
         halMessage.addMessage("set emccd gain")
 
     def handleGainChange(self, new_gain):
@@ -138,7 +144,7 @@ class Params(halModule.HalModule):
                 if (self.current_camera == data["camera"]):
                     self.view.updateTemperature(data)
 
-            elif (message.getType() == "configure"):
+            elif (message.getType() == "configure1"):
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "add to ui",
                                                            data = self.configure_dict))

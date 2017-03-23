@@ -43,11 +43,11 @@ class HalController(halModule.HalModule):
     """
     HAL main window controller.
 
-    This sends the following message:
-    'close event'
-    'new directory'
-    'new parameters file'
-    'new shutters file'
+    This sends the following messages:
+     'close event'
+     'new directory'
+     'new parameters file'
+     'new shutters file'
     """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
@@ -312,9 +312,10 @@ class HalCore(QtCore.QObject):
     the message passing and tears everything down.
 
     This sends the following messages:
-    'configure'
-    'new parameters file'
-    'start'
+     'configure1'
+     'configure2'
+     'new parameters file'
+     'start'
     """
     def __init__(self, config = None, parameters_file_name = None, **kwds):
         super().__init__(**kwds)
@@ -353,7 +354,7 @@ class HalCore(QtCore.QObject):
 
         # Connect signals.
         for module in self.modules:
-            module.newFrame.connect(self.handleFrame)
+#            module.newFrame.connect(self.handleFrame)
             module.newMessage.connect(self.handleMessage)
 
         # Create messages.
@@ -364,15 +365,18 @@ class HalCore(QtCore.QObject):
         #
         # The actual sequence of sent messages is:
         #
-        # 1. "configure", tell modules to finish configuration.
+        # 1. "configure1", tell modules to finish configuration.
         #    The message includes a dictionary of the names of
         #    all modules that were loaded.
         #
-        # 2. "start", tell the modules to start.
+        # 2. "configure2", gives the modules a chance to 'react'
+        #    based on what happened during configure1.
+        #
+        # 3. "start", tell the modules to start.
         #    This is the point where any GUI modules that are
         #    visible should call show().
         #
-        # 3. "new parameters file", initial parameters (if any).
+        # 4. "new parameters file", initial parameters (if any).
         #
         if parameters_file_name is not None:
             newp_message = halMessage.HalMessage(source = self,
@@ -386,27 +390,32 @@ class HalCore(QtCore.QObject):
             start_message = halMessage.HalMessage(source = self,
                                                   m_type = "start",
                                                   sync = True)
-            
-        config_message = halMessage.HalMessage(source = self,
-                                               m_type = "configure",
-                                               data = {"module_names" : module_names},
-                                               finalizer = lambda: self.handleMessage(start_message))
-        self.handleMessage(config_message)
-            
+
+        config2_message = halMessage.HalMessage(source = self,
+                                                m_type = "configure2",
+                                                finalizer = lambda: self.handleMessage(start_message))
+        
+        config1_message = halMessage.HalMessage(source = self,
+                                                m_type = "configure1",
+                                                data = {"module_names" : module_names},
+                                                finalizer = lambda: self.handleMessage(config2_message))
+        
+        self.handleMessage(config1_message)
+
     def cleanup(self):
         print(" Dave? What are you doing Dave?")
         print("  ...")
         for module in self.modules:
             module.cleanUp(self.qt_settings)
 
-    def handleFrame(self, new_frame):
-        """
-        I was split on whether or not these should also just be messages.
-        However, since there will likely be a lot of them I decided they 
-        should be handled separately.
-        """
-        for module in self.modules:
-            module.handleFrame(new_frame)
+#    def handleFrame(self, new_frame):
+#        """
+#        I was split on whether or not these should also just be messages.
+#        However, since there will likely be a lot of them I decided they 
+#        should be handled separately.
+#        """
+#        for module in self.modules:
+#            module.handleFrame(new_frame)
             
     def handleMessage(self, message):
         """
@@ -443,7 +452,8 @@ class HalCore(QtCore.QObject):
         # Process the next message.
         if (len(self.queued_messages) > 0):
             cur_message = self.queued_messages.popleft()
-            print(cur_message.source.module_name + " '" + cur_message.m_type + "'")
+            if (cur_message.level == 1):
+                print(cur_message.source.module_name + " '" + cur_message.m_type + "'")
 
             #
             # If this message requested synchronization and there are

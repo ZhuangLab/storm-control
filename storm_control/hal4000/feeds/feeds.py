@@ -4,8 +4,9 @@ This module enables the processing of camera frame(s) with
 operations like averaging, slicing, etc..
 
 It is also responsible for keeping tracking of how many
-different cameras and feeds are available for each parameter
-file.
+different cameras / feeds are available for each parameter
+file, whether the cameras / feeds should be saved when
+filming and what extension to use when saving.
 
 Hazen 03/17
 """
@@ -433,26 +434,42 @@ class FeedController(object):
 
 
 class Feeds(halModule.HalModule):
+    """
+    Feeds controller.
+
+    This sends the following messages:
+     'feed list'
+    """    
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
-        self.camera_feeds = []
+        self.feed_list = []
 
         halMessage.addMessage("feed list")
-        
+
+    def broadcastFeedInfo(self):
+        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "feed list",
+                                                   data = {"feeds" : self.feed_list}))
+
     def processMessage(self, message):
         super().processMessage(message)
         if (message.level == 1):
 
-            if (message.getType() == "configure"):
+            if (message.getType() == "current parameters"):
+                data = message.getData()
+                if ("camera" in data):
+                    self.feed_list.append({"extension" : data["parameters"].get("filename_ext"),
+                                           "feed_name" : data["camera"],
+                                           "is_camera" : True,
+                                           "is_master" : data["master"],
+                                           "is_saved" : data["parameters"].get("is_saved")})
 
-                # At startup the only feeds are the cameras.
-                for module_name in message.getData()["module_names"]:
-                    if isCamera(module_name):
-                        self.camera_feeds.append(module_name)
+            elif (message.getType() == "new parameters"):
+                self.feed_list = []
 
-                # Broadcast the names of the cameras.
-                self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "feed list",
-                                                           data = {"feeds" : self.camera_feeds}))
+            elif (message.getType() == "configure2"):
+                self.broadcastFeedInfo()
+
+
 

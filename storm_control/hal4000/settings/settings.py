@@ -38,7 +38,7 @@ class Settings(halModule.HalModule):
     def processMessage(self, message):
         super().processMessage(message)
         if (message.level == 1):
-            if (message.m_type == "configure"):
+            if (message.m_type == "configure1"):
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "add to ui",
                                                            data = self.configure_dict))

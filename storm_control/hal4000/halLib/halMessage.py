@@ -18,14 +18,14 @@ valid_messages = {
     # HAL/core/general messages.
     'add to ui' : True,
     'close event' : True,
-    'configure' : True,
-    'default parameters' : True,
+    'configure1' : True,
+    'configure2' : True,
+    'current parameters' : True,
     'module' : True,
     'new directory' : True,
     'new parameters file' : True,
     'new shutters file' : True,
     'start' : True,
-    
     }
 
 def addMessage(name, check_exists = True):

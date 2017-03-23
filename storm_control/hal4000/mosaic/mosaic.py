@@ -40,7 +40,12 @@ class MosaicBox(QtWidgets.QGroupBox):
         
     
 class Mosaic(halModule.HalModule):
+    """
+    Mosaic settings controller.
 
+    This sends the following messages:
+     'pixel size'
+    """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
@@ -52,12 +57,13 @@ class Mosaic(halModule.HalModule):
                                "ui_parent" : "hal.containerWidget",
                                "ui_widget" : self.view}
 
+        # The current pixel size.
         halMessage.addMessage("pixel size")
 
     def processMessage(self, message):
         super().processMessage(message)
         if (message.level == 1):
-            if (message.getType() == "configure"):
+            if (message.getType() == "configure1"):
 
                 # Check if there is a (motorized) stage.
                 if "stage" in message.getData():
@@ -73,7 +79,7 @@ class Mosaic(halModule.HalModule):
 
                 # Broadcast default parameters.
                 self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "default parameters",
+                                                           m_type = "current parameters",
                                                            data = {"parameters", self.parameters.copy()}))
 
             elif (message.getType() == "new parameters"):

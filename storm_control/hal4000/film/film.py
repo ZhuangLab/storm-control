@@ -97,6 +97,24 @@ class FilmBox(QtWidgets.QGroupBox):
         self.ui.lengthSpinBox.valueChanged.connect(self.handleLength)
         self.ui.modeComboBox.currentIndexChanged.connect(self.handleMode)
 
+    def amInLiveMode(self):
+        return self.ui.liveModeCheckBox.isChecked()
+
+    def getParameters(self):
+        return self.parameters.copy()
+    
+    def enableUI(self, state):
+        for ui_elt in [self.ui.autoIncCheckBox,
+                       self.ui.autoShuttersCheckBox,
+                       self.ui.extensionComboBox,
+                       self.ui.filenameEdit,
+                       self.ui.filetypeComboBox,
+                       self.ui.indexSpinBox,
+                       self.ui.lengthSpinBox,
+                       self.ui.liveModeCheckBox,
+                       self.ui.modeComboBox]:
+            ui_elt.setEnabled(state)
+        
     def handleAutoInc(self, state):
         self.parameters.set("auto_increment", state)
 
@@ -167,10 +185,19 @@ class FilmBox(QtWidgets.QGroupBox):
         
 
 class Film(halModule.HalModuleBuffered):
+    """
+    Filming controller.
 
+    This sends the following messages:
+     'start camera'
+     'start film'
+     'stop camera'
+     'stop film'
+    """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
-
+        self.feed_list = None
+        
         self.logfile_fp = open(module_params.get("directory") + "image_log.txt", "a")
 
         p = module_params.getp("parameters")
@@ -186,17 +213,65 @@ class Film(halModule.HalModuleBuffered):
                                "ui_parent" : "hal.containerWidget",
                                "ui_widget" : self.view}
 
+        halMessage.addMessage("start camera")
+        halMessage.addMessage("start film")
+        halMessage.addMessage("stop camera")
+        halMessage.addMessage("stop film")
+        
     def cleanUp(self, qt_settings):
         self.logfile_fp.close()
         
     def processMessage(self, message):
         super().processMessage(message)
         if (message.level == 1):
-            if (message.m_type == "configure"):
+            if (message.m_type == "configure1"):
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "add to ui",
                                                            data = self.configure_dict))
+                
+                # Broadcast default parameters.
+                self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                           m_type = "current parameters",
+                                                           data = {"parameters", self.view.getParameters()}))
 
+            elif (message.m_type == "feed list"):
+                self.feed_list = message.getData()["feeds"]
+                
+            elif (message.m_type == "start"):
+                if self.view.amInLiveMode():
+                    self.startCameras()
+
+    def startCameras(self):
+        
+        # Start slave cameras first.
+        for feed in self.feed_list:
+            if feed["is_camera"] and not feed["is_master"]:
+                self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                           m_type = "start camera",
+                                                           data = {"camera" : feed["feed_name"]}))
+
+        # Start master cameras last.
+        for feed in self.feed_list:
+            if feed["is_camera"] and feed["is_master"]:
+                self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                           m_type = "start camera",
+                                                           data = {"camera" : feed["feed_name"]}))
+
+    def stopCameras(self):
+
+        # Stop master cameras first
+        for feed in self.feed_list:
+            if feed["is_camera"] and feed["is_master"]:
+                self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                           m_type = "stop camera",
+                                                           data = {"camera" : feed["feed_name"]}))
+                
+        # Stop slave cameras last.
+        for feed in self.feed_list:
+            if feed["is_camera"] and not feed["is_master"]:
+                self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                           m_type = "stop camera",
+                                                           data = {"camera" : feed["feed_name"]}))
 
 #
 # The MIT License

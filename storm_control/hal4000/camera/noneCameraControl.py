@@ -29,7 +29,7 @@ class NoneCameraControl(cameraControl.CameraControl):
         # Emulation camera parameters.
         self.parameters.add("exposure_time", params.ParameterRangeFloat("Exposure time (seconds)", 
                                                                         "exposure_time", 
-                                                                        0.0, 0.0, 10.0))
+                                                                        0.1, 0.01, 10.0))
         self.parameters.add("max_intensity", params.ParameterInt("",
                                                                  "max_intensity",
                                                                  512,
@@ -40,6 +40,8 @@ class NoneCameraControl(cameraControl.CameraControl):
                                                                0.1, 0.0, 1.0))
         
         self.parameters.set("roll", config.get("roll"))
+
+        self.newParameters(self.parameters)
 
     def newParameters(self, parameters):
         super().newParameters(parameters)
@@ -80,7 +82,7 @@ class NoneCameraControl(cameraControl.CameraControl):
                 self.frame_number += 1
 
                 # Emit new data signal.
-                self.newData.emit([aframe], self.key)
+                self.newData.emit([aframe])
             else:
                 self.acquire.idle()
 

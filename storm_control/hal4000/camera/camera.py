@@ -29,7 +29,15 @@ import storm_control.hal4000.halLib.halModule as halModule
 
 
 class Camera(halModule.HalModuleBuffered):
+    """
+    Controller for a single camera.
 
+    This sends the following messages:
+     'camera temperature'
+     'current camera'
+     'camera stopped'
+     'new frame'
+    """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
@@ -40,31 +48,47 @@ class Camera(halModule.HalModuleBuffered):
         self.camera_control.addToHWConfig("camera", self.module_name)
         self.camera_control.addToHWConfig("master", camera_params.get("master"))
 
-        self.camera_control.newFrame.connect(self.handleNewFrame)
+        self.camera_control.newData.connect(self.handleNewData)
 
+        # The temperature data from this camera.
         halMessage.addMessage("camera temperature", check_exists = False)
+
+        # Information about this camera if it is the 'current camera', i.e. 
+        # the camera shown in the main viewer and the parameters display.
         halMessage.addMessage("current camera", check_exists = False)
 
+        # Sent when the camera is actually stopped.
+        halMessage.addMessage("camera stopped", check_exists = False)
+
+        # Sent each time there is a new frame from the camera.
+        halMessage.addMessage("new frame", check_exists = False)
+
+    def broadcastParameters(self):
+        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "current parameters",
+                                                   data = self.camera_control.getCameraConfig()))
+        
     def cleanUp(self, qt_settings):
         self.camera_control.cleanUp()
 
-    def handleNewFrame(self, frame, key):
-        if (key == self.key):
-            self.newFrame.emit(frame)
+    def handleNewData(self, frames):
+        for frame in frames:
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "new frame",
+                                                       level = 2,
+                                                       data = {"frame" : frame}))
 
     def processMessage(self, message):
         super().processMessage(message)
         if (message.level == 1):
                     
-            if (message.getType() == "configure"):
+            if (message.getType() == "configure1"):
 
                 # Start the camera control thread.
                 self.camera_control.cameraInit()
 
                 # Broadcast initial parameters and configuration.
-                self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "default parameters",
-                                                           data = self.camera_control.getCameraConfig()))
+                self.broadcastParameters()
 
             # This message comes from display.cameraDisplay to get information about a camera.
             elif (message.getType() == "get feed config"):
@@ -75,8 +99,9 @@ class Camera(halModule.HalModuleBuffered):
 
             # This message comes from settings.settings.
             elif (message.getType() == "new parameters"):
-                p = message.getData().get(self.module_name).copy()
+                p = message.getData().get(self.module_name)
                 self.camera_control.newParameters(p)
+                self.broadcastParameters()
 
             #
             # This message comes from display.cameraDisplay when the feed is changed. The
@@ -113,16 +138,19 @@ class Camera(halModule.HalModuleBuffered):
                                                                    data = self.camera_control.getTemperature()))
 
                     # Start the camera.
-                    self.camera_control.startCamera(message.getData()["key"])
+                    self.camera_control.startCamera()
 
             # This message comes from film.film, it goes to all cameras at once.
             elif (message.getType() == "start film"):
                 self.camera_control.startCamera(message.getData()["film_settings"])
 
-            # This message comes from film.film.
+            # This message comes from film.film. Once the camera actually
+            # stops we send the 'camera stopped' message.
             elif (message.getType() == "stop camera"):
                 if (message.getData()["camera"] == self.module_name):
                     self.camera_control.stopCamera()
+                    self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                               m_type = "camera stopped"))
 
             # This message comes from film.film, it goes to all camera at once.
             elif (message.getType() == "stop film"):

@@ -48,7 +48,13 @@ class DisplayDialog(halDialog.HalDialog):
 
 
 class Display(halModule.HalModule):
+    """
+    Controller for one or more displays of camera / feed data.
 
+    This sends the following messages:
+     'get feed config'
+     'set current camera'
+    """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
         
@@ -106,17 +112,15 @@ class Display(halModule.HalModule):
                     if (module == self.module_name):
                         self.dialogs[0].addParamsWidget(message.data["ui_widget"])
 
-            elif (message.getType() == "configure"):
+            elif (message.getType() == "configure1"):
                 if self.dialogs[0] is None:
                     self.newMessage.emit(halMessage.HalMessage(source = self,
                                                                m_type = "add to ui",
                                                                data = {"ui_parent" : "hal.cameraFrame",
                                                                        "ui_widget" : self.views[0]}))
 
-                #
-                # Broadcasting this message tells all the modules that camera1 is the
-                # 'current camera', this is primarily for the benefit of display.paramsDisplay.
-                #
+                # Set the 'current camera', i.e. the camera that is being displayed
+                # in the main view and also in the parameters box to camera1.
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "set current camera",
                                                            data = {"camera" : "camera1"}))
@@ -131,6 +135,11 @@ class Display(halModule.HalModule):
             elif (message.getType() == "start"):
                 if self.dialogs[0] is not None:
                     self.dialogs[0].showIfVisible()
+
+        elif (message.level == 2):
+            if (message.getType() == "new frame"):
+                for view in self.views:
+                    view.newFrame(message.getData()["frame"])
 
     def viewFeedConfig(self, message):
         data = message.getData()
