@@ -21,6 +21,7 @@ import storm_control.sc_library.parameters as params
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 import storm_control.hal4000.halLib.halModule as halModule
+import storm_control.hal4000.halLib.imagewriters as imagewriters
 import storm_control.hal4000.qtdesigner.film_ui as filmUi
 
 
@@ -67,10 +68,6 @@ class FilmBox(QtWidgets.QGroupBox):
         self.parameters.add("want_bell", params.ParameterSetBoolean("Sound bell at the end of long movies",
                                                                     "want_bell",
                                                                     True))
-        
-        self.parameters.add("dax_big_endian", params.ParameterSetBoolean("Save .dax movies using a big endian format",
-                                                                         "dax_big_endian",
-                                                                         False))
 
         # Initial UI configuration.
         self.ui = filmUi.Ui_GroupBox()
@@ -254,6 +251,7 @@ class Film(halModule.HalModuleBuffered):
         self.feed_list = None
         self.film_settings = None
         self.film_start = True
+        self.writers = None
 
         self.logfile_fp = open(module_params.get("directory") + "image_log.txt", "a")
 
@@ -359,7 +357,7 @@ class Film(halModule.HalModuleBuffered):
 
     def startFilmingLevel1(self, film_settings):
         self.am_filming = True
-        self.film_params = film_settings
+        self.film_settings = film_settings
         self.film_start = True
         self.view.enableUI(False)
 
@@ -376,10 +374,18 @@ class Film(halModule.HalModuleBuffered):
         all of the feeds, then send the 'start film' message, followed 
         by the 'start camera' message.
         """
+        
+        # Create writers as needed for each feed.
+        self.writers = {}
+        if self.film_settings["save_film"]:
+            for feed in self.feed_list:
+                if feed["is_saved"]:
+                    self.writer[feed["feed_name"]] = imagewriters.createFileWriter(feed, self.film_settings)
+            
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    sync = True,
                                                    m_type = "start film",
-                                                   data = {"film_settings" : self.film_params}))
+                                                   data = {"film_settings" : self.film_settings}))
         self.startCameras()
         
     def stopCameras(self):
@@ -415,10 +421,13 @@ class Film(halModule.HalModuleBuffered):
         Once all the cameras have stopped close the imagewriters
         and restart the cameras (if we are in live mode).
         """
+        for writer in self.writers:
+            pass
+        
         self.am_filming = False
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "stop film",
-                                                   data = {"film_settings" : self.film_params}))
+                                                   data = {"film_settings" : self.film_settings}))
 
         if self.view.amInLiveMode():
             self.startCameras()

@@ -457,13 +457,22 @@ class Feeds(halModule.HalModule):
         if (message.level == 1):
 
             if (message.getType() == "current parameters"):
+                #
+                # We get this message when the camera (and also other modules) update
+                # their parameters. For each of the cameras we get all of the key
+                # information. The information is broadcast in the 'feed list' message.
+                #
                 data = message.getData()
                 if ("camera" in data):
-                    self.feed_list.append({"extension" : data["parameters"].get("filename_ext"),
+                    p = data["parameters"]
+                    self.feed_list.append({"bytes_per_frame" : p.get("bytes_per_frame"),
+                                           "extension" : p.get("filename_ext"),
                                            "feed_name" : data["camera"],
                                            "is_camera" : True,
                                            "is_master" : data["master"],
-                                           "is_saved" : data["parameters"].get("is_saved")})
+                                           "is_saved" : p.get("is_saved"),
+                                           "x_pixels" : p.get("x_pixels"),
+                                           "y_pixels" : p.get("y_pixels")})
 
             elif (message.getType() == "new parameters"):
                 self.feed_list = []
