@@ -177,7 +177,7 @@ class HalView(QtWidgets.QMainWindow):
         Save GUI settings and close.
         """
         qt_settings.setValue(self.module_name + ".pos", self.pos())
-        qt_settings.setValue(self.module_name + ".main", self.size())
+        qt_settings.setValue(self.module_name + ".size", self.size())
         qt_settings.setValue(self.module_name + ".xml_directory", self.xml_directory)
 
         self.close()
