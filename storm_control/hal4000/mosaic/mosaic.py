@@ -59,7 +59,7 @@ class Mosaic(halModule.HalModule):
         if (message.level == 1):
             if (message.getType() == "configure"):
 
-                # Check if there is a stage.
+                # Check if there is a (motorized) stage.
                 if "stage" in message.getData():
                     self.have_stage = True
                     
