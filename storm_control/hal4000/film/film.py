@@ -30,6 +30,7 @@ class FilmBox(QtWidgets.QGroupBox):
     def __init__(self, parameters = None, **kwds):
         super().__init__(**kwds)
         self.parameters = parameters
+        self.will_overwrite = False
 
         # Add default film parameters.        
         self.parameters.add("acq_mode", params.ParameterSetString("Acquisition mode",
