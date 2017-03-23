@@ -83,6 +83,7 @@ class HalController(halModule.HalModule):
                                           message.data.get("ui_order"))
                 
             elif (message.getType() == "start"):
+                self.view.addWidgets()
                 self.view.show()
 
 
@@ -97,7 +98,13 @@ class HalView(QtWidgets.QMainWindow):
 
     def __init__(self, module_name = None, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
-        
+
+        self.close_now = False
+        self.close_timer = QtCore.QTimer(self)
+        self.film_directory = module_params.get("directory")
+        self.module_name = module_name
+        self.widgets_to_add = []
+
         # Configure UI.
         if self.classic_view:
             import storm_control.hal4000.qtdesigner.hal4000_ui as hal4000Ui            
@@ -106,11 +113,6 @@ class HalView(QtWidgets.QMainWindow):
             
         self.ui = hal4000Ui.Ui_MainWindow()
         self.ui.setupUi(self)
-
-        self.close_now = False
-        self.close_timer = QtCore.QTimer(self)
-        self.film_directory = module_params.get("directory")
-        self.module_name = module_name
 
         # Create layout for the cameraFrame.
         if self.classic_view:
@@ -153,15 +155,23 @@ class HalView(QtWidgets.QMainWindow):
 
     def addUiWidget(self, parent_widget_name, ui_widget, ui_order):
         """
-        A UI widget (from another module) to the main display.
+        A UI widget (from another module) to the list of widgets to add.
         """
-        hal_widget = getattr(self.ui, parent_widget_name)
-        ui_widget.setParent(hal_widget)
-        layout = hal_widget.layout()
         if ui_order is None:
+            ui_order = 0
+        self.widgets_to_add.append([parent_widget_name, ui_widget, ui_order])
+        print(len(self.widgets_to_add))
+
+    def addWidgets(self):
+        """
+        This actually adds the widgets to UI.
+        """
+        for to_add in sorted(self.widgets_to_add, key = lambda x: x[2]):
+            [parent_widget_name, ui_widget] = to_add[:2]
+            hal_widget = getattr(self.ui, parent_widget_name)
+            ui_widget.setParent(hal_widget)
+            layout = hal_widget.layout()
             layout.addWidget(ui_widget)
-        else:
-            layout.insertWidget(ui_order, ui_widget)
     
     def cleanUp(self, qt_settings):
         """
@@ -346,28 +356,42 @@ class HalCore(QtCore.QObject):
             module.newFrame.connect(self.handleFrame)
             module.newMessage.connect(self.handleMessage)
 
-        # Tell modules to finish configuration.
+        # Create messages.
         #
-        # The message includes a dictionary of the names of all modules that were loaded.
+        # We do it this way with finalizers because otherwise all of these messages
+        # would get processed first and the modules would not have a change to send
+        # messages in between these messages.
         #
-        self.handleMessage(halMessage.HalMessage(source = self,
-                                                 m_type = "configure",
-                                                 data = {"module_names" : module_names}))
-
-        # Tell the modules to start.
+        # The actual sequence of sent messages is:
         #
-        # This is the point where any GUI modules that are visible should call show().
+        # 1. "configure", tell modules to finish configuration.
+        #    The message includes a dictionary of the names of
+        #    all modules that were loaded.
         #
-        self.handleMessage(halMessage.HalMessage(source = self,
-                                                 m_type = "start",
-                                                 sync = True))
-
-        # Initial parameters (if any).
+        # 2. "start", tell the modules to start.
+        #    This is the point where any GUI modules that are
+        #    visible should call show().
+        #
+        # 3. "new parameters file", initial parameters (if any).
+        #
         if parameters_file_name is not None:
-            self.handleMessage(halMessage.HalMessage(source = self,
-                                                     m_type = "new parameters file",
-                                                     data = {"filename" : parameters_file_name}))
-                                                     
+            newp_message = halMessage.HalMessage(source = self,
+                                                 m_type = "new parameters file",
+                                                 data = {"filename" : parameters_file_name})
+            start_message = halMessage.HalMessage(source = self,
+                                                  m_type = "start",
+                                                  sync = True,
+                                                  finalizer = lambda: self.handleMessage(newp_message))
+        else:
+            start_message = halMessage.HalMessage(source = self,
+                                                  m_type = "start",
+                                                  sync = True)
+            
+        config_message = halMessage.HalMessage(source = self,
+                                               m_type = "configure",
+                                               data = {"module_names" : module_names},
+                                               finalizer = lambda: self.handleMessage(start_message))
+        self.handleMessage(config_message)
             
     def cleanup(self):
         print(" Dave? What are you doing Dave?")
@@ -388,7 +412,6 @@ class HalCore(QtCore.QObject):
         """
         Adds a message to the queue of images to send.
         """
-        
         # Check the message and it to the queue.
         if not message.m_type in halMessage.valid_messages:
             raise halExceptions.HalException("Invalid message type '" + message.m_type + "' received from " + message.getSourceName())

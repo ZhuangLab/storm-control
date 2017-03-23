@@ -55,8 +55,6 @@
     <film>
       <class_name type="string">Film</class_name>
       <module_name type="string">film.film</module_name>
-      <ui_parent type="string">hal.containerWidget</ui_parent>
-      <ui_order type="int">1</ui_order>
 
       <!-- Film parameters specific to this setup go here. -->
       <parameters>
