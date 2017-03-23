@@ -360,7 +360,7 @@ class HalCore(QtCore.QObject):
         # Create messages.
         #
         # We do it this way with finalizers because otherwise all of these messages
-        # would get processed first and the modules would not have a change to send
+        # would get queued first and the modules would not have a chance to insert
         # messages in between these messages.
         #
         # The actual sequence of sent messages is:
