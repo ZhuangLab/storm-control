@@ -29,7 +29,7 @@ class NoneCameraControl(cameraControl.CameraControl):
         # Emulation camera parameters.
         self.parameters.add("exposure_time", params.ParameterRangeFloat("Exposure time (seconds)", 
                                                                         "exposure_time", 
-                                                                        0.1, 0.01, 10.0))
+                                                                        0.01, 0.01, 10.0))
         self.parameters.add("max_intensity", params.ParameterInt("",
                                                                  "max_intensity",
                                                                  512,

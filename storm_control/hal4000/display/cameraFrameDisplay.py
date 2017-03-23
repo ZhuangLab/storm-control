@@ -10,20 +10,13 @@ Hazen 2/17
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-# Debugging
-import storm_control.sc_library.parameters as params
-
-# Camera Helper Modules
+import storm_control.hal4000.colorTables.colorTables as colorTables
 import storm_control.hal4000.qtWidgets.qtColorGradient as qtColorGradient
 import storm_control.hal4000.qtWidgets.qtCameraWidget as qtCameraWidget
 import storm_control.hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
-
-# Misc
-import storm_control.hal4000.colorTables.colorTables as colorTables
+import storm_control.sc_library.parameters as params
 
 import storm_control.hal4000.qtdesigner.camera_display_ui as cameraDisplayUi
-
-default_widget = None
 
 
 class BaseFrameDisplay(QtWidgets.QFrame):
@@ -66,7 +59,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.color_gradient = None
         self.color_tables = colorTables.ColorTables(os.path.dirname(__file__) + "/../colorTables/all_tables/")
         self.cycle_length = 1
-        self.display_name = None
+        self.display_name = display_name
         self.display_timer = QtCore.QTimer(self)
         self.feed_name = feed_name
         self.filming = False
@@ -168,15 +161,15 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         #
         if (self.feed_name == data["camera"]):
 
-            # Setup the camera display widget
-            print("cfd", cam_params.get("x_pixels"), cam_params.get("y_pixels"))
+            # Setup the camera display widget.
             color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
             self.camera_widget.newColorTable(color_table)
+            self.camera_widget.newParameters(cam_params)
             self.camera_widget.newSize([cam_params.get("x_pixels")/cam_params.get("x_bin"),
                                         cam_params.get("y_pixels")/cam_params.get("y_bin")])
             self.updateRange()
 
-            # Color gradient
+            # Color gradient.
             if self.color_gradient is not None:
                 self.color_gradient.newColorTable(color_table)
             else:
@@ -188,7 +181,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
                 
             self.ui.colorComboBox.setCurrentIndex(self.ui.colorComboBox.findText(self.getParameter("colortable")[:-5]))
 
-            # General settings
+            # General settings.
             self.ui.rangeSlider.setRange([0.0, self.getParameter("max_intensity"), 1.0])
             self.ui.rangeSlider.setValues([float(self.getParameter("display_min")),
                                            float(self.getParameter("display_max"))])
@@ -396,6 +389,10 @@ class CameraFrameDisplay(BaseFrameDisplay):
     """
     Add handling of interaction with the feeds, i.e. mouse drags,
     ROI selection, etc..
+
+    FIXME:
+      1. Dragging should not be specific to the main display?
+      2. Dragging should only work for the cameras, not feeds?
     """
     def __init__(self, show_record = False, **kwds):
         super().__init__(**kwds)
@@ -412,22 +409,32 @@ class CameraFrameDisplay(BaseFrameDisplay):
         self.camera_widget.roiSelection.connect(self.handleROISelection)
 
         self.ui.cameraShutterButton.clicked.connect(self.handleCameraShutter)
+        self.ui.recordButton.clicked.connect(self.handleRecord)
 
     def handleCameraShutter(self, boolean):
-        #self.cameraShutter.emit(self.feed_controller.getCamera(self.feed_name))
-        pass
+        self.guiMessage.emit(["shutter clicked", 1,
+                              {"display_name" : self.display_name,
+                               "feed_name" : self.feed_name}])
 
     def handleDisplayCaptured(self, a_pixmap):
         #self.frameCaptured.emit(self.feed_name, a_pixmap)
         pass
 
     def handleDragStart(self):
-        #self.dragStart.emit(self.feed_name)
-        pass
+        self.guiMessage.emit(["drag start", 3,
+                              {"display_name" : self.display_name,
+                               "feed_name" : self.feed_name}])
 
     def handleDragMove(self, x_disp, y_disp):
-        #self.dragMove.emit(self.feed_name, x_disp, y_disp)
-        pass
+        self.guiMessage.emit(["drag move", 3,
+                              {"display_name" : self.display_name,
+                               "feed_name" : self.feed_name,
+                               "x_disp" : x_disp,
+                               "y_disp" : y_disp}])
+
+    def handleRecord(self, boolean):
+        self.guiMessage.emit(["record clicked", 1,
+                              {"display_name" : self.display_name}])
         
     def handleROISelection(self, select_rect):
         #self.ROISelection.emit(self.feed_name, select_rect)

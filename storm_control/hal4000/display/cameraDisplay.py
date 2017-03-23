@@ -86,14 +86,19 @@ class Display(halModule.HalModule):
         # display settings for a camera or feed.
         halMessage.addMessage("get feed config", check_exists = False)
 
+        # This message comes from the record button.
+        halMessage.addMessage("record clicked")
+        
         # This message only comes from view[0], the default display.
         halMessage.addMessage("set current camera")
 
     def getNextViewName(self):
         return "display{0:02d}".format(len(self.views))
     
-    def handleGuiMessage(self, message):
-        self.newMessage.emit(message)
+    def handleGuiMessage(self, message_data):
+        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = message_data[0],
+                                                   data = message_data[1]))
 
     def handleResponse(self, response):
         """

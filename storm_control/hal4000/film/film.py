@@ -164,6 +164,7 @@ class FilmBox(QtWidgets.QGroupBox):
     def setDirectory(self, new_directory):
         self.parameters.set("directory", new_directory)
         self.ui.directoryText.setText("  " + new_directory[-30:])
+        self.updateFilenameLabel()
 
     def setShutters(self, new_shutters):
         self.ui.shuttersText.setText("  " + new_shutters)
@@ -236,6 +237,9 @@ class Film(halModule.HalModuleBuffered):
 
             elif (message.m_type == "feed list"):
                 self.feed_list = message.getData()["feeds"]
+
+            elif (message.m_type == "new directory"):
+                self.view.setDirectory(message.getData()["directory"])
                 
             elif (message.m_type == "start"):
                 if self.view.amInLiveMode():

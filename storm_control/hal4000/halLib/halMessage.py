@@ -63,7 +63,7 @@ class HalMessageBase(object):
 
     def getType(self):
         return self.m_type
-    
+
 
 class HalMessage(HalMessageBase):
 
@@ -81,6 +81,11 @@ class HalMessage(HalMessageBase):
                 from a USB joystick) then it should be some other level so that
                 modules that are not interested can more quickly ignore it.
 
+                Convention:
+                 1. General messages
+                 2. New frame messages
+                 3. Joystick / mouse drag messages
+
         finalizer - A function with no arguments to call when the message has been 
                     processed by all of the modules.
         """
@@ -96,7 +101,8 @@ class HalMessage(HalMessageBase):
         self.ref_count = 0
 
         # Log when message was created.
-        self.logEvent("created")
+        if (self.level == 1):
+            self.logEvent("created")
 
     def addError(self, hal_message_error):
         self.m_errors.append(hal_message_error)
@@ -107,7 +113,8 @@ class HalMessage(HalMessageBase):
     def finalize(self):
 
         # Log when message was destroyed.
-        self.logEvent("destroyed")
+        if (self.level == 1):
+            self.logEvent("destroyed")
 
         if self.finalizer is not None:
             self.finalizer()

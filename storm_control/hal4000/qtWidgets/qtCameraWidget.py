@@ -16,6 +16,8 @@ import storm_control.hal4000.halLib.c_image_manipulation_c as c_image
 class QCameraWidget(QtWidgets.QWidget):
     """
     Class for displaying images from the camera.
+
+    FIXME: This has many issues.. Maybe a graphics view/scene would work better?
     """
     displayCaptured = QtCore.pyqtSignal(object)
     dragStart = QtCore.pyqtSignal()
@@ -36,7 +38,6 @@ class QCameraWidget(QtWidgets.QWidget):
         self.ctrl_key_down = False
         self.drag_enabled = False
         self.drag_mode = False
-        self.drag_multiplier = None
         self.drag_x = 0
         self.drag_y = 0
 
@@ -160,11 +161,11 @@ class QCameraWidget(QtWidgets.QWidget):
             self.roi_rubber_band.setGeometry(QtCore.QRect(self.roi_rubber_band.pos(), event.pos()).normalized())
 
         #
-        # FIXME: Need to also adjust for binning, current magnification..
+        # FIXME: Need to also adjust for binning..
         #
         if self.drag_mode:
-            dx = self.drag_multiplier * (self.mouse_x - self.drag_x)
-            dy = self.drag_multiplier * (self.mouse_y - self.drag_y)
+            dx = self.mouse_x - self.drag_x
+            dy = self.mouse_y - self.drag_y
             self.dragMove.emit(dx, dy)
 
     def mousePressEvent(self, event):
@@ -229,13 +230,13 @@ class QCameraWidget(QtWidgets.QWidget):
         self.flip_horizontal = parameters.get("flip_horizontal")
         self.flip_vertical = parameters.get("flip_vertical")
         self.transpose = parameters.get("transpose")
-        self.drag_multiplier = parameters.get("drag_multiplier", 1.0)
         self.max_intensity = parameters.get("max_intensity")
 
-        if "_sat.ctbl" in parameters.get("colortable"):
-            self.display_saturated_pixels = True
-        else:
-            self.display_saturated_pixels = False
+        # FIXME: re-implement this..
+        #if "_sat.ctbl" in parameters.get("colortable"):
+        #    self.display_saturated_pixels = True
+        #else:
+        #    self.display_saturated_pixels = False
             
     def newRange(self, new_range):
         self.display_range = new_range
@@ -345,7 +346,7 @@ class QCameraWidget(QtWidgets.QWidget):
         try:
             image_data = image_data.reshape((h,w))
         except ValueError as e:
-            print("Got an image with an unexpected size, ", image_data.size, "expected", h * w)
+            print("Got an image with an unexpected size, ", image_data.shape, "expected [", w, ",", h, "]")
             return
 
         max_intensity = self.max_intensity
