@@ -233,6 +233,7 @@ class HalView(QtWidgets.QMainWindow):
                     halMessageBox.halMessageBox("File type not recognized")
 
     def handleCloseTimer(self):
+        self.close_now = True
         self.guiMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "close event",
                                                    sync = True))
