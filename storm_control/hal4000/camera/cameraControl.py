@@ -309,7 +309,7 @@ class IdleActive(object):
 
     def stop(self):
         """
-        Tells the thread that is should stop operating.
+        Tells the thread that it should stop operating.
         """
         self.running = False
 

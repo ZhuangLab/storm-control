@@ -65,11 +65,11 @@ class HalModule(QtCore.QThread):
             data = m_error.source + ": " + m_error.message
             if m_error.hasException():
                 if not self.handleError(m_error):
-                    halMessageBox.halMessageBox(message.data, is_error = True)
+                    halMessageBox.halMessageBoxInfo(message.data, is_error = True)
                     raise m_error.getException()
             else:
                 if not self.handleWarning(m_warning):
-                    halMessageBox.halMessageBox(message.data)
+                    halMessageBox.halMessageBoxInfo(message.data)
 
     def messageResponse(self, responses):
         """

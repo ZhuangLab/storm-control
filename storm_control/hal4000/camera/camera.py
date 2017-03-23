@@ -60,6 +60,9 @@ class Camera(halModule.HalModuleBuffered):
         # Sent when the camera is actually stopped.
         halMessage.addMessage("camera stopped", check_exists = False)
 
+        # Sent when filming and we have reached the desired number of frames.
+        halMessage.addMessage("film complete")
+        
         # Sent each time there is a new frame from the camera.
         halMessage.addMessage("new frame", check_exists = False)
 
@@ -142,7 +145,7 @@ class Camera(halModule.HalModuleBuffered):
 
             # This message comes from film.film, it goes to all cameras at once.
             elif (message.getType() == "start film"):
-                self.camera_control.startCamera(message.getData()["film_settings"])
+                self.camera_control.startFilm(message.getData()["film_settings"])
 
             # This message comes from film.film. Once the camera actually
             # stops we send the 'camera stopped' message.

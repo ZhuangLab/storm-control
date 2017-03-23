@@ -367,17 +367,20 @@ class BaseFrameDisplay(QtWidgets.QFrame):
 #        self.cycle_length = sync_max
 #        self.ui.syncSpinBox.setMaximum(sync_max)
         
-#    def startFilm(self, run_shutters):
-#        self.filming = True
-#        if run_shutters:
-#            self.ui.syncLabel.show()
-#            self.ui.syncSpinBox.show()
+    def startFilm(self, film_settings):
+        self.filming = True
+        if film_settings["run_shutters"]:
+            self.ui.syncLabel.show()
+            self.ui.syncSpinBox.show()
+        if self.ui.cameraShutterButton.isVisible():
+            self.ui.cameraShutterButton.setEnabled(False)
             
-#    def stopFilm(self):
-#        self.filming = False
-#        self.ui.syncLabel.hide()
-#        self.ui.syncSpinBox.hide()
-
+    def stopFilm(self):
+        self.filming = False
+        self.ui.syncLabel.hide()
+        self.ui.syncSpinBox.hide()
+        if self.ui.cameraShutterButton.isVisible():
+            self.ui.cameraShutterButton.setEnabled(True)
                 
     def updateRange(self):
         self.ui.scaleMax.setText(str(self.getParameter("display_max")))
@@ -449,13 +452,20 @@ class CameraFrameDisplay(BaseFrameDisplay):
         super.handleSync(self, sync_value)
         #self.setParameter("sync", sync_value)
 
-#    def startFilm(self, run_shutters):
-#        CameraFeedDisplay.startFilm(self, run_shutters)
-#        self.ui.cameraShutterButton.setEnabled(False)
+    def startFilm(self, film_settings):
+        super().startFilm(film_settings)
+        if self.ui.recordButton.isVisible():
+            self.ui.recordButton.setText("Stop")
+            if film_settings["save_film"]:
+                self.ui.recordButton.setStyleSheet("QPushButton { color: red }")
+            else:
+                self.ui.recordButton.setStyleSheet("QPushButton { color: orange }")
 
-#    def stopFilm(self):
-#        CameraFeedDisplay.stopFilm(self)
-#        self.ui.cameraShutterButton.setEnabled(True)
+    def stopFilm(self):
+        super().stopFilm()
+        if self.ui.recordButton.isVisible():
+            self.ui.recordButton.setText("Record")
+            self.ui.recordButton.setStyleSheet("QPushButton { color: black }")
 
     def updateCameraProperties(self, camera_properties):
         if self.feed_name in camera_properties:

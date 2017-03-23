@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 """
-Standardized HAL message box. Use this for 
-messages instead of rolling your own.
+Standardized HAL message boxes. Use these for 
+messages instead of rolling your own!
 
 Hazen 01/17
 """
 
 from PyQt5 import QtWidgets
 
-def halMessageBox(message, is_error = False):
+def halMessageBoxInfo(message, is_error = False):
     msg_box = QtWidgets.QMessageBox()
     msg_box.setText(message)
     if is_error:
@@ -16,6 +16,13 @@ def halMessageBox(message, is_error = False):
     else:
         msg_box.setIcon(QtWidgets.QMessageBox.Information)
     msg_box.exec_()
+
+def halMessageBoxResponse(source, header, message):
+    return QtWidgets.QMessageBox.question(source,
+                                          header,
+                                          message,
+                                          QtWidgets.QMessageBox.Yes,
+                                          QtWidgets.QMessageBox.No)    
 
 #
 # The MIT License

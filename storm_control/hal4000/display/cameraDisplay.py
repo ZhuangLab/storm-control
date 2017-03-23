@@ -141,6 +141,14 @@ class Display(halModule.HalModule):
                 if self.dialogs[0] is not None:
                     self.dialogs[0].showIfVisible()
 
+            elif (message.getType() == "start film"):
+                for view in self.views:
+                    view.startFilm(message.getData()["film_settings"])
+
+            elif (message.getType() == "stop film"):
+                for view in self.views:
+                    view.stopFilm()
+
         elif (message.level == 2):
             if (message.getType() == "new frame"):
                 for view in self.views:

@@ -227,9 +227,9 @@ class HalView(QtWidgets.QMainWindow):
                                                            data = {"filename" : filename}))
             else:
                 if error_text:
-                    halMessageBox.halMessageBox("XML file parsing error " + error_text)
+                    halMessageBox.halMessageBoxInfo("XML file parsing error " + error_text + ".")
                 else:
-                    halMessageBox.halMessageBox("File type not recognized")
+                    halMessageBox.halMessageBoxInfo("File type not recognized.")
 
     def handleCloseTimer(self):
         self.close_now = True
