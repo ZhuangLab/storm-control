@@ -88,6 +88,10 @@ class Mosaic(halModule.HalModule):
                     self.newMessage.emit(halMessage.HalMessage(source = self,
                                                                m_type = "pixel size",
                                                                data = {"pixel_size" : pixel_size}))
+                    
+            elif (message.getType() == "stop film"):
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                  data = {"parameters" : self.parameters}))
 
         super().processMessage(message)                    
                     

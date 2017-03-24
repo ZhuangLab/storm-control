@@ -16,6 +16,7 @@ import os
 
 from PyQt5 import QtCore, QtWidgets
 
+import storm_control.sc_library.hgit as hgit
 import storm_control.sc_library.parameters as params
 
 import storm_control.hal4000.halLib.halMessage as halMessage
@@ -275,11 +276,11 @@ class Film(halModule.HalModuleBuffered):
         self.logfile_fp = open(module_params.get("directory") + "image_log.txt", "a")
 
         p = module_params.getp("parameters")
-        p.add("directory", params.ParameterStringDirectory("Current working directory",
-                                                           "directory",
-                                                           module_params.get("directory"),
-                                                           is_mutable = False,
-                                                           is_saved = False))
+        p.add(params.ParameterStringDirectory("Current working directory",
+                                              "directory",
+                                              module_params.get("directory"),
+                                              is_mutable = False,
+                                              is_saved = False))
                 
         self.view = FilmBox(parameters = p)
         self.view.liveModeChange.connect(self.handleLiveModeChange)
@@ -316,6 +317,8 @@ class Film(halModule.HalModuleBuffered):
             if film_settings["save_film"]:
                 to_save = params.StormXMLObject()
                 acq_p = to_save.addSubSection("acquisition")
+                acq_p.add(params.ParameterString("", "version", hgit.getVersion()))
+                acq_p.add(params.ParameterInt("", "number_frames", film_settings["number_frames"]))
                 for response in message.getResponses():
                     data = response.getData()
 
@@ -401,6 +404,7 @@ class Film(halModule.HalModuleBuffered):
                 
                 # Update frame counter if the frame is from camera1.
                 if (frame.which_camera == "camera1"):
+                    self.film_settings["number_frames"] = frame.frame_number + 1
                     self.view.updateFrames(frame.frame_number + 1)
 
                 # Save frame (if needed).
