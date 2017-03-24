@@ -23,6 +23,7 @@ class ParametersItemData(object):
         self.checked = False
         self.initialized = False
         self.parameters = parameters
+        self.stale = False  # Edited but not saved.
 
     
 class ParametersListViewDelegate(QtWidgets.QStyledItemDelegate):
@@ -45,8 +46,19 @@ class ParametersListViewDelegate(QtWidgets.QStyledItemDelegate):
         style = option.widget.style()
         style.drawControl(QtWidgets.QStyle.CE_RadioButton, opt, painter, option.widget)
         
-        
+    def sizeHint(self, option, index):
+        """
+        This provides a little more space between the items.
+        """
+        result = QtWidgets.QStyledItemDelegate.sizeHint(self, option, index)
+        result.setHeight(1.2 * result.height())
+        return result
+
+    
 class ParametersMVC(QtWidgets.QListView):
+    editParameters = QtCore.pyqtSignal(object)
+    newParameters = QtCore.pyqtSignal(object)
+    saveParameters = QtCore.pyqtSignal(object)
     
     def __init__(self, parent = None, **kwds):
         kwds["parent"] = parent
@@ -54,6 +66,7 @@ class ParametersMVC(QtWidgets.QListView):
 
         self.current_item = None
         self.model = ParametersStandardItemModel(self)
+        self.rc_item = None
         self.setModel(self.model)
 
         # This enables the user to re-order the items by dragging them.
@@ -62,27 +75,92 @@ class ParametersMVC(QtWidgets.QListView):
         # Custom drawing of the items.
         self.setItemDelegate(ParametersListViewDelegate(model = self.model))
 
-        for name in ["setting 1", "setting 2", "setting 3"]:
-            qitem = QtGui.QStandardItem(name)
-            qitem.setData(ParametersItemData())
-            self.model.appendRow(qitem)
-            self.current_item = qitem
-
         self.selectionModel().selectionChanged.connect(self.handleSelectionChange)
+
+        # Actions for the pop-up menu.
+        self.deleteAction = QtWidgets.QAction(self.tr("Delete"), self)
+        self.duplicateAction = QtWidgets.QAction("Duplicate", self)
+        self.editAction = QtWidgets.QAction(self.tr("Edit"), self)
+        self.saveAction = QtWidgets.QAction(self.tr("Save"), self)
+
+        self.deleteAction.triggered.connect(self.handleDelete)
+        self.duplicateAction.triggered.connect(self.handleDuplicate)
+        self.editAction.triggered.connect(self.handleEdit)
+        self.saveAction.triggered.connect(self.handleSave)
+
+        # Testing.
+        if True:
+            for name in ["setting 1", "setting 2", "setting 3"]:
+                self.addParameters(name, "foo")
+
+    def addParameters(self, name, parameters):
+        qitem = QtGui.QStandardItem(name)
+        qitem.setData(ParametersItemData(parameters))
+        self.model.insertRow(0, qitem)
+
+        # The first parameter in is the default current parameters.
+        if (self.model.rowCount() == 1):
+            self.current_item = qitem
+            getItemData(qitem).checked = True
 
     def getSelectedItem(self, selection):
         return self.model.itemFromIndex(selection.indexes()[0])
-            
+
+    def handleDelete(self, boolean):
+        self.model.removeRows(self.model.indexFromItem(self.rc_item).row(), 1)
+
+    def handleDuplicate(self, boolean):
+        dup_qitem = QtGui.QStandardItem(self.rc_item.text())
+        # F
+#        dup_qitem.setData(ParametersItemData(getItemData(self.rc_item).parameters.copy()))
+        dup_qitem.setData(ParametersItemData(getItemData(self.rc_item).parameters))
+        row = self.model.indexFromItem(self.rc_item).row()
+        self.model.insertRow(row, dup_qitem)
+
+    def handleEdit(self, boolean):
+        self.editParameters.emit(getItemData(self.rc_item).parameters)
+    
+    def handleSave(self, boolean):
+        data = getItemData(self.rc_item)
+        self.saveParameters.emit(getItemData(self.rc_item).parameters)
+        data.stale = False
+    
     def handleSelectionChange(self, new_selection, old_selection):
         """
-        Heh, new_selection and old_selection are the same..
+        Heh, new_selection and old_selection are the same so we
+        need to keep track of what was previously selected ourselves.
         """
         new_item = self.getSelectedItem(new_selection)
         if (self.current_item != new_item):
             getItemData(self.current_item).checked = False
             getItemData(new_item).checked = True
             self.current_item = new_item
-            
+            self.newParameters.emit(getItemData(new_item).parameters)
+
+    def mousePressEvent(self, event):
+        if (event.button() == QtCore.Qt.RightButton):
+            rc_index = self.indexAt(event.pos())
+
+            # Check that the user actually clicked on an item.
+            if (rc_index.row() > -1):
+                self.rc_item = self.model.itemFromIndex(rc_index)
+                if (self.rc_item == self.current_item):
+                    popup_menu = QtWidgets.QMenu()
+                    popup_menu.addAction(self.duplicateAction)
+                    popup_menu.addAction(self.editAction)
+                    if getItemData(self.rc_item).stale:
+                        popup_menu.addAction(self.saveAction)
+                else:
+                    popup_menu = QtWidgets.QMenu()
+                    popup_menu.addAction(self.deleteAction)
+                    popup_menu.addAction(self.duplicateAction)
+                    if getItemData(self.rc_item).stale:
+                        popup_menu.addAction(self.saveAction)
+                popup_menu.exec_(event.globalPos())
+                
+        else:
+            super().mousePressEvent(event)
+
 
 class ParametersStandardItemModel(QtGui.QStandardItemModel):
 
