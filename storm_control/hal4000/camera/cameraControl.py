@@ -189,8 +189,17 @@ class CameraControl(QtCore.QThread):
         pass
 
     def stopCamera(self):
-        self.running = False
-        self.wait()
+
+        # If we are running then we'll get the finished signal when the
+        # thread stops.
+        if self.running:
+            self.running = False
+            self.wait()
+
+        # Otherwise we need to send it ourselves, or the
+        # 'camera stopped' message will never get sent.
+        else:
+            self.finished.emit()
 
     def stopFilm(self):
         pass
