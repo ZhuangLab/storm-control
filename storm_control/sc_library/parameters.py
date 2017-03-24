@@ -738,9 +738,12 @@ class StormXMLObject(object):
         # the name twice, which was really annoying..
         #
         if pvalue is None:
-            pvalue = pname
-            pname = pvalue.getName()
-            
+            if isinstance(pname, Parameter):
+                pvalue = pname
+                pname = pvalue.getName()
+            else:
+                raise ParametersException("pvalue for " + pname + " must be specified.")
+
         pnames = pname.split(".")
         if (len(pnames) > 1):
             try:
