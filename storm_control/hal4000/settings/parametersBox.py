@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-Group box containing a variable number of radio buttons
-representing all the currently available parameters files.
+Listview containing a variable number of elements representing 
+all of the currently available parameters files.
 
 This now contains the widgets for the parameters editor as well.
 
@@ -35,6 +35,9 @@ def handleCustomParameter(root_name, parameter, changed_signal, parent):
         return pEditors.ParametersTableWidgetString(root_name, parameter, changed_signal, parent)
 
 
+#
+# Parameter editor dialog section.
+#
 class ParametersEditor(QtWidgets.QDialog):
     """
     This class handles the parameters editor dialog box.
@@ -284,6 +287,9 @@ class ParametersTable(QtWidgets.QWidget):
         return new_widget
         
 
+#
+# Parameters display section.
+#
 class ParametersRadioButton(QtWidgets.QRadioButton):
     """
     This class encapsulates a set of parameters and it's
@@ -413,17 +419,20 @@ class ParametersBox(QtWidgets.QGroupBox):
 
         self.ui = settingsUi.Ui_GroupBox()
         self.ui.setupUi(self)
-        self.ui.settingsScrollArea.setWidgetResizable(True)
+
+        self.ui.settingsListView.setStyleSheet("background-color: transparent;")
         
-        self.button_group = QtWidgets.QButtonGroup(self.ui.scrollAreaWidgetContents)
-        
-        self.layout = QtWidgets.QVBoxLayout(self.ui.scrollAreaWidgetContents)
-        self.layout.setContentsMargins(4,4,4,4)
-        self.layout.setSpacing(2)
-        self.layout.addSpacerItem(QtWidgets.QSpacerItem(20, 
-                                                        12,
-                                                        QtWidgets.QSizePolicy.Minimum,
-                                                        QtWidgets.QSizePolicy.Expanding))
+#        self.ui.settingsScrollArea.setWidgetResizable(True)
+#        
+#        self.button_group = QtWidgets.QButtonGroup(self.ui.scrollAreaWidgetContents)
+#        
+#        self.layout = QtWidgets.QVBoxLayout(self.ui.scrollAreaWidgetContents)
+#        self.layout.setContentsMargins(4,4,4,4)
+#        self.layout.setSpacing(2)
+#        self.layout.addSpacerItem(QtWidgets.QSpacerItem(20, 
+#                                                        12,
+#                                                        QtWidgets.QSizePolicy.Minimum,
+#                                                        QtWidgets.QSizePolicy.Expanding))
 
 
     def addParameters(self, parameters):
@@ -539,6 +548,7 @@ class ParametersBox(QtWidgets.QGroupBox):
         for button in self.radio_buttons:
             if button.isChecked():
                 button.updateParameters()
+
 
 #
 # The MIT License

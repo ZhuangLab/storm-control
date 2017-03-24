@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>237</width>
-    <height>184</height>
+    <height>219</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -23,28 +23,43 @@
    <string>Settings</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>9</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item>
-    <widget class="QScrollArea" name="settingsScrollArea">
+    <widget class="ParametersListView" name="settingsListView">
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
      </property>
-     <property name="widgetResizable">
-      <bool>true</bool>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
      </property>
-     <widget class="QWidget" name="scrollAreaWidgetContents">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>211</width>
-        <height>148</height>
-       </rect>
-      </property>
-     </widget>
+     <property name="horizontalScrollBarPolicy">
+      <enum>Qt::ScrollBarAsNeeded</enum>
+     </property>
     </widget>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ParametersListView</class>
+   <extends>QListView</extends>
+   <header>storm_control.hal4000.settings.parametersListView</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
