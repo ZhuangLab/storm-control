@@ -108,7 +108,7 @@ class Display(halModule.HalModule):
             self.viewFeedConfig(response)
 
     def processMessage(self, message):
-        super().processMessage(message)
+
         if (message.level == 1):
             
             if (message.getType() == "add to ui"):
@@ -154,6 +154,8 @@ class Display(halModule.HalModule):
                 for view in self.views:
                     view.newFrame(message.getData()["frame"])
 
+        super().processMessage(message)
+        
     def viewFeedConfig(self, message):
         data = message.getData()
 

@@ -73,7 +73,7 @@ class HalController(halModule.HalModule):
         self.newMessage.emit(message)
 
     def processMessage(self, message):
-        super().processMessage(message)
+        
         if (message.level == 1):
             if (message.getType() == "add to ui"):
                 [module, parent_widget] = message.data["ui_parent"].split(".")
@@ -85,6 +85,8 @@ class HalController(halModule.HalModule):
             elif (message.getType() == "start"):
                 self.view.addWidgets()
                 self.view.show()
+
+        super().processMessage(message)
 
 
 #

@@ -80,6 +80,11 @@ class HalModule(QtCore.QThread):
             self.handleResponse(response)
         
     def processMessage(self, message):
+        """
+        Note that it is important that a sub class calls this method
+        only **after** the message has actually been processed! Otherwise
+        synchronization will not work as expected! Chaos will ensue..
+        """
         message.ref_count -= 1
 
         

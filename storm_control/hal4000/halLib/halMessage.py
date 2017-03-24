@@ -72,8 +72,8 @@ class HalMessage(HalMessageBase):
         data - Python object containing the message data. In general this should
                be a dictionary or a Parameters object.
 
-        sync - Boolean that indicates whether or not this message should be 
-               processed by all the modules before continuing to the next message.
+        sync - Boolean that indicates whether or not all the messages before
+               this message should be processed before continuing to this message.
 
         level - Integer that for the message 'level'. Most messages are level 1
                 but if the message is one that there will be a lot of, and that

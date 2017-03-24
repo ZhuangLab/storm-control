@@ -288,7 +288,7 @@ class Film(halModule.HalModuleBuffered):
                                                    data = {"live mode", state}))
         
     def processMessage(self, message):
-        super().processMessage(message)
+
         if (message.level == 1):
             
             if (message.m_type == "camera stopped"):
@@ -338,6 +338,8 @@ class Film(halModule.HalModuleBuffered):
             elif (message.m_type == "start"):
                 if self.view.amInLiveMode():
                     self.startCameras()
+
+        super().processMessage(message)
 
     def startCameras(self):
         

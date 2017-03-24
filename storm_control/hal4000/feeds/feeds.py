@@ -453,7 +453,7 @@ class Feeds(halModule.HalModule):
                                                    data = {"feeds" : self.feed_list}))
 
     def processMessage(self, message):
-        super().processMessage(message)
+
         if (message.level == 1):
 
             if (message.getType() == "current parameters"):
@@ -480,5 +480,5 @@ class Feeds(halModule.HalModule):
             elif (message.getType() == "configure2"):
                 self.broadcastFeedInfo()
 
-
+        super().processMessage(message)
 

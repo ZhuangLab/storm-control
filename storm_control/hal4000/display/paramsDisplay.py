@@ -136,7 +136,7 @@ class Params(halModule.HalModule):
                                                            "gain" : new_gain}))
         
     def processMessage(self, message):
-        super().processMessage(message)
+
         if (message.level == 1):
 
             if (message.getType() == "camera temperature"):
@@ -159,6 +159,7 @@ class Params(halModule.HalModule):
                 p = message.getData().get(self.current_camera).copy()
                 self.view.newParameters(p)
 
+        super().processMessage(message)
 
 #
 # The MIT License

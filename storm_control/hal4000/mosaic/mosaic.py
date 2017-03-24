@@ -61,7 +61,7 @@ class Mosaic(halModule.HalModule):
         halMessage.addMessage("pixel size")
 
     def processMessage(self, message):
-        super().processMessage(message)
+
         if (message.level == 1):
             if (message.getType() == "configure1"):
 
@@ -93,7 +93,8 @@ class Mosaic(halModule.HalModule):
                         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                                    m_type = "pixel size",
                                                                    data = {"pixel_size" : pixel_size}))
-                    
+
+        super().processMessage(message)                    
                     
                     
 

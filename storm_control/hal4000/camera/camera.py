@@ -57,9 +57,6 @@ class Camera(halModule.HalModuleBuffered):
         # the camera shown in the main viewer and the parameters display.
         halMessage.addMessage("current camera", check_exists = False)
 
-        # Sent when the camera is actually stopped.
-        halMessage.addMessage("camera stopped", check_exists = False)
-
         # Sent when filming and we have reached the desired number of frames.
         halMessage.addMessage("film complete")
         
@@ -82,7 +79,7 @@ class Camera(halModule.HalModuleBuffered):
                                                        data = {"frame" : frame}))
 
     def processMessage(self, message):
-        super().processMessage(message)
+        
         if (message.level == 1):
                     
             if (message.getType() == "configure1"):
@@ -152,12 +149,13 @@ class Camera(halModule.HalModuleBuffered):
             elif (message.getType() == "stop camera"):
                 if (message.getData()["camera"] == self.module_name):
                     self.camera_control.stopCamera()
-                    self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                               m_type = "camera stopped"))
-
+                    
             # This message comes from film.film, it goes to all camera at once.
             elif (message.getType() == "stop film"):
                 self.camera_control.stopFilm()
+                
+        super().processMessage(message)
+
 
 #
 # The MIT License
