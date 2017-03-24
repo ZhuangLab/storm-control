@@ -144,7 +144,8 @@ class FilmBox(QtWidgets.QGroupBox):
                        self.ui.indexSpinBox,
                        self.ui.lengthSpinBox,
                        self.ui.liveModeCheckBox,
-                       self.ui.modeComboBox]:
+                       self.ui.modeComboBox,
+                       self.ui.saveMovieCheckBox]:
             ui_elt.setEnabled(state)
         
     def handleAutoInc(self, state):
