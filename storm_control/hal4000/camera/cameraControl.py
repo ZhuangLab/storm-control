@@ -209,6 +209,10 @@ class HWCameraControl(CameraControl):
     """
     This class implements what is common to all of the 'hardware' cameras.
     """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.camera_mutex = QtCore.QMutex()
+
     def cleanUp(self):
         self.stopCamera()
         self.camera.shutdown()
@@ -218,7 +222,9 @@ class HWCameraControl(CameraControl):
         while(self.running):
 
             # Get data from camera and create frame objects.
+            self.camera_mutex.lock()
             [frames, frame_size] = self.camera.getFrames()
+            self.camera_mutex.unlock()
 
             # Check if we got new frame data.
             if (len(frames) > 0):
@@ -246,7 +252,9 @@ class HWCameraControl(CameraControl):
 
     def stopCamera(self):
         if self.camera_working:
+            self.camera_mutex.lock()
             self.camera.stopAcquisition()
+            self.camera_mutex.unlock()
         super().stopCamera()
         
 
