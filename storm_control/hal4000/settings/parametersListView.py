@@ -24,12 +24,6 @@ class ParametersItemData(object):
         self.initialized = False
         self.parameters = parameters
 
-    def getChecked(self):
-        return self.checked
-
-    def getParameters(self):
-        return self.parameters
-
     
 class ParametersListViewDelegate(QtWidgets.QStyledItemDelegate):
     """
@@ -41,9 +35,10 @@ class ParametersListViewDelegate(QtWidgets.QStyledItemDelegate):
 
     def paint(self, painter, option, index):
         note = self.model.itemFromIndex(index)
-        print(type(getItemData(note)))
-        
+
         opt = QtWidgets.QStyleOptionButton()
+        if getItemData(note).checked:
+            opt.state = QtWidgets.QStyle.State_On
         opt.rect = option.rect
         opt.text = note.text()
         
@@ -57,20 +52,38 @@ class ParametersMVC(QtWidgets.QListView):
         kwds["parent"] = parent
         super().__init__(**kwds)
 
+        self.current_item = None
         self.model = ParametersStandardItemModel(self)
         self.setModel(self.model)
 
         # This enables the user to re-order the items by dragging them.
         self.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
 
+        # Custom drawing of the items.
         self.setItemDelegate(ParametersListViewDelegate(model = self.model))
 
         for name in ["setting 1", "setting 2", "setting 3"]:
             qitem = QtGui.QStandardItem(name)
             qitem.setData(ParametersItemData())
             self.model.appendRow(qitem)
-    
-    
+            self.current_item = qitem
+
+        self.selectionModel().selectionChanged.connect(self.handleSelectionChange)
+
+    def getSelectedItem(self, selection):
+        return self.model.itemFromIndex(selection.indexes()[0])
+            
+    def handleSelectionChange(self, new_selection, old_selection):
+        """
+        Heh, new_selection and old_selection are the same..
+        """
+        new_item = self.getSelectedItem(new_selection)
+        if (self.current_item != new_item):
+            getItemData(self.current_item).checked = False
+            getItemData(new_item).checked = True
+            self.current_item = new_item
+            
+
 class ParametersStandardItemModel(QtGui.QStandardItemModel):
 
     def flags(self, index):
