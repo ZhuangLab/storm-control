@@ -731,7 +731,16 @@ class StormXMLObject(object):
     #
     # Add a new Parameter to the parameters.
     #
-    def add(self, pname, pvalue):
+    def add(self, pname, pvalue = None):
+
+        #
+        # This lets us create parameters without having to specify
+        # the name twice, which was really annoying..
+        #
+        if pvalue is None:
+            pvalue = pname
+            pname = pvalue.getName()
+            
         pnames = pname.split(".")
         if (len(pnames) > 1):
             try:
