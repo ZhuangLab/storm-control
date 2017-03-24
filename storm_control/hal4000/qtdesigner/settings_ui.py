@@ -21,9 +21,9 @@ class Ui_GroupBox(object):
         self.verticalLayout.setContentsMargins(0, 9, 0, 0)
         self.verticalLayout.setSpacing(0)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.settingsListView = ParametersListView(GroupBox)
+        self.settingsListView = ParametersMVC(GroupBox)
         self.settingsListView.setFrameShape(QtWidgets.QFrame.NoFrame)
-        self.settingsListView.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.settingsListView.setFrameShadow(QtWidgets.QFrame.Plain)
         self.settingsListView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.settingsListView.setObjectName("settingsListView")
         self.verticalLayout.addWidget(self.settingsListView)
@@ -36,4 +36,4 @@ class Ui_GroupBox(object):
         GroupBox.setWindowTitle(_translate("GroupBox", "GroupBox"))
         GroupBox.setTitle(_translate("GroupBox", "Settings"))
 
-from storm_control.hal4000.settings.parametersListView import ParametersListView
+from storm_control.hal4000.settings.parametersListView import ParametersMVC

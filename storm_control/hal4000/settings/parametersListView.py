@@ -7,9 +7,29 @@ Hazen 03/17
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-class ParametersListView(QtWidgets.QListView):
+
+class ParametersMVC(QtWidgets.QListView):
+    
+    def __init__(self, parent = None, **kwds):
+        kwds["parent"] = parent
+        super().__init__(**kwds)
+
+        self.model = ParametersStandardItemModel(self)
+        self.setModel(self.model)
+
+        # This enables the user to re-order the items by dragging them.
+        self.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+
+        for name in ["setting 1", "setting 2", "setting 3"]:
+            self.model.appendRow(ParametersStandardItem(name))
+            
+
+class ParametersStandardItem(QtGui.QStandardItem):
     pass
 
+    
+class ParametersStandardItemModel(QtGui.QStandardItemModel):
+    pass
 
 #
 # The MIT License

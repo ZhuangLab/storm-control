@@ -39,12 +39,12 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="ParametersListView" name="settingsListView">
+    <widget class="ParametersMVC" name="settingsListView">
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Sunken</enum>
+      <enum>QFrame::Plain</enum>
      </property>
      <property name="horizontalScrollBarPolicy">
       <enum>Qt::ScrollBarAsNeeded</enum>
@@ -55,7 +55,7 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ParametersListView</class>
+   <class>ParametersMVC</class>
    <extends>QListView</extends>
    <header>storm_control.hal4000.settings.parametersListView</header>
   </customwidget>
