@@ -134,26 +134,26 @@ class BaseFrameDisplay(QtWidgets.QFrame):
             p = self.parameters.addSubSection(data["camera"])
 
             # Add display specific parameters.
-            p.add("colortable", params.ParameterSetString("Color table",
-                                                          "colortable",
-                                                          data["colortable"],
-                                                          self.color_tables.getColorTableNames()))
+            p.add(params.ParameterSetString("Color table",
+                                            "colortable",
+                                            data["colortable"],
+                                            self.color_tables.getColorTableNames()))
                         
-            p.add("display_max", params.ParameterInt("Display maximum",
-                                                     "display_max",
-                                                     cam_params.get("default_max")))
+            p.add(params.ParameterInt("Display maximum",
+                                      "display_max",
+                                      cam_params.get("default_max")))
 
-            p.add("display_min", params.ParameterInt("Display minimum",
-                                                     "display_min",
-                                                     cam_params.get("default_min")))
+            p.add(params.ParameterInt("Display minimum",
+                                      "display_min",
+                                      cam_params.get("default_min")))
 
-            p.add("max_intensity", params.ParameterInt("", "max_intensity",
-                                                       cam_params.get("max_intensity"),
-                                                       is_mutable = False,
-                                                       is_saved = False))
+            p.add(params.ParameterInt("", "max_intensity",
+                                      cam_params.get("max_intensity"),
+                                      is_mutable = False,
+                                      is_saved = False))
 
-            p.add("sync", params.ParameterInt("Frame to display when filming with a shutter sequence",
-                                              "sync", 0))
+            p.add(params.ParameterInt("Frame to display when filming with a shutter sequence",
+                                      "sync", 0))
 
         #
         # Update UI settings if the feed / camera that we got configuration

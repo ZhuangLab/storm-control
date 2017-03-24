@@ -45,50 +45,50 @@ class CameraControl(QtCore.QThread):
 
         # This is frames per second as reported by the camera. It is used
         # by the illumination module for timing the shutters.
-        self.parameters.add("fps", params.ParameterFloat("", "fps", 0, is_mutable = False))
+        self.parameters.add(params.ParameterFloat("", "fps", 0, is_mutable = False))
 
         # Camera AOI size.
         x_size = 512
         y_size = 512
-        self.parameters.add("x_start", params.ParameterRangeInt("AOI X start",
-                                                                "x_start",
-                                                                1, 1, x_size))
-        self.parameters.add("x_end", params.ParameterRangeInt("AOI X end",
-                                                              "x_end",
-                                                              x_size, 1, x_size))
-        self.parameters.add("y_start", params.ParameterRangeInt("AOI Y start",
-                                                                "y_start",
-                                                                1, 1, y_size))
-        self.parameters.add("y_end", params.ParameterRangeInt("AOI Y end",
-                                                              "y_end",
-                                                              y_size, 1, y_size))
+        self.parameters.add(params.ParameterRangeInt("AOI X start",
+                                                     "x_start",
+                                                     1, 1, x_size))
+        self.parameters.add(params.ParameterRangeInt("AOI X end",
+                                                     "x_end",
+                                                     x_size, 1, x_size))
+        self.parameters.add(params.ParameterRangeInt("AOI Y start",
+                                                     "y_start",
+                                                     1, 1, y_size))
+        self.parameters.add(params.ParameterRangeInt("AOI Y end",
+                                                     "y_end",
+                                                     y_size, 1, y_size))
 
-        self.parameters.add("x_pixels", params.ParameterInt("", "x_pixels", x_size, is_mutable = False))
-        self.parameters.add("y_pixels", params.ParameterInt("", "y_pixels", y_size, is_mutable = False))
+        self.parameters.add(params.ParameterInt("", "x_pixels", x_size, is_mutable = False))
+        self.parameters.add(params.ParameterInt("", "y_pixels", y_size, is_mutable = False))
 
-        self.parameters.add("x_bin", params.ParameterRangeInt("Binning in X",
-                                                              "x_bin",
-                                                              1, 1, 4))
-        self.parameters.add("y_bin", params.ParameterRangeInt("Binning in Y",
-                                                              "y_bin",
-                                                              1, 1, 4))
+        self.parameters.add(params.ParameterRangeInt("Binning in X",
+                                                     "x_bin",
+                                                     1, 1, 4))
+        self.parameters.add(params.ParameterRangeInt("Binning in Y",
+                                                     "y_bin",
+                                                     1, 1, 4))
 
         # Frame size in bytes.
-        self.parameters.add("bytes_per_frame", params.ParameterInt("",
-                                                                   "bytes_per_frame",
-                                                                   x_size * y_size * 2,
-                                                                   is_mutable = False,
-                                                                   is_saved = False))
+        self.parameters.add(params.ParameterInt("",
+                                                "bytes_per_frame",
+                                                x_size * y_size * 2,
+                                                is_mutable = False,
+                                                is_saved = False))
 
         #
         # How/if data from this camera is saved.
         #
-        self.parameters.add("filename_ext", params.ParameterString("Camera save filename extension",
-                                                                   "filename_ext",
-                                                                   ""))
-        self.parameters.add("is_saved", params.ParameterSetBoolean("Save data from this camera when filming",
-                                                                   "is_saved",
-                                                                   True))
+        self.parameters.add(params.ParameterString("Camera save filename extension",
+                                                   "filename_ext",
+                                                   ""))
+        self.parameters.add(params.ParameterSetBoolean("Save data from this camera when filming",
+                                                       "is_saved",
+                                                       True))
         self.parameters.set("filename_ext", config.get("filename_ext", ""))
         self.parameters.set("is_saved", config.get("is_saved", True))
 
@@ -96,20 +96,20 @@ class CameraControl(QtCore.QThread):
         # Camera display orientation. Values can only be changed by
         # changing the config.xml file.
         #
-        self.parameters.add("flip_horizontal", params.ParameterSetBoolean("Flip image horizontal",
-                                                                          "flip_horizontal",
-                                                                          False,
-                                                                          is_mutable = False))
+        self.parameters.add(params.ParameterSetBoolean("Flip image horizontal",
+                                                       "flip_horizontal",
+                                                       False,
+                                                       is_mutable = False))
                             
-        self.parameters.add("flip_vertical", params.ParameterSetBoolean("Flip image vertical",
-                                                                        "flip_vertical",
-                                                                        False,
-                                                                        is_mutable = False))
+        self.parameters.add(params.ParameterSetBoolean("Flip image vertical",
+                                                       "flip_vertical",
+                                                       False,
+                                                       is_mutable = False))
 
-        self.parameters.add("transpose", params.ParameterSetBoolean("Transpose image",
-                                                                    "transpose",
-                                                                    False,
-                                                                    is_mutable = False))
+        self.parameters.add(params.ParameterSetBoolean("Transpose image",
+                                                       "transpose",
+                                                       False,
+                                                       is_mutable = False))
         
         self.parameters.set("flip_horizontal", config.get("flip_horizontal", False))
         self.parameters.set("flip_vertical", config.get("flip_vertical", False))
@@ -121,15 +121,15 @@ class CameraControl(QtCore.QThread):
         # These are the values the display will use by default. They can
         # only be changed by changing the config.xml file.
         #
-        self.parameters.add("default_max", params.ParameterInt("",
-                                                               "default_max",
-                                                               2000,
-                                                               is_mutable = False))
+        self.parameters.add(params.ParameterInt("",
+                                                "default_max",
+                                                2000,
+                                                is_mutable = False))
         
-        self.parameters.add("default_min", params.ParameterInt("",
-                                                               "default_min",
-                                                               100,
-                                                               is_mutable = False))
+        self.parameters.add(params.ParameterInt("",
+                                                "default_min",
+                                                100,
+                                                is_mutable = False))
         
         self.parameters.set("default_max", config.get("default_max", 2000))
         self.parameters.set("default_min", config.get("default_min", 100))

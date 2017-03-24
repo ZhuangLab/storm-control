@@ -38,37 +38,37 @@ class FilmBox(QtWidgets.QGroupBox):
         self.will_overwrite = False
 
         # Add default film parameters.        
-        self.parameters.add("acq_mode", params.ParameterSetString("Acquisition mode",
-                                                                  "acq_mode",
-                                                                  "fixed_length",
-                                                                  ["run_till_abort", "fixed_length"]))
+        self.parameters.add(params.ParameterSetString("Acquisition mode",
+                                                      "acq_mode",
+                                                      "fixed_length",
+                                                      ["run_till_abort", "fixed_length"]))
         
-        self.parameters.add("auto_increment", params.ParameterSetBoolean("Automatically increment movie counter between movies",
-                                                                         "auto_increment",
-                                                                         True))
+        self.parameters.add(params.ParameterSetBoolean("Automatically increment movie counter between movies",
+                                                       "auto_increment",
+                                                       True))
         
-        self.parameters.add("auto_shutters", params.ParameterSetBoolean("Run shutters during the movie",
-                                                                        "auto_shutters",
-                                                                        True))
+        self.parameters.add(params.ParameterSetBoolean("Run shutters during the movie",
+                                                       "auto_shutters",
+                                                       True))
         
-        self.parameters.add("filename", params.ParameterString("Current movie file name",
-                                                               "filename",
-                                                               "movie"))
+        self.parameters.add(params.ParameterString("Current movie file name",
+                                                   "filename",
+                                                   "movie"))
         
-        self.parameters.add("filetype", params.ParameterSetString("Movie file type",
-                                                                  "filetype",
-                                                                  ".dax",
-                                                                  [".dax", ".tif"]))
+        self.parameters.add(params.ParameterSetString("Movie file type",
+                                                      "filetype",
+                                                      ".dax",
+                                                      [".dax", ".tif"]))
         
-        self.parameters.add("frames", params.ParameterRangeInt("Movie length in frames",
-                                                               "frames",
-                                                               10,
-                                                               1,
-                                                               1000000000))
+        self.parameters.add(params.ParameterRangeInt("Movie length in frames",
+                                                     "frames",
+                                                     10,
+                                                     1,
+                                                     1000000000))
         
-        self.parameters.add("want_bell", params.ParameterSetBoolean("Sound bell at the end of long movies",
-                                                                    "want_bell",
-                                                                    True))
+        self.parameters.add(params.ParameterSetBoolean("Sound bell at the end of long movies",
+                                                       "want_bell",
+                                                       True))
 
         # Initial UI configuration.
         self.ui = filmUi.Ui_GroupBox()
