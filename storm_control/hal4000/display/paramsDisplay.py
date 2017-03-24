@@ -78,7 +78,7 @@ class ParamsView(QtWidgets.QGroupBox):
             self.ui.EMCCDSlider.valueChanged.connect(self.handleGainChange)
 
         if p.has("preampgain"):
-            self.ui.preampGainText.setText("{0:1f}".format(p.get("preampgain")))
+            self.ui.preampGainText.setText("{0:.1f}".format(p.get("preampgain")))
 
         self.ui.pictureSizeText.setText(str(p.get("x_pixels")) + " x " + str(p.get("y_pixels")) +
                                         " (" + str(p.get("x_bin")) + "," + str(p.get("y_bin")) + ")")
@@ -87,8 +87,8 @@ class ParamsView(QtWidgets.QGroupBox):
             self.ui.exposureTimeText.setText("External")
             self.ui.FPSText.setText("External")
         else:
-            self.ui.exposureTimeText.setText("{0:04f}".format(p.get("exposure_time")))
-            self.ui.FPSText.setText("{0:04f}".format(p.get("fps")))
+            self.ui.exposureTimeText.setText("{0:.4f}".format(p.get("exposure_time")))
+            self.ui.FPSText.setText("{0:.4f}".format(p.get("fps")))
 
     def updateTemperature(self, temp_data):
         if (temp_data["state"] == "stable"):

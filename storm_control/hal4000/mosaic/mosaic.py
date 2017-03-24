@@ -49,7 +49,6 @@ class Mosaic(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
-        self.have_stage = False
         self.parameters = module_params.get("parameters")
         
         self.view = MosaicBox()
@@ -65,10 +64,6 @@ class Mosaic(halModule.HalModule):
         if (message.level == 1):
             if (message.getType() == "configure1"):
 
-                # Check if there is a (motorized) stage.
-                if "stage" in message.getData():
-                    self.have_stage = True
-                    
                 # Initial UI configuration.
                 self.view.setObjectiveText(getObjectiveName(self.parameters))
 
@@ -88,11 +83,11 @@ class Mosaic(halModule.HalModule):
                     objective = p.get("objective")
                     self.parameters.setv("objective", objective)
                     self.view.setObjectiveText(getObjectiveName(self.parameters))
-                    if self.have_stage:
-                        pixel_size = getObjectivePixelSize(self.parameters)
-                        self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                                   m_type = "pixel size",
-                                                                   data = {"pixel_size" : pixel_size}))
+
+                    pixel_size = getObjectivePixelSize(self.parameters)
+                    self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                               m_type = "pixel size",
+                                                               data = {"pixel_size" : pixel_size}))
 
         super().processMessage(message)                    
                     

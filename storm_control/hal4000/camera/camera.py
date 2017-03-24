@@ -33,9 +33,10 @@ class Camera(halModule.HalModuleBuffered):
     Controller for a single camera.
 
     This sends the following messages:
+     'camera stopped'
      'camera temperature'
      'current camera'
-     'camera stopped'
+     'film complete'
      'new frame'
     """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
@@ -44,11 +45,14 @@ class Camera(halModule.HalModuleBuffered):
         camera_params = module_params.get("camera")
         a_module = importlib.import_module("storm_control.hal4000." + camera_params.get("module_name"))
         a_class = getattr(a_module, camera_params.get("class_name"))
-        self.camera_control = a_class(camera_params.get("parameters"))
-        self.camera_control.addToHWConfig("camera", self.module_name)
+        self.camera_control = a_class(camera_name = self.module_name,
+                                      config = camera_params.get("parameters"))
         self.camera_control.addToHWConfig("master", camera_params.get("master"))
 
         self.camera_control.newData.connect(self.handleNewData)
+
+        # Sent when the camera stops.
+        halMessage.addMessage("camera stopped", check_exists = False)
 
         # The temperature data from this camera.
         halMessage.addMessage("camera temperature", check_exists = False)
@@ -116,11 +120,17 @@ class Camera(halModule.HalModuleBuffered):
                                                                data = self.camera_control.getCameraConfig()))
                     
             # This message comes from display.paramsDisplay.
+            #
+            # FIXME: Should broadcast the gain after it is set.
+            #
             elif (message.getType() == "set emccd gain"):
                 if (message.getData()["camera"] == self.module_name):
                     self.camera_control.setEMCCDGain(message.getData()["gain"])
 
             # This message comes from the shutter button.
+            #
+            # FIXME: Should broadcast the updated shutter state.
+            #
             elif (message.getType() == "set shutter"):
                 if (message.getData()["camera"] == self.module_name):
                     self.camera_control.setShutter(message.getData()["state"])
@@ -149,7 +159,9 @@ class Camera(halModule.HalModuleBuffered):
             elif (message.getType() == "stop camera"):
                 if (message.getData()["camera"] == self.module_name):
                     self.camera_control.stopCamera()
-                    
+                    self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                               m_type = "camera stopped"))
+
             # This message comes from film.film, it goes to all camera at once.
             elif (message.getType() == "stop film"):
                 self.camera_control.stopFilm()

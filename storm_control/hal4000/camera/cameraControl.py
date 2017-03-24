@@ -22,11 +22,12 @@ class CameraException(halExceptions.HardwareException):
 class CameraControl(QtCore.QThread):
     newData = QtCore.pyqtSignal(object)
 
-    def __init__(self, config = None, **kwds):
+    def __init__(self, camera_name = None, config = None, **kwds):
         super().__init__(**kwds)
 
         self.acquire = IdleActive()
         self.camera = False
+        self.camera_name = camera_name
         self.frame_number = 0
         self.is_master = None
         self.mutex = QtCore.QMutex()
@@ -36,7 +37,8 @@ class CameraControl(QtCore.QThread):
 
         # Default (hardware) configuration. The remaining values
         # for the camera are stored in it's parameters.
-        self.hw_dict = {"have_emccd" : False,
+        self.hw_dict = {"camera" : self.camera_name,
+                        "have_emccd" : False,
                         "have_preamp" : False,
                         "have_shutter" : False,
                         "have_temp" : False}
@@ -237,8 +239,7 @@ class HWCameraControl(CameraControl):
                                              self.frame_number,
                                              frame_size[0],
                                              frame_size[1],
-                                             "camera1",
-                                             True)
+                                             self.camera_name)
                         frame_data.append(aframe)
                         self.frame_number += 1
                             

@@ -26,6 +26,7 @@ valid_messages = {
     'new parameters file' : True,
     'new shutters file' : True,
     'start' : True,
+    'sync' : True
     }
 
 def addMessage(name, check_exists = True):
@@ -182,7 +183,18 @@ class HalMessageResponse(HalMessageBase):
     def getData(self):
         return self.response_data
                  
-    
+
+class SyncMessage(HalMessage):
+    """
+    A message whose sole purpose is to jam up the queue until 
+    everything before it is processed. Use sparingly..
+    """
+    def __init__(self, source):
+        kwds = {"m_type" : "sync",
+                "source" : source,
+                "sync" : True}
+        super().__init__(**kwds)
+        
 #
 # The MIT License
 #

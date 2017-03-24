@@ -458,9 +458,10 @@ class Feeds(halModule.HalModule):
 
             if (message.getType() == "current parameters"):
                 #
-                # We get this message when the camera (and also other modules) update
-                # their parameters. For each of the cameras we get all of the key
-                # information. The information is broadcast in the 'feed list' message.
+                # We get this message when the camera (and also other modules) respond
+                # with their current parameters. For each of the cameras we get all of
+                # the key information. The information is then broadcast in the 'feed list'
+                # message.
                 #
                 data = message.getData()
                 if ("camera" in data):

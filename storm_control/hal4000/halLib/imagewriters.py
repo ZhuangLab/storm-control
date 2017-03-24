@@ -8,12 +8,12 @@ Hazen 03/17
 import copy
 import datetime
 import struct
+import tifffile
 
 import storm_control.sc_library.hgit as hgit
 import storm_control.sc_library.parameters as params
 
-import storm_control.hal4000.camera.feeds as feeds
-import storm_control.hal4000.halLib.tiffwriter as tiffwriter
+#import storm_control.hal4000.halLib.tiffwriter as tiffwriter
 
 # Get the version of the software.
 software_version = hgit.getVersion()
@@ -115,23 +115,24 @@ def writeInfFile(filename, number_frames, parameters, camera):
 
 
 
-class BaseFileWriter(object)
+class BaseFileWriter(object):
 
     def __init__(self, feed_params = None, film_settings = None, **kwds):
         super().__init__(**kwds)
         self.feed_params = feed_params
         self.film_settings = film_settings
 
-        self.frame_size = self.feed_params["bytes_per_frame"]
+        # This is the frame size in MB.
+        self.frame_size = self.feed_params["bytes_per_frame"] *  0.000000953674
         self.number_frames = 0
 
         # Figure out the filename.
         self.basename = self.film_settings["basename"]
-        if len(self.feed_params["extension"] != 0):
+        if (len(self.feed_params["extension"]) != 0):
             self.basename += "_" + self.feed_params["extension"]
-        self.filename = self.basename + "." + self.film_settings["filetype"]
+        self.filename = self.basename + self.film_settings["filetype"]
 
-    def saveFrame(self, frame):
+    def saveFrame(self):
         self.number_frames += 1
         return self.frame_size
 
@@ -170,7 +171,7 @@ class DaxFile(BaseFileWriter):
         return super().saveFrame()
 
 
-class SPEFile(GenericFile):
+class SPEFile(BaseFileWriter):
     """
     SPE file writing class.
 
@@ -180,9 +181,6 @@ class SPEFile(GenericFile):
         super().__init__(**kwds)
         self.fp = open(self.filename, "wb")
         
-        # Write header information.
-            [x_pixels, y_pixels] = getCameraSize(parameters, self.feed_names[i])
-
         header = chr(0) * 4100
         self.fp.write(header)
 
@@ -218,84 +216,31 @@ class SPEFile(GenericFile):
         self.fp.write(struct.pack("i", self.number_frames))
 
 
-class TIFFile(GenericFile):
+class TIFFile(BaseFileWriter):
     """
-    TIF file writing class. Note that this is a normal tif file format
-    and not a big tif format so the maximum size is limited to 4GB
-    more or less.
+    TIF file writing class. Note that this is a normal tif file format and 
+    not a big tif format so the maximum size is limited to 4GB (more or less).
     """
-
-    ## __init__
-    #
-    # Creates the tif writer(s) for saving in tif format.
-    #
-    # @param filename The name of the movie file (without an extension).
-    # @param parameters A parameters object.
-    # @param cameras A python array of camera names, e.g. ["camera1"].
-    #
-    def __init__(self, filename, parameters, cameras):
-        GenericFile.__init__(self, filename, parameters, cameras, "tif", want_fp = False)
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.description = "ImageJ=1.49i\nunit=um\n"
+        self.resolution = (self.film_settings["pixel_size"], self.film_settings["pixel_size"], None)
+        self.tif = tifffile.TiffWriter(self.filename)
         
-        self.tif_writers = []
-        for i in range(len(cameras)):
-
-            # Determine pixel size (if possible).
-            pixel_size = 1.0
-            cur_obj = parameters.get("mosaic.objective", False)
-            if cur_obj:
-                pixel_size = float(parameters.get("mosaic." + cur_obj).split(",")[1])
-            tif_writer = tiffwriter.TiffWriter(self.filenames[i],
-                                               software = "hal4000",
-                                               x_pixel_size = pixel_size,
-                                               y_pixel_size = pixel_size)
-            self.tif_writers.append(tif_writer)
-
-    ## saveFrame
-    #
-    # @param frame A frame object.
-    #
     def saveFrame(self, frame):
-        if frame.which_camera in self.feed_names:
-            index = self.feed_names.index(frame.which_camera)
-            [x_pixels, y_pixels] = getCameraSize(self.parameters, self.feed_names[index])
-            self.tif_writers[index].addFrame(frame.getData(), x_pixels, y_pixels)
-            
-            self.number_frames[index] += 1
-
-    ## closeFile
-    #
-    # Closes the tif file writers.
-    #
+        image = frame.getData()
+        self.tif.save(image.reshape((frame.image_y, frame.image_x)),
+                      description = self.description,
+                      resolution = self.resolution)
+        return super().saveFrame()
+                      
     def closeFile(self):
-        for writer in self.tif_writers:
-            writer.close()
-        GenericFile.closeFile(self)
-
-#
-# Testing
-# 
-
-if __name__ == "__main__":
-    import ctypes
-
-    class Parameters:
-        def __init__(self, x_pixels, y_pixels, x_bin, y_bin):
-            self.x_pixels = x_pixels
-            self.y_pixels = y_pixels
-            self.x_bin = x_bin
-            self.y_bin = y_bin
-
-    parameters = Parameters(100, 100, 1, 1)
-    daxfile = DaxFile("test", parameters)
-    frame = ctypes.create_string_buffer(parameters.get("x_pixels") * parameters.get("y_pixels"))
-    daxfile.saveFrame(frame)
-    daxfile.closeFile()
-
+        self.tif.close()
 
 #
 # The MIT License
 #
-# Copyright (c) 2014 Zhuang Lab, Harvard University
+# Copyright (c) 2017 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

@@ -77,8 +77,7 @@ class NoneCameraControl(cameraControl.CameraControl):
                                      self.frame_number,
                                      self.fake_frame_size[0],
                                      self.fake_frame_size[1],
-                                     "camera1", 
-                                     True)
+                                     self.camera_name)
                 self.frame_number += 1
 
                 # Emit new data signal.

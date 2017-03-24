@@ -16,7 +16,7 @@ class Frame(object):
     and it's meta-information.
     """
 
-    def __init__(self, np_data, frame_number, image_x, image_y, which_camera, master):
+    def __init__(self, np_data, frame_number, image_x, image_y, which_camera):
         """
         Create a camera frame object.
         FIXME: Are we consistent in the use of master vs. camera1?
@@ -25,15 +25,12 @@ class Frame(object):
         frame_number - The frame number of this frame.
         image_x - The size of the frame in pixels in x.
         image_y - The size of the frame in pixels in y.
-        which_camera - Which camera the frame came from ("camera1", "camera2", etc.).
-        master - True/False Is this frame from the "master" (as opposed to the "slave") camera.
         """
 
         self.image_x = image_x
         self.image_y = image_y
-        self.master = master
         self.np_data = np_data
-        self.number = frame_number
+        self.frame_number = frame_number
         self.which_camera = which_camera
 
     def getData(self):
@@ -48,6 +45,7 @@ class Frame(object):
         camera frame data in the computers memory.
         """
         return self.np_data.ctypes.data
+
 
 #
 # The MIT License

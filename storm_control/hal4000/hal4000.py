@@ -454,6 +454,7 @@ class HalCore(QtCore.QObject):
         # Process the next message.
         if (len(self.queued_messages) > 0):
             cur_message = self.queued_messages.popleft()
+            
             if (cur_message.level == 1):
                 print(cur_message.source.module_name + " '" + cur_message.m_type + "'")
 
@@ -475,13 +476,18 @@ class HalCore(QtCore.QObject):
                 if (cur_message.getSourceName() == "hal") and (cur_message.getType() == "close event"):
                     self.cleanup()
 
-                # Otherwise send the message.
                 else:
-                    cur_message.logEvent("sent")
-                    self.sent_messages.append(cur_message)
-                    for module in self.modules:
-                        cur_message.ref_count += 1
-                        module.handleMessage(cur_message)
+                    # Check for "sync" message, these don't actually get sent.
+                    if (cur_message.getType() == "sync"):
+                        pass
+
+                    # Otherwise send the message.
+                    else:
+                        cur_message.logEvent("sent")
+                        self.sent_messages.append(cur_message)
+                        for module in self.modules:
+                            cur_message.ref_count += 1
+                            module.handleMessage(cur_message)
 
                     # Process any remaining messages with immediate timeout.
                     if (len(self.queued_messages) > 0):

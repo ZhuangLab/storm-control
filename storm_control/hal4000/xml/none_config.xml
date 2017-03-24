@@ -98,7 +98,7 @@
 	or "slave" they are timed by another camera. Each time the cameras
 	are started the slave cameras are started first, then the master cameras.
 	
-	Also, "camera1" is assumed to be a master camera and many other modules
+	Also, "camera1" is assumed to be the master camera and many other modules
 	(software) synchronize to this camera.
     -->
     
