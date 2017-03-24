@@ -397,6 +397,10 @@ class Film(halModule.HalModuleBuffered):
                 if self.view.amInLiveMode():
                     self.startCameras()
 
+            elif (message.getType() == "stop film"):
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                  data = {"parameters" : self.view.getParameters()}))
+
         elif (message.level == 2) and (self.film_state == "run"):
             if (message.getType() == "new frame"):
                 
