@@ -49,6 +49,7 @@ class Camera(halModule.HalModuleBuffered):
                                       config = camera_params.get("parameters"))
         self.camera_control.addToHWConfig("master", camera_params.get("master"))
 
+        self.camera_control.finished.connect(self.handleFinished)
         self.camera_control.newData.connect(self.handleNewData)
 
         # Sent when the camera stops.
@@ -74,6 +75,10 @@ class Camera(halModule.HalModuleBuffered):
         
     def cleanUp(self, qt_settings):
         self.camera_control.cleanUp()
+
+    def handleFinished(self):
+        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "camera stopped"))
 
     def handleNewData(self, frames):
         for frame in frames:
@@ -156,8 +161,6 @@ class Camera(halModule.HalModuleBuffered):
             elif (message.getType() == "stop camera"):
                 if (message.getData()["camera"] == self.module_name):
                     self.camera_control.stopCamera()
-                    self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                               m_type = "camera stopped"))
 
             # This message comes from film.film, it goes to all camera at once.
             elif (message.getType() == "stop film"):
