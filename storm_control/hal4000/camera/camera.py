@@ -88,9 +88,6 @@ class Camera(halModule.HalModuleBuffered):
                     
             if (message.getType() == "configure1"):
 
-                # Start the camera control thread.
-                self.camera_control.cameraInit()
-
                 # Broadcast initial parameters and configuration.
                 self.broadcastParameters()
 

@@ -25,14 +25,12 @@ class CameraControl(QtCore.QThread):
     def __init__(self, camera_name = None, config = None, **kwds):
         super().__init__(**kwds)
 
-        self.acquire = IdleActive()
         self.camera = False
         self.camera_name = camera_name
+        self.camera_working = True
         self.frame_number = 0
-        self.is_master = None
-        self.mutex = QtCore.QMutex()
         self.parameters = params.StormXMLObject()
-        self.running = True
+        self.running = False
         self.shutter_state = False  # True = open
 
         # Default (hardware) configuration. The remaining values
@@ -138,9 +136,6 @@ class CameraControl(QtCore.QThread):
 
     def addToHWConfig(self, key, value):
         self.hw_dict[key] = value
-        
-    def cameraInit(self):
-        self.start(QtCore.QThread.NormalPriority)
 
     def cleanUp(self):
         self.running = False
@@ -187,22 +182,20 @@ class CameraControl(QtCore.QThread):
         self.shutter_state = shutter_state
 
     def startCamera(self):
-        self.mutex.lock()
-        self.acquire.go()
         self.frame_number = 0
-        self.mutex.unlock()
+        self.start(QtCore.QThread.NormalPriority)
 
     def startFilm(self, film_settings):
         pass
 
     def stopCamera(self):
-        self.mutex.lock()
-        self.acquire.stop()
-        self.mutex.unlock()
+        self.running = False
+        self.wait()
 
     def stopFilm(self):
         pass
-    
+
+    # FIXME: Is this used? How many different ways to control the shutter do we need?
     def toggleShutter(self, which_camera):
         if self.shutter:
             self.closeShutter()
@@ -217,103 +210,45 @@ class HWCameraControl(CameraControl):
     This class implements what is common to all of the 'hardware' cameras.
     """
     def cleanUp(self):
-        self.stopThread()
-        self.wait()
+        self.stopCamera()
         self.camera.shutdown()
 
     def run(self):
+        self.running = True
         while(self.running):
-            self.mutex.lock()
-            if self.acquire.amActive() and self.camera_working:
 
-                # Get data from camera and create frame objects.
-                [frames, frame_size] = self.camera.getFrames()
+            # Get data from camera and create frame objects.
+            [frames, frame_size] = self.camera.getFrames()
 
-                # Check if we got new frame data.
-                if (len(frames) > 0):
+            # Check if we got new frame data.
+            if (len(frames) > 0):
 
-                    # Create frame objects.
-                    frame_data = []
-                    for cam_frame in frames:
-                        aframe = frame.Frame(cam_frame.getData(),
-                                             self.frame_number,
-                                             frame_size[0],
-                                             frame_size[1],
-                                             self.camera_name)
-                        frame_data.append(aframe)
-                        self.frame_number += 1
+                # Create frame objects.
+                frame_data = []
+                for cam_frame in frames:
+                    aframe = frame.Frame(cam_frame.getData(),
+                                         self.frame_number,
+                                         frame_size[0],
+                                         frame_size[1],
+                                         self.camera_name)
+                    frame_data.append(aframe)
+                    self.frame_number += 1
                             
-                    # Emit new data signal.
-                    self.newData.emit(frame_data)
-            else:
-                self.acquire.idle()
+                # Emit new data signal.
+                self.newData.emit(frame_data)
 
-            self.mutex.unlock()
-            self.msleep(5)
+        self.msleep(5)
 
     def startCamera(self):
-        self.mutex.lock()
-        self.acquire.go()
-        self.frame_number = 0
-        if self.got_camera:
+        super().startCamera()
+        if self.camera_working:
             self.camera.startAcquisition()
-        self.mutex.unlock()
 
     def stopCamera(self):
-        if self.acquire.amActive():
-            self.mutex.lock()
-            if self.got_camera:
-                self.camera.stopAcquisition()
-            self.acquire.stop()
-            self.mutex.unlock()
-            while not self.acquire.amIdle():
-                self.usleep(50)
-
-
-class IdleActive(object):
-    """
-    This class handles signaling between the thread run function and the
-    rest of the thread. If "go" then the run method performs the
-    requested operations. If "stop" then the run method acknowledges
-    that it is idling.
-    """
-
-    def __init__(self, **kwds):
-        super().__init__(**kwds)
-        self.idling = False
-        self.running = False
-
-    def amActive(self):
-        """
-        Returns true if thread should be operating (as opposed to idling).
-        """
-        return self.running
-
-    def amIdle(self):
-        """
-        Returns true if the thread is currently idling.
-        """
-        return self.idling
-
-    def go(self):
-        """
-        Tells the thread that it should be operating.
-        """
-        self.idling = False
-        self.running = True
-
-    def idle(self):
-        """
-        Tells the main process that the thread is idling.
-        """
-        self.idling = True
-
-    def stop(self):
-        """
-        Tells the thread that it should stop operating.
-        """
-        self.running = False
-
+        if self.camera_working:
+            self.camera.stopAcquisition()
+        super().stopCamera()
+        
 
 #
 # The MIT License

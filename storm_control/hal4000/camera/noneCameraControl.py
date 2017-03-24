@@ -69,29 +69,25 @@ class NoneCameraControl(cameraControl.CameraControl):
         p.set("bytes_per_frame", 2 * size_x * size_y)
 
     def run(self):
+        self.running = True
         while(self.running):
-            self.mutex.lock()
-            if self.acquire.amActive():
-                aframe = frame.Frame(numpy.roll(self.fake_frame,
-                                                int(self.frame_number * self.parameters.get("roll"))),
-                                     self.frame_number,
-                                     self.fake_frame_size[0],
-                                     self.fake_frame_size[1],
-                                     self.camera_name)
-                self.frame_number += 1
+            aframe = frame.Frame(numpy.roll(self.fake_frame,
+                                            int(self.frame_number * self.parameters.get("roll"))),
+                                 self.frame_number,
+                                 self.fake_frame_size[0],
+                                 self.fake_frame_size[1],
+                                 self.camera_name)
+            self.frame_number += 1
 
-                # Emit new data signal.
-                self.newData.emit([aframe])
-            else:
-                self.acquire.idle()
-
-            self.mutex.unlock()
+            # Emit new data signal.
+            self.newData.emit([aframe])
             self.msleep(int(1000.0 * self.parameters.get("exposure_time")))
+
 
 #
 # The MIT License
 #
-# Copyright (c) 2015 Zhuang Lab, Harvard University
+# Copyright (c) 2017 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
