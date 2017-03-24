@@ -183,6 +183,10 @@ class FilmBox(QtWidgets.QGroupBox):
         else:
             self.parameters.set("acq_mode", "fixed_length")
             self.ui.lengthSpinBox.show()
+
+    def incIndex(self):
+        if self.parameters.get("auto_increment"):
+            self.ui.indexSpinBox.stepUp()
         
     def newParameters(self, parameters):
         self.ui.autoIncCheckBox.setChecked(parameters.get("auto_increment"))
@@ -265,6 +269,7 @@ class Film(halModule.HalModuleBuffered):
         self.film_size = 0.0
         self.film_state = "idle"
         self.pixel_size = 1.0
+        self.tcp_requested = False
         self.writers = None
 
         self.logfile_fp = open(module_params.get("directory") + "image_log.txt", "a")
@@ -332,7 +337,7 @@ class Film(halModule.HalModuleBuffered):
             #        cameras that should be done are done.
             #
             #        For now this message should only come from camera1 when it
-            #        has recored the required number of frames.
+            #        has recorded the required number of frames.
             #
             elif (message.m_type == "film complete"):
                 if (self.film_state == "run"):
@@ -349,6 +354,7 @@ class Film(halModule.HalModuleBuffered):
                 self.pixel_size = message.getData()["pixel_size"]
                 
             elif (message.m_type == "record clicked"):
+                self.tcp_requested = False
 
                 # Start filming if we are idle.
                 if (self.film_state == "idle"):
@@ -372,7 +378,7 @@ class Film(halModule.HalModuleBuffered):
                 
                 # Update frame counter if the frame is from camera1.
                 if (frame.which_camera == "camera1"):
-                    self.view.updateFrames(frame.frame_number)
+                    self.view.updateFrames(frame.frame_number + 1)
 
                 # Save frame (if needed).
                 if frame.which_camera in self.writers:
@@ -498,6 +504,10 @@ class Film(halModule.HalModuleBuffered):
         if self.view.amInLiveMode():
             self.startCameras()
 
+        # Increment film counter.
+        if not self.tcp_requested:
+            self.view.incIndex()
+            
 #
 # The MIT License
 #

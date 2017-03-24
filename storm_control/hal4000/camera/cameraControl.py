@@ -190,14 +190,15 @@ class CameraControl(QtCore.QThread):
 
     def stopCamera(self):
 
-        # If we are running then we'll get the finished signal when the
-        # thread stops.
+        # If we are running then we'll get the finished
+        # signal when the thread stops.
         if self.running:
             self.running = False
             self.wait()
 
-        # Otherwise we need to send it ourselves, or the
-        # 'camera stopped' message will never get sent.
+        # Otherwise we need to send it ourselves, or the 'camera stopped'
+        # message will never get sent. Other classes depend on this message
+        # to know when the camera has actually stopped running.
         else:
             self.finished.emit()
 

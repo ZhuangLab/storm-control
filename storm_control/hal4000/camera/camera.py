@@ -41,6 +41,7 @@ class Camera(halModule.HalModuleBuffered):
     """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
+        self.film_length = None
 
         camera_params = module_params.get("camera")
         a_module = importlib.import_module("storm_control.hal4000." + camera_params.get("module_name"))
@@ -86,7 +87,16 @@ class Camera(halModule.HalModuleBuffered):
                                                        m_type = "new frame",
                                                        level = 2,
                                                        data = {"frame" : frame}))
-
+            #
+            # If possible the camera should stop when it has recorded the
+            # expected number of frames, but not all camera supports this.
+            #
+            if self.film_length is not None:
+                if (frame.frame_number == self.film_length):
+                    self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                               m_type = "film complete"))
+                    break
+                
     def processMessage(self, message):
         
         if (message.level == 1):
@@ -154,7 +164,10 @@ class Camera(halModule.HalModuleBuffered):
 
             # This message comes from film.film, it goes to all cameras at once.
             elif (message.getType() == "start film"):
-                self.camera_control.startFilm(message.getData()["film_settings"])
+                film_settings = message.getData()["film_settings"]
+                self.camera_control.startFilm(film_settings)
+                if (self.module_name == "camera1") and (film_settings["acq_mode"] == "fixed_length"):
+                    self.film_length = film_settings["frames"] - 1
 
             # This message comes from film.film. Once the camera actually
             # stops we send the 'camera stopped' message.
