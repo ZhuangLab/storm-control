@@ -144,17 +144,19 @@ class HalMessageError(object):
     If a module has a problem with a message that it can't handle then
     it should call the message's addError() method with one of these objects.
     """
-    def __init__(self, message = "", m_exception = None, **kwds):
+    def __init__(self, source = "", message = "", m_exception = None, **kwds):
         """
-        source - The halmodule that created the error/warning.
-        message - The warning / error message as a String.
+        source - The halmodule that created the error/warning as a string.
+        message - The warning / error message as a string.
         m_exception - The exception for the source to raise if can't handle
-                      this error.
+                      this error. If this is not set then we'll just get a
+                      warning.
         """
         super().__init__(**kwds)
 
         self.message = message
         self.m_exception = m_exception
+        self.source = source
 
     def getException(self):
         return self.m_exception
@@ -163,26 +165,24 @@ class HalMessageError(object):
         return self.m_exception is not None
 
 
-class HalMessageResponse(HalMessageBase):
+class HalMessageResponse(object):
     """
     If a module wants to send some information back to the message sender then
     it should call the message's addResponse() method with one of the objects.
-
-    Note: This is probably not the optimal design as the m_type should probably
-          be determined automatically somehow, but for now you should specify what
-          the message type that this is response to is.
     """
-    def __init__(self, response_data = None, **kwds):
+    def __init__(self, source = "", data = None, **kwds):
         """
-        response_data - Python object containing the response.
+        source - The halmodule that added the response as a string.
+        data - Python object containing the response.
         """
         super().__init__(**kwds)
 
-        self.response_data = response_data
+        self.data = data
+        self.source = source
 
     def getData(self):
-        return self.response_data
-                 
+        return self.data
+
 
 class SyncMessage(HalMessage):
     """

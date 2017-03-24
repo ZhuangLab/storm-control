@@ -445,11 +445,11 @@ class HalCore(QtCore.QObject):
 
                 # Notify the sender if errors occured while processing the message.
                 if sent_message.hasErrors():
-                    sent_message.getSource().messageError(sent_message.getErrors())
+                    sent_message.getSource().handleErrors(sent_message)
 
                 # Notify the sender of any responses to the message.
                 if sent_message.hasResponses():
-                    sent_message.getSource().messageResponse(sent_message.getResponses())
+                    sent_message.getSource().handleResponses(sent_message)
 
         # Process the next message.
         if (len(self.queued_messages) > 0):

@@ -100,11 +100,11 @@ class Display(halModule.HalModule):
                                                    m_type = message_data[0],
                                                    data = message_data[1]))
 
-    def handleResponse(self, response):
+    def handleResponse(self, message, response):
         """
         The only message that we expect a response for is a 'get feed config' message.
         """
-        if (response.getType() == "get feed config"):
+        if (message.getType() == "get feed config"):
             self.viewFeedConfig(response)
 
     def processMessage(self, message):
@@ -148,6 +148,8 @@ class Display(halModule.HalModule):
             elif (message.getType() == "stop film"):
                 for view in self.views:
                     view.stopFilm()
+                    message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
+                                                                      data = {"parameters" : view.getParameters()}))
 
         elif (message.level == 2):
             if (message.getType() == "new frame"):

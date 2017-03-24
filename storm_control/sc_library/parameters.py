@@ -597,6 +597,7 @@ class StormXMLObject(object):
     #
     def __init__(self, nodes = None, recurse = False):
 
+        self._is_new_ = False
         self.parameters = {}
 
         if nodes is None:
@@ -604,8 +605,6 @@ class StormXMLObject(object):
         
         if isinstance(nodes, ElementTree.Element):
             self._is_new_ = bool(nodes.attrib.get("is_new", False))
-        else:
-            self._is_new_ = False
 
         for node in nodes:
             param = None
@@ -757,17 +756,22 @@ class StormXMLObject(object):
             else:
                 self.parameters[pname] = ParameterSimple(pname, pvalue)
 
-    ## addSubSection
-    #
-    # Add a sub-section if it doesn't already exist.
-    #
-    def addSubSection(self, sname):
+    def addSubSection(self, sname, svalue = None):
+        """
+        Add a sub-section if it doesn't already exist. 
+
+        If the optional svalue is specified and it is a StormXMLObject then
+        a copy of it will be used to initialize the new sub section.
+        """
         snames = sname.split(".")
         if (len(snames) > 1):
-            self.get(".".join(snames[:-1])).addSubSection(sname[-1])
+            self.get(".".join(snames[:-1])).addSubSection(sname[-1], svalue)
         else:
             if not sname in self.parameters:
-                self.parameters[sname] = StormXMLObject([])
+                if isinstance(svalue, StormXMLObject):
+                    self.parameters[sname] = svalue.copy()
+                else:
+                    self.parameters[sname] = StormXMLObject()
         return self.parameters[sname]
             
     ## copy

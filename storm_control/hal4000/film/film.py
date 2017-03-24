@@ -305,6 +305,29 @@ class Film(halModule.HalModuleBuffered):
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "live mode",
                                                    data = {"live mode", state}))
+
+    def handleResponses(self, message):
+        """
+        Modules are expected to add their current parameters as responses
+        to the 'stop film' message. We save them as an xml file here.
+        """
+        if (message.getType() == "stop film"):
+            film_settings = message.getData()["film_settings"]
+            if film_settings["save_film"]:
+                to_save = params.StormXMLObject()
+                acq_p = to_save.addSubSection("acquisition")
+                for response in message.getResponses():
+                    data = response.getData()
+
+                    # Add general parameters 'en-bloc'.
+                    to_save.addSubSection(response.source, data["parameters"])
+
+                    # Add any acquisition parameters, these will be a list.
+                    if "acquisition" in data:
+                        for p in data["acquisition"]:
+                            acq_p.addParameter(p.getName(), p)
+                            
+                to_save.saveToFile(film_settings["basename"] + ".xml")
         
     def processMessage(self, message):
 
@@ -490,12 +513,10 @@ class Film(halModule.HalModuleBuffered):
         Once all the cameras have stopped close the imagewriters
         and restart the cameras (if we are in live mode).
         """
-        self.film_state = "idle"
         for name in self.writers:
             self.writers[name].closeFile()
 
         # Stop filming.
-        self.am_filming = False
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "stop film",
                                                    data = {"film_settings" : self.film_settings}))
@@ -507,6 +528,8 @@ class Film(halModule.HalModuleBuffered):
         # Increment film counter.
         if not self.tcp_requested:
             self.view.incIndex()
+
+        self.film_state = "idle"
             
 #
 # The MIT License

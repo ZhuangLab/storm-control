@@ -187,11 +187,17 @@ class BaseFrameDisplay(QtWidgets.QFrame):
                                            float(self.getParameter("display_max"))])
             self.ui.syncSpinBox.setValue(self.getParameter("sync"))
 
+    def getDisplayName(self):
+        return self.display_name
+    
     def getParameter(self, pname):
         """
         Wrapper to make it easier to get the appropriate parameter value.
         """
         return self.parameters.get(self.feed_name).get(pname)
+
+    def getParameters(self):
+        return self.parameters
     
     def handleAutoScale(self, bool):
         [scalemin, scalemax] = self.camera_widget.getAutoScale()

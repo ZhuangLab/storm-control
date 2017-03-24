@@ -37,31 +37,12 @@ class HalModule(QtCore.QThread):
 
     def handleError(self, m_error):
         """
-        Override with class specific error handling.
+        Override this with class specific error handling.
         """
         return False
     
-    def handleFrame(self, new_frame):
-        pass
-
-    def handleMessage(self, message):
-        self.processMessage(message)
-
-    def handleResponse(self, response):
-        pass
-        
-    def handleWarning(self, m_warning):
-        """
-        Override with class specific warning handling.
-        """
-        return False
-    
-    def messageError(self, m_errors):
-        """
-        Implement class specific error / warning handling by
-        overriding handleError and/or handleWarning.
-        """
-        for m_error in m_errors:
+    def handleErrors(self, message):
+        for m_error in message.getErrors():
             data = m_error.source + ": " + m_error.message
             if m_error.hasException():
                 if not self.handleError(m_error):
@@ -69,16 +50,34 @@ class HalModule(QtCore.QThread):
                     raise m_error.getException()
             else:
                 if not self.handleWarning(m_warning):
-                    halMessageBox.halMessageBoxInfo(message.data)
+                    halMessageBox.halMessageBoxInfo(message.data)    
+    
+    def handleFrame(self, new_frame):
+        pass
 
-    def messageResponse(self, responses):
+    def handleMessage(self, message):
+        self.processMessage(message)
+
+    def handleResponse(self, message, response):
         """
-        Implement class specific response handling by overriding
-        handleResponse().
+        Override this if you expect only singleton message responses.
         """
-        for response in responses:
-            self.handleResponse(response)
-        
+        pass
+
+    def handleResponses(self, message):
+        """
+        Override this if you want to handle all the message
+        responses (as a list).
+        """
+        for response in message.getResponses():
+            self.handleResponse(message, response)
+    
+    def handleWarning(self, m_warning):
+        """
+        Override with class specific warning handling.
+        """
+        return False
+    
     def processMessage(self, message):
         """
         Note that it is important that a sub class calls this method

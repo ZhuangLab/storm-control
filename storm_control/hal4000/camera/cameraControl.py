@@ -146,6 +146,9 @@ class CameraControl(QtCore.QThread):
         self.hw_dict["parameters"] = self.parameters.copy()
         return self.hw_dict
 
+    def getParameters(self):
+        return self.parameters
+
     def getTemperature(self):
         """
         Non-sensical defaults. Cameras that have this 

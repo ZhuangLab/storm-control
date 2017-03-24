@@ -109,9 +109,8 @@ class Camera(halModule.HalModuleBuffered):
             # This message comes from display.cameraDisplay to get information about a camera.
             elif (message.getType() == "get feed config"):
                 if (message.getData()["camera"] == self.module_name):
-                    message.addResponse(halMessage.HalMessageResponse(source = self,
-                                                                      m_type = message.getType(),
-                                                                      response_data = self.camera_control.getCameraConfig()))
+                    message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                      data = self.camera_control.getCameraConfig()))
 
             # This message comes from settings.settings.
             elif (message.getType() == "new parameters"):
@@ -178,7 +177,9 @@ class Camera(halModule.HalModuleBuffered):
             # This message comes from film.film, it goes to all camera at once.
             elif (message.getType() == "stop film"):
                 self.camera_control.stopFilm()
-                
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                  data = {"parameters" : self.camera_control.getParameters()}))
+
         super().processMessage(message)
 
 
