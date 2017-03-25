@@ -27,18 +27,23 @@ class NoneCameraControl(cameraControl.CameraControl):
         self.sleep_time = 0
 
         # Emulation camera parameters.
-        self.parameters.add(params.ParameterRangeFloat("Exposure time (seconds)", 
-                                                       "exposure_time", 
-                                                       0.01, 0.01, 10.0))
-        self.parameters.add(params.ParameterInt("",
-                                                "max_intensity",
-                                                512,
+        self.parameters.add(params.ParameterRangeFloat(description = "Exposure time (seconds)", 
+                                                       name = "exposure_time", 
+                                                       value = 0.01,
+                                                       min_value = 0.01,
+                                                       max_value = 10.0))
+        
+        self.parameters.add(params.ParameterInt(name = "max_intensity",
+                                                value = 512,
                                                 is_mutable = False,
                                                 is_saved = False))
-        self.parameters.add(params.ParameterRangeFloat("Camera rolling constant", 
-                                                       "roll", 
-                                                       0.1, 0.0, 1.0))
         
+        self.parameters.add(params.ParameterRangeFloat(description = "Camera rolling constant", 
+                                                       name = "roll", 
+                                                       value = 0.1,
+                                                       min_value = 0.0,
+                                                       max_value = 1.0))
+    
         self.parameters.set("roll", config.get("roll"))
 
         self.newParameters(self.parameters)

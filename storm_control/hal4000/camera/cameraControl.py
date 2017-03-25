@@ -45,50 +45,74 @@ class CameraControl(QtCore.QThread):
 
         # This is frames per second as reported by the camera. It is used
         # by the illumination module for timing the shutters.
-        self.parameters.add(params.ParameterFloat("", "fps", 0, is_mutable = False))
+        self.parameters.add(params.ParameterFloat(name = "fps",
+                                                  value = 0,
+                                                  is_mutable = False))
 
         # Camera AOI size.
         x_size = 512
         y_size = 512
-        self.parameters.add(params.ParameterRangeInt("AOI X start",
-                                                     "x_start",
-                                                     1, 1, x_size))
-        self.parameters.add(params.ParameterRangeInt("AOI X end",
-                                                     "x_end",
-                                                     x_size, 1, x_size))
-        self.parameters.add(params.ParameterRangeInt("AOI Y start",
-                                                     "y_start",
-                                                     1, 1, y_size))
-        self.parameters.add(params.ParameterRangeInt("AOI Y end",
-                                                     "y_end",
-                                                     y_size, 1, y_size))
+        self.parameters.add(params.ParameterRangeInt(description = "AOI X start",
+                                                     name = "x_start",
+                                                     value = 1,
+                                                     min_value = 1,
+                                                     max_value = x_size))
+        
+        self.parameters.add(params.ParameterRangeInt(description = "AOI X end",
+                                                     name = "x_end",
+                                                     value = x_size,
+                                                     min_value = 1,
+                                                     max_value = x_size))
+        
+        self.parameters.add(params.ParameterRangeInt(description = "AOI Y start",
+                                                     name = "y_start",
+                                                     value = 1,
+                                                     min_value = 1,
+                                                     max_value = y_size))
+        
+        self.parameters.add(params.ParameterRangeInt(description = "AOI Y end",
+                                                     name = "y_end",
+                                                     value = y_size,
+                                                     min_value = 1,
+                                                     max_value = y_size))
 
-        self.parameters.add(params.ParameterInt("", "x_pixels", x_size, is_mutable = False))
-        self.parameters.add(params.ParameterInt("", "y_pixels", y_size, is_mutable = False))
+        self.parameters.add(params.ParameterInt(name = "x_pixels",
+                                                value = x_size,
+                                                is_mutable = False))
+        
+        self.parameters.add(params.ParameterInt(name = "y_pixels",
+                                                value = y_size,
+                                                is_mutable = False))
 
-        self.parameters.add(params.ParameterRangeInt("Binning in X",
-                                                     "x_bin",
-                                                     1, 1, 4))
-        self.parameters.add(params.ParameterRangeInt("Binning in Y",
-                                                     "y_bin",
-                                                     1, 1, 4))
+        self.parameters.add(params.ParameterRangeInt(description = "Binning in X",
+                                                     name = "x_bin",
+                                                     value = 1,
+                                                     min_value = 1,
+                                                     max_value = 4))
+        
+        self.parameters.add(params.ParameterRangeInt(description = "Binning in Y",
+                                                     name = "y_bin",
+                                                     value = 1,
+                                                     min_value = 1,
+                                                     max_value = 4))
 
         # Frame size in bytes.
-        self.parameters.add(params.ParameterInt("",
-                                                "bytes_per_frame",
-                                                x_size * y_size * 2,
+        self.parameters.add(params.ParameterInt(name = "bytes_per_frame",
+                                                value = x_size * y_size * 2,
                                                 is_mutable = False,
                                                 is_saved = False))
 
         #
         # How/if data from this camera is saved.
         #
-        self.parameters.add(params.ParameterString("Camera save filename extension",
-                                                   "filename_ext",
-                                                   ""))
-        self.parameters.add(params.ParameterSetBoolean("Save data from this camera when filming",
-                                                       "is_saved",
-                                                       True))
+        self.parameters.add(params.ParameterString(description = "Camera save filename extension",
+                                                   name = "filename_ext",
+                                                   value = ""))
+        
+        self.parameters.add(params.ParameterSetBoolean(description = "Save data from this camera when filming",
+                                                       name = "is_saved",
+                                                       value = True))
+        
         self.parameters.set("filename_ext", config.get("filename_ext", ""))
         self.parameters.set("is_saved", config.get("is_saved", True))
 
@@ -96,19 +120,16 @@ class CameraControl(QtCore.QThread):
         # Camera display orientation. Values can only be changed by
         # changing the config.xml file.
         #
-        self.parameters.add(params.ParameterSetBoolean("Flip image horizontal",
-                                                       "flip_horizontal",
-                                                       False,
+        self.parameters.add(params.ParameterSetBoolean(name = "flip_horizontal",
+                                                       value = False,
                                                        is_mutable = False))
                             
-        self.parameters.add(params.ParameterSetBoolean("Flip image vertical",
-                                                       "flip_vertical",
-                                                       False,
+        self.parameters.add(params.ParameterSetBoolean(name = "flip_vertical",
+                                                       value = False,
                                                        is_mutable = False))
 
-        self.parameters.add(params.ParameterSetBoolean("Transpose image",
-                                                       "transpose",
-                                                       False,
+        self.parameters.add(params.ParameterSetBoolean(name = "transpose",
+                                                       value = False,
                                                        is_mutable = False))
         
         self.parameters.set("flip_horizontal", config.get("flip_horizontal", False))
@@ -121,14 +142,12 @@ class CameraControl(QtCore.QThread):
         # These are the values the display will use by default. They can
         # only be changed by changing the config.xml file.
         #
-        self.parameters.add(params.ParameterInt("",
-                                                "default_max",
-                                                2000,
+        self.parameters.add(params.ParameterInt(name = "default_max",
+                                                value = 2000,
                                                 is_mutable = False))
         
-        self.parameters.add(params.ParameterInt("",
-                                                "default_min",
-                                                100,
+        self.parameters.add(params.ParameterInt(name = "default_min",
+                                                value = 100,
                                                 is_mutable = False))
         
         self.parameters.set("default_max", config.get("default_max", 2000))

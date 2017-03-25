@@ -38,37 +38,38 @@ class FilmBox(QtWidgets.QGroupBox):
         self.will_overwrite = False
 
         # Add default film parameters.        
-        self.parameters.add(params.ParameterSetString("Acquisition mode",
-                                                      "acq_mode",
-                                                      "fixed_length",
-                                                      ["run_till_abort", "fixed_length"]))
+        self.parameters.add(params.ParameterSetString(description = "Acquisition mode",
+                                                      name = "acq_mode",
+                                                      value = "fixed_length",
+                                                      allowed = ["run_till_abort", "fixed_length"]))
         
-        self.parameters.add(params.ParameterSetBoolean("Automatically increment movie counter between movies",
-                                                       "auto_increment",
-                                                       True))
+        self.parameters.add(params.ParameterSetBoolean(description = "Automatically increment movie counter between movies",
+                                                       name = "auto_increment",
+                                                       value = True))
         
-        self.parameters.add(params.ParameterSetBoolean("Run shutters during the movie",
-                                                       "auto_shutters",
-                                                       True))
+        self.parameters.add(params.ParameterSetBoolean(description = "Run shutters during the movie",
+                                                       name = "auto_shutters",
+                                                       value = True))
         
-        self.parameters.add(params.ParameterString("Current movie file name",
-                                                   "filename",
-                                                   "movie"))
+        self.parameters.add(params.ParameterString(description = "Current movie file name",
+                                                   name = "filename",
+                                                   value = "movie"))
+
+        formats = imagewriters.availableFileFormats()        
+        self.parameters.add(params.ParameterSetString(description = "Movie file type",
+                                                      name = "filetype",
+                                                      value = formats[0],
+                                                      allowed = formats))
         
-        self.parameters.add(params.ParameterSetString("Movie file type",
-                                                      "filetype",
-                                                      ".dax",
-                                                      [".dax", ".tif"]))
+        self.parameters.add(params.ParameterRangeInt(description = "Movie length in frames",
+                                                     name = "frames",
+                                                     value = 10,
+                                                     min_value = 1,
+                                                     max_value = 1000000000))
         
-        self.parameters.add(params.ParameterRangeInt("Movie length in frames",
-                                                     "frames",
-                                                     10,
-                                                     1,
-                                                     1000000000))
-        
-        self.parameters.add(params.ParameterSetBoolean("Sound bell at the end of long movies",
-                                                       "want_bell",
-                                                       True))
+        self.parameters.add(params.ParameterSetBoolean(description = "Sound bell at the end of long movies",
+                                                       name = "want_bell",
+                                                       value = True))
 
         # Initial UI configuration.
         self.ui = filmUi.Ui_GroupBox()
@@ -210,6 +211,15 @@ class FilmBox(QtWidgets.QGroupBox):
     def setShutters(self, new_shutters):
         self.ui.shuttersText.setText("  " + new_shutters)
 
+    def soundBell(self):
+        if not self.parameters.get("want_bell"):
+            return False
+        if not (self.parameters.get("acq_mode") == "fixed_length"):
+            return False
+        if not (self.parameters.get("frames") > 1000):
+            return False
+        return True
+
     def updateFilenameLabel(self):
         name = self.getBasename() + self.parameters.get("filetype")
 
@@ -230,7 +240,7 @@ class FilmBox(QtWidgets.QGroupBox):
         else:
             self.ui.sizeText.setText("{0:.1f} GB".format(new_size * 0.00097656))
 
-        
+
 class Film(halModule.HalModuleBuffered):
     """
     Filming controller.
@@ -521,6 +531,7 @@ class Film(halModule.HalModuleBuffered):
         Once all the cameras have stopped close the imagewriters
         and restart the cameras (if we are in live mode).
         """
+        # Close writers.
         for name in self.writers:
             self.writers[name].closeFile()
 
@@ -536,6 +547,8 @@ class Film(halModule.HalModuleBuffered):
         # Increment film counter.
         if not self.tcp_requested:
             self.view.incIndex()
+            if self.view.soundBell():
+                print("\7\7")
 
         self.film_state = "idle"
             
