@@ -452,36 +452,31 @@ class Feeds(halModule.HalModule):
                                                    m_type = "feed list",
                                                    data = {"feeds" : self.feed_list}))
 
-    def processMessage(self, message):
+    def processL1Message(self, message):
 
-        if (message.level == 1):
+        if (message.getType() == "configure2"):
+            self.broadcastFeedInfo()
 
-            if (message.getType() == "configure2"):
-                self.broadcastFeedInfo()
+        elif (message.getType() == "current parameters"):
+            #
+            # We get this message when the camera (and also other modules) respond
+            # with their current parameters. For each of the cameras we get all of
+            # the key information. The information is then broadcast in the 'feed list'
+            # message.
+            #
+            data = message.getData()
+            if ("camera" in data):
+                p = data["parameters"]
+                self.feed_list.append({"bytes_per_frame" : p.get("bytes_per_frame"),
+                                       "extension" : p.get("filename_ext"),
+                                       "feed_name" : data["camera"],
+                                       "is_camera" : True,
+                                       "is_master" : data["master"],
+                                       "is_saved" : p.get("is_saved"),
+                                       "x_pixels" : p.get("x_pixels"),
+                                       "y_pixels" : p.get("y_pixels")})
 
-            elif (message.getType() == "current parameters"):
-                #
-                # We get this message when the camera (and also other modules) respond
-                # with their current parameters. For each of the cameras we get all of
-                # the key information. The information is then broadcast in the 'feed list'
-                # message.
-                #
-                data = message.getData()
-                if ("camera" in data):
-                    p = data["parameters"]
-                    self.feed_list.append({"bytes_per_frame" : p.get("bytes_per_frame"),
-                                           "extension" : p.get("filename_ext"),
-                                           "feed_name" : data["camera"],
-                                           "is_camera" : True,
-                                           "is_master" : data["master"],
-                                           "is_saved" : p.get("is_saved"),
-                                           "x_pixels" : p.get("x_pixels"),
-                                           "y_pixels" : p.get("y_pixels")})
+        elif (message.getType() == "new parameters"):
+            self.feed_list = []
 
-            elif (message.getType() == "new parameters"):
-                self.feed_list = []
-
-
-
-        super().processMessage(message)
 

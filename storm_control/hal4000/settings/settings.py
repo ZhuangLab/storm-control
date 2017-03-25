@@ -40,41 +40,38 @@ class Settings(halModule.HalModule):
                                "ui_parent" : "hal.containerWidget",
                                "ui_widget" : self.view}
         
-    def processMessage(self, message):
+    def processL1Message(self, message):
         
-        if (message.level == 1):
-            if (message.m_type == "configure1"):
-                self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "add to ui",
-                                                           data = self.configure_dict))
+        if (message.m_type == "configure1"):
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "add to ui",
+                                                       data = self.configure_dict))
 
-            elif (message.getType() == "current parameters"):                
-                section = message.getSourceName()
+        elif (message.getType() == "current parameters"):                
+            section = message.getSourceName()
 
-                # The display module handles all the displays, so figure
-                # out which display these are the parameters for.
-                if (section == "display"):
-                    section = message.getData()["display_name"]
+            # The display module handles all the displays, so figure
+            # out which display these are the parameters for.
+            if (section == "display"):
+                section = message.getData()["display_name"]
                     
-                parameters = message.getData()["parameters"]
+            parameters = message.getData()["parameters"]
                 
-                #
-                # If we don't have default parameters then we must be in start-up and
-                # the parameters that we get from the modules will be the defaults.
-                #
-                if (self.default_parameters == None):
-                    self.default_parameters.addSubSection(section,
-                                                          parameters)
+            #
+            # If we don't have default parameters then we must be in start-up and
+            # the parameters that we get from the modules will be the defaults.
+            #
+            if (self.default_parameters == None):
+                self.default_parameters.addSubSection(section,
+                                                      parameters)
 
-                #
-                # Otherwise update current parameters with parameters from the module.
-                #
-                else:
-                    print("s", section)
+            #
+            # Otherwise update current parameters with parameters from the module.
+            #
+            else:
+                print("s", section)
 
-            elif (message.getType() == 'start'):
-                self.view.addParameters("default", self.default_parameters)
-                  
-        super().processMessage(message)
+        elif (message.getType() == 'start'):
+            self.view.addParameters("default", self.default_parameters)
 
 

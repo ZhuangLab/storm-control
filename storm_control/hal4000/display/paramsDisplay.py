@@ -135,31 +135,28 @@ class Params(halModule.HalModule):
                                                    data = {"camera" : self.current_camera,
                                                            "gain" : new_gain}))
         
-    def processMessage(self, message):
+    def processL1Message(self, message):
 
-        if (message.level == 1):
+        if (message.getType() == "camera temperature"):
+            data = message.getData()
+            if (self.current_camera == data["camera"]):
+                self.view.updateTemperature(data)
 
-            if (message.getType() == "camera temperature"):
-                data = message.getData()
-                if (self.current_camera == data["camera"]):
-                    self.view.updateTemperature(data)
+        elif (message.getType() == "configure1"):
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "add to ui",
+                                                       data = self.configure_dict))
 
-            elif (message.getType() == "configure1"):
-                self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "add to ui",
-                                                           data = self.configure_dict))
-
-            # The current camera has changed.
-            elif (message.getType() == "current camera"):
-                data = message.getData()
-                self.current_camera = data["camera"]
-                self.view.configureAndUpdateUi(data)
+        # The current camera has changed.
+        elif (message.getType() == "current camera"):
+            data = message.getData()
+            self.current_camera = data["camera"]
+            self.view.configureAndUpdateUi(data)
                 
-            elif (message.getType() == "new parameters"):
-                p = message.getData().get(self.current_camera).copy()
-                self.view.newParameters(p)
+        elif (message.getType() == "new parameters"):
+            p = message.getData().get(self.current_camera).copy()
+            self.view.newParameters(p)
 
-        super().processMessage(message)
 
 #
 # The MIT License

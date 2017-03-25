@@ -59,42 +59,60 @@ class Mosaic(halModule.HalModule):
         # The current pixel size.
         halMessage.addMessage("pixel size")
 
-    def processMessage(self, message):
+    def processL1Message(self, message):
 
-        if (message.level == 1):
-            if (message.getType() == "configure1"):
+        if (message.getType() == "configure1"):
 
-                # Initial UI configuration.
+            # Initial UI configuration.
+            self.view.setObjectiveText(getObjectiveName(self.parameters))
+
+            # Add view to HAL UI display.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "add to ui",
+                                                       data = self.configure_dict))
+
+            # Broadcast default parameters.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "current parameters",
+                                                       data = {"parameters" : self.parameters.copy()}))
+
+        elif (message.getType() == "new parameters"):
+            p = message.getData().get(self.module_name)
+            if (self.parameters.get("objective") != p.get("objective")):
+                objective = p.get("objective")
+                self.parameters.setv("objective", objective)
                 self.view.setObjectiveText(getObjectiveName(self.parameters))
 
-                # Add view to HAL UI display.
+                pixel_size = getObjectivePixelSize(self.parameters)
                 self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "add to ui",
-                                                           data = self.configure_dict))
-
-                # Broadcast default parameters.
-                self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "current parameters",
-                                                           data = {"parameters" : self.parameters.copy()}))
-
-            elif (message.getType() == "new parameters"):
-                p = message.getData().get(self.module_name)
-                if (self.parameters.get("objective") != p.get("objective")):
-                    objective = p.get("objective")
-                    self.parameters.setv("objective", objective)
-                    self.view.setObjectiveText(getObjectiveName(self.parameters))
-
-                    pixel_size = getObjectivePixelSize(self.parameters)
-                    self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                               m_type = "pixel size",
-                                                               data = {"pixel_size" : pixel_size}))
+                                                           m_type = "pixel size",
+                                                           data = {"pixel_size" : pixel_size}))
                     
-            elif (message.getType() == "stop film"):
-                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                                  data = {"parameters" : self.parameters}))
-
-        super().processMessage(message)                    
-                    
-                    
+        elif (message.getType() == "stop film"):
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.parameters}))
 
 
+#
+# The MIT License
+#
+# Copyright (c) 2017 Zhuang Lab, Harvard University
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#

@@ -5,6 +5,8 @@ The messages that are passed between modules.
 Hazen 01/17
 """
 
+from PyQt5 import QtCore
+
 import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.hdebug as hdebug
 
@@ -99,7 +101,10 @@ class HalMessage(HalMessageBase):
         self.responses = []
         self.sync = sync
 
+        # We use a mutex for the ref_count because threaded
+        # modules will change this inside the thread.
         self.ref_count = 0
+        self.ref_count_mutex = QtCore.QMutex()
 
         # Log when message was created.
         if (self.level == 1):
@@ -110,6 +115,11 @@ class HalMessage(HalMessageBase):
 
     def addResponse(self, hal_message_response):
         self.responses.append(hal_message_response)
+
+    def decRefCount(self):
+        self.ref_count_mutex.lock()
+        self.ref_count -= 1
+        self.ref_count_mutex.unlock()
         
     def finalize(self):
 
@@ -137,6 +147,12 @@ class HalMessage(HalMessageBase):
 
     def logEvent(self, event_name):
         hdebug.logText(",".join([event_name, str(id(self)), self.source.module_name, self.m_type]))
+
+    def refCountIsZero(self):
+        self.ref_count_mutex.lock()
+        is_zero = (self.ref_count == 0)
+        self.ref_count_mutex.unlock()
+        return is_zero
 
 
 class HalMessageError(object):

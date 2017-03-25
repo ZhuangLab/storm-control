@@ -107,57 +107,52 @@ class Display(halModule.HalModule):
         if (message.getType() == "get feed config"):
             self.viewFeedConfig(response)
 
-    def processMessage(self, message):
-
-        if (message.level == 1):
+    def processL1Message(self, message):
             
-            if (message.getType() == "add to ui"):
-                if self.dialogs[0] is not None:
-                    [module, parent_widget] = message.data["ui_parent"].split(".")
-                    if (module == self.module_name):
-                        self.dialogs[0].addParamsWidget(message.data["ui_widget"])
+        if (message.getType() == "add to ui"):
+            if self.dialogs[0] is not None:
+                [module, parent_widget] = message.data["ui_parent"].split(".")
+                if (module == self.module_name):
+                    self.dialogs[0].addParamsWidget(message.data["ui_widget"])
 
-            elif (message.getType() == "configure1"):
-                if self.dialogs[0] is None:
-                    self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                               m_type = "add to ui",
-                                                               data = {"ui_parent" : "hal.cameraFrame",
-                                                                       "ui_widget" : self.views[0]}))
-
-                # Set the 'current camera', i.e. the camera that is being displayed
-                # in the main view and also in the parameters box to camera1.
+        elif (message.getType() == "configure1"):
+            if self.dialogs[0] is None:
                 self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "set current camera",
-                                                           data = {"camera" : "camera1"}))
+                                                           m_type = "add to ui",
+                                                           data = {"ui_parent" : "hal.cameraFrame",
+                                                                   "ui_widget" : self.views[0]}))
+
+            # Set the 'current camera', i.e. the camera that is being displayed
+            # in the main view and also in the parameters box to camera1.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "set current camera",
+                                                       data = {"camera" : "camera1"}))
                 
-            elif (message.getType() == "current camera"):
-                self.viewFeedConfig(message)
+        elif (message.getType() == "current camera"):
+            self.viewFeedConfig(message)
 
-            elif (message.getType() == "feed list"):
-                for view in self.views:
-                    view.setFeeds(message.getData()["feeds"])
+        elif (message.getType() == "feed list"):
+            for view in self.views:
+                view.setFeeds(message.getData()["feeds"])
 
-            elif (message.getType() == "start"):
-                if self.dialogs[0] is not None:
-                    self.dialogs[0].showIfVisible()
-                self.sendParameters()
+        elif (message.getType() == "start"):
+            if self.dialogs[0] is not None:
+                self.dialogs[0].showIfVisible()
+            self.sendParameters()
 
-            elif (message.getType() == "start film"):
-                for view in self.views:
-                    view.startFilm(message.getData()["film_settings"])
+        elif (message.getType() == "start film"):
+            for view in self.views:
+                view.startFilm(message.getData()["film_settings"])
 
-            elif (message.getType() == "stop film"):
-                for view in self.views:
-                    view.stopFilm()
-                    message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
-                                                                      data = {"parameters" : view.getParameters()}))
+        elif (message.getType() == "stop film"):
+            for view in self.views:
+                view.stopFilm()
+                message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
+                                                                  data = {"parameters" : view.getParameters()}))
 
-        elif (message.level == 2):
-            if (message.getType() == "new frame"):
-                for view in self.views:
-                    view.newFrame(message.getData()["frame"])
-
-        super().processMessage(message)
+    def processL2Message(self, message):
+        for view in self.views:
+            view.newFrame(message.getData()["frame"])
 
     def sendParameters(self):
         for view in self.views:

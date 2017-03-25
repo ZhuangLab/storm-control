@@ -76,6 +76,7 @@ class Camera(halModule.HalModuleBuffered):
         
     def cleanUp(self, qt_settings):
         self.camera_control.cleanUp()
+        super().cleanUp(qt_settings)
 
     def handleFinished(self):
         self.newMessage.emit(halMessage.HalMessage(source = self,
@@ -97,90 +98,87 @@ class Camera(halModule.HalModuleBuffered):
                                                                m_type = "film complete"))
                     break
                 
-    def processMessage(self, message):
-        
-        if (message.level == 1):
+    def processL1Message(self, message):
                     
-            if (message.getType() == "configure1"):
+        if (message.getType() == "configure1"):
 
-                # Broadcast initial parameters and configuration.
-                self.broadcastParameters()
+            # Broadcast initial parameters and configuration.
+            self.broadcastParameters()
 
-            # This message comes from display.cameraDisplay to get information about a camera.
-            elif (message.getType() == "get feed config"):
-                if (message.getData()["camera"] == self.module_name):
-                    message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                                      data = self.camera_control.getCameraConfig()))
-
-            # This message comes from settings.settings.
-            elif (message.getType() == "new parameters"):
-                p = message.getData().get(self.module_name)
-                self.camera_control.newParameters(p)
-                self.broadcastParameters()
-
-            #
-            # This message comes from display.cameraDisplay when the feed is changed. The
-            # response is broadcast because display.paramsDisplay also needs this information.
-            #
-            # FIXME: Should also broadcast current temperature?
-            #
-            elif (message.getType() == "set current camera"):
-                if (message.getData()["camera"] == self.module_name):
-                    self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                               m_type = "current camera",
-                                                               data = self.camera_control.getCameraConfig()))
-                    
-            # This message comes from display.paramsDisplay.
-            #
-            # FIXME: Should broadcast the gain after it is set.
-            #
-            elif (message.getType() == "set emccd gain"):
-                if (message.getData()["camera"] == self.module_name):
-                    self.camera_control.setEMCCDGain(message.getData()["gain"])
-
-            # This message comes from the shutter button.
-            #
-            # FIXME: Should broadcast the updated shutter state.
-            #
-            elif (message.getType() == "set shutter"):
-                if (message.getData()["camera"] == self.module_name):
-                    self.camera_control.setShutter(message.getData()["state"])
-
-            # This message comes from film.film, it is camera specific as
-            # slave cameras need to be started before master camera(s).
-            elif (message.getType() == "start camera"):
-                if (message.getData()["camera"] == self.module_name):
-
-                    # Broadcast the camera temperature, if available. We do this here because at least
-                    # with some cameras this can only be measured when the camera is not running.
-                    if self.camera_control.haveTemperature():
-                        self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                                   m_type = "camera temperature",
-                                                                   data = self.camera_control.getTemperature()))
-
-                    # Start the camera.
-                    self.camera_control.startCamera()
-
-            # This message comes from film.film, it goes to all cameras at once.
-            elif (message.getType() == "start film"):
-                film_settings = message.getData()["film_settings"]
-                self.camera_control.startFilm(film_settings)
-                if (self.module_name == "camera1") and (film_settings["acq_mode"] == "fixed_length"):
-                    self.film_length = film_settings["frames"] - 1
-
-            # This message comes from film.film. Once the camera actually
-            # stops we send the 'camera stopped' message.
-            elif (message.getType() == "stop camera"):
-                if (message.getData()["camera"] == self.module_name):
-                    self.camera_control.stopCamera()
-
-            # This message comes from film.film, it goes to all camera at once.
-            elif (message.getType() == "stop film"):
-                self.camera_control.stopFilm()
+        # This message comes from display.cameraDisplay to get information about a camera.
+        elif (message.getType() == "get feed config"):
+            if (message.getData()["camera"] == self.module_name):
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                                  data = {"parameters" : self.camera_control.getParameters()}))
+                                                                  data = self.camera_control.getCameraConfig()))
 
-        super().processMessage(message)
+        # This message comes from settings.settings.
+        elif (message.getType() == "new parameters"):
+            p = message.getData().get(self.module_name)
+            self.camera_control.newParameters(p)
+            self.broadcastParameters()
+
+        #
+        # This message comes from display.cameraDisplay when the feed is changed. The
+        # response is broadcast because display.paramsDisplay also needs this information.
+        #
+        # FIXME: Should also broadcast current temperature?
+        #
+        elif (message.getType() == "set current camera"):
+            if (message.getData()["camera"] == self.module_name):
+                self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                           m_type = "current camera",
+                                                           data = self.camera_control.getCameraConfig()))
+                    
+        # This message comes from display.paramsDisplay.
+        #
+        # FIXME: Should broadcast the gain after it is set, or include it in the response?
+        #
+        elif (message.getType() == "set emccd gain"):
+            if (message.getData()["camera"] == self.module_name):
+                self.camera_control.setEMCCDGain(message.getData()["gain"])
+
+        # This message comes from the shutter button.
+        #
+        # FIXME: Should broadcast the updated shutter state, or include it in the response?
+        #
+        elif (message.getType() == "set shutter"):
+            if (message.getData()["camera"] == self.module_name):
+                self.camera_control.setShutter(message.getData()["state"])
+
+        # This message comes from film.film, it is camera specific as
+        # slave cameras need to be started before master camera(s).
+        elif (message.getType() == "start camera"):
+            if (message.getData()["camera"] == self.module_name):
+
+                # Broadcast the camera temperature, if available. We do this here because at least
+                # with some cameras this can only be measured when the camera is not running.
+                if self.camera_control.haveTemperature():
+                    self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                               m_type = "camera temperature",
+                                                               data = self.camera_control.getTemperature()))
+
+                # Start the camera.
+                print("starting camera")
+                self.camera_control.startCamera()
+
+        # This message comes from film.film, it goes to all cameras at once.
+        elif (message.getType() == "start film"):
+            film_settings = message.getData()["film_settings"]
+            self.camera_control.startFilm(film_settings)
+            if (self.module_name == "camera1") and (film_settings["acq_mode"] == "fixed_length"):
+                self.film_length = film_settings["frames"] - 1
+
+        # This message comes from film.film. Once the camera actually
+        # stops we send the 'camera stopped' message.
+        elif (message.getType() == "stop camera"):
+            if (message.getData()["camera"] == self.module_name):
+                self.camera_control.stopCamera()
+
+        # This message comes from film.film, it goes to all camera at once.
+        elif (message.getType() == "stop film"):
+            self.camera_control.stopFilm()
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.camera_control.getParameters()}))
 
 
 #

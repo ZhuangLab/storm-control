@@ -342,96 +342,92 @@ class Film(halModule.HalModuleBuffered):
                             
                 to_save.saveToFile(film_settings["basename"] + ".xml")
         
-    def processMessage(self, message):
-
-        if (message.level == 1):
+    def processL1Message(self, message):
             
-            if (message.m_type == "camera stopped"):
-                self.active_camera_count -= 1
-                if (self.active_camera_count == 0):
-                    if (self.film_state == "start"):
-                        self.startFilmingLevel2()
-                    elif (self.film_state == "stop"):
-                        self.stopFilmingLevel2()
+        if (message.m_type == "camera stopped"):
+            self.active_camera_count -= 1
+            if (self.active_camera_count == 0):
+                if (self.film_state == "start"):
+                    self.startFilmingLevel2()
+                elif (self.film_state == "stop"):
+                    self.stopFilmingLevel2()
 
-            elif (message.m_type == "configure1"):
-                self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "add to ui",
-                                                           data = self.configure_dict))
+        elif (message.m_type == "configure1"):
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "add to ui",
+                                                       data = self.configure_dict))
                 
-                # Broadcast default parameters.
-                self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "current parameters",
-                                                           data = {"parameters" : self.view.getParameters()}))
+            # Broadcast default parameters.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "current parameters",
+                                                       data = {"parameters" : self.view.getParameters()}))
 
-            elif (message.m_type == "feed list"):
-                self.feed_list = message.getData()["feeds"]
+        elif (message.m_type == "feed list"):
+            self.feed_list = message.getData()["feeds"]
 
-            #
-            # FIXME: This will stop everything when the first camera reaches the
-            #        expected number of frames. It should not fire until all the
-            #        cameras that should be done are done.
-            #
-            #        For now this message should only come from camera1 when it
-            #        has recorded the required number of frames.
-            #
-            elif (message.m_type == "film complete"):
-                if (self.film_state == "run"):
-                    self.stopFilmingLevel1()
+        #
+        # FIXME: This will stop everything when the first camera reaches the
+        #        expected number of frames. It should not fire until all the
+        #        cameras that should be done are done.
+        #
+        #        For now this message should only come from camera1 when it
+        #        has recorded the required number of frames.
+        #
+        elif (message.m_type == "film complete"):
+            if (self.film_state == "run"):
+                self.stopFilmingLevel1()
 
-            elif (message.m_type == "new directory"):
-                self.view.setDirectory(message.getData()["directory"])
+        elif (message.m_type == "new directory"):
+            self.view.setDirectory(message.getData()["directory"])
 
-            #
-            # We need to keep track of the current value so that
-            # we can save this in the tif images / stacks.
-            #
-            elif (message.m_type == "pixel size"):
-                self.pixel_size = message.getData()["pixel_size"]
+        #
+        # We need to keep track of the current value so that
+        # we can save this in the tif images / stacks.
+        #
+        elif (message.m_type == "pixel size"):
+            self.pixel_size = message.getData()["pixel_size"]
                 
-            elif (message.m_type == "record clicked"):
-                self.tcp_requested = False
+        elif (message.m_type == "record clicked"):
+            self.tcp_requested = False
+            
+            # Start filming if we are idle.
+            if (self.film_state == "idle"):
+                film_settings = self.view.getFilmParams()
+                if film_settings is not None:
+                    film_settings["pixel_size"] = self.pixel_size
+                    self.startFilmingLevel1(film_settings)
 
-                # Start filming if we are idle.
-                if (self.film_state == "idle"):
-                    film_settings = self.view.getFilmParams()
-                    if film_settings is not None:
-                        film_settings["pixel_size"] = self.pixel_size
-                        self.startFilmingLevel1(film_settings)
+            # Otherwise stop filming if we are running.
+            elif (self.film_state == "run"):
+                self.stopFilmingLevel1()
 
-                # Otherwise stop filming if we are running.
-                elif (self.film_state == "run"):
-                    self.stopFilmingLevel1()
+        elif (message.m_type == "start"):
+            if self.view.amInLiveMode():
+                self.startCameras()
 
-            elif (message.m_type == "start"):
-                if self.view.amInLiveMode():
-                    self.startCameras()
+        elif (message.getType() == "stop film"):
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.view.getParameters()}))
 
-            elif (message.getType() == "stop film"):
-                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                                  data = {"parameters" : self.view.getParameters()}))
-
-        elif (message.level == 2) and (self.film_state == "run"):
-            if (message.getType() == "new frame"):
+    def processL2Message(self, message):            
+        if (self.film_state == "run"):
                 
-                frame = message.getData()["frame"]
-                
-                # Update frame counter if the frame is from camera1.
-                if (frame.which_camera == "camera1"):
-                    self.film_settings["number_frames"] = frame.frame_number + 1
-                    self.view.updateFrames(frame.frame_number + 1)
+            frame = message.getData()["frame"]
+            
+            # Update frame counter if the frame is from camera1.
+            if (frame.which_camera == "camera1"):
+                self.film_settings["number_frames"] = frame.frame_number + 1
+                self.view.updateFrames(frame.frame_number + 1)
 
-                # Save frame (if needed).
-                if frame.which_camera in self.writers:
+            # Save frame (if needed).
+            if frame.which_camera in self.writers:
 
-                    #
-                    # Potential for round off error here in tracking the total amount of
-                    # data that has been saved.. Probably does not really matter..
-                    #
-                    self.film_size += self.writers[frame.which_camera].saveFrame(frame)
-                    self.view.updateSize(self.film_size)
-
-        super().processMessage(message)
+                #
+                # Potential for round off error here in tracking the total amount of
+                # data that has been saved.. Probably does not really matter..
+                #
+                self.film_size += self.writers[frame.which_camera].saveFrame(frame)
+                self.view.updateSize(self.film_size)
 
     def startCameras(self):
         

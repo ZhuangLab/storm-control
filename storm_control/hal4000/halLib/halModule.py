@@ -17,15 +17,14 @@ import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 
 class HalModule(QtCore.QThread):
     """
-    Use this if you can guarantee that your processMessage() function 
-    will execute on the millisecond time frame. If this is not the
-    case then use the HalModuleBuffered class instead.
+    Use this if you can guarantee that your processLXMessage() function(s) 
+    will execute on the millisecond time frame. If this is not the case 
+    then use the HalModuleBuffered class instead.
 
     Conventions:
        1. self.view is the GUI view, if any that is associated with this module.
 
     """
-    newFrame = QtCore.pyqtSignal(object)
     newMessage = QtCore.pyqtSignal(object)
 
     def __init__(self, module_name = "", **kwds):
@@ -56,7 +55,15 @@ class HalModule(QtCore.QThread):
         pass
 
     def handleMessage(self, message):
-        self.processMessage(message)
+        if (message.level == 1):
+            self.processL1Message(message)
+        elif (message.level == 2):
+            self.processL2Message(message)
+        elif (message.level == 3):
+            self.processL3Message(message)
+        else:
+            raise halException.HalException("Unknown message level", message.level)
+        message.decRefCount()
 
     def handleResponse(self, message, response):
         """
@@ -78,13 +85,23 @@ class HalModule(QtCore.QThread):
         """
         return False
     
-    def processMessage(self, message):
+    def processL1Message(self, message):
         """
-        Note that it is important that a sub class calls this method
-        only **after** the message has actually been processed! Otherwise
-        synchronization will not work as expected! Chaos will ensue..
+        Override with class specific handling of general messages.
         """
-        message.ref_count -= 1
+        pass
+
+    def processL2Message(self, message):
+        """
+        Override with class specific handling of 'new frame' messages.
+        """
+        pass
+    
+    def processL3Message(self, message):
+        """
+        Override with class specific handling of 'other' messages.
+        """
+        pass
 
         
 class HalModuleBuffered(HalModule):
@@ -92,10 +109,22 @@ class HalModuleBuffered(HalModule):
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
+        self.idle_counts = 0
+
         self.queued_messages = deque()
         self.queued_messages_mutex = QtCore.QMutex()
 
-    def addMessageToQueue(self, message):
+        self.time_to_stop = False
+
+    def cleanUp(self, qt_settings):
+        """
+        Wait for the thread to stop before exiting.
+        """
+        self.time_to_stop = True
+        self.wait()
+        
+    def handleMessage(self, message):
+        
         # Add the message to the queue.
         self.queued_messages_mutex.lock()
         self.queued_messages.append(message)
@@ -106,13 +135,39 @@ class HalModuleBuffered(HalModule):
             self.start(QtCore.QThread.NormalPriority)
         
     def run(self):
-        while (len(self.queued_message) > 0):
+        while (len(self.queued_messages) > 0) and (self.idle_counts < 20):
+
+            if self.time_to_stop:
+                break
+            
             self.queued_messages_mutex.lock()
-            next_message = self.queued_messages.popleft()
+            message = self.queued_messages.popleft()
             self.queued_messages_mutex.unlock()
-            self.processMessage(next_message)
 
+            if (message.level == 1):
+                self.processL1Message(message)
+            elif (message.level == 2):
+                self.processL2Message(message)
+            elif (message.level == 3):
+                self.processL3Message(message)
+            else:
+                raise halException.HalException("Unknown message level", message.level)        
+            message.decRefCount()
 
+            #
+            # The idea is that we don't want the thread to immediately stop if
+            # there are no new messages. Instead we'd like it to stay alive for
+            # a few hundred milli-seconds, then stop. Though with a camera
+            # running at a normal speed the thread is not likely to ever actually
+            # stop.
+            #
+            if (len(self.queued_messages) == 0):
+                self.idle_counts += 1
+                self.msleep(10)
+            else:
+                self.idle_counts = 0
+
+            
 #
 # The MIT License
 #
