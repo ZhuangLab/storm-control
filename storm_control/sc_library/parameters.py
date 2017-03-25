@@ -587,12 +587,10 @@ class StormXMLObject(object):
             if param is not None:
                 self.addParameter(node.tag, param)
 
-    ## add
-    #
-    # Add a new Parameter to the parameters.
-    #
     def add(self, pname, pvalue = None):
-
+        """
+        Add a new Parameter to the parameters.
+        """
         #
         # This lets us create parameters without having to specify
         # the name twice, which was really annoying..
@@ -615,11 +613,10 @@ class StormXMLObject(object):
         else:
             self.addParameter(pname, pvalue)
 
-    ## addParameter
-    #
-    # Handles adding Parameters.
-    #
     def addParameter(self, pname, pvalue):
+        """
+        Handles adding Parameters.
+        """
         if pname in self.parameters:
             raise ParametersException("Parameter " + pname + " already exists.")
         else:
@@ -646,18 +643,13 @@ class StormXMLObject(object):
                     self.parameters[sname] = StormXMLObject()
         return self.parameters[sname]
             
-    ## copy
-    #
-    # @return A deep copy of this object.
-    #
     def copy(self):
         return copy.deepcopy(self)
 
-    ## delete
-    #
-    # Remove a sub-section or parameter (if it exists).
-    #
     def delete(self, name):
+        """
+        Remove a sub-section or parameter (if it exists).
+        """
         if self.has(name):
             names = name.split(".")
             if (len(names) > 1):
@@ -665,17 +657,11 @@ class StormXMLObject(object):
             else:
                 del self.parameters[name]
 
-    ## get
-    #
-    # Returns either the value of the Parameter object specified by pname or
-    # the corresponding StormXMLObject.
-    #
-    # @param pname A string containing the property name.
-    # @param default (Optional) The value to use if the Parameter is not found.
-    #
-    # @return The value if found, otherwise default.
-    #
     def get(self, pname, default = None):
+        """
+        Returns either the value of the Parameter object specified by pname or
+        the corresponding StormXMLObject.
+        """
         try:
             prop = self.getp(pname)
         except ParametersException:
@@ -689,19 +675,16 @@ class StormXMLObject(object):
             else:
                 return prop.getv()
 
-    ## getAttrs
-    #
-    # @return a list of the property names.
-    #
     def getAttrs(self):
+        """
+        Return a list of the property names.
+        """
         return self.parameters.keys()
                 
-    ## getp
-    #
-    # @return the property specified by pname.
-    #
     def getp(self, pname):
-        
+        """
+        Return the property specified by pname.
+        """
         # Check for sub-property.
         pnames = pname.split(".")
         if (len(pnames) > 1):
@@ -714,44 +697,35 @@ class StormXMLObject(object):
         else:
             raise ParametersExceptionGet("Requested property " + pname + " not found")
 
-    ## getProps
-    #
-    # @return all the properties.
-    #
     def getProps(self):
+        """
+        Return all the properties.
+        """
         return self.parameters.values()
     
-    ## has
-    #
-    # Return true if this object has a particular Parameter.
-    #
-    # @param pname A string containing the property name.
-    #
-    # @return True if found, otherwise False.
-    #
     def has(self, pname):
+        """
+        Return true if this object has a particular Parameter.
+        """
         try:
             prop = self.getp(pname)
         except ParametersExceptionGet:
             return False
         return True
 
-    ## saveToFile
-    #
-    # Save the Parameters as XML in a file.
-    #
-    # @param filename The name of the file to save settings in.
-    #
     def saveToFile(self, filename):
+        """
+        Save the Parameters as XML in a file.
+        """
         rough_string = ElementTree.tostring(self.toXML())
         reparsed = minidom.parseString(rough_string)
         with open(filename, "w") as fp:
             fp.write(reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1").decode())
 
-    ## set
-    #
     def set(self, pname, pvalue):
-
+        """
+        FIXME: This is probably bad name as it is also a Python intrinsic.
+        """
         # Check for list of pnames and values.
         if isinstance(pname, list):
             if (len(pname) == len(pvalue)):
@@ -772,17 +746,12 @@ class StormXMLObject(object):
         except ParametersExceptionGet:
             self.add(pname, pvalue)
 
-    ## setv
-    #
-    # Set a Parameters (or Parameters). This is different from
-    # set() in that it will throw an error if the parameter
-    # does not already exist.
-    #
-    # @param pname A string containing the Parameter name(s).
-    # @param value The value(s) to set the Parameter too.
-    #
     def setv(self, pname, value):
-
+        """
+        Set a Parameters (or Parameters). This is different from
+        set() in that it will throw an error if the parameter
+        does not already exist.
+        """
         # Check for list of pnames and values.
         if isinstance(pname, list):
             if (len(pname) == len(value)):
@@ -794,13 +763,10 @@ class StormXMLObject(object):
 
         self.getp(pname).setv(value)
 
-    ## toXML
-    #
-    # Return an XML representation of this object.
-    #
-    # @param name (optional) The tag attribute to use for the current block of XML.
-    #
     def toXML(self, xml = None, name = "settings"):
+        """
+        Return an XML representation of this object.
+        """
         if xml is None:
             xml = ElementTree.Element(name)
         for key in sorted(self.parameters):
