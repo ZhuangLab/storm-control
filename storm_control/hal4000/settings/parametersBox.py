@@ -290,125 +290,12 @@ class ParametersTable(QtWidgets.QWidget):
 #
 # Parameters display section.
 #
-class ParametersRadioButton(QtWidgets.QRadioButton):
-    """
-    This class encapsulates a set of parameters and it's
-    associated radio button.
-    """
-    deleteSelected = QtCore.pyqtSignal(object)
-    duplicateSelected = QtCore.pyqtSignal(object)
-    updateClicked = QtCore.pyqtSignal(object)
-
-    def __init__(self, parameters = None, **kwds):
-        super().__init__(**kwds)
-                
-        self.changed = False
-        self.editor_dialog = None
-        self.parameters = parameters
-
-        self.setText(getFileName(parameters.get("parameters_file")))
-
-        self.delAct = QtWidgets.QAction(self.tr("Delete"), self)
-        self.delAct.triggered.connect(self.handleDelete)
-
-        self.duplicateAct = QtWidgets.QAction(self.tr("Duplicate"), self)
-        self.duplicateAct.triggered.connect(self.handleDuplicate)
-
-        self.editAct = QtWidgets.QAction(self.tr("Edit"), self)
-        self.editAct.triggered.connect(self.handleEdit)
-
-        self.saveAct = QtWidgets.QAction(self.tr("Save"), self)
-        self.saveAct.triggered.connect(self.handleSave)
-
-
-    def contextMenuEvent(self, event):
-        """
-        This is called to create the popup menu when the use right click on the parameters box.
-        """
-        menu = QtWidgets.QMenu(self)
-
-        # If it is not the current button it can be deleted.
-        if not self.isChecked():
-            menu.addAction(self.delAct)
-            menu.addAction(self.duplicateAct)
-        
-        # If it is the current button it's parameters can be edited.
-        else:
-            menu.addAction(self.editAct)
-            menu.addAction(self.duplicateAct)
-
-        # If it has been changed then it can be saved.
-        if self.changed:
-            menu.addAction(self.saveAct)
-            
-        menu.exec_(event.globalPos())
-
-    def enableEditor(self):
-        if self.editor_dialog is not None:
-            self.editor_dialog.enableUpdateButton(self.isChecked())
-        
-    def getParameters(self):
-        return self.parameters
-
-    def handleDelete(self, boolean):
-        self.deleteSelected.emit(self)
-
-    def handleDuplicate(self, boolean):
-        self.duplicateSelected.emit(self)
-
-    def handleEdit(self, boolean):
-        self.editor_dialog = ParametersEditor(self.parameters, self)
-        self.editor_dialog.updateClicked.connect(self.handleUpdate)
-        self.editor_dialog.finished.connect(self.handleEditorDestroyed)
-        self.editor_dialog.show()
-
-    def handleEditorDestroyed(self, temp):
-        self.editor_dialog = None
-
-    def handleSave(self, boolean):
-        filename = QtWidgets.QFileDialog.getSaveFileName(self, 
-                                                         "Choose File", 
-                                                         os.path.dirname(str(self.parameters.get("parameters_file"))),
-                                                         "*.xml")[0]
-        if filename:
-            self.changed = False
-            self.setText(getFileName(filename))
-            self.parameters.set("parameters_file", filename)
-            if self.editor_dialog is not None:
-                self.editor_dialog.updateParametersNameLabel()
-            self.parameters.saveToFile(filename)
-            self.updateDisplay()
-
-    def handleUpdate(self):
-        self.changed = True
-        self.parameters = self.editor_dialog.getParameters()
-        self.updateClicked.emit(self)
-        self.updateDisplay()
-
-    def updateDisplay(self):
-        if self.changed:
-            #
-            # FIXME: I really wanted to change the text color but for reasons that
-            #        are completely opaque to me this appears to be impossible short
-            #        of creating a custom radio button widget.
-            #
-            self.setStyleSheet("QRadioButton { background-color: rgb(255,200,200); }")
-        else:
-            self.setStyleSheet("")
-        self.update()
-
-    def updateParameters(self):
-        if self.editor_dialog is not None:
-            self.editor_dialog.updateParameters()
-
-
 class ParametersBox(QtWidgets.QGroupBox):
     """
     This class handles displaying and interacting with
     the various parameter files that the user has loaded.
     """
-    
-    settings_toggled = QtCore.pyqtSignal(name = 'settingsToggled')
+    newParameters = QtCore.pyqtSignal(object)
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
@@ -421,35 +308,47 @@ class ParametersBox(QtWidgets.QGroupBox):
         self.ui.setupUi(self)
 
         self.ui.settingsListView.setStyleSheet("background-color: transparent;")
+
+        self.ui.settingsListView.newParameters.connect(self.handleNewParameters)
         
-#        self.ui.settingsScrollArea.setWidgetResizable(True)
-#        
-#        self.button_group = QtWidgets.QButtonGroup(self.ui.scrollAreaWidgetContents)
-#        
-#        self.layout = QtWidgets.QVBoxLayout(self.ui.scrollAreaWidgetContents)
-#        self.layout.setContentsMargins(4,4,4,4)
-#        self.layout.setSpacing(2)
-#        self.layout.addSpacerItem(QtWidgets.QSpacerItem(20, 
-#                                                        12,
-#                                                        QtWidgets.QSizePolicy.Minimum,
-#                                                        QtWidgets.QSizePolicy.Expanding))
+    def addParameters(self, name, parameters):
+        """
+        Add new parameters to the ListView.
+        """
+        self.ui.settingsListView.addParameters(name, parameters)
 
-
-    def addParameters(self, parameters):
-        self.current_parameters = parameters
-        radio_button = ParametersRadioButton(parameters)
+    def getParameters(self, name):
+        """
+        Return the parameters that correspond to name, which could be
+        an integer (the row number) or the parameters name.
+        """
+        self.ui.settingsListView.getParameters(name)
         
-        self.button_group.addButton(radio_button)
-        self.layout.insertWidget(0, radio_button)
-        self.radio_buttons.append(radio_button)
+    def handleNewParameters(self, parameters):
+        self.newParameters.emit(parameters)
 
-        radio_button.clicked.connect(self.toggleParameters)
-        radio_button.deleteSelected.connect(self.handleDelete)
-        radio_button.duplicateSelected.connect(self.handleDuplicate)
-        radio_button.updateClicked.connect(self.handleUpdate)
-        if (len(self.radio_buttons) == 1):
-            radio_button.click()
+    def setParameters(self, name):
+        """
+        Set the current parameters to name.
+        """
+        self.ui.settingsListView.setParameters(name)
+        
+    def updateCurrentParameters(self, parameters):
+        """
+        After a 'new parameters' message the other modules will respond with
+        the parameters. Exchange whatever we have with these parameters.
+        """
+        self.ui.settingsListView.updateCurrentParameters(parameters)
 
+    def updatePreviousParameters(self, parameters):
+        """
+        The modules will response to 'new parameters' by adding their current
+        parameters to the response. Exchange whatever we had with these parameters.
+        """
+        self.ui.settingsListView.updatePreviousParameters(parameters)
+        
+
+        
     def getButtonNames(self):
         return list(map(lambda x: x.text(), self.radio_buttons))
 

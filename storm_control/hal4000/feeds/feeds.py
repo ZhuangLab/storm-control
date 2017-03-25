@@ -456,7 +456,10 @@ class Feeds(halModule.HalModule):
 
         if (message.level == 1):
 
-            if (message.getType() == "current parameters"):
+            if (message.getType() == "configure2"):
+                self.broadcastFeedInfo()
+
+            elif (message.getType() == "current parameters"):
                 #
                 # We get this message when the camera (and also other modules) respond
                 # with their current parameters. For each of the cameras we get all of
@@ -478,8 +481,7 @@ class Feeds(halModule.HalModule):
             elif (message.getType() == "new parameters"):
                 self.feed_list = []
 
-            elif (message.getType() == "configure2"):
-                self.broadcastFeedInfo()
+
 
         super().processMessage(message)
 

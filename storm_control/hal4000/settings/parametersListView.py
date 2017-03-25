@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 def getItemData(q_std_item):
     return q_std_item.data()
 
+
 class ParametersItemData(object):
     """
     WTF? Apparently Qt clones items when dragging and dropping
@@ -89,7 +90,7 @@ class ParametersMVC(QtWidgets.QListView):
         self.saveAction.triggered.connect(self.handleSave)
 
         # Testing.
-        if True:
+        if False:
             for name in ["setting 1", "setting 2", "setting 3"]:
                 self.addParameters(name, "foo")
 
@@ -111,9 +112,8 @@ class ParametersMVC(QtWidgets.QListView):
 
     def handleDuplicate(self, boolean):
         dup_qitem = QtGui.QStandardItem(self.rc_item.text())
-        # F
-#        dup_qitem.setData(ParametersItemData(getItemData(self.rc_item).parameters.copy()))
-        dup_qitem.setData(ParametersItemData(getItemData(self.rc_item).parameters))
+        dup_qitem.setData(ParametersItemData(getItemData(self.rc_item).parameters.copy()))
+        #dup_qitem.setData(ParametersItemData(getItemData(self.rc_item).parameters))
         row = self.model.indexFromItem(self.rc_item).row()
         self.model.insertRow(row, dup_qitem)
 

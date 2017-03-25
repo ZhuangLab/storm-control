@@ -19,6 +19,8 @@ Hazen 01/17
 
 from PyQt5 import QtWidgets
 
+import storm_control.sc_library.parameters as params
+
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 import storm_control.hal4000.settings.parametersBox as parametersBox
@@ -28,6 +30,9 @@ class Settings(halModule.HalModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
+
+        self.current_parameters = None
+        self.default_parameters = params.StormXMLObject()
 
         self.view = parametersBox.ParametersBox()
 
@@ -42,6 +47,24 @@ class Settings(halModule.HalModule):
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "add to ui",
                                                            data = self.configure_dict))
+
+            elif (message.getType() == "current parameters"):
+
+                #
+                # If we don't have default parameters then we must be in start-up and
+                # the parameters that we get from the modules will be the defaults.
+                #
+                if (self.default_parameters == None):
+                    self.default_parameters.addSubSection(message.getSourceName(),
+                                                          message.getData()["parameters"])
+
+                #
+                # Otherwise update current parameters with parameters from the module.
+                #
+
+            elif (message.getType() == 'start'):
+                self.view.addParameters("default", self.default_parameters)
+                  
         super().processMessage(message)
 
 
