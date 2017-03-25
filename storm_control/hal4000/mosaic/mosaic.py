@@ -75,7 +75,7 @@ class Mosaic(halModule.HalModule):
                 # Broadcast default parameters.
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "current parameters",
-                                                           data = {"parameters", self.parameters.copy()}))
+                                                           data = {"parameters" : self.parameters.copy()}))
 
             elif (message.getType() == "new parameters"):
                 p = message.getData().get(self.module_name)

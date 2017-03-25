@@ -140,6 +140,7 @@ class Display(halModule.HalModule):
             elif (message.getType() == "start"):
                 if self.dialogs[0] is not None:
                     self.dialogs[0].showIfVisible()
+                self.sendParameters()
 
             elif (message.getType() == "start film"):
                 for view in self.views:
@@ -157,6 +158,13 @@ class Display(halModule.HalModule):
                     view.newFrame(message.getData()["frame"])
 
         super().processMessage(message)
+
+    def sendParameters(self):
+        for view in self.views:
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "current parameters",
+                                                       data = {"display_name" : view.getDisplayName(),
+                                                               "parameters" : view.getParameters}))
         
     def viewFeedConfig(self, message):
         data = message.getData()

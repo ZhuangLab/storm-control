@@ -333,12 +333,13 @@ class ParametersBox(QtWidgets.QGroupBox):
         """
         self.ui.settingsListView.setParameters(name)
         
-    def updateCurrentParameters(self, parameters):
+    def updateCurrentParameters(self, section, parameters):
         """
-        After a 'new parameters' message the other modules will respond with
-        the parameters. Exchange whatever we have with these parameters.
+        After a 'new parameters' message the other modules will respond 
+        with 'current parameters' message. Exchange whatever we have for 
+        the modules with these parameters.
         """
-        self.ui.settingsListView.updateCurrentParameters(parameters)
+        self.ui.settingsListView.updateCurrentParameters(section, parameters)
 
     def updatePreviousParameters(self, parameters):
         """

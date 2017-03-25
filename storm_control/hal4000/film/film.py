@@ -362,7 +362,7 @@ class Film(halModule.HalModuleBuffered):
                 # Broadcast default parameters.
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "current parameters",
-                                                           data = {"parameters", self.view.getParameters()}))
+                                                           data = {"parameters" : self.view.getParameters()}))
 
             elif (message.m_type == "feed list"):
                 self.feed_list = message.getData()["feeds"]

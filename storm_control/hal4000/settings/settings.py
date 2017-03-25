@@ -48,19 +48,29 @@ class Settings(halModule.HalModule):
                                                            m_type = "add to ui",
                                                            data = self.configure_dict))
 
-            elif (message.getType() == "current parameters"):
+            elif (message.getType() == "current parameters"):                
+                section = message.getSourceName()
 
+                # The display module handles all the displays, so figure
+                # out which display these are the parameters for.
+                if (section == "display"):
+                    section = message.getData()["display_name"]
+                    
+                parameters = message.getData()["parameters"]
+                
                 #
                 # If we don't have default parameters then we must be in start-up and
                 # the parameters that we get from the modules will be the defaults.
                 #
                 if (self.default_parameters == None):
-                    self.default_parameters.addSubSection(message.getSourceName(),
-                                                          message.getData()["parameters"])
+                    self.default_parameters.addSubSection(section,
+                                                          parameters)
 
                 #
                 # Otherwise update current parameters with parameters from the module.
                 #
+                else:
+                    print("s", section)
 
             elif (message.getType() == 'start'):
                 self.view.addParameters("default", self.default_parameters)
