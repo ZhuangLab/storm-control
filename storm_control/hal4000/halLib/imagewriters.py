@@ -16,7 +16,8 @@ def availableFileFormats():
     """
     Return a list of the available movie formats.
     """
-    return [".dax", ".spe", ".tif"]
+#    return [".dax", ".spe", ".tif"]
+    return [".dax", ".tif"]
 
 def createFileWriter(feed_params, film_settings):
     """
