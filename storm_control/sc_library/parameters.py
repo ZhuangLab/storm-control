@@ -51,7 +51,7 @@ def copyParameters(original_parameters, new_parameters):
     if (len(unrecognized) > 0):
         if True:
             msg = "The following parameters were not recognized: "
-            msg += ", ".join(unrecognized) + ". Perhaps they are not in the correct sub-section?")
+            msg += ", ".join(unrecognized) + ". Perhaps they are not in the correct sub-section?"
 
             # FIXME: Use HAL message box?
             QtGui.QMessageBox.information(None,
@@ -289,9 +289,9 @@ class ParameterRange(Parameter):
     Range parameter base class.
     """
     def __init__(self, min_value = 0.0, max_value = 1.0, **kwds):
-        super().__init__(**kwds)
         self.setMaximum(max_value)
         self.setMinimum(min_value)
+        super().__init__(**kwds)
 
     def getMaximum(self):
         return self.max_value
@@ -345,10 +345,11 @@ class ParameterRangeInt(ParameterRange):
 class ParameterSet(Parameter):
     """
     Base class for sets.
+
+    Note: sub-classes need to create the 'allowed' attribute.
     """
-    def __init__(self, allowed = [], **kwds):
+    def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.allowed = allowed
 
     def getAllowed(self):
         return self.allowed
@@ -365,7 +366,7 @@ class ParameterSet(Parameter):
             self.value = new_value
         else:
             msg = str(new_value) + " is not in the list of allowed values for "
-            msg += self.name + ", " + str(self.allowed))
+            msg += self.name + ", " + str(self.allowed)
             raise ParametersException(msg)
 
             
@@ -374,8 +375,8 @@ class ParameterSetBoolean(ParameterSet):
     Boolean set.
     """
     def __init__(self, **kwds):
-        super().__init__(**kwds)
         self.allowed = [True, False]
+        super().__init__(**kwds)
         self.ptype = "boolean"
 
     def toType(self, value):
@@ -393,9 +394,9 @@ class ParameterSetFloat(ParameterSet):
     """
     Floats set.
     """
-    def __init__(self, **kwds):
+    def __init__(self, allowed = [], **kwds):
+        self.allowed = list(map(float, allowed))
         super().__init__(**kwds)
-        self.allowed = list(map(float, self.allowed))
         self.ptype = "float"
 
     def toType(self, value):
@@ -406,9 +407,9 @@ class ParameterSetInt(ParameterSet):
     """
     Integers set.
     """
-    def __init__(self, **kwds):
+    def __init__(self, allowed = [], **kwds):
+        self.allowed = list(map(int, allowed))
         super().__init__(**kwds)
-        self.allowed = list(map(int, self.allowed))
         self.ptype = "int"
         
     def toType(self, new_value):
@@ -419,9 +420,9 @@ class ParameterSetString(ParameterSet):
     """
     Strings set.
     """
-    def __init__(self, **kwds):
+    def __init__(self, allowed = [], **kwds):
+        self.allowed = list(map(str, allowed))
         super().__init__(**kwds)
-        self.allowed = list(map(str, self.allowed))
 
     def toType(self, new_value):
         if new_value is None:
@@ -510,7 +511,7 @@ class StormXMLObject(object):
                         "value" : node.text,
                         "description" : node.attrib.get("desc", "None"),
                         "is_mutable" : (node.attrib.get("mutable", "true").lower() == "true"),
-                        "order" = int(node.attrib.get("order", 1))}
+                        "order" : int(node.attrib.get("order", 1))}
 
                 # Boolean
                 if (node_type == "boolean"):
