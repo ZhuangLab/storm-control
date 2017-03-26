@@ -650,6 +650,8 @@ class StormXMLObject(object):
                     raise ParametersException("Section " + sname + " already exists")
                 if isinstance(svalue, StormXMLObject):
                     self.parameters[sname] = svalue.copy()
+                else:
+                    raise ParametersException("Object is a " + type(svalue) + " not a StormXMLObject")
 
         return self.parameters[sname]
             
