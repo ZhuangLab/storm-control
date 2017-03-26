@@ -18,7 +18,15 @@ import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 
 threadpool = QtCore.QThreadPool.globalInstance()
 
+
 def runWorkerTask(module, message, task):
+    """
+    Use this to handle long running (non-GUI) tasks. See
+    camera.camera.py for examples.
+    """
+
+    # Increment the count because once this message is handled off
+    # HalModule will automatically decrement the count.
     message.incRefCount()
     ct_task = HalWorker(message = message,
                         task = task)
@@ -27,11 +35,16 @@ def runWorkerTask(module, message, task):
 
     
 class HalWorkerSignaler(QtCore.QObject):
+    """
+    A signaler class for HalWorker.
+    """
     workerDone = QtCore.pyqtSignal(object)
 
 
 class HalWorker(QtCore.QRunnable):
-
+    """
+    For running long non-GUI tasks in a separate thread.
+    """
     def __init__(self, message = None, task = None, **kwds):
         super().__init__(**kwds)
         self.message = message
