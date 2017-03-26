@@ -98,7 +98,8 @@ class Display(halModule.HalModule):
     def handleGuiMessage(self, message_data):
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = message_data[0],
-                                                   data = message_data[1]))
+                                                   level = message_data[1],
+                                                   data = message_data[2]))
 
     def handleResponse(self, message, response):
         """

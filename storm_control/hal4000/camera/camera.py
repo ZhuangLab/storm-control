@@ -70,6 +70,10 @@ class Camera(halModule.HalModule):
         # Sent each time there is a new frame from the camera.
         halMessage.addMessage("new frame", check_exists = False)
 
+    def addParametersResponse(self, message):
+        message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                          data = {"parameters" : self.camera_control.getParameters()}))
+
     def broadcastParameters(self):
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "current parameters",
@@ -190,10 +194,6 @@ class Camera(halModule.HalModule):
         elif (message.getType() == "stop film"):
             self.camera_control.stopFilm()
             self.addParametersResponse(message)
-
-    def addParametersResponse(message):
-        message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                          data = {"parameters" : self.camera_control.getParameters()}))
 
     def startCamera(self):
         # Broadcast the camera temperature, if available. We do this here because at least

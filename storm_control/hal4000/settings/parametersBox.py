@@ -295,7 +295,7 @@ class ParametersBox(QtWidgets.QGroupBox):
     This class handles displaying and interacting with
     the various parameter files that the user has loaded.
     """
-    newParameters = QtCore.pyqtSignal(object, boolean)
+    newParameters = QtCore.pyqtSignal(object, bool)
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
@@ -309,7 +309,7 @@ class ParametersBox(QtWidgets.QGroupBox):
         self.ui.settingsListView.newParameters.connect(self.handleNewParameters)
         self.ui.settingsListView.saveParameters.connect(self.handleSaveParameters)
 
-    def addParameters(self, name, parameters, directory = None):
+    def addParameters(self, name, parameters, directory):
         """
         Add new parameters to the ListView.
         """
@@ -322,9 +322,9 @@ class ParametersBox(QtWidgets.QGroupBox):
         """
         self.ui.settingsListView.getParameters(name)
 
-    def handleEditParameter(self, parameters):
+    def handleEditParameters(self, parameters):
         pass
-    
+
     def handleNewParameters(self, parameters):
         self.newParameters.emit(parameters, False)
 
@@ -342,7 +342,6 @@ class ParametersBox(QtWidgets.QGroupBox):
             self.parameters.saveToFile(filename)
             self.updateDisplay()
 
-    
     def setParameters(self, name):
         """
         Set the current parameters to name.

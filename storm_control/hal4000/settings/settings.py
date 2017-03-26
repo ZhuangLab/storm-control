@@ -31,11 +31,11 @@ class Settings(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
-        self.current_parameters = None
-        self.default_parameters = params.StormXMLObject()
-
         self.view = parametersBox.ParametersBox()
         self.view.newParameters.connect(self.handleNewParameters)
+
+        p = params.StormXMLObject()
+        self.view.addParameters("default", p, module_params.get("directory"))
 
         self.configure_dict = {"ui_order" : 0,
                                "ui_parent" : "hal.containerWidget",
@@ -47,10 +47,10 @@ class Settings(halModule.HalModule):
     def handleNewParameters(self, parameters, is_edit):
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "new parameters",
-                                                   data = {"parameters" : "parameters",
-                                                           "is_edit", is_edit}))
+                                                   data = {"parameters" : parameters,
+                                                           "is_edit" : is_edit}))
         
-    def handleResponses(self, message, response):
+    def handleResponses(self, message):
         if (message.getType() == "new parameters"):
 
             # If this is in response to a 'new parameters' message triggered by
@@ -76,23 +76,10 @@ class Settings(halModule.HalModule):
             if (section == "display"):
                 section = message.getData()["display_name"]
                     
-            parameters = message.getData()["parameters"]
-                
-            #
-            # If we don't have default parameters then we must be in start-up and
-            # the parameters that we get from the modules will be the defaults.
-            #
-            if (self.default_parameters == None):
-                self.default_parameters.addSubSection(section,
-                                                      parameters)
+            self.view.updateCurrentParameters(section, message.getData()["parameters"])
 
-            #
-            # Otherwise update current parameters with parameters from the module.
-            #
-            else:
-                self.view.updateCurrentParameters(response.source, data["parameters"])
-
-        elif (message.getType() == 'start'):
-            self.view.addParameters("default", self.default_parameters)
+#        elif (message.getType() == 'start'):
+#            self.view.addParameters("default", self.default_parameters)
+#            self.current_parameters = self.
 
 

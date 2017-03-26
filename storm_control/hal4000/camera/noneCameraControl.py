@@ -50,6 +50,9 @@ class NoneCameraControl(cameraControl.CameraControl):
 
     def newParameters(self, parameters):
         super().newParameters(parameters)
+
+        self.stopCamera()
+        
         p = self.parameters
 
         # Update parameters.
@@ -72,6 +75,8 @@ class NoneCameraControl(cameraControl.CameraControl):
                 self.fake_frame[j*size_x+i] = i % 128 + j % 128
 
         p.set("bytes_per_frame", 2 * size_x * size_y)
+
+        self.startCamera()
 
         self.configured.emit()
         

@@ -107,6 +107,13 @@ class ParametersMVC(QtWidgets.QListView):
             self.current_item = qitem
             getItemData(qitem).checked = True
 
+    def getCurrentParameters(self):
+        return getItemData(self.current_item).parameters
+
+    def getPreviousParameters(self):
+        if self.previous_item is not None:
+            return getItemData(self.previous_item).parameters    
+
     def getSelectedItem(self, selection):
         return self.model.itemFromIndex(selection.indexes()[0])
 
