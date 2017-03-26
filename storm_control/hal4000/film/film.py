@@ -320,15 +320,17 @@ class Film(halModule.HalModuleBuffered):
     def handleResponses(self, message):
         """
         Modules are expected to add their current parameters as responses
-        to the 'stop film' message. We save them as an xml file here.
+        to the 'stop film' message. We save them in an xml file here.
         """
         if (message.getType() == "stop film"):
             film_settings = message.getData()["film_settings"]
             if film_settings["save_film"]:
                 to_save = params.StormXMLObject()
                 acq_p = to_save.addSubSection("acquisition")
-                acq_p.add(params.ParameterString("", "version", hgit.getVersion()))
-                acq_p.add(params.ParameterInt("", "number_frames", film_settings["number_frames"]))
+                acq_p.add(params.ParameterString(name = "version",
+                                                 value = hgit.getVersion()))
+                acq_p.add(params.ParameterInt(name = "number_frames",
+                                              value = film_settings["number_frames"]))
                 for response in message.getResponses():
                     data = response.getData()
 
