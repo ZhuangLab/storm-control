@@ -446,6 +446,7 @@ class HalCore(QtCore.QObject):
                 # Notify the sender of any responses to the message.
                 if sent_message.hasResponses():
                     sent_message.getSource().handleResponses(sent_message)
+
             else:
                 unhandled.append(sent_message)
         self.sent_messages = unhandled
@@ -481,7 +482,8 @@ class HalCore(QtCore.QObject):
 
                     # Otherwise send the message.
                     else:
-                        cur_message.logEvent("sent")
+                        if (cur_message.level == 1):
+                            cur_message.logEvent("sent")
                         self.sent_messages.append(cur_message)
                         for module in self.modules:
                             cur_message.ref_count += 1

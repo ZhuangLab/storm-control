@@ -41,6 +41,10 @@ def addMessage(name, check_exists = True):
     valid_messages[name] = True
 
 
+class HalMessageException(halExceptions.HalException):
+    pass
+
+
 class HalMessageBase(object):
     """
     Base class for the HalMessage as well as for various response
@@ -54,6 +58,9 @@ class HalMessageBase(object):
         source - HalModule object that sent the message.
         """
         super().__init__(**kwds)
+
+        if not isinstance(m_type, str):
+            raise HalMessageException("m_type is not of type 'str'")
 
         self.m_type = m_type
         self.source = source
@@ -72,8 +79,7 @@ class HalMessage(HalMessageBase):
 
     def __init__(self, data = None, sync = False, level = 1, finalizer = None, **kwds):
         """
-        data - Python object containing the message data. In general this should
-               be a dictionary or a Parameters object.
+        data - Python object containing the message data. This should be a dictionary.
 
         sync - Boolean that indicates whether or not all the messages before
                this message should be processed before continuing to this message.
@@ -93,6 +99,20 @@ class HalMessage(HalMessageBase):
                     processed by all of the modules.
         """
         super().__init__(**kwds)
+
+        if data is not None:
+            if not isinstance(data, dict):
+                raise HalMessageException("data is not of type 'dict'")
+        
+        if not isinstance(sync, bool):
+            raise HalMessageException("sync is not of type 'bool'")
+        
+        if not isinstance(level, int):
+            raise HalMessageException("level is not of type 'int'")
+
+        if finalizer is not None:
+            if not callable(finalizer):
+                raise HalMessageException("function is not of type 'function'")
 
         self.data = data
         self.finalizer = finalizer
@@ -120,13 +140,13 @@ class HalMessage(HalMessageBase):
         
     def finalize(self):
 
-        # Log when message was destroyed.
-        if (self.level == 1):
-            self.logEvent("destroyed")
-
         if self.finalizer is not None:
             self.finalizer()
 
+        # Log when message was destroyed.
+        if (self.level == 1):
+            self.logEvent("destroyed")
+            
     def getData(self):
         return self.data
 
@@ -167,6 +187,15 @@ class HalMessageError(object):
         """
         super().__init__(**kwds)
 
+        if not isinstance(source, str):
+            raise HalMessageException("source is not of type 'str'")
+        
+        if not isinstance(message, str):
+            raise HalMessageException("message is not of type 'str'")
+        
+        if not isinstance(m_exception, Exception):
+            raise HalMessageException("m_exception is not of type 'Exception'")
+
         self.message = message
         self.m_exception = m_exception
         self.source = source
@@ -190,6 +219,9 @@ class HalMessageResponse(object):
         """
         super().__init__(**kwds)
 
+        if not isinstance(source, str):
+            raise HalMessageException("Source is not of type 'str'")
+            
         self.data = data
         self.source = source
 

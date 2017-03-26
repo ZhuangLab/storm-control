@@ -25,7 +25,7 @@ def runWorkerTask(module, message, task):
     camera.camera.py for examples.
     """
 
-    # Increment the count because once this message is handled off
+    # Increment the count because once this message is handed off
     # HalModule will automatically decrement the count.
     message.incRefCount()
     ct_task = HalWorker(message = message,
@@ -147,6 +147,10 @@ class HalModule(QtCore.QObject):
         You probably don't want to override this..
         """
         message.decRefCount()
+
+        # Log when the worker finished.
+        if (message.level == 1):
+            message.logEvent("worker done")
     
     def processMessage(self):
         """
@@ -166,6 +170,10 @@ class HalModule(QtCore.QObject):
         else:
             raise halException.HalException("Unknown message level", message.level)
         message.decRefCount()
+
+        # Log when processed.
+        if (message.level == 1):
+            message.logEvent("processed")
 
         # Start the timer if we still have messages left.
         if (len(self.queued_messages) > 0):
