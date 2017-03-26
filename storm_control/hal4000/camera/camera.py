@@ -65,7 +65,7 @@ class Camera(halModule.HalModule):
         halMessage.addMessage("current camera", check_exists = False)
 
         # Sent when filming and we have reached the desired number of frames.
-        halMessage.addMessage("film complete")
+        halMessage.addMessage("film complete", check_exists = False)
         
         # Sent each time there is a new frame from the camera.
         halMessage.addMessage("new frame", check_exists = False)
