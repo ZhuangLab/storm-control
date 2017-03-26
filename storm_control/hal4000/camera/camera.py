@@ -124,7 +124,12 @@ class Camera(halModule.HalModule):
 
         # This message comes from settings.settings.
         elif (message.getType() == "new parameters"):
-            p = message.getData().get(self.module_name)
+
+            # Add current parameters to the response.
+            self.addParametersResponse(message)
+
+            # Update with new parameters.
+            p = message.getData()["parameters"].get(self.module_name)
             halModule.runWorkerTask(self,
                                     message,
                                     lambda : self.camera_control.newParameters(p))
@@ -184,8 +189,11 @@ class Camera(halModule.HalModule):
         # This message comes from film.film, it goes to all camera at once.
         elif (message.getType() == "stop film"):
             self.camera_control.stopFilm()
-            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"parameters" : self.camera_control.getParameters()}))
+            self.addParametersResponse(message)
+
+    def addParametersResponse(message):
+        message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                          data = {"parameters" : self.camera_control.getParameters()}))
 
     def startCamera(self):
         # Broadcast the camera temperature, if available. We do this here because at least

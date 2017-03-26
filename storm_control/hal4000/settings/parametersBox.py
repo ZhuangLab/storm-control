@@ -295,27 +295,25 @@ class ParametersBox(QtWidgets.QGroupBox):
     This class handles displaying and interacting with
     the various parameter files that the user has loaded.
     """
-    newParameters = QtCore.pyqtSignal(object)
+    newParameters = QtCore.pyqtSignal(object, boolean)
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
         
-        self.current_parameters = None
-        self.current_button = False
-        self.radio_buttons = []
-
         self.ui = settingsUi.Ui_GroupBox()
         self.ui.setupUi(self)
 
         self.ui.settingsListView.setStyleSheet("background-color: transparent;")
 
+        self.ui.settingsListView.editParameters.connect(self.handleEditParameters)
         self.ui.settingsListView.newParameters.connect(self.handleNewParameters)
-        
-    def addParameters(self, name, parameters):
+        self.ui.settingsListView.saveParameters.connect(self.handleSaveParameters)
+
+    def addParameters(self, name, parameters, directory = None):
         """
         Add new parameters to the ListView.
         """
-        self.ui.settingsListView.addParameters(name, parameters)
+        self.ui.settingsListView.addParameters(name, parameters, directory)
 
     def getParameters(self, name):
         """
@@ -323,10 +321,28 @@ class ParametersBox(QtWidgets.QGroupBox):
         an integer (the row number) or the parameters name.
         """
         self.ui.settingsListView.getParameters(name)
-        
-    def handleNewParameters(self, parameters):
-        self.newParameters.emit(parameters)
 
+    def handleEditParameter(self, parameters):
+        pass
+    
+    def handleNewParameters(self, parameters):
+        self.newParameters.emit(parameters, False)
+
+    def handleSaveParameters(self, parameters, directory):
+        filename = QtWidgets.QFileDialog.getSaveFileName(self, 
+                                                         "Choose File", 
+                                                         os.path.dirname(str(self.parameters.get("parameters_file"))),
+                                                         "*.xml")[0]
+        if filename:
+            self.changed = False
+            self.setText(getFileName(filename))
+            self.parameters.set("parameters_file", filename)
+            if self.editor_dialog is not None:
+                self.editor_dialog.updateParametersNameLabel()
+            self.parameters.saveToFile(filename)
+            self.updateDisplay()
+
+    
     def setParameters(self, name):
         """
         Set the current parameters to name.
@@ -337,16 +353,25 @@ class ParametersBox(QtWidgets.QGroupBox):
         """
         After a 'new parameters' message the other modules will respond 
         with 'current parameters' message. Exchange whatever we have for 
-        the modules with these parameters.
+        each modules with its updated parameters.
         """
-        self.ui.settingsListView.updateCurrentParameters(section, parameters)
+        curp = self.ui.settingsListView.getCurrentParameters()
+        curp.addSubSection(section,
+                           svalue = parameters,
+                           overwrite = True)
 
-    def updatePreviousParameters(self, parameters):
+    def updatePreviousParameters(self, section, parameters):
         """
         The modules will response to 'new parameters' by adding their current
-        parameters to the response. Exchange whatever we had with these parameters.
+        parameters to the response. Exchange whatever we had for each
+        module with its current parameters.
         """
-        self.ui.settingsListView.updatePreviousParameters(parameters)
+        prevp = self.ui.settingsListView.getPreviousParameters()
+        if prevp is not None:
+            prevp.addSubSection(section,
+                                svalue = parameters,
+                                overwrite = True)
+
         
 
         

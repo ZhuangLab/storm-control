@@ -335,7 +335,8 @@ class Film(halModule.HalModule):
                     data = response.getData()
 
                     # Add general parameters 'en-bloc'.
-                    to_save.addSubSection(response.source, data["parameters"])
+                    to_save.addSubSection(response.source,
+                                          svalue = data["parameters"])
 
                     # Add any acquisition parameters, these will be a list.
                     if "acquisition" in data:

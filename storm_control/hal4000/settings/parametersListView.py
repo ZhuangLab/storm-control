@@ -19,9 +19,10 @@ class ParametersItemData(object):
     a re-orderable list. So instead we store the data in an object
     and store the object in a QStandardItem. Hackish..
     """
-    def __init__(self, parameters = None, **kwds):
+    def __init__(self, parameters = None, directory = None, **kwds):
         super().__init__(**kwds)
         self.checked = False
+        self.directory = directory
         self.initialized = False
         self.parameters = parameters
         self.stale = False  # Edited but not saved.
@@ -59,7 +60,7 @@ class ParametersListViewDelegate(QtWidgets.QStyledItemDelegate):
 class ParametersMVC(QtWidgets.QListView):
     editParameters = QtCore.pyqtSignal(object)
     newParameters = QtCore.pyqtSignal(object)
-    saveParameters = QtCore.pyqtSignal(object)
+    saveParameters = QtCore.pyqtSignal(object, str)
     
     def __init__(self, parent = None, **kwds):
         kwds["parent"] = parent
@@ -67,6 +68,7 @@ class ParametersMVC(QtWidgets.QListView):
 
         self.current_item = None
         self.model = ParametersStandardItemModel(self)
+        self.previous_item = None
         self.rc_item = None
         self.setModel(self.model)
 
@@ -94,9 +96,10 @@ class ParametersMVC(QtWidgets.QListView):
             for name in ["setting 1", "setting 2", "setting 3"]:
                 self.addParameters(name, "foo")
 
-    def addParameters(self, name, parameters):
+    def addParameters(self, name, parameters, directory):
         qitem = QtGui.QStandardItem(name)
-        qitem.setData(ParametersItemData(parameters))
+        qitem.setData(ParametersItemData(parameters = parameters,
+                                         directory = directory))
         self.model.insertRow(0, qitem)
 
         # The first parameter in is the default current parameters.
@@ -111,18 +114,19 @@ class ParametersMVC(QtWidgets.QListView):
         self.model.removeRows(self.model.indexFromItem(self.rc_item).row(), 1)
 
     def handleDuplicate(self, boolean):
-        dup_qitem = QtGui.QStandardItem(self.rc_item.text())
-        dup_qitem.setData(ParametersItemData(getItemData(self.rc_item).parameters.copy()))
+        dup_item = QtGui.QStandardItem(self.rc_item.text())
+        dup_item.setData(ParametersItemData(getItemData(self.rc_item).parameters.copy()))
         #dup_qitem.setData(ParametersItemData(getItemData(self.rc_item).parameters))
         row = self.model.indexFromItem(self.rc_item).row()
-        self.model.insertRow(row, dup_qitem)
+        self.model.insertRow(row, dup_item)
 
     def handleEdit(self, boolean):
-        self.editParameters.emit(getItemData(self.rc_item).parameters)
-    
+        # You can only edit the current parameters.
+        self.editParameters.emit(getItemData(self.current_item).parameters)
+
     def handleSave(self, boolean):
         data = getItemData(self.rc_item)
-        self.saveParameters.emit(getItemData(self.rc_item).parameters)
+        self.saveParameters.emit(data.parameters, data.directory)
         data.stale = False
     
     def handleSelectionChange(self, new_selection, old_selection):
@@ -134,6 +138,7 @@ class ParametersMVC(QtWidgets.QListView):
         if (self.current_item != new_item):
             getItemData(self.current_item).checked = False
             getItemData(new_item).checked = True
+            self.previous_item = self.current_item
             self.current_item = new_item
             self.newParameters.emit(getItemData(new_item).parameters)
 

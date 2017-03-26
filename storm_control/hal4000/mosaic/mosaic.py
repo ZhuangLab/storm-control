@@ -77,7 +77,7 @@ class Mosaic(halModule.HalModule):
                                                        data = {"parameters" : self.parameters.copy()}))
 
         elif (message.getType() == "new parameters"):
-            p = message.getData().get(self.module_name)
+            p = message.getData()["parameters"].get(self.module_name)
             if (self.parameters.get("objective") != p.get("objective")):
                 objective = p.get("objective")
                 self.parameters.setv("objective", objective)

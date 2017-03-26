@@ -626,12 +626,15 @@ class StormXMLObject(object):
             else:
                 self.parameters[pname] = ParameterSimple(pname, pvalue)
 
-    def addSubSection(self, sname, svalue = None):
+    def addSubSection(self, sname, svalue = None, overwrite = False):
         """
         Add a sub-section if it doesn't already exist. 
 
         If the optional svalue is specified and it is a StormXMLObject then
         a copy of it will be used to initialize the new sub section.
+
+        If the section already exists and overwrite is False then you
+        will get an exception.
         """
         snames = sname.split(".")
         if (len(snames) > 1):
@@ -642,6 +645,12 @@ class StormXMLObject(object):
                     self.parameters[sname] = svalue.copy()
                 else:
                     self.parameters[sname] = StormXMLObject()
+            else:
+                if not overwrite:
+                    raise ParametersException("Section " + sname + " already exists")
+                if isinstance(svalue, StormXMLObject):
+                    self.parameters[sname] = svalue.copy()
+
         return self.parameters[sname]
             
     def copy(self):

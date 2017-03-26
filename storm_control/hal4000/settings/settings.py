@@ -35,10 +35,31 @@ class Settings(halModule.HalModule):
         self.default_parameters = params.StormXMLObject()
 
         self.view = parametersBox.ParametersBox()
+        self.view.newParameters.connect(self.handleNewParameters)
 
         self.configure_dict = {"ui_order" : 0,
                                "ui_parent" : "hal.containerWidget",
                                "ui_widget" : self.view}
+
+        # The current parameters have changed.
+        halMessage.addMessage("new parameters")
+
+    def handleNewParameters(self, parameters, is_edit):
+        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "new parameters",
+                                                   data = {"parameters" : "parameters",
+                                                           "is_edit", is_edit}))
+        
+    def handleResponses(self, message, response):
+        if (message.getType() == "new parameters"):
+
+            # If this is in response to a 'new parameters' message triggered by
+            # the editor then we don't want to update the previous parameters.
+            if not ("is_edit" in message.getData()):
+                for response in message.getResponses():
+                    data = response.getData()
+
+                    self.view.updatePreviousParameters(response.source, data["parameters"])
         
     def processL1Message(self, message):
         
@@ -69,7 +90,7 @@ class Settings(halModule.HalModule):
             # Otherwise update current parameters with parameters from the module.
             #
             else:
-                print("s", section)
+                self.view.updateCurrentParameters(response.source, data["parameters"])
 
         elif (message.getType() == 'start'):
             self.view.addParameters("default", self.default_parameters)
