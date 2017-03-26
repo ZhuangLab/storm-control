@@ -102,9 +102,8 @@ class HalMessage(HalMessageBase):
         self.sync = sync
 
         # We use a mutex for the ref_count because threaded
-        # modules will change this inside the thread.
+        # modules could change this inside the thread.
         self.ref_count = 0
-        self.ref_count_mutex = QtCore.QMutex()
 
         # Log when message was created.
         if (self.level == 1):
@@ -117,9 +116,7 @@ class HalMessage(HalMessageBase):
         self.responses.append(hal_message_response)
 
     def decRefCount(self):
-        self.ref_count_mutex.lock()
         self.ref_count -= 1
-        self.ref_count_mutex.unlock()
         
     def finalize(self):
 
@@ -140,19 +137,19 @@ class HalMessage(HalMessageBase):
         return self.responses
 
     def hasErrors(self):
-        return len(self.m_errors) > 0
+        return (len(self.m_errors) > 0)
 
     def hasResponses(self):
-        return len(self.responses) > 0
+        return (len(self.responses) > 0)
+
+    def incRefCount(self):
+        self.ref_count += 1
 
     def logEvent(self, event_name):
         hdebug.logText(",".join([event_name, str(id(self)), self.source.module_name, self.m_type]))
 
     def refCountIsZero(self):
-        self.ref_count_mutex.lock()
-        is_zero = (self.ref_count == 0)
-        self.ref_count_mutex.unlock()
-        return is_zero
+        return (self.ref_count == 0)
 
 
 class HalMessageError(object):

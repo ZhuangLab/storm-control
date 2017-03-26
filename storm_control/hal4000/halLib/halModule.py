@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-The core functionality for a HAL module.
+The core functionality for a HAL module. All modules should be
+a sub-class of this module.
 
 Hazen 01/17
 """
@@ -15,11 +16,45 @@ import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 
 
-class HalModule(QtCore.QThread):
+threadpool = QtCore.QThreadPool.globalInstance()
+
+def runWorkerTask(module, message, task):
+    message.incRefCount()
+    ct_task = HalWorker(message = message,
+                        task = task)
+    ct_task.hwsignaler.workerDone.connect(module.handleWorkerDone)
+    threadpool.start(ct_task)
+
+    
+class HalWorkerSignaler(QtCore.QObject):
+    workerDone = QtCore.pyqtSignal(object)
+
+
+class HalWorker(QtCore.QRunnable):
+
+    def __init__(self, message = None, task = None, **kwds):
+        super().__init__(**kwds)
+        self.message = message
+        self.task = task
+
+        self.hwsignaler = HalWorkerSignaler()
+
+    def run(self):
+        self.task()
+        self.hwsignaler.workerDone.emit(self.message)
+
+
+class HalModule(QtCore.QObject):
     """
-    Use this if you can guarantee that your processLXMessage() function(s) 
-    will execute on the millisecond time frame. If this is not the case 
-    then use the HalModuleBuffered class instead.
+    To handle messages sub-classes should override the appropriate
+    processLXMessage method (See halMessage.py for the meaning of
+    the different message levels).
+
+    Any processLXMessage() method should execute essentially instantly. 
+    If the task they need to accomplish cannot be done immediately then
+    processing should be handed off to a HalConcurrentTask to be run
+    in separate. This will keep the task from freezing the GUI and 
+    causing other issues.
 
     Conventions:
        1. self.view is the GUI view, if any that is associated with this module.
@@ -30,10 +65,21 @@ class HalModule(QtCore.QThread):
     def __init__(self, module_name = "", **kwds):
         super().__init__(**kwds)
         self.module_name = module_name
+        
+        self.queued_messages = deque()
 
+        self.queued_messages_timer = QtCore.QTimer(self)
+        self.queued_messages_timer.setInterval(0)
+        self.queued_messages_timer.timeout.connect(self.processMessage)
+        self.queued_messages_timer.setSingleShot(True)
+        
     def cleanUp(self, qt_settings):
+        """
+        Override to provide module specific clean up and to save
+        GUI settings.
+        """
         pass
-
+        
     def handleError(self, m_error):
         """
         Override this with class specific error handling.
@@ -41,6 +87,9 @@ class HalModule(QtCore.QThread):
         return False
     
     def handleErrors(self, message):
+        """
+        Don't override..
+        """
         for m_error in message.getErrors():
             data = m_error.source + ": " + m_error.message
             if m_error.hasException():
@@ -51,20 +100,15 @@ class HalModule(QtCore.QThread):
                 if not self.handleWarning(m_warning):
                     halMessageBox.halMessageBoxInfo(message.data)    
     
-    def handleFrame(self, new_frame):
-        pass
-
     def handleMessage(self, message):
-        if (message.level == 1):
-            self.processL1Message(message)
-        elif (message.level == 2):
-            self.processL2Message(message)
-        elif (message.level == 3):
-            self.processL3Message(message)
-        else:
-            raise halException.HalException("Unknown message level", message.level)
-        message.decRefCount()
-
+        """
+        Don't override..
+        """
+        # Use a queue and timer so that core doesn't
+        # get hung up sending messages.
+        self.queued_messages.append(message)        
+        self.queued_messages_timer.start()
+        
     def handleResponse(self, message, response):
         """
         Override this if you expect only singleton message responses.
@@ -84,7 +128,36 @@ class HalModule(QtCore.QThread):
         Override with class specific warning handling.
         """
         return False
+
+    def handleWorkerDone(self, message):
+        """
+        You probably don't want to override this..
+        """
+        message.decRefCount()
     
+    def processMessage(self):
+        """
+        Don't override..
+        """
+        # Get the next message from the queue.
+        message = self.queued_messages.popleft()
+
+        # All of these need to execute quickly, otherwise the GUI
+        # will appear frozen among other problems.
+        if (message.level == 1):
+            self.processL1Message(message)
+        elif (message.level == 2):
+            self.processL2Message(message)
+        elif (message.level == 3):
+            self.processL3Message(message)
+        else:
+            raise halException.HalException("Unknown message level", message.level)
+        message.decRefCount()
+
+        # Start the timer if we still have messages left.
+        if (len(self.queued_messages) > 0):
+            self.queued_messages_timer.start()
+        
     def processL1Message(self, message):
         """
         Override with class specific handling of general messages.
@@ -102,70 +175,6 @@ class HalModule(QtCore.QThread):
         Override with class specific handling of 'other' messages.
         """
         pass
-
-        
-class HalModuleBuffered(HalModule):
-
-    def __init__(self, **kwds):
-        super().__init__(**kwds)
-
-        self.idle_counts = 0
-
-        self.queued_messages = deque()
-        self.queued_messages_mutex = QtCore.QMutex()
-
-        self.time_to_stop = False
-
-    def cleanUp(self, qt_settings):
-        """
-        Wait for the thread to stop before exiting.
-        """
-        self.time_to_stop = True
-        self.wait()
-        
-    def handleMessage(self, message):
-        
-        # Add the message to the queue.
-        self.queued_messages_mutex.lock()
-        self.queued_messages.append(message)
-        self.queued_messages_mutex.unlock()
-
-        # Start message processing, if it is not already running.
-        if not self.isRunning():
-            self.start(QtCore.QThread.NormalPriority)
-        
-    def run(self):
-        while (len(self.queued_messages) > 0) and (self.idle_counts < 20):
-
-            if self.time_to_stop:
-                break
-            
-            self.queued_messages_mutex.lock()
-            message = self.queued_messages.popleft()
-            self.queued_messages_mutex.unlock()
-
-            if (message.level == 1):
-                self.processL1Message(message)
-            elif (message.level == 2):
-                self.processL2Message(message)
-            elif (message.level == 3):
-                self.processL3Message(message)
-            else:
-                raise halException.HalException("Unknown message level", message.level)        
-            message.decRefCount()
-
-            #
-            # The idea is that we don't want the thread to immediately stop if
-            # there are no new messages. Instead we'd like it to stay alive for
-            # a few hundred milli-seconds, then stop. Though with a camera
-            # running at a normal speed the thread is not likely to ever actually
-            # stop.
-            #
-            if (len(self.queued_messages) == 0):
-                self.idle_counts += 1
-                self.msleep(10)
-            else:
-                self.idle_counts = 0
 
             
 #

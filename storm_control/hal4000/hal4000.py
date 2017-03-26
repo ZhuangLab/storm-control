@@ -72,21 +72,18 @@ class HalController(halModule.HalModule):
         """
         self.newMessage.emit(message)
 
-    def processMessage(self, message):
+    def processL1Message(self, message):
         
-        if (message.level == 1):
-            if (message.getType() == "add to ui"):
-                [module, parent_widget] = message.data["ui_parent"].split(".")
-                if (module == self.module_name):
-                    self.view.addUiWidget(parent_widget,
-                                          message.data["ui_widget"],
-                                          message.data.get("ui_order"))
+        if (message.getType() == "add to ui"):
+            [module, parent_widget] = message.data["ui_parent"].split(".")
+            if (module == self.module_name):
+                self.view.addUiWidget(parent_widget,
+                                      message.data["ui_widget"],
+                                      message.data.get("ui_order"))
                 
-            elif (message.getType() == "start"):
-                self.view.addWidgets()
-                self.view.show()
-
-        super().processMessage(message)
+        elif (message.getType() == "start"):
+            self.view.addWidgets()
+            self.view.show()
 
 
 #
@@ -335,7 +332,9 @@ class HalCore(QtCore.QObject):
 
         # Load all the modules.
         module_names = []
+        print("Loading modules")
         for module_name in config.get("modules").getAttrs():
+            print("  " + module_name)
             module_names.append(module_name)
 
             # Get module specific parameters.
@@ -353,10 +352,10 @@ class HalCore(QtCore.QObject):
             self.modules.append(a_class(module_name = module_name,
                                         module_params = module_params,
                                         qt_settings = self.qt_settings))
+        print("")
 
         # Connect signals.
         for module in self.modules:
-#            module.newFrame.connect(self.handleFrame)
             module.newMessage.connect(self.handleMessage)
 
         # Create messages.
@@ -409,15 +408,6 @@ class HalCore(QtCore.QObject):
         print("  ...")
         for module in self.modules:
             module.cleanUp(self.qt_settings)
-
-#    def handleFrame(self, new_frame):
-#        """
-#        I was split on whether or not these should also just be messages.
-#        However, since there will likely be a lot of them I decided they 
-#        should be handled separately.
-#        """
-#        for module in self.modules:
-#            module.handleFrame(new_frame)
             
     def handleMessage(self, message):
         """
@@ -425,7 +415,9 @@ class HalCore(QtCore.QObject):
         """
         # Check the message and it to the queue.
         if not message.m_type in halMessage.valid_messages:
-            raise halExceptions.HalException("Invalid message type '" + message.m_type + "' received from " + message.getSourceName())
+            msg = "Invalid message type '" + message.m_type
+            msg += "' received from " + message.getSourceName()
+            raise halExceptions.HalException(msg)
         self.queued_messages.append(message)
 
         # Start the message timer, if it is not already running.
@@ -435,12 +427,16 @@ class HalCore(QtCore.QObject):
         """
         Handle sending the current message to all the modules.
         """
-        
+        interval = -1
+        #
         # Remove all the messages that have already been
         # handled from the list of sent messages.
+        #
+        unhandled = []
         for sent_message in self.sent_messages:
-            if (sent_message.ref_count == 0):
-                self.sent_messages.remove(sent_message)
+            if sent_message.refCountIsZero():
+
+                # Call message finalizer.
                 sent_message.finalize()
 
                 # Notify the sender if errors occured while processing the message.
@@ -450,14 +446,14 @@ class HalCore(QtCore.QObject):
                 # Notify the sender of any responses to the message.
                 if sent_message.hasResponses():
                     sent_message.getSource().handleResponses(sent_message)
+            else:
+                unhandled.append(sent_message)
+        self.sent_messages = unhandled
 
         # Process the next message.
         if (len(self.queued_messages) > 0):
             cur_message = self.queued_messages.popleft()
             
-            if (cur_message.level == 1):
-                print(cur_message.source.module_name + " '" + cur_message.m_type + "'")
-
             #
             # If this message requested synchronization and there are
             # pending messages then push it back into the queue and
@@ -465,12 +461,14 @@ class HalCore(QtCore.QObject):
             #
             if cur_message.sync and (len(self.sent_messages) > 0):
                 self.queued_messages.appendleft(cur_message)
-                self.startMessageTimer(interval = 50)
+                interval = 50
             
             #
             # Otherwise process the message.
             #
             else:
+                if (cur_message.level == 1):
+                    print(cur_message.source.module_name + " '" + cur_message.m_type + "'")
 
                 # Check for "closeEvent" message from the main window.
                 if (cur_message.getSourceName() == "hal") and (cur_message.getType() == "close event"):
@@ -491,7 +489,28 @@ class HalCore(QtCore.QObject):
 
                     # Process any remaining messages with immediate timeout.
                     if (len(self.queued_messages) > 0):
-                        self.startMessageTimer()
+                        interval = 0
+
+                    #
+                    # Otherwise wait ~50 milliseconds, then check if the message
+                    # that was just sent has been processed.
+                    #
+                    # See note below about sent messages and finalizers.
+                    #
+                    else:
+                        interval = 50
+
+        #
+        # If have unprocesses messages wait ~50 milliseconds and check again.
+        #
+        # We do this even if we don't have queued messages because one or of
+        # the sent messages might have a finalizer specified.
+        #
+        elif (len(self.sent_messages) > 0):
+            interval = 50
+
+        if (interval > -1):
+            self.startMessageTimer(interval = interval)
 
     def startMessageTimer(self, interval = 0):
         if not self.queued_messages_timer.isActive():

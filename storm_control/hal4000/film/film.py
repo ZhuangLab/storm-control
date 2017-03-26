@@ -241,7 +241,7 @@ class FilmBox(QtWidgets.QGroupBox):
             self.ui.sizeText.setText("{0:.1f} GB".format(new_size * 0.00097656))
 
 
-class Film(halModule.HalModuleBuffered):
+class Film(halModule.HalModule):
     """
     Filming controller.
 

@@ -28,7 +28,7 @@ import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
 
-class Camera(halModule.HalModuleBuffered):
+class Camera(halModule.HalModule):
     """
     Controller for a single camera.
 
@@ -50,6 +50,7 @@ class Camera(halModule.HalModuleBuffered):
                                       config = camera_params.get("parameters"))
         self.camera_control.addToHWConfig("master", camera_params.get("master"))
 
+        self.camera_control.configured.connect(self.handleConfigured)
         self.camera_control.finished.connect(self.handleFinished)
         self.camera_control.newData.connect(self.handleNewData)
 
@@ -78,10 +79,14 @@ class Camera(halModule.HalModuleBuffered):
         self.camera_control.cleanUp()
         super().cleanUp(qt_settings)
 
+    def handleConfigured(self):
+        self.broadcastParameters()
+
+    # Finished is the signal the thread emits when the run() method stops.
     def handleFinished(self):
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "camera stopped"))
-
+                        
     def handleNewData(self, frames):
         for frame in frames:
             self.newMessage.emit(halMessage.HalMessage(source = self,
@@ -90,14 +95,20 @@ class Camera(halModule.HalModuleBuffered):
                                                        data = {"frame" : frame}))
             #
             # If possible the camera should stop when it has recorded the
-            # expected number of frames, but not all camera supports this.
+            # expected number of frames, but not all camera support this
+            # so we software back-stop it here.
             #
             if self.film_length is not None:
+
+                # Broadcast that we've captured the expected number of frames.
                 if (frame.frame_number == self.film_length):
                     self.newMessage.emit(halMessage.HalMessage(source = self,
                                                                m_type = "film complete"))
+
+                # Don't send more frames than were requested for the film.
+                if (frame.frame_number >= self.film_length):
                     break
-                
+
     def processL1Message(self, message):
                     
         if (message.getType() == "configure1"):
@@ -114,8 +125,9 @@ class Camera(halModule.HalModuleBuffered):
         # This message comes from settings.settings.
         elif (message.getType() == "new parameters"):
             p = message.getData().get(self.module_name)
-            self.camera_control.newParameters(p)
-            self.broadcastParameters()
+            halModule.runWorkerTask(self,
+                                    message,
+                                    lambda : self.camera_control.newParameters(p))
 
         #
         # This message comes from display.cameraDisplay when the feed is changed. The
@@ -135,7 +147,9 @@ class Camera(halModule.HalModuleBuffered):
         #
         elif (message.getType() == "set emccd gain"):
             if (message.getData()["camera"] == self.module_name):
-                self.camera_control.setEMCCDGain(message.getData()["gain"])
+                halModule.runWorkerTask(self,
+                                        message,
+                                        lambda : self.camera_control.setEMCCDGain(message.getData()["gain"]))
 
         # This message comes from the shutter button.
         #
@@ -143,23 +157,15 @@ class Camera(halModule.HalModuleBuffered):
         #
         elif (message.getType() == "set shutter"):
             if (message.getData()["camera"] == self.module_name):
-                self.camera_control.setShutter(message.getData()["state"])
+                halModule.runWorkerTask(self,
+                                        message,
+                                        lambda : self.camera_control.setShutter(message.getData()["state"]))
 
         # This message comes from film.film, it is camera specific as
         # slave cameras need to be started before master camera(s).
         elif (message.getType() == "start camera"):
             if (message.getData()["camera"] == self.module_name):
-
-                # Broadcast the camera temperature, if available. We do this here because at least
-                # with some cameras this can only be measured when the camera is not running.
-                if self.camera_control.haveTemperature():
-                    self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                               m_type = "camera temperature",
-                                                               data = self.camera_control.getTemperature()))
-
-                # Start the camera.
-                print("starting camera")
-                self.camera_control.startCamera()
+                halModule.runWorkerTask(self, message, self.startCamera)
 
         # This message comes from film.film, it goes to all cameras at once.
         elif (message.getType() == "start film"):
@@ -172,13 +178,25 @@ class Camera(halModule.HalModuleBuffered):
         # stops we send the 'camera stopped' message.
         elif (message.getType() == "stop camera"):
             if (message.getData()["camera"] == self.module_name):
-                self.camera_control.stopCamera()
+                print("stopping camera")
+                halModule.runWorkerTask(self, message, self.camera_control.stopCamera)
 
         # This message comes from film.film, it goes to all camera at once.
         elif (message.getType() == "stop film"):
             self.camera_control.stopFilm()
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : self.camera_control.getParameters()}))
+
+    def startCamera(self):
+        # Broadcast the camera temperature, if available. We do this here because at least
+        # with some cameras this can only be measured when the camera is not running.
+        if self.camera_control.haveTemperature():
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "camera temperature",
+                                                       data = self.camera_control.getTemperature()))
+
+        # Start the camera.
+        self.camera_control.startCamera()
 
 
 #

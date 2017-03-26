@@ -20,7 +20,9 @@ class CameraException(halExceptions.HardwareException):
 
 
 class CameraControl(QtCore.QThread):
+    configured = QtCore.pyqtSignal()
     newData = QtCore.pyqtSignal(object)
+    stopped = QtCore.pyqtSignal()
 
     def __init__(self, camera_name = None, config = None, **kwds):
         super().__init__(**kwds)
@@ -182,8 +184,11 @@ class CameraControl(QtCore.QThread):
 
     def newParameters(self, parameters):
         """
-        Note: The parameters that the camera receives are already
-              a copy so there is no need to make another copy.
+        Note: (1) The sub-class must emit 'configured' at the
+                  end of this method()!
+
+              (2) The parameters that the camera receives are already
+                  a copy so there is no need to make another copy.
         """
         #
         # This restriction is necessary because in order to display
