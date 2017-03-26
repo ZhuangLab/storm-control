@@ -73,6 +73,8 @@ class NoneCameraControl(cameraControl.CameraControl):
 
         p.set("bytes_per_frame", 2 * size_x * size_y)
 
+        self.configured.emit()
+        
     def run(self):
         self.running = True
         while(self.running):
