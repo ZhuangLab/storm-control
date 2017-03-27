@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<settings>
+  <camera1 validate="True">
+    <default_max type="int">300</default_max>
+    <exposure_time type="float">0.01</exposure_time>
+    <filename_ext type="string"/>
+    <flip_horizontal type="boolean">False</flip_horizontal>
+  </camera1>
+  <display00 validate="False">
+    <camera1 validate="True">
+      <colortable type="string">idl5.ctbl</colortable>
+      <display_max type="int">300</display_max>
+    </camera1>
+    <feed_name type="string">camera1</feed_name>
+  </display00>
+</settings>
