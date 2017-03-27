@@ -13,8 +13,6 @@ import traceback
 from xml.dom import minidom
 from xml.etree import ElementTree
 
-from PyQt5 import QtCore, QtGui
-
 
 #
 # Functions.
@@ -133,7 +131,33 @@ def copyParametersReplace(root, original, new):
         elif (len(root) > 0) and new.has(root + "." + attr):
             original.set(attr, new.get(root + "." + attr))
 
-            
+
+def difference(params1, params2):
+    """
+    Return which parameters in params1 are different / don't 
+    exist in params2.
+    """
+    differences = []
+    
+    def diffRecurse(root, p1, p2):
+        for attr in p1.getAttrs():
+            prop = p1.get(attr)
+
+            if isinstance(prop, StormXMLObject):
+                if p2.has(attr):
+                    diffRecurse(root + attr + ".", prop, p2.get(attr))
+                else:
+                    differences.append(root + attr)
+            else:
+                if not p2.has(attr):
+                    differences.append(root + attr)
+                elif (prop != p2.get(attr)):
+                    differences.append(root + attr)
+
+    diffRecurse("", params1, params2)
+    return differences
+
+    
 def fileType(xml_file):
     """
     Based on the root tag, returns the XML file type.
