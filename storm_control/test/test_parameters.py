@@ -84,8 +84,28 @@ def test_parameters_4():
     assert p3.get("camera1.flip_horizontal")
 
 
+def test_parameters_5():
+
+    # Load parameters.
+    p1 = params.parameters(test.xmlFilePathAndName("test_parameters.xml"),
+                           recurse = True,
+                           add_filename_param = False)
+
+    # Save.
+    p1.saveToFile("temp.xml")
+
+    # Re-load.
+    p2 = params.parameters("temp.xml",
+                           recurse = True,
+                           add_filename_param = False)
+
+    # Check that they are the same.
+    assert (len(params.difference(p1, p2)) == 0) and (len(params.difference(p2, p1)) == 0)
+
+    
 if (__name__ == "__main__"):
     test_parameters_1()
     test_parameters_2()
     test_parameters_3()
     test_parameters_4()
+    test_parameters_5()
