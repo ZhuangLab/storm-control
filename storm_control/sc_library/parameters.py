@@ -240,8 +240,8 @@ class Parameter(object):
     def toType(self, value):
         return value
         
-    def toXML(self, parent):
-        if self.is_saved:
+    def toXML(self, parent, override_is_saved = False):
+        if self.is_saved or override_is_saved:
             field = ElementTree.SubElement(parent, self.name)
             field.set("type", self.ptype)
             field.text = str(self.value)
@@ -725,14 +725,12 @@ class StormXMLObject(object):
             return False
         return True
 
-    def saveToFile(self, filename):
+    def saveToFile(self, filename, all_params = False):
         """
         Save the Parameters as XML in a file.
         """
-        rough_string = ElementTree.tostring(self.toXML())
-        reparsed = minidom.parseString(rough_string)
         with open(filename, "w") as fp:
-            fp.write(reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1").decode())
+            fp.write(self.toString(all_params = all_params))
 
     def set(self, pname, pvalue):
         """
@@ -775,9 +773,19 @@ class StormXMLObject(object):
 
         self.getp(pname).setv(value)
 
-    def toXML(self, xml = None, name = "settings"):
+    def toString(self, all_params = False):
+        """
+        Return an XML string representation of this object.
+        """
+        rough_string = ElementTree.tostring(self.toXML(override_is_saved = all_params))
+        reparsed = minidom.parseString(rough_string)
+        return reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1").decode()
+
+    def toXML(self, xml = None, name = "settings", override_is_saved = False):
         """
         Return an XML representation of this object.
+
+        Use override_is_saved = True to get all of the parameters.
         """
         if xml is None:
             xml = ElementTree.Element(name)
@@ -786,11 +794,11 @@ class StormXMLObject(object):
             if isinstance(value, StormXMLObject):
                 child = ElementTree.SubElement(xml, key)
                 child.set("validate", str(value._validate_))
-                value.toXML(child, key)
+                value.toXML(child, key, override_is_saved = override_is_saved)
                 if (len(child) == 0):
                     xml.remove(child)
             else:
-                value.toXML(xml)
+                value.toXML(xml, override_is_saved = override_is_saved)
         return xml
 
 
