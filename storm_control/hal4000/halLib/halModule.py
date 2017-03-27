@@ -6,6 +6,8 @@ a sub-class of this module.
 Hazen 01/17
 """
 
+import traceback
+
 from collections import deque
 
 from PyQt5 import QtCore, QtWidgets
@@ -31,14 +33,16 @@ def runWorkerTask(module, message, task):
     ct_task = HalWorker(message = message,
                         task = task)
     ct_task.hwsignaler.workerDone.connect(module.handleWorkerDone)
+    ct_task.hwsignaler.workerError.connect(module.handleWorkerError)
     threadpool.start(ct_task)
 
-    
+
 class HalWorkerSignaler(QtCore.QObject):
     """
     A signaler class for HalWorker.
     """
     workerDone = QtCore.pyqtSignal(object)
+    workerError = QtCore.pyqtSignal(object, object, str)
 
 
 class HalWorker(QtCore.QRunnable):
@@ -53,10 +57,15 @@ class HalWorker(QtCore.QRunnable):
         self.hwsignaler = HalWorkerSignaler()
 
     def run(self):
-        self.task()
+        try:
+            self.task()
+        except Exception as exception:
+            self.hwsignaler.workerError.emit(self.message,
+                                             exception,
+                                             traceback.format_exc())
         self.hwsignaler.workerDone.emit(self.message)
 
-
+        
 class HalModule(QtCore.QObject):
     """
     To handle messages sub-classes should override the appropriate
@@ -107,12 +116,11 @@ class HalModule(QtCore.QObject):
             data = m_error.source + ": " + m_error.message
             if m_error.hasException():
                 if not self.handleError(m_error):
-                    halMessageBox.halMessageBoxInfo(message.data, is_error = True)
-                    raise m_error.getException()
+                    m_error.printExceptionAndDie()
             else:
                 if not self.handleWarning(m_warning):
-                    halMessageBox.halMessageBoxInfo(message.data)    
-    
+                    halMessageBox.halMessageBoxInfo(data)
+
     def handleMessage(self, message):
         """
         Don't override..
@@ -151,7 +159,13 @@ class HalModule(QtCore.QObject):
         # Log when the worker finished.
         if (message.level == 1):
             message.logEvent("worker done")
-    
+
+    def handleWorkerError(self, message, exception, stack_trace):
+        message.addError(halMessage.HalMessageError(source = self.module_name,
+                                                    message = str(exception),
+                                                    m_exception = exception,
+                                                    stack_trace = stack_trace))
+        
     def processMessage(self):
         """
         Don't override..
@@ -162,7 +176,12 @@ class HalModule(QtCore.QObject):
         # All of these need to execute quickly, otherwise the GUI
         # will appear frozen among other problems.
         if (message.level == 1):
-            self.processL1Message(message)
+            try:
+                self.processL1Message(message)
+            except Exception as exception:
+                message.addError(halMessage.HalMessageError(source = self.module_name,
+                                                            message = str(exception),
+                                                            m_exception = exception))
         elif (message.level == 2):
             self.processL2Message(message)
         elif (message.level == 3):

@@ -402,7 +402,7 @@ class HalCore(QtCore.QObject):
             message_chain.append(halMessage.HalMessage(source = self,
                                                  m_type = "new parameters file",
                                                  data = {"filename" : parameters_file_name,
-                                                         "default" : True}))        
+                                                         "is_default" : True}))        
 
         # start.
         message_chain.append(halMessage.HalMessage(source = self,
@@ -418,7 +418,25 @@ class HalCore(QtCore.QObject):
         print("  ...")
         for module in self.modules:
             module.cleanUp(self.qt_settings)
-            
+
+    def handleErrors(self, message):
+        """
+        Handle errors in messages from 'core'
+        """
+        for m_error in message.getErrors():
+            msg = "from '" + m_error.source + "' of type '" + m_error.message + "'!"
+
+            # Print the error and crash on exceptions. If we try and display
+            # an information box we'll quickly crash anyway as the message
+            # loop will continue to run and we'll soon overflow the stack.
+            if m_error.hasException():
+                m_error.printExceptionAndDie()
+
+            # Use a informational box for warnings.
+            else:
+                msg = "Got a warning" + msg
+                halMessageBox.halMessageBoxInfo(msg)
+        
     def handleMessage(self, message):
         """
         Adds a message to the queue of images to send.
@@ -471,6 +489,7 @@ class HalCore(QtCore.QObject):
             # wait ~50 milliseconds.
             #
             if cur_message.sync and (len(self.sent_messages) > 0):
+                print("waiting on", cur_message.m_type)
                 self.queued_messages.appendleft(cur_message)
                 interval = 50
             
@@ -539,7 +558,9 @@ if (__name__ == "__main__"):
 
     # Get command line arguments..
     parser = argparse.ArgumentParser(description = 'STORM microscope control software')
-    parser.add_argument('config', type=str, help = "The name of the configuration file to use.")
+    parser.add_argument('config', type = str, help = "The name of the configuration file to use.")
+    parser.add_argument('--xml', dest = 'default_xml', type = str, required = False, default = None,
+                        help = "The name of a settings xml file to use as the default.")
 
     args = parser.parse_args()
 
@@ -561,7 +582,8 @@ if (__name__ == "__main__"):
     hdebug.startLogging(config.get("directory") + "logs/", "hal4000")
     
     # Setup HAL and all of the modules.
-    hal = HalCore(config)
+    hal = HalCore(config = config,
+                  parameters_file_name = args.default_xml)
 
     # Hide splash screen and start.
     splash.hide()

@@ -5,6 +5,8 @@ The messages that are passed between modules.
 Hazen 01/17
 """
 
+import traceback
+
 from PyQt5 import QtCore
 
 import storm_control.sc_library.halExceptions as halExceptions
@@ -192,7 +194,7 @@ class HalMessageError(object):
     If a module has a problem with a message that it can't handle then
     it should call the message's addError() method with one of these objects.
     """
-    def __init__(self, source = "", message = "", m_exception = None, **kwds):
+    def __init__(self, source = "", message = "", m_exception = None, stack_trace = "NA", **kwds):
         """
         source - The halmodule that created the error/warning as a string.
         message - The warning / error message as a string.
@@ -214,12 +216,25 @@ class HalMessageError(object):
         self.message = message
         self.m_exception = m_exception
         self.source = source
+        if (stack_trace == "NA"):
+            self.stack_trace = traceback.format_exc()
+        else:
+            self.stack_trace = stack_trace
 
     def getException(self):
         return self.m_exception
     
     def hasException(self):
         return self.m_exception is not None
+
+    def printExceptionAndDie(self):
+        print("")
+        print("Got an exception from '" + self.source + "' of type '" + self.message + "'!")
+        print("")        
+        print("Traceback when the exception occurred:")
+        print(self.stack_trace)
+        print("")
+        raise self.m_exception
 
 
 class HalMessageResponse(object):
