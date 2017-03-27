@@ -199,7 +199,7 @@ def halParameters(parameters_file):
     return xml_object
 
 
-def parameters(parameters_file, recurse = False):
+def parameters(parameters_file, recurse = False, add_filename_param = True):
     """
     Parses a parameters file to create a parameters object.
     """
@@ -209,7 +209,8 @@ def parameters(parameters_file, recurse = False):
 
     # Create XML object.
     xml_object = StormXMLObject(xml, recurse)
-    xml_object.set("parameters_file", parameters_file)
+    if add_filename_param:
+        xml_object.set("parameters_file", parameters_file)
     
     return xml_object
 
