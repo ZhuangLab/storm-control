@@ -73,8 +73,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         # Keep track of the current feed_name in parameters.
         self.parameters.add(params.ParameterString(name = "feed_name",
                                                    value = feed_name,
-                                                   is_mutable = False,
-                                                   is_saved = False))
+                                                   is_mutable = False))
         
         # UI setup.
         self.ui = cameraDisplayUi.Ui_Frame()
@@ -455,6 +454,8 @@ class CameraFrameDisplay(BaseFrameDisplay):
         Handles setting the sync parameter. This parameter is used in
         shutter sequences to specify which frame in the sequence should
         be displayed, or just any random frame.
+
+        FIXME: Do we need this? It doesn't do anything..
         """
         super.handleSync(self, sync_value)
         #self.setParameter("sync", sync_value)
@@ -474,22 +475,22 @@ class CameraFrameDisplay(BaseFrameDisplay):
             self.ui.recordButton.setText("Record")
             self.ui.recordButton.setStyleSheet("QPushButton { color: black }")
 
-    def updateCameraProperties(self, camera_properties):
-        if self.feed_name in camera_properties:
-            if "have_shutter" in camera_properties[self.feed_name]:
-                self.ui.cameraShutterButton.show()
-            else:
-                self.ui.cameraShutterButton.hide()
-        else:
-            self.ui.cameraShutterButton.hide()
+#    def updateCameraProperties(self, camera_properties):
+#        if self.feed_name in camera_properties:
+#            if "have_shutter" in camera_properties[self.feed_name]:
+#                self.ui.cameraShutterButton.show()
+#            else:
+#                self.ui.cameraShutterButton.hide()
+#        else:
+#            self.ui.cameraShutterButton.hide()
 
-    def updatedParams(self):
-        if self.getParameter("shutter", False):
-            self.ui.cameraShutterButton.setText("Close Shutter")
-            self.ui.cameraShutterButton.setStyleSheet("QPushButton { color: green }")
-        else:
-            self.ui.cameraShutterButton.setText("Open Shutter")
-            self.ui.cameraShutterButton.setStyleSheet("QPushButton { color: black }")
+#    def updatedParams(self):
+#        if self.getParameter("shutter", False):
+#            self.ui.cameraShutterButton.setText("Close Shutter")
+#            self.ui.cameraShutterButton.setStyleSheet("QPushButton { color: green }")
+#        else:
+#            self.ui.cameraShutterButton.setText("Open Shutter")
+#            self.ui.cameraShutterButton.setStyleSheet("QPushButton { color: black }")
 
 
 #
