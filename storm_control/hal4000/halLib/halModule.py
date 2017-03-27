@@ -102,7 +102,7 @@ class HalModule(QtCore.QObject):
         """
         pass
         
-    def handleError(self, m_error):
+    def handleError(self, message, m_error):
         """
         Override this with class specific error handling.
         """
@@ -115,10 +115,10 @@ class HalModule(QtCore.QObject):
         for m_error in message.getErrors():
             data = m_error.source + ": " + m_error.message
             if m_error.hasException():
-                if not self.handleError(m_error):
+                if not self.handleError(message, m_error):
                     m_error.printExceptionAndDie()
             else:
-                if not self.handleWarning(m_warning):
+                if not self.handleWarning(message, m_warning):
                     halMessageBox.halMessageBoxInfo(data)
 
     def handleMessage(self, message):
