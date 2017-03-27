@@ -324,7 +324,7 @@ class Film(halModule.HalModule):
             self.stopCameras()
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "live mode",
-                                                   data = {"live mode", state}))
+                                                   data = {"live mode" : state}))
 
     def handleResponses(self, message):
         """
