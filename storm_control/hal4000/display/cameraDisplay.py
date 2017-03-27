@@ -119,6 +119,11 @@ class Display(halModule.HalModule):
                                                        m_type = "current parameters",
                                                        data = {"parameters" : view.getParameters()}))
 
+    def cleanUp(self, qt_settings):
+        for dialog in self.dialogs:
+            if dialog is not None:
+                dialog.cleanUp(qt_settings)
+        
     def getNextViewName(self):
         return "display{0:02d}".format(len(self.views))
     
