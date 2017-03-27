@@ -33,6 +33,7 @@ def test_parameters_2():
 
     # Check that p1 and p2 store the same values and have
     # the same structure.
+    assert (len(params.difference(p1, p2)) == 0)
 
     # Change a value in p2.
     p2.set("camera1.flip_horizontal", True)
@@ -41,9 +42,28 @@ def test_parameters_2():
     assert (p1.get("camera1.flip_horizontal") == False)
 
     # Get the difference between p1 and p2.
+    assert (params.difference(p1, p2)[0] == 'camera1.flip_horizontal')
     
 
+def test_parameters_3():
+
+    # Load parameters.
+    p1 = params.parameters(test.xmlFilePathAndName("test_parameters.xml"), recurse = True)
+
+    # Test sub-section creation.
+    p2 = params.StormXMLObject()
+    p2s = p2.addSubSection("camera1", p1.get("camera1").copy())
+    p2s.add(params.ParameterInt(name = "test", value = 5))
+
+    # p2 is different then p1 because it has 'test'.
+    assert (params.difference(p2.get("camera1"), p1.get("camera1"))[0] == "test")
+
+    # But p1 is not different from p2 because difference() only
+    # checks p1 properties that exist in p1.
+    assert (len(params.difference(p1.get("camera1"), p2.get("camera1"))) == 0)
+    
+    
 if (__name__ == "__main__"):
     test_parameters_1()
     test_parameters_2()
-    
+    test_parameters_3()
