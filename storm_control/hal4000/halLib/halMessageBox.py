@@ -9,6 +9,9 @@ Hazen 01/17
 from PyQt5 import QtWidgets
 
 def halMessageBoxInfo(message, is_error = False):
+    """
+    Display an informational message box.
+    """
     msg_box = QtWidgets.QMessageBox()
     msg_box.setText(message)
     if is_error:
@@ -18,6 +21,9 @@ def halMessageBoxInfo(message, is_error = False):
     msg_box.exec_()
 
 def halMessageBoxResponse(source, header, message):
+    """
+    Display a simple chooser message box.
+    """
     return QtWidgets.QMessageBox.question(source,
                                           header,
                                           message,
