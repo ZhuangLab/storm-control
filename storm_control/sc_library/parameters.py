@@ -440,7 +440,7 @@ class ParameterSimple(Parameter):
                 "value" : value,
                 "is_mutable" : False,
                 "is_saved" : False}
-        super.__init__(self, **kwds)
+        super().__init__(self, **kwds)
 
         
 class ParameterString(Parameter):
