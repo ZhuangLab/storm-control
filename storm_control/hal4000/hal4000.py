@@ -373,11 +373,14 @@ class HalCore(QtCore.QObject):
         # 2. "configure2", gives the modules a chance to 'react'
         #    based on what happened during configure1.
         #
-        # 3. "start", tell the modules to start.
-        #    This is the point where any GUI modules that are
-        #    visible should call show().
+        # 3. "configure3", gives the modules a chance to 'react'
+        #    based on what happened during configure1.
         #
         # 4. "new parameters file", initial parameters (if any).
+        #
+        # 5. "start", tell the modules to start.
+        #    This is the point where any GUI modules that are
+        #    visible should call show().
         #
         message_chain = []
 
@@ -390,17 +393,22 @@ class HalCore(QtCore.QObject):
         message_chain.append(halMessage.HalMessage(source = self,
                                                    m_type = "configure2"))
 
+        # configure3.
+        message_chain.append(halMessage.HalMessage(source = self,
+                                                   m_type = "configure3"))
+        
         # update default parameters.
         if parameters_file_name is not None:
             message_chain.append(halMessage.HalMessage(source = self,
                                                  m_type = "new parameters file",
                                                  data = {"filename" : parameters_file_name,
-                                                         "default" : True}))
+                                                         "default" : True}))        
 
         # start.
         message_chain.append(halMessage.HalMessage(source = self,
                                                    m_type = "start",
                                                    sync = True))
+
 
         self.handleMessage(halMessage.chainMessages(self.handleMessage,
                                                     message_chain))

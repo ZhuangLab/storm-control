@@ -22,6 +22,7 @@ valid_messages = {
     'close event' : True,
     'configure1' : True,
     'configure2' : True,
+    'configure3' : True,
     'current parameters' : True,
     'module' : True,
     'new directory' : True,

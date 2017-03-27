@@ -448,6 +448,14 @@ class Feeds(halModule.HalModule):
         halMessage.addMessage("feed list")
 
     def broadcastFeedInfo(self):
+        """
+        Send the 'feed list' message.
+
+        film.film uses this message to figure out which cameras / feeds to save.
+
+        display.cameraDisplay uses this message to populate the feed chooser
+           combobox.
+        """
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "feed list",
                                                    data = {"feeds" : self.feed_list}))

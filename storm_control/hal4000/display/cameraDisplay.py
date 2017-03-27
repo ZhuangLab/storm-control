@@ -160,7 +160,15 @@ class Display(halModule.HalModule):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "set current camera",
                                                        data = {"camera" : "camera1"}))
-                
+
+        #
+        # 'set current camera' is sent after the 'configure1' message. The
+        # camera response comes after the 'configure2' message, so the parameters
+        # should be initialized by 'configure3'.
+        #
+        elif (message.getType() == "configure3"):
+            self.broadcastParameters()
+
         elif (message.getType() == "current camera"):
             self.viewFeedConfig(message)
 
@@ -178,7 +186,6 @@ class Display(halModule.HalModule):
         elif (message.getType() == "start"):
             if self.dialogs[0] is not None:
                 self.dialogs[0].showIfVisible()
-            self.broadcastParameters()
 
         elif (message.getType() == "start film"):
             for view in self.views:
