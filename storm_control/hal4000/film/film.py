@@ -304,7 +304,16 @@ class Film(halModule.HalModule):
         halMessage.addMessage("start film")
         halMessage.addMessage("stop camera")
         halMessage.addMessage("stop film")
-        
+
+    def addParametersResponse(self, message):
+        message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                          data = {"parameters" : self.view.getParameters()}))
+
+    def broadcastParameters(self):
+        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "current parameters",
+                                                   data = {"parameters" : self.view.getParameters()}))
+
     def cleanUp(self, qt_settings):
         self.logfile_fp.close()
 
@@ -361,9 +370,7 @@ class Film(halModule.HalModule):
                                                        data = self.configure_dict))
                 
             # Broadcast default parameters.
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "current parameters",
-                                                       data = {"parameters" : self.view.getParameters()}))
+            self.broadcastParameters()
 
         elif (message.m_type == "feed list"):
             self.feed_list = message.getData()["feeds"]
@@ -383,6 +390,17 @@ class Film(halModule.HalModule):
         elif (message.m_type == "new directory"):
             self.view.setDirectory(message.getData()["directory"])
 
+        elif (message.m_type == "new parameters"):
+
+            # Add current parameters to the response.
+            self.addParametersResponse(message)
+
+            # Update parameters.
+            self.view.newParameters(message.getData()["parameters"].get(self.module_name))
+
+            # Broadcast new parameters.
+            self.broadcastParameters()
+            
         #
         # We need to keep track of the current value so that
         # we can save this in the tif images / stacks.
@@ -409,8 +427,7 @@ class Film(halModule.HalModule):
                 self.startCameras()
 
         elif (message.getType() == "stop film"):
-            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"parameters" : self.view.getParameters()}))
+            self.addParametersResponse(message)
 
     def processL2Message(self, message):            
         if (self.film_state == "run"):

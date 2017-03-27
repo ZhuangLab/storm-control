@@ -171,10 +171,6 @@ class HalModule(QtCore.QObject):
             raise halException.HalException("Unknown message level", message.level)
         message.decRefCount()
 
-        # Log when processed.
-        if (message.level == 1):
-            message.logEvent("processed")
-
         # Start the timer if we still have messages left.
         if (len(self.queued_messages) > 0):
             self.queued_messages_timer.start()

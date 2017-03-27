@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 """
-
 Handles all interaction / communication with the parameters widget.
 
 This widget is responsible for keeping track of the various
@@ -14,7 +13,11 @@ The 'parameters of record' are those that are stored by each
 module, though they are expected to match this modules
 parameters.
 
-Hazen 01/17
+Note this module makes a copy of any parameters it receives
+before storing. Similarly it only broadcasts a copy of the
+parameters that it has stored.
+
+Hazen 03/17
 """
 
 from PyQt5 import QtWidgets
@@ -27,7 +30,7 @@ import storm_control.hal4000.settings.parametersBox as parametersBox
 
 
 class Settings(halModule.HalModule):
-
+    
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
@@ -44,12 +47,6 @@ class Settings(halModule.HalModule):
         # The current parameters have changed.
         halMessage.addMessage("new parameters")
 
-    def handleNewParameters(self, parameters, is_edit):
-        self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "new parameters",
-                                                   data = {"parameters" : parameters,
-                                                           "is_edit" : is_edit}))
-        
     def handleResponses(self, message):
         if (message.getType() == "new parameters"):
 
@@ -58,9 +55,15 @@ class Settings(halModule.HalModule):
             if not ("is_edit" in message.getData()):
                 for response in message.getResponses():
                     data = response.getData()
+                    self.view.updatePreviousParameters(response.source, data["parameters"].copy())
 
-                    self.view.updatePreviousParameters(response.source, data["parameters"])
-        
+    def handleNewParameters(self, parameters, is_edit):
+        print(parameters.toString(all_params = True))
+        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "new parameters",
+                                                   data = {"parameters" : parameters,
+                                                           "is_edit" : is_edit}))
+
     def processL1Message(self, message):
         
         if (message.m_type == "configure1"):
@@ -68,16 +71,13 @@ class Settings(halModule.HalModule):
                                                        m_type = "add to ui",
                                                        data = self.configure_dict))
 
-        elif (message.getType() == "current parameters"):                
-            section = message.getSourceName()
+        elif (message.getType() == "current parameters"):
+            self.view.updateCurrentParameters(message.getSourceName(),
+                                              message.getData()["parameters"].copy())
 
-            # The display module handles all the displays, so figure
-            # out which display these are the parameters for.
-            if (section == "display"):
-                section = message.getData()["display_name"]
-                    
-            self.view.updateCurrentParameters(section, message.getData()["parameters"])
-
+        elif (message.getType() == "new parameters file"):
+            self.view.newParametersFile(message.getData()["filename"])
+                
 #        elif (message.getType() == 'start'):
 #            self.view.addParameters("default", self.default_parameters)
 #            self.current_parameters = self.

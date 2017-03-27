@@ -299,7 +299,8 @@ class ParametersBox(QtWidgets.QGroupBox):
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        
+        self.default_parameters = None
+
         self.ui = settingsUi.Ui_GroupBox()
         self.ui.setupUi(self)
 
@@ -313,6 +314,8 @@ class ParametersBox(QtWidgets.QGroupBox):
         """
         Add new parameters to the ListView.
         """
+        if self.default_parameters is None:
+            self.default_parameters = parameters
         self.ui.settingsListView.addParameters(name, parameters, directory)
 
     def getParameters(self, name):
@@ -342,6 +345,12 @@ class ParametersBox(QtWidgets.QGroupBox):
             self.parameters.saveToFile(filename)
             self.updateDisplay()
 
+    def newParametersFile(self, filename):
+        """
+        Load parameters from a file.
+        """
+        pass
+        
     def setParameters(self, name):
         """
         Set the current parameters to name.
@@ -354,6 +363,7 @@ class ParametersBox(QtWidgets.QGroupBox):
         with 'current parameters' message. Exchange whatever we have for 
         each modules with its updated parameters.
         """
+        #print("> ucp", section)
         curp = self.ui.settingsListView.getCurrentParameters()
         curp.addSubSection(section,
                            svalue = parameters,
@@ -373,7 +383,11 @@ class ParametersBox(QtWidgets.QGroupBox):
 
         
 
-        
+
+
+##
+## To delete..
+##
     def getButtonNames(self):
         return list(map(lambda x: x.text(), self.radio_buttons))
 

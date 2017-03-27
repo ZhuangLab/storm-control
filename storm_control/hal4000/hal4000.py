@@ -484,6 +484,7 @@ class HalCore(QtCore.QObject):
                     else:
                         if (cur_message.level == 1):
                             cur_message.logEvent("sent")
+                            
                         self.sent_messages.append(cur_message)
                         for module in self.modules:
                             cur_message.ref_count += 1
