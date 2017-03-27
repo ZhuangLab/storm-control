@@ -41,6 +41,20 @@ def addMessage(name, check_exists = True):
     valid_messages[name] = True
 
 
+def chainMessages(send_fn, messages):
+    """
+    Constructs a chain of messages each of which will be sent when
+    the previous message in the chain is finalized.
+    """
+    for i in range(len(messages)-1):
+        #
+        # Need the x = i bit to capture the current value of i,
+        # otherwise all the messages have the same finalizer.
+        #
+        messages[i].finalizer = lambda x = i: send_fn(messages[x+1])
+    return messages[0]
+
+        
 class HalMessageException(halExceptions.HalException):
     pass
 

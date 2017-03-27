@@ -379,29 +379,31 @@ class HalCore(QtCore.QObject):
         #
         # 4. "new parameters file", initial parameters (if any).
         #
-        if parameters_file_name is not None:
-            newp_message = halMessage.HalMessage(source = self,
-                                                 m_type = "new parameters file",
-                                                 data = {"filename" : parameters_file_name})
-            start_message = halMessage.HalMessage(source = self,
-                                                  m_type = "start",
-                                                  sync = True,
-                                                  finalizer = lambda: self.handleMessage(newp_message))
-        else:
-            start_message = halMessage.HalMessage(source = self,
-                                                  m_type = "start",
-                                                  sync = True)
+        message_chain = []
 
-        config2_message = halMessage.HalMessage(source = self,
-                                                m_type = "configure2",
-                                                finalizer = lambda: self.handleMessage(start_message))
-        
-        config1_message = halMessage.HalMessage(source = self,
-                                                m_type = "configure1",
-                                                data = {"module_names" : module_names},
-                                                finalizer = lambda: self.handleMessage(config2_message))
-        
-        self.handleMessage(config1_message)
+        # configure1.
+        message_chain.append(halMessage.HalMessage(source = self,
+                                                   m_type = "configure1",
+                                                   data = {"module_names" : module_names}))
+
+        # configure2.
+        message_chain.append(halMessage.HalMessage(source = self,
+                                                   m_type = "configure2"))
+
+        # update default parameters.
+        if parameters_file_name is not None:
+            message_chain.append(halMessage.HalMessage(source = self,
+                                                 m_type = "new parameters file",
+                                                 data = {"filename" : parameters_file_name,
+                                                         "default" : True}))
+
+        # start.
+        message_chain.append(halMessage.HalMessage(source = self,
+                                                   m_type = "start",
+                                                   sync = True))
+
+        self.handleMessage(halMessage.chainMessages(self.handleMessage,
+                                                    message_chain))
 
     def cleanup(self):
         print(" Dave? What are you doing Dave?")
