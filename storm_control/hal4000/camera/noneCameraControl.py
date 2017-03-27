@@ -46,37 +46,50 @@ class NoneCameraControl(cameraControl.CameraControl):
     
         self.parameters.set("roll", config.get("roll"))
 
-        self.newParameters(self.parameters)
+        self.newParameters(self.parameters, initialization = True)
 
-    def newParameters(self, parameters):
+    def newParameters(self, parameters, initialization = False):
         super().newParameters(parameters)
 
-        self.stopCamera()
+        # Figure out which parameters have changed.
+        if initialization:
+            changed_p_names = parameters.getAttrs()
+        else:
+            changed_p_names = params.difference(parameters, self.parameters)
+
+        # Check if we actually need to do anything.
+        if (len(changed_p_names) > 0):
+            running = self.running
+            if running:
+                self.stopCamera()
         
-        p = self.parameters
+            p = self.parameters
 
-        # Update parameters.
-        for pname in ["exposure_time", "roll", "x_bin", "x_end", "x_start", "y_bin", "y_end", "y_start"]:
-            p.set(pname, parameters.get(pname))
-        
-        if (p.get("exposure_time") < 0.010):
-            p.set("exposure_time", 0.010)
+            # Update parameters.
+            for pname in changed_p_names:
+                p.set(pname, parameters.get(pname))
 
-        p.set("fps", 1.0/p.get("exposure_time"))
+            # Configure camera.
+            p = self.parameters
+            if (p.get("exposure_time") < 0.010):
+                p.set("exposure_time", 0.010)
 
-        size_x = int((p.get("x_end") - p.get("x_start") + 1)/p.get("x_bin"))
-        size_y = int((p.get("y_end") - p.get("y_start") + 1)/p.get("y_bin"))
-        p.set("x_pixels", size_x)
-        p.set("y_pixels", size_y)
-        self.fake_frame_size = [size_x, size_y]
-        self.fake_frame = numpy.zeros(size_x * size_y, dtype = numpy.uint16)
-        for i in range(size_x):
-            for j in range(size_y):
-                self.fake_frame[j*size_x+i] = i % 128 + j % 128
+            p.set("fps", 1.0/p.get("exposure_time"))
 
-        p.set("bytes_per_frame", 2 * size_x * size_y)
+            size_x = int((p.get("x_end") - p.get("x_start") + 1)/p.get("x_bin"))
+            size_y = int((p.get("y_end") - p.get("y_start") + 1)/p.get("y_bin"))
+            p.set("x_pixels", size_x)
+            p.set("y_pixels", size_y)
+            self.fake_frame_size = [size_x, size_y]
+            self.fake_frame = numpy.zeros(size_x * size_y, dtype = numpy.uint16)
+            for i in range(size_x):
+                for j in range(size_y):
+                    self.fake_frame[j*size_x+i] = i % 128 + j % 128
 
-        self.startCamera()
+            p.set("bytes_per_frame", 2 * size_x * size_y)            
+
+            if running:
+                self.startCamera()
 
         self.configured.emit()
         

@@ -196,6 +196,7 @@ class Camera(halModule.HalModule):
             self.addParametersResponse(message)
 
     def startCamera(self):
+        
         # Broadcast the camera temperature, if available. We do this here because at least
         # with some cameras this can only be measured when the camera is not running.
         if self.camera_control.haveTemperature():

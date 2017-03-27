@@ -184,11 +184,18 @@ class CameraControl(QtCore.QThread):
 
     def newParameters(self, parameters):
         """
-        Note: (1) The sub-class must emit 'configured' at the
-                  end of this method()!
+        Notes: (1) The sub-class must emit 'configured' at the
+                   end of this method()!
 
-              (2) The parameters that the camera receives are already
-                  a copy so there is no need to make another copy.
+               (2) The parameters that the camera receives are already
+                   a copy so there is no need to make another copy.
+
+               (3) It is up to the sub-class whether or not the camera
+                   needs to be stopped to make the parameter changes. If
+                   the camera needs to be stopped, then it must also be
+                   re-started by the sub-class. And care should be taken
+                   that the camera is not accidentally starting at
+                   initialization. See noneCameraControl.py.
         """
         #
         # This restriction is necessary because in order to display
