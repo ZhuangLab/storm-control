@@ -630,8 +630,8 @@ class StormXMLObject(object):
         """
         Add a sub-section if it doesn't already exist. 
 
-        If the optional svalue is specified and it is a StormXMLObject then
-        a copy of it will be used to initialize the new sub section.
+        If the optional svalue is specified and it is a StormXMLObject 
+        then it will be used to initialize the new sub section.
 
         If the section already exists and overwrite is False then you
         will get an exception.
@@ -642,14 +642,14 @@ class StormXMLObject(object):
         else:
             if not sname in self.parameters:
                 if isinstance(svalue, StormXMLObject):
-                    self.parameters[sname] = svalue.copy()
+                    self.parameters[sname] = svalue
                 else:
                     self.parameters[sname] = StormXMLObject()
             else:
                 if not overwrite:
                     raise ParametersException("Section " + sname + " already exists")
                 if isinstance(svalue, StormXMLObject):
-                    self.parameters[sname] = svalue.copy()
+                    self.parameters[sname] = svalue
                 else:
                     raise ParametersException("Object is a " + type(svalue) + " not a StormXMLObject")
 
@@ -692,7 +692,7 @@ class StormXMLObject(object):
         Return a list of the property names.
         """
         return self.parameters.keys()
-                
+
     def getp(self, pname):
         """
         Return the property specified by pname.
