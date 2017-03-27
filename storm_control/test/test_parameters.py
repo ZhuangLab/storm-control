@@ -62,8 +62,30 @@ def test_parameters_3():
     # checks p1 properties that exist in p1.
     assert (len(params.difference(p1.get("camera1"), p2.get("camera1"))) == 0)
     
-    
+
+def test_parameters_4():
+
+    # Load parameters.
+    p1 = params.parameters(test.xmlFilePathAndName("test_parameters.xml"), recurse = True)
+
+    # Create another set of parameters with only 1 item.
+    p2 = params.StormXMLObject()
+    p2s = p2.addSubSection("camera1")
+    p2s.add(params.ParameterSetBoolean(name = "flip_horizontal", value = True))
+    p2s.add(params.ParameterSetBoolean(name = "flip_vertical", value = False))
+
+    # Test copy.
+    [p3, ur] = params.copyParameters(p1, p2)
+
+    # Their should be one un-recognized parameter, 'flip_vertical'.
+    assert (len(ur) == 1) and (ur[0] == "flip_vertical")
+
+    # 'camera1.flip_horizontal' in p3 should be True.
+    assert p3.get("camera1.flip_horizontal")
+
+
 if (__name__ == "__main__"):
     test_parameters_1()
     test_parameters_2()
     test_parameters_3()
+    test_parameters_4()
