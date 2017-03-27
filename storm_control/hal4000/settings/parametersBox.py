@@ -16,9 +16,11 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 import storm_control.sc_library.parameters as params
 
+import storm_control.hal4000.halLib.halMessageBox as halMessageBox
+import storm_control.hal4000.halLib.parameterEditors as pEditors
 import storm_control.hal4000.qtdesigner.params_editor_ui as paramsEditorUi
 import storm_control.hal4000.qtdesigner.settings_ui as settingsUi
-import storm_control.hal4000.halLib.parameterEditors as pEditors
+import storm_control.hal4000.settings.parametersListView as parametersListView
 
 
 def getFileName(path):
@@ -310,31 +312,36 @@ class ParametersBox(QtWidgets.QGroupBox):
         self.ui.settingsListView.newParameters.connect(self.handleNewParameters)
         self.ui.settingsListView.saveParameters.connect(self.handleSaveParameters)
 
-    def addParameters(self, name, parameters, directory):
+    def addParameters(self, parameters, is_default = False):
         """
         Add new parameters to the ListView.
         """
-        if self.default_parameters is None:
+        if is_default:
             self.default_parameters = parameters
-        self.ui.settingsListView.addParameters(name, parameters, directory)
+        name = os.path.splitext(os.path.basename(parameters.get("parameters_file")))[0]
+        self.ui.settingsListView.addParameters(name, parameters)
 
-    def getParameters(self, name):
+    def enableUI(self, state):
+        self.ui.settingsListView.setEnabled(state)
+    
+    def getParameters(self, value):
         """
         Return the parameters that correspond to name, which could be
         an integer (the row number) or the parameters name.
         """
-        self.ui.settingsListView.getParameters(name)
+        return self.ui.settingsListView.getParametersItem(value)
 
     def handleEditParameters(self, parameters):
         pass
 
     def handleNewParameters(self, parameters):
+        parameters.set("initialized", True)
         self.newParameters.emit(parameters, False)
 
-    def handleSaveParameters(self, parameters, directory):
+    def handleSaveParameters(self, parameters):
         filename = QtWidgets.QFileDialog.getSaveFileName(self, 
                                                          "Choose File", 
-                                                         os.path.dirname(str(self.parameters.get("parameters_file"))),
+                                                         os.path.dirname(str(parameters.get("parameters_file"))),
                                                          "*.xml")[0]
         if filename:
             self.changed = False
@@ -345,18 +352,45 @@ class ParametersBox(QtWidgets.QGroupBox):
             self.parameters.saveToFile(filename)
             self.updateDisplay()
 
-    def newParametersFile(self, filename):
+    def newParametersFile(self, filename, is_default):
         """
-        Load parameters from a file.
+        Load new parameters from a file.
         """
-        pass
+        [p, unrecognized] = params.copyParameters(self.default_parameters, params.halParameters(filename))
+        if (len(unrecognized) > 0):
+            msg = "The following parameters were not recognized: "
+            msg += ", ".join(unrecognized) + ". Perhaps they are not in the correct sub-section?"
+            halMessageBox.halMessageBoxInfo(msg)
+
+        # Mark as not having been used.
+        p.set("initialized", False)
         
-    def setParameters(self, name):
-        """
-        Set the current parameters to name.
-        """
-        self.ui.settingsListView.setParameters(name)
+        if is_default:
+            self.default_parameters = p
+
+            # Get the parameters labeled 'default'. They should exist because
+            # we only expect to have to handle this at initialization.
+            q_item = self.ui.settingsListView.getParametersItem("default")
+
+            # Replace them with these parameters.
+            self.ui.settingsListView.setItemParameters(q_item, self.default_parameters)
+
+            # Trigger a 'new parameters' message.
+            self.ui.settingsListView.setCurrentParameters(q_item,
+                                                          always_emit_new_parameters = True)
+            
+        # Otherwise, just add the parameters to the ListView.
+        else:
+            self.addParameters(p)
         
+    def setParameters(self, value):
+        """
+        Set parameters that correspond to name, which could be
+        an integer (the row number), to be the current parameters.
+        """
+        q_item = self.ui.settingsListView.getParametersItem(value)
+        self.ui.settingsListView.setCurrentParameters(q_item)
+
     def updateCurrentParameters(self, section, parameters):
         """
         After a 'new parameters' message the other modules will respond 
@@ -380,112 +414,6 @@ class ParametersBox(QtWidgets.QGroupBox):
             prevp.addSubSection(section,
                                 svalue = parameters,
                                 overwrite = True)
-
-        
-
-
-
-##
-## To delete..
-##
-    def getButtonNames(self):
-        return list(map(lambda x: x.text(), self.radio_buttons))
-
-    def getCurrentParameters(self):
-        return self.current_parameters
-
-    def getIndexOfParameters(self, param_index):
-        button_names = self.getButtonNames()
-        if param_index in button_names:
-            return button_names.index(param_index)
-        elif param_index in range(len(button_names)):
-            return param_index
-        else:
-            return -1
-
-    def getParameters(self, param_index):
-        index = self.getIndexOfParameters(param_index)
-        if (index != -1):
-            return self.radio_buttons[index].getParameters()
-        else:
-            return None
-
-    def handleDelete(self, button):
-        self.button_group.removeButton(button)
-        self.layout.removeWidget(button)
-        self.radio_buttons.remove(button)
-        button.close()
-
-    def handleDuplicate(self, button):
-        parameters = button.getParameters()
-        self.addParameters(copy.deepcopy(parameters))
-
-    def handleUpdate(self, button):
-        self.current_parameters = button.getParameters()
-        self.settings_toggled.emit()
-        
-    def isValidParameters(self, param_index):
-        """
-        Returns true if the requested parameters exist.
-        """
-        # Warn if there are multiple parameters with the same name?
-        if (self.getIndexOfParameters(param_index) != -1):
-            return True
-        else:
-            return False
-        
-    def setCurrentParameters(self, param_index):
-        """
-        Select one of the parameter choices in the parameters box.
-        """
-        index = self.getIndexOfParameters(param_index)
-        if (index != -1):
-            if (self.radio_buttons[index] == self.current_button):
-                return True
-            else:
-                self.radio_buttons[index].click()
-                return False
-        else:
-            print("Requested parameter index not available", param_index)
-            return True
-
-    def startFilm(self):
-        """
-        Called at the start of filming to disable the radio buttons.
-        """
-        for button in self.radio_buttons:
-            button.setEnabled(False)
-
-    def stopFilm(self):
-        """
-        Called at the end of filming to enable the radio buttons.
-        """
-        for button in self.radio_buttons:
-            button.setEnabled(True)
-
-    def toggleParameters(self, bool):
-        """
-        This is called when one of the radio buttons is clicked to figure out
-        which parameters were selected. It emits a settings_toggled signal to
-        indicate that the settings have been changed.
-        """
-        for button in self.radio_buttons:
-            button.enableEditor()
-            if button.isChecked() and (button != self.current_button):
-                self.current_button = button
-                self.current_parameters = button.getParameters()
-                self.settings_toggled.emit()
-
-    def updateParameters(self):
-        """
-        FIXME: This is a bad model..
-
-        This is called by HAL after calling newParameters so that any changes
-        to the parameters can flow back to the parameter editor (if it exists).
-        """
-        for button in self.radio_buttons:
-            if button.isChecked():
-                button.updateParameters()
 
 
 #

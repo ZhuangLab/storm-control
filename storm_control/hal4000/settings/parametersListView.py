@@ -7,6 +7,8 @@ Hazen 03/17
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+import storm_control.sc_library.halExceptions as halExceptions
+
 
 def getItemData(q_std_item):
     return q_std_item.data()
@@ -19,11 +21,9 @@ class ParametersItemData(object):
     a re-orderable list. So instead we store the data in an object
     and store the object in a QStandardItem. Hackish..
     """
-    def __init__(self, parameters = None, directory = None, **kwds):
+    def __init__(self, parameters = None, **kwds):
         super().__init__(**kwds)
         self.checked = False
-        self.directory = directory
-        self.initialized = False
         self.parameters = parameters
         self.stale = False  # Edited but not saved.
 
@@ -60,8 +60,8 @@ class ParametersListViewDelegate(QtWidgets.QStyledItemDelegate):
 class ParametersMVC(QtWidgets.QListView):
     editParameters = QtCore.pyqtSignal(object)
     newParameters = QtCore.pyqtSignal(object)
-    saveParameters = QtCore.pyqtSignal(object, str)
-    
+    saveParameters = QtCore.pyqtSignal(object)
+
     def __init__(self, parent = None, **kwds):
         kwds["parent"] = parent
         super().__init__(**kwds)
@@ -96,10 +96,9 @@ class ParametersMVC(QtWidgets.QListView):
             for name in ["setting 1", "setting 2", "setting 3"]:
                 self.addParameters(name, "foo")
 
-    def addParameters(self, name, parameters, directory):
+    def addParameters(self, name, parameters):
         qitem = QtGui.QStandardItem(name)
-        qitem.setData(ParametersItemData(parameters = parameters,
-                                         directory = directory))
+        qitem.setData(ParametersItemData(parameters = parameters))
         self.model.insertRow(0, qitem)
 
         # The first parameter in is the default current parameters.
@@ -109,6 +108,26 @@ class ParametersMVC(QtWidgets.QListView):
 
     def getCurrentParameters(self):
         return getItemData(self.current_item).parameters
+    
+    def getParametersItem(self, value):
+        """
+        This returns a QStandardItem including it's data from the model.
+
+        value can a string or an integer.
+        """
+        if isinstance(value, str):
+            items = self.model.findItems(value)
+
+            #
+            # FIXME: Not sure we actually want to throw an error here, maybe we
+            #        should just return a list of matching parameters?
+            #
+            if (len(items) > 1):
+                raise halExceptions.HalException("Found", len(items), "parameter files with the requested name")
+            elif (len(items) == 1):
+                return items[0]
+        else:
+            return self.model.item(value)
 
     def getPreviousParameters(self):
         if self.previous_item is not None:
@@ -133,7 +152,7 @@ class ParametersMVC(QtWidgets.QListView):
 
     def handleSave(self, boolean):
         data = getItemData(self.rc_item)
-        self.saveParameters.emit(data.parameters, data.directory)
+        self.saveParameters.emit(data.parameters)
         data.stale = False
     
     def handleSelectionChange(self, new_selection, old_selection):
@@ -172,6 +191,20 @@ class ParametersMVC(QtWidgets.QListView):
                 
         else:
             super().mousePressEvent(event)
+
+    def setCurrentParameters(self, item, always_emit_new_parameters = False):
+        self.setCurrentIndex(self.model.indexFromItem(item))
+
+        # If we are modifying the current and always_emit_new_parameter is
+        # True then we have to emit the newParameters signal here because
+        # handleSelectionChange will not do this.
+        if (item == self.current_item) and always_emit_new_parameters:
+            self.newParameters.emit(getItemData(item).parameters)
+
+    def setItemParameters(self, item, parameters):
+        getItemData(item).parameters = parameters
+
+
 
 
 class ParametersStandardItemModel(QtGui.QStandardItemModel):
