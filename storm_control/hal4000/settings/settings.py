@@ -58,7 +58,6 @@ class Settings(halModule.HalModule):
                     self.view.updatePreviousParameters(response.source, data["parameters"].copy())
 
     def handleNewParameters(self, parameters, is_edit):
-        print(parameters.toString(all_params = True))
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "new parameters",
                                                    data = {"parameters" : parameters,
