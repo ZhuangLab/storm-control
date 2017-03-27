@@ -45,7 +45,7 @@ def copyParameters(original_parameters, new_parameters):
     copyParametersReplace("", params, new_parameters)
 
     # Check and add any new parameters.
-    unrecognized = copyParametersAddNew(params, new_parameters, not new_parameters.validate)
+    unrecognized = copyParametersAddNew(params, new_parameters, not new_parameters._validate_)
 #    if (len(unrecognized) > 0):
 #        if True:
 #            msg = "The following parameters were not recognized: "
@@ -84,17 +84,23 @@ def copyParametersAddNew(original_parameters, new_parameters, allow_new):
         prop = new_parameters.get(attr)
         if isinstance(prop, StormXMLObject):
             if not original_parameters.has(attr):
-                if allow_new or not prop.validate:
-                    original_parameters.addSubSection(attr).validate = False
+                if allow_new or not prop._validate_:
+                    original_parameters.addSubSection(attr)._validate_ = False
                 else:
                     unrecognized.append(attr)
                     continue
 
             # Allow new parameters for all sub-objects.
             if allow_new:
-                unrecognized.extend(copyParametersAddNew(original_parameters.get(attr), prop, True))
+                unrecognized.extend(copyParametersAddNew(original_parameters.get(attr),
+                                                         prop,
+                                                         True))
+
+            # Otherwise it depends on the current objects _validate_ attribute.
             else:
-                unrecognized.extend(copyParametersAddNew(original_parameters.get(attr), prop, prop.validate))
+                unrecognized.extend(copyParametersAddNew(original_parameters.get(attr),
+                                                         prop,
+                                                         not prop._validate_))
 
         else:
             if not original_parameters.has(attr):
