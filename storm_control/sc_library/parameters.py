@@ -48,22 +48,22 @@ def copyParameters(original_parameters, new_parameters):
 
     # Check and add any new parameters.
     unrecognized = copyParametersAddNew(params, new_parameters, not new_parameters.validate)
-    if (len(unrecognized) > 0):
-        if True:
-            msg = "The following parameters were not recognized: "
-            msg += ", ".join(unrecognized) + ". Perhaps they are not in the correct sub-section?"
-
-            # FIXME: Use HAL message box?
-            QtGui.QMessageBox.information(None,
-                                          "Bad Parameters?",
-                                          msg)
+#    if (len(unrecognized) > 0):
+#        if True:
+#            msg = "The following parameters were not recognized: "
+#            msg += ", ".join(unrecognized) + ". Perhaps they are not in the correct sub-section?"
+#
+#            # FIXME: Use HAL message box?
+#            QtGui.QMessageBox.information(None,
+#                                          "Bad Parameters?",
+#                                          msg)
+#            
+#            #raise ParametersException("Unrecognized parameters.")
+#            
+#        else:
+#            print("The following parameters were not recognized: " + ", ".join(unrecognized))
             
-            #raise ParametersException("Unrecognized parameters.")
-            
-        else:
-            print("The following parameters were not recognized: " + ", ".join(unrecognized))
-            
-    return params
+    return [params, unrecognized]
 
 
 def copyParametersAddNew(original_parameters, new_parameters, allow_new):
