@@ -120,7 +120,7 @@ class Camera(halModule.HalModule):
             # Broadcast initial parameters and configuration.
             self.broadcastParameters()
 
-        # This message comes from display.cameraDisplay to get information about a camera.
+        # This message comes from display.cameraDisplay to get information about a camera / feed.
         elif (message.getType() == "get feed config"):
             if (message.getData()["camera"] == self.module_name):
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
