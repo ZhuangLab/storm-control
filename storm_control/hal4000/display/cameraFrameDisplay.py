@@ -317,13 +317,13 @@ class BaseFrameDisplay(QtWidgets.QFrame):
 
         1. Replace current parameters with the new parameters
 
-        2. Execute a feed change to the new camera / feed change,
-           this will a 'get feed config' message.
+        2. Execute a feed change to the new camera / feed,
+           this will send a 'get feed config' message.
 
-        3. The camera / feed will respond with the correct frame
-           size, etc. for display.
+        3. The camera / feed will respond to the message with 
+           the correct frame size, etc. for display.
 
-        4. The viewFeedConfig() message will then handle actually
+        4. The viewFeedConfig() method will then handle actually
            updating everything.
         """
         self.parameters = parameters
