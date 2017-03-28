@@ -41,7 +41,7 @@ def copyParameters(original_parameters, new_parameters):
     """
 
     # Create.
-    params = copy.deepcopy(original_parameters)
+    params = original_parameters.copy()
     copyParametersReplace("", params, new_parameters)
 
     # Check and add any new parameters.
@@ -120,8 +120,12 @@ def copyParametersReplace(root, original, new):
                 copyParametersReplace(attr, prop, new)
 
         # Otherwise check for the corresponding node in new.
-        elif (len(root) > 0) and new.has(root + "." + attr):
-            original.set(attr, new.get(root + "." + attr))
+        else:
+            attr_fullname = attr
+            if (len(root) > 0):
+                attr_fullname = root + "." + attr
+            if new.has(attr_fullname):
+                original.set(attr, new.get(attr_fullname))
 
 
 def difference(params1, params2):
@@ -174,7 +178,7 @@ def halParameters(parameters_file):
     """
 
     # Load parameters.
-    xml_object = parameters(parameters_file, True)
+    xml_object = parameters(parameters_file, recurse = True)
     
     # Sometimes the user might drag in a parameters file that was
     # saved when taking a movie. Since some of the values were

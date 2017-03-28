@@ -373,7 +373,8 @@ class ParametersBox(QtWidgets.QGroupBox):
         """
         Load new parameters from a file.
         """
-        [p, unrecognized] = params.copyParameters(self.default_parameters, params.halParameters(filename))
+        new_p = params.halParameters(filename)
+        [p, unrecognized] = params.copyParameters(self.default_parameters, new_p)
         if (len(unrecognized) > 0):
             msg = "The following parameters were not recognized: "
             msg += ", ".join(unrecognized) + ". Perhaps they are not in the correct sub-section?"
