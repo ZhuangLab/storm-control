@@ -418,7 +418,8 @@ class Film(halModule.HalModule):
                 self.startCameras()
 
         elif (message.getType() == "stop film"):
-            self.addParametersResponse(message)
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.view.getParameters()}))
 
     def processL2Message(self, message):            
         if (self.film_state == "run"):
