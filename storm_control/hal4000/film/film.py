@@ -304,15 +304,6 @@ class Film(halModule.HalModule):
         halMessage.addMessage("stop camera")
         halMessage.addMessage("stop film")
 
-    def addParametersResponse(self, message):
-        message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                          data = {"parameters" : self.view.getParameters()}))
-
-    def broadcastParameters(self):
-        self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "current parameters",
-                                                   data = {"parameters" : self.view.getParameters()}))
-
     def cleanUp(self, qt_settings):
         self.logfile_fp.close()
 
@@ -368,8 +359,10 @@ class Film(halModule.HalModule):
                                                        m_type = "add to ui",
                                                        data = self.configure_dict))
                 
-            # Broadcast default parameters.
-            self.broadcastParameters()
+            # Broadcast initial parameters.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "initial parameters",
+                                                       data = {"parameters" : self.view.getParameters()}))
 
         elif (message.m_type == "feed list"):
             self.feed_list = message.getData()["feeds"]
@@ -390,15 +383,15 @@ class Film(halModule.HalModule):
             self.view.setDirectory(message.getData()["directory"])
 
         elif (message.m_type == "new parameters"):
-
-            # Add current parameters to the response.
-            self.addParametersResponse(message)
+            old_parameters = self.view.getParameters().copy()
 
             # Update parameters.
             self.view.newParameters(message.getData()["parameters"].get(self.module_name))
 
-            # Broadcast new parameters.
-            self.broadcastParameters()
+            # Respond
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"old parameters" : old_parameters,
+                                                                      "new parameters" : self.view.getParameters()}))
             
         #
         # We need to keep track of the current value so that

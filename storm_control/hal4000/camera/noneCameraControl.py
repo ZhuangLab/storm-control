@@ -91,7 +91,7 @@ class NoneCameraControl(cameraControl.CameraControl):
             if running:
                 self.startCamera()
 
-        self.configured.emit()
+        return self.parameters
         
     def run(self):
         self.running = True

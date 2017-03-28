@@ -167,7 +167,22 @@ class Display(halModule.HalModule):
         # should be initialized by 'configure3'.
         #
         elif (message.getType() == "configure3"):
-            self.broadcastParameters()
+            for view in self.views:
+                if False:
+                    print("")
+                    print("bp", view.getDisplayName())
+                    print(view.getParameters().toString(all_params = True))
+                    print("")
+                    
+                #
+                # We use a temporary module when we send the parameters so that the
+                # settings module organizes them by the display name instead of
+                # putting them all in a single section called "display".
+                #
+                dummy_hal_module = halModule.HalModule(module_name = view.getDisplayName())
+                self.newMessage.emit(halMessage.HalMessage(source = dummy_hal_module,
+                                                           m_type = "initial parameters",
+                                                           data = {"parameters" : view.getParameters()}))
 
         elif (message.getType() == "current camera"):
             self.viewFeedConfig(message)
@@ -179,9 +194,11 @@ class Display(halModule.HalModule):
         elif (message.getType() == "new parameters"):
             p = message.getData()["parameters"]
             for view in self.views:
-                self.addParametersResponse(message, view)
+                old_parameters = view.getParameters().copy()
                 view.newParameters(p.get(view.getDisplayName()))
-            self.broadcastParameters()
+                message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
+                                                                  data = {"old parameters" : old_parameters,
+                                                                          "new parameters" : viw.getParameters()}))
 
         elif (message.getType() == "start"):
             if self.dialogs[0] is not None:
@@ -194,7 +211,8 @@ class Display(halModule.HalModule):
         elif (message.getType() == "stop film"):
             for view in self.views:
                 view.stopFilm()
-                self.addParametersResponse(message, view)
+                message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
+                                                                  data = {"parameters" : view.getParameters()}))
 
     def processL2Message(self, message):
         for view in self.views:

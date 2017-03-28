@@ -63,10 +63,6 @@ class Mosaic(halModule.HalModule):
         message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                           data = {"parameters" : self.parameters}))
 
-    def broadcastParameters(self):
-        self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "current parameters",
-                                                   data = {"parameters" : self.parameters}))
 
     def processL1Message(self, message):
 
@@ -80,13 +76,13 @@ class Mosaic(halModule.HalModule):
                                                        m_type = "add to ui",
                                                        data = self.configure_dict))
 
-            # Broadcast default parameters.
-            self.broadcastParameters()
+            # Broadcast initial parameters.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "initial parameters",
+                                                       data = {"parameters" : self.parameters}))
 
         elif (message.getType() == "new parameters"):
-
-            # Add current parameters to the response.
-            self.addParametersResponse(message)
+            old_parameters = self.parameters.copy()
 
             # Update parameters.
             p = message.getData()["parameters"].get(self.module_name)
@@ -100,11 +96,14 @@ class Mosaic(halModule.HalModule):
                                                            m_type = "pixel size",
                                                            data = {"pixel_size" : pixel_size}))
 
-            # Broadcast new parameters.
-            self.broadcastParameters()
-                    
+            # Respond
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"old parameters" : old_parameters,
+                                                                      "new parameters" : self.parameters}))
+
         elif (message.getType() == "stop film"):
-            self.addParametersResponse(message)
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.parameters}))
 
 
 #

@@ -25,13 +25,14 @@ valid_messages = {
     'configure1' : True,
     'configure2' : True,
     'configure3' : True,
-    'current parameters' : True,
+    'initial parameters' : True,
     'module' : True,
     'new directory' : True,
     'new parameters file' : True,
     'new shutters file' : True,
     'start' : True,
-    'sync' : True
+    'sync' : True,
+    'test' : True
     }
 
 def addMessage(name, check_exists = True):
@@ -113,7 +114,7 @@ class HalMessage(HalMessageBase):
                  3. Joystick / mouse drag messages
 
         finalizer - A function with no arguments to call when the message has been 
-                    processed by all of the modules.
+                    completely processed by all of the modules.
         """
         super().__init__(**kwds)
 

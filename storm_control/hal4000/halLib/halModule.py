@@ -47,7 +47,10 @@ class HalWorkerSignaler(QtCore.QObject):
 
 class HalWorker(QtCore.QRunnable):
     """
-    For running long non-GUI tasks in a separate thread.
+    For running long non-GUI tasks in a separate thread. 
+
+    Note that the message will remain in HAL's sent messages queue
+    until this (and all other processing) are complete.
     """
     def __init__(self, message = None, task = None, **kwds):
         super().__init__(**kwds)

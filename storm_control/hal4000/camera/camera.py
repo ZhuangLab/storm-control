@@ -50,7 +50,6 @@ class Camera(halModule.HalModule):
                                       config = camera_params.get("parameters"))
         self.camera_control.addToHWConfig("master", camera_params.get("master"))
 
-        self.camera_control.configured.connect(self.handleConfigured)
         self.camera_control.finished.connect(self.handleFinished)
         self.camera_control.newData.connect(self.handleNewData)
 
@@ -82,9 +81,6 @@ class Camera(halModule.HalModule):
     def cleanUp(self, qt_settings):
         self.camera_control.cleanUp()
         super().cleanUp(qt_settings)
-
-    def handleConfigured(self):
-        self.broadcastParameters()
 
     # Finished is the signal the thread emits when the run() method stops.
     def handleFinished(self):
@@ -118,7 +114,9 @@ class Camera(halModule.HalModule):
         if (message.getType() == "configure1"):
 
             # Broadcast initial parameters and configuration.
-            self.broadcastParameters()
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "initial parameters",
+                                                       data = self.camera_control.getCameraConfig()))
 
         # This message comes from display.cameraDisplay to get information about a camera / feed.
         elif (message.getType() == "get feed config"):
@@ -193,7 +191,8 @@ class Camera(halModule.HalModule):
         # This message comes from film.film, it goes to all camera at once.
         elif (message.getType() == "stop film"):
             self.camera_control.stopFilm()
-            self.addParametersResponse(message)
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.camera_control.getParameters()}))
 
     def startCamera(self):
         
@@ -207,6 +206,16 @@ class Camera(halModule.HalModule):
         # Start the camera.
         self.camera_control.startCamera()
 
+    def updateParameters(self, message):
+        old_p = self.camera_control.getParameters().copy()
+
+        p = message.getData()["parameters"].get(self.module_name)
+        new_p = self.camera_control.newParameters(p)
+
+        message.addResponse(halMessage.HalMessage(source = self.module_name,
+                                                  data = {"old parameters", old_p,
+                                                          "new parameters", new_p}))
+        
 
 #
 # The MIT License

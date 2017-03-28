@@ -20,7 +20,6 @@ class CameraException(halExceptions.HardwareException):
 
 
 class CameraControl(QtCore.QThread):
-    configured = QtCore.pyqtSignal()
     newData = QtCore.pyqtSignal(object)
     stopped = QtCore.pyqtSignal()
 
@@ -184,8 +183,8 @@ class CameraControl(QtCore.QThread):
 
     def newParameters(self, parameters):
         """
-        Notes: (1) The sub-class must emit 'configured' at the
-                   end of this method()!
+        Notes: (1) The sub-class must return the current parameters
+                   on when finished.
 
                (2) The parameters that the camera receives are already
                    a copy so there is no need to make another copy.
@@ -208,6 +207,8 @@ class CameraControl(QtCore.QThread):
 
         self.parameters.set("filename_ext", parameters.get("filename_ext"))
         self.parameters.set("is_saved", parameters.get("is_saved"))
+
+        return self.parameters
 
     def setEMCCDGain(self, gain):
         pass
