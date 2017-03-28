@@ -183,13 +183,10 @@ class CameraControl(QtCore.QThread):
 
     def newParameters(self, parameters):
         """
-        Notes: (1) The sub-class must return the current parameters
-                   on when finished.
-
-               (2) The parameters that the camera receives are already
+        Notes: (1) The parameters that the camera receives are already
                    a copy so there is no need to make another copy.
 
-               (3) It is up to the sub-class whether or not the camera
+               (2) It is up to the sub-class whether or not the camera
                    needs to be stopped to make the parameter changes. If
                    the camera needs to be stopped, then it must also be
                    re-started by the sub-class. And care should be taken
@@ -207,8 +204,6 @@ class CameraControl(QtCore.QThread):
 
         self.parameters.set("filename_ext", parameters.get("filename_ext"))
         self.parameters.set("is_saved", parameters.get("is_saved"))
-
-        return self.parameters
 
     def setEMCCDGain(self, gain):
         pass

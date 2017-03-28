@@ -58,6 +58,11 @@ class ParametersListViewDelegate(QtWidgets.QStyledItemDelegate):
 
     
 class ParametersMVC(QtWidgets.QListView):
+    """
+    This class handles the actual display of the various parameter choices in a
+    QListView. It also keeps track of the current selected item and the 
+    previously selected item.
+    """
     editParameters = QtCore.pyqtSignal(object)
     newParameters = QtCore.pyqtSignal(object)
     saveParameters = QtCore.pyqtSignal(object)
@@ -66,10 +71,9 @@ class ParametersMVC(QtWidgets.QListView):
         kwds["parent"] = parent
         super().__init__(**kwds)
 
-        self.current_item = None
         self.model = ParametersStandardItemModel(self)
-        self.previous_item = None
         self.rc_item = None
+        self.selected_items = [] # Keeps track of the last N selected items.
         self.setModel(self.model)
 
         # This enables the user to re-order the items by dragging them.
@@ -97,19 +101,41 @@ class ParametersMVC(QtWidgets.QListView):
                 self.addParameters(name, "foo")
 
     def addParameters(self, name, parameters):
-        qitem = QtGui.QStandardItem(name)
-        qitem.setData(ParametersItemData(parameters = parameters))
-        self.model.insertRow(0, qitem)
+        q_item = QtGui.QStandardItem(name)
+        q_item.setData(ParametersItemData(parameters = parameters))
+        self.model.insertRow(0, q_item)
 
-        # The first parameter in is the default current parameters.
+        # The first parameter in is the default parameters
+        # and are selected by default.
         if (self.model.rowCount() == 1):
-            self.current_item = qitem
-            getItemData(qitem).checked = True
+            self.selected_items.append(q_item)
+            getItemData(q_item).checked = True
+
+    def getCurrentItem(self):
+        """
+        Return the currently selected item.
+        """
+        return self.selected_items[-1]
 
     def getCurrentParameters(self):
-        return getItemData(self.current_item).parameters
-    
-    def getParametersItem(self, value):
+        """
+        Return the currently selected items parameters.
+        """
+        return self.getItemParameters(self.getCurrentItem())
+
+    def getItemParameters(self, q_item):
+        return getItemData(q_item).parameters
+        
+    def getPreviousItem(self):
+        if (len(self.selected_items) > 1):
+            return self.selected_items[-2]
+
+    def getPreviousParameters(self):
+        q_item = self.getPreviousItem()
+        if q_item is not None:
+            return self.getItemParameters(q_item)
+
+    def getQItemByValue(self, value):
         """
         This returns a QStandardItem including it's data from the model.
 
@@ -128,21 +154,17 @@ class ParametersMVC(QtWidgets.QListView):
                 return items[0]
         else:
             return self.model.item(value)
-
-    def getPreviousParameters(self):
-        if self.previous_item is not None:
-            return getItemData(self.previous_item).parameters    
-
+        
     def getSelectedItem(self, selection):
         return self.model.itemFromIndex(selection.indexes()[0])
 
     def handleDelete(self, boolean):
+        self.selected_items.remove(self.rc_item)
         self.model.removeRows(self.model.indexFromItem(self.rc_item).row(), 1)
 
     def handleDuplicate(self, boolean):
         dup_item = QtGui.QStandardItem(self.rc_item.text())
         dup_item.setData(ParametersItemData(getItemData(self.rc_item).parameters.copy()))
-        #dup_qitem.setData(ParametersItemData(getItemData(self.rc_item).parameters))
         row = self.model.indexFromItem(self.rc_item).row()
         self.model.insertRow(row, dup_item)
 
@@ -161,12 +183,13 @@ class ParametersMVC(QtWidgets.QListView):
         need to keep track of what was previously selected ourselves.
         """
         new_item = self.getSelectedItem(new_selection)
-        if (self.current_item != new_item):
-            getItemData(self.current_item).checked = False
+        if (new_item != self.getCurrentItem()):
+            getItemData(self.getCurrentItem()).checked = False
             getItemData(new_item).checked = True
-            self.previous_item = self.current_item
-            self.current_item = new_item
-            self.newParameters.emit(getItemData(new_item).parameters)
+            self.selected_items.append(new_item)
+            if (len(self.selected_items) > 3):
+                self.selected_items = self.selected_items[1:]
+            self.newParameters.emit(self.getItemParameters(self.getCurrentItem()))
 
     def mousePressEvent(self, event):
         if (event.button() == QtCore.Qt.RightButton):
@@ -175,7 +198,7 @@ class ParametersMVC(QtWidgets.QListView):
             # Check that the user actually clicked on an item.
             if (rc_index.row() > -1):
                 self.rc_item = self.model.itemFromIndex(rc_index)
-                if (self.rc_item == self.current_item):
+                if (self.rc_item == self.getCurrentItem()):
                     popup_menu = QtWidgets.QMenu()
                     popup_menu.addAction(self.duplicateAction)
                     popup_menu.addAction(self.editAction)
@@ -192,19 +215,35 @@ class ParametersMVC(QtWidgets.QListView):
         else:
             super().mousePressEvent(event)
 
-    def setCurrentParameters(self, item, always_emit_new_parameters = False):
-        self.setCurrentIndex(self.model.indexFromItem(item))
+    def revertToPreviousItem(self):
+        """
+        Set the previously selected item as the current item.
+        """
+        # Get the previously selected item.
+        q_item = self.getPreviousItem()
 
-        # If we are modifying the current and always_emit_new_parameter is
-        # True then we have to emit the newParameters signal here because
-        # handleSelectionChange will not do this.
-        if (item == self.current_item) and always_emit_new_parameters:
-            self.newParameters.emit(getItemData(item).parameters)
+        # Remove the current and the previously selected items
+        # from the list of selected items.
+        self.selected_items = self.selected_items[:-2]
 
-    def setItemParameters(self, item, parameters):
-        getItemData(item).parameters = parameters
+        # Select the previous item. This should also emit a 'newParameters' signal.
+        self.setCurrentIndex(self.model.indexFromItem(q_item))        
+        
+    def setCurrentItem(self, q_item, always_emit_new_parameters = False):
 
+        # Check if the q_item is the current item.
+        is_current = False
+        if (q_item == self.getCurrentItem()):
+            is_current = True
+            
+        self.setCurrentIndex(self.model.indexFromItem(q_item))
 
+        # If it is then we might need to emit newParameters.
+        if is_current and always_emit_new_parameters:
+            self.newParameters.emit(self.getItemParameters(q_item))
+
+    def setItemParameters(self, q_item, parameters):
+        getItemData(q_item).parameters = parameters
 
 
 class ParametersStandardItemModel(QtGui.QStandardItemModel):

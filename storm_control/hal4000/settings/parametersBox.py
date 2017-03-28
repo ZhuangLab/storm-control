@@ -20,7 +20,6 @@ import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 import storm_control.hal4000.halLib.parameterEditors as pEditors
 import storm_control.hal4000.qtdesigner.params_editor_ui as paramsEditorUi
 import storm_control.hal4000.qtdesigner.settings_ui as settingsUi
-import storm_control.hal4000.settings.parametersListView as parametersListView
 
 
 def getFileName(path):
@@ -294,14 +293,14 @@ class ParametersTable(QtWidgets.QWidget):
 #
 class ParametersBox(QtWidgets.QGroupBox):
     """
-    This class handles displaying and interacting with
-    the various parameter files that the user has loaded.
+    
     """
     newParameters = QtCore.pyqtSignal(object, bool)
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
         self.default_parameters = None
+        self.enabled = True
 
         self.ui = settingsUi.Ui_GroupBox()
         self.ui.setupUi(self)
@@ -322,20 +321,38 @@ class ParametersBox(QtWidgets.QGroupBox):
         self.ui.settingsListView.addParameters(name, parameters)
 
     def enableUI(self, state):
+        self.enabled = state
         self.ui.settingsListView.setEnabled(state)
-    
+
+    def getCurrentParameters(self):
+        """
+        Return the current parameters.
+        """
+        return self.ui.settingsListView.getCurrentParameters()
+        
+    def getEnabled(self):
+        return self.enabled
+
     def getParameters(self, value):
         """
-        Return the parameters that correspond to name, which could be
-        an integer (the row number) or the parameters name.
+        Return a copy of parameters that correspond to name, which could 
+        be an integer (the row number) or the parameters name.
         """
-        return self.ui.settingsListView.getParametersItem(value)
+        q_item = self.ui.settingsListView.getQItemByValue(value)
+        if q_item is not None:
+            return self.ui.settingsListView.getItemParameters(q_item).copy()
 
     def handleEditParameters(self, parameters):
-        pass
+
+        # Disable the ListView while we are editting the parameters.
+        self.enableUI(False)
+
+        #.. edit something ..
+
+        # Re-enable the ListView.
+        self.enableUI(True)
 
     def handleNewParameters(self, parameters):
-        parameters.set("initialized", True)
         self.newParameters.emit(parameters, False)
 
     def handleSaveParameters(self, parameters):
@@ -364,40 +381,50 @@ class ParametersBox(QtWidgets.QGroupBox):
 
         # Mark as not having been used.
         p.set("initialized", False)
-        
-        if is_default:
-            self.default_parameters = p
 
+        # In the current state, this will only work if the 'default' parameters
+        # are also the currently selected parameters. This should not be a problem
+        # for now as is_default will only be True at startup.
+        if is_default:
+            
             # Get the parameters labeled 'default'. They should exist because
             # we only expect to have to handle this at initialization.
-            q_item = self.ui.settingsListView.getParametersItem("default")
+            #
+            # Also, the parameters referenced by self.default_parameters are
+            # those stored in the q_item labeled 'default'.
+            q_item = self.ui.settingsListView.getQItemByValue("default")
 
-            # Replace them with these parameters.
-            self.ui.settingsListView.setItemParameters(q_item, self.default_parameters)
+            # Replace them with these parameters. This also changes
+            # self.default_parameters in a very opaque way.
+            self.ui.settingsListView.setItemParameters(q_item, p)
 
-            # Trigger a 'new parameters' message.
-            self.ui.settingsListView.setCurrentParameters(q_item,
-                                                          always_emit_new_parameters = True)
+            # Emit a 'new parameters' message.
+            self.newParameters.emit(p, True)
             
         # Otherwise, just add the parameters to the ListView.
         else:
             self.addParameters(p)
-        
+
+    def revertSelection(self):
+        """
+        The currently selected parameters are bad, go back to the previous ones.
+        """
+        self.ui.settingsListView.revertToPreviousItem()
+
     def setParameters(self, value):
         """
-        Set parameters that correspond to name, which could be
-        an integer (the row number), to be the current parameters.
+        Set the current parameters to be those that correspond to name, which 
+        can be an integer (the row number), or a string (the name of the parameters).
         """
         q_item = self.ui.settingsListView.getParametersItem(value)
-        self.ui.settingsListView.setCurrentParameters(q_item)
+        self.ui.settingsListView.setCurrentItem(q_item)
 
     def updateCurrentParameters(self, section, parameters):
         """
-        After a 'new parameters' message the other modules will respond 
-        with 'current parameters' message. Exchange whatever we have for 
-        each modules with its updated parameters.
+        This updates the currently selected parameters with values
+        received either in the 'initial parameters' message, or as
+        a response to the 'new parameters' message.
         """
-        #print("> ucp", section)
         curp = self.ui.settingsListView.getCurrentParameters()
         curp.addSubSection(section,
                            svalue = parameters,

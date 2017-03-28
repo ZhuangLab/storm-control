@@ -23,7 +23,6 @@ import importlib
 
 from PyQt5 import QtCore
 
-
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
@@ -201,15 +200,13 @@ class Camera(halModule.HalModule):
         self.camera_control.startCamera()
 
     def updateParameters(self, message):
-        old_p = self.camera_control.getParameters().copy()
-
+        message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                          data = {"old parameters" : self.camera_control.getParameters().copy()}))
         p = message.getData()["parameters"].get(self.module_name)
-        new_p = self.camera_control.newParameters(p)
+        self.camera_control.newParameters(p)
+        message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                          data = {"new parameters" : self.camera_control.getParameters()}))
 
-        message.addResponse(halMessage.HalMessage(source = self.module_name,
-                                                  data = {"old parameters", old_p,
-                                                          "new parameters", new_p}))
-        
 
 #
 # The MIT License

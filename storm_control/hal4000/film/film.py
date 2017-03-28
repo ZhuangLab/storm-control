@@ -383,15 +383,14 @@ class Film(halModule.HalModule):
             self.view.setDirectory(message.getData()["directory"])
 
         elif (message.m_type == "new parameters"):
-            old_parameters = self.view.getParameters().copy()
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"old parameters" : self.view.getParameters().copy()}))
 
             # Update parameters.
             self.view.newParameters(message.getData()["parameters"].get(self.module_name))
 
-            # Respond
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"old parameters" : old_parameters,
-                                                                      "new parameters" : self.view.getParameters()}))
+                                                              data = {"new parameters" : self.view.getParameters()}))
             
         #
         # We need to keep track of the current value so that

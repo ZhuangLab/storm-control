@@ -59,11 +59,6 @@ class Mosaic(halModule.HalModule):
         # The current pixel size.
         halMessage.addMessage("pixel size")
 
-    def addParametersResponse(self, message):
-        message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                          data = {"parameters" : self.parameters}))
-
-
     def processL1Message(self, message):
 
         if (message.getType() == "configure1"):
@@ -82,7 +77,8 @@ class Mosaic(halModule.HalModule):
                                                        data = {"parameters" : self.parameters}))
 
         elif (message.getType() == "new parameters"):
-            old_parameters = self.parameters.copy()
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"old parameters" : self.parameters.copy()}))
 
             # Update parameters.
             p = message.getData()["parameters"].get(self.module_name)
@@ -96,10 +92,8 @@ class Mosaic(halModule.HalModule):
                                                            m_type = "pixel size",
                                                            data = {"pixel_size" : pixel_size}))
 
-            # Respond
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"old parameters" : old_parameters,
-                                                                      "new parameters" : self.parameters}))
+                                                              data = {"new parameters" : self.parameters}))
 
         elif (message.getType() == "stop film"):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,

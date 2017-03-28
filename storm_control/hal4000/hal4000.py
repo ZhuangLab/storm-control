@@ -489,7 +489,7 @@ class HalCore(QtCore.QObject):
             # wait ~50 milliseconds.
             #
             if cur_message.sync and (len(self.sent_messages) > 0):
-                print("waiting on", cur_message.m_type)
+                print("> waiting on", cur_message.m_type)
                 self.queued_messages.appendleft(cur_message)
                 interval = 50
             

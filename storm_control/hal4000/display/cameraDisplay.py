@@ -92,33 +92,6 @@ class Display(halModule.HalModule):
         # This message only comes from view[0], the default display.
         halMessage.addMessage("set current camera")
 
-    def addParametersResponse(self, message, view):        
-        if False:
-            print("")
-            print("app", view.getDisplayName())
-            print(view.getParameters().toString(all_params = True))
-            print("")
-        message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
-                                                          data = {"parameters" : view.getParameters()}))
-
-    def broadcastParameters(self):
-        for view in self.views:
-            if False:
-                print("")
-                print("bp", view.getDisplayName())
-                print(view.getParameters().toString(all_params = True))
-                print("")
-                
-            #
-            # We use a temporary module when we send the parameters so that the
-            # settings module organizes them by the display name instead of
-            # putting them all in a single section called "display".
-            #
-            dummy_hal_module = halModule.HalModule(module_name = view.getDisplayName())
-            self.newMessage.emit(halMessage.HalMessage(source = dummy_hal_module,
-                                                       m_type = "current parameters",
-                                                       data = {"parameters" : view.getParameters()}))
-
     def cleanUp(self, qt_settings):
         for dialog in self.dialogs:
             if dialog is not None:
@@ -176,8 +149,8 @@ class Display(halModule.HalModule):
                     
                 #
                 # We use a temporary module when we send the parameters so that the
-                # settings module organizes them by the display name instead of
-                # putting them all in a single section called "display".
+                # settings.settings module organizes them by the display name instead
+                # of putting them all in a single section called "display".
                 #
                 dummy_hal_module = halModule.HalModule(module_name = view.getDisplayName())
                 self.newMessage.emit(halMessage.HalMessage(source = dummy_hal_module,
@@ -194,11 +167,11 @@ class Display(halModule.HalModule):
         elif (message.getType() == "new parameters"):
             p = message.getData()["parameters"]
             for view in self.views:
-                old_parameters = view.getParameters().copy()
+                message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
+                                                                  data = {"old parameters" : view.getParameters().copy()}))
                 view.newParameters(p.get(view.getDisplayName()))
                 message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
-                                                                  data = {"old parameters" : old_parameters,
-                                                                          "new parameters" : viw.getParameters()}))
+                                                                  data = {"new parameters" : view.getParameters()}))
 
         elif (message.getType() == "start"):
             if self.dialogs[0] is not None:
