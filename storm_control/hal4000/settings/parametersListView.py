@@ -222,10 +222,6 @@ class ParametersMVC(QtWidgets.QListView):
         # Get the previously selected item.
         q_item = self.getPreviousItem()
 
-        # Remove the current and the previously selected items
-        # from the list of selected items.
-        self.selected_items = self.selected_items[:-2]
-
         # Select the previous item. This should also emit a 'newParameters' signal.
         self.setCurrentIndex(self.model.indexFromItem(q_item))        
         
