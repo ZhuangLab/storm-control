@@ -515,7 +515,7 @@ class StormXMLObject(object):
             # in HAL before we decided that this was a bad / confusing name
             # and changed it to 'validate'.
             #
-            self._validate_ = bool(nodes.attrib.get("is_new", self._validate_))
+            self._validate_ = not bool(nodes.attrib.get("is_new", self._validate_))
             self._validate_ = bool(nodes.attrib.get("validate", self._validate_))
             
 
