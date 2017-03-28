@@ -124,13 +124,12 @@ class Settings(halModule.HalModule):
                         data = response.getData()
                         if "old parameters" in data:
                             self.view.updateCurrentParameters(response.source, data["old parameters"])
-
+                    self.handleNewParameters(self.view.getCurrentParameters(), True)
+                            
                 # Otherwise set the current selection back to previous selection.
+                # This will automatically send a 'new parameters' message.
                 else:
                     self.view.revertSelection()
-
-                # Send the 'good' values.
-                self.handleNewParameters(self.view.getCurrentParameters(), True)
                 
             else:
                 # If this is in response to a 'new parameters' message triggered by
