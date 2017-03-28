@@ -36,6 +36,8 @@ import storm_control.hal4000.halLib.halModule as halModule
 import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
 
 
+app = None
+
 #
 # Main window controller.
 #
@@ -82,11 +84,14 @@ class HalController(halModule.HalModule):
                 self.view.addUiWidget(parent_widget,
                                       message.data["ui_widget"],
                                       message.data.get("ui_order"))
-                
+
+#        elif (message.getType() == "configure1"):
+#            self.view.show()
+            
         elif (message.getType() == "start"):
             self.view.addWidgets()
             self.view.show()
-
+            
 
 #
 # Main window View.
@@ -407,10 +412,14 @@ class HalCore(QtCore.QObject):
                                                          "is_default" : True}))        
 
         # start.
+        #
+        # It is safe to stop blocking Qt's last window closed behavior after
+        # this message as HAL's main window will be open.
+        #
         message_chain.append(halMessage.HalMessage(source = self,
                                                    m_type = "start",
-                                                   sync = True))
-
+                                                   sync = True,
+                                                   finalizer = lambda : app.setQuitOnLastWindowClosed(True)))
 
         self.handleMessage(halMessage.chainMessages(self.handleMessage,
                                                     message_chain))
@@ -580,6 +589,10 @@ if (__name__ == "__main__"):
     
     # Start..
     app = QtWidgets.QApplication(sys.argv)
+
+    # This keeps Qt from closing everything if a message box is displayed
+    # before HAL's main window is shown.
+    app.setQuitOnLastWindowClosed(False)
 
     # Splash Screen.
     pixmap = QtGui.QPixmap("splash.png")
