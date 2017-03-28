@@ -178,7 +178,6 @@ class FilmBox(QtWidgets.QGroupBox):
         self.liveModeChange.emit(state)
         
     def handleMode(self, index):
-        print("hm", index)
         if (index == 0):
             self.parameters.set("acq_mode", "run_till_abort")
             self.ui.lengthSpinBox.hide()
