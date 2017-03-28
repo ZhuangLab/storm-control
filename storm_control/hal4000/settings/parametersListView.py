@@ -71,7 +71,7 @@ class ParametersMVC(QtWidgets.QListView):
         super().__init__(**kwds)
 
         self.model = ParametersStandardItemModel(self)
-        self.rc_item = None
+        self.rc_item = None # This is the right item that was right clicked.
         self.selected_items = [None, None] # Keeps track of the last two selected items.
         self.setModel(self.model)
 
@@ -83,8 +83,6 @@ class ParametersMVC(QtWidgets.QListView):
         self.setItemDelegate(ParametersListViewDelegate(model = self.model))
 
         self.clicked.connect(self.handleClicked)
-        
-        #self.selectionModel().selectionChanged.connect(self.handleSelectionChange)
 
         # Actions for the pop-up menu.
         self.deleteAction = QtWidgets.QAction(self.tr("Delete"), self)
