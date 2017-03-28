@@ -57,7 +57,10 @@ class Settings(halModule.HalModule):
 
         # The current parameters have changed.
         #
-        # Data includes a copy of the desired new parameters.
+        # Data includes a copy of the desired new parameters. Other modules
+        # should at least check if the new parameters are okay. They may
+        # defer actually re-configuring until they receive the
+        # 'updated parameters' message.
         #
         # Other modules that respond should send two response:
         #  1. A response with a copy of their old parameter as "old parameters".
@@ -144,6 +147,9 @@ class Settings(halModule.HalModule):
                     data = response.getData()
                     if "new parameters" in data:
                         self.view.updateCurrentParameters(response.source, data["new parameters"].copy())
+
+                # Mark the new parameters as initialized.
+                self.view.markCurrentAsInitialized()
                     
                 # Let modules, such as feeds.feeds known that all of the modules
                 # have updated their parameters.

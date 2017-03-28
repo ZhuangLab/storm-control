@@ -369,6 +369,10 @@ class ParametersBox(QtWidgets.QGroupBox):
             self.parameters.saveToFile(filename)
             self.updateDisplay()
 
+    def markCurrentAsInitialized(self):
+        cur_p = self.getCurrentParameters()
+        cur_p.set("initialized", True)
+        
     def newParametersFile(self, filename, is_default):
         """
         Load new parameters from a file.
