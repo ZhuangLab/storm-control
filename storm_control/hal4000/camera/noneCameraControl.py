@@ -78,6 +78,7 @@ class NoneCameraControl(cameraControl.CameraControl):
 
             size_x = int((p.get("x_end") - p.get("x_start") + 1)/p.get("x_bin"))
             size_y = int((p.get("y_end") - p.get("y_start") + 1)/p.get("y_bin"))
+            
             p.set("x_pixels", size_x)
             p.set("y_pixels", size_y)
             self.fake_frame_size = [size_x, size_y]

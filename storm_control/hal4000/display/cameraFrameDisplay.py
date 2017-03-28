@@ -311,23 +311,34 @@ class BaseFrameDisplay(QtWidgets.QFrame):
             else:
                 self.frame = frame
 
-    def newParameters(self, parameters):
+    def newParametersEnd(self):
+        """
+        This is called when we get the 'updated parameters' message.
+        It indicates that the new parameters are good and we can go
+        ahead and update the display accordingly.
+        """
+        self.handleFeedChange(self.parameters.get("feed_name"))
+
+    def newParametersStart(self, parameters):
         """
         How this is supposed to work..
 
-        1. Replace current parameters with the new parameters
+        1. Replace current parameters with the new parameters when
+           we get the 'new parameters' message.
 
-        2. Execute a feed change to the new camera / feed,
+        2. Wait for the 'updated parameters' message.
+
+        3. Execute a feed change to the new camera / feed,
            this will send a 'get feed config' message.
 
-        3. The camera / feed will respond to the message with 
+        4. The camera / feed will respond to the message with 
            the correct frame size, etc. for display.
 
-        4. The viewFeedConfig() method will then handle actually
+        5. The viewFeedConfig() method will then handle actually
            updating everything.
         """
+        # FIXME: Check that there are no problems with the new parameters?
         self.parameters = parameters
-        self.handleFeedChange(self.parameters.get("feed_name"))
 
     def setFeeds(self, feed_list):
         """
