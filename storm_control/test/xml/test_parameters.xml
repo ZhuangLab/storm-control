@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <settings>
+  <test_param type="string">foo</test_param>
   <camera1 validate="True">
     <default_max type="int">300</default_max>
     <exposure_time type="float">0.01</exposure_time>

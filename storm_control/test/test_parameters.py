@@ -70,6 +70,7 @@ def test_parameters_4():
 
     # Create another set of parameters with only 1 item.
     p2 = params.StormXMLObject()
+    p2.add(params.ParameterString(name = "test_param", value = "bar"))
     p2s = p2.addSubSection("camera1")
     p2s.add(params.ParameterSetBoolean(name = "flip_horizontal", value = True))
     p2s.add(params.ParameterSetBoolean(name = "flip_vertical", value = False))
@@ -82,6 +83,9 @@ def test_parameters_4():
 
     # 'camera1.flip_horizontal' in p3 should be True.
     assert p3.get("camera1.flip_horizontal")
+
+    # 'test_param' should be 'bar'.
+    assert (p3.get("test_param") == "bar")
 
 
 def test_parameters_5():
