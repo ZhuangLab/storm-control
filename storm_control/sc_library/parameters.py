@@ -759,7 +759,9 @@ class StormXMLObject(object):
                 for i in range(len(pname)):
                     self.set(pname[i], pvalue[i])
             else:
-                raise ParameterException("Lengths do not match in parameters multi-set. " + str(len(pname)) + ", " + str(len(pvalue)))
+                msg = "Lengths do not match in parameters multi-set. "
+                msg += str(len(pname)) + ", " + str(len(pvalue))
+                raise ParameterException(msg)
             return
 
         # If the parameter does not already exist a ParameterSimple
@@ -779,13 +781,16 @@ class StormXMLObject(object):
         set() in that it will throw an error if the parameter
         does not already exist.
         """
+        
         # Check for list of pnames and values.
         if isinstance(pname, list):
             if (len(pname) == len(value)):
                 for i in range(len(pname)):
                     self.setv(pname[i], value[i])
             else:
-                raise ParameterException("Lengths do not match in parameters multi-set. " + str(len(pname)) + ", " + str(len(value)))
+                msg = "Lengths do not match in parameters multi-set. "
+                msg += str(len(pname)) + ", " + str(len(value))
+                raise ParameterException(msg)
             return
 
         self.getp(pname).setv(value)
