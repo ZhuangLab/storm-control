@@ -118,10 +118,10 @@ class Camera(halModule.HalModule):
                                                        data = self.camera_control.getCameraConfig()))
 
         # This message comes from display.cameraDisplay to get information about a camera / feed.
-        elif (message.getType() == "get feed config"):
-            if (message.getData()["camera"] == self.module_name):
-                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                                  data = self.camera_control.getCameraConfig()))
+#        elif (message.getType() == "get feed config"):
+#            if (message.getData()["feed_name"] == self.module_name):
+#                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+#                                                                  data = self.camera_control.getCameraConfig()))
 
         # This message comes from settings.settings.
         elif (message.getType() == "new parameters"):

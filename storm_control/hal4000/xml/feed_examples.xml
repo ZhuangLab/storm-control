@@ -32,6 +32,7 @@
       <save type="boolean">True</save>
     </average>
 
+    <!-- Note: Not supported anymore -->
     <!-- This feed saves a frame from the previous film, frame 0
 	 by default.
 
@@ -40,13 +41,14 @@
             one of these kinds of feeds per parameter set.
          2. In order for this to work if you change parameters
             between films the lastfilm feeds in both parameter
-            sets need to have the same dimensions. -->
+            sets need to have the same dimensions.
     <lastfilm>
       <source type="string">camera1</source>
       <feed_type type="string">lastfilm</feed_type>
-      <!-- <which_frame type="int">5</which_frame> -->
+      <which_frame type="int">5</which_frame>
     </lastfilm>
-	
+    -->
+    
     <!-- This feed shows the first and fifth frame of a 16 frame
          interval. It also takes only the top half of the image
          from the camera. -->
@@ -55,7 +57,7 @@
       <feed_type type="string">interval</feed_type>
       
       <cycle_length type="int">16</cycle_length>
-      <capture_frames type="int-array">0,5</capture_frames>
+      <capture_frames type="custom">0,5</capture_frames>
       <save type="boolean">True</save>
       <x_start type="int">1</x_start>
       <x_end type="int">512</x_end>

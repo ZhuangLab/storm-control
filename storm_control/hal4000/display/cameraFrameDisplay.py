@@ -13,6 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import storm_control.sc_library.parameters as params
 
 import storm_control.hal4000.colorTables.colorTables as colorTables
+import storm_control.hal4000.feeds.feeds as feeds
 import storm_control.hal4000.qtWidgets.qtColorGradient as qtColorGradient
 import storm_control.hal4000.qtWidgets.qtCameraWidget as qtCameraWidget
 import storm_control.hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
@@ -354,7 +355,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         if (len(feed_list) > 1):
             for feed in feed_list:
                 self.ui.feedComboBox.addItem(feed["feed_name"])
-            self.ui.feedComboBox.setCurrentIndex(self.ui.feedComboBox.findText(self.feed_name))
+            self.ui.feedComboBox.setCurrentIndex(self.ui.feedComboBox.findText(self.getFeedName()))
             self.ui.feedComboBox.show()
         else:
             self.ui.feedComboBox.hide()
@@ -424,14 +425,20 @@ class CameraFrameDisplay(BaseFrameDisplay):
         self.ui.recordButton.clicked.connect(self.handleRecord)
 
     def handleFeedChange(self, feed_name):
-        #
-        # FIXME: Need to send a different message if feed_name
-        #        is actually a feed. Or two messages..
-        #
         self.parameters.set("feed_name", str(feed_name))
+        [camera, feed] = feeds.getCameraFeedName(feed_name)
+
+        # This will get the updated feed information.
+        if feed is not None:
+            self.guiMessage.emit(["get feed config", 1,
+                                  {"display_name" : self.display_name,
+                                   "feed_name" : self.getFeedName()}])
+
+        # This will get the correct camera.
         self.guiMessage.emit(["set current camera", 1,
-                              {"camera" : self.getFeedName()}])
-        
+                              {"display_name" : self.display_name,
+                               "camera" : camera}])
+
     def handleCameraShutter(self, boolean):
         self.guiMessage.emit(["shutter clicked", 1,
                               {"display_name" : self.display_name,
