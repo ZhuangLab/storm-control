@@ -126,15 +126,9 @@ class Camera(halModule.HalModule):
 
         # This message comes from settings.settings.
         elif (message.getType() == "new parameters"):
-
-            # Add current parameters to the response.
-            self.addParametersResponse(message)
-
-            # Update with new parameters.
-            p = message.getData()["parameters"].get(self.module_name)
             halModule.runWorkerTask(self,
                                     message,
-                                    lambda : self.camera_control.newParameters(p))
+                                    lambda : self.updateParameters(message))
 
         #
         # This message comes from display.cameraDisplay when the feed is changed. The
