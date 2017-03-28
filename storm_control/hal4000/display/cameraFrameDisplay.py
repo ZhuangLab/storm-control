@@ -338,6 +338,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
            updating everything.
         """
         # FIXME: Check that there are no problems with the new parameters?
+        #        We need to error now rather than at 'updated parameters'.
         self.parameters = parameters
 
     def setFeeds(self, feed_list):
