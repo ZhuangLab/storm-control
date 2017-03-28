@@ -108,17 +108,15 @@ class Settings(halModule.HalModule):
 
             # Check if we got any errors.
             if message.hasErrors():
-
-                # Create a message box with the first error.
-                msg = "New Parameters:\n"
-                for m_error in message.getErrors():
-                    msg += "Got an error from '" + m_error.source + "' of type '" + m_error.message + "'!\n"
-                print(msg)
-                #msg += "Attempting to revert to the last known good parameters."
-                #halMessageBox.halMessageBoxInfo(msg)
                 
+                # Create a message box with the first error.
+                msg = "New Parameters:\n\n"
+                for m_error in message.getErrors():
+                    msg += "Got an error from '" + m_error.source + "' of type '" + m_error.message + "'!\n\n"
+                msg += "Attempting to revert to the last known good parameters."
+                halMessageBox.halMessageBoxInfo(msg)
+
                 # Attempt reversion.
-                print("settings - reverting parameters", message.getData()["is_edit"])
 
                 # Replace the 'bad' parameters with their previous 'good' values.
                 if message.getData()["is_edit"]:
