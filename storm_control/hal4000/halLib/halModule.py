@@ -90,7 +90,7 @@ class HalModule(QtCore.QObject):
     def __init__(self, module_name = "", **kwds):
         super().__init__(**kwds)
         self.module_name = module_name
-        
+
         self.queued_messages = deque()
 
         self.queued_messages_timer = QtCore.QTimer(self)

@@ -68,8 +68,10 @@ class HalController(halModule.HalModule):
 
     def handleGuiMessage(self, message):
         """
-        This just passes through the messages from the GUI.
+        This just passes through the messages from the GUI after 
+        correcting the source.
         """
+        message.source = self
         self.newMessage.emit(message)
 
     def processL1Message(self, message):
@@ -426,9 +428,7 @@ class HalCore(QtCore.QObject):
         for m_error in message.getErrors():
             msg = "from '" + m_error.source + "' of type '" + m_error.message + "'!"
 
-            # Print the error and crash on exceptions. If we try and display
-            # an information box we'll quickly crash anyway as the message
-            # loop will continue to run and we'll soon overflow the stack.
+            # Just print the error and crash on exceptions.
             if m_error.hasException():
                 m_error.printExceptionAndDie()
 
@@ -446,6 +446,7 @@ class HalCore(QtCore.QObject):
             msg = "Invalid message type '" + message.m_type
             msg += "' received from " + message.getSourceName()
             raise halExceptions.HalException(msg)
+
         self.queued_messages.append(message)
 
         # Start the message timer, if it is not already running.
@@ -463,6 +464,17 @@ class HalCore(QtCore.QObject):
         unhandled = []
         for sent_message in self.sent_messages:
             if sent_message.refCountIsZero():
+
+                #
+                # Good times.. If the source throws up a message box and the camera
+                # is running then we'll keep trying to finalize the same message
+                # over and over again until we have so many message boxes that the
+                # everything crashes. So check to see if the message is already
+                # being finalized before proceeding.
+                #
+                if sent_message.finalizing:
+                    continue
+                sent_message.finalizing = True
 
                 # Call message finalizer.
                 sent_message.finalize()

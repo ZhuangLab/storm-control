@@ -133,6 +133,7 @@ class HalMessage(HalMessageBase):
                 raise HalMessageException("function is not of type 'function'")
 
         self.data = data
+        self.finalizing = False
         self.finalizer = finalizer
         self.level = level
         self.m_errors = []
