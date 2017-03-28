@@ -443,8 +443,15 @@ class Feeds(halModule.HalModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
+
+        self.camera_info = {}
         self.feed_list = []
 
+        #
+        # This message is a list of dictionaries containing the information
+        # the 'key' information about each camera / feed such as it's size
+        # in x,y in pixels, whether and under what filename to save it, etc.
+        #
         halMessage.addMessage("feed list")
 
     def broadcastFeedInfo(self):
@@ -454,7 +461,7 @@ class Feeds(halModule.HalModule):
         film.film uses this message to figure out which cameras / feeds to save.
 
         display.cameraDisplay uses this message to populate the feed chooser
-           combobox.
+        combobox.
         """
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "feed list",
@@ -475,6 +482,17 @@ class Feeds(halModule.HalModule):
             data = message.getData()
             if ("camera" in data):
                 p = data["parameters"]
+
+                #
+                # These are the invariant properties of the camera. We could also
+                # get the from the camera by sending a 'get feed config' message,
+                # but it is easiest to just keep a record of all them at
+                # initialization.
+                #
+                self.camera_info[data["camera"]] = {"feed_name" : data["camera"],
+                                                    "is_camera" : True,
+                                                    "is_master" : data["master"]}
+                
                 self.feed_list.append({"bytes_per_frame" : p.get("bytes_per_frame"),
                                        "extension" : p.get("filename_ext"),
                                        "feed_name" : data["camera"],
@@ -484,7 +502,25 @@ class Feeds(halModule.HalModule):
                                        "x_pixels" : p.get("x_pixels"),
                                        "y_pixels" : p.get("y_pixels")})
 
-        elif (message.getType() == "new parameters"):
+        elif (message.getType() == "updated parameters"):
             self.feed_list = []
+            params = message.getData()["parameters"]
+
+            # Get camera information.
+            for attr in params.getAttrs():
+                if attr.startswith("camera"):
+                    p = params.get(attr)
+                    self.feed_list.append({"bytes_per_frame" : p.get("bytes_per_frame"),
+                                           "extension" : p.get("filename_ext"),
+                                           "feed_name" : self.camera_info[attr]["feed_name"],
+                                           "is_camera" : self.camera_info[attr]["is_camera"],
+                                           "is_master" : self.camera_info[attr]["is_master"],
+                                           "is_saved" : p.get("is_saved"),
+                                           "x_pixels" : p.get("x_pixels"),
+                                           "y_pixels" : p.get("y_pixels")})
+
+            # Get feed information.
+
+            self.broadcastFeedInfo()
 
 
