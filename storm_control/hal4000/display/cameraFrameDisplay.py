@@ -15,8 +15,11 @@ import storm_control.sc_library.parameters as params
 import storm_control.hal4000.colorTables.colorTables as colorTables
 import storm_control.hal4000.feeds.feeds as feeds
 import storm_control.hal4000.halLib.halMessage as halMessage
+
+import storm_control.hal4000.qtWidgets.qtCameraGraphicsScene as qtCameraGraphicsScene
+
 import storm_control.hal4000.qtWidgets.qtColorGradient as qtColorGradient
-import storm_control.hal4000.qtWidgets.qtCameraWidget as qtCameraWidget
+#import storm_control.hal4000.qtWidgets.qtCameraWidget as qtCameraWidget
 import storm_control.hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
 
 import storm_control.hal4000.qtdesigner.camera_display_ui as cameraDisplayUi
@@ -81,13 +84,19 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.ui = cameraDisplayUi.Ui_Frame()
         self.ui.setupUi(self)
 
+        # Camera frame display.
+        self.camera_scene = qtCameraGraphicsScene.QtCameraGraphicsScene(parent = self)
+        self.camera_widget = qtCameraGraphicsScene.QtCameraGraphicsItem()
+        self.camera_scene.addItem(self.camera_widget)
+        self.ui.cameraGraphicsView.setScene(self.camera_scene)
+        self.ui.cameraGraphicsView.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(0,0,0)))
+
         # Display range slider.
         self.ui.rangeSlider = qtRangeSlider.QVRangeSlider()
         layout = QtWidgets.QGridLayout(self.ui.rangeSliderWidget)
         layout.setContentsMargins(1,1,1,1)
         layout.addWidget(self.ui.rangeSlider)
         self.ui.rangeSliderWidget.setLayout(layout)
-        #self.ui.rangeSlider.setRange([0.0, self.max_intensity, 1.0])
         self.ui.rangeSlider.setEmitWhileMoving(True)
 
         # Color tables combo box.
@@ -104,11 +113,13 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.ui.syncLabel.hide()
         self.ui.syncSpinBox.hide()
 
-        self.camera_widget = qtCameraWidget.QCameraWidget(parent = self.ui.cameraScrollArea)
-        self.ui.cameraScrollArea.setWidget(self.camera_widget)
-        self.ui.cameraScrollArea.setStyleSheet("QScrollArea { background-color: black } ")
+#        self.camera_widget = qtCameraWidget.QCameraWidget(parent = self.ui.cameraScrollArea)
+#        self.ui.cameraScrollArea.setWidget(self.camera_widget)
+#        self.ui.cameraScrollArea.setStyleSheet("QScrollArea { background-color: black } ")
 
-        self.camera_widget.intensityInfo.connect(self.handleIntensityInfo)
+
+        # Connect signals.
+#        self.camera_widget.intensityInfo.connect(self.handleIntensityInfo)
 
         self.ui.autoScaleButton.clicked.connect(self.handleAutoScale)
         self.ui.colorComboBox.currentIndexChanged[str].connect(self.handleColorTableChange)
@@ -120,7 +131,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.ui.syncSpinBox.valueChanged.connect(self.handleSync)
         self.ui.targetAct.triggered.connect(self.handleTarget)
 
-        # Display timer
+        # Display timer, the display updates at approximately 10Hz.
         self.display_timer.setInterval(100)
         self.display_timer.timeout.connect(self.handleDisplayTimer)
         self.display_timer.start()
@@ -396,7 +407,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
     def updateRange(self):
         self.ui.scaleMax.setText(str(self.getParameter("display_max")))
         self.ui.scaleMin.setText(str(self.getParameter("display_min")))
-        self.camera_widget.newRange([self.getParameter("display_min"), self.getParameter("display_max")])
+        self.camera_widget.newRange(self.getParameter("display_min"), self.getParameter("display_max"))
 
 
 class CameraFrameDisplay(BaseFrameDisplay):
@@ -411,16 +422,16 @@ class CameraFrameDisplay(BaseFrameDisplay):
     def __init__(self, show_record = False, **kwds):
         super().__init__(**kwds)
 
-        self.camera_widget.setDragEnabled(True)
+#        self.camera_widget.setDragEnabled(True)
         
         if show_record:
             self.ui.recordButton.show()
                 
         # Signals
-        self.camera_widget.displayCaptured.connect(self.handleDisplayCaptured)
-        self.camera_widget.dragStart.connect(self.handleDragStart)
-        self.camera_widget.dragMove.connect(self.handleDragMove)
-        self.camera_widget.roiSelection.connect(self.handleROISelection)
+        #self.camera_widget.displayCaptured.connect(self.handleDisplayCaptured)
+        #self.camera_widget.dragStart.connect(self.handleDragStart)
+        #self.camera_widget.dragMove.connect(self.handleDragMove)
+        #self.camera_widget.roiSelection.connect(self.handleROISelection)
 
         self.ui.cameraShutterButton.clicked.connect(self.handleCameraShutter)
         self.ui.recordButton.clicked.connect(self.handleRecord)

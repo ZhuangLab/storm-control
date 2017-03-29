@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>645</width>
-    <height>545</height>
+    <height>555</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -43,6 +43,12 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
      <property name="maximumSize">
       <size>
        <width>16777215</width>
@@ -66,29 +72,13 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QCameraScrollArea" name="cameraScrollArea">
+       <widget class="QGraphicsView" name="cameraGraphicsView">
         <property name="minimumSize">
          <size>
-          <width>514</width>
-          <height>514</height>
+          <width>520</width>
+          <height>524</height>
          </size>
         </property>
-        <property name="autoFillBackground">
-         <bool>false</bool>
-        </property>
-        <property name="widgetResizable">
-         <bool>true</bool>
-        </property>
-        <widget class="QWidget" name="scrollAreaWidgetContents">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>569</width>
-           <height>512</height>
-          </rect>
-         </property>
-        </widget>
        </widget>
       </item>
       <item>
@@ -418,14 +408,6 @@
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>QCameraScrollArea</class>
-   <extends>QScrollArea</extends>
-   <header>storm_control.hal4000.qtWidgets.qtCameraScrollArea</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>
