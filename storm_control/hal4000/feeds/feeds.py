@@ -346,7 +346,6 @@ class Feeds(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
-        self.active = False
         self.camera_info = {}
         self.feed_controller = None
         self.feeds_info = {}
@@ -440,22 +439,24 @@ class Feeds(halModule.HalModule):
                 
             self.broadcastFeedInfo()
 
-        elif (message.getType() == "start camera"):
-            self.active = True
+#        elif (message.getType() == "start camera"):
+#            self.active = True
 
         elif (message.getType() == "start film"):
-            self.feed_controller.resetFeeds()
+            if self.feed_controller is not None:
+                self.feed_controller.resetFeeds()
 
-        elif (message.getType() == "start camera"):
-            self.active = False
+#        elif (message.getType() == "start camera"):
+#            self.active = False
             
         elif (message.getType() == "stop film"):
-            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"parameters" : self.feed_controller.getParameters()}))
-            self.feed_controller.resetFeeds()
-            
+            if self.feed_controller is not None:
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                  data = {"parameters" : self.feed_controller.getParameters()}))
+                self.feed_controller.resetFeeds()
+
     def processL2Message(self, message):
-        if self.feed_controller is not None and self.active:
+        if self.feed_controller is not None:
             frame = message.getData()["frame"]
             feed_frames = self.feed_controller.newFrame(frame)
             for ff in feed_frames:
