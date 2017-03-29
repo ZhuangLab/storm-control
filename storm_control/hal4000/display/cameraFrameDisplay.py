@@ -89,8 +89,10 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.camera_widget = qtCameraGraphicsScene.QtCameraGraphicsItem()
         self.camera_scene.addItem(self.camera_widget)
         self.ui.cameraGraphicsView.setScene(self.camera_scene)
-        self.ui.cameraGraphicsView.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(0,0,0)))
 
+        #self.ui.cameraGraphicsView.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(0,0,0)))
+        self.camera_scene.sceneRectChanged.connect(self.ui.cameraGraphicsView.handleRectChanged)
+        
         # Display range slider.
         self.ui.rangeSlider = qtRangeSlider.QVRangeSlider()
         layout = QtWidgets.QGridLayout(self.ui.rangeSliderWidget)
@@ -257,6 +259,12 @@ class BaseFrameDisplay(QtWidgets.QFrame):
     def handleDisplayTimer(self):
         if self.frame:
             self.camera_widget.updateImageWithFrame(self.frame)
+#            print("gv", self.ui.cameraGraphicsView.sceneRect())
+#            print("gs", self.camera_scene.sceneRect())
+#            print()
+
+            #q_rect = self.camera_widget.boundingRect()
+            #self.camara_scene.
 
     def handleFeedChange(self, feed_name):
         """

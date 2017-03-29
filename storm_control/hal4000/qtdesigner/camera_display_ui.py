@@ -31,7 +31,7 @@ class Ui_Frame(object):
         self.horizontalLayout_2.setContentsMargins(2, 0, 2, 0)
         self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
-        self.cameraGraphicsView = QtWidgets.QGraphicsView(self.displayWidget)
+        self.cameraGraphicsView = QtCameraGraphicsView(self.displayWidget)
         self.cameraGraphicsView.setMinimumSize(QtCore.QSize(520, 524))
         self.cameraGraphicsView.setObjectName("cameraGraphicsView")
         self.horizontalLayout_2.addWidget(self.cameraGraphicsView)
@@ -163,3 +163,4 @@ class Ui_Frame(object):
         self.syncLabel.setText(_translate("Frame", "Display:"))
         self.autoScaleButton.setText(_translate("Frame", "Autoscale"))
 
+from storm_control.hal4000.qtWidgets.qtCameraGraphicsView import QtCameraGraphicsView

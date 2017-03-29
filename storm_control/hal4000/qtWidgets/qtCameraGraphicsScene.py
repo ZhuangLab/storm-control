@@ -28,6 +28,7 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
         self.intensity_info = 0
         self.max_intensity = None
         self.q_image = None
+        self.size_changed = False
         self.transpose = False
         self.x_click = 0
         self.y_click = 0
@@ -35,7 +36,12 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
         self.y_pixels = 256
 
     def boundingRect(self):
-        return QtCore.QRectF(0, 0, self.x_pixels, self.y_pixels)
+        s_rect = QtCore.QRectF(0, 0, self.x_pixels, self.y_pixels)
+        if self.size_changed:
+            print("br")
+            self.scene().setSceneRect(s_rect)
+            self.size_changed = False
+        return s_rect
                              
     def newColorTable(self, colortable):
         self.colortable = colortable
@@ -105,19 +111,26 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
                                                                       self.display_range,
                                                                       max_intensity)
         
-        # Create QImage
+        # Create QImage.
         if self.transpose:
-            self.x_pixels = h
-            self.y_pixels = w
+            x_pixels = h
+            y_pixels = w
             self.q_image = QtGui.QImage(temp.data, h, w, QtGui.QImage.Format_Indexed8)
         else:
-            self.x_pixels = w
-            self.y_pixels = h
+            x_pixels = w
+            y_pixels = h
             self.q_image = QtGui.QImage(temp.data, w, h, QtGui.QImage.Format_Indexed8)
         self.q_image.ndarray = temp
-
+        
         # Set the images color table.
         self.setColorTable()
+
+        # Possibly notify the scene of a size change.
+        if (x_pixels != self.x_pixels) or (y_pixels != self.y_pixels):
+            self.x_pixels = x_pixels
+            self.y_pixels = y_pixels
+            self.size_changed = True
+            self.prepareGeometryChange()
 
         # Record the intensity where the user last clicked on the image.
         #

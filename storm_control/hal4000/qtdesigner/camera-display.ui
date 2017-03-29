@@ -72,7 +72,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QGraphicsView" name="cameraGraphicsView">
+       <widget class="QtCameraGraphicsView" name="cameraGraphicsView">
         <property name="minimumSize">
          <size>
           <width>520</width>
@@ -408,6 +408,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QtCameraGraphicsView</class>
+   <extends>QGraphicsView</extends>
+   <header>storm_control.hal4000.qtWidgets.qtCameraGraphicsView</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
