@@ -13,8 +13,6 @@ Hazen 03/17
 
 import numpy
 
-#from PyQt5 import QtCore, QtGui, QtWidgets
-
 import storm_control.sc_library.halExceptions as halExceptions
 
 import storm_control.hal4000.camera.frame as frame
@@ -346,6 +344,7 @@ class Feeds(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
+        self.active = False
         self.camera_info = {}
         self.feed_controller = None
         self.feeds_info = {}
@@ -357,7 +356,8 @@ class Feeds(halModule.HalModule):
         # e.g. dict["feed_name"]["display_max"] = ?
         #
         halMessage.addMessage("feeds information",
-                              validator = {"data" : {"feeds" : [True, dict]}})
+                              validator = {"data" : {"feeds" : [True, dict]},
+                                           "resp" : None})
 
         # Sent each time a feed generates a frame.
         # Note: This needs to match the definition in camera.camera.
@@ -381,16 +381,16 @@ class Feeds(halModule.HalModule):
 
     def processL1Message(self, message):
 
-        if (message.getType() == "configure2"):
+        if message.isType("configure2"):
             self.broadcastFeedInfo()
 
-        elif (message.getType() == "get feed information"):
+        elif message.isType("get feed information"):
             feed_name = message.getData()["feed_name"]
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"feed_name" : feed_name,
                                                                       "feed_info" : self.feeds_info[feed_name]}))
 
-        elif (message.getType() == "camera configuration"):
+        elif message.isType("camera configuration"):
             #
             # We get this message at startup from each of the cameras.
             #
@@ -407,12 +407,12 @@ class Feeds(halModule.HalModule):
                                                                    data["camera"],
                                                                    data["master"])
 
-        elif (message.getType() == "new parameters"):
+        elif message.isType("new parameters"):
             self.feed_controller = FeedController(parameters = message.getData()["parameters"])
             if not self.feed_controller.haveFeeds():
                 self.feed_controller = None
             
-        elif (message.getType() == "updated parameters"):
+        elif message.isType("updated parameters"):
             self.feeds_info = {}
             params = message.getData()["parameters"]
 
@@ -438,24 +438,24 @@ class Feeds(halModule.HalModule):
                 
             self.broadcastFeedInfo()
 
-#        elif (message.getType() == "start camera"):
-#            self.active = True
+        elif message.isType("start camera"):
+            self.active = True
 
-        elif (message.getType() == "start film"):
+        elif message.isType("start film"):
             if self.feed_controller is not None:
                 self.feed_controller.resetFeeds()
 
-#        elif (message.getType() == "start camera"):
-#            self.active = False
+        elif message.isType("stop camera"):
+            self.active = False
             
-        elif (message.getType() == "stop film"):
+        elif message.isType("stop film"):
             if self.feed_controller is not None:
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                   data = {"parameters" : self.feed_controller.getParameters()}))
                 self.feed_controller.resetFeeds()
 
     def processL2Message(self, message):
-        if self.feed_controller is not None:
+        if self.feed_controller is not None and self.active:
             frame = message.getData()["frame"]
             feed_frames = self.feed_controller.newFrame(frame)
             for ff in feed_frames:
