@@ -40,9 +40,9 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         # Change the scale, which we maybe don't want to do.
         self.rescale(self.min_scale)
 
-    def onResize(self, event):
-        print("or")
+    def resizeEvent(self, event):
         self.updateScaleRange()
+        super().resizeEvent(event)
         
     def rescale(self, scale):
         """
@@ -69,7 +69,7 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
             viewport_size = viewport_rect.height()
 
         # This sets how far we can zoom out (and also the starting size).
-        self.min_scale = 0.98 * float(viewport_size)/float(self.frame_size)
+        self.min_scale = float(viewport_size)/float(self.frame_size + 10)
 
         # This sets how far we can zoom in (~32 pixels).
         self.max_scale = float(viewport_size)/32.0
@@ -77,6 +77,14 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         # For those really small cameras.
         if (self.max_scale < self.min_scale):
             self.max_scale = 2.0 * self.min_scale
+
+        if (self.view_scale < self.min_scale):
+            self.view_scale = self.min_scale
+
+        if (self.view_scale > self.max_scale):
+            self.view_scale = self.max_scale
+
+        print(self.frame_size, viewport_size, self.min_scale, self.max_scale)
 
     def wheelEvent(self, event):
         """
