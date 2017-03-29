@@ -255,6 +255,9 @@ class HalMessage(HalMessageBase):
 
     def incRefCount(self):
         self.ref_count += 1
+        
+    def isType(self, m_type):
+        return (self.m_type == m_type)
 
     def logEvent(self, event_name):
         hdebug.logText(",".join([event_name, str(id(self)), self.source.module_name, self.m_type]))
