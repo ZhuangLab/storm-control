@@ -11,7 +11,7 @@ from PyQt5 import QtCore
 
 import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.hdebug as hdebug
-
+import storm_control.sc_library.parameters as params
 
 #
 # This dictionary contains all of the valid message types. Modules
@@ -22,25 +22,34 @@ import storm_control.sc_library.hdebug as hdebug
 #
 # The format of each entry is "field" : [Required, Expected type].
 #
+# Setting "data" and "resp" to {} checks that the we are not adding data or
+# response when we should not have.
+#
 valid_messages = {
     
     # HAL/core/general messages.
     'add to ui' : {"data" : {"ui_order" : [False, int],
                              "ui_parent" : [True, str],
-                             "ui_widget" : [True, QtCore.QObject]}},
-    'close event' : {},
-    'configure1' : {"data" : {"module_names" : [True, list]}},
-    'configure2' : {},
-    'configure3' : {},
-    'initial parameters' : {},
+                             "ui_widget" : [True, QtCore.QObject]},
+                   "resp" : {}},
+    'close event' : {"data" : {}, "resp" : {}},
+    'configure1' : {"data" : {"module_names" : [True, list]},
+                    "resp" : {}},
+    'configure2' : {"data" : {}, "resp" : {}},
+    'configure3' :  {"data" : {}, "resp" : {}},
+    'initial parameters' :  {"data" : {"parameters" : [True, params.StormXMLObject]},
+                             "resp" : {}},
 #    'module' : True,
-    'new directory' : {"data" : {"directory" : [True, str]}},
+    'new directory' : {"data" : {"directory" : [True, str]},
+                       "resp" : {}},
     'new parameters file' : {"data" : {"filename" : [True, str],
-                                       "is_default" : [False, bool]}},
-    'new shutters file' : {"data" : {"filename" : [True, str]}},
-    'start' : {},
-    'sync' : {},
-    'test' : {}
+                                       "is_default" : [False, bool]},
+                             "resp" : {}},
+    'new shutters file' : {"data" : {"filename" : [True, str]},
+                           "resp" : {}},
+    'start' :  {"data" : {}, "resp" : {}},
+    'sync' :  {"data" : {}, "resp" : {}},
+    'test' :  {"data" : {}, "resp" : {}},
     }
 
 def addMessage(name, validator = {}, check_exists = True):

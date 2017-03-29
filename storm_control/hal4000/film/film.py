@@ -300,19 +300,24 @@ class Film(halModule.HalModule):
 
         # In live mode the camera also runs between films.
         halMessage.addMessage("live mode",
-                              validator = {"data" : {"live mode" : [True, bool]}})
+                              validator = {"data" : {"live mode" : [True, bool]},
+                                           "resp" : {}})
+                              
 
         # Start a camera.
         halMessage.addMessage("start camera",
-                              validator = {"data" : {"camera" : [True, str]}})
+                              validator = {"data" : {"camera" : [True, str]},
+                                           "resp" : {}})
 
         # Start filming.
         halMessage.addMessage("start film",
-                              validator = {"data" : {"film settings" : [True, dict]}})
+                              validator = {"data" : {"film settings" : [True, dict]},
+                                           "resp" : {}})
 
         # Stop a camera.
         halMessage.addMessage("stop camera",
-                              validator = {"data" : {"camera" : [True, str]}})
+                              validator = {"data" : {"camera" : [True, str]},
+                                           "resp" : {}})
 
         # Stop filming.
         halMessage.addMessage("stop film",
