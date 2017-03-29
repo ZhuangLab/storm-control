@@ -498,7 +498,13 @@ class HalCore(QtCore.QObject):
                 # Call message finalizer.
                 sent_message.finalize()
 
-                # Notify the sender if errors occured while processing the message.
+                # Always die on exceptions in strict mode.
+                if self.strict and sent_message.hasErrors():
+                    for m_error in sent_message.getErrors():
+                        if m_error.hasException():
+                            m_error.printExceptionAndDie()
+
+                # Notify the sender if errors occured while processing the message.                            
                 if sent_message.hasErrors():
                     sent_message.getSource().handleErrors(sent_message)
 
