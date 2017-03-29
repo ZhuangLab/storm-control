@@ -200,7 +200,7 @@ class Display(halModule.HalModule):
 
         elif (message.getType() == "start film"):
             for view in self.views:
-                view.startFilm(message.getData()["film_settings"])
+                view.startFilm(message.getData()["film settings"])
 
         elif (message.getType() == "stop film"):
             for view in self.views:

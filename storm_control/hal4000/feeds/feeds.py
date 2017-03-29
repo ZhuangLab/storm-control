@@ -356,7 +356,8 @@ class Feeds(halModule.HalModule):
         #
         # e.g. dict["feed_name"]["display_max"] = ?
         #
-        halMessage.addMessage("feeds information")
+        halMessage.addMessage("feeds information",
+                              validator = {"data" : {"feeds" : [True, dict]}})
 
         # Sent each time a feed generates a frame.
         halMessage.addMessage("new frame", check_exists = False)

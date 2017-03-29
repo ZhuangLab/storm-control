@@ -299,19 +299,26 @@ class Film(halModule.HalModule):
                                "ui_widget" : self.view}
 
         # In live mode the camera also runs between films.
-        halMessage.addMessage("live mode")
+        halMessage.addMessage("live mode",
+                              validator = {"data" : {"live mode" : [True, bool]}})
 
         # Start a camera.
-        halMessage.addMessage("start camera")
+        halMessage.addMessage("start camera",
+                              validator = {"data" : {"camera" : [True, str]}})
 
         # Start filming.
-        halMessage.addMessage("start film")
+        halMessage.addMessage("start film",
+                              validator = {"data" : {"film settings" : [True, dict]}})
 
         # Stop a camera.
-        halMessage.addMessage("stop camera")
+        halMessage.addMessage("stop camera",
+                              validator = {"data" : {"camera" : [True, str]}})
 
         # Stop filming.
-        halMessage.addMessage("stop film")
+        halMessage.addMessage("stop film",
+                              validator = {"data" : {"film settings" : [True, dict]},
+                                           "resp" : {"parameters" : [False, params.StormXMLObject]}})
+                                           
 
     def cleanUp(self, qt_settings):
         self.logfile_fp.close()
@@ -331,7 +338,7 @@ class Film(halModule.HalModule):
         to the 'stop film' message. We save them in an xml file here.
         """
         if (message.getType() == "stop film"):
-            film_settings = message.getData()["film_settings"]
+            film_settings = message.getData()["film settings"]
             if film_settings["save_film"]:
                 to_save = params.StormXMLObject()
                 acq_p = to_save.addSubSection("acquisition")
@@ -508,7 +515,7 @@ class Film(halModule.HalModule):
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    sync = True,
                                                    m_type = "start film",
-                                                   data = {"film_settings" : self.film_settings}))
+                                                   data = {"film settings" : self.film_settings}))
         # Start cameras.
         self.startCameras()
         
@@ -555,7 +562,7 @@ class Film(halModule.HalModule):
         # Stop filming.
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "stop film",
-                                                   data = {"film_settings" : self.film_settings}))
+                                                   data = {"film settings" : self.film_settings}))
 
         # Restart cameras, if needed.
         if self.view.amInLiveMode():

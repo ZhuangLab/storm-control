@@ -458,25 +458,9 @@ class HalCore(QtCore.QObject):
                 msg += "' received from " + message.getSourceName()
                 raise halExceptions.HalException(msg)
 
-            validator = halMessage.valid_messages[message.m_type].get("sent")
+            validator = halMessage.valid_messages[message.m_type].get("data")
             if validator is not None:
-                data = message.getData()
-                if data is None:
-                    msg = "Data in message '" + message.m_type + "' from '" 
-                    msg += message.getSourceName()
-                    msg += "' should have data."
-                    raise halExceptions.HalException(msg)
-                for field in validator:
-                    if not field in data:
-                        msg = "Data in message '" + message.m_type + "' from '" 
-                        msg += message.getSourceName()
-                        msg += "' does not have required field '" + field + "'."
-                        raise halExceptions.HalException(msg)
-                    if not isinstance(data[field], validator[field]):
-                        msg = "Data in message '" + message.m_type + "' from '" 
-                        msg += message.getSourceName()
-                        msg += "' is not the expected type."
-                        raise halExceptions.HalException(msg)
+                halMessage.validateData(validator, message)
                     
         self.queued_messages.append(message)
 
@@ -515,6 +499,13 @@ class HalCore(QtCore.QObject):
                 # Notify the sender if errors occured while processing the message.
                 if sent_message.hasErrors():
                     sent_message.getSource().handleErrors(sent_message)
+
+                # Check the responses if we are in strict mode.
+                if self.strict:
+                    validator = halMessage.valid_messages[sent_message.m_type].get("resp")
+                    if validator is not None:
+                        for response in sent_message.getResponses():
+                            halMessage.validateResponse(validator, sent_message, response)
 
                 # Notify the sender of any responses to the message.
                 if sent_message.hasResponses():

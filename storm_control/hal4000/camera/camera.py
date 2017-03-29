@@ -169,7 +169,7 @@ class Camera(halModule.HalModule):
 
         # This message comes from film.film, it goes to all cameras at once.
         elif (message.getType() == "start film"):
-            film_settings = message.getData()["film_settings"]
+            film_settings = message.getData()["film settings"]
             self.film_length = None
             self.camera_control.startFilm(film_settings)
             if (self.module_name == "camera1") and (film_settings["acq_mode"] == "fixed_length"):

@@ -20,20 +20,24 @@ import storm_control.sc_library.hdebug as hdebug
 # "data" - These are the required fields & types in the message data dictionary.
 # "resp" - These are the required fields & types in the response data dictionary.
 #
+# The format of each entry is "field" : [Required, Expected type].
+#
 valid_messages = {
     
     # HAL/core/general messages.
-    'add to ui' : {"sent" : {"ui_parent" : str,
-                             "ui_widget" : QtCore.QObject}},
+    'add to ui' : {"data" : {"ui_order" : [False, int],
+                             "ui_parent" : [True, str],
+                             "ui_widget" : [True, QtCore.QObject]}},
     'close event' : {},
-    'configure1' : {"sent" : {"module_names" : list}},
+    'configure1' : {"data" : {"module_names" : [True, list]}},
     'configure2' : {},
     'configure3' : {},
     'initial parameters' : {},
 #    'module' : True,
-    'new directory' : {"sent" : {"directory" : str}},
-    'new parameters file' : {"sent" : {"filename" : str}},
-    'new shutters file' : {"sent" : {"filename" : str}},
+    'new directory' : {"data" : {"directory" : [True, str]}},
+    'new parameters file' : {"data" : {"filename" : [True, str],
+                                       "is_default" : [False, bool]}},
+    'new shutters file' : {"data" : {"filename" : [True, str]}},
     'start' : {},
     'sync' : {},
     'test' : {}
@@ -62,7 +66,56 @@ def chainMessages(send_fn, messages):
         messages[i].finalizer = lambda x = i: send_fn(messages[x+1])
     return messages[0]
 
+
+def validate(validator, data, base_string):
+    """
+    Checks that data (or response) field of a message is correct.
+    """
+    # Check that the message has data.
+    if data is None:
+        msg = base_string + "' should have data."
+        raise HalMessageException(msg)
+
+    # Check that every item in data exists in validator.
+    for item in data:
+        if not item in validator:
+            msg = base_string + "' has an unexpected field '" + item + "'."
+            raise HalMessageException(msg)
+
+    # Check that every item that should be in data is, and that
+    # all items are of the correct type.
+    for item in validator:
+
+        # Existence check.
+        if (not item in data) and validator[item][0]:
+            msg = base_string + "' does not have required item '" + item + "'."
+            raise HalMessageException(msg)
         
+        # Type check.
+        if item in data:
+            if not isinstance(data[item], validator[item][1]):
+                msg = base_string + "' is not the expected type."
+                raise HalMessageException(msg)
+            
+    
+def validateData(validator, message):
+    """
+    Checks that data field of a message is correct.
+    """
+    base_string = "Data in message '" + message.m_type + "' from '" 
+    base_string += message.getSourceName()
+    validate(validator, message.getData(), base_string)
+
+    
+def validateResponse(validator, message, response):
+    """
+    Checks that response field of a message is correct.
+    """
+    base_string = "Response from '" + response.source + "' in message '" 
+    base_string += message.m_type + "' from '" + message.getSourceName()
+    validate(validator, response.getData(), base_string)
+
+
 class HalMessageException(halExceptions.HalException):
     pass
 
