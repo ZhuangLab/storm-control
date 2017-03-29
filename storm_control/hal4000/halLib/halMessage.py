@@ -17,32 +17,36 @@ import storm_control.sc_library.hdebug as hdebug
 # This dictionary contains all of the valid message types. Modules
 # may dynamically add to this dictionary using addMessage().
 #
+# "data" - These are the required fields & types in the message data dictionary.
+# "resp" - These are the required fields & types in the response data dictionary.
+#
 valid_messages = {
     
     # HAL/core/general messages.
-    'add to ui' : True,
-    'close event' : True,
-    'configure1' : True,
-    'configure2' : True,
-    'configure3' : True,
-    'initial parameters' : True,
-    'module' : True,
-    'new directory' : True,
-    'new parameters file' : True,
-    'new shutters file' : True,
-    'start' : True,
-    'sync' : True,
-    'test' : True
+    'add to ui' : {"sent" : {"ui_parent" : str,
+                             "ui_widget" : QtCore.QObject}},
+    'close event' : {},
+    'configure1' : {"sent" : {"module_names" : list}},
+    'configure2' : {},
+    'configure3' : {},
+    'initial parameters' : {},
+#    'module' : True,
+    'new directory' : {"sent" : {"directory" : str}},
+    'new parameters file' : {"sent" : {"filename" : str}},
+    'new shutters file' : {"sent" : {"filename" : str}},
+    'start' : {},
+    'sync' : {},
+    'test' : {}
     }
 
-def addMessage(name, check_exists = True):
+def addMessage(name, validator = {}, check_exists = True):
     """
     Modules should call this function at initialization to add additional messages.
     """
     global valid_messages
     if check_exists and name in valid_messages:
         raise halExceptions.HalException("Message " + name + " already exists!")
-    valid_messages[name] = True
+    valid_messages[name] = validator
 
 
 def chainMessages(send_fn, messages):
@@ -63,6 +67,7 @@ class HalMessageException(halExceptions.HalException):
     pass
 
 
+# FIXME: This is only the base class for HalMessage, do we need it separate?
 class HalMessageBase(object):
     """
     Base class for the HalMessage as well as for various response
@@ -97,7 +102,7 @@ class HalMessage(HalMessageBase):
 
     def __init__(self, data = None, sync = False, level = 1, finalizer = None, **kwds):
         """
-        data - Python object containing the message data. This should be a dictionary.
+        data - Python object containing the message data. This must be a dictionary.
 
         sync - Boolean that indicates whether or not all the messages before
                this message should be processed before continuing to this message.
@@ -247,7 +252,8 @@ class HalMessageResponse(object):
     def __init__(self, source = "", data = None, **kwds):
         """
         source - The halmodule that added the response as a string.
-        data - Python object containing the response.
+        data - Python object containing the response. This must be a
+               dictionary.
         """
         super().__init__(**kwds)
 

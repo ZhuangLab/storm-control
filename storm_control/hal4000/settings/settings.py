@@ -86,8 +86,8 @@ class Settings(halModule.HalModule):
         # to the previous good parameters. The actual reversion happens in
         # handleResponses.
         if (message.getType() == "new parameters"):
-            return False
-        
+            return True
+
     def handleNewParameters(self, parameters, is_edit):
         """
         Sends the 'new parameters' message. 

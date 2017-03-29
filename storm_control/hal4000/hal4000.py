@@ -332,6 +332,7 @@ class HalCore(QtCore.QObject):
         self.queued_messages = deque()
         self.queued_messages_timer = QtCore.QTimer(self)
         self.sent_messages = []
+        self.strict = config.get("strict", False)
 
         self.queued_messages_timer.setInterval(0)
         self.queued_messages_timer.timeout.connect(self.handleSendMessage)
@@ -451,11 +452,32 @@ class HalCore(QtCore.QObject):
         Adds a message to the queue of images to send.
         """
         # Check the message and it to the queue.
-        if not message.m_type in halMessage.valid_messages:
-            msg = "Invalid message type '" + message.m_type
-            msg += "' received from " + message.getSourceName()
-            raise halExceptions.HalException(msg)
+        if self.strict:
+            if not message.m_type in halMessage.valid_messages:
+                msg = "Invalid message type '" + message.m_type
+                msg += "' received from " + message.getSourceName()
+                raise halExceptions.HalException(msg)
 
+            validator = halMessage.valid_messages[message.m_type].get("sent")
+            if validator is not None:
+                data = message.getData()
+                if data is None:
+                    msg = "Data in message '" + message.m_type + "' from '" 
+                    msg += message.getSourceName()
+                    msg += "' should have data."
+                    raise halExceptions.HalException(msg)
+                for field in validator:
+                    if not field in data:
+                        msg = "Data in message '" + message.m_type + "' from '" 
+                        msg += message.getSourceName()
+                        msg += "' does not have required field '" + field + "'."
+                        raise halExceptions.HalException(msg)
+                    if not isinstance(data[field], validator[field]):
+                        msg = "Data in message '" + message.m_type + "' from '" 
+                        msg += message.getSourceName()
+                        msg += "' is not the expected type."
+                        raise halExceptions.HalException(msg)
+                    
         self.queued_messages.append(message)
 
         # Start the message timer, if it is not already running.
@@ -474,12 +496,14 @@ class HalCore(QtCore.QObject):
         for sent_message in self.sent_messages:
             if sent_message.refCountIsZero():
 
+                # Finalizing, etc. is only performed for level 1 messages.
+                if (sent_message.level != 1):
+                    continue
+                
                 #
-                # Good times.. If the source throws up a message box and the camera
-                # is running then we'll keep trying to finalize the same message
-                # over and over again until we have so many message boxes that the
-                # everything crashes. So check to see if the message is already
-                # being finalized before proceeding.
+                # Good times.. If the source throws up a message box and other
+                # messages come in then we'll get more and more message boxes
+                # and eventually HAL will crash.
                 #
                 if sent_message.finalizing:
                     continue

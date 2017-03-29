@@ -9,6 +9,17 @@
 
   <!-- The ui type, this is 'classic' or 'detached' -->
   <ui_type type="string">classic</ui_type>
+
+  <!--
+      This has two effects:
+      
+      (1) If this is True any exception will immediately crash HAL, which can
+      be useful for debugging. If it is False then some exceptions will be
+      handled by the modules.
+      
+      (2) If it is False we also don't check whether messages are valid.
+  -->
+  <strict type="boolean">True</strict>
   
   <!--
       Define the modules to use for this setup.
