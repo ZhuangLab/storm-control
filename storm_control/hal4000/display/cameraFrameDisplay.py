@@ -90,8 +90,8 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.camera_scene.addItem(self.camera_widget)
         self.ui.cameraGraphicsView.setScene(self.camera_scene)
 
-        #self.ui.cameraGraphicsView.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(0,0,0)))
-        self.camera_scene.sceneRectChanged.connect(self.ui.cameraGraphicsView.handleRectChanged)
+        self.ui.cameraGraphicsView.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(0,0,0)))
+        #self.camera_scene.sceneRectChanged.connect(self.ui.cameraGraphicsView.handleRectChanged)
         
         # Display range slider.
         self.ui.rangeSlider = qtRangeSlider.QVRangeSlider()
@@ -199,13 +199,16 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         #
         if (self.getFeedName() == feed_name):
 
-            # Setup the camera display widget.
+            # Configure the QtCameraGraphicsItem.
             color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
             self.camera_widget.newColorTable(color_table)
             self.camera_widget.newConfiguration(feed_info)
-            #self.camera_widget.newSize([feed_info["x_pixels"], feed_info["y_pixels"]])
             self.updateRange()
 
+            # Configure the QtCameraGraphicsView.
+            #self.ui.cameraGraphicsView.setMaxViewable(feed_info["x_pixels"], feed_info["y_pixels"])
+            self.ui.cameraGraphicsView.newConfiguration(feed_info)
+            
             # Color gradient.
             if self.color_gradient is not None:
                 self.color_gradient.newColorTable(color_table)
@@ -259,12 +262,6 @@ class BaseFrameDisplay(QtWidgets.QFrame):
     def handleDisplayTimer(self):
         if self.frame:
             self.camera_widget.updateImageWithFrame(self.frame)
-#            print("gv", self.ui.cameraGraphicsView.sceneRect())
-#            print("gs", self.camera_scene.sceneRect())
-#            print()
-
-            #q_rect = self.camera_widget.boundingRect()
-            #self.camara_scene.
 
     def handleFeedChange(self, feed_name):
         """

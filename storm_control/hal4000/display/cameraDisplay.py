@@ -156,18 +156,21 @@ class Display(halModule.HalModule):
                                                                "display_name" : "display00"}))
 
         elif message.isType("configure2"):
+            #
             # Request feed information for the default display.
+            #
+            # This happens here because feeds.feeds is not gauranteed to have this
+            # information until the end of the 'configure1' step.
+            #
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "get feed information",
                                                        data = {"display_name" : self.views[0].getDisplayName(),
                                                                "feed_name" : "camera1"}))
 
-        #
-        # 'set current camera' is sent after the 'configure1' message. The
-        # camera response comes after the 'configure2' message, so the parameters
-        # should be initialized by 'configure3'.
-        #
         elif message.isType("configure3"):
+            #
+            # At this point we should have a valid set of parameters for the display.
+            #
             for view in self.views:
                 if False:
                     print("")
@@ -202,6 +205,13 @@ class Display(halModule.HalModule):
         elif message.isType("start"):
             if self.dialogs[0] is not None:
                 self.dialogs[0].showIfVisible()
+
+            # Heh, need to send this message again because the QtCameraGraphicsView won't know how
+            # to scale the frames until it gets rendered and can correctly calculate it's size.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "get feed information",
+                                                       data = {"display_name" : self.views[0].getDisplayName(),
+                                                               "feed_name" : "camera1"}))
 
         elif message.isType("start film"):
             for view in self.views:

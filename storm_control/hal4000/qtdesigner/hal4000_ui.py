@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(806, 676)
+        MainWindow.resize(863, 687)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -50,7 +50,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.cameraFrame.sizePolicy().hasHeightForWidth())
         self.cameraFrame.setSizePolicy(sizePolicy)
-        self.cameraFrame.setMinimumSize(QtCore.QSize(588, 540))
+        self.cameraFrame.setMinimumSize(QtCore.QSize(645, 551))
         self.cameraFrame.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.cameraFrame.setFrameShadow(QtWidgets.QFrame.Plain)
         self.cameraFrame.setLineWidth(0)
@@ -81,7 +81,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.addLayout(self.verticalLayout)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 806, 25))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 863, 25))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")

@@ -37,8 +37,9 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
 
     def boundingRect(self):
         s_rect = QtCore.QRectF(0, 0, self.x_pixels, self.y_pixels)
+
+        # Resize the scene rect if necessary.
         if self.size_changed:
-            print("br")
             self.scene().setSceneRect(s_rect)
             self.size_changed = False
         return s_rect

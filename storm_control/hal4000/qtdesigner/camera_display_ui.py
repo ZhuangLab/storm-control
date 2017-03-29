@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Frame(object):
     def setupUi(self, Frame):
         Frame.setObjectName("Frame")
-        Frame.resize(645, 555)
+        Frame.resize(645, 551)
         Frame.setFrameShape(QtWidgets.QFrame.NoFrame)
         Frame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(Frame)
@@ -32,7 +32,7 @@ class Ui_Frame(object):
         self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.cameraGraphicsView = QtCameraGraphicsView(self.displayWidget)
-        self.cameraGraphicsView.setMinimumSize(QtCore.QSize(520, 524))
+        self.cameraGraphicsView.setMinimumSize(QtCore.QSize(520, 520))
         self.cameraGraphicsView.setObjectName("cameraGraphicsView")
         self.horizontalLayout_2.addWidget(self.cameraGraphicsView)
         self.scaleWidget = QtWidgets.QWidget(self.displayWidget)
