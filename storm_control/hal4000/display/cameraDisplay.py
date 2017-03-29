@@ -84,7 +84,7 @@ class Display(halModule.HalModule):
 
         # This message comes from the viewers, it is used to get the initial
         # display settings for a camera or feed.
-        halMessage.addMessage("get feed config", check_exists = False)
+        halMessage.addMessage("get feed information")
 
         # This message comes from the record button.
         halMessage.addMessage("record clicked")
@@ -108,10 +108,23 @@ class Display(halModule.HalModule):
 
     def handleResponse(self, message, response):
         """
-        The only message that we expect a response for is a 'get feed config' message.
+        The only message that we expect a response for is a 'get feed information' message.
         """
-        if (message.getType() == "get feed config"):
-            self.viewFeedConfig(response)
+        if (message.getType() == "get feed information"):
+            display_name = message.getData()["display_name"]
+            data = response.getData()
+
+            # Add default color table information.
+            feed_info = data["feed_info"]
+            if "colortable" in feed_info:
+                if (feed_info["colortable"] == "none"):
+                    feed_info["colortable"] = self.parameters.get("colortable")
+            else:
+                feed_info["colortable"] = self.parameters.get("colortable")
+        
+            for view in self.views:
+                if (view.getDisplayName() == display_name):
+                    view.feedConfig(data)
 
     def processL1Message(self, message):
             
@@ -133,6 +146,13 @@ class Display(halModule.HalModule):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "set current camera",
                                                        data = {"camera" : "camera1"}))
+
+        elif (message.getType() == "configure2"):
+            # Request feed information for the default display.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "get feed information",
+                                                       data = {"display_name" : self.views[0].getDisplayName(),
+                                                               "feed_name" : "camera1"}))
 
         #
         # 'set current camera' is sent after the 'configure1' message. The
@@ -157,10 +177,10 @@ class Display(halModule.HalModule):
                                                            m_type = "initial parameters",
                                                            data = {"parameters" : view.getParameters()}))
 
-        elif (message.getType() == "current camera"):
-            self.viewFeedConfig(message)
+#        elif (message.getType() == "current camera"):
+#            self.viewFeedConfig(message)
 
-        elif (message.getType() == "feed list"):
+        elif (message.getType() == "feeds information"):
             for view in self.views:
                 view.setFeeds(message.getData()["feeds"])
 
@@ -197,14 +217,8 @@ class Display(halModule.HalModule):
         for view in self.views:
             view.newFrame(message.getData()["frame"])
 
-    def viewFeedConfig(self, message):
-        data = message.getData()
+#    def viewFeedConfig(self, message):
 
-        # Add default color table information.
-        data["colortable"] = self.parameters.get("colortable")
-        
-        for view in self.views:
-            view.feedConfig(data)
 
 
 #

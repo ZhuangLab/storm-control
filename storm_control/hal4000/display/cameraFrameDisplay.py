@@ -136,7 +136,8 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         This method gets called when any of the views changes it's 
         current feed or 'display00' changes the current camera.
         """
-        cam_params = data["parameters"]
+        feed_name = data["feed_name"]
+        feed_info = data["feed_info"]
 
         #
         # Add a sub-section for this camera / feed if we don't already have one.
@@ -145,27 +146,27 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         # be displayed. These are what we'll use if don't already have some other
         # values.
         #
-        if not self.parameters.has(data["camera"]):
+        if not self.parameters.has(feed_name):
 
             # Create a sub-section for this camera / feed.
-            p = self.parameters.addSubSection(data["camera"])
+            p = self.parameters.addSubSection(feed_name)
 
             # Add display specific parameters.
             p.add(params.ParameterSetString(description = "Color table",
                                             name = "colortable",
-                                            value = data["colortable"],
+                                            value = feed_info["colortable"],
                                             allowed = self.color_tables.getColorTableNames()))
                         
             p.add(params.ParameterInt(description = "Display maximum",
                                       name = "display_max",
-                                      value = cam_params.get("default_max")))
+                                      value = feed_info["default_max"]))
 
             p.add(params.ParameterInt(description = "Display minimum",
                                       name = "display_min",
-                                      value = cam_params.get("default_min")))
+                                      value = feed_info["default_min"]))
 
             p.add(params.ParameterInt(name = "max_intensity",
-                                      value = cam_params.get("max_intensity"),
+                                      value = feed_info["max_intensity"],
                                       is_mutable = False,
                                       is_saved = False))
 
@@ -182,14 +183,13 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         # Update UI settings if the feed / camera that we got configuration
         # information for is the current feed / camera.
         #
-        if (self.getFeedName() == data["camera"]):
+        if (self.getFeedName() == feed_name):
 
             # Setup the camera display widget.
             color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
             self.camera_widget.newColorTable(color_table)
-            self.camera_widget.newParameters(cam_params)
-            self.camera_widget.newSize([cam_params.get("x_pixels")/cam_params.get("x_bin"),
-                                        cam_params.get("y_pixels")/cam_params.get("y_bin")])
+            self.camera_widget.newConfiguration(feed_info)
+            #self.camera_widget.newSize([feed_info["x_pixels"], feed_info["y_pixels"]])
             self.updateRange()
 
             # Color gradient.
@@ -342,7 +342,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         #        We need to error now rather than at 'updated parameters'.
         self.parameters = parameters
 
-    def setFeeds(self, feed_list):
+    def setFeeds(self, feeds_info):
         """
         This updates feed selector combo box with a list of 
         the feeds that are currently available.
@@ -352,9 +352,9 @@ class BaseFrameDisplay(QtWidgets.QFrame):
 
         # Update combo box with the new feed names.
         self.ui.feedComboBox.clear()
-        if (len(feed_list) > 1):
-            for feed in feed_list:
-                self.ui.feedComboBox.addItem(feed["feed_name"])
+        if (len(feeds_info) > 1):
+            for feed_name in sorted(feeds_info):
+                self.ui.feedComboBox.addItem(feed_name)
             self.ui.feedComboBox.setCurrentIndex(self.ui.feedComboBox.findText(self.getFeedName()))
             self.ui.feedComboBox.show()
         else:
@@ -430,7 +430,7 @@ class CameraFrameDisplay(BaseFrameDisplay):
 
         # This will get the updated feed information.
         if feed is not None:
-            self.guiMessage.emit(["get feed config", 1,
+            self.guiMessage.emit(["get feed information", 1,
                                   {"display_name" : self.display_name,
                                    "feed_name" : self.getFeedName()}])
 

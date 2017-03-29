@@ -226,25 +226,43 @@ class QCameraWidget(QtWidgets.QWidget):
         """
         self.colortable = colortable
 
-    def newParameters(self, parameters):
-        self.flip_horizontal = parameters.get("flip_horizontal")
-        self.flip_vertical = parameters.get("flip_vertical")
-        self.transpose = parameters.get("transpose")
-        self.max_intensity = parameters.get("max_intensity")
+    def newConfiguration(self, feed_info):
+        """
+        ...
+        """
+        self.flip_horizontal = feed_info["flip_horizontal"]
+        self.flip_vertical = feed_info["flip_vertical"]
+        self.max_intensity = feed_info["max_intensity"]
+        self.transpose = feed_info["transpose"]
+        self.x_size = feed_info["x_pixels"]
+        self.y_size = feed_info["y_pixels"]
+        
+        if "_sat.ctbl" in feed_info["colortable"]:
+            self.display_saturated_pixels = True
+        else:
+            self.display_saturated_pixels = False
 
-        # FIXME: re-implement this..
-        #if "_sat.ctbl" in parameters.get("colortable"):
-        #    self.display_saturated_pixels = True
-        #else:
-        #    self.display_saturated_pixels = False
+        self.calcFinalSize()
+
+#    def newParameters(self, parameters):
+#        self.flip_horizontal = parameters.get("flip_horizontal")
+#        self.flip_vertical = parameters.get("flip_vertical")
+#        self.transpose = parameters.get("transpose")
+#        self.max_intensity = parameters.get("max_intensity")
+#
+#        # FIXME: re-implement this..
+#        #if "_sat.ctbl" in parameters.get("colortable"):
+#        #    self.display_saturated_pixels = True
+#        #else:
+#        #    self.display_saturated_pixels = False
             
     def newRange(self, new_range):
         self.display_range = new_range
 
-    def newSize(self, new_size):
-        self.x_size = new_size[0]
-        self.y_size = new_size[1]
-        self.calcFinalSize()
+#    def newSize(self, new_size):
+#        self.x_size = new_size[0]
+#        self.y_size = new_size[1]
+#        self.calcFinalSize()
 
     def paintEvent(self, event):
         """

@@ -274,7 +274,7 @@ class Film(halModule.HalModule):
         # which we might want (or not want) to save.
         #
         self.active_camera_count = 0
-        self.feed_list = None
+        self.feeds_info = None
         self.film_settings = None
         self.film_size = 0.0
         self.film_state = "idle"
@@ -298,10 +298,19 @@ class Film(halModule.HalModule):
                                "ui_parent" : "hal.containerWidget",
                                "ui_widget" : self.view}
 
+        # In live mode the camera also runs between films.
         halMessage.addMessage("live mode")
+
+        # Start a camera.
         halMessage.addMessage("start camera")
+
+        # Start filming.
         halMessage.addMessage("start film")
+
+        # Stop a camera.
         halMessage.addMessage("stop camera")
+
+        # Stop filming.
         halMessage.addMessage("stop film")
 
     def cleanUp(self, qt_settings):
@@ -364,8 +373,8 @@ class Film(halModule.HalModule):
                                                        m_type = "initial parameters",
                                                        data = {"parameters" : self.view.getParameters()}))
 
-        elif (message.m_type == "feed list"):
-            self.feed_list = message.getData()["feeds"]
+        elif (message.m_type == "feeds information"):
+            self.feeds_info = message.getData()["feeds"]
 
         #
         # FIXME: This will stop everything when the first camera reaches the
@@ -444,7 +453,7 @@ class Film(halModule.HalModule):
     def startCameras(self):
         
         # Start slave cameras first.
-        for feed in self.feed_list:
+        for feed_name, feed in self.feeds_info.items():
             if feed["is_camera"] and not feed["is_master"]:
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "start camera",
@@ -458,7 +467,7 @@ class Film(halModule.HalModule):
         self.newMessage.emit(halMessage.SyncMessage(self))
 
         # Start master cameras last.
-        for feed in self.feed_list:
+        for feed_name, feed in self.feeds_info.items():
             if feed["is_camera"] and feed["is_master"]:
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "start camera",
@@ -489,7 +498,7 @@ class Film(halModule.HalModule):
         # Create writers as needed for each feed.
         self.writers = {}
         if self.film_settings["save_film"]:
-            for feed in self.feed_list:
+            for feed_name, feed in self.feeds_info.items():
                 if feed["is_saved"]:
                     self.writers[feed["feed_name"]] = imagewriters.createFileWriter(feed, self.film_settings)
         if (len(self.writers) == 0):
@@ -507,7 +516,7 @@ class Film(halModule.HalModule):
         self.active_camera_count = 0
 
         # Stop master cameras first.
-        for feed in self.feed_list:
+        for feed_name, feed in self.feeds_info.items():
             if feed["is_camera"] and feed["is_master"]:
                 self.active_camera_count += 1
                 self.newMessage.emit(halMessage.HalMessage(source = self,
@@ -518,7 +527,7 @@ class Film(halModule.HalModule):
         self.newMessage.emit(halMessage.SyncMessage(self))
 
         # Stop slave cameras last.
-        for feed in self.feed_list:
+        for feed_name, feed in self.feeds_info.items():
             if feed["is_camera"] and not feed["is_master"]:
                 self.active_camera_count += 1
                 self.newMessage.emit(halMessage.HalMessage(source = self,

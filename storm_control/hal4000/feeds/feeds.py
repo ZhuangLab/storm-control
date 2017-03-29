@@ -22,11 +22,31 @@ import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
 
+def createCameraFeedInfo(cam_params, camera_name, is_master):
+    """
+    Create a feed information dictionary for a camera.
+    """
+    return {"bytes_per_frame" : cam_params.get("bytes_per_frame"),
+            "default_max" : cam_params.get("default_max"),
+            "default_min" : cam_params.get("default_min"),
+            "extension" : cam_params.get("filename_ext"),
+            "feed_name" : camera_name,
+            "flip_horizontal" : cam_params.get("flip_horizontal"),
+            "flip_vertical" : cam_params.get("flip_vertical"),
+            "is_camera" : True,
+            "is_master" : is_master,
+            "is_saved" : cam_params.get("is_saved"),
+            "max_intensity" : cam_params.get("max_intensity"),
+            "transpose" : cam_params.get("transpose"),
+            "x_pixels" : cam_params.get("x_pixels"),
+            "y_pixels" : cam_params.get("y_pixels")}
+
+    
 def getCameraFeedName(feed_name):
     """
     Use this to separate the camera and the feed name from a feed name string.
     """
-    tmp = feed_name.split(".")
+    tmp = feed_name.split("-")
     if (len(tmp) > 1):
         return tmp
     else:
@@ -50,9 +70,10 @@ class FeedNC(object):
         """
         super().__init__(**kwds)
         self.camera_name = camera_name
-        self.feed_name = camera_name + "." + feed_name
+        self.feed_name = camera_name + "-" + feed_name
         self.parameters = feed_parameters
 
+        self.frame_number = -1
         self.frame_slice = None
 
         # Shorten the names..
@@ -78,18 +99,30 @@ class FeedNC(object):
         if not ((self.x_pixels % 4) == 0):
             raise FeedException("x size of " + str(self.x_pixels) + " is not a multiple of 4 in feed " + feed_name)
 
+        # This is everything that display.cameraFrameDisplay and film.film need
+        # to know about a feed.
         self.feed_info = {"bytes_per_frame" : bytes_per_frame,
+                          "colortable" : fp.get("colortable", "none"),
+                          "default_max" : fp.get("default_max", cp.get("default_max")),
+                          "default_min" : fp.get("default_min", cp.get("default_min")),
                           "extension" : feed_name,
                           "feed_name" : self.feed_name,
+                          "flip_horizontal" : cp.get("flip_horizontal"),
+                          "flip_vertical" : cp.get("flip_vertical"),
                           "is_camera" : False,
                           "is_master" : False,
                           "is_saved" : feed_parameters.get("save", True),
+                          "max_intensity" : fp.get("max_intensity", cp.get("max_intensity")),
+                          "transpose" : cp.get("transpose"),
                           "x_pixels" : self.x_pixels,
                           "y_pixels" : self.y_pixels}
 
     def getFeedInfo(self):
         return self.feed_info
 
+    def reset(self):
+        self.frame_number = -1
+    
     def sliceFrame(self, new_frame):
         if (new_frame.which_camera == self.camera_name):
             if self.frame_slice is None:
@@ -111,7 +144,6 @@ class FeedAverage(FeedNC):
 
         self.average_frame = None
         self.counts = 0
-        self.frame_number = -1
         self.frames_to_average = self.parameters.get("frames_to_average")
 
     def newFrame(self, new_frame):
@@ -136,6 +168,11 @@ class FeedAverage(FeedNC):
         else:
             return []
 
+    def reset(self):
+        super().reset()
+        self.average_frame = None
+        self.counts = 0
+        
     
 class FeedInterval(FeedNC):
     """
@@ -147,8 +184,6 @@ class FeedInterval(FeedNC):
         temp = self.parameters.get("capture_frames")
         self.capture_frames = list(map(int, temp.split(",")))
         self.cycle_length = self.parameters.get("cycle_length")
-        print("fi", self.capture_frames, self.cycle_length)
-        self.frame_number = -1
 
     def newFrame(self, new_frame):
         sliced_data = self.sliceFrame(new_frame)
@@ -244,15 +279,16 @@ class FeedController(object):
         super().__init__(**kwds)
 
         self.feeds = []
+        self.parameters = None
 
         # Get the names of the additional feeds (if any).
         if not parameters.has("feeds"):
             return
 
         # Create the feeds.
-        feeds = parameters.get("feeds")
-        for feed_name in feeds.getAttrs():
-            feed_params = feeds.get(feed_name)
+        self.parameters = parameters.get("feeds")
+        for feed_name in self.parameters.getAttrs():
+            feed_params = self.parameters.get(feed_name)
             camera_name = feed_params.get("source")
             camera_params = parameters.get(camera_name)
             
@@ -275,11 +311,15 @@ class FeedController(object):
                                      feed_name = feed_name,
                                      feed_parameters = feed_params))
 
-    def getFeedInfo(self):
-        f_info = []
+    def getFeedsInfo(self):
+        feeds_info = {}
         for feed in self.feeds:
-            f_info.append(feed.getFeedInfo())
-        return f_info
+            f_info = feed.getFeedInfo()
+            feeds_info[f_info["feed_name"]] = f_info
+        return feeds_info
+
+    def getParameters(self):
+        return self.parameters
 
     def haveFeeds(self):
         return (len(self.feeds) > 0)
@@ -289,7 +329,11 @@ class FeedController(object):
         for feed in self.feeds:
             feed_frames += feed.newFrame(new_frame)
         return feed_frames
-    
+
+    def resetFeeds(self):
+        for feed in self.feeds:
+            feed.reset()
+            
 
 class Feeds(halModule.HalModule):
     """
@@ -304,21 +348,22 @@ class Feeds(halModule.HalModule):
 
         self.camera_info = {}
         self.feed_controller = None
-        self.feed_list = []
+        self.feeds_info = {}
 
         #
-        # This message is a list of dictionaries containing the information
-        # the 'key' information about each camera / feed such as it's size
-        # in x,y in pixels, whether and under what filename to save it, etc.
+        # This message returns a dictionary keyed by feed name with all
+        # relevant parameters for the feed name in another dictionary.
         #
-        halMessage.addMessage("feed list")
+        # e.g. dict["feed_name"]["display_max"] = ?
+        #
+        halMessage.addMessage("feeds information")
 
         # Sent each time a feed generates a frame.
         halMessage.addMessage("new frame", check_exists = False)
         
     def broadcastFeedInfo(self):
         """
-        Send the 'feed list' message.
+        Send the 'feeds information' message.
 
         film.film uses this message to figure out which cameras / feeds to save.
 
@@ -326,21 +371,20 @@ class Feeds(halModule.HalModule):
         combobox.
         """
         self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "feed list",
-                                                   data = {"feeds" : self.feed_list}))
+                                                   m_type = "feeds information",
+                                                   data = {"feeds" : self.feeds_info}))
 
     def processL1Message(self, message):
 
         if (message.getType() == "configure2"):
             self.broadcastFeedInfo()
 
-        elif (message.getType() == "get feed config"):
+        elif (message.getType() == "get feed information"):
             feed_name = message.getData()["feed_name"]
-            for feed in self.feed_list:
-                if (feed["feed_name"] == feed_name):
-                    message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                                      data = {"feed_info" : feed}))
-            
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"feed_name" : feed_name,
+                                                                      "feed_info" : self.feeds_info[feed_name]}))
+
         elif (message.getType() == "initial parameters"):
             #
             # We get this message when the camera (and also other modules) respond
@@ -358,18 +402,12 @@ class Feeds(halModule.HalModule):
                 # but it is easiest to just keep a record of all them at
                 # initialization.
                 #
-                self.camera_info[data["camera"]] = {"feed_name" : data["camera"],
-                                                    "is_camera" : True,
-                                                    "is_master" : data["master"]}
-                
-                self.feed_list.append({"bytes_per_frame" : p.get("bytes_per_frame"),
-                                       "extension" : p.get("filename_ext"),
-                                       "feed_name" : data["camera"],
-                                       "is_camera" : True,
-                                       "is_master" : data["master"],
-                                       "is_saved" : p.get("is_saved"),
-                                       "x_pixels" : p.get("x_pixels"),
-                                       "y_pixels" : p.get("y_pixels")})
+                self.camera_info[data["camera"]] = {"camera" : data["camera"],
+                                                    "master" : data["master"]}
+
+                self.feeds_info[data["camera"]] = createCameraFeedInfo(p,
+                                                                       data["camera"],
+                                                                       data["master"])
 
         elif (message.getType() == "new parameters"):
             self.feed_controller = FeedController(parameters = message.getData()["parameters"])
@@ -377,31 +415,38 @@ class Feeds(halModule.HalModule):
                 self.feed_controller = None
             
         elif (message.getType() == "updated parameters"):
-            self.feed_list = []
+            self.feeds_info = {}
             params = message.getData()["parameters"]
 
             # Get camera information.
             for attr in params.getAttrs():
                 if attr.startswith("camera"):
                     p = params.get(attr)
-                    self.feed_list.append({"bytes_per_frame" : p.get("bytes_per_frame"),
-                                           "extension" : p.get("filename_ext"),
-                                           "feed_name" : self.camera_info[attr]["feed_name"],
-                                           "is_camera" : self.camera_info[attr]["is_camera"],
-                                           "is_master" : self.camera_info[attr]["is_master"],
-                                           "is_saved" : p.get("is_saved"),
-                                           "x_pixels" : p.get("x_pixels"),
-                                           "y_pixels" : p.get("y_pixels")})
+                    self.feeds_info[attr] = createCameraFeedInfo(p,
+                                                                 self.camera_info[attr]["camera"],
+                                                                 self.camera_info[attr]["master"])
 
             # Get feed information.
             if self.feed_controller is not None:
-                self.feed_list += self.feed_controller.getFeedInfo()
+                self.feeds_info.update(self.feed_controller.getFeedsInfo())
 
-            for elt in self.feed_list:
-                print(elt)
+            print("")
+            for elts in self.feeds_info:
+                print(elts)
+                for elt in self.feeds_info[elts]:
+                    print("  ", elt, self.feeds_info[elts][elt])
+            print("")
                 
             self.broadcastFeedInfo()
 
+        elif (message.getType() == "start film"):
+            self.feed_controller.resetFeeds()
+
+        elif (message.getType() == "stop film"):
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.feed_controller.getParameters()}))
+            self.feed_controller.resetFeeds()
+            
     def processL2Message(self, message):
         if self.feed_controller is not None:
             frame = message.getData()["frame"]
