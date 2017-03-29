@@ -144,7 +144,7 @@ class Camera(halModule.HalModule):
 
     def processL1Message(self, message):
                     
-        if (message.getType() == "configure1"):
+        if message.isType("configure1"):
 
             # Broadcast initial parameters.
             self.newMessage.emit(halMessage.HalMessage(source = self,
@@ -157,7 +157,7 @@ class Camera(halModule.HalModule):
                                                        data = self.camera_control.getCameraConfig()))            
 
         # This message comes from settings.settings.
-        elif (message.getType() == "new parameters"):
+        elif message.isType("new parameters"):
             halModule.runWorkerTask(self,
                                     message,
                                     lambda : self.updateParameters(message))
@@ -168,7 +168,7 @@ class Camera(halModule.HalModule):
         #
         # FIXME: Should also broadcast current temperature?
         #
-        elif (message.getType() == "set current camera"):
+        elif message.isType("set current camera"):
             if (message.getData()["camera"] == self.module_name):
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "current camera",
@@ -178,7 +178,7 @@ class Camera(halModule.HalModule):
         #
         # FIXME: Should broadcast the gain after it is set, or include it in the response?
         #
-        elif (message.getType() == "set emccd gain"):
+        elif message.isType("set emccd gain"):
             if (message.getData()["camera"] == self.module_name):
                 halModule.runWorkerTask(self,
                                         message,
@@ -188,7 +188,7 @@ class Camera(halModule.HalModule):
         #
         # FIXME: Should broadcast the updated shutter state, or include it in the response?
         #
-        elif (message.getType() == "set shutter"):
+        elif message.isType("set shutter"):
             if (message.getData()["camera"] == self.module_name):
                 halModule.runWorkerTask(self,
                                         message,
@@ -196,12 +196,12 @@ class Camera(halModule.HalModule):
 
         # This message comes from film.film, it is camera specific as
         # slave cameras need to be started before master camera(s).
-        elif (message.getType() == "start camera"):
+        elif message.isType("start camera"):
             if (message.getData()["camera"] == self.module_name):
                 halModule.runWorkerTask(self, message, self.startCamera)
 
         # This message comes from film.film, it goes to all cameras at once.
-        elif (message.getType() == "start film"):
+        elif message.isType("start film"):
             film_settings = message.getData()["film settings"]
             self.film_length = None
             self.camera_control.startFilm(film_settings)
@@ -210,12 +210,12 @@ class Camera(halModule.HalModule):
 
         # This message comes from film.film. Once the camera actually
         # stops we send the 'camera stopped' message.
-        elif (message.getType() == "stop camera"):
+        elif message.isType("stop camera"):
             if (message.getData()["camera"] == self.module_name):
                 halModule.runWorkerTask(self, message, self.camera_control.stopCamera)
 
         # This message comes from film.film, it goes to all camera at once.
-        elif (message.getType() == "stop film"):
+        elif message.isType("stop film"):
             self.camera_control.stopFilm()
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : self.camera_control.getParameters()}))

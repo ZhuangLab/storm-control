@@ -117,7 +117,7 @@ class Display(halModule.HalModule):
         """
         The only message that we expect a response for is a 'get feed information' message.
         """
-        if (message.getType() == "get feed information"):
+        if message.isType("get feed information"):
             display_name = message.getData()["display_name"]
             data = response.getData()
 
@@ -135,13 +135,13 @@ class Display(halModule.HalModule):
 
     def processL1Message(self, message):
             
-        if (message.getType() == "add to ui"):
+        if message.isType("add to ui"):
             if self.dialogs[0] is not None:
                 [module, parent_widget] = message.data["ui_parent"].split(".")
                 if (module == self.module_name):
                     self.dialogs[0].addParamsWidget(message.data["ui_widget"])
 
-        elif (message.getType() == "configure1"):
+        elif message.isType("configure1"):
             if self.dialogs[0] is None:
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "add to ui",
@@ -155,7 +155,7 @@ class Display(halModule.HalModule):
                                                        data = {"camera" : "camera1",
                                                                "display_name" : "display00"}))
 
-        elif (message.getType() == "configure2"):
+        elif message.isType("configure2"):
             # Request feed information for the default display.
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "get feed information",
@@ -167,7 +167,7 @@ class Display(halModule.HalModule):
         # camera response comes after the 'configure2' message, so the parameters
         # should be initialized by 'configure3'.
         #
-        elif (message.getType() == "configure3"):
+        elif message.isType("configure3"):
             for view in self.views:
                 if False:
                     print("")
@@ -185,14 +185,11 @@ class Display(halModule.HalModule):
                                                            m_type = "initial parameters",
                                                            data = {"parameters" : view.getParameters()}))
 
-#        elif (message.getType() == "current camera"):
-#            self.viewFeedConfig(message)
-
-        elif (message.getType() == "feeds information"):
+        elif message.isType("feeds information"):
             for view in self.views:
                 view.setFeeds(message.getData()["feeds"])
 
-        elif (message.getType() == "new parameters"):
+        elif message.isType("new parameters"):
             p = message.getData()["parameters"]
             for view in self.views:
                 message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
@@ -202,21 +199,21 @@ class Display(halModule.HalModule):
                 message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
                                                                   data = {"new parameters" : view.getParameters()}))
 
-        elif (message.getType() == "start"):
+        elif message.isType("start"):
             if self.dialogs[0] is not None:
                 self.dialogs[0].showIfVisible()
 
-        elif (message.getType() == "start film"):
+        elif message.isType("start film"):
             for view in self.views:
                 view.startFilm(message.getData()["film settings"])
 
-        elif (message.getType() == "stop film"):
+        elif message.isType("stop film"):
             for view in self.views:
                 view.stopFilm()
                 message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
                                                                   data = {"parameters" : view.getParameters()}))
 
-        elif (message.getType() == "updated parameters"):
+        elif message.isType("updated parameters"):
             # It is now safe to query the camera / feed for the new configuration.
             for view in self.views:
                 view.newParametersEnd()

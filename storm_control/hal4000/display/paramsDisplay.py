@@ -127,7 +127,10 @@ class Params(halModule.HalModule):
         self.view.gainChange.connect(self.handleGainChange)
 
         # Change the EMCCD gain.
-        halMessage.addMessage("set emccd gain")
+        halMessage.addMessage("set emccd gain",
+                              validator = {"data" : {"camera" : [True, str],
+                                                     "gain" : [True, int]},
+                                           "resp" : {"gain" : [True, int]}})
 
     def handleGainChange(self, new_gain):
         self.newMessage.emit(halMessage.HalMessage(source = self,
@@ -137,23 +140,24 @@ class Params(halModule.HalModule):
         
     def processL1Message(self, message):
 
-        if (message.getType() == "camera temperature"):
+        # New temperature data from the camera.
+        if message.isType("camera temperature"):
             data = message.getData()
             if (self.current_camera == data["camera"]):
                 self.view.updateTemperature(data)
 
-        elif (message.getType() == "configure1"):
+        elif message.isType("configure1"):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "add to ui",
                                                        data = self.configure_dict))
 
         # The current camera has changed.
-        elif (message.getType() == "current camera"):
+        elif message.isType("current camera"):
             data = message.getData()
             self.current_camera = data["camera"]
             self.view.configureAndUpdateUi(data)
                 
-        elif (message.getType() == "updated parameters"):
+        elif message.isType("updated parameters"):
             p = message.getData()["parameters"].get(self.current_camera).copy()
             self.view.newParameters(p)
 

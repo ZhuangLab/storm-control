@@ -78,6 +78,11 @@ class Mosaic(halModule.HalModule):
                                                        m_type = "initial parameters",
                                                        data = {"parameters" : self.parameters}))
 
+            # Broadcast initial pixel size.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "pixel size",
+                                                       data = {"pixel size" : getObjectivePixelSize(self.parameters)}))
+
         elif message.isType("new parameters"):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"old parameters" : self.parameters.copy()}))
@@ -92,7 +97,7 @@ class Mosaic(halModule.HalModule):
                 pixel_size = getObjectivePixelSize(self.parameters)
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "pixel size",
-                                                           data = {"pixel_size" : pixel_size}))
+                                                           data = {"pixel size" : pixel_size}))
 
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"new parameters" : self.parameters}))

@@ -91,7 +91,7 @@ class Settings(halModule.HalModule):
         # We can hopefully handle all 'new parameters' errors by reverting
         # to the previous good parameters. The actual reversion happens in
         # handleResponses.
-        if (message.getType() == "new parameters"):
+        if message.isType("new parameters"):
             return True
 
     def handleNewParameters(self, parameters, is_edit):
@@ -113,7 +113,8 @@ class Settings(halModule.HalModule):
                                                            "is_edit" : is_edit}))
 
     def handleResponses(self, message):
-        if (message.getType() == "new parameters"):
+        
+        if message.isType("new parameters"):
 
             # Check if we got any errors.
             if message.hasErrors():
@@ -168,12 +169,12 @@ class Settings(halModule.HalModule):
 
     def processL1Message(self, message):
         
-        if (message.m_type == "configure1"):
+        if message.isType("configure1"):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "add to ui",
                                                        data = self.configure_dict))
 
-        elif (message.getType() == "initial parameters"):
+        elif message.isType("initial parameters"):
             #
             # It is okay for other modules to just send their parameters as we make
             # a copy before storing them in this module.
@@ -181,12 +182,12 @@ class Settings(halModule.HalModule):
             self.view.updateCurrentParameters(message.getSourceName(),
                                               message.getData()["parameters"].copy())
 
-        elif (message.getType() == "get parameters"):
+        elif message.isType("get parameters"):
             p = self.view.getParameters(message.getData()["index_or_name"])
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : p}))
             
-        elif (message.getType() == "new parameters file"):
+        elif message.isType("new parameters file"):
 
             # Ignore this message if the UI is disabled and send a warning.
             if not self.view.getEnabled():
@@ -206,10 +207,10 @@ class Settings(halModule.HalModule):
             # Process new parameters file.
             self.view.newParametersFile(data["filename"], is_default)
 
-        elif (message.getType() == "start film"):
+        elif message.isType("start film"):
             self.view.enableUI(False)
             
-        elif (message.getType() == "stop film"):
+        elif message.isType("stop film"):
             self.view.enableUI(True)
 
 

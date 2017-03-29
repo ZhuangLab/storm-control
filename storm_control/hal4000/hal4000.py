@@ -78,17 +78,14 @@ class HalController(halModule.HalModule):
 
     def processL1Message(self, message):
         
-        if (message.getType() == "add to ui"):
+        if message.isType("add to ui"):
             [module, parent_widget] = message.data["ui_parent"].split(".")
             if (module == self.module_name):
                 self.view.addUiWidget(parent_widget,
                                       message.data["ui_widget"],
                                       message.data.get("ui_order"))
-
-#        elif (message.getType() == "configure1"):
-#            self.view.show()
             
-        elif (message.getType() == "start"):
+        elif message.isType("start"):
             self.view.addWidgets()
             self.view.show()
             
@@ -544,12 +541,12 @@ class HalCore(QtCore.QObject):
                     print(cur_message.source.module_name + " '" + cur_message.m_type + "'")
 
                 # Check for "closeEvent" message from the main window.
-                if (cur_message.getSourceName() == "hal") and (cur_message.getType() == "close event"):
+                if cur_message.isType("close event") and (cur_message.getSourceName() == "hal"):
                     self.cleanup()
 
                 else:
                     # Check for "sync" message, these don't actually get sent.
-                    if (cur_message.getType() == "sync"):
+                    if cur_message.isType("sync"):
                         pass
 
                     # Otherwise send the message.

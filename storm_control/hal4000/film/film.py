@@ -342,7 +342,7 @@ class Film(halModule.HalModule):
         Modules are expected to add their current parameters as responses
         to the 'stop film' message. We save them in an xml file here.
         """
-        if (message.getType() == "stop film"):
+        if message.isType("stop film"):
             film_settings = message.getData()["film settings"]
             if film_settings["save_film"]:
                 to_save = params.StormXMLObject()
@@ -367,7 +367,7 @@ class Film(halModule.HalModule):
         
     def processL1Message(self, message):
             
-        if (message.m_type == "camera stopped"):
+        if message.isType("camera stopped"):
             self.active_camera_count -= 1
             if (self.active_camera_count == 0):
                 if (self.film_state == "start"):
@@ -375,7 +375,7 @@ class Film(halModule.HalModule):
                 elif (self.film_state == "stop"):
                     self.stopFilmingLevel2()
 
-        elif (message.m_type == "configure1"):
+        elif message.isType("configure1"):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "add to ui",
                                                        data = self.configure_dict))
@@ -385,7 +385,7 @@ class Film(halModule.HalModule):
                                                        m_type = "initial parameters",
                                                        data = {"parameters" : self.view.getParameters()}))
 
-        elif (message.m_type == "feeds information"):
+        elif message.isType("feeds information"):
             self.feeds_info = message.getData()["feeds"]
 
         #
@@ -396,14 +396,14 @@ class Film(halModule.HalModule):
         #        For now this message should only come from camera1 when it
         #        has recorded the required number of frames.
         #
-        elif (message.m_type == "film complete"):
+        elif message.isType("film complete"):
             if (self.film_state == "run"):
                 self.stopFilmingLevel1()
 
-        elif (message.m_type == "new directory"):
+        elif message.isType("new directory"):
             self.view.setDirectory(message.getData()["directory"])
 
-        elif (message.m_type == "new parameters"):
+        elif message.isType("new parameters"):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"old parameters" : self.view.getParameters().copy()}))
 
@@ -417,10 +417,10 @@ class Film(halModule.HalModule):
         # We need to keep track of the current value so that
         # we can save this in the tif images / stacks.
         #
-        elif (message.m_type == "pixel size"):
-            self.pixel_size = message.getData()["pixel_size"]
-                
-        elif (message.m_type == "record clicked"):
+        elif message.isType("pixel size"):
+            self.pixel_size = message.getData()["pixel size"]
+
+        elif message.isType("record clicked"):
             self.tcp_requested = False
             
             # Start filming if we are idle.
@@ -434,11 +434,11 @@ class Film(halModule.HalModule):
             elif (self.film_state == "run"):
                 self.stopFilmingLevel1()
 
-        elif (message.m_type == "start"):
+        elif message.isType("start"):
             if self.view.amInLiveMode():
                 self.startCameras()
 
-        elif (message.getType() == "stop film"):
+        elif message.isType("stop film"):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : self.view.getParameters()}))
 
