@@ -489,7 +489,7 @@ class HalCore(QtCore.QObject):
                 #
                 # Good times.. If the source throws up a message box and other
                 # messages come in then we'll get more and more message boxes
-                # and eventually HAL will crash.
+                # and eventually HAL will crash, so try and block that here.
                 #
                 if sent_message.finalizing:
                     continue
