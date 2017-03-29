@@ -70,7 +70,11 @@ class Settings(halModule.HalModule):
         # during the parameter update we still have a record of the last
         # good state in "old parameters".
         #
-        halMessage.addMessage("new parameters")
+        halMessage.addMessage("new parameters",
+                              validator = {"data" : {"parameters" : [True, params.StormXMLObject],
+                                                     "is_edit" : [True, bool]},
+                                           "resp" : {"new parameters" : [False, params.StormXMLObject],
+                                                     "old parameters" : [False, params.StormXMLObject]}})
 
         # The updated parameters.
         #
@@ -78,7 +82,9 @@ class Settings(halModule.HalModule):
         # This is sent immediately after all of the modules respond to
         # the 'new parameters' message.
         #
-        halMessage.addMessage("updated parameters")
+        halMessage.addMessage("updated parameters",
+                              validator = {"data" : {"parameters" : [True, params.StormXMLObject]},
+                                           "resp" : None})
 
     def handleError(self, message, m_error):
 

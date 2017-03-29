@@ -23,6 +23,9 @@ import importlib
 
 from PyQt5 import QtCore
 
+import storm_control.sc_library.parameters as params
+
+import storm_control.hal4000.camera.frame as frame
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
@@ -52,21 +55,52 @@ class Camera(halModule.HalModule):
         self.camera_control.finished.connect(self.handleFinished)
         self.camera_control.newData.connect(self.handleNewData)
 
+        # The 'current camera' and the 'camera configuration'
+        # message send the same data.
+        info_validator = {"data" : {"camera" : [True, str],
+                                    "have_emccd" : [True, bool],
+                                    "have_preamp" : [True, bool],
+                                    "have_shutter" : [True, bool],
+                                    "have_temp" : [True, bool],
+                                    "master" : [True, bool],
+                                    "parameters" : [True, params.StormXMLObject],
+                                    "shutter_state" : [True, bool]},
+                          "resp" : {}}
+
+        # This is sent at start-up so that other modules, in particular
+        # feeds.feeds, get the information they need about the camera(s)
+        halMessage.addMessage("camera configuration",
+                              check_exists = False,
+                              validator = info_validator)
+
         # Sent when the camera stops.
-        halMessage.addMessage("camera stopped", check_exists = False)
+        halMessage.addMessage("camera stopped",
+                              check_exists = False,
+                              validator = {"data" : None, "resp" : None})
 
         # The temperature data from this camera.
-        halMessage.addMessage("camera temperature", check_exists = False)
+        halMessage.addMessage("camera temperature",
+                              check_exists = False,
+                              validator = {"data" : {"state" : [True, str],
+                                                     "temperature" : [True, float]},
+                                           "resp" : None})
 
         # Information about this camera if it is the 'current camera', i.e. 
         # the camera shown in the main viewer and the parameters display.
-        halMessage.addMessage("current camera", check_exists = False)
+        halMessage.addMessage("current camera",
+                              check_exists = False,
+                              validator = info_validator)
 
         # Sent when filming and we have reached the desired number of frames.
-        halMessage.addMessage("film complete", check_exists = False)
+        halMessage.addMessage("film complete",
+                              check_exists = False,
+                              validator = {"data" : None, "resp" : None})
         
         # Sent each time there is a new frame from the camera.
-        halMessage.addMessage("new frame", check_exists = False)
+        halMessage.addMessage("new frame",
+                              check_exists = False,
+                              validator = {"data" : {"frame" : [True, frame.Frame]},
+                                           "resp" : None})
 
     def addParametersResponse(self, message):
         message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
@@ -112,16 +146,15 @@ class Camera(halModule.HalModule):
                     
         if (message.getType() == "configure1"):
 
-            # Broadcast initial parameters and configuration.
+            # Broadcast initial parameters.
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "initial parameters",
-                                                       data = self.camera_control.getCameraConfig()))
+                                                       data = {"parameters" : self.camera_control.getParameters()}))
 
-        # This message comes from display.cameraDisplay to get information about a camera / feed.
-#        elif (message.getType() == "get feed config"):
-#            if (message.getData()["feed_name"] == self.module_name):
-#                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-#                                                                  data = self.camera_control.getCameraConfig()))
+            # Broadcast configuration.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "camera configuration",
+                                                       data = self.camera_control.getCameraConfig()))            
 
         # This message comes from settings.settings.
         elif (message.getType() == "new parameters"):
@@ -179,7 +212,6 @@ class Camera(halModule.HalModule):
         # stops we send the 'camera stopped' message.
         elif (message.getType() == "stop camera"):
             if (message.getData()["camera"] == self.module_name):
-                print("stopping camera")
                 halModule.runWorkerTask(self, message, self.camera_control.stopCamera)
 
         # This message comes from film.film, it goes to all camera at once.

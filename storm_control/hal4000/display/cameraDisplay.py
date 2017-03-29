@@ -84,13 +84,22 @@ class Display(halModule.HalModule):
 
         # This message comes from the viewers, it is used to get the initial
         # display settings for a camera or feed.
-        halMessage.addMessage("get feed information")
+        halMessage.addMessage("get feed information",
+                              validator = {"data" : {"display_name" : [True, str],
+                                                     "feed_name" : [True, str]},
+                                           "resp" : {"feed_name" : [True, str],
+                                                     "feed_info" : [True, dict]}})
 
         # This message comes from the record button.
-        halMessage.addMessage("record clicked")
+        halMessage.addMessage("record clicked",
+                              validator = {"data" : {"display_name" : [True, str]},
+                                           "resp" : None})
         
         # This message only comes from view[0], the default display.
-        halMessage.addMessage("set current camera")
+        halMessage.addMessage("set current camera",
+                              validator = {"data" : {"display_name" : [True, str],
+                                                     "camera" : [True, str]},
+                                           "resp" : None})
 
     def cleanUp(self, qt_settings):
         for dialog in self.dialogs:
@@ -100,12 +109,10 @@ class Display(halModule.HalModule):
     def getNextViewName(self):
         return "display{0:02d}".format(len(self.views))
     
-    def handleGuiMessage(self, message_data):
-        self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = message_data[0],
-                                                   level = message_data[1],
-                                                   data = message_data[2]))
-
+    def handleGuiMessage(self, message):
+        message.source = self
+        self.newMessage.emit(message)
+        
     def handleResponse(self, message, response):
         """
         The only message that we expect a response for is a 'get feed information' message.
@@ -145,7 +152,8 @@ class Display(halModule.HalModule):
             # in the main view and also in the parameters box to camera1.
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "set current camera",
-                                                       data = {"camera" : "camera1"}))
+                                                       data = {"camera" : "camera1",
+                                                               "display_name" : "display00"}))
 
         elif (message.getType() == "configure2"):
             # Request feed information for the default display.

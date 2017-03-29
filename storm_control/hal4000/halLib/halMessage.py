@@ -31,25 +31,24 @@ valid_messages = {
     'add to ui' : {"data" : {"ui_order" : [False, int],
                              "ui_parent" : [True, str],
                              "ui_widget" : [True, QtCore.QObject]},
-                   "resp" : {}},
-    'close event' : {"data" : {}, "resp" : {}},
+                   "resp" : None},
+    'close event' : {"data" : None, "resp" : None},
     'configure1' : {"data" : {"module_names" : [True, list]},
                     "resp" : {}},
-    'configure2' : {"data" : {}, "resp" : {}},
-    'configure3' :  {"data" : {}, "resp" : {}},
+    'configure2' : {"data" : None, "resp" : None},
+    'configure3' :  {"data" : None, "resp" : None},
     'initial parameters' :  {"data" : {"parameters" : [True, params.StormXMLObject]},
-                             "resp" : {}},
-#    'module' : True,
+                             "resp" : None},
     'new directory' : {"data" : {"directory" : [True, str]},
-                       "resp" : {}},
+                       "resp" : None},
     'new parameters file' : {"data" : {"filename" : [True, str],
                                        "is_default" : [False, bool]},
-                             "resp" : {}},
+                             "resp" : None},
     'new shutters file' : {"data" : {"filename" : [True, str]},
-                           "resp" : {}},
-    'start' :  {"data" : {}, "resp" : {}},
-    'sync' :  {"data" : {}, "resp" : {}},
-    'test' :  {"data" : {}, "resp" : {}},
+                           "resp" : None},
+    'start' :  {"data" : None, "resp" : None},
+    'sync' :  {"data" : None, "resp" : None},
+    'test' :  {"data" : None, "resp" : None},
     }
 
 def addMessage(name, validator = {}, check_exists = True):
@@ -80,7 +79,15 @@ def validate(validator, data, base_string):
     """
     Checks that data (or response) field of a message is correct.
     """
-    # Check that the message has data.
+    # Check that their is no data if the validator is None.
+    if validator is None:
+        if data is not None:
+            msg = base_string + "' should not have data."
+            raise HalMessageException(msg)
+        else:
+            return
+    
+    # Check that their is data if validator is not None.
     if data is None:
         msg = base_string + "' should have data."
         raise HalMessageException(msg)
@@ -103,7 +110,9 @@ def validate(validator, data, base_string):
         # Type check.
         if item in data:
             if not isinstance(data[item], validator[item][1]):
-                msg = base_string + "' is not the expected type."
+                msg = base_string + "' is not the expected type, got '"
+                msg += str(type(data[item])) + "' expected '" + str(validator[item][1])
+                msg += " for item '" + item + "'."
                 raise HalMessageException(msg)
             
     
@@ -211,10 +220,6 @@ class HalMessage(HalMessageBase):
         # modules could change this inside the thread.
         self.ref_count = 0
 
-        # Log when message was created.
-        if (self.level == 1):
-            self.logEvent("created")
-
     def addError(self, hal_message_error):
         self.m_errors.append(hal_message_error)
 
@@ -229,10 +234,10 @@ class HalMessage(HalMessageBase):
         if self.finalizer is not None:
             self.finalizer()
 
-        # Log when message was destroyed.
+        # Log when message was processed
         if (self.level == 1):
-            self.logEvent("destroyed")
-            
+            self.logEvent("processed")
+
     def getData(self):
         return self.data
 

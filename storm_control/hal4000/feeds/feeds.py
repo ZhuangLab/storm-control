@@ -360,7 +360,11 @@ class Feeds(halModule.HalModule):
                               validator = {"data" : {"feeds" : [True, dict]}})
 
         # Sent each time a feed generates a frame.
-        halMessage.addMessage("new frame", check_exists = False)
+        # Note: This needs to match the definition in camera.camera.
+        halMessage.addMessage("new frame",
+                              check_exists = False,
+                              validator = {"data" : {"frame" : [True, frame.Frame]},
+                                           "resp" : None})
         
     def broadcastFeedInfo(self):
         """
@@ -386,29 +390,22 @@ class Feeds(halModule.HalModule):
                                                               data = {"feed_name" : feed_name,
                                                                       "feed_info" : self.feeds_info[feed_name]}))
 
-        elif (message.getType() == "initial parameters"):
+        elif (message.getType() == "camera configuration"):
             #
-            # We get this message when the camera (and also other modules) respond
-            # with their initial parameters. For each of the cameras we get all of
-            # the key information. The information is then broadcast in the 'feed list'
-            # message.
+            # We get this message at startup from each of the cameras.
             #
             data = message.getData()
-            if ("camera" in data):
-                p = data["parameters"]
+            p = data["parameters"]
 
-                #
-                # These are the invariant properties of the camera. We could also
-                # get the from the camera by sending a 'get feed config' message,
-                # but it is easiest to just keep a record of all them at
-                # initialization.
-                #
-                self.camera_info[data["camera"]] = {"camera" : data["camera"],
-                                                    "master" : data["master"]}
+            #
+            # These are the invariant properties of the camera.
+            #
+            self.camera_info[data["camera"]] = {"camera" : data["camera"],
+                                                "master" : data["master"]}
 
-                self.feeds_info[data["camera"]] = createCameraFeedInfo(p,
-                                                                       data["camera"],
-                                                                       data["master"])
+            self.feeds_info[data["camera"]] = createCameraFeedInfo(p,
+                                                                   data["camera"],
+                                                                   data["master"])
 
         elif (message.getType() == "new parameters"):
             self.feed_controller = FeedController(parameters = message.getData()["parameters"])
@@ -431,12 +428,13 @@ class Feeds(halModule.HalModule):
             if self.feed_controller is not None:
                 self.feeds_info.update(self.feed_controller.getFeedsInfo())
 
-            print("")
-            for elts in self.feeds_info:
-                print(elts)
-                for elt in self.feeds_info[elts]:
-                    print("  ", elt, self.feeds_info[elts][elt])
-            print("")
+            if False:
+                print("")
+                for elts in self.feeds_info:
+                    print(elts)
+                    for elt in self.feeds_info[elts]:
+                        print("  ", elt, self.feeds_info[elts][elt])
+                print("")
                 
             self.broadcastFeedInfo()
 

@@ -153,7 +153,7 @@ class Params(halModule.HalModule):
             self.current_camera = data["camera"]
             self.view.configureAndUpdateUi(data)
                 
-        elif (message.getType() == "new parameters"):
+        elif (message.getType() == "updated parameters"):
             p = message.getData()["parameters"].get(self.current_camera).copy()
             self.view.newParameters(p)
 

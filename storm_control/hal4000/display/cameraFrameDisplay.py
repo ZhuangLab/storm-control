@@ -14,6 +14,7 @@ import storm_control.sc_library.parameters as params
 
 import storm_control.hal4000.colorTables.colorTables as colorTables
 import storm_control.hal4000.feeds.feeds as feeds
+import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.qtWidgets.qtColorGradient as qtColorGradient
 import storm_control.hal4000.qtWidgets.qtCameraWidget as qtCameraWidget
 import storm_control.hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
@@ -252,9 +253,9 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         respond to with information about it should be displayed.
         """
         self.parameters.set("feed_name", str(feed_name))
-        self.guiMessage.emit(["get feed config", 1,
-                              {"display_name" : self.display_name,
-                               "feed_name" : self.getFeedName()}])
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "get feed config",
+                                                   data = {"display_name" : self.display_name,
+                                                           "feed_name" : self.getFeedName()}))
 
     def handleGrid(self, boolean):
         if self.show_grid:
@@ -430,39 +431,41 @@ class CameraFrameDisplay(BaseFrameDisplay):
 
         # This will get the updated feed information.
         if feed is not None:
-            self.guiMessage.emit(["get feed information", 1,
-                                  {"display_name" : self.display_name,
-                                   "feed_name" : self.getFeedName()}])
+            self.guiMessage.emit(halMessage.HalMessage(m_type = "get feed information",
+                                                       data = {"display_name" : self.display_name,
+                                                               "feed_name" : self.getFeedName()}))
 
         # This will get the correct camera.
-        self.guiMessage.emit(["set current camera", 1,
-                              {"display_name" : self.display_name,
-                               "camera" : camera}])
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "set current camera",
+                                                   data = {"display_name" : self.display_name,
+                                                           "camera" : camera}))
 
     def handleCameraShutter(self, boolean):
-        self.guiMessage.emit(["shutter clicked", 1,
-                              {"display_name" : self.display_name,
-                               "feed_name" : self.getFeedName()}])
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "shutter clicked",
+                                                   data = {"display_name" : self.display_name,
+                                                           "feed_name" : self.getFeedName()}))
 
     def handleDisplayCaptured(self, a_pixmap):
         #self.frameCaptured.emit(self.feed_name, a_pixmap)
         pass
 
     def handleDragStart(self):
-        self.guiMessage.emit(["drag start", 3,
-                              {"display_name" : self.display_name,
-                               "feed_name" : self.getFeedName()}])
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "drag start",
+                                                   level = 3,
+                                                   data = {"display_name" : self.display_name,
+                                                           "feed_name" : self.getFeedName()}))
 
     def handleDragMove(self, x_disp, y_disp):
-        self.guiMessage.emit(["drag move", 3,
-                              {"display_name" : self.display_name,
-                               "feed_name" : self.getFeedName(),
-                               "x_disp" : x_disp,
-                               "y_disp" : y_disp}])
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "drag move",
+                                                   level = 3,
+                                                   data = {"display_name" : self.display_name,
+                                                           "feed_name" : self.getFeedName(),
+                                                           "x_disp" : x_disp,
+                                                           "y_disp" : y_disp}))
 
     def handleRecord(self, boolean):
-        self.guiMessage.emit(["record clicked", 1,
-                              {"display_name" : self.display_name}])
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "record clicked",
+                                                   data = {"display_name" : self.display_name}))
         
     def handleROISelection(self, select_rect):
         #self.ROISelection.emit(self.feed_name, select_rect)

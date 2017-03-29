@@ -459,9 +459,11 @@ class HalCore(QtCore.QObject):
                 raise halExceptions.HalException(msg)
 
             validator = halMessage.valid_messages[message.m_type].get("data")
-            if validator is not None:
-                halMessage.validateData(validator, message)
-                    
+            halMessage.validateData(validator, message)
+            
+        if (message.level == 1):
+            message.logEvent("queued")
+
         self.queued_messages.append(message)
 
         # Start the message timer, if it is not already running.
@@ -503,9 +505,8 @@ class HalCore(QtCore.QObject):
                 # Check the responses if we are in strict mode.
                 if self.strict:
                     validator = halMessage.valid_messages[sent_message.m_type].get("resp")
-                    if validator is not None:
-                        for response in sent_message.getResponses():
-                            halMessage.validateResponse(validator, sent_message, response)
+                    for response in sent_message.getResponses():
+                        halMessage.validateResponse(validator, sent_message, response)
 
                 # Notify the sender of any responses to the message.
                 if sent_message.hasResponses():
