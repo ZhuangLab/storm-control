@@ -168,35 +168,7 @@ class HalModule(QtCore.QObject):
                                                     message = str(exception),
                                                     m_exception = exception,
                                                     stack_trace = stack_trace))
-        
-    def processMessage(self):
-        """
-        Don't override..
-        """
-        # Get the next message from the queue.
-        message = self.queued_messages.popleft()
 
-        # All of these need to execute quickly, otherwise the GUI
-        # will appear frozen among other problems.
-        if (message.level == 1):
-            try:
-                self.processL1Message(message)
-            except Exception as exception:
-                message.addError(halMessage.HalMessageError(source = self.module_name,
-                                                            message = str(exception),
-                                                            m_exception = exception))
-        elif (message.level == 2):
-            self.processL2Message(message)
-        elif (message.level == 3):
-            self.processL3Message(message)
-        else:
-            raise halException.HalException("Unknown message level", message.level)
-        message.decRefCount()
-
-        # Start the timer if we still have messages left.
-        if (len(self.queued_messages) > 0):
-            self.queued_messages_timer.start()
-        
     def processL1Message(self, message):
         """
         Override with class specific handling of general messages.
@@ -214,6 +186,35 @@ class HalModule(QtCore.QObject):
         Override with class specific handling of 'other' messages.
         """
         pass
+        
+    def processMessage(self):
+        """
+        Don't override..
+        """
+        # Get the next message from the queue.
+        message = self.queued_messages.popleft()
+
+        # All of these need to execute quickly, otherwise the GUI
+        # will appear frozen among other problems.
+        if (message.level == 1):
+            try:
+                self.processL1Message(message)
+            except Exception as exception:
+                message.addError(halMessage.HalMessageError(source = self.module_name,
+                                                            message = str(exception),
+                                                            m_exception = exception,
+                                                            stack_trace = traceback.format_exc()))
+        elif (message.level == 2):
+            self.processL2Message(message)
+        elif (message.level == 3):
+            self.processL3Message(message)
+        else:
+            raise halException.HalException("Unknown message level", message.level)
+        message.decRefCount()
+
+        # Start the timer if we still have messages left.
+        if (len(self.queued_messages) > 0):
+            self.queued_messages_timer.start()
 
             
 #
