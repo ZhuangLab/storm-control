@@ -67,7 +67,7 @@ def copyParametersAddNew(original_parameters, new_parameters, allow_new):
     unrecognized = []
     for attr in new_parameters.getAttrs():
 
-        prop = new_parameters.get(attr)
+        prop = new_parameters.getp(attr)
         if isinstance(prop, StormXMLObject):
             if not original_parameters.has(attr):
                 if allow_new or not prop._validate_:
@@ -91,7 +91,7 @@ def copyParametersAddNew(original_parameters, new_parameters, allow_new):
         else:
             if not original_parameters.has(attr):
                 if allow_new:
-                    original_parameters.set(attr, prop)
+                    original_parameters.addParameter(attr, prop)
                 else:
                     unrecognized.append(attr)
 
