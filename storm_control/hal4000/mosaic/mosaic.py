@@ -57,11 +57,13 @@ class Mosaic(halModule.HalModule):
                                "ui_widget" : self.view}
 
         # The current pixel size.
-        halMessage.addMessage("pixel size")
+        halMessage.addMessage("pixel size",
+                              validator = {"data" : {"pixel size" : [True, float]},
+                                           "resp" : None})
 
     def processL1Message(self, message):
 
-        if (message.getType() == "configure1"):
+        if message.isType("configure1"):
 
             # Initial UI configuration.
             self.view.setObjectiveText(getObjectiveName(self.parameters))
@@ -76,7 +78,7 @@ class Mosaic(halModule.HalModule):
                                                        m_type = "initial parameters",
                                                        data = {"parameters" : self.parameters}))
 
-        elif (message.getType() == "new parameters"):
+        elif message.isType("new parameters"):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"old parameters" : self.parameters.copy()}))
 
@@ -95,7 +97,7 @@ class Mosaic(halModule.HalModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"new parameters" : self.parameters}))
 
-        elif (message.getType() == "stop film"):
+        elif message.isType("stop film"):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : self.parameters}))
 
