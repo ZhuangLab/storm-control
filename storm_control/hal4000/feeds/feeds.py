@@ -14,6 +14,7 @@ Hazen 03/17
 import numpy
 
 import storm_control.sc_library.halExceptions as halExceptions
+import storm_control.sc_library.parameters as params
 
 import storm_control.hal4000.camera.frame as frame
 import storm_control.hal4000.halLib.halMessage as halMessage
@@ -51,6 +52,149 @@ def getCameraFeedName(feed_name):
         return [tmp[0], None]
     
 
+class CameraFeedInfo(params.StormXMLObject):
+    """
+    This class stores all the information necessary to render and save
+    the image from a camera/feed, along with some coordinate transform
+    functions.
+    """
+    def __init__(self, camera_params = None, camera_name = None, is_master = False, **kwds):
+        """
+        This will automatically make a copy of camera_params.
+        """
+        super().__init__(**kwds)
+
+        # Copy all of the camera parameters.
+        self.parameters = camera_params.copy()
+
+        # Add some additional parameters.
+
+        # display.display will replace the colortable parameter with correct value.
+        self.parameters.add(params.ParameterString(name = "colortable",
+                                                   value = ""))
+        self.paremeters.add(params.ParameterString(name = "extension",
+                                                   value = camera_params.get("filename_ext")))
+        self.paremeters.add(params.ParameterString(name = "feed_name",
+                                                   value = camera_name))
+        self.parameters.add(params.ParameterSetBoolean(name = "is_camera",
+                                                       value = True))
+        self.parameters.add(params.ParameterSetBoolean(name = "is_master",
+                                                       value = is_master))
+
+        # These are for the various geometry calculations.
+        self.camera_chip_x = self.parameters.getp("x_end").getMaximum()
+        self.camera_chip_y = self.parameters.getp("y_end").getMaximum()
+        self.camera_x_bin = self.parameters.get("x_bin")
+        self.camera_x_pixels = self.parameters.get("x_pixels")
+        self.camera_x_start = self.parameters.get("x_start")
+        self.camera_y_bin = self.parameters.get("y_bin")
+        self.camera_y_pixels = self.parameters.get("y_pixels")
+        self.camera_y_start = self.parameters.get("y_start")
+        self.feed_x_pixels = self.camera_x_pixels
+        self.feed_x_start = 0
+        self.feed_y_pixels = self.camera_y_pixels
+        self.feed_y_start = 0
+        self.flip_horizontal = self.parameters.get("flip_horizontal")
+        self.flip_vertical = self.parameters.get("flip_vertical")
+        self.transpose = self.parameters.get("transpose")
+
+        # Delete everything we won't need.
+        to_keep = ["bytes_per_frame",
+                   "colortable",
+                   "default_max",
+                   "default_min",
+                   "extension",
+                   "feed_name",
+                   "flip_horizontal",
+                   "flip_vertical",
+                   "is_camera",
+                   "is_master",
+                   "is_saved",
+                   "max_intensity",
+                   "transpose",
+                   "x_pixels"]
+        for attr in self.parameters.getAttrs():
+            if not attr in to_keep:
+                self.parameters.delete(attr)
+
+    def addFeedInfo(self, feed_params):
+        """
+        This will update the object to give the right values for a feed
+        derived from the camera the object was created with.
+
+        Note: All transforms will adjusted by the feeds parameters.
+        """
+        for attr in self.parameters.getAttrs():
+            if feed_params.has(attr):
+                self.parameters.set(attr, feed_params.get(attr))
+        self.feed_x_pixels = self.parameters.get("x_pixels")
+        self.feed_x_start = self.parameters.get("x_start")
+        self.feed_y_pixels = self.parameters.get("y_pixels")
+        self.feed_y_start = self.parameters.get("y_start")
+
+    def getChipSize(self):
+        if self.transpose:
+            return [self.camera_chip_y, self.camera_chip_x]
+        else:
+            return [self.camera_chip_x, self.camera_chip_y]
+
+    def getFrameScale(self):
+        if self.transpose:
+            return [self.camera_y_bin, self.camera_x_bin]
+        else:
+            return [self.camera_x_bin, self.camera_y_bin]
+    
+    def getFrameSize(self):
+       if self.transpose:
+            return [self.feed_y_pixels, self.feed_x_pixels]
+        else:
+            return [self.feed_x_pixels, self.feed_y_pixels]
+
+    def frameCenter(self):
+        """
+        Center point of the frame in display coordinates.
+        """
+        cx = self.camera_x_start + int(self.camera_x_bin * self.feed_x_start + 0.5 * self.feed_x_pixels)
+        cy = self.camera_y_start + int(self.camera_y_bin * self.feed_y_start + 0.5 * self.feed_y_pixels)
+        return self.transformChipToDisplay(cx, cy)
+    
+    def frameZeroZero(self):
+        """
+        Where to place the frame in the display.
+        """
+        zx = self.camera_x_start + self.camera_x_bin * self.feed_x_start
+        zy = self.camera_y_start + self.camera_y_bin * self.feed_y_start
+        return self.transformChipToDisplay(zx, zy)
+
+    def transformChipToDisplay(self, cx, cy):
+        """
+        Go from chip coordinates to display coordinates.
+        """
+        if self.flip_horizontal:
+            cx = self.camera_chip_x - cx
+        if self.flip_vertical:
+            cy = self.camera_chip_y - cy
+        if self.transpose:
+            [cx, cy] = [cy, cx]
+
+        return [cx, cy]
+
+    def transfromDisplayToFrame(self, dx, dy):
+        """
+        Go from coordinates in the display to coordinates in the frame.
+        """
+        if self.transpose:
+            [dx, dy] = [dy, dx]
+        if self.flip_vertical:
+            dy = self.camera_chip_y - dy
+        if self.flip_horizontal:
+            dx = self.camera_chip_x - dx
+        dx = int(dx/self.camera_x_bin)
+        dy = int(dy/self.camera_y_bin)
+
+        return [dx, dy]
+
+    
 class FeedException(halExceptions.HalException):
     pass
         
