@@ -133,7 +133,7 @@
 	  <transpose type="boolean">False</transpose>
 
 	  <!-- This is the extension to use (if any) when saving data from this camera. -->
-	  <filename_ext type="string"></filename_ext>
+	  <extension type="string"></extension>
 
 	  <!-- Whether or not data from this camera is saved during filming. -->
 	  <is_saved type="boolean">True</is_saved>

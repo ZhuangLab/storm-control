@@ -21,24 +21,24 @@ import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
 
-def createCameraFeedInfo(cam_params, camera_name, is_master):
-    """
-    Create a feed information dictionary for a camera.
-    """
-    return {"bytes_per_frame" : cam_params.get("bytes_per_frame"),
-            "default_max" : cam_params.get("default_max"),
-            "default_min" : cam_params.get("default_min"),
-            "extension" : cam_params.get("filename_ext"),
-            "feed_name" : camera_name,
-            "flip_horizontal" : cam_params.get("flip_horizontal"),
-            "flip_vertical" : cam_params.get("flip_vertical"),
-            "is_camera" : True,
-            "is_master" : is_master,
-            "is_saved" : cam_params.get("is_saved"),
-            "max_intensity" : cam_params.get("max_intensity"),
-            "transpose" : cam_params.get("transpose"),
-            "x_pixels" : cam_params.get("x_pixels"),
-            "y_pixels" : cam_params.get("y_pixels")}
+#def createCameraFeedInfo(cam_params, camera_name, is_master):
+#    """
+#    Create a feed information dictionary for a camera.
+#    """
+#    return {"bytes_per_frame" : cam_params.get("bytes_per_frame"),
+#            "default_max" : cam_params.get("default_max"),
+#            "default_min" : cam_params.get("default_min"),
+#            "extension" : cam_params.get("filename_ext"),
+#            "feed_name" : camera_name,
+#            "flip_horizontal" : cam_params.get("flip_horizontal"),
+#            "flip_vertical" : cam_params.get("flip_vertical"),
+#            "is_camera" : True,
+#            "is_master" : is_master,
+#            "is_saved" : cam_params.get("is_saved"),
+#            "max_intensity" : cam_params.get("max_intensity"),
+#            "transpose" : cam_params.get("transpose"),
+#            "x_pixels" : cam_params.get("x_pixels"),
+#            "y_pixels" : cam_params.get("y_pixels")}
 
     
 def getCameraFeedName(feed_name):
@@ -72,8 +72,6 @@ class CameraFeedInfo(params.StormXMLObject):
         # display.display will replace the colortable parameter with correct value.
         self.parameters.add(params.ParameterString(name = "colortable",
                                                    value = ""))
-        self.paremeters.add(params.ParameterString(name = "extension",
-                                                   value = camera_params.get("filename_ext")))
         self.paremeters.add(params.ParameterString(name = "feed_name",
                                                    value = camera_name))
         self.parameters.add(params.ParameterSetBoolean(name = "is_camera",
@@ -98,7 +96,8 @@ class CameraFeedInfo(params.StormXMLObject):
         self.flip_vertical = self.parameters.get("flip_vertical")
         self.transpose = self.parameters.get("transpose")
 
-        # Delete everything we won't need.
+        # Delete all the parameters we won't need. Probably not necessary
+        # but it at least keeps us from using them accidentally.
         to_keep = ["bytes_per_frame",
                    "colortable",
                    "default_max",
@@ -179,9 +178,21 @@ class CameraFeedInfo(params.StormXMLObject):
 
         return [cx, cy]
 
-    def transfromDisplayToFrame(self, dx, dy):
+    def transformChipToFrame(self, cx, cy):
         """
-        Go from coordinates in the display to coordinates in the frame.
+        Go from chip coodinates to frame coordinates. Typically
+        frame will only be part of the camera chip not the
+        entire chip.
+        """
+        cx -= (self.camera_x_start + self.feed_x_start)
+        cy -= (self.camera_x_start + self.feed_x_start)
+        cx = int(cx/self.camera_x_bin)
+        cy = int(cy/self.camera_y_bin)
+        return [cx, cy]
+
+    def transfromDisplayToChip(self, dx, dy):
+        """
+        Go from display coordinate to chip coordinates.
         """
         if self.transpose:
             [dx, dy] = [dy, dx]
@@ -189,8 +200,6 @@ class CameraFeedInfo(params.StormXMLObject):
             dy = self.camera_chip_y - dy
         if self.flip_horizontal:
             dx = self.camera_chip_x - dx
-        dx = int(dx/self.camera_x_bin)
-        dy = int(dy/self.camera_y_bin)
 
         return [dx, dy]
 
@@ -500,7 +509,7 @@ class Feeds(halModule.HalModule):
         # e.g. dict["feed_name"]["display_max"] = ?
         #
         halMessage.addMessage("feeds information",
-                              validator = {"data" : {"feeds" : [True, dict]},
+                              validator = {"data" : {"feeds" : [True, feeds.CameraFeedInfo]},
                                            "resp" : None})
 
         # Sent each time a feed generates a frame.
@@ -564,9 +573,9 @@ class Feeds(halModule.HalModule):
             for attr in params.getAttrs():
                 if attr.startswith("camera"):
                     p = params.get(attr)
-                    self.feeds_info[attr] = createCameraFeedInfo(p,
-                                                                 self.camera_info[attr]["camera"],
-                                                                 self.camera_info[attr]["master"])
+                    self.feeds_info[attr] = CameraFeedInfo(camera_params = p,
+                                                           camera_name = self.camera_info[attr]["camera"],
+                                                           is_master = self.camera_info[attr]["master"])
 
             # Get feed information.
             if self.feed_controller is not None:
