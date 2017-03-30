@@ -40,6 +40,31 @@ import storm_control.hal4000.halLib.halModule as halModule
 #            "x_pixels" : cam_params.get("x_pixels"),
 #            "y_pixels" : cam_params.get("y_pixels")}
 
+
+def checkParameters(parameters):
+    """
+    Checks parameters to verify that there won't be any errors
+    when we actually try to create the feeds.
+
+    Throw an exception if there are any problems.
+    """
+    if not parameters.has("feeds"):
+        return
+
+    # Check the feed parameters. For now all we are doing is
+    # verifying that the feed x size is a multiple of 4.
+    feedparameters = parameters.get("feeds")
+    for feed_name in feedparameters:
+        fp = self.parameters.get(feed_name)
+
+        x_start = fp.get("x_start", 1)
+        x_end = fp.get("x_end", cp.get("x_pixels"))
+        x_pixels = x_end - x_start + 1
+        
+        # Check that the feed size is a multiple of 4 in x.
+        if not ((x_pixels % 4) == 0):
+            raise FeedException("x size of " + str(x_pixels) + " is not a multiple of 4 in feed " + feed_name)
+
     
 def getCameraFeedName(feed_name):
     """
@@ -50,7 +75,11 @@ def getCameraFeedName(feed_name):
         return tmp
     else:
         return [tmp[0], None]
-    
+
+
+class FeedException(halExceptions.HalException):
+    pass
+
 
 class CameraFeedInfo(params.StormXMLObject):
     """
@@ -204,10 +233,6 @@ class CameraFeedInfo(params.StormXMLObject):
         return [dx, dy]
 
     
-class FeedException(halExceptions.HalException):
-    pass
-        
-
 class FeedNC(object):
     """
     The base class for all the feeds.
@@ -422,22 +447,23 @@ class FeedController(object):
     """
     Feed controller.
     """
-    def __init__(self, parameters = None, **kwds):
+    def __init__(self, parameters = None, camera_info = None, **kwds):
         """
-        parameters - This is all of the current parameters as we'll also need
-                     information about the cameras.
+        parameters - This is just the 'feed' section of the parameters.
+        camera_info - This is a dictionary of CameraFeedInfo objects
+                      keyed by camera name. We'll use these to create
+                      equivalent objects for each feed.
         """
         super().__init__(**kwds)
 
         self.feeds = []
+        if parameters is None:
+            return
+        
         self.parameters = None
 
-        # Get the names of the additional feeds (if any).
-        if not parameters.has("feeds"):
-            return
-
         # Create the feeds.
-        self.parameters = parameters.get("feeds")
+        self.parameters = parameters
         for feed_name in self.parameters.getAttrs():
             feed_params = self.parameters.get(feed_name)
             camera_name = feed_params.get("source")
