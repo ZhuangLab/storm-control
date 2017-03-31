@@ -85,13 +85,13 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.ui.setupUi(self)
 
         # Camera frame display.
+        self.camera_view = self.ui.cameraGraphicsView
         self.camera_scene = qtCameraGraphicsScene.QtCameraGraphicsScene(parent = self)
         self.camera_widget = qtCameraGraphicsScene.QtCameraGraphicsItem()
+        
         self.camera_scene.addItem(self.camera_widget)
-        self.ui.cameraGraphicsView.setScene(self.camera_scene)
-
-        self.ui.cameraGraphicsView.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(0,0,0)))
-        #self.camera_scene.sceneRectChanged.connect(self.ui.cameraGraphicsView.handleRectChanged)
+        self.camera_view.setScene(self.camera_scene)
+        self.camera_view.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(0,0,0)))
         
         # Display range slider.
         self.ui.rangeSlider = qtRangeSlider.QVRangeSlider()
@@ -145,14 +145,10 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         menu.addAction(self.ui.gridAct)
         menu.exec_(event.globalPos())
 
-    def feedConfig(self, data):
+    def feedConfig(self, feed_info):
         """
-        This method gets called when any of the views changes it's 
-        current feed or 'display00' changes the current camera.
+        This method gets called when the view changes it's current feed.
         """
-        feed_name = data["feed_name"]
-        feed_info = data["feed_info"]
-
         #
         # Add a sub-section for this camera / feed if we don't already have one.
         #
@@ -160,30 +156,45 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         # be displayed. These are what we'll use if don't already have some other
         # values.
         #
-        if not self.parameters.has(feed_name):
+        if not self.parameters.has(feed_info.getFeedName()):
 
             # Create a sub-section for this camera / feed.
-            p = self.parameters.addSubSection(feed_name)
+            p = self.parameters.addSubSection(feed_info.getFeedName())
 
             # Add display specific parameters.
+            p.add(params.ParameterInt(name = "center_x",
+                                      value = 0,
+                                      is_mutable = False,
+                                      is_saved = False))
+
+            p.add(params.ParameterInt(name = "center_y",
+                                      value = 0,
+                                      is_mutable = False,
+                                      is_saved = False))
+            
             p.add(params.ParameterSetString(description = "Color table",
                                             name = "colortable",
-                                            value = feed_info["colortable"],
+                                            value = feed_info.getParameter("colortable"),
                                             allowed = self.color_tables.getColorTableNames()))
                         
             p.add(params.ParameterInt(description = "Display maximum",
                                       name = "display_max",
-                                      value = feed_info["default_max"]))
+                                      value = feed_info.getParameter("default_max")))
 
             p.add(params.ParameterInt(description = "Display minimum",
                                       name = "display_min",
-                                      value = feed_info["default_min"]))
+                                      value = feed_info.getParameter("default_min")))
 
             p.add(params.ParameterInt(name = "max_intensity",
-                                      value = feed_info["max_intensity"],
+                                      value = feed_info.getParameter("max_intensity"),
                                       is_mutable = False,
                                       is_saved = False))
 
+            p.add(params.ParameterInt(name = "scale",
+                                      value = 1,
+                                      is_mutable = False,
+                                      is_saved = False))
+            
             p.add(params.ParameterInt(description = "Frame to display when filming with a shutter sequence",
                                       name = "sync",
                                       value = 0))
@@ -193,41 +204,37 @@ class BaseFrameDisplay(QtWidgets.QFrame):
                                       is_mutable = False,
                                       is_saved = False))
 
-        #
-        # Update UI settings if the feed / camera that we got configuration
-        # information for is the current feed / camera.
-        #
-        if (self.getFeedName() == feed_name):
+        # A sanity check..
+        assert (self.getFeedName() == feed_info.getFeedName())
+        
+        # Configure the QtCameraGraphicsItem.
+        color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
+        self.camera_widget.newColorTable(color_table)
+        self.camera_widget.newConfiguration(feed_info)
+        self.updateRange()
 
-            # Configure the QtCameraGraphicsItem.
-            color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
-            self.camera_widget.newColorTable(color_table)
-            self.camera_widget.newConfiguration(feed_info)
-            self.updateRange()
+        # Configure the QtCameraGraphicsView.
+        self.camera_widget.newConfiguration(feed_info)
 
-            # Configure the QtCameraGraphicsView.
-            #self.ui.cameraGraphicsView.setMaxViewable(feed_info["x_pixels"], feed_info["y_pixels"])
-            self.ui.cameraGraphicsView.newConfiguration(feed_info)
-            
-            # Color gradient.
-            if self.color_gradient is not None:
-                self.color_gradient.newColorTable(color_table)
-            else:
-                self.color_gradient = qtColorGradient.QColorGradient(colortable = color_table,
+        # Color gradient.
+        if self.color_gradient is not None:
+            self.color_gradient.newColorTable(color_table)
+        else:
+            self.color_gradient = qtColorGradient.QColorGradient(colortable = color_table,
                                                                      parent = self.ui.colorFrame)
-                layout = QtWidgets.QGridLayout(self.ui.colorFrame)
-                layout.setContentsMargins(2,2,2,2)
-                layout.addWidget(self.color_gradient)
+            layout = QtWidgets.QGridLayout(self.ui.colorFrame)
+            layout.setContentsMargins(2,2,2,2)
+            layout.addWidget(self.color_gradient)
                 
-            self.ui.colorComboBox.setCurrentIndex(self.ui.colorComboBox.findText(self.getParameter("colortable")[:-5]))
+        self.ui.colorComboBox.setCurrentIndex(self.ui.colorComboBox.findText(self.getParameter("colortable")[:-5]))
 
-            # General settings.
-            self.ui.rangeSlider.setRange([0.0, self.getParameter("max_intensity"), 1.0])
-            self.ui.rangeSlider.setValues([float(self.getParameter("display_min")),
-                                           float(self.getParameter("display_max"))])
+        # General settings.
+        self.ui.rangeSlider.setRange([0.0, self.getParameter("max_intensity"), 1.0])
+        self.ui.rangeSlider.setValues([float(self.getParameter("display_min")),
+                                       float(self.getParameter("display_max"))])
 
-            self.setSyncMax(self.getParameter("sync_max"))
-            self.ui.syncSpinBox.setValue(self.getParameter("sync"))
+        self.setSyncMax(self.getParameter("sync_max"))
+        self.ui.syncSpinBox.setValue(self.getParameter("sync"))
 
     def getDisplayName(self):
         return self.display_name

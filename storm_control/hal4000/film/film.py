@@ -466,10 +466,10 @@ class Film(halModule.HalModule):
         
         # Start slave cameras first.
         for feed_name, feed in self.feeds_info.items():
-            if feed["is_camera"] and not feed["is_master"]:
+            if feed.getParameter("is_camera") and not feed.getParameter("is_master"):
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "start camera",
-                                                           data = {"camera" : feed["feed_name"]}))
+                                                           data = {"camera" : feed.getParameter("feed_name")}))
 
         # Force sync.
         #
@@ -480,10 +480,10 @@ class Film(halModule.HalModule):
 
         # Start master cameras last.
         for feed_name, feed in self.feeds_info.items():
-            if feed["is_camera"] and feed["is_master"]:
+            if feed.getParameter("is_camera") and feed.getParameter("is_master"):
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "start camera",
-                                                           data = {"camera" : feed["feed_name"]}))
+                                                           data = {"camera" : feed.getParameter("feed_name")}))
 
     def startFilmingLevel1(self, film_settings):
         """
@@ -511,8 +511,8 @@ class Film(halModule.HalModule):
         self.writers = {}
         if self.film_settings["save_film"]:
             for feed_name, feed in self.feeds_info.items():
-                if feed["is_saved"]:
-                    self.writers[feed["feed_name"]] = imagewriters.createFileWriter(feed, self.film_settings)
+                if feed.getParameter("saved"):
+                    self.writers[feed.getFeedName()] = imagewriters.createFileWriter(feed, self.film_settings)
         if (len(self.writers) == 0):
             self.view.updateSize(self.film_size)
 
@@ -529,22 +529,22 @@ class Film(halModule.HalModule):
 
         # Stop master cameras first.
         for feed_name, feed in self.feeds_info.items():
-            if feed["is_camera"] and feed["is_master"]:
+            if feed.getParameter("is_camera") and feed.getParameter("is_master"):
                 self.active_camera_count += 1
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "stop camera",
-                                                           data = {"camera" : feed["feed_name"]}))
+                                                           data = {"camera" : feed.getParameter("feed_name")}))
 
         # Force sync.
         self.newMessage.emit(halMessage.SyncMessage(self))
 
         # Stop slave cameras last.
         for feed_name, feed in self.feeds_info.items():
-            if feed["is_camera"] and not feed["is_master"]:
+            if feed.getParameter("is_camera") and not feed.getParameter("is_master"):
                 self.active_camera_count += 1
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "stop camera",
-                                                           data = {"camera" : feed["feed_name"]}))
+                                                           data = {"camera" : feed.getParameter("feed_name")}))
 
     def stopFilmingLevel1(self):
         """

@@ -125,19 +125,22 @@
 	  <!-- This is specific to the emulated camera. -->
 	  <roll type="float">0.5</roll>
 
-	  <!-- These should be specified for every camera. -->
+	  <!-- These should be specified for every camera, and cannot be changed
+	       in HAL when running. -->
 	  <default_max type="int">300</default_max> <!-- these are the display defaults, not the camera range. -->
 	  <default_min type="int">0</default_min>
 	  <flip_horizontal type="boolean">False</flip_horizontal>
 	  <flip_vertical type="boolean">False</flip_vertical>
 	  <transpose type="boolean">False</transpose>
 
+	  <!-- These can be changed / editted. -->
+
 	  <!-- This is the extension to use (if any) when saving data from this camera. -->
 	  <extension type="string"></extension>
 
 	  <!-- Whether or not data from this camera is saved during filming. -->
-	  <is_saved type="boolean">True</is_saved>
-	  
+	  <saved type="boolean">True</saved>
+
 	</parameters>
       </camera>
     </camera1>

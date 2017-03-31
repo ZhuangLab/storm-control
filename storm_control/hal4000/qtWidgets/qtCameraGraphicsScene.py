@@ -47,15 +47,15 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
     def newColorTable(self, colortable):
         self.colortable = colortable
 
-    def newConfiguration(self, configuration):
-        self.flip_horizontal = configuration["flip_horizontal"]
-        self.flip_vertical = configuration["flip_vertical"]
-        self.max_intensity = configuration["max_intensity"]
-        self.transpose = configuration["transpose"]
-        self.x_size = configuration["x_pixels"]
-        self.y_size = configuration["y_pixels"]
+    def newConfiguration(self, feed_info):
+        self.flip_horizontal = feed_info.getParameter("flip_horizontal")
+        self.flip_vertical = feed_info.getParameter("flip_vertical")
+        self.max_intensity = feed_info.getParameter("max_intensity")
+        self.transpose = feed_info.getParameter("transpose")
+        self.x_size = feed_info.getParameter("x_pixels")
+        self.y_size = feed_info.getParameter("y_pixels")
         
-        if "_sat.ctbl" in configuration["colortable"]:
+        if "_sat.ctbl" in feed_info.getParameter("colortable"):
             self.display_saturated_pixels = True
         else:
             self.display_saturated_pixels = False

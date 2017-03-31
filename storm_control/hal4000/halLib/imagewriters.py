@@ -10,6 +10,7 @@ import datetime
 import struct
 import tifffile
 
+import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
 
 def availableFileFormats():
@@ -19,38 +20,37 @@ def availableFileFormats():
 #    return [".dax", ".spe", ".tif"]
     return [".dax", ".tif"]
 
-def createFileWriter(feed_params, film_settings):
+def createFileWriter(feed_info, film_settings):
     """
     This is convenience function which creates the appropriate file writer
     based on the filetype.
     """
     ft = film_settings["filetype"]
     if (ft == ".dax"):
-        return DaxFile(feed_params = feed_params, film_settings = film_settings)
+        return DaxFile(feed_info = feed_info, film_settings = film_settings)
     elif (ft == ".spe"):
-        return SPEFile(feed_params = feed_params, film_settings = film_settings)
+        return SPEFile(feed_info = feed_info, film_settings = film_settings)
     elif (ft == ".tif"):
-        return TIFFile(feed_params = feed_params, film_settings = film_settings)
+        return TIFFile(feed_info = feed_info, film_settings = film_settings)
     else:
-        print("Unknown output file format, defaulting to .dax")
-        return DaxFile(feed_params = feed_params, film_settings = film_settings)
+        raise halExceptions.HalException("Unknown output file format '" + ft + "'")
 
 
 class BaseFileWriter(object):
 
-    def __init__(self, feed_params = None, film_settings = None, **kwds):
+    def __init__(self, feed_info = None, film_settings = None, **kwds):
         super().__init__(**kwds)
-        self.feed_params = feed_params
+        self.feed_info = feed_info
         self.film_settings = film_settings
 
         # This is the frame size in MB.
-        self.frame_size = self.feed_params["bytes_per_frame"] *  0.000000953674
+        self.frame_size = self.feed_info.getParameter("bytes_per_frame") *  0.000000953674
         self.number_frames = 0
 
         # Figure out the filename.
         self.basename = self.film_settings["basename"]
-        if (len(self.feed_params["extension"]) != 0):
-            self.basename += "_" + self.feed_params["extension"]
+        if (len(self.feed_info.getParameter("extension")) != 0):
+            self.basename += "_" + self.feed_info.getParameter(extension)
         self.filename = self.basename + self.film_settings["filetype"]
 
     def saveFrame(self):
@@ -73,8 +73,8 @@ class DaxFile(BaseFileWriter):
         """
         self.fp.close()
 
-        w = str(self.feed_params["x_pixels"])
-        h = str(self.feed_params["y_pixels"])
+        w = str(self.feed_info.getParameter("x_pixels"))
+        h = str(self.feed_info.getParameter("y_pixels"))
         with open(self.basename + ".inf", "w") as inf_fp:
             inf_fp.write("binning = 1 x 1\n")
             inf_fp.write("data type = 16 bit integers (binary, little endian)\n")
@@ -112,7 +112,7 @@ class SPEFile(BaseFileWriter):
 
         # FACCOUNT (width)
         self.fp.seek(42)
-        self.fp.write(struct.pack("h", self.feed_params["x_pixels"]))
+        self.fp.write(struct.pack("h", self.feed_info.getParameter(x_pixels)))
 
         # DATATYPE
         self.fp.seek(108)
@@ -124,7 +124,7 @@ class SPEFile(BaseFileWriter):
 
         # STRIPE (height)
         self.fp.seek(656)
-        self.fp.write(struct.pack("h", self.feed_params["y_pixels"]))
+        self.fp.write(struct.pack("h", self.feed_info.getParameter("y_pixels")))
 
         self.fp.seek(4100)
 
@@ -145,14 +145,14 @@ class TIFFile(BaseFileWriter):
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.description = "ImageJ=1.49i\nunit=um\n"
+        self.metadata = {'unit' : 'um'}
         self.resolution = (self.film_settings["pixel_size"], self.film_settings["pixel_size"], None)
         self.tif = tifffile.TiffWriter(self.filename)
         
     def saveFrame(self, frame):
         image = frame.getData()
         self.tif.save(image.reshape((frame.image_y, frame.image_x)),
-                      description = self.description,
+                      metadata = self.metadata,
                       resolution = self.resolution)
         return super().saveFrame()
                       

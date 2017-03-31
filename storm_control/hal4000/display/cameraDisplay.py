@@ -7,6 +7,7 @@ Hazen 3/17
 
 from PyQt5 import QtWidgets
 
+import storm_control.hal4000.feeds.feeds as feeds
 import storm_control.hal4000.display.cameraFrameDisplay as cameraFrameDisplay
 import storm_control.hal4000.halLib.halDialog as halDialog
 import storm_control.hal4000.halLib.halMessage as halMessage
@@ -88,7 +89,7 @@ class Display(halModule.HalModule):
                               validator = {"data" : {"display_name" : [True, str],
                                                      "feed_name" : [True, str]},
                                            "resp" : {"feed_name" : [True, str],
-                                                     "feed_info" : [True, dict]}})
+                                                     "feed_info" : [True, feeds.CameraFeedInfo]}})
 
         # This message comes from the record button.
         halMessage.addMessage("record clicked",
@@ -118,20 +119,15 @@ class Display(halModule.HalModule):
         The only message that we expect a response for is a 'get feed information' message.
         """
         if message.isType("get feed information"):
-            display_name = message.getData()["display_name"]
-            data = response.getData()
+            feed_info = response.getData()["feed_info"]
 
             # Add default color table information.
-            feed_info = data["feed_info"]
-            if "colortable" in feed_info:
-                if (feed_info["colortable"] == "none"):
-                    feed_info["colortable"] = self.parameters.get("colortable")
-            else:
-                feed_info["colortable"] = self.parameters.get("colortable")
+            if (feed_info.getParameter("colortable") == ""):
+                feed_info.setParameter("colortable", self.parameters.get("colortable"))
         
             for view in self.views:
-                if (view.getDisplayName() == display_name):
-                    view.feedConfig(data)
+                if (view.getDisplayName() == message.getData()["display_name"]):
+                    view.feedConfig(feed_info)
 
     def processL1Message(self, message):
             

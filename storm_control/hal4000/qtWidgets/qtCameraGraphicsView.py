@@ -25,14 +25,14 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         self.setAlignment(QtCore.Qt.AlignCenter)
         self.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(0,0,0)))
 
-    def newConfiguration(self, configuration):
+    def newConfiguration(self, feed_info):
         """
-        This is called when the frame size might change.
+        This is called when the camera or frame size might change.
         """
         # Figure out the maximum dimension of the frame.
-        self.frame_size = configuration["x_pixels"]
-        if (self.frame_size < configuration["y_pixels"]):
-            self.frame_size = configuration["y_pixels"]
+        self.frame_size = feed_info.getParameter("x_pixels")
+        if (self.frame_size < feed_info.getParameter("y_pixels")):
+            self.frame_size = feed_info.getParameter("y_pixels")
 
         # Calculate new scales.
         self.updateScaleRange()

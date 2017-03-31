@@ -107,14 +107,14 @@ class CameraControl(QtCore.QThread):
         # How/if data from this camera is saved.
         #
         self.parameters.add(params.ParameterString(description = "Camera save filename extension",
-                                                   name = "filename_ext",
+                                                   name = "extension",
                                                    value = ""))
         
         self.parameters.add(params.ParameterSetBoolean(description = "Save data from this camera when filming",
-                                                       name = "is_saved",
+                                                       name = "saved",
                                                        value = True))
         
-        self.parameters.set("filename_ext", config.get("filename_ext", ""))
+        self.parameters.set("extension", config.get("extension", ""))
         self.parameters.set("is_saved", config.get("is_saved", True))
 
         #
@@ -202,8 +202,8 @@ class CameraControl(QtCore.QThread):
             if((x_pixels % 4) != 0):
                 raise CameraException("The camera ROI must be a multiple of 4 in x!")
 
-        self.parameters.set("filename_ext", parameters.get("filename_ext"))
-        self.parameters.set("is_saved", parameters.get("is_saved"))
+        self.parameters.set("extension", parameters.get("extension"))
+        self.parameters.set("saved", parameters.get("saved"))
 
     def setEMCCDGain(self, gain):
         pass

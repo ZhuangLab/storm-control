@@ -11,6 +11,7 @@ filming and what extension to use when saving.
 Hazen 03/17
 """
 
+import copy
 import numpy
 
 import storm_control.sc_library.halExceptions as halExceptions
@@ -19,26 +20,6 @@ import storm_control.sc_library.parameters as params
 import storm_control.hal4000.camera.frame as frame
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
-
-
-#def createCameraFeedInfo(cam_params, camera_name, is_master):
-#    """
-#    Create a feed information dictionary for a camera.
-#    """
-#    return {"bytes_per_frame" : cam_params.get("bytes_per_frame"),
-#            "default_max" : cam_params.get("default_max"),
-#            "default_min" : cam_params.get("default_min"),
-#            "extension" : cam_params.get("filename_ext"),
-#            "feed_name" : camera_name,
-#            "flip_horizontal" : cam_params.get("flip_horizontal"),
-#            "flip_vertical" : cam_params.get("flip_vertical"),
-#            "is_camera" : True,
-#            "is_master" : is_master,
-#            "is_saved" : cam_params.get("is_saved"),
-#            "max_intensity" : cam_params.get("max_intensity"),
-#            "transpose" : cam_params.get("transpose"),
-#            "x_pixels" : cam_params.get("x_pixels"),
-#            "y_pixels" : cam_params.get("y_pixels")}
 
 
 def checkParameters(parameters):
@@ -81,7 +62,7 @@ class FeedException(halExceptions.HalException):
     pass
 
 
-class CameraFeedInfo(params.StormXMLObject):
+class CameraFeedInfo(object):
     """
     This class stores all the information necessary to render and save
     the image from a camera/feed, along with some coordinate transform
@@ -101,7 +82,7 @@ class CameraFeedInfo(params.StormXMLObject):
         # display.display will replace the colortable parameter with correct value.
         self.parameters.add(params.ParameterString(name = "colortable",
                                                    value = ""))
-        self.paremeters.add(params.ParameterString(name = "feed_name",
+        self.parameters.add(params.ParameterString(name = "feed_name",
                                                    value = camera_name))
         self.parameters.add(params.ParameterSetBoolean(name = "is_camera",
                                                        value = True))
@@ -137,11 +118,13 @@ class CameraFeedInfo(params.StormXMLObject):
                    "flip_vertical",
                    "is_camera",
                    "is_master",
-                   "is_saved",
                    "max_intensity",
+                   "saved",
                    "transpose",
-                   "x_pixels"]
-        for attr in self.parameters.getAttrs():
+                   "x_pixels",
+                   "y_pixels"]
+        
+        for attr in list(self.parameters.getAttrs()):
             if not attr in to_keep:
                 self.parameters.delete(attr)
 
@@ -166,6 +149,9 @@ class CameraFeedInfo(params.StormXMLObject):
         else:
             return [self.camera_chip_x, self.camera_chip_y]
 
+    def getFeedName(self):
+        return self.parameters.get("feed_name")
+
     def getFrameScale(self):
         if self.transpose:
             return [self.camera_y_bin, self.camera_x_bin]
@@ -173,26 +159,32 @@ class CameraFeedInfo(params.StormXMLObject):
             return [self.camera_x_bin, self.camera_y_bin]
     
     def getFrameSize(self):
-       if self.transpose:
+        if self.transpose:
             return [self.feed_y_pixels, self.feed_x_pixels]
         else:
             return [self.feed_x_pixels, self.feed_y_pixels]
 
+    def getParameter(self, name):
+        return self.parameters.get(name)
+        
     def frameCenter(self):
         """
         Center point of the frame in display coordinates.
         """
-        cx = self.camera_x_start + int(self.camera_x_bin * self.feed_x_start + 0.5 * self.feed_x_pixels)
-        cy = self.camera_y_start + int(self.camera_y_bin * self.feed_y_start + 0.5 * self.feed_y_pixels)
+        cx = self.camera_x_bin*(self.camera_x_start + self.feed_x_start + int(0.5 * self.feed_x_pixels))
+        cy = self.camera_y_bin*(self.camera_y_start + self.feed_y_start + int(0.5 * self.feed_y_pixels))
         return self.transformChipToDisplay(cx, cy)
     
     def frameZeroZero(self):
         """
         Where to place the frame in the display.
         """
-        zx = self.camera_x_start + self.camera_x_bin * self.feed_x_start
-        zy = self.camera_y_start + self.camera_y_bin * self.feed_y_start
+        zx = self.camera_x_bin*(self.camera_x_start + self.feed_x_start)
+        zy = self.camera_y_bin*(self.camera_y_start + self.feed_y_start)
         return self.transformChipToDisplay(zx, zy)
+
+    def setParameter(self, name, value):
+        self.parameters.set(name, value)
 
     def transformChipToDisplay(self, cx, cy):
         """
@@ -209,12 +201,11 @@ class CameraFeedInfo(params.StormXMLObject):
 
     def transformChipToFrame(self, cx, cy):
         """
-        Go from chip coodinates to frame coordinates. Typically
-        frame will only be part of the camera chip not the
-        entire chip.
+        Go from chip coodinates to frame coordinates. Typically frame 
+        will only be part of the camera chip not the entire chip.
         """
         cx -= (self.camera_x_start + self.feed_x_start)
-        cy -= (self.camera_x_start + self.feed_x_start)
+        cy -= (self.camera_y_start + self.feed_y_start)
         cx = int(cx/self.camera_x_bin)
         cy = int(cy/self.camera_y_bin)
         return [cx, cy]
@@ -238,60 +229,56 @@ class FeedNC(object):
     The base class for all the feeds.
     """
     
-    def __init__(self, camera_name = None, camera_parameters = None, feed_name = None, feed_parameters = None, **kwds):
+    def __init__(self, camera_feed_info = None, feed_name = None, feed_parameters = None, **kwds):
         """
-        camera_name - The name of the camera module the feed is derived from.
-        camera_parameters - The parameters of the corresponding camera.
+        camera_feed_info - The CameraFeedInfo object this seed is derived from.
+        feed_name - The name of this feed.
         feed_parameters - The parameters of this feed (not all of them in aggregate).
         """
         super().__init__(**kwds)
-        self.camera_name = camera_name
-        self.feed_name = camera_name + "-" + feed_name
-        self.parameters = feed_parameters
-
+        self.camera_name = camera_feed_info.getFeedName()
+        self.feed_info = copy.deepcopy(camera_feed_info)
         self.frame_number = -1
         self.frame_slice = None
 
         # Shorten the names..
-        cp = camera_parameters
-        fp = feed_parameters
+        cfi = camera_feed_info
+        fp = feed_parameters.copy()
         
         # Figure out what to slice, if anything.
         x_start = fp.get("x_start", 1)
-        x_end = fp.get("x_end", cp.get("x_pixels"))
+        x_end = fp.get("x_end", cfi.getParameter("x_pixels"))
         y_start = fp.get("y_start", 1)
-        y_end = fp.get("y_end", cp.get("y_pixels"))
+        y_end = fp.get("y_end", cfi.getParameter("y_pixels"))
 
         # Check if we actually need to slice.
-        if (x_start != 1) or (x_end != cp.get("x_pixels")) or (y_start != 1) or (y_start != cp.get("y_pixels")):
+        if (x_start != 1) or (x_end != cfi.getParameter("x_pixels")) or\
+           (y_start != 1) or (y_start != cfi.getParameter("y_pixels")):
             self.frame_slice = (slice(y_start-1, y_end),
                                 slice(x_start-1, x_end))
 
         self.x_pixels = x_end - x_start + 1
         self.y_pixels = y_end - y_start + 1
-        bytes_per_frame = 2 * self.x_pixels * self.y_pixels
         
         # Check that the feed size is a multiple of 4 in x.
         if not ((self.x_pixels % 4) == 0):
             raise FeedException("x size of " + str(self.x_pixels) + " is not a multiple of 4 in feed " + feed_name)
 
-        # This is everything that display.cameraFrameDisplay and film.film need
-        # to know about a feed.
-        self.feed_info = {"bytes_per_frame" : bytes_per_frame,
-                          "colortable" : fp.get("colortable", "none"),
-                          "default_max" : fp.get("default_max", cp.get("default_max")),
-                          "default_min" : fp.get("default_min", cp.get("default_min")),
-                          "extension" : feed_name,
-                          "feed_name" : self.feed_name,
-                          "flip_horizontal" : cp.get("flip_horizontal"),
-                          "flip_vertical" : cp.get("flip_vertical"),
-                          "is_camera" : False,
-                          "is_master" : False,
-                          "is_saved" : feed_parameters.get("save", True),
-                          "max_intensity" : fp.get("max_intensity", cp.get("max_intensity")),
-                          "transpose" : cp.get("transpose"),
-                          "x_pixels" : self.x_pixels,
-                          "y_pixels" : self.y_pixels}
+        # Configure parameters for addition to the CameraFeedInfo structure.
+        fp.set("bytes_per_frame", 2 * self.x_pixels * self.y_pixels)
+        fp.set("extension", feed_name)
+        fp.set("feed_name", self.camera_name + "-" + self.feed_name)
+        fp.set("is_camera", False)
+        fp.set("is_master", False)
+        if not fp.has("saved"):
+            fp.set("saved", True)
+        fp.set("x_pixels", x_pixels)
+        fp.set("x_start", x_start)
+        fp.set("y_pixels", y_pixels)
+        fp.set("y_start", y_start)
+
+        # Add feed information to the CameraFeedInfo structure.
+        self.addFeedInfo(fp)
 
     def getFeedInfo(self):
         return self.feed_info
@@ -300,6 +287,9 @@ class FeedNC(object):
         self.frame_number = -1
     
     def sliceFrame(self, new_frame):
+        """
+        This also selects for only those frames from the correct camera.
+        """
         if (new_frame.which_camera == self.camera_name):
             if self.frame_slice is None:
                 return new_frame.np_data
@@ -467,7 +457,6 @@ class FeedController(object):
         for feed_name in self.parameters.getAttrs():
             feed_params = self.parameters.get(feed_name)
             camera_name = feed_params.get("source")
-            camera_params = parameters.get(camera_name)
             
             # Figure out what type of feed this is.
             fclass = None
@@ -483,8 +472,7 @@ class FeedController(object):
             else:
                 raise FeedException("Unknown feed type '" + feed_type + "' in feed '" + feed_name + "'")
 
-            self.feeds.append(fclass(camera_name = camera_name,
-                                     camera_parameters = camera_params,
+            self.feeds.append(fclass(camera_feed_info = camera_info[camera_name],
                                      feed_name = feed_name,
                                      feed_parameters = feed_params))
 
@@ -498,8 +486,8 @@ class FeedController(object):
     def getParameters(self):
         return self.parameters
 
-    def haveFeeds(self):
-        return (len(self.feeds) > 0)
+#    def haveFeeds(self):
+#        return (len(self.feeds) > 0)
     
     def newFrame(self, new_frame):
         feed_frames = []
@@ -535,7 +523,7 @@ class Feeds(halModule.HalModule):
         # e.g. dict["feed_name"]["display_max"] = ?
         #
         halMessage.addMessage("feeds information",
-                              validator = {"data" : {"feeds" : [True, feeds.CameraFeedInfo]},
+                              validator = {"data" : {"feeds" : [True, dict]},
                                            "resp" : None})
 
         # Sent each time a feed generates a frame.
@@ -582,16 +570,15 @@ class Feeds(halModule.HalModule):
             self.camera_info[data["camera"]] = {"camera" : data["camera"],
                                                 "master" : data["master"]}
 
-            self.feeds_info[data["camera"]] = createCameraFeedInfo(p,
-                                                                   data["camera"],
-                                                                   data["master"])
+            self.feeds_info[data["camera"]] = CameraFeedInfo(camera_params = p,
+                                                             camera_name = data["camera"],
+                                                             is_master = data["master"])
 
         elif message.isType("new parameters"):
-            self.feed_controller = FeedController(parameters = message.getData()["parameters"])
-            if not self.feed_controller.haveFeeds():
-                self.feed_controller = None
+            checkParameters(message.getData()["parameters"])
             
         elif message.isType("updated parameters"):
+            self.feed_controller = None
             self.feeds_info = {}
             params = message.getData()["parameters"]
 
@@ -604,18 +591,10 @@ class Feeds(halModule.HalModule):
                                                            is_master = self.camera_info[attr]["master"])
 
             # Get feed information.
-            if self.feed_controller is not None:
+            if params.has("feeds"):
+                self.feed_controller = FeedController(parameters = params.get("feeds"),
+                                                      camera_info = self.feeds_info)
                 self.feeds_info.update(self.feed_controller.getFeedsInfo())
-
-            if False:
-                print("")
-                for elts in self.feeds_info:
-                    print(elts)
-                    for elt in self.feeds_info[elts]:
-                        print("  ", elt, self.feeds_info[elts][elt])
-                print("")
-                
-            self.broadcastFeedInfo()
 
         elif message.isType("start camera"):
             self.active = True
