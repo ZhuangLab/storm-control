@@ -123,7 +123,7 @@
 	<parameters>
 
 	  <!-- This is specific to the emulated camera. -->
-	  <roll type="float">0.5</roll>
+	  <roll type="float">2.5</roll>
 
 	  <!-- These should be specified for every camera, and cannot be changed
 	       in HAL when running. -->
