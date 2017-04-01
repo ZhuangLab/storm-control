@@ -49,8 +49,9 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
                 QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
     def mousePressEvent(self, event):
-        self.center_x = event.x()
-        self.center_y = event.y()
+        pos = self.mapToScene(event.pos())
+        self.center_x = pos.x()
+        self.center_y = pos.y()
         self.newCenter.emit(self.center_x, self.center_y)
         self.centerOn(self.center_x, self.center_y)
         
@@ -101,7 +102,6 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
             else:
                 self.scale = -int(feed_info.getFrameMax()/self.viewport_min)
                 
-            # FIXME: Need to map center from scene?
             [self.center_x, self.center_y] = feed_info.getFrameCenter()
             feed_parameters.set("initialized", True)
 
@@ -124,6 +124,7 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         Rescale the view so that it looks like we have zoomed in/out.
         """
         if (scale <= self.min_scale) or (scale >= self.max_scale):
+            print("scale out of range", scale, self.min_scale, self.max_scale)
             return
 
         self.scale = scale
@@ -139,36 +140,7 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         transform = QtGui.QTransform()
         transform.scale(flt_scale, flt_scale)
         self.setTransform(self.transform * transform)
-
-    def updateScaleRange(self):
-        """
-        Given the view and camera size, this figures 
-        out the range of scales to allow.
-        """
-        
-        # Figure out the minimum dimension of the viewport.
-        viewport_rect = self.viewport().contentsRect()
-        viewport_size = viewport_rect.width()
-        if (viewport_size > viewport_rect.height()):
-            viewport_size = viewport_rect.height()
-
-        # This sets how far we can zoom out (and also the starting size).
-        self.min_scale = float(viewport_size)/float(self.frame_size + 10)
-
-        # This sets how far we can zoom in (~32 pixels).
-        self.max_scale = float(viewport_size)/32.0
-
-        # For those really small cameras.
-        if (self.max_scale < self.min_scale):
-            self.max_scale = 2.0 * self.min_scale
-
-        if (self.view_scale < self.min_scale):
-            self.view_scale = self.min_scale
-
-        if (self.view_scale > self.max_scale):
-            self.view_scale = self.max_scale
-
-        print(self.frame_size, viewport_size, self.min_scale, self.max_scale)
+        self.centerOn(self.center_x, self.center_y)
 
     def wheelEvent(self, event):
         """
