@@ -14,47 +14,64 @@ import storm_control.hal4000.halLib.c_image_manipulation_c as c_image
 
 
 class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
+    """
+    The idea is to display the image as it would appear on the 
+    chip, so 0,0 is corner of camera chip. 
 
+    If the image is a sub-section then it should be rendered 
+    with the appropriate x,y offset from 0,0.
+
+    If the image is binned then the rendered image needs to be
+    up-sampled appropriately to compensate for the binning.
+    """
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
+        self.chip_size_changed = False
+        self.chip_x = 0
+        self.chip_y = 0
+        self.click_x = 0
+        self.click_y = 0
         self.colortable = None
         self.display_range = [0, 200]
         self.display_saturated_pixels = False
-        self.flip_horizontal = False
-        self.flip_vertical = False
+        self.draw_grid = False
+        self.draw_target = False
+        self.frame_x_offset = 0
+        self.frame_y_offset = 0
         self.image_max = 0
         self.image_min = 0
         self.intensity_info = 0
         self.max_intensity = None
         self.q_image = None
-        self.size_changed = False
-        self.transpose = False
-        self.x_click = 0
-        self.y_click = 0
-        self.x_pixels = 256
-        self.y_pixels = 256
+        self.scale_x = 1
+        self.scale_y = 1
 
     def boundingRect(self):
-        s_rect = QtCore.QRectF(0, 0, self.x_pixels, self.y_pixels)
+        chip_rect = QtCore.QRectF(0, 0, self.chip_x, self.chip_y)
 
         # Resize the scene rect if necessary.
-        if self.size_changed:
-            self.scene().setSceneRect(s_rect)
-            self.size_changed = False
-        return s_rect
-                             
+        if self.chip_size_changed:
+            self.scene().setSceneRect(chip_rect)
+            self.chip_size_changed = False
+        return chip_rect
+
     def newColorTable(self, colortable):
         self.colortable = colortable
 
     def newConfiguration(self, feed_info):
-        self.flip_horizontal = feed_info.getParameter("flip_horizontal")
-        self.flip_vertical = feed_info.getParameter("flip_vertical")
+        [chip_x, chip_y] = feed_info.getChipSize()
+        [self.frame_x_offset, self.frame_y_offset] = feed_info.getFrameZeroZero()
         self.max_intensity = feed_info.getParameter("max_intensity")
-        self.transpose = feed_info.getParameter("transpose")
-        self.x_size = feed_info.getParameter("x_pixels")
-        self.y_size = feed_info.getParameter("y_pixels")
+        [self.scale_x, self.scale_y] = feed_info.getFrameScale()
         
+        # Check if we need to notify the scene of a change in the chip size.
+        if (chip_x != self.chip_x) or (chip_y != self.chip_y):
+            self.chip_x = chip_x
+            self.chip_y = chip_y
+            self.chip_size_changed = True
+            self.prepareGeometryChange()
+
         if "_sat.ctbl" in feed_info.getParameter("colortable"):
             self.display_saturated_pixels = True
         else:
@@ -65,7 +82,9 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
 
     def paint(self, painter, option, widget):
         if self.q_image is not None:
-            painter.drawImage(0, 0, self.q_image)
+            painter.drawImage(self.frame_x_offset,
+                              self.frame_y_offset,
+                              self.q_image)
 
     def setColorTable(self):
         """
@@ -106,50 +125,38 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
 
         # Rescale the image & record it's minimum and maximum.        
         [temp, self.image_min, self.image_max] = c_image.rescaleImage(image_data,
-                                                                      self.flip_horizontal,
-                                                                      self.flip_vertical,
-                                                                      self.transpose,
+                                                                      False,
+                                                                      False,
+                                                                      False,
                                                                       self.display_range,
                                                                       max_intensity)
         
-        # Create QImage.
-        if self.transpose:
-            x_pixels = h
-            y_pixels = w
-            self.q_image = QtGui.QImage(temp.data, h, w, QtGui.QImage.Format_Indexed8)
+        # Create QImage & re-scale to compensate for binning, if any.
+        temp_image = QtGui.QImage(temp.data, w, h, QtGui.QImage.Format_Indexed8)
+        if (self.scale_x != 1) or (self.scale_y != 1):
+            self.q_image = temp_image.scale(w * self.scale_x, h * self.scale_y)
         else:
-            x_pixels = w
-            y_pixels = h
-            self.q_image = QtGui.QImage(temp.data, w, h, QtGui.QImage.Format_Indexed8)
+            self.q_image = temp_image
         self.q_image.ndarray = temp
-        
+
         # Set the images color table.
         self.setColorTable()
 
-        # Possibly notify the scene of a size change.
-        if (x_pixels != self.x_pixels) or (y_pixels != self.y_pixels):
-            self.x_pixels = x_pixels
-            self.y_pixels = y_pixels
-            self.size_changed = True
-            self.prepareGeometryChange()
-
         # Record the intensity where the user last clicked on the image.
-        #
-        # FIXME: Need to adjust for image transformation..
-        #
-        x_loc = self.x_click
-        y_loc = self.y_click
-        if ((x_loc >= 0) and (x_loc < w) and (y_loc >= 0) and (y_loc < h)):
-            self.intensity_info = image_data[y_loc, x_loc]
+        # self.click_x and self.click_y are in frame coordinates.
+        xl = self.click_x
+        yl = self.click_y
+        if ((xl >= 0) and (xl < w) and (yl >= 0) and (yl < h)):
+            self.intensity_info = image_data[yl, xl]
+        else:
+            self.intensity_info = 0
 
-        self.update(self.boundingRect())
+        # Force re-paint.
+        self.update()
 
 
 class QtCameraGraphicsScene(QtWidgets.QGraphicsScene):
-
-    def __init__(self, **kwds):
-        super().__init__(**kwds)
-
+    pass
         
         
 #

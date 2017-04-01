@@ -373,14 +373,6 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         # FIXME: Check that there are no problems with the new parameters?
         #        We need to error now rather than at 'updated parameters'.
         self.parameters = parameters
-        
-        # Depending on how the parameters were created, they might have
-        # set 'initialized' for each display section to True, so we need
-        # to undo that.
-        for feed_name in self.parameters.getAttrs():
-            p = self.parameters.get(feed_name)
-            if isinstance(p, params.StormXMLObject):
-                p.set("initialized", False)
 
     def setFeeds(self, feeds_info):
         """

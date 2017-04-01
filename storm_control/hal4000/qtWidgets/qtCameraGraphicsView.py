@@ -10,7 +10,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 class QtCameraGraphicsView(QtWidgets.QGraphicsView):
     """
-
+    This is responsible for handling the camera transforms
+    (flip_horizontal, flip_vertical, transpose).
     """
     newCenter = QtCore.pyqtSignal(int, int)
     newScale = QtCore.pyqtSignal(int)
@@ -69,7 +70,9 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
                 self.scale = int(self.viewport_min/feed_info.getFrameMax()) - 1
             else:
                 self.scale = -int(feed_info.getFrameMax()/self.viewport_min)
-            [self.center_x, self.center_y] = feed_info.frameCenter()
+                
+            # FIXME: Need to map center from scene?
+            [self.center_x, self.center_y] = feed_info.getFrameCenter()
             feed_parameters.set("initialized", True)
 
         self.centerOn(self.center_x, self.center_y)
