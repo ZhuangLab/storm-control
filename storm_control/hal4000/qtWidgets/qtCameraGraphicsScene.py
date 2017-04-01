@@ -35,8 +35,8 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
         self.colortable = None
         self.display_range = [0, 200]
         self.display_saturated_pixels = False
-        self.draw_grid = False
-        self.draw_target = False
+        self.draw_grid = True
+        self.draw_target = True
         self.frame_x_offset = 0
         self.frame_y_offset = 0
         self.image_max = 0
@@ -82,9 +82,27 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
 
     def paint(self, painter, option, widget):
         if self.q_image is not None:
+
+            # Draw the image.
             painter.drawImage(self.frame_x_offset,
                               self.frame_y_offset,
                               self.q_image)
+            
+            # Draw the grid into the buffer.
+            if self.draw_grid:
+                x_step = self.chip_x/8
+                y_step = self.chip_y/8
+                painter.setPen(QtGui.QColor(255, 255, 255))
+                for i in range(7):
+                    painter.drawLine((i+1)*x_step, 0, (i+1)*x_step, self.chip_y)
+                    painter.drawLine(0, (i+1)*y_step, self.chip_x, (i+1)*y_step)
+
+            # Draw the target into the buffer
+            if self.draw_target:
+                mid_x = self.chip_x/2 - 20
+                mid_y = self.chip_y/2 - 20
+                painter.setPen(QtGui.QColor(255, 255, 255))
+                painter.drawEllipse(mid_x, mid_y, 40, 40)
 
     def setColorTable(self):
         """
