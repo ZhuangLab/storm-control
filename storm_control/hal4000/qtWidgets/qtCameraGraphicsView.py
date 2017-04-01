@@ -11,7 +11,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class QtCameraGraphicsView(QtWidgets.QGraphicsView):
     """
     This is responsible for handling the camera transforms
-    (flip_horizontal, flip_vertical, transpose).
+    (flip_horizontal, flip_vertical, transpose). Hopefully
+    this makes rendering a lot simpler for us as we don't 
+    have keep track of all these details.
     """
     newCenter = QtCore.pyqtSignal(int, int)
     newScale = QtCore.pyqtSignal(int)
@@ -28,6 +30,7 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         self.max_scale = 8
         self.min_scale = -8
         self.scale = 0
+        self.transform = QtGui.QTransform()
         self.viewport_min = 100
 
         self.setAcceptDrops(True)
@@ -56,6 +59,33 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         This is called when the camera or frame size may have changed.
         """
         self.chip_max = feed_info.getChipMax()
+
+        # Calculate transform matrix.
+        [cx, cy] = feed_info.getChipSize()
+
+        if feed_info.getParameter("flip_horizontal"):
+            flip_lr = QtGui.QTransform(-1.0, 0.0, 0.0,
+                                       0.0, 1.0, 0.0,
+                                       cx, 0.0, 1.0)
+        else:
+            flip_lr = QtGui.QTransform()
+
+        if feed_info.getParameter("flip_vertical"):
+            flip_ud = QtGui.QTransform(1.0, 0.0, 0.0,
+                                       0.0, -1.0, 0.0,
+                                       0.0, cy, 1.0)
+        else:
+            flip_ud = QtGui.QTransform()
+
+        if feed_info.getParameter("transpose"):
+            flip_xy = QtGui.QTransform(0.0, 1.0, 0.0,
+                                       1.0, 0.0, 0.0,
+                                       0.0, 0.0, 1.0)
+        else:
+            flip_xy = QtGui.QTransform()            
+
+        self.transform = flip_lr * flip_ud * flip_xy
+        self.setTransform(self.transform)
 
         # Calculate max zoom out.
         self.min_scale = -int(self.chip_max/self.viewport_min) - 1
@@ -108,8 +138,8 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
             
         transform = QtGui.QTransform()
         transform.scale(flt_scale, flt_scale)
-        self.setTransform(transform)
-        
+        self.setTransform(self.transform * transform)
+
     def updateScaleRange(self):
         """
         Given the view and camera size, this figures 
