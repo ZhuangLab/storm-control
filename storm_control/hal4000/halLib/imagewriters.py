@@ -50,7 +50,7 @@ class BaseFileWriter(object):
         # Figure out the filename.
         self.basename = self.film_settings["basename"]
         if (len(self.feed_info.getParameter("extension")) != 0):
-            self.basename += "_" + self.feed_info.getParameter(extension)
+            self.basename += "_" + self.feed_info.getParameter("extension")
         self.filename = self.basename + self.film_settings["filetype"]
 
     def saveFrame(self):

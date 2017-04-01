@@ -67,7 +67,6 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.cycle_length = 1
         self.display_name = display_name
         self.display_timer = QtCore.QTimer(self)
-#        self.feed_name = feed_name
         self.filming = False
         self.frame = False
         self.parameters = params.StormXMLObject(validate = False)
@@ -115,13 +114,11 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.ui.syncLabel.hide()
         self.ui.syncSpinBox.hide()
 
-#        self.camera_widget = qtCameraWidget.QCameraWidget(parent = self.ui.cameraScrollArea)
-#        self.ui.cameraScrollArea.setWidget(self.camera_widget)
-#        self.ui.cameraScrollArea.setStyleSheet("QScrollArea { background-color: black } ")
-
-
         # Connect signals.
 #        self.camera_widget.intensityInfo.connect(self.handleIntensityInfo)
+
+        self.camera_view.newCenter.connect(self.handleNewCenter)
+        self.camera_view.newScale.connect(self.handleNewScale)
 
         self.ui.autoScaleButton.clicked.connect(self.handleAutoScale)
         self.ui.colorComboBox.currentIndexChanged[str].connect(self.handleColorTableChange)
@@ -185,13 +182,17 @@ class BaseFrameDisplay(QtWidgets.QFrame):
                                       name = "display_min",
                                       value = feed_info.getParameter("default_min")))
 
+            p.add(params.ParameterSetBoolean(name = "initialized",
+                                             value = False,
+                                             is_mutable = False))
+
             p.add(params.ParameterInt(name = "max_intensity",
                                       value = feed_info.getParameter("max_intensity"),
                                       is_mutable = False,
                                       is_saved = False))
 
             p.add(params.ParameterInt(name = "scale",
-                                      value = 1,
+                                      value = 0,
                                       is_mutable = False,
                                       is_saved = False))
             
@@ -214,7 +215,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.updateRange()
 
         # Configure the QtCameraGraphicsView.
-        self.camera_widget.newConfiguration(feed_info)
+        self.camera_view.newConfiguration(feed_info, self.parameters.get(self.getFeedName()))
 
         # Color gradient.
         if self.color_gradient is not None:
@@ -276,7 +277,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         respond to with information about it should be displayed.
         """
         self.parameters.set("feed_name", str(feed_name))
-        self.guiMessage.emit(halMessage.HalMessage(m_type = "get feed config",
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "get feed information",
                                                    data = {"display_name" : self.display_name,
                                                            "feed_name" : self.getFeedName()}))
 
@@ -305,6 +306,13 @@ class BaseFrameDisplay(QtWidgets.QFrame):
     def handleIntensityInfo(self, x, y, i):
         self.ui.intensityPosLabel.setText("({0:d},{1:d})".format(x, y, i))
         self.ui.intensityIntLabel.setText("{0:d}".format(i))
+
+    def handleNewCenter(self, cx, cy):
+        self.setParameter("center_x", cx)
+        self.setParameter("center_y", cy)
+
+    def handleNewScale(self, scale):
+        self.setParameter("scale", scale)
 
     def handleRangeChange(self, scale_min, scale_max):
         if (scale_max == scale_min):
@@ -365,6 +373,14 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         # FIXME: Check that there are no problems with the new parameters?
         #        We need to error now rather than at 'updated parameters'.
         self.parameters = parameters
+        
+        # Depending on how the parameters were created, they might have
+        # set 'initialized' for each display section to True, so we need
+        # to undo that.
+        for feed_name in self.parameters.getAttrs():
+            p = self.parameters.get(feed_name)
+            if isinstance(p, params.StormXMLObject):
+                p.set("initialized", False)
 
     def setFeeds(self, feeds_info):
         """
@@ -453,11 +469,10 @@ class CameraFrameDisplay(BaseFrameDisplay):
         [camera, feed] = feeds.getCameraFeedName(feed_name)
 
         # This will get the updated feed information.
-        if feed is not None:
-            self.guiMessage.emit(halMessage.HalMessage(m_type = "get feed information",
-                                                       data = {"display_name" : self.display_name,
-                                                               "feed_name" : self.getFeedName()}))
-
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "get feed information",
+                                                   data = {"display_name" : self.display_name,
+                                                           "feed_name" : self.getFeedName()}))
+        
         # This will get the correct camera.
         self.guiMessage.emit(halMessage.HalMessage(m_type = "set current camera",
                                                    data = {"display_name" : self.display_name,

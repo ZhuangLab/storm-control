@@ -202,12 +202,17 @@ class Display(halModule.HalModule):
             if self.dialogs[0] is not None:
                 self.dialogs[0].showIfVisible()
 
+            #
             # Heh, need to send this message again because the QtCameraGraphicsView won't know how
             # to scale the frames until it gets rendered and can correctly calculate it's size.
+            #
+            # We also need to reset the "initialized" parameter.
+            #
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "get feed information",
                                                        data = {"display_name" : self.views[0].getDisplayName(),
                                                                "feed_name" : "camera1"}))
+            self.views[0].setParameter("initialized", False)
 
         elif message.isType("start film"):
             for view in self.views:
