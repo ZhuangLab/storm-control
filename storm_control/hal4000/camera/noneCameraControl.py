@@ -29,7 +29,7 @@ class NoneCameraControl(cameraControl.CameraControl):
         # Emulation camera parameters.
         self.parameters.add(params.ParameterRangeFloat(description = "Exposure time (seconds)", 
                                                        name = "exposure_time", 
-                                                       value = 0.05,
+                                                       value = 0.02,
                                                        min_value = 0.01,
                                                        max_value = 10.0))
         

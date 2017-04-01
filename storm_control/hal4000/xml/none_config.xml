@@ -123,7 +123,7 @@
 	<parameters>
 
 	  <!-- This is specific to the emulated camera. -->
-	  <roll type="float">2.5</roll>
+	  <roll type="float">1.0</roll>
 
 	  <!-- These should be specified for every camera, and cannot be changed
 	       in HAL when running. -->
@@ -131,7 +131,7 @@
 	  <default_min type="int">0</default_min>
 	  <flip_horizontal type="boolean">False</flip_horizontal>
 	  <flip_vertical type="boolean">False</flip_vertical>
-	  <transpose type="boolean">False</transpose>
+	  <transpose type="boolean">True</transpose>
 
 	  <!-- These can be changed / editted. -->
 
