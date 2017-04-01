@@ -22,9 +22,6 @@ import storm_control.sc_library.parameters as params
 #
 # The format of each entry is "field" : [Required, Expected type].
 #
-# Setting "data" and "resp" to {} checks that the we are not adding data or
-# response when we should not have.
-#
 valid_messages = {
     
     # HAL/core/general messages.
@@ -50,6 +47,7 @@ valid_messages = {
     'sync' :  {"data" : None, "resp" : None},
     'test' :  {"data" : None, "resp" : None},
     }
+
 
 def addMessage(name, validator = {}, check_exists = True):
     """
