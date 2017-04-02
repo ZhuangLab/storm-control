@@ -167,7 +167,6 @@ class CameraFeedInfo(object):
         cx = self.camera_x_bin*(self.camera_x_start + self.feed_x_start + int(0.5 * self.feed_x_pixels))
         cy = self.camera_y_bin*(self.camera_y_start + self.feed_y_start + int(0.5 * self.feed_y_pixels))
         return [cx, cy]
-#        return self.transformChipToDisplay(cx, cy)
     
     def getFrameMax(self):
         xp = self.feed_x_pixels * self.camera_x_bin
@@ -175,17 +174,7 @@ class CameraFeedInfo(object):
         return xp if (xp > yp) else yp
 
     def getFrameScale(self):
-        return [self.camera_x_bin, self.camera_y_bin]        
-#        if self.transpose:
-#            return [self.camera_y_bin, self.camera_x_bin]
-#        else:
-#            return [self.camera_x_bin, self.camera_y_bin]
-    
-#    def getFrameSize(self):
-#        if self.transpose:
-#            return [self.feed_y_pixels, self.feed_x_pixels]
-#        else:
-#            return [self.feed_x_pixels, self.feed_y_pixels]
+        return [self.camera_x_bin, self.camera_y_bin]
 
     def getFrameZeroZero(self):
         """
@@ -194,26 +183,12 @@ class CameraFeedInfo(object):
         zx = self.camera_x_bin*(self.camera_x_start + self.feed_x_start)
         zy = self.camera_y_bin*(self.camera_y_start + self.feed_y_start)
         return [zx, zy]
-        #return self.transformChipToDisplay(zx, zy)
         
     def getParameter(self, name):
         return self.parameters.get(name)
 
     def setParameter(self, name, value):
         self.parameters.set(name, value)
-
-#    def transformChipToDisplay(self, cx, cy):
-#        """
-#        Go from chip coordinates to display coordinates.
-#        """
-#        if self.flip_horizontal:
-#            cx = self.camera_chip_x - cx
-#        if self.flip_vertical:
-#            cy = self.camera_chip_y - cy
-#        if self.transpose:
-#            [cx, cy] = [cy, cx]
-#
-#        return [cx, cy]
 
     def transformChipToFrame(self, cx, cy):
         """
@@ -225,20 +200,6 @@ class CameraFeedInfo(object):
         cx = int(cx/self.camera_x_bin)
         cy = int(cy/self.camera_y_bin)
         return [cx, cy]
-
-#    def transfromDisplayToChip(self, dx, dy):
-#        """
-#        Go from display coordinate to chip coordinates.
-#        """
-#        if self.transpose:
-#            [dx, dy] = [dy, dx]
-#        if self.flip_vertical:
-#            dy = self.camera_chip_y - dy
-#        if self.flip_horizontal:
-#            dx = self.camera_chip_x - dx
-#
-#        return [dx, dy]
-
     
 class FeedNC(object):
     """
