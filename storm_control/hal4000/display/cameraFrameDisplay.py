@@ -10,6 +10,7 @@ Hazen 2/17
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
 
 import storm_control.hal4000.colorTables.colorTables as colorTables
@@ -143,7 +144,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.display_timer.setInterval(100)
         self.display_timer.timeout.connect(self.handleDisplayTimer)
         self.display_timer.start()
-        
+
     def contextMenuEvent(self, event):
         menu = QtWidgets.QMenu(self)
         menu.addAction(self.ui.infoAct)
@@ -151,10 +152,96 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         menu.addAction(self.ui.gridAct)
         menu.exec_(event.globalPos())
 
+    def createParameters(self, feed_info, parameters_from_file):
+        """
+        Create (initial) parameters for the current feed.
+        """
+        # Check that we are not writing over something that already exists.
+        if (self.parameters.has(self.getFeedName())):
+            msg = "Display parameters for " + self.getFeedName() + " already exists."
+            raise halExceptions.HalException(msg)
+
+        # Create a sub-section for this camera / feed.
+        p = self.parameters.addSubSection(self.getFeedName())
+
+        # Add display specific parameters.
+        #
+        # FIXME: Should we save center_x, center_y and scale?
+        #
+        p.add(params.ParameterInt(name = "center_x",
+                                  value = 0,
+                                  is_mutable = False,
+                                  is_saved = False))
+
+        p.add(params.ParameterInt(name = "center_y",
+                                  value = 0,
+                                  is_mutable = False,
+                                  is_saved = False))
+            
+        p.add(params.ParameterSetString(description = "Color table",
+                                        name = "colortable",
+                                        value = self.color_tables.getColorTableNames()[0],
+                                        allowed = self.color_tables.getColorTableNames()))
+                        
+        p.add(params.ParameterInt(description = "Display maximum",
+                                  name = "display_max",
+                                  value = 100))
+
+        p.add(params.ParameterInt(description = "Display minimum",
+                                  name = "display_min",
+                                  value = 0))
+
+        p.add(params.ParameterSetBoolean(name = "initialized",
+                                         value = False,
+                                         is_mutable = False))
+
+        p.add(params.ParameterInt(name = "max_intensity",
+                                  value = 100,
+                                  is_mutable = False,
+                                  is_saved = False))
+
+        p.add(params.ParameterInt(name = "scale",
+                                  value = 0,
+                                  is_mutable = False,
+                                  is_saved = False))
+            
+        p.add(params.ParameterInt(description = "Frame to display when filming with a shutter sequence",
+                                  name = "sync",
+                                  value = 0))
+
+        p.add(params.ParameterInt(name = "sync_max",
+                                  value = 0,
+                                  is_mutable = False,
+                                  is_saved = False))
+
+        # Set parameters with default values from feed_info.
+        p.set("colortable", feed_info.getParameter("colortable"))
+        p.set("display_max", feed_info.getParameter("default_max"))
+        p.set("display_min", feed_info.getParameter("default_min"))
+        p.set("max_intensity", feed_info.getParameter("max_intensity"))
+
+        # If they exist, update with the values that we loaded from a file.
+        if parameters_from_file is not None:
+            for attr in parameters_from_file.getAttrs():
+                p.set(attr, parameters_from_file.get(attr))
+
+    def createParametersFromFeedInfo(self, feed_info):
+        """
+        Create (initial) parameters using a feed_info structure.
+        """
+        self.createParameters()
+
+        
     def feedConfig(self, feed_info):
         """
         This method gets called when the view changes it's current feed.
         """
+
+        # A sanity check..
+        assert (self.getFeedName() == feed_info.getFeedName())
+
+        self.feed_info = feed_info
+
         #
         # Add a sub-section for this camera / feed if we don't already have one.
         #
@@ -162,66 +249,34 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         # be displayed. These are what we'll use if don't already have some other
         # values.
         #
-        if not self.parameters.has(feed_info.getFeedName()):
+        parameters_from_file = None
+        need_to_initialize = False
 
-            # Create a sub-section for this camera / feed.
-            p = self.parameters.addSubSection(feed_info.getFeedName())
+        # Check if we have anything at all for this feed.
+        if not self.parameters.has(self.getFeedName()):
+            need_to_initialize = True
 
-            # Add display specific parameters.
-            #
-            # FIXME: Should we save center_x, center_y and scale?
-            #
-            p.add(params.ParameterInt(name = "center_x",
-                                      value = 0,
-                                      is_mutable = False,
-                                      is_saved = False))
+        # Check if all we have are values from a parameter file that we loaded.
+        # In this case we will only have some of the parameters and some of
+        # them will not be of the correct type.
+        #
+        # We're doing this by checking for "max_intensity" as this should not
+        # have been saved, so if it exists then the parameters must have been
+        # initialized properly.
+        #
+        # In order to initialize them properly we make a copy of the current
+        # values, then delete the section, recreate it correctly and update
+        # it with the current values.
+        else:
+            feed_params = self.parameters.get(self.getFeedName())
+            if not feed_params.has("max_intensity"):
+                need_to_initialize = True
+                parameters_from_file = feed_params.copy()
+                self.parameters.delete(self.getFeedName())
 
-            p.add(params.ParameterInt(name = "center_y",
-                                      value = 0,
-                                      is_mutable = False,
-                                      is_saved = False))
-            
-            p.add(params.ParameterSetString(description = "Color table",
-                                            name = "colortable",
-                                            value = feed_info.getParameter("colortable"),
-                                            allowed = self.color_tables.getColorTableNames()))
-                        
-            p.add(params.ParameterInt(description = "Display maximum",
-                                      name = "display_max",
-                                      value = feed_info.getParameter("default_max")))
+        if need_to_initialize:
+            self.createParameters(self.feed_info, parameters_from_file)
 
-            p.add(params.ParameterInt(description = "Display minimum",
-                                      name = "display_min",
-                                      value = feed_info.getParameter("default_min")))
-
-            p.add(params.ParameterSetBoolean(name = "initialized",
-                                             value = False,
-                                             is_mutable = False))
-
-            p.add(params.ParameterInt(name = "max_intensity",
-                                      value = feed_info.getParameter("max_intensity"),
-                                      is_mutable = False,
-                                      is_saved = False))
-
-            p.add(params.ParameterInt(name = "scale",
-                                      value = 0,
-                                      is_mutable = False,
-                                      is_saved = False))
-            
-            p.add(params.ParameterInt(description = "Frame to display when filming with a shutter sequence",
-                                      name = "sync",
-                                      value = 0))
-
-            p.add(params.ParameterInt(name = "sync_max",
-                                      value = 0,
-                                      is_mutable = False,
-                                      is_saved = False))
-
-        # A sanity check..
-        assert (self.getFeedName() == feed_info.getFeedName())
-
-        self.feed_info = feed_info
-        
         # Configure the QtCameraGraphicsItem.
         color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
         self.camera_widget.newColorTable(color_table)
