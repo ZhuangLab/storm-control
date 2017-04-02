@@ -36,7 +36,7 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
         self.display_range = [0, 200]
         self.display_saturated_pixels = False
         self.draw_grid = True
-        self.draw_target = True
+        self.draw_target = False
         self.frame_x_offset = 0
         self.frame_y_offset = 0
         self.image_max = 0
@@ -126,6 +126,12 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
             for i in range(256):
                 self.q_image.setColor(i,QtGui.qRgb(i,i,i))        
 
+    def setShowGrid(self, show):
+        self.draw_grid = show
+        
+    def setShowTarget(self, show):
+        self.draw_target = show
+        
     def updateImageWithFrame(self, frame):
         """
         Convert the frame to a QImage, then call update() to display it.
