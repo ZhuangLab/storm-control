@@ -152,10 +152,6 @@ class CameraFeedInfo(object):
 
     def getChipSize(self):
         return [self.camera_chip_x, self.camera_chip_y]
-#        if self.transpose:
-#            return [self.camera_chip_y, self.camera_chip_x]
-#        else:
-#            return [self.camera_chip_x, self.camera_chip_y]
 
     def getFeedName(self):
         return self.parameters.get("feed_name")
@@ -200,7 +196,8 @@ class CameraFeedInfo(object):
         cx = int(cx/self.camera_x_bin)
         cy = int(cy/self.camera_y_bin)
         return [cx, cy]
-    
+
+
 class FeedNC(object):
     """
     The base class for all the feeds.
