@@ -213,6 +213,8 @@ class BaseFrameDisplay(QtWidgets.QFrame):
                                       is_mutable = False,
                                       is_saved = False))
 
+        print(">fc", self.getParameter("scale"), self.getParameter("initialized"))
+
         # A sanity check..
         assert (self.getFeedName() == feed_info.getFeedName())
         
@@ -249,8 +251,9 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         """
         Return a copy of the default parameters.
         """
+        print(">getting defaults.")
         return self.default_parameters.copy()
-        
+
     def getDisplayName(self):
         return self.display_name
 
@@ -326,6 +329,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.setParameter("center_y", cy)
 
     def handleNewScale(self, scale):
+        print(">hns", scale)
         self.setParameter("scale", scale)
 
     def handleRangeChange(self, scale_min, scale_max):

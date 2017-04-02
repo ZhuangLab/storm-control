@@ -22,45 +22,57 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         kwds["parent"] = parent
         super().__init__(**kwds)
 
-        self.chip_max = 0
-        self.center_x = 0
-        self.center_y = 0
-        self.ctrl_key_down = False
-        self.frame_size = 0
-        self.max_scale = 8
-        self.min_scale = -8
-        self.scale = 0
-        self.transform = QtGui.QTransform()
-        self.viewport_min = 100
+        # Prefix everything is prefixed with hal_ here to try
+        # not to collide with Qt class attributes.
+        self.hal_chip_max = 0
+        self.hal_center_x = 0
+        self.hal_center_y = 0
+        self.hal_ctrl_key_down = False
+        self.hal_display_scale = 0
+        self.hal_drag_mode = False
+        self.hal_frame_size = 0
+        self.hal_max_scale = 8
+        self.hal_min_scale = -8
+        self.hal_scale = 0
+        self.hal_transform = QtGui.QTransform()
+        self.hal_viewport_min = 100
 
         self.setAcceptDrops(True)
         self.setAlignment(QtCore.Qt.AlignCenter)
         self.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(0,0,0)))
 
+    def calcScale(self, size):
+        if (size < self.hal_viewport_min):
+            return int(self.hal_viewport_min/size) -1
+        else:
+            return -int(size/self.hal_viewport_min)
+
     def keyPressEvent(self, event):
         if (event.key() == QtCore.Qt.Key_Control):
-            self.ctrl_key_down = True
+            self.hal_ctrl_key_down = True
             QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
 
     def keyReleaseEvent(self, event):
         if (event.key() == QtCore.Qt.Key_Control):
-            self.ctrl_key_down = False
-            if not self.drag_mode:
+            self.hal_ctrl_key_down = False
+            if not self.hal_drag_mode:
                 QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
     def mousePressEvent(self, event):
         pos = self.mapToScene(event.pos())
-        self.center_x = pos.x()
-        self.center_y = pos.y()
-        self.newCenter.emit(self.center_x, self.center_y)
-        self.centerOn(self.center_x, self.center_y)
+        self.hal_center_x = pos.x()
+        self.hal_center_y = pos.y()
+        self.newCenter.emit(self.hal_center_x, self.hal_center_y)
+        self.centerOn(self.hal_center_x, self.hal_center_y)
         
     def newConfiguration(self, feed_info, feed_parameters):
         """
         This is called when the camera or frame size may have changed.
         """
-        self.chip_max = feed_info.getChipMax()
+        self.hal_chip_max = feed_info.getChipMax()
 
+        print(">nc", self.hal_scale, feed_parameters.get("initialized"))
+        
         # Calculate transform matrix.
         [cx, cy] = feed_info.getChipSize()
 
@@ -85,37 +97,45 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         else:
             flip_xy = QtGui.QTransform()            
 
-        self.transform = flip_lr * flip_ud * flip_xy
-        self.setTransform(self.transform)
-
-        # Calculate max zoom out.
-        self.min_scale = -int(self.chip_max/self.viewport_min) - 1
+        self.hal_transform = flip_lr * flip_ud * flip_xy
+        self.setTransform(self.hal_transform)
 
         # Calculate initial zoom and center position.
         if feed_parameters.get("initialized"):
-            self.scale = feed_parameters.get("scale")
-            self.center_x = feed_parameters.get("center_x")
-            self.center_y = feed_parameters.get("center_y")
+            self.hal_scale = feed_parameters.get("scale")
+            self.hal_center_x = feed_parameters.get("center_x")
+            self.hal_center_y = feed_parameters.get("center_y")
         else:
-            if (feed_info.getFrameMax() < self.viewport_min):
-                self.scale = int(self.viewport_min/feed_info.getFrameMax()) - 1
-            else:
-                self.scale = -int(feed_info.getFrameMax()/self.viewport_min)
-
-            [self.center_x, self.center_y] = feed_info.getFrameCenter()
+            self.hal_scale = self.calcScale(feed_info.getFrameMax())
+            [self.hal_center_x, self.hal_center_y] = feed_info.getFrameCenter()
             feed_parameters.set("initialized", True)
 
-        self.centerOn(self.center_x, self.center_y)
-        self.rescale(self.scale)
+        # Calculate max zoom out.
+        self.hal_min_scale = self.calcScale(self.hal_chip_max)
+
+        #
+        # Among other possible issues, this solves the problem that at startup
+        # self.scale will get set to the wrong value this GraphicsView will
+        # not have the correct size the first time we come through this method,
+        # then on the second pass initialized will be set and we'll locked in
+        # on a self.scale value that is out of range and cannot be changed
+        # using the scroll wheel.
+        #
+        if (self.hal_scale < self.hal_min_scale):
+            self.hal_scale = self.hal_min_scale
+    
+        self.centerOn(self.hal_center_x, self.hal_center_y)
+        self.rescale(self.hal_scale)
 
     def resizeEvent(self, event):
+        print(">resize")
         viewport_rect = self.viewport().contentsRect()
-        self.viewport_min = viewport_rect.width() if (viewport_rect.width() < viewport_rect.height())\
+        self.hal_viewport_min = viewport_rect.width() if (viewport_rect.width() < viewport_rect.height())\
                             else viewport_rect.height()
 
-        self.min_scale = -int(self.chip_max/self.viewport_min) - 1
-        if (self.scale < self.min_scale):
-            self.scale = self.min_scale
+        self.hal_min_scale = self.calcScale(self.hal_chip_max)
+        if (self.hal_scale < self.hal_min_scale):
+            self.hal_scale = self.hal_min_scale
         
         super().resizeEvent(event)
         
@@ -123,24 +143,25 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         """
         Rescale the view so that it looks like we have zoomed in/out.
         """
-        if (scale <= self.min_scale) or (scale >= self.max_scale):
-            print("scale out of range", scale, self.min_scale, self.max_scale)
+        if (scale < self.hal_min_scale) or (scale > self.hal_max_scale):
+            print("scale out of range", scale, self.hal_min_scale, self.hal_max_scale)
             return
 
-        self.scale = scale
-        self.newScale.emit(self.scale)
+        self.hal_scale = scale
+        print(">rs emit")
+        self.newScale.emit(self.hal_scale)
 
-        if (self.scale == 0):
+        if (self.hal_scale == 0):
             flt_scale = 1.0
-        elif (self.scale > 0):
-            flt_scale = float(self.scale + 1)
+        elif (self.hal_scale > 0):
+            flt_scale = float(self.hal_scale + 1)
         else:
-            flt_scale = 1.0/(-self.scale + 1)
+            flt_scale = 1.0/(-self.hal_scale + 1)
             
         transform = QtGui.QTransform()
         transform.scale(flt_scale, flt_scale)
-        self.setTransform(self.transform * transform)
-        self.centerOn(self.center_x, self.center_y)
+        self.setTransform(self.hal_transform * transform)
+        self.centerOn(self.hal_center_x, self.hal_center_y)
 
     def wheelEvent(self, event):
         """
@@ -148,7 +169,7 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         """
         if not event.angleDelta().isNull():
             if (event.angleDelta().y() > 0):
-                self.rescale(self.scale + 1)
+                self.rescale(self.hal_scale + 1)
             else:
-                self.rescale(self.scale - 1)
+                self.rescale(self.hal_scale - 1)
             event.accept()

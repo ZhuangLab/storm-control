@@ -195,6 +195,8 @@ class Display(halModule.HalModule):
             for view in self.views:
                 message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
                                                                   data = {"old parameters" : view.getParameters().copy()}))
+                print("")
+                print(">cd", p.has(view.getDisplayName()), view.getDisplayName())
                 view.newParametersStart(p.get(view.getDisplayName(),
                                               view.getDefaultParameters()))
                 message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
