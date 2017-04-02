@@ -15,6 +15,8 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
     this makes rendering a lot simpler for us as we don't 
     have keep track of all these details.
     """
+    dragMove = QtCore.pyqtSignal(int, int)
+    dragStart = QtCore.pyqtSignal()
     newCenter = QtCore.pyqtSignal(int, int)
     newScale = QtCore.pyqtSignal(int)
     
@@ -22,12 +24,15 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         kwds["parent"] = parent
         super().__init__(**kwds)
 
+        self.can_drag = False
         self.chip_max = 0
         self.center_x = 0
         self.center_y = 0
         self.ctrl_key_down = False
         self.display_scale = 0
         self.drag_mode = False
+        self.drag_x = 0
+        self.drag_y = 0
         self.frame_size = 0
         self.max_scale = 8
         self.min_scale = -8
@@ -44,24 +49,44 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         else:
             return -int(size/self.viewport_min)
 
+    def enableStageDrag(self, enabled):
+        self.can_drag = enabled
+        
     def keyPressEvent(self, event):
-        if (event.key() == QtCore.Qt.Key_Control):
+        if self.can_drag and (event.key() == QtCore.Qt.Key_Control):
             self.ctrl_key_down = True
             QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
 
     def keyReleaseEvent(self, event):
-        if (event.key() == QtCore.Qt.Key_Control):
+        if self.can_drag and (event.key() == QtCore.Qt.Key_Control):
             self.ctrl_key_down = False
-            if not self.drag_mode:
-                QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+            self.drag_mode = False
+            QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
+    def mouseMoveEvent(self, event):
+        if self.drag_mode:
+            self.dragMove.emit(event.x() - self.drag_x,
+                               event.y() - self.drag_y)
+            
     def mousePressEvent(self, event):
         pos = self.mapToScene(event.pos())
         self.center_x = pos.x()
         self.center_y = pos.y()
         self.newCenter.emit(self.center_x, self.center_y)
         self.centerOn(self.center_x, self.center_y)
-        
+
+        if self.ctrl_key_down:
+            self.drag_mode = True
+            self.dragStart.emit()
+            self.drag_x = event.x()
+            self.drag_y = event.y()
+            QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ClosedHandCursor))
+
+    def mouseReleaseEvent(self, event):
+        if self.drag_mode:
+            self.drag_mode = False
+            QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
+
     def newConfiguration(self, feed_info, feed_parameters):
         """
         This is called when the camera or frame size may have changed.

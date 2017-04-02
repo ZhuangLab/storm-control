@@ -61,6 +61,7 @@ class Display(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
+        self.have_stage = False
         self.parameters = module_params.get("parameters")
         
         self.dialogs = []
@@ -89,7 +90,23 @@ class Display(halModule.HalModule):
         halMessage.addMessage("default colortable",
                               validator = {"data" : {"colortable" : [True, str]},
                                            "resp" : None})
-        
+
+        # This message comes from one of the viewers when the user is trying to
+        # get the stage to move by dragging on the display.
+        halMessage.addMessage("drag move",
+                              validator = {"data" : {"display_name" : [True, str],
+                                                     "feed_name" : [True, str],
+                                                     "x_disp" : [True, int],
+                                                     "y_disp" : [True, int]},
+                                           "resp" : None})
+
+        # This message comes from one of the viewers when the user first clicks
+        # to initiate stage movement by dragging on the display.
+        halMessage.addMessage("drag start",
+                              validator = {"data" : {"display_name" : [True, str],
+                                                     "feed_name" : [True, str]},
+                                           "resp" : None})
+                                           
         # This message comes from the viewers, it is used to get the initial
         # display settings for a camera or feed.
         halMessage.addMessage("get feed information",
@@ -156,7 +173,13 @@ class Display(halModule.HalModule):
             # Let everyone know what the default color table is.
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "default colortable",
-                                                       data = {"colortable" : self.parameters.get("colortable")}))            
+                                                       data = {"colortable" : self.parameters.get("colortable")}))
+
+            # Enable stage dragging if there is a stage.
+            if "stage" in message.getData()["all_modules"]:
+                self.have_stage = True
+                for view in self.views:
+                    view.enableStageDrag(self.have_stage)
 
         elif message.isType("configure2"):
             #

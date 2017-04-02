@@ -125,8 +125,8 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.ui.syncSpinBox.hide()
 
         # Connect signals.
-#        self.camera_widget.intensityInfo.connect(self.handleIntensityInfo)
-
+        self.camera_view.dragMove.connect(self.handleDragMove)
+        self.camera_view.dragStart.connect(self.handleDragStart)
         self.camera_view.newCenter.connect(self.handleNewCenter)
         self.camera_view.newScale.connect(self.handleNewScale)
 
@@ -231,6 +231,8 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         """
         self.createParameters()
 
+    def enableStageDrag(self, enabled):
+        self.camera_view.enableStageDrag(enabled)
         
     def feedConfig(self, feed_info):
         """
@@ -347,6 +349,21 @@ class BaseFrameDisplay(QtWidgets.QFrame):
             self.camera_widget.updateImageWithFrame(self.frame)
             if self.show_info:
                 self.handleIntensityInfo(*self.camera_widget.getIntensityInfo())
+
+    # FIXME: Disable this when there is no motorized stage.
+    def handleDragMove(self, x_disp, y_disp):
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "drag move",
+                                                   level = 3,
+                                                   data = {"display_name" : self.display_name,
+                                                           "feed_name" : self.getFeedName(),
+                                                           "x_disp" : x_disp,
+                                                           "y_disp" : y_disp}))
+                
+    def handleDragStart(self):
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "drag start",
+                                                   level = 3,
+                                                   data = {"display_name" : self.display_name,
+                                                           "feed_name" : self.getFeedName()}))
 
     def handleFeedChange(self, feed_name):
         """
@@ -509,27 +526,14 @@ class BaseFrameDisplay(QtWidgets.QFrame):
 
 class CameraFrameDisplay(BaseFrameDisplay):
     """
-    Add handling of interaction with the feeds, i.e. mouse drags,
-    ROI selection, etc..
-
-    FIXME:
-      1. Dragging should not be specific to the main display?
-      2. Dragging should only work for the cameras, not feeds?
+    The BaseFrameDisplay with a record button.
     """
     def __init__(self, show_record = False, **kwds):
         super().__init__(**kwds)
-
-#        self.camera_widget.setDragEnabled(True)
         
         if show_record:
             self.ui.recordButton.show()
                 
-        # Signals
-        #self.camera_widget.displayCaptured.connect(self.handleDisplayCaptured)
-        #self.camera_widget.dragStart.connect(self.handleDragStart)
-        #self.camera_widget.dragMove.connect(self.handleDragMove)
-        #self.camera_widget.roiSelection.connect(self.handleROISelection)
-
         self.ui.cameraShutterButton.clicked.connect(self.handleCameraShutter)
         self.ui.recordButton.clicked.connect(self.handleRecord)
 
@@ -555,20 +559,6 @@ class CameraFrameDisplay(BaseFrameDisplay):
     def handleDisplayCaptured(self, a_pixmap):
         #self.frameCaptured.emit(self.feed_name, a_pixmap)
         pass
-
-    def handleDragStart(self):
-        self.guiMessage.emit(halMessage.HalMessage(m_type = "drag start",
-                                                   level = 3,
-                                                   data = {"display_name" : self.display_name,
-                                                           "feed_name" : self.getFeedName()}))
-
-    def handleDragMove(self, x_disp, y_disp):
-        self.guiMessage.emit(halMessage.HalMessage(m_type = "drag move",
-                                                   level = 3,
-                                                   data = {"display_name" : self.display_name,
-                                                           "feed_name" : self.getFeedName(),
-                                                           "x_disp" : x_disp,
-                                                           "y_disp" : y_disp}))
 
     def handleRecord(self, boolean):
         self.guiMessage.emit(halMessage.HalMessage(m_type = "record clicked",
