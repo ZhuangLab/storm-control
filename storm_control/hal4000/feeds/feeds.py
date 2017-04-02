@@ -81,7 +81,8 @@ class CameraFeedInfo(object):
 
         # Add some additional parameters.
 
-        # display.display will replace the colortable parameter with correct value.
+        # We will replace the colortable parameter with correct value just
+        # before we broadcast these objects to other modules.
         self.parameters.add(params.ParameterString(name = "colortable",
                                                    value = ""))
         self.parameters.add(params.ParameterString(name = "feed_name",
@@ -184,6 +185,12 @@ class CameraFeedInfo(object):
     def getParameter(self, name):
         return self.parameters.get(name)
 
+    def isCamera(self):
+        return self.getParameter("is_camera")
+    
+    def isMaster(self):
+        return self.getParameter("is_master")
+    
     def setLocked(self, is_locked):
         self.locked = is_locked
 

@@ -466,7 +466,7 @@ class Film(halModule.HalModule):
         
         # Start slave cameras first.
         for feed_name, feed in self.feeds_info.items():
-            if feed.getParameter("is_camera") and not feed.getParameter("is_master"):
+            if feed.isCamera() and not feed.isMaster():
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "start camera",
                                                            data = {"camera" : feed.getParameter("feed_name")}))
@@ -480,7 +480,7 @@ class Film(halModule.HalModule):
 
         # Start master cameras last.
         for feed_name, feed in self.feeds_info.items():
-            if feed.getParameter("is_camera") and feed.getParameter("is_master"):
+            if feed.isCamera() and feed.isMaster():
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "start camera",
                                                            data = {"camera" : feed.getParameter("feed_name")}))
@@ -529,7 +529,7 @@ class Film(halModule.HalModule):
 
         # Stop master cameras first.
         for feed_name, feed in self.feeds_info.items():
-            if feed.getParameter("is_camera") and feed.getParameter("is_master"):
+            if feed.isCamera() and feed.isMaster():
                 self.active_camera_count += 1
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "stop camera",
@@ -540,7 +540,7 @@ class Film(halModule.HalModule):
 
         # Stop slave cameras last.
         for feed_name, feed in self.feeds_info.items():
-            if feed.getParameter("is_camera") and not feed.getParameter("is_master"):
+            if feed.isCamera() and not feed.isMaster():
                 self.active_camera_count += 1
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "stop camera",
