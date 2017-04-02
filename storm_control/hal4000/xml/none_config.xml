@@ -131,7 +131,7 @@
 	  <default_min type="int">0</default_min>
 	  <flip_horizontal type="boolean">False</flip_horizontal>
 	  <flip_vertical type="boolean">False</flip_vertical>
-	  <transpose type="boolean">True</transpose>
+	  <transpose type="boolean">False</transpose>
 
 	  <!-- These can be changed / editted. -->
 
