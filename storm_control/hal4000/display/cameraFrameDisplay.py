@@ -386,6 +386,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
     def handleNewCenter(self, cx, cy):
         self.setParameter("center_x", cx)
         self.setParameter("center_y", cy)
+        self.camera_widget.setClickPos(*self.feed_info.transformChipToFrame(cx, cy))
 
     def handleNewScale(self, scale):
         self.setParameter("scale", scale)

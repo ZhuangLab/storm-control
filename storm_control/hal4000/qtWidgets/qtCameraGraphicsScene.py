@@ -107,6 +107,10 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
                 painter.setPen(QtGui.QColor(255, 255, 255))
                 painter.drawEllipse(mid_x, mid_y, 40, 40)
 
+    def setClickPos(self, cx, cy):
+        self.click_x = cx
+        self.click_y = cy
+
     def setColorTable(self):
         """
         Sets the color table of the new image. If you don't do this Qt
