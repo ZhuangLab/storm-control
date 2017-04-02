@@ -85,6 +85,11 @@ class Display(halModule.HalModule):
         
         self.views[0].guiMessage.connect(self.handleGuiMessage)
 
+        # Default color table to use. This used be feeds.feeds in the feed_info structure.
+        halMessage.addMessage("default colortable",
+                              validator = {"data" : {"colortable" : [True, str]},
+                                           "resp" : None})
+        
         # This message comes from the viewers, it is used to get the initial
         # display settings for a camera or feed.
         halMessage.addMessage("get feed information",
@@ -122,11 +127,6 @@ class Display(halModule.HalModule):
         """
         if message.isType("get feed information"):
             feed_info = response.getData()["feed_info"]
-
-            # Add default color table information.
-            if (feed_info.getParameter("colortable") == ""):
-                feed_info.setParameter("colortable", self.parameters.get("colortable"))
-        
             for view in self.views:
                 if (view.getDisplayName() == message.getData()["display_name"]):
                     view.feedConfig(feed_info)
@@ -152,6 +152,11 @@ class Display(halModule.HalModule):
                                                        m_type = "set current camera",
                                                        data = {"camera" : "camera1",
                                                                "display_name" : "display00"}))
+
+            # Let everyone know what the default color table is.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "default colortable",
+                                                       data = {"colortable" : self.parameters.get("colortable")}))            
 
         elif message.isType("configure2"):
             #

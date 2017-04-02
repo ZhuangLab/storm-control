@@ -16,7 +16,7 @@ import storm_control.hal4000.halLib.c_image_manipulation_c as c_image
 class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
     """
     The idea is to display the image as it would appear on the 
-    chip, so 0,0 is corner of camera chip. 
+    chip, so 0,0 is corner of the camera chip. 
 
     If the image is a sub-section then it should be rendered 
     with the appropriate x,y offset from 0,0.
@@ -56,6 +56,9 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
             self.chip_size_changed = False
         return chip_rect
 
+    def getIntensityInfo(self):
+        return [self.click_x, self.click_y, self.intensity_info]
+        
     def newColorTable(self, colortable):
         self.colortable = colortable
 
@@ -123,7 +126,6 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
         """
         Convert the frame to a QImage, then call update() to display it.
         """
-    
         #
         # For reasons lost in the mists of time 'frame' is a 1D numpy array
         # and needs to be reshaped before rescaling and converting to a QImage.

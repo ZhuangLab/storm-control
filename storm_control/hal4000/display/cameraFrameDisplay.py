@@ -68,6 +68,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.default_parameters = params.StormXMLObject(validate = False) 
         self.display_name = display_name
         self.display_timer = QtCore.QTimer(self)
+        self.feed_info = None
         self.filming = False
         self.frame = False
         self.parameters = False
@@ -109,7 +110,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.ui.rangeSlider.setEmitWhileMoving(True)
 
         # Color tables combo box.
-        for color_name in self.color_tables.getColorTableNames():
+        for color_name in sorted(self.color_tables.getColorTableNames()):
             self.ui.colorComboBox.addItem(color_name[:-5])
 
         self.ui.gridAct = QtWidgets.QAction(self.tr("Show Grid"), self)
@@ -167,6 +168,9 @@ class BaseFrameDisplay(QtWidgets.QFrame):
             p = self.parameters.addSubSection(feed_info.getFeedName())
 
             # Add display specific parameters.
+            #
+            # FIXME: Should we save center_x, center_y and scale?
+            #
             p.add(params.ParameterInt(name = "center_x",
                                       value = 0,
                                       is_mutable = False,
@@ -215,15 +219,17 @@ class BaseFrameDisplay(QtWidgets.QFrame):
 
         # A sanity check..
         assert (self.getFeedName() == feed_info.getFeedName())
+
+        self.feed_info = feed_info
         
         # Configure the QtCameraGraphicsItem.
         color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
         self.camera_widget.newColorTable(color_table)
-        self.camera_widget.newConfiguration(feed_info)
+        self.camera_widget.newConfiguration(self.feed_info)
         self.updateRange()
 
         # Configure the QtCameraGraphicsView.
-        self.camera_view.newConfiguration(feed_info, self.parameters.get(self.getFeedName()))
+        self.camera_view.newConfiguration(self.feed_info, self.parameters.get(self.getFeedName()))
 
         # Color gradient.
         if self.color_gradient is not None:
@@ -284,6 +290,8 @@ class BaseFrameDisplay(QtWidgets.QFrame):
     def handleDisplayTimer(self):
         if self.frame:
             self.camera_widget.updateImageWithFrame(self.frame)
+            if self.show_info:
+                self.handleIntensityInfo(*self.camera_widget.getIntensityInfo())
 
     def handleFeedChange(self, feed_name):
         """
@@ -315,7 +323,6 @@ class BaseFrameDisplay(QtWidgets.QFrame):
             self.ui.infoAct.setText("Hide Info")
             self.ui.intensityPosLabel.show()
             self.ui.intensityIntLabel.show()
-        self.camera_widget.setShowInfo(self.show_info)
 
     def handleIntensityInfo(self, x, y, i):
         self.ui.intensityPosLabel.setText("({0:d},{1:d})".format(x, y, i))

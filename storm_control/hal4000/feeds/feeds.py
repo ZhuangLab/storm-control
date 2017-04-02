@@ -74,6 +74,7 @@ class CameraFeedInfo(object):
         This will automatically make a copy of camera_params.
         """
         super().__init__(**kwds)
+        self.locked = False
 
         # Copy all of the camera parameters.
         self.parameters = camera_params.copy()
@@ -183,7 +184,12 @@ class CameraFeedInfo(object):
     def getParameter(self, name):
         return self.parameters.get(name)
 
+    def setLocked(self, is_locked):
+        self.locked = is_locked
+
     def setParameter(self, name, value):
+        if self.locked:
+            raise halException("Feed information no longer be changed.")
         self.parameters.set(name, value)
 
     def transformChipToFrame(self, cx, cy):
@@ -490,6 +496,7 @@ class Feeds(halModule.HalModule):
 
         self.active = False
         self.camera_info = {}
+        self.default_colortable = None
         self.feed_controller = None
         self.feeds_info = {}
         
@@ -519,6 +526,15 @@ class Feeds(halModule.HalModule):
         display.cameraDisplay uses this message to populate the feed chooser
         combobox.
         """
+        #
+        # Add the default color table and 'lock' the info so that we'll get an
+        # error if anything tries to change to them. These are shared as
+        # read-only objects.
+        #
+        for feed_name, feed in self.feeds_info.items():
+            feed.setParameter("colortable", self.default_colortable)
+            feed.setLocked(True)
+            
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "feeds information",
                                                    data = {"feeds" : self.feeds_info}))
@@ -528,6 +544,9 @@ class Feeds(halModule.HalModule):
         if message.isType("configure2"):
             self.broadcastFeedInfo()
 
+        elif message.isType("default colortable"):
+            self.default_colortable = message.getData()["colortable"]
+            
         elif message.isType("get feed information"):
             feed_name = message.getData()["feed_name"]
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
