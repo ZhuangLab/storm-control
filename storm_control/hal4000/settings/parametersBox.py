@@ -444,7 +444,6 @@ class ParametersBox(QtWidgets.QGroupBox):
         a response to the 'new parameters' message.
         """
         curp = self.ui.settingsListView.getCurrentParameters()
-        print(">ucp", section)
         curp.addSubSection(section,
                            svalue = parameters,
                            overwrite = True)

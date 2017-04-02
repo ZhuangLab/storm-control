@@ -42,7 +42,7 @@ class Settings(halModule.HalModule):
         # Add parameter to record whether or not these parameters have actually
         # been used (as opposed to just appearing in the list view).
         #
-        # They should be initialized since this what we are starting with..
+        # They should be initialized since this is what we are starting with..
         #
         p.add(params.ParameterSetBoolean(name = "initialized",
                                          value = False,
@@ -144,7 +144,7 @@ class Settings(halModule.HalModule):
             else:
                 # If this is in response to a 'new parameters' message triggered by
                 # the editor then we don't want to update the previous parameters.
-                if not ("is_edit" in message.getData()):
+                if not message.getData()["is_edit"]:
                     for response in message.getResponses():
                         data = response.getData()
                         if "old parameters" in data:
