@@ -195,10 +195,8 @@ class Display(halModule.HalModule):
             for view in self.views:
                 message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
                                                                   data = {"old parameters" : view.getParameters().copy()}))
-                print("")
-                print(">cd", p.has(view.getDisplayName()), view.getDisplayName())
-                view.newParametersStart(p.get(view.getDisplayName(),
-                                              view.getDefaultParameters()))
+                view.newParameters(p.get(view.getDisplayName(),
+                                         view.getDefaultParameters()))
                 message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
                                                                   data = {"new parameters" : view.getParameters()}))
 
@@ -228,7 +226,7 @@ class Display(halModule.HalModule):
         elif message.isType("updated parameters"):
             # It is now safe to query the camera / feed for the new configuration.
             for view in self.views:
-                view.newParametersEnd()
+                view.updatedParameters()
 
     def processL2Message(self, message):
         for view in self.views:

@@ -213,8 +213,6 @@ class BaseFrameDisplay(QtWidgets.QFrame):
                                       is_mutable = False,
                                       is_saved = False))
 
-        print(">fc", self.getParameter("scale"), self.getParameter("initialized"))
-
         # A sanity check..
         assert (self.getFeedName() == feed_info.getFeedName())
         
@@ -251,7 +249,6 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         """
         Return a copy of the default parameters.
         """
-        print(">getting defaults.")
         return self.default_parameters.copy()
 
     def getDisplayName(self):
@@ -329,7 +326,6 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.setParameter("center_y", cy)
 
     def handleNewScale(self, scale):
-        print(">hns", scale)
         self.setParameter("scale", scale)
 
     def handleRangeChange(self, scale_min, scale_max):
@@ -362,15 +358,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
             else:
                 self.frame = frame
 
-    def newParametersEnd(self):
-        """
-        This is called when we get the 'updated parameters' message.
-        It indicates that the new parameters are good and we can go
-        ahead and update the display accordingly.
-        """
-        self.handleFeedChange(self.parameters.get("feed_name"))
-
-    def newParametersStart(self, parameters):
+    def newParameters(self, parameters):
         """
         How this is supposed to work..
 
@@ -441,7 +429,15 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.ui.syncSpinBox.hide()
         if self.ui.cameraShutterButton.isVisible():
             self.ui.cameraShutterButton.setEnabled(True)
-                
+
+    def updatedParameters(self):
+        """
+        This is called when we get the 'updated parameters' message.
+        It indicates that the new parameters are good and we can go
+        ahead and update the display accordingly.
+        """
+        self.handleFeedChange(self.parameters.get("feed_name"))
+            
     def updateRange(self):
         self.ui.scaleMax.setText(str(self.getParameter("display_max")))
         self.ui.scaleMin.setText(str(self.getParameter("display_min")))
