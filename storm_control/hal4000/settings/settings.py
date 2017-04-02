@@ -174,6 +174,9 @@ class Settings(halModule.HalModule):
                                                        m_type = "add to ui",
                                                        data = self.configure_dict))
 
+        elif message.isType("configure2"):
+            self.view.copyDefaultParameters()
+            
         elif message.isType("initial parameters"):
             #
             # It is okay for other modules to just send their parameters as we make

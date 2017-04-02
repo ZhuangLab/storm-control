@@ -320,6 +320,16 @@ class ParametersBox(QtWidgets.QGroupBox):
         name = os.path.splitext(os.path.basename(parameters.get("parameters_file")))[0]
         self.ui.settingsListView.addParameters(name, parameters)
 
+    def copyDefaultParameters(self):
+        """
+        Make a copy of the parameters that were used for the
+        default settings. This breaks the link between them
+        and what is shown in GUI so that if the user changes
+        the GUI default paramters it does not effect the
+        'true' default parameters.
+        """
+        self.default_parameters = self.default_parameters.copy()
+
     def enableUI(self, state):
         self.enabled = state
         self.ui.settingsListView.setEnabled(state)
@@ -394,14 +404,17 @@ class ParametersBox(QtWidgets.QGroupBox):
             
             # Get the parameters labeled 'default'. They should exist because
             # we only expect to have to handle this at initialization.
-            #
-            # Also, the parameters referenced by self.default_parameters are
-            # those stored in the q_item labeled 'default'.
             q_item = self.ui.settingsListView.getQItemByValue("default")
 
-            # Replace them with these parameters. This also changes
-            # self.default_parameters in a very opaque way.
+            # Replace them with these parameters.
             self.ui.settingsListView.setItemParameters(q_item, p)
+
+            # Also set there parameters as default.
+            #
+            # FIXME: We'll have issues if the new default parameters are
+            # bad, as there is no pathway to reset the default parameters.
+            #
+            self.default_parameters = p.copy()
 
             # Emit a 'new parameters' message.
             self.newParameters.emit(p, True)

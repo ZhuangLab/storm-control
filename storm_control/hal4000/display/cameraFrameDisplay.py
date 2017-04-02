@@ -65,19 +65,27 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.color_gradient = None
         self.color_tables = colorTables.ColorTables(os.path.dirname(__file__) + "/../colorTables/all_tables/")
         self.cycle_length = 1
+        self.default_parameters = params.StormXMLObject(validate = False) 
         self.display_name = display_name
         self.display_timer = QtCore.QTimer(self)
         self.filming = False
         self.frame = False
-        self.parameters = params.StormXMLObject(validate = False)
+        self.parameters = False
         self.show_grid = False
         self.show_info = True
         self.show_target = False
 
-        # Keep track of the current feed_name in parameters.
-        self.parameters.add(params.ParameterString(name = "feed_name",
-                                                   value = feed_name,
-                                                   is_mutable = False))
+        #
+        # Keep track of the default feed_name in the default parameters, these
+        # are the paraemeters that will be used when we change parameter files
+        # and the parameters files doesn't specify anything for this this view.
+        #
+        self.default_parameters.add(params.ParameterString(name = "feed_name",
+                                                           value = feed_name,
+                                                           is_mutable = False))
+
+        # Set current parameters to default parameters.
+        self.parameters = self.default_parameters.copy()
         
         # UI setup.
         self.ui = cameraDisplayUi.Ui_Frame()
@@ -237,6 +245,12 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.setSyncMax(self.getParameter("sync_max"))
         self.ui.syncSpinBox.setValue(self.getParameter("sync"))
 
+    def getDefaultParameters(self):
+        """
+        Return a copy of the default parameters.
+        """
+        return self.default_parameters.copy()
+        
     def getDisplayName(self):
         return self.display_name
 

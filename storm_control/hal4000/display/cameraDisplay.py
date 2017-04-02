@@ -7,6 +7,8 @@ Hazen 3/17
 
 from PyQt5 import QtWidgets
 
+import storm_control.sc_library.parameters as params
+
 import storm_control.hal4000.feeds.feeds as feeds
 import storm_control.hal4000.display.cameraFrameDisplay as cameraFrameDisplay
 import storm_control.hal4000.halLib.halDialog as halDialog
@@ -193,8 +195,8 @@ class Display(halModule.HalModule):
             for view in self.views:
                 message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
                                                                   data = {"old parameters" : view.getParameters().copy()}))
-                # This just saves the new parameters.
-                view.newParametersStart(p.get(view.getDisplayName()))
+                view.newParametersStart(p.get(view.getDisplayName(),
+                                              view.getDefaultParameters()))
                 message.addResponse(halMessage.HalMessageResponse(source = view.getDisplayName(),
                                                                   data = {"new parameters" : view.getParameters()}))
 
@@ -206,13 +208,10 @@ class Display(halModule.HalModule):
             # Heh, need to send this message again because the QtCameraGraphicsView won't know how
             # to scale the frames until it gets rendered and can correctly calculate it's size.
             #
-            # We also need to reset the "initialized" parameter.
-            #
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "get feed information",
                                                        data = {"display_name" : self.views[0].getDisplayName(),
                                                                "feed_name" : "camera1"}))
-            self.views[0].setParameter("initialized", False)
 
         elif message.isType("start film"):
             for view in self.views:
