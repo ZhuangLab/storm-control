@@ -336,11 +336,13 @@ class HalCore(QtCore.QObject):
         self.queued_messages_timer.setSingleShot(True)
 
         # Load all the modules.
-        module_names = []
         print("Loading modules")
+
+        # For HAL it is easier to just use a list of modules, but at initialization
+        # we also send a dictionary of all the modules to all of the modules.
+        all_modules = {}
         for module_name in config.get("modules").getAttrs():
             print("  " + module_name)
-            module_names.append(module_name)
 
             # Get module specific parameters.
             module_params = config.get("modules").get(module_name)
@@ -354,9 +356,12 @@ class HalCore(QtCore.QObject):
             # Load the module.
             a_module = importlib.import_module("storm_control.hal4000." + module_params.get("module_name"))
             a_class = getattr(a_module, module_params.get("class_name"))
-            self.modules.append(a_class(module_name = module_name,
-                                        module_params = module_params,
-                                        qt_settings = self.qt_settings))
+            a_object = a_class(module_name = module_name,
+                               module_params = module_params,
+                               qt_settings = self.qt_settings)
+            self.modules.append(a_object)
+            all_modules[module_name] = a_object
+
         print("")
 
         # Connect signals.
@@ -392,7 +397,7 @@ class HalCore(QtCore.QObject):
         # configure1.
         message_chain.append(halMessage.HalMessage(source = self,
                                                    m_type = "configure1",
-                                                   data = {"module_names" : module_names}))
+                                                   data = {"all_modules" : all_modules}))
 
         # configure2.
         message_chain.append(halMessage.HalMessage(source = self,

@@ -30,7 +30,7 @@ valid_messages = {
                              "ui_widget" : [True, QtCore.QObject]},
                    "resp" : None},
     'close event' : {"data" : None, "resp" : None},
-    'configure1' : {"data" : {"module_names" : [True, list]},
+    'configure1' : {"data" : {"all_modules" : [True, dict]},
                     "resp" : {}},
     'configure2' : {"data" : None, "resp" : None},
     'configure3' :  {"data" : None, "resp" : None},
