@@ -19,6 +19,58 @@ class CameraException(halExceptions.HardwareException):
     pass
 
 
+class CameraConfiguration(object):
+    """
+    Stores the camera configuration information in a 
+    form that can be passed to other modules.
+    """
+    def __init__(self,
+                 camera_name = "",
+                 have_emccd = False,
+                 have_preamp = False,
+                 have_shutter = False,
+                 have_temperature = False,
+                 is_master = False,
+                 parameters = None,
+                 **kwds):
+        super().__init__(**kwds)
+
+        self.camera_name = camera_name
+        self.have_emccd = have_emccd
+        self.have_preamp = have_preamp
+        self.have_shutter = have_shutter
+        self.have_temperature = have_temperature
+        self.is_master = is_master
+        self.parameters = parameters
+
+    def getCameraName(self):
+        return self.camera_name
+
+    def getParameter(self, name):
+        return self.parameters.get(name)
+
+    def getParameters(self):
+        return self.parameters
+    
+    def hasEMCCD(self):
+        return self.have_emccd
+
+    def hasPreamp(self):
+        return self.have_preamp
+
+    def hasShutter(self):
+        return self.have_shutter
+
+    def hasTemperature(self):
+        return self.have_temperature
+
+    def isMaster(self):
+        return self.is_master
+
+    def setParameters(self, parameters):
+        self.parameters = parameters
+        
+    
 class CameraControl(QtCore.QThread):
     newData = QtCore.pyqtSignal(object)
     stopped = QtCore.pyqtSignal()
@@ -26,21 +78,30 @@ class CameraControl(QtCore.QThread):
     def __init__(self, camera_name = None, config = None, **kwds):
         super().__init__(**kwds)
 
+        # This is the hardware module that will actually control the camera.
         self.camera = False
-        self.camera_name = camera_name
-        self.camera_working = True
-        self.frame_number = 0
-        self.parameters = params.StormXMLObject()
-        self.running = False
-        self.shutter_state = False  # True = open
 
-        # Default (hardware) configuration. The remaining values
-        # for the camera are stored in it's parameters.
-        self.hw_dict = {"camera" : self.camera_name,
-                        "have_emccd" : False,
-                        "have_preamp" : False,
-                        "have_shutter" : False,
-                        "have_temp" : False}
+        # Sub-classes should set this to a CameraConfiguration object.
+        self.camera_configuration = None
+        
+        self.camera_name = camera_name
+
+        # This is a flag for whether or not the camera is in a working state.
+        # It might not be if for example the parameters were bad.
+        self.camera_working = True
+
+        # The current frame number, this gets reset by startCamera().
+        self.frame_number = 0
+
+        # The camera parameters.
+        self.parameters = params.StormXMLObject()
+
+        # This is how we tell the thread that is handling actually talking
+        # to the camera hardware to stop.
+        self.running = False
+
+        # Current shutter state. True = open.
+        self.shutter_state = False 
 
         # Parameters common to every camera.
 
@@ -154,17 +215,15 @@ class CameraControl(QtCore.QThread):
         self.parameters.set("default_max", config.get("default_max", 2000))
         self.parameters.set("default_min", config.get("default_min", 100))
 
-    def addToHWConfig(self, key, value):
-        self.hw_dict[key] = value
-
     def cleanUp(self):
         self.running = False
         self.wait()
 
-    def getCameraConfig(self):
-        self.hw_dict["shutter_state"] = self.shutter_state
-        self.hw_dict["parameters"] = self.parameters.copy()
-        return self.hw_dict
+    def getCameraConfiguration(self):
+        if (self.camera_configuration.parameters != self.parameters):
+            msg = "The parameters in the camera configuration are different from the actual camera parameters."
+            raise CameraException(msg)
+        return self.config
 
     def getParameters(self):
         return self.parameters
@@ -174,12 +233,12 @@ class CameraControl(QtCore.QThread):
         Non-sensical defaults. Cameras that have this 
         feature should override this method.
         """
-        return {"camera" : self.hw_dict["camera"],
+        return {"camera" : self.camera_name,
                 "temperature" : 50.0,
                 "state" : "unstable"}
 
     def haveTemperature(self):
-        return self.hw_dict["have_temp"]
+        return self.camera_configuration.hasTemperature()
 
     def newParameters(self, parameters):
         """

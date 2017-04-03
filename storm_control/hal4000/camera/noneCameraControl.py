@@ -16,7 +16,7 @@ import storm_control.hal4000.camera.frame as frame
 
 class NoneCameraControl(cameraControl.CameraControl):
 
-    def __init__(self, config = None, **kwds):
+    def __init__(self, config = None, is_master = False, **kwds):
         kwds["config"] = config
         super().__init__(**kwds)
 
@@ -26,6 +26,16 @@ class NoneCameraControl(cameraControl.CameraControl):
         self.fake_frame_size = [0,0]
         self.sleep_time = 0
 
+        #
+        # The camera configuration. Note the connection to self.parameters
+        # which should not be changed to point to some other parameters
+        # object when the parameters change. This is enforced by the
+        # getCameraConfiguration() method.
+        #
+        self.camera_configuration = cameraControl.CameraConfiguration(camera_name = self.camera_name,
+                                                                      is_master = is_master,
+                                                                      parameters = self.parameters)
+        
         # Emulation camera parameters.
         self.parameters.add(params.ParameterRangeFloat(description = "Exposure time (seconds)", 
                                                        name = "exposure_time", 

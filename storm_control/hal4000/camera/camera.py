@@ -25,6 +25,7 @@ from PyQt5 import QtCore
 
 import storm_control.sc_library.parameters as params
 
+import storm_control.hal4000.camera.cameraControl as cameraControl
 import storm_control.hal4000.camera.frame as frame
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
@@ -49,29 +50,31 @@ class Camera(halModule.HalModule):
         a_module = importlib.import_module("storm_control.hal4000." + camera_params.get("module_name"))
         a_class = getattr(a_module, camera_params.get("class_name"))
         self.camera_control = a_class(camera_name = self.module_name,
-                                      config = camera_params.get("parameters"))
-        self.camera_control.addToHWConfig("master", camera_params.get("master"))
+                                      config = camera_params.get("parameters"),
+                                      is_master = camera_params.get("master"))
 
         self.camera_control.finished.connect(self.handleFinished)
         self.camera_control.newData.connect(self.handleNewData)
 
-        # The 'current camera' and the 'camera configuration'
-        # message send the same data.
-        info_validator = {"data" : {"camera" : [True, str],
-                                    "have_emccd" : [True, bool],
-                                    "have_preamp" : [True, bool],
-                                    "have_shutter" : [True, bool],
-                                    "have_temp" : [True, bool],
-                                    "master" : [True, bool],
-                                    "parameters" : [True, params.StormXMLObject],
-                                    "shutter_state" : [True, bool]},
-                          "resp" : {}}
+#        # The 'current camera' and the 'camera configuration'
+#        # message send the same data.
+#        info_validator = {"data" : {"camera" : [True, str],
+#                                    "have_emccd" : [True, bool],
+#                                    "have_preamp" : [True, bool],
+#                                    "have_shutter" : [True, bool],
+#                                    "have_temp" : [True, bool],
+#                                    "master" : [True, bool],
+#                                    "parameters" : [True, params.StormXMLObject],
+#                                    "shutter_state" : [True, bool]},
+#                          "resp" : {}}
 
         # This is sent at start-up so that other modules, in particular
         # feeds.feeds, get the information they need about the camera(s)
         halMessage.addMessage("camera configuration",
                               check_exists = False,
-                              validator = info_validator)
+                              validator = {"data" : {"camera" : [True, str],
+                                                     "config" : [True, cameraControl.CameraConfiguration]},
+                                           "resp" : {}})
 
         # Sent when the camera stops.
         halMessage.addMessage("camera stopped",
@@ -85,11 +88,11 @@ class Camera(halModule.HalModule):
                                                      "temperature" : [True, float]},
                                            "resp" : None})
 
-        # Information about this camera if it is the 'current camera', i.e. 
-        # the camera shown in the main viewer and the parameters display.
-        halMessage.addMessage("current camera",
-                              check_exists = False,
-                              validator = info_validator)
+#        # Information about this camera if it is the 'current camera', i.e. 
+#        # the camera shown in the main viewer and the parameters display.
+#        halMessage.addMessage("current camera",
+#                              check_exists = False,
+#                              validator = info_validator)
 
         # Sent when filming and we have reached the desired number of frames.
         halMessage.addMessage("film complete",
@@ -154,7 +157,8 @@ class Camera(halModule.HalModule):
             # Broadcast configuration.
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "camera configuration",
-                                                       data = self.camera_control.getCameraConfig()))            
+                                                       data = {"camera" : self.module_name,
+                                                               "config" : self.camera_control.getCameraConfig()}))
 
         # This message comes from settings.settings.
         elif message.isType("new parameters"):
@@ -162,17 +166,12 @@ class Camera(halModule.HalModule):
                                     message,
                                     lambda : self.updateParameters(message))
 
-        #
-        # This message comes from display.cameraDisplay when the feed is changed. The
-        # response is broadcast because display.paramsDisplay also needs this information.
-        #
-        # FIXME: Should also broadcast current temperature?
-        #
-        elif message.isType("set current camera"):
+        # This message comes from display.cameraDisplay.
+        elif message.isType("get camera configuration"):
             if (message.getData()["camera"] == self.module_name):
-                self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "current camera",
-                                                           data = self.camera_control.getCameraConfig()))
+                message.addResponse(halMessage.HalMessageResponse(source = self,
+                                                                  data = {"camera" : self.module_name,
+                                                                          "config" : self.camera_control.getCameraConfig()}))
                     
         # This message comes from display.paramsDisplay.
         #

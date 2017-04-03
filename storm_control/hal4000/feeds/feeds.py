@@ -215,10 +215,9 @@ class FeedNC(object):
     """
     The base class for all the feeds.
     """
-    
     def __init__(self, camera_feed_info = None, feed_name = None, feed_parameters = None, **kwds):
         """
-        camera_feed_info - The CameraFeedInfo object this seed is derived from.
+        camera_feed_info - The CameraFeedInfo object this feed is derived from.
         feed_name - The name of this feed, this will be combined with the camera name
                     to create the final feed name.
         feed_parameters - The parameters of this feed (not all of them in aggregate).
@@ -475,9 +474,6 @@ class FeedController(object):
 
     def getParameters(self):
         return self.parameters
-
-#    def haveFeeds(self):
-#        return (len(self.feeds) > 0)
     
     def newFrame(self, new_frame):
         feed_frames = []
@@ -548,7 +544,11 @@ class Feeds(halModule.HalModule):
 
     def processL1Message(self, message):
 
-        if message.isType("configure2"):
+        if message.isType("configure1"):
+            if not ("camera1" in message.getData()["all_modules"]):
+                raise halException.HalException("There must be at least one camera named 'camera1'.")
+            
+        elif message.isType("configure2"):
             self.broadcastFeedInfo()
 
         elif message.isType("default colortable"):
@@ -564,18 +564,21 @@ class Feeds(halModule.HalModule):
             #
             # We get this message at startup from each of the cameras.
             #
-            data = message.getData()
-            p = data["parameters"]
+            camera_name = message.getData("camera")
+            camera_config = message.getData("config")
 
+            # Sanity check.
+            assert (camera_name == camera_config.getCameraName())
+            
             #
             # These are the invariant properties of the camera.
             #
-            self.camera_info[data["camera"]] = {"camera" : data["camera"],
-                                                "master" : data["master"]}
+            self.camera_info[camera_name] = {"camera" : camera_name,
+                                             "master" : camera_config.isMaster()}
 
-            self.feeds_info[data["camera"]] = CameraFeedInfo(camera_params = p,
-                                                             camera_name = data["camera"],
-                                                             is_master = data["master"])
+            self.feeds_info[camera_name] = CameraFeedInfo(camera_params = camera_config.getParameters(),
+                                                          camera_name = camera_name,
+                                                          is_master = camera_config.isMaster())
 
         elif message.isType("new parameters"):
             checkParameters(message.getData()["parameters"])
@@ -603,10 +606,12 @@ class Feeds(halModule.HalModule):
 
         elif message.isType("start camera"):
             self.active = True
+            # This assumes that there is always at least a "camera1" module.
+            if self.feed_controller is not None and (message.getData()["camera"] == "camera1"):
+                self.feed_controller.resetFeeds()
 
         elif message.isType("start film"):
-            if self.feed_controller is not None:
-                self.feed_controller.resetFeeds()
+            pass
 
         elif message.isType("stop camera"):
             self.active = False
@@ -615,7 +620,6 @@ class Feeds(halModule.HalModule):
             if self.feed_controller is not None:
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                   data = {"parameters" : self.feed_controller.getParameters()}))
-                self.feed_controller.resetFeeds()
 
     def processL2Message(self, message):
         if self.feed_controller is not None and self.active:
