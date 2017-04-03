@@ -42,6 +42,7 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         self.setAcceptDrops(True)
         self.setAlignment(QtCore.Qt.AlignCenter)
         self.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(0,0,0)))
+        self.setDragMode(QtWidgets.QGraphicsView.RubberBandDrag)
 
     def calcScale(self, size):
         if (size < self.viewport_min):
@@ -67,7 +68,9 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         if self.drag_mode:
             self.dragMove.emit(event.x() - self.drag_x,
                                event.y() - self.drag_y)
-            
+        else:
+            super().mouseMoveEvent(event)
+
     def mousePressEvent(self, event):
         pos = self.mapToScene(event.pos())
         self.center_x = pos.x()
@@ -81,11 +84,15 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
             self.drag_x = event.x()
             self.drag_y = event.y()
             QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ClosedHandCursor))
+        else:
+            super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
         if self.drag_mode:
             self.drag_mode = False
             QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.OpenHandCursor))
+        else:
+            super().mouseReleaseEvent(event)
 
     def newConfiguration(self, feed_info, feed_parameters):
         """

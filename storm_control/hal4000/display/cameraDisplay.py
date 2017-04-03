@@ -86,9 +86,20 @@ class Display(halModule.HalModule):
         
         self.views[0].guiMessage.connect(self.handleGuiMessage)
 
-        # Default color table to use. This used be feeds.feeds in the feed_info structure.
+        # Default color table to use. This is used by feeds.feeds in the feed_info structure.
         halMessage.addMessage("default colortable",
                               validator = {"data" : {"colortable" : [True, str]},
+                                           "resp" : None})
+
+        # These are sent when the user selects an ROI on a View with the rubber
+        # band selection, 'chip' coordinates.
+        halMessage.addMessage("display ROI",
+                              validator = {"data" : {"display_name" : [True, str],
+                                                     "feed_name" : [True, str],
+                                                     "x1" : [True, int],
+                                                     "x2" : [True, int],
+                                                     "y1" : [True, int],
+                                                     "y2" : [True, int]},
                                            "resp" : None})
 
         # This message comes from one of the viewers when the user is trying to

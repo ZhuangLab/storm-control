@@ -73,6 +73,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.filming = False
         self.frame = False
         self.parameters = False
+        self.rubber_band_rect = None
         self.show_grid = False
         self.show_info = True
         self.show_target = False
@@ -129,6 +130,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.camera_view.dragStart.connect(self.handleDragStart)
         self.camera_view.newCenter.connect(self.handleNewCenter)
         self.camera_view.newScale.connect(self.handleNewScale)
+        self.camera_view.rubberBandChanged.connect(self.handleRubberBandChanged)
 
         self.ui.autoScaleButton.clicked.connect(self.handleAutoScale)
         self.ui.colorComboBox.currentIndexChanged[str].connect(self.handleColorTableChange)
@@ -350,7 +352,6 @@ class BaseFrameDisplay(QtWidgets.QFrame):
             if self.show_info:
                 self.handleIntensityInfo(*self.camera_widget.getIntensityInfo())
 
-    # FIXME: Disable this when there is no motorized stage.
     def handleDragMove(self, x_disp, y_disp):
         self.guiMessage.emit(halMessage.HalMessage(m_type = "drag move",
                                                    level = 3,
@@ -417,6 +418,27 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.setParameter("display_max", int(scale_max))
         self.setParameter("display_min", int(scale_min))
         self.updateRange()
+
+    def handleRubberBandChanged(self, rect, p1, p2):
+        if rect.isNull():
+            tl = self.camera_view.mapToScene(self.rubber_band_rect.topLeft())
+            br = self.camera_view.mapToScene(self.rubber_band_rect.bottomLeft())
+            [x1, x2] = [tl.x(), br.x()] if (tl.x() < br.x()) else [br.x(), tl.x()]
+            [y1, y2] = [tl.y(), br.y()] if (tl.y() < br.y()) else [br.y(), tl.y()]
+            [x1, x2, y1, y2] = map(round, [x1, x2, y1, y2])
+            if (x1 == x2):
+                x2 += 1
+            if (y1 == y2):
+                y2 += 1
+            self.guiMessage.emit(halMessage.HalMessage(m_type = "display ROI",
+                                                       data = {"display_name" : self.display_name,
+                                                               "feed_name" : self.getFeedName(),
+                                                               "x1" : x1,
+                                                               "x2" : x2,
+                                                               "y1" : y1,
+                                                               "y2" : y2}))
+        else:
+            self.rubber_band_rect = rect
 
     def handleSync(self, sync_value):
         self.setParameter("sync", sync_value)
