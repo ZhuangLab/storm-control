@@ -56,6 +56,9 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
             self.chip_size_changed = False
         return chip_rect
 
+    def getImage(self):
+        return self.q_image
+    
     def getIntensityInfo(self):
         return [self.click_x, self.click_y, self.intensity_info]
         

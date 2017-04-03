@@ -63,6 +63,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         super().__init__(**kwds)
 
         # General (alphabetically ordered).
+        self.broadcast_q_image = False
         self.color_gradient = None
         self.color_tables = colorTables.ColorTables(os.path.dirname(__file__) + "/../colorTables/all_tables/")
         self.cycle_length = 1
@@ -233,6 +234,9 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         """
         self.createParameters()
 
+    def enableBroadcastImage(self, enabled):
+        self.broadcast_q_image = enabled
+        
     def enableStageDrag(self, enabled):
         self.camera_view.enableStageDrag(enabled)
         
@@ -351,6 +355,9 @@ class BaseFrameDisplay(QtWidgets.QFrame):
             self.camera_widget.updateImageWithFrame(self.frame)
             if self.show_info:
                 self.handleIntensityInfo(*self.camera_widget.getIntensityInfo())
+            # This is a stub. Fill it out when we get Bluetooth up and running again.
+            if self.broadcast_q_image:
+                pass
 
     def handleDragMove(self, x_disp, y_disp):
         self.guiMessage.emit(halMessage.HalMessage(m_type = "drag move",
