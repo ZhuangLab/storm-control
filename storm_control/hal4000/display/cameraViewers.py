@@ -47,10 +47,35 @@ class CameraParamsMixin(object):
         
     def getViewerName(self):
         return self.viewer_name
-    
+
+    def handleFeedChange(self, feed_name):
+        [camera_name, temp] = feeds.getCameraFeedName(feed_name)
+        if (camera_name != self.camera_name):
+            self.guiMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "get camera configuration",
+                                                       data = {"display_name" : self.viewer_name,
+                                                               "camera" : camera_name}))
+            self.camera_name = camera_name
+        self.guiMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "get feed information",
+                                                   data = {"display_name" : self.viewer_name,
+                                                           "feed_name" : feed_name}))
+
+    def handleGuiMessage(self, message):
+        self.guiMessage.emit(message)
+
+    def handleRecordButton(self, boolean):
+        self.guiMessage.emit(self.frame_viewer.ui.recordButton.getHalMessage())
+
+    def handleShutterButton(self, boolean):
+        self.guiMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "shutter clicked",
+                                                   data = {"display_name" : self.viewer_name,
+                                                           "camera" : camera_name}))
+        
     def messageCameraEMCCDGain(self, camera_name, emccd_gain):
         if (camera_name == self.camera_name):
-            if self.params_view is not None:
+            if self.params_viewer is not None:
                 self.params_viewer.setEMCCDGain(emccd_gain)
 
     def messageCameraShutter(self, camera_name, camera_shutter):
@@ -59,7 +84,7 @@ class CameraParamsMixin(object):
 
     def messageCameraTemperature(self, camera_name, state, temperature):
         if (camera_name == self.camera_name):
-            if self.params_view is not None:
+            if self.params_viewer is not None:
                 self.params_viewer.setTemperature(state, temperature)
 
     def messageConfigure1(self):
@@ -85,21 +110,21 @@ class CameraParamsMixin(object):
         
     def messageNewParameters(self, parameters):
         self.frame_viewer.newParameters(parameters)
-        if self.params_view is not None:
-            self.params_view.newParameters(parameters)
+        if self.params_viewer is not None:
+            self.params_viewer.newParameters(parameters)
             
     def showIfVisible(self):
         pass
 
     def startFilm(self, film_settings):
         self.frame_viewer.startFilm(film_settings)
-        if self.params_view is not None:
-            self.params_view.startFilm()
+        if self.params_viewer is not None:
+            self.params_viewer.startFilm()
 
-    def stopFilm(self, film_settings):
+    def stopFilm(self):
         self.frame_viewer.stopFilm()
-        if self.params_view is not None:
-            self.params_view.stopFilm()
+        if self.params_viewer is not None:
+            self.params_viewer.stopFilm()
 
             
 class ClassicViewer(QtCore.QObject, CameraParamsMixin):
@@ -122,24 +147,10 @@ class ClassicViewer(QtCore.QObject, CameraParamsMixin):
 
         self.frame_viewer.feedChange.connect(self.handleFeedChange)
         self.frame_viewer.guiMessage.connect(self.handleGuiMessage)
+        self.frame_viewer.ui.recordButton.clicked.connect(self.handleRecordButton)
+        self.frame_viewer.ui.shutterButton.clicked.connect(self.handleShutterButton)        
         self.params_viewer.guiMessage.connect(self.handleGuiMessage)
 
-    def handleFeedChange(self, feed_name):
-        [camera_name, temp] = feeds.getCameraFeedName(feed_name)
-        if (camera_name != self.camera_name):
-            self.guiMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "get camera configuration",
-                                                       data = {"display_name" : self.viewer_name,
-                                                               "camera" : camera_name}))
-            self.camera_name = camera_name
-        self.guiMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "get feed information",
-                                                   data = {"display_name" : self.viewer_name,
-                                                           "feed_name" : feed_name}))
-
-    def handleGuiMessage(self, message):
-        self.guiMessage.emit(message)
-        
     def messageConfigure1(self):
         """
         Send messages with the UI elements to HAL.

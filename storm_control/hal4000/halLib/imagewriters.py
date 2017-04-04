@@ -25,7 +25,7 @@ def createFileWriter(feed_info, film_settings):
     This is convenience function which creates the appropriate file writer
     based on the filetype.
     """
-    ft = film_settings["filetype"]
+    ft = film_settings.getFiletype()
     if (ft == ".dax"):
         return DaxFile(feed_info = feed_info, film_settings = film_settings)
     elif (ft == ".spe"):
@@ -48,10 +48,10 @@ class BaseFileWriter(object):
         self.number_frames = 0
 
         # Figure out the filename.
-        self.basename = self.film_settings["basename"]
+        self.basename = self.film_settings.getBasename()
         if (len(self.feed_info.getParameter("extension")) != 0):
             self.basename += "_" + self.feed_info.getParameter("extension")
-        self.filename = self.basename + self.film_settings["filetype"]
+        self.filename = self.basename + self.film_settings.getFiletype()
 
     def saveFrame(self):
         self.number_frames += 1
@@ -146,7 +146,7 @@ class TIFFile(BaseFileWriter):
     def __init__(self, **kwds):
         super().__init__(**kwds)
         self.metadata = {'unit' : 'um'}
-        self.resolution = (self.film_settings["pixel_size"], self.film_settings["pixel_size"], None)
+        self.resolution = (self.film_settings.getPixelSize(), self.film_settings.getPixelSize(), None)
         self.tif = tifffile.TiffWriter(self.filename)
         
     def saveFrame(self, frame):

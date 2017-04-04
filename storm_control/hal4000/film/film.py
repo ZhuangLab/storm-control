@@ -17,8 +17,11 @@ import os
 from PyQt5 import QtCore, QtWidgets
 
 import storm_control.sc_library.hgit as hgit
+import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
 
+import storm_control.hal4000.film.filmRequest as filmRequest
+import storm_control.hal4000.film.filmSettings as filmSettings
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 import storm_control.hal4000.halLib.halModule as halModule
@@ -110,30 +113,47 @@ class FilmBox(QtWidgets.QGroupBox):
             name += "_" + self.parameters.get("extension")
         return name
 
-    def getFilmParams(self):
-        film_settings = None
+    def getFilmSettings(self, film_request):
 
-        reply = QtWidgets.QMessageBox.Yes
-        if self.will_overwrite and self.ui.saveMovieCheckBox.isChecked():
-            reply = halMessageBox.halMessageBoxResponse(self,
-                                                        "Warning!",
-                                                        "Overwrite Existing Movie?")
+        if film_request.isTCPRequest():
+            #
+            # TCP requested films are
+            # 1. Always fixed length.
+            # 2. Will always overwrite.
+            # 3. Are always saved.
+            #
+            return filmSettings.FilmSettings(basename = film_request.getBasename(),
+                                             filetype = self.parameters.get("filetype"),
+                                             film_length = film_request.getFrames(),
+                                             run_shutters = self.ui.autoShuttersCheckBox.isChecked(),
+                                             tcp_request = True)
 
-        if not self.ui.saveMovieCheckBox.isChecked():
-            reply = halMessageBox.halMessageBoxResponse(self,
-                                                        "Warning!",
-                                                        "Do you know that the movie will not be saved?")
-            
-        if (reply == QtWidgets.QMessageBox.Yes):
-            film_settings = {"acq_mode" : self.parameters.get("acq_mode"),
-                             "basename" :os.path.join(self.parameters.get("directory"), self.getBasename()),
-                             "filetype" : self.parameters.get("filetype"),
-                             "frames" : self.parameters.get("frames"),
-                             "run_shutters" : self.ui.autoShuttersCheckBox.isChecked(),
-                             "save_film" : self.ui.saveMovieCheckBox.isChecked()}
+        else:
+            reply = QtWidgets.QMessageBox.Yes
 
-        return film_settings
-        
+            # Overwrite check.
+            if self.will_overwrite and self.ui.saveMovieCheckBox.isChecked():
+                reply = halMessageBox.halMessageBoxResponse(self,
+                                                            "Warning!",
+                                                            "Overwrite Existing Movie?")
+                if (reply == QtWidgets.QMessageBox.No):
+                    return
+
+            # Not saved check.
+            if not self.ui.saveMovieCheckBox.isChecked():
+                reply = halMessageBox.halMessageBoxResponse(self,
+                                                            "Warning!",
+                                                            "Do you know that the movie will not be saved?")
+                if (reply == QtWidgets.QMessageBox.No):
+                    return
+
+            return filmSettings.FilmSettings(acq_mode = self.parameters.get("acq_mode"),
+                                             basename  = os.path.join(self.parameters.get("directory"), self.getBasename()),
+                                             filetype = self.parameters.get("filetype"),
+                                             film_length = self.parameters.get("frames"),
+                                             run_shutters = self.ui.autoShuttersCheckBox.isChecked(),
+                                             save_film = self.ui.saveMovieCheckBox.isChecked())
+
     def getParameters(self):
         return self.parameters.copy()
     
@@ -243,12 +263,6 @@ class FilmBox(QtWidgets.QGroupBox):
 class Film(halModule.HalModule):
     """
     Filming controller.
-
-    This sends the following messages:
-     'start camera'
-     'start film'
-     'stop camera'
-     'stop film'
     """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
@@ -278,8 +292,8 @@ class Film(halModule.HalModule):
         self.film_settings = None
         self.film_size = 0.0
         self.film_state = "idle"
+        self.number_frames = 0
         self.pixel_size = 1.0
-        self.tcp_requested = False
         self.writers = None
 
         self.logfile_fp = open(module_params.get("directory") + "image_log.txt", "a")
@@ -301,29 +315,38 @@ class Film(halModule.HalModule):
         # In live mode the camera also runs between films.
         halMessage.addMessage("live mode",
                               validator = {"data" : {"live mode" : [True, bool]},
-                                           "resp" : {}})
-                              
+                                           "resp" : None})
 
         # Start a camera.
         halMessage.addMessage("start camera",
                               validator = {"data" : {"camera" : [True, str]},
-                                           "resp" : {}})
+                                           "resp" : None})
 
         # Start filming.
         halMessage.addMessage("start film",
-                              validator = {"data" : {"film settings" : [True, dict]},
-                                           "resp" : {}})
+                              validator = {"data" : {"film settings" : [True, filmSettings.FilmSettings]},
+                                           "resp" : None})
+
+        # Request to start filming, either from a record button or via TCP.
+        halMessage.addMessage("start film request",
+                              validator = {"data" : {"request" : [True, filmRequest.FilmRequest]},
+                                           "resp" : None})
 
         # Stop a camera.
         halMessage.addMessage("stop camera",
                               validator = {"data" : {"camera" : [True, str]},
-                                           "resp" : {}})
+                                           "resp" : None})
 
         # Stop filming.
         halMessage.addMessage("stop film",
-                              validator = {"data" : {"film settings" : [True, dict]},
+                              validator = {"data" : {"film settings" : [True, filmSettings.FilmSettings],
+                                                     "number frames" : [True, int]},
                                            "resp" : {"parameters" : [False, params.StormXMLObject]}})
-                                           
+
+        # Request to stop filming.
+        halMessage.addMessage("stop film request",
+                              validator = {"data" : None,
+                                           "resp" : None})
 
     def cleanUp(self, qt_settings):
         self.logfile_fp.close()
@@ -344,13 +367,14 @@ class Film(halModule.HalModule):
         """
         if message.isType("stop film"):
             film_settings = message.getData()["film settings"]
-            if film_settings["save_film"]:
+            number_frames = message.getData()["number frames"]
+            if film_settings.isSaved():
                 to_save = params.StormXMLObject()
                 acq_p = to_save.addSubSection("acquisition")
                 acq_p.add(params.ParameterString(name = "version",
                                                  value = hgit.getVersion()))
                 acq_p.add(params.ParameterInt(name = "number_frames",
-                                              value = film_settings["number_frames"]))
+                                              value = number_frames))
                 for response in message.getResponses():
                     data = response.getData()
 
@@ -363,7 +387,7 @@ class Film(halModule.HalModule):
                         for p in data["acquisition"]:
                             acq_p.addParameter(p.getName(), p)
                             
-                to_save.saveToFile(film_settings["basename"] + ".xml")
+                to_save.saveToFile(film_settings.getBasename() + ".xml")
         
     def processL1Message(self, message):
             
@@ -396,10 +420,10 @@ class Film(halModule.HalModule):
         #        For now this message should only come from camera1 when it
         #        has recorded the required number of frames.
         #
-        elif message.isType("film complete"):
+        elif message.isType("camera film complete"):
             if (self.film_state == "run"):
                 self.stopFilmingLevel1()
-
+                
         elif message.isType("new directory"):
             self.view.setDirectory(message.getData()["directory"])
 
@@ -420,27 +444,27 @@ class Film(halModule.HalModule):
         elif message.isType("pixel size"):
             self.pixel_size = message.getData()["pixel size"]
 
-        elif message.isType("record clicked"):
-            self.tcp_requested = False
-            
-            # Start filming if we are idle.
-            if (self.film_state == "idle"):
-                film_settings = self.view.getFilmParams()
-                if film_settings is not None:
-                    film_settings["pixel_size"] = self.pixel_size
-                    self.startFilmingLevel1(film_settings)
-
-            # Otherwise stop filming if we are running.
-            elif (self.film_state == "run"):
-                self.stopFilmingLevel1()
-
         elif message.isType("start"):
             if self.view.amInLiveMode():
                 self.startCameras()
 
+        elif message.isType("start film request"):
+            if (self.film_state != "idle"):
+                raise halException.HalException("Start film request received while filming.")
+
+            film_settings = self.view.getFilmSettings(message.getData()["request"])
+            if film_settings is not None:
+                film_settings.setPixelSize(self.pixel_size)
+                self.startFilmingLevel1(film_settings)
+
         elif message.isType("stop film"):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : self.view.getParameters()}))
+
+        elif message.isType("stop film request"):
+            if (self.film_state != "run"):
+                raise halException.HalException("Stop film request received while not filming.")
+            self.stopFilmingLevel1()
 
     def processL2Message(self, message):            
         if (self.film_state == "run"):
@@ -449,8 +473,8 @@ class Film(halModule.HalModule):
             
             # Update frame counter if the frame is from camera1.
             if (frame.which_camera == "camera1"):
-                self.film_settings["number_frames"] = frame.frame_number + 1
-                self.view.updateFrames(frame.frame_number + 1)
+                self.number_frames = frame.frame_number + 1
+                self.view.updateFrames(self.number_frames)
 
             # Save frame (if needed).
             if frame.which_camera in self.writers:
@@ -509,7 +533,7 @@ class Film(halModule.HalModule):
         
         # Create writers as needed for each feed.
         self.writers = {}
-        if self.film_settings["save_film"]:
+        if self.film_settings.isSaved():
             for feed_name, feed in self.feeds_info.items():
                 if feed.getParameter("saved"):
                     self.writers[feed.getFeedName()] = imagewriters.createFileWriter(feed, self.film_settings)
@@ -567,14 +591,15 @@ class Film(halModule.HalModule):
         # Stop filming.
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "stop film",
-                                                   data = {"film settings" : self.film_settings}))
+                                                   data = {"film settings" : self.film_settings,
+                                                           "number frames" : self.number_frames}))
 
         # Restart cameras, if needed.
         if self.view.amInLiveMode():
             self.startCameras()
 
         # Increment film counter.
-        if not self.tcp_requested:
+        if not self.film_settings.isTCPRequest():
             self.view.incIndex()
             if self.view.soundBell():
                 print("\7\7")

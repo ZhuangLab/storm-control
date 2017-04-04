@@ -94,13 +94,6 @@ class Display(halModule.HalModule):
                                            "resp" : {"feed_name" : [True, str],
                                                      "feed_info" : [True, feeds.CameraFeedInfo]}})
 
-        # This message comes from the record button.
-        halMessage.addMessage("film request",
-                              check_exists = False,
-                              validator = {"data" : {"filename" : [False, str],
-                                                     "overwrite" : [False, bool]},
-                                           "resp" : None})
-
         # This message comes from the shutter button.
         halMessage.addMessage("shutter clicked",
                               validator = {"data" : {"display_name" : [True, str],

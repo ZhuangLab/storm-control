@@ -129,7 +129,7 @@ class Camera(halModule.HalModule):
                 # Broadcast that we've captured the expected number of frames.
                 if (frame.frame_number == self.film_length):
                     self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                               m_type = "film complete"))
+                                                               m_type = "camera film complete"))
 
                 # Don't send more frames than were requested for the film.
                 if (frame.frame_number >= self.film_length):
@@ -195,14 +195,14 @@ class Camera(halModule.HalModule):
         # This message comes from film.film, it goes to all cameras at once.
         elif message.isType("start film"):
             film_settings = message.getData()["film settings"]
-            self.film_length = None
             self.camera_control.startFilm(film_settings)
-            if (self.module_name == "camera1") and (film_settings["acq_mode"] == "fixed_length"):
-                self.film_length = film_settings["frames"] - 1
+            if (self.module_name == "camera1") and film_settings.isFixedLength():
+                self.film_length = film_settings.getFilmLength() - 1
 
         # This message comes from film.film. Once the camera actually
         # stops we send the 'camera stopped' message.
         elif message.isType("stop camera"):
+            self.film_length = None
             if (message.getData()["camera"] == self.module_name):
                 halModule.runWorkerTask(self, message, self.camera_control.stopCamera)
 

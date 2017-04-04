@@ -259,7 +259,13 @@ class CameraFrameViewer(QtWidgets.QFrame):
 
     def getParameters(self):
         return self.parameters
-    
+
+#    def getRecordButton(self):
+#        return self.ui.recordButton
+#
+#    def getShutterButton(self):
+#        return self.ui.shutterButton
+
     def handleAutoScale(self, bool):
         [scalemin, scalemax] = self.camera_widget.getAutoScale()
         if scalemin < 0:
@@ -535,11 +541,11 @@ class CameraFrameViewer(QtWidgets.QFrame):
         
     def startFilm(self, film_settings):
         self.filming = True
-        if film_settings["run_shutters"]:
+        if film_settings.runShutters():
             self.ui.syncLabel.show()
             self.ui.syncSpinBox.show()
 
-        self.ui.recordButton.startFilm()
+        self.ui.recordButton.startFilm(film_settings)
         self.ui.shutterButton.startFilm()
             
     def stopFilm(self):
