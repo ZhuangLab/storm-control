@@ -12,6 +12,7 @@ now located in this module.
 Hazen 01/17
 """
 
+import datetime
 import os
 
 from PyQt5 import QtCore, QtWidgets
@@ -297,6 +298,8 @@ class Film(halModule.HalModule):
         self.writers = None
 
         self.logfile_fp = open(module_params.get("directory") + "image_log.txt", "a")
+        self.logfile_fp.write("\r\n")
+        self.logfile_fp.flush()
 
         p = module_params.getp("parameters")
         p.add(params.ParameterStringDirectory("Current working directory",
@@ -387,7 +390,12 @@ class Film(halModule.HalModule):
                     if "acquisition" in data:
                         for p in data["acquisition"]:
                             acq_p.addParameter(p.getName(), p)
-                            
+
+                # FIXME: Also include notes.
+                msg = str(datetime.datetime.now()) + ","
+                msg += film_settings.getBasename()
+                msg += "\r\n"
+                self.logfile_fp.write(msg)
                 to_save.saveToFile(film_settings.getBasename() + ".xml")
         
     def processL1Message(self, message):
