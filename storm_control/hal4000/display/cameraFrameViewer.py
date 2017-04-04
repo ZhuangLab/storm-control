@@ -134,9 +134,11 @@ class CameraFrameViewer(QtWidgets.QFrame):
         # Connect signals.
         self.camera_view.dragMove.connect(self.handleDragMove)
         self.camera_view.dragStart.connect(self.handleDragStart)
+        self.camera_view.horizontalScrollBar().sliderReleased.connect(self.handleScrollBar)
         self.camera_view.newCenter.connect(self.handleNewCenter)
         self.camera_view.newScale.connect(self.handleNewScale)
         self.camera_view.rubberBandChanged.connect(self.handleRubberBandChanged)
+        self.camera_view.verticalScrollBar().sliderReleased.connect(self.handleScrollBar)
 
         self.ui.autoScaleButton.clicked.connect(self.handleAutoScale)
         self.ui.colorComboBox.currentIndexChanged[str].connect(self.handleColorTableChange)
@@ -173,18 +175,13 @@ class CameraFrameViewer(QtWidgets.QFrame):
         p = self.parameters.addSubSection(self.getFeedName())
 
         # Add display specific parameters.
-        #
-        # FIXME: Should we save center_x, center_y and scale?
-        #
-        p.add(params.ParameterInt(name = "center_x",
-                                  value = 0,
-                                  is_mutable = False,
-                                  is_saved = False))
+        p.add(params.ParameterFloat(name = "center_x",
+                                    value = 0.0,
+                                    is_mutable = False))
 
-        p.add(params.ParameterInt(name = "center_y",
-                                  value = 0,
-                                  is_mutable = False,
-                                  is_saved = False))
+        p.add(params.ParameterFloat(name = "center_y",
+                                    value = 0.0,
+                                    is_mutable = False))
             
         p.add(params.ParameterSetString(description = "Color table",
                                         name = "colortable",
@@ -210,8 +207,7 @@ class CameraFrameViewer(QtWidgets.QFrame):
 
         p.add(params.ParameterInt(name = "scale",
                                   value = 0,
-                                  is_mutable = False,
-                                  is_saved = False))
+                                  is_mutable = False))
             
         p.add(params.ParameterInt(description = "Frame to display when filming with a shutter sequence",
                                   name = "sync",
@@ -259,12 +255,6 @@ class CameraFrameViewer(QtWidgets.QFrame):
 
     def getParameters(self):
         return self.parameters
-
-#    def getRecordButton(self):
-#        return self.ui.recordButton
-#
-#    def getShutterButton(self):
-#        return self.ui.shutterButton
 
     def handleAutoScale(self, bool):
         [scalemin, scalemax] = self.camera_widget.getAutoScale()
@@ -375,6 +365,9 @@ class CameraFrameViewer(QtWidgets.QFrame):
                                                                "y2" : y2}))
         else:
             self.rubber_band_rect = rect
+
+    def handleScrollBar(self):
+        self.camera_view.getCurrentCenter()
 
     def handleSync(self, sync_value):
         self.setParameter("sync", sync_value)

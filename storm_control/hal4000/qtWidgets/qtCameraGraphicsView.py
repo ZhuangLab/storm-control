@@ -52,6 +52,12 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
 
     def enableStageDrag(self, enabled):
         self.can_drag = enabled
+
+    def getCurrentCenter(self):
+        center = self.mapToScene(self.viewport().rect().center())
+        self.center_x = center.x()
+        self.center_y = center.y()
+        self.newCenter.emit(self.center_x, self.center_y)
         
     def keyPressEvent(self, event):
         if self.can_drag and (event.key() == QtCore.Qt.Key_Control):
@@ -150,12 +156,17 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         #
         if (self.display_scale < self.min_scale):
             self.display_scale = self.min_scale
-    
-        self.centerOn(self.center_x, self.center_y)
+
         self.rescale(self.display_scale)
 
     def resizeEvent(self, event):
-        viewport_rect = self.viewport().contentsRect()
+        #
+        # Use the GraphicsView contentsRect size and not it's viewport
+        # contentsRect size because depending on the zoom scroll bars
+        # will appear and disappear throwing off the calculation.
+        #
+        #viewport_rect = self.viewport().contentsRect()
+        viewport_rect = self.contentsRect()
         self.viewport_min = viewport_rect.width() if (viewport_rect.width() < viewport_rect.height())\
                             else viewport_rect.height()
 
