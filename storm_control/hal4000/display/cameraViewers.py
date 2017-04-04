@@ -110,9 +110,12 @@ class CameraParamsMixin(object):
         
     def messageNewParameters(self, parameters):
         self.frame_viewer.newParameters(parameters)
+
+    def messageUpdatedParameters(self, parameters):
+        self.frame_viewer.updatedParameters()
         if self.params_viewer is not None:
-            self.params_viewer.newParameters(parameters)
-            
+            self.params_viewer.newParameters(parameters.get(self.camera_name))
+
     def showIfVisible(self):
         pass
 

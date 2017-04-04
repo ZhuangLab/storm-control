@@ -38,6 +38,8 @@ class ParamsViewer(QtWidgets.QGroupBox):
 
     def newParameters(self, parameters):
         p = parameters
+        print(p.toString())
+        
         if p.has("emccd_gain"):
             gainp = p.getp("emccd_gain")
             self.ui.EMCCDSlider.valueChanged.disconnect()
@@ -63,7 +65,6 @@ class ParamsViewer(QtWidgets.QGroupBox):
         self.ui.pictureSizeText.setText(str(p.get("x_pixels")) + " x " + str(p.get("y_pixels")) +
                                         " (" + str(p.get("x_bin")) + "," + str(p.get("y_bin")) + ")")
 
-            
     def setTemperature(self, state, temperature):
         if (state == "stable"):
             self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
