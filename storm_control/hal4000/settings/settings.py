@@ -11,7 +11,16 @@ parameter object that is shared across all the modules.
 
 The 'parameters of record' are those that are stored by each
 module, though they are expected to match this modules
-parameters.
+parameters. 
+
+In general, modules should update their parameters with the
+values from these parameters when settings are changed. Module
+should try not to use these parameters directly as their parameters, 
+though this will sometimes be unavoidable, e.g. with the feeds. 
+This is because at least some of these parameters will come directly
+from an XML file and may not have the complete type information,
+for example they will just be ParameterInt when the module might
+be expecting to work with a ParameterRangeInt.
 
 Hazen 03/17
 """

@@ -218,7 +218,7 @@
        <number>2</number>
       </property>
       <item>
-       <widget class="QPushButton" name="recordButton">
+       <widget class="QtRecordButton" name="recordButton">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -243,7 +243,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="cameraShutterButton">
+       <widget class="QtShutterButton" name="shutterButton">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -413,6 +413,16 @@
    <class>QtCameraGraphicsView</class>
    <extends>QGraphicsView</extends>
    <header>storm_control.hal4000.qtWidgets.qtCameraGraphicsView</header>
+  </customwidget>
+  <customwidget>
+   <class>QtRecordButton</class>
+   <extends>QPushButton</extends>
+   <header>storm_control.hal4000.qtWidgets.qtRecordButton</header>
+  </customwidget>
+  <customwidget>
+   <class>QtShutterButton</class>
+   <extends>QPushButton</extends>
+   <header>storm_control.hal4000.qtWidgets.qtShutterButton</header>
   </customwidget>
  </customwidgets>
  <resources/>

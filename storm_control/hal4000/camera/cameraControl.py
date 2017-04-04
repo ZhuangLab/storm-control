@@ -42,6 +42,7 @@ class CameraConfiguration(object):
         self.have_temperature = have_temperature
         self.is_master = is_master
         self.parameters = parameters
+        self.shutter_state = False
 
     def getCameraName(self):
         return self.camera_name
@@ -51,6 +52,9 @@ class CameraConfiguration(object):
 
     def getParameters(self):
         return self.parameters
+
+    def getShutterState(self):
+        return self.shutter_state
     
     def hasEMCCD(self):
         return self.have_emccd
@@ -69,6 +73,12 @@ class CameraConfiguration(object):
 
     def setParameters(self, parameters):
         self.parameters = parameters
+
+    def setShutterState(self, state):
+        """
+        This should *only* be used by the camera.
+        """
+        self.shutter_state = state
         
     
 class CameraControl(QtCore.QThread):
@@ -228,7 +238,7 @@ class CameraControl(QtCore.QThread):
         if (self.camera_configuration.parameters != self.parameters):
             msg = "The parameters in the camera configuration are different from the actual camera parameters."
             raise CameraException(msg)
-        return self.config
+        return self.camera_configuration
 
     def getParameters(self):
         return self.parameters

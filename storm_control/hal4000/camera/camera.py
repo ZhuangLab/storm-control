@@ -34,13 +34,6 @@ import storm_control.hal4000.halLib.halModule as halModule
 class Camera(halModule.HalModule):
     """
     Controller for a single camera.
-
-    This sends the following messages:
-     'camera stopped'
-     'camera temperature'
-     'current camera'
-     'film complete'
-     'new frame'
     """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
@@ -56,18 +49,6 @@ class Camera(halModule.HalModule):
         self.camera_control.finished.connect(self.handleFinished)
         self.camera_control.newData.connect(self.handleNewData)
 
-#        # The 'current camera' and the 'camera configuration'
-#        # message send the same data.
-#        info_validator = {"data" : {"camera" : [True, str],
-#                                    "have_emccd" : [True, bool],
-#                                    "have_preamp" : [True, bool],
-#                                    "have_shutter" : [True, bool],
-#                                    "have_temp" : [True, bool],
-#                                    "master" : [True, bool],
-#                                    "parameters" : [True, params.StormXMLObject],
-#                                    "shutter_state" : [True, bool]},
-#                          "resp" : {}}
-
         # This is sent at start-up so that other modules, in particular
         # feeds.feeds, get the information they need about the camera(s)
         halMessage.addMessage("camera configuration",
@@ -76,6 +57,25 @@ class Camera(halModule.HalModule):
                                                      "config" : [True, cameraControl.CameraConfiguration]},
                                            "resp" : {}})
 
+        # Sent each time the camera emccd gain changes.
+        halMessage.addMessage("camera emccd gain",
+                              check_exists = False,
+                              validator = {"data" : {"camera" : [True, str],
+                                                     "emccd_gain" : [True, int]},
+                                           "resp" : None})
+
+        # Sent when filming and we have reached the desired number of frames.
+        halMessage.addMessage("camera film complete",
+                              check_exists = False,
+                              validator = {"data" : None, "resp" : None})
+                        
+        # Sent each time the camera shutter stage changes.
+        halMessage.addMessage("camera shutter",
+                              check_exists = False,
+                              validator = {"data" : {"camera" : [True, str],
+                                                     "state" : [True, bool]},
+                                           "resp" : None})
+        
         # Sent when the camera stops.
         halMessage.addMessage("camera stopped",
                               check_exists = False,
@@ -84,21 +84,11 @@ class Camera(halModule.HalModule):
         # The temperature data from this camera.
         halMessage.addMessage("camera temperature",
                               check_exists = False,
-                              validator = {"data" : {"state" : [True, str],
+                              validator = {"data" : {"camera" : [True, str],
+                                                     "state" : [True, str],
                                                      "temperature" : [True, float]},
                                            "resp" : None})
 
-#        # Information about this camera if it is the 'current camera', i.e. 
-#        # the camera shown in the main viewer and the parameters display.
-#        halMessage.addMessage("current camera",
-#                              check_exists = False,
-#                              validator = info_validator)
-
-        # Sent when filming and we have reached the desired number of frames.
-        halMessage.addMessage("film complete",
-                              check_exists = False,
-                              validator = {"data" : None, "resp" : None})
-        
         # Sent each time there is a new frame from the camera.
         halMessage.addMessage("new frame",
                               check_exists = False,
@@ -158,7 +148,7 @@ class Camera(halModule.HalModule):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "camera configuration",
                                                        data = {"camera" : self.module_name,
-                                                               "config" : self.camera_control.getCameraConfig()}))
+                                                               "config" : self.camera_control.getCameraConfiguration()}))
 
         # This message comes from settings.settings.
         elif message.isType("new parameters"):
@@ -169,13 +159,13 @@ class Camera(halModule.HalModule):
         # This message comes from display.cameraDisplay.
         elif message.isType("get camera configuration"):
             if (message.getData()["camera"] == self.module_name):
-                message.addResponse(halMessage.HalMessageResponse(source = self,
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                   data = {"camera" : self.module_name,
-                                                                          "config" : self.camera_control.getCameraConfig()}))
-                    
+                                                                          "config" : self.camera_control.getCameraConfiguration()}))
+
         # This message comes from display.paramsDisplay.
         #
-        # FIXME: Should broadcast the gain after it is set, or include it in the response?
+        # FIXME: Need to broadcast the emccd gain after it is set.
         #
         elif message.isType("set emccd gain"):
             if (message.getData()["camera"] == self.module_name):
@@ -185,16 +175,19 @@ class Camera(halModule.HalModule):
 
         # This message comes from the shutter button.
         #
-        # FIXME: Should broadcast the updated shutter state, or include it in the response?
+        # FIXME: Need to broadcast the shutter state after it is changed.
         #
-        elif message.isType("set shutter"):
+        elif message.isType("shutter clicked"):
             if (message.getData()["camera"] == self.module_name):
                 halModule.runWorkerTask(self,
                                         message,
-                                        lambda : self.camera_control.setShutter(message.getData()["state"]))
+                                        lambda : self.camera_control.toggleShutter())
 
         # This message comes from film.film, it is camera specific as
         # slave cameras need to be started before master camera(s).
+        #
+        # FIXME: Need to broadcast the camera temperature before we start the camera.
+        #
         elif message.isType("start camera"):
             if (message.getData()["camera"] == self.module_name):
                 halModule.runWorkerTask(self, message, self.startCamera)

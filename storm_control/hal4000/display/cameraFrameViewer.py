@@ -1,9 +1,15 @@
 #!/usr/bin/env python
 """
-This class handles handles displaying camera data using the
-appropriate qtCameraWidget class. It is also responsible for 
-displaying the camera record and shutter buttons as well as
-choosing the color table, scaling, etc..
+This class handles most of the functionality of the camera
+frame display. This includes:
+
+1. Showing the frames from the camera.
+2. Handling scaling.
+3. Handling the color table.
+4. Handling dragging.
+5. Broadcasting the current image.
+6. Handling the changing the feed.
+7. Handling information, target, and grid.
 
 Hazen 2/17
 """
@@ -14,21 +20,18 @@ import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
 
 import storm_control.hal4000.colorTables.colorTables as colorTables
-import storm_control.hal4000.feeds.feeds as feeds
 import storm_control.hal4000.halLib.halMessage as halMessage
 
 import storm_control.hal4000.qtWidgets.qtCameraGraphicsScene as qtCameraGraphicsScene
-
 import storm_control.hal4000.qtWidgets.qtColorGradient as qtColorGradient
-#import storm_control.hal4000.qtWidgets.qtCameraWidget as qtCameraWidget
 import storm_control.hal4000.qtWidgets.qtRangeSlider as qtRangeSlider
 
 import storm_control.hal4000.qtdesigner.camera_display_ui as cameraDisplayUi
 
 
-class BaseFrameDisplay(QtWidgets.QFrame):
+class CameraFrameViewer(QtWidgets.QFrame):
     """
-    The base frame display class.
+    The camera frame viewer class.
 
     Handles the qtCameraWidget which displays the image as well as other
     GUI elements such as the display range slide, color table chooser, etc..
@@ -57,6 +60,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
     display specific? That would also make it easier to include them
     in the parameters editor.
     """
+    feedChange = QtCore.pyqtSignal(str)
     guiMessage = QtCore.pyqtSignal(object)
 
     def __init__(self, display_name = None, feed_name = "camera1", **kwds):
@@ -120,8 +124,9 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.ui.infoAct = QtWidgets.QAction(self.tr("Hide Info"), self)
         self.ui.targetAct = QtWidgets.QAction(self.tr("Show Target"), self)
 
-        self.ui.cameraShutterButton.hide()
+        # The default is not to show the shutter or the record button.
         self.ui.recordButton.hide()
+        self.ui.shutterButton.hide()
 
         self.ui.syncLabel.hide()
         self.ui.syncSpinBox.hide()
@@ -228,21 +233,191 @@ class BaseFrameDisplay(QtWidgets.QFrame):
             for attr in parameters_from_file.getAttrs():
                 p.set(attr, parameters_from_file.get(attr))
 
-    def createParametersFromFeedInfo(self, feed_info):
-        """
-        Create (initial) parameters using a feed_info structure.
-        """
-        self.createParameters()
-
     def enableBroadcastImage(self, enabled):
         self.broadcast_q_image = enabled
         
     def enableStageDrag(self, enabled):
         self.camera_view.enableStageDrag(enabled)
         
-    def feedConfig(self, feed_info):
+    def getDefaultParameters(self):
         """
-        This method gets called when the view changes it's current feed.
+        Return a copy of the default parameters.
+        """
+        return self.default_parameters.copy()
+
+    def getDisplayName(self):
+        return self.display_name
+
+    def getFeedName(self):
+        return self.parameters.get("feed_name")
+    
+    def getParameter(self, pname):
+        """
+        Wrapper to make it easier to get the appropriate parameter value.
+        """
+        return self.parameters.get(self.getFeedName()).get(pname)
+
+    def getParameters(self):
+        return self.parameters
+    
+    def handleAutoScale(self, bool):
+        [scalemin, scalemax] = self.camera_widget.getAutoScale()
+        if scalemin < 0:
+            scalemin = 0
+        if scalemax > self.max_intensity:
+            scalemax = self.max_intensity
+        self.ui.rangeSlider.setValues([float(scalemin), float(scalemax)])
+
+    def handleColorTableChange(self, table_name):
+        table_name = str(table_name)
+        self.setParameter("colortable", table_name + ".ctbl")
+        color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
+        self.camera_widget.newColorTable(color_table)
+        self.color_gradient.newColorTable(color_table)
+
+    def handleDisplayTimer(self):
+        if self.frame:
+            self.camera_widget.updateImageWithFrame(self.frame)
+            if self.show_info:
+                self.handleIntensityInfo(*self.camera_widget.getIntensityInfo())
+            # This is a stub. Fill it out when we get Bluetooth up and running again.
+            if self.broadcast_q_image:
+                pass
+
+    def handleDragMove(self, x_disp, y_disp):
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "drag move",
+                                                   level = 3,
+                                                   data = {"display_name" : self.display_name,
+                                                           "feed_name" : self.getFeedName(),
+                                                           "x_disp" : x_disp,
+                                                           "y_disp" : y_disp}))
+                
+    def handleDragStart(self):
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "drag start",
+                                                   level = 3,
+                                                   data = {"display_name" : self.display_name,
+                                                           "feed_name" : self.getFeedName()}))
+
+    def handleFeedChange(self, feed_name):
+        """
+        This sends a message to the new camera / feed that it will respond 
+        to with information about how it should be displayed.
+        """
+        self.parameters.set("feed_name", str(feed_name))
+        self.feedChange.emit(feed_name)
+
+    def handleGrid(self, boolean):
+        if self.show_grid:
+            self.show_grid = False
+            self.ui.gridAct.setText("Show Grid")
+        else:
+            self.show_grid = True
+            self.ui.gridAct.setText("Hide Grid")
+        self.camera_widget.setShowGrid(self.show_grid)
+
+    def handleInfo(self, boolean):
+        if self.show_info:
+            self.show_info = False
+            self.ui.infoAct.setText("Show Info")
+            self.ui.intensityPosLabel.hide()
+            self.ui.intensityIntLabel.hide()
+        else:
+            self.show_info = True
+            self.ui.infoAct.setText("Hide Info")
+            self.ui.intensityPosLabel.show()
+            self.ui.intensityIntLabel.show()
+
+    def handleIntensityInfo(self, x, y, i):
+        self.ui.intensityPosLabel.setText("({0:d},{1:d})".format(x, y, i))
+        self.ui.intensityIntLabel.setText("{0:d}".format(i))
+
+    def handleNewCenter(self, cx, cy):
+        self.setParameter("center_x", cx)
+        self.setParameter("center_y", cy)
+        self.camera_widget.setClickPos(*self.feed_info.transformChipToFrame(cx, cy))
+
+    def handleNewScale(self, scale):
+        self.setParameter("scale", scale)
+
+    def handleRangeChange(self, scale_min, scale_max):
+        if (scale_max == scale_min):
+            if (scale_max < float(self.getParameter("max_intensity"))):
+                scale_max += 1.0
+            else:
+                scale_min -= 1.0
+        self.setParameter("display_max", int(scale_max))
+        self.setParameter("display_min", int(scale_min))
+        self.updateRange()
+
+    def handleRubberBandChanged(self, rect, p1, p2):
+        if rect.isNull():
+            tl = self.camera_view.mapToScene(self.rubber_band_rect.topLeft())
+            br = self.camera_view.mapToScene(self.rubber_band_rect.bottomLeft())
+            [x1, x2] = [tl.x(), br.x()] if (tl.x() < br.x()) else [br.x(), tl.x()]
+            [y1, y2] = [tl.y(), br.y()] if (tl.y() < br.y()) else [br.y(), tl.y()]
+            [x1, x2, y1, y2] = map(round, [x1, x2, y1, y2])
+            if (x1 == x2):
+                x2 += 1
+            if (y1 == y2):
+                y2 += 1
+            self.guiMessage.emit(halMessage.HalMessage(m_type = "display ROI selection",
+                                                       data = {"display_name" : self.display_name,
+                                                               "feed_name" : self.getFeedName(),
+                                                               "x1" : x1,
+                                                               "x2" : x2,
+                                                               "y1" : y1,
+                                                               "y2" : y2}))
+        else:
+            self.rubber_band_rect = rect
+
+    def handleSync(self, sync_value):
+        self.setParameter("sync", sync_value)
+
+    def handleTarget(self, boolean):
+        if self.show_target:
+            self.show_target = False
+            self.ui.targetAct.setText("Show Target")
+        else:
+            self.show_target = True
+            self.ui.targetAct.setText("Hide Target")
+        self.camera_widget.setShowTarget(self.show_target)
+
+    def newFrame(self, frame):
+        if (frame.which_camera == self.getFeedName()):
+            if self.filming and (self.getParameter("sync") != 0):
+                if((frame.number % self.cycle_length) == (self.getParameter("sync") - 1)):
+                    self.frame = frame
+            else:
+                self.frame = frame
+
+    def newParameters(self, parameters):
+        """
+        How this is supposed to work..
+
+        1. Replace current parameters with the new parameters when
+           we get the 'new parameters' message.
+
+        2. Wait for the 'updated parameters' message.
+
+        3. Execute a feed change to the new camera / feed,
+           this will send a 'get feed config' message.
+
+        4. The camera / feed will respond to the message with 
+           the correct frame size, etc. for display.
+
+        5. The viewFeedConfig() method will then handle actually
+           updating everything.
+        """
+        # FIXME: Check that there are no problems with the new parameters?
+        #        We need to error now rather than at 'updated parameters'.
+        self.parameters = parameters
+
+    def setCameraConfiguration(self, camera_config):
+        self.showShutter(camera_config.hasShutter())
+
+    def setFeedInformation(self, feed_info):
+        """
+        This method gets called when the view changes it's current feed. 
         """
 
         # A sanity check..
@@ -313,182 +488,7 @@ class BaseFrameDisplay(QtWidgets.QFrame):
 
         self.setSyncMax(self.getParameter("sync_max"))
         self.ui.syncSpinBox.setValue(self.getParameter("sync"))
-
-    def getDefaultParameters(self):
-        """
-        Return a copy of the default parameters.
-        """
-        return self.default_parameters.copy()
-
-    def getDisplayName(self):
-        return self.display_name
-
-    def getFeedName(self):
-        return self.parameters.get("feed_name")
-    
-    def getParameter(self, pname):
-        """
-        Wrapper to make it easier to get the appropriate parameter value.
-        """
-        return self.parameters.get(self.getFeedName()).get(pname)
-
-    def getParameters(self):
-        return self.parameters
-    
-    def handleAutoScale(self, bool):
-        [scalemin, scalemax] = self.camera_widget.getAutoScale()
-        if scalemin < 0:
-            scalemin = 0
-        if scalemax > self.max_intensity:
-            scalemax = self.max_intensity
-        self.ui.rangeSlider.setValues([float(scalemin), float(scalemax)])
-
-    def handleColorTableChange(self, table_name):
-        table_name = str(table_name)
-        self.setParameter("colortable", table_name + ".ctbl")
-        color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
-        self.camera_widget.newColorTable(color_table)
-        self.color_gradient.newColorTable(color_table)
-
-    def handleDisplayTimer(self):
-        if self.frame:
-            self.camera_widget.updateImageWithFrame(self.frame)
-            if self.show_info:
-                self.handleIntensityInfo(*self.camera_widget.getIntensityInfo())
-            # This is a stub. Fill it out when we get Bluetooth up and running again.
-            if self.broadcast_q_image:
-                pass
-
-    def handleDragMove(self, x_disp, y_disp):
-        self.guiMessage.emit(halMessage.HalMessage(m_type = "drag move",
-                                                   level = 3,
-                                                   data = {"display_name" : self.display_name,
-                                                           "feed_name" : self.getFeedName(),
-                                                           "x_disp" : x_disp,
-                                                           "y_disp" : y_disp}))
-                
-    def handleDragStart(self):
-        self.guiMessage.emit(halMessage.HalMessage(m_type = "drag start",
-                                                   level = 3,
-                                                   data = {"display_name" : self.display_name,
-                                                           "feed_name" : self.getFeedName()}))
-
-    def handleFeedChange(self, feed_name):
-        """
-        This sends a message to the new camera / feed that it will
-        respond to with information about it should be displayed.
-        """
-        self.parameters.set("feed_name", str(feed_name))
-        self.guiMessage.emit(halMessage.HalMessage(m_type = "get feed information",
-                                                   data = {"display_name" : self.display_name,
-                                                           "feed_name" : self.getFeedName()}))
-
-    def handleGrid(self, boolean):
-        if self.show_grid:
-            self.show_grid = False
-            self.ui.gridAct.setText("Show Grid")
-        else:
-            self.show_grid = True
-            self.ui.gridAct.setText("Hide Grid")
-        self.camera_widget.setShowGrid(self.show_grid)
-
-    def handleInfo(self, boolean):
-        if self.show_info:
-            self.show_info = False
-            self.ui.infoAct.setText("Show Info")
-            self.ui.intensityPosLabel.hide()
-            self.ui.intensityIntLabel.hide()
-        else:
-            self.show_info = True
-            self.ui.infoAct.setText("Hide Info")
-            self.ui.intensityPosLabel.show()
-            self.ui.intensityIntLabel.show()
-
-    def handleIntensityInfo(self, x, y, i):
-        self.ui.intensityPosLabel.setText("({0:d},{1:d})".format(x, y, i))
-        self.ui.intensityIntLabel.setText("{0:d}".format(i))
-
-    def handleNewCenter(self, cx, cy):
-        self.setParameter("center_x", cx)
-        self.setParameter("center_y", cy)
-        self.camera_widget.setClickPos(*self.feed_info.transformChipToFrame(cx, cy))
-
-    def handleNewScale(self, scale):
-        self.setParameter("scale", scale)
-
-    def handleRangeChange(self, scale_min, scale_max):
-        if (scale_max == scale_min):
-            if (scale_max < float(self.getParameter("max_intensity"))):
-                scale_max += 1.0
-            else:
-                scale_min -= 1.0
-        self.setParameter("display_max", int(scale_max))
-        self.setParameter("display_min", int(scale_min))
-        self.updateRange()
-
-    def handleRubberBandChanged(self, rect, p1, p2):
-        if rect.isNull():
-            tl = self.camera_view.mapToScene(self.rubber_band_rect.topLeft())
-            br = self.camera_view.mapToScene(self.rubber_band_rect.bottomLeft())
-            [x1, x2] = [tl.x(), br.x()] if (tl.x() < br.x()) else [br.x(), tl.x()]
-            [y1, y2] = [tl.y(), br.y()] if (tl.y() < br.y()) else [br.y(), tl.y()]
-            [x1, x2, y1, y2] = map(round, [x1, x2, y1, y2])
-            if (x1 == x2):
-                x2 += 1
-            if (y1 == y2):
-                y2 += 1
-            self.guiMessage.emit(halMessage.HalMessage(m_type = "display ROI",
-                                                       data = {"display_name" : self.display_name,
-                                                               "feed_name" : self.getFeedName(),
-                                                               "x1" : x1,
-                                                               "x2" : x2,
-                                                               "y1" : y1,
-                                                               "y2" : y2}))
-        else:
-            self.rubber_band_rect = rect
-
-    def handleSync(self, sync_value):
-        self.setParameter("sync", sync_value)
-
-    def handleTarget(self, boolean):
-        if self.show_target:
-            self.show_target = False
-            self.ui.targetAct.setText("Show Target")
-        else:
-            self.show_target = True
-            self.ui.targetAct.setText("Hide Target")
-        self.camera_widget.setShowTarget(self.show_target)
-
-    def newFrame(self, frame):
-        if (frame.which_camera == self.getFeedName()):
-            if self.filming and (self.getParameter("sync") != 0):
-                if((frame.number % self.cycle_length) == (self.getParameter("sync") - 1)):
-                    self.frame = frame
-            else:
-                self.frame = frame
-
-    def newParameters(self, parameters):
-        """
-        How this is supposed to work..
-
-        1. Replace current parameters with the new parameters when
-           we get the 'new parameters' message.
-
-        2. Wait for the 'updated parameters' message.
-
-        3. Execute a feed change to the new camera / feed,
-           this will send a 'get feed config' message.
-
-        4. The camera / feed will respond to the message with 
-           the correct frame size, etc. for display.
-
-        5. The viewFeedConfig() method will then handle actually
-           updating everything.
-        """
-        # FIXME: Check that there are no problems with the new parameters?
-        #        We need to error now rather than at 'updated parameters'.
-        self.parameters = parameters
-
+        
     def setFeeds(self, feeds_info):
         """
         This updates feed selector combo box with a list of 
@@ -517,27 +517,38 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         feed_params = self.parameters.get(self.getFeedName())
         feed_params.set(pname, pvalue)
         return pvalue
-            
+
+    def setShutter(self, state):
+        self.ui.shutterButton.setShutter(state)
+        
     def setSyncMax(self, sync_max):
         self.setParameter("sync_max", sync_max)
         self.ui.syncSpinBox.disconnect()
         self.ui.syncSpinBox.setMaximum(sync_max)
         self.ui.syncSpinBox.valueChanged.connect(self.handleSync)        
+
+    def showRecord(self, show):
+        self.ui.recordButton.setVisible(show)
+
+    def showShutter(self, show):
+        self.ui.shutterButton.setVisible(show)
         
     def startFilm(self, film_settings):
         self.filming = True
         if film_settings["run_shutters"]:
             self.ui.syncLabel.show()
             self.ui.syncSpinBox.show()
-        if self.ui.cameraShutterButton.isVisible():
-            self.ui.cameraShutterButton.setEnabled(False)
+
+        self.ui.recordButton.startFilm()
+        self.ui.shutterButton.startFilm()
             
     def stopFilm(self):
         self.filming = False
         self.ui.syncLabel.hide()
         self.ui.syncSpinBox.hide()
-        if self.ui.cameraShutterButton.isVisible():
-            self.ui.cameraShutterButton.setEnabled(True)
+
+        self.ui.recordButton.stopFilm()
+        self.ui.shutterButton.stopFilm()
 
     def updatedParameters(self):
         """
@@ -551,94 +562,6 @@ class BaseFrameDisplay(QtWidgets.QFrame):
         self.ui.scaleMax.setText(str(self.getParameter("display_max")))
         self.ui.scaleMin.setText(str(self.getParameter("display_min")))
         self.camera_widget.newRange(self.getParameter("display_min"), self.getParameter("display_max"))
-
-
-class CameraFrameDisplay(BaseFrameDisplay):
-    """
-    The BaseFrameDisplay with a record button.
-    """
-    def __init__(self, show_record = False, **kwds):
-        super().__init__(**kwds)
-        
-        if show_record:
-            self.ui.recordButton.show()
-                
-        self.ui.cameraShutterButton.clicked.connect(self.handleCameraShutter)
-        self.ui.recordButton.clicked.connect(self.handleRecord)
-
-    def handleFeedChange(self, feed_name):
-        self.parameters.set("feed_name", str(feed_name))
-        [camera, feed] = feeds.getCameraFeedName(feed_name)
-
-        # This will get the updated feed information.
-        self.guiMessage.emit(halMessage.HalMessage(m_type = "get feed information",
-                                                   data = {"display_name" : self.display_name,
-                                                           "feed_name" : self.getFeedName()}))
-        
-        # This will get the correct camera.
-        self.guiMessage.emit(halMessage.HalMessage(m_type = "set current camera",
-                                                   data = {"display_name" : self.display_name,
-                                                           "camera" : camera}))
-
-    def handleCameraShutter(self, boolean):
-        self.guiMessage.emit(halMessage.HalMessage(m_type = "shutter clicked",
-                                                   data = {"display_name" : self.display_name,
-                                                           "feed_name" : self.getFeedName()}))
-
-    def handleDisplayCaptured(self, a_pixmap):
-        #self.frameCaptured.emit(self.feed_name, a_pixmap)
-        pass
-
-    def handleRecord(self, boolean):
-        self.guiMessage.emit(halMessage.HalMessage(m_type = "record clicked",
-                                                   data = {"display_name" : self.display_name}))
-        
-    def handleROISelection(self, select_rect):
-        #self.ROISelection.emit(self.feed_name, select_rect)
-        pass
-
-    def handleSync(self, sync_value):
-        """
-        Handles setting the sync parameter. This parameter is used in
-        shutter sequences to specify which frame in the sequence should
-        be displayed, or just any random frame.
-
-        FIXME: Do we need this? It doesn't do anything..
-        """
-        super.handleSync(self, sync_value)
-        #self.setParameter("sync", sync_value)
-
-    def startFilm(self, film_settings):
-        super().startFilm(film_settings)
-        if self.ui.recordButton.isVisible():
-            self.ui.recordButton.setText("Stop")
-            if film_settings["save_film"]:
-                self.ui.recordButton.setStyleSheet("QPushButton { color: red }")
-            else:
-                self.ui.recordButton.setStyleSheet("QPushButton { color: orange }")
-
-    def stopFilm(self):
-        super().stopFilm()
-        if self.ui.recordButton.isVisible():
-            self.ui.recordButton.setText("Record")
-            self.ui.recordButton.setStyleSheet("QPushButton { color: black }")
-
-#    def updateCameraProperties(self, camera_properties):
-#        if self.feed_name in camera_properties:
-#            if "have_shutter" in camera_properties[self.feed_name]:
-#                self.ui.cameraShutterButton.show()
-#            else:
-#                self.ui.cameraShutterButton.hide()
-#        else:
-#            self.ui.cameraShutterButton.hide()
-
-#    def updatedParams(self):
-#        if self.getParameter("shutter", False):
-#            self.ui.cameraShutterButton.setText("Close Shutter")
-#            self.ui.cameraShutterButton.setStyleSheet("QPushButton { color: green }")
-#        else:
-#            self.ui.cameraShutterButton.setText("Open Shutter")
-#            self.ui.cameraShutterButton.setStyleSheet("QPushButton { color: black }")
 
 
 #

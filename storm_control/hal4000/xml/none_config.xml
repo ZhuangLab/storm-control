@@ -38,16 +38,10 @@
 	You also need all of these.
     -->
 
-    <!-- Camera parameter display. -->
-    <camera_params>
-      <class_name type="string">Params</class_name>
-      <module_name type="string">display.paramsDisplay</module_name>
-    </camera_params>
-
     <!-- Camera display. -->
     <display>
       <class_name type="string">Display</class_name>
-      <module_name type="string">display.cameraDisplay</module_name>
+      <module_name type="string">display.display</module_name>
       <parameters>
 
 	<!-- The default color table. Other options are in hal4000/colorTables/all_tables -->

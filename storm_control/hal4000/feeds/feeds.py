@@ -564,8 +564,8 @@ class Feeds(halModule.HalModule):
             #
             # We get this message at startup from each of the cameras.
             #
-            camera_name = message.getData("camera")
-            camera_config = message.getData("config")
+            camera_name = message.getData()["camera"]
+            camera_config = message.getData()["config"]
 
             # Sanity check.
             assert (camera_name == camera_config.getCameraName())
