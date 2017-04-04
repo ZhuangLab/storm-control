@@ -483,11 +483,6 @@ class HalCore(QtCore.QObject):
         unhandled = []
         for sent_message in self.sent_messages:
             if sent_message.refCountIsZero():
-
-                # Finalizing, etc. is only performed for level 1 messages.
-                if (sent_message.level != 1):
-                    continue
-                
                 #
                 # Good times.. If the source throws up a message box and other
                 # messages come in then we'll get more and more message boxes

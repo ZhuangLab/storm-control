@@ -38,7 +38,13 @@ class Camera(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
         self.film_length = None
+        self.finished_timer = QtCore.QTimer(self)
+        self.unprocessed_frames = 0
 
+        self.finished_timer.setInterval(10)
+        self.finished_timer.timeout.connect(self.handleFinished)
+        self.finished_timer.setSingleShot(True)
+        
         camera_params = module_params.get("camera")
         a_module = importlib.import_module("storm_control.hal4000." + camera_params.get("module_name"))
         a_class = getattr(a_module, camera_params.get("class_name"))
@@ -108,21 +114,23 @@ class Camera(halModule.HalModule):
         self.camera_control.cleanUp()
         super().cleanUp(qt_settings)
 
+    def decUnprocessed(self):
+        self.unprocessed_frames -= 1
+        
     # Finished is the signal the thread emits when the run() method stops.
     def handleFinished(self):
-        self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "camera stopped"))
-                        
+        if (self.unprocessed_frames == 0):
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "camera stopped"))
+        else:
+            self.finished_timer.start()
+
     def handleNewData(self, frames):
         for frame in frames:
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "new frame",
-                                                       level = 2,
-                                                       data = {"frame" : frame}))
             #
             # If possible the camera should stop when it has recorded the
             # expected number of frames, but not all camera support this
-            # so we software back-stop it here.
+            # so we software back-stop this here.
             #
             if self.film_length is not None:
 
@@ -130,10 +138,21 @@ class Camera(halModule.HalModule):
                 if (frame.frame_number == self.film_length):
                     self.newMessage.emit(halMessage.HalMessage(source = self,
                                                                m_type = "camera film complete"))
+                    break
 
                 # Don't send more frames than were requested for the film.
                 if (frame.frame_number >= self.film_length):
                     break
+
+            self.incUnprocessed()
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "new frame",
+                                                       level = 2,
+                                                       data = {"frame" : frame},
+                                                       finalizer = lambda : self.decUnprocessed()))
+
+    def incUnprocessed(self):
+        self.unprocessed_frames += 1
 
     def processL1Message(self, message):
                     
@@ -197,17 +216,17 @@ class Camera(halModule.HalModule):
             film_settings = message.getData()["film settings"]
             self.camera_control.startFilm(film_settings)
             if (self.module_name == "camera1") and film_settings.isFixedLength():
-                self.film_length = film_settings.getFilmLength() - 1
+                self.film_length = film_settings.getFilmLength()
 
         # This message comes from film.film. Once the camera actually
         # stops we send the 'camera stopped' message.
         elif message.isType("stop camera"):
-            self.film_length = None
             if (message.getData()["camera"] == self.module_name):
                 halModule.runWorkerTask(self, message, self.camera_control.stopCamera)
 
         # This message comes from film.film, it goes to all camera at once.
         elif message.isType("stop film"):
+            self.film_length = None
             self.camera_control.stopFilm()
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : self.camera_control.getParameters()}))

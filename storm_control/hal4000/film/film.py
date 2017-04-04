@@ -288,7 +288,6 @@ class Film(halModule.HalModule):
         # is still running could be throwing off 'new frame' messages
         # which we might want (or not want) to save.
         #
-        self.active_camera_count = 0
         self.feeds_info = None
         self.film_settings = None
         self.film_size = 0.0
@@ -400,13 +399,11 @@ class Film(halModule.HalModule):
         
     def processL1Message(self, message):
             
-        if message.isType("camera stopped"):
-            self.active_camera_count -= 1
-            if (self.active_camera_count == 0):
-                if (self.film_state == "start"):
-                    self.startFilmingLevel2()
-                elif (self.film_state == "stop"):
-                    self.stopFilmingLevel2()
+        if message.isType("feeds stopped"):
+            if (self.film_state == "start"):
+                self.startFilmingLevel2()
+            elif (self.film_state == "stop"):
+                self.stopFilmingLevel2()
 
         elif message.isType("configure1"):
             self.newMessage.emit(halMessage.HalMessage(source = self,
@@ -476,10 +473,10 @@ class Film(halModule.HalModule):
             self.stopFilmingLevel1()
 
     def processL2Message(self, message):            
-        if (self.film_state == "run"):
-                
+        if (self.film_state == "run") or (self.film_state == "stop"):
+
             frame = message.getData()["frame"]
-            
+
             # Update frame counter if the frame is from camera1.
             if (frame.which_camera == "camera1"):
                 self.number_frames = frame.frame_number + 1
@@ -558,12 +555,10 @@ class Film(halModule.HalModule):
         self.startCameras()
         
     def stopCameras(self):
-        self.active_camera_count = 0
 
         # Stop master cameras first.
         for feed_name, feed in self.feeds_info.items():
             if feed.isCamera() and feed.isMaster():
-                self.active_camera_count += 1
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "stop camera",
                                                            data = {"camera" : feed.getParameter("feed_name")}))
@@ -574,7 +569,6 @@ class Film(halModule.HalModule):
         # Stop slave cameras last.
         for feed_name, feed in self.feeds_info.items():
             if feed.isCamera() and not feed.isMaster():
-                self.active_camera_count += 1
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "stop camera",
                                                            data = {"camera" : feed.getParameter("feed_name")}))
@@ -585,7 +579,6 @@ class Film(halModule.HalModule):
         'camera stopped' message from all the cameras.
         """
         self.film_state = "stop"
-        self.view.enableUI(True)
         self.stopCameras()
 
     def stopFilmingLevel2(self):
@@ -593,6 +586,8 @@ class Film(halModule.HalModule):
         Once all the cameras have stopped close the imagewriters
         and restart the cameras (if we are in live mode).
         """
+        self.view.enableUI(True)
+
         # Close writers.
         for name in self.writers:
             self.writers[name].closeFile()
@@ -613,7 +608,8 @@ class Film(halModule.HalModule):
             if self.view.soundBell():
                 print("\7\7")
 
-            
+        #raise halExceptions.HalException("done now!")
+
 #
 # The MIT License
 #

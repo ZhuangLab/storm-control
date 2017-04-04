@@ -14,6 +14,8 @@ Hazen 03/17
 import copy
 import numpy
 
+from PyQt5 import QtCore
+
 import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
 
@@ -496,12 +498,18 @@ class Feeds(halModule.HalModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
-
-        self.active = False
+        self.active_camera_count = 0
         self.camera_info = {}
         self.default_colortable = None
         self.feed_controller = None
         self.feeds_info = {}
+
+        self.finished_timer = QtCore.QTimer(self)
+        self.unprocessed_frames = 0
+
+        self.finished_timer.setInterval(10)
+        self.finished_timer.timeout.connect(self.handleFinished)
+        self.finished_timer.setSingleShot(True)        
         
         #
         # This message returns a dictionary keyed by feed name with all
@@ -512,6 +520,10 @@ class Feeds(halModule.HalModule):
         halMessage.addMessage("feeds information",
                               validator = {"data" : {"feeds" : [True, dict]},
                                            "resp" : None})
+
+        # Sent when the feeds stop.
+        halMessage.addMessage("feeds stopped",
+                              validator = {"data" : None, "resp" : None})   
 
         # Sent each time a feed generates a frame.
         # Note: This needs to match the definition in camera.camera.
@@ -542,9 +554,28 @@ class Feeds(halModule.HalModule):
                                                    m_type = "feeds information",
                                                    data = {"feeds" : self.feeds_info}))
 
+    def decUnprocessed(self):
+        self.unprocessed_frames -= 1
+
+    def handleFinished(self):
+        print(">hf", self.unprocessed_frames)
+        if (self.unprocessed_frames == 0):
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "feeds stopped"))
+        else:
+            self.finished_timer.start()
+
+    def incUnprocessed(self):
+        self.unprocessed_frames += 1
+        
     def processL1Message(self, message):
 
-        if message.isType("configure1"):
+        if message.isType("camera stopped"):
+            self.active_camera_count -= 1
+            if (self.active_camera_count == 0):
+                self.handleFinished()
+            
+        elif message.isType("configure1"):
             if not ("camera1" in message.getData()["all_modules"]):
                 raise halException.HalException("There must be at least one camera named 'camera1'.")
             
@@ -605,29 +636,34 @@ class Feeds(halModule.HalModule):
             self.broadcastFeedInfo()
 
         elif message.isType("start camera"):
-            self.active = True
+            self.active_camera_count += 1
+            
             # This assumes that there is always at least a "camera1" module.
             if self.feed_controller is not None and (message.getData()["camera"] == "camera1"):
                 self.feed_controller.resetFeeds()
 
         elif message.isType("start film"):
             pass
-
-        elif message.isType("stop camera"):
-            self.active = False
-            
+        
         elif message.isType("stop film"):
             if self.feed_controller is not None:
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                   data = {"parameters" : self.feed_controller.getParameters()}))
 
     def processL2Message(self, message):
-        if self.feed_controller is not None and self.active:
+        if self.feed_controller is not None:
+
+            # Don't reprocess our own frames..
+            if(message.getSourceName() == self.module_name):
+                return
+            
             frame = message.getData()["frame"]
             feed_frames = self.feed_controller.newFrame(frame)
             for ff in feed_frames:
+                self.incUnprocessed()
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "new frame",
                                                            level = 2,
-                                                           data = {"frame" : ff}))
+                                                           data = {"frame" : ff},
+                                                           finalizer = lambda : self.decUnprocessed()))
 
