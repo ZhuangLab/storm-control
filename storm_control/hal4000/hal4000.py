@@ -77,15 +77,20 @@ class HalController(halModule.HalModule):
         self.newMessage.emit(message)
 
     def processL1Message(self, message):
-        
-        if message.isType("add to ui"):
-            [module, parent_widget] = message.data["ui_parent"].split(".")
+
+        if message.isType("add to menu"):
+            self.view.addMenuItem(message.getData()["item name"],
+                                  message.getData()["item action"])
+            
+        elif message.isType("add to ui"):
+            [module, parent_widget] = message.getData()["ui_parent"].split(".")
             if (module == self.module_name):
                 self.view.addUiWidget(parent_widget,
-                                      message.data["ui_widget"],
-                                      message.data.get("ui_order"))
+                                      message.getData()["ui_widget"],
+                                      message.getData().get("ui_order"))
             
         elif message.isType("start"):
+            self.view.addMenuItems()
             self.view.addWidgets()
             self.view.show()
             
@@ -105,6 +110,7 @@ class HalView(QtWidgets.QMainWindow):
         self.close_now = False
         self.close_timer = QtCore.QTimer(self)
         self.film_directory = module_params.get("directory")
+        self.menu_items_to_add = []
         self.module_name = module_name
         self.widgets_to_add = []
 
@@ -156,6 +162,23 @@ class HalView(QtWidgets.QMainWindow):
         self.close_timer.timeout.connect(self.handleCloseTimer)
         self.close_timer.setSingleShot(True)
 
+    def addMenuItem(self, item_name, item_action):
+        """
+        A menu item (from another module) that should be added to the file menu.
+        """
+        self.menu_items_to_add.append([item_name, item_action])
+
+    def addMenuItems(self):
+        """
+        This actually adds the items to the file menu.
+        """
+        if (len(self.menu_items_to_add) > 0):
+            for item in sorted(self.menu_items_to_add, key = lambda x : x[1]):
+                a_action = QtWidgets.QAction(self.tr(item[0]), self)
+                self.ui.menuFile.insertAction(self.ui.actionQuit, a_action)
+                a_action.triggered.connect(item[1])
+            self.ui.menuFile.insertSeparator(self.ui.actionQuit)
+        
     def addUiWidget(self, parent_widget_name, ui_widget, ui_order):
         """
         A UI widget (from another module) to the list of widgets to add.

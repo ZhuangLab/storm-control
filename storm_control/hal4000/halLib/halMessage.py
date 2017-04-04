@@ -6,6 +6,7 @@ Hazen 01/17
 """
 
 import traceback
+import types
 
 from PyQt5 import QtCore
 
@@ -29,6 +30,9 @@ valid_messages = {
                              "ui_parent" : [True, str],
                              "ui_widget" : [True, QtCore.QObject]},
                    "resp" : None},
+    'add to menu' : {"data" : {"item name" : [True, str],
+                               "item action" : [True, (types.FunctionType, types.MethodType)]},
+                     "resp" : None},
     'close event' : {"data" : None, "resp" : None},
     'configure1' : {"data" : {"all_modules" : [True, dict]},
                     "resp" : {}},

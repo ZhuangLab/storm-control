@@ -33,6 +33,7 @@ class Display(halModule.HalModule):
         self.have_stage = False
         self.is_classic = (module_params.get("ui_type") == "classic")
         self.parameters = module_params.get("parameters")
+        self.qt_settings = qt_settings
         
         self.viewers = []
 
@@ -42,7 +43,8 @@ class Display(halModule.HalModule):
         if self.is_classic:
             self.viewers.append(cameraViewers.ClassicViewer(viewer_name = self.getNextViewerName()))
         else:
-            self.viewers.append(cameraViewers.DetachedViewer(viewer_name = self.getNextViewerName()))
+            self.viewers.append(cameraViewers.DetachedViewer(viewer_name = self.getNextViewerName(),
+                                                             qt_settings = self.qt_settings))
         
         self.viewers[0].guiMessage.connect(self.handleGuiMessage)
         
@@ -156,7 +158,20 @@ class Display(halModule.HalModule):
             # The ClassicViewer might need to tell other modules to
             # incorporate some of it's UI elements.
             self.viewers[0].messageConfigure1()
-                
+
+            # Add a menu option to generate more viewers.
+            print(">c1", type(self.newFeedViewer))
+            if self.is_classic:
+                self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                           m_type = "add to menu",
+                                                           data = {"item name" : "Feed Viewer",
+                                                                   "item action" : self.newFeedViewer}))
+            else:
+                self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                           m_type = "add to menu",
+                                                           data = {"item name" : "Camera Viewer",
+                                                                   "item action" : self.newCameraViewer}))
+
             # Enable stage dragging if there is a stage.
             if "stage" in message.getData()["all_modules"]:
                 self.have_stage = True
@@ -209,6 +224,13 @@ class Display(halModule.HalModule):
     def processL2Message(self, message):
         for viewer in self.viewers:
             viewer.messageNewFrame(message.getData()["frame"])
+
+    def newCameraViewer(self):
+        print(">ncv")
+    
+    def newFeedViewer(self):
+        print(">nfv")
+
 
 
 #
