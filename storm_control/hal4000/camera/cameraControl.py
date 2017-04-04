@@ -104,6 +104,11 @@ class CameraControl(QtCore.QThread):
         self.shutter_state = False 
 
         # Parameters common to every camera.
+        #
+        # FIXME: These should *only* be the parameters that HAL requires
+        #        so that it is clear which one a sub-class needs to
+        #        specify to work properly.
+        #
 
         # This is frames per second as reported by the camera. It is used
         # by the illumination module for timing the shutters.
