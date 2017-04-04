@@ -64,6 +64,11 @@ class Settings(halModule.HalModule):
                                "ui_parent" : "hal.containerWidget",
                                "ui_widget" : self.view}
 
+        # A request from another module for one of the sets of parameters.
+        halMessage.addMessage("get parameters",
+                              validator = {"data" : {"index or name" : [True, [str, int]]},
+                                           "resp" : {"parameters" : [True, params.StormXMLObject]}})
+        
         # The current parameters have changed.
         #
         # Data includes a copy of the desired new parameters. Other modules
@@ -195,9 +200,10 @@ class Settings(halModule.HalModule):
                                               message.getData()["parameters"].copy())
 
         elif message.isType("get parameters"):
-            p = self.view.getParameters(message.getData()["index_or_name"])
-            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"parameters" : p}))
+            p = self.view.getParameters(message.getData()["index or name"])
+            if p is not None:
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                  data = {"parameters" : p}))
             
         elif message.isType("new parameters file"):
 

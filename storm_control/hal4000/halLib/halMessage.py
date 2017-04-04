@@ -255,6 +255,8 @@ class HalMessage(HalMessageBase):
         self.ref_count += 1
         
     def isType(self, m_type):
+        if not m_type in valid_messages:
+            raise HalMessageException("'" + m_type + "' is not a valid message type.")
         return (self.m_type == m_type)
 
     def logEvent(self, event_name):
