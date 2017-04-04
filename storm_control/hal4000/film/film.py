@@ -366,6 +366,7 @@ class Film(halModule.HalModule):
         to the 'stop film' message. We save them in an xml file here.
         """
         if message.isType("stop film"):
+            self.film_state = "idle"
             film_settings = message.getData()["film settings"]
             number_frames = message.getData()["number frames"]
             if film_settings.isSaved():
@@ -604,7 +605,6 @@ class Film(halModule.HalModule):
             if self.view.soundBell():
                 print("\7\7")
 
-        self.film_state = "idle"
             
 #
 # The MIT License
