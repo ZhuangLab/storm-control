@@ -38,7 +38,6 @@ class ParamsViewer(QtWidgets.QGroupBox):
 
     def newParameters(self, parameters):
         p = parameters
-        print(p.toString())
         
         if p.has("emccd_gain"):
             gainp = p.getp("emccd_gain")
