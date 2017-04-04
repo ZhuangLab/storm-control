@@ -122,7 +122,7 @@ class FilmBox(QtWidgets.QGroupBox):
             # 2. Will always overwrite.
             # 3. Are always saved.
             #
-            return filmSettings.FilmSettings(basename = film_request.getBasename(),
+            return filmSettings.FilmSettings(basename = os.path.join(self.parameters.get("directory"), film_request.getBasename()),
                                              filetype = self.parameters.get("filetype"),
                                              film_length = film_request.getFrames(),
                                              run_shutters = self.ui.autoShuttersCheckBox.isChecked(),
