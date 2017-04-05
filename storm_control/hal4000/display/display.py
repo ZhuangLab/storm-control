@@ -230,16 +230,21 @@ class Display(halModule.HalModule):
         print(">ncv")
     
     def newFeedViewer(self):
-        print(">nfv")
-        # First look for an existing viewer that is hidden.
 
+        # First look for an existing viewer that is just hidden.
+        found_existing_viewer = False
+        for viewer in self.viewers:
+            if isinstance(viewer, cameraViewers.FeedViewer) and not viewer.isVisible():
+                viewer.show()
+                found_existing_viewer = True
+                
         # If none exists, create a new feed viewer.
-        feed_viewer = cameraViewers.FeedViewer(module_name = self.getNextViewerName())
-        feed_viewer.halDialogInit(self.qt_settings, self.window_title + " feed viewer")        
-        feed_viewer.guiMessage.connect(self.handleGuiMessage)
-        feed_viewer.showViewer()
-
-        self.viewers.append(feed_viewer)
+        if not found_existing_viewer:
+            feed_viewer = cameraViewers.FeedViewer(module_name = self.getNextViewerName())
+            feed_viewer.halDialogInit(self.qt_settings, self.window_title + " feed viewer")        
+            feed_viewer.guiMessage.connect(self.handleGuiMessage)
+            feed_viewer.showViewer()
+            self.viewers.append(feed_viewer)
 
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "get feeds information"))
