@@ -52,8 +52,10 @@ class Camera(halModule.HalModule):
                                       config = camera_params.get("parameters"),
                                       is_master = camera_params.get("master"))
 
+        self.camera_control.emccd.connect(self.handleEMCCD)
         self.camera_control.finished.connect(self.handleFinished)
         self.camera_control.newData.connect(self.handleNewData)
+        self.camera_control.shutter.connect(self.handleShutter)
 
         # This is sent at start-up so that other modules, in particular
         # feeds.feeds, get the information they need about the camera(s)
@@ -67,7 +69,7 @@ class Camera(halModule.HalModule):
         halMessage.addMessage("camera emccd gain",
                               check_exists = False,
                               validator = {"data" : {"camera" : [True, str],
-                                                     "emccd_gain" : [True, int]},
+                                                     "emccd gain" : [True, int]},
                                            "resp" : None})
 
         # Sent when filming and we have reached the desired number of frames.
@@ -116,9 +118,20 @@ class Camera(halModule.HalModule):
 
     def decUnprocessed(self):
         self.unprocessed_frames -= 1
-        
-    # Finished is the signal the thread emits when the run() method stops.
+
+    def handleEMCCD(self, gain):
+        """
+        'emccd' is the signal the camera emits when it changes the gain.
+        """
+        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "camera emccd gain",
+                                                   data = {"camera" : self.module_name,
+                                                           "emccd gain" : gain}))
+
     def handleFinished(self):
+        """
+        'finished' is the signal the thread emits when the run() method stops.
+        """
         if (self.unprocessed_frames == 0):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "camera stopped"))
@@ -151,6 +164,15 @@ class Camera(halModule.HalModule):
                                                        data = {"frame" : frame},
                                                        finalizer = lambda : self.decUnprocessed()))
 
+    def handleShutter(self, state):
+        """
+        'shutter' is the signal the camera emits when the shutter opens or closes.
+        """
+        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "camera shutter",
+                                                   data = {"camera" : self.module_name,
+                                                           "state" : state}))
+    
     def incUnprocessed(self):
         self.unprocessed_frames += 1
 

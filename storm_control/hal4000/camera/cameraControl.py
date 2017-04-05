@@ -82,8 +82,9 @@ class CameraConfiguration(object):
         
     
 class CameraControl(QtCore.QThread):
+    emccd = QtCore.pyqtSignal(int)
     newData = QtCore.pyqtSignal(object)
-    stopped = QtCore.pyqtSignal()
+    shutter = QtCore.pyqtSignal(bool)
 
     def __init__(self, camera_name = None, config = None, **kwds):
         super().__init__(**kwds)
@@ -113,22 +114,32 @@ class CameraControl(QtCore.QThread):
         # Current shutter state. True = open.
         self.shutter_state = False 
 
-        # Parameters common to every camera.
         #
-        # FIXME: These should *only* be the parameters that HAL requires
-        #        so that it is clear which one a sub-class needs to
-        #        specify to work properly.
+        # These are the minimal parameters that every camera must provide
+        # to work with HAL.
         #
 
+        # The exposure time.
+        self.parameters.add(params.ParameterFloat(description = "Exposure time (seconds)", 
+                                                       name = "exposure_time", 
+                                                       value = 1.0))
+        
         # This is frames per second as reported by the camera. It is used
         # by the illumination module for timing the shutters.
         self.parameters.add(params.ParameterFloat(name = "fps",
                                                   value = 0,
                                                   is_mutable = False))
 
-        # Camera AOI size.
-        x_size = 512
-        y_size = 512
+        #
+        # Chip size, ROI of the chip and the well depth.
+        #
+        x_size = 256
+        y_size = 256
+        self.parameters.add(params.ParameterInt(name = "max_intensity",
+                                                value = 128,
+                                                is_mutable = False,
+                                                is_saved = False))
+
         self.parameters.add(params.ParameterRangeInt(description = "AOI X start",
                                                      name = "x_start",
                                                      value = 1,
@@ -152,13 +163,13 @@ class CameraControl(QtCore.QThread):
                                                      value = y_size,
                                                      min_value = 1,
                                                      max_value = y_size))
-
+        
         self.parameters.add(params.ParameterInt(name = "x_pixels",
-                                                value = x_size,
+                                                value = 0,
                                                 is_mutable = False))
         
         self.parameters.add(params.ParameterInt(name = "y_pixels",
-                                                value = y_size,
+                                                value = 0,
                                                 is_mutable = False))
 
         self.parameters.add(params.ParameterRangeInt(description = "Binning in X",
@@ -234,6 +245,12 @@ class CameraControl(QtCore.QThread):
         self.running = False
         self.wait()
 
+    def closeShutter(self):
+        """
+        Cameras that have a shutter should override this.
+        """
+        pass
+
     def getCameraConfiguration(self):
         if (self.camera_configuration.parameters != self.parameters):
             msg = "The parameters in the camera configuration are different from the actual camera parameters."
@@ -279,6 +296,12 @@ class CameraControl(QtCore.QThread):
         self.parameters.set("extension", parameters.get("extension"))
         self.parameters.set("saved", parameters.get("saved"))
 
+    def openShutter(self):
+        """
+        Cameras that have a shutter should override this.
+        """
+        pass
+        
     def setEMCCDGain(self, gain):
         pass
     
@@ -309,14 +332,13 @@ class CameraControl(QtCore.QThread):
     def stopFilm(self):
         pass
 
-    # FIXME: Is this used? How many different ways to control the shutter do we need?
     def toggleShutter(self, which_camera):
-        if self.shutter:
+        if self.shutter_state:
             self.closeShutter()
-            return False
         else:
             self.openShutter()
-            return True
+        self.shutter_state = not self.shutter_state
+        self.shutter.emit(self.shutter_state)
 
 
 class HWCameraControl(CameraControl):

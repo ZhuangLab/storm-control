@@ -36,18 +36,26 @@ class NoneCameraControl(cameraControl.CameraControl):
                                                                       is_master = is_master,
                                                                       parameters = self.parameters)
         
-        # Emulation camera parameters.
-        self.parameters.add(params.ParameterRangeFloat(description = "Exposure time (seconds)", 
+        #
+        # Override defaults with camera specific values.
+        #
+        self.parameters.set("exposure_time", params.ParameterRangeFloat(description = "Exposure time (seconds)", 
                                                        name = "exposure_time", 
                                                        value = 0.02,
                                                        min_value = 0.01,
                                                        max_value = 10.0))
+        self.parameters.set("max_intensity", 512)
         
-        self.parameters.add(params.ParameterInt(name = "max_intensity",
-                                                value = 512,
-                                                is_mutable = False,
-                                                is_saved = False))
+        chip_size = 512
+        for pname in ["x_start", "x_end", "y_start", "y_end"]:
+            self.parameters.getp(pname).setMaximum(chip_size)
+
+        self.parameters.getp("x_end").setv(chip_size)
+        self.parameters.getp("y_end").setv(chip_size)
         
+        #
+        # Emulation camera specific parameters.
+        #
         self.parameters.add(params.ParameterRangeFloat(description = "Camera rolling constant", 
                                                        name = "roll", 
                                                        value = 0.1,
