@@ -25,7 +25,7 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         super().__init__(**kwds)
 
         self.can_drag = False
-        self.chip_max = 0
+        self.chip_max = 100
         self.center_x = 0
         self.center_y = 0
         self.ctrl_key_down = False
