@@ -18,6 +18,7 @@ class HalDialog(QtWidgets.QDialog):
 
     def __init__(self, module_name = None, **kwds):
         super().__init__(**kwds)
+        self.am_visible = False
         self.ignore_close = True
         self.module_name = module_name
 

@@ -145,7 +145,7 @@ class ClassicViewer(QtCore.QObject, CameraParamsMixin):
         self.frame_viewer = cameraFrameViewer.CameraFrameViewer(display_name = self.module_name,
                                                                 feed_name = camera_name)
         self.params_viewer = paramsViewer.ParamsViewer(viewer_name = self.module_name,
-                                                       viewer_ui = cameraParamsDetachedUi)
+                                                       viewer_ui = cameraParamsUi)
 
         self.frame_viewer.showRecord(True)
 
@@ -204,34 +204,37 @@ class FeedViewer(halDialog.HalDialog, CameraParamsMixin):
         self.frame_viewer.ui.shutterButton.clicked.connect(self.handleShutterButton)
 
 
-class DetachedViewer(halDialog.HalDialog):
+class DetachedViewer(halDialog.HalDialog, CameraParamsMixin):
     """
     These are the dialog boxes that show the camera image in combination with a
     parameters view. In detached mode there is at least one of these.
     """
-    def __init__(self, module_params = None, qt_settings = None, camera_view = None, **kwds):
+    guiMessage = QtCore.pyqtSignal(object)
+
+    def __init__(self, camera_name = "camera1", **kwds):
         super().__init__(**kwds)
 
-        # Create UI
+        self.frame_viewer = cameraFrameViewer.CameraFrameViewer(display_name = self.module_name,
+                                                                feed_name = camera_name)
+        self.params_viewer = paramsViewer.ParamsViewer(viewer_name = self.module_name,
+                                                       viewer_ui = cameraParamsDetachedUi)
+
         self.ui = cameraDetachedUi.Ui_Dialog()
         self.ui.setupUi(self)
 
-        # Configure UI.
-        self.setWindowTitle(module_params.get("setup_name") + " Main Display")
-        super().halDialogInit(qt_settings)
+        layout = QtWidgets.QGridLayout(self.ui.cameraFrame)
+        layout.setContentsMargins(2,2,2,2)
+        layout.addWidget(self.frame_viewer)
 
-        camera_layout = QtWidgets.QGridLayout(self.ui.cameraFrame)
-        camera_layout.setContentsMargins(0,0,0,0)
-        camera_layout.addWidget(camera_view)
-        camera_view.setParent(self.ui.cameraFrame)
+        layout = QtWidgets.QGridLayout(self.ui.cameraParamsFrame)
+        layout.setContentsMargins(2,2,2,2)
+        layout.addWidget(self.params_viewer)
 
-        self.params_layout = QtWidgets.QGridLayout(self.ui.cameraParamsFrame)
-        self.params_layout.setContentsMargins(0,0,0,0)
+        self.frame_viewer.feedChange.connect(self.handleFeedChange)
+        self.frame_viewer.guiMessage.connect(self.handleGuiMessage)
+        self.frame_viewer.ui.recordButton.clicked.connect(self.handleRecordButton)
+        self.frame_viewer.ui.shutterButton.clicked.connect(self.handleShutterButton)        
+        self.params_viewer.guiMessage.connect(self.handleGuiMessage)
 
-        self.halDialogInit(qt_settings)
-
-    def addParamsWidget(self, camera_params_widget):
-        """
-        Add the camera params widget to the UI.
-        """
-        self.params_layout.addWidget(camera_params_widget)
+    def messageConfigure2(self):
+        self.handleFeedChange(self.frame_viewer.getFeedName())

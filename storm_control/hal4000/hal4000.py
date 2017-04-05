@@ -44,12 +44,6 @@ app = None
 class HalController(halModule.HalModule):
     """
     HAL main window controller.
-
-    This sends the following messages:
-     'close event'
-     'new directory'
-     'new parameters file'
-     'new shutters file'
     """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
@@ -93,6 +87,12 @@ class HalController(halModule.HalModule):
             self.view.addMenuItems()
             self.view.addWidgets()
             self.view.show()
+
+        elif message.isType("start film"):
+            self.view.startFilm(message.getData()["film settings"])
+
+        elif message.isType("stop film"):
+            self.view.stopFilm()
             
 
 #
@@ -173,7 +173,7 @@ class HalView(QtWidgets.QMainWindow):
         This actually adds the items to the file menu.
         """
         if (len(self.menu_items_to_add) > 0):
-            for item in sorted(self.menu_items_to_add, key = lambda x : x[1]):
+            for item in sorted(self.menu_items_to_add, key = lambda x : x[0]):
                 a_action = QtWidgets.QAction(self.tr(item[0]), self)
                 self.ui.menuFile.insertAction(self.ui.actionQuit, a_action)
                 a_action.triggered.connect(item[1])
@@ -305,8 +305,11 @@ class HalView(QtWidgets.QMainWindow):
                                                    m_type = "close event",
                                                    sync = True))
 
-#    def setFilmDirectory(self, film_directory):
-#        self.film_directory = film_directory
+    def startFilm(self, film_settings):
+        pass
+
+    def stopFilm(self):
+        pass
 
         
 class ClassicView(HalView):
@@ -328,6 +331,17 @@ class DetachedView(HalView):
         self.classic_view = False
         super().__init__(**kwds)
 
+        self.ui.recordButton.clicked.connect(self.handleRecordButton)
+
+    def handleRecordButton(self, boolean):
+        self.guiMessage.emit(self.ui.recordButton.getHalMessage())
+
+    def startFilm(self, film_settings):
+        self.ui.recordButton.startFilm(film_settings)
+
+    def stopFilm(self):
+        self.ui.recordButton.stopFilm()
+        
 
 #
 # The core..

@@ -44,8 +44,9 @@ class Display(halModule.HalModule):
         if self.is_classic:
             self.viewers.append(cameraViewers.ClassicViewer(module_name = self.getNextViewerName()))
         else:
-            self.viewers.append(cameraViewers.DetachedViewer(module_name = self.getNextViewerName(),
-                                                             qt_settings = self.qt_settings))
+            camera_viewer = cameraViewers.DetachedViewer(module_name = self.getNextViewerName())
+            camera_viewer.halDialogInit(self.qt_settings, self.window_title + " camera viewer")        
+            self.viewers.append(camera_viewer)
         
         self.viewers[0].guiMessage.connect(self.handleGuiMessage)
         
@@ -160,14 +161,12 @@ class Display(halModule.HalModule):
             # incorporate some of it's UI elements.
             self.viewers[0].messageConfigure1()
 
-            # Add a menu option to generate more viewers.
-            print(">c1", type(self.newFeedViewer))
-            if self.is_classic:
-                self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "add to menu",
-                                                           data = {"item name" : "Feed Viewer",
-                                                                   "item action" : self.newFeedViewer}))
-            else:
+            # Add a menu option(s) to generate more viewers.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "add to menu",
+                                                       data = {"item name" : "Feed Viewer",
+                                                               "item action" : self.newFeedViewer}))
+            if not self.is_classic:
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "add to menu",
                                                            data = {"item name" : "Camera Viewer",
@@ -227,7 +226,25 @@ class Display(halModule.HalModule):
             viewer.messageNewFrame(message.getData()["frame"])
 
     def newCameraViewer(self):
-        print(">ncv")
+
+        # First look for an existing viewer that is just hidden.
+        found_existing_viewer = False
+        for viewer in self.viewers:
+            if isinstance(viewer, cameraViewers.DetachedViewer) and not viewer.isVisible():
+                viewer.show()
+                found_existing_viewer = True
+
+        # If none exists, create a new feed viewer.
+        if not found_existing_viewer:
+            feed_viewer = cameraViewers.DetachedViewer(module_name = self.getNextViewerName())
+            feed_viewer.halDialogInit(self.qt_settings, self.window_title + " camera viewer")
+            feed_viewer.guiMessage.connect(self.handleGuiMessage)
+            feed_viewer.showViewer()
+            self.viewers.append(feed_viewer)
+
+        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "get feeds information"))                
+
     
     def newFeedViewer(self):
 
