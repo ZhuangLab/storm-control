@@ -52,10 +52,8 @@ class Camera(halModule.HalModule):
                                       config = camera_params.get("parameters"),
                                       is_master = camera_params.get("master"))
 
-        self.camera_control.emccd.connect(self.handleEMCCD)
         self.camera_control.finished.connect(self.handleFinished)
         self.camera_control.newData.connect(self.handleNewData)
-        self.camera_control.shutter.connect(self.handleShutter)
 
         # This is sent at start-up so that other modules, in particular
         # feeds.feeds, get the information they need about the camera(s)
@@ -163,15 +161,6 @@ class Camera(halModule.HalModule):
                                                        level = 2,
                                                        data = {"frame" : frame},
                                                        finalizer = lambda : self.decUnprocessed()))
-
-    def handleShutter(self, state):
-        """
-        'shutter' is the signal the camera emits when the shutter opens or closes.
-        """
-        self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "camera shutter",
-                                                   data = {"camera" : self.module_name,
-                                                           "state" : state}))
     
     def incUnprocessed(self):
         self.unprocessed_frames += 1
@@ -212,7 +201,7 @@ class Camera(halModule.HalModule):
             if (message.getData()["camera"] == self.module_name):
                 halModule.runWorkerTask(self,
                                         message,
-                                        lambda : self.camera_control.setEMCCDGain(message.getData()["gain"]))
+                                        lambda : self.setEMCCDGain(message.getData()["emccd gain"]))
 
         # This message comes from the shutter button.
         #
@@ -222,7 +211,7 @@ class Camera(halModule.HalModule):
             if (message.getData()["camera"] == self.module_name):
                 halModule.runWorkerTask(self,
                                         message,
-                                        lambda : self.camera_control.toggleShutter())
+                                        self.toggleShutter)
 
         # This message comes from film.film, it is camera specific as
         # slave cameras need to be started before master camera(s).
@@ -253,6 +242,13 @@ class Camera(halModule.HalModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : self.camera_control.getParameters()}))
 
+    def setEMCCDGain(self, new_gain):
+        gain = self.camera_control.setEMCCDGain(new_gain)
+        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "camera emccd gain",
+                                                   data = {"camera" : self.module_name,
+                                                           "emccd gain" : gain}))
+
     def startCamera(self):
         
         # Broadcast the camera temperature, if available. We do this here because at least
@@ -264,7 +260,14 @@ class Camera(halModule.HalModule):
 
         # Start the camera.
         self.camera_control.startCamera()
-
+        
+    def toggleShutter(self):
+        state = self.camera_control.toggleShutter()
+        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "camera shutter",
+                                                   data = {"camera" : self.module_name,
+                                                           "state" : state}))
+        
     def updateParameters(self, message):
         message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                           data = {"old parameters" : self.camera_control.getParameters().copy()}))

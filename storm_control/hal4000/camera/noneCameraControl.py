@@ -65,8 +65,24 @@ class NoneCameraControl(cameraControl.CameraControl):
                                                        value = 0.1,
                                                        min_value = 0.0,
                                                        max_value = 1.0))
-    
         self.parameters.set("roll", config.get("roll"))
+
+        self.parameters.add(params.ParameterRangeInt(description = "EMCCD gain",
+                                                     name = "emccd_gain",
+                                                     value = 10,
+                                                     min_value = 2,
+                                                     max_value = 50))
+        
+        self.parameters.add(params.ParameterSetFloat(description = "Pre-amp gain",
+                                                     name = "preampgain",
+                                                     value = 1.0,
+                                                     allowed = [1.0, 2.0, 5.0]))
+        
+        self.parameters.add(params.ParameterRangeFloat(description = "Target temperature", 
+                                                       name = "temperature", 
+                                                       value = -20.0,
+                                                       min_value = -50.0,
+                                                       max_value = 25.0))
 
         self.newParameters(self.parameters, initialization = True)
 

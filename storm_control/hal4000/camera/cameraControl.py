@@ -35,14 +35,29 @@ class CameraConfiguration(object):
                  **kwds):
         super().__init__(**kwds)
 
+        # The name of the camera (i.e. 'camera1').
         self.camera_name = camera_name
+
+        # This is an EMCCD camera.
         self.have_emccd = have_emccd
+
+        # The camera has adjustable pre-amp gain.
         self.have_preamp = have_preamp
+
+        # The camera has a shutter.
         self.have_shutter = have_shutter
+
+        # The camera has temperature control.
         self.have_temperature = have_temperature
+
+        # The camera provides it own timing.
         self.is_master = is_master
+
+        # Camera parameters.
         self.parameters = parameters
-        self.shutter_state = False
+        
+        # Current shutter state. True = open.
+        self.shutter_state = False 
 
     def getCameraName(self):
         return self.camera_name
@@ -59,6 +74,9 @@ class CameraConfiguration(object):
     def hasEMCCD(self):
         return self.have_emccd
 
+    def hasParameter(self, pname):
+        return self.parameters.has(pname)
+        
     def hasPreamp(self):
         return self.have_preamp
 
@@ -82,9 +100,7 @@ class CameraConfiguration(object):
         
     
 class CameraControl(QtCore.QThread):
-    emccd = QtCore.pyqtSignal(int)
     newData = QtCore.pyqtSignal(object)
-    shutter = QtCore.pyqtSignal(bool)
 
     def __init__(self, camera_name = None, config = None, **kwds):
         super().__init__(**kwds)
@@ -110,9 +126,6 @@ class CameraControl(QtCore.QThread):
         # This is how we tell the thread that is handling actually talking
         # to the camera hardware to stop.
         self.running = False
-
-        # Current shutter state. True = open.
-        self.shutter_state = False 
 
         #
         # These are the minimal parameters that every camera must provide
@@ -303,11 +316,13 @@ class CameraControl(QtCore.QThread):
         pass
         
     def setEMCCDGain(self, gain):
-        pass
+        """
+        Cameras that have EMCCD gain should override this. This method must 
+        set the 'emccd_gain' parameter and return the current EMCCD gain.
+        """
+        self.parameters.set("emccd_gain", gain)
+        return gain
     
-    def setShutter(self, shutter_state):
-        self.shutter_state = shutter_state
-
     def startCamera(self):
         self.frame_number = 0
         self.start(QtCore.QThread.NormalPriority)
@@ -333,12 +348,13 @@ class CameraControl(QtCore.QThread):
         pass
 
     def toggleShutter(self):
-        if self.shutter_state:
+        if self.camera_configuration.getShutterState():
             self.closeShutter()
+            self.camera_configuration.setShutterState(False)
         else:
             self.openShutter()
-        self.shutter_state = not self.shutter_state
-        self.shutter.emit(self.shutter_state)
+            self.camera_configuration.setShutterState(True)
+        return self.camera_configuration.getShutterState()
 
 
 class HWCameraControl(CameraControl):

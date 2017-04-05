@@ -8,9 +8,14 @@ Hazen 04/17
 import importlib
 from PyQt5 import QtCore, QtWidgets
 
+import storm_control.sc_library.halExceptions as halExceptions
+
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
+
+class ParamsViewerException(halExceptions.HalException):
+    pass
 
 class ParamsViewer(QtWidgets.QGroupBox):
     """
@@ -22,6 +27,7 @@ class ParamsViewer(QtWidgets.QGroupBox):
 
     def __init__(self, viewer_name = "", viewer_ui = None, **kwds):
         super().__init__(**kwds)
+        self.camera_name = ""
         self.temperature = 50
         self.viewer_name = viewer_name
         
@@ -33,8 +39,10 @@ class ParamsViewer(QtWidgets.QGroupBox):
         self.ui.EMCCDSlider.valueChanged.connect(self.handleGainChange)
 
     def handleGainChange(self, new_gain):
-        self.ui.EMCCDLabel.setText("EMCCD Gain: {0:d}".format(new_gain))
-        self.gainChange.emit(new_gain)
+        self.guiMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "set emccd gain",
+                                                   data = {"camera" : self.camera_name,
+                                                           "emccd gain" : new_gain}))
 
     def newParameters(self, parameters):
         p = parameters
@@ -64,17 +72,20 @@ class ParamsViewer(QtWidgets.QGroupBox):
         self.ui.pictureSizeText.setText(str(p.get("x_pixels")) + " x " + str(p.get("y_pixels")) +
                                         " (" + str(p.get("x_bin")) + "," + str(p.get("y_bin")) + ")")
 
-    def setTemperature(self, state, temperature):
-        if (state == "stable"):
-            self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
-        else:
-            self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
-        self.ui.temperatureText.setText(str(temperature) + " (" + str(self.temperature) + ")")
+    def setEMCCDGain(self, new_gain):
+        if (new_gain != self.ui.EMCCDSlider.value()):
+            self.ui.EMCCDSlider.valueChanged.disconnect()
+            self.ui.EMCCDSlider.setValue(new_gain)
+            self.ui.EMCCDSlider.valueChanged.connect(self.handleGainChange)
+        self.ui.EMCCDLabel.setText("EMCCD Gain: {0:d}".format(new_gain))
 
     def setCameraConfiguration(self, camera_config):
-        self.setTitle(camera_config.getCameraName().title())
-        
+        self.camera_name = camera_config.getCameraName()
+        self.setTitle(self.camera_name.title())
+
         if camera_config.hasEMCCD():
+            if not camera_config.hasParameter("emccd_gain"):
+                raise ParamsViewerException("EMCCD cameras must have the 'emccd_gain' parameter.")
             self.ui.EMCCDLabel.show()
             self.ui.EMCCDSlider.show()
         else:
@@ -82,6 +93,9 @@ class ParamsViewer(QtWidgets.QGroupBox):
             self.ui.EMCCDSlider.hide()
 
         if camera_config.hasPreamp():
+            if not camera_config.hasParameter("preampgain"):
+                msg = "Cameras with adjustable preamp gain must have the 'preampgain' parameter."
+                raise ParamsViewerException(msg)
             self.ui.preampGainLabel.show()
             self.ui.preampGainText.show()
         else:
@@ -89,6 +103,9 @@ class ParamsViewer(QtWidgets.QGroupBox):
             self.ui.preampGainText.hide()
 
         if camera_config.hasTemperature():
+            if not camera_config.hasParameter("temperature"):
+                msg = "Cameras with temperature control must have the 'temperature' parameter."
+                raise ParamsViewerException(msg)
             self.ui.temperatureLabel.show()
             self.ui.temperatureText.show()
         else:
@@ -97,6 +114,13 @@ class ParamsViewer(QtWidgets.QGroupBox):
 
         self.newParameters(camera_config.getParameters())
 
+    def setTemperature(self, state, temperature):
+        if (state == "stable"):
+            self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
+        else:
+            self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
+        self.ui.temperatureText.setText(str(temperature) + " (" + str(self.temperature) + ")")
+        
     def startFilm(self):
         self.ui.EMCCDSlider.setEnabled(False)
 

@@ -101,7 +101,7 @@ class Display(halModule.HalModule):
         # Change the EMCCD gain.
         halMessage.addMessage("set emccd gain",
                               validator = {"data" : {"camera" : [True, str],
-                                                     "gain" : [True, int]},
+                                                     "emccd gain" : [True, int]},
                                            "resp" : None})
         
         # This message comes from the shutter button.
@@ -118,6 +118,10 @@ class Display(halModule.HalModule):
         return "display{0:02d}".format(len(self.viewers))
 
     def handleGuiMessage(self, message):
+        #
+        # Over write source so that message will appear to HAL to come from
+        # this module and not one display or params viewers.
+        #
         message.source = self
         self.newMessage.emit(message)
         
@@ -137,7 +141,7 @@ class Display(halModule.HalModule):
         if message.isType("camera emccd gain"):
             for viewer in self.viewers:
                 viewer.messageCameraEMCCDGain(message.getData()["camera"],
-                                              message.getData()["emccd_gain"])
+                                              message.getData()["emccd gain"])
 
         elif message.isType("camera shutter"):
             for viewer in self.viewers:
