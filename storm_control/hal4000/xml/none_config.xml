@@ -8,7 +8,7 @@
   <setup_name type="string">none</setup_name>
 
   <!-- The ui type, this is 'classic' or 'detached' -->
-  <ui_type type="string">detached</ui_type>
+  <ui_type type="string">classic</ui_type>
 
   <!--
       This has two effects:
