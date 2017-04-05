@@ -34,6 +34,7 @@ class Display(halModule.HalModule):
         self.is_classic = (module_params.get("ui_type") == "classic")
         self.parameters = module_params.get("parameters")
         self.qt_settings = qt_settings
+        self.window_title = module_params.get("setup_name")
         
         self.viewers = []
 
@@ -41,9 +42,9 @@ class Display(halModule.HalModule):
         # There is always at least one display by default.
         #
         if self.is_classic:
-            self.viewers.append(cameraViewers.ClassicViewer(viewer_name = self.getNextViewerName()))
+            self.viewers.append(cameraViewers.ClassicViewer(module_name = self.getNextViewerName()))
         else:
-            self.viewers.append(cameraViewers.DetachedViewer(viewer_name = self.getNextViewerName(),
+            self.viewers.append(cameraViewers.DetachedViewer(module_name = self.getNextViewerName(),
                                                              qt_settings = self.qt_settings))
         
         self.viewers[0].guiMessage.connect(self.handleGuiMessage)
@@ -230,9 +231,20 @@ class Display(halModule.HalModule):
     
     def newFeedViewer(self):
         print(">nfv")
+        # First look for an existing viewer that is hidden.
 
+        # If none exists, create a new feed viewer.
+        feed_viewer = cameraViewers.FeedViewer(module_name = self.getNextViewerName())
+        feed_viewer.halDialogInit(self.qt_settings, self.window_title + " feed viewer")        
+        feed_viewer.guiMessage.connect(self.handleGuiMessage)
+        feed_viewer.showViewer()
 
+        self.viewers.append(feed_viewer)
 
+        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "get feeds information"))
+
+        
 #
 # The MIT License
 #

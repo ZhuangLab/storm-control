@@ -128,9 +128,13 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.ui.recordButton.hide()
         self.ui.shutterButton.hide()
 
+        # These are always hidden unless we are filming.
         self.ui.syncLabel.hide()
         self.ui.syncSpinBox.hide()
 
+        # FIXME: This only sort of works, the text is still getting cut-off.
+        self.ui.feedComboBox.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+        
         # Connect signals.
         self.camera_view.dragMove.connect(self.handleDragMove)
         self.camera_view.dragStart.connect(self.handleDragStart)
@@ -487,7 +491,7 @@ class CameraFrameViewer(QtWidgets.QFrame):
 
         self.setSyncMax(self.getParameter("sync_max"))
         self.ui.syncSpinBox.setValue(self.getParameter("sync"))
-        
+
     def setFeeds(self, feeds_info):
         """
         This updates feed selector combo box with a list of 

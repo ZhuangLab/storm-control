@@ -198,7 +198,7 @@ class CameraFeedInfo(object):
 
     def setParameter(self, name, value):
         if self.locked:
-            raise halException("Feed information no longer be changed.")
+            raise FeedException("Feed information no longer be changed.")
         self.parameters.set(name, value)
 
     def transformChipToFrame(self, cx, cy):
@@ -510,7 +510,11 @@ class Feeds(halModule.HalModule):
         self.finished_timer.setInterval(10)
         self.finished_timer.timeout.connect(self.handleFinished)
         self.finished_timer.setSingleShot(True)        
-        
+
+        # Sent by other modules to prompt for information about the
+        # current feeds.
+        halMessage.addMessage("get feeds information",
+                              validator = {"data" : None, "resp" : None})
         #
         # This message returns a dictionary keyed by feed name with all
         # relevant parameters for the feed name in another dictionary.
@@ -547,6 +551,7 @@ class Feeds(halModule.HalModule):
         # read-only objects.
         #
         for feed_name, feed in self.feeds_info.items():
+            feed.setLocked(False)
             feed.setParameter("colortable", self.default_colortable)
             feed.setLocked(True)
             
@@ -590,6 +595,9 @@ class Feeds(halModule.HalModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"feed_name" : feed_name,
                                                                       "feed_info" : self.feeds_info[feed_name]}))
+
+        elif message.isType("get feeds information"):
+            self.broadcastFeedInfo()
 
         elif message.isType("camera configuration"):
             #

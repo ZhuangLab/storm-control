@@ -336,12 +336,6 @@ class HalCore(QtCore.QObject):
     """
     The core of it all. It sets everything else up, handles 
     the message passing and tears everything down.
-
-    This sends the following messages:
-     'configure1'
-     'configure2'
-     'new parameters file'
-     'start'
     """
     def __init__(self, config = None, parameters_file_name = None, **kwds):
         super().__init__(**kwds)

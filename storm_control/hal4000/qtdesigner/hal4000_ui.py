@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(863, 687)
+        MainWindow.resize(863, 686)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -50,7 +50,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.cameraFrame.sizePolicy().hasHeightForWidth())
         self.cameraFrame.setSizePolicy(sizePolicy)
-        self.cameraFrame.setMinimumSize(QtCore.QSize(645, 551))
+        self.cameraFrame.setMinimumSize(QtCore.QSize(645, 550))
         self.cameraFrame.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.cameraFrame.setFrameShadow(QtWidgets.QFrame.Plain)
         self.cameraFrame.setLineWidth(0)
