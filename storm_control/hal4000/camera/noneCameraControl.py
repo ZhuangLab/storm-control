@@ -33,6 +33,10 @@ class NoneCameraControl(cameraControl.CameraControl):
         # getCameraConfiguration() method.
         #
         self.camera_configuration = cameraControl.CameraConfiguration(camera_name = self.camera_name,
+                                                                      have_emccd = True,
+                                                                      have_preamp = True,
+                                                                      have_shutter = True,
+                                                                      have_temperature = True,
                                                                       is_master = is_master,
                                                                       parameters = self.parameters)
         

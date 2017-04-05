@@ -332,7 +332,7 @@ class CameraControl(QtCore.QThread):
     def stopFilm(self):
         pass
 
-    def toggleShutter(self, which_camera):
+    def toggleShutter(self):
         if self.shutter_state:
             self.closeShutter()
         else:

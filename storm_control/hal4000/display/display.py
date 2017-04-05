@@ -97,17 +97,17 @@ class Display(halModule.HalModule):
                                                      "feed_name" : [True, str]},
                                            "resp" : {"feed_name" : [True, str],
                                                      "feed_info" : [True, feeds.CameraFeedInfo]}})
-
-        # This message comes from the shutter button.
-        halMessage.addMessage("shutter clicked",
-                              validator = {"data" : {"display_name" : [True, str],
-                                                     "camera" : [True, str]},
-                                           "resp" : None})
-
+        
         # Change the EMCCD gain.
         halMessage.addMessage("set emccd gain",
                               validator = {"data" : {"camera" : [True, str],
                                                      "gain" : [True, int]},
+                                           "resp" : None})
+        
+        # This message comes from the shutter button.
+        halMessage.addMessage("shutter clicked",
+                              validator = {"data" : {"display_name" : [True, str],
+                                                     "camera" : [True, str]},
                                            "resp" : None})
         
     def cleanUp(self, qt_settings):
@@ -142,7 +142,7 @@ class Display(halModule.HalModule):
         elif message.isType("camera shutter"):
             for viewer in self.viewers:
                 viewer.messageCameraShutter(message.getData()["camera"],
-                                            message.getData()["shutter"])
+                                            message.getData()["state"])
 
         elif message.isType("camera temperature"):
             for viewer in self.viewers:
