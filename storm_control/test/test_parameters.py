@@ -123,7 +123,25 @@ def test_parameters_6():
     assert(p1.get("foo.bar.bar2") == "foo2")
     assert(p1.get("bar.foo.foo1") == "bar1")
 
+
+def test_parameters_7():
+    p1 = params.StormXMLObject()
+    v1 = params.ParameterSimple("foo", "bar")
+    p1.add(v1)
+
+    p2 = params.StormXMLObject()
+    p2.add("foo", p1.getp("foo"))
+
+    p3 = params.StormXMLObject()
+    p3.add("foo", p1.getp("foo").copy())
+
+    v1.setv("baz")
     
+    assert(p1.get("foo") == "baz")
+    assert(p2.get("foo") == "baz")
+    assert(p3.get("foo") == "bar")
+
+        
 if (__name__ == "__main__"):
     test_parameters_1()
     test_parameters_2()
@@ -131,3 +149,4 @@ if (__name__ == "__main__"):
     test_parameters_4()
     test_parameters_5()
     test_parameters_6()
+    test_parameters_7()
