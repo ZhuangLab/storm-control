@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 
 import storm_control.sc_library.halExceptions as halExceptions
 
@@ -32,4 +33,17 @@ class FilmTest2(testing.Testing):
                              testActions.SetParameters(p_name = 0),
                              testActions.Record(filename = "movie_02")]
 
+#
+# Test that we can load the parameters files from a movie.
+#
+class FilmTest3(testing.Testing):
 
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        directory = test.dataDirectory()
+        self.test_actions = [testActions.SetDirectory(directory = directory),
+                             testActions.Record(filename = "movie_03"),
+                             testActions.LoadParameters(os.path.join(directory, "movie_03.xml")),
+                             testActions.SetParameters(p_name = 0),
+                             testActions.Timer(timeout = 500)]
