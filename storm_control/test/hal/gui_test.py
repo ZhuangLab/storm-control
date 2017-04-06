@@ -3,7 +3,7 @@
 import storm_control.hal4000.testing.testActions as testActions
 import storm_control.hal4000.testing.testing as testing
 
-class Testing(testing.Testing):
+class GUITest(testing.Testing):
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
