@@ -34,6 +34,7 @@ class Display(halModule.HalModule):
         self.is_classic = (module_params.get("ui_type") == "classic")
         self.parameters = module_params.get("parameters")
         self.qt_settings = qt_settings
+        self.show_gui = True
         self.window_title = module_params.get("setup_name")
         
         self.viewers = []
@@ -214,7 +215,9 @@ class Display(halModule.HalModule):
                                                                   data = {"new parameters" : viewer.getParameters()}))
 
         elif message.isType("start"):
-            self.viewers[0].showIfVisible()
+            self.show_gui = message.getData()["show_gui"]
+            if self.show_gui:
+                self.viewers[0].showIfVisible()
 
             #
             # Heh, need to send this message again because the QtCameraGraphicsView won't know how
@@ -257,7 +260,7 @@ class Display(halModule.HalModule):
             feed_viewer = cameraViewers.DetachedViewer(module_name = self.getNextViewerName())
             feed_viewer.halDialogInit(self.qt_settings, self.window_title + " camera viewer")
             feed_viewer.guiMessage.connect(self.handleGuiMessage)
-            feed_viewer.showViewer()
+            feed_viewer.showViewer(self.show_gui)
             self.viewers.append(feed_viewer)
 
         self.newMessage.emit(halMessage.HalMessage(source = self,
@@ -278,7 +281,7 @@ class Display(halModule.HalModule):
             feed_viewer = cameraViewers.FeedViewer(module_name = self.getNextViewerName())
             feed_viewer.halDialogInit(self.qt_settings, self.window_title + " feed viewer")        
             feed_viewer.guiMessage.connect(self.handleGuiMessage)
-            feed_viewer.showViewer()
+            feed_viewer.showViewer(self.show_gui)
             self.viewers.append(feed_viewer)
 
         self.newMessage.emit(halMessage.HalMessage(source = self,

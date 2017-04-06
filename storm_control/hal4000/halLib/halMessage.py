@@ -47,7 +47,8 @@ valid_messages = {
                              "resp" : None},
     'new shutters file' : {"data" : {"filename" : [True, str]},
                            "resp" : None},
-    'start' :  {"data" : None, "resp" : None},
+    'start' :  {"data" : {"show_gui" : [True, bool]},
+                "resp" : None},
     'sync' :  {"data" : None, "resp" : None},
     'test' :  {"data" : None, "resp" : None},
     }

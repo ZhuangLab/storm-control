@@ -84,9 +84,10 @@ class HalController(halModule.HalModule):
                                       message.getData().get("ui_order"))
             
         elif message.isType("start"):
-            self.view.addMenuItems()
-            self.view.addWidgets()
-            self.view.show()
+            if message.getData()["show_gui"]:
+                self.view.addMenuItems()
+                self.view.addWidgets()
+                self.view.show()
 
         elif message.isType("start film"):
             self.view.startFilm(message.getData()["film settings"])
@@ -352,7 +353,11 @@ class HalCore(QtCore.QObject):
     The core of it all. It sets everything else up, handles 
     the message passing and tears everything down.
     """
-    def __init__(self, config = None, parameters_file_name = None, **kwds):
+    def __init__(self, config = None,
+                 parameters_file_name = None,
+                 testing_mode = False,
+                 show_gui = True,
+                 **kwds):
         super().__init__(**kwds)
 
         self.modules = []
@@ -370,8 +375,15 @@ class HalCore(QtCore.QObject):
         # Load all the modules.
         print("Loading modules")
 
+        #
         # For HAL it is easier to just use a list of modules, but at initialization
-        # we also send a dictionary of all the modules to all of the modules.
+        # we also send a dictionary with the module names as keys to all of the
+        # modules
+        #
+        # In testing mode the testing.testing module may use the other modules as
+        # message sources. During normal operation however all inter-module
+        # communication should be done using messages.
+        #
         all_modules = {}
         for module_name in config.get("modules").getAttrs():
             print("  " + module_name)
@@ -392,7 +404,10 @@ class HalCore(QtCore.QObject):
                                module_params = module_params,
                                qt_settings = self.qt_settings)
             self.modules.append(a_object)
-            all_modules[module_name] = a_object
+            if testing_mode:
+                all_modules[module_name] = a_object
+            else:
+                all_modules[module_name] = True
 
         print("")
 
@@ -453,6 +468,7 @@ class HalCore(QtCore.QObject):
         #
         message_chain.append(halMessage.HalMessage(source = self,
                                                    m_type = "start",
+                                                   data = {"show_gui" : show_gui},
                                                    sync = True,
                                                    finalizer = lambda : app.setQuitOnLastWindowClosed(True)))
 
@@ -635,8 +651,6 @@ if (__name__ == "__main__"):
                         help = "The name of a settings xml file to use as the default.")
 
     args = parser.parse_args()
-
-    # FIXME: Should allow an (optional) initial setup file name.
     
     # Start..
     app = QtWidgets.QApplication(sys.argv)

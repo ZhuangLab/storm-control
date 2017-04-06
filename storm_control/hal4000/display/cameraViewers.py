@@ -116,9 +116,10 @@ class CameraParamsMixin(object):
         if self.params_viewer is not None:
             self.params_viewer.newParameters(parameters.get(self.camera_name))
 
-    def showViewer(self):
+    def showViewer(self, show_gui):
         self.handleFeedChange(self.frame_viewer.getFeedName())
-        self.show()
+        if show_gui:
+            self.show()
 
     def startFilm(self, film_settings):
         self.frame_viewer.startFilm(film_settings)
