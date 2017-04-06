@@ -149,7 +149,7 @@ class ParametersMVC(QtWidgets.QListView):
             #        should just return a list of matching parameters?
             #
             if (len(items) > 1):
-                raise halExceptions.HalException("Found", len(items), "parameter files with the requested name")
+                raise halExceptions.HalException("Found " + str(len(items)) + " parameter files with the requested name!")
             elif (len(items) == 1):
                 return items[0]
         else:

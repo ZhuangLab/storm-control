@@ -121,7 +121,7 @@ class HalModule(QtCore.QObject):
                 if not self.handleError(message, m_error):
                     m_error.printExceptionAndDie()
             else:
-                if not self.handleWarning(message, m_warning):
+                if not self.handleWarning(message, m_error):
                     halMessageBox.halMessageBoxInfo(data)
 
     def handleMessage(self, message):
@@ -147,7 +147,7 @@ class HalModule(QtCore.QObject):
         for response in message.getResponses():
             self.handleResponse(message, response)
     
-    def handleWarning(self, m_warning):
+    def handleWarning(self, message, m_error):
         """
         Override with class specific warning handling.
         """

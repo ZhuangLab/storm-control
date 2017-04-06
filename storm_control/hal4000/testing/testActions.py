@@ -49,7 +49,12 @@ class TestAction(QtCore.QObject):
         return "testing"
     
     def finalizer(self):
-        pass
+        if self.message.hasErrors():
+            for m_error in self.message.getErrors():
+                if m_error.hasException():
+                    raise m_error.getException()
+                else:
+                    print(">>Warning from '" + m_error.source + "' " + m_error.message)
 
     def handleActionTimer(self):
         self.actionDone.emit()
@@ -90,6 +95,7 @@ class GetParameters(TestAction):
         pass
     
     def finalizer(self):
+        super().finalizer()
         if not self.message.hasResponses():
             raise TestException("No response to message '" + self.m_type + "'")            
         self.actionDone.emit()
@@ -118,6 +124,7 @@ class LoadParameters(TestAction):
         self.m_type = "new parameters file"
 
     def finalizer(self):
+        super().finalizer()
         self.actionDone.emit()
 
     def getMessageData(self):
