@@ -23,12 +23,12 @@ class Testing(halModule.HalModule):
         self.current_action = None
         self.test_actions = []
 
-        #
-        # This message is not actually sent, it is just the default
-        # message filter name for a test action. It keeps HalMessage.isType()
-        # from complaining that the message does not exist.
-        #
+        # This message type is just a place holder.
         halMessage.addMessage("na",
+                              validator = {"data" : None, "resp" : None})
+        
+        # This message is sent but does not do anything.
+        halMessage.addMessage("noop",
                               validator = {"data" : None, "resp" : None})
 
         # This message is sent when all the tests finish. HAL should
@@ -53,11 +53,14 @@ class Testing(halModule.HalModule):
             if self.current_action is not None:
                 self.current_action.actionDone.disconnect()
             self.current_action = self.test_actions[0]
-            self.current_action.actionDone.connect(self.handleActionDone)
             self.test_actions = self.test_actions[1:]
+
+            self.current_action.start()
+            self.current_action.actionDone.connect(self.handleActionDone)
             self.newMessage.emit(halMessage.HalMessage(source = self.all_modules[self.current_action.getSourceName()],
                                                        m_type = self.current_action.getMessageType(),
-                                                       data = self.current_action.getMessageData()))
+                                                       data = self.current_action.getMessageData(),
+                                                       finalizer = self.current_action.finalizer))
 
     def handleResponses(self, message):
 

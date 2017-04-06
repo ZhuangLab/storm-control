@@ -14,7 +14,7 @@ import storm_control.sc_library.hdebug as hdebug
 import storm_control.sc_library.parameters as params
 import storm_control.test as test
 
-def halTest(config_xml = "", class_name = "Testing", test_module = ""):
+def halTest(config_xml = "", class_name = "Testing", test_module = "", show_gui = False):
 
     app = QtWidgets.QApplication(sys.argv)
     
@@ -29,6 +29,6 @@ def halTest(config_xml = "", class_name = "Testing", test_module = ""):
     
     hal = hal4000.HalCore(config = config,
                           testing_mode = True,
-                          show_gui = False)
+                          show_gui = show_gui)
     
     app.exec_()
