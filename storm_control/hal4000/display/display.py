@@ -21,10 +21,6 @@ import storm_control.hal4000.halLib.halModule as halModule
 class Display(halModule.HalModule):
     """
     Controller for one or more displays of camera / feed data.
-
-    This sends the following messages:
-     'get feed config'
-     'set current camera'
     """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
