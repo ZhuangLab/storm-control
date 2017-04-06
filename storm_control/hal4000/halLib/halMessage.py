@@ -173,6 +173,7 @@ class HalMessageBase(object):
 
 
 class HalMessage(HalMessageBase):
+    istype_warned = {}
 
     def __init__(self, data = None, sync = False, level = 1, finalizer = None, **kwds):
         """
@@ -260,8 +261,10 @@ class HalMessage(HalMessageBase):
         self.ref_count += 1
         
     def isType(self, m_type):
-        if not m_type in valid_messages:
-            raise HalMessageException("'" + m_type + "' is not a valid message type.")
+        if (not m_type in valid_messages) and (not m_type in self.istype_warned):
+            #raise HalMessageException("'" + m_type + "' is not a valid message type.")
+            print(">> Warning '" + m_type + "' is not a valid message type. <<")
+            self.istype_warned[m_type] = True
         return (self.m_type == m_type)
 
     def logEvent(self, event_name):
