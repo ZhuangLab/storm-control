@@ -18,7 +18,6 @@ import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
 
-
 class Display(halModule.HalModule):
     """
     Controller for one or more displays of camera / feed data.
@@ -264,8 +263,7 @@ class Display(halModule.HalModule):
             self.viewers.append(feed_viewer)
 
         self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "get feeds information"))                
-
+                                                   m_type = "get feeds information"))
     
     def newFeedViewer(self):
 

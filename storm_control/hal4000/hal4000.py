@@ -380,11 +380,17 @@ class HalCore(QtCore.QObject):
         # we also send a dictionary with the module names as keys to all of the
         # modules
         #
-        # In testing mode the testing.testing module may use the other modules as
-        # message sources. During normal operation however all inter-module
-        # communication should be done using messages.
+        # In testing mode the testing.testing module may use the other modules to
+        # spoof the message sources.
         #
-        all_modules = {}
+        # During normal operation all inter-module communication must be done
+        # using messages.
+        #
+        all_module = {}
+        if testing_mode:
+            all_modules["core"] = self
+        else:
+            all_modules["core"] = True
         for module_name in config.get("modules").getAttrs():
             print("  " + module_name)
 
