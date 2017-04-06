@@ -434,7 +434,7 @@ class ParametersBox(QtWidgets.QGroupBox):
         Set the current parameters to be those that correspond to name, which 
         can be an integer (the row number), or a string (the name of the parameters).
         """
-        q_item = self.ui.settingsListView.getParametersItem(value)
+        q_item = self.ui.settingsListView.getQItemByValue(value)
         self.ui.settingsListView.setCurrentItem(q_item)
 
     def updateCurrentParameters(self, section, parameters):

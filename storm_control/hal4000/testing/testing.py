@@ -57,10 +57,12 @@ class Testing(halModule.HalModule):
 
             self.current_action.start()
             self.current_action.actionDone.connect(self.handleActionDone)
-            self.newMessage.emit(halMessage.HalMessage(source = self.all_modules[self.current_action.getSourceName()],
-                                                       m_type = self.current_action.getMessageType(),
-                                                       data = self.current_action.getMessageData(),
-                                                       finalizer = self.current_action.finalizer))
+            message = halMessage.HalMessage(source = self.all_modules[self.current_action.getSourceName()],
+                                            m_type = self.current_action.getMessageType(),
+                                            data = self.current_action.getMessageData(),
+                                            finalizer = self.current_action.finalizer)
+            self.current_action.setMessage(message)
+            self.newMessage.emit(message)
 
     def handleResponses(self, message):
 

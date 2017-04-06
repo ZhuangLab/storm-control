@@ -66,7 +66,7 @@ class Settings(halModule.HalModule):
 
         # A request from another module for one of the sets of parameters.
         halMessage.addMessage("get parameters",
-                              validator = {"data" : {"index or name" : [True, [str, int]]},
+                              validator = {"data" : {"index or name" : [True, (str, int)]},
                                            "resp" : {"parameters" : [True, params.StormXMLObject]}})
         
         # The current parameters have changed.
@@ -90,6 +90,17 @@ class Settings(halModule.HalModule):
                                            "resp" : {"new parameters" : [False, params.StormXMLObject],
                                                      "old parameters" : [False, params.StormXMLObject]}})
 
+        # Add a new parameters file to the list of parameters.
+        halMessage.addMessage("new parameters file",
+                              validator = {"data" : {"filename" : [True, str],
+                                                     "is_default" : [False, bool]},
+                                           "resp" : None})
+
+        # A request from another module to set the current parameters.
+        halMessage.addMessage("set parameters",
+                              validator = {"data" : {"index or name" : [True, (str, int)]},
+                                           "resp" : None})
+        
         # The updated parameters.
         #
         # These are the updated values of parameters of all of the modules.
@@ -190,7 +201,13 @@ class Settings(halModule.HalModule):
 
         elif message.isType("configure2"):
             self.view.copyDefaultParameters()
-            
+            self.view.markCurrentAsInitialized()
+
+        elif message.isType("get parameters"):
+            p = self.view.getParameters(message.getData()["index or name"])
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : p}))
+
         elif message.isType("initial parameters"):
             #
             # It is okay for other modules to just send their parameters as we make
@@ -198,12 +215,6 @@ class Settings(halModule.HalModule):
             #
             self.view.updateCurrentParameters(message.getSourceName(),
                                               message.getData()["parameters"].copy())
-
-        elif message.isType("get parameters"):
-            p = self.view.getParameters(message.getData()["index or name"])
-            if p is not None:
-                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                                  data = {"parameters" : p}))
             
         elif message.isType("new parameters file"):
 
@@ -225,6 +236,9 @@ class Settings(halModule.HalModule):
             # Process new parameters file.
             self.view.newParametersFile(data["filename"], is_default)
 
+        elif message.isType("set parameters"):
+            self.view.setParameters(message.getData()["index or name"])
+            
         elif message.isType("start film"):
             self.view.enableUI(False)
             

@@ -233,6 +233,9 @@ class Parameter(object):
         self.ptype = "string"
         
         self.setv(value)
+
+    def copy(self):
+        return copy.deepcopy(self)
     
     def getDescription(self):
         return self.description
