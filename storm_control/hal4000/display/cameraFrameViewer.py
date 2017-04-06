@@ -415,6 +415,11 @@ class CameraFrameViewer(QtWidgets.QFrame):
         #        We need to error now rather than at 'updated parameters'.
         self.parameters = parameters
 
+        # Add parameters in our default parameters if they don't exist.
+        for attr in self.default_parameters.getAttrs():
+            if not self.parameters.has(attr):
+                self.parameters.add(attr, self.default_parameters.getp(attr).copy())
+
     def setCameraConfiguration(self, camera_config):
         self.showShutter(camera_config.hasShutter())
         self.setShutter(camera_config.getShutterState())
