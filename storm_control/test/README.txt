@@ -8,4 +8,4 @@ https://pypi.python.org/pypi/pytest-xdist
 And run the tests with:
 py.test --boxed
 
-So that each test gets run in it's Python instance.
+So that each test gets run in it's own Python instance.
