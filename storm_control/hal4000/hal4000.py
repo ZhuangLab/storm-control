@@ -74,8 +74,8 @@ class HalController(halModule.HalModule):
 
         if message.isType("add to menu"):
             self.view.addMenuItem(message.getData()["item name"],
-                                  message.getData()["item action"])
-            
+                                  message.getData()["item msg"])
+
         elif message.isType("add to ui"):
             [module, parent_widget] = message.getData()["ui_parent"].split(".")
             if (module == self.module_name):
@@ -176,7 +176,7 @@ class HalView(QtWidgets.QMainWindow):
             for item in sorted(self.menu_items_to_add, key = lambda x : x[0]):
                 a_action = QtWidgets.QAction(self.tr(item[0]), self)
                 self.ui.menuFile.insertAction(self.ui.actionQuit, a_action)
-                a_action.triggered.connect(item[1])
+                a_action.triggered.connect(lambda x, elt = item[1] : self.handleMenuMessage(elt))
             self.ui.menuFile.insertSeparator(self.ui.actionQuit)
         
     def addUiWidget(self, parent_widget_name, ui_widget, ui_order):
@@ -268,15 +268,16 @@ class HalView(QtWidgets.QMainWindow):
                                                                    "New Directory",
                                                                    self.film_directory,
                                                                    QtWidgets.QFileDialog.ShowDirsOnly)
-        #
-        # FIXME: Why do we have the existence check? Is it possible to get a directory that does not exist?
-        #
         if new_directory and os.path.exists(new_directory):
             self.film_directory = new_directory
             self.guiMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "new directory",
                                                        data = {"directory" : self.film_directory}))
 
+    def handleMenuMessage(self, m_type):
+        self.guiMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = m_type))
+        
     def handleSettings(self, boolean):
         parameters_filename = QtWidgets.QFileDialog.getOpenFileName(self,
                                                                     "New Settings",

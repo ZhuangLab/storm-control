@@ -31,7 +31,7 @@ valid_messages = {
                              "ui_widget" : [True, QtCore.QObject]},
                    "resp" : None},
     'add to menu' : {"data" : {"item name" : [True, str],
-                               "item action" : [True, (types.FunctionType, types.MethodType)]},
+                               "item msg" : [True, str]},
                      "resp" : None},
     'close event' : {"data" : None, "resp" : None},
     'configure1' : {"data" : {"all_modules" : [True, dict]},

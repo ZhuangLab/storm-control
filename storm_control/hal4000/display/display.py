@@ -97,7 +97,15 @@ class Display(halModule.HalModule):
                                                      "feed_name" : [True, str]},
                                            "resp" : {"feed_name" : [True, str],
                                                      "feed_info" : [True, feeds.CameraFeedInfo]}})
-        
+
+        # Unhide / create a new camera viewer.
+        halMessage.addMessage("new camera viewer",
+                              validator = {"data" : None, "resp" : None})
+
+        # Unhide / create a new feed viewer.
+        halMessage.addMessage("new feed viewer",
+                              validator = {"data" : None, "resp" : None})
+                              
         # Change the EMCCD gain.
         halMessage.addMessage("set emccd gain",
                               validator = {"data" : {"camera" : [True, str],
@@ -169,12 +177,12 @@ class Display(halModule.HalModule):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "add to menu",
                                                        data = {"item name" : "Feed Viewer",
-                                                               "item action" : self.newFeedViewer}))
+                                                               "item msg" : "new feed viewer"}))
             if not self.is_classic:
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "add to menu",
                                                            data = {"item name" : "Camera Viewer",
-                                                                   "item action" : self.newCameraViewer}))
+                                                                   "item msg" : "new camera viewer"}))
 
             # Enable stage dragging if there is a stage.
             if "stage" in message.getData()["all_modules"]:
@@ -188,6 +196,12 @@ class Display(halModule.HalModule):
         elif message.isType("feeds information"):
             for viewer in self.viewers:
                 viewer.messageFeedsInformation(message.getData()["feeds"])
+
+        elif message.isType("new camera viewer"):
+            self.newCameraViewer()
+
+        elif message.isType("new feed viewer"):
+            self.newFeedViewer()
 
         elif message.isType("new parameters"):
             p = message.getData()["parameters"]
