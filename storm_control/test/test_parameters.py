@@ -118,8 +118,6 @@ def test_parameters_6():
 
     s3 = p1.addSubSection("bar.foo")
     s3.add("foo1", "bar1")
-
-    print(p1.toString(True))
     
     assert(p1.get("foo.bar1") == "foo1")
     assert(p1.get("foo.bar.bar2") == "foo2")
