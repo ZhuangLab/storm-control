@@ -23,36 +23,13 @@ import storm_control.sc_library.parameters as params
 #
 # The format of each entry is "field" : [Required, Expected type].
 #
-valid_messages = {
-    
-    # HAL/core/general messages.
-    'add to ui' : {"data" : {"ui_order" : [False, int],
-                             "ui_parent" : [True, str],
-                             "ui_widget" : [True, QtCore.QObject]},
-                   "resp" : None},
-    'add to menu' : {"data" : {"item name" : [True, str],
-                               "item msg" : [True, str]},
-                     "resp" : None},
-    'close event' : {"data" : None, "resp" : None},
-    'configure1' : {"data" : {"all_modules" : [True, dict]},
-                    "resp" : {}},
-    'configure2' : {"data" : None, "resp" : None},
-    'configure3' :  {"data" : None, "resp" : None},
-    'initial parameters' :  {"data" : {"parameters" : [True, params.StormXMLObject]},
-                             "resp" : None},
-    'new directory' : {"data" : {"directory" : [True, str]},
-                       "resp" : None},
-    'new parameters file' : {"data" : {"filename" : [True, str],
-                                       "is_default" : [False, bool]},
-                             "resp" : None},
-    'new shutters file' : {"data" : {"filename" : [True, str]},
-                           "resp" : None},
-    'start' :  {"data" : {"show_gui" : [True, bool]},
-                "resp" : None},
-    'sync' :  {"data" : None, "resp" : None},
-    'test' :  {"data" : None, "resp" : None},
-    }
-
+# It is convenient to have this be a property of this module rather than
+# say HalCore as it makes it typo checking easier. This was problematic
+# for testing because this module was not getting reset between tests.
+# So now HalCore calls initializeMessages() once at initialization to
+# restore this dictionary to its original state.
+#
+valid_messages = {}
 
 def addMessage(name, validator = {}, check_exists = True):
     """
@@ -62,7 +39,6 @@ def addMessage(name, validator = {}, check_exists = True):
     if check_exists and name in valid_messages:
         raise halExceptions.HalException("Message " + name + " already exists!")
     valid_messages[name] = validator
-
 
 def chainMessages(send_fn, messages):
     """
@@ -77,6 +53,40 @@ def chainMessages(send_fn, messages):
         messages[i].finalizer = lambda x = i: send_fn(messages[x+1])
     return messages[0]
 
+def initializeMessages():
+    """
+    Called by HAL core to create/reset the dictionary of valid messages.
+    """
+    global valid_messages
+
+    valid_messages = {
+        
+        'add to ui' : {"data" : {"ui_order" : [False, int],
+                                 "ui_parent" : [True, str],
+                                 "ui_widget" : [True, QtCore.QObject]},
+                       "resp" : None},
+        'add to menu' : {"data" : {"item name" : [True, str],
+                                   "item msg" : [True, str]},
+                         "resp" : None},
+        'close event' : {"data" : None, "resp" : None},
+        'configure1' : {"data" : {"all_modules" : [True, dict]},
+                        "resp" : {}},
+        'configure2' : {"data" : None, "resp" : None},
+        'configure3' :  {"data" : None, "resp" : None},
+        'initial parameters' :  {"data" : {"parameters" : [True, params.StormXMLObject]},
+                                 "resp" : None},
+        'new directory' : {"data" : {"directory" : [True, str]},
+                           "resp" : None},
+        'new parameters file' : {"data" : {"filename" : [True, str],
+                                           "is_default" : [False, bool]},
+                                 "resp" : None},
+        'new shutters file' : {"data" : {"filename" : [True, str]},
+                               "resp" : None},
+        'start' :  {"data" : {"show_gui" : [True, bool]},
+                    "resp" : None},
+        'sync' :  {"data" : None, "resp" : None},
+        'test' :  {"data" : None, "resp" : None},
+    }
 
 def validate(validator, data, base_string):
     """

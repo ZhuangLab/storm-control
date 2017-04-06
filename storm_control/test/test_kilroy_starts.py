@@ -8,12 +8,13 @@ import time
 import pytestqt
 
 import storm_control.sc_library.parameters as params
+import storm_control.test as test
 
 import storm_control.fluidics.kilroy as kilroy
 
 def test_kilroy_starts(qtbot):
 
-    parameters = params.parameters("./kilroy_xml/test_default.xml")
+    parameters = params.parameters(test.kilroyXmlFilePathAndName("test_default.xml"))
 
     mainw = kilroy.StandAlone(parameters)
     mainw.show()

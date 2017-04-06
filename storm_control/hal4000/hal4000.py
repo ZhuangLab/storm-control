@@ -375,6 +375,9 @@ class HalCore(QtCore.QObject):
         self.queued_messages_timer.timeout.connect(self.handleSendMessage)
         self.queued_messages_timer.setSingleShot(True)
 
+        # Initialize messages.
+        halMessage.initializeMessages()
+        
         # Load all the modules.
         print("Loading modules")
 
