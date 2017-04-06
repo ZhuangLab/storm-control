@@ -10,6 +10,7 @@ from PyQt5 import QtCore
 import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
 
+import storm_control.hal4000.film.filmRequest as filmRequest
 import storm_control.hal4000.halLib.halMessage as halMessage
 
 
@@ -132,6 +133,47 @@ class LoadParameters(TestAction):
                 "is_default" : self.is_default}
 
 
+class Record(TestAction):
+    """
+    Test recording a movie.
+    """
+    def __init__(self, filename = "", length = 10, **kwds):
+        super().__init__(**kwds)
+
+        self.m_type = "start film request"
+
+        self.film_request = filmRequest.FilmRequest(basename = filename,
+                                                    frames = length,
+                                                    tcp_request = True)                                                
+
+    def getMessageData(self):
+        return {"request" : self.film_request}
+                
+    def getMessageFilter(self):
+        return "stop film"
+
+    def handleMessage(self, message):
+        self.actionDone.emit()
+
+
+class SetDirectory(TestAction):
+    """
+    Test setting the working directory.
+    """
+    def __init__(self, directory = "", **kwds):
+        super().__init__(**kwds)
+
+        self.directory = directory
+        self.m_type = "new directory"
+
+    def finalizer(self):
+        super().finalizer()
+        self.actionDone.emit()
+        
+    def getMessageData(self):
+        return {"directory" : self.directory}
+    
+    
 class SetParameters(TestAction):
     """
     Set current parameters.

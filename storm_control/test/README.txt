@@ -1,4 +1,6 @@
 
+Some of the tests depend on the storm-analysis project.
+
 Running these tests in the standard way may fail, perhaps due
 the creation of so many QApplications?
 

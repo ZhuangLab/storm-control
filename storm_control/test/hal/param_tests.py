@@ -84,7 +84,8 @@ class ParamTest4(testing.Testing):
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
-        self.test_actions = [ParamTest1Action(p_name = 0)]
+        self.test_actions = [testActions.LoadParameters(filename = test.halXmlFilePathAndName("256x512.xml")),
+                             ParamTest1Action(p_name = 1)]
 
 #
 # Check that we fail when two parameter files have the same name.

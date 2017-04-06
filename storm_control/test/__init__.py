@@ -2,6 +2,9 @@
 
 import os
 
+def dataDirectory():
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/")
+
 def daveXmlFilePathAndName(filename):
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), "dave_xml", filename)
 
