@@ -563,7 +563,6 @@ class Feeds(halModule.HalModule):
         self.unprocessed_frames -= 1
 
     def handleFinished(self):
-        print(">hf", self.unprocessed_frames)
         if (self.unprocessed_frames == 0):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "feeds stopped"))
