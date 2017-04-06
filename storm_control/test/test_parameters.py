@@ -106,6 +106,19 @@ def test_parameters_5():
     # Check that they are the same.
     assert (len(params.difference(p1, p2)) == 0) and (len(params.difference(p2, p1)) == 0)
 
+
+def test_parameters_6():
+    p1 = params.StormXMLObject()
+
+    s1 = p1.addSubSection("bar")
+    s1.add("bar1", "foo1")
+        
+    s2 = p1.addSubSection("foo.bar")
+    s2.add("bar2", "foo2")
+
+    assert(p1.get("bar.bar1") == "foo1")
+    assert(p1.get("foo.bar.bar2") == "foo2")
+
     
 if (__name__ == "__main__"):
     test_parameters_1()

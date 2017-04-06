@@ -659,7 +659,7 @@ class StormXMLObject(object):
         """
         snames = sname.split(".")
         if (len(snames) > 1):
-            self.get(".".join(snames[:-1])).addSubSection(sname[-1], svalue)
+            return self.get(".".join(snames[:-1])).addSubSection(snames[-1], svalue)
         else:
             if not sname in self.parameters:
                 if isinstance(svalue, StormXMLObject):
@@ -674,8 +674,8 @@ class StormXMLObject(object):
                 else:
                     raise ParametersException("Object is a " + type(svalue) + " not a StormXMLObject")
 
-        return self.parameters[sname]
-            
+            return self.parameters[sname]
+
     def copy(self):
         return copy.deepcopy(self)
 
