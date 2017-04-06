@@ -31,6 +31,11 @@ class Testing(halModule.HalModule):
         halMessage.addMessage("na",
                               validator = {"data" : None, "resp" : None})
 
+        # This message is sent when all the tests finish. HAL should
+        # close when it gets this message.
+        halMessage.addMessage("tests done",
+                              validator = {"data" : None, "resp" : None})
+
     def handleActionDone(self):
 
         #
@@ -38,8 +43,8 @@ class Testing(halModule.HalModule):
         # from 'hal' to finish up.
         #
         if (len(self.test_actions) == 0):
-            self.newMessage.emit(halMessage.HalMessage(source = self.all_modules["hal"],
-                                                       m_type = "close event"))
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "tests done"))
 
         #
         # Otherwise start the next action.
@@ -61,7 +66,10 @@ class Testing(halModule.HalModule):
 
     def processL1Message(self, message):
 
-        if message.isType("start"):
+        if message.isType("configure1"):
+            self.all_modules = message.getData()["all_modules"]
+            
+        elif message.isType("start"):
             self.handleActionDone()
 
         if self.current_action is not None:

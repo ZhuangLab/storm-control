@@ -94,6 +94,9 @@ class HalController(halModule.HalModule):
 
         elif message.isType("stop film"):
             self.view.stopFilm()
+
+        elif message.isType("tests done"):
+            self.view.close()
             
 
 #
@@ -386,7 +389,7 @@ class HalCore(QtCore.QObject):
         # During normal operation all inter-module communication must be done
         # using messages.
         #
-        all_module = {}
+        all_modules = {}
         if testing_mode:
             all_modules["core"] = self
         else:
@@ -404,7 +407,10 @@ class HalCore(QtCore.QObject):
                     module_params.add(root_param, config.getp(root_param))
 
             # Load the module.
-            a_module = importlib.import_module("storm_control.hal4000." + module_params.get("module_name"))
+            if module_params.get("module_name").startswith("storm_control"):
+                a_module = importlib.import_module(module_params.get("module_name"))
+            else:
+                a_module = importlib.import_module("storm_control.hal4000." + module_params.get("module_name"))
             a_class = getattr(a_module, module_params.get("class_name"))
             a_object = a_class(module_name = module_name,
                                module_params = module_params,
@@ -472,16 +478,25 @@ class HalCore(QtCore.QObject):
         # It is safe to stop blocking Qt's last window closed behavior after
         # this message as HAL's main window will be open.
         #
-        message_chain.append(halMessage.HalMessage(source = self,
-                                                   m_type = "start",
-                                                   data = {"show_gui" : show_gui},
-                                                   sync = True,
-                                                   finalizer = lambda : app.setQuitOnLastWindowClosed(True)))
-
+        # If we run HAL from another module, in testing for example, app might
+        # be none.
+        #
+        if app is not None:
+            message_chain.append(halMessage.HalMessage(source = self,
+                                                       m_type = "start",
+                                                       data = {"show_gui" : show_gui},
+                                                       sync = True,
+                                                       finalizer = lambda : app.setQuitOnLastWindowClosed(True)))
+        else:
+           message_chain.append(halMessage.HalMessage(source = self,
+                                                       m_type = "start",
+                                                       data = {"show_gui" : show_gui},
+                                                       sync = True))
+            
         self.handleMessage(halMessage.chainMessages(self.handleMessage,
                                                     message_chain))
 
-    def cleanup(self):
+    def cleanUp(self):
         print(" Dave? What are you doing Dave?")
         print("  ...")
         for module in self.modules:
@@ -596,7 +611,7 @@ class HalCore(QtCore.QObject):
 
                 # Check for "closeEvent" message from the main window.
                 if cur_message.isType("close event") and (cur_message.getSourceName() == "hal"):
-                    self.cleanup()
+                    self.cleanUp()
 
                 else:
                     # Check for "sync" message, these don't actually get sent.
