@@ -417,6 +417,7 @@ class CameraFrameViewer(QtWidgets.QFrame):
 
     def setCameraConfiguration(self, camera_config):
         self.showShutter(camera_config.hasShutter())
+        self.setShutter(camera_config.getShutterState())
 
     def setFeedInformation(self, feed_info):
         """
