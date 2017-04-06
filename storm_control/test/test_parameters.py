@@ -110,14 +110,20 @@ def test_parameters_5():
 def test_parameters_6():
     p1 = params.StormXMLObject()
 
-    s1 = p1.addSubSection("bar")
+    s1 = p1.addSubSection("foo")
     s1.add("bar1", "foo1")
         
     s2 = p1.addSubSection("foo.bar")
     s2.add("bar2", "foo2")
 
-    assert(p1.get("bar.bar1") == "foo1")
+    s3 = p1.addSubSection("bar.foo")
+    s3.add("foo1", "bar1")
+
+    print(p1.toString(True))
+    
+    assert(p1.get("foo.bar1") == "foo1")
     assert(p1.get("foo.bar.bar2") == "foo2")
+    assert(p1.get("bar.foo.foo1") == "bar1")
 
     
 if (__name__ == "__main__"):
@@ -126,3 +132,4 @@ if (__name__ == "__main__"):
     test_parameters_3()
     test_parameters_4()
     test_parameters_5()
+    test_parameters_6()

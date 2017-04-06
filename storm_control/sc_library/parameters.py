@@ -659,7 +659,13 @@ class StormXMLObject(object):
         """
         snames = sname.split(".")
         if (len(snames) > 1):
-            return self.get(".".join(snames[:-1])).addSubSection(snames[-1], svalue)
+            if not snames[0] in self.parameters:
+                cur_section = self.parameters[snames[0]] = StormXMLObject()
+            else:
+                cur_section = self.parameters[snames[0]]
+            return cur_section.addSubSection(".".join(snames[1:]),
+                                             svalue = svalue,
+                                             overwrite = overwrite)
         else:
             if not sname in self.parameters:
                 if isinstance(svalue, StormXMLObject):
