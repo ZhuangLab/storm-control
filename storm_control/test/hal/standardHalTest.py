@@ -14,7 +14,7 @@ import storm_control.sc_library.hdebug as hdebug
 import storm_control.sc_library.parameters as params
 import storm_control.test as test
 
-def halTest(config_xml = "", test_module = ""):
+def halTest(config_xml = "", class_name = "Testing", test_module = ""):
 
     app = QtWidgets.QApplication(sys.argv)
     
@@ -22,7 +22,7 @@ def halTest(config_xml = "", test_module = ""):
 
     # Add the class that will actually do the testing.
     c_test = config.addSubSection("modules.testing")
-    c_test.add("class_name", "Testing")
+    c_test.add("class_name", class_name)
     c_test.add("module_name", test_module)
     
     hdebug.startLogging(test.logDirectory(), "hal4000")

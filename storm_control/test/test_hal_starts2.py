@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from storm_control.test.standardHalTest import halTest
+from storm_control.test.hal.standardHalTest import halTest
 
 def test_hal_starts():
     halTest(config_xml = "none_classic_dual_config.xml",

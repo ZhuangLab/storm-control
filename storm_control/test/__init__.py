@@ -6,7 +6,7 @@ def daveXmlFilePathAndName(filename):
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), "dave_xml", filename)
 
 def halXmlFilePathAndName(filename):
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "hal_xml", filename)
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "hal", filename)
 
 def kilroyXmlFilePathAndName(filename):
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), "kilroy_xml", filename)
