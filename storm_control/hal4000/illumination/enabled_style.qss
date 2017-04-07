@@ -1,0 +1,8 @@
+
+QLabel {
+    color : black;
+}
+
+QRadioButton {
+    color white;
+}

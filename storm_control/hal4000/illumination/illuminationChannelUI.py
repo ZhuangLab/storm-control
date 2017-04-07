@@ -5,9 +5,18 @@ The various ChannelUI classes.
 Hazen 04/17
 """
 
+import os
+
 from PyQt5 import QtCore, QtWidgets
 
 
+def loadStyleSheet(name):
+    text = ""
+    with open(os.path.join(os.path.dirname(__file__), name)) as fp:
+        text += fp.read()
+    return text
+
+    
 class ChannelUI(QtWidgets.QFrame):
     """
     A QWidget for displaying the UI elements associated with
@@ -19,39 +28,48 @@ class ChannelUI(QtWidgets.QFrame):
     def __init__(self, name = "", color = None, **kwds):
         super().__init__(**kwds)
 
-        self.color = color
         self.enabled = True
 
-        self.setLineWidth(2)
-        self.setStyleSheet("background-color: rgb(" + self.color + ");")
-        self.setFrameShape(QtWidgets.QFrame.Panel)
-        self.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.setLayout(QtWidgets.QVBoxLayout())
+        self.disabled_style = loadStyleSheet("disabled_style.qss")
+        self.enabled_style = "QFrame { background-color: rgb(" + color + ");}\n"
+        self.enabled_style += loadStyleSheet("enabled_style.qss")
+
         self.setFixedWidth(50)
-        self.layout().setContentsMargins(0,0,0,0)
-        self.layout().setSpacing(1)
+        self.setLineWidth(2)
+        self.setStyleSheet(self.enabled_style)
+   
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0,0,0,0)
+        self.main_layout.setSpacing(1)
 
         # Text label.
         self.wavelength_label = QtWidgets.QLabel(self)
         self.wavelength_label.setText(name)
         self.wavelength_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.layout().addWidget(self.wavelength_label)
+        
+        self.main_layout.addWidget(self.wavelength_label)
 
         # Container for the power slider (if any).
-        self.container_widget = QtWidgets.QWidget(self)
-        self.container_widget.setFixedHeight(140)
-        self.container_widget.setStyleSheet("background-color: white;")
-        self.layout().addWidget(self.container_widget)
-        
-        self.container_layout = QtWidgets.QVBoxLayout(self.container_widget)
-        self.container_layout.setContentsMargins(0,0,0,0)
-        self.container_layout.setSpacing(1)
+        self.slider_widget = QtWidgets.QWidget(self)
+
+        self.slider_layout = QtWidgets.QVBoxLayout(self.slider_widget)
+        self.slider_layout.setContentsMargins(0,0,0,0)
+        self.slider_layout.setSpacing(1)
+
+        self.main_layout.addWidget(self.slider_widget)
 
         # Power on/off radio button.
         self.on_off_button = QtWidgets.QRadioButton(self)
-        self.layout().addWidget(self.on_off_button)
-        self.layout().setAlignment(self.on_off_button, QtCore.Qt.AlignCenter)
         
+        self.main_layout.addWidget(self.on_off_button)
+        self.main_layout.setAlignment(self.on_off_button, QtCore.Qt.AlignCenter)
+
+        # Spacer at the bottom.
+        self.spacer_item = QtWidgets.QSpacerItem(1, 1,
+                                                 QtWidgets.QSizePolicy.Minimum,
+                                                 QtWidgets.QSizePolicy.Expanding)
+        self.main_layout.addItem(self.spacer_item)
+
         # Connect signals
         self.on_off_button.clicked.connect(self.handleOnOffChange)
 
@@ -60,9 +78,8 @@ class ChannelUI(QtWidgets.QFrame):
         Disables all the UI elements of the channel.
         """
         self.setOnOff(False)
-        self.setStyleSheet("background-color: rgb(128,128,128);")
+        self.setStyleSheet(self.disabled_style)
         self.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.wavelength_label.setStyleSheet("QLabel { color: rgb(200,200,200)}")
         self.on_off_button.setCheckable(False)
         self.enabled = False
 
@@ -70,9 +87,8 @@ class ChannelUI(QtWidgets.QFrame):
         """
         Enables all the UI elements of the channel.
         """
-        self.setStyleSheet("background-color: rgb(" + self.color + ");")
+        self.setStyleSheet(self.enabled_style)
         self.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.wavelength_label.setStyleSheet("QLabel { color: black}")
         self.on_off_button.setCheckable(True)
         self.setOnOff(was_on)
         self.enabled = True
@@ -138,13 +154,14 @@ class ChannelUIAdjustable(ChannelUI):
         self.min_amplitude = minimum
 
         # Current power label.
-        self.power_label = QtWidgets.QLabel(self.container_widget)
-        self.power_label.setText("")
+        self.power_label = QtWidgets.QLabel(self.slider_widget)
         self.power_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.container_layout.addWidget(self.power_label)
+        
+        self.slider_layout.addWidget(self.power_label)
 
         # Slider for controlling the power.
-        self.powerslider = QtWidgets.QSlider(self.container_widget)
+        self.powerslider = QtWidgets.QSlider(self.slider_widget)
+        self.powerslider.setFixedHeight(120)
         self.powerslider.setMinimum(minimum)
         self.powerslider.setMaximum(maximum)
         self.powerslider.setOrientation(QtCore.Qt.Vertical)
@@ -152,24 +169,21 @@ class ChannelUIAdjustable(ChannelUI):
         if (page_step > 1.0):
             self.powerslider.setPageStep(page_step)
         self.powerslider.setSingleStep(1)
-        self.container_layout.addWidget(self.powerslider)
-        self.container_layout.setAlignment(self.powerslider,
+
+        self.slider_layout.addWidget(self.powerslider)
+        self.slider_layout.setAlignment(self.powerslider,
                                            QtCore.Qt.AlignCenter)
-        self.powerslider.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed,
-                                                             QtWidgets.QSizePolicy.Expanding))
 
         self.powerslider.valueChanged.connect(self.handleAmplitudeChange)
 
     def disableChannel(self):
         super().disableChannel()
-        self.power_label.setStyleSheet("QLabel { color: rgb(200,200,200)}")
         self.powerslider.setEnabled(False)
         for button in self.buttons:
             button.setEnabled(False)
 
     def enableChannel(self, was_on = False):
         super().enableChannel(was_on)
-        self.power_label.setStyleSheet("QLabel { color: black}")
         self.powerslider.setEnabled(True)
         for button in self.buttons:
             button.setEnabled(True)
@@ -198,6 +212,9 @@ class ChannelUIAdjustable(ChannelUI):
 
     def setupButtons(self, button_data):
 
+        # Remove spacer at the end.
+        self.main_layout.removeItem(self.spacer_item)
+        
         # Make sure we have enough buttons.
         while (len(self.buttons) < len(button_data)):
             new_button = PowerButton(parent = self)
@@ -216,7 +233,10 @@ class ChannelUIAdjustable(ChannelUI):
             self.buttons[i].setText(button_data[i][0])
             self.buttons[i].setValue(int(round(button_data[i][1] * amp_range + self.min_amplitude)))
             self.buttons[i].show()
-            
+
+        # Add spacer again.
+        self.main_layout.addItem(self.spacer_item)
+        
         # Resize based on number of visible buttons.
         #self.setFixedSize(48, 248 + 22 * len(button_data))
 
@@ -232,11 +252,7 @@ class PowerButton(QtWidgets.QPushButton):
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
-
         self.value = 0.0
-        #self.setGeometry(6, y_loc, 38, 20)
-        #self.setAligment(QtCore.Qt.AlignCenter)
-        self.setStyleSheet("background-color: None;")
 
         self.clicked.connect(self.handleClicked)
 
