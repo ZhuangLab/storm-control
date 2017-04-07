@@ -261,6 +261,9 @@ class Parameter(object):
     def setv(self, new_value):
         self.value = self.toType(new_value)
 
+    def toString(self):
+        return str(self.value)
+    
     def toType(self, value):
         return value
         
@@ -268,7 +271,7 @@ class Parameter(object):
         if self.is_saved or override_is_saved:
             field = ElementTree.SubElement(parent, self.name)
             field.set("type", self.ptype)
-            field.text = str(self.value)
+            field.text = self.toString()
             return field
 
         

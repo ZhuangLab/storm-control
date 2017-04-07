@@ -139,6 +139,16 @@
       </camera>
     </camera1>
 
+
+    <!-- Illumination (lasers, shutters, etc) control -->
+    <illumination>
+      <class_name type="string">Illumination</class_name>
+      <module_name type="string">illumination.illumination</module_name>
+      <parameters>
+	<settings_xml type="string">none_illumination_settings.xml</settings_xml>
+      </parameters>
+    </illumination>
+    
     <!-- Bluetooth communication -->
     <!--
 	This module handle Bluetooth communication with the HAL android app.
@@ -153,19 +163,6 @@
     </bluetooth>
     -->
 
-    <!-- Feed viewers -->
-    <!--
-	This module handles additional camera displays as well as processing
-	of the camera stream(s) such as averaging, sub-sections, etc.
-    -->
-    <!--
-    <feedviewers>
-      <class_name type="string">FeedViewers</class_name>
-      <menu_item type="string">New Viewer</menu_item>
-      <module_name type="string">display.feedViewer</module_name>
-      </feedviewers>
-    -->
-    
     <!-- The focus lock -->
     <!--
     <focuslock>
@@ -173,18 +170,6 @@
       <menu_item type="string">Focus Lock</menu_item>
       <module_name type="string">focuslock.noneFocusLockZ</module_name>
       </focuslock>
-    -->
-
-    <!-- Illumination (lasers, shutters, etc) control -->
-    <!--
-    <illumination>
-      <class_name type="string">IlluminationControl</class_name>
-      <menu_item type="string">Illumination</menu_item>
-      <module_name type="string">illumination.illuminationControl</module_name>
-      <parameters>
-        <settings_xml type="string">none_illumination_settings.xml</settings_xml>
-      </parameters>
-    </illumination>
     -->
     
     <!-- Automatic illumination power adjustment -->

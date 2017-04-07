@@ -1,33 +1,22 @@
-#!/usr/bin/python
-#
-## @file
-#
-# This file contains the Channel class.
-#
-# Hazen 04/14
-#
+#!/usr/bin/env python
+"""
+This controls a single channel.
+
+Hazen 04/17
+"""
 
 from PyQt5 import QtCore
 
 import storm_control.hal4000.illumination.illuminationChannelUI as illuminationChannelUI
 
-## Channel
-#
-# This class is responsible for orchestrating the behaviour of a
-# a single channel.
-#
-class Channel(QtCore.QObject):
 
-    ## __init__
-    #
-    # @param channel_id The id number for this channel.
-    # @param channel A channelXML object describing the channel.
-    # @param parameters A parameters XML object.
-    # @param hardware_modules An array of hardware module objects.
-    # @param channels_box The UI group box where the channels will be drawn.
-    #
-    def __init__(self, channel_id, channel, parameters, hardware_modules, channels_box):
-        QtCore.QObject.__init__(self, channels_box)
+class Channel(QtCore.QObject):
+    """
+    This class is responsible for orchestrating the behaviour of a
+    a single channel.
+    """
+    def __init__(self, channel_id = 0, channel = None, hardware_modules = None, **kwds):
+        super().__init__(**kwds)
 
         self.amplitude_range = 1.0
         self.channel_id = channel_id
@@ -76,18 +65,18 @@ class Channel(QtCore.QObject):
             self.min_amplitude = self.amplitude_modulation.getMinAmplitude(self.channel_id)
             self.max_amplitude = self.amplitude_modulation.getMaxAmplitude(self.channel_id)
             self.amplitude_range = float(self.max_amplitude - self.min_amplitude)
-            self.channel_ui = illuminationChannelUI.ChannelUIAdjustable(self.name,
-                                                                        channel.color,
-                                                                        self.min_amplitude,
-                                                                        self.max_amplitude,
-                                                                        channels_box)
+            self.channel_ui = illuminationChannelUI.ChannelUIAdjustable(name = self.name,
+                                                                        color = channel.color,
+                                                                        minimum = self.min_amplitude,
+                                                                        maximum = self.max_amplitude,
+                                                                        parent = self.parent())
             self.channel_ui.updatePowerText("NS")
 
         # Otherwise it is a basic channel with on only a on/off radio button.
         else:
-            self.channel_ui = illuminationChannelUI.ChannelUI(self.name,
-                                                              channel.color,
-                                                              channels_box)
+            self.channel_ui = illuminationChannelUI.ChannelUI(name = self.name,
+                                                              color = channel.color,
+                                                              parent = self.parent())
 
         if self.bad_module:
             self.channel_ui.disableChannel()
@@ -95,66 +84,40 @@ class Channel(QtCore.QObject):
             self.channel_ui.onOffChange.connect(self.handleOnOffChange)
             self.channel_ui.powerChange.connect(self.handleSetPower)
 
-    ## cleanup
-    #
     def cleanup(self):
         self.channel_ui.setOnOff(False)
     
-    ## getAmplitude
-    #
-    # Return the current channel amplitude as a string. This is
-    # always normalized.
-    #
-    # @return The current amplitude of the channel (as a string).
-    #
     def getAmplitude(self):
+        """
+        Return the current channel amplitude as a string. This is
+        always normalized.
+        """
         power = self.channel_ui.getAmplitude()
         return "{0:.4f}".format((power - self.min_amplitude)/self.amplitude_range)
 
-    ## getChannelId
-    #
-    # @return The id of the channel
-    #
     def getChannelId(self):
         return self.channel_id
 
-    ## getHeight
-    #
-    # @return The height of the channel UI element.
-    #
     def getHeight(self):
         return self.channel_ui.height()
 
-    ## getWidth
-    #
-    # @return The width of the channel UI element.
     def getWidth(self):
         return self.channel_ui.width()
 
-    ## getX
-    #
-    # @return The x position of the channel UI element.
     def getX(self):
         return self.channel_ui.x()
 
-    ## getName
-    #
-    # @return The name of the channel.
-    #
     def getName(self):
         return self.name
 
-    ## handleOnOffChange
-    #
-    # Handles a request to turn the channel on / off. These all
-    # come from the UI. They are ignored when we are filming.
-    #
-    # As a side effect this records the on/off setting in the
-    # 'on_off_state' property of the parameters.
-    #
-    # @param on True/False on/off.
-    #
     def handleOnOffChange(self, on):
+        """
+        Handles a request to turn the channel on / off. These all
+        come from the UI. They are ignored when we are filming.
+        
+        As a side effect this records the on/off setting in the
+        'on_off_state' property of the parameters.
+        """
         if self.filming:
             return
 
@@ -187,18 +150,15 @@ class Channel(QtCore.QObject):
 
         self.parameters.get("on_off_state")[self.channel_id] = on
 
-    ## handleSetPower
-    #
-    # Handles requests to set the current channel power to a new value.
-    # These all come from the UI. The current power is always whatever
-    # the current value of the slider is.
-    #
-    # As a side effect this records the current power setting in
-    # 'default_power' property of the parameters.
-    #
-    # @param new_power The new channel power setting.
-    #
     def handleSetPower(self, new_power):
+        """
+        Handles requests to set the current channel power to a new value.
+        These all come from the UI. The current power is always whatever
+        the current value of the slider is.
+        
+        As a side effect this records the current power setting in
+        'default_power' property of the parameters.
+        """
         if self.display_normalized:
             power = (new_power - self.min_amplitude)/self.amplitude_range
             power_string = "{0:.4f}".format((new_power - self.min_amplitude)/self.amplitude_range)
@@ -218,10 +178,6 @@ class Channel(QtCore.QObject):
                 else:
                     self.mechanical_shutter.shutterOn(self.channel_id)
 
-    ## newParameters
-    #
-    # @param parameters A parameters XML object.
-    #
     def newParameters(self, parameters):
         self.parameters = parameters
 
@@ -241,16 +197,11 @@ class Channel(QtCore.QObject):
         if (parameters.get("shutter_frames", -1) != -1):
             self.shutter_data = parameters.get("shutter_data")[self.channel_id]
 
-    ## newShutters
-    #
-    # This both sets the internal shutter data store and converts it
-    # to the appropriate scale based on the analog modulation settings.
-    #
-    # @param shutter_data A array containing the shutter data.
-    #
-    # @return The processed shutter data.
-    #
     def newShutters(self, shutter_data):
+        """
+        This both sets the internal shutter data store and converts it
+        to the appropriate scale based on the analog modulation settings.
+        """
         self.shutter_data = shutter_data
         if self.analog_modulation:
             for i in range(len(self.shutter_data)):
@@ -258,50 +209,31 @@ class Channel(QtCore.QObject):
 
         return self.shutter_data
 
-    ## remoteIncPower
-    #
-    # Handles power increment requests that come from outside of the illumination UI.
-    # This is "bounced" off the UI slider, for range checking.
-    #
-    # @param power_inc The channel power increment (0.0 - 1.0).
-    #
     def remoteIncPower(self, power_inc):
+        """
+        Handles power increment requests that come from outside of the illumination UI.
+        This is "bounced" off the UI slider, for range checking.
+        """
         self.channel_ui.remoteIncPower(int(round(power_inc * self.amplitude_range)))
 
-    ## remoteSetPower
-    #
-    # Handles power requests that come from outside of the illumination UI.
-    # This is "bounced" off the UI slider, for range checking.
-    #
-    # @param new_power The channel power setting (0.0 - 1.0).
-    #
-    def remoteSetPower(self, new_power):        
+    def remoteSetPower(self, new_power):
+        """
+        Handles power requests that come from outside of the illumination UI.
+        This is "bounced" off the UI slider, for range checking.
+        """
         self.channel_ui.remoteSetPower(int(round(new_power * self.amplitude_range + self.min_amplitude)))
 
-    ## setHeight
-    #
-    # @param height Changes the height of the channel UI.
-    #
     def setHeight(self, height):
         self.channel_ui.resize(self.channel_ui.width(), height)
 
-    ## setPosition
-    #
-    # @param x The x location of the channel UI.
-    # @param y The y location of the channel UI.
-    #
-    # @return The width of the channel UI.
-    #
     def setPosition(self, x, y):
         self.channel_ui.move(x, y)
         return self.channel_ui.width()
 
-    ## setupFilm
-    #
-    # Called at the before of filming to get the channel setup.
-    #
     def setupFilm(self):
-
+        """
+        Called before of filming to get the channel setup.
+        """
         # Figure out if this channel is used for filming.
         self.used_for_film = False
         if any((y > 0.0) for y in self.shutter_data):
@@ -315,11 +247,10 @@ class Channel(QtCore.QObject):
         if self.digital_modulation:
             self.digital_modulation.digitalAddChannel(self.channel_id, self.shutter_data)
 
-    ## startFilm
-    #
-    # Called at the start of filming.
-    #
     def startFilm(self):
+        """
+        Called at the start of filming.
+        """
         if not self.bad_module:
             if self.channel_ui.isEnabled(): # Enabled only if live view
                 self.was_on = self.channel_ui.isOn() # Record state to restore after movie
@@ -337,11 +268,10 @@ class Channel(QtCore.QObject):
                 
         self.filming = True
 
-    ## startLiveView
-    #
-    # Configure illumination for live view
-    #
     def startLiveView(self, live_view):
+        """
+        Configure illumination for live view.
+        """
         if not self.bad_module and live_view:
             # Enable the channel
             self.channel_ui.enableChannel()
@@ -350,11 +280,10 @@ class Channel(QtCore.QObject):
         if not live_view:
             self.channel_ui.disableChannel()
     
-    ## stopFilm
-    #
-    # Called at the end of filming to reset things.
-    #
     def stopFilm(self):
+        """
+        Called at the end of filming to reset things.
+        """
         self.filming = False
         
         if self.filming_disabled:
@@ -364,11 +293,10 @@ class Channel(QtCore.QObject):
             self.channel_ui.stopFilm()
             self.channel_ui.setOnOff(self.was_on)
 
-    ## stopLiveView
-    #
-    # Cleanup illumination settings at the end of the live view
-    #
     def stopLiveView(self, live_view):
+        """
+        Cleanup illumination settings at the end of the live view
+        """
         if not self.bad_module and live_view:
             # record state of the channel
             self.was_on = self.channel_ui.isOn()
@@ -377,7 +305,7 @@ class Channel(QtCore.QObject):
 #
 # The MIT License
 #
-# Copyright (c) 2014 Zhuang Lab, Harvard University
+# Copyright (c) 2017 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
