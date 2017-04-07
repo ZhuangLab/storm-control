@@ -26,19 +26,32 @@ class ChannelUI(QtWidgets.QFrame):
         self.setStyleSheet("background-color: rgb(" + self.color + ");")
         self.setFrameShape(QtWidgets.QFrame.Panel)
         self.setFrameShadow(QtWidgets.QFrame.Raised)
-        #self.resize(48, 204)
-        self.setFixedSize(48, 204)
+        self.setLayout(QtWidgets.QVBoxLayout())
+        self.setFixedWidth(50)
+        self.layout().setContentsMargins(0,0,0,0)
+        self.layout().setSpacing(1)
 
         # Text label.
         self.wavelength_label = QtWidgets.QLabel(self)
-        self.wavelength_label.setGeometry(5, 5, 40, 10)
         self.wavelength_label.setText(name)
         self.wavelength_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.layout().addWidget(self.wavelength_label)
+
+        # Container for the power slider (if any).
+        self.container_widget = QtWidgets.QWidget(self)
+        self.container_widget.setFixedHeight(140)
+        self.container_widget.setStyleSheet("background-color: white;")
+        self.layout().addWidget(self.container_widget)
+        
+        self.container_layout = QtWidgets.QVBoxLayout(self.container_widget)
+        self.container_layout.setContentsMargins(0,0,0,0)
+        self.container_layout.setSpacing(1)
 
         # Power on/off radio button.
         self.on_off_button = QtWidgets.QRadioButton(self)
-        self.on_off_button.setGeometry(18, self.height() - 24, 18, 18)
-
+        self.layout().addWidget(self.on_off_button)
+        self.layout().setAlignment(self.on_off_button, QtCore.Qt.AlignCenter)
+        
         # Connect signals
         self.on_off_button.clicked.connect(self.handleOnOffChange)
 
@@ -120,25 +133,31 @@ class ChannelUIAdjustable(ChannelUI):
         super().__init__(**kwds)
 
         self.buttons = []
-        self.cur_y = 202
+        #self.cur_y = 202
         self.max_amplitude = maximum
         self.min_amplitude = minimum
 
         # Current power label.
-        self.power_label = QtWidgets.QLabel(self)
-        self.power_label.setGeometry(5, 19, 40, 10)
+        self.power_label = QtWidgets.QLabel(self.container_widget)
         self.power_label.setText("")
         self.power_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.container_layout.addWidget(self.power_label)
 
         # Slider for controlling the power.
-        self.powerslider = QtWidgets.QSlider(self)
-        self.powerslider.setGeometry(13, 34, 24, 141)
+        self.powerslider = QtWidgets.QSlider(self.container_widget)
         self.powerslider.setMinimum(minimum)
         self.powerslider.setMaximum(maximum)
+        self.powerslider.setOrientation(QtCore.Qt.Vertical)
         page_step = 0.1 * (maximum - minimum)
         if (page_step > 1.0):
             self.powerslider.setPageStep(page_step)
         self.powerslider.setSingleStep(1)
+        self.container_layout.addWidget(self.powerslider)
+        self.container_layout.setAlignment(self.powerslider,
+                                           QtCore.Qt.AlignCenter)
+        self.powerslider.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed,
+                                                             QtWidgets.QSizePolicy.Expanding))
+
         self.powerslider.valueChanged.connect(self.handleAmplitudeChange)
 
     def disableChannel(self):
@@ -181,10 +200,11 @@ class ChannelUIAdjustable(ChannelUI):
 
         # Make sure we have enough buttons.
         while (len(self.buttons) < len(button_data)):
-            new_button = PowerButton(self.cur_y, self)
+            new_button = PowerButton(parent = self)
             new_button.powerChange.connect(self.setAmplitude)
+            self.layout().addWidget(new_button)
             self.buttons.append(new_button)
-            self.cur_y += 22
+            #self.cur_y += 22
 
         # Hide all the buttons.
         for button in self.buttons:
@@ -196,9 +216,9 @@ class ChannelUIAdjustable(ChannelUI):
             self.buttons[i].setText(button_data[i][0])
             self.buttons[i].setValue(int(round(button_data[i][1] * amp_range + self.min_amplitude)))
             self.buttons[i].show()
-
+            
         # Resize based on number of visible buttons.
-        self.resize(50, 204 + 22 * len(button_data))
+        #self.setFixedSize(48, 248 + 22 * len(button_data))
 
     def updatePowerText(self, new_text):
         self.power_label.setText(new_text)
@@ -210,11 +230,12 @@ class PowerButton(QtWidgets.QPushButton):
     """
     powerChange = QtCore.pyqtSignal(int)
 
-    def __init__(self, y_loc = 0, **kwds):
+    def __init__(self, **kwds):
         super().__init__(**kwds)
 
         self.value = 0.0
-        self.setGeometry(6, y_loc, 38, 20)
+        #self.setGeometry(6, y_loc, 38, 20)
+        #self.setAligment(QtCore.Qt.AlignCenter)
         self.setStyleSheet("background-color: None;")
 
         self.clicked.connect(self.handleClicked)

@@ -29,7 +29,9 @@ class ParameterPowerButtons(params.ParameterCustom):
 
         if not isinstance(new_value, (list, tuple)):
             msg = "Can't convert '" + str(type(new_value)) + "' to power buttons."
-            raise IlluminationParameterException(msg)            
+            raise IlluminationParameterException(msg)
+
+        return new_value
 
 
 # FIXME: Add an editor for these?
@@ -46,7 +48,7 @@ class ParameterDefaultPowers(params.ParameterCustom):
             msg = "Can't convert '" + str(type(new_value)) + "' to a list of floats."
             raise IlluminationParameterException(msg)
 
-        return map(float, new_value)
+        return list(map(float, new_value))
 
 
 # FIXME: Add an editor for these?
@@ -63,7 +65,7 @@ class ParameterOnOffStates(params.ParameterCustom):
             msg = "Can't convert '" + str(type(new_value)) + "' to a list of booleans."
             raise IlluminationParameterException(msg)
 
-        return map(bool, new_value)
+        return list(map(bool, new_value))
 
 
 #

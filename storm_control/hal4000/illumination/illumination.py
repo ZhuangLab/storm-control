@@ -67,17 +67,20 @@ class IlluminationView(halDialog.HalDialog):
         # Default buttons.
         buttons = []
         for i in range(len(hardware.channels)):
-            buttons.append([["Max", 1.0], ["Low", 0.1]])
+            if((i%2)==0):
+                buttons.append([["Max", 1.0], ["Low", 0.1]])
+            else:
+                buttons.append([["Max", 1.0]])
         self.parameters.add(illuminationParameters.ParameterPowerButtons(description = "Buttons",
                                                                          name = "power_buttons",
                                                                          value = buttons))
 
-        # This parameter is used to be able to tell when the shutters file
-        # has been changed for a given set of parameters.
-        self.parameters.add(params.ParameterString(name = "last_shutters",
-                                                   value = "",
-                                                   is_mutable = False,
-                                                   is_saved = False))
+#        # This parameter is used to be able to tell when the shutters file
+#        # has been changed for a given set of parameters.
+#        self.parameters.add(params.ParameterString(name = "last_shutters",
+#                                                   value = "",
+#                                                   is_mutable = False,
+#                                                   is_saved = False))
 
         # Default shutters file.
         self.parameters.add(params.ParameterStringFilename(description = "Shutters file name",
@@ -97,7 +100,8 @@ class IlluminationView(halDialog.HalDialog):
 
         # Illumination channels setup.
         layout = QtWidgets.QHBoxLayout(self.ui.powerControlBox)
-        layout.setContentsMargins(2,2,2,2)
+        layout.setContentsMargins(1,1,1,1)
+        layout.setSpacing(1)
         for i, channel in enumerate(hardware.channels):
             a_instance = illuminationChannel.Channel(channel_id = i,
                                                      channel = channel,
@@ -106,7 +110,7 @@ class IlluminationView(halDialog.HalDialog):
             self.channels.append(a_instance)
             layout.addWidget(a_instance.channel_ui)
 
-        self.adjustSize()
+        self.newParameters(self.parameters)
 
     def cleanUp(self, qt_settings):
         for channel in self.channels:
@@ -152,37 +156,23 @@ class IlluminationView(halDialog.HalDialog):
                 str = str + " " + channel.getAmplitude()
             self.fp.write(str + "\n")
 
-    ## newParameters
-    #
-    # Calls channels newParameters method, then updates the size of 
-    # the dialog as appropriate to fit all of the channels.
-    #
-    # Note that the camera updates the kinetic value (time per frame).
-    #
-    # @param parameters A parameters object.
-    #
     def newParameters(self, parameters):
-        p = parameters.get("illumination")
+        """
+        Calls channels newParameters method, then updates the size of 
+        the dialog as appropriate to fit all of the channels.
+        """
 
-        #
-        # Convert string representation of a power buttons list to an actual list
-        # if necessary. This would happen for example the first time that a
-        # settings file is loaded that contains save power button information.
-        #
-        if isinstance(p.get("power_buttons"), str):
-            buttons = ast.literal_eval(p.get("power_buttons"))
-            p.setv("power_buttons", buttons)
-            
-        for channel in self.channels:
-            channel.newParameters(p)
-
-        if (p.get("shutter_frames", 0) > 0):
-            self.newColors.emit(p.get("shutter_colors"))
-            self.newCycleLength.emit(p.get("shutter_frames"))
-
+        # A sanity check that settings.settings is not giving us bad parameters.
+        for attr in parameters.getAttrs():
+            assert(type(self.parameters.getp(attr)) == type(parameters.getp(attr)))
+        
         self.parameters = parameters
-
+                
+        for channel in self.channels:
+            channel.newParameters(self.parameters)
+            
         self.updateSize()
+
 
     ## newShutters
     #
@@ -202,31 +192,13 @@ class IlluminationView(halDialog.HalDialog):
         self.newColors.emit(colors)
         self.newCycleLength.emit(frames)
 
-    ## remoteIncPower
-    #
-    # Calls QIlluminationControl's remoteIncPower method.
-    #
-    # @param channel The channel index.
-    # @param power_inc The amount increment the power by.
-    #
+    # FIXME: Allow setting power by name as well as by index.
     def remoteIncPower(self, channel, power_inc):
         self.channels[channel].remoteIncPower(power_inc)
 
-    ## remoteSetPower
-    #
-    # Calls QIlluminationControl's remoteSetPower method.
-    #
-    # @param channel The channel index.
-    # @param power The desired power (0.0 - 1.0).
-    #
     def remoteSetPower(self, channel, power):
         self.channels[channel].remoteSetPower(power)
 
-    ## startFilm
-    #
-    # @param film_name The name of the film without any extensions, or False if the film is not being saved.
-    # @param run_shutters True/False the shutters should be run or not.
-    #
     def startFilm(self, film_name, run_shutters):
 
         # Recording the power.
@@ -286,30 +258,31 @@ class IlluminationView(halDialog.HalDialog):
 
             self.running_shutters = False
 
-#    def updateSize(self):
-#
-#        # Determine max channel height.
-#        new_height = 0
-#        for channel in self.channels:
-#            if (new_height < channel.getHeight()):
-#                new_height = channel.getHeight()
-#
+#    def updatedParameters(self, parameters):
+#        # The parameters are hopefully good, so keep a copy.
+#        self.parameters = parameters
+        
+    def updateSize(self):
+        """
+        This resizes the channels so that they are all the height even if
+        they have a different number of buttons. Then it resizes the dialog
+        box to fit everything & fixes the dialog box size.
+        """
+
+        # Determine max channel height.
+        new_height = 0
+        for channel in self.channels:
+            if (new_height < channel.getHeight()):
+                new_height = channel.getHeight()
+        print(">us", new_height)
+
 #        # Resize all the channels to be the same height.
 #        for channel in self.channels:
 #            if (channel.getHeight() != new_height):
-#                channel.setHeight(new_height)
-#        
-#        # Resize the group box and the dialog box.
-#        if (len(self.channels) > 1):
-#            new_width = self.channels[-1].getX() + self.channels[1].getWidth() + 7
-#        else:
-#            new_width = self.channels[0].getWidth() + 7
-#        self.ui.powerControlBox.setGeometry(10, 0, new_width, new_height + 19)
-#
-#        lb_width = self.ui.powerControlBox.width()
-#        lb_height = self.ui.powerControlBox.height()
-#        self.ui.okButton.setGeometry(lb_width - 65, lb_height + 4, 75, 24)
-#        self.setFixedSize(lb_width + 18, lb_height + 36)
+#                channel.setFixedHeight(new_height)
+
+        self.adjustSize()
+#        self.setFixedSize(self.width(), self.height())
 
 
 #    channelNames = QtCore.pyqtSignal(object)
