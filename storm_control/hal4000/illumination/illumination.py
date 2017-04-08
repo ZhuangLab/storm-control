@@ -79,13 +79,6 @@ class IlluminationView(halDialog.HalDialog):
                                                                          name = "power_buttons",
                                                                          value = buttons))
 
-#        # This parameter is used to be able to tell when the shutters file
-#        # has been changed for a given set of parameters.
-#        self.parameters.add(params.ParameterString(name = "last_shutters",
-#                                                   value = "",
-#                                                   is_mutable = False,
-#                                                   is_saved = False))
-
         # Default shutters file.
         self.parameters.add(params.ParameterStringFilename(description = "Shutters file name",
                                                            name= "shutters",
@@ -144,18 +137,6 @@ class IlluminationView(halDialog.HalDialog):
     def getShuttersSequence(self):
         return self.shutters_sequence
         
-#    def handleCommMessage(self, message):
-#        if (message.getType() == "Set Power"):
-#            if not message.isTest():
-#                self.remoteSetPower(message.getData("channel"),
-#                                    message.getData("power"))
-#            self.tcpMessage.emit(message)
-#        elif (message.getType() == "Increment Power"):
-#            if not message.isTest():
-#                self.remoteIncPower(message.getData("channel"),
-#                                    message.getData("increment"))
-#            self.tcpMessage.emit(message)
-
     def newParameters(self, parameters):
         """
         Calls channels newParameters method, then updates the size of 
@@ -260,15 +241,6 @@ class IlluminationView(halDialog.HalDialog):
 
     def stopFilm(self):
         pass
-    
-#    def updatedParameters(self):
-#        # Update shutters here.
-#        pass
-    
-#    channelNames = QtCore.pyqtSignal(object)
-#    newColors = QtCore.pyqtSignal(object)
-#    newCycleLength = QtCore.pyqtSignal(int)
-#    tcpComplete = QtCore.pyqtSignal(object)
 
 
 class Illumination(halModule.HalModule):
@@ -334,6 +306,10 @@ class Illumination(halModule.HalModule):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "initial parameters",
                                                        data = {"parameters" : self.view.getParameters()}))
+
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "illumination channels",
+                                                       data = {"names" : self.view.getChannelNames()}))
 
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "shutters sequence",
