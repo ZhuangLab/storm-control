@@ -3,9 +3,9 @@ QLabel {
     color : black;
 }
 
-QRadioButton {
-    color : white;
-}
+//QRadioButton {
+//    color : white;
+//}
 
 //QSlider {
 //    background-color : white;
