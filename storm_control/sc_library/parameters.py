@@ -231,6 +231,7 @@ class Parameter(object):
         self.name = name
         self.order = order
         self.ptype = "string"
+        self.value = None
         
         self.setv(value)
 
