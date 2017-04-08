@@ -37,7 +37,8 @@ class IlluminationView(halDialog.HalDialog):
     
     def __init__(self, module_name = None, hardware = None, **kwds):
         super().__init__(**kwds)
-        
+
+        self.camera1_fps = None
         self.channels = []
         self.channels_by_name = {}
         self.hardware_modules = {}
@@ -210,6 +211,9 @@ class IlluminationView(halDialog.HalDialog):
         else:
             self.channels[channel].remoteSetPower(power)
 
+    def setCamera1FPS(self, fps):
+        self.camera1_fps = fps
+        
     def setXMLDirectory(self, xml_directory):
         self.xml_directory = xml_directory
         
@@ -257,11 +261,10 @@ class IlluminationView(halDialog.HalDialog):
     def stopFilm(self):
         pass
     
-    def updatedParameters(self):
-        # Update shutters here.
-        pass
-
-
+#    def updatedParameters(self):
+#        # Update shutters here.
+#        pass
+    
 #    channelNames = QtCore.pyqtSignal(object)
 #    newColors = QtCore.pyqtSignal(object)
 #    newCycleLength = QtCore.pyqtSignal(int)
@@ -312,6 +315,13 @@ class Illumination(halModule.HalModule):
 
     def cleanUp(self, qt_settings):
         self.view.cleanUp(qt_settings)
+
+    def handleResponse(self, message, response):
+
+        if message.isType("get camera configuration"):
+            if (response.getData()["camera"] == "camera1"):
+                fps = response.getData()["config"].getParameter("fps")
+                self.view.setCamera1FPS(fps)
             
     def processL1Message(self, message):
 
@@ -320,7 +330,7 @@ class Illumination(halModule.HalModule):
                                                        m_type = "add to menu",
                                                        data = {"item name" : "Illumination",
                                                                "item msg" : "show illumination"}))
-
+            
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "initial parameters",
                                                        data = {"parameters" : self.view.getParameters()}))
@@ -328,6 +338,12 @@ class Illumination(halModule.HalModule):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "shutters sequence",
                                                        data = {"sequence" : self.view.getShuttersSequence()}))
+            
+            # Query camera1 for timing information.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "get camera configuration",
+                                                       data = {"display_name" : "NA",
+                                                               "camera" : "camera1"}))
 
         elif message.isType("new parameters"):
             p = message.getData()["parameters"]
@@ -372,6 +388,12 @@ class Illumination(halModule.HalModule):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "shutters sequence",
                                                        data = {"sequence" : self.view.getShuttersSequence()}))
+
+            # Query camera1 for timing information.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "get camera configuration",
+                                                       data = {"display_name" : "NA",
+                                                               "camera" : "camera1"}))
             #self.view.updatedParameters()
 
     def processL2Message(self, message):
