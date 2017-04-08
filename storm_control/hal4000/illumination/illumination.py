@@ -198,20 +198,20 @@ class IlluminationView(halDialog.HalDialog):
     def setXMLDirectory(self, xml_directory):
         self.xml_directory = xml_directory
         
-    def startFilm(self, film_name, run_shutters):
+    def startFilm(self, run_shutters):
         if run_shutters:
             self.running_shutters = True
 
             # Setup channels.
-            for channel in self.channels:
-                channel.setupFilm()
+            for i, channel in enumerate(self.channels):
+                channel.setupFilm(self.shutter_sequence.getWaveforms()[i])
 
             try:
                 # Start hardware.
                 for name, instance in self.hardware_modules.items():
                     if (instance.getStatus() == True):
-                        instance.startFilm(self.parameters.get("seconds_per_frame"),
-                                           self.parameters.get("illumination.shutter_oversampling"))
+                        instance.startFilm(1.0/self.camera1_fps,
+                                           self.shutter_sequence.getOverSampling())
 
                 # Start channels.
                 for channel in self.channels:
@@ -347,7 +347,7 @@ class Illumination(halModule.HalModule):
 
         elif message.isType("start film"):
             film_settings = message.getData()["film settings"]
-            self.view.startFilm(film_settings)
+            self.view.startFilm(film_settings.runShutters())
             if film_settings.isSaved():
                 self.power_fp = open(film_settings.getBasename() + ".power", "w")
                 self.power_fp.write("frame " + " ".join(self.view.getChannelNames()) + "\n")

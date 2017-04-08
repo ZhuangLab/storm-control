@@ -5,6 +5,8 @@ This controls a single channel.
 Hazen 04/17
 """
 
+import numpy
+
 from PyQt5 import QtCore
 
 import storm_control.hal4000.illumination.illuminationChannelUI as illuminationChannelUI
@@ -193,10 +195,6 @@ class Channel(QtCore.QObject):
         # Update buttons.
         self.channel_ui.setupButtons(parameters.get("power_buttons")[self.channel_id])
 
-        # Update shutter data, if available.
-#        if (parameters.get("shutter_frames", -1) != -1):
-#            self.shutter_data = parameters.get("shutter_data")[self.channel_id]
-
     def newShutters(self, shutter_data):
         """
         This both sets the internal shutter data store and converts it
@@ -230,22 +228,22 @@ class Channel(QtCore.QObject):
         self.channel_ui.move(x, y)
         return self.channel_ui.width()
 
-    def setupFilm(self):
+    def setupFilm(self, waveform):
         """
         Called before of filming to get the channel setup.
         """
         # Figure out if this channel is used for filming.
         self.used_for_film = False
-        if any((y > 0.0) for y in self.shutter_data):
+        if (numpy.count_nonzero(waveform) > 0):
             self.used_for_film = True
 
         # Add analog waveform data.
         if self.analog_modulation:
-            self.analog_modulation.analogAddChannel(self.channel_id, self.shutter_data)
+            self.analog_modulation.analogAddChannel(self.channel_id, waveform)
 
         # Add digital waveform data.
         if self.digital_modulation:
-            self.digital_modulation.digitalAddChannel(self.channel_id, self.shutter_data)
+            self.digital_modulation.digitalAddChannel(self.channel_id, waveform)
 
     def startFilm(self):
         """
