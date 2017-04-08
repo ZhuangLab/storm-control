@@ -268,17 +268,17 @@ class Channel(QtCore.QObject):
                 
         self.filming = True
 
-    def startLiveView(self, live_view):
-        """
-        Configure illumination for live view.
-        """
-        if not self.bad_module and live_view:
-            # Enable the channel
-            self.channel_ui.enableChannel()
-            self.channel_ui.setOnOff(self.was_on)
-
-        if not live_view:
-            self.channel_ui.disableChannel()
+#    def startLiveView(self, live_view):
+#        """
+#        Configure illumination for live view.
+#        """
+#        if not self.bad_module and live_view:
+#            # Enable the channel
+#            self.channel_ui.enableChannel()
+#            self.channel_ui.setOnOff(self.was_on)
+#
+#        if not live_view:
+#            self.channel_ui.disableChannel()
     
     def stopFilm(self):
         """
@@ -293,14 +293,14 @@ class Channel(QtCore.QObject):
             self.channel_ui.stopFilm()
             self.channel_ui.setOnOff(self.was_on)
 
-    def stopLiveView(self, live_view):
-        """
-        Cleanup illumination settings at the end of the live view
-        """
-        if not self.bad_module and live_view:
-            # record state of the channel
-            self.was_on = self.channel_ui.isOn()
-            self.channel_ui.disableChannel()
+#    def stopLiveView(self, live_view):
+#        """
+#        Cleanup illumination settings at the end of the live view
+#        """
+#        if not self.bad_module and live_view:
+#            # record state of the channel
+#            self.was_on = self.channel_ui.isOn()
+#            self.channel_ui.disableChannel()
 
 #
 # The MIT License

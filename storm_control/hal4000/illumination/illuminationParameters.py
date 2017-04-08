@@ -48,6 +48,10 @@ class ParameterDefaultPowers(params.ParameterCustom):
             msg = "Can't convert '" + str(type(new_value)) + "' to a list of floats."
             raise IlluminationParameterException(msg)
 
+        if self.value is not None:
+            if (len(new_value) != len(self.value)):
+                raise IlluminationParameterException("List is not the right length.")
+        
         return list(map(float, new_value))
 
 
@@ -59,11 +63,21 @@ class ParameterOnOffStates(params.ParameterCustom):
         
     def toType(self, new_value):
         if isinstance(new_value, str):
-            new_value = new_value.split(",")
-
+            values = []
+            for elt in new_value.split(","):
+                if (elt.lower() == "true"):
+                    values.append(True)
+                else:
+                    values.append(False)
+            new_value = values
+            
         if not isinstance(new_value, (list, tuple)):
             msg = "Can't convert '" + str(type(new_value)) + "' to a list of booleans."
             raise IlluminationParameterException(msg)
+
+        if self.value is not None:
+            if (len(new_value) != len(self.value)):
+                raise IlluminationParameterException("List is not the right length.")
 
         return list(map(bool, new_value))
 

@@ -30,6 +30,7 @@ class ChannelUI(QtWidgets.QFrame):
 
         self.enabled = True
 
+        # FIXME: These styles could be better..
         self.disabled_style = loadStyleSheet("disabled_style.qss")
         self.enabled_style = "QFrame { background-color: rgb(" + color + ");}\n"
         self.enabled_style += loadStyleSheet("enabled_style.qss")
@@ -161,18 +162,19 @@ class ChannelUIAdjustable(ChannelUI):
 
         # Slider for controlling the power.
         self.powerslider = QtWidgets.QSlider(self.slider_widget)
-        self.powerslider.setFixedHeight(120)
+#        self.powerslider.setFixedSize(40, 150)
         self.powerslider.setMinimum(minimum)
+        self.powerslider.setMinimumHeight(150)
         self.powerslider.setMaximum(maximum)
         self.powerslider.setOrientation(QtCore.Qt.Vertical)
         page_step = 0.1 * (maximum - minimum)
         if (page_step > 1.0):
             self.powerslider.setPageStep(page_step)
         self.powerslider.setSingleStep(1)
+        self.powerslider.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
+                                       QtWidgets.QSizePolicy.Expanding)
 
         self.slider_layout.addWidget(self.powerslider)
-        self.slider_layout.setAlignment(self.powerslider,
-                                           QtCore.Qt.AlignCenter)
 
         self.powerslider.valueChanged.connect(self.handleAmplitudeChange)
 

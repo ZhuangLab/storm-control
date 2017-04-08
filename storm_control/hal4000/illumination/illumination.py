@@ -25,6 +25,10 @@ import storm_control.hal4000.illumination.xmlParser as xmlParser
 import storm_control.hal4000.qtdesigner.illumination_ui as illuminationUi
 
 
+#
+# FIXME: The parameters object is shared with all of the channels. It
+#        would probably be better to only have one copy here.
+#
 class IlluminationView(halDialog.HalDialog):
     """
     Manages the illumination GUI.
@@ -35,6 +39,7 @@ class IlluminationView(halDialog.HalDialog):
         super().__init__(**kwds)
         
         self.channels = []
+        self.channels_by_name = {}
         self.hardware_modules = {}
         self.fp = False
         self.module_name = module_name
@@ -67,10 +72,7 @@ class IlluminationView(halDialog.HalDialog):
         # Default buttons.
         buttons = []
         for i in range(len(hardware.channels)):
-            if((i%2)==0):
-                buttons.append([["Max", 1.0], ["Low", 0.1]])
-            else:
-                buttons.append([["Max", 1.0]])
+            buttons.append([["Max", 1.0], ["Low", 0.1]])
         self.parameters.add(illuminationParameters.ParameterPowerButtons(description = "Buttons",
                                                                          name = "power_buttons",
                                                                          value = buttons))
@@ -108,6 +110,7 @@ class IlluminationView(halDialog.HalDialog):
                                                      hardware_modules = self.hardware_modules,
                                                      parent = self.ui.powerControlBox)
             self.channels.append(a_instance)
+            self.channels_by_name[a_instance.getName()] = a_instance
             layout.addWidget(a_instance.channel_ui)
 
         self.newParameters(self.parameters)
@@ -121,7 +124,22 @@ class IlluminationView(halDialog.HalDialog):
 
         super().cleanUp(qt_settings)
 
+    def getChannelNames(self):
+        names = []
+        for channel in self.channels:
+            names.append(channel.getName())
+        return names
 
+    def getChannelPowers(self):
+        powers = []
+        for channel in self.channels:
+            powers.append(channel.getAmplitude())
+        return powers
+    
+    def getParameters(self):
+        return self.parameters
+        
+        
 #    def handleCommMessage(self, message):
 #        if (message.getType() == "Set Power"):
 #            if not message.isTest():
@@ -134,12 +152,6 @@ class IlluminationView(halDialog.HalDialog):
 #                                    message.getData("increment"))
 #            self.tcpMessage.emit(message)
 
-#    def moduleInit(self):
-#        names = []
-#        for channel in self.channels:
-#            names.append(channel.getName())
-#        self.channelNames.emit(names)
-
     ## newFrame
     #
     # Handles new frames. If there is a open file and the frame
@@ -149,18 +161,19 @@ class IlluminationView(halDialog.HalDialog):
     # @param frame A camera.Frame object
     # @param filming True/False if we are currently filming.
     #
-    def newFrame(self, frame, filming):
-        if self.fp and frame.master:
-            str = "{0:d}".format(frame.number)
-            for channel in self.channels:
-                str = str + " " + channel.getAmplitude()
-            self.fp.write(str + "\n")
+#    def newFrame(self, frame, filming):
+#        if self.fp and frame.master:
+#            str = "{0:d}".format(frame.number)
+#            for channel in self.channels:
+#                str = str + " " + channel.getAmplitude()
+#            self.fp.write(str + "\n")
 
     def newParameters(self, parameters):
         """
         Calls channels newParameters method, then updates the size of 
         the dialog as appropriate to fit all of the channels.
         """
+        current_position = self.pos()
 
         # A sanity check that settings.settings is not giving us bad parameters.
         for attr in parameters.getAttrs():
@@ -170,9 +183,16 @@ class IlluminationView(halDialog.HalDialog):
                 
         for channel in self.channels:
             channel.newParameters(self.parameters)
-            
-        self.updateSize()
 
+        #
+        # If the number of buttons change, this can cause the dialog to jump
+        # so we need to keep track of it's current position and reset to
+        # that position.
+        #
+        self.adjustSize()
+        self.setFixedSize(self.width(), self.height())
+
+        self.move(current_position)
 
     ## newShutters
     #
@@ -192,12 +212,17 @@ class IlluminationView(halDialog.HalDialog):
         self.newColors.emit(colors)
         self.newCycleLength.emit(frames)
 
-    # FIXME: Allow setting power by name as well as by index.
     def remoteIncPower(self, channel, power_inc):
-        self.channels[channel].remoteIncPower(power_inc)
+        if isinstance(channel, str):
+            self.channels_by_name[channel].remoteIncPower(power_inc)
+        else:
+            self.channels[channel].remoteIncPower(power_inc)
 
     def remoteSetPower(self, channel, power):
-        self.channels[channel].remoteSetPower(power)
+        if isinstance(channel, str):
+            self.channels_by_name[channel].remoteSetPower(power)
+        else:
+            self.channels[channel].remoteSetPower(power)
 
     def startFilm(self, film_name, run_shutters):
 
@@ -233,11 +258,7 @@ class IlluminationView(halDialog.HalDialog):
                 hdebug.logText(error_message)
                 raise halModule.StartFilmException(error_message)
 
-
-    def startLiveView(self, live_view):
-        pass
-
-    def stopLiveView(self, live_view):
+    def startFilm(self, film_settings):
         pass
 
     def stopFilm(self, film_writer):
@@ -258,31 +279,12 @@ class IlluminationView(halDialog.HalDialog):
 
             self.running_shutters = False
 
-#    def updatedParameters(self, parameters):
-#        # The parameters are hopefully good, so keep a copy.
-#        self.parameters = parameters
-        
-    def updateSize(self):
-        """
-        This resizes the channels so that they are all the height even if
-        they have a different number of buttons. Then it resizes the dialog
-        box to fit everything & fixes the dialog box size.
-        """
-
-        # Determine max channel height.
-        new_height = 0
-        for channel in self.channels:
-            if (new_height < channel.getHeight()):
-                new_height = channel.getHeight()
-        print(">us", new_height)
-
-#        # Resize all the channels to be the same height.
-#        for channel in self.channels:
-#            if (channel.getHeight() != new_height):
-#                channel.setFixedHeight(new_height)
-
-        self.adjustSize()
-#        self.setFixedSize(self.width(), self.height())
+    def stopFilm(self):
+        pass
+    
+    def updatedParameters(self):
+        # Update shutters here.
+        pass
 
 
 #    channelNames = QtCore.pyqtSignal(object)
@@ -295,6 +297,7 @@ class Illumination(halModule.HalModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
+        self.power_fp = None
 
         ilm_params = module_params.get("parameters")
         ilm_xml_file = os.path.join(os.path.dirname(__file__), ilm_params.get("settings_xml"))
@@ -306,6 +309,23 @@ class Illumination(halModule.HalModule):
         self.view.halDialogInit(qt_settings,
                                 module_params.get("setup_name") + " illumination control")
 
+        # The names of the illumination channels that are available.
+        halMessage.addMessage("illumination channels",
+                              validator = {"data" : {"names" : [True, list]},
+                                           "resp" : None})
+
+        # Increment the power of an illumination channel.
+        halMessage.addMessage("remote inc power",
+                              validator = {"data" : {"channel" : [True, (str, int)],
+                                                     "power" : [True, float]},
+                                           "resp" : None})
+
+        # Set the power of an illumination channel.
+        halMessage.addMessage("remote set power",
+                              validator = {"data" : {"channel" : [True, (str, int)],
+                                                     "power" : [True, float]},
+                                           "resp" : None})        
+        
         # Unhide illumination control.
         halMessage.addMessage("show illumination",
                               validator = {"data" : None, "resp" : None})
@@ -321,13 +341,57 @@ class Illumination(halModule.HalModule):
                                                        data = {"item name" : "Illumination",
                                                                "item msg" : "show illumination"}))
 
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "initial parameters",
+                                                       data = {"parameters" : self.view.getParameters()}))
+
+        elif message.isType("new parameters"):
+            p = message.getData()["parameters"]
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"old parameters" : self.view.getParameters().copy()}))
+            self.view.newParameters(p.get(self.module_name))
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"new parameters" : self.view.getParameters()}))
+
+        elif message.isType("remote inc power"):
+            self.view.remoteIncPower(message.getData()["channel"],
+                                     message.getData()["power"])
+
+        elif message.isType("remote set power"):
+            self.view.remoteSetPower(message.getData()["channel"],
+                                     message.getData()["power"])            
+
         elif message.isType("show illumination"):
             self.view.show()
 
         elif message.isType("start"):
-            self.view.showIfVisible()
-        
-    
+            if message.getData()["show_gui"]:
+                self.view.showIfVisible()
+
+        elif message.isType("start film"):
+            film_settings = message.getData()["film settings"]
+            self.view.startFilm(film_settings)
+            if film_settings.isSaved():
+                self.power_fp = open(film_settings.getBasename() + ".power", "w")
+                self.power_fp.write("frame " + " ".join(self.view.getChannelNames()) + "\n")
+
+        elif message.isType("stop film"):
+            self.view.stopFilm()
+            if self.power_fp is not None:
+                self.power_fp.close()
+                self.power_fp = None
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.view.getParameters()}))
+
+        elif message.isType("updated parameters"):
+            self.view.updatedParameters()
+
+    def processL2Message(self, message):
+        if self.power_fp is not None:
+            frame_number = str(message.getData()["frame"].frame_number + 1)
+            self.power_fp.write(frame_number + " " + " ".join(self.view.getChannelPowers()) + "\n")
+
+
 #
 # The MIT License
 #

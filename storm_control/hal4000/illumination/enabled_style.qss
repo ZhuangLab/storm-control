@@ -4,5 +4,14 @@ QLabel {
 }
 
 QRadioButton {
-    color white;
+    color : white;
+}
+
+//QSlider {
+//    background-color : white;
+//}
+
+QSlider::handle {
+    width : 60px;
+    margin : -30px 0;
 }
