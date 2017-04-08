@@ -41,10 +41,11 @@ class IlluminationView(halDialog.HalDialog):
         self.channels = []
         self.channels_by_name = {}
         self.hardware_modules = {}
-        self.fp = False
         self.module_name = module_name
         self.parameters = params.StormXMLObject()
         self.running_shutters = False
+        self.shutters_sequence = False
+        self.xml_directory = os.path.dirname(os.path.dirname(__file__))
 
         # UI setup.
         self.ui = illuminationUi.Ui_Dialog()
@@ -138,7 +139,9 @@ class IlluminationView(halDialog.HalDialog):
     
     def getParameters(self):
         return self.parameters
-        
+
+    def getShuttersSequence(self):
+        return self.shutters_sequence
         
 #    def handleCommMessage(self, message):
 #        if (message.getType() == "Set Power"):
@@ -151,22 +154,6 @@ class IlluminationView(halDialog.HalDialog):
 #                self.remoteIncPower(message.getData("channel"),
 #                                    message.getData("increment"))
 #            self.tcpMessage.emit(message)
-
-    ## newFrame
-    #
-    # Handles new frames. If there is a open file and the frame
-    # is a master frame then this calls QIlluminationControl's
-    # savePowers method.
-    #
-    # @param frame A camera.Frame object
-    # @param filming True/False if we are currently filming.
-    #
-#    def newFrame(self, frame, filming):
-#        if self.fp and frame.master:
-#            str = "{0:d}".format(frame.number)
-#            for channel in self.channels:
-#                str = str + " " + channel.getAmplitude()
-#            self.fp.write(str + "\n")
 
     def newParameters(self, parameters):
         """
@@ -194,23 +181,22 @@ class IlluminationView(halDialog.HalDialog):
 
         self.move(current_position)
 
-    ## newShutters
-    #
-    # @param shutters_filename The name of a shutters XML file.
-    #
-    def newShutters(self, shutters_filename):
-        [waveforms, colors, frames, oversampling] = xmlParser.parseShuttersXML(len(self.channels), 
-                                                                               shutters_filename)
+        self.newShutters(self.parameters.get("shutters"))
 
-        p = self.parameters.get("illumination")
-        p.set("shutter_data", [])
-        for i, channel in enumerate(self.channels):
-            p.get("shutter_data").append(channel.newShutters(waveforms[i]))
-        p.set("shutter_colors", colors)
-        p.set("shutter_frames", frames)
-        p.set("shutter_oversampling", oversampling)
-        self.newColors.emit(colors)
-        self.newCycleLength.emit(frames)
+    def newShutters(self, shutters_filename):
+        if os.path.exists(shutters_filename):
+            self.shutters_sequence = xmlParser.parseShuttersXML(len(self.channels), 
+                                                                shutters_filename)
+            self.parameters.set("shutters", os.path.abspath(shutters_filename))
+            return
+            
+        path_filename = os.path.join(self.xml_directory, shutters_filename)
+        if os.path.exists(path_filename):
+            self.shutters_sequence = xmlParser.parseShuttersXML(len(self.channels), 
+                                                                path_filename)
+            return
+        
+        raise halExceptions.HalException("Could not load find '" + shutters_filename + "' or '" + path_filename + "'")
 
     def remoteIncPower(self, channel, power_inc):
         if isinstance(channel, str):
@@ -224,17 +210,10 @@ class IlluminationView(halDialog.HalDialog):
         else:
             self.channels[channel].remoteSetPower(power)
 
+    def setXMLDirectory(self, xml_directory):
+        self.xml_directory = xml_directory
+        
     def startFilm(self, film_name, run_shutters):
-
-        # Recording the power.
-        if film_name:
-            self.fp = open(film_name + ".power", "w")
-            frame_base = "frame"
-            for channel in self.channels:
-                frame_base = frame_base + " " + channel.getName()
-            self.fp.write(frame_base + "\n")
-
-        # Running the shutters.
         if run_shutters:
             self.running_shutters = True
 
@@ -262,10 +241,6 @@ class IlluminationView(halDialog.HalDialog):
         pass
 
     def stopFilm(self, film_writer):
-        if self.fp:
-            self.fp.close()
-            self.fp = False
-
         if self.running_shutters:
 
             # Stop hardware.
@@ -325,7 +300,12 @@ class Illumination(halModule.HalModule):
                               validator = {"data" : {"channel" : [True, (str, int)],
                                                      "power" : [True, float]},
                                            "resp" : None})        
-        
+
+        # Shutters sequence.
+        halMessage.addMessage("shutters sequence",
+                              validator = {"data" : {"sequence" : [True, xmlParser.ShuttersSequence]},
+                                           "resp" : None})
+                              
         # Unhide illumination control.
         halMessage.addMessage("show illumination",
                               validator = {"data" : None, "resp" : None})
@@ -345,10 +325,15 @@ class Illumination(halModule.HalModule):
                                                        m_type = "initial parameters",
                                                        data = {"parameters" : self.view.getParameters()}))
 
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "shutters sequence",
+                                                       data = {"sequence" : self.view.getShuttersSequence()}))
+
         elif message.isType("new parameters"):
             p = message.getData()["parameters"]
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"old parameters" : self.view.getParameters().copy()}))
+            self.view.setXMLDirectory(os.path.dirname(p.get("parameters_file")))
             self.view.newParameters(p.get(self.module_name))
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"new parameters" : self.view.getParameters()}))
@@ -384,7 +369,10 @@ class Illumination(halModule.HalModule):
                                                               data = {"parameters" : self.view.getParameters()}))
 
         elif message.isType("updated parameters"):
-            self.view.updatedParameters()
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "shutters sequence",
+                                                       data = {"sequence" : self.view.getShuttersSequence()}))
+            #self.view.updatedParameters()
 
     def processL2Message(self, message):
         if self.power_fp is not None:

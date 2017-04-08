@@ -1,29 +1,21 @@
-#!/usr/bin/python
-#
-## @file
-#
-# This file contains the various XML parsing functions.
-#
-# Hazen 04/14
-#
+#!/usr/bin/env python
+"""
+This file contains the various XML parsing functions.
+
+Hazen 04/17
+"""
+
+import numpy
 
 import xml.etree.ElementTree as ElementTree
 
-# Debugging
-import storm_control.sc_library.hdebug as hdebug
 
-
-## HardwareXMLObject
-#
-# A hardware XML object, created dynamically by parsing the XML nodes.
-#
-class HardwareXMLObject():
-
-    ## __init__
-    #
-    # @param nodes A list of XML nodes.
-    #
-    def __init__(self, nodes):
+class HardwareXMLObject(object):
+    """
+    A hardware XML object, created dynamically by parsing the XML nodes.
+    """
+    def __init__(self, nodes = None, **kwds):
+        super().__init__(**kwds)
         for node in nodes:
             if (len(node) == 0):
                 if node.attrib.get("type", False):
@@ -45,31 +37,27 @@ class HardwareXMLObject():
                     setattr(self, node.tag, node.text)
 
 
-## parseHardwareXML
-#
-# This parses a illumation_settings.xml file and returns a hardware XML object.
-#
-# @return A hardware XML object.
-#
-@hdebug.debug
 def parseHardwareXML(hardware_xml_file):
+    """
+    This parses a illumation_settings.xml file and returns a hardware XML object.
+    """
 
     # Load XML illumination settings file.
     xml = ElementTree.parse(hardware_xml_file).getroot()
     assert xml.tag == "illumination_settings", hardware_xml_file + " is not a illumination settings file."
 
     # Create the hardware XML object.
-    xml_object = HardwareXMLObject([])
+    xml_object = HardwareXMLObject(nodes = [])
 
     # Load control modules.
     xml_object.modules = []
     for xml_module in xml.find("control_modules"):
 
         # Create module based on XML
-        module = HardwareXMLObject(xml_module)
+        module = HardwareXMLObject(nodes = xml_module)
         xml_parameters = xml_module.find("parameters")
         if xml_parameters is not None:
-            module.parameters = HardwareXMLObject(xml_parameters)
+            module.parameters = HardwareXMLObject(nodes = xml_parameters)
         else:
             module.parameters = None
 
@@ -80,14 +68,14 @@ def parseHardwareXML(hardware_xml_file):
     for xml_module in xml.find("channels"):
 
         # Create channel based on XML
-        module = HardwareXMLObject(xml_module)
+        module = HardwareXMLObject(nodes = xml_module)
         for control_type in ["amplitude_modulation", "analog_modulation", "digital_modulation", "mechanical_shutter"]:
             xml_control_type = xml_module.find(control_type)
             if xml_control_type is not None:
-                temp = HardwareXMLObject(xml_control_type)
+                temp = HardwareXMLObject(nodes = xml_control_type)
                 xml_parameters = xml_control_type.find("parameters")
                 if xml_parameters is not None:
-                    temp.parameters = HardwareXMLObject(xml_parameters)
+                    temp.parameters = HardwareXMLObject(nodes = xml_parameters)
                 else:
                     temp.parameters = None
                 setattr(module, control_type, temp)
@@ -96,17 +84,34 @@ def parseHardwareXML(hardware_xml_file):
     return xml_object
 
 
-## parseXML
-#
-# This parses a XML file that defines a shutter sequence.
-#
-# @param number_channels The number of channels.
-# @param shutters_file The name of the shutter sequence xml file.
-#
-# @return [waveforms, colors, frames, oversampling]
-#
-@hdebug.debug
+class ShuttersSequence(object):
+    """
+    Stores the results of parsing a shutters XML file.
+    """
+    def __init__(self, waveforms = None, color_data = None, frames = None, oversampling = None, **kwds):
+        super().__init__(**kwds)
+        self.color_data = color_data
+        self.frames = frames
+        self.oversampling = oversampling
+        self.waveforms = waveforms
+
+    def getColorData(self):
+        return self.color_data
+
+    def getFrames(self):
+        return self.frames
+
+    def getOverSampling(self):
+        return self.oversampling
+
+    def getWaveforms(self):
+        return self.waveforms
+        
+        
 def parseShuttersXML(number_channels, shutters_file, oversampling = 100):
+    """
+    This parses a XML file that defines a shutter sequence.
+    """
 
     # Load XML shutters file.
     xml = ElementTree.parse(shutters_file).getroot()
@@ -136,10 +141,7 @@ def parseShuttersXML(number_channels, shutters_file, oversampling = 100):
     #
     waveforms = []
     for i in range(number_channels):
-        waveform = []
-        for j in range(frames * oversampling):
-            waveform.append(0.0)
-        waveforms.append(waveform)
+        waveforms.append(numpy.zeros(frames * oversampling))
 
     # Add in the events.
     for event in xml.findall("event"):
@@ -189,27 +191,16 @@ def parseShuttersXML(number_channels, shutters_file, oversampling = 100):
                     color_data[i] = color
                     i += 1
 
-    return [waveforms, color_data, frames, oversampling]
+    return ShuttersSequence(waveforms = waveforms,
+                            color_data = color_data,
+                            frames = frames,
+                            oversampling = oversampling)
 
-
-#
-# Testing
-#
-if (__name__ == "__main__"):
-    import sys
-
-    if 1:
-        xh = parseHardwareXML(sys.argv[1])
-        print(xh.modules[0].name)
-        print(xh.channels[0].description)
-
-        #print len(xh.modules)
-        #print len(xh.channels)
 
 #
 # The MIT License
 #
-# Copyright (c) 2014 Zhuang Lab, Harvard University
+# Copyright (c) 2017 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
