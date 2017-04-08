@@ -410,7 +410,6 @@ class Film(halModule.HalModule):
                                                        m_type = "add to ui",
                                                        data = self.configure_dict))
                 
-            # Broadcast initial parameters.
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "initial parameters",
                                                        data = {"parameters" : self.view.getParameters()}))
