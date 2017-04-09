@@ -221,24 +221,16 @@ class IlluminationView(halDialog.HalDialog):
             for i, channel in enumerate(self.channels):
                 channel.setupFilm(self.waveforms[i])
 
-            try:
-                # Start hardware.
-                for name, instance in self.hardware_modules.items():
-                    if (instance.getStatus() == True):
-                        instance.startFilm(1.0/self.camera1_fps, self.oversampling)
+            # Start hardware.
+            for name, instance in self.hardware_modules.items():
+                if (instance.getStatus() == True):
+                    instance.startFilm(1.0/self.camera1_fps, self.oversampling)
 
-                # Start channels.
-                for channel in self.channels:
-                    channel.startFilm()
-                    
-            except halExceptions.HardwareException as error:
-                error_message = "startFilm in illumination control encountered an error: \n" + str(error)
-                raise halModule.StartFilmException(error_message)
+            # Start channels.
+            for channel in self.channels:
+                channel.startFilm()
 
-    def startFilm(self, film_settings):
-        pass
-
-    def stopFilm(self, film_writer):
+    def stopFilm(self):
         if self.running_shutters:
 
             # Stop hardware.
@@ -251,9 +243,6 @@ class IlluminationView(halDialog.HalDialog):
                 channel.stopFilm()
 
             self.running_shutters = False
-
-    def stopFilm(self):
-        pass
 
 
 class Illumination(halModule.HalModule):
