@@ -398,6 +398,15 @@ class DaqModulation(IlluminationHardware):
         self.analog_data = []
         self.digital_data = []
 
+    def waveformToVoltage(self, channel_id, waveform):
+        """
+        Convert a waveform (0.0 - 1.0 numpy array) to correct voltage.
+        """
+        minv = self.analog_settings[channel_id].min_voltage
+        maxv = self.analog_settings[channel_id].max_voltage
+        diff = maxv - minv
+        return diff * (waveform - minv)
+
 
 #
 # The MIT License

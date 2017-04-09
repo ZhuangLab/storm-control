@@ -84,28 +84,20 @@ def parseHardwareXML(hardware_xml_file):
     return xml_object
 
 
-class ShuttersSequence(object):
+class ShuttersInfo(object):
     """
-    Stores the results of parsing a shutters XML file.
+    Stores the shutters information that will get sent to other modules.
     """
-    def __init__(self, waveforms = None, color_data = None, frames = None, oversampling = None, **kwds):
+    def __init__(self,color_data = None, frames = None, **kwds):
         super().__init__(**kwds)
         self.color_data = color_data
         self.frames = frames
-        self.oversampling = oversampling
-        self.waveforms = waveforms
 
     def getColorData(self):
         return self.color_data
 
     def getFrames(self):
         return self.frames
-
-    def getOverSampling(self):
-        return self.oversampling
-
-    def getWaveforms(self):
-        return self.waveforms
         
         
 def parseShuttersXML(number_channels, shutters_file, oversampling = 100):
@@ -191,10 +183,9 @@ def parseShuttersXML(number_channels, shutters_file, oversampling = 100):
                     color_data[i] = color
                     i += 1
 
-    return ShuttersSequence(waveforms = waveforms,
-                            color_data = color_data,
-                            frames = frames,
-                            oversampling = oversampling)
+    return [ShuttersInfo(color_data = color_data, frames = frames),
+            waveforms,
+            oversampling]
 
 
 #

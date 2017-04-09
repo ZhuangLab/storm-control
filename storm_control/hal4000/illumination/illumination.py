@@ -43,9 +43,11 @@ class IlluminationView(halDialog.HalDialog):
         self.channels_by_name = {}
         self.hardware_modules = {}
         self.module_name = module_name
+        self.oversampling = None
         self.parameters = params.StormXMLObject()
         self.running_shutters = False
-        self.shutters_sequence = False
+        self.shutters_info = False
+        self.waveforms = None
         self.xml_directory = os.path.dirname(os.path.dirname(__file__))
 
         # UI setup.
@@ -134,8 +136,8 @@ class IlluminationView(halDialog.HalDialog):
     def getParameters(self):
         return self.parameters
 
-    def getShuttersSequence(self):
-        return self.shutters_sequence
+    def getShuttersInfo(self):
+        return self.shutters_info
         
     def newParameters(self, parameters):
         """
@@ -166,19 +168,32 @@ class IlluminationView(halDialog.HalDialog):
         self.newShutters(self.parameters.get("shutters"))
 
     def newShutters(self, shutters_filename):
-        if os.path.exists(shutters_filename):
-            self.shutters_sequence = xmlParser.parseShuttersXML(len(self.channels), 
-                                                                shutters_filename)
-            self.parameters.set("shutters", os.path.abspath(shutters_filename))
-            return
-            
+        """
+        Called when we get new parameters, which will have a shutters file,
+        and also when the user loads a new shutters file for the existing
+        parameters.
+        """
+        filename_to_parse = None
         path_filename = os.path.join(self.xml_directory, shutters_filename)
-        if os.path.exists(path_filename):
-            self.shutters_sequence = xmlParser.parseShuttersXML(len(self.channels), 
-                                                                path_filename)
-            return
-        
-        raise halExceptions.HalException("Could not load find '" + shutters_filename + "' or '" + path_filename + "'")
+
+        # Check if the shutters file exists in the current directory.
+        if os.path.exists(shutters_filename):
+            filename_to_parse = shutters_filename
+
+        # Check if the shutters exists in the current XML directory.
+        elif os.path.exists(path_filename):
+            filename_to_parse = path_filename
+        else:
+            raise halExceptions.HalException("Could not load find '" + shutters_filename + "' or '" + path_filename + "'")
+
+        # Save possibly updated shutter file information.
+        self.parameters.set("shutters", shutters_filename)
+                            
+        # Parse XML to get shutter information, waveforms, etc.
+        [self.shutters_info, self.waveforms, self.oversampling] = xmlParser.parseShuttersXML(len(self.channels),
+                                                                                             filename_to_parse)
+        for i, channel in enumerate(self.channels):
+            self.waveforms[i] = channel.newShutters(self.waveforms[i])
 
     def remoteIncPower(self, channel, power_inc):
         if isinstance(channel, str):
@@ -204,14 +219,13 @@ class IlluminationView(halDialog.HalDialog):
 
             # Setup channels.
             for i, channel in enumerate(self.channels):
-                channel.setupFilm(self.shutter_sequence.getWaveforms()[i])
+                channel.setupFilm(self.waveforms[i])
 
             try:
                 # Start hardware.
                 for name, instance in self.hardware_modules.items():
                     if (instance.getStatus() == True):
-                        instance.startFilm(1.0/self.camera1_fps,
-                                           self.shutter_sequence.getOverSampling())
+                        instance.startFilm(1.0/self.camera1_fps, self.oversampling)
 
                 # Start channels.
                 for channel in self.channels:
@@ -219,7 +233,6 @@ class IlluminationView(halDialog.HalDialog):
                     
             except halExceptions.HardwareException as error:
                 error_message = "startFilm in illumination control encountered an error: \n" + str(error)
-                hdebug.logText(error_message)
                 raise halModule.StartFilmException(error_message)
 
     def startFilm(self, film_settings):
@@ -278,7 +291,7 @@ class Illumination(halModule.HalModule):
 
         # Shutters sequence.
         halMessage.addMessage("shutters sequence",
-                              validator = {"data" : {"sequence" : [True, xmlParser.ShuttersSequence]},
+                              validator = {"data" : {"sequence" : [True, xmlParser.ShuttersInfo]},
                                            "resp" : None})
                               
         # Unhide illumination control.
@@ -313,8 +326,8 @@ class Illumination(halModule.HalModule):
 
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "shutters sequence",
-                                                       data = {"sequence" : self.view.getShuttersSequence()}))
-            
+                                                       data = {"sequence" : self.view.getShuttersInfo()}))
+
             # Query camera1 for timing information.
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "get camera configuration",
@@ -357,8 +370,15 @@ class Illumination(halModule.HalModule):
             if self.power_fp is not None:
                 self.power_fp.close()
                 self.power_fp = None
+
+            #
+            # Fix shutters file information to be an absolute path as the shutters
+            # file won't be saved in the same directory as the movie.
+            #
+            p = self.view.getParameters().copy()
+            p.set("shutters", os.path.abspath(p.get("shutters")))
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"parameters" : self.view.getParameters()}))
+                                                              data = {"parameters" : p}))
 
         elif message.isType("updated parameters"):
             self.newMessage.emit(halMessage.HalMessage(source = self,

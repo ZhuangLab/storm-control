@@ -30,7 +30,6 @@ class Channel(QtCore.QObject):
         self.min_amplitude = 0.0
         self.name = channel.description
         self.parameters = False
-        self.shutter_data = []
         self.used_for_film = False
         self.was_on = False
         self.bad_module = False
@@ -195,17 +194,14 @@ class Channel(QtCore.QObject):
         # Update buttons.
         self.channel_ui.setupButtons(parameters.get("power_buttons")[self.channel_id])
 
-    def newShutters(self, shutter_data):
+    def newShutters(self, waveform):
         """
-        This both sets the internal shutter data store and converts it
-        to the appropriate scale based on the analog modulation settings.
+        Return the waveform properly scaled for the hardware.
         """
-        self.shutter_data = shutter_data
         if self.analog_modulation:
-            for i in range(len(self.shutter_data)):
-                self.shutter_data[i] = self.analog_modulation.powerToVoltage(self.channel_id, self.shutter_data[i])
-
-        return self.shutter_data
+            return self.analog_modulation.waveformToVoltage(self.channel_id, waveform)
+        else:
+            return waveform
 
     def remoteIncPower(self, power_inc):
         """
