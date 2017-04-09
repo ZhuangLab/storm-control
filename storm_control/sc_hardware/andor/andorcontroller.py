@@ -16,6 +16,9 @@ import ctypes
 import numpy
 import time
 
+import storm_control.sc_library.halExceptions as halExceptions
+
+
 # Andor constants & structures.
 
 drv_acquiring = 20072
@@ -72,7 +75,8 @@ def loadAndorDLL(andor_dll):
 # @param message A string message, usually this is the name of the function call.
 #
 def andorCheck(status, message):
-    assert status == drv_success, message + " failed with status = " + str(status)
+    if (status != drv_success):
+        raise AndorEMCCDException(message + " failed with status = " + str(status))
 
 ## getAvailableCameras
 #
@@ -117,9 +121,8 @@ def setCurrentCamera(camera_handle):
 #
 # Camera exception.
 #
-class AndorException(Exception):
-    def __init__(self, message):
-        Exception.__init__(self, message)
+class AndorEMCCDException(halExceptions.HardwareException):
+    pass
 
 
 ## AndorFrameData
@@ -194,7 +197,7 @@ class AndorCamera:
         # Determine camera head model.
         head_model = ctypes.create_string_buffer(32)
         andorCheck(andor.GetHeadModel(head_model), "GetHeadModel")
-        self._props_['HeadModel'] = head_model.value
+        self._props_['HeadModel'] = head_model.value.decode("utf-8")
 
         # Determine hardware version.
         plug_in_card_version = ctypes.c_uint()
@@ -218,7 +221,7 @@ class AndorCamera:
         # Determine vertical shift speeds.
         number = ctypes.c_int()
         andorCheck(andor.GetNumberVSSpeeds(ctypes.byref(number)), "GetNumberVSSpeeds")
-        self._props_["VSSpeeds"] = range(number.value)
+        self._props_["VSSpeeds"] = list(range(number.value))
         for i in range(number.value):
             index = ctypes.c_int(i)
             speed = ctypes.c_float()
@@ -228,11 +231,11 @@ class AndorCamera:
         # Determine horizontal shift speeds.
         andorCheck(andor.GetNumberADChannels(ctypes.byref(number)), "GetNumberADChannels")
         self._props_["NumberADChannels"] = number.value
-        self._props_["HSSpeeds"] = range(number.value)
+        self._props_["HSSpeeds"] = list(range(number.value))
         for i in range(number.value):
             channel = ctypes.c_int(i)
             andorCheck(andor.GetNumberHSSpeeds(channel, 0, ctypes.byref(number)), "GetNumberHSSpeeds")
-            self._props_["HSSpeeds"][i] = range(number.value)
+            self._props_["HSSpeeds"][i] = list(range(number.value))
             for j in range(number.value):
                 type = ctypes.c_int(j)
                 speed = ctypes.c_float()
@@ -248,7 +251,7 @@ class AndorCamera:
         # Determine preamp gains available.
         number = ctypes.c_int()
         andorCheck(andor.GetNumberPreAmpGains(ctypes.byref(number)), "GetNumberPreAmpGains")
-        self._props_["PreAmpGains"] = range(number.value)
+        self._props_["PreAmpGains"] = list(range(number.value))
         for i in range(number.value):
             index = ctypes.c_int(i)
             gain = ctypes.c_float()
@@ -304,7 +307,7 @@ class AndorCamera:
         if state == drv_acquiring :
             andorCheck(andor.AbortAcquisition(), "AbortAcquisition")
         elif state != drv_idle and state != drv_tempcycle:
-            raise AssertionError, "Driver is in a bad place?: " + str(state)
+            raise AndorEMCCDException("Driver is in a bad place?: " + str(state))
 
     ## closeShutter
     #
@@ -313,8 +316,8 @@ class AndorCamera:
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
         status = andor.SetShutter(0, 2, 0, 0)
-        if status != drv_success:
-            print "SetShutter (closed) failed: ", status
+        if (status != drv_success):
+            print("SetShutter (closed) failed: ", status)
 
     ## coolerOff
     #
@@ -372,8 +375,11 @@ class AndorCamera:
                     'ROI': self.ROI,
                     'binning': self.binning,
                     'vsspeed': self.vsspeed}
-        except:
-            print "getCurrentSetup: One or more parameters are not defined."
+
+        # FIXME: This should be more specific.
+        except Exception as exception:
+            print(str(exception))
+            print("getCurrentSetup: One or more parameters are not defined.")
 
     ## getDimensions
     #
@@ -466,9 +472,9 @@ class AndorCamera:
             # FIXME: Should we raise an AndorException here? This almost always
             #        means something has gone wrong.
             if (first.value != valid_first.value):
-                print "getImages16 first value problem", first.value, valid_first.value
+                print("getImages16 first value problem", first.value, valid_first.value)
             if (last.value != valid_last.value):
-                print "getImages16 last value problem", last.value, valid_last.value
+                print("getImages16 last value problem", last.value, valid_last.value)
 
             # Got the data. Split the data buffer up into frames.
             if (status == drv_success):
@@ -482,7 +488,7 @@ class AndorCamera:
 
             # Something bad happened.
             else:
-                raise AndorException("andor.GetImages16 failed with error code: " + str(status))
+                raise AndorEMCCDException("andor.GetImages16 failed with error code: " + str(status))
 
         # There is no new data.
         elif (status == drv_no_new_data):
@@ -490,8 +496,7 @@ class AndorCamera:
 
         # Something bad must have happened.
         else:
-            raise AndorException("andor.GetNumberNewImages failed with error code: " + str(status))
-
+            raise AndorEMCCDException("andor.GetNumberNewImages failed with error code: " + str(status))
 
     ## getImages16
     #
@@ -528,9 +533,9 @@ class AndorCamera:
             valid_last = ctypes.c_long(0)
             status = andor.GetImages16(first, last, data_buffer, ctypes.c_ulong(buffer_size), ctypes.byref(valid_first), ctypes.byref(valid_last))
             if (first.value != valid_first.value):
-                print "getImages16 first value problem", first.value, valid_first.value
+                print("getImages16 first value problem", first.value, valid_first.value)
             if (last.value != valid_last.value):
-                print "getImages16 last value problem", last.value, valid_last.value
+                print("getImages16 last value problem", last.value, valid_last.value)
 
             # Got the data. Split the data buffer up into frames.
             if (status == drv_success):
@@ -550,7 +555,7 @@ class AndorCamera:
 
             # Something bad happened.
             else:
-                raise AssertionError, "GetImages16 failed: " + str(status)
+                raise AndorEMCCDException("GetImages16 failed: " + str(status))
 
         # There is no new data.
         elif (status == drv_no_new_data):
@@ -561,7 +566,7 @@ class AndorCamera:
 
         # Something bad must have happened.
         else:
-            raise AssertionError, "GetNumberNewImages failed: " + str(status)
+            raise AndorEMCCDException("GetNumberNewImages failed: " + str(status))
 
     ## getMaxBinning
     #
@@ -621,7 +626,7 @@ class AndorCamera:
             andor.GetNumberNewImages(ctypes.byref(first), ctypes.byref(last))
             diff = first.value - last.value
             if (diff > 1):
-                print "  warning: acquisition is", diff, "frames behind..."
+                print("  warning: acquisition is", diff, "frames behind...")
         c_buffer = ctypes.create_string_buffer(2 * self.pixels)
         status = andor.GetOldestImage16(c_buffer, ctypes.c_ulong(self.pixels))
         if status == drv_success:
@@ -633,7 +638,7 @@ class AndorCamera:
             else:
                 return [0, self.frame_size, "acquiring"]
         else:
-            raise AssertionError, "GetOldestImage16 failed: " + str(status)
+            raise AndorEMCCDException("GetOldestImage16 failed: " + str(status))
 
     ## getPreampGains
     #
@@ -666,7 +671,7 @@ class AndorCamera:
         elif (status == drv_temp_off) or (status == drv_temp_not_stabilized) or (status == drv_temp_not_reached) or (status == drv_temp_drift):
             return [temperature.value, "unstable"]
         else:
-            print "GetTemperature failed: ", status
+            print("GetTemperature failed: ", status)
             return [50, "unstable"]
 
     ## getTemperatureRange
@@ -695,7 +700,7 @@ class AndorCamera:
         setCurrentCamera(self.camera_handle)
         self.setTemperature(temperature)
         status = self.getTemperature()
-        while status[1] == "unstable":
+        while (status[1] == "unstable"):
             time.sleep(5)
             status = camera.getTemperature()
 
@@ -707,8 +712,8 @@ class AndorCamera:
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
         status = andor.SetShutter(0, 1, 0, 0)
-        if status != drv_success:
-            print "SetShutter (open) failed: ", status
+        if (status != drv_success):
+            print("SetShutter (open) failed: ", status)
 
     ## setACQMode
     #
@@ -721,17 +726,17 @@ class AndorCamera:
     def setACQMode(self, mode, number_frames = "undef"):
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
-        if mode == "single_frame":
+        if (mode == "single_frame"):
             andorCheck(andor.SetAcquisitionMode(1), "SetAcquisitionMOde")
-        elif mode == "fixed_length":
+        elif (mode == "fixed_length"):
             andorCheck(andor.SetAcquisitionMode(3), "SetAcquisitionMode")
             andorCheck(andor.SetNumberAccumulations(1), "SetNumberAccumulations")
             andorCheck(andor.SetAccumulationCycleTime(0), "SetAccumulationCycleTime")
             andorCheck(andor.SetNumberKinetics(ctypes.c_int(number_frames)), "SetNumberKinetics")
-        elif mode == "run_till_abort":
+        elif (mode == "run_till_abort"):
             andorCheck(andor.SetAcquisitionMode(5), "SetAcquisitionMode")
         else:
-            print "Unknown mode: " + mode
+            print("Unknown mode: " + mode)
             return
         self.acqmode = mode
 
@@ -749,7 +754,7 @@ class AndorCamera:
             andorCheck(andor.SetOutputAmplifier(ctypes.c_int(channel)), "SetOutputAmplifier")
             self.adchannel = channel
         else:
-            print "Invalid channel: ", channel
+            print("Invalid channel: ", channel)
 
     ## setBaselineClamp
     #
@@ -812,7 +817,7 @@ class AndorCamera:
         self._abortIfAcquiring_()
         status = andor.SetEMGainMode(ctypes.c_int(mode))
         if (status == drv_not_supported):
-            print "Warning: Setting EM Gain Mode is not supported by this camera."
+            print("Warning: Setting EM Gain Mode is not supported by this camera.")
             return False
         elif (status == drv_p1invalid):
             return False
@@ -967,11 +972,11 @@ class AndorCamera:
         x_pixels = self._props_["XPixels"]
         y_pixels = self._props_["YPixels"]
         if (binning[0] <= 0) or (binning[1] <= 0):
-            raise AssertionError, "Invalid binning request: " + str(binning[0]) + "," + str(binning[1])
+            raise AndorEMCCDException("Invalid binning request: " + str(binning[0]) + "," + str(binning[1]))
         if (ROI[0] > ROI[1]) or (ROI[0] >= x_pixels) or (ROI[1] > x_pixels):
-            raise AssertionError, "Invalid x range: " + str(ROI[0]) + "," + str(ROI[1])
+            raise AndorEMCCDException("Invalid x range: " + str(ROI[0]) + "," + str(ROI[1]))
         if (ROI[2] > ROI[3]) or (ROI[2] >= y_pixels) or (ROI[3] > y_pixels):
-            raise AssertionError, "Invalid y range: " + str(ROI[2]) + "," +str(ROI[3])
+            raise AndorEMCCDException("Invalid y range: " + str(ROI[2]) + "," +str(ROI[3]))
         setCurrentCamera(self.camera_handle)
         self._abortIfAcquiring_()
         andorCheck(andor.SetImage(ctypes.c_int(binning[0]), ctypes.c_int(binning[1]),
@@ -1005,11 +1010,11 @@ class AndorCamera:
         setCurrentCamera(self.camera_handle)
         self.coolerOn()
         [t_min, t_max] = self._props_["TemperatureRange"]
-        if temperature < t_min:
-            print "setTemperature: Temperature is too low (" + str(temperature) + " < " + str(t_min)
+        if (temperature < t_min):
+            print("setTemperature: Temperature is too low (" + str(temperature) + " < " + str(t_min))
             temperature = t_min
-        if temperature > t_max:
-            print "setTemperature: Temperature is too high (" + str(temperature) + " > " + str(t_max)
+        if (temperature > t_max):
+            print("setTemperature: Temperature is too high (" + str(temperature) + " > " + str(t_max))
             temperature = t_max
         i_temp = ctypes.c_int(temperature)
         andorCheck(andor.SetTemperature(i_temp), "SetTemperature")
@@ -1057,13 +1062,13 @@ class AndorCamera:
         self._abortIfAcquiring_()
         self.closeShutter()
         self.coolerOff()
-        if 0:
+        if False:
             # I thought this might turn off the fan, which seems to run
             # pretty much all the time, but no luck there.
-            print "Warming"
+            print("Warming")
             current_temp = self.getTemperature()[0]
-            while current_temp < 0:
-                print "  Temperature:", current_temp
+            while(current_temp < 0):
+                print("  Temperature:", current_temp)
                 time.sleep(5.0)
                 current_temp = self.getTemperature()[0]
         andor.ShutDown()
@@ -1092,29 +1097,27 @@ class AndorCamera:
 if __name__ == "__main__":
 
     def printDict(dictionary):
-        keys = dictionary.keys()
-        keys.sort()
-        for key in keys:
-            print key, '\t', dictionary[key]
+        for key in sorted(dictionary):
+            print(key, '\t', dictionary[key])
 
     andor_path = "c:/Program Files/Andor SOLIS/Drivers/"
     loadAndorDLL(andor_path + "atmcd64d.dll")
-    print getAvailableCameras(), "cameras connected"
+    print(getAvailableCameras(), "cameras connected")
     handles = getCameraHandles()
-    print "camera handles: ", handles
+    print("camera handles: ", handles)
 
     cameras = []
     for handle in handles:
         camera = AndorCamera(andor_path, handle)
         cameras.append(camera)
-        print "Camera", handle, "Properties:"
+        print("Camera", handle, "Properties:")
         printDict(camera.getProperties())
         camera.setEMAdvanced(True)
         camera.setEMGainMode(2)
-        print "Gain range:", camera.getEMGainRange()
-        print "Advanced:", camera.getEMAdvanced()
+        print("Gain range:", camera.getEMGainRange())
+        print("Advanced:", camera.getEMAdvanced())
         #camera.setEMCCDGain(250)
-        print ""
+        print("")
 
 #    camera = AndorCamera("c:/Program Files/Andor SOLIS/Drivers/")
 #    camera = AndorCamera("c:/Program Files (x86)/Andor SOLIS/Drivers/atmcd64d.dll")
