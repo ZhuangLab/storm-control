@@ -224,7 +224,7 @@ class IlluminationView(halDialog.HalDialog):
             # Start hardware.
             for name, instance in self.hardware_modules.items():
                 if (instance.getStatus() == True):
-                    instance.startFilm(1.0/self.camera1_fps, self.oversampling)
+                    instance.startFilm(self.camera1_fps, self.oversampling)
 
             # Start channels.
             for channel in self.channels:

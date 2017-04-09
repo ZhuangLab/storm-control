@@ -1,13 +1,10 @@
-#!/usr/bin/python
-#
-## @file
-#
-# This file contains hardware classes that interface 
-# National Instruments cards with HAL illumination
-# control software.
-#
-# Hazen 04/14
-#
+#!/usr/bin/env python
+"""
+This file contains hardware classes that interface National 
+Instruments cards with HAL illumination control software.
+
+Hazen 04/17
+"""
 
 import hashlib
 import time
@@ -18,19 +15,13 @@ import storm_control.sc_library.hdebug as hdebug
 import storm_control.sc_hardware.baseClasses.illuminationHardware as illuminationHardware
 import storm_control.sc_hardware.nationalInstruments.nicontrol as nicontrol
 
-## Nidaq
-#
-# National Instruments DAQ card (modulation).
-#
-class Nidaq(illuminationHardware.DaqModulation):
 
-    ## __init__
-    #
-    # @param parameters A XML object containing initial parameters.
-    # @param parent The PyQt parent of this object.
-    #
-    def __init__(self, parameters, parent):
-        illuminationHardware.DaqModulation.__init__(self, parameters, parent)
+class Nidaq(illuminationHardware.DaqModulation):
+    """
+    National Instruments DAQ card (modulation).
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
 
         self.ao_task = False
         self.ct_task = False
@@ -54,89 +45,67 @@ class Nidaq(illuminationHardware.DaqModulation):
         else:
             self.waveform_clock = False
     
-    ## analogOff
-    #
-    # Sets the analog voltage to the minimum.
-    #
-    # @param channel_id The channel id.
-    #
     def analogOff(self, channel_id):
+        """
+        Sets the analog voltage to the minimum.
+        """
         if not self.filming:
             nicontrol.setAnalogLine(self.analog_settings[channel_id].board,
                                     self.analog_settings[channel_id].channel,
                                     self.analog_settings[channel_id].min_voltage)
 
-    ## analogOn
-    #
-    # Sets the analog voltage to the maximum.
-    #
-    # @param channel_id The channel id.
-    #
     def analogOn(self, channel_id):
+        """
+        Sets the analog voltage to the maximum.
+        """
         if not self.filming:
             nicontrol.setAnalogLine(self.analog_settings[channel_id].board,
                                     self.analog_settings[channel_id].channel,
                                     self.analog_settings[channel_id].max_voltage)
 
-    ## digitalOff
-    #
-    # Sets the digital line to 0.
-    #
-    # @param channel_id The channel id.
-    #
     def digitalOff(self, channel_id):
+        """
+        Sets the digital line to 0.
+        """
         if not self.filming:
             nicontrol.setDigitalLine(self.digital_settings[channel_id].board,
                                      self.digital_settings[channel_id].channel,
                                      False)
 
-    ## digitalOn
-    #
-    # Sets the digital line to 1.
-    #
-    # @param channel_id The channel id.
-    #
     def digitalOn(self, channel_id):
+        """
+        Sets the digital line to 1.
+        """
         if not self.filming:
             nicontrol.setDigitalLine(self.digital_settings[channel_id].board,
                                      self.digital_settings[channel_id].channel,
                                      True)
 
-    ## shutterOff
-    #
-    # Sets the shutter digital line to 0.
-    #
-    # @param channel_id The channel id.
-    #
     def shutterOff(self, channel_id):
+        """
+        Sets the shutter digital line to 0.
+        """
         nicontrol.setDigitalLine(self.shutter_settings[channel_id].board,
                                  self.shutter_settings[channel_id].channel,
                                  False)
 
-    ## digitalOn
-    #
-    # Sets the shutter digital line to 1.
-    #
-    # @param channel_id The channel id.
-    #
     def shutterOn(self, channel_id):
+        """
+        Sets the shutter digital line to 1.
+        """
         nicontrol.setDigitalLine(self.shutter_settings[channel_id].board,
                                  self.shutter_settings[channel_id].channel,
                                  True)
 
-    ## startFilm
-    #
-    # Called at the start of filming (when shutters are active).
-    #
-    # @param seconds_per_frame How many seconds it takes to acquire each frame.
-    # @param oversampling The number of values in the shutter waveform per frame.
-    #
-    def startFilm(self, seconds_per_frame, oversampling):
-        illuminationHardware.DaqModulation.startFilm(self, seconds_per_frame, oversampling)
+    def startFilm(self, frames_per_second, oversampling):
+        """
+        Called at the start of filming (when shutters are active).
+        """
+        super().startFilm(frames_per_second, oversampling)
 
         # Calculate frequency. This is set slightly higher than the camere
         # frequency so that we are ready at the start of the next frame.
-        frequency = (1.01 / seconds_per_frame) * float(oversampling)
+        frequency = (1.01 * seconds_per_frame) * float(oversampling)
 
         # If oversampling is 1 then just trigger the ao_task 
         # and do_task directly off the camera fire pin.
@@ -260,17 +229,10 @@ class Nidaq(illuminationHardware.DaqModulation):
         else:
             self.do_task = False
 
-        # Start tasks
-#        for task in [self.ao_task, self.do_task]:
-#            #for task in [self.ct_task, self.ao_task, self.do_task]:
-#            if task:
-#                task.startTask()
-
-    ## stopFilm
-    #
-    # Called at the end of filming (when shutters are active).
-    #
     def stopFilm(self):
+        """
+        Called at the end of filming (when shutters are active).
+        """
         illuminationHardware.DaqModulation.stopFilm(self)
         for task in [self.ct_task, self.ao_task, self.do_task]:
             if task:
@@ -281,58 +243,32 @@ class Nidaq(illuminationHardware.DaqModulation):
                     hdebug.logText("stop / clear failed for task " + str(task) + " with " + str(e))
 
 
-## NidaqAmp
-#
-# National Instruments DAQ card analog amplitude modulation.
-#
 class NidaqAmp(illuminationHardware.AmplitudeModulation):
+    """
+    National Instruments DAQ card analog amplitude modulation.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
 
-    ## __init__
-    #
-    # @param parameters A XML object containing initial parameters.
-    # @param parent The PyQt parent of this object.
-    #
-    def __init__(self, parameters, parent):
-        illuminationHardware.AmplitudeModulation.__init__(self, parameters, parent)
-
-    ## amplitudeOff
-    #
-    # Called when the module should turn off a channel.
-    #
-    # @param channel_id The channel id.
-    #
     def amplitudeOff(self, channel_id):
+        """
+        Called when the module should turn off a channel.
+        """
         nicontrol.setAnalogLine(self.channel_parameters[channel_id].board,
                                 self.channel_parameters[channel_id].channel,
                                 self.channel_parameters[channel_id].min_voltage)
 
-    ## amplitudeOn
-    #
-    # Called when the module should turn on a channel.
-    #
-    # @param channel_id The channel id.
-    # @param amplitude The channel amplitude.
-    #
     def amplitudeOn(self, channel_id, amplitude):
+        """
+        Called when the module should turn on a channel.
+        """
         nicontrol.setAnalogLine(self.channel_parameters[channel_id].board,
                                 self.channel_parameters[channel_id].channel,
                                 0.001 * amplitude)
 
-    ## getMaxAmplitude
-    #
-    # @param channel_id The channel id.
-    #
-    # @return The maximum amplitude for this channel.
-    #
     def getMaxAmplitude(self, channel_id):
         return self.channel_parameters[channel_id].maximum
 
-    ## getMinAmplitude
-    #
-    # @param channel_id The channel id.
-    #
-    # @return The minimum amplitude for this channel.
-    #
     def getMinAmplitude(self, channel_id):
         params = self.channel_parameters[channel_id]
         if (hasattr(params, "minimum")):
@@ -340,27 +276,25 @@ class NidaqAmp(illuminationHardware.AmplitudeModulation):
         else:
             return 0
 
-    ## initialize
-    #
-    # This is called by each of the channels that wants to use this module.
-    #
-    # @param interface Interface type (from the perspective of the channel).
-    # @param channel_id The channel id.
-    # @param parameters A parameters object for this channel.
-    #
     def initialize(self, interface, channel_id, parameters):
+        """
+        This is called by each of the channels that wants to use this module.
+        """
         self.channel_parameters[channel_id] = parameters
         self.channel_parameters[channel_id].maximum = int(1000.0 * parameters.max_voltage)
         self.channel_parameters[channel_id].minimum = int(1000.0 * parameters.min_voltage)
 
-    ## setAmplitude
-    #
-    # @param channel_id The channel id.
-    # @param amplitude The channel amplitude.
-    #
     def setAmplitude(self, channel_id, amplitude):
         self.amplitudeOn(channel_id, amplitude)
 
+
+
+##
+## I'm pretty sure that:
+##
+## (1) This doesn't work.
+## (2) It was a bad idea.
+##
 ## NidaqTR
 #
 # National Instruments DAQ card (modulation) with task recycling.
