@@ -727,6 +727,12 @@ class StormXMLObject(object):
         """
         return self.parameters.keys()
 
+    def getOrder(self):
+        """
+        A convience so that we can sort these along with Parameter objects.
+        """
+        return 0
+        
     def getp(self, pname):
         """
         Return the property specified by pname.
@@ -748,7 +754,14 @@ class StormXMLObject(object):
         Return all the properties.
         """
         return self.parameters.values()
-    
+
+    def getSortedAttrs(self):
+        """
+        Return attributes sorted by order, then by name.
+        """
+        attrs = self.parameters.keys()
+        return sorted(attrs, key = lambda x: (self.parameters[x].getOrder(), x))
+
     def has(self, pname):
         """
         Return true if this object has a particular Parameter.

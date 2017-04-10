@@ -141,6 +141,20 @@ def test_parameters_7():
     assert(p2.get("foo") == "baz")
     assert(p3.get("foo") == "bar")
 
+def test_parameters_8():
+    s1 = params.StormXMLObject()
+    s2 = params.StormXMLObject()
+    p1 = params.Parameter(name = "aa", order = 2)
+    p2 = params.Parameter(name = "bb", order = 1)
+    p3 = params.Parameter(name = "cc", order = 2)
+
+    s1.addSubSection("dd", s2)
+    s1.add(p1)
+    s1.add(p2)
+    s1.add(p3)
+
+    assert(s1.getSortedAttrs() == ['dd', 'bb', 'aa', 'cc'])
+
         
 if (__name__ == "__main__"):
     test_parameters_1()
@@ -150,3 +164,4 @@ if (__name__ == "__main__"):
     test_parameters_5()
     test_parameters_6()
     test_parameters_7()
+    test_parameters_8()
