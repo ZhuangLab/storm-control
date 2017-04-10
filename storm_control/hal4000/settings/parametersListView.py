@@ -36,14 +36,14 @@ class ParametersListViewDelegate(QtWidgets.QStyledItemDelegate):
         self.model = model
 
     def paint(self, painter, option, index):
-        note = self.model.itemFromIndex(index)
+        p_item = self.model.itemFromIndex(index)
 
         opt = QtWidgets.QStyleOptionButton()
-        if (note.checkState() == QtCore.Qt.Checked):
+        if (p_item.checkState() == QtCore.Qt.Checked):
             opt.state = QtWidgets.QStyle.State_On
         opt.rect = option.rect
-        opt.text = note.text()
-        
+        opt.text = p_item.text()
+
         style = option.widget.style()
         style.drawControl(QtWidgets.QStyle.CE_RadioButton, opt, painter, option.widget)
         
