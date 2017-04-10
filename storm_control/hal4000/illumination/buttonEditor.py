@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 import storm_control.sc_library.hdebug as hdebug
 
-import storm_control.hal4000.settings.parameterEditors as parameterEditors
+import storm_control.hal4000.settings.parametersEditors as parametersEditors
 import storm_control.hal4000.illumination.button_editor_ui as buttonEditorUi
 
 
@@ -151,7 +151,7 @@ class ButtonEditorTable(QtWidgets.QWidget):
 #
 # A widget for editting power buttons.
 #
-class ParametersTablePowerButtonEditor(parameterEditors.ParametersTableWidget):
+class ParametersTablePowerButtonEditor(parametersEditors.ParametersTableWidget):
 
     @hdebug.debug
     def __init__(self, root_name, parameter, changed_signal, parent):
