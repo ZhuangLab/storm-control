@@ -373,7 +373,7 @@ class Illumination(halModule.HalModule):
         elif message.isType("updated parameters"):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "shutters sequence",
-                                                       data = {"sequence" : self.view.getShuttersSequence()}))
+                                                       data = {"sequence" : self.view.getShuttersInfo()}))
 
             # Query camera1 for timing information.
             self.newMessage.emit(halMessage.HalMessage(source = self,
