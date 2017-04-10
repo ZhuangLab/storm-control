@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 import storm_control.sc_library.hdebug as hdebug
 
-import storm_control.hal4000.halLib.parameterEditors as parameterEditors
+import storm_control.hal4000.settings.parameterEditors as parameterEditors
 import storm_control.hal4000.illumination.button_editor_ui as buttonEditorUi
 
 

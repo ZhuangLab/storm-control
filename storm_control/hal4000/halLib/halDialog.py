@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 """
-
 The standard HAL dialog box.
 
 All the dialog boxes in HAL are sub-classes of this dialog box.
 
 Hazen 2/17
-
 """
 
 from PyQt5 import QtWidgets

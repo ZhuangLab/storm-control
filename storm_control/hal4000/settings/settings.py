@@ -41,7 +41,8 @@ class Settings(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
-        self.view = parametersBox.ParametersBox()
+        self.view = parametersBox.ParametersBox(module_params = module_params,
+                                                qt_settings = qt_settings)
         self.view.newParameters.connect(self.handleNewParameters)
 
         p = params.StormXMLObject()
