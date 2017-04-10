@@ -1,28 +1,19 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Emulated daq card.
-#
-# Hazen 04/14
-#
+#!/usr/bin/env python
+"""
+Emulated daq card.
 
+Hazen 04/14
+"""
 
 import storm_control.sc_hardware.baseClasses.illuminationHardware as illuminationHardware
 
-## NoneDaq
-#
-# Daq card emulation.
-#
-class NoneDaq(illuminationHardware.DaqModulation):
 
-    ## __init__
-    #
-    # @param parameters A XML object containing initial parameters.
-    # @param parent The PyQt parent of this object.
-    #
-    def __init__(self, parameters, parent):
-        illuminationHardware.DaqModulation.__init__(self, parameters, parent)
+class NoneDaq(illuminationHardware.DaqModulation):
+    """
+    Daq card emulation.
+    """
+    def __init__(self, parameters = None, parent = None, **kwds):
+        super().__init__(**kwds)
 
 
 #

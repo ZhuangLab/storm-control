@@ -92,7 +92,8 @@ class IlluminationView(halDialog.HalDialog):
             m_name = module.module_name
             a_module =  importlib.import_module(m_name)
             a_class = getattr(a_module, module.class_name)
-            a_instance = a_class(module.parameters, self)
+            a_instance = a_class(parameters = module.parameters,
+                                 parent = self)
             if a_instance.isBuffered():
                 a_instance.start(QtCore.QThread.NormalPriority)
             self.hardware_modules[module.name] = a_instance            

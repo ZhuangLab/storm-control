@@ -1,28 +1,17 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Emulated AOTF.
-#
-# Hazen 04/14
-#
+#!/usr/bin/env python
+"""
+Emulated AOTF.
+
+Hazen 04/14
+"""
 
 import storm_control.sc_hardware.baseClasses.illuminationHardware as illuminationHardware
 
 
-## NoneAOTF
-#
-# AOTF emulator.
-#
 class NoneAOTF(illuminationHardware.AmplitudeModulation):
 
-    ## __init__
-    #
-    # @param parameters A XML object containing initial parameters.
-    # @param parent The PyQt parent of this object.
-    #
-    def __init__(self, parameters, parent):
-        illuminationHardware.AmplitudeModulation.__init__(self, parameters, parent)
+    def __init__(self, parameters = None, parent = None, **kwds):
+        super().__init__(**kwds)
 
 
 #
