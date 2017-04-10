@@ -31,12 +31,8 @@ class ParametersListViewDelegate(QtWidgets.QStyledItemDelegate):
     """
     This lets us draw items that look like radio buttons.
     """
-    def __init__(self, model = None, **kwds):
-        super().__init__(**kwds)
-        self.model = model
-
     def paint(self, painter, option, index):
-        p_item = self.model.itemFromIndex(index)
+        p_item = index.model().itemFromIndex(index)
 
         opt = QtWidgets.QStyleOptionButton()
         if (p_item.checkState() == QtCore.Qt.Checked):
@@ -80,7 +76,7 @@ class ParametersMVC(QtWidgets.QListView):
         self.setDragDropOverwriteMode(False)
 
         # Custom drawing of the items.
-        self.setItemDelegate(ParametersListViewDelegate(model = self.model))
+        self.setItemDelegate(ParametersListViewDelegate())
 
         self.clicked.connect(self.handleClicked)
 
