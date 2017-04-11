@@ -3,7 +3,7 @@
 ## @file
 #
 # Spot counter. This performs real time analysis of the frames from
-# camera. It uses a fairly simple object finder. It's purpose is to
+# camera. It uses a fairly simple object finder. Its purpose is to
 # provide the user with a rough idea of the quality of the data
 # that they are taking.
 #
