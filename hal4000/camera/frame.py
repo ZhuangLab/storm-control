@@ -3,7 +3,7 @@
 ## @file
 #
 # Class for storage of a single frame of camera data
-# or the data from a feed and it's meta-information.
+# or the data from a feed and its meta-information.
 #
 # Notes: 
 # 1) The numpy data field (np_data) is expected to
@@ -15,7 +15,7 @@
 ## Frame
 #
 # Class for the storage of a single frame of camera data
-# and it's meta-information.
+# and its meta-information.
 #
 class Frame():
 
