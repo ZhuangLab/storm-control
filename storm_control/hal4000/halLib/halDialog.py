@@ -25,7 +25,7 @@ class HalDialog(QtWidgets.QDialog):
         Save GUI settings & close.
         """
         qt_settings.setValue(self.module_name + ".pos", self.pos())
-        qt_settings.setValue(self.module_name + ".main", self.size())
+        qt_settings.setValue(self.module_name + ".size", self.size())
         qt_settings.setValue(self.module_name + ".visible", self.isVisible())
 
         self.ignore_close = False
