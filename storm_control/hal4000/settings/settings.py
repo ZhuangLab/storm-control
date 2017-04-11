@@ -47,7 +47,7 @@ class Settings(halModule.HalModule):
 
         p = params.StormXMLObject()
         p.set("parameters_file", os.path.join(module_params.get("directory"), "default.xml"))
-        
+    
         #
         # Add parameter to record whether or not these parameters have actually
         # been used (as opposed to just appearing in the list view).

@@ -37,20 +37,22 @@ def populateModel(model, parameters):
             
         # Create items for (mutable) parameters.
         else:
+            q_item = QtGui.QStandardItem()
+            q_item.setData(EditorItemData(parameter = param))
             if param.isMutable():
-                q_item = QtGui.QStandardItem()
-                q_item.setData(EditorItemData(parameter = param))
                 q_item.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable)
-                model.appendRow(q_item)
-        
+            else:
+                q_item.setFlags(QtCore.Qt.ItemIsEnabled)
+            model.appendRow(q_item)
+
 
 class EditorItemData(object):
     """
     QVariant storage for parameters.
     """
-    def __init__(self, parameter = None, changed = False, **kwds):
+    def __init__(self, parameter = None, modified = False, **kwds):
         super().__init__(**kwds)
-        self.changed = changed
+        self.modified = modified
         self.parameter = parameter
 
     
@@ -61,8 +63,8 @@ class EditorModel(QtGui.QStandardItemModel):
 class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
     margin = 2
     name_width = 100
-    widget_width = 100
-        
+    widget_width = 200
+
     def createEditor(self, parent, option, index):
         data = self.getData(index)
         if isinstance(data, EditorItemData):
@@ -76,8 +78,8 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
             return super().createEditor(parent, option, index)
 
     def getData(self, index):
-        return index.data(role = QtCore.Qt.UserRole+1)
-    
+        return index.model().itemFromIndex(index).data(role = QtCore.Qt.UserRole+1)
+
     def getEditorRect(self, option):
         a_rect = QtCore.QRect(option.rect.topLeft(),
                               option.rect.bottomRight())
@@ -96,7 +98,13 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         data = self.getData(index)
         if isinstance(data, EditorItemData):
+            pen = painter.pen()
+            
             parameter = data.parameter
+
+            # Draw the text gray if it not mutable.
+            if not parameter.isMutable():
+                painter.setPen(QtGui.QColor(128, 128, 128))
 
             overall_width = option.rect.width()
 
@@ -105,11 +113,17 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
                                   option.rect.bottomRight())
             a_rect.setWidth(self.name_width)
 
+            # Draw the text red if it has been modified.
+            if data.modified:
+                painter.setPen(QtGui.QColor(255, 0, 0))
+
             painter.setClipping(True)
             painter.setClipRect(a_rect)
             painter.drawText(a_rect,
                              QtCore.Qt.AlignLeft,
                              parameter.getName())
+            if data.modified:
+                painter.setPen(pen)
 
             # Render parameter description.
             if (overall_width > 400):
@@ -127,12 +141,19 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
             painter.setClipping(False)
             a_rect = self.getEditorRect(option)
 
-            opt = QtWidgets.QStyleOptionComboBox()
-            opt.rect = a_rect
-            
-            style = option.widget.style()
-            parametersDrawersEditors.drawParameter(parameter, style, opt, painter, option.widget)
+            if parameter.isMutable():
+                opt = QtWidgets.QStyleOptionComboBox()
+                opt.rect = a_rect
+                style = option.widget.style()
+                parametersDrawersEditors.drawParameter(parameter, style, opt, painter, option.widget)
+            else:
+                painter.setClipRect(a_rect)
+                painter.drawText(a_rect,
+                                 QtCore.Qt.AlignLeft,
+                                 parameter.toString())
 
+            painter.setPen(pen)
+            
         else:
             super().paint(painter, option, index)
 
@@ -146,8 +167,9 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
     def setModelData(self, editor, model, index):
         data = self.getData(index)
         if isinstance(data, EditorItemData):
-            model.setData(index, EditorItemData(changed = True,
-                                                parameter = editor.getParameter()))
+            q_item = model.itemFromIndex(index)
+            q_item.setData(EditorItemData(modified = True,
+                                          parameter = editor.getParameter()))
         else:
             super().setModelData(editor, model, index)
 
