@@ -48,10 +48,10 @@ class EditorItemData(object):
     """
     QVariant storage for parameters.
     """
-    def __init__(self, parameter = None, **kwds):
+    def __init__(self, parameter = None, changed = False, **kwds):
         super().__init__(**kwds)
+        self.changed = changed
         self.parameter = parameter
-        self.changed = False
 
     
 class EditorModel(QtGui.QStandardItemModel):
@@ -146,7 +146,8 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
     def setModelData(self, editor, model, index):
         data = self.getData(index)
         if isinstance(data, EditorItemData):
-            model.setData(index, EditorItemData(parameter = editor.getParameter()))
+            model.setData(index, EditorItemData(changed = True,
+                                                parameter = editor.getParameter()))
         else:
             super().setModelData(editor, model, index)
 
@@ -229,3 +230,23 @@ class ParametersEditorDialog(QtWidgets.QDialog):
 
     def handleUpdate(self):
         self.update.emit(self.parameters)
+
+    def updateParameters(self, new_parameters):
+        #
+        # FIXME: For now we are just replacing the current model with a new
+        #        model. What we should do is update the data in the current
+        #        model with new parameters. In order to do this though we
+        #        need to maintain a connection between each parameter and
+        #        it's location in the model.
+        #
+        self.changed_items = {}
+        self.ui.okButton.setStyleSheet("QPushButton { color : black }")
+        self.ui.updateButton.setEnabled(False)
+
+        self.parameters = new_parameters
+        new_model = EditorModel()
+        populateModel(new_model, self.parameters)
+        self.editor_model.itemChanged.disconnect()
+        self.ui.editorTreeView.setModel(new_model)
+        self.editor_model = new_model
+        self.editor_model.itemChanged.connect(self.handleItemChanged)

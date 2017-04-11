@@ -84,21 +84,26 @@ class ParametersBox(QtWidgets.QGroupBox):
 
     def handleEditorClosed(self):
         self.editor_dialog.closed.disconnect()
+        self.editor_dialog.update.disconnect()
+        self.editor_dialog = None
+
+        # Reenable the ListView when we are done editing the parameters.
         self.enableUI(True)
 
+    def handleEditorUpdate(self, parameters):
+        self.newParameters.emit(parameters, True)
+        
     def handleEditParameters(self, parameters):
 
-        # Disable the ListView while we are editting the parameters.
+        # Disable the ListView while we are editing the parameters.
         self.enableUI(False)
 
         self.editor_dialog = parametersEditorDialog.ParametersEditorDialog(window_title = self.editor_window_title,
                                                                            qt_settings = self.qt_settings,
                                                                            parameters = parameters)
         self.editor_dialog.closed.connect(self.handleEditorClosed)
+        self.editor_dialog.update.connect(self.handleEditorUpdate)
         self.editor_dialog.show()
-        
-        # Re-enable the ListView.
-
 
     def handleNewParameters(self, parameters):
         self.newParameters.emit(parameters, False)
@@ -186,6 +191,11 @@ class ParametersBox(QtWidgets.QGroupBox):
                            svalue = parameters,
                            overwrite = True)
 
+    def updateEditor(self):
+        # We should not end up here if there is no editor dialog.
+        assert (self.editor_dialog is not None)
+        self.editor_dialog.updateParameters(self.getCurrentParameters())
+        
     def updatePreviousParameters(self, section, parameters):
         """
         The modules will response to 'new parameters' by adding their current

@@ -168,18 +168,28 @@ class Settings(halModule.HalModule):
                     self.view.revertSelection()
                 
             else:
+                #
                 # If this is in response to a 'new parameters' message triggered by
                 # the editor then we don't want to update the previous parameters.
-                if not message.getData()["is_edit"]:
+                #
+                is_edit = message.getData()["is_edit"]
+                if not is_edit:
                     for response in message.getResponses():
                         data = response.getData()
                         if "old parameters" in data:
-                            self.view.updatePreviousParameters(response.source, data["old parameters"])
+                            self.view.updatePreviousParameters(response.source,
+                                                               data["old parameters"])
 
                 for response in message.getResponses():
                     data = response.getData()
                     if "new parameters" in data:
-                        self.view.updateCurrentParameters(response.source, data["new parameters"].copy())
+                        self.view.updateCurrentParameters(response.source,
+                                                          data["new parameters"].copy())
+
+                # Notify the editor, so that it can update based on the parameters
+                # that were returned.
+                if is_edit:
+                    self.view.updateEditor()
 
                 # Mark the new parameters as initialized.
                 self.view.markCurrentAsInitialized()
