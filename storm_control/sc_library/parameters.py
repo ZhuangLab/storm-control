@@ -480,7 +480,7 @@ class ParameterSimple(Parameter):
                 "value" : value,
                 "is_mutable" : False,
                 "is_saved" : False}
-        super().__init__(self, **kwds)
+        super().__init__(**kwds)
 
         
 class ParameterString(Parameter):
@@ -664,6 +664,7 @@ class StormXMLObject(object):
             if isinstance(pvalue, Parameter):
                 self.parameters[pname] = pvalue
             else:
+                print(">ap", pname, pvalue)
                 self.parameters[pname] = ParameterSimple(pname, pvalue)
 
     def addSubSection(self, sname, svalue = None, overwrite = False):
