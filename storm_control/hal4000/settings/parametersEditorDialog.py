@@ -38,6 +38,7 @@ def populateModel(model, parameters):
             if param.isMutable():
                 q_item = QtGui.QStandardItem()
                 q_item.setData(EditorItemData(parameter = param))
+                q_item.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable)
                 model.appendRow(q_item)
         
 
@@ -53,46 +54,72 @@ class EditorModel(QtGui.QStandardItemModel):
 
 
 class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
+    margin = 2
+    name_width = 100
+    widget_width = 100
+
+    def createEditor(self, parent, option, index):
+        if isinstance(index.data(role = QtCore.Qt.UserRole+1), EditorItemData):        
+            parameter = index.data(role = QtCore.Qt.UserRole+1).parameter
+            if isinstance(parameter, params.ParameterSet):
+                editor = QtWidgets.QComboBox(parent)
+                for elt in sorted(parameter.getAllowed()):
+                    editor.addItem(str(elt))
+                editor.setCurrentIndex(editor.findText(str(parameter.getv())))
+                return editor
+        else:
+            return super().createEditor(parent, option, index)
+
+    def getEditorRect(self, option):
+        a_rect = QtCore.QRect(option.rect.topLeft(),
+                              option.rect.bottomRight())
+        a_rect.setLeft(option.rect.left() + option.rect.width() - self.widget_width - 2*self.margin)
+        a_rect.setWidth(self.widget_width)        
+        a_rect.setTop(option.rect.top() + self.margin)
+        a_rect.setHeight(option.rect.height() - 2*self.margin)
+        return a_rect
         
     def paint(self, painter, option, index):
         if isinstance(index.data(role = QtCore.Qt.UserRole+1), EditorItemData):
             parameter = index.data(role = QtCore.Qt.UserRole+1).parameter
 
-            # Render parameter name.
-            opt = QtWidgets.QStyleOptionButton()
-            opt.rect = option.rect
-            opt.text = "foo " + ",".join([parameter.getName(), parameter.getDescription()])
-            opt.rect.setWidth(100)
+            overall_width = option.rect.width()
 
-            print(opt.rect)
-            
-            style = option.widget.style()
-            style.drawItemText(painter,
-                               opt.rect,
-                               QtCore.Qt.AlignLeft,
-                               option.palette,
-                               (option.state == QtWidgets.QStyle.State_Enabled),
-                               opt.text)
+            # Render parameter name.
+            a_rect = QtCore.QRect(option.rect.topLeft(),
+                                  option.rect.bottomRight())
+            a_rect.setWidth(self.name_width)
+
+            painter.setClipping(True)
+            painter.setClipRect(a_rect)
+            painter.drawText(a_rect,
+                             QtCore.Qt.AlignLeft,
+                             parameter.getName())
 
             # Render parameter description.
+            if (overall_width > 400):
+                a_rect = QtCore.QRect(option.rect.topLeft(),
+                                      option.rect.bottomRight())
+                a_rect.setLeft(option.rect.left() + self.name_width + self.margin)
+                a_rect.setWidth(overall_width - (self.name_width + self.widget_width + 3*self.margin))
 
-            # Render parameter editor.
+                painter.setClipRect(a_rect)
+                painter.drawText(a_rect,
+                                 QtCore.Qt.AlignLeft,
+                                 parameter.getDescription())
+
+            # Render control for editting.
+            painter.setClipping(False)
+            a_rect = self.getEditorRect(option)
+
+            opt = QtWidgets.QStyleOptionComboBox()
+            opt.rect = a_rect
+            opt.currentText = parameter.toString()
             
-                               
-            #style.drawControl(QtWidgets.QStyle.CE_ItemViewItem, opt, painter, option.widget)
-            #print(opt.text)
-            #style.drawControl(QtWidgets.QStyle.CE_RadioButton, opt, painter, option.widget)
+            style = option.widget.style()
+            style.drawComplexControl(QtWidgets.QStyle.CC_ComboBox, opt, painter, option.widget)
+            style.drawControl(QtWidgets.QStyle.CE_ComboBoxLabel, opt, painter, option.widget)
 
-#            painter.drawText(option.rect,
-#                             QtCore.Qt.AlignLeft,
-#                             "bar")
-                                     
-            #opt = QtWidgets.QStyleOption()
-            #opt.rect = option.rect
-            #opt.text = "foo " + 
-
-            #style = option.widget.style()
-            #style.drawControl(QtWidgets.QStyle.CE_RadioButton, opt, painter, option.widget)
         else:
             super().paint(painter, option, index)
 
@@ -102,9 +129,14 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
         This provides a little more space between the items.
         """
         result = QtWidgets.QStyledItemDelegate.sizeHint(self, option, index)
-        result.setHeight(1.1 * result.height())
+        result.setHeight(2.0 * result.height())
         return result
-    
+
+    def updateEditorGeometry(self, editor, option, index):
+        overall_width = option.rect.width()
+        a_rect = self.getEditorRect(option)
+        editor.setGeometry(a_rect)
+
     
 class ParametersEditorDialog(QtWidgets.QDialog):
     """
@@ -128,6 +160,7 @@ class ParametersEditorDialog(QtWidgets.QDialog):
         self.editor_model = EditorModel()
         populateModel(self.editor_model, self.parameters)
         self.ui.editorTreeView.setModel(self.editor_model)
+        self.ui.editorTreeView.setHeaderHidden(True)
         self.ui.editorTreeView.setItemDelegate(EditorTreeViewDelegate())
         
         # Configure Ui.
@@ -144,7 +177,8 @@ class ParametersEditorDialog(QtWidgets.QDialog):
     def closeEvent(self, event):
         self.closed.emit()
         self.qt_settings.setValue(self.module_name + ".pos", self.pos())
-        self.qt_settings.setValue(self.module_name + ".main", self.size())
+        self.qt_settings.setValue(self.module_name + ".size", self.size())
+        self.qt_settings.sync()
 
     def handleOk(self, boolean):
         self.close()
