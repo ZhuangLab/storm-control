@@ -10,7 +10,7 @@ import ast
 import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
 
-import storm_control.hal4000.illumination.buttonEditor as buttonEditor
+#import storm_control.hal4000.illumination.buttonEditor as buttonEditor
 
 
 class IlluminationParameterException(halExceptions.HalException):
@@ -21,7 +21,7 @@ class ParameterPowerButtons(params.ParameterCustom):
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.editor = buttonEditor.ParametersTablePowerButtonEditor
+        #self.editor = buttonEditor.ParametersTablePowerButtonEditor
         
     def toType(self, new_value):
         if isinstance(new_value, str):

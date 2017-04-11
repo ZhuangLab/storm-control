@@ -11,8 +11,10 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 import storm_control.sc_library.parameters as params
 
+import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 import storm_control.hal4000.qtdesigner.params_editor_ui as paramsEditorUi
 import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
+import storm_control.hal4000.settings.parametersDrawersEditors as parametersDrawersEditors
 
 
 def getFileName(path):
@@ -43,10 +45,13 @@ def populateModel(model, parameters):
         
 
 class EditorItemData(object):
-    
+    """
+    QVariant storage for parameters.
+    """
     def __init__(self, parameter = None, **kwds):
         super().__init__(**kwds)
         self.parameter = parameter
+        self.changed = False
 
     
 class EditorModel(QtGui.QStandardItemModel):
@@ -57,19 +62,22 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
     margin = 2
     name_width = 100
     widget_width = 100
-
+        
     def createEditor(self, parent, option, index):
-        if isinstance(index.data(role = QtCore.Qt.UserRole+1), EditorItemData):        
-            parameter = index.data(role = QtCore.Qt.UserRole+1).parameter
-            if isinstance(parameter, params.ParameterSet):
-                editor = QtWidgets.QComboBox(parent)
-                for elt in sorted(parameter.getAllowed()):
-                    editor.addItem(str(elt))
-                editor.setCurrentIndex(editor.findText(str(parameter.getv())))
-                return editor
+        data = self.getData(index)
+        if isinstance(data, EditorItemData):
+            editor = parametersDrawersEditors.getEditor(parameter = data.parameter,
+                                                        parent = parent)
+            if editor is not None:
+                editor.editingFinished.connect(self.handleEditingFinished)
+                editor.updateParameter.connect(self.handleUpdateParameter)
+            return editor
         else:
             return super().createEditor(parent, option, index)
 
+    def getData(self, index):
+        return index.data(role = QtCore.Qt.UserRole+1)
+    
     def getEditorRect(self, option):
         a_rect = QtCore.QRect(option.rect.topLeft(),
                               option.rect.bottomRight())
@@ -78,10 +86,17 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
         a_rect.setTop(option.rect.top() + self.margin)
         a_rect.setHeight(option.rect.height() - 2*self.margin)
         return a_rect
-        
+
+    def handleEditingFinished(self, editor):
+        self.closeEditor.emit(editor)
+
+    def handleUpdateParameter(self, editor):
+        self.commitData.emit(editor)
+
     def paint(self, painter, option, index):
-        if isinstance(index.data(role = QtCore.Qt.UserRole+1), EditorItemData):
-            parameter = index.data(role = QtCore.Qt.UserRole+1).parameter
+        data = self.getData(index)
+        if isinstance(data, EditorItemData):
+            parameter = data.parameter
 
             overall_width = option.rect.width()
 
@@ -108,22 +123,33 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
                                  QtCore.Qt.AlignLeft,
                                  parameter.getDescription())
 
-            # Render control for editting.
+            # Render control for editing.
             painter.setClipping(False)
             a_rect = self.getEditorRect(option)
 
             opt = QtWidgets.QStyleOptionComboBox()
             opt.rect = a_rect
-            opt.currentText = parameter.toString()
             
             style = option.widget.style()
-            style.drawComplexControl(QtWidgets.QStyle.CC_ComboBox, opt, painter, option.widget)
-            style.drawControl(QtWidgets.QStyle.CE_ComboBoxLabel, opt, painter, option.widget)
+            parametersDrawersEditors.drawParameter(parameter, style, opt, painter, option.widget)
 
         else:
             super().paint(painter, option, index)
 
-            
+    def setEditorData(self, editor, index):
+        data = self.getData(index)
+        if isinstance(data, EditorItemData):
+            editor.setParameter(data.parameter)
+        else:
+            super().setEditorData(editor, index)
+
+    def setModelData(self, editor, model, index):
+        data = self.getData(index)
+        if isinstance(data, EditorItemData):
+            model.setData(index, EditorItemData(parameter = editor.getParameter()))
+        else:
+            super().setModelData(editor, model, index)
+
     def sizeHint(self, option, index):
         """
         This provides a little more space between the items.
@@ -143,13 +169,15 @@ class ParametersEditorDialog(QtWidgets.QDialog):
     The parameters editor dialog with a TreeView based editor.
     """
     closed = QtCore.pyqtSignal()
+    update = QtCore.pyqtSignal(object)
     
     def __init__(self, window_title = None, qt_settings = None, parameters = None, **kwds):
         """
         """
         super().__init__(**kwds)
+        self.changed_items = {}
         self.module_name = "parameters_editor"
-        self.parameters = parameters
+        self.parameters = parameters.copy()
         self.qt_settings = qt_settings
 
         # Load Ui.
@@ -171,14 +199,33 @@ class ParametersEditorDialog(QtWidgets.QDialog):
         self.resize(self.qt_settings.value(self.module_name + ".size", self.size()))
 
         self.ui.parametersNameLabel.setText(getFileName(parameters.get("parameters_file")))
-                
+        self.ui.updateButton.setEnabled(False)
+
+        self.editor_model.itemChanged.connect(self.handleItemChanged)
         self.ui.okButton.clicked.connect(self.handleOk)
+        self.ui.updateButton.clicked.connect(self.handleUpdate)
         
     def closeEvent(self, event):
+        if (len(self.changed_items) > 0):
+            reply = halMessageBox.halMessageBoxResponse(self,
+                                                        "Warning!",
+                                                        "Parameters have not been updated, close anyway?")
+            if (reply == QtWidgets.QMessageBox.No):
+                event.ignore()
+                return
+
         self.closed.emit()
         self.qt_settings.setValue(self.module_name + ".pos", self.pos())
         self.qt_settings.setValue(self.module_name + ".size", self.size())
         self.qt_settings.sync()
 
+    def handleItemChanged(self, q_item):
+        self.changed_items[id(q_item)] = q_item
+        self.ui.okButton.setStyleSheet("QPushButton { color : red }")
+        self.ui.updateButton.setEnabled(True)
+
     def handleOk(self, boolean):
         self.close()
+
+    def handleUpdate(self):
+        self.update.emit(self.parameters)

@@ -222,10 +222,18 @@ class Parameter(object):
     """
     Base Parameter object.
     """
-    def __init__(self, description = "", name = "", value = None, order = 1, is_mutable = True, is_saved = True, **kwds):
+    def __init__(self,
+                 description = "",
+                 name = "",
+                 value = None,
+                 order = 1,
+                 is_mutable = True,
+                 is_saved = True,
+                 **kwds):
         super().__init__(**kwds)
-        
+
         self.description = description
+        self.editor = None
         self.is_saved = is_saved
         self.is_mutable = is_mutable
         self.name = name
@@ -241,12 +249,15 @@ class Parameter(object):
     def getDescription(self):
         return self.description
 
+    def getEditor(self):
+        return self.editor
+    
     def getName(self):
         return self.name
     
     def getOrder(self):
         return self.order
-        
+
     def getv(self):
         return self.value
 
@@ -376,6 +387,7 @@ class ParameterSet(Parameter):
 
     Note: sub-classes need to create the 'allowed' attribute.
     """
+    
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
