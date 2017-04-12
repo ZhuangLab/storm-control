@@ -106,7 +106,7 @@
 	Also, "camera1" is assumed to be the master camera and many other modules
 	(software) synchronize to this camera.
     -->
-    
+
     <camera1>
       <class_name type="string">Camera</class_name>
       <module_name type="string">camera.camera</module_name>
@@ -115,13 +115,14 @@
 	<class_name type="string">NoneCameraControl</class_name>
 	<module_name type="string">camera.noneCameraControl</module_name>
 	<parameters>
-
+	  
 	  <!-- This is specific to the emulated camera. -->
 	  <roll type="float">1.0</roll>
 
-	  <!-- These should be specified for every camera, and cannot be changed
+          <!-- These should be specified for every camera, and cannot be changed
 	       in HAL when running. -->
-	  <default_max type="int">300</default_max> <!-- these are the display defaults, not the camera range. -->
+	  <!-- These are the display defaults, not the camera range. -->
+	  <default_max type="int">300</default_max> 
 	  <default_min type="int">0</default_min>
 	  <flip_horizontal type="boolean">False</flip_horizontal>
 	  <flip_vertical type="boolean">False</flip_vertical>
@@ -131,7 +132,7 @@
 
 	  <!-- This is the extension to use (if any) when saving data from this camera. -->
 	  <extension type="string"></extension>
-
+	  
 	  <!-- Whether or not data from this camera is saved during filming. -->
 	  <saved type="boolean">True</saved>
 
@@ -139,8 +140,8 @@
       </camera>
     </camera1>
 
-
     <!-- Illumination (lasers, shutters, etc) control -->
+    <!--
     <illumination>
       <class_name type="string">Illumination</class_name>
       <module_name type="string">illumination.illumination</module_name>
@@ -148,6 +149,7 @@
 	<settings_xml type="string">none_illumination_settings.xml</settings_xml>
       </parameters>
     </illumination>
+    -->
     
     <!-- Bluetooth communication -->
     <!--

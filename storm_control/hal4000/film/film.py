@@ -397,7 +397,7 @@ class Film(halModule.HalModule):
                 self.logfile_fp.write(msg)
                 to_save.saveToFile(film_settings.getBasename() + ".xml")
         
-    def processL1Message(self, message):
+    def processMessage(self, message):
             
         if message.isType("feeds stopped"):
             if (self.film_state == "start"):
@@ -471,25 +471,25 @@ class Film(halModule.HalModule):
                 raise halException.HalException("Stop film request received while not filming.")
             self.stopFilmingLevel1()
 
-    def processL2Message(self, message):            
-        if (self.film_state == "run") or (self.film_state == "stop"):
-
-            frame = message.getData()["frame"]
-
-            # Update frame counter if the frame is from camera1.
-            if (frame.which_camera == "camera1"):
-                self.number_frames = frame.frame_number + 1
-                self.view.updateFrames(self.number_frames)
-
-            # Save frame (if needed).
-            if frame.which_camera in self.writers:
-
-                #
-                # Potential for round off error here in tracking the total amount of
-                # data that has been saved.. Probably does not really matter..
-                #
-                self.film_size += self.writers[frame.which_camera].saveFrame(frame)
-                self.view.updateSize(self.film_size)
+#    def processL2Message(self, message):            
+#        if (self.film_state == "run") or (self.film_state == "stop"):
+#
+#            frame = message.getData()["frame"]
+#
+#            # Update frame counter if the frame is from camera1.
+#            if (frame.which_camera == "camera1"):
+#                self.number_frames = frame.frame_number + 1
+#                self.view.updateFrames(self.number_frames)
+#
+#            # Save frame (if needed).
+#            if frame.which_camera in self.writers:
+#
+#                #
+#                # Potential for round off error here in tracking the total amount of
+#                # data that has been saved.. Probably does not really matter..
+#                #
+#                self.film_size += self.writers[frame.which_camera].saveFrame(frame)
+#                self.view.updateSize(self.film_size)
 
     def startCameras(self):
         

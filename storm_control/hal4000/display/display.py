@@ -140,7 +140,7 @@ class Display(halModule.HalModule):
                 if (viewer.getViewerName() == message.getData()["display_name"]):
                     viewer.messageGetFeedInformation(response.getData()["feed_info"])
 
-    def processL1Message(self, message):
+    def processMessage(self, message):
 
         if message.isType("camera emccd gain"):
             for viewer in self.viewers:
@@ -237,9 +237,9 @@ class Display(halModule.HalModule):
             for viewer in self.viewers:
                 viewer.messageUpdatedParameters(message.getData()["parameters"])
 
-    def processL2Message(self, message):
-        for viewer in self.viewers:
-            viewer.messageNewFrame(message.getData()["frame"])
+#    def processL2Message(self, message):
+#        for viewer in self.viewers:
+#            viewer.messageNewFrame(message.getData()["frame"])
 
     def newCameraViewer(self):
 

@@ -182,23 +182,12 @@ class HalMessageBase(object):
 class HalMessage(HalMessageBase):
     istype_warned = {}
 
-    def __init__(self, data = None, sync = False, level = 1, finalizer = None, **kwds):
+    def __init__(self, data = None, sync = False, finalizer = None, **kwds):
         """
         data - Python object containing the message data. This must be a dictionary.
 
         sync - Boolean that indicates whether or not all the messages before
                this message should be processed before continuing to this message.
-
-        level - Integer that for the message 'level'. Most messages are level 1
-                but if the message is one that there will be a lot of, and that
-                is only relevant to one or two other modules (such as commands
-                from a USB joystick) then it should be some other level so that
-                modules that are not interested can more quickly ignore it.
-
-                Convention:
-                 1. General messages
-                 2. New frame messages
-                 3. Joystick / mouse drag messages
 
         finalizer - A function with no arguments to call when the message has been 
                     completely processed by all of the modules.
@@ -212,9 +201,6 @@ class HalMessage(HalMessageBase):
         if not isinstance(sync, bool):
             raise HalMessageException("sync is not of type 'bool'")
         
-        if not isinstance(level, int):
-            raise HalMessageException("level is not of type 'int'")
-
         if finalizer is not None:
             if not callable(finalizer):
                 raise HalMessageException("function is not of type 'function'")
@@ -222,7 +208,6 @@ class HalMessage(HalMessageBase):
         self.data = data
         self.finalizing = False
         self.finalizer = finalizer
-        self.level = level
         self.m_errors = []
         self.responses = []
         self.sync = sync
@@ -246,8 +231,7 @@ class HalMessage(HalMessageBase):
             self.finalizer()
 
         # Log when message was processed
-        if (self.level == 1):
-            self.logEvent("processed")
+        self.logEvent("processed")
 
     def getData(self):
         return self.data

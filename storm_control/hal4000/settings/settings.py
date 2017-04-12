@@ -203,7 +203,7 @@ class Settings(halModule.HalModule):
                 # Renable the UI
                 self.view.enableUI(True)
 
-    def processL1Message(self, message):
+    def processMessage(self, message):
         
         if message.isType("configure1"):
             self.newMessage.emit(halMessage.HalMessage(source = self,

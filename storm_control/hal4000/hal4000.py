@@ -70,7 +70,7 @@ class HalController(halModule.HalModule):
         message.source = self
         self.newMessage.emit(message)
 
-    def processL1Message(self, message):
+    def processMessage(self, message):
 
         if message.isType("add to menu"):
             self.view.addMenuItem(message.getData()["item name"],
@@ -535,8 +535,7 @@ class HalCore(QtCore.QObject):
             validator = halMessage.valid_messages[message.m_type].get("data")
             halMessage.validateData(validator, message)
             
-        if (message.level == 1):
-            message.logEvent("queued")
+        message.logEvent("queued")
 
         self.queued_messages.append(message)
 
@@ -609,8 +608,7 @@ class HalCore(QtCore.QObject):
             # Otherwise process the message.
             #
             else:
-                if (cur_message.level == 1):
-                    print(cur_message.source.module_name + " '" + cur_message.m_type + "'")
+                print(cur_message.source.module_name + " '" + cur_message.m_type + "'")
 
                 # Check for "closeEvent" message from the main window.
                 if cur_message.isType("close event") and (cur_message.getSourceName() == "hal"):
@@ -623,8 +621,7 @@ class HalCore(QtCore.QObject):
 
                     # Otherwise send the message.
                     else:
-                        if (cur_message.level == 1):
-                            cur_message.logEvent("sent")
+                        cur_message.logEvent("sent")
                             
                         self.sent_messages.append(cur_message)
                         for module in self.modules:

@@ -61,7 +61,7 @@ class Mosaic(halModule.HalModule):
                               validator = {"data" : {"pixel size" : [True, float]},
                                            "resp" : None})
 
-    def processL1Message(self, message):
+    def processMessage(self, message):
 
         if message.isType("configure1"):
 

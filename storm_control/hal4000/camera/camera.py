@@ -137,6 +137,7 @@ class Camera(halModule.HalModule):
             self.finished_timer.start()
 
     def handleNewData(self, frames):
+        return
         for frame in frames:
             #
             # If possible the camera should stop when it has recorded the
@@ -165,8 +166,8 @@ class Camera(halModule.HalModule):
     def incUnprocessed(self):
         self.unprocessed_frames += 1
 
-    def processL1Message(self, message):
-                    
+    def processMessage(self, message):
+
         if message.isType("configure1"):
 
             # Broadcast initial parameters.

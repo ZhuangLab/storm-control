@@ -572,7 +572,7 @@ class Feeds(halModule.HalModule):
     def incUnprocessed(self):
         self.unprocessed_frames += 1
         
-    def processL1Message(self, message):
+    def processMessage(self, message):
 
         if message.isType("camera stopped"):
             self.active_camera_count -= 1
@@ -581,8 +581,8 @@ class Feeds(halModule.HalModule):
             
         elif message.isType("configure1"):
             if not ("camera1" in message.getData()["all_modules"]):
-                raise halException.HalException("There must be at least one camera named 'camera1'.")
-            
+                raise halExceptions.HalException("There must be at least one camera named 'camera1'.")
+
         elif message.isType("configure2"):
             self.broadcastFeedInfo()
 
@@ -657,20 +657,20 @@ class Feeds(halModule.HalModule):
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                   data = {"parameters" : self.feed_controller.getParameters()}))
 
-    def processL2Message(self, message):
-        if self.feed_controller is not None:
-
-            # Don't reprocess our own frames..
-            if(message.getSourceName() == self.module_name):
-                return
-            
-            frame = message.getData()["frame"]
-            feed_frames = self.feed_controller.newFrame(frame)
-            for ff in feed_frames:
-                self.incUnprocessed()
-                self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "new frame",
-                                                           level = 2,
-                                                           data = {"frame" : ff},
-                                                           finalizer = lambda : self.decUnprocessed()))
+#    def processL2Message(self, message):
+#        if self.feed_controller is not None:
+#
+#            # Don't reprocess our own frames..
+#            if(message.getSourceName() == self.module_name):
+#                return
+#            
+#            frame = message.getData()["frame"]
+#            feed_frames = self.feed_controller.newFrame(frame)
+#            for ff in feed_frames:
+#                self.incUnprocessed()
+#                self.newMessage.emit(halMessage.HalMessage(source = self,
+#                                                           m_type = "new frame",
+#                                                           level = 2,
+#                                                           data = {"frame" : ff},
+#                                                           finalizer = lambda : self.decUnprocessed()))
 

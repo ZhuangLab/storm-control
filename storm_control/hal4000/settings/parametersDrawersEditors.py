@@ -127,7 +127,6 @@ class EditorRangeInt(QtWidgets.QSpinBox, EditorMixin):
         self.valueChanged.connect(self.handleValueChanged)
 
     def handleValueChanged(self, new_value):
-        print(">hvc")
         self.parameter.setv(new_value)
         self.updateParameter.emit(self)
 
