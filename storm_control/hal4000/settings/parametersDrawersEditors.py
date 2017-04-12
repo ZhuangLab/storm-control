@@ -17,30 +17,44 @@ def drawParameter(parameter, painter, a_rect, widget):
     """
     Draws parameter with the appropriate style.
     """
-    if isinstance(parameter, params.ParameterFloat):
-        # FIXME: How to draw this to look like a QLineEdit?
-        painter.setClipRect(a_rect)
-        painter.drawText(a_rect,
-                         QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft,
-                         parameter.toString())
-        #opt = QtWidgets.QStyleOptionFrame()
-        #style = widget.style()
-        #style.drawPrimitive(QtWidgets.QStyle.PE_PanelLineEdit, opt, painter, widget)
-    elif isinstance(parameter, params.ParameterInt):
-        painter.setClipRect(a_rect)
-        painter.drawText(a_rect,
-                         QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft,
-                         parameter.toString())
-        #opt = QtWidgets.QStyleOptionFrame()
-        #style = widget.style()
-        #style.drawPrimitive(QtWidgets.QStyle.PE_PanelLineEdit, opt, painter, widget)        
-    elif isinstance(parameter, params.ParameterSet):
-        opt = QtWidgets.QStyleOptionComboBox()
-        opt.rect = a_rect
-        opt.currentText = parameter.toString()
-        style = widget.style()
-        style.drawComplexControl(QtWidgets.QStyle.CC_ComboBox, opt, painter, widget)
-        style.drawControl(QtWidgets.QStyle.CE_ComboBoxLabel, opt, painter, widget)
+    # FIXME: Figuring out how to draw all the controls is real
+    #        headache, so just display text for now.
+    painter.setClipRect(a_rect)
+    painter.drawText(a_rect,
+                     QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft,
+                     parameter.toString())
+    
+#    if isinstance(parameter, params.ParameterFloat):
+#        # FIXME: How to draw this to look like a QLineEdit?
+#        painter.setClipRect(a_rect)
+#        painter.drawText(a_rect,
+#                         QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft,
+#                         parameter.toString())
+#        #opt = QtWidgets.QStyleOptionFrame()
+#        #style = widget.style()
+#        #style.drawPrimitive(QtWidgets.QStyle.PE_PanelLineEdit, opt, painter, widget)
+#    elif isinstance(parameter, params.ParameterInt):
+#        painter.setClipRect(a_rect)
+#        painter.drawText(a_rect,
+#                         QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft,
+#                         parameter.toString())
+#        #opt = QtWidgets.QStyleOptionFrame()
+#        #style = widget.style()
+#        #style.drawPrimitive(QtWidgets.QStyle.PE_PanelLineEdit, opt, painter, widget)        
+#    elif isinstance(parameter, params.ParameterRangeInt):
+#        opt = QtWidgets.QStyleOptionSpinBox()
+#        opt.rect = a_rect
+#        opt.text = parameter.toString()
+#        style = widget.style()
+#        style.drawComplexControl(QtWidgets.QStyle.CC_SpinBox, opt, painter, widget)
+#        style.drawControl(QtWidgets.QStyle.CE_ItemViewItem, opt, painter, widget)
+#    elif isinstance(parameter, params.ParameterSet):
+#        opt = QtWidgets.QStyleOptionComboBox()
+#        opt.rect = a_rect
+#        opt.currentText = parameter.toString()
+#        style = widget.style()
+#        style.drawComplexControl(QtWidgets.QStyle.CC_ComboBox, opt, painter, widget)
+#        style.drawControl(QtWidgets.QStyle.CE_ComboBoxLabel, opt, painter, widget)
 
     
 def getEditor(parameter = None, parent = None):
@@ -50,7 +64,9 @@ def getEditor(parameter = None, parent = None):
     if isinstance(parameter, params.ParameterFloat):
         return EditorFloat(parent = parent)
     elif isinstance(parameter, params.ParameterInt):
-        return EditorInt(parent = parent)    
+        return EditorInt(parent = parent)
+    elif isinstance(parameter, params.ParameterRangeInt):
+        return EditorRangeInt(parent = parent)
     elif isinstance(parameter, params.ParameterSet):
         return EditorSet(parent = parent)
 
@@ -103,7 +119,27 @@ class EditorInt(EditorNumber):
         super().__init__(**kwds)
         self.setValidator(QtGui.QIntValidator(self))
 
-    
+
+class EditorRangeInt(QtWidgets.QSpinBox, EditorMixin):
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.valueChanged.connect(self.handleValueChanged)
+
+    def handleValueChanged(self, new_value):
+        print(">hvc")
+        self.parameter.setv(new_value)
+        self.updateParameter.emit(self)
+
+    def setParameter(self, parameter):
+        super().setParameter(parameter)
+        self.valueChanged.disconnect()
+        self.setMaximum(self.parameter.getMaximum())
+        self.setMinimum(self.parameter.getMinimum())
+        self.setValue(self.parameter.getv())
+        self.valueChanged.connect(self.handleValueChanged)
+        
+        
 class EditorSet(QtWidgets.QComboBox, EditorMixin):
     
     def __init__(self, **kwds):
@@ -123,7 +159,7 @@ class EditorSet(QtWidgets.QComboBox, EditorMixin):
         self.setCurrentIndex(self.findText(str(self.parameter.getv())))
         self.currentIndexChanged.connect(self.handleIndexChanged)
 
-    
+
 #
 # The MIT License
 #
