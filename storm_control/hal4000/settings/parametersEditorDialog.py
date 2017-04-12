@@ -42,7 +42,7 @@ def populateModel(model, parameters):
             if param.isMutable():
                 q_item.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable)
             else:
-                q_item.setFlags(QtCore.Qt.ItemIsEnabled)
+                q_item.setFlags(QtCore.Qt.NoItemFlags)
             model.appendRow(q_item)
 
 
@@ -96,6 +96,7 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
         self.commitData.emit(editor)
 
     def paint(self, painter, option, index):
+        super().paint(painter, option, index)
         data = self.getData(index)
         if isinstance(data, EditorItemData):
             pen = painter.pen()
@@ -120,7 +121,7 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
             painter.setClipping(True)
             painter.setClipRect(a_rect)
             painter.drawText(a_rect,
-                             QtCore.Qt.AlignLeft,
+                             QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft,
                              parameter.getName())
             if data.modified:
                 painter.setPen(pen)
@@ -134,7 +135,7 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
 
                 painter.setClipRect(a_rect)
                 painter.drawText(a_rect,
-                                 QtCore.Qt.AlignLeft,
+                                 QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft,
                                  parameter.getDescription())
 
             # Render control for editing.
@@ -146,13 +147,13 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
             else:
                 painter.setClipRect(a_rect)
                 painter.drawText(a_rect,
-                                 QtCore.Qt.AlignLeft,
+                                 QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft,
                                  parameter.toString())
 
             painter.setPen(pen)
             
-        else:
-            super().paint(painter, option, index)
+#        else:
+#            super().paint(painter, option, index)
 
     def setEditorData(self, editor, index):
         data = self.getData(index)

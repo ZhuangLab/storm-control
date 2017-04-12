@@ -20,13 +20,17 @@ def drawParameter(parameter, painter, a_rect, widget):
     if isinstance(parameter, params.ParameterFloat):
         # FIXME: How to draw this to look like a QLineEdit?
         painter.setClipRect(a_rect)
-        painter.drawText(a_rect, QtCore.Qt.AlignLeft, parameter.toString())
+        painter.drawText(a_rect,
+                         QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft,
+                         parameter.toString())
         #opt = QtWidgets.QStyleOptionFrame()
         #style = widget.style()
         #style.drawPrimitive(QtWidgets.QStyle.PE_PanelLineEdit, opt, painter, widget)
     elif isinstance(parameter, params.ParameterInt):
         painter.setClipRect(a_rect)
-        painter.drawText(a_rect, QtCore.Qt.AlignLeft, parameter.toString())
+        painter.drawText(a_rect,
+                         QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft,
+                         parameter.toString())
         #opt = QtWidgets.QStyleOptionFrame()
         #style = widget.style()
         #style.drawPrimitive(QtWidgets.QStyle.PE_PanelLineEdit, opt, painter, widget)        
