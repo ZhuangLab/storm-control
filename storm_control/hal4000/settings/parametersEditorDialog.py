@@ -71,7 +71,7 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
             editor = parametersDrawersEditors.getEditor(parameter = data.parameter,
                                                         parent = parent)
             if editor is not None:
-                editor.editingFinished.connect(self.handleEditingFinished)
+                editor.finished.connect(self.handleFinished)
                 editor.updateParameter.connect(self.handleUpdateParameter)
             return editor
         else:
@@ -89,7 +89,7 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
         a_rect.setHeight(option.rect.height() - 2*self.margin)
         return a_rect
 
-    def handleEditingFinished(self, editor):
+    def handleFinished(self, editor):
         self.closeEditor.emit(editor)
 
     def handleUpdateParameter(self, editor):
@@ -142,10 +142,7 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
             a_rect = self.getEditorRect(option)
 
             if parameter.isMutable():
-                opt = QtWidgets.QStyleOptionComboBox()
-                opt.rect = a_rect
-                style = option.widget.style()
-                parametersDrawersEditors.drawParameter(parameter, style, opt, painter, option.widget)
+                parametersDrawersEditors.drawParameter(parameter, painter, a_rect, option.widget)
             else:
                 painter.setClipRect(a_rect)
                 painter.drawText(a_rect,
@@ -167,9 +164,21 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
     def setModelData(self, editor, model, index):
         data = self.getData(index)
         if isinstance(data, EditorItemData):
+            
+            # Get the item from the model.
             q_item = model.itemFromIndex(index)
-            q_item.setData(EditorItemData(modified = True,
-                                          parameter = editor.getParameter()))
+
+            # Check if the editor changed anything.
+            if (q_item.data().parameter.getv() != editor.getParameter().getv()):
+
+                # Update the item based on the editor change.
+                q_item.data().parameter.setv(editor.getParameter().getv())
+
+                # Save the updated item back in the model. The editor works on
+                # a copy, so if we save the copy then we'll lose the connection
+                # to the original parameters.
+                q_item.setData(EditorItemData(modified = True,
+                                              parameter = q_item.data().parameter))
         else:
             super().setModelData(editor, model, index)
 

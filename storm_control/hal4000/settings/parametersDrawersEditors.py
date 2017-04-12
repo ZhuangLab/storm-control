@@ -13,14 +13,28 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import storm_control.sc_library.parameters as params
 
 
-def drawParameter(parameter, style, opt, painter, widget):
+def drawParameter(parameter, painter, a_rect, widget):
     """
     Draws parameter with the appropriate style.
     """
-    if hasattr(parameter, "drawParameter"):
-        parameter.drawParameter(style, opt, painter, widget)
+    if isinstance(parameter, params.ParameterFloat):
+        # FIXME: How to draw this to look like a QLineEdit?
+        painter.setClipRect(a_rect)
+        painter.drawText(a_rect, QtCore.Qt.AlignLeft, parameter.toString())
+        #opt = QtWidgets.QStyleOptionFrame()
+        #style = widget.style()
+        #style.drawPrimitive(QtWidgets.QStyle.PE_PanelLineEdit, opt, painter, widget)
+    elif isinstance(parameter, params.ParameterInt):
+        painter.setClipRect(a_rect)
+        painter.drawText(a_rect, QtCore.Qt.AlignLeft, parameter.toString())
+        #opt = QtWidgets.QStyleOptionFrame()
+        #style = widget.style()
+        #style.drawPrimitive(QtWidgets.QStyle.PE_PanelLineEdit, opt, painter, widget)        
     elif isinstance(parameter, params.ParameterSet):
+        opt = QtWidgets.QStyleOptionComboBox()
+        opt.rect = a_rect
         opt.currentText = parameter.toString()
+        style = widget.style()
         style.drawComplexControl(QtWidgets.QStyle.CC_ComboBox, opt, painter, widget)
         style.drawControl(QtWidgets.QStyle.CE_ComboBoxLabel, opt, painter, widget)
 
@@ -29,17 +43,19 @@ def getEditor(parameter = None, parent = None):
     """
     Return the appropriate editor for a particular parameter.
     """
-    if parameter.getEditor() is not None:
-        return parameter.getEditor()
+    if isinstance(parameter, params.ParameterFloat):
+        return EditorFloat(parent = parent)
+    elif isinstance(parameter, params.ParameterInt):
+        return EditorInt(parent = parent)    
     elif isinstance(parameter, params.ParameterSet):
-        return ParameterEditorSet(parent = parent)
+        return EditorSet(parent = parent)
 
 
-class ParameterEditorMixin(object):
+class EditorMixin(object):
     """
     Mixin to provide functionality needed by the editors.
     """
-    editingFinished = QtCore.pyqtSignal(object)
+    finished = QtCore.pyqtSignal(object)
     updateParameter = QtCore.pyqtSignal(object)
 
     def __init__(self, **kwds):
@@ -50,10 +66,41 @@ class ParameterEditorMixin(object):
         return self.parameter
     
     def setParameter(self, parameter):
-        self.parameter = parameter
+        self.parameter = parameter.copy()
     
 
-class ParameterEditorSet(QtWidgets.QComboBox, ParameterEditorMixin):
+class EditorNumber(QtWidgets.QLineEdit, EditorMixin):
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.textChanged.connect(self.handleTextChanged)
+
+    def handleTextChanged(self, text):
+        self.parameter.setv(text)
+        self.updateParameter.emit(self)
+
+    def setParameter(self, parameter):
+        super().setParameter(parameter)
+        self.textChanged.disconnect()
+        self.setText(self.parameter.toString())
+        self.textChanged.connect(self.handleTextChanged)
+        
+
+class EditorFloat(EditorNumber):
+    
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.setValidator(QtGui.QDoubleValidator(self))
+
+
+class EditorInt(EditorNumber):
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.setValidator(QtGui.QIntValidator(self))
+
+    
+class EditorSet(QtWidgets.QComboBox, EditorMixin):
     
     def __init__(self, **kwds):
         super().__init__(**kwds)

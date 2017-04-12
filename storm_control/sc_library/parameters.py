@@ -289,14 +289,13 @@ class Parameter(object):
         
 class ParameterCustom(Parameter):
     """
-    This is a custom parameter whose behavior (i.e. it's editor)
-    will be set by whichever module creates/uses it.
+    This is a custom parameter whose editor and drawer will need
+    to be set by its sub-class.
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
         self.ptype = "custom"
-        self.editor = None
 
         
 class ParameterFloat(Parameter):
