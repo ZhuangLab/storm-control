@@ -288,7 +288,8 @@ class Film(halModule.HalModule):
         # is still running could be throwing off 'new frame' messages
         # which we might want (or not want) to save.
         #
-        self.feeds_info = None
+        self.camera_functionalities = None
+        self.feed_names = None
         self.film_settings = None
         self.film_size = 0.0
         self.film_state = "idle"
@@ -367,7 +368,12 @@ class Film(halModule.HalModule):
         Modules are expected to add their current parameters as responses
         to the 'stop film' message. We save them in an xml file here.
         """
-        if message.isType("stop film"):
+        if message.isType("get camera functionality"):
+            assert (len(message.getResponses()) == 1)
+            for response in message.getResponses():
+                self.camera_functionalities.append(response.getData()["functionality"])
+            
+        elif message.isType("stop film"):
             self.film_state = "idle"
             film_settings = message.getData()["film settings"]
             number_frames = message.getData()["number frames"]
@@ -414,8 +420,13 @@ class Film(halModule.HalModule):
                                                        m_type = "initial parameters",
                                                        data = {"parameters" : self.view.getParameters()}))
 
-        elif message.isType("feeds information"):
-            self.feeds_info = message.getData()["feeds"]
+        elif message.isType("feed names"):
+            self.camera_functionalities = []
+            for name in message.getData()["feed names"]:
+                self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                           m_type = "get camera functionality",
+                                                           data = {"camera" : name}))
+
 
         #
         # FIXME: This will stop everything when the first camera reaches the
@@ -494,11 +505,11 @@ class Film(halModule.HalModule):
     def startCameras(self):
         
         # Start slave cameras first.
-        for feed_name, feed in self.feeds_info.items():
-            if feed.isCamera() and not feed.isMaster():
+        for camera in self.camera_functionalities:
+            if camera.isCamera() and not camera.isMaster():
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "start camera",
-                                                           data = {"camera" : feed.getParameter("feed_name")}))
+                                                           data = {"camera" : camera.getCameraName()}))
 
         # Force sync.
         #
@@ -508,11 +519,11 @@ class Film(halModule.HalModule):
         self.newMessage.emit(halMessage.SyncMessage(self))
 
         # Start master cameras last.
-        for feed_name, feed in self.feeds_info.items():
-            if feed.isCamera() and feed.isMaster():
+        for camera in self.camera_functionalities:
+            if camera.isCamera() and camera.isMaster():
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "start camera",
-                                                           data = {"camera" : feed.getParameter("feed_name")}))
+                                                           data = {"camera" : camera.getCameraName()}))
 
     def startFilmingLevel1(self, film_settings):
         """
@@ -556,21 +567,21 @@ class Film(halModule.HalModule):
     def stopCameras(self):
 
         # Stop master cameras first.
-        for feed_name, feed in self.feeds_info.items():
-            if feed.isCamera() and feed.isMaster():
+        for camera in self.camera_functionalities:
+            if camera.isCamera() and camera.isMaster():
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "stop camera",
-                                                           data = {"camera" : feed.getParameter("feed_name")}))
+                                                           data = {"camera" : camera.getCameraName()}))
 
         # Force sync.
         self.newMessage.emit(halMessage.SyncMessage(self))
 
         # Stop slave cameras last.
-        for feed_name, feed in self.feeds_info.items():
-            if feed.isCamera() and not feed.isMaster():
+        for camera in self.camera_functionalities:
+            if camera.isCamera() and not camera.isMaster():
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "stop camera",
-                                                           data = {"camera" : feed.getParameter("feed_name")}))
+                                                           data = {"camera" : camera.getCameraName()}))
 
     def stopFilmingLevel1(self):
         """

@@ -19,86 +19,6 @@ class CameraException(halExceptions.HardwareException):
     pass
 
 
-class CameraConfiguration(object):
-    """
-    Stores the camera configuration information in a 
-    form that can be passed to other modules.
-    """
-    def __init__(self,
-                 camera_name = "",
-                 have_emccd = False,
-                 have_preamp = False,
-                 have_shutter = False,
-                 have_temperature = False,
-                 is_master = False,
-                 parameters = None,
-                 **kwds):
-        super().__init__(**kwds)
-
-        # The name of the camera (i.e. 'camera1').
-        self.camera_name = camera_name
-
-        # This is an EMCCD camera.
-        self.have_emccd = have_emccd
-
-        # The camera has adjustable pre-amp gain.
-        self.have_preamp = have_preamp
-
-        # The camera has a shutter.
-        self.have_shutter = have_shutter
-
-        # The camera has temperature control.
-        self.have_temperature = have_temperature
-
-        # The camera provides it own timing.
-        self.is_master = is_master
-
-        # Camera parameters.
-        self.parameters = parameters
-        
-        # Current shutter state. True = open.
-        self.shutter_state = False 
-
-    def getCameraName(self):
-        return self.camera_name
-
-    def getParameter(self, name):
-        return self.parameters.get(name)
-
-    def getParameters(self):
-        return self.parameters
-
-    def getShutterState(self):
-        return self.shutter_state
-    
-    def hasEMCCD(self):
-        return self.have_emccd
-
-    def hasParameter(self, pname):
-        return self.parameters.has(pname)
-        
-    def hasPreamp(self):
-        return self.have_preamp
-
-    def hasShutter(self):
-        return self.have_shutter
-
-    def hasTemperature(self):
-        return self.have_temperature
-
-    def isMaster(self):
-        return self.is_master
-
-    def setParameters(self, parameters):
-        self.parameters = parameters
-
-    def setShutterState(self, state):
-        """
-        This should *only* be used by the camera.
-        """
-        self.shutter_state = state
-        
-    
 class CameraControl(QtCore.QThread):
     newData = QtCore.pyqtSignal(object)
 
@@ -108,15 +28,18 @@ class CameraControl(QtCore.QThread):
         # This is the hardware module that will actually control the camera.
         self.camera = False
 
-        # Sub-classes should set this to a CameraConfiguration object.
-        self.camera_configuration = None
-        
+        # Sub-classes should set this to a CameraFunctionality object.
+        self.camera_functionality = None
+
         self.camera_name = camera_name
 
         # This is a flag for whether or not the camera is in a working state.
         # It might not be if for example the parameters were bad.
         self.camera_working = True
 
+        # The length of a fixed length film.
+        self.film_length = None
+        
         # The current frame number, this gets reset by startCamera().
         self.frame_number = 0
 
@@ -148,11 +71,26 @@ class CameraControl(QtCore.QThread):
         #
         x_size = 256
         y_size = 256
+        self.parameters.add(params.ParameterInt(name = "x_chip",
+                                                value = x_size,
+                                                is_mutable = False,
+                                                is_saved = False))
+        
+        self.parameters.add(params.ParameterInt(name = "y_chip",
+                                                value = y_size,
+                                                is_mutable = False,
+                                                is_saved = False))
+
         self.parameters.add(params.ParameterInt(name = "max_intensity",
                                                 value = 128,
                                                 is_mutable = False,
                                                 is_saved = False))
 
+        #
+        # Note: These are all expected to be in units of binned pixels. For
+        # example if the camera is 512 x 512 and we are binning by 2s then
+        # the maximum value of these would 256 x 256.
+        #
         self.parameters.add(params.ParameterRangeInt(description = "AOI X start",
                                                      name = "x_start",
                                                      value = 1,
@@ -215,7 +153,7 @@ class CameraControl(QtCore.QThread):
                                                        value = True))
         
         self.parameters.set("extension", config.get("extension", ""))
-        self.parameters.set("is_saved", config.get("is_saved", True))
+        self.parameters.set("saved", config.get("saved", True))
 
         #
         # Camera display orientation. Values can only be changed by
@@ -254,21 +192,24 @@ class CameraControl(QtCore.QThread):
         self.parameters.set("default_max", config.get("default_max", 2000))
         self.parameters.set("default_min", config.get("default_min", 100))
 
+        self.newData.connect(self.handleNewData)
+
     def cleanUp(self):
         self.running = False
         self.wait()
 
     def closeShutter(self):
         """
-        Cameras that have a shutter should override this.
+        Close the shutter.
         """
-        pass
+        self.camera_functionality.shutter_state = False
+        self.camera_functionality.shutter.emit(False)
 
-    def getCameraConfiguration(self):
-        if (self.camera_configuration.parameters != self.parameters):
-            msg = "The parameters in the camera configuration are different from the actual camera parameters."
+    def getCameraFunctionality(self):
+        if (self.camera_functionality.parameters != self.parameters):
+            msg = "The parameters in the camera functionality are different from the actual camera parameters."
             raise CameraException(msg)
-        return self.camera_configuration
+        return self.camera_functionality
 
     def getParameters(self):
         return self.parameters
@@ -278,12 +219,19 @@ class CameraControl(QtCore.QThread):
         Non-sensical defaults. Cameras that have this 
         feature should override this method.
         """
-        return {"camera" : self.camera_name,
-                "temperature" : 50.0,
-                "state" : "unstable"}
+        self.camera_functionality.temperature.emit({"camera" : self.camera_name,
+                                                    "temperature" : 50.0,
+                                                    "state" : "unstable"})
 
-    def haveTemperature(self):
-        return self.camera_configuration.hasTemperature()
+    def handleNewData(self, frames):
+        for frame in frames:
+            if self.film_length is not None:
+                if (frame.frame_number >= self.film_length):
+                    break
+            self.camera_functionality.newFrame.emit(frame)
+
+#    def haveTemperature(self):
+#        return self.camera_configuration.hasTemperature()
 
     def newParameters(self, parameters):
         """
@@ -306,24 +254,39 @@ class CameraControl(QtCore.QThread):
             if((x_pixels % 4) != 0):
                 raise CameraException("The camera ROI must be a multiple of 4 in x!")
 
+        # Update parameter ranges based on binning.
+        max_x = self.parameters.get("x_chip") / parameters.get("x_bin")
+        for attr in ["x_start", "x_end"]:
+            self.parameters.getp(attr).setMaximum(max_x)
+
+        max_y = self.parameters.get("y_chip") / parameters.get("y_bin")
+        for attr in ["y_start", "y_end"]:
+            self.parameters.getp(attr).setMaximum(max_y)
+
         self.parameters.set("extension", parameters.get("extension"))
         self.parameters.set("saved", parameters.get("saved"))
 
     def openShutter(self):
         """
-        Cameras that have a shutter should override this.
+        Open the shutter.
         """
-        pass
+        self.camera_functionality.shutter_state = True
+        self.camera_functionality.shutter.emit(True)
         
     def setEMCCDGain(self, gain):
         """
         Cameras that have EMCCD gain should override this. This method must 
-        set the 'emccd_gain' parameter and return the current EMCCD gain.
+        also set the 'emccd_gain' parameter.
         """
         self.parameters.set("emccd_gain", gain)
-        return gain
+        self.camera_functionality.emccdGain.emit(gain)
     
     def startCamera(self):
+
+        # Update the camera temperature, if available.
+        if self.camera_functionality.hasTemperature():
+            self.getTemperature()
+        
         self.frame_number = 0
         self.start(QtCore.QThread.NormalPriority)
 
@@ -331,30 +294,21 @@ class CameraControl(QtCore.QThread):
         pass
 
     def stopCamera(self):
-
-        # If we are running then we'll get the finished
-        # signal when the thread stops.
         if self.running:
             self.running = False
             self.wait()
-
-        # Otherwise we need to send it ourselves, or the 'camera stopped'
-        # message will never get sent. Other classes depend on this message
-        # to know when the camera has actually stopped running.
-        else:
-            self.finished.emit()
+            
+        self.camera_functionality.stopped.emit()
 
     def stopFilm(self):
         pass
 
     def toggleShutter(self):
-        if self.camera_configuration.getShutterState():
+        if self.camera_functionality.getShutterState():
             self.closeShutter()
-            self.camera_configuration.setShutterState(False)
         else:
             self.openShutter()
-            self.camera_configuration.setShutterState(True)
-        return self.camera_configuration.getShutterState()
+#        return self.camera_functionality.getShutterState()
 
 
 class HWCameraControl(CameraControl):

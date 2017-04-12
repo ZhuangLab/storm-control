@@ -80,19 +80,19 @@ class Display(halModule.HalModule):
 
         # This message only comes from viewers, it is used to get the configuration
         # of a camera mostly, for the benefit of the camera parameters display.
-        halMessage.addMessage("get camera configuration",
-                              validator = {"data" : {"display_name" : [True, str],
-                                                     "camera" : [True, str]},
-                                           "resp" : {"camera" : [True, str],
-                                                     "config" : [True, cameraControl.CameraConfiguration]}})
+#        halMessage.addMessage("get camera configuration",
+#                              validator = {"data" : {"display_name" : [True, str],
+#                                                     "camera" : [True, str]},
+#                                           "resp" : {"camera" : [True, str],
+#                                                     "config" : [True, cameraControl.CameraConfiguration]}})
         
         # This message comes from the viewers, it is used to get the initial
         # display settings for a camera or feed.
-        halMessage.addMessage("get feed information",
-                              validator = {"data" : {"display_name" : [True, str],
-                                                     "feed_name" : [True, str]},
-                                           "resp" : {"feed_name" : [True, str],
-                                                     "feed_info" : [True, feeds.CameraFeedInfo]}})
+#        halMessage.addMessage("get feed information",
+#                              validator = {"data" : {"display_name" : [True, str],
+#                                                     "feed_name" : [True, str]},
+#                                           "resp" : {"feed_name" : [True, str],
+#                                                     "feed_info" : [True, feeds.CameraFeedInfo]}})
 
         # Unhide / create a new camera viewer.
         halMessage.addMessage("new camera viewer",
@@ -185,9 +185,9 @@ class Display(halModule.HalModule):
                 self.have_stage = True
                 self.viewers[0].enableStageDrag(self.have_stage)
 
-        elif message.isType("configure2"):
-            # This is where the default viewer requests camera and feed information.
-            self.viewers[0].messageConfigure2()
+#        elif message.isType("configure2"):
+#            # This is where the default viewer requests camera and feed information.
+#            self.viewers[0].messageConfigure2()
 
         elif message.isType("feeds information"):
             for viewer in self.viewers:
@@ -218,10 +218,10 @@ class Display(halModule.HalModule):
             # Heh, need to send this message again because the QtCameraGraphicsView won't know how
             # to scale the frames until it gets rendered and can correctly calculate it's size.
             #
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "get feed information",
-                                                       data = {"display_name" : self.viewers[0].getViewerName(),
-                                                               "feed_name" : self.viewers[0].getFeedName()}))
+#            self.newMessage.emit(halMessage.HalMessage(source = self,
+#                                                       m_type = "get feed information",
+#                                                       data = {"display_name" : self.viewers[0].getViewerName(),
+#                                                               "feed_name" : self.viewers[0].getFeedName()}))
 
         elif message.isType("start film"):
             for viewer in self.viewers:

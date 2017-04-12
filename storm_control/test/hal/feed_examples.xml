@@ -29,7 +29,7 @@
 	   the camera to be saved then you can add this setting
 	   with the value false to the camera section of the
 	   parameters. -->
-      <save type="boolean">True</save>
+      <saved type="boolean">True</saved>
     </average>
 
     <!-- This feed shows the first and fifth frame of a 16 frame
@@ -41,7 +41,7 @@
       
       <cycle_length type="int">16</cycle_length>
       <capture_frames type="custom">0,5</capture_frames>
-      <save type="boolean">True</save>
+      <saved type="boolean">True</saved>
       <x_start type="int">1</x_start>
       <x_end type="int">512</x_end>
       <y_start type="int">1</y_start>

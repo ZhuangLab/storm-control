@@ -389,8 +389,10 @@ class HalCore(QtCore.QObject):
         # In testing mode the testing.testing module may use the other modules to
         # spoof the message sources.
         #
-        # During normal operation all inter-module communication must be done
-        # using messages.
+        # During normal operation most inter-module communication is done using
+        # messages. Modules may also request functionalities from other modules
+        # that they can use to do specific tasks, such as daq output or displaying
+        # the images from a camera.
         #
         all_modules = {}
         if testing_mode:

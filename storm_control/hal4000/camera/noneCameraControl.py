@@ -11,6 +11,7 @@ from PyQt5 import QtCore
 
 import storm_control.sc_library.parameters as params
 import storm_control.hal4000.camera.cameraControl as cameraControl
+import storm_control.hal4000.camera.cameraFunctionality as cameraFunctionality
 import storm_control.hal4000.camera.frame as frame
 
 
@@ -32,13 +33,14 @@ class NoneCameraControl(cameraControl.CameraControl):
         # object when the parameters change. This is enforced by the
         # getCameraConfiguration() method.
         #
-        self.camera_configuration = cameraControl.CameraConfiguration(camera_name = self.camera_name,
-                                                                      have_emccd = True,
-                                                                      have_preamp = True,
-                                                                      have_shutter = True,
-                                                                      have_temperature = True,
-                                                                      is_master = is_master,
-                                                                      parameters = self.parameters)
+        self.camera_functionality = cameraFunctionality.CameraFunctionality(camera_name = self.camera_name,
+                                                                            have_emccd = True,
+                                                                            have_preamp = True,
+                                                                            have_shutter = True,
+                                                                            have_temperature = True,
+                                                                            is_master = is_master,
+                                                                            parameters = self.parameters)
+        self.camera_functionality.setEMCCDGain = self.setEMCCDGain
         
         #
         # Override defaults with camera specific values.
@@ -54,8 +56,8 @@ class NoneCameraControl(cameraControl.CameraControl):
         for pname in ["x_start", "x_end", "y_start", "y_end"]:
             self.parameters.getp(pname).setMaximum(chip_size)
 
-        self.parameters.getp("x_end").setv(chip_size)
-        self.parameters.getp("y_end").setv(chip_size)
+        self.parameters.set("x_chip", chip_size)
+        self.parameters.set("y_chip", chip_size)
         
         #
         # Emulation camera specific parameters.
@@ -99,6 +101,7 @@ class NoneCameraControl(cameraControl.CameraControl):
         if (len(changed_p_names) > 0):
             running = self.running
             if running:
+                self.camera_configuration.setInvalid()
                 self.stopCamera()
         
             p = self.parameters
@@ -114,9 +117,9 @@ class NoneCameraControl(cameraControl.CameraControl):
 
             p.set("fps", 1.0/p.get("exposure_time"))
 
-            size_x = int((p.get("x_end") - p.get("x_start") + 1)/p.get("x_bin"))
-            size_y = int((p.get("y_end") - p.get("y_start") + 1)/p.get("y_bin"))
-            
+            size_x = p.get("x_end") - p.get("x_start") + 1
+            size_y = p.get("y_end") - p.get("y_start") + 1
+
             p.set("x_pixels", size_x)
             p.set("y_pixels", size_y)
             self.fake_frame_size = [size_x, size_y]
