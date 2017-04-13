@@ -90,7 +90,16 @@
       <class_name type="string">Settings</class_name>
       <module_name type="string">settings.settings</module_name>
     </settings>
-  
+
+    <!-- Set the (software) time base for films. -->
+    <timing>
+      <class_name type="string">Timing</class_name>
+      <module_name type="string">timing.timing</module_name>
+      <parameters>
+	<time_base type="string">camera1</time_base>
+      </parameters>
+    </timing>
+    
     <!--
 	Everything else is optional, but you probably want at least one camera.
     -->

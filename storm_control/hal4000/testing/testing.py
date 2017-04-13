@@ -39,8 +39,8 @@ class Testing(halModule.HalModule):
     def handleActionDone(self):
 
         #
-        # If there are no more actions, spoof the 'close event' message
-        # from 'hal' to finish up.
+        # If there are no more actions, send the 'tests done' message
+        # which will cause HAL to close.
         #
         if (len(self.test_actions) == 0):
             self.newMessage.emit(halMessage.HalMessage(source = self,
@@ -69,7 +69,7 @@ class Testing(halModule.HalModule):
         if message.isType(self.current_action.getResponseFilter()):
             self.current_action.handleResponses(message)
 
-    def processL1Message(self, message):
+    def processMessage(self, message):
 
         if message.isType("configure1"):
             self.all_modules = message.getData()["all_modules"]
