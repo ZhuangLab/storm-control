@@ -125,18 +125,6 @@ class Display(halModule.HalModule):
         elif message.isType("start"):
             self.show_gui = message.getData()["show_gui"]
             self.viewers[0].showViewer(self.show_gui)
-            
-#            if self.show_gui:
-#                self.viewers[0].showIfVisible()
-
-            #
-            # Heh, need to send this message again because the QtCameraGraphicsView won't know how
-            # to scale the frames until it gets rendered and can correctly calculate it's size.
-            #
-#            self.newMessage.emit(halMessage.HalMessage(source = self,
-#                                                       m_type = "get feed information",
-#                                                       data = {"display_name" : self.viewers[0].getViewerName(),
-#                                                               "feed_name" : self.viewers[0].getFeedName()}))
 
         elif message.isType("start film"):
             for viewer in self.viewers:
@@ -151,10 +139,6 @@ class Display(halModule.HalModule):
         elif message.isType("updated parameters"):
             for viewer in self.viewers:
                 viewer.updatedParameters(message.getData()["parameters"])
-
-#    def processL2Message(self, message):
-#        for viewer in self.viewers:
-#            viewer.messageNewFrame(message.getData()["frame"])
 
     def newCameraViewer(self):
 

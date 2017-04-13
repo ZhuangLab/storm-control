@@ -241,7 +241,17 @@ class CameraFrameViewer(QtWidgets.QFrame):
             for attr in parameters_from_file.getAttrs():
                 p.setv(attr, parameters_from_file.get(attr))
 
+    def getDefaultParameters(self):
+        """
+        Return a copy of the default parameters. These are used when we change
+        parameters and the new parameters don't have a "displayXX" section.
+        """
+        return self.default_parameters.copy()
+
     def getFeedName(self):
+        """
+        Return current feed name.
+        """
         return self.parameters.get("feed_name")
     
     def getParameter(self, pname):
@@ -251,6 +261,9 @@ class CameraFrameViewer(QtWidgets.QFrame):
         return self.parameters.get(self.getFeedName()).get(pname)
 
     def getParameters(self):
+        """
+        Return the current parameters.
+        """
         return self.parameters
 
     def handleAutoScale(self, bool):
@@ -388,11 +401,13 @@ class CameraFrameViewer(QtWidgets.QFrame):
         if camera_functionality.isCamera():
             self.ui.shutterButton.setCameraFunctionality(camera_functionality)
         else:
-            self.ui.shutterButton.setCameraFunctionality(camera_functionality.getCameraFunctionality)
+            self.ui.shutterButton.setCameraFunctionality(camera_functionality.getCameraFunctionality())
 
         # A sanity check..
         assert (self.getFeedName() == camera_functionality.getCameraName())
 
+        if self.cam_fn is not None:
+            self.cam_fn.newFrame.disconnect(self.handleNewFrame)
         self.cam_fn = camera_functionality
         self.cam_fn.newFrame.connect(self.handleNewFrame)
 
@@ -549,14 +564,7 @@ class CameraFrameViewer(QtWidgets.QFrame):
 #                                                   level = 3,
 #                                                   data = {"display_name" : self.display_name,
 #                                                           "feed_name" : self.getFeedName()}))
-        
-#    def showShutter(self, show):
-#        self.ui.shutterButton.setVisible(show)
-
-
-#    def setShutter(self, state):
-#        self.ui.shutterButton.setShutter(state)
-
+#
 #    def handleRubberBandChanged(self, rect, p1, p2):
 #        if rect.isNull():
 #            tl = self.camera_view.mapToScene(self.rubber_band_rect.topLeft())
@@ -577,23 +585,12 @@ class CameraFrameViewer(QtWidgets.QFrame):
 #                                                               "y2" : y2}))
 #        else:
 #            self.rubber_band_rect = rect
-        
-
 #    def enableBroadcastImage(self, enabled):
 #        self.broadcast_q_image = enabled
 #        
 #    def enableStageDrag(self, enabled):
 #        self.camera_view.enableStageDrag(enabled)
 #        
-#    def getDefaultParameters(self):
-#        """
-#        Return a copy of the default parameters.
-#        """
-#        return self.default_parameters.copy()
-#
-#    def getDisplayName(self):
-#        return self.display_name
-
         
 #
 # The MIT License

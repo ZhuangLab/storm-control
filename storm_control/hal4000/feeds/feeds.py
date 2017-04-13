@@ -99,8 +99,8 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
         if self.frame_slice is None:
             return new_frame.np_data
         else:
-            w = frame.image_x
-            h = frame.image_y
+            w = new_frame.image_x
+            h = new_frame.image_y
             return numpy.reshape(new_frame.np_data, (h,w))[self.frame_slice]
 
     def handleShutter(self, state):
@@ -150,19 +150,20 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
         # were not specified in the parameters file.
         #
         for base in ["x_", "y_"]:
-            p.set(base + "start", p.get(base +"start") + self.cam_fn.get(base + "start") - 1)
+            p.set(base + "start", p.get(base +"start") + self.cam_fn.getParameter(base + "start") - 1)
 
             if (p.get(base + "end") > 1):
                 p.set(base + "end", p.get(base + "end") + p.get(base + "start"))
             else:
-                p.set(base + "end", self.cam_fn.get(base + "pixels"))
+                p.set(base + "end", self.cam_fn.getParameter(base + "pixels"))
 
             p.getp(base + "start").setMaximum(self.cam_fn.getParameter(base + "pixels"))
             p.getp(base + "end").setMaximum(self.cam_fn.getParameter(base + "pixels"))
 
         # Add some of other parameters that we need to behave like a camera functionality. These
         # are just duplicates from the corresponding camera.
-        for pname in ["default_max", "default_min", "flip_horizontal", "flip_vertical", "transpose"]:
+        for pname in ["default_max", "default_min", "flip_horizontal", "flip_vertical",
+                      "max_intensity", "transpose", "x_bin", "y_bin"]:
             self.parameters.add(self.cam_fn.parameters.getp(pname).copy())
 
         # And calculate some additional parameters.
@@ -175,7 +176,9 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
            (p.get("y_pixels") != self.cam_fn.getParameter("y_pixels")):
             self.frame_slice  = (slice(p.get("y_start") - 1, p.get("y_end")),
                                  slice(p.get("x_start") - 1, p.get("x_end")))
-            
+
+        print(p.toString(True))
+        
         # Connect camera functionality signals. We just pass most of
         # these right through.
         self.cam_fn.invalid.connect(self.handleInvalid)
@@ -199,12 +202,12 @@ class FeedFunctionalityAverage(FeedFunctionality):
         self.frames_to_average = self.parameters.get("frames_to_average")
 
     def handleNewFrame(self, new_frame):
-        sliced_frame = super().handleNewFrame(new_frame)
+        sliced_data = super().handleNewFrame(new_frame)
 
         if self.average_frame is None:
-            self.average_frame = sliced_frame.astype(numpy.uint32)
+            self.average_frame = sliced_data.astype(numpy.uint32)
         else:
-            self.average_frame += sliced_frame
+            self.average_frame += sliced_data
         self.counts += 1
 
         if (self.counts == self.frames_to_average):
@@ -236,9 +239,10 @@ class FeedFunctionalityInterval(FeedFunctionality):
         self.cycle_length = self.parameters.get("cycle_length")
 
     def handleNewFrame(self, new_frame):
-        sliced_frame = self.sliceFrame(new_frame)
+        sliced_data = super().handleNewFrame(new_frame)
+        
         if (new_frame.frame_number % self.cycle_length) in self.capture_frames:
-            self.newFrame.emit(frame.Frame(sliced_frame,
+            self.newFrame.emit(frame.Frame(sliced_data,
                                            self.frame_number,
                                            self.x_pixels,
                                            self.y_pixels,
@@ -251,7 +255,8 @@ class FeedFunctionalitySlice(FeedFunctionality):
     The feed functionality for slicing out sub-sets of frames.
     """
     def handleNewFrame(self, new_frame):
-        sliced_data = self.sliceFrame(new_frame)
+        sliced_data = super().handleNewFrame(new_frame)
+        
         self.newFrame.emit(frame.Frame(sliced_data,
                                        new_frame.frame_number,
                                        self.x_pixels,
@@ -276,7 +281,8 @@ class FeedController(object):
         # Create the feeds.
         self.parameters = parameters
         for feed_name in self.parameters.getAttrs():
-
+            file_params = self.parameters.get(feed_name)
+            
             # Create default feed parameters.
             max_value = 100000
             feed_params = params.StormXMLObject()
@@ -285,7 +291,7 @@ class FeedController(object):
                                                    value = "",
                                                    is_mutable = False))
 
-            feed_params.add(params.ParameterSetBoolean(name = "save",
+            feed_params.add(params.ParameterSetBoolean(name = "saved",
                                                        value = False))
             
             feed_params.add(params.ParameterString(name = "source",
@@ -296,42 +302,46 @@ class FeedController(object):
                                                      name = "x_start",
                                                      value = 1,
                                                      min_value = 1,
-                                                     max_value = max_val))
+                                                     max_value = max_value))
 
             feed_params.add(params.ParameterRangeInt(description = "AOI X end.",
                                                      name = "x_end",
                                                      value = 1,
                                                      min_value = 1,
-                                                     max_value = max_val))
+                                                     max_value = max_value))
 
             feed_params.add(params.ParameterRangeInt(description = "AOI Y start.",
                                                      name = "y_start",
                                                      value = 1,
                                                      min_value = 1,
-                                                     max_value = max_val))
+                                                     max_value = max_value))
             
             feed_params.add(params.ParameterRangeInt(description = "AOI Y end.",
                                                      name = "y_end",
+                                                     value = 1,
                                                      min_value = 1,
-                                                     max_value = max_val))
-            
+                                                     max_value = max_value))
+
             # Figure out what type of feed this is.
             fclass = None
-            feed_type = feed_params.get("feed_type")
+            feed_type = file_params.get("feed_type")
             if (feed_type == "average"):
                 fclass = FeedFunctionalityAverage
                 
                 feed_params.add(params.ParameterInt(description = "Number of frames to average.",
-                                                    name = "frames_to_average"))
+                                                    name = "frames_to_average",
+                                                    value = 1))
                             
             elif (feed_type == "interval"):
                 fclass = FeedFunctionalityInterval
 
                 feed_params.add(params.ParameterInt(description = "Interval cycle length.",
-                                                    name = "cycle_length"))
+                                                    name = "cycle_length",
+                                                    value = 1))
                 
                 feed_params.add(params.ParameterCustom(description = "Frames to capture.",
-                                                       name = "capture_frames"))
+                                                       name = "capture_frames",
+                                                       value = "1"))
 
             elif (feed_type == "slice"):
                 fclass = FeedFunctionalitySlice
@@ -339,14 +349,13 @@ class FeedController(object):
                 raise FeedException("Unknown feed type '" + feed_type + "' in feed '" + feed_name + "'")
 
             # Update with values from the parameters file.
-            file_params = self.parameters.get(feed_name)
             for attr in file_params.getAttrs():
                 feed_params.setv(attr, file_params.get(attr))
 
-            # Replace the values in the parameters that were read from a file
-            # with these values.
+            # Replace the values in the parameters that were read from a file with these values.
             self.parameters.addSubSection(feed_name, feed_params, overwrite = True)
-            
+
+            feed_name = feed_params.get("source") + "." + feed_name
             self.feeds[feed_name] = fclass(camera_name = feed_name,
                                            parameters = feed_params)
 
@@ -403,7 +412,12 @@ class Feeds(halModule.HalModule):
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "feed names",
                                                    data = {"feed names" : self.feed_names}))
-        
+
+    def handleResponse(self, message, response):
+        if message.isType("get camera functionality"):
+            feed = self.feed_controller.getFeed(message.getData()["extra data"])
+            feed.setCameraFunctionality(response.getData()["functionality"])
+
     def processMessage(self, message):
 
         if message.isType("configure1"):
@@ -440,8 +454,9 @@ class Feeds(halModule.HalModule):
                     self.feed_names.append(feed.getCameraName())
                     self.newMessage.emit(halMessage.HalMessage(source = self,
                                                                m_type = "get camera functionality",
-                                                               data = {"camera" : feed.getParameter("source")}))
-            self.broadcastFeedInfo()
+                                                               data = {"camera" : feed.getParameter("source"),
+                                                                       "extra data" : feed.getCameraName()}))
+            self.broadcastFeedNames()
 
         elif message.isType("start camera"):
             

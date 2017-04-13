@@ -30,7 +30,7 @@ class QtShutterButton(QtWidgets.QPushButton):
 
     def setCameraFunctionality(self, camera_functionality):
         if self.cam_fn is not None:
-            self.cam_fn.shutter.disconnect()
+            self.cam_fn.shutter.disconnect(self.handleShutter)
         self.cam_fn = camera_functionality
         self.cam_fn.shutter.connect(self.handleShutter)
         self.setVisible(self.cam_fn.hasShutter())

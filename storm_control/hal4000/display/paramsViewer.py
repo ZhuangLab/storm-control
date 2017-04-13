@@ -58,8 +58,8 @@ class ParamsViewer(QtWidgets.QGroupBox):
 
         # Disconnect signals from previous camera_functionality, if any.
         if self.cam_fn is not None:
-            self.cam_fn.emccdGain.disconnect()
-            self.cam_fn.temperature.disconnect()
+            self.cam_fn.emccdGain.disconnect(self.handleEMCCDGain)
+            self.cam_fn.temperature.disconnect(self.handleTemperature)
 
         # If this is a feed we want it's source camera functionality.
         if camera_functionality.isCamera():

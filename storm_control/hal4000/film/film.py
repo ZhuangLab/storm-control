@@ -405,13 +405,13 @@ class Film(halModule.HalModule):
         
     def processMessage(self, message):
             
-        if message.isType("feeds stopped"):
-            if (self.film_state == "start"):
-                self.startFilmingLevel2()
-            elif (self.film_state == "stop"):
-                self.stopFilmingLevel2()
+#        if message.isType("feeds stopped"):
+#            if (self.film_state == "start"):
+#                self.startFilmingLevel2()
+#            elif (self.film_state == "stop"):
+#                self.stopFilmingLevel2()
 
-        elif message.isType("configure1"):
+        if message.isType("configure1"):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "add to ui",
                                                        data = self.configure_dict))
@@ -435,9 +435,9 @@ class Film(halModule.HalModule):
         #        For now this message should only come from camera1 when it
         #        has recorded the required number of frames.
         #
-        elif message.isType("camera film complete"):
-            if (self.film_state == "run"):
-                self.stopFilmingLevel1()
+#        elif message.isType("camera film complete"):
+#            if (self.film_state == "run"):
+#                self.stopFilmingLevel1()
                 
         elif message.isType("new directory"):
             self.view.setDirectory(message.getData()["directory"])

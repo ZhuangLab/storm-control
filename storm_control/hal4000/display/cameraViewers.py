@@ -38,7 +38,10 @@ class CameraParamsMixin(object):
 
     def configure2(self):
         pass    
-    
+
+    def getDefaultParameters(self):
+        return self.frame_viewer.getDefaultParameters()
+            
     def getParameters(self):
         return self.frame_viewer.getParameters()
 
