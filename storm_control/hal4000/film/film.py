@@ -365,12 +365,12 @@ class Film(halModule.HalModule):
         from all the cameras/feeds we know that we can proceed.
         """
         self.active_cameras -= 1
-        #print(">camera started", self.active_cameras)
+        print(">camera started", self.active_cameras)
         if (self.active_cameras == 0):
             # Disconnect start signals.
             for camera in self.camera_functionalities:
                 camera.started.disconnect(self.handleCameraStarted)
-            #print(">all started")
+            print(">all started")
 
     def handleCameraStopped(self):
         """
@@ -378,12 +378,12 @@ class Film(halModule.HalModule):
         all of the cameras have stopped.
         """
         self.active_cameras -= 1
-        #print(">camera stopped", self.active_cameras)
+        print(">camera stopped", self.active_cameras)
         if (self.active_cameras == 0):
             # Disconnect stop signals.
             for camera in self.camera_functionalities:
                 camera.stopped.disconnect(self.handleCameraStopped)
-            #print(">all stopped")
+            print(">all stopped")
 
             if (self.film_state == "start"):
                 self.startFilmingLevel2()
@@ -460,7 +460,7 @@ class Film(halModule.HalModule):
                                                        m_type = "initial parameters",
                                                        data = {"parameters" : self.view.getParameters()}))
 
-        elif message.isType("feed names"):
+        elif message.isType("current feeds"):
             
             # We'll get this message after the parameters have changed.
             self.camera_functionalities = []
@@ -531,11 +531,11 @@ class Film(halModule.HalModule):
         #
         self.newMessage.emit(halMessage.SyncMessage(self))
                 
-        # Connect to camera/feed started signals.
-        self.active_cameras = 0
-        for camera in self.camera_functionalities:
-            self.active_cameras += 1
-            camera.started.connect(self.handleCameraStarted)
+#        # Connect to camera/feed started signals.
+#        self.active_cameras = 0
+#        for camera in self.camera_functionalities:
+#            self.active_cameras += 1
+#            camera.started.connect(self.handleCameraStarted)
             
         # Start slave cameras first.
         for camera in self.camera_functionalities:
@@ -620,6 +620,7 @@ class Film(halModule.HalModule):
         for camera in self.camera_functionalities:
             self.active_cameras += 1
             camera.stopped.connect(self.handleCameraStopped)
+        print(">sc", self.active_cameras)
 
         # Stop master cameras first.
         for camera in self.camera_functionalities:

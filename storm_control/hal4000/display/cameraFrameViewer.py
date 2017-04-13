@@ -370,10 +370,12 @@ class CameraFrameViewer(QtWidgets.QFrame):
         1. Replace current parameters with the new parameters when
            we get the 'new parameters' message.
 
-        2. Wait for the 'updated parameters' message.
+        2. Wait for the 'current feeds' message when the setFeedNames()
+           method will get called.
 
-        3. Execute a feed change to the new camera / feed,
-           this will send a 'get camera functionality' message.
+        3. At the end of setFeedNames() Execute a feed change to the 
+           new camera / feed, this will send a 'get camera functionality' 
+           message.
 
         4. The camera / feed will respond with a functionality.
 
@@ -498,6 +500,9 @@ class CameraFrameViewer(QtWidgets.QFrame):
         # Reconnect signal.
         self.ui.feedComboBox.currentIndexChanged[str].connect(self.handleFeedChange)
 
+        # Switch to the correct feed.
+        self.handleFeedChange(self.getFeedName())
+
     def setParameter(self, pname, pvalue):
         """
         Wrapper to make it easier to set the appropriate parameter value.
@@ -532,13 +537,13 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.ui.recordButton.stopFilm()
         self.ui.shutterButton.stopFilm()
 
-    def updatedParameters(self):
-        """
-        This is called when we get the 'updated parameters' message.
-        It indicates that the new parameters are good and we can go
-        ahead and update the display accordingly.
-        """
-        self.handleFeedChange(self.parameters.get("feed_name"))
+#    def updatedParameters(self):
+#        """
+#        This is called when we get the 'updated parameters' message.
+#        It indicates that the new parameters are good and we can go
+#        ahead and update the display accordingly.
+#        """
+#        self.handleFeedChange(self.parameters.get("feed_name"))
             
     def updateRange(self):
         self.ui.scaleMax.setText(str(self.getParameter("display_max")))

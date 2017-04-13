@@ -107,7 +107,7 @@ class Display(halModule.HalModule):
                                                            data = {"item name" : "Camera Viewer",
                                                                    "item msg" : "new camera viewer"}))
 
-        elif message.isType("feed names"):
+        elif message.isType("current feeds"):
             for viewer in self.viewers:
                 viewer.setFeedNames(message.getData()["feed names"])
 
@@ -141,9 +141,9 @@ class Display(halModule.HalModule):
                 message.addResponse(halMessage.HalMessageResponse(source = viewer.getViewerName(),
                                                                   data = {"parameters" : viewer.getParameters()}))
 
-        elif message.isType("updated parameters"):
-            for viewer in self.viewers:
-                viewer.updatedParameters(message.getData()["parameters"])
+#        elif message.isType("updated parameters"):
+#            for viewer in self.viewers:
+#                viewer.updatedParameters(message.getData()["parameters"])
 
     def newCameraViewer(self):
 

@@ -152,7 +152,10 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
 
     def hasTemperature(self):
         assert False
-    
+
+    def haveCameraFunctionality(self):
+        return (not self.cam_fn is None)
+        
     def isCamera(self):
         return False
 
@@ -404,6 +407,12 @@ class FeedController(object):
                                              camera_name = camera_name,
                                              parameters = feed_params)
 
+    def allFeedsFunctional(self):
+        for feed in self.getFeeds():
+            if not feed.haveCameraFunctionality():
+                return False
+        return True
+
     def getFeed(self, feed_name):
         return self.feeds[feed_name]
         
@@ -446,10 +455,10 @@ class Feeds(halModule.HalModule):
 
         # This is broadcast at startup and when the parameters change
         # to tell other modules what cameras/feeds are available.
-        halMessage.addMessage("feed names",
+        halMessage.addMessage("current feeds",
                               validator = {"data" : {"feed names" : [True, list]},
                                            "resp" : None})
-
+        
         # This message comes from the display.display when it creates a new
         # viewer.
         halMessage.addMessage("get feed names",
@@ -459,10 +468,10 @@ class Feeds(halModule.HalModule):
         # This message tells the feeds to (re)start.
         halMessage.addMessage("start feeds",
                               validator = {"data" : None, "resp" : None})
-
-    def broadcastFeedNames(self):
+        
+    def broadcastCurrentFeeds(self):
         """
-        Send the 'feeds names' message.
+        Send the 'current feeds' message.
 
         film.film uses this message to know what all the feeds are.
 
@@ -470,7 +479,7 @@ class Feeds(halModule.HalModule):
         combobox.
         """
         self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "feed names",
+                                                   m_type = "current feeds",
                                                    data = {"feed names" : self.feed_names}))
 
     def handleResponse(self, message, response):
@@ -478,19 +487,24 @@ class Feeds(halModule.HalModule):
             feed = self.feed_controller.getFeed(message.getData()["extra data"])
             feed.setCameraFunctionality(response.getData()["functionality"])
 
+        #
+        # If we have camera functionality for all the feeds then it is safe to
+        # broadcast the new feed information. This is the marker for the end
+        # of the 'new parameters' update cycle.
+        #
+        if self.feed_controller.allFeedsFunctional():
+            self.broadcastCurrentFeeds()
+
     def processMessage(self, message):
 
         if message.isType("configure1"):
             for module_name in message.getData()["all_modules"]:
                 if module_name.startswith("camera"):
                     self.camera_names.append(module_name)
-
-#            if not "camera1" in self.camera_names:
-#                raise FeedException("There must be at least one camera named camera1.")
             
             self.feed_names = copy.copy(self.camera_names)
-            self.broadcastFeedNames()
-            
+            self.broadcastCurrentFeeds()
+
         elif message.isType("get camera functionality"):
             if self.feed_controller is not None:
                 feed_name = message.getData()["camera"]
@@ -520,7 +534,8 @@ class Feeds(halModule.HalModule):
                                                                m_type = "get camera functionality",
                                                                data = {"camera" : feed.getParameter("source"),
                                                                        "extra data" : feed.getCameraName()}))
-            self.broadcastFeedNames()
+            else:
+                self.broadcastCurrentFeeds()
 
         elif message.isType("start feeds"):
             if self.feed_controller is not None:

@@ -86,8 +86,8 @@ class CameraParamsMixin(object):
         if self.params_viewer is not None:
             self.params_viewer.stopFilm()
 
-    def updatedParameters(self, parameters):
-        self.frame_viewer.updatedParameters()
+#    def updatedParameters(self, parameters):
+#        self.frame_viewer.updatedParameters()
 
             
 class ClassicViewer(QtCore.QObject, CameraParamsMixin):
