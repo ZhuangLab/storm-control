@@ -49,7 +49,8 @@ class Camera(halModule.HalModule):
         # Other modules will send this to get a camera/feed functionality.
         halMessage.addMessage("get camera functionality",
                               check_exists = False,
-                              validator = {"data" : {"camera" : [True, str]},
+                              validator = {"data" : {"camera" : [True, str],
+                                                     "extra data" : [False, str]},
                                            "resp" : {"functionality" : [True, cameraFunctionality.CameraFunctionality]}})
                                    
     def cleanUp(self, qt_settings):

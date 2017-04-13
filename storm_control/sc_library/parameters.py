@@ -404,7 +404,7 @@ class ParameterSet(Parameter):
         if new_value in self.allowed:
             self.value = new_value
         else:
-            msg = str(new_value) + " is not in the list of allowed values for "
+            msg = "'" + str(new_value) + "' is not in the list of allowed values for "
             msg += self.name + ", " + str(self.allowed)
             raise ParametersException(msg)
 

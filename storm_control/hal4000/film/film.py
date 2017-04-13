@@ -427,7 +427,6 @@ class Film(halModule.HalModule):
                                                            m_type = "get camera functionality",
                                                            data = {"camera" : name}))
 
-
         #
         # FIXME: This will stop everything when the first camera reaches the
         #        expected number of frames. It should not fire until all the
@@ -481,26 +480,6 @@ class Film(halModule.HalModule):
             if (self.film_state != "run"):
                 raise halException.HalException("Stop film request received while not filming.")
             self.stopFilmingLevel1()
-
-#    def processL2Message(self, message):            
-#        if (self.film_state == "run") or (self.film_state == "stop"):
-#
-#            frame = message.getData()["frame"]
-#
-#            # Update frame counter if the frame is from camera1.
-#            if (frame.which_camera == "camera1"):
-#                self.number_frames = frame.frame_number + 1
-#                self.view.updateFrames(self.number_frames)
-#
-#            # Save frame (if needed).
-#            if frame.which_camera in self.writers:
-#
-#                #
-#                # Potential for round off error here in tracking the total amount of
-#                # data that has been saved.. Probably does not really matter..
-#                #
-#                self.film_size += self.writers[frame.which_camera].saveFrame(frame)
-#                self.view.updateSize(self.film_size)
 
     def startCameras(self):
         
@@ -619,6 +598,27 @@ class Film(halModule.HalModule):
                 print("\7\7")
 
         #raise halExceptions.HalException("done now!")
+
+#    def processL2Message(self, message):            
+#        if (self.film_state == "run") or (self.film_state == "stop"):
+#
+#            frame = message.getData()["frame"]
+#
+#            # Update frame counter if the frame is from camera1.
+#            if (frame.which_camera == "camera1"):
+#                self.number_frames = frame.frame_number + 1
+#                self.view.updateFrames(self.number_frames)
+#
+#            # Save frame (if needed).
+#            if frame.which_camera in self.writers:
+#
+#                #
+#                # Potential for round off error here in tracking the total amount of
+#                # data that has been saved.. Probably does not really matter..
+#                #
+#                self.film_size += self.writers[frame.which_camera].saveFrame(frame)
+#                self.view.updateSize(self.film_size)
+
 
 #
 # The MIT License

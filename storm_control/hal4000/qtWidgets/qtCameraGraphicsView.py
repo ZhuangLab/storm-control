@@ -100,30 +100,30 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         else:
             super().mouseReleaseEvent(event)
 
-    def newConfiguration(self, feed_info, feed_parameters):
+    def newConfiguration(self, camera_functionality, feed_parameters):
         """
         This is called when the camera or frame size may have changed.
         """
-        self.chip_max = feed_info.getChipMax()
+        self.chip_max = camera_functionality.getChipMax()
 
         # Calculate transform matrix.
-        [cx, cy] = feed_info.getChipSize()
+        [cx, cy] = camera_functionality.getChipSize()
 
-        if feed_info.getParameter("flip_horizontal"):
+        if camera_functionality.getParameter("flip_horizontal"):
             flip_lr = QtGui.QTransform(-1.0, 0.0, 0.0,
                                        0.0, 1.0, 0.0,
                                        cx, 0.0, 1.0)
         else:
             flip_lr = QtGui.QTransform()
 
-        if feed_info.getParameter("flip_vertical"):
+        if camera_functionality.getParameter("flip_vertical"):
             flip_ud = QtGui.QTransform(1.0, 0.0, 0.0,
                                        0.0, -1.0, 0.0,
                                        0.0, cy, 1.0)
         else:
             flip_ud = QtGui.QTransform()
 
-        if feed_info.getParameter("transpose"):
+        if camera_functionality.getParameter("transpose"):
             flip_xy = QtGui.QTransform(0.0, 1.0, 0.0,
                                        1.0, 0.0, 0.0,
                                        0.0, 0.0, 1.0)
@@ -139,8 +139,8 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
             self.center_x = feed_parameters.get("center_x")
             self.center_y = feed_parameters.get("center_y")
         else:
-            self.display_scale = self.calcScale(feed_info.getFrameMax())
-            [self.center_x, self.center_y] = feed_info.getFrameCenter()
+            self.display_scale = self.calcScale(camera_functionality.getFrameMax())
+            [self.center_x, self.center_y] = camera_functionality.getFrameCenter()
             feed_parameters.set("initialized", True)
 
         # Calculate max zoom out.

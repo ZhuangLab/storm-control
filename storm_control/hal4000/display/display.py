@@ -38,62 +38,16 @@ class Display(halModule.HalModule):
         # There is always at least one display by default.
         #
         if self.is_classic:
-            self.viewers.append(cameraViewers.ClassicViewer(module_name = self.getNextViewerName()))
+            self.viewers.append(cameraViewers.ClassicViewer(module_name = self.getNextViewerName(),
+                                                            default_colortable = self.parameters.get("colortable")))
         else:
-            camera_viewer = cameraViewers.DetachedViewer(module_name = self.getNextViewerName())
+            camera_viewer = cameraViewers.DetachedViewer(module_name = self.getNextViewerName(),
+                                                         default_colortable = self.parameters.get("colortable"))
             camera_viewer.halDialogInit(self.qt_settings, self.window_title + " camera viewer")        
             self.viewers.append(camera_viewer)
         
         self.viewers[0].guiMessage.connect(self.handleGuiMessage)
         
-        # Default color table to use. This is used by feeds.feeds in the feed_info structure.
-        halMessage.addMessage("default colortable",
-                              validator = {"data" : {"colortable" : [True, str]},
-                                           "resp" : None})
-
-        # These are sent when the user selects an ROI on a View with the rubber
-        # band selection, 'chip' coordinates.
-        halMessage.addMessage("display ROI selection",
-                              validator = {"data" : {"display_name" : [True, str],
-                                                     "feed_name" : [True, str],
-                                                     "x1" : [True, int],
-                                                     "x2" : [True, int],
-                                                     "y1" : [True, int],
-                                                     "y2" : [True, int]},
-                                           "resp" : None})
-
-        # This message comes from one of the viewers when the user is trying to
-        # get the stage to move by dragging on the display.
-        halMessage.addMessage("drag move",
-                              validator = {"data" : {"display_name" : [True, str],
-                                                     "feed_name" : [True, str],
-                                                     "x_disp" : [True, int],
-                                                     "y_disp" : [True, int]},
-                                           "resp" : None})
-
-        # This message comes from one of the viewers when the user first clicks
-        # to initiate stage movement by dragging on the display.
-        halMessage.addMessage("drag start",
-                              validator = {"data" : {"display_name" : [True, str],
-                                                     "feed_name" : [True, str]},
-                                           "resp" : None})
-
-        # This message only comes from viewers, it is used to get the configuration
-        # of a camera mostly, for the benefit of the camera parameters display.
-#        halMessage.addMessage("get camera configuration",
-#                              validator = {"data" : {"display_name" : [True, str],
-#                                                     "camera" : [True, str]},
-#                                           "resp" : {"camera" : [True, str],
-#                                                     "config" : [True, cameraControl.CameraConfiguration]}})
-        
-        # This message comes from the viewers, it is used to get the initial
-        # display settings for a camera or feed.
-#        halMessage.addMessage("get feed information",
-#                              validator = {"data" : {"display_name" : [True, str],
-#                                                     "feed_name" : [True, str]},
-#                                           "resp" : {"feed_name" : [True, str],
-#                                                     "feed_info" : [True, feeds.CameraFeedInfo]}})
-
         # Unhide / create a new camera viewer.
         halMessage.addMessage("new camera viewer",
                               validator = {"data" : None, "resp" : None})
@@ -101,12 +55,6 @@ class Display(halModule.HalModule):
         # Unhide / create a new feed viewer.
         halMessage.addMessage("new feed viewer",
                               validator = {"data" : None, "resp" : None})
-                              
-        # Change the EMCCD gain.
-        halMessage.addMessage("set emccd gain",
-                              validator = {"data" : {"camera" : [True, str],
-                                                     "emccd gain" : [True, int]},
-                                           "resp" : None})
         
         # This message comes from the shutter button.
         halMessage.addMessage("shutter clicked",
@@ -130,44 +78,18 @@ class Display(halModule.HalModule):
         self.newMessage.emit(message)
         
     def handleResponse(self, message, response):
-        if message.isType("get camera configuration"):
+        if message.isType("get camera functionality"):
             for viewer in self.viewers:
-                if (viewer.getViewerName() == message.getData()["display_name"]):
-                    viewer.messageGetCameraConfiguration(response.getData()["config"])
-
-        elif message.isType("get feed information"):
-            for viewer in self.viewers:
-                if (viewer.getViewerName() == message.getData()["display_name"]):
-                    viewer.messageGetFeedInformation(response.getData()["feed_info"])
+                if (viewer.getViewerName() == message.getData()["extra data"]):
+                    viewer.setCameraFunctionality(response.getData()["functionality"])
 
     def processMessage(self, message):
 
-        if message.isType("camera emccd gain"):
-            for viewer in self.viewers:
-                viewer.messageCameraEMCCDGain(message.getData()["camera"],
-                                              message.getData()["emccd gain"])
-
-        elif message.isType("camera shutter"):
-            for viewer in self.viewers:
-                viewer.messageCameraShutter(message.getData()["camera"],
-                                            message.getData()["state"])
-
-        elif message.isType("camera temperature"):
-            for viewer in self.viewers:
-                viewer.messageCameraTemperature(message.getData()["camera"],
-                                                message.getData()["state"],
-                                                message.getData()["temperature"])
-
-        elif message.isType("configure1"):
+        if message.isType("configure1"):
             
-            # Let everyone know what the default color table is.
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "default colortable",
-                                                       data = {"colortable" : self.parameters.get("colortable")}))
-
             # The ClassicViewer might need to tell other modules to
             # incorporate some of it's UI elements.
-            self.viewers[0].messageConfigure1()
+            self.viewers[0].configure1()
 
             # Add a menu option(s) to generate more viewers.
             self.newMessage.emit(halMessage.HalMessage(source = self,
@@ -180,18 +102,9 @@ class Display(halModule.HalModule):
                                                            data = {"item name" : "Camera Viewer",
                                                                    "item msg" : "new camera viewer"}))
 
-            # Enable stage dragging if there is a stage.
-            if "stage" in message.getData()["all_modules"]:
-                self.have_stage = True
-                self.viewers[0].enableStageDrag(self.have_stage)
-
-#        elif message.isType("configure2"):
-#            # This is where the default viewer requests camera and feed information.
-#            self.viewers[0].messageConfigure2()
-
-        elif message.isType("feeds information"):
+        elif message.isType("feed names"):
             for viewer in self.viewers:
-                viewer.messageFeedsInformation(message.getData()["feeds"])
+                viewer.setFeedNames(message.getData()["feed names"])
 
         elif message.isType("new camera viewer"):
             self.newCameraViewer()
@@ -204,15 +117,17 @@ class Display(halModule.HalModule):
             for viewer in self.viewers:
                 message.addResponse(halMessage.HalMessageResponse(source = viewer.getViewerName(),
                                                                   data = {"old parameters" : viewer.getParameters().copy()}))
-                viewer.messageNewParameters(p.get(viewer.getViewerName(),
-                                                  viewer.getDefaultParameters()))
+                viewer.newParameters(p.get(viewer.getViewerName(),
+                                           viewer.getDefaultParameters()))
                 message.addResponse(halMessage.HalMessageResponse(source = viewer.getViewerName(),
                                                                   data = {"new parameters" : viewer.getParameters()}))
 
         elif message.isType("start"):
             self.show_gui = message.getData()["show_gui"]
-            if self.show_gui:
-                self.viewers[0].showIfVisible()
+            self.viewers[0].showViewer(self.show_gui)
+            
+#            if self.show_gui:
+#                self.viewers[0].showIfVisible()
 
             #
             # Heh, need to send this message again because the QtCameraGraphicsView won't know how
@@ -235,7 +150,7 @@ class Display(halModule.HalModule):
 
         elif message.isType("updated parameters"):
             for viewer in self.viewers:
-                viewer.messageUpdatedParameters(message.getData()["parameters"])
+                viewer.updatedParameters(message.getData()["parameters"])
 
 #    def processL2Message(self, message):
 #        for viewer in self.viewers:
@@ -252,7 +167,8 @@ class Display(halModule.HalModule):
 
         # If none exists, create a new feed viewer.
         if not found_existing_viewer:
-            feed_viewer = cameraViewers.DetachedViewer(module_name = self.getNextViewerName())
+            feed_viewer = cameraViewers.DetachedViewer(module_name = self.getNextViewerName(),
+                                                       default_colortable = self.parameters.get("colortable"))
             feed_viewer.halDialogInit(self.qt_settings, self.window_title + " camera viewer")
             feed_viewer.guiMessage.connect(self.handleGuiMessage)
             feed_viewer.showViewer(self.show_gui)
@@ -272,7 +188,8 @@ class Display(halModule.HalModule):
                 
         # If none exists, create a new feed viewer.
         if not found_existing_viewer:
-            feed_viewer = cameraViewers.FeedViewer(module_name = self.getNextViewerName())
+            feed_viewer = cameraViewers.FeedViewer(module_name = self.getNextViewerName(),
+                                                   default_colortable = self.parameters.get("colortable"))
             feed_viewer.halDialogInit(self.qt_settings, self.window_title + " feed viewer")        
             feed_viewer.guiMessage.connect(self.handleGuiMessage)
             feed_viewer.showViewer(self.show_gui)
@@ -281,7 +198,107 @@ class Display(halModule.HalModule):
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "get feeds information"))
 
+
+
+
+
+
+                              
+        # Change the EMCCD gain.
+#        halMessage.addMessage("set emccd gain",
+#                              validator = {"data" : {"camera" : [True, str],
+#                                                     "emccd gain" : [True, int]},
+#                                           "resp" : None})
         
+#        elif message.isType("configure2"):
+#            # This is where the default viewer requests camera and feed information.
+#            self.viewers[0].messageConfigure2()
+        
+
+#        if message.isType("camera emccd gain"):
+#            for viewer in self.viewers:
+#                viewer.messageCameraEMCCDGain(message.getData()["camera"],
+#                                              message.getData()["emccd gain"])
+#
+#        elif message.isType("camera shutter"):
+#            for viewer in self.viewers:
+#                viewer.messageCameraShutter(message.getData()["camera"],
+#                                            message.getData()["state"])
+#
+#        elif message.isType("camera temperature"):
+#            for viewer in self.viewers:
+#                viewer.messageCameraTemperature(message.getData()["camera"],
+#                                                message.getData()["state"],
+#                                                message.getData()["temperature"])
+
+        
+#            # Let everyone know what the default color table is.
+#            self.newMessage.emit(halMessage.HalMessage(source = self,
+ #                                                      m_type = "default colortable",
+ #                                                      data = {"colortable" : self.parameters.get("colortable")}))
+        
+#            # Enable stage dragging if there is a stage.
+#            if "stage" in message.getData()["all_modules"]:
+#                self.have_stage = True
+#                self.viewers[0].enableStageDrag(self.have_stage)
+        
+#        # These are sent when the user selects an ROI on a View with the rubber
+#        # band selection, 'chip' coordinates.
+#        halMessage.addMessage("display ROI selection",
+#                              validator = {"data" : {"display_name" : [True, str],
+#                                                     "feed_name" : [True, str],
+#                                                     "x1" : [True, int],
+#                                                     "x2" : [True, int],
+#                                                     "y1" : [True, int],
+#                                                     "y2" : [True, int]},
+#                                           "resp" : None})
+#
+#        # This message comes from one of the viewers when the user is trying to
+#        # get the stage to move by dragging on the display.
+#        halMessage.addMessage("drag move",
+#                              validator = {"data" : {"display_name" : [True, str],
+#                                                     "feed_name" : [True, str],
+#                                                     "x_disp" : [True, int],
+#                                                     "y_disp" : [True, int]},
+#                                           "resp" : None})
+#
+#        # This message comes from one of the viewers when the user first clicks
+#        # to initiate stage movement by dragging on the display.
+#        halMessage.addMessage("drag start",
+#                              validator = {"data" : {"display_name" : [True, str],
+#                                                     "feed_name" : [True, str]},
+#                                           "resp" : None})
+
+
+        # This message only comes from viewers, it is used to get the configuration
+        # of a camera mostly, for the benefit of the camera parameters display.
+#        halMessage.addMessage("get camera configuration",
+#                              validator = {"data" : {"display_name" : [True, str],
+#                                                     "camera" : [True, str]},
+#                                           "resp" : {"camera" : [True, str],
+#                                                     "config" : [True, cameraControl.CameraConfiguration]}})
+        
+        # This message comes from the viewers, it is used to get the initial
+        # display settings for a camera or feed.
+#        halMessage.addMessage("get feed information",
+#                              validator = {"data" : {"display_name" : [True, str],
+#                                                     "feed_name" : [True, str]},
+#                                           "resp" : {"feed_name" : [True, str],
+#                                                     "feed_info" : [True, feeds.CameraFeedInfo]}})
+
+        
+#        # Default color table to use. This is used by feeds.feeds in the feed_info structure.
+#        halMessage.addMessage("default colortable",
+#                              validator = {"data" : {"colortable" : [True, str]},
+#                                           "resp" : None})
+
+#        elif message.isType("get feed information"):
+#            for viewer in self.viewers:
+#                if (viewer.getViewerName() == message.getData()["display_name"]):
+#                    viewer.messageGetFeedInformation(response.getData()["feed_info"])
+
+
+
 #
 # The MIT License
 #

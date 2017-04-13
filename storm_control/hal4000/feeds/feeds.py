@@ -51,15 +51,15 @@ def checkParameters(parameters):
             raise FeedException("x size of " + str(x_pixels) + " is not a multiple of 4 in feed " + feed_name)
 
     
-def getCameraFeedName(feed_name):
-    """
-    Use this to separate the camera and the feed name from a feed name string.
-    """
-    tmp = feed_name.split("-")
-    if (len(tmp) > 1):
-        return tmp
-    else:
-        return [tmp[0], None]
+#def getCameraFeedName(feed_name):
+#    """
+#    Use this to separate the camera and the feed name from a feed name string.
+#    """
+#    tmp = feed_name.split("-")
+#    if (len(tmp) > 1):
+#        return tmp
+#    else:
+#        return [tmp[0], None]
 
 
 class FeedException(halExceptions.HalException):
@@ -82,6 +82,9 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
         self.x_pixels = 0
         self.y_pixels = 0
 
+    def getCameraFunctionality(self):
+        return self.cam_fn
+        
     def handleEMCCDGain(self, gain):
         self.emcddGain.emit(gain)
 
@@ -157,7 +160,8 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
             p.getp(base + "start").setMaximum(self.cam_fn.getParameter(base + "pixels"))
             p.getp(base + "end").setMaximum(self.cam_fn.getParameter(base + "pixels"))
 
-        # Add some of other parameters that we'll need from the camera.
+        # Add some of other parameters that we need to behave like a camera functionality. These
+        # are just duplicates from the corresponding camera.
         for pname in ["default_max", "default_min", "flip_horizontal", "flip_vertical", "transpose"]:
             self.parameters.add(self.cam_fn.parameters.getp(pname).copy())
 
@@ -174,18 +178,13 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
             
         # Connect camera functionality signals. We just pass most of
         # these right through.
-        self.cam_fn.emccdGain.connect(self.handleEMCCDGain)
         self.cam_fn.invalid.connect(self.handleInvalid)
         self.cam_fn.newFrame.connect(self.handleNewFrame)
-        self.cam_fn.shutter.connect(self.handleShutter)
         self.cam_fn.stopped.connect(self.handleStopped)
-        self.cam_fn.temperature.connect(self.handleTemperature)
 
-    def setEMCCDGain(self, gain):
-        self.cam_fn.setEMCCDGain(gain)
-
-    def toggleShutter(self):
-        self.cam_fn.toggleShutter()
+        #self.cam_fn.shutter.connect(self.handleShutter)
+        #self.cam_fn.emccdGain.connect(self.handleEMCCDGain)
+        #self.cam_fn.temperature.connect(self.handleTemperature)
 
 
 class FeedFunctionalityAverage(FeedFunctionality):

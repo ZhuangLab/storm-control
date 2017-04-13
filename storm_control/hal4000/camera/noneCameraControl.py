@@ -40,24 +40,30 @@ class NoneCameraControl(cameraControl.CameraControl):
                                                                             have_temperature = True,
                                                                             is_master = is_master,
                                                                             parameters = self.parameters)
+        #
+        # In general these should be handled by a thread as they may be slow.
+        #
         self.camera_functionality.setEMCCDGain = self.setEMCCDGain
+        self.camera_functionality.toggleShutter = self.toggleShutter
         
         #
         # Override defaults with camera specific values.
         #
         self.parameters.set("exposure_time", params.ParameterRangeFloat(description = "Exposure time (seconds)", 
-                                                       name = "exposure_time", 
-                                                       value = 0.02,
-                                                       min_value = 0.01,
-                                                       max_value = 10.0))
-        self.parameters.set("max_intensity", 512)
+                                                                        name = "exposure_time", 
+                                                                        value = 0.02,
+                                                                        min_value = 0.01,
+                                                                        max_value = 10.0))
+        self.parameters.setv("max_intensity", 512)
         
         chip_size = 512
         for pname in ["x_start", "x_end", "y_start", "y_end"]:
             self.parameters.getp(pname).setMaximum(chip_size)
 
-        self.parameters.set("x_chip", chip_size)
-        self.parameters.set("y_chip", chip_size)
+        self.parameters.setv("x_end", chip_size)
+        self.parameters.setv("y_end", chip_size)
+        self.parameters.setv("x_chip", chip_size)
+        self.parameters.setv("y_chip", chip_size)
         
         #
         # Emulation camera specific parameters.
@@ -67,7 +73,7 @@ class NoneCameraControl(cameraControl.CameraControl):
                                                        value = 0.1,
                                                        min_value = 0.0,
                                                        max_value = 1.0))
-        self.parameters.set("roll", config.get("roll"))
+        self.parameters.setv("roll", config.get("roll"))
 
         self.parameters.add(params.ParameterRangeInt(description = "EMCCD gain",
                                                      name = "emccd_gain",

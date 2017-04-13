@@ -96,11 +96,11 @@ class CameraFunctionality(halFunctionality.HalFunctionality):
         zy = self.getParameter("y_bin") * self.getParameter("y_start")
         return [zx, zy]
 
-    def getParameter(self, name):
-        return self.parameters.get(name)
+    def getParameter(self, pname):
+        return self.parameters.get(pname)
 
-    def getParameters(self):
-        return self.parameters
+    def getParameterObject(self, pname):
+        return self.parameters.getp(pname)
 
     def getShutterState(self):
         return self.shutter_state

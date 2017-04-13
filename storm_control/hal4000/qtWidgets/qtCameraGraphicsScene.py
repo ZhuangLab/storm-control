@@ -64,12 +64,16 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
         
     def newColorTable(self, colortable):
         self.colortable = colortable
+        if "_sat.ctbl" in colortable:
+            self.display_saturated_pixels = True
+        else:
+            self.display_saturated_pixels = False
 
-    def newConfiguration(self, feed_info):
-        [chip_x, chip_y] = feed_info.getChipSize()
-        [self.frame_x_offset, self.frame_y_offset] = feed_info.getFrameZeroZero()
-        self.max_intensity = feed_info.getParameter("max_intensity")
-        [self.scale_x, self.scale_y] = feed_info.getFrameScale()
+    def newConfiguration(self, camera_functionality):
+        [chip_x, chip_y] = camera_functionality.getChipSize()
+        [self.frame_x_offset, self.frame_y_offset] = camera_functionality.getFrameZeroZero()
+        self.max_intensity = camera_functionality.getParameter("max_intensity")
+        [self.scale_x, self.scale_y] = camera_functionality.getFrameScale()
         
         # Check if we need to notify the scene of a change in the chip size.
         if (chip_x != self.chip_x) or (chip_y != self.chip_y):
@@ -77,11 +81,6 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
             self.chip_y = chip_y
             self.chip_size_changed = True
             self.prepareGeometryChange()
-
-        if "_sat.ctbl" in feed_info.getParameter("colortable"):
-            self.display_saturated_pixels = True
-        else:
-            self.display_saturated_pixels = False
 
     def newRange(self, d_min, d_max):
         self.display_range = [d_min, d_max]

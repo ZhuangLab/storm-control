@@ -23,14 +23,12 @@ class ParamsViewer(QtWidgets.QGroupBox):
     in the UI. It also handles the EMCCD gain slider (if the camera has
     an EMCCD).
     """
-    guiMessage = QtCore.pyqtSignal(object)
-
     def __init__(self, viewer_name = "", viewer_ui = None, **kwds):
         super().__init__(**kwds)
-        self.camera_name = ""
+        self.cam_fn = None
         self.temperature = 50
         self.viewer_name = viewer_name
-        
+
         # UI setup
         self.ui = viewer_ui.Ui_GroupBox()
         self.ui.setupUi(self)
@@ -38,53 +36,47 @@ class ParamsViewer(QtWidgets.QGroupBox):
         # connect signals
         self.ui.EMCCDSlider.valueChanged.connect(self.handleGainChange)
 
-    def handleGainChange(self, new_gain):
-        self.guiMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "set emccd gain",
-                                                   data = {"camera" : self.camera_name,
-                                                           "emccd gain" : new_gain}))
-
-    def newParameters(self, parameters):
-        p = parameters
-        
-        if p.has("emccd_gain"):
-            gainp = p.getp("emccd_gain")
+    def handleEMCCDGain(self, gain):
+        if (gain != self.ui.EMCCDSlider.value()):
             self.ui.EMCCDSlider.valueChanged.disconnect()
-            self.ui.EMCCDSlider.setMinimum(gainp.getMinimum())
-            self.ui.EMCCDSlider.setMaximum(gainp.getMaximum())
-            self.ui.EMCCDSlider.setValue(gainp.getv())
-            self.ui.EMCCDLabel.setText("EMCCD Gain: {0:d}".format(gainp.getv()))
-            self.ui.EMCCDSlider.valueChanged.connect(self.handleGainChange)
-
-        if p.get("external_trigger", False):
-            self.ui.exposureTimeText.setText("External")
-            self.ui.FPSText.setText("External")
-        else:
-            self.ui.exposureTimeText.setText("{0:.4f}".format(p.get("exposure_time")))
-            self.ui.FPSText.setText("{0:.4f}".format(p.get("fps")))
-
-        if p.has("preampgain"):
-            self.ui.preampGainText.setText("{0:.1f}".format(p.get("preampgain")))
-
-        if p.has("temperature"):
-            self.temperature = p.get("temperature")
-
-        self.ui.pictureSizeText.setText(str(p.get("x_pixels")) + " x " + str(p.get("y_pixels")) +
-                                        " (" + str(p.get("x_bin")) + "," + str(p.get("y_bin")) + ")")
-
-    def setEMCCDGain(self, new_gain):
-        if (new_gain != self.ui.EMCCDSlider.value()):
-            self.ui.EMCCDSlider.valueChanged.disconnect()
-            self.ui.EMCCDSlider.setValue(new_gain)
+            self.ui.EMCCDSlider.setValue(gain)
             self.ui.EMCCDSlider.valueChanged.connect(self.handleGainChange)
         self.ui.EMCCDLabel.setText("EMCCD Gain: {0:d}".format(new_gain))
+            
+    def handleGainChange(self, new_gain):
+        if self.cam_fn is not None:
+            self.cam_fn.setEMCCDGain(new_gain)
+            
+    def handleTemperature(self, t_dict):
+        if (t_dict["state"] == "stable"):
+            self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
+        else:
+            self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
+        self.ui.temperatureText.setText(str(t_dict["temperature"]) + " (" + str(self.temperature) + ")")
 
-    def setCameraConfiguration(self, camera_config):
-        self.camera_name = camera_config.getCameraName()
-        self.setTitle(self.camera_name.title())
+    def setCameraFunctionality(self, camera_functionality):
 
-        if camera_config.hasEMCCD():
-            if not camera_config.hasParameter("emccd_gain"):
+        # Disconnect signals from previous camera_functionality, if any.
+        if self.cam_fn is not None:
+            self.cam_fn.emccdGain.disconnect()
+            self.cam_fn.temperature.disconnect()
+
+        # If this is a feed we want it's source camera functionality.
+        if camera_functionality.isCamera():
+            self.cam_fn = camera_functionality
+        else:
+            self.cam_fn = camera_functionality.getCameraFunctionality()
+
+        # Connect new signals.
+        self.cam_fn.emccdGain.connect(self.handleEMCCDGain)
+        self.cam_fn.temperature.connect(self.handleTemperature)
+
+        # Set the group box title.
+        self.setTitle(self.cam_fn.getCameraName().title())
+
+        # Show hide UI elements.
+        if self.cam_fn.hasEMCCD():
+            if not self.cam_fn.hasParameter("emccd_gain"):
                 raise ParamsViewerException("EMCCD cameras must have the 'emccd_gain' parameter.")
             self.ui.EMCCDLabel.show()
             self.ui.EMCCDSlider.show()
@@ -92,8 +84,8 @@ class ParamsViewer(QtWidgets.QGroupBox):
             self.ui.EMCCDLabel.hide()
             self.ui.EMCCDSlider.hide()
 
-        if camera_config.hasPreamp():
-            if not camera_config.hasParameter("preampgain"):
+        if self.cam_fn.hasPreamp():
+            if not self.cam_fn.hasParameter("preampgain"):
                 msg = "Cameras with adjustable preamp gain must have the 'preampgain' parameter."
                 raise ParamsViewerException(msg)
             self.ui.preampGainLabel.show()
@@ -102,8 +94,8 @@ class ParamsViewer(QtWidgets.QGroupBox):
             self.ui.preampGainLabel.hide()
             self.ui.preampGainText.hide()
 
-        if camera_config.hasTemperature():
-            if not camera_config.hasParameter("temperature"):
+        if self.cam_fn.hasTemperature():
+            if not self.cam_fn.hasParameter("temperature"):
                 msg = "Cameras with temperature control must have the 'temperature' parameter."
                 raise ParamsViewerException(msg)
             self.ui.temperatureLabel.show()
@@ -112,15 +104,34 @@ class ParamsViewer(QtWidgets.QGroupBox):
             self.ui.temperatureLabel.hide()
             self.ui.temperatureText.hide()
 
-        self.newParameters(camera_config.getParameters())
+        # Update UI elements.
+        if self.cam_fn.hasParameter("emccd_gain"):
+            gainp = self.cam_fn.getParameterObject("emccd_gain")
+            self.ui.EMCCDSlider.valueChanged.disconnect()
+            self.ui.EMCCDSlider.setMinimum(gainp.getMinimum())
+            self.ui.EMCCDSlider.setMaximum(gainp.getMaximum())
+            self.ui.EMCCDSlider.setValue(gainp.getv())
+            self.ui.EMCCDLabel.setText("EMCCD Gain: {0:d}".format(gainp.getv()))
+            self.ui.EMCCDSlider.valueChanged.connect(self.handleGainChange)
 
-    def setTemperature(self, state, temperature):
-        if (state == "stable"):
-            self.ui.temperatureText.setStyleSheet("QLabel { color: green }")
+        if self.cam_fn.hasParameter("external_trigger"):
+            self.ui.exposureTimeText.setText("External")
+            self.ui.FPSText.setText("External")
         else:
-            self.ui.temperatureText.setStyleSheet("QLabel { color: red }")
-        self.ui.temperatureText.setText(str(temperature) + " (" + str(self.temperature) + ")")
-        
+            self.ui.exposureTimeText.setText("{0:.4f}".format(self.cam_fn.getParameter("exposure_time")))
+            self.ui.FPSText.setText("{0:.4f}".format(self.cam_fn.getParameter("fps")))
+
+        if self.cam_fn.hasParameter("preampgain"):
+            self.ui.preampGainText.setText("{0:.1f}".format(self.cam_fn.getParameter("preampgain")))
+
+        if self.cam_fn.hasParameter("temperature"):
+            self.temperature = self.cam_fn.getParameter("temperature")
+
+        self.ui.pictureSizeText.setText(str(self.cam_fn.getParameter("x_pixels")) + " x " +
+                                        str(self.cam_fn.getParameter("y_pixels")) + " (" +
+                                        str(self.cam_fn.getParameter("x_bin")) + "," +
+                                        str(self.cam_fn.getParameter("y_bin")) + ")")
+
     def startFilm(self):
         self.ui.EMCCDSlider.setEnabled(False)
 
@@ -128,7 +139,7 @@ class ParamsViewer(QtWidgets.QGroupBox):
         self.ui.EMCCDSlider.setEnabled(True)
             
 
-
+#
 # The MIT License
 #
 # Copyright (c) 2017 Zhuang Lab, Harvard University

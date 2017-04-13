@@ -63,18 +63,19 @@ class CameraFrameViewer(QtWidgets.QFrame):
     feedChange = QtCore.pyqtSignal(str)
     guiMessage = QtCore.pyqtSignal(object)
 
-    def __init__(self, display_name = None, feed_name = "camera1", **kwds):
+    def __init__(self, display_name = None, feed_name = "camera1", default_colortable = None, **kwds):
         super().__init__(**kwds)
 
         # General (alphabetically ordered).
         self.broadcast_q_image = False
+        self.cam_fn = None
         self.color_gradient = None
         self.color_tables = colorTables.ColorTables(os.path.dirname(__file__) + "/../colorTables/all_tables/")
         self.cycle_length = 1
+        self.default_colortable = default_colortable
         self.default_parameters = params.StormXMLObject(validate = False) 
         self.display_name = display_name
         self.display_timer = QtCore.QTimer(self)
-        self.feed_info = None
         self.filming = False
         self.frame = False
         self.parameters = False
@@ -136,13 +137,14 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.ui.feedComboBox.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
         
         # Connect signals.
-        self.camera_view.dragMove.connect(self.handleDragMove)
-        self.camera_view.dragStart.connect(self.handleDragStart)
         self.camera_view.horizontalScrollBar().sliderReleased.connect(self.handleScrollBar)
         self.camera_view.newCenter.connect(self.handleNewCenter)
         self.camera_view.newScale.connect(self.handleNewScale)
-        self.camera_view.rubberBandChanged.connect(self.handleRubberBandChanged)
         self.camera_view.verticalScrollBar().sliderReleased.connect(self.handleScrollBar)
+
+#        self.camera_view.dragMove.connect(self.handleDragMove)
+#        self.camera_view.dragStart.connect(self.handleDragStart)        
+#        self.camera_view.rubberBandChanged.connect(self.handleRubberBandChanged)
 
         self.ui.autoScaleButton.clicked.connect(self.handleAutoScale)
         self.ui.colorComboBox.currentIndexChanged[str].connect(self.handleColorTableChange)
@@ -166,9 +168,12 @@ class CameraFrameViewer(QtWidgets.QFrame):
         menu.addAction(self.ui.gridAct)
         menu.exec_(event.globalPos())
 
-    def createParameters(self, feed_info, parameters_from_file):
+    def createParameters(self, cam_fn, parameters_from_file):
         """
         Create (initial) parameters for the current feed.
+
+        cam_fn - A camera / feed functionality object.
+        parameters_from_file - The parameters that were read from the XML file.
         """
         # Check that we are not writing over something that already exists.
         if (self.parameters.has(self.getFeedName())):
@@ -222,31 +227,19 @@ class CameraFrameViewer(QtWidgets.QFrame):
                                   is_mutable = False,
                                   is_saved = False))
 
-        # Set parameters with default values from feed_info.
-        p.set("colortable", feed_info.getParameter("colortable"))
-        p.set("display_max", feed_info.getParameter("default_max"))
-        p.set("display_min", feed_info.getParameter("default_min"))
-        p.set("max_intensity", feed_info.getParameter("max_intensity"))
+        # Set parameters with default values from feed/camera functionality
+        if cam_fn.hasParameter("colortable"):
+            p.setv("colortable", cam_fn.getParameter("colortable"))
+        else:
+            p.setv("colortable", self.default_colortable)
+        p.setv("display_max", cam_fn.getParameter("default_max"))
+        p.setv("display_min", cam_fn.getParameter("default_min"))
+        p.setv("max_intensity", cam_fn.getParameter("max_intensity"))
 
         # If they exist, update with the values that we loaded from a file.
         if parameters_from_file is not None:
             for attr in parameters_from_file.getAttrs():
-                p.set(attr, parameters_from_file.get(attr))
-
-    def enableBroadcastImage(self, enabled):
-        self.broadcast_q_image = enabled
-        
-    def enableStageDrag(self, enabled):
-        self.camera_view.enableStageDrag(enabled)
-        
-    def getDefaultParameters(self):
-        """
-        Return a copy of the default parameters.
-        """
-        return self.default_parameters.copy()
-
-    def getDisplayName(self):
-        return self.display_name
+                p.setv(attr, parameters_from_file.get(attr))
 
     def getFeedName(self):
         return self.parameters.get("feed_name")
@@ -283,20 +276,6 @@ class CameraFrameViewer(QtWidgets.QFrame):
             # This is a stub. Fill it out when we get Bluetooth up and running again.
             if self.broadcast_q_image:
                 pass
-
-    def handleDragMove(self, x_disp, y_disp):
-        self.guiMessage.emit(halMessage.HalMessage(m_type = "drag move",
-                                                   level = 3,
-                                                   data = {"display_name" : self.display_name,
-                                                           "feed_name" : self.getFeedName(),
-                                                           "x_disp" : x_disp,
-                                                           "y_disp" : y_disp}))
-                
-    def handleDragStart(self):
-        self.guiMessage.emit(halMessage.HalMessage(m_type = "drag start",
-                                                   level = 3,
-                                                   data = {"display_name" : self.display_name,
-                                                           "feed_name" : self.getFeedName()}))
 
     def handleFeedChange(self, feed_name):
         """
@@ -336,6 +315,13 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.setParameter("center_y", cy)
         self.camera_widget.setClickPos(*self.feed_info.transformChipToFrame(cx, cy))
 
+    def handleNewFrame(self, frame):
+        if self.filming and (self.getParameter("sync") != 0):
+            if((frame.number % self.cycle_length) == (self.getParameter("sync") - 1)):
+                self.frame = frame
+        else:
+            self.frame = frame
+
     def handleNewScale(self, scale):
         self.setParameter("scale", scale)
 
@@ -348,27 +334,6 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.setParameter("display_max", int(scale_max))
         self.setParameter("display_min", int(scale_min))
         self.updateRange()
-
-    def handleRubberBandChanged(self, rect, p1, p2):
-        if rect.isNull():
-            tl = self.camera_view.mapToScene(self.rubber_band_rect.topLeft())
-            br = self.camera_view.mapToScene(self.rubber_band_rect.bottomLeft())
-            [x1, x2] = [tl.x(), br.x()] if (tl.x() < br.x()) else [br.x(), tl.x()]
-            [y1, y2] = [tl.y(), br.y()] if (tl.y() < br.y()) else [br.y(), tl.y()]
-            [x1, x2, y1, y2] = map(round, [x1, x2, y1, y2])
-            if (x1 == x2):
-                x2 += 1
-            if (y1 == y2):
-                y2 += 1
-            self.guiMessage.emit(halMessage.HalMessage(m_type = "display ROI selection",
-                                                       data = {"display_name" : self.display_name,
-                                                               "feed_name" : self.getFeedName(),
-                                                               "x1" : x1,
-                                                               "x2" : x2,
-                                                               "y1" : y1,
-                                                               "y2" : y2}))
-        else:
-            self.rubber_band_rect = rect
 
     def handleScrollBar(self):
         self.camera_view.getCurrentCenter()
@@ -385,14 +350,6 @@ class CameraFrameViewer(QtWidgets.QFrame):
             self.ui.targetAct.setText("Hide Target")
         self.camera_widget.setShowTarget(self.show_target)
 
-    def newFrame(self, frame):
-        if (frame.which_camera == self.getFeedName()):
-            if self.filming and (self.getParameter("sync") != 0):
-                if((frame.number % self.cycle_length) == (self.getParameter("sync") - 1)):
-                    self.frame = frame
-            else:
-                self.frame = frame
-
     def newParameters(self, parameters):
         """
         How this is supposed to work..
@@ -403,13 +360,12 @@ class CameraFrameViewer(QtWidgets.QFrame):
         2. Wait for the 'updated parameters' message.
 
         3. Execute a feed change to the new camera / feed,
-           this will send a 'get feed config' message.
+           this will send a 'get camera functionality' message.
 
-        4. The camera / feed will respond to the message with 
-           the correct frame size, etc. for display.
+        4. The camera / feed will respond with a functionality.
 
-        5. The viewFeedConfig() method will then handle actually
-           updating everything.
+        5. The setCameraFunctionality() method will then handle updating
+           the display.
         """
         # FIXME: Check that there are no problems with the new parameters?
         #        We need to error now rather than at 'updated parameters'.
@@ -420,19 +376,25 @@ class CameraFrameViewer(QtWidgets.QFrame):
             if not self.parameters.has(attr):
                 self.parameters.add(attr, self.default_parameters.getp(attr).copy())
 
-    def setCameraConfiguration(self, camera_config):
-        self.showShutter(camera_config.hasShutter())
-        self.setShutter(camera_config.getShutterState())
+    def setCameraFunctionality(self, camera_functionality):
+        """
+        This method gets called when the view changes it's current feed. The
+        sequence is that a 'get camera functionality' message is sent. When
+        the display module gets the updated functionality it calls this 
+        method.
+        """
 
-    def setFeedInformation(self, feed_info):
-        """
-        This method gets called when the view changes it's current feed. 
-        """
+        # Give the correct functionality to the shutter button.
+        if camera_functionality.isCamera():
+            self.ui.shutterButton.setCameraFunctionality(camera_functionality)
+        else:
+            self.ui.shutterButton.setCameraFunctionality(camera_functionality.getCameraFunctionality)
 
         # A sanity check..
-        assert (self.getFeedName() == feed_info.getFeedName())
+        assert (self.getFeedName() == camera_functionality.getCameraName())
 
-        self.feed_info = feed_info
+        self.cam_fn = camera_functionality
+        self.cam_fn.newFrame.connect(self.handleNewFrame)
 
         #
         # Add a sub-section for this camera / feed if we don't already have one.
@@ -448,6 +410,7 @@ class CameraFrameViewer(QtWidgets.QFrame):
         if not self.parameters.has(self.getFeedName()):
             need_to_initialize = True
 
+        #
         # Check if all we have are values from a parameter file that we loaded.
         # In this case we will only have some of the parameters and some of
         # them will not be of the correct type.
@@ -459,6 +422,7 @@ class CameraFrameViewer(QtWidgets.QFrame):
         # In order to initialize them properly we make a copy of the current
         # values, then delete the section, recreate it correctly and update
         # it with the current values.
+        #
         else:
             feed_params = self.parameters.get(self.getFeedName())
             if not feed_params.has("max_intensity"):
@@ -467,16 +431,16 @@ class CameraFrameViewer(QtWidgets.QFrame):
                 self.parameters.delete(self.getFeedName())
 
         if need_to_initialize:
-            self.createParameters(self.feed_info, parameters_from_file)
+            self.createParameters(self.cam_fn, parameters_from_file)
 
         # Configure the QtCameraGraphicsItem.
         color_table = self.color_tables.getTableByName(self.getParameter("colortable"))
         self.camera_widget.newColorTable(color_table)
-        self.camera_widget.newConfiguration(self.feed_info)
+        self.camera_widget.newConfiguration(self.cam_fn)
         self.updateRange()
 
         # Configure the QtCameraGraphicsView.
-        self.camera_view.newConfiguration(self.feed_info, self.parameters.get(self.getFeedName()))
+        self.camera_view.newConfiguration(self.cam_fn, self.parameters.get(self.getFeedName()))
 
         # Color gradient.
         if self.color_gradient is not None:
@@ -498,7 +462,7 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.setSyncMax(self.getParameter("sync_max"))
         self.ui.syncSpinBox.setValue(self.getParameter("sync"))
 
-    def setFeeds(self, feeds_info):
+    def setFeedNames(self, feed_names):
         """
         This updates feed selector combo box with a list of 
         the feeds that are currently available.
@@ -508,8 +472,8 @@ class CameraFrameViewer(QtWidgets.QFrame):
 
         # Update combo box with the new feed names.
         self.ui.feedComboBox.clear()
-        if (len(feeds_info) > 1):
-            for feed_name in sorted(feeds_info):
+        if (len(feed_names) > 1):
+            for feed_name in sorted(feed_names):
                 self.ui.feedComboBox.addItem(feed_name)
             self.ui.feedComboBox.setCurrentIndex(self.ui.feedComboBox.findText(self.getFeedName()))
             self.ui.feedComboBox.show()
@@ -526,9 +490,6 @@ class CameraFrameViewer(QtWidgets.QFrame):
         feed_params = self.parameters.get(self.getFeedName())
         feed_params.set(pname, pvalue)
         return pvalue
-
-    def setShutter(self, state):
-        self.ui.shutterButton.setShutter(state)
         
     def setSyncMax(self, sync_max):
         self.setParameter("sync_max", sync_max)
@@ -538,9 +499,6 @@ class CameraFrameViewer(QtWidgets.QFrame):
 
     def showRecord(self, show):
         self.ui.recordButton.setVisible(show)
-
-    def showShutter(self, show):
-        self.ui.shutterButton.setVisible(show)
         
     def startFilm(self, film_settings):
         self.filming = True
@@ -573,6 +531,70 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.camera_widget.newRange(self.getParameter("display_min"), self.getParameter("display_max"))
 
 
+
+
+
+
+
+#    def handleDragMove(self, x_disp, y_disp):
+#        self.guiMessage.emit(halMessage.HalMessage(m_type = "drag move",
+#                                                   level = 3,
+#                                                   data = {"display_name" : self.display_name,
+#                                                           "feed_name" : self.getFeedName(),
+#                                                           "x_disp" : x_disp,
+#                                                           "y_disp" : y_disp}))
+#                
+#    def handleDragStart(self):
+#        self.guiMessage.emit(halMessage.HalMessage(m_type = "drag start",
+#                                                   level = 3,
+#                                                   data = {"display_name" : self.display_name,
+#                                                           "feed_name" : self.getFeedName()}))
+        
+#    def showShutter(self, show):
+#        self.ui.shutterButton.setVisible(show)
+
+
+#    def setShutter(self, state):
+#        self.ui.shutterButton.setShutter(state)
+
+#    def handleRubberBandChanged(self, rect, p1, p2):
+#        if rect.isNull():
+#            tl = self.camera_view.mapToScene(self.rubber_band_rect.topLeft())
+#            br = self.camera_view.mapToScene(self.rubber_band_rect.bottomLeft())
+#            [x1, x2] = [tl.x(), br.x()] if (tl.x() < br.x()) else [br.x(), tl.x()]
+#            [y1, y2] = [tl.y(), br.y()] if (tl.y() < br.y()) else [br.y(), tl.y()]
+#            [x1, x2, y1, y2] = map(round, [x1, x2, y1, y2])
+#            if (x1 == x2):
+#                x2 += 1
+#            if (y1 == y2):
+#                y2 += 1
+#            self.guiMessage.emit(halMessage.HalMessage(m_type = "display ROI selection",
+#                                                       data = {"display_name" : self.display_name,
+#                                                               "feed_name" : self.getFeedName(),
+#                                                               "x1" : x1,
+#                                                               "x2" : x2,
+#                                                               "y1" : y1,
+#                                                               "y2" : y2}))
+#        else:
+#            self.rubber_band_rect = rect
+        
+
+#    def enableBroadcastImage(self, enabled):
+#        self.broadcast_q_image = enabled
+#        
+#    def enableStageDrag(self, enabled):
+#        self.camera_view.enableStageDrag(enabled)
+#        
+#    def getDefaultParameters(self):
+#        """
+#        Return a copy of the default parameters.
+#        """
+#        return self.default_parameters.copy()
+#
+#    def getDisplayName(self):
+#        return self.display_name
+
+        
 #
 # The MIT License
 #

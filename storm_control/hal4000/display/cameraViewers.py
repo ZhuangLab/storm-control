@@ -32,34 +32,24 @@ class CameraParamsMixin(object):
         super().__init__(**kwds)
         self.camera_name = ""
         self.params_viewer = None
-        
-    def enableStageDrag(self, enabled):
-        self.frame_viewer.enableStageDrag(enabled)
 
-    def getDefaultParameters(self):
-        return self.frame_viewer.getDefaultParameters()
+    def configure1(self):
+        pass
+
+    def configure2(self):
+        pass    
     
     def getParameters(self):
         return self.frame_viewer.getParameters()
 
-    def getFeedName(self):
-        return self.frame_viewer.getFeedName()
-        
     def getViewerName(self):
         return self.module_name
 
     def handleFeedChange(self, feed_name):
-        [camera_name, temp] = feeds.getCameraFeedName(feed_name)
-        if (camera_name != self.camera_name):
-            self.guiMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "get camera configuration",
-                                                       data = {"display_name" : self.module_name,
-                                                               "camera" : camera_name}))
-            self.camera_name = camera_name
         self.guiMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "get feed information",
-                                                   data = {"display_name" : self.module_name,
-                                                           "feed_name" : feed_name}))
+                                                   m_type = "get camera functionality",
+                                                   data = {"camera" : feed_name,
+                                                           "extra data" : self.module_name}))
 
     def handleGuiMessage(self, message):
         self.guiMessage.emit(message)
@@ -67,54 +57,16 @@ class CameraParamsMixin(object):
     def handleRecordButton(self, boolean):
         self.guiMessage.emit(self.frame_viewer.ui.recordButton.getHalMessage())
 
-    def handleShutterButton(self, boolean):
-        self.guiMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "shutter clicked",
-                                                   data = {"display_name" : self.module_name,
-                                                           "camera" : self.camera_name}))
-
-    def messageCameraEMCCDGain(self, camera_name, emccd_gain):
-        if (camera_name == self.camera_name):
-            if self.params_viewer is not None:
-                self.params_viewer.setEMCCDGain(emccd_gain)
-
-    def messageCameraShutter(self, camera_name, camera_shutter):
-        if (camera_name == self.camera_name):
-            self.frame_viewer.setShutter(camera_shutter)
-
-    def messageCameraTemperature(self, camera_name, state, temperature):
-        if (camera_name == self.camera_name):
-            if self.params_viewer is not None:
-                self.params_viewer.setTemperature(state, temperature)
-
-    def messageConfigure1(self):
-        pass
-
-    def messageConfigure2(self):
-        pass    
-    
-    def messageGetCameraConfiguration(self, camera_config):
-        assert(camera_config.getCameraName() == self.camera_name)
-        self.frame_viewer.setCameraConfiguration(camera_config)
-        if self.params_viewer is not None:
-            self.params_viewer.setCameraConfiguration(camera_config)
-            
-    def messageGetFeedInformation(self, feed_info):
-        self.frame_viewer.setFeedInformation(feed_info)
-
-    def messageFeedsInformation(self, feeds_info):
-        self.frame_viewer.setFeeds(feeds_info)
-
-    def messageNewFrame(self, frame):
-        self.frame_viewer.newFrame(frame)
-        
-    def messageNewParameters(self, parameters):
+    def newParameters(self, parameters):
         self.frame_viewer.newParameters(parameters)
 
-    def messageUpdatedParameters(self, parameters):
-        self.frame_viewer.updatedParameters()
+    def setCameraFunctionality(self, camera_functionality):
+        self.frame_viewer.setCameraFunctionality(camera_functionality)
         if self.params_viewer is not None:
-            self.params_viewer.newParameters(parameters.get(self.camera_name))
+            self.params_viewer.setCameraFunctionality(camera_functionality)
+
+    def setFeedNames(self, feed_names):
+        self.frame_viewer.setFeedNames(feed_names)
 
     def showViewer(self, show_gui):
         self.handleFeedChange(self.frame_viewer.getFeedName())
@@ -131,6 +83,9 @@ class CameraParamsMixin(object):
         if self.params_viewer is not None:
             self.params_viewer.stopFilm()
 
+    def updatedParameters(self, parameters):
+        self.frame_viewer.updatedParameters()
+
             
 class ClassicViewer(QtCore.QObject, CameraParamsMixin):
     """
@@ -139,12 +94,13 @@ class ClassicViewer(QtCore.QObject, CameraParamsMixin):
     """
     guiMessage = QtCore.pyqtSignal(object)
 
-    def __init__(self, module_name = "", camera_name = "camera1", **kwds):
+    def __init__(self, module_name = "", camera_name = "camera1", default_colortable = None, **kwds):
         super().__init__(**kwds)
         self.module_name = module_name
 
         self.frame_viewer = cameraFrameViewer.CameraFrameViewer(display_name = self.module_name,
-                                                                feed_name = camera_name)
+                                                                feed_name = camera_name,
+                                                                default_colortable = default_colortable)
         self.params_viewer = paramsViewer.ParamsViewer(viewer_name = self.module_name,
                                                        viewer_ui = cameraParamsUi)
 
@@ -153,13 +109,11 @@ class ClassicViewer(QtCore.QObject, CameraParamsMixin):
         self.frame_viewer.feedChange.connect(self.handleFeedChange)
         self.frame_viewer.guiMessage.connect(self.handleGuiMessage)
         self.frame_viewer.ui.recordButton.clicked.connect(self.handleRecordButton)
-        self.frame_viewer.ui.shutterButton.clicked.connect(self.handleShutterButton)        
-        self.params_viewer.guiMessage.connect(self.handleGuiMessage)
 
     def cleanUp(self, qt_settings):
         pass
 
-    def messageConfigure1(self):
+    def configure1(self):
         """
         Send messages with the UI elements to HAL.
         """
@@ -174,11 +128,11 @@ class ClassicViewer(QtCore.QObject, CameraParamsMixin):
                                                            "ui_parent" : "hal.containerWidget",
                                                            "ui_widget" : self.params_viewer}))
 
-    def messageConfigure2(self):
+    def configure2(self):
         self.handleFeedChange(self.frame_viewer.getFeedName())
 
-    def showIfVisible(self):
-        pass
+    def showViewer(self, show_gui):
+        self.handleFeedChange(self.frame_viewer.getFeedName())
 
     
 class FeedViewer(halDialog.HalDialog, CameraParamsMixin):
@@ -188,11 +142,12 @@ class FeedViewer(halDialog.HalDialog, CameraParamsMixin):
     """
     guiMessage = QtCore.pyqtSignal(object)
     
-    def __init__(self, camera_name = "camera1", **kwds):
+    def __init__(self, camera_name = "camera1", default_colortable = None, **kwds):
         super().__init__(**kwds)
 
         self.frame_viewer = cameraFrameViewer.CameraFrameViewer(display_name = self.module_name,
-                                                                feed_name = camera_name)
+                                                                feed_name = camera_name,
+                                                                default_colortable = default_colortable)
 
         self.ui = feedViewerUi.Ui_Dialog()
         self.ui.setupUi(self)
@@ -202,7 +157,6 @@ class FeedViewer(halDialog.HalDialog, CameraParamsMixin):
 
         self.frame_viewer.feedChange.connect(self.handleFeedChange)
         self.frame_viewer.guiMessage.connect(self.handleGuiMessage)
-        self.frame_viewer.ui.shutterButton.clicked.connect(self.handleShutterButton)
 
 
 class DetachedViewer(halDialog.HalDialog, CameraParamsMixin):
@@ -212,11 +166,12 @@ class DetachedViewer(halDialog.HalDialog, CameraParamsMixin):
     """
     guiMessage = QtCore.pyqtSignal(object)
 
-    def __init__(self, camera_name = "camera1", **kwds):
+    def __init__(self, camera_name = "camera1", default_colortable = None, **kwds):
         super().__init__(**kwds)
 
         self.frame_viewer = cameraFrameViewer.CameraFrameViewer(display_name = self.module_name,
-                                                                feed_name = camera_name)
+                                                                feed_name = camera_name,
+                                                                default_colortable = default_colortable)
         self.params_viewer = paramsViewer.ParamsViewer(viewer_name = self.module_name,
                                                        viewer_ui = cameraParamsDetachedUi)
 
@@ -234,8 +189,59 @@ class DetachedViewer(halDialog.HalDialog, CameraParamsMixin):
         self.frame_viewer.feedChange.connect(self.handleFeedChange)
         self.frame_viewer.guiMessage.connect(self.handleGuiMessage)
         self.frame_viewer.ui.recordButton.clicked.connect(self.handleRecordButton)
-        self.frame_viewer.ui.shutterButton.clicked.connect(self.handleShutterButton)        
-        self.params_viewer.guiMessage.connect(self.handleGuiMessage)
 
-    def messageConfigure2(self):
+    def configure2(self):
         self.handleFeedChange(self.frame_viewer.getFeedName())
+
+
+
+
+
+
+#    def handleShutterButton(self, boolean):
+#        self.guiMessage.emit(halMessage.HalMessage(source = self,
+#                                                   m_type = "shutter clicked",
+#                                                   data = {"display_name" : self.module_name,
+#                                                           "camera" : self.camera_name}))
+        
+
+#        if self.params_viewer is not None:
+#            self.params_viewer.newParameters(parameters.get(self.camera_name))
+
+#    def getFeedName(self):
+#        return self.frame_viewer.getFeedName()
+        
+#    def getViewerName(self):
+#        return self.module_name
+
+#    def enableStageDrag(self, enabled):
+#        self.frame_viewer.enableStageDrag(enabled)
+
+#    def getDefaultParameters(self):
+#        return self.frame_viewer.getDefaultParameters()
+        
+
+
+#    def messageCameraEMCCDGain(self, camera_name, emccd_gain):
+#        if (camera_name == self.camera_name):
+#            if self.params_viewer is not None:
+#                self.params_viewer.setEMCCDGain(emccd_gain)
+
+#    def messageCameraShutter(self, camera_name, camera_shutter):
+#        if (camera_name == self.camera_name):
+#            self.frame_viewer.setShutter(camera_shutter)
+
+#    def messageCameraTemperature(self, camera_name, state, temperature):
+#        if (camera_name == self.camera_name):
+#            if self.params_viewer is not None:
+#                self.params_viewer.setTemperature(state, temperature)
+
+                
+#    def messageGetFeedInformation(self, feed_info):
+#        self.frame_viewer.setFeedInformation(feed_info)
+
+#    def messageFeedsInformation(self, feeds_info):
+#        self.frame_viewer.setFeeds(feeds_info)
+
+#    def messageNewFrame(self, frame):
+#        self.frame_viewer.newFrame(frame)
