@@ -10,6 +10,8 @@ import datetime
 import struct
 import tifffile
 
+from PyQt5 import QtCore
+
 import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
 
@@ -20,39 +22,57 @@ def availableFileFormats():
 #    return [".dax", ".spe", ".tif"]
     return [".dax", ".tif"]
 
-def createFileWriter(feed_info, film_settings):
+def createFileWriter(camera_functionality, film_settings):
     """
     This is convenience function which creates the appropriate file writer
     based on the filetype.
     """
     ft = film_settings.getFiletype()
     if (ft == ".dax"):
-        return DaxFile(feed_info = feed_info, film_settings = film_settings)
+        return DaxFile(camera_functionality = camera_functionality,
+                       film_settings = film_settings)
     elif (ft == ".spe"):
-        return SPEFile(feed_info = feed_info, film_settings = film_settings)
+        return SPEFile(camera_functionality = camera_functionality,
+                       film_settings = film_settings)
     elif (ft == ".tif"):
-        return TIFFile(feed_info = feed_info, film_settings = film_settings)
+        return TIFFile(camera_functionality = camera_functionality,
+                       film_settings = film_settings)
     else:
         raise halExceptions.HalException("Unknown output file format '" + ft + "'")
 
 
 class BaseFileWriter(object):
 
-    def __init__(self, feed_info = None, film_settings = None, **kwds):
+    def __init__(self, camera_functionality = None, film_settings = None, **kwds):
         super().__init__(**kwds)
-        self.feed_info = feed_info
+        self.cam_fn = camera_functionality
         self.film_settings = film_settings
+        self.stopped = False
 
         # This is the frame size in MB.
-        self.frame_size = self.feed_info.getParameter("bytes_per_frame") *  0.000000953674
+        self.frame_size = self.cam_fn.getParameter("bytes_per_frame") *  0.000000953674
         self.number_frames = 0
 
         # Figure out the filename.
         self.basename = self.film_settings.getBasename()
-        if (len(self.feed_info.getParameter("extension")) != 0):
-            self.basename += "_" + self.feed_info.getParameter("extension")
+        if (len(self.cam_fn.getParameter("extension")) != 0):
+            self.basename += "_" + self.cam_fn.getParameter("extension")
         self.filename = self.basename + self.film_settings.getFiletype()
 
+        # Connect the camera functionality.
+        self.cam_fn.newFrame.connect(self.saveFrame)
+        self.cam_fn.stopped.connect(self.handleStopped)
+
+    def closeWriter(self):
+        self.cam_fn.newFrame.disconnect(self.saveFrame)
+        self.cam_fn.stopped.disconnect(self.handleStopped)
+        
+    def handleStopped(self):
+        self.stopped = True
+
+    def isStopped(self):
+        return self.stopped
+        
     def saveFrame(self):
         self.number_frames += 1
         return self.frame_size
@@ -66,11 +86,12 @@ class DaxFile(BaseFileWriter):
         super().__init__(**kwds)
         self.fp = open(self.filename, "wb")
 
-    def closeFile(self):
+    def closeWriter(self):
         """
         Close the file and write a very simple .inf file. All the metadata is
         now stored in the .xml file that is saved with each recording.
         """
+        super().closeWriter()
         self.fp.close()
 
         w = str(self.feed_info.getParameter("x_pixels"))
@@ -128,14 +149,15 @@ class SPEFile(BaseFileWriter):
 
         self.fp.seek(4100)
 
+    def closeWriter(self):
+        super().closeWriter()
+        self.fp.seek(1446)
+        self.fp.write(struct.pack("i", self.number_frames))
+
     def saveFrame(self, frame):
         np_data = frame.getData()
         np_data.tofile(self.file_ptrs[index])
         return super().saveFrame()
-
-    def closeFile(self):
-        self.fp.seek(1446)
-        self.fp.write(struct.pack("i", self.number_frames))
 
 
 class TIFFile(BaseFileWriter):
@@ -148,6 +170,10 @@ class TIFFile(BaseFileWriter):
         self.metadata = {'unit' : 'um'}
         self.resolution = (1.0/self.film_settings.getPixelSize(), 1.0/self.film_settings.getPixelSize(), None)
         self.tif = tifffile.TiffWriter(self.filename)
+
+    def closeWriter(self):
+        super().closeWriter()
+        self.tif.close()
         
     def saveFrame(self, frame):
         image = frame.getData()
@@ -156,8 +182,6 @@ class TIFFile(BaseFileWriter):
                       resolution = self.resolution)
         return super().saveFrame()
                       
-    def closeFile(self):
-        self.tif.close()
 
 #
 # The MIT License

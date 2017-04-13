@@ -50,17 +50,6 @@ def checkParameters(parameters):
         if not ((x_pixels % 4) == 0):
             raise FeedException("x size of " + str(x_pixels) + " is not a multiple of 4 in feed " + feed_name)
 
-    
-#def getCameraFeedName(feed_name):
-#    """
-#    Use this to separate the camera and the feed name from a feed name string.
-#    """
-#    tmp = feed_name.split("-")
-#    if (len(tmp) > 1):
-#        return tmp
-#    else:
-#        return [tmp[0], None]
-
 
 class FeedException(halExceptions.HalException):
     pass
@@ -97,6 +86,7 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
         
         self.cam_fn.invalid.connect(self.handleInvalid)
         self.cam_fn.newFrame.connect(self.handleNewFrame)
+        self.cam_fn.started.connect(self.handleStarted)
         self.cam_fn.stopped.connect(self.handleStopped)
 
     def disconnectCameraFunctionality(self):
@@ -110,6 +100,7 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
         if self.cam_fn is not None:
             self.cam_fn.invalid.disconnect(self.handleInvalid)
             self.cam_fn.newFrame.disconnect(self.handleNewFrame)
+            self.cam_fn.started.disconnect(self.handleStarted)
             self.cam_fn.stopped.disconnect(self.handleStopped)
 
     def getCameraFunctionality(self):
@@ -125,7 +116,16 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
         return self.feed_name
 
     def handleInvalid(self):
-        super().setInvalid()
+        """
+        This is called when the camera emit's an invalid signal. This
+        happens when the parameters are changed.
+
+        Unlike for the camera, feed functionalities really are invalid
+        at this point. The feed controller will disconnect them from
+        their camera functionality and throw them away when the parameters
+        change.
+        """
+        self.setInvalid()
 
     def handleNewFrame(self, new_frame):
         sliced_data = self.sliceFrame(new_frame)
@@ -134,6 +134,9 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
                                        self.x_pixels,
                                        self.y_pixels,
                                        self.camera_name))
+
+    def handleStarted(self):
+        self.started.emit()
 
     def handleStopped(self):
         self.stopped.emit()
@@ -211,8 +214,6 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
         for pname in ["default_max", "default_min", "flip_horizontal", "flip_vertical",
                       "max_intensity", "transpose", "x_bin", "y_bin"]:
             p.add(self.cam_fn.parameters.getp(pname).copy())
-
-        print(p.toString(True))
         
         # Connect camera functionality signals. We just pass most of
         # these through.
@@ -324,13 +325,19 @@ class FeedController(object):
             max_value = 100000
             feed_params = params.StormXMLObject()
 
+            # Feeds are saved with their name as the extension.
+            feed_params.add(params.ParameterString(name = "extension",
+                                                   value = feed_name,
+                                                   is_mutable = True))
+            
             feed_params.add(params.ParameterString(name = "feed_type",
                                                    value = "",
                                                    is_mutable = False))
 
             feed_params.add(params.ParameterSetBoolean(name = "saved",
                                                        value = False))
-            
+
+            # This is the camera that drives the feed.
             feed_params.add(params.ParameterString(name = "source",
                                                    value = "",
                                                    is_mutable = False))
@@ -528,3 +535,15 @@ class Feeds(halModule.HalModule):
             if self.feed_controller is not None:
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                   data = {"parameters" : self.feed_controller.getParameters()}))
+
+
+#def getCameraFeedName(feed_name):
+#    """
+#    Use this to separate the camera and the feed name from a feed name string.
+#    """
+#    tmp = feed_name.split("-")
+#    if (len(tmp) > 1):
+#        return tmp
+#    else:
+#        return [tmp[0], None]
+

@@ -290,6 +290,8 @@ class CameraControl(QtCore.QThread):
         self.frame_number = 0
         self.start(QtCore.QThread.NormalPriority)
 
+        self.camera_functionality.started.emit()
+
     def startFilm(self, film_settings):
         pass
 

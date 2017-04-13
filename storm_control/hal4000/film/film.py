@@ -288,7 +288,8 @@ class Film(halModule.HalModule):
         # is still running could be throwing off 'new frame' messages
         # which we might want (or not want) to save.
         #
-        self.camera_functionalities = None
+        self.active_cameras = 0
+        self.camera_functionalities = []
         self.feed_names = None
         self.film_settings = None
         self.film_size = 0.0
@@ -353,6 +354,33 @@ class Film(halModule.HalModule):
 
     def cleanUp(self, qt_settings):
         self.logfile_fp.close()
+
+    def handleCameraStarted(self):
+        """
+        When the startCameras() method is called it will set the number of active
+        cameras/feeds and connect their signals. Once receive the started signal
+        from all the cameras/feeds we know that we can proceed.
+        """
+        self.active_cameras -= 1
+        print("camera started", self.active_cameras)
+        if (self.active_cameras == 0):
+            # Disconnect start signals.
+            for camera in self.camera_functionalities:
+                camera.started.disconnect(self.handleCameraStarted)
+            print("all started")
+
+    def handleCameraStopped(self):
+        """
+        This is the same as handleCameraStarted(), but it is for making sure that
+        all of the cameras have stopped.
+        """
+        self.active_cameras -= 1
+        print("camera stopped", self.active_cameras)
+        if (self.active_cameras == 0):
+            # Disconnect stop signals.
+            for camera in self.camera_functionalities:
+                camera.stopped.disconnect(self.handleCameraStopped)
+            print("all stopped")                
 
     def handleLiveModeChange(self, state):
         if state:
@@ -421,6 +449,9 @@ class Film(halModule.HalModule):
                                                        data = {"parameters" : self.view.getParameters()}))
 
         elif message.isType("feed names"):
+            #
+            # We'll get this message after the parameters have changed.
+            #
             self.camera_functionalities = []
             for name in message.getData()["feed names"]:
                 self.newMessage.emit(halMessage.HalMessage(source = self,
@@ -451,12 +482,12 @@ class Film(halModule.HalModule):
 
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"new parameters" : self.view.getParameters()}))
-            
-        #
-        # We need to keep track of the current value so that
-        # we can save this in the tif images / stacks.
-        #
+
         elif message.isType("pixel size"):
+            #
+            # We need to keep track of the current value so that
+            # we can save this in the tif images / stacks.
+            #
             self.pixel_size = message.getData()["pixel size"]
 
         elif message.isType("start"):
@@ -482,7 +513,20 @@ class Film(halModule.HalModule):
             self.stopFilmingLevel1()
 
     def startCameras(self):
-        
+
+        # Force sync.
+        #
+        # We want to make sure that nothing else that might also start the
+        # cameras, like a 'new parameters' message is pending in the queue.
+        #
+        self.newMessage.emit(halMessage.SyncMessage(self))
+                
+        # Connect to camera/feed started signals.
+        self.active_cameras = 0
+        for camera in self.camera_functionalities:
+            self.active_cameras += 1
+            camera.started.connect(self.handleCameraStarted)
+            
         # Start slave cameras first.
         for camera in self.camera_functionalities:
             if camera.isCamera() and not camera.isMaster():
@@ -527,11 +571,11 @@ class Film(halModule.HalModule):
         self.film_state = "run"
         
         # Create writers as needed for each feed.
-        self.writers = {}
+        self.writers = []
         if self.film_settings.isSaved():
-            for feed_name, feed in self.feeds_info.items():
-                if feed.getParameter("saved"):
-                    self.writers[feed.getFeedName()] = imagewriters.createFileWriter(feed, self.film_settings)
+            for camera in self.camera_functionalities:
+                if camera.getParameter("saved"):
+                    self.writers.append(imagewriters.createFileWriter(camera, self.film_settings))
         if (len(self.writers) == 0):
             self.view.updateSize(self.film_size)
 
@@ -544,6 +588,19 @@ class Film(halModule.HalModule):
         self.startCameras()
         
     def stopCameras(self):
+
+        # Force sync.
+        #
+        # We want to make sure that nothing else that might also stop the
+        # cameras, like a 'new parameters' message is pending in the queue.
+        #
+        self.newMessage.emit(halMessage.SyncMessage(self))
+
+        # Connect to camera/feed stopped signals.
+        self.active_cameras = 0
+        for camera in self.camera_functionalities:
+            self.active_cameras += 1
+            camera.stopped.connect(self.handleCameraStopped)
 
         # Stop master cameras first.
         for camera in self.camera_functionalities:
@@ -578,8 +635,8 @@ class Film(halModule.HalModule):
         self.view.enableUI(True)
 
         # Close writers.
-        for name in self.writers:
-            self.writers[name].closeFile()
+#        for name in self.writers:
+#            self.writers[name].closeFile()
 
         # Stop filming.
         self.newMessage.emit(halMessage.HalMessage(source = self,

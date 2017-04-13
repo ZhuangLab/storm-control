@@ -16,14 +16,22 @@ import storm_control.hal4000.halLib.halFunctionality as halFunctionality
 
 class CameraFunctionality(halFunctionality.HalFunctionality):
     """
-    Camera functionality in a form that other modules can interact with.
+    Camera functionality in a form that other modules can interact with. 
+
+    There is one of these per camera and it will exist for the lifetime of 
+    HAL. When the camera starts to change it's parameters an invalid signal
+    is emitted.
+
+    During a parameter change feed.feed and display.display disconnect
+    from camera functionalities and then request new ones.
     """
     emccdGain = QtCore.pyqtSignal(int)
     newFrame = QtCore.pyqtSignal(object)
     shutter = QtCore.pyqtSignal(bool)
+    started = QtCore.pyqtSignal()
     stopped = QtCore.pyqtSignal()
     temperature = QtCore.pyqtSignal(dict)
-    
+
     def __init__(self,
                  camera_name = "",
                  have_emccd = False,

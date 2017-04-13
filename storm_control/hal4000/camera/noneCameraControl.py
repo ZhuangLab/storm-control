@@ -107,7 +107,7 @@ class NoneCameraControl(cameraControl.CameraControl):
         if (len(changed_p_names) > 0):
             running = self.running
             if running:
-                self.camera_configuration.setInvalid()
+                self.camera_configuration.invalid.emit()
                 self.stopCamera()
         
             p = self.parameters

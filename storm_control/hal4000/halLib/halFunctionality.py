@@ -13,11 +13,14 @@ class HalFunctionality(QtCore.QObject):
     """
     Base class for a functionality that a module can provide.
     """
-    # This signal is sent by the module that sourced the
-    # functionality to let it's users know that this
-    # functionality is no longer valid. This could happen
-    # for example with a camera when the parameters are
+    # This signal is sent by the module that sourced the functionality to
+    # let it's users know that this functionality is no longer valid. This
+    # could happen for example with a camera when the parameters are
     # changed.
+    #
+    # FIXME: Need some way to know that this is being respected and that
+    #        modules are not continuing to use invalid functionalities.
+    #
     invalid = QtCore.pyqtSignal()
 
     def __init__(self, **kwds):
