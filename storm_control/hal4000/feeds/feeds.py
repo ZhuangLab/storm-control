@@ -442,7 +442,13 @@ class Feeds(halModule.HalModule):
         halMessage.addMessage("feed names",
                               validator = {"data" : {"feed names" : [True, list]},
                                            "resp" : None})
-                
+
+        # This message comes from the display.display when it creates a new
+        # viewer.
+        halMessage.addMessage("get feed names",
+                              validator = {"data" : {"extra data" : [False, str]},
+                                           "resp" : {"feed names" : [True, list]}})
+
     def broadcastFeedNames(self):
         """
         Send the 'feeds names' message.
@@ -481,6 +487,10 @@ class Feeds(halModule.HalModule):
                     message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                       data = {"functionality" : self.feed_controller.getFeed(feed_name)}))
 
+        elif message.isType("get feed names"):
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"feed names" : self.feed_names}))
+            
         elif message.isType("new parameters"):
             params = message.getData()["parameters"]
             checkParameters(params)

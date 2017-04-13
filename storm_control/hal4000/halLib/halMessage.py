@@ -89,7 +89,7 @@ def validate(validator, data, base_string):
     """
     Checks that data (or response) field of a message is correct.
     """
-    # Check that their is no data if the validator is None.
+    # Check that there is no data if the validator is None.
     if validator is None:
         if data is not None:
             msg = base_string + "' should not have data."
@@ -97,10 +97,14 @@ def validate(validator, data, base_string):
         else:
             return
     
-    # Check that their is data if validator is not None.
+    # Check that there is data if validator is not None
+    # and there are required values.
     if data is None:
-        msg = base_string + "' should have data."
-        raise HalMessageException(msg)
+        for item in validator:
+            if validator[item][0]:
+                msg = base_string + "' should have data."
+                raise HalMessageException(msg)
+        return
 
     # Check that every item in data exists in validator.
     for item in data:
