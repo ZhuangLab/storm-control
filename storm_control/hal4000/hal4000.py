@@ -399,7 +399,7 @@ class HalCore(QtCore.QObject):
             all_modules["core"] = self
         else:
             all_modules["core"] = True
-        for module_name in config.get("modules").getAttrs():
+        for module_name in sorted(config.get("modules").getAttrs()):
             print("  " + module_name)
 
             # Get module specific parameters.
