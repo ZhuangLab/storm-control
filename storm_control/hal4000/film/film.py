@@ -295,6 +295,7 @@ class Film(halModule.HalModule):
         self.film_state = "idle"
         self.number_frames = 0
         self.pixel_size = 1.0
+        self.timing_functionality = None
         self.writers = None
 
         self.film_timer.setInterval(100)
@@ -317,7 +318,7 @@ class Film(halModule.HalModule):
         self.configure_dict = {"ui_order" : 1,
                                "ui_parent" : "hal.containerWidget",
                                "ui_widget" : self.view}
-
+        
         # In live mode the camera also runs between films.
         halMessage.addMessage("live mode",
                               validator = {"data" : {"live mode" : [True, bool]},
@@ -364,12 +365,12 @@ class Film(halModule.HalModule):
         from all the cameras/feeds we know that we can proceed.
         """
         self.active_cameras -= 1
-        print(">camera started", self.active_cameras)
+        #print(">camera started", self.active_cameras)
         if (self.active_cameras == 0):
             # Disconnect start signals.
             for camera in self.camera_functionalities:
                 camera.started.disconnect(self.handleCameraStarted)
-            print(">all started")
+            #print(">all started")
 
     def handleCameraStopped(self):
         """
@@ -377,12 +378,12 @@ class Film(halModule.HalModule):
         all of the cameras have stopped.
         """
         self.active_cameras -= 1
-        print(">camera stopped", self.active_cameras)
+        #print(">camera stopped", self.active_cameras)
         if (self.active_cameras == 0):
             # Disconnect stop signals.
             for camera in self.camera_functionalities:
                 camera.stopped.disconnect(self.handleCameraStopped)
-            print(">all stopped")
+            #print(">all stopped")
 
             if (self.film_state == "start"):
                 self.startFilmingLevel2()
@@ -398,6 +399,10 @@ class Film(halModule.HalModule):
                                                    m_type = "live mode",
                                                    data = {"live mode" : state}))
 
+    def handleNewFrame(self, frame_number):
+        self.number_frames = frame_number + 1
+        self.view.updateFrames(self.number_frames)
+        
     def handleResponses(self, message):
         """
         Modules are expected to add their current parameters as responses
@@ -456,27 +461,23 @@ class Film(halModule.HalModule):
                                                        data = {"parameters" : self.view.getParameters()}))
 
         elif message.isType("feed names"):
-            #
+            
             # We'll get this message after the parameters have changed.
-            #
             self.camera_functionalities = []
             for name in message.getData()["feed names"]:
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "get camera functionality",
                                                            data = {"camera" : name}))
 
-        #
-        # FIXME: This will stop everything when the first camera reaches the
-        #        expected number of frames. It should not fire until all the
-        #        cameras that should be done are done.
-        #
-        #        For now this message should only come from camera1 when it
-        #        has recorded the required number of frames.
-        #
-#        elif message.isType("camera film complete"):
-#            if (self.film_state == "run"):
-#                self.stopFilmingLevel1()
-                
+        elif message.isType("film timing"):
+            
+            # We'll get this message from timing.timing, the part we are interested in is
+            # the timing functionality which we will use both to update the frame counter
+            # and to know when a fixed length film is complete.
+            self.timing_functionality = message.getData()["functionality"]
+            self.timing_functionality.newFrame.connect(self.handleNewFrame)
+            self.timing_functionality.stopped.connect(self.stopFilmingLevel1)
+            
         elif message.isType("new directory"):
             self.view.setDirectory(message.getData()["directory"])
 
@@ -491,10 +492,9 @@ class Film(halModule.HalModule):
                                                               data = {"new parameters" : self.view.getParameters()}))
 
         elif message.isType("pixel size"):
-            #
+
             # We need to keep track of the current value so that
             # we can save this in the tif images / stacks.
-            #
             self.pixel_size = message.getData()["pixel size"]
 
         elif message.isType("start"):
@@ -589,6 +589,11 @@ class Film(halModule.HalModule):
         if (len(self.writers) == 0):
             self.view.updateSize(self.film_size)
 
+        # Start the feeds, this actually just resets them so that they start
+        # at the appropriate initial values.
+        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "start feeds"))
+        
         # Start filming.
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    sync = True,
@@ -641,6 +646,10 @@ class Film(halModule.HalModule):
         Tell the cameras to stop, then wait until we get the
         'camera stopped' message from all the cameras.
         """
+        # Disconnect the timing functionality as it is stopped now.
+        self.timing_functionality.newFrame.disconnect(self.handleNewFrame)
+        self.timing_functionality.stopped.disconnect(self.stopFilmingLevel1)
+
         self.film_state = "stop"
         self.stopCameras()
 
@@ -662,6 +671,10 @@ class Film(halModule.HalModule):
         self.handleFilmTimer()
         
         # Stop filming.
+        #
+        # The message includes the current number of frames so that even if this gets
+        # reset before we handle the responses we'll still have the right numbers.
+        #
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "stop film",
                                                    data = {"film settings" : self.film_settings,
@@ -678,27 +691,6 @@ class Film(halModule.HalModule):
                 print("\7\7")
 
         #raise halExceptions.HalException("done now!")
-
-#    def processL2Message(self, message):            
-#        if (self.film_state == "run") or (self.film_state == "stop"):
-#
-#            frame = message.getData()["frame"]
-#
-#            # Update frame counter if the frame is from camera1.
-#            if (frame.which_camera == "camera1"):
-#                self.number_frames = frame.frame_number + 1
-#                self.view.updateFrames(self.number_frames)
-#
-#            # Save frame (if needed).
-#            if frame.which_camera in self.writers:
-#
-#                #
-#                # Potential for round off error here in tracking the total amount of
-#                # data that has been saved.. Probably does not really matter..
-#                #
-#                self.film_size += self.writers[frame.which_camera].saveFrame(frame)
-#                self.view.updateSize(self.film_size)
-
 
 #
 # The MIT License

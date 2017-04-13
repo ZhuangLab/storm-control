@@ -456,6 +456,10 @@ class Feeds(halModule.HalModule):
                               validator = {"data" : {"extra data" : [False, str]},
                                            "resp" : {"feed names" : [True, list]}})
 
+        # This message tells the feeds to (re)start.
+        halMessage.addMessage("start feeds",
+                              validator = {"data" : None, "resp" : None})
+
     def broadcastFeedNames(self):
         """
         Send the 'feeds names' message.
@@ -518,12 +522,6 @@ class Feeds(halModule.HalModule):
                                                                        "extra data" : feed.getCameraName()}))
             self.broadcastFeedNames()
 
-#        elif message.isType("start camera"):
-#            
-#            # This assumes that there is always at least a "camera1" module.
-#            if self.feed_controller is not None and (message.getData()["camera"] == "camera1"):
-#                self.feed_controller.resetFeeds()
-
         elif message.isType("start feeds"):
             if self.feed_controller is not None:
                 self.feed_controller.resetFeeds()
@@ -535,15 +533,4 @@ class Feeds(halModule.HalModule):
             if self.feed_controller is not None:
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                   data = {"parameters" : self.feed_controller.getParameters()}))
-
-
-#def getCameraFeedName(feed_name):
-#    """
-#    Use this to separate the camera and the feed name from a feed name string.
-#    """
-#    tmp = feed_name.split("-")
-#    if (len(tmp) > 1):
-#        return tmp
-#    else:
-#        return [tmp[0], None]
 

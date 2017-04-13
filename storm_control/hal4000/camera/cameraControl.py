@@ -224,10 +224,22 @@ class CameraControl(QtCore.QThread):
                                                     "state" : "unstable"})
 
     def handleNewData(self, frames):
+        """
+        Data from the camera should go through this method on it's
+        way to the camera functionality object.
+        """
         for frame in frames:
             if self.film_length is not None:
+
+                # Stop the camera (if it has not already stopped).
+                if (frame.frame_number == self.film_length):
+                    self.stopCamera()
+
+                # This keeps us from emitting more than the expected number
+                # of newFrame signals.
                 if (frame.frame_number >= self.film_length):
                     break
+                
             self.camera_functionality.newFrame.emit(frame)
 
     def newParameters(self, parameters):
@@ -277,7 +289,14 @@ class CameraControl(QtCore.QThread):
         """
         self.parameters.set("emccd_gain", gain)
         self.camera_functionality.emccdGain.emit(gain)
-    
+
+    def setFilmLength(self, film_length):
+        """
+        The camera should stop after it has taken this many frames and it should
+        not emit more than this number of newFrame signals.
+        """
+        self.film_length = film_length
+        
     def startCamera(self):
 
         # Update the camera temperature, if available.
@@ -289,9 +308,6 @@ class CameraControl(QtCore.QThread):
 
         self.camera_functionality.started.emit()
 
-    def startFilm(self, film_settings):
-        pass
-
     def stopCamera(self):
         if self.running:
             self.running = False
@@ -300,14 +316,13 @@ class CameraControl(QtCore.QThread):
         self.camera_functionality.stopped.emit()
 
     def stopFilm(self):
-        pass
+        self.film_length = None
 
     def toggleShutter(self):
         if self.camera_functionality.getShutterState():
             self.closeShutter()
         else:
             self.openShutter()
-#        return self.camera_functionality.getShutterState()
 
 
 class HWCameraControl(CameraControl):

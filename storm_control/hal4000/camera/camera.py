@@ -66,17 +66,25 @@ class Camera(halModule.HalModule):
                                                        m_type = "initial parameters",
                                                        data = {"parameters" : self.camera_control.getParameters()}))
 
-        # This message comes from settings.settings.
-        elif message.isType("new parameters"):
-            halModule.runWorkerTask(self,
-                                    message,
-                                    lambda : self.updateParameters(message))
-
+        # This message comes from timing.timing, if we are the timing camera
+        # then we'll need to configure for fixed length filming.
+        elif message.isType("film timing"):
+            if (message.getData()["camera"] == self.module_name):
+                film_settings = message.getData()["film settings"]
+                if film_settings.isFixedLength():
+                    self.camera_control.setFilmLength(film_settings.getFilmLength())
+                    
         # This message comes from display.cameraDisplay among others.
         elif message.isType("get camera functionality"):
             if (message.getData()["camera"] == self.module_name):
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                   data = {"functionality" : self.camera_control.getCameraFunctionality()}))
+
+        # This message comes from settings.settings.
+        elif message.isType("new parameters"):
+            halModule.runWorkerTask(self,
+                                    message,
+                                    lambda : self.updateParameters(message))
 
         # This message comes from the shutter button.
         elif message.isType("shutter clicked"):
@@ -90,13 +98,6 @@ class Camera(halModule.HalModule):
         elif message.isType("start camera"):
             if (message.getData()["camera"] == self.module_name):
                 halModule.runWorkerTask(self, message, self.startCamera)
-
-        # This message comes from film.film, it goes to all cameras at once.
-        elif message.isType("start film"):
-            film_settings = message.getData()["film settings"]
-            self.camera_control.startFilm(film_settings)
-#            if (self.module_name == "camera1") and film_settings.isFixedLength():
-#                self.film_length = film_settings.getFilmLength()
 
         # This message comes from film.film.
         elif message.isType("stop camera"):
@@ -126,168 +127,6 @@ class Camera(halModule.HalModule):
         self.camera_control.newParameters(p)
         message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                           data = {"new parameters" : self.camera_control.getParameters()}))
-
-
-
-
-
-
-        
-#        state = self.camera_control.toggleShutter()
-#        self.newMessage.emit(halMessage.HalMessage(source = self,
-#                                                   m_type = "camera shutter",
-#                                                   data = {"camera" : self.module_name,
-#                                                           "state" : state}))
-        
-        # Broadcast the camera temperature, if available. We do this here because at least
-        # with some cameras this can only be measured when the camera is not running.
-#        if self.camera_control.haveTemperature():
-#            self.newMessage.emit(halMessage.HalMessage(source = self,
-#                                                       m_type = "camera temperature",
-#                                                       data = self.camera_control.getTemperature()))
-        
-#    def setEMCCDGain(self, new_gain):
-#        gain = self.camera_control.setEMCCDGain(new_gain)
-#        self.newMessage.emit(halMessage.HalMessage(source = self,
-#                                                   m_type = "camera emccd gain",
-#                                                   data = {"camera" : self.module_name,
-#                                                           "emccd gain" : gain}))        
-        # This message comes from display.paramsDisplay.
-        #
-        # FIXME: Need to broadcast the emccd gain after it is set.
-        #
-#        elif message.isType("set emccd gain"):
-#            if (message.getData()["camera"] == self.module_name):
-#                halModule.runWorkerTask(self,
-#                                        message,
-#                                        lambda : self.setEMCCDGain(message.getData()["emccd gain"]))
-        
-
-#            # Broadcast configuration.
-#            self.newMessage.emit(halMessage.HalMessage(source = self,
-#                                                       m_type = "camera configuration",
-#                                                       data = {"camera" : self.module_name,
-#                                                               "config" : self.camera_control.getCameraConfiguration()}))
-        
-#        self.camera_control.finished.connect(self.handleFinished)
-#        self.camera_control.newData.connect(self.handleNewData)
-
-
-        # This is sent at start-up so that other modules, in particular
-        # feeds.feeds, get the information they need about the camera(s)
-#        halMessage.addMessage("camera configuration",
-#                              check_exists = False,
-#                              validator = {"data" : {"camera" : [True, str],
-#                                                     "config" : [True, cameraControl.CameraConfiguration]},
-#                                           "resp" : {}})
-
-#        # Sent each time the camera emccd gain changes.
-#        halMessage.addMessage("camera emccd gain",
-#                              check_exists = False,
-#                              validator = {"data" : {"camera" : [True, str],
-#                                                     "emccd gain" : [True, int]},
-#                                           "resp" : None})
-
-#        # Sent when filming and we have reached the desired number of frames.
-#        halMessage.addMessage("camera film complete",
-#                              check_exists = False,
-#                              validator = {"data" : None, "resp" : None})
-                        
-#        # Sent each time the camera shutter stage changes.
-#        halMessage.addMessage("camera shutter",
-#                              check_exists = False,
-#                              validator = {"data" : {"camera" : [True, str],
-#                                                     "state" : [True, bool]},
-#                                           "resp" : None})
-        
-#        # Sent when the camera stops.
-#        halMessage.addMessage("camera stopped",
-#                              check_exists = False,
-#                              validator = {"data" : None, "resp" : None})
-
-#        # The temperature data from this camera.
-#        halMessage.addMessage("camera temperature",
-#                              check_exists = False,
-#                              validator = {"data" : {"camera" : [True, str],
-#                                                     "state" : [True, str],
-#                                                     "temperature" : [True, float]},
-#                                           "resp" : None})
-
-#        # Sent each time there is a new frame from the camera.
-#        halMessage.addMessage("new frame",
-#                              check_exists = False,
-#                              validator = {"data" : {"frame" : [True, frame.Frame]},
-#                                           "resp" : None})
-
-#    def addParametersResponse(self, message):
-#        message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-#                                                          data = {"parameters" : self.camera_control.getParameters()}))
-
-#    def broadcastParameters(self):
-#        self.newMessage.emit(halMessage.HalMessage(source = self,
-#                                                   m_type = "current parameters",
-#                                                   data = self.camera_control.getCameraConfig()))
-
-#        self.film_length = None
-#        self.finished_timer = QtCore.QTimer(self)
-#        self.unprocessed_frames = 0
-
-#        self.finished_timer.setInterval(10)
-#        self.finished_timer.timeout.connect(self.handleFinished)
-#        self.finished_timer.setSingleShot(True)
-
-#    def decUnprocessed(self):
-#        self.unprocessed_frames -= 1
-
-#    def handleEMCCD(self, gain):
-#        """
-#        'emccd' is the signal the camera emits when it changes the gain.
-#        """
-#        self.newMessage.emit(halMessage.HalMessage(source = self,
-#                                                   m_type = "camera emccd gain",
-#                                                   data = {"camera" : self.module_name,
-#                                                           "emccd gain" : gain}))
-
-#    def handleFinished(self):
-#        """
-#        'finished' is the signal the thread emits when the run() method stops.
-#        """
-#        if (self.unprocessed_frames == 0):
-#            self.newMessage.emit(halMessage.HalMessage(source = self,
-#                                                       m_type = "camera stopped"))
-#        else:
-#            self.finished_timer.start()
-
-#    def handleNewData(self, frames):
-#        return
-#        for frame in frames:
-#            #
-#            # If possible the camera should stop when it has recorded the
-#            # expected number of frames, but not all camera support this
-#            # so we software back-stop this here.
-#            #
-#            if self.film_length is not None:
-#
-#                # Broadcast that we've captured the expected number of frames.
-#                if (frame.frame_number == self.film_length):
-#                    self.newMessage.emit(halMessage.HalMessage(source = self,
-#                                                               m_type = "camera film complete"))
-#                    break
-#
-#                # Don't send more frames than were requested for the film.
-#                if (frame.frame_number >= self.film_length):
-#                    break
-#
-#            self.incUnprocessed()
-#            self.newMessage.emit(halMessage.HalMessage(source = self,
-#                                                       m_type = "new frame",
-#                                                       level = 2,
-#                                                       data = {"frame" : frame},
-#                                                       finalizer = lambda : self.decUnprocessed()))
-    
-#    def incUnprocessed(self):
-#        self.unprocessed_frames += 1
-
 
 
 #

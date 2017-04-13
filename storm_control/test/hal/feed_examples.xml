@@ -49,11 +49,12 @@
     </interval>
 
     <!-- This feed takes only a small sub-section of the camera
-	 image. Note also that it is not saved. -->
+	 image. -->
     <slice1>
       <source type="string">camera1</source>
       <feed_type type="string">slice</feed_type>
-      
+
+      <saved type="boolean">True</saved>      
       <x_start type="int">65</x_start>
       <x_end type="int">128</x_end>
       <y_start type="int">256</y_start>

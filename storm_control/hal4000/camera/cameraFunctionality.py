@@ -68,6 +68,7 @@ class CameraFunctionality(halFunctionality.HalFunctionality):
         self.shutter_state = False
 
     def copy(self):
+        # Not used, kept because it may be useful for enforcing invalid functionalities?
         return copy.deepcopy(self)
 
     def getCameraName(self):
