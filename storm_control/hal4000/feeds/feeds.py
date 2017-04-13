@@ -73,57 +73,83 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
 
     For the most part this just passes through information from the underlying
     camera functionality.
+
+    Some functionality is explicitly blocked so we get an error if we accidentally
+    try and use this exactly like a camera functionality.
     """
-    def __init__(self, **kwds):
+    def __init__(self, feed_name = None, **kwds):
         super().__init__(**kwds)
         self.cam_fn = None
+        self.feed_name = feed_name
         self.frame_number = 0
         self.frame_slice = None
+        self.number_connections = 0
         self.x_pixels = 0
         self.y_pixels = 0
 
-    def getCameraFunctionality(self):
-        return self.cam_fn
+    def connectCameraFunctionality(self):
+        """
+        Connect the feed to it's camera functionality
+        """
+        # sanity check.
+        assert(self.number_connections == 0)
+        self.number_connections += 1
         
-    def handleEMCCDGain(self, gain):
-        self.emcddGain.emit(gain)
+        self.cam_fn.invalid.connect(self.handleInvalid)
+        self.cam_fn.newFrame.connect(self.handleNewFrame)
+        self.cam_fn.stopped.connect(self.handleStopped)
+
+    def disconnectCameraFunctionality(self):
+        """
+        Disconnect the feed from it's camera functionality.
+        """
+        # sanity check.
+        assert(self.number_connections == 1)
+        self.number_connections += 1
+        
+        if self.cam_fn is not None:
+            self.cam_fn.invalid.disconnect(self.handleInvalid)
+            self.cam_fn.newFrame.disconnect(self.handleNewFrame)
+            self.cam_fn.stopped.disconnect(self.handleStopped)
+
+    def getCameraFunctionality(self):
+        """
+        Return the camera functionality this feed is using.
+        """
+        return self.cam_fn
+
+    def getFeedName(self):
+        """
+        Return the name of the feed (as specified in the XML file).
+        """
+        return self.feed_name
 
     def handleInvalid(self):
         super().setInvalid()
-            
-    def handleNewFrame(self, new_frame):
-        """
-        This just does the slicing, if necessary, sub-classes need to convert
-        this back into a Frame object & emit the newFrame signal.
-        """
-        if self.frame_slice is None:
-            return new_frame.np_data
-        else:
-            w = new_frame.image_x
-            h = new_frame.image_y
-            return numpy.reshape(new_frame.np_data, (h,w))[self.frame_slice]
 
-    def handleShutter(self, state):
-        self.shutter.emit(state)
+    def handleNewFrame(self, new_frame):
+        sliced_data = self.sliceFrame(new_frame)
+        self.newFrame.emit(frame.Frame(sliced_data,
+                                       new_frame.frame_number,
+                                       self.x_pixels,
+                                       self.y_pixels,
+                                       self.camera_name))
 
     def handleStopped(self):
         self.stopped.emit()
 
-    def handleTemperature(self, t_dict):
-        self.temperature.emit(t_dict)
-    
     def hasEMCCD(self):
-        return self.cam_fn.hasEMCCD()
-
+        assert False
+        
     def hasPreamp(self):
-        return self.cam_fn.hasPreamp()
+        assert False
 
     def hasShutter(self):
-        return self.cam_fn.hasShutter()
+        assert False
 
     def hasTemperature(self):
-        return self.cam_fn.hasTemperature()
-
+        assert False
+    
     def isCamera(self):
         return False
 
@@ -136,12 +162,6 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
     def setCameraFunctionality(self, camera_functionality):
         self.cam_fn = camera_functionality
 
-        # Adjust / add parameters from the camera so that the feed will be
-        # displayed properly.
-        p = self.parameters
-        p.add(self.cam_fn.parameters.getp("x_chip").copy())
-        p.add(self.cam_fn.parameters.getp("y_chip").copy())
-
         #
         # The assumption here is that x_start, x_end and x_pixels are all in
         # units of binned pixels. This is also what we assume with the camera.
@@ -149,45 +169,69 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
         # Also, the initial values for x_start and x_end will be 1, if they
         # were not specified in the parameters file.
         #
-        for base in ["x_", "y_"]:
-            p.set(base + "start", p.get(base +"start") + self.cam_fn.getParameter(base + "start") - 1)
+        p = self.parameters
 
-            if (p.get(base + "end") > 1):
-                p.set(base + "end", p.get(base + "end") + p.get(base + "start"))
-            else:
-                p.set(base + "end", self.cam_fn.getParameter(base + "pixels"))
+        # Figure out if we need to slice.
+        if (p.get("x_end") == 1):
+            p.setv("x_end", self.cam_fn.getParameter("x_end"))
+        if (p.get("y_end") == 1):
+            p.setv("y_end", self.cam_fn.getParameter("y_end"))
 
-            p.getp(base + "start").setMaximum(self.cam_fn.getParameter(base + "pixels"))
-            p.getp(base + "end").setMaximum(self.cam_fn.getParameter(base + "pixels"))
-
-        # Add some of other parameters that we need to behave like a camera functionality. These
-        # are just duplicates from the corresponding camera.
-        for pname in ["default_max", "default_min", "flip_horizontal", "flip_vertical",
-                      "max_intensity", "transpose", "x_bin", "y_bin"]:
-            self.parameters.add(self.cam_fn.parameters.getp(pname).copy())
-
-        # And calculate some additional parameters.
         p.set("x_pixels", p.get("x_end") - p.get("x_start") + 1)
         p.set("y_pixels", p.get("y_end") - p.get("y_start") + 1)
         p.set("bytes_per_frame", 2 * p.get("x_pixels") * p.get("y_pixels"))
 
-        # Figure out if we need to slice.
+        self.x_pixels = p.get("x_pixels")
+        self.y_pixels = p.get("y_pixels")
+
         if (p.get("x_pixels") != self.cam_fn.getParameter("x_pixels")) or\
            (p.get("y_pixels") != self.cam_fn.getParameter("y_pixels")):
             self.frame_slice  = (slice(p.get("y_start") - 1, p.get("y_end")),
                                  slice(p.get("x_start") - 1, p.get("x_end")))
 
+        # Adjust / add parameters from the camera so that the feed will be
+        # displayed properly.
+        p.add(self.cam_fn.parameters.getp("x_chip").copy())
+        p.add(self.cam_fn.parameters.getp("y_chip").copy())
+
+        p.setv("x_start", self.cam_fn.getParameter("x_start") + p.get("x_start") - 1)
+        p.setv("x_end", p.get("x_start") + p.get("x_pixels") - 1)
+        
+        p.setv("y_start", self.cam_fn.getParameter("y_start") + p.get("y_start") - 1)
+        p.setv("y_end", p.get("y_start") + p.get("y_pixels") - 1)
+
+        # Set the maximums so that the editor will work better.
+        p.getp("x_start").setMaximum(self.cam_fn.getParameter("x_pixels"))
+        p.getp("x_end").setMaximum(self.cam_fn.getParameter("x_end"))
+        p.getp("y_start").setMaximum(self.cam_fn.getParameter("y_pixels"))
+        p.getp("y_end").setMaximum(self.cam_fn.getParameter("y_end"))
+
+        # Add some of other parameters that we need to behave like a camera functionality. These
+        # are just duplicates from the corresponding camera.
+        for pname in ["default_max", "default_min", "flip_horizontal", "flip_vertical",
+                      "max_intensity", "transpose", "x_bin", "y_bin"]:
+            p.add(self.cam_fn.parameters.getp(pname).copy())
+
         print(p.toString(True))
         
         # Connect camera functionality signals. We just pass most of
-        # these right through.
-        self.cam_fn.invalid.connect(self.handleInvalid)
-        self.cam_fn.newFrame.connect(self.handleNewFrame)
-        self.cam_fn.stopped.connect(self.handleStopped)
+        # these through.
+        self.connectCameraFunctionality()
 
-        #self.cam_fn.shutter.connect(self.handleShutter)
-        #self.cam_fn.emccdGain.connect(self.handleEMCCDGain)
-        #self.cam_fn.temperature.connect(self.handleTemperature)
+    def sliceFrame(self, new_frame):
+        """
+        Slices out a part of the frame based on self.frame_slice.
+        """
+        if self.frame_slice is None:
+            return new_frame.np_data
+        else:
+            w = new_frame.image_x
+            h = new_frame.image_y
+            sliced_frame = numpy.reshape(new_frame.np_data, (h,w))[self.frame_slice]
+            return numpy.ascontiguousarray(sliced_frame)
+
+    def toggleShutter(self):
+        assert False
 
 
 class FeedFunctionalityAverage(FeedFunctionality):
@@ -202,7 +246,7 @@ class FeedFunctionalityAverage(FeedFunctionality):
         self.frames_to_average = self.parameters.get("frames_to_average")
 
     def handleNewFrame(self, new_frame):
-        sliced_data = super().handleNewFrame(new_frame)
+        sliced_data = self.sliceFrame(new_frame)
 
         if self.average_frame is None:
             self.average_frame = sliced_data.astype(numpy.uint32)
@@ -239,7 +283,7 @@ class FeedFunctionalityInterval(FeedFunctionality):
         self.cycle_length = self.parameters.get("cycle_length")
 
     def handleNewFrame(self, new_frame):
-        sliced_data = super().handleNewFrame(new_frame)
+        sliced_data = self.sliceFrame(new_frame)
         
         if (new_frame.frame_number % self.cycle_length) in self.capture_frames:
             self.newFrame.emit(frame.Frame(sliced_data,
@@ -254,14 +298,7 @@ class FeedFunctionalitySlice(FeedFunctionality):
     """
     The feed functionality for slicing out sub-sets of frames.
     """
-    def handleNewFrame(self, new_frame):
-        sliced_data = super().handleNewFrame(new_frame)
-        
-        self.newFrame.emit(frame.Frame(sliced_data,
-                                       new_frame.frame_number,
-                                       self.x_pixels,
-                                       self.y_pixels,
-                                       self.camera_name))
+    pass
 
         
 class FeedController(object):
@@ -355,9 +392,10 @@ class FeedController(object):
             # Replace the values in the parameters that were read from a file with these values.
             self.parameters.addSubSection(feed_name, feed_params, overwrite = True)
 
-            feed_name = feed_params.get("source") + "." + feed_name
-            self.feeds[feed_name] = fclass(camera_name = feed_name,
-                                           parameters = feed_params)
+            camera_name = feed_params.get("source") + "." + feed_name
+            self.feeds[camera_name] = fclass(feed_name = feed_name,
+                                             camera_name = camera_name,
+                                             parameters = feed_params)
 
     def getFeed(self, feed_name):
         return self.feeds[feed_name]
@@ -372,11 +410,16 @@ class FeedController(object):
         return self.parameters
 
     def invalidateFeeds(self):
-        for feed in self.feeds:
+        """
+        Disconnect the feeds from their camera functionalities and notify
+        any users that they are invalid.
+        """
+        for feed in self.getFeeds():
+            feed.disconnectCameraFunctionality()
             feed.setInvalid()
             
     def resetFeeds(self):
-        for feed in self.feeds:
+        for feed in self.getFeeds():
             feed.reset()
             
 
@@ -425,8 +468,8 @@ class Feeds(halModule.HalModule):
                 if module_name.startswith("camera"):
                     self.camera_names.append(module_name)
 
-            if not "camera1" in self.camera_names:
-                raise FeedException("There must be at least one camera named camera1.")
+#            if not "camera1" in self.camera_names:
+#                raise FeedException("There must be at least one camera named camera1.")
             
             self.feed_names = copy.copy(self.camera_names)
             self.broadcastFeedNames()
@@ -458,10 +501,14 @@ class Feeds(halModule.HalModule):
                                                                        "extra data" : feed.getCameraName()}))
             self.broadcastFeedNames()
 
-        elif message.isType("start camera"):
-            
-            # This assumes that there is always at least a "camera1" module.
-            if self.feed_controller is not None and (message.getData()["camera"] == "camera1"):
+#        elif message.isType("start camera"):
+#            
+#            # This assumes that there is always at least a "camera1" module.
+#            if self.feed_controller is not None and (message.getData()["camera"] == "camera1"):
+#                self.feed_controller.resetFeeds()
+
+        elif message.isType("start feeds"):
+            if self.feed_controller is not None:
                 self.feed_controller.resetFeeds()
 
         elif message.isType("start film"):
@@ -471,146 +518,3 @@ class Feeds(halModule.HalModule):
             if self.feed_controller is not None:
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                   data = {"parameters" : self.feed_controller.getParameters()}))
-
-
-#            self.active_camera_count += 1
-                
-#            if self.feed_controller is not None:
-
-                
-
-#            feed_name = message.getData()["feed_name"]
-#            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-#                                                              data = {"feed_name" : feed_name,
-#                                                                      "feed_info" : self.feeds_info[feed_name]}))
-
-#        elif message.isType("get feeds information"):
-#            self.broadcastFeedInfo()
-
-#        elif message.isType("camera configuration"):
-#            #
-#            # We get this message at startup from each of the cameras.
-#            #
-#            camera_name = message.getData()["camera"]
-#            camera_config = message.getData()["config"]
-#
-#            # Sanity check.
-#            assert (camera_name == camera_config.getCameraName())
-#            
-#            #
-#            # These are the invariant properties of the camera.
-#            #
-#            self.camera_info[camera_name] = {"camera" : camera_name,
-#                                             "master" : camera_config.isMaster()}
-#
-#            self.feeds_info[camera_name] = CameraFeedInfo(camera_params = camera_config.getParameters(),
-#                                                          camera_name = camera_name,
-#                                                          is_master = camera_config.isMaster())
-
-#        elif message.isType("configure2"):
-#            self.broadcastFeedInfo()
-
-#        elif message.isType("default colortable"):
-#            self.default_colortable = message.getData()["colortable"]
-
-#                                                      camera_info = self.feeds_info)
-#                self.feeds_info.update(self.feed_controller.getFeedsInfo())
-                
-#            # Get camera information.
-#            for attr in params.getAttrs():
-#                if attr.startswith("camera"):
-#                    p = params.get(attr)
-#                    self.feeds_info[attr] = CameraFeedInfo(camera_params = p,
-#                                                           camera_name = self.camera_info[attr]["camera"],
-#                                                           is_master = self.camera_info[attr]["master"])
-
-                
-
-#        if message.isType("camera stopped"):
-#            self.active_camera_count -= 1
-#            if (self.active_camera_count == 0):
-#                self.handleFinished()
-            
-        
-#        #
-#        # Add the default color table and 'lock' the info so that we'll get an
-#        # error if anything tries to change to them. These are shared as
-#        # read-only objects.
-#        #
-#        for feed_name, feed in self.feeds_info.items():
-#            feed.setLocked(False)
-#            feed.setParameter("colortable", self.default_colortable)
-#            feed.setLocked(True)
-#            
-#        self.newMessage.emit(halMessage.HalMessage(source = self,
-#                                                   m_type = "feeds information",
-#                                                   data = {"feeds" : self.feeds_info}))
-
-#    def decUnprocessed(self):
-#        self.unprocessed_frames -= 1
-
-#    def handleFinished(self):
-#        if (self.unprocessed_frames == 0):
-#            self.newMessage.emit(halMessage.HalMessage(source = self,
-#                                                       m_type = "feeds stopped"))
-#        else:
-#            self.finished_timer.start()
-
-#    def incUnprocessed(self):
-#        self.unprocessed_frames += 1
-
-#        self.active_camera_count = 0
-#        self.camera_info = {}
-#        self.default_colortable = None
-#        self.feed_controller = None
-#        self.feeds_info = {}
-
-#        self.finished_timer = QtCore.QTimer(self)
-#        self.unprocessed_frames = 0
-
-#        self.finished_timer.setInterval(10)
-#        self.finished_timer.timeout.connect(self.handleFinished)
-#        self.finished_timer.setSingleShot(True)        
-
-#        # Sent by other modules to prompt for information about the
-#        # current feeds.
-#        halMessage.addMessage("get feeds information",
-#                              validator = {"data" : None, "resp" : None})
-        #
-        # This message returns a dictionary keyed by feed name with all
-        # relevant parameters for the feed name in another dictionary.
-        #
-        # e.g. dict["feed_name"]["display_max"] = ?
-        #
-#        halMessage.addMessage("feeds information",
-#                              validator = {"data" : {"feeds" : [True, dict]},
-#                                           "resp" : None})
-
-#        # Sent when the feeds stop.
-#        halMessage.addMessage("feeds stopped",
-#                              validator = {"data" : None, "resp" : None})   
-
-#        # Sent each time a feed generates a frame.
-#        # Note: This needs to match the definition in camera.camera.
-#        halMessage.addMessage("new frame",
-#                              check_exists = False,
-#                              validator = {"data" : {"frame" : [True, frame.Frame]},
-#                                           "resp" : None})
-                
-#    def processL2Message(self, message):
-#        if self.feed_controller is not None:
-#
-#            # Don't reprocess our own frames..
-#            if(message.getSourceName() == self.module_name):
-#                return
-#            
-#            frame = message.getData()["frame"]
-#            feed_frames = self.feed_controller.newFrame(frame)
-#            for ff in feed_frames:
-#                self.incUnprocessed()
-#                self.newMessage.emit(halMessage.HalMessage(source = self,
-#                                                           m_type = "new frame",
-#                                                           level = 2,
-#                                                           data = {"frame" : ff},
-#                                                           finalizer = lambda : self.decUnprocessed()))
-
