@@ -56,6 +56,9 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
             self.chip_size_changed = False
         return chip_rect
 
+    def getAutoScale(self):
+        return [self.image_min, self.image_max]
+
     def getImage(self):
         return self.q_image
     
@@ -155,7 +158,7 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
         if not self.display_saturated_pixels:
             max_intensity = None
 
-        # Rescale the image & record it's minimum and maximum.        
+        # Rescale the image & record it's minimum and maximum.
         [temp, self.image_min, self.image_max] = c_image.rescaleImage(image_data,
                                                                       False,
                                                                       False,

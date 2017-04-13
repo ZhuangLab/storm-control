@@ -257,8 +257,8 @@ class CameraFrameViewer(QtWidgets.QFrame):
         [scalemin, scalemax] = self.camera_widget.getAutoScale()
         if scalemin < 0:
             scalemin = 0
-        if scalemax > self.max_intensity:
-            scalemax = self.max_intensity
+        if scalemax > self.getParameter("max_intensity"):
+            scalemax = self.getParameter("max_intensity")
         self.ui.rangeSlider.setValues([float(scalemin), float(scalemax)])
 
     def handleColorTableChange(self, table_name):
@@ -313,7 +313,7 @@ class CameraFrameViewer(QtWidgets.QFrame):
     def handleNewCenter(self, cx, cy):
         self.setParameter("center_x", cx)
         self.setParameter("center_y", cy)
-        self.camera_widget.setClickPos(*self.feed_info.transformChipToFrame(cx, cy))
+        self.camera_widget.setClickPos(*self.cam_fn.transformChipToFrame(cx, cy))
 
     def handleNewFrame(self, frame):
         if self.filming and (self.getParameter("sync") != 0):

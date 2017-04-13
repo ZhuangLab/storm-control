@@ -36,13 +36,13 @@ class ParamsViewer(QtWidgets.QGroupBox):
         # connect signals
         self.ui.EMCCDSlider.valueChanged.connect(self.handleGainChange)
 
-    def handleEMCCDGain(self, gain):
-        if (gain != self.ui.EMCCDSlider.value()):
+    def handleEMCCDGain(self, new_gain):
+        if (new_gain != self.ui.EMCCDSlider.value()):
             self.ui.EMCCDSlider.valueChanged.disconnect()
-            self.ui.EMCCDSlider.setValue(gain)
+            self.ui.EMCCDSlider.setValue(new_gain)
             self.ui.EMCCDSlider.valueChanged.connect(self.handleGainChange)
         self.ui.EMCCDLabel.setText("EMCCD Gain: {0:d}".format(new_gain))
-            
+
     def handleGainChange(self, new_gain):
         if self.cam_fn is not None:
             self.cam_fn.setEMCCDGain(new_gain)
