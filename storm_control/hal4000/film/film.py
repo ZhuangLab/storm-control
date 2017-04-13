@@ -282,22 +282,24 @@ class Film(halModule.HalModule):
         #   4. stopFilmLevel2() - Fire when all the cameras have stopped.
         #      film_state = "idle"
         #
-        # The problem that we are trying to solve is that we need to
-        # wait until all the cameras have actually stopped before
-        # creating / destroying the image writers as any camera that
-        # is still running could be throwing off 'new frame' messages
-        # which we might want (or not want) to save.
+        # The problem that we are trying to solve is that we need to wait until
+        # all the cameras have actually stopped before creating / destroying the
+        # image writers as any camera that is still running could be generating
+        # frames that we might want (or not want) to save.
         #
         self.active_cameras = 0
         self.camera_functionalities = []
         self.feed_names = None
+        self.film_timer = QtCore.QTimer(self)
         self.film_settings = None
-        self.film_size = 0.0
         self.film_state = "idle"
         self.number_frames = 0
         self.pixel_size = 1.0
         self.writers = None
 
+        self.film_timer.setInterval(100)
+        self.film_timer.timeout.connect(self.handleFilmTimer)
+        
         self.logfile_fp = open(module_params.get("directory") + "image_log.txt", "a")
         self.logfile_fp.write("\r\n")
         self.logfile_fp.flush()
@@ -362,12 +364,12 @@ class Film(halModule.HalModule):
         from all the cameras/feeds we know that we can proceed.
         """
         self.active_cameras -= 1
-        print("camera started", self.active_cameras)
+        print(">camera started", self.active_cameras)
         if (self.active_cameras == 0):
             # Disconnect start signals.
             for camera in self.camera_functionalities:
                 camera.started.disconnect(self.handleCameraStarted)
-            print("all started")
+            print(">all started")
 
     def handleCameraStopped(self):
         """
@@ -375,12 +377,17 @@ class Film(halModule.HalModule):
         all of the cameras have stopped.
         """
         self.active_cameras -= 1
-        print("camera stopped", self.active_cameras)
+        print(">camera stopped", self.active_cameras)
         if (self.active_cameras == 0):
             # Disconnect stop signals.
             for camera in self.camera_functionalities:
                 camera.stopped.disconnect(self.handleCameraStopped)
-            print("all stopped")                
+            print(">all stopped")
+
+            if (self.film_state == "start"):
+                self.startFilmingLevel2()
+            elif (self.film_state == "stop"):
+                self.stopFilmingLevel2()
 
     def handleLiveModeChange(self, state):
         if state:
@@ -430,15 +437,15 @@ class Film(halModule.HalModule):
                 msg += "\r\n"
                 self.logfile_fp.write(msg)
                 to_save.saveToFile(film_settings.getBasename() + ".xml")
+
+    def handleFilmTimer(self):
+        total_size = 0.0
+        for writer in self.writers:
+            total_size += writer.getSize()
+        self.view.updateSize(total_size)
         
     def processMessage(self, message):
-            
-#        if message.isType("feeds stopped"):
-#            if (self.film_state == "start"):
-#                self.startFilmingLevel2()
-#            elif (self.film_state == "stop"):
-#                self.stopFilmingLevel2()
-
+        
         if message.isType("configure1"):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "add to ui",
@@ -519,6 +526,9 @@ class Film(halModule.HalModule):
         # We want to make sure that nothing else that might also start the
         # cameras, like a 'new parameters' message is pending in the queue.
         #
+        # We also do this so that all of the modules have a chance to
+        # respond to the 'start film' message (when we are starting a film).
+        #
         self.newMessage.emit(halMessage.SyncMessage(self))
                 
         # Connect to camera/feed started signals.
@@ -584,6 +594,10 @@ class Film(halModule.HalModule):
                                                    sync = True,
                                                    m_type = "start film",
                                                    data = {"film settings" : self.film_settings}))
+
+        # Start film display update timer.
+        self.film_timer.start()
+
         # Start cameras.
         self.startCameras()
         
@@ -619,6 +633,9 @@ class Film(halModule.HalModule):
                                                            m_type = "stop camera",
                                                            data = {"camera" : camera.getCameraName()}))
 
+        # Another sync is not needed here because there is no other message that
+        # could stop the cameras prematurely?
+
     def stopFilmingLevel1(self):
         """
         Tell the cameras to stop, then wait until we get the
@@ -629,15 +646,21 @@ class Film(halModule.HalModule):
 
     def stopFilmingLevel2(self):
         """
-        Once all the cameras have stopped close the imagewriters
+        Once all the cameras/feeds have stopped close the imagewriters
         and restart the cameras (if we are in live mode).
         """
         self.view.enableUI(True)
 
         # Close writers.
-#        for name in self.writers:
-#            self.writers[name].closeFile()
+        for writer in self.writers:
+            writer.closeWriter()
 
+        # Stop film display timer.
+        self.film_timer.stop()
+
+        # Perform a final update of the display.
+        self.handleFilmTimer()
+        
         # Stop filming.
         self.newMessage.emit(halMessage.HalMessage(source = self,
                                                    m_type = "stop film",

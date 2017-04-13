@@ -64,9 +64,13 @@ class BaseFileWriter(object):
         self.cam_fn.stopped.connect(self.handleStopped)
 
     def closeWriter(self):
+        assert self.stopped
         self.cam_fn.newFrame.disconnect(self.saveFrame)
         self.cam_fn.stopped.disconnect(self.handleStopped)
-        
+
+    def getSize(self):
+        return self.frame_size * self.number_frames
+    
     def handleStopped(self):
         self.stopped = True
 
@@ -75,7 +79,6 @@ class BaseFileWriter(object):
         
     def saveFrame(self):
         self.number_frames += 1
-        return self.frame_size
 
 
 class DaxFile(BaseFileWriter):
@@ -94,8 +97,8 @@ class DaxFile(BaseFileWriter):
         super().closeWriter()
         self.fp.close()
 
-        w = str(self.feed_info.getParameter("x_pixels"))
-        h = str(self.feed_info.getParameter("y_pixels"))
+        w = str(self.cam_fn.getParameter("x_pixels"))
+        h = str(self.cam_fn.getParameter("y_pixels"))
         with open(self.basename + ".inf", "w") as inf_fp:
             inf_fp.write("binning = 1 x 1\n")
             inf_fp.write("data type = 16 bit integers (binary, little endian)\n")
@@ -109,9 +112,9 @@ class DaxFile(BaseFileWriter):
             inf_fp.close()
 
     def saveFrame(self, frame):
+        super().saveFrame()
         np_data = frame.getData()
         np_data.tofile(self.fp)
-        return super().saveFrame()
 
 
 class SPEFile(BaseFileWriter):
@@ -155,9 +158,9 @@ class SPEFile(BaseFileWriter):
         self.fp.write(struct.pack("i", self.number_frames))
 
     def saveFrame(self, frame):
+        super().saveFrame()
         np_data = frame.getData()
         np_data.tofile(self.file_ptrs[index])
-        return super().saveFrame()
 
 
 class TIFFile(BaseFileWriter):
@@ -176,12 +179,12 @@ class TIFFile(BaseFileWriter):
         self.tif.close()
         
     def saveFrame(self, frame):
+        super().saveFrame()
         image = frame.getData()
         self.tif.save(image.reshape((frame.image_y, frame.image_x)),
                       metadata = self.metadata,
                       resolution = self.resolution)
-        return super().saveFrame()
-                      
+
 
 #
 # The MIT License

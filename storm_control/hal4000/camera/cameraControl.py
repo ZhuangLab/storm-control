@@ -230,9 +230,6 @@ class CameraControl(QtCore.QThread):
                     break
             self.camera_functionality.newFrame.emit(frame)
 
-#    def haveTemperature(self):
-#        return self.camera_configuration.hasTemperature()
-
     def newParameters(self, parameters):
         """
         Notes: (1) The parameters that the camera receives are already
