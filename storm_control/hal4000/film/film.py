@@ -463,6 +463,8 @@ class Film(halModule.HalModule):
             self.view.setDirectory(message.getData()["directory"])
 
         elif message.isType("new parameters"):
+            if self.locked_out:
+                raise halException.HalException("'new parameters' received while locked out.")
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"old parameters" : self.view.getParameters().copy()}))
             # Update parameters.
