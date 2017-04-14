@@ -16,7 +16,7 @@ def test_hal_film():
     # Check that the movies are the right length.
     for name, size in [["movie_02.dax", [512, 512, 10]],
                        ["movie_02_average.dax", [512, 512, 1]],
-                       ["movie_02_interval.dax", [256, 512, 2]],
+                       ["movie_02_interval.dax", [256, 508, 2]],
                        ["movie_02_slice1.dax", [65, 64, 10]]]:
         movie = datareader.inferReader(os.path.join(test.dataDirectory(), name))
         assert(movie.filmSize() == size)

@@ -150,10 +150,11 @@ class Record(TestAction):
         return {"request" : self.film_request}
                 
     def getMessageFilter(self):
-        return "stop film"
+        return "film lockout"
 
     def handleMessage(self, message):
-        self.actionDone.emit()
+        if not message.getData()["locked out"]:
+            self.actionDone.emit()
 
 
 class SetDirectory(TestAction):
@@ -177,6 +178,9 @@ class SetDirectory(TestAction):
 class SetParameters(TestAction):
     """
     Set current parameters.
+
+    This waits for the 'settings lockout' message with 
+    "locked out" False before proceeding.
     """
     def __init__(self, p_name = "", **kwds):
         super().__init__(**kwds)
@@ -188,10 +192,11 @@ class SetParameters(TestAction):
         return {"index or name" : self.p_name}
 
     def getMessageFilter(self):
-        return "updated parameters"
+        return "settings lockout"
 
     def handleMessage(self, message):
-        self.actionDone.emit()
+        if not message.getData()["locked out"]:
+            self.actionDone.emit()
         
     
 class Timer(TestAction):
