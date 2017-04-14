@@ -297,10 +297,15 @@ class Film(halModule.HalModule):
         self.pixel_size = 1.0
         self.timing_functionality = None
         self.writers = None
-        
+        self.writers_stopped_timer = QtCore.QTimer(self)
+
         self.logfile_fp = open(module_params.get("directory") + "image_log.txt", "a")
         self.logfile_fp.write("\r\n")
         self.logfile_fp.flush()
+
+        self.writers_stopped_timer.setSingleShot(True)
+        self.writers_stopped_timer.setInterval(10)
+        self.writers_stopped_timer.timeout.connect(self.stopFilmingLevel2)
 
         p = module_params.getp("parameters")
         p.add(params.ParameterStringDirectory("Current working directory",
@@ -545,7 +550,6 @@ class Film(halModule.HalModule):
         running, i.e. we are not in live mode.
         """
         self.film_settings = film_settings
-        self.film_size = 0.0
         self.film_state = "start"
         self.view.enableUI(False)
 
@@ -566,7 +570,7 @@ class Film(halModule.HalModule):
                 if camera.getParameter("saved"):
                     self.writers.append(imagewriters.createFileWriter(camera, self.film_settings))
         if (len(self.writers) == 0):
-            self.view.updateSize(self.film_size)
+            self.view.updateSize(0.0)
 
         # Start the feeds, this actually just resets them so that they start
         # at the appropriate initial values.
@@ -621,11 +625,23 @@ class Film(halModule.HalModule):
         Once all the cameras/feeds have stopped close the imagewriters
         and restart the cameras (if we are in live mode).
         """
-        self.view.enableUI(True)
+
+        # Check that the writers have stopped. The problem (I think) is a race condition
+        # where the 'stopped' signal from the Camera has not reached the functionalities
+        # or the writers before the handleStopCamera() finalizer for the 'stop camera'
+        # message calls this function. If any of the writers have not stopped we wait
+        # ~10ms and try again.
+        for writer in self.writers:
+            if not writer.isStopped():
+                self.writers_stopped_timer.start()
+                break
 
         # Close writers.
         for writer in self.writers:
             writer.closeWriter()
+
+        # Enable the UI.
+        self.view.enableUI(True)
         
         # Stop filming.
         #
