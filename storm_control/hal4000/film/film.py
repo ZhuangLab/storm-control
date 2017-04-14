@@ -634,7 +634,7 @@ class Film(halModule.HalModule):
         for writer in self.writers:
             if not writer.isStopped():
                 self.writers_stopped_timer.start()
-                break
+                return
 
         # Close writers.
         for writer in self.writers:
