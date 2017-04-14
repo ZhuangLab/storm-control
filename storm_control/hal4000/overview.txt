@@ -1,4 +1,130 @@
 
+HAL uses a (somewhat) modular message passing architecture in order
+to be able to control multiple pieces of hardware with a degree of
+parallelization. The basic idea is that GUI elements and hardware
+all communicate with each other through HAL who serves as the message
+broker. All the HAL really gaurantees is that each module will
+receive all the messages in the same order.
+
+
+The message life cycle:
+
+(1) Created and sent to HAL.
+
+(2) Held in queue by HAL until all the messages in front of it
+    have been sent.
+    
+(3) Sent by HAL to all of the modules.
+
+(4) Modules may add responses or errors to the message.
+
+(5) If the module cannot process the message essentially
+    instantaneously it is expected to handle the module to a
+    thread and return control of the main thread to HAL.
+    
+(6) When the message is completely processed by the modules
+    (or threads they have started) HAL calls the message finalizer
+    (if any).
+    
+(7) HAL informs the sending module (and only the sending module)
+    of responses or errors that have been added to the message.
+
+
+Important message sequences:
+
+(1) Changing of parameters / settings:
+
+    a. 'new parameters' - The modules should test / switch to
+       the new parameters, or throw an error / warning if there
+       is a problem with the new parameters. Also modules are
+       expected to add responses to this message with both their
+       old parameters and the new parameters.
+
+    b. 'updated parameters' - The parameters are good and all
+       the modules must now switch to the new parameters.
+
+    c. 'current feeds' - This is a list of the currently of the
+       names of the currently active camera / feeds.
+
+    d. 'settings lockout' with data "locked out" = False - The
+       parameter change is complete.
+
+
+(2) Filming:
+
+    a. 'film lockout' with data "locked out" = True - Filming
+       is about to start, don't touch anything..
+
+    b. 'stop camera' - One of these is sent to each camera,
+       master cameras are stopped first, then slave cameras.
+
+    c. 'start feeds' - The feeds (if any) should prepare to
+       start.
+
+    d. 'start film' - Modules that have special behaviour during
+       filming should prepare to start.
+
+    e. 'film timing' - This message from timing.timing provides
+       the (software) time base for the film.
+
+    f. 'start camera' - Again, one of these is sent to each
+       camera, slave cameras first then master cameras. This is
+       also when the filming will actually start as everything
+       is driven by the "newFrame" signals from the cameras.
+
+    g. 'stop camera' - Same as (b).
+
+    h. 'stop film' - The film is done, modules are expected to
+       add a response to this message containing their current
+       parameters.
+
+
+Other message details:
+
+(1) There is a sync message which will block the queue until all
+    of the messages that arrived before it are completely
+    processed & finalized.
+
+(2) Messages can set a sync flag which will block messages that
+    arrive after the message from being processed until the
+    message if completely processed & finalized.
+
+
+Functionalities - In addition to sending messages to each other
+through HAL modules can request functionalities from other
+modules, a display for example might request a camera or feed
+functionality to display. These are supposed to encapsulate
+some of the behavior a module can provide in a form that it
+is easy for other modules to use. We hoped this would solve
+two problems: (1) Some of the HAL GUI elements use the same
+hardware, for example many stages also control filter wheels,
+but (2) As sending messages has some overhead and HAL provides
+no gaurantees on timing it would be better to have a more
+direct pathway for hardware control than doing everything by
+sending messages.
+
+As a rough rule of thumb interaction that will involve lots
+of messages between a single sender & receiver that need to
+be processed in more or less real time should be done with
+functionalities, and everything else should go through HAL
+(including requestes for functionalities from other modules).
+
+Also, the provider of a functionality can signal that it is
+no longer valid. At this point the user should stop using
+the functionality and request a new one, if needed.
+
+
+Feeds - These are derived from a source camera and provide
+a degree of processing. They might average camera frames
+together, or slice them, or only pass through some fraction
+of them. The file 'feed_examples.xml' in the test/hal
+directory provides examples of the various options.
+
+
+
+
+-- old section -- only sort of correct --
+
 A brief overview of the classes / modules.
 
 HAL-4000 (QtGui.QMainWindow)
