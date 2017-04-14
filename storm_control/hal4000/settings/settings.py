@@ -28,6 +28,7 @@ import os
 
 from PyQt5 import QtWidgets
 
+import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
 
 import storm_control.hal4000.halLib.halMessage as halMessage
@@ -40,6 +41,7 @@ class Settings(halModule.HalModule):
     
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
+        self.locked_out = False
 
         self.view = parametersBox.ParametersBox(module_params = module_params,
                                                 qt_settings = qt_settings)
@@ -101,7 +103,13 @@ class Settings(halModule.HalModule):
         halMessage.addMessage("set parameters",
                               validator = {"data" : {"index or name" : [True, (str, int)]},
                                            "resp" : None})
-        
+
+        # Sent when changing the settings is not possible/possible. While this is
+        # true we'll throw an error if another modules attempts to change the settings.
+        halMessage.addMessage("settings lockout",
+                              validator = {"data" : {"locked out" : [True, bool]},
+                                           "resp" : None})        
+
         # The updated parameters.
         #
         # These are the updated values of parameters of all of the modules.
@@ -128,8 +136,14 @@ class Settings(halModule.HalModule):
         it could be a different set. We use the is_edit flag to record which of these
         two it is.
         """
+        if self.locked_out:
+            raise halException.HalException("parameter change attempted while locked out.")
+
         # Disable the UI so the user can't change the parameters again while we
         # are processing the current change.
+        #
+        # FIXME: We also need to disable the editor, if it is open.
+        #
         self.view.enableUI(False)
         
         # is_edit means we are sending a modified version of the current parameters.
@@ -199,10 +213,7 @@ class Settings(halModule.HalModule):
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "updated parameters",
                                                            data = {"parameters" : self.view.getCurrentParameters().copy()}))
-
-                # Renable the UI
-                self.view.enableUI(True)
-
+                
     def processMessage(self, message):
         
         if message.isType("configure1"):
@@ -214,16 +225,22 @@ class Settings(halModule.HalModule):
             self.view.copyDefaultParameters()
             self.view.markCurrentAsInitialized()
 
+        elif message.isType("current feeds"):
+            # This is the signal that the parameters have been completely updated.
+            self.setLockout(False)
+            
+            # Renable the UI
+            self.view.enableUI(True)
+
         elif message.isType("get parameters"):
             p = self.view.getParameters(message.getData()["index or name"])
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : p}))
 
         elif message.isType("initial parameters"):
-            #
+            
             # It is okay for other modules to just send their parameters as we make
             # a copy before storing them in this module.
-            #
             self.view.updateCurrentParameters(message.getSourceName(),
                                               message.getData()["parameters"].copy())
             
@@ -248,6 +265,8 @@ class Settings(halModule.HalModule):
             self.view.newParametersFile(data["filename"], is_default)
 
         elif message.isType("set parameters"):
+            if self.locked_out:
+                raise halException.HalException("'set parameters' received while locked out.")
             self.view.setParameters(message.getData()["index or name"])
             
         elif message.isType("start film"):
@@ -256,6 +275,10 @@ class Settings(halModule.HalModule):
         elif message.isType("stop film"):
             self.view.enableUI(True)
 
-
+    def setLockout(self, state):
+        self.locked_out = state
+        self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                   m_type = "settings lockout",
+                                                   data = {"locked out" : self.locked_out}))
 
 
