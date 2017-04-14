@@ -27,15 +27,15 @@ sdk3_utility = None
 def loadSDK3DLL(path):
     global sdk3, sdk3_utility
     if sdk3 is None:
-	sdk3 = ctypes.oledll.LoadLibrary(path + "atcore.dll")
-	sdk3_utility = ctypes.oledll.LoadLibrary(path + "atutility.dll")
+        sdk3 = ctypes.oledll.LoadLibrary(path + "atcore.dll")
+        sdk3_utility = ctypes.oledll.LoadLibrary(path + "atutility.dll")
 
 # Wrapper functions for the DLL
 
 def check(value, fn_name = "??", command = "??"):
     if (value != 0):
         error_message = "Error", value, "when calling function", fn_name, "with command", command
-        print error_message
+        print(error_message)
         raise AndorException(error_message) # Raise a hardware error
         
         return False
@@ -197,10 +197,10 @@ def setInteger(handle, command, value):
     success, min_value, max_value = getIntegerRange(handle, command)
     if value < min_value:
         value = min_value
-        print "Coerced " + str(command) + " to " + str(value)
+        print("Coerced " + str(command) + " to " + str(value))
     elif value > max_value:
         value = max_value
-        print "Coerced " + str(command) + " to " + str(value)
+        print("Coerced " + str(command) + " to " + str(value))
     
     return check(sdk3.AT_SetInt(handle, 
                                 ctypes.c_wchar_p(command), 
@@ -220,17 +220,17 @@ def setString(handle, command, string):
 # Camera exception.
 #
 class AndorException(halExceptions.HardwareException):
-    def __init__(self, message):
-        halExceptions.HardwareException.__init__(self, message)
+    pass
 
 
 ## AndorRawData
 #
 # This class stores the raw data from the Andor camera, the "buffer".
 #
-class AndorRawData():
+class AndorRawData(object):
 
-    def __init__(self, size):
+    def __init__(self, size = None, **kwds):
+        super().__init__(**kwds)
         #self.np_array = numpy.require(numpy.empty(size, dtype = numpy.uint8),
         #                              dtype = numpy.uint8,
         #                              requirements = ['C_CONTIGUOUS', 'ALIGNED'])
@@ -245,9 +245,11 @@ class AndorRawData():
 #
 # This class stores the converted data from the Andor camera.
 #
-class AndorFrameData():
+class AndorFrameData(object):
     
-    def __init__(self, size):
+    def __init__(self, size = None, **kwds):
+        super().__init__(**kwds)
+        
         self.np_array = numpy.ascontiguousarray(numpy.empty(size, dtype = numpy.uint16))
         self.size = size
 
@@ -262,9 +264,11 @@ class AndorFrameData():
 #
 # The interface to and Andor SDK3 controlled camera.
 #
-class SDK3Camera:
+class SDK3Camera(object):
 
-    def __init__(self, camera_id = 0):
+    def __init__(self, camera_id = 0, **kwds):
+        super().__init__(**kwds)
+        
         self.camera_handle = ctypes.c_void_p()
         self.enumerated = frozenset(["AOIBinning",
                                      "AOILayout",
@@ -303,9 +307,9 @@ class SDK3Camera:
         self.raw_data = []
         self.stride = 0
 
-	check(sdk3.AT_InitialiseLibrary(), "AT_InitializeLibrary")
-	check(sdk3_utility.AT_InitialiseUtilityLibrary(), "AT_InitialiseUtilityLibrary")
-	check(sdk3.AT_Open(ctypes.c_int(camera_id), ctypes.byref(self.camera_handle)), "AT_Open")
+        check(sdk3.AT_InitialiseLibrary(), "AT_InitializeLibrary")
+        check(sdk3_utility.AT_InitialiseUtilityLibrary(), "AT_InitialiseUtilityLibrary")
+        check(sdk3.AT_Open(ctypes.c_int(camera_id), ctypes.byref(self.camera_handle)), "AT_Open")
 
     def captureSetup(self):
 
@@ -391,7 +395,7 @@ class SDK3Camera:
         elif (ptype == "str"):
             return getString(self.camera_handle, pname)
         else:
-            print "Unknown type", ptype, "for", pname
+            print("Unknown type", ptype, "for", pname)
 
     def hasFeature(self, pname):
         implemented = ctypes.c_bool(False)
@@ -413,7 +417,7 @@ class SDK3Camera:
             setFloat(self.camera_handle, pname, pvalue)
             setFloat(self.camera_handle, "FrameRate", 1e5) # Force frame rate to highest value possible
         elif pname is "FrameRate":
-            print "WARNING: Setting FrameRate is not supported"
+            print("WARNING: Setting FrameRate is not supported")
             setFloat(self.camera_handle, pname, pvalue)
             setFloat(self.camera_handle, "ExposureTime", 0) # Force exposure time to lowest possible value
             raise AndorException("FrameRate is not supported") # Raise a hardware error
@@ -434,13 +438,13 @@ class SDK3Camera:
             elif (ptype == "str"):
                 setString(self.camera_handle, pname, pvalue)
             else:
-                print "Unknown type", ptype, "for", pname
+                print("Unknown type", ptype, "for", pname)
         
 
     def shutdown(self):
-	check(sdk3.AT_Close(self.camera_handle), "AT_Close")
+        check(sdk3.AT_Close(self.camera_handle), "AT_Close")
         check(sdk3.AT_FinaliseLibrary(), "AT_FinalizeLibrary")
-	check(sdk3_utility.AT_FinaliseUtilityLibrary(), "AT_FinalizeUtilityLibrary")
+        check(sdk3_utility.AT_FinaliseUtilityLibrary(), "AT_FinalizeUtilityLibrary")
 
     def startAcquisition(self):
         self.captureSetup()
@@ -448,32 +452,38 @@ class SDK3Camera:
         sendCommand(self.camera_handle, "AcquisitionStart")
 
     def stopAcquisition(self):
-	sendCommand(self.camera_handle, "AcquisitionStop")
-	check(sdk3.AT_Flush(self.camera_handle), "AT_Flush")
+        sendCommand(self.camera_handle, "AcquisitionStop")
+        check(sdk3.AT_Flush(self.camera_handle), "AT_Flush")
 
     def waitBuffer(self, current_buffer, buffer_size):
         resp = sdk3.AT_WaitBuffer(self.camera_handle, ctypes.byref(current_buffer), ctypes.byref(buffer_size), 0)
-        assert (resp != 100), "Andor thinks there will be a buffer overflow, sigh.."
+        if (resp != 100):
+            raise AndorException("Andor thinks there will be a buffer overflow, sigh..")
         if (resp == 0):
             return True
         elif (resp == 13):
             return False
         else:
-            assert False, "Unexpected response " + str(resp)
+            raise AndorException("Unexpected response " + str(resp))
 
 
 if (__name__ == "__main__"):
     loadSDK3DLL("C:/Program Files/Andor SOLIS/")
 
-    cam = SDK3Camera()
-    if 1:
-        print "model", cam.getProperty("CameraModel", "str")
-        print "name", cam.getProperty("CameraName", "str")
-        print "xsize", cam.getProperty("SensorWidth", "int")
-        print "ysize", cam.getProperty("SensorHeight", "int")
-        print "target", cam.getProperty("TemperatureControl", "enum")
+    if True:
+        cam1 = SDK3Camera(camera_id = 0)
+        cam2 = SDK3Camera(camera_id = 1)
+        for cam in [cam1, cam2]:
+            print("model", cam.getProperty("CameraModel", "str"))
+            print("name", cam.getProperty("CameraName", "str"))
+            print("xsize", cam.getProperty("SensorWidth", "int"))
+            print("ysize", cam.getProperty("SensorHeight", "int"))
+            print("target", cam.getProperty("TemperatureControl", "enum"))
+            print("shutdown")
+            cam.shutdown()
+            print("done")
 
-    if 0:
+    if False:
         cam.setProperty("AOIWidth", "int", 2048)
         cam.setProperty("AOIHeight", "int", 2048)
         cam.setProperty("ExposureTime", "float", 0.01)
@@ -481,13 +491,11 @@ if (__name__ == "__main__"):
         for i in range(20):
             frames = cam.getFrames()[0]
             for frame in frames:
-                print i, frame.getData()
+                print(i, frame.getData())
             time.sleep(0.1)
         cam.stopAcquisition()
 
-    print "shutdown"
-    cam.shutdown()
-    print "done"
+
 
 #    print "close"
 #    closeSDK3DLL()
