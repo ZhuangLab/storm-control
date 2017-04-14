@@ -28,7 +28,7 @@ class NoneCameraControl(cameraControl.CameraControl):
         self.sleep_time = 0
 
         #
-        # The camera configuration. Note the connection to self.parameters
+        # The camera functionality. Note the connection to self.parameters
         # which should not be changed to point to some other parameters
         # object when the parameters change. This is enforced by the
         # getCameraConfiguration() method.

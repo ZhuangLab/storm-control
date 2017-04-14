@@ -23,6 +23,10 @@ class CameraControl(QtCore.QThread):
     newData = QtCore.pyqtSignal(object)
 
     def __init__(self, camera_name = None, config = None, **kwds):
+        """
+        camera_name - This is the name of this camera's section in the config XML file.        
+        config - These are the values in the parameters section as a StormXMLObject().
+        """
         super().__init__(**kwds)
 
         # This is the hardware module that will actually control the camera.
@@ -57,8 +61,8 @@ class CameraControl(QtCore.QThread):
 
         # The exposure time.
         self.parameters.add(params.ParameterFloat(description = "Exposure time (seconds)", 
-                                                       name = "exposure_time", 
-                                                       value = 1.0))
+                                                  name = "exposure_time", 
+                                                  value = 1.0))
         
         # This is frames per second as reported by the camera. It is used
         # by the illumination module for timing the shutters.
@@ -264,6 +268,9 @@ class CameraControl(QtCore.QThread):
                 raise CameraException("The camera ROI must be a multiple of 4 in x!")
 
         # Update parameter ranges based on binning.
+        #
+        # FIXME: For most cameras these parameters are not even relevant.
+        #
         max_x = self.parameters.get("x_chip") / parameters.get("x_bin")
         for attr in ["x_start", "x_end"]:
             self.parameters.getp(attr).setMaximum(max_x)
@@ -366,11 +373,13 @@ class HWCameraControl(CameraControl):
         self.msleep(5)
 
     def startCamera(self):
-        super().startCamera()
+        print(">start", self.camera_name)
         if self.camera_working:
             self.camera.startAcquisition()
+        super().startCamera()
 
     def stopCamera(self):
+        print(">stop", self.camera_name)
         if self.camera_working:
             self.camera_mutex.lock()
             self.camera.stopAcquisition()

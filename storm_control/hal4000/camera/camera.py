@@ -72,7 +72,9 @@ class Camera(halModule.HalModule):
             if (message.getData()["camera"] == self.module_name):
                 film_settings = message.getData()["film settings"]
                 if film_settings.isFixedLength():
-                    self.camera_control.setFilmLength(film_settings.getFilmLength())
+                    halModule.runWorkerTask(self,
+                                            message, 
+                                            lambda : self.setFilmLength(film_settings.getFilmLength()))
                     
         # This message comes from display.cameraDisplay among others.
         elif message.isType("get camera functionality"):
@@ -111,6 +113,9 @@ class Camera(halModule.HalModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : self.camera_control.getParameters()}))
 
+    def setFilmLength(self, film_length):
+        self.camera_control.setFilmLength(film_length)
+        
     def startCamera(self):
         self.camera_control.startCamera()
 

@@ -2,13 +2,13 @@
 <config>
 
   <!-- The starting directory. -->
-  <directory type="directory">C:\\Data\</directory>
+  <directory type="directory">C:/Data/</directory>
   
   <!-- The setup name -->
   <setup_name type="string">jfocal</setup_name>
 
   <!-- The ui type, this is 'classic' or 'detached' -->
-  <ui_type type="string">classic</ui_type>
+  <ui_type type="string">detached</ui_type>
 
   <!--
       This has two effects:
@@ -121,17 +121,18 @@
       <module_name type="string">camera.camera</module_name>
       <camera>
 	<master type="boolean">True</master>
-	<class_name type="string">NoneCameraControl</class_name>
-	<module_name type="string">camera.noneCameraControl</module_name>
+	<class_name type="string">AndorSDK3CameraControl</class_name>
+	<module_name type="string">camera.andorSDK3CameraControl</module_name>
 	<parameters>
 	  
-	  <!-- This is specific to the emulated camera. -->
-	  <roll type="float">1.0</roll>
+	  <!-- The location of the Andor DLL -->
+	  <andor_sdk type="string">C:/Program Files/Andor SOLIS/</andor_sdk>
 
-          <!-- These should be specified for every camera, and cannot be changed
-	       in HAL when running. -->
+	  <!-- Which camera to use -->
+	  <camera_id type="int">0</camera_id>
+
 	  <!-- These are the display defaults, not the camera range. -->
-	  <default_max type="int">300</default_max> 
+	  <default_max type="int">500</default_max> 
 	  <default_min type="int">0</default_min>
 	  <flip_horizontal type="boolean">False</flip_horizontal>
 	  <flip_vertical type="boolean">False</flip_vertical>
@@ -140,7 +141,7 @@
 	  <!-- These can be changed / editted. -->
 
 	  <!-- This is the extension to use (if any) when saving data from this camera. -->
-	  <extension type="string"></extension>
+	  <extension type="string">c0</extension>
 	  
 	  <!-- Whether or not data from this camera is saved during filming. -->
 	  <saved type="boolean">True</saved>
@@ -148,6 +149,40 @@
 	</parameters>
       </camera>
     </camera1>
+
+    <camera2>
+      <class_name type="string">Camera</class_name>
+      <module_name type="string">camera.camera</module_name>
+      <camera>
+	<master type="boolean">True</master>
+	<class_name type="string">AndorSDK3CameraControl</class_name>
+	<module_name type="string">camera.andorSDK3CameraControl</module_name>
+	<parameters>
+	  
+	  <!-- The location of the Andor DLL -->
+	  <andor_sdk type="string">C:/Program Files/Andor SOLIS/</andor_sdk>
+
+	  <!-- Which camera to use -->
+	  <camera_id type="int">1</camera_id>
+
+	  <!-- These are the display defaults, not the camera range. -->
+	  <default_max type="int">500</default_max> 
+	  <default_min type="int">0</default_min>
+	  <flip_horizontal type="boolean">False</flip_horizontal>
+	  <flip_vertical type="boolean">False</flip_vertical>
+	  <transpose type="boolean">False</transpose>
+
+	  <!-- These can be changed / editted. -->
+
+	  <!-- This is the extension to use (if any) when saving data from this camera. -->
+	  <extension type="string">c1</extension>
+	  
+	  <!-- Whether or not data from this camera is saved during filming. -->
+	  <saved type="boolean">True</saved>
+
+	</parameters>
+      </camera>
+    </camera2>    
 
     <!-- Illumination (lasers, shutters, etc) control -->
     <!--

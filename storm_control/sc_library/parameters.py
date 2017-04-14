@@ -270,6 +270,9 @@ class Parameter(object):
     def isSet(self):
         return False
 
+    def setMutable(self, value):
+        self.is_mutable = bool(value)
+        
     def setv(self, new_value):
         self.value = self.toType(new_value)
 

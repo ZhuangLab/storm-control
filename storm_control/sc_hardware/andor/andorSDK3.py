@@ -330,7 +330,7 @@ class SDK3Camera(object):
         if (frame_bytes != self.frame_bytes):
             self.raw_data = []
             for i in range(n_buffers):
-                self.raw_data.append(AndorRawData(frame_bytes))
+                self.raw_data.append(AndorRawData(size = frame_bytes))
 
         #
         # frame_bytes can be the same even when the frame size is different.
@@ -338,7 +338,7 @@ class SDK3Camera(object):
         if ((frame_x * frame_y) != (self.frame_x * self.frame_y)):
             self.frame_data = []
             for i in range(n_buffers):
-                self.frame_data.append(AndorFrameData(frame_x * frame_y))
+                self.frame_data.append(AndorFrameData(size = frame_x * frame_y))
 
         for a_buffer in self.raw_data:
             sdk3.AT_QueueBuffer(self.camera_handle, 
@@ -457,20 +457,21 @@ class SDK3Camera(object):
 
     def waitBuffer(self, current_buffer, buffer_size):
         resp = sdk3.AT_WaitBuffer(self.camera_handle, ctypes.byref(current_buffer), ctypes.byref(buffer_size), 0)
-        if (resp != 100):
+        if (resp == 100):
             raise AndorException("Andor thinks there will be a buffer overflow, sigh..")
-        if (resp == 0):
+        elif (resp == 0):
             return True
         elif (resp == 13):
             return False
         else:
+            print(resp)
             raise AndorException("Unexpected response " + str(resp))
 
 
 if (__name__ == "__main__"):
     loadSDK3DLL("C:/Program Files/Andor SOLIS/")
 
-    if True:
+    if False:
         cam1 = SDK3Camera(camera_id = 0)
         cam2 = SDK3Camera(camera_id = 1)
         for cam in [cam1, cam2]:
@@ -483,7 +484,8 @@ if (__name__ == "__main__"):
             cam.shutdown()
             print("done")
 
-    if False:
+    if True:
+        cam = SDK3Camera(camera_id = 0)
         cam.setProperty("AOIWidth", "int", 2048)
         cam.setProperty("AOIHeight", "int", 2048)
         cam.setProperty("ExposureTime", "float", 0.01)
@@ -494,7 +496,9 @@ if (__name__ == "__main__"):
                 print(i, frame.getData())
             time.sleep(0.1)
         cam.stopAcquisition()
-
+        print("shutdown")
+        cam.shutdown()
+        print("done")
 
 
 #    print "close"
