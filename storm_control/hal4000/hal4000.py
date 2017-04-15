@@ -615,6 +615,7 @@ class HalCore(QtCore.QObject):
                 # Check for "closeEvent" message from the main window.
                 if cur_message.isType("close event") and (cur_message.getSourceName() == "hal"):
                     self.cleanUp()
+                    interval = -2
 
                 else:
                     # Check for "sync" message, these don't actually get sent.

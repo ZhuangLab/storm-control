@@ -204,7 +204,7 @@ def setInteger(handle, command, value):
     
     return check(sdk3.AT_SetInt(handle, 
                                 ctypes.c_wchar_p(command), 
-                                ctypes.c_longlong(value)), 
+                                ctypes.c_int64(value)), 
                  "AT_SetInt",
                  command)
 
@@ -448,7 +448,7 @@ class SDK3Camera(object):
 
     def startAcquisition(self):
         self.captureSetup()
-        setEnumeratedString(self.camera_handle, "CycleMode", "Continuous")
+        #setEnumeratedString(self.camera_handle, "CycleMode", "Continuous")
         sendCommand(self.camera_handle, "AcquisitionStart")
 
     def stopAcquisition(self):
@@ -489,11 +489,13 @@ if (__name__ == "__main__"):
         cam.setProperty("AOIWidth", "int", 2048)
         cam.setProperty("AOIHeight", "int", 2048)
         cam.setProperty("ExposureTime", "float", 0.01)
+        cam.setProperty("CycleMode", "enum", "Fixed")
+        cam.setProperty("FrameCount", "int", 10)
         cam.startAcquisition()
         for i in range(20):
             frames = cam.getFrames()[0]
             for frame in frames:
-                print(i, frame.getData())
+                print(i, frame.getData()[0])
             time.sleep(0.1)
         cam.stopAcquisition()
         print("shutdown")

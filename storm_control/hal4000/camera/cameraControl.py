@@ -196,6 +196,7 @@ class CameraControl(QtCore.QThread):
         self.parameters.set("default_max", config.get("default_max", 2000))
         self.parameters.set("default_min", config.get("default_min", 100))
 
+        self.finished.connect(self.handleFinished)
         self.newData.connect(self.handleNewData)
 
     def cleanUp(self):
@@ -227,6 +228,9 @@ class CameraControl(QtCore.QThread):
                                                     "temperature" : 50.0,
                                                     "state" : "unstable"})
 
+    def handleFinished(self):
+        self.camera_functionality.stopped.emit()
+        
     def handleNewData(self, frames):
         """
         Data from the camera should go through this method on it's
@@ -236,7 +240,7 @@ class CameraControl(QtCore.QThread):
             if self.film_length is not None:
 
                 # Stop the camera (if it has not already stopped).
-                if (frame.frame_number == self.film_length):
+                if (frame.frame_number > self.film_length):
                     self.stopCamera()
 
                 # This keeps us from emitting more than the expected number
@@ -319,7 +323,7 @@ class CameraControl(QtCore.QThread):
         if self.running:
             self.running = False
             self.wait()
-            
+
         self.camera_functionality.stopped.emit()
 
     def stopFilm(self):
@@ -341,11 +345,12 @@ class HWCameraControl(CameraControl):
         self.camera_mutex = QtCore.QMutex()
 
     def cleanUp(self):
-        self.stopCamera()
+        super().cleanUp()
         self.camera.shutdown()
 
     def run(self):
         self.running = True
+        self.camera.startAcquisition()
         while(self.running):
 
             # Get data from camera and create frame objects.
@@ -366,26 +371,30 @@ class HWCameraControl(CameraControl):
                                          self.camera_name)
                     frame_data.append(aframe)
                     self.frame_number += 1
+
+                    if self.film_length is not None:                    
+                        if (self.frame_number == self.film_length):
+                            self.running = False
                             
                 # Emit new data signal.
                 self.newData.emit(frame_data)
+            self.msleep(5)
+        self.camera.stopAcquisition()            
 
-        self.msleep(5)
+#    def startCamera(self):
+#        print(">start", self.camera_name, self.running)
+#        if self.camera_working:
+#            self.camera.startAcquisition()
+#        super().startCamera()
 
-    def startCamera(self):
-        print(">start", self.camera_name)
-        if self.camera_working:
-            self.camera.startAcquisition()
-        super().startCamera()
-
-    def stopCamera(self):
-        print(">stop", self.camera_name)
-        if self.camera_working:
-            self.camera_mutex.lock()
-            self.camera.stopAcquisition()
-            self.camera_mutex.unlock()
-        super().stopCamera()
-        
+#    def stopCamera(self):
+#        print(">stop", self.camera_name, self.running)
+#        if self.camera_working and self.running:
+#            self.camera_mutex.lock()
+#
+#            self.camera_mutex.unlock()
+#        super().stopCamera()
+            
 
 #
 # The MIT License

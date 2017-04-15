@@ -150,6 +150,10 @@ class NoneCameraControl(cameraControl.CameraControl):
                                  self.camera_name)
             self.frame_number += 1
 
+            if self.film_length is not None:
+                if (self.frame_number == self.film_length):
+                    self.running = False
+
             # Emit new data signal.
             self.newData.emit([aframe])
             self.msleep(int(1000.0 * self.parameters.get("exposure_time")))

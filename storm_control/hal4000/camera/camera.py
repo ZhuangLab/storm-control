@@ -54,7 +54,9 @@ class Camera(halModule.HalModule):
                                            "resp" : {"functionality" : [True, cameraFunctionality.CameraFunctionality]}})
                                    
     def cleanUp(self, qt_settings):
+        print(">cu 1")
         self.camera_control.cleanUp()
+        print(">cu 2")
         super().cleanUp(qt_settings)
 
     def processMessage(self, message):
@@ -75,7 +77,7 @@ class Camera(halModule.HalModule):
                     halModule.runWorkerTask(self,
                                             message, 
                                             lambda : self.setFilmLength(film_settings.getFilmLength()))
-                    
+
         # This message comes from display.cameraDisplay among others.
         elif message.isType("get camera functionality"):
             if (message.getData()["camera"] == self.module_name):

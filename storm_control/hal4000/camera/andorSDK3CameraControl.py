@@ -38,7 +38,7 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
         # Load the library and start the camera, camera 0 will be used
         # if no 'camera_id' is specified.
         andor.loadSDK3DLL(config.get("andor_sdk"))
-        self.camera = andor.SDK3Camera(config.get("camera_id", 0))
+        self.camera = andor.SDK3Camera(config.get("camera_id"))
 
         # Dictionary of the Andor settings we'll use and their types.
         #
@@ -203,6 +203,7 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
                              self.camera.getProperty("FrameRate", self.andor_props["FrameRate"]))
 
     def setFilmLength(self, film_length):
+        print(">sfl", self.camera_name, self.camera_working, film_length)
         super().setFilmLength(film_length)
         if self.camera_working:
             self.camera.setProperty("CycleMode", self.andor_props["CycleMode"], "Fixed")
