@@ -177,13 +177,18 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
 
         # Update the parameter values, only the Andor specific ones and
         # only if they are different.
+        to_change = []
         for pname in self.andor_props:
             if self.parameters.has(pname):
                 if (self.parameters.get(pname) != parameters.get(pname)) or initialization:
-                    self.camera.setProperty(pname, self.andor_props[pname], parameters.get(pname))
-                    self.parameters.setv(pname, parameters.get(pname))
-            else:
-                print(">no parameter for", pname)
+                    to_change.append(pname)
+
+        if (len(to_change)>0):
+            self.stopCamera()
+            for pname in to_change:
+                self.camera.setProperty(pname, self.andor_props[pname], parameters.get(pname))
+                self.parameters.setv(pname, parameters.get(pname))
+            self.startCamera()
 
         # Get the target temperature for the camera. On some 
         # cameras this cannot be set.
