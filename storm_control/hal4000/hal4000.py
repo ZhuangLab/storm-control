@@ -412,10 +412,7 @@ class HalCore(QtCore.QObject):
                     module_params.add(root_param, config.getp(root_param))
 
             # Load the module.
-            if module_params.get("module_name").startswith("storm_control"):
-                a_module = importlib.import_module(module_params.get("module_name"))
-            else:
-                a_module = importlib.import_module("storm_control.hal4000." + module_params.get("module_name"))
+            a_module = importlib.import_module(module_params.get("module_name"))
             a_class = getattr(a_module, module_params.get("class_name"))
             a_object = a_class(module_name = module_name,
                                module_params = module_params,

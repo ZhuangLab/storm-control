@@ -72,10 +72,9 @@ class HalWorker(QtCore.QRunnable):
 class HalModule(QtCore.QObject):
     """
     To handle messages sub-classes should override the appropriate
-    processLXMessage method (See halMessage.py for the meaning of
-    the different message levels).
+    processMessage method.
 
-    Any processLXMessage() method should execute essentially instantly. 
+    Any processMessage() method should execute essentially instantly. 
     If the task they need to accomplish cannot be done immediately then
     processing should be handed off to a HalConcurrentTask to be run
     in separate. This will keep the task from freezing the GUI and 
