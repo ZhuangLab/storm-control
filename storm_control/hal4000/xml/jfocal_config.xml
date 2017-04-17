@@ -151,22 +151,79 @@
     </camera1>
 
     <!-- DAQ control -->
-    <!--
     <daq>
+      <module_name>sc_hardware.nationalInstruments.nidaqModule</module_name>
+      <class_name>NidaqModule</class_name>
+
+      <configuration>
+
+	<!-- This is the default timing source to use while filming. -->
+	<timing>
+	  <board type="string">PCIe-6351</board>
+	  <counter_id type="int">0</counter_id>
+	  <counter_trigger type="int">PFI0</counter_trigger>
+	  <waveform_clock type="string">PFI12</waveform_clock>
+	</timing>
+
+	<!-- These are the things that we provide DAQ functionality for.
+	     Other modules will request them with a 'get functionality'
+	     message and "name" = "daq.xxx.yyy". -->
+
+	<ilm754>
+	  <do_task>
+	    <board type="string">PCIe-6351</board>
+	    <channel type="int">0</channel>
+	  </do_task>
+	</ilm754>
+
+	<ilm656>
+	  <do_task>
+	    <board type="string">PCIe-6351</board>
+	    <channel type="int">1</channel>
+	  </do_task>
+	</ilm656>
+
+	<ilm561>
+	  <do_task>
+	    <board type="string">PCIe-6351</board>
+	    <channel type="int">2</channel>
+	  </do_task>
+	</ilm561>
+
+	<ilm488>
+	  <do_task>
+	    <board type="string">PCIe-6351</board>
+	    <channel type="int">3</channel>
+	  </do_task>
+	</ilm488>	
+      </configuration>
       
-      </daq>
-      -->
-    <!-- Illumination (lasers, shutters, etc) control -->
-    <!--
+    </daq>
+
+    <!-- Illumination (lasers, shutters, etc) control GUI. -->
     <illumination>
       <class_name type="string">Illumination</class_name>
-      <module_name type="string">illumination.illumination</module_name>
-      <parameters>
-	<settings_xml type="string">none_illumination_settings.xml</settings_xml>
-      </parameters>
+      <module_name type="string">storm_control.hal4000.illumination.illumination</module_name>
+      <configuration>
+	<ch754>
+	  <gui_name type="string">754</gui_name>
+	  <digital_modulation type="string">daq.ilm754.dotask</digital_modulation>
+	</ch754>
+	<ch656>
+	  <gui_name type="string">656</gui_name>
+	  <digital_modulation type="string">daq.ilm656.dotask</digital_modulation>
+	</ch656>
+	<ch561>
+	  <gui_name type="string">561</gui_name>
+	  <digital_modulation type="string">daq.ilm561.dotask</digital_modulation>
+	</ch561>
+	<ch488>
+	  <gui_name type="string">488</gui_name>
+	  <digital_modulation type="string">daq.ilm488.dotask</digital_modulation>
+	</ch488>
+      </configuration>
     </illumination>
-    -->
-    
+
     <!-- Bluetooth communication -->
     <!--
 	This module handle Bluetooth communication with the HAL android app.

@@ -65,7 +65,7 @@ Important message sequences:
        filming should prepare to start.
 
     e. 'film timing' - This message from timing.timing provides
-       the (software) time base for the film.
+       the timing information for the film.
 
     f. 'start camera' - Again, one of these is sent to each
        camera, slave cameras first then master cameras. This is

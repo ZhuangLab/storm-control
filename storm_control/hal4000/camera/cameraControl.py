@@ -65,7 +65,7 @@ class CameraControl(QtCore.QThread):
                                                   value = 1.0))
         
         # This is frames per second as reported by the camera. It is used
-        # by the illumination module for timing the shutters.
+        # for hardware timed waveforms (if any).
         self.parameters.add(params.ParameterFloat(name = "fps",
                                                   value = 0,
                                                   is_mutable = False))

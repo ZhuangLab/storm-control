@@ -215,9 +215,9 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
         # Add some of other parameters that we need to behave like a camera functionality. These
         # are just duplicates from the corresponding camera.
         for pname in ["default_max", "default_min", "flip_horizontal", "flip_vertical",
-                      "max_intensity", "transpose", "x_bin", "y_bin"]:
+                      "fps", "max_intensity", "transpose", "x_bin", "y_bin"]:
             p.add(self.cam_fn.parameters.getp(pname).copy())
-        
+
         # Connect camera functionality signals. We just pass most of
         # these through.
         self.connectCameraFunctionality()

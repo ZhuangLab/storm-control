@@ -42,6 +42,9 @@ class TimingFunctionality(halFunctionality.HalFunctionality):
     def disconnectCameraFunctionality(self):
         self.cam_fn.newFrame.disconnect(self.handleNewFrame)
         self.cam_fn.stopped.disconnect(self.handleStopped)
+
+    def getFPS(self):
+        return self.cam_fn.getParameter("fps")
         
     def getTimeBase(self):
         return self.time_base
