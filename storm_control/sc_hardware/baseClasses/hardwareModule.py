@@ -9,7 +9,7 @@ Hazen 04/17
 
 import storm_control.hal4000.halLib.halFunctionality as halFunctionality
 import storm_control.hal4000.halLib.halMessage as halMessage
-import storm_control.hal4000.halLig.halModule as halModule
+import storm_control.hal4000.halLib.halModule as halModule
 
 
 class HardwareFunctionality(halFunctionality.HalFunctionality):
@@ -45,7 +45,7 @@ class HardwareModule(halModule.HalModule):
     def processMessage(self, message):
 
         if message.isType("configure1"):
-            self.configure1message)
+            self.configure1(message)
 
         elif message.isType("get functionality"):
             self.getFunctionality(message)

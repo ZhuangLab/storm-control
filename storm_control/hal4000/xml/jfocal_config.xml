@@ -152,17 +152,16 @@
 
     <!-- DAQ control -->
     <daq>
-      <module_name>sc_hardware.nationalInstruments.nidaqModule</module_name>
+      <module_name>storm_control.sc_hardware.nationalInstruments.nidaqModule</module_name>
       <class_name>NidaqModule</class_name>
 
       <configuration>
 
 	<!-- This is the default timing source to use while filming. -->
 	<timing>
-	  <board type="string">PCIe-6351</board>
-	  <counter_id type="int">0</counter_id>
-	  <counter_trigger type="int">PFI0</counter_trigger>
-	  <waveform_clock type="string">PFI12</waveform_clock>
+	  <camera_fire_pin type="string">/Dev1/PFI0</camera_fire_pin>
+	  <counter type="string">/Dev1/ctr0</counter>
+	  <counter_out type="string">/Dev1/PFI12</counter_out>
 	</timing>
 
 	<!-- These are the things that we provide DAQ functionality for.
@@ -171,29 +170,25 @@
 
 	<ilm754>
 	  <do_task>
-	    <board type="string">PCIe-6351</board>
-	    <channel type="int">0</channel>
+	    <source type="string">/Dev1/port0/line0</source>
 	  </do_task>
 	</ilm754>
 
 	<ilm656>
 	  <do_task>
-	    <board type="string">PCIe-6351</board>
-	    <channel type="int">1</channel>
+	    <source type="string">/Dev1/port0/line1</source>
 	  </do_task>
 	</ilm656>
 
 	<ilm561>
 	  <do_task>
-	    <board type="string">PCIe-6351</board>
-	    <channel type="int">2</channel>
+	    <source type="string">/Dev1/port0/line2</source>
 	  </do_task>
 	</ilm561>
 
 	<ilm488>
 	  <do_task>
-	    <board type="string">PCIe-6351</board>
-	    <channel type="int">3</channel>
+	    <source type="string">/Dev1/port0/line3</source>
 	  </do_task>
 	</ilm488>	
       </configuration>
@@ -201,6 +196,7 @@
     </daq>
 
     <!-- Illumination (lasers, shutters, etc) control GUI. -->
+    <!--
     <illumination>
       <class_name type="string">Illumination</class_name>
       <module_name type="string">storm_control.hal4000.illumination.illumination</module_name>
@@ -223,7 +219,8 @@
 	</ch488>
       </configuration>
     </illumination>
-
+    -->
+    
     <!-- Bluetooth communication -->
     <!--
 	This module handle Bluetooth communication with the HAL android app.

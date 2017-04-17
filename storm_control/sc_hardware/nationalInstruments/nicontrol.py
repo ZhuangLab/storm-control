@@ -264,7 +264,7 @@ class CounterOutput(NIDAQTask):
         with getLock():
             self.DisableStartTrig()
                 
-    def setTrigger(self, trigger_source = "", retriggerable = 1, board = None):
+    def setTrigger(self, trigger_source = None, retriggerable = True):
         if retriggerable:
             with getLock():
                 self.SetStartTrigRetriggerable(1)

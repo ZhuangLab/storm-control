@@ -21,17 +21,16 @@ class NidaqModuleException(halExceptions.HardwareException):
 class NidaqFunctionality(hardwareModule.HardwareModule):
 
     def __init__(self, used_during_filming = True, **kwds):
-        self.board = None
-        self.channel = None
+        self.source = None
         self.task = None
         self.used_during_filming = used_during_filming
 
-    def getBoard(self):
-        return self.board
-
     def getChannel(self):
         return self.channel
-        
+
+    def getSource(self):
+        return self.source
+    
     def getUsedDuringFilming(self):
         return self.used_during_filming
         
@@ -42,16 +41,14 @@ class NidaqFunctionality(hardwareModule.HardwareModule):
             self.task = None
 
 
-class DoTaskFunctionality(NidaqFunctionality):
+class DOTaskFunctionality(NidaqFunctionality):
 
-    def __init__(self, board = None, channel = None, **kwds):
+    def __init__(self, source = None, **kwds):
         super().__init__(**kwds)
-        self.board = board
-        self.channel = channel
+        self.source = source
 
     def createTask(self):
-        self.task = nicontrol.DigitalOutput(board = self.board,
-                                            channel = self.channel)
+        self.task = nicontrol.DigitalOutput(source = self.source)
         self.task.startTask()
         
     def output(self, state):
@@ -94,17 +91,16 @@ class NidaqModule(hardwareModule.HardwareModule):
                 continue
 
             task = configuration.get(fn_name)
-            assert (len(ftype.getAttrs()) == 1)
-            task_name = ftype.getAttrs()[0]
-            task_params = task.getAttrs()
+            for task_name in task.getAttrs():
+                task_params = task.get(task_name)
             
-            daq_fn_name = ".".join(self.module_name, fn_name, task_name)
-            if (task_name == "do_task"):
-                self.daq_fns[daq_fn_name] = DOTaskFunctionality(board = task_params.get("board"),
-                                                                channel = task_params.get("channel"),
-                                                                used_during_filming = task_params.get("used_during_filming", True))
-            else:
-                raise NidaqModuleException("Unknown task type", task_name)
+                daq_fn_name = ".".join([self.module_name, fn_name, task_name])
+                print(">", daq_fn_name)
+                if (task_name == "do_task"):
+                    self.daq_fns[daq_fn_name] = DOTaskFunctionality(source = task_params.get("source"),
+                                                                    used_during_filming = task_params.get("used_during_filming", True))
+                else:
+                    raise NidaqModuleException("Unknown task type", task_name)
 
     def filmTiming(self, message):
         self.ao_task = None
@@ -131,20 +127,19 @@ class NidaqModule(hardwareModule.HardwareModule):
             # If oversampling is 1 then just trigger the ao_task 
             # and do_task directly off the camera fire pin.
             if (self.oversampling == 1):
-                wv_clock = "/" + self.timing.get("board") + "/" + self.timing.get("waveform_clock")
+                wv_clock = self.timing.get("camera_fire_pin")
             else:
-                wv_clock = "/" + self.timing.get("board") + "/" + self.timing.get("counter_trigger")
+                wv_clock = self.timing.get("counter_out")
 
             # Setup the counter.
             if self.counter_board and (oversampling > 1):
                 def startCtTask():
                     try:
-                        self.ct_task = nicontrol.CounterOutput(self.timing.get("board"), 
-                                                               self.timing.get("counter_id"),
-                                                               frequency, 
-                                                               0.5)
-                        self.ct_task.setCounter(self.oversampling)
-                        self.ct_task.setTrigger(self.timing.get("counter_trigger"))
+                        self.ct_task = nicontrol.CounterOutput(source = self.timing.get("counter"), 
+                                                               frequency = frequency, 
+                                                               duty_cyle = 0.5)
+                        self.ct_task.setCounter(number_samples = self.oversampling)
+                        self.ct_task.setTrigger(trigger_source = self.timing.get("camera_fire_pin"))
                         self.ct_task.startTask()
                     except nicontrol.NIException as exception:
                         print(exception)
@@ -166,24 +161,26 @@ class NidaqModule(hardwareModule.HardwareModule):
             # Setup analog waveforms.
             if (len(self.analog_waveforms) > 0):
 
-                # Sort by board, channel.
-                analog_data = sorted(self.analog_waveforms, key = lambda x: (x[0], x[1]))
+                # Sort by source.
+                analog_data = sorted(self.analog_waveforms, key = lambda x: x[0])
 
                 # Set waveforms.
                 waveforms = []
                 for i in range(len(analog_data)):
-                    waveforms.append(analog_data[i][2])
+                    waveforms.append(analog_data[i][1])
 
                 def startAoTask():
                 
                     try:
                         # Create channels.
-                        self.ao_task = nicontrol.AnalogWaveformOutput(analog_data[0][0], analog_data[0][1])
+                        self.ao_task = nicontrol.AnalogWaveformOutput(source = analog_data[0][0])
                         for i in range(len(analog_data) - 1):
-                            self.ao_task.addChannel(analog_data[i+1][0], analog_data[i+1][1])
+                            self.ao_task.addChannel(source = analog_data[i+1][0])
 
                         # Add waveforms
-                        self.ao_task.setWaveforms(waveforms, frequency, clock = wv_clock)
+                        self.ao_task.setWaveforms(waveforms = waveforms,
+                                                  sample_rate = frequency,
+                                                  clock = wv_clock)
 
                         # Start task.
                         self.ao_task.startTask()
@@ -208,23 +205,25 @@ class NidaqModule(hardwareModule.HardwareModule):
         if (len(self.digital_waveforms) > 0):
 
             # Sort by board, channel.
-            digital_data = sorted(self.digital_waveforms, key = lambda x: (x[0], x[1]))
+            digital_data = sorted(self.digital_waveforms, key = lambda x: x[0])
 
             # Set waveforms.
             waveforms = []
             for i in range(len(digital_data)):
-                waveforms += digital_data[i][2]
+                waveforms += digital_data[i][1]
 
             def startDoTask():
 
                 try:
                     # Create channels.
-                    self.do_task = nicontrol.DigitalWaveformOutput(digital_data[0][0], digital_data[0][1])
+                    self.do_task = nicontrol.DigitalWaveformOutput(source = digital_data[0][0])
                     for i in range(len(digital_data) - 1):
-                        self.do_task.addChannel(digital_data[i+1][0], digital_data[i+1][1])
+                        self.do_task.addChannel(source = digital_data[i+1][0])
 
                     # Add waveform
-                    self.do_task.setWaveforms(waveforms, frequency, clock = wv_clock)
+                    self.do_task.setWaveforms(waveforms = waveforms,
+                                              sample_rate = frequency,
+                                              clock = wv_clock)
 
                     # Start task.
                     self.do_task.startTask()
