@@ -7,7 +7,7 @@ Hazen 04/17
 
 import storm_control.hal4000.halLib.halMessage as halMessage
 
-import storm_control.sc_hardware.baseClasses.hardwareModule as hardwareModule
+import storm_control.sc_hardware.baseClasses.daqModule as daqModule
 import storm_control.sc_hardware.nationalInstruments.nicontrol as nicontrol
 
 import storm_control.sc_library.hdebug as hdebug
@@ -18,7 +18,7 @@ class NidaqModuleException(halExceptions.HardwareException):
     pass
 
 
-class NidaqFunctionality(hardwareModule.HardwareFunctionality):
+class NidaqFunctionality(daqModule.DaqFunctionality):
 
     def __init__(self, used_during_filming = True, **kwds):
         super().__init__(**kwds)
@@ -63,7 +63,7 @@ class DOTaskFunctionality(NidaqFunctionality):
             self.createTask()
         
 
-class NidaqModule(hardwareModule.HardwareModule):
+class NidaqModule(daqModule.DaqModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
