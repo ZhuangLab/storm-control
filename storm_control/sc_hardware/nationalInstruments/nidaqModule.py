@@ -18,7 +18,7 @@ class NidaqModuleException(halExceptions.HardwareException):
     pass
 
 
-class NidaqFunctionality(hardwareModule.HardwareModule):
+class NidaqFunctionality(hardwareModule.HardwareFunctionality):
 
     def __init__(self, used_during_filming = True, **kwds):
         self.source = None
@@ -246,6 +246,7 @@ class NidaqModule(hardwareModule.HardwareModule):
             
     def getFunctionality(self, message):
         daq_fn_name = message.getData()["name"]
+        print(">gt", daq_fn_name)
         if daq_fn_name in self.daq_fns:
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"functionality" : self.daq_fns[daq_fn_name]}))

@@ -99,22 +99,11 @@ class IlluminationView(halDialog.HalDialog):
             self.channels_by_name[a_instance.getName()] = a_instance
             layout.addWidget(a_instance.channel_ui)
 
-        # Send requests for functionalities that the channels need.
-        for channel in self.channels:
-            for fn_name in channel.getFunctionalityNames():
-                self.guiMessage.emit(source = None,
-                                     m_type = "get functionality",
-                                     data = {"name" : fn_name,
-                                             "extra data" : channel.getName()})
-
         self.newParameters(self.parameters)
 
     def cleanUp(self, qt_settings):
         for channel in self.channels:
             channel.cleanup()
-
-        for name, instance in self.hardware_modules.items():
-            instance.cleanup()
 
         super().cleanUp(qt_settings)
 
@@ -129,7 +118,16 @@ class IlluminationView(halDialog.HalDialog):
         for channel in self.channels:
             powers.append(channel.getAmplitude())
         return powers
-    
+
+    def getFunctionalities(self):
+        # Send requests for functionalities that the channels need.
+        for channel in self.channels:
+            for fn_name in channel.getFunctionalityNames():
+                self.guiMessage.emit(halMessage.HalMessage(source = None,
+                                                           m_type = "get functionality",
+                                                           data = {"name" : fn_name,
+                                                                   "extra data" : channel.getName()}))
+
     def getParameters(self):
         return self.parameters
 
@@ -280,10 +278,10 @@ class Illumination(halModule.HalModule):
         self.newMessage.emit(message)
                 
     def handleResponse(self, message, response):
-        if message.isType("get configuration"):
+        if message.isType("get functionality"):
             self.view.setFunctionality(message.getData()["extra data"],
                                        message.getData()["name"],
-                                       message.getResponse()["functionality"])
+                                       response.getData()["functionality"])
 
     def processMessage(self, message):
 
@@ -300,6 +298,8 @@ class Illumination(halModule.HalModule):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "illumination channels",
                                                        data = {"names" : self.view.getChannelNames()}))
+
+            self.view.getFunctionalities()
 
         elif message.isType("new parameters"):
             p = message.getData()["parameters"]

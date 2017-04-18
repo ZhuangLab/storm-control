@@ -76,7 +76,7 @@ class Channel(QtCore.QObject):
             
             self.amplitude_range = float(self.max_amplitude - self.min_amplitude)
             self.channel_ui = illuminationChannelUI.ChannelUIAdjustable(name = self.name,
-                                                                        color = configuration.get("color")
+                                                                        color = configuration.get("color"),
                                                                         minimum = self.min_amplitude,
                                                                         maximum = self.max_amplitude,
                                                                         parent = self.parent())
@@ -85,7 +85,7 @@ class Channel(QtCore.QObject):
         # Otherwise it is a basic channel with on only a on/off radio button.
         else:
             self.channel_ui = illuminationChannelUI.ChannelUI(name = self.name,
-                                                              color = configuration.get("color")
+                                                              color = configuration.get("color"),
                                                               parent = self.parent())
 
         self.channel_ui.disableChannel()
@@ -163,7 +163,7 @@ class Channel(QtCore.QObject):
         self.parameters.get("default_power")[self.channel_id] = power
         self.channel_ui.updatePowerText(power_string)
 
-        if self.amplitude_modulation is not None
+        if self.amplitude_modulation is not None:
             self.amplitude_modulation.output(new_power)
 
         if (self.channel_ui.isOn()):

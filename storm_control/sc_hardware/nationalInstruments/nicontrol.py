@@ -298,15 +298,15 @@ class DigitalOutput(NIDAQTask):
         else:
             data = numpy.array([0], dtype = numpy.uint8)
 
-        c_written = ctypes.c_int32
+        c_written = ctypes.c_int32(0)
         with getLock():
-            self.DigitalLines(1,
-                              1,
-                              timeout,
-                              PyDAQmx.DAQmx_Val_GroupByChannel,
-                              data,
-                              ctypes.byref(c_written),
-                              None)
+            self.WriteDigitalLines(1,
+                                   1,
+                                   timeout,
+                                   PyDAQmx.DAQmx_Val_GroupByChannel,
+                                   data,
+                                   ctypes.byref(c_written),
+                                   None)
         if (c_written.value != 1):
             raise NIException("Digital output failed")
 
