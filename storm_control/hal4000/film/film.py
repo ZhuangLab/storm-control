@@ -228,8 +228,8 @@ class FilmBox(QtWidgets.QGroupBox):
         self.ui.directoryText.setText("  " + new_directory[-30:])
         self.updateFilenameLabel()
 
-    def setShutters(self, new_shutters):
-        self.ui.shuttersText.setText("  " + new_shutters)
+    def setShutters(self, shutters_filename):
+        self.ui.shuttersText.setText("  " + shutters_filename[-30:])
 
     def soundBell(self):
         if not self.parameters.get("want_bell"):
@@ -492,6 +492,9 @@ class Film(halModule.HalModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"new parameters" : self.view.getParameters()}))
 
+        elif message.isType("new shutters file"):
+            self.view.setShutters(message.getData()["filename"])
+            
         elif message.isType("pixel size"):
 
             # We need to keep track of the current value so that

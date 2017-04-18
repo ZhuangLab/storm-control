@@ -206,7 +206,7 @@ class AnalogWaveformOutput(NIDAQTask):
             rising = PyDAQmx.DAQmx_Val_Falling
         
         with getLock():
-            self.CfgSampClkTiming(clock_source,
+            self.CfgSampClkTiming(clock,
                                   sample_rate,
                                   rising,
                                   sample_mode,
@@ -365,7 +365,7 @@ class DigitalWaveformOutput(NIDAQTask):
                               "",
                               PyDAQmx.DAQmx_Val_ChanPerLine)
             
-    def setWaveform(self, waveforms = None, sample_rate = None, clock = None, finite = True, rising = True):
+    def setWaveforms(self, waveforms = None, sample_rate = None, clock = None, finite = True, rising = True):
         """
         The output waveforms for all the analog channels are expected
         to be a list of equal length numpy arrays of type numpy.uint8.
@@ -390,7 +390,7 @@ class DigitalWaveformOutput(NIDAQTask):
             rising = PyDAQmx.DAQmx_Val_Falling
         
         with getLock():
-            self.CfgSampClkTiming(clock_source,
+            self.CfgSampClkTiming(clock,
                                   sample_rate,
                                   rising,
                                   sample_mode,

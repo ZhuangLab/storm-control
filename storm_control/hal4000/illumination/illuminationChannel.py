@@ -9,7 +9,7 @@ import numpy
 
 from PyQt5 import QtCore
 
-import storm_control.sc_hardware.baseClasses.hardwareModule as hardwareModule
+import storm_control.sc_hardware.baseClasses.daqModule as daqModule
 import storm_control.hal4000.illumination.illuminationChannelUI as illuminationChannelUI
 
 
@@ -101,6 +101,35 @@ class Channel(QtCore.QObject):
         power = self.channel_ui.getAmplitude()
         return "{0:.4f}".format((power - self.min_amplitude)/self.amplitude_range)
 
+    def getDaqWaveforms(self, waveform, oversampling):
+        """
+        Return the waveform as a DaqWaveform objects. 
+        """
+        if self.bad_module:
+            return []
+
+        daq_waveforms = []
+
+        # Scale analog waveform.
+        if self.analog_modulation is not None:
+            temp = waveform * (self.max_voltage - self.min_voltage) - self.min_voltage
+            temp = numpy.ascontiguousarray(temp, dtype = numpy.float64)
+            daq_waveforms.append(daqModule.DaqWaveform(source = self.analog_modulation.getSource(),
+                                                       oversampling = oversampling,
+                                                       waveform = temp))
+
+        # Convert waveform to digital.
+        if self.digital_modulation is not None:
+            temp = numpy.round(numpy.copy(waveform)).astype(numpy.uint8)
+            temp[(temp != 0)] = 1
+            temp = numpy.ascontiguousarray(temp, dtype = numpy.uint8)
+            daq_waveforms.append(daqModule.DaqWaveform(is_analog = False,
+                                                       source = self.digital_modulation.getSource(),
+                                                       oversampling = oversampling,
+                                                       waveform = temp))
+
+        return daq_waveforms
+    
     def getFunctionalityNames(self):
         hw_fn_names = []
         for name in self.functionality_names:
@@ -188,15 +217,6 @@ class Channel(QtCore.QObject):
         # Update buttons.
         self.channel_ui.setupButtons(parameters.get("power_buttons")[self.channel_id])
 
-    def newShutters(self, waveform):
-        """
-        Return the waveform properly scaled for the hardware.
-        """
-        if self.analog_modulation:
-            return self.analog_modulation.waveformToVoltage(self.channel_id, waveform)
-        else:
-            return waveform
-
     def remoteIncPower(self, power_inc):
         """
         Handles power increment requests that come from outside of the illumination UI.
@@ -210,7 +230,7 @@ class Channel(QtCore.QObject):
         This is "bounced" off the UI slider, for range checking.
         """
         self.channel_ui.remoteSetPower(int(round(new_power * self.amplitude_range + self.min_amplitude)))
-
+                  
     def setFunctionality(self, fn_name, functionality):
         
         # This both adds the functionality and checks whether we have all
@@ -221,7 +241,7 @@ class Channel(QtCore.QObject):
             if fn is not None:
                 if (fn.get("hw_fn_name") == fn_name):
                     setattr(self, name, functionality)
-                if not isinstance(getattr(self, name), hardwareModule.HardwareFunctionality):
+                if not isinstance(getattr(self, name), daqModule.DaqFunctionality):
                     all_good = False
 
         if all_good:
@@ -230,11 +250,11 @@ class Channel(QtCore.QObject):
             self.channel_ui.onOffChange.connect(self.handleOnOffChange)
             self.channel_ui.powerChange.connect(self.handleSetPower)
         
-    def setupFilm(self, waveform):
+    def setUsedForFilm(self, waveform):
         """
-        Called before of filming to get the channel setup.
+        Figure out whether or not this channel is used during filming based
+        on the waveform.
         """
-        # Figure out if this channel is used for filming.
         self.used_for_film = False
         if (numpy.count_nonzero(waveform) > 0):
             self.used_for_film = True
@@ -268,6 +288,8 @@ class Channel(QtCore.QObject):
 
                 self.channel_ui.startFilm()
             else:
+                # Turn off unused channels.
+                self.channel_ui.setOnOff(False)
                 self.channel_ui.disableChannel()
                 self.filming_disabled = True
                 
@@ -287,37 +309,8 @@ class Channel(QtCore.QObject):
 
             # This should restore the pre-film state (open/closed).
             self.channel_ui.onOffChange.connect(self.handleOnOffChange)
-            self.channel_ui.setOnOff(self.was_on)
-
-
-#    def getChannelId(self):
-#        return self.channel_id
-#
-#    def getHeight(self):
-#        return self.channel_ui.height()
-#
-#    def getWidth(self):
-#        return self.channel_ui.width()
-#
-#    def getX(self):
-#        return self.channel_ui.x()
-
             
-#    def setHeight(self, height):
-#        self.channel_ui.resize(self.channel_ui.width(), height)
-
-#    def setPosition(self, x, y):
-#        self.channel_ui.move(x, y)
-#        return self.channel_ui.width()
-
-#        # Add analog waveform data.
-#        if self.analog_modulation:
-#            self.analog_modulation.analogAddChannel(self.channel_id, waveform)
-#
-#        # Add digital waveform data.
-#        if self.digital_modulation:
-#            self.digital_modulation.digitalAddChannel(self.channel_id, waveform)
-
+        self.channel_ui.setOnOff(self.was_on)
 
 #
 # The MIT License

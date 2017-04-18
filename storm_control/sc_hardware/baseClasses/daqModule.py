@@ -35,13 +35,26 @@ class DaqWaveform(object):
         
     def getWaveform(self):
         return self.waveform
+
+    def getWaveformLength(self):
+        return self.waveform.size
     
     def isAnalog(self):
         return self.is_analog
 
     
 class DaqFunctionality(hardwareModule.HardwareFunctionality):
-    pass
+
+    def __init__(self, used_during_filming = True, **kwds):
+        super().__init__(**kwds)
+        self.source = None
+        self.used_during_filming = used_during_filming
+
+    def getSource(self):
+        return self.source
+
+    def getUsedDuringFilming(self):
+        return self.used_during_filming    
 
 
 class DaqModule(hardwareModule.HardwareModule):
@@ -49,9 +62,70 @@ class DaqModule(hardwareModule.HardwareModule):
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
+        # These are the waveforms to output during a film.
+        self.analog_waveforms = []
+        self.digital_waveforms = []
+        
+        self.oversampling = 0
+        self.waveform_len = 0
+
         # The message for passing waveforms to a Daq module.
-        halMessage.addMessage("daq waveform",
-                              validator = {"data" : {"waveform" : [True, DaqWaveform]},
+        halMessage.addMessage("daq waveforms",
+                              validator = {"data" : {"waveforms" : [True, list]},
                                            "resp" : None})
 
-        
+    def configure1(self, message):
+        pass
+
+    def daqWaveforms(self, message):
+        waveforms = message.getData()["waveforms"]
+        for waveform in waveforms:
+            assert isinstance(waveform, DaqWaveform)
+
+            # Check that all the waveforms are the same
+            # length with the same oversampling.
+            if (self.oversampling == 0):
+                self.oversampling = waveform.getOversampling()
+                self.waveform_len = waveform.getWaveformLength()
+            else:
+                assert (self.oversampling == waveform.getOversampling())
+                assert (self.waveform_len == waveform.getWaveformLength())
+                
+            if waveform.isAnalog():
+                self.analog_waveforms.append(waveform)
+            else:
+                self.digital_waveforms.append(waveform)
+
+    def filmTiming(self, message):
+        pass
+
+    def getFunctionality(self, message):
+        pass
+    
+    def processMessage(self, message):
+
+        if message.isType("configure1"):
+            self.configure1(message)
+
+        elif message.isType("daq waveforms"):
+            self.daqWaveforms(message)
+
+        elif message.isType("get functionality"):
+            self.getFunctionality(message)
+            
+        elif message.isType("film timing"):
+            self.filmTiming(message)
+            
+        elif message.isType("start film"):
+            self.startFilm(message)
+
+        elif message.isType("stop film"):
+            self.stopFilm(message)
+
+    def startFilm(self, message):
+        pass
+
+    def stopFilm(self, message):
+        self.oversampling = 0
+        self.analog_waveforms = []
+        self.digital_waveforms = []

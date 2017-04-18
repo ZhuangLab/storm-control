@@ -45,7 +45,7 @@ class IlluminationView(halDialog.HalDialog):
         self.parameters = params.StormXMLObject()
         self.running_shutters = False
         self.shutters_info = False
-        self.waveforms = None
+        self.waveforms = []
         self.xml_directory = os.path.dirname(os.path.dirname(__file__))
 
         # UI setup.
@@ -98,8 +98,6 @@ class IlluminationView(halDialog.HalDialog):
             self.channels.append(a_instance)
             self.channels_by_name[a_instance.getName()] = a_instance
             layout.addWidget(a_instance.channel_ui)
-
-        self.newParameters(self.parameters)
 
     def cleanUp(self, qt_settings):
         for channel in self.channels:
@@ -160,7 +158,10 @@ class IlluminationView(halDialog.HalDialog):
 
         self.move(current_position)
 
-        self.newShutters(self.parameters.get("shutters"))
+        # Do it by sending a message so that film.film also updates.
+        self.guiMessage.emit(halMessage.HalMessage(source = None,
+                                                   m_type = "new shutters file",
+                                                   data = {"filename" : self.parameters.get("shutters")}))
 
     def newShutters(self, shutters_filename):
         """
@@ -185,10 +186,16 @@ class IlluminationView(halDialog.HalDialog):
         self.parameters.set("shutters", shutters_filename)
                             
         # Parse XML to get shutter information, waveforms, etc.
-        [self.shutters_info, self.waveforms, self.oversampling] = xmlParser.parseShuttersXML(len(self.channels),
-                                                                                             filename_to_parse)
+        [self.shutters_info, waveforms, oversampling] = xmlParser.parseShuttersXML(len(self.channels),
+                                                                                   filename_to_parse)
+
+        self.waveforms = []
         for i, channel in enumerate(self.channels):
-            self.waveforms[i] = channel.newShutters(self.waveforms[i])
+            # Channels determine whether or not they are used for filming based on the waveform.
+            channel.setUsedForFilm(waveforms[i])
+            
+            # Channels create waveform objects (or not) based on the waveform.
+            self.waveforms.extend(channel.getDaqWaveforms(waveforms[i], oversampling))
 
     def remoteIncPower(self, channel, power_inc):
         if isinstance(channel, str):
@@ -212,14 +219,16 @@ class IlluminationView(halDialog.HalDialog):
         if run_shutters:
             self.running_shutters = True
 
-            # Setup channels.
-            for i, channel in enumerate(self.channels):
-                channel.setupFilm(self.waveforms[i])
-
             # Start channels.
             for channel in self.channels:
                 channel.startFilm()
 
+            # Send waveforms to the daq.
+            if (len(self.waveforms) > 0):
+                self.guiMessage.emit(halMessage.HalMessage(source = None,
+                                                           m_type = "daq waveforms",
+                                                           data = {"waveforms" : self.waveforms}))
+            
     def stopFilm(self):
         if self.running_shutters:
 
@@ -310,6 +319,9 @@ class Illumination(halModule.HalModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"new parameters" : self.view.getParameters()}))
 
+        elif message.isType("new shutters file"):
+            self.view.newShutters(message.getData()["filename"])
+            
         elif message.isType("remote inc power"):
             self.view.remoteIncPower(message.getData()["channel"],
                                      message.getData()["power"])
@@ -322,6 +334,9 @@ class Illumination(halModule.HalModule):
             self.view.show()
 
         elif message.isType("start"):
+            # This is here because we need to have gotten the hardware functionalities
+            # in order to correctly handle parameter (and shutter) initialization.
+            self.view.newParameters(self.view.getParameters())
             if message.getData()["show_gui"]:
                 self.view.showIfVisible()
 

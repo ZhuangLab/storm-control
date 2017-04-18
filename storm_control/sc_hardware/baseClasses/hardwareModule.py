@@ -32,36 +32,3 @@ class HardwareModule(halModule.HalModule):
                               validator = {"data" : {"name" : [True, str],
                                                      "extra data" : [False, str]},
                                            "resp" : {"functionality" : [True, HardwareFunctionality]}})
-        
-    def configure1(self, message):
-        pass
-
-    def filmTiming(self, message):
-        pass
-
-    def getFunctionality(self, message):
-        pass
-    
-    def processMessage(self, message):
-
-        if message.isType("configure1"):
-            self.configure1(message)
-
-        elif message.isType("get functionality"):
-            self.getFunctionality(message)
-            
-        elif message.isType("film timing"):
-            self.filmTiming(message)
-            
-        elif message.isType("start film"):
-            self.startFilm(message)
-
-        elif message.isType("stop film"):
-            self.stopFilm(message)
-
-    def startFilm(self, message):
-        pass
-
-    def stopFilm(self, message):
-        pass
-    

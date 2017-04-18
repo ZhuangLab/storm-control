@@ -1,30 +1,25 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <repeat>
-  <frames>6</frames>
+  <frames>5</frames>
+  <event>
+    <channel>1</channel>
+    <power>1.0</power>
+    <on>1.0</on>
+    <off>2.0</off>
+    <color>255,0,0</color>
+  </event>
   <event>
     <channel>2</channel>
     <power>1.0</power>
-    <on>0.0</on>
-    <off>0.1</off>
-  </event>
-  <event>
-    <channel>0</channel>
-    <power>1.0</power>
-    <on>0.0</on>
+    <on>2.0</on>
     <off>3.0</off>
     <color>0,255,0</color>
   </event>
   <event>
-    <channel>6</channel>
+    <channel>3</channel>
     <power>1.0</power>
     <on>3.0</on>
-    <off>3.02</off>
-  </event>
-  <event>
-    <channel>0</channel>
-    <power>1.0</power>
-    <on>3.0</on>
-    <off>6.0</off>
+    <off>4.0</off>
     <color>0,0,255</color>
   </event>
 </repeat>
