@@ -285,7 +285,7 @@ class Illumination(halModule.HalModule):
                                        message.getData()["name"],
                                        message.getResponse()["functionality"])
 
-    def processL1Message(self, message):
+    def processMessage(self, message):
 
         if message.isType("configure1"):
             self.newMessage.emit(halMessage.HalMessage(source = self,
