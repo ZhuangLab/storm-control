@@ -296,6 +296,7 @@ class Film(halModule.HalModule):
         self.number_frames = 0
         self.pixel_size = 1.0
         self.timing_functionality = None
+        self.wait_for = []
         self.writers = None
         self.writers_stopped_timer = QtCore.QTimer(self)
 
@@ -333,6 +334,11 @@ class Film(halModule.HalModule):
                               validator = {"data" : {"live mode" : [True, bool]},
                                            "resp" : None})
 
+        # This comes from other modules that added a "wait for" request
+        # to the 'start film' message.
+        halMessage.addMessage("ready to film",
+                              validator = {"data" : None, "resp" : None})
+        
         # Start a camera.
         halMessage.addMessage("start camera",
                               validator = {"data" : {"camera" : [True, str]},
@@ -341,7 +347,7 @@ class Film(halModule.HalModule):
         # Start filming.
         halMessage.addMessage("start film",
                               validator = {"data" : {"film settings" : [True, filmSettings.FilmSettings]},
-                                           "resp" : None})
+                                           "resp" : {"wait for" : [False, str]}})
 
         # Request to start filming, either from a record button or via TCP.
         halMessage.addMessage("start film request",
@@ -394,6 +400,17 @@ class Film(halModule.HalModule):
             assert (len(message.getResponses()) == 1)
             for response in message.getResponses():
                 self.camera_functionalities.append(response.getData()["functionality"])
+
+        # Modules that need additional time to get ready to film should add
+        # their name as a "wait for" response to the start film message.
+        elif message.isType("start film"):
+
+            # No waits requested, so start now.
+            if (len(message.getResponses()) == 0):
+                self.startCameras()
+            else:
+                for response in message.getResponses():
+                    self.wait_for.append(response.getData()["wait for"])
         
         # Modules are expected to add their current parameters as responses
         # to the 'stop film' message. We save them in an xml file here.
@@ -447,6 +464,7 @@ class Film(halModule.HalModule):
                                                        data = {"parameters" : self.view.getParameters()}))
 
         elif message.isType("current feeds"):
+            self.camera_functionalities = []
             for name in message.getData()["feed names"]:
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "get camera functionality",
@@ -466,7 +484,7 @@ class Film(halModule.HalModule):
 
         elif message.isType("new parameters"):
             if self.locked_out:
-                raise halException.HalException("'new parameters' received while locked out.")
+                raise halExceptions.HalException("'new parameters' received while locked out.")
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"old parameters" : self.view.getParameters().copy()}))
             # Update parameters.
@@ -480,17 +498,24 @@ class Film(halModule.HalModule):
             # we can save this in the tif images / stacks.
             self.pixel_size = message.getData()["pixel size"]
 
+        elif message.isType("ready to film"):
+            self.wait_for.remove(message.getSourceName())
+
+            # All modules are ready, so start the cameras.
+            if (len(self.wait_for) == 0):
+                self.startCameras()
+
         elif message.isType("start"):
             if self.view.amInLiveMode():
                 self.startCameras()
 
         elif message.isType("start camera"):
             if self.locked_out and (message.getSource() != self):
-                raise halException.HalException("'start camera' received while locked out.")
+                raise halExceptions.HalException("'start camera' received while locked out.")
 
         elif message.isType("start film request"):
             if self.locked_out:
-                raise halException.HalException("'start film request' received while locked out.")
+                raise halExceptions.HalException("'start film request' received while locked out.")
             self.setLockout(True)
             film_settings = self.view.getFilmSettings(message.getData()["request"])
             if film_settings is not None:
@@ -509,10 +534,6 @@ class Film(halModule.HalModule):
             if (self.film_state != "run"):
                 raise halException.HalException("Stop film request received while not filming.")
             self.stopFilmingLevel1()
-
-        elif message.isType("timing ready"):
-            # This message means that we can start the cameras.
-            self.startCameras()
 
     def setLockout(self, state):
         self.locked_out = state

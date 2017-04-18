@@ -81,24 +81,21 @@ class Timing(halModule.HalModule):
 
         # The timing to use for the film.
         halMessage.addMessage("film timing",
-                              validator = {"data" : {"camera" : [True, str],
-                                                     "film settings" : [True, filmSettings.FilmSettings],
-                                                     "functionality" : [True, TimingFunctionality]},
+                              validator = {"data" : {"functionality" : [True, TimingFunctionality]},
                                            "resp" : None})
-
-        # We send this once the other modules have had a change to handle
-        # the 'film timing' message. When film.film gets this it knows
-        # that everything is configured and it is okay to start the cameras.
-        halMessage.addMessage("timing ready",
-                              validator = {"data" : None, "resp" : None})
 
     def handleResponse(self, message, response):
         if message.isType("get camera functionality"):
             self.timing_functionality.connectCameraFunctionality(response.getData()["functionality"])
 
-        elif message.isType("film timing"):
+            # Broadcast timing information for the film.
             self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "timing ready"))
+                                                       m_type = "film timing",
+                                                       data = {"functionality" : self.timing_functionality}))
+            
+            # Tell film.film that this module is ready to film.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "ready to film"))
         
     def processMessage(self, message):
 
@@ -136,16 +133,13 @@ class Timing(halModule.HalModule):
                                                               data = {"new parameters" : self.parameters}))
 
         elif message.isType("start film"):
+            # Tell film to wait for a 'ready to film' message from us.
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"wait for" : self.module_name}))
             self.timing_functionality = TimingFunctionality(time_base = self.parameters.get("time_base"))
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "get camera functionality",
                                                        data = {"camera" : self.timing_functionality.getTimeBase()}))
-
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "film timing",
-                                                       data = {"camera" : self.timing_functionality.getTimeBase(),
-                                                               "film settings" : message.getData()["film settings"],
-                                                               "functionality" : self.timing_functionality}))
             
         elif message.isType("stop film"):
             self.timing_functionality.disconnectCameraFunctionality()
