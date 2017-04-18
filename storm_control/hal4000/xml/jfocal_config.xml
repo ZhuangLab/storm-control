@@ -196,30 +196,43 @@
     </daq>
 
     <!-- Illumination (lasers, shutters, etc) control GUI. -->
-    <!--
     <illumination>
       <class_name type="string">Illumination</class_name>
       <module_name type="string">storm_control.hal4000.illumination.illumination</module_name>
       <configuration>
-	<ch754>
+
+	<!-- Note: The name of the channel is the gui_name.
+	     XML tags cannot start with numbers. -->
+	<ch1>
 	  <gui_name type="string">754</gui_name>
-	  <digital_modulation type="string">daq.ilm754.dotask</digital_modulation>
-	</ch754>
-	<ch656>
+	  <color type="string">200,0,0</color>
+	  <digital_modulation>
+	    <hw_fn_name type="string">daq.ilm754.dotask</hw_fn_name>
+	  </digital_modulation>
+	</ch1>
+	<ch2>
 	  <gui_name type="string">656</gui_name>
-	  <digital_modulation type="string">daq.ilm656.dotask</digital_modulation>
-	</ch656>
-	<ch561>
+	  <color type="string">255,0,0</color>
+	  <digital_modulation>
+	    <hw_fn_name type="string">daq.ilm656.dotask</hw_fn_name>
+	  </digital_modulation>
+	</ch2>
+	<ch3>
 	  <gui_name type="string">561</gui_name>
-	  <digital_modulation type="string">daq.ilm561.dotask</digital_modulation>
-	</ch561>
-	<ch488>
+	  <color type="string">255,255,0</color>
+	  <digital_modulation>
+	    <hw_fn_name type="string">daq.ilm561.dotask</hw_fn_name>
+	  </digital_modulation>
+	</ch3>
+	<ch4>
 	  <gui_name type="string">488</gui_name>
-	  <digital_modulation type="string">daq.ilm488.dotask</digital_modulation>
-	</ch488>
+	  <color type="string">0,255,255</color>
+	  <digital_modulation>
+	    <hw_fn_name type="string">daq.ilm488.dotask</hw_fn_name>
+	  </digital_modulation>
+	</ch4>
       </configuration>
     </illumination>
-    -->
     
     <!-- Bluetooth communication -->
     <!--

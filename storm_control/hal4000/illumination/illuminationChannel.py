@@ -9,6 +9,7 @@ import numpy
 
 from PyQt5 import QtCore
 
+import storm_control.sc_hardware.baseClasses.hardwareModule as hardwareModule
 import storm_control.hal4000.illumination.illuminationChannelUI as illuminationChannelUI
 
 
@@ -17,7 +18,9 @@ class Channel(QtCore.QObject):
     This class is responsible for orchestrating the behaviour of a
     a single channel.
     """
-    def __init__(self, channel_id = 0, channel = None, hardware_modules = None, **kwds):
+    functionality_names = ["amplitude_modulation", "analog_modulation", "digital_modulation", "mechanical_shutter"]
+    
+    def __init__(self, channel_id = 0, configuration = None, **kwds):
         super().__init__(**kwds)
 
         self.amplitude_range = 1.0
@@ -27,47 +30,53 @@ class Channel(QtCore.QObject):
         self.filming = False
         self.filming_disabled = False
         self.max_amplitude = 1.0
+        self.max_voltage = 1.0
         self.min_amplitude = 0.0
-        self.name = channel.description
+        self.min_voltage = 0.0
+        self.name = configuration.get("gui_name")
         self.parameters = False
         self.used_for_film = False
         self.was_on = False
-        self.bad_module = False
+        self.bad_module = True
 
-        # Create variables for communication with the various hardware modules.
-        # This will add the attributes in the list to this class.
-        for name in ["amplitude_modulation", "analog_modulation", "digital_modulation", "mechanical_shutter"]:
+        #
+        # Create variables for communication with the various hardware functionalities.
+        #
+        # This will add the attributes in the list to this class. Initially these
+        # are just the StormXMLObjects describing each functionality that we'll
+        # need. During 'configure1' illumination.illumination will request these
+        # functionalities. If they are returned the attributes are changed to be
+        # the functionalities.
+        #
+        # amplitude_modulation - A device like a filter wheel or AOTF.
+        # analog_modulation - A daq analog out (with hardware timing).
+        # digital_modulation - A daq digital out (with hardware timing).
+        # mechanical_shutter - Usually a daq digital out connected to shutter that
+        #                      backs up an AOTF or filter wheel.
+        #
+        for name in self.functionality_names:
+            if configuration.has(name):
+                setattr(self, name, configuration.get(name))
+            else:
+                setattr(self, name, None)
 
-            h_module = False
+        if self.analog_modulation is not None:
+            self.max_voltage = self.analog_modulation.get("max_voltage")
+            self.min_voltage = self.analog_modulation.get("min_voltage")
 
-            # Test if the XML file has the attribute of interest.
-            if hasattr(channel, name):
-
-                # Get the data for the attribute.
-                a_control = getattr(channel, name)
-
-                # Get the corresponding hardware / control module that will be used for this attribute.
-                h_module = hardware_modules[a_control.uses]
-
-                # Initialize the hardware / control module with the parameters for this channel.
-                h_module.initialize(name, self.channel_id, a_control.parameters)
-
-                # Check if the hardware / control module actual works.
-                if not h_module.getStatus():
-                    self.bad_module = True
-
-            # Add the attribute to the class.
-            setattr(self, name, h_module)
-
+        #
         # Configure the UI.
+        #
         # If we have amplitude modulation then this is an adjustable channel with slider.
-        if self.amplitude_modulation:
-            self.display_normalized = channel.amplitude_modulation.display_normalized
-            self.min_amplitude = self.amplitude_modulation.getMinAmplitude(self.channel_id)
-            self.max_amplitude = self.amplitude_modulation.getMaxAmplitude(self.channel_id)
+        #
+        if self.amplitude_modulation is not None:
+            self.display_normalized = self.amplitude_modulation.get("display_normalized")
+            self.max_amplitude = self.amplitude_modulation.get("max_amplitude")
+            self.min_amplitude = self.amplitude_modulation.get("min_amplitude")
+            
             self.amplitude_range = float(self.max_amplitude - self.min_amplitude)
             self.channel_ui = illuminationChannelUI.ChannelUIAdjustable(name = self.name,
-                                                                        color = channel.color,
+                                                                        color = configuration.get("color")
                                                                         minimum = self.min_amplitude,
                                                                         maximum = self.max_amplitude,
                                                                         parent = self.parent())
@@ -76,14 +85,10 @@ class Channel(QtCore.QObject):
         # Otherwise it is a basic channel with on only a on/off radio button.
         else:
             self.channel_ui = illuminationChannelUI.ChannelUI(name = self.name,
-                                                              color = channel.color,
+                                                              color = configuration.get("color")
                                                               parent = self.parent())
 
-        if self.bad_module:
-            self.channel_ui.disableChannel()
-        else:
-            self.channel_ui.onOffChange.connect(self.handleOnOffChange)
-            self.channel_ui.powerChange.connect(self.handleSetPower)
+        self.channel_ui.disableChannel()
 
     def cleanup(self):
         self.channel_ui.setOnOff(False)
@@ -96,18 +101,14 @@ class Channel(QtCore.QObject):
         power = self.channel_ui.getAmplitude()
         return "{0:.4f}".format((power - self.min_amplitude)/self.amplitude_range)
 
-    def getChannelId(self):
-        return self.channel_id
-
-    def getHeight(self):
-        return self.channel_ui.height()
-
-    def getWidth(self):
-        return self.channel_ui.width()
-
-    def getX(self):
-        return self.channel_ui.x()
-
+    def getFunctionalityNames(self):
+        hw_fn_names = []
+        for name in self.functionality_names:
+            fn = getattr(self, name)
+            if fn is not None:
+                hw_fn_names.append(fn.get("hw_fn_name"))
+        return hw_fn_names
+        
     def getName(self):
         return self.name
 
@@ -123,31 +124,24 @@ class Channel(QtCore.QObject):
             return
 
         if on:
-            if self.amplitude_modulation:
-                self.amplitude_modulation.amplitudeOn(self.channel_id, 
-                                                      self.channel_ui.getAmplitude())
+            if self.amplitude_modulation is not None:
+                self.amplitude_modulation.output(self.channel_ui.getAmplitude())
         
-            if self.analog_modulation:
-                self.analog_modulation.analogOn(self.channel_id)
-
-            if self.digital_modulation:
-                self.digital_modulation.digitalOn(self.channel_id)
-
-            if self.mechanical_shutter:
-                self.mechanical_shutter.shutterOn(self.channel_id)
+            if self.analog_modulation is not None:
+                self.analog_modulation.output(self.max_voltage)
 
         else:
-            if self.amplitude_modulation:
-                self.amplitude_modulation.amplitudeOff(self.channel_id)
+            if self.amplitude_modulation is not None:
+                self.amplitude_modulation.output(self.min_amplitude)
         
-            if self.analog_modulation:
-                self.analog_modulation.analogOff(self.channel_id)
+            if self.analog_modulation is not None:
+                self.analog_modulation.output(self.min_voltage)
                 
-            if self.digital_modulation:
-                self.digital_modulation.digitalOff(self.channel_id)
+        if self.digital_modulation is not None:
+            self.digital_modulation.output(on)
 
-            if self.mechanical_shutter:
-                self.mechanical_shutter.shutterOff(self.channel_id)
+        if self.mechanical_shutter is not None:
+            self.mechanical_shutter.output(on)
 
         self.parameters.get("on_off_state")[self.channel_id] = on
 
@@ -169,15 +163,15 @@ class Channel(QtCore.QObject):
         self.parameters.get("default_power")[self.channel_id] = power
         self.channel_ui.updatePowerText(power_string)
 
-        if self.amplitude_modulation:
-            self.amplitude_modulation.setAmplitude(self.channel_id, new_power)
+        if self.amplitude_modulation is not None
+            self.amplitude_modulation.output(new_power)
 
         if (self.channel_ui.isOn()):
-            if self.mechanical_shutter:
+            if self.mechanical_shutter is not None:
                 if (new_power == self.min_amplitude):
-                    self.mechanical_shutter.shutterOff(self.channel_id)
+                    self.mechanical_shutter.output(False)
                 else:
-                    self.mechanical_shutter.shutterOn(self.channel_id)
+                    self.mechanical_shutter.output(True)
 
     def newParameters(self, parameters):
         self.parameters = parameters
@@ -217,13 +211,25 @@ class Channel(QtCore.QObject):
         """
         self.channel_ui.remoteSetPower(int(round(new_power * self.amplitude_range + self.min_amplitude)))
 
-    def setHeight(self, height):
-        self.channel_ui.resize(self.channel_ui.width(), height)
+    def setFunctionality(self, fn_name, functionality):
+        
+        # This both adds the functionality and checks whether we have all
+        # the functionalities that we requested.
+        all_good = True
+        for name in self.functionality_names:
+            fn = getattr(self, name)
+            if fn is not None:
+                if (fn.get("hw_fn_name") == fn_name):
+                    setattr(self, name, functionality)
+                if not isinstance(getattr(self, name), hardwareModule.HardwareFunctionality):
+                    all_good = False
 
-    def setPosition(self, x, y):
-        self.channel_ui.move(x, y)
-        return self.channel_ui.width()
-
+        if all_good:
+            self.bad_module = False
+            self.channel_ui.enableChannel()
+            self.channel_ui.onOffChange.connect(self.handleOnOffChange)
+            self.channel_ui.powerChange.connect(self.handleSetPower)
+        
     def setupFilm(self, waveform):
         """
         Called before of filming to get the channel setup.
@@ -233,46 +239,39 @@ class Channel(QtCore.QObject):
         if (numpy.count_nonzero(waveform) > 0):
             self.used_for_film = True
 
-        # Add analog waveform data.
-        if self.analog_modulation:
-            self.analog_modulation.analogAddChannel(self.channel_id, waveform)
-
-        # Add digital waveform data.
-        if self.digital_modulation:
-            self.digital_modulation.digitalAddChannel(self.channel_id, waveform)
-
     def startFilm(self):
         """
         Called at the start of filming.
         """
         if not self.bad_module:
-            if self.channel_ui.isEnabled(): # Enabled only if live view
-                self.was_on = self.channel_ui.isOn() # Record state to restore after movie
+            
+            # Record state to restore after movie
+            self.was_on = self.channel_ui.isOn() 
 
             if self.used_for_film:
-                self.channel_ui.enableChannel() # Turn on channel (if live view turned it off)
+                self.channel_ui.enableChannel()
+
+                #
+                # Check the radio box without actually turning anything on/off
+                # that is not already on/off. Analog and digital modulation are
+                # taken over by the daq so we don't need to do anything with
+                # them. All we need to do is set the power and open the shutter?
+                #
+                self.channel_ui.onOffChange.disconnect(self.handleOnOffChange)
                 self.channel_ui.setOnOff(True)
+                
+                if self.amplitude_modulation is not None:
+                    self.amplitude_modulation.output(self.channel_ui.getAmplitude())
+
+                if self.mechanical_shutter is not None:                    
+                    self.mechanical_shutter.output(True)
+
                 self.channel_ui.startFilm()
-                if self.amplitude_modulation:
-                    self.amplitude_modulation.setAmplitude(self.channel_id, 
-                                                           self.channel_ui.getAmplitude())
             else:
                 self.channel_ui.disableChannel()
                 self.filming_disabled = True
                 
         self.filming = True
-
-#    def startLiveView(self, live_view):
-#        """
-#        Configure illumination for live view.
-#        """
-#        if not self.bad_module and live_view:
-#            # Enable the channel
-#            self.channel_ui.enableChannel()
-#            self.channel_ui.setOnOff(self.was_on)
-#
-#        if not live_view:
-#            self.channel_ui.disableChannel()
     
     def stopFilm(self):
         """
@@ -285,16 +284,40 @@ class Channel(QtCore.QObject):
             self.filming_disabled = False
         else:
             self.channel_ui.stopFilm()
+
+            # This should restore the pre-film state (open/closed).
+            self.channel_ui.onOffChange.connect(self.handleOnOffChange)
             self.channel_ui.setOnOff(self.was_on)
 
-#    def stopLiveView(self, live_view):
-#        """
-#        Cleanup illumination settings at the end of the live view
-#        """
-#        if not self.bad_module and live_view:
-#            # record state of the channel
-#            self.was_on = self.channel_ui.isOn()
-#            self.channel_ui.disableChannel()
+
+#    def getChannelId(self):
+#        return self.channel_id
+#
+#    def getHeight(self):
+#        return self.channel_ui.height()
+#
+#    def getWidth(self):
+#        return self.channel_ui.width()
+#
+#    def getX(self):
+#        return self.channel_ui.x()
+
+            
+#    def setHeight(self, height):
+#        self.channel_ui.resize(self.channel_ui.width(), height)
+
+#    def setPosition(self, x, y):
+#        self.channel_ui.move(x, y)
+#        return self.channel_ui.width()
+
+#        # Add analog waveform data.
+#        if self.analog_modulation:
+#            self.analog_modulation.analogAddChannel(self.channel_id, waveform)
+#
+#        # Add digital waveform data.
+#        if self.digital_modulation:
+#            self.digital_modulation.digitalAddChannel(self.channel_id, waveform)
+
 
 #
 # The MIT License

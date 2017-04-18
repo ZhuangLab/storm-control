@@ -35,15 +35,13 @@ class IlluminationView(halDialog.HalDialog):
     """
     guiMessage = QtCore.pyqtSignal(object)
     
-    def __init__(self, module_name = None, hardware = None, **kwds):
+    def __init__(self, module_name = None, configuration = None, **kwds):
         super().__init__(**kwds)
 
         self.camera1_fps = None
         self.channels = []
         self.channels_by_name = {}
-        self.hardware_modules = {}
         self.module_name = module_name
-        self.oversampling = None
         self.parameters = params.StormXMLObject()
         self.running_shutters = False
         self.shutters_info = False
@@ -54,9 +52,11 @@ class IlluminationView(halDialog.HalDialog):
         self.ui = illuminationUi.Ui_Dialog()
         self.ui.setupUi(self)
 
+        number_channels = len(configuration.getAttrs())
+        
         # Default power setting.
         default_power = []
-        for i in range(len(hardware.channels)):
+        for i in range(number_channels):
             default_power.append(1.0)
         self.parameters.add(illuminationParameters.ParameterDefaultPowers(description = "Power",
                                                                           name = "default_power",
@@ -65,7 +65,7 @@ class IlluminationView(halDialog.HalDialog):
 
         # Default on/off state.
         on_off_state = []
-        for i in range(len(hardware.channels)):
+        for i in range(number_channels):
             on_off_state.append(False)
         self.parameters.add(illuminationParameters.ParameterOnOffStates(description = "On/Off",
                                                                         name = "on_off_state",
@@ -75,7 +75,7 @@ class IlluminationView(halDialog.HalDialog):
 
         # Default buttons.
         buttons = []
-        for i in range(len(hardware.channels)):
+        for i in range(number_channels):
             buttons.append([["Max", 1.0], ["Low", 0.1]])
         self.parameters.add(illuminationParameters.ParameterPowerButtons(description = "Buttons",
                                                                          name = "power_buttons",
@@ -87,29 +87,25 @@ class IlluminationView(halDialog.HalDialog):
                                                            value = "shutters_default.xml",
                                                            use_save_dialog = False))
 
-        # Hardware modules setup.
-        for module in hardware.modules:
-            m_name = module.module_name
-            a_module =  importlib.import_module(m_name)
-            a_class = getattr(a_module, module.class_name)
-            a_instance = a_class(parameters = module.parameters,
-                                 parent = self)
-            if a_instance.isBuffered():
-                a_instance.start(QtCore.QThread.NormalPriority)
-            self.hardware_modules[module.name] = a_instance            
-
         # Illumination channels setup.
         layout = QtWidgets.QHBoxLayout(self.ui.powerControlBox)
         layout.setContentsMargins(1,1,1,1)
         layout.setSpacing(1)
-        for i, channel in enumerate(hardware.channels):
+        for i, cname in enumerate(sorted(configuration.getAttrs())):
             a_instance = illuminationChannel.Channel(channel_id = i,
-                                                     channel = channel,
-                                                     hardware_modules = self.hardware_modules,
+                                                     configuration = configuration.get(cname),
                                                      parent = self.ui.powerControlBox)
             self.channels.append(a_instance)
             self.channels_by_name[a_instance.getName()] = a_instance
             layout.addWidget(a_instance.channel_ui)
+
+        # Send requests for functionalities that the channels need.
+        for channel in self.channels:
+            for fn_name in channel.getFunctionalityNames():
+                self.guiMessage.emit(source = None,
+                                     m_type = "get functionality",
+                                     data = {"name" : fn_name,
+                                             "extra data" : channel.getName()})
 
         self.newParameters(self.parameters)
 
@@ -208,8 +204,8 @@ class IlluminationView(halDialog.HalDialog):
         else:
             self.channels[channel].remoteSetPower(power)
 
-    def setCamera1FPS(self, fps):
-        self.camera1_fps = fps
+    def setFunctionality(self, channel_name, fn_name, functionality):
+        self.channels_by_name[channel_name].setFunctionality(fn_name, functionality)
         
     def setXMLDirectory(self, xml_directory):
         self.xml_directory = xml_directory
@@ -222,22 +218,12 @@ class IlluminationView(halDialog.HalDialog):
             for i, channel in enumerate(self.channels):
                 channel.setupFilm(self.waveforms[i])
 
-            # Start hardware.
-            for name, instance in self.hardware_modules.items():
-                if (instance.getStatus() == True):
-                    instance.startFilm(self.camera1_fps, self.oversampling)
-
             # Start channels.
             for channel in self.channels:
                 channel.startFilm()
 
     def stopFilm(self):
         if self.running_shutters:
-
-            # Stop hardware.
-            for name, instance in self.hardware_modules.items():
-                if (instance.getStatus() == True):
-                    instance.stopFilm()
 
             # Stop channels.
             for channel in self.channels:
@@ -252,15 +238,13 @@ class Illumination(halModule.HalModule):
         super().__init__(**kwds)
         self.power_fp = None
 
-        ilm_params = module_params.get("parameters")
-        ilm_xml_file = os.path.join(os.path.dirname(__file__), ilm_params.get("settings_xml"))
-        channel_config = xmlParser.parseHardwareXML(os.path.join(os.path.dirname(__file__),
-                                                                 ilm_xml_file))
+        configuration = module_params.get("configuration")
 
         self.view = IlluminationView(module_name = self.module_name,
-                                     hardware = channel_config)
+                                     configuration = configuration)
         self.view.halDialogInit(qt_settings,
                                 module_params.get("setup_name") + " illumination control")
+        self.view.guiMessage.connect(self.handleGuiMessage)
 
         # The names of the illumination channels that are available.
         halMessage.addMessage("illumination channels",
@@ -291,13 +275,16 @@ class Illumination(halModule.HalModule):
     def cleanUp(self, qt_settings):
         self.view.cleanUp(qt_settings)
 
+    def handleGuiMessage(self, message):
+        message.source = self
+        self.newMessage.emit(message)
+                
     def handleResponse(self, message, response):
+        if message.isType("get configuration"):
+            self.view.setFunctionality(message.getData()["extra data"],
+                                       message.getData()["name"],
+                                       message.getResponse()["functionality"])
 
-        if message.isType("get camera configuration"):
-            if (response.getData()["camera"] == "camera1"):
-                fps = response.getData()["config"].getParameter("fps")
-                self.view.setCamera1FPS(fps)
-            
     def processL1Message(self, message):
 
         if message.isType("configure1"):
@@ -313,16 +300,6 @@ class Illumination(halModule.HalModule):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "illumination channels",
                                                        data = {"names" : self.view.getChannelNames()}))
-
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "shutters sequence",
-                                                       data = {"sequence" : self.view.getShuttersInfo()}))
-
-            # Query camera1 for timing information.
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "get camera configuration",
-                                                       data = {"display_name" : "NA",
-                                                               "camera" : "camera1"}))
 
         elif message.isType("new parameters"):
             p = message.getData()["parameters"]
@@ -369,18 +346,6 @@ class Illumination(halModule.HalModule):
             p.set("shutters", os.path.abspath(p.get("shutters")))
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : p}))
-
-        elif message.isType("updated parameters"):
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "shutters sequence",
-                                                       data = {"sequence" : self.view.getShuttersInfo()}))
-
-            # Query camera1 for timing information.
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "get camera configuration",
-                                                       data = {"display_name" : "NA",
-                                                               "camera" : "camera1"}))
-            #self.view.updatedParameters()
 
     def processL2Message(self, message):
         if self.power_fp is not None:
