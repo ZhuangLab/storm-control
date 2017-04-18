@@ -70,9 +70,9 @@ class Channel(QtCore.QObject):
         # If we have amplitude modulation then this is an adjustable channel with slider.
         #
         if self.amplitude_modulation is not None:
-            self.display_normalized = self.amplitude_modulation.get("display_normalized")
+            self.display_normalized = self.amplitude_modulation.get("display_normalized", True)
             self.max_amplitude = self.amplitude_modulation.get("max_amplitude")
-            self.min_amplitude = self.amplitude_modulation.get("min_amplitude")
+            self.min_amplitude = self.amplitude_modulation.get("min_amplitude", 0)
             
             self.amplitude_range = float(self.max_amplitude - self.min_amplitude)
             self.channel_ui = illuminationChannelUI.ChannelUIAdjustable(name = self.name,
