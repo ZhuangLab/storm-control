@@ -365,7 +365,7 @@ class DigitalWaveformOutput(NIDAQTask):
                               "",
                               PyDAQmx.DAQmx_Val_ChanPerLine)
             
-    def setWaveforms(self, waveforms = None, sample_rate = None, clock = None, finite = True, rising = True):
+    def setWaveforms(self, waveforms = None, sample_rate = None, clock = None, finite = False, rising = True):
         """
         The output waveforms for all the analog channels are expected
         to be a list of equal length numpy arrays of type numpy.uint8.

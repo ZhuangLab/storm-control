@@ -55,9 +55,7 @@ class Camera(halModule.HalModule):
                                            "resp" : {"functionality" : [True, cameraFunctionality.CameraFunctionality]}})
                                    
     def cleanUp(self, qt_settings):
-        print(">cu 1")
         self.camera_control.cleanUp()
-        print(">cu 2")
         super().cleanUp(qt_settings)
 
     def processMessage(self, message):

@@ -30,6 +30,13 @@ import storm_control.hal4000.halLib.imagewriters as imagewriters
 import storm_control.hal4000.qtdesigner.film_ui as filmUi
 
 
+def truncateFilename(filename):
+    if (len(filename) > 37):
+        return ".." + filename[-35:]
+    else:
+        return filename
+    
+    
 class FilmBox(QtWidgets.QGroupBox):
     """
     The UI.
@@ -225,11 +232,11 @@ class FilmBox(QtWidgets.QGroupBox):
 
     def setDirectory(self, new_directory):
         self.parameters.set("directory", new_directory)
-        self.ui.directoryText.setText("  " + new_directory[-30:])
+        self.ui.directoryText.setText("  " + truncateFilename(new_directory))
         self.updateFilenameLabel()
 
     def setShutters(self, shutters_filename):
-        self.ui.shuttersText.setText("  " + shutters_filename[-30:])
+        self.ui.shuttersText.setText("  " + truncateFilename(shutters_filename))
 
     def soundBell(self):
         if not self.parameters.get("want_bell"):
