@@ -464,10 +464,6 @@ class Feeds(halModule.HalModule):
         halMessage.addMessage("get feed names",
                               validator = {"data" : {"extra data" : [False, str]},
                                            "resp" : {"feed names" : [True, list]}})
-
-        # This message tells the feeds to (re)start.
-        halMessage.addMessage("start feeds",
-                              validator = {"data" : None, "resp" : None})
         
     def broadcastCurrentFeeds(self):
         """
@@ -537,12 +533,9 @@ class Feeds(halModule.HalModule):
             else:
                 self.broadcastCurrentFeeds()
 
-        elif message.isType("start feeds"):
+        elif message.isType("start film"):
             if self.feed_controller is not None:
                 self.feed_controller.resetFeeds()
-
-        elif message.isType("start film"):
-            pass
         
         elif message.isType("stop film"):
             if self.feed_controller is not None:

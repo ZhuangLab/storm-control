@@ -461,9 +461,6 @@ class Film(halModule.HalModule):
             self.timing_functionality.newFrame.connect(self.handleNewFrame)
             self.timing_functionality.stopped.connect(self.stopFilmingLevel1)
             
-            # It also means that we can start the cameras.
-            self.startCameras()
-
         elif message.isType("new directory"):
             self.view.setDirectory(message.getData()["directory"])
 
@@ -512,6 +509,10 @@ class Film(halModule.HalModule):
             if (self.film_state != "run"):
                 raise halException.HalException("Stop film request received while not filming.")
             self.stopFilmingLevel1()
+
+        elif message.isType("timing ready"):
+            # This message means that we can start the cameras.
+            self.startCameras()
 
     def setLockout(self, state):
         self.locked_out = state
@@ -571,11 +572,6 @@ class Film(halModule.HalModule):
                     self.writers.append(imagewriters.createFileWriter(camera, self.film_settings))
         if (len(self.writers) == 0):
             self.view.updateSize(0.0)
-
-        # Start the feeds, this actually just resets them so that they start
-        # at the appropriate initial values.
-        self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "start feeds"))
         
         # Start filming.
         self.newMessage.emit(halMessage.HalMessage(source = self,

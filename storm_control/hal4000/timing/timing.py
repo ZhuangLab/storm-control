@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Provides the (software) time base for a film.
+Provides the time base for a film.
 
 Hazen 04/17
 """
@@ -86,9 +86,19 @@ class Timing(halModule.HalModule):
                                                      "functionality" : [True, TimingFunctionality]},
                                            "resp" : None})
 
+        # We send this once the other modules have had a change to handle
+        # the 'film timing' message. When film.film gets this it knows
+        # that everything is configured and it is okay to start the cameras.
+        halMessage.addMessage("timing ready",
+                              validator = {"data" : None, "resp" : None})
+
     def handleResponse(self, message, response):
         if message.isType("get camera functionality"):
             self.timing_functionality.connectCameraFunctionality(response.getData()["functionality"])
+
+        elif message.isType("film timing"):
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "timing ready"))
         
     def processMessage(self, message):
 
@@ -131,14 +141,6 @@ class Timing(halModule.HalModule):
                                                        m_type = "get camera functionality",
                                                        data = {"camera" : self.timing_functionality.getTimeBase()}))
 
-            #
-            # This could be a race? The self.timing_functionality won't do anything until we get
-            # a response to the 'get camera functionality' request. Hopefully the camera(s) won't
-            # have started by then.
-            #
-            # I think this will be okay because we force a sync before sending 'start camera' and
-            # these messages should both be in the queue ahead of the 'start camera' message.
-            #
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "film timing",
                                                        data = {"camera" : self.timing_functionality.getTimeBase(),

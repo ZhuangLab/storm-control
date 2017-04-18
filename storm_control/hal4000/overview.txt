@@ -57,15 +57,14 @@ Important message sequences:
 
     b. 'stop camera' - One of these is sent to each camera,
        master cameras are stopped first, then slave cameras.
-
-    c. 'start feeds' - The feeds (if any) should prepare to
-       start.
-
-    d. 'start film' - Modules that have special behaviour during
+       
+    c. 'start film' - Modules that have special behaviour during
        filming should prepare to start.
 
-    e. 'film timing' - This message from timing.timing provides
+    d. 'film timing' - This message from timing.timing provides
        the timing information for the film.
+
+    e. 'timing ready' - Timing is now configured.
 
     f. 'start camera' - Again, one of these is sent to each
        camera, slave cameras first then master cameras. This is
@@ -77,6 +76,9 @@ Important message sequences:
     h. 'stop film' - The film is done, modules are expected to
        add a response to this message containing their current
        parameters.
+
+    i. 'film lockout' with data "locked out" = False - Filming
+       is done.
 
 
 Other message details:
