@@ -21,6 +21,7 @@ class NidaqModuleException(halExceptions.HardwareException):
 class NidaqFunctionality(hardwareModule.HardwareFunctionality):
 
     def __init__(self, used_during_filming = True, **kwds):
+        super().__init__(**kwds)
         self.source = None
         self.task = None
         self.used_during_filming = used_during_filming
@@ -66,6 +67,7 @@ class NidaqModule(hardwareModule.HardwareModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
+        self.run_shutters = False
 
         # These are the waveforms to output during a film.
         self.analog_waveforms = []
@@ -103,22 +105,23 @@ class NidaqModule(hardwareModule.HardwareModule):
                     raise NidaqModuleException("Unknown task type", task_name)
 
     def filmTiming(self, message):
-        self.ao_task = None
-        self.ct_task = None
-        self.do_task = None
-        film_settings = message.getData("film settings")
-        if film_settings.runShutters():
+        """
+        Get ready for waveform output when we get the film timing message, which
+        includes the frames per second information that we need.
+        """
+        if self.run_shutters:
 
             # Invalidate all the tasks that we'll need for waveform output. This
             # is maybe not so important as these tasks are able to reset themselves
             # anyway in the event that there is an error.
-            for daq_fn in self.daq_fns():
+            for daq_fn in self.daq_fns:
                 if self.daq_fns[daq_fn].getUsedDuringFilming():
                     self.daq_fns[daq_fn].setInvalid()
 
             # Get frames per second from the timing functionality. This is
             # a property of the camera that drives the timing functionality.
-            fps = message.getData("functionality").getFPS()
+            fps = message.getData()["functionality"].getFPS()
+            print(">ft", fps)
             
             # Calculate frequency. This is set slightly higher than the camere
             # frequency so that we are ready at the start of the next frame.
@@ -132,78 +135,104 @@ class NidaqModule(hardwareModule.HardwareModule):
                 wv_clock = self.timing.get("counter_out")
 
             # Setup the counter.
-            if self.counter_board and (oversampling > 1):
-                def startCtTask():
-                    try:
-                        self.ct_task = nicontrol.CounterOutput(source = self.timing.get("counter"), 
-                                                               frequency = frequency, 
-                                                               duty_cyle = 0.5)
-                        self.ct_task.setCounter(number_samples = self.oversampling)
-                        self.ct_task.setTrigger(trigger_source = self.timing.get("camera_fire_pin"))
-                        self.ct_task.startTask()
-                    except nicontrol.NIException as exception:
-                        print(exception)
-                        return True
-
-                    return False
-
-                iters = 0
-                while (iters < 5) and startCtTask():
-                    hdebug.logText("startCtTask failed " + str(iters))
-                    self.ct_task.clearTask()
-                    time.sleep(0.5)
-                    iters += 1
-
-                if (iters == 5):
-                    hdebug.logText("startCtTask critical failure")
-                    raise NidaqModuleException("NIException: startCtTask critical failure")
-
+            self.setupCounter(frequency)
+            
             # Setup analog waveforms.
-            if (len(self.analog_waveforms) > 0):
+            self.setupAnalog(frequency, wv_clock)
 
-                # Sort by source.
-                analog_data = sorted(self.analog_waveforms, key = lambda x: x[0])
+            # Setup digital waveforms.
+            self.setupDigital(frequency, wv_clock)
 
-                # Set waveforms.
-                waveforms = []
-                for i in range(len(analog_data)):
-                    waveforms.append(analog_data[i][1])
+            # Notify film.film that we are ready.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "ready to film"))
+            
+    def getFunctionality(self, message):
+        daq_fn_name = message.getData()["name"]
+        if daq_fn_name in self.daq_fns:
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"functionality" : self.daq_fns[daq_fn_name]}))
 
-                def startAoTask():
+    def setupAnalog(self, frequency, wv_clock):
+        """
+        Configures for analog waveform output.
+        """
+        self.ao_task = None
+        if (len(self.analog_waveforms) > 0):
+
+            # Sort by source.
+            analog_data = sorted(self.analog_waveforms, key = lambda x: x[0])
+
+            # Set waveforms.
+            waveforms = []
+            for i in range(len(analog_data)):
+                waveforms.append(analog_data[i][1])
+
+            def startAoTask():
                 
-                    try:
-                        # Create channels.
-                        self.ao_task = nicontrol.AnalogWaveformOutput(source = analog_data[0][0])
-                        for i in range(len(analog_data) - 1):
-                            self.ao_task.addChannel(source = analog_data[i+1][0])
+                try:
+                    # Create channels.
+                    self.ao_task = nicontrol.AnalogWaveformOutput(source = analog_data[0][0])
+                    for i in range(len(analog_data) - 1):
+                        self.ao_task.addChannel(source = analog_data[i+1][0])
 
-                        # Add waveforms
-                        self.ao_task.setWaveforms(waveforms = waveforms,
-                                                  sample_rate = frequency,
-                                                  clock = wv_clock)
+                    # Add waveforms
+                    self.ao_task.setWaveforms(waveforms = waveforms,
+                                              sample_rate = frequency,
+                                              clock = wv_clock)
 
-                        # Start task.
-                        self.ao_task.startTask()
-                    except nicontrol.NIException as exception:
-                        print(exception)
-                        return True
+                    # Start task.
+                    self.ao_task.startTask()
+                except nicontrol.NIException as exception:
+                    print(exception)
+                    return True
                     
-                    return False
+                return False
 
-                iters = 0
-                while (iters < 5) and startAoTask():
-                    hdebug.logText("startAoTask failed " + str(iters))
-                    self.ao_task.clearTask()
-                    time.sleep(0.1)
-                    iters += 1
+            iters = 0
+            while (iters < 5) and startAoTask():
+                hdebug.logText("startAoTask failed " + str(iters))
+                time.sleep(0.1)
+                iters += 1
 
-                if (iters == 5):
-                    hdebug.logText("startAoTask critical failure")
-                    raise NidaqModuleException("NIException: startAoTask critical failure")
+            if (iters == 5):
+                hdebug.logText("startAoTask critical failure")
+                raise NidaqModuleException("NIException: startAoTask critical failure")
+        
+    def setupCounter(self, frequency):
+        """
+        Configures the counter for filming.
+        """
+        self.ct_task = None
+        if (self.oversampling > 1):
+            def startCtTask():
+                try:
+                    self.ct_task = nicontrol.CounterOutput(source = self.timing.get("counter"), 
+                                                           frequency = frequency, 
+                                                           duty_cyle = 0.5)
+                    self.ct_task.setCounter(number_samples = self.oversampling)
+                    self.ct_task.setTrigger(trigger_source = self.timing.get("camera_fire_pin"))
+                    self.ct_task.startTask()
+                except nicontrol.NIException as exception:
+                    print(exception)
+                    return True
+                    
+                return False
 
-        # Setup digital waveforms.
+            iters = 0
+            while (iters < 5) and startCtTask():
+                hdebug.logText("startCtTask failed " + str(iters))
+                time.sleep(0.5)
+                iters += 1
+
+            if (iters == 5):
+                hdebug.logText("startCtTask critical failure")
+                raise NidaqModuleException("NIException: startCtTask critical failure")
+
+    def setupDigital(self, frequency, wv_clock):
+        self.do_task = None
         if (len(self.digital_waveforms) > 0):
-
+                
             # Sort by board, channel.
             digital_data = sorted(self.digital_waveforms, key = lambda x: x[0])
 
@@ -242,15 +271,14 @@ class NidaqModule(hardwareModule.HardwareModule):
 
             if iters == 5:
                 hdebug.logText("startDoTask critical failure")
-                raise NidaqModuleException("NIException: startDoTask critical failure")
-            
-    def getFunctionality(self, message):
-        daq_fn_name = message.getData()["name"]
-        print(">gt", daq_fn_name)
-        if daq_fn_name in self.daq_fns:
+                raise NidaqModuleException("NIException: startDoTask critical failure")        
+
+    def startFilm(self, message):
+        self.run_shutters = message.getData()["film settings"].runShutters()
+        if self.run_shutters:
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"functionality" : self.daq_fns[daq_fn_name]}))
-            
+                                                              data = {"wait for" : self.module_name}))
+
     def stopFilm(self, message):
         """
         Handle the 'stop film' message.
