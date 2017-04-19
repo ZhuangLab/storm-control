@@ -29,9 +29,9 @@ class Channel(QtCore.QObject):
         self.display_normalized = False
         self.filming = False
         self.filming_disabled = False
-        self.max_amplitude = 1.0
+        self.max_amplitude = 1
         self.max_voltage = 1.0
-        self.min_amplitude = 0.0
+        self.min_amplitude = 0
         self.min_voltage = 0.0
         self.name = configuration.get("gui_name")
         self.parameters = False
@@ -70,15 +70,8 @@ class Channel(QtCore.QObject):
         # If we have amplitude modulation then this is an adjustable channel with slider.
         #
         if self.amplitude_modulation is not None:
-            self.display_normalized = self.amplitude_modulation.get("display_normalized", True)
-            self.max_amplitude = self.amplitude_modulation.get("max_amplitude")
-            self.min_amplitude = self.amplitude_modulation.get("min_amplitude", 0)
-            
-            self.amplitude_range = float(self.max_amplitude - self.min_amplitude)
             self.channel_ui = illuminationChannelUI.ChannelUIAdjustable(name = self.name,
                                                                         color = configuration.get("color"),
-                                                                        minimum = self.min_amplitude,
-                                                                        maximum = self.max_amplitude,
                                                                         parent = self.parent())
             self.channel_ui.updatePowerText("NS")
 
@@ -245,6 +238,13 @@ class Channel(QtCore.QObject):
                     all_good = False
 
         if all_good:
+            if self.amplitude_modulation is not None:
+                self.display_normalized = self.amplitude_modulation.getDisplayNormalized()
+                self.max_amplitude = self.amplitude_modulation.getMaximum()
+                self.min_amplitude = self.amplitude_modulation.getMinimum()
+                self.amplitude_range = float(self.max_amplitude - self.min_amplitude)
+                self.channel_ui.configureSlider(self.min_amplitude, self.max_amplitude)
+                
             self.bad_module = False
             self.channel_ui.enableChannel()
             self.channel_ui.onOffChange.connect(self.handleOnOffChange)

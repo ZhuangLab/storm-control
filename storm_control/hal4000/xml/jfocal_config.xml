@@ -262,7 +262,6 @@
 	  
 	  <amplitude_modulation>
 	    <hw_fn_name>cube405</hw_fn_name>
-	    <maximum type="int">5000</maximum>
 	  </amplitude_modulation>
 	  
 	  <digital_modulation>

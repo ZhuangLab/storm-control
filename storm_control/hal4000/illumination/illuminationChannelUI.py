@@ -146,13 +146,12 @@ class ChannelUIAdjustable(ChannelUI):
     an adjustable illumination channel.
     """
 
-    def __init__(self, minimum = 0, maximum = 1, **kwds):
+    def __init__(self, **kwds):
         super().__init__(**kwds)
 
         self.buttons = []
-        #self.cur_y = 202
-        self.max_amplitude = maximum
-        self.min_amplitude = minimum
+        self.max_amplitude = 1
+        self.min_amplitude = 0
 
         # Current power label.
         self.power_label = QtWidgets.QLabel(self.slider_widget)
@@ -162,22 +161,32 @@ class ChannelUIAdjustable(ChannelUI):
 
         # Slider for controlling the power.
         self.powerslider = QtWidgets.QSlider(self.slider_widget)
-#        self.powerslider.setFixedSize(40, 150)
-        self.powerslider.setMinimum(minimum)
         self.powerslider.setMinimumHeight(150)
-        self.powerslider.setMaximum(maximum)
         self.powerslider.setOrientation(QtCore.Qt.Vertical)
-        page_step = 0.1 * (maximum - minimum)
-        if (page_step > 1.0):
-            self.powerslider.setPageStep(page_step)
-        self.powerslider.setSingleStep(1)
         self.powerslider.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
                                        QtWidgets.QSizePolicy.Expanding)
 
         self.slider_layout.addWidget(self.powerslider)
 
-        self.powerslider.valueChanged.connect(self.handleAmplitudeChange)
+    def configureSlider(self, minimum, maximum):
+        """
+        This is called once we have obtained amplitude functionality 
+        that backs the slider. The functionality sets the range
+        for the slider.
+        """
+        self.max_amplitude = maximum
+        self.min_amplitude = minimum
 
+        self.powerslider.setMaximum(maximum)
+        self.powerslider.setMinimum(minimum)
+
+        page_step = 0.1 * (maximum - minimum)
+        if (page_step > 1.0):
+            self.powerslider.setPageStep(page_step)
+        self.powerslider.setSingleStep(1)
+
+        self.powerslider.valueChanged.connect(self.handleAmplitudeChange)
+        
     def disableChannel(self):
         super().disableChannel()
         self.powerslider.setEnabled(False)
