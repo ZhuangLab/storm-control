@@ -19,9 +19,18 @@ class AmplitudeMixin(object):
     """
     These are the methods that illumination.illumination will 
     expect an amplitude functionality to have.
+
+    Note that illumination uses sliders to control the amplitude
+    minimum and maximum must be integers.
     """
     def __init__(self, display_normalized = True, minimum = 0, maximum = 10, used_during_filming = True, **kwds):
         super().__init__(**kwds)
+
+        assert isinstance(display_normalized, bool)
+        assert isinstance(minimum, int)
+        assert isinstance(maximum, int)
+        assert isinstance(used_during_filming, bool)
+        
         self.display_normalized = display_normalized
         self.maximum = maximum
         self.minimum = minimum

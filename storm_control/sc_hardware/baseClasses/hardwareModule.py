@@ -32,7 +32,10 @@ class HardwareFunctionality(halFunctionality.HalFunctionality):
 
 
 class HardwareWorker(QtCore.QRunnable):
-
+    """
+    Primarily this is used by BufferedFunctionality, but it may also 
+    be useful by itself for one off communication with hardware.
+    """
     def __init__(self, task = None, args = [], **kwds):
         super().__init__(**kwds)
         self.args = args
@@ -44,7 +47,7 @@ class HardwareWorker(QtCore.QRunnable):
 
 class BufferedFunctionality(HardwareFunctionality):
     """
-    This is used to communicate with less responsive hardware. 
+    This is used to communicate with less responsive hardware.
 
     There may be several of these per device, self.device_mutex is used
     to coordinate.

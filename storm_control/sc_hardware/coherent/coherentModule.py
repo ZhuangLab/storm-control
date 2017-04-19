@@ -9,7 +9,10 @@ import storm_control.sc_hardware.baseClasses.amplitudeModule as amplitudeModule
 
 
 class CoherentLaserFunctionality(amplitudeModule.AmplitudeFunctionalityBuffered):
-
+    """
+    Users specify the laser power in units of 0.01mW. For example output(100) 
+    will set the laser to output 1mW.
+    """
     def __init__(self, laser = None, **kwds):
         super().__init__(**kwds)
         self.laser = laser
@@ -53,3 +56,45 @@ class CoherentModule(amplitudeModule.AmplitudeModule):
             self.laser_functionality.mustRun(task = self.laser.setExtControl,
                                              args = [False])
             self.film_mode = False
+
+
+class CoherentCube(CoherentModule):
+    
+    def __init__(self, module_params = None, **kwds):
+        kwds["module_params"] = module_params
+        super().__init__(**kwds)
+
+        serial_port = module_params.get("configuration").get("port")
+
+        import storm_control.sc_hardware.coherent.cube as cube
+        self.laser = cube.Cube(serial_port)
+        
+        if self.laser.getStatus():
+            [pmin, pmax] = self.laser.getPowerRange()
+            self.laser_functionality = CoherentLaserFunctionality(display_normalized = True,
+                                                                  minimum = 0,
+                                                                  maximum = int(100.0 * pmax),
+                                                                  used_during_filming = self.used_during_filming)
+        else:
+            self.laser = None
+
+
+class CoherentObis(CoherentModule):
+    
+    def __init__(self, module_params = None, **kwds):
+        kwds["module_params"] = module_params
+        super().__init__(**kwds)
+
+        serial_port = module_params.get("configuration").get("port")
+
+        import storm_control.sc_hardware.coherent.obis as obis
+        self.laser = obis.Obis(serial_port)
+
+        if self.laser.getStatus():
+            [pmin, pmax] = self.laser.getPowerRange()
+            self.laser_functionality = CoherentLaserFunctionality(display_normalized = True,
+                                                                  minimum = 0,
+                                                                  maximum = int(100.0 * pmax),
+                                                                  used_during_filming = self.used_during_filming)
+        else:
+            self.laser = None            
