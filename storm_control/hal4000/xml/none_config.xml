@@ -149,16 +149,161 @@
       </camera>
     </camera1>
 
-    <!-- Illumination (lasers, shutters, etc) control -->
-    <!--
+    <!-- DAQ control -->
+    <daq>
+      <module_name type="string">storm_control.sc_hardware.none.noneDaqModule</module_name>
+      <class_name type="string">NoneDaqModule</class_name>
+
+      <configuration>
+
+	<!-- These are the things that we provide DAQ functionality for.
+	     Other modules will request them with a 'get functionality'
+	     message and "name" = "daq.xxx.yyy". -->
+
+	<ilm754>
+	  <do_task>
+	    <source type="string">/do/line0</source>
+	    <used_during_filming type="boolean">True</used_during_filming>
+	  </do_task>
+	</ilm754>
+
+	<ilm647>
+	  <ao_task>
+	    <source type="string">/ao/line0</source>
+	    <used_during_filming type="boolean">True</used_during_filming>
+	  </ao_task>
+
+	  <do_task>
+	    <source type="string">/do/line1</source>
+	    <used_during_filming type="boolean">True</used_during_filming>
+	  </do_task>	  
+	</ilm647>
+
+	<ilm647m>
+	  <do_task>
+	    <source type="string">/do/line2</source>
+	    <used_during_filming type="boolean">False</used_during_filming>
+	  </do_task>
+	</ilm647m>
+
+	<ilm561>
+	  <ao_task>
+	    <source type="string">/ao/line1</source>
+	    <used_during_filming type="boolean">True</used_during_filming>
+	  </ao_task>
+
+	  <do_task>
+	    <source type="string">/do/line3</source>
+	    <used_during_filming type="boolean">True</used_during_filming>
+	  </do_task>
+	</ilm561>
+
+	<ilm532>
+	  <do_task>
+	    <source type="string">/do/line4</source>
+	    <used_during_filming type="boolean">True</used_during_filming>
+	  </do_task>
+	</ilm532>
+
+	<ilm488>
+	  <ao_task>
+	    <source type="string">/ao/line2</source>
+	    <used_during_filming type="boolean">True</used_during_filming>
+	  </ao_task>
+	</ilm488>
+
+	<ilm405>
+	  <do_task>
+	    <source type="string">/do/line5</source>
+	    <used_during_filming type="boolean">True</used_during_filming>
+	  </do_task>
+	</ilm405>	
+      </configuration>
+      
+    </daq>
+    
+    <!-- Illumination (lasers, shutters, etc) control GUI. -->
     <illumination>
       <class_name type="string">Illumination</class_name>
-      <module_name type="string">illumination.illumination</module_name>
-      <parameters>
-	<settings_xml type="string">none_illumination_settings.xml</settings_xml>
-      </parameters>
+      <module_name type="string">storm_control.hal4000.illumination.illumination</module_name>
+      <configuration>
+
+	<!-- Note: The name of the channel is the gui_name.
+	     XML tags cannot start with numbers. -->
+	<ch1>
+	  <gui_name type="string">750</gui_name>
+	  <color type="string">200,0,0</color>
+	  <amplitude_modulation>
+	    <hw_fn_name>none_filter_wheel</hw_fn_name>
+	  </amplitude_modulation>
+	  <digital_modulation>
+	    <hw_fn_name type="string">daq.ilm750.do_task</hw_fn_name>
+	  </digital_modulation>
+	</ch1>
+	<ch2>
+	  <gui_name type="string">647</gui_name>
+	  <color type="string">255,0,0</color>
+	  <amplitude_modulation>
+	    <hw_fn_name>aotf.ilm647</hw_fn_name>
+	  </amplitude_modulation>	  
+	  <analog_modulation>
+	    <hw_fn_name type="string">daq.ilm647.ao_task</hw_fn_name>
+	    <max_voltage type="float">1.0</max_voltage>
+	    <min_voltage type="float">0.0</min_voltage>
+	  </analog_modulation>
+	  <digital_modulation>
+	    <hw_fn_name type="string">daq.ilm647.do_task</hw_fn_name>
+	  </digital_modulation>
+	  <mechanical_shutter>
+	    <hw_fn_name type="string">daq.ilm647m.do_task</hw_fn_name>
+	  </mechanical_shutter>	  
+	</ch2>
+	<ch3>
+	  <gui_name type="string">561</gui_name>
+	  <color type="string">255,255,0</color>
+	  <amplitude_modulation>
+	    <hw_fn_name>aotf.ilm561</hw_fn_name>
+	  </amplitude_modulation>	  
+	  <analog_modulation>
+	    <hw_fn_name type="string">daq.ilm561.ao_task</hw_fn_name>
+	    <max_voltage type="float">1.0</max_voltage>
+	    <min_voltage type="float">0.0</min_voltage>
+	  </analog_modulation>	  
+	  <digital_modulation>
+	    <hw_fn_name type="string">daq.ilm561.do_task</hw_fn_name>
+	  </digital_modulation>
+	</ch3>
+	<ch4>
+	  <gui_name type="string">532</gui_name>
+	  <color type="string">0,255,255</color>
+	  <digital_modulation>
+	    <hw_fn_name type="string">daq.ilm532.do_task</hw_fn_name>
+	  </digital_modulation>
+	</ch4>
+	<ch5>
+	  <gui_name type="string">488</gui_name>
+	  <color type="string">0,255,255</color>
+	  <amplitude_modulation>
+	    <hw_fn_name>aotf.ilm488</hw_fn_name>
+	  </amplitude_modulation>	  
+	  <analog_modulation>
+	    <hw_fn_name type="string">daq.ilm488.ao_task</hw_fn_name>
+	    <max_voltage type="float">1.0</max_voltage>
+	    <min_voltage type="float">0.0</min_voltage>
+	  </analog_modulation>
+	</ch5>
+	<ch6>
+	  <gui_name type="string">405</gui_name>
+	  <color type="string">255,0,255</color>
+	  <amplitude_modulation>
+	    <hw_fn_name>none_405</hw_fn_name>
+	  </amplitude_modulation>
+	  <digital_modulation>
+	    <hw_fn_name type="string">daq.ilm405.do_task</hw_fn_name>
+	  </digital_modulation>
+	</ch6>
+      </configuration>
     </illumination>
-    -->
     
     <!-- Bluetooth communication -->
     <!--

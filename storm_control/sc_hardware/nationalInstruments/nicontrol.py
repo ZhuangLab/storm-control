@@ -12,7 +12,6 @@ import traceback
 import threading
 
 import PyDAQmx
-#from PyDAQmx import Task
 
 import storm_control.sc_library.halExceptions as halExceptions
 

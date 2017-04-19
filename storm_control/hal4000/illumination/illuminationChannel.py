@@ -10,6 +10,7 @@ import numpy
 from PyQt5 import QtCore
 
 import storm_control.sc_hardware.baseClasses.daqModule as daqModule
+import storm_control.sc_hardware.baseClasses.hardwareModule as hardwareModule
 import storm_control.hal4000.illumination.illuminationChannelUI as illuminationChannelUI
 
 
@@ -228,13 +229,26 @@ class Channel(QtCore.QObject):
         
         # This both adds the functionality and checks whether we have all
         # the functionalities that we requested.
+        #
+        # fn will be one of 'None' - We don't have this functionality.
+        #                   'StormXMLObject' - The parameters for the functionality.
+        #                   'DaqFunctionality' - A live functionality.
+        #
         all_good = True
         for name in self.functionality_names:
             fn = getattr(self, name)
             if fn is not None:
+
+                # Check if we already have a functionality for this attribute.
+                if isinstance(getattr(self, name), hardwareModule.HardwareFunctionality):
+                    continue
+
+                # Check if we have the functionality for this attribute.
                 if (fn.get("hw_fn_name") == fn_name):
                     setattr(self, name, functionality)
-                if not isinstance(getattr(self, name), daqModule.DaqFunctionality):
+
+                # Otherwise we still don't have what we need for this attribute.
+                else:
                     all_good = False
 
         if all_good:

@@ -45,9 +45,9 @@ class DaqWaveform(object):
     
 class DaqFunctionality(hardwareModule.HardwareFunctionality):
 
-    def __init__(self, used_during_filming = True, **kwds):
+    def __init__(self, source = None, used_during_filming = True, **kwds):
         super().__init__(**kwds)
-        self.source = None
+        self.source = source
         self.used_during_filming = used_during_filming
 
     def getSource(self):

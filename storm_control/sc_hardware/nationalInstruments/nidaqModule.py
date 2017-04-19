@@ -33,9 +33,8 @@ class NidaqFunctionality(daqModule.DaqFunctionality):
 
 class DOTaskFunctionality(NidaqFunctionality):
 
-    def __init__(self, source = None, **kwds):
+    def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.source = source
 
     def createTask(self):
         self.task = nicontrol.DigitalOutput(source = self.source)
@@ -271,6 +270,8 @@ class NidaqModule(daqModule.DaqModule):
                     task.stopTask()
                 except nicontrol.NIException as e:
                     hdebug.logText("stop / clear failed for task " + str(task) + " with " + str(e))
+
+        # Need to explicitly clear these so that PyDAQmx will release the resources.
         self.ao_task = None
         self.ct_task = None
         self.do_task = None
