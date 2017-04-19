@@ -47,8 +47,22 @@ class AmplitudeMixin(object):
 
     def getUsedDuringFilming(self):
         return self.used_during_filming
-    
+
+    def onOff(self, power, state):
+        """
+        This is usually called when the illumination channel check box is toggled. Devices
+        like lasers and AOTFs are expected to go their minimum power, or return to their
+        current power. Others like filter wheels should not change as presumably they are
+        being used in combination with a shutter that will turn the channel on/off.
+        """
+        assert False
+        
     def output(self, power):
+        """
+        This is usually called when the illumination channel slider is moved. Some
+        channels will ignore this when they are turned off, others like filter wheels
+        might still move.
+        """
         assert False
         
     

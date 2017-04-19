@@ -145,18 +145,18 @@ class Channel(QtCore.QObject):
         """
         if self.filming:
             return
-
+        
         if on:
             if self.amplitude_modulation is not None:
-                self.amplitude_modulation.output(self.channel_ui.getAmplitude())
-        
+                self.amplitude_modulation.onOff(self.channel_ui.getAmplitude(), True)
+
             if self.analog_modulation is not None:
                 self.analog_modulation.output(self.max_voltage)
 
         else:
             if self.amplitude_modulation is not None:
-                self.amplitude_modulation.output(self.min_amplitude)
-        
+                self.amplitude_modulation.onOff(self.min_amplitude, False)
+
             if self.analog_modulation is not None:
                 self.analog_modulation.output(self.min_voltage)
                 
@@ -188,7 +188,7 @@ class Channel(QtCore.QObject):
 
         if self.amplitude_modulation is not None:
             self.amplitude_modulation.output(new_power)
-
+            
         if (self.channel_ui.isOn()):
             if self.mechanical_shutter is not None:
                 if (new_power == self.min_amplitude):

@@ -185,6 +185,13 @@ class ChannelUIAdjustable(ChannelUI):
             self.powerslider.setPageStep(page_step)
         self.powerslider.setSingleStep(1)
 
+        #
+        # Why 2? We need the initial value to be a number that is not
+        # the default power, otherwise the slider text won't get updated
+        # at start-up.
+        #
+        self.setAmplitude(2)
+        
         self.powerslider.valueChanged.connect(self.handleAmplitudeChange)
         
     def disableChannel(self):

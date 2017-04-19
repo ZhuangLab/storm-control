@@ -55,6 +55,10 @@ class IlluminationView(halDialog.HalDialog):
         number_channels = len(configuration.getAttrs())
         
         # Default power setting.
+        #
+        # FIXME: This assumes that all the channels are normalized
+        #        so that the maximum power is 1.0.
+        #
         default_power = []
         for i in range(number_channels):
             default_power.append(1.0)

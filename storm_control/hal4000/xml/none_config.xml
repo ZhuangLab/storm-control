@@ -157,12 +157,12 @@
 	     Other modules will request them with a 'get functionality'
 	     message and "name" = "daq.xxx.yyy". -->
 
-	<ilm754>
+	<ilm750>
 	  <do_task>
 	    <source type="string">/do/line0</source>
 	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
-	</ilm754>
+	</ilm750>
 
 	<ilm647>
 	  <ao_task>
@@ -310,6 +310,11 @@
 	<used_during_filming type="boolean">True</used_during_filming>
       </configuration>      
     </none_405>
+
+    <none_wheel1>
+      <module_name type="string">storm_control.sc_hardware.none.noneFilterWheelModule</module_name>
+      <class_name type="string">NoneFilterWheelModule</class_name>
+    </none_wheel1>
     
     <!-- Bluetooth communication -->
     <!--

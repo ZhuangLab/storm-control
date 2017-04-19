@@ -17,11 +17,20 @@ class CoherentLaserFunctionality(amplitudeModule.AmplitudeFunctionalityBuffered)
     """
     def __init__(self, laser = None, **kwds):
         super().__init__(**kwds)
+        self.on = True
         self.laser = laser
 
+    def onOff(self, power, state):
+        # FIXME: We could build up a back-log here if the user
+        #        gets carried away toggling the shutter button.
+        self.mustRun(task = self.laser.setPower,
+                     args = [0.01 * power])
+        self.on = state
+
     def output(self, power):
-        self.maybeRun(task = self.laser.setPower,
-                      args = [0.01 * power])
+        if self.on:
+            self.maybeRun(task = self.laser.setPower,
+                          args = [0.01 * power])
 
     
 class CoherentModule(amplitudeModule.AmplitudeModule):
