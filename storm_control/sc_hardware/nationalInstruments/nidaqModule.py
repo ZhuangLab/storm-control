@@ -83,7 +83,7 @@ class NidaqModule(daqModule.DaqModule):
                 daq_fn_name = ".".join([self.module_name, fn_name, task_name])
                 if (task_name == "do_task"):
                     self.daq_fns[daq_fn_name] = DOTaskFunctionality(source = task_params.get("source"),
-                                                                    used_during_filming = task_params.get("used_during_filming", True))
+                                                                    used_during_filming = task_params.get("used_during_filming"))
                 else:
                     raise NidaqModuleException("Unknown task type", task_name)
 

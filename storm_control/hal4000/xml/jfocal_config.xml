@@ -157,9 +157,10 @@
 
       <configuration>
 	<port type="string">COM10</port>
+	<used_during_filming type="bool">True</used_during_filming>
       </configuration>
     </cube405>
-    
+
     <!-- DAQ control -->
     <daq>
       <module_name type="string">storm_control.sc_hardware.nationalInstruments.nidaqModule</module_name>
@@ -184,30 +185,35 @@
 	<ilm754>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line0</source>
+	    <used_during_filming type="bool">True</used_during_filming>
 	  </do_task>
 	</ilm754>
 
 	<ilm656>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line1</source>
+	    <used_during_filming type="bool">True</used_during_filming>
 	  </do_task>
 	</ilm656>
 
 	<ilm561>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line2</source>
+	    <used_during_filming type="bool">True</used_during_filming>
 	  </do_task>
 	</ilm561>
 
 	<ilm488>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line3</source>
+	    <used_during_filming type="bool">True</used_during_filming>
 	  </do_task>
 	</ilm488>
 
 	<ilm405>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line4</source>
+	    <used_during_filming type="bool">True</used_during_filming>
 	  </do_task>
 	</ilm405>	
       </configuration>
@@ -255,7 +261,7 @@
 	  <color type="string">255,0,255</color>
 	  
 	  <amplitude_modulation>
-	    <hw_fn_name>cube405.amplitude_modulation</hw_fn_name>
+	    <hw_fn_name>cube405</hw_fn_name>
 	    <maximum type="int">5000</maximum>
 	  </amplitude_modulation>
 	  

@@ -14,44 +14,42 @@ class CoherentLaserFunctionality(amplitudeModule.AmplitudeFunctionalityBuffered)
         super().__init__(**kwds)
         self.laser = laser
 
-    def processRequest(self, power):
-        # This will be called inside a mutex so we don't have to
-        # worry about locking this ourselves.
-        self.laser.setPower(0.01 * power)
-    
+    def output(self, power):
+        self.maybeRun(task = self.laser.setPower,
+                      args = [0.01 * power])
+
     
 class CoherentModule(amplitudeModule.AmplitudeModule):
-    
-    def __init__(self, **kwds):
+    """
+    The functionality name is just the module name.
+    """    
+    def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
+        self.film_mode = False
         self.laser = None
+        self.laser_functionality = None
+
+        configuration = module_params.get("configuration")
+        self.used_during_filming = configuration.get("used_during_filming")
 
     def cleanUp(self):
-        if self.laser:
+        if self.laser_functionality is not None:
             self.laser.shutDown()
-   
-    def processMessage(self, message):
 
-        if message.isType("get functionality"):
-            self.getFunctionality(message)
-            
-        elif message.isType("start film"):
-            self.startFilm(message)
-
-        elif message.isType("stop film"):
-            self.stopFilm(message)
-
-    def setExtControl(self, state):
-        self.device_mutex.lock()
-        self.laser.setExtControl(state)
-        self.device_mutex.unlock()
+   def getFunctionality(self, message):
+       if (message.getData()["name"] == self.module_name) and (self.laser_functionality is not None):
+           message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                             data = {"functionality" : self.laser_functionality}))
         
     def startFilm(self, message):
-        if self.laser is not None:
-            amplitudeModule.AmplitudeWorker(task = self.setExtControl,
-                                            args = [True])
+        if message.getData()["film settings"].runShutters():
+            if self.used_during_filming and (self.laser_functionality is not None):
+                self.laser_functionality.mustRun(task = self.laser.setExtControl,
+                                                 args = [True])
+                self.film_mode = True
 
     def stopFilm(self, message):
-        if self.laser is not None:
-            amplitudeModule.AmplitudeWorker(task = self.setExtControl,
-                                            args = [False])
+        if self.film_mode:
+            self.laser_functionality.mustRun(task = self.laser.setExtControl,
+                                             args = [False])
+            self.film_mode = False

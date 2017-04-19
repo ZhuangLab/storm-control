@@ -6,8 +6,7 @@ this module.
 
 Hazen 04/17
 """
-
-import copy
+#import copy
 
 from PyQt5 import QtCore
 
@@ -43,13 +42,13 @@ class HardwareWorker(QtCore.QRunnable):
         self.task(*self.args)
 
 
-class BufferedHardwareWorker(HardwareWorker):
-    """
-    The HardwareWorker specialized for use by BufferedFunctionality.
-    """
-    def __init__(self, request = None, emit_done = True, **kwds):
-        kwds["args"] = [request, emit_done]
-        super().__init__(**kwds)
+#class BufferedHardwareWorker(HardwareWorker):
+#    """
+#    The HardwareWorker specialized for use by BufferedFunctionality.
+#    """
+#    def __init__(self, request = None, emit_done = True, **kwds):
+#        kwds["args"] = [request, emit_done]
+#        super().__init__(**kwds)
         
 
 class BufferedFunctionality(HardwareFunctionality):
@@ -59,13 +58,10 @@ class BufferedFunctionality(HardwareFunctionality):
     There may be several of these per device, self.device_mutex is used
     to coordinate.
 
-    Requests are expected to be simple objects like strings. Processing
-    will actually be done on a copy.copy() of the request.
-
-    maybeProcess() only gaurantees that the most recently received
+    maybeRun() only gaurantees that the most recently received
     request will be processed.
 
-    mustProcess() will process all requests.
+    mustRun() will process all requests.
     """
     done = QtCore.pyqtSignal()
     
@@ -75,51 +71,51 @@ class BufferedFunctionality(HardwareFunctionality):
         self.device_mutex = device_mutex        
         self.next_request = None
 
+        # This signal is used to let us know when the current 'maybe'
+        # request is done and we should start the next one.
         self.done.connect(self.handleDone)
 
     def handleDone(self):
         if self.next_request is not None:
-            self.start(self.next_request, True)
+            self.start(*self.next_request)
             self.next_request = None
 
-    def maybeProcess(self, request):
+    def maybeRun(self, task = None, args = [], ret_signal = None):
         """
         Call this method with requests that don't absolutely have to be
         processed. This will process them in the order received, but 
         will only process the most recently received request.
         """
         if not self.busy:
-            self.start(request, True)
+            self.start(task, args, True, ret_signal)
         else:
-            self.next_request = request
+            self.next_request = [task, args, True, ret_signal]
 
-    def mustProcess(self, request):
+    def mustRun(self, task = None, args = [], ret_signal = None):
         """
         Call this method with requests that must be processed.
         """
-        self.start(request, False)
+        self.start(task, args, False, ret_signal)
             
-    def processRequest(self, request):
+    def run(self, task, args, emit_done, ret_signal):
         """
-        Override this with device specific request processing. This
-        should be the only method that you need to override.
+        run the task with arguments args, and use the ret_signal
+        pyqtSignal to return the results.
         """
-        pass
-    
-    def run(self, request, emit_done):
         self.device_mutex.lock()
-        self.processRequest(request)
+        retv = task(*args)
         self.device_mutex.unlock()
         self.busy = False
         if emit_done:
             self.done.emit()
+        if ret_signal is not None:
+            ret_signal.emit(retv)
 
-    def start(self, request, emit_done):
+    def start(self, task, args, emit_done, ret_signal):
         self.busy = True
-        bhw = BufferedHardwareWorker(request = copy.copy(request),
-                                     task = self.run,
-                                     emit_done = emit_done)
-        getThreadPool().start(bhw)
+        hw = HardwareWorker(task = self.run,
+                            args = [task, args, emit_done, ret_signal])
+        getThreadPool().start(hw)
         
 
 class HardwareModule(halModule.HalModule):

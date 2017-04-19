@@ -20,11 +20,12 @@ class AmplitudeMixin(object):
     These are the methods that illumination.illumination will 
     expect an amplitude functionality to have.
     """
-    def __init__(self, display_normalized = True, minimum = 0, maximum = 10, **kwds):
+    def __init__(self, display_normalized = True, minimum = 0, maximum = 10, used_during_filming = True, **kwds):
         super().__init__(**kwds)
         self.display_normalized = display_normalized
         self.maximum = maximum
         self.minimum = minimum
+        self.used_during_filming = used_during_filming
 
     def getDisplayNormalized(self):
         return self.display_normalized
@@ -34,12 +35,11 @@ class AmplitudeMixin(object):
         
     def getMinimum(self):
         return self.minimum
-        
-    def output(self, power):
-        self.processRequest(power)
 
-    def processRequest(self, power):
-        # This is where the command to the hardware is supposed to go.
+    def getUsedDuringFilming(self):
+        return self.used_during_filming
+    
+    def output(self, power):
         assert False
         
     
@@ -57,24 +57,21 @@ class AmplitudeFunctionalityBuffered(hardwareModule.BufferedFunctionality, Ampli
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        
-    def output(self, power):
-        self.maybeProcess(power)
     
     
 class AmplitudeModule(hardwareModule.HardwareModule):
-    
+    """
+    These modules will always provide a single functionality with the 
+    name 'module_name.amplitude_modulation'. This functionality is
+    primarily used by illumination.illumination.
+    """
     def __init__(self, **kwds):
         super().__init__(**kwds)
         self.device_mutex = QtCore.QMutex()
-        self.fn_name = self.module_name + ".amplitude_modulation"
-        self.amplitude_functionality = None
 
-   def getFunctionality(self, message):
-       if (message.getData()["name"] == self.fn_name) and (self.laser_functionality is not None):
-           message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                             data = {"functionality" : self.amplitude_functionality}))
-
+    def getFunctionality(self, message):
+        pass
+    
     def processMessage(self, message):
 
         if message.isType("get functionality"):
