@@ -51,9 +51,9 @@ class AmplitudeMixin(object):
     def onOff(self, power, state):
         """
         This is usually called when the illumination channel check box is toggled. Devices
-        like lasers and AOTFs are expected to go their minimum power, or return to their
-        current power. Others like filter wheels should not change as presumably they are
-        being used in combination with a shutter that will turn the channel on/off.
+        like lasers and AOTFs are expected to go to 'power' and then not respond to further
+        power changes if state is False. Others devices like filter wheels will likely
+        just ignore this as they are usually not used to also turn the channel on/off.
         """
         assert False
         
