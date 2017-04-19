@@ -32,6 +32,26 @@ class HardwareFunctionality(halFunctionality.HalFunctionality):
     pass
 
 
+class HardwareWorker(QtCore.QRunnable):
+
+    def __init__(self, task = None, args = None, **kwds):
+        super().__init__(**kwds)
+        self.args = args
+        self.task = task
+
+    def run(self):
+        self.task(*self.args)
+
+
+class BufferedHardwareWorker(HardwareWorker):
+    """
+    The HardwareWorker specialized for use by BufferedFunctionality.
+    """
+    def __init__(self, request = None, emit_done = True, **kwds):
+        kwds["args"] = [request, emit_done]
+        super().__init__(**kwds)
+        
+
 class BufferedFunctionality(HardwareFunctionality):
     """
     This is used to communicate with less responsive hardware. 
@@ -96,24 +116,10 @@ class BufferedFunctionality(HardwareFunctionality):
 
     def start(self, request, emit_done):
         self.busy = True
-        bw = BufferedWorker(request = copy.copy(request),
-                            task = self.run,
-                            emit_done = emit_done)
-        getThreadPool().start(bw)
-        
-
-class BufferedWorker(QtCore.QRunnable):
-    """
-    The worker QRunnable used by BufferedFunctionality.
-    """
-    def __init__(self, request = None, task = None, emit_done = True, **kwds):
-        super().__init__(**kwds)
-        self.emit_done = emit_done
-        self.request = request
-        self.task = task
-
-    def run(self):
-        self.task(self.request, self.emit_done)
+        bhw = BufferedHardwareWorker(request = copy.copy(request),
+                                     task = self.run,
+                                     emit_done = emit_done)
+        getThreadPool().start(bhw)
         
 
 class HardwareModule(halModule.HalModule):
