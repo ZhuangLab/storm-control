@@ -16,7 +16,7 @@ import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
 
-def getThreadPool(self):
+def getThreadPool():
     """
     Return the applications threadpool instance. This is stored in halModule.
     """
@@ -34,39 +34,86 @@ class HardwareFunctionality(halFunctionality.HalFunctionality):
 
 class BufferedFunctionality(HardwareFunctionality):
     """
-    This is used to communicate with less responsive hardware. There
-    may be several of these per device, self.device_mutex is used
+    This is used to communicate with less responsive hardware. 
+
+    There may be several of these per device, self.device_mutex is used
     to coordinate.
+
+    Requests are expected to be simple objects like strings. Processing
+    will actually be done on a copy.copy() of the request.
+
+    maybeProcess() only gaurantees that the most recently received
+    request will be processed.
+
+    mustProcess() will process all requests.
     """
     done = QtCore.pyqtSignal()
     
     def __init__(self, device_mutex = QtCore.QMutex(), **kwds):
         super().__init__(**kwds)
-        self.current_request = None
-        self.device_mutex = device_mutex
+        self.busy = False
+        self.device_mutex = device_mutex        
+        self.next_request = None
 
         self.done.connect(self.handleDone)
 
     def handleDone(self):
-        if self.current_request is not None:
-            request = copy.copy(self.current_request)
-            self.current_request = None
-            getThreadPool().start(self.run(request))
+        if self.next_request is not None:
+            self.start(self.next_request, True)
+            self.next_request = None
 
-    def handleRequest(self, request):
-        if self.current_request is None:
-            getThreadPool().start(self.run(copy.copy(request)))
-        self.current_request = request
+    def maybeProcess(self, request):
+        """
+        Call this method with requests that don't absolutely have to be
+        processed. This will process them in the order received, but 
+        will only process the most recently received request.
+        """
+        if not self.busy:
+            self.start(request, True)
+        else:
+            self.next_request = request
 
+    def mustProcess(self, request):
+        """
+        Call this method with requests that must be processed.
+        """
+        self.start(request, False)
+            
     def processRequest(self, request):
+        """
+        Override this with device specific request processing. This
+        should be the only method that you need to override.
+        """
         pass
     
-    def run(self, request):
+    def run(self, request, emit_done):
         self.device_mutex.lock()
         self.processRequest(request)
         self.device_mutex.unlock()
-        self.done.emit()
+        self.busy = False
+        if emit_done:
+            self.done.emit()
 
+    def start(self, request, emit_done):
+        self.busy = True
+        bw = BufferedWorker(request = copy.copy(request),
+                            task = self.run,
+                            emit_done = emit_done)
+        getThreadPool().start(bw)
+        
+
+class BufferedWorker(QtCore.QRunnable):
+    """
+    The worker QRunnable used by BufferedFunctionality.
+    """
+    def __init__(self, request = None, task = None, emit_done = True, **kwds):
+        super().__init__(**kwds)
+        self.emit_done = emit_done
+        self.request = request
+        self.task = task
+
+    def run(self):
+        self.task(self.request, self.emit_done)
         
 
 class HardwareModule(halModule.HalModule):
