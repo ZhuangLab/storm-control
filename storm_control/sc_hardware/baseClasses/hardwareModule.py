@@ -42,15 +42,6 @@ class HardwareWorker(QtCore.QRunnable):
         self.task(*self.args)
 
 
-#class BufferedHardwareWorker(HardwareWorker):
-#    """
-#    The HardwareWorker specialized for use by BufferedFunctionality.
-#    """
-#    def __init__(self, request = None, emit_done = True, **kwds):
-#        kwds["args"] = [request, emit_done]
-#        super().__init__(**kwds)
-        
-
 class BufferedFunctionality(HardwareFunctionality):
     """
     This is used to communicate with less responsive hardware. 
