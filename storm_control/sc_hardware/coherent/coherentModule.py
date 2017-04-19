@@ -5,12 +5,10 @@ HAL module for Coherent laser control.
 Hazen 04/17
 """
 
-from PyQt5 import QtCore
-
-import storm_control.sc_hardware.baseClasses.laserModule as laserModule
+import storm_control.sc_hardware.baseClasses.amplitudeModule as amplitudeModule
 
 
-class CoherentLaserFunctionality(laserModule.LaserFunctionalityBuffered):
+class CoherentLaserFunctionality(amplitudeModule.AmplitudeFunctionalityBuffered):
 
     def __init__(self, laser = None, **kwds):
         super().__init__(**kwds)
@@ -22,16 +20,16 @@ class CoherentLaserFunctionality(laserModule.LaserFunctionalityBuffered):
         self.laser.setPower(0.01 * power)
     
     
-class CoherentModule(hardwareModule.HardwareModule):
+class CoherentModule(amplitudeModule.AmplitudeModule):
     
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.device_mutex = QtCore.QMutex()
-        self.laser_functionality = None
-        
-    def getFunctionality(self, message):
-        pass
-    
+        self.laser = None
+
+    def cleanUp(self):
+        if self.laser:
+            self.laser.shutDown()
+   
     def processMessage(self, message):
 
         if message.isType("get functionality"):
@@ -43,9 +41,17 @@ class CoherentModule(hardwareModule.HardwareModule):
         elif message.isType("stop film"):
             self.stopFilm(message)
 
+    def setExtControl(self, state):
+        self.device_mutex.lock()
+        self.laser.setExtControl(state)
+        self.device_mutex.unlock()
+        
     def startFilm(self, message):
-        if self.laser_functionality is not None:
-        pass
+        if self.laser is not None:
+            amplitudeModule.AmplitudeWorker(task = self.setExtControl,
+                                            args = [True])
 
     def stopFilm(self, message):
-        pass
+        if self.laser is not None:
+            amplitudeModule.AmplitudeWorker(task = self.setExtControl,
+                                            args = [False])

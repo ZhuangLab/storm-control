@@ -4,6 +4,9 @@ Base class / functionality for an (illumination) amplitude control device.
 
 Hazen 04/17
 """
+from PyQt5 import QtCore
+
+import storm_control.hal4000.halLib.halMessage as halMessage
 
 import storm_control.sc_hardware.baseClasses.hardwareModule as hardwareModule
 
@@ -42,7 +45,7 @@ class AmplitudeMixin(object):
     
 class AmplitudeFunctionality(hardwareModule.HardwareFunctionality, AmplitudeMixin):
     """
-    Base class for a amplitude functionality. The sub-class must override processRequest().
+    Base class for an amplitude functionality. The sub-class must override processRequest().
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
@@ -50,7 +53,7 @@ class AmplitudeFunctionality(hardwareModule.HardwareFunctionality, AmplitudeMixi
         
 class AmplitudeFunctionalityBuffered(hardwareModule.BufferedFunctionality, AmplitudeMixin):
     """
-    Base class for a buffered laser functionality. The sub-class must override processRequest().
+    Base class for a buffered amplitude functionality. The sub-class must override processRequest().
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
@@ -63,10 +66,15 @@ class AmplitudeModule(hardwareModule.HardwareModule):
     
     def __init__(self, **kwds):
         super().__init__(**kwds)
+        self.device_mutex = QtCore.QMutex()
+        self.fn_name = self.module_name + ".amplitude_modulation"
+        self.amplitude_functionality = None
 
-    def getFunctionality(self, message):
-        pass
-    
+   def getFunctionality(self, message):
+       if (message.getData()["name"] == self.fn_name) and (self.laser_functionality is not None):
+           message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                             data = {"functionality" : self.amplitude_functionality}))
+
     def processMessage(self, message):
 
         if message.isType("get functionality"):

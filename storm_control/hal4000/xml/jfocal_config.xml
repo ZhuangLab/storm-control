@@ -255,7 +255,7 @@
 	  <color type="string">255,0,255</color>
 	  
 	  <amplitude_modulation>
-	    <hw_fn_name>cube405.power_modulation</hw_fn_name>
+	    <hw_fn_name>cube405.amplitude_modulation</hw_fn_name>
 	    <maximum type="int">5000</maximum>
 	  </amplitude_modulation>
 	  

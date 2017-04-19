@@ -34,7 +34,7 @@ class HardwareFunctionality(halFunctionality.HalFunctionality):
 
 class HardwareWorker(QtCore.QRunnable):
 
-    def __init__(self, task = None, args = None, **kwds):
+    def __init__(self, task = None, args = [], **kwds):
         super().__init__(**kwds)
         self.args = args
         self.task = task
