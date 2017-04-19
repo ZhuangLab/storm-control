@@ -91,7 +91,7 @@
       <module_name type="string">storm_control.hal4000.settings.settings</module_name>
     </settings>
 
-    <!-- Set the (software) time base for films. -->
+    <!-- Set the time base for films. -->
     <timing>
       <class_name type="string">Timing</class_name>
       <module_name type="string">storm_control.hal4000.timing.timing</module_name>
@@ -111,9 +111,6 @@
 	Cameras are either "master" (they provide their own hardware timing)
 	or "slave" they are timed by another camera. Each time the cameras
 	are started the slave cameras are started first, then the master cameras.
-	
-	Also, "camera1" is assumed to be the master camera and many other modules
-	(software) synchronize to this camera.
     -->
 
     <camera1>

@@ -91,7 +91,7 @@
       <module_name type="string">settings.settings</module_name>
     </settings>
 
-    <!-- Set the (software) time base for films. -->
+    <!-- Set the time base for films. -->
     <timing>
       <class_name type="string">Timing</class_name>
       <module_name type="string">timing.timing</module_name>
@@ -111,9 +111,6 @@
 	Cameras are either "master" (they provide their own hardware timing)
 	or "slave" they are timed by another camera. Each time the cameras
 	are started the slave cameras are started first, then the master cameras.
-	
-	Also, "camera1" is assumed to be the master camera and many other modules
-	(software) synchronize to this camera.
     -->
 
     <camera1>
@@ -234,7 +231,7 @@
 	  <gui_name type="string">750</gui_name>
 	  <color type="string">200,0,0</color>
 	  <amplitude_modulation>
-	    <hw_fn_name>none_filter_wheel</hw_fn_name>
+	    <hw_fn_name>none_wheel1</hw_fn_name>
 	  </amplitude_modulation>
 	  <digital_modulation>
 	    <hw_fn_name type="string">daq.ilm750.do_task</hw_fn_name>
@@ -304,6 +301,15 @@
 	</ch6>
       </configuration>
     </illumination>
+
+    <none_405>
+      <module_name type="string">storm_control.sc_hardware.none.noneLaserModule</module_name>
+      <class_name type="string">NoneLaserModule</class_name>
+
+      <configuration>
+	<used_during_filming type="boolean">True</used_during_filming>
+      </configuration>      
+    </none_405>
     
     <!-- Bluetooth communication -->
     <!--

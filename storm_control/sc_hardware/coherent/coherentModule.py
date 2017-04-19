@@ -5,6 +5,8 @@ HAL module for Coherent laser control.
 Hazen 04/17
 """
 
+import storm_control.hal4000.halLib.halMessage as halMessage
+
 import storm_control.sc_hardware.baseClasses.amplitudeModule as amplitudeModule
 
 
