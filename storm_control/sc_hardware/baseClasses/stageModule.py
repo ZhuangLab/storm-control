@@ -91,7 +91,12 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
 
 
 class StageModule(hardwareModule.HardwareModule):
+    """
+    Provides a stage functionality whose name is just the module name.
 
+    Some stage controllers can also control additional peripherals.
+    Functionalities for these will have names like 'module_name.peripheral'.
+    """
     def __init__(self, **kwds):
         super().__init__(**kwds)
         self.stage = None
