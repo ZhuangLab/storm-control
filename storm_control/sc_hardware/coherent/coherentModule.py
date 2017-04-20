@@ -56,9 +56,8 @@ class CoherentModule(amplitudeModule.AmplitudeModule):
                                                              data = {"functionality" : self.laser_functionality}))
 
     def setExtControl(self, state):
-        self.device_mutex.lock()
-        self.laser.setExtControl(state)
-        self.device_mutex.unlock()
+        self.laser_functionality.mustRun(task = self.laser.setExtControl,
+                                         args = [state])
                 
     def startFilm(self, message):
         if message.getData()["film settings"].runShutters():
