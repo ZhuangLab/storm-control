@@ -93,8 +93,8 @@ class Channel(QtCore.QObject):
         always normalized.
 
         (I think) This is normalized so that external control power 
-        control, which is always normalized 0.0 - 1.0, can be use
-        the .power file to recreate the intensity profile.                 
+        control, which is always normalized 0.0 - 1.0, can use the 
+        .power file to recreate the intensity profile.
         """
         power = self.channel_ui.getAmplitude()
         return "{0:.4f}".format((power - self.min_amplitude)/self.amplitude_range)
