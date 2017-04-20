@@ -52,6 +52,11 @@ class ChannelUI(QtWidgets.QFrame):
 
         # Container for the power slider (if any).
         self.slider_widget = QtWidgets.QWidget(self)
+
+        #
+        # FIXME: This is a mistake if none of the channels have a power
+        #        slider.
+        #
         self.slider_widget.setMinimumHeight(150)
 
         self.slider_layout = QtWidgets.QVBoxLayout(self.slider_widget)
