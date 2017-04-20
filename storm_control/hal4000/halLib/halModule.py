@@ -196,6 +196,15 @@ class HalModule(QtCore.QObject):
         if (len(self.queued_messages) > 0):
             self.queued_messages_timer.start()
 
+    def sendMessage(self, message):
+        """
+        Use this to send a message from the module.
+
+        FIXME: Need to update mnay of the modules to use this.
+        """
+        message.source = self
+        self.newMessage.emit(message)
+        
             
 #
 # The MIT License
