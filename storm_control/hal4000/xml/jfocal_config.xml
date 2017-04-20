@@ -119,7 +119,7 @@
       <camera>
 	<master type="boolean">True</master>
 	<class_name type="string">AndorSDK3CameraControl</class_name>
-	<module_name type="string">camera.andorSDK3CameraControl</module_name>
+	<module_name type="string">storm_control.hal4000.camera.andorSDK3CameraControl</module_name>
 	<parameters>
 	  
 	  <!-- The location of the Andor DLL -->

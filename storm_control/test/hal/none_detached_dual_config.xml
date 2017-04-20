@@ -30,7 +30,7 @@
 	This is the main window, you must have this.
     -->
     <hal>
-      <module_name type="string">hal4000</module_name>
+      <module_name type="string">storm_control.hal4000.hal4000</module_name>
       <class_name type="string">HalController</class_name>
     </hal>
 
@@ -41,7 +41,7 @@
     <!-- Camera display. -->
     <display>
       <class_name type="string">Display</class_name>
-      <module_name type="string">display.display</module_name>
+      <module_name type="string">storm_control.hal4000.display.display</module_name>
       <parameters>
 
 	<!-- The default color table. Other options are in hal4000/colorTables/all_tables -->
@@ -53,13 +53,13 @@
     <!-- Feeds. -->
     <feeds>
       <class_name type="string">Feeds</class_name>
-      <module_name type="string">feeds.feeds</module_name>
+      <module_name type="string">storm_control.hal4000.feeds.feeds</module_name>
     </feeds>
 
     <!-- Filming and starting/stopping the camera. -->
     <film>
       <class_name type="string">Film</class_name>
-      <module_name type="string">film.film</module_name>
+      <module_name type="string">storm_control.hal4000.film.film</module_name>
 
       <!-- Film parameters specific to this setup go here. -->
       <parameters>
@@ -70,7 +70,7 @@
     <!-- Which objective is being used, etc. -->
     <mosaic>
       <class_name type="string">Mosaic</class_name>
-      <module_name type="string">mosaic.mosaic</module_name>
+      <module_name type="string">storm_control.hal4000.mosaic.mosaic</module_name>
 
       <!-- List objectives available on this setup here. -->
       <parameters>
@@ -88,13 +88,13 @@
     <!-- Loading, changing and editting settings/parameters -->
     <settings>
       <class_name type="string">Settings</class_name>
-      <module_name type="string">settings.settings</module_name>
+      <module_name type="string">storm_control.hal4000.settings.settings</module_name>
     </settings>
 
     <!-- Set the (software) time base for films. -->
     <timing>
       <class_name type="string">Timing</class_name>
-      <module_name type="string">timing.timing</module_name>
+      <module_name type="string">storm_control.hal4000.timing.timing</module_name>
       <parameters>
 	<time_base type="string">camera1</time_base>
       </parameters>
@@ -118,11 +118,11 @@
     
     <camera1>
       <class_name type="string">Camera</class_name>
-      <module_name type="string">camera.camera</module_name>
+      <module_name type="string">storm_control.hal4000.camera.camera</module_name>
       <camera>
 	<master type="boolean">True</master>
 	<class_name type="string">NoneCameraControl</class_name>
-	<module_name type="string">camera.noneCameraControl</module_name>
+	<module_name type="string">storm_control.hal4000.camera.noneCameraControl</module_name>
 	<parameters>
 
 	  <!-- This is specific to the emulated camera. -->
@@ -151,11 +151,11 @@
 
     <camera2>
       <class_name type="string">Camera</class_name>
-      <module_name type="string">camera.camera</module_name>
+      <module_name type="string">storm_control.hal4000.camera.camera</module_name>
       <camera>
 	<master type="boolean">True</master>
 	<class_name type="string">NoneCameraControl</class_name>
-	<module_name type="string">camera.noneCameraControl</module_name>
+	<module_name type="string">storm_control.hal4000.camera.noneCameraControl</module_name>
 	<parameters>
 
 	  <!-- This is specific to the emulated camera. -->

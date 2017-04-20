@@ -41,7 +41,7 @@ class Camera(halModule.HalModule):
         self.film_length = None
         
         camera_params = module_params.get("camera")
-        a_module = importlib.import_module("storm_control.hal4000." + camera_params.get("module_name"))
+        a_module = importlib.import_module(camera_params.get("module_name"))
         a_class = getattr(a_module, camera_params.get("class_name"))
         self.camera_control = a_class(camera_name = self.module_name,
                                       config = camera_params.get("parameters"),
