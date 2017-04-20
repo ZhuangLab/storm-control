@@ -35,12 +35,11 @@ class IlluminationView(halDialog.HalDialog):
     """
     guiMessage = QtCore.pyqtSignal(object)
     
-    def __init__(self, module_name = None, configuration = None, **kwds):
+    def __init__(self, configuration = None, **kwds):
         super().__init__(**kwds)
 
         self.channels = []
         self.channels_by_name = {}
-        self.module_name = module_name
         self.parameters = params.StormXMLObject()
         self.power_fp = None
         self.running_shutters = False
