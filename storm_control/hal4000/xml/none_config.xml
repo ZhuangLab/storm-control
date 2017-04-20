@@ -343,6 +343,15 @@
       </configuration>      
     </none_405>
 
+    <none_stage>
+      <module_name type="string">storm_control.sc_hardware.none.noneStageModule</module_name>
+      <class_name type="string">NoneStageModule</class_name>
+
+      <configuration>
+	<velocity type="float">100.0</velocity>
+      </configuration>
+    </none_stage>
+    
     <none_wheel1>
       <module_name type="string">storm_control.sc_hardware.none.noneFilterWheelModule</module_name>
       <class_name type="string">NoneFilterWheelModule</class_name>

@@ -27,7 +27,7 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
         """
         super().__init__(**kwds)
         self.is_slow = is_slow
-        self.pixels_to_microns
+        self.pixels_to_microns = 1.0
 
         # Each time this timer fires we'll query the stage for it's
         # current position.
@@ -106,15 +106,29 @@ class StageModule(hardwareModule.HardwareModule):
         if self.stage is not None:
             self.stage.shutDown()
 
-   def getFunctionality(self, message):
-       if (message.getData()["name"] == self.module_name) and (self.stage_functionality is not None):
-           message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                             data = {"functionality" : self.stage_functionality}))
+    def getFunctionality(self, message):
+        if (message.getData()["name"] == self.module_name) and (self.stage_functionality is not None):
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"functionality" : self.stage_functionality}))
 
-    def setVelocity(self, xv, yx):
-        self.stage_functionality.mustRun(task = self.stage.setVelocity,
-                                         args = [xv, yv])
+    def pixelSize(self, message):
+        if self.stage is not None:
+            self.stage_functionality.setPixelsToMicrons(message.getData()["pixel size"])
 
+    def processMessage(self, message):
+
+        if message.isType("get functionality"):
+            self.getFunctionality(message)
+
+        elif message.isType("pixel size"):
+            self.pixelSize(message)
+            
+        elif message.isType("start film"):
+            self.startFilm(message)
+
+        elif message.isType("stop film"):
+            self.stopFilm(message)
+            
     def startFilm(self, message):
         if self.stage is not None:
             self.stage_functionality.mustRun(task = self.stage.joystickOnOff,
