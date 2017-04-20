@@ -46,7 +46,7 @@ class CoherentModule(amplitudeModule.AmplitudeModule):
         configuration = module_params.get("configuration")
         self.used_during_filming = configuration.get("used_during_filming")
 
-    def cleanUp(self):
+    def cleanUp(self, qt_settings):
         if self.laser_functionality is not None:
             self.laser.shutDown()
 
