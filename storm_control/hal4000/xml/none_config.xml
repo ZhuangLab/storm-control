@@ -304,7 +304,7 @@
 	</ch3>
 	<ch4>
 	  <gui_name type="string">532</gui_name>
-	  <color type="string">0,255,255</color>
+	  <color type="string">0,255,0</color>
 	  <digital_modulation>
 	    <hw_fn_name type="string">daq.ilm532.do_task</hw_fn_name>
 	  </digital_modulation>

@@ -38,13 +38,14 @@ class IlluminationView(halDialog.HalDialog):
     def __init__(self, module_name = None, configuration = None, **kwds):
         super().__init__(**kwds)
 
-        self.camera1_fps = None
         self.channels = []
         self.channels_by_name = {}
         self.module_name = module_name
         self.parameters = params.StormXMLObject()
+        self.power_fp = None
         self.running_shutters = False
         self.shutters_info = False
+        self.timing_functionality = None
         self.waveforms = []
         self.xml_directory = os.path.dirname(os.path.dirname(__file__))
 
@@ -135,7 +136,15 @@ class IlluminationView(halDialog.HalDialog):
 
     def getShuttersInfo(self):
         return self.shutters_info
-        
+
+    def handleNewFrame(self, frame_number):
+        """
+        This called during timing by TimingFunctionality provided by timing.timing.
+        """
+        if self.power_fp is not None:
+            frame_number = str(frame_number + 1)
+            self.power_fp.write(frame_number + " " + " ".join(self.getChannelPowers()) + "\n")
+            
     def newParameters(self, parameters):
         """
         Calls channels newParameters method, then updates the size of 
@@ -215,12 +224,23 @@ class IlluminationView(halDialog.HalDialog):
 
     def setFunctionality(self, channel_name, fn_name, functionality):
         self.channels_by_name[channel_name].setFunctionality(fn_name, functionality)
+
+    def setTimingFunctionality(self, timing_functionality):
+        self.timing_functionality = timing_functionality
+        self.timing_functionality.newFrame.connect(self.handleNewFrame)
         
     def setXMLDirectory(self, xml_directory):
         self.xml_directory = xml_directory
         
-    def startFilm(self, run_shutters):
-        if run_shutters:
+    def startFilm(self, film_settings):
+
+        # Open file to save the channel powers at each frame.
+        if film_settings.isSaved():
+            self.power_fp = open(film_settings.getBasename() + ".power", "w")
+            self.power_fp.write("frame " + " ".join(self.getChannelNames()) + "\n")
+
+        # Configure channels.
+        if film_settings.runShutters():
             self.running_shutters = True
 
             # Start channels.
@@ -234,6 +254,12 @@ class IlluminationView(halDialog.HalDialog):
                                                            data = {"waveforms" : self.waveforms}))
             
     def stopFilm(self):
+
+        # Close the channel powers file.
+        if self.power_fp is not None:
+            self.power_fp.close()
+            self.power_fp = None
+
         if self.running_shutters:
 
             # Stop channels.
@@ -242,12 +268,15 @@ class IlluminationView(halDialog.HalDialog):
 
             self.running_shutters = False
 
+        # Disconnect film timing functionality.
+        self.timing_functionality.newFrame.disconnect(self.handleNewFrame)
+        self.timing_functionality = None
+
 
 class Illumination(halModule.HalModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
-        self.power_fp = None
 
         configuration = module_params.get("configuration")
 
@@ -345,18 +374,11 @@ class Illumination(halModule.HalModule):
                 self.view.showIfVisible()
 
         elif message.isType("start film"):
-            film_settings = message.getData()["film settings"]
-            self.view.startFilm(film_settings.runShutters())
-            if film_settings.isSaved():
-                self.power_fp = open(film_settings.getBasename() + ".power", "w")
-                self.power_fp.write("frame " + " ".join(self.view.getChannelNames()) + "\n")
+            self.view.startFilm(message.getData()["film settings"])
 
         elif message.isType("stop film"):
             self.view.stopFilm()
-            if self.power_fp is not None:
-                self.power_fp.close()
-                self.power_fp = None
-
+            
             #
             # Fix shutters file information to be an absolute path as the shutters
             # file won't be saved in the same directory as the movie.
@@ -366,10 +388,8 @@ class Illumination(halModule.HalModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : p}))
 
-    def processL2Message(self, message):
-        if self.power_fp is not None:
-            frame_number = str(message.getData()["frame"].frame_number + 1)
-            self.power_fp.write(frame_number + " " + " ".join(self.view.getChannelPowers()) + "\n")
+        elif message.isType("film timing"):
+            self.view.setTimingFunctionality(message.getData()["functionality"])
 
 
 #
