@@ -146,6 +146,38 @@
       </camera>
     </camera1>
 
+    <!-- AOTF control -->
+    <aotf>
+      <module_name type="string">storm_control.sc_hardware.none.noneAOTFModule</module_name>
+      <class_name type="string">NoneAOTFModule</class_name>
+
+      <configuration>
+	<off_frequency type="float">20.0</off_frequency>
+	<used_during_filming type="boolean">True</used_during_filming>
+	
+	<!-- These are the things that we provide AOTF functionality for.
+	     Other modules will request them with a 'get functionality'
+	     message and "name" = "aotf.xxx". -->
+
+	<ilm647>
+	  <channel type="int">0</channel>
+	  <frequency type="float">90.0</frequency>
+	  <maximum type="int">5000</maximum>
+	</ilm647>
+	<ilm561>
+	  <channel type="int">1</channel>
+	  <frequency type="float">108.0</frequency>
+	  <maximum type="int">4000</maximum>
+	</ilm561>
+	<ilm488>
+	  <channel type="int">2</channel>
+	  <frequency type="float">131.0</frequency>
+	  <maximum type="int">3000</maximum>
+	</ilm488>
+	
+      </configuration>
+    </aotf>
+    
     <!-- DAQ control -->
     <daq>
       <module_name type="string">storm_control.sc_hardware.none.noneDaqModule</module_name>
