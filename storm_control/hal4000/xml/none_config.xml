@@ -361,6 +361,9 @@
     <stage>
       <class_name type="string">Stage</class_name>
       <module_name type="string">storm_control.hal4000.stage.stage</module_name>
+      <configuration>
+	<stage_functionality type="string">none_stage</stage_functionality>
+      </configuration>
     </stage>
     
     <!-- Bluetooth communication -->

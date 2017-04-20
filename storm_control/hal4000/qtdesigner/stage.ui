@@ -121,6 +121,12 @@
        <property name="text">
         <string/>
        </property>
+       <property name="iconSize">
+        <size>
+         <width>56</width>
+         <height>56</height>
+        </size>
+       </property>
       </widget>
      </item>
      <item>
@@ -139,6 +145,12 @@
        </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>56</width>
+         <height>56</height>
+        </size>
        </property>
       </widget>
      </item>
@@ -276,6 +288,12 @@
        <property name="text">
         <string/>
        </property>
+       <property name="iconSize">
+        <size>
+         <width>56</width>
+         <height>56</height>
+        </size>
+       </property>
       </widget>
      </item>
      <item>
@@ -294,6 +312,12 @@
        </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>56</width>
+         <height>56</height>
+        </size>
        </property>
       </widget>
      </item>
@@ -337,6 +361,12 @@
        <property name="text">
         <string/>
        </property>
+       <property name="iconSize">
+        <size>
+         <width>56</width>
+         <height>56</height>
+        </size>
+       </property>
       </widget>
      </item>
      <item>
@@ -355,6 +385,12 @@
        </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>56</width>
+         <height>56</height>
+        </size>
        </property>
       </widget>
      </item>
@@ -504,6 +540,12 @@
        <property name="text">
         <string/>
        </property>
+       <property name="iconSize">
+        <size>
+         <width>56</width>
+         <height>56</height>
+        </size>
+       </property>
       </widget>
      </item>
      <item>
@@ -522,6 +564,12 @@
        </property>
        <property name="text">
         <string/>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>56</width>
+         <height>56</height>
+        </size>
        </property>
       </widget>
      </item>

@@ -14,6 +14,41 @@ import storm_control.hal4000.halLib.halModule as halModule
 import storm_control.hal4000.qtdesigner.stage_ui as stageUi
 
 
+class MotionButton(QtCore.QObject):
+    """
+    Encapsulate the handling and display of the motion buttons.
+    """
+    buttonClicked = QtCore.pyqtSignal(float, float)
+    
+    def __init__(self,
+                 button = None,
+                 icon = None,
+                 button_type = None,
+                 xval = None,
+                 yval = None,
+                 **kwds):
+        super().__init__(**kwds)
+
+        self.step_size = 1.0
+        self.button_type = button_type
+        self.xval = float(xval)
+        self.yval = float(yval)
+
+        self.button = button
+        self.button.setIcon(QtGui.QIcon(icon))
+        self.button.setIconSize(QtCore.QSize(56, 56))
+        self.button.clicked.connect(self.handleClicked)
+
+    def handleClicked(self, boolean):
+        self.buttonClicked.emit(self.xval * self.step_size, self.yval * self.step_size)
+
+    def setStepSize(self, small_step_size, large_step_size):
+        if (self.button_type == "small"):
+            self.step_size = small_step_size
+        else:
+            self.step_size = large_step_size
+            
+
 class StageView(halDialog.HalDialog):
     """
     Manages the stage GUI.
@@ -26,6 +61,8 @@ class StageView(halDialog.HalDialog):
         self.ui = stageUi.Ui_Dialog()
         self.ui.setupUi(self)
 
+        #
+        
         # Disable UI until we get a stage functionality.
         self.setEnabled(False)
         
@@ -43,6 +80,8 @@ class Stage(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
 
+        self.stage_fn_name = module_params.get("configuration.stage_functionality")
+        
         self.view = StageView(module_name = self.module_name)
         self.view.halDialogInit(qt_settings,
                                 module_params.get("setup_name") + " stage control")
@@ -56,15 +95,17 @@ class Stage(halModule.HalModule):
 
     def handleResponse(self, message, response):
         if message.isType("get functionality"):
-            self.view.setFunctionality(response.getData()["functionality"])
+            self.view.setStageFunctionality(response.getData()["functionality"])
             
     def processMessage(self, message):
             
         if message.isType("configure1"):
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "add to menu",
-                                                       data = {"item name" : "Stage",
-                                                               "item msg" : "show stage"}))
+            self.sendMessage(halMessage.HalMessage(m_type = "add to menu",
+                                                   data = {"item name" : "Stage",
+                                                           "item msg" : "show stage"}))
+
+            self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
+                                                   data = {"name" : self.stage_fn_name}))
 
         elif message.isType("show stage"):
             self.view.show()
