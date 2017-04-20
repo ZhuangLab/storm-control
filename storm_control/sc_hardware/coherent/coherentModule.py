@@ -54,18 +54,21 @@ class CoherentModule(amplitudeModule.AmplitudeModule):
        if (message.getData()["name"] == self.module_name) and (self.laser_functionality is not None):
            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                              data = {"functionality" : self.laser_functionality}))
-        
+
+    def setExtControl(self, state):
+        self.device_mutex.lock()
+        self.laser.setExtControl(state)
+        self.device_mutex.unlock()
+                
     def startFilm(self, message):
         if message.getData()["film settings"].runShutters():
             if self.used_during_filming and (self.laser_functionality is not None):
-                self.laser_functionality.mustRun(task = self.laser.setExtControl,
-                                                 args = [True])
+                self.setExtControl(True)
                 self.film_mode = True
 
     def stopFilm(self, message):
         if self.film_mode:
-            self.laser_functionality.mustRun(task = self.laser.setExtControl,
-                                             args = [False])
+            self.setExtControl(False)
             self.film_mode = False
 
 
@@ -82,7 +85,8 @@ class CoherentCube(CoherentModule):
         
         if self.laser.getStatus():
             [pmin, pmax] = self.laser.getPowerRange()
-            self.laser_functionality = CoherentLaserFunctionality(display_normalized = True,
+            self.laser_functionality = CoherentLaserFunctionality(device_mutex = self.device_mutex,
+                                                                  display_normalized = True,
                                                                   minimum = 0,
                                                                   maximum = int(100.0 * pmax),
                                                                   used_during_filming = self.used_during_filming)
@@ -103,7 +107,8 @@ class CoherentObis(CoherentModule):
 
         if self.laser.getStatus():
             [pmin, pmax] = self.laser.getPowerRange()
-            self.laser_functionality = CoherentLaserFunctionality(display_normalized = True,
+            self.laser_functionality = CoherentLaserFunctionality(device_mutex = self.device_mutex,
+                                                                  display_normalized = True,
                                                                   minimum = 0,
                                                                   maximum = int(100.0 * pmax),
                                                                   used_during_filming = self.used_during_filming)
