@@ -52,6 +52,7 @@ class ChannelUI(QtWidgets.QFrame):
 
         # Container for the power slider (if any).
         self.slider_widget = QtWidgets.QWidget(self)
+        self.slider_widget.setMinimumHeight(150)
 
         self.slider_layout = QtWidgets.QVBoxLayout(self.slider_widget)
         self.slider_layout.setContentsMargins(0,0,0,0)
@@ -161,7 +162,6 @@ class ChannelUIAdjustable(ChannelUI):
 
         # Slider for controlling the power.
         self.powerslider = QtWidgets.QSlider(self.slider_widget)
-        self.powerslider.setMinimumHeight(150)
         self.powerslider.setOrientation(QtCore.Qt.Vertical)
         self.powerslider.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
                                        QtWidgets.QSizePolicy.Expanding)
