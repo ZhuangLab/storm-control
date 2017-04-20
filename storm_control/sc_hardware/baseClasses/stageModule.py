@@ -28,12 +28,14 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
         super().__init__(**kwds)
         self.is_slow = is_slow
         self.pixels_to_microns = 1.0
+        self.stage = stage
 
         # Each time this timer fires we'll query the stage for it's
         # current position.
         self.updateTimer = QtCore.QTimer()
         self.updateTimer.setInterval(update_interval)
         self.updateTimer.timeout.connect(self.handleUpdateTimer)
+        self.updateTimer.start()
 
         # Due to implementation details of the BufferedFunctionality we'll get
         # the position from the stage as a list, so we need to process that
@@ -67,7 +69,6 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
         """
         Emit the current stage position in microns.
         """
-        print(position)
         self.stagePosition.emit(*position)
         
     def handleUpdateTimer(self):

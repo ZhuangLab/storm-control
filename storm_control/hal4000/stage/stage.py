@@ -65,9 +65,14 @@ class StageView(halDialog.HalDialog):
         
         # Disable UI until we get a stage functionality.
         self.setEnabled(False)
+
+    def handleStagePosition(self, stage_x, stage_y, stage_z):
+        self.ui.xposText.setText("{0:.3f}".format(stage_x))
+        self.ui.yposText.setText("{0:.3f}".format(stage_y))
         
     def setStageFunctionality(self, stage_functionality):
         self.stage_functionality = stage_functionality
+        self.stage_functionality.stagePosition.connect(self.handleStagePosition)
         self.setEnabled(True)
 
     def show(self):
