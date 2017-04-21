@@ -370,7 +370,8 @@ class Film(halModule.HalModule):
         halMessage.addMessage("stop film",
                               validator = {"data" : {"film settings" : [True, filmSettings.FilmSettings],
                                                      "number frames" : [True, int]},
-                                           "resp" : {"parameters" : [False, params.StormXMLObject]}})
+                                           "resp" : {"parameters" : [False, params.StormXMLObject],
+                                                     "acquisition" : [False, list]}})
 
         # Request to stop filming.
         halMessage.addMessage("stop film request",
@@ -436,20 +437,23 @@ class Film(halModule.HalModule):
                     data = response.getData()
 
                     # Add general parameters 'en-bloc'.
-                    to_save.addSubSection(response.source,
-                                          svalue = data["parameters"])
+                    if "parameters" in data:
+                        to_save.addSubSection(response.source,
+                                              svalue = data["parameters"])
 
                     # Add any acquisition parameters, these will be a list.
                     if "acquisition" in data:
                         for p in data["acquisition"]:
                             acq_p.addParameter(p.getName(), p)
-
-                # FIXME: Also include notes.
+                
+                to_save.saveToFile(film_settings.getBasename() + ".xml")
+                
+                # FIXME: Also include notes in the log file.
                 msg = str(datetime.datetime.now()) + ","
                 msg += film_settings.getBasename()
                 msg += "\r\n"
                 self.logfile_fp.write(msg)
-                to_save.saveToFile(film_settings.getBasename() + ".xml")
+
 
     def handleStopCamera(self):
         self.active_cameras -= 1

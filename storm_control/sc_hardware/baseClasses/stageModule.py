@@ -10,6 +10,7 @@ from PyQt5 import QtCore
 import storm_control.hal4000.halLib.halMessage as halMessage
 
 import storm_control.sc_hardware.baseClasses.hardwareModule as hardwareModule
+import storm_control.sc_library.parameters as params
 
 
 class StageFunctionality(hardwareModule.BufferedFunctionality):
@@ -146,3 +147,9 @@ class StageModule(hardwareModule.HardwareModule):
         if self.stage is not None:
             self.stage_functionality.mustRun(task = self.stage.joystickOnOff,
                                              args = [True])
+            [x, y, z] = self.stage_functionality.getCurrentPosition()
+            pos_string = "{0:.2f},{1:.2f},{2:.2f}".format(x, y, z)
+            pos_param = params.ParameterCustom(name = "stage_position",
+                                               value = pos_string)
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"acquisition" : [pos_param]}))

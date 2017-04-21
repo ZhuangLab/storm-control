@@ -271,4 +271,9 @@ class Stage(halModule.HalModule):
 
         elif message.isType("start"):
             if message.getData()["show_gui"]:
-                self.view.showIfVisible()            
+                self.view.showIfVisible()
+
+        elif message.isType("stop film"):
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.view.getParameters()}))
+            
