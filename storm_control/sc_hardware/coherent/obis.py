@@ -32,7 +32,7 @@ class Obis(RS232.RS232):
             # see if the laser is connected
             assert not(self.commWithResp("?SYSTem:INFormation:MODel?") == None)
 
-        # FIXME: This should not catch everything!            
+        # FIXME: This should not catch everything!
         except:
             print(traceback.format_exc())
             self.live = False
