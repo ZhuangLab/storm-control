@@ -45,13 +45,13 @@ class MarzhauserRS232(RS232.RS232):
 
     def goAbsolute(self, x, y):
         x = x * self.um_to_unit
-        x = y * self.um_to_unit
-        print(self.commWithResp(" ".join(["!moa", str(x), str(y), "0"])))
+        y = y * self.um_to_unit
+        self.commWithResp(" ".join(["!moa", str(x), str(y)]))
 
     def goRelative(self, x, y):
         x = x * self.um_to_unit
         y = y * self.um_to_unit
-        print(self.commWithResp(" ".join(["!mor", str(x), str(y), "0"])))
+        self.commWithResp(" ".join(["!mor", str(x), str(y)]))
 
     def jog(self, x_speed, y_speed):
         vx = x_speed * self.um_to_unit
@@ -68,11 +68,11 @@ class MarzhauserRS232(RS232.RS232):
         try:
             [self.x, self.y] = map(lambda x: float(x)*self.unit_to_um, 
                                    self.commWithResp("?pos")[:-2].split(" "))
-            return [self.x, self.y, 0.0]
+            return [self.x, self.y]
         except Exception as ex:
-            print(ex)
+            print(">pos", ex)
             hdebug.logText("  Warning: Bad position from Marzhauser stage.")
-            return [self.x, self.y, 0.0]
+            return [self.x, self.y]
 
     def serialNumber(self):
         """
@@ -84,7 +84,7 @@ class MarzhauserRS232(RS232.RS232):
         self.commWithResp(" ".join(["!vel",str(x_vel),str(y_vel)]))
 
     def zero(self):
-        self.commWithResp("!pos 0 0 0")
+        self.commWithResp("!pos 0 0")
 
 
 #
