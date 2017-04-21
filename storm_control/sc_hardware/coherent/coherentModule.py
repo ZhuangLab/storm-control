@@ -17,7 +17,7 @@ class CoherentLaserFunctionality(amplitudeModule.AmplitudeFunctionalityBuffered)
     """
     def __init__(self, laser = None, **kwds):
         super().__init__(**kwds)
-        self.on = True
+        self.on = False
         self.laser = laser
 
     def onOff(self, power, state):
