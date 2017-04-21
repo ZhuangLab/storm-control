@@ -515,6 +515,8 @@ class HalCore(QtCore.QObject):
         print("  ...")
         for module in self.modules:
             module.cleanUp(self.qt_settings)
+        print("Waiting for QThreadPool to finish.")
+        halModule.threadpool.waitForDone()
 
     def handleErrors(self, message):
         """
