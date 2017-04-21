@@ -9,6 +9,7 @@ Hazen 06/15
 import copy
 import os
 import traceback
+import xml
 
 from xml.dom import minidom
 from xml.etree import ElementTree
@@ -844,7 +845,11 @@ class StormXMLObject(object):
         Return an XML string representation of this object.
         """
         rough_string = ElementTree.tostring(self.toXML(override_is_saved = all_params))
-        reparsed = minidom.parseString(rough_string)
+        try:
+            reparsed = minidom.parseString(rough_string)
+        except xml.parsers.expat.ExpatError as exception:
+            print(rough_string)
+            raise exception
         return reparsed.toprettyxml(indent = "  ", encoding = "ISO-8859-1").decode()
 
     def toXML(self, xml = None, name = "settings", override_is_saved = False):
