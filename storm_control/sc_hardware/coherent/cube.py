@@ -4,8 +4,6 @@ Generic Coherent Cube laser control (via RS-232)
 
 Hazen 7/10
 """
-
-import time
 import traceback
 
 import storm_control.sc_hardware.serial.RS232 as RS232

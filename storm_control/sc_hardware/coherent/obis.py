@@ -4,8 +4,6 @@ Generic Obis laser control (RS-232 over USB).
 
 Hazen 7/10
 """
-
-import time
 import traceback
 
 import storm_control.sc_hardware.serial.RS232 as RS232
@@ -136,8 +134,9 @@ class Obis(RS232.RS232):
 #
 # Testing
 #
-
 if (__name__ == "__main__"):
+    import time
+    
     obis = Obis(port = "COM9")
     if obis.getStatus():
         print obis.getPowerRange()
