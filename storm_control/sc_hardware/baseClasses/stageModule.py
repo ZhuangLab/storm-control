@@ -76,6 +76,7 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
         """
         Emit the current stage position in microns.
         """
+        print(">hu", position)
         [self.sx, self.sy, self.sz] = position
         self.stagePosition.emit(*position)
         
@@ -95,6 +96,10 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
     def setPixelsToMicrons(self, pixels_to_microns):
         self.pixels_to_microns = pixels_to_microns
 
+    def wait(self):
+        self.updateTimer.stop()
+        super().wait()
+
     def zero(self):
         self.mustRun(task = self.stage.zero)
 
@@ -113,6 +118,7 @@ class StageModule(hardwareModule.HardwareModule):
 
     def cleanUp(self, qt_settings):
         if self.stage is not None:
+            self.stage_functionality.wait()
             self.stage.shutDown()
 
     def getFunctionality(self, message):
