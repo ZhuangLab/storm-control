@@ -1,60 +1,60 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Generic Obis laser control (RS-232 over USB).
-#
-# Hazen 7/10
-#
+#!/usr/bin/env python
+"""
+Generic Obis laser control (RS-232 over USB).
+
+Hazen 7/10
+"""
 
 import time
 import traceback
 
 import storm_control.sc_hardware.serial.RS232 as RS232
 
-## Obis
-#
-# This controls a Coherent Obis laser using RS-232.
-#
 class Obis(RS232.RS232):
-
-    ## __init__
-    #
-    # Connect to the laser at the specified port and verify that the laser is responding.
-    #
-    # @param port The RS-232 port, a string like "COM5".
-    #
-    def __init__(self, port):
+    """
+    This controls a Coherent Obis laser using RS-232.
+    """
+    def __init__(self, **kwds):
+        """
+        Connect to the laser at the specified port and verify that the laser is responding.
+        """
+        # Add Obis RS232 default settings.
+        kwds["baudrate"] = 9600
+        kwds["end_of_line"] = "\r"
+        kwds["wait_time"] = 0.05
+        
         self.on = False
+        self.pmin = 0.0
+        self.pmax = 5.0
+            
         try:
             # open port
-            RS232.RS232.__init__(self, port, None, 9600, "\r", 0.05)
+            super().__init__(**kwds)
 
             # see if the laser is connected
             assert not(self.commWithResp("?SYSTem:INFormation:MODel?") == None)
 
-            # finish setup
-            self.pmin = 0.0
-            self.pmax = 5.0
+        # FIXME: This should not catch everything!            
+        except:
+            print(traceback.format_exc())
+            self.live = False
+            print("Failed to connect to Obis Laser at port", kwds["port"])
+            print("Perhaps it is turned off or the COM ports have")
+            print("been scrambled?")
+
+        if self.live:
             [self.pmin, self.pmax] = self.getPowerRange()
             self.setExtControl(False)
             if (not self.getLaserOnOff()):
                 self.setLaserOnOff(True)
-        except:
-            print traceback.format_exc()
-            self.live = False
-            print "Failed to connect to Obis Laser at port", port
-            print "Perhaps it is turned off or the COM ports have"
-            print "been scrambled?"
+            
 
     #def respToFloat(self, resp, start):
     #    return float(resp[start:-1])
-
-    ## getExtControl
-    #
-    # @return True/False the laser can be controlled with an external voltage.
-    #
     def getExtControl(self):
+        """
+        Return True/False the laser can be controlled with an external voltage.
+        """
         self.sendCommand("SOURce:AM:SOURce?")
         response = self.waitResponse()
         if ("CWP" in response) or ("CWC" in response):
@@ -62,11 +62,10 @@ class Obis(RS232.RS232):
         else:
             return True
 
-    ## getLaserOnOff
-    #
-    # @return True/False the laser is on/off.
-    #
     def getLaserOnOff(self):
+        """
+        Return True/False the laser is on/off.
+        """
         self.sendCommand("SOURce:AM:STATe?")
         resp = self.waitResponse()
         if ("ON" in resp):
@@ -76,45 +75,37 @@ class Obis(RS232.RS232):
             self.on = False
             return False
 
-    ## getPowerRange
-    #
-    # @return [minimum power, maximum power]
-    #
     def getPowerRange(self):
+        """
+        Return [minimum power, maximum power].
+        """
         self.sendCommand("SOURce:POWer:LIMit:LOW?")
         pmin = 1000.0 * float(self.waitResponse()[:-6])
         self.sendCommand("SOURce:POWer:LIMit:HIGH?")
         pmax = 1000.0 * float(self.waitResponse()[:-6])
         return [pmin, pmax]
 
-    ## getPower
-    #
-    # @return the current laser power.
-    #
     def getPower(self):
+        """
+        Return the current laser power.
+        """
         self.sendCommand("SOURce:POWer:NOMinal?")
         return float(self.waitResponse()[:-1])
 
-    ## setExtControl
-    #
-    # Turn on/off external control mode.
-    #
-    # @param mode True/False, turn the external control mode off/on.
-    #
     def setExtControl(self, mode):
+        """
+        Turn on/off external control mode.
+        """
         if mode:
             self.sendCommand("SOURce:AM:EXTernal DIGital")
         else:
             self.sendCommand("SOURce:AM:INTernal CWP")
         self.waitResponse()
 
-    ## setLaserOnOff
-    #
-    # Turn the laser on/off.
-    #
-    # @param on True/False, turn the laser on/off.
-    #
     def setLaserOnOff(self, on):
+        """
+        Turn the laser on/off.
+        """
         if on and (not self.on):
             self.sendCommand("SOURce:AM:STATe ON")
             self.waitResponse()
@@ -124,31 +115,30 @@ class Obis(RS232.RS232):
             self.waitResponse()
             self.on = False
 
-    ## setPower
-    #
-    # @param power_in_mw The desired laser power in mW.
-    #
     def setPower(self, power_in_mw):
+        """
+        power_in_mw - The desired laser power in mW.
+        """
         if power_in_mw > self.pmax:
             power_in_mw = self.pmax
         self.sendCommand("SOURce:POWer:LEVel:IMMediate:AMPLitude " + str(0.001*power_in_mw))
         self.waitResponse()
 
-    ## shutDown
-    #
-    # Turn the laser off and close the RS-232 port.
-    #
     def shutDown(self):
+        """
+        Turn the laser off and close the RS-232 port.
+        """
         if self.live:
             self.setLaserOnOff(False)
-        RS232.RS232.shutDown(self)
+        super().shutDown()
+
 
 #
 # Testing
 #
 
-if __name__ == "__main__":
-    obis = Obis("COM9")
+if (__name__ == "__main__"):
+    obis = Obis(port = "COM9")
     if obis.getStatus():
         print obis.getPowerRange()
         print obis.getLaserOnOff()

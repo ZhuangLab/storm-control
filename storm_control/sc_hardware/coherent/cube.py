@@ -6,6 +6,7 @@ Hazen 7/10
 """
 
 import time
+import traceback
 
 import storm_control.sc_hardware.serial.RS232 as RS232
 
@@ -17,7 +18,7 @@ class Cube(RS232.RS232):
         """
         Connect to the laser by RS-232 and verify that the connection has been made.
         """
-        # Add Coherent RS232 default settings.
+        # Add Cube RS232 default settings.
         kwds["baudrate"] = 19200
         kwds["end_of_line"] = "\r"
         kwds["wait_time"] = 0.05
@@ -34,7 +35,7 @@ class Cube(RS232.RS232):
             assert not(self.commWithResp("?HID") == None)
 
         except Exception as e:
-            print("RS232 Error:", type(e), str(e))
+            print(traceback.format_exc())
             self.live = False
             print("Failed to connect to Cube Laser at port", kwds["port"])
             print("Perhaps it is turned off or the COM ports have")
