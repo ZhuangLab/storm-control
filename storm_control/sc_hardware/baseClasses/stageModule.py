@@ -29,6 +29,9 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
         self.is_slow = is_slow
         self.pixels_to_microns = 1.0
         self.stage = stage
+        self.sx = None
+        self.sy = None
+        self.sz = None
 
         # Each time this timer fires we'll query the stage for it's
         # current position.
@@ -51,6 +54,9 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
         self.maybeRun(task = self.stage.goAbsolute,
                       args = [x, y])
 
+    def getCurrentPosition(self):
+        return [self.sx, self.sy, self.sz]
+
     def goAbsolute(self, x, y):
         """
         Usually used by the stage GUI, units are microns.
@@ -69,6 +75,7 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
         """
         Emit the current stage position in microns.
         """
+        [self.sx, self.sy, self.sz] = position
         self.stagePosition.emit(*position)
         
     def handleUpdateTimer(self):

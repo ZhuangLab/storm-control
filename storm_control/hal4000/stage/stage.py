@@ -56,6 +56,9 @@ class MotionButton(QtCore.QObject):
 class StageView(halDialog.HalDialog):
     """
     Manages the stage GUI.
+
+    The stage orientation settings have been dropped in this version of
+    HAL, at least until we remember why we thought they were useful.
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
@@ -82,7 +85,6 @@ class StageView(halDialog.HalDialog):
 
         # Configure all the stage movement buttons.
         icon_path = os.path.join(os.path.dirname(__file__),"../icons/")
-        print(icon_path)
         self.motion_buttons = [MotionButton(button = self.ui.leftSButton,
                                             icon = os.path.join(icon_path, "1leftarrow-128.png"),
                                             button_type = "small",
@@ -126,20 +128,79 @@ class StageView(halDialog.HalDialog):
         for button in self.motion_buttons:
             button.motionClicked.connect(self.handleMotionClicked)
 
+        # Connect the rest of the UI elements.
+        self.ui.addButton.clicked.connect(self.handleAddButton)
+        self.ui.clearButton.clicked.connect(self.handleClearButton)
+        self.ui.goButton.clicked.connect(self.handleGoButton)
+        self.ui.homeButton.clicked.connect(self.handleHomeButton)
+        self.ui.loadButton.clicked.connect(self.handleLoadButton)
+        self.ui.saveButton.clicked.connect(self.handleSaveButton)
+        self.ui.saveComboBox.activated.connect(self.handleSaveComboBox)
+        self.ui.zeroButton.clicked.connect(self.handleZeroButton)
+
         self.newParameters(self.parameters)
         
         # Disable UI until we get a stage functionality.
         self.setEnabled(False)
 
+
     def getParameters(self):
         return self.parameters
+
+    def handleAddButton(self, boolean):
+        [x, y, z] = self.stage_functionality.getCurrentPosition()
+        self.ui.saveComboBox.addItem("{0:.1f}, {1:.1f}".format(x, y), [x, y])
+        self.ui.saveComboBox.setCurrentIndex(self.ui.saveComboBox.count()-1)
+
+    def handleClearButton(self, boolean):
+        self.ui.saveComboBox.clear()
+
+    def handleGoButton(self, boolean):
+        self.stage_functionality.goAbsolute(self.ui.xmoveDoubleSpinBox.value(),
+                                            self.ui.ymoveDoubleSpinBox.value())
+
+    def handleHomeButton(self, boolean):
+        self.stage_functionality.goAbsolute(0, 0)
+
+    def handleLoadButton(self, boolean):
+        positions_filename = QtWidgets.QFileDialog.getOpenFileName(self,
+                                                                   "Load Positions",
+                                                                   self.directory,
+                                                                   "*.txt")[0]
+        if positions_filename:
+            self.ui.saveComboBox.clear()
+            with open(positions_filename, "r") as fp:
+                for line in fp:
+                    [x, y] = map(float, line.split(","))
+                    self.ui.saveComboBox.addItem("{0:.1f}, {1:.1f}".format(x, y),
+                                                 [x, y])
+            self.ui.saveComboBox.setCurrentIndex(self.ui.saveComboBox.count()-1)
         
     def handleMotionClicked(self, dx, dy):
         self.stage_functionality.goRelative(dx, dy)
+
+    def handleSaveButton(self, boolean):
+        positions_filename = QtWidgets.QFileDialog.getSaveFileName(self, 
+                                                                   "Save Positions", 
+                                                                   self.directory, 
+                                                                   "*.txt")[0]
+        if positions_filename and (self.ui.saveComboBox.count() > 0):
+            with open(positions_filename, "w") as fp:
+                for i in range(self.ui.saveComboBox.count()):
+                    [x, y] = self.ui.saveComboBox.itemData(i)
+                    fp.write("{0:.2f}, {1:.2f}\r\n".format(x, y))
+
+    def handleSaveComboBox(self, index):
+        [x, y] = self.ui.saveComboBox.itemData(index)
+        self.ui.xmoveDoubleSpinBox.setValue(x)
+        self.ui.ymoveDoubleSpinBox.setValue(y)
         
     def handleStagePosition(self, stage_x, stage_y, stage_z):
         self.ui.xposText.setText("{0:.3f}".format(stage_x))
         self.ui.yposText.setText("{0:.3f}".format(stage_y))
+
+    def handleZeroButton(self, boolean):
+        self.stage_functionality.zero()
 
     def newParameters(self, parameters):
         small_step = parameters.get("small_step_size")
