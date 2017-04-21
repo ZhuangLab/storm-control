@@ -50,7 +50,7 @@ class CoherentModule(amplitudeModule.AmplitudeModule):
         if self.laser_functionality is not None:
             self.laser.shutDown()
 
-   def getFunctionality(self, message):
+    def getFunctionality(self, message):
        if (message.getData()["name"] == self.module_name) and (self.laser_functionality is not None):
            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                              data = {"functionality" : self.laser_functionality}))
@@ -80,12 +80,13 @@ class CoherentCube(CoherentModule):
         serial_port = module_params.get("configuration").get("port")
 
         import storm_control.sc_hardware.coherent.cube as cube
-        self.laser = cube.Cube(serial_port)
-        
+        self.laser = cube.Cube(port = serial_port)
+
         if self.laser.getStatus():
             [pmin, pmax] = self.laser.getPowerRange()
             self.laser_functionality = CoherentLaserFunctionality(device_mutex = self.device_mutex,
                                                                   display_normalized = True,
+                                                                  laser = self.laser,
                                                                   minimum = 0,
                                                                   maximum = int(100.0 * pmax),
                                                                   used_during_filming = self.used_during_filming)
@@ -102,12 +103,13 @@ class CoherentObis(CoherentModule):
         serial_port = module_params.get("configuration").get("port")
 
         import storm_control.sc_hardware.coherent.obis as obis
-        self.laser = obis.Obis(serial_port)
+        self.laser = obis.Obis(port = serial_port)
 
         if self.laser.getStatus():
             [pmin, pmax] = self.laser.getPowerRange()
             self.laser_functionality = CoherentLaserFunctionality(device_mutex = self.device_mutex,
                                                                   display_normalized = True,
+                                                                  laser = self.laser,
                                                                   minimum = 0,
                                                                   maximum = int(100.0 * pmax),
                                                                   used_during_filming = self.used_during_filming)
