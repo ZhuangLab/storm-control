@@ -88,6 +88,9 @@ class HalController(halModule.HalModule):
                 self.view.addMenuItems()
                 self.view.addWidgets()
                 self.view.show()
+                
+            self.sendMessage(halMessage.HalMessage(m_type = "new directory",
+                                                   data = {"directory" : self.view.getFilmDirectory()}))
 
         elif message.isType("start film"):
             self.view.startFilm(message.getData()["film settings"])
@@ -260,6 +263,9 @@ class HalView(QtWidgets.QMainWindow):
                     halMessageBox.halMessageBoxInfo("XML file parsing error " + error_text + ".")
                 else:
                     halMessageBox.halMessageBoxInfo("File type not recognized.")
+
+    def getFilmDirectory(self):
+        return self.film_directory
 
     def handleCloseTimer(self):
         self.close_now = True
