@@ -34,7 +34,11 @@ class TBWidget(QtWidgets.QWidget):
     def handleProcessed(self, string):
         self.strings.append(string)
         if "end" in string:
-            assert(self.strings == ["0111", "0212", "0end"])
+            try:
+                assert(self.strings == ["0111", "0212", "0end"])
+            except AssertionError as exc:
+                print(self.strings, "is not expected")
+                raise exc
             self.bf.wait()
             self.close()
         

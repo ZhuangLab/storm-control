@@ -83,36 +83,39 @@ class BufferedFunctionality(HardwareFunctionality):
         will only process the most recently received request.
         """
         if not self.busy:
-            self.start(task, args, True, ret_signal)
+            self.busy = True
+            self.start(task, args, ret_signal)
         else:
-            self.next_request = [task, args, True, ret_signal]
+            self.next_request = [task, args, ret_signal]
 
     def mustRun(self, task = None, args = [], ret_signal = None):
         """
         Call this method with requests that must be processed.
+
+        FIXME: There is some danger here of being able to build up a
+               large backlog of QRunnables that are waiting to run.
         """
-        self.start(task, args, False, ret_signal)
-            
-    def run(self, task, args, emit_done, ret_signal):
+        self.start(task, args, ret_signal)
+
+    def run(self, task, args, ret_signal):
         """
         run the task with arguments args, and use the ret_signal
         pyqtSignal to return the results.
         """
+        self.busy = True
         self.device_mutex.lock()
         retv = task(*args)
         self.device_mutex.unlock()
         self.busy = False
-        if emit_done:
-            self.done.emit()
+        self.done.emit()
         if ret_signal is not None:
             ret_signal.emit(retv)
 
-    def start(self, task, args, emit_done, ret_signal):
+    def start(self, task, args, ret_signal):
         if not self.running:
             return
-        self.busy = True
         hw = HardwareWorker(task = self.run,
-                            args = [task, args, emit_done, ret_signal])
+                            args = [task, args, ret_signal])
         getThreadPool().start(hw)
 
     def wait(self):
@@ -121,7 +124,7 @@ class BufferedFunctionality(HardwareFunctionality):
         """
         self.running = False
         while(self.busy):
-            print(self.busy, self.running)
+            print("BufferedFunctionality wait")
             time.sleep(0.1)
 
 
