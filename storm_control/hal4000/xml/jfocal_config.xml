@@ -268,12 +268,23 @@
       </configuration>
     </illumination>
 
+    <!-- Marzhauzer stage -->
+    <marzhauser_stage>
+      <module_name type="string">storm_control.sc_hardware.marzhauser.marzhauserModule</module_name>
+      <class_name type="string">MarzhauserStage</class_name>
+
+      <configuration>
+	<port type="string">COM5</port>
+	<velocity type="float">2.0</velocity>
+      </configuration>
+    </marzhauser_stage>
+
     <!-- Stage control GUI -->
     <stage>
       <class_name type="string">Stage</class_name>
       <module_name type="string">storm_control.hal4000.stage.stage</module_name>
       <configuration>
-	<stage_functionality type="string">none_stage</stage_functionality>
+	<stage_functionality type="string">marzhauser_stage</stage_functionality>
       </configuration>
     </stage>
 
