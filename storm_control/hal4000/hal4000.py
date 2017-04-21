@@ -511,12 +511,12 @@ class HalCore(QtCore.QObject):
                                                     message_chain))
 
     def cleanUp(self):
-        print(" Dave? What are you doing Dave?")
-        print("  ...")
         for module in self.modules:
             module.cleanUp(self.qt_settings)
         print("Waiting for QThreadPool to finish.")
         halModule.threadpool.waitForDone()
+        print(" Dave? What are you doing Dave?")
+        print("  ...")
 
     def handleErrors(self, message):
         """
