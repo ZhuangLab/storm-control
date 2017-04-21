@@ -55,7 +55,7 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
                       args = [x, y])
 
     def getCurrentPosition(self):
-        return [self.sx, self.sy, self.sz]
+        return [self.sx, self.sy]
 
     def goAbsolute(self, x, y):
         """
@@ -151,8 +151,8 @@ class StageModule(hardwareModule.HardwareModule):
         if self.stage is not None:
             self.stage_functionality.mustRun(task = self.stage.joystickOnOff,
                                              args = [True])
-            [x, y, z] = self.stage_functionality.getCurrentPosition()
-            pos_string = "{0:.2f},{1:.2f},{2:.2f}".format(x, y, z)
+            [x, y] = self.stage_functionality.getCurrentPosition()
+            pos_string = "{0:.2f},{1:.2f}".format(x, y)
             pos_param = params.ParameterCustom(name = "stage_position",
                                                value = pos_string)
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
