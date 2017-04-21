@@ -168,11 +168,16 @@ class ChannelUIAdjustable(ChannelUI):
         # Slider for controlling the power.
         self.powerslider = QtWidgets.QSlider(self.slider_widget)
         self.powerslider.setOrientation(QtCore.Qt.Vertical)
-        self.powerslider.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
+        self.powerslider.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
                                        QtWidgets.QSizePolicy.Expanding)
 
         self.slider_layout.addWidget(self.powerslider)
 
+        # FIXME: If I knew what I was doing I should be able to do this
+        #        using the stylesheet?
+        self.powerslider.setFixedWidth(25)
+        self.slider_layout.setAlignment(self.powerslider, QtCore.Qt.AlignHCenter)
+                
     def configureSlider(self, minimum, maximum):
         """
         This is called once we have obtained amplitude functionality 
