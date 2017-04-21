@@ -34,7 +34,8 @@ class Cube(RS232.RS232):
             # see if the laser is connected
             assert not(self.commWithResp("?HID") == None)
 
-        except Exception as e:
+        # FIXME: This should not catch everything!
+        except Exception:
             print(traceback.format_exc())
             self.live = False
             print("Failed to connect to Cube Laser at port", kwds["port"])
