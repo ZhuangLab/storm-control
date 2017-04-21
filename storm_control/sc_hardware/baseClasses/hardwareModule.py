@@ -8,6 +8,7 @@ Hazen 04/17
 """
 #import copy
 
+import time
 from PyQt5 import QtCore
 
 import storm_control.hal4000.halLib.halFunctionality as halFunctionality
@@ -64,7 +65,8 @@ class BufferedFunctionality(HardwareFunctionality):
         self.busy = False
         self.device_mutex = device_mutex        
         self.next_request = None
-
+        self.running = True
+        
         # This signal is used to let us know when the current 'maybe'
         # request is done and we should start the next one.
         self.done.connect(self.handleDone)
@@ -106,11 +108,22 @@ class BufferedFunctionality(HardwareFunctionality):
             ret_signal.emit(retv)
 
     def start(self, task, args, emit_done, ret_signal):
+        if not self.running:
+            return
         self.busy = True
         hw = HardwareWorker(task = self.run,
                             args = [task, args, emit_done, ret_signal])
         getThreadPool().start(hw)
-        
+
+    def wait(self):
+        """
+        Block job submission and wait for the last job to finish.
+        """
+        self.running = False
+        while(self.busy):
+            print(self.busy, self.running)
+            time.sleep(0.1)
+
 
 class HardwareModule(halModule.HalModule):
 
