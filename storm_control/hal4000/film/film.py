@@ -308,8 +308,6 @@ class Film(halModule.HalModule):
         self.writers_stopped_timer = QtCore.QTimer(self)
 
         self.logfile_fp = open(module_params.get("directory") + "image_log.txt", "a")
-        self.logfile_fp.write("\r\n")
-        self.logfile_fp.flush()
 
         self.writers_stopped_timer.setSingleShot(True)
         self.writers_stopped_timer.setInterval(10)
@@ -424,6 +422,7 @@ class Film(halModule.HalModule):
         # to the 'stop film' message. We save them in an xml file here.
         elif message.isType("stop film"):
             self.film_state = "idle"
+            notes = ""
             film_settings = message.getData()["film settings"]
             number_frames = message.getData()["number frames"]
             if film_settings.isSaved():
@@ -445,15 +444,17 @@ class Film(halModule.HalModule):
                     if "acquisition" in data:
                         for p in data["acquisition"]:
                             acq_p.addParameter(p.getName(), p)
+                            if (p.getName() == "notes"):
+                                notes = p.getv()
                 
                 to_save.saveToFile(film_settings.getBasename() + ".xml")
                 
-                # FIXME: Also include notes in the log file.
-                msg = str(datetime.datetime.now()) + ","
-                msg += film_settings.getBasename()
+                msg = ",".join([str(datetime.datetime.now()),
+                                film_settings.getBasename(),
+                                notes])
                 msg += "\r\n"
                 self.logfile_fp.write(msg)
-
+                self.logfile_fp.flush()
 
     def handleStopCamera(self):
         self.active_cameras -= 1

@@ -97,10 +97,13 @@ class HalController(halModule.HalModule):
 
         elif message.isType("stop film"):
             self.view.stopFilm()
+            notes_param = params.ParameterString(name = "notes",
+                                                 value = self.view.getNotesEditText())
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"acquisition" : [notes_param]}))
 
         elif message.isType("tests done"):
             self.view.close()
-            
 
 #
 # Main window View.
@@ -267,6 +270,9 @@ class HalView(QtWidgets.QMainWindow):
     def getFilmDirectory(self):
         return self.film_directory
 
+    def getNotesEditText(self):
+        return self.ui.notesEdit.toPlainText()
+        
     def handleCloseTimer(self):
         self.close_now = True
         self.guiMessage.emit(halMessage.HalMessage(source = self,
