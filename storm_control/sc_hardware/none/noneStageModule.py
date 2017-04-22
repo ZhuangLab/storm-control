@@ -37,7 +37,7 @@ class NoneStage(object):
         pass
 
     def position(self):
-        return [self.x, self.y, 0.0]
+        return [self.x, self.y]
 
     def setVelocity(self, vx, vy):
         pass
