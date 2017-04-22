@@ -23,11 +23,13 @@ class LockDisplay(QtWidgets.QGroupBox):
         self.ir_power = configuration.get("ir_power", 0)
 
         # UI setup
-        self.ui = lockdisplayUi.Ui_Form()
+        self.ui = lockdisplayUi.Ui_GroupBox()
         self.ui.setupUi(self)
         
         self.ui.irButton.hide()
         self.ui.irSlider.hide()
+        self.ui.qpdXText.hide()
+        self.ui.qpdYText.hide()
 
     def handleIrButton(self, boolean):
         """

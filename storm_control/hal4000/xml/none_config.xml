@@ -254,8 +254,9 @@
     <!-- Focus lock control GUI. -->
     <focuslock>
       <class_name type="string">FocusLock</class_name>
-      <module_name type="string">storm_control.hal4000.focuslock.focuslock</module_name>
+      <module_name type="string">storm_control.hal4000.focusLock.focusLock</module_name>
       <configuration>
+	<place_holder type="string">holding</place_holder>
       </configuration>
     </focuslock>
     

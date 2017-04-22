@@ -11,7 +11,7 @@ import storm_control.hal4000.halLib.halDialog as halDialog
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
-import storm_control.hal4000.focuslock.lockDisplay as lockDisplay
+import storm_control.hal4000.focusLock.lockDisplay as lockDisplay
 
 # UI.
 import storm_control.hal4000.qtdesigner.focuslock_ui as focuslockUi
@@ -33,6 +33,10 @@ class FocusLockView(halDialog.HalDialog):
         layout = QtWidgets.QGridLayout(self.ui.lockDisplayWidget)
         layout.setContentsMargins(0,0,0,0)
         layout.addWidget(self.lock_display)
+
+    def show(self):
+        super().show()
+        self.setFixedSize(self.width(), self.height())
         
         
 class FocusLock(halModule.HalModule):
