@@ -8,6 +8,7 @@ Hazen 04/17
 """
 #import copy
 
+import time
 from PyQt5 import QtCore
 
 import storm_control.hal4000.halLib.halFunctionality as halFunctionality
@@ -64,7 +65,8 @@ class BufferedFunctionality(HardwareFunctionality):
         self.busy = False
         self.device_mutex = device_mutex        
         self.next_request = None
-
+        self.running = True
+        
         # This signal is used to let us know when the current 'maybe'
         # request is done and we should start the next one.
         self.done.connect(self.handleDone)
@@ -81,36 +83,50 @@ class BufferedFunctionality(HardwareFunctionality):
         will only process the most recently received request.
         """
         if not self.busy:
-            self.start(task, args, True, ret_signal)
+            self.busy = True
+            self.start(task, args, ret_signal)
         else:
-            self.next_request = [task, args, True, ret_signal]
+            self.next_request = [task, args, ret_signal]
 
     def mustRun(self, task = None, args = [], ret_signal = None):
         """
         Call this method with requests that must be processed.
+
+        FIXME: There is some danger here of being able to build up a
+               large backlog of QRunnables that are waiting to run.
         """
-        self.start(task, args, False, ret_signal)
-            
-    def run(self, task, args, emit_done, ret_signal):
+        self.start(task, args, ret_signal)
+
+    def run(self, task, args, ret_signal):
         """
         run the task with arguments args, and use the ret_signal
         pyqtSignal to return the results.
         """
+        self.busy = True
         self.device_mutex.lock()
         retv = task(*args)
         self.device_mutex.unlock()
         self.busy = False
-        if emit_done:
-            self.done.emit()
+        self.done.emit()
         if ret_signal is not None:
             ret_signal.emit(retv)
 
-    def start(self, task, args, emit_done, ret_signal):
-        self.busy = True
+    def start(self, task, args, ret_signal):
+        if not self.running:
+            return
         hw = HardwareWorker(task = self.run,
-                            args = [task, args, emit_done, ret_signal])
+                            args = [task, args, ret_signal])
         getThreadPool().start(hw)
-        
+
+    def wait(self):
+        """
+        Block job submission and wait for the last job to finish.
+        """
+        self.running = False
+        while(self.busy):
+            print("BufferedFunctionality wait")
+            time.sleep(0.1)
+
 
 class HardwareModule(halModule.HalModule):
 

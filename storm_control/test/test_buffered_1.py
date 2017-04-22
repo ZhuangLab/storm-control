@@ -10,11 +10,6 @@ from PyQt5 import QtCore, QtWidgets
 import storm_control.sc_hardware.baseClasses.hardwareModule as hardwareModule
 
 
-#class BufferedTest(hardwareModule.BufferedFunctionality):
-    
-
-    
-
 class TBWidget(QtWidgets.QWidget):
     processed = QtCore.pyqtSignal(str)
     
@@ -39,7 +34,12 @@ class TBWidget(QtWidgets.QWidget):
     def handleProcessed(self, string):
         self.strings.append(string)
         if "end" in string:
-            assert(self.strings == ["0111", "0212", "0end"])
+            try:
+                assert(self.strings == ["0111", "0212", "0end"])
+            except AssertionError as exc:
+                print(self.strings, "is not expected")
+                raise exc
+            self.bf.wait()
             self.close()
         
     def runTest(self):

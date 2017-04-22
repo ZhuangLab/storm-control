@@ -1,84 +1,72 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Generic Coherent Cube laser control (via RS-232)
-#
-# Hazen 7/10
-#
+#!/usr/bin/env python
+"""
+Generic Coherent Cube laser control (via RS-232)
 
-import time
+Hazen 7/10
+"""
+import traceback
 
 import storm_control.sc_hardware.serial.RS232 as RS232
 
-## Cube
-#
-# This class controls a Coherent cube laser using RS-232 communication.
-#
 class Cube(RS232.RS232):
+    """
+    This class controls a Coherent cube laser using RS-232 communication.
+    """
+    def __init__(self, **kwds):
+        """
+        Connect to the laser by RS-232 and verify that the connection has been made.
+        """
+        # Add Cube RS232 default settings.
+        kwds["baudrate"] = 19200
+        kwds["end_of_line"] = "\r"
+        kwds["wait_time"] = 0.05
 
-    ## __init__
-    #
-    # Connect to the laser by RS-232 and verify that the connection has been made.
-    #
-    # @param port The RS-232 port that the laser is on. This is a string like "COM9".
-    #
-    def __init__(self, port):
         self.on = False
+        self.pmin = 0.0
+        self.pmax = 5.0
+        
         try:
             # open port
-            RS232.RS232.__init__(self, port, None, 19200, "\r", 0.05)
+            super().__init__(**kwds)
 
             # see if the laser is connected
             assert not(self.commWithResp("?HID") == None)
 
-            # finish setup
-            self.pmin = 0.0
-            self.pmax = 5.0
+        # FIXME: This should not catch everything!
+        except Exception:
+            print(traceback.format_exc())
+            self.live = False
+            print("Failed to connect to Cube Laser at port", kwds["port"])
+            print("Perhaps it is turned off or the COM ports have")
+            print("been scrambled?")
+            
+        if self.live:
             [self.pmin, self.pmax] = self.getPowerRange()
             self.setExtControl(0)
             if (not self.getLaserOnOff()):
                 self.setLaserOnOff(True)
-        except Exception as e:
-            print "RS232 Error:", type(e), str(e)
-            self.live = False
-            print "Failed to connect to Cube Laser at port", port
-            print "Perhaps it is turned off or the COM ports have"
-            print "been scrambled?"
 
-    ## respToFloat
-    #
-    # Convert a response from the laser to a floating point number.
-    #
-    # @param resp The response string from the laser.
-    # @param start The index of the first character in the number.
-    #
-    # @return A floating point number.
-    #
     def respToFloat(self, resp, start):
+        """
+        Convert a response from the laser to a floating point number.
+        """
         return float(resp[start:-1])
 
-    ## getExtControl
-    #
-    # Checks if the laser is configured for external control.
-    #
-    # @return True/False
-    #
     def getExtControl(self):
+        """
+        Checks if the laser is configured for external control.
+        """
         self.sendCommand("?EXT")
         response = self.waitResponse()
-        if response.find("=1") == -1:
+        if (response.find("=1") == -1):
             return False
         else:
             return True
 
-    ## getLaserOnOff
-    #
-    # Checks if the laser is on or off.
-    #
-    # @return True/False
-    #
     def getLaserOnOff(self):
+        """
+        Checks if the laser is on or off.
+        """
         self.sendCommand("?L")
         resp = self.waitResponse()
         if (resp[2] == "1"):
@@ -88,50 +76,38 @@ class Cube(RS232.RS232):
             self.on = False
             return False
 
-    ## getPowerRange
-    #
-    # Returns the laser power range (in mW?).
-    #
-    # @return [minimum power, maximum power]
-    #
     def getPowerRange(self):
+        """
+        Returns the laser power range (in mW?).
+        """
         self.sendCommand("?MINLP")
         pmin = self.respToFloat(self.waitResponse(), 6)
         self.sendCommand("?MAXLP")
         pmax = self.respToFloat(self.waitResponse(), 6)
         return [pmin, pmax]
 
-    ## getPower
-    #
-    # Return the current laser power (in mW?).
-    #
-    # @return The laser power as a float.
-    #
     def getPower(self):
+        """
+        Return the current laser power (in mW?).
+        """
         self.sendCommand("?SP")
         power_string = self.waitResponse()
         return float(power_string[3:-1])
 
-    ## setExtControl
-    #
-    # Set the laser to external control mode.
-    #
-    # @param mode True/False turn on/off external control mode.
-    #
     def setExtControl(self, mode):
+        """
+        Set the laser to external control mode.
+        """
         if mode:
             self.sendCommand("EXT=1")
         else:
             self.sendCommand("EXT=0")
         self.waitResponse()
 
-    ## setLaserOnOff
-    #
-    # Turn the laser on or off.
-    #
-    # @param on True/False, turn the laser on/off
-    #
     def setLaserOnOff(self, on):
+        """
+        Turn the laser on or off.
+        """
         if on and (not self.on):
             self.sendCommand("L=1")
             self.waitResponse()
@@ -141,36 +117,32 @@ class Cube(RS232.RS232):
             self.waitResponse()
             self.on = False
 
-    ## setPower
-    #
-    # Set the laser power (in mW).
-    #
-    # @param power_in_mw The desired laser power in mW.
-    #
     def setPower(self, power_in_mw):
+        """
+        Set the laser power (in mW).
+        """
         if power_in_mw > self.pmax:
             power_in_mw = self.pmax
         self.sendCommand("P=" + str(power_in_mw))
         self.waitResponse()
 
-    ## shutDown
-    #
-    # Turn the laser off & close the RS-232 connection.
-    #
     def shutDown(self):
+        """
+        Turn the laser off & close the RS-232 connection.
+        """
         if self.live:
             self.setLaserOnOff(False)
-        RS232.RS232.shutDown(self)
+        super().shutDown()
 
+        
 #
 # Testing
 #
-
-if __name__ == "__main__":
-    cube = Cube("COM9")
+if (__name__ == "__main__"):
+    cube = Cube(port = "COM10")
     if cube.getStatus():
-        print cube.getPowerRange()
-        print cube.getLaserOnOff()
+        print(cube.getPowerRange())
+        print(cube.getLaserOnOff())
         cube.shutDown()
 
 #
