@@ -5,7 +5,6 @@ Illumination control.
 Hazen 04/17
 """
 
-import importlib
 import os
 
 from PyQt5 import QtCore, QtWidgets
