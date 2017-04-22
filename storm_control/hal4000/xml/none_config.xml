@@ -250,6 +250,14 @@
       </configuration>
       
     </daq>
+
+    <!-- Focus lock control GUI. -->
+    <focuslock>
+      <class_name type="string">FocusLock</class_name>
+      <module_name type="string">storm_control.hal4000.focuslock.focuslock</module_name>
+      <configuration>
+      </configuration>
+    </focuslock>
     
     <!-- Illumination (lasers, shutters, etc) control GUI. -->
     <illumination>
