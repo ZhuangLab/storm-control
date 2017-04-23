@@ -256,7 +256,8 @@
       <class_name type="string">FocusLock</class_name>
       <module_name type="string">storm_control.hal4000.focusLock.focusLock</module_name>
       <configuration>
-	<place_holder type="string">holding</place_holder>
+	<qpd type="string">none_qpd</qpd>
+	<z_stage type="string">none_zstage</z_stage>
       </configuration>
     </focuslock>
     
@@ -365,6 +366,19 @@
       <module_name type="string">storm_control.sc_hardware.none.noneFilterWheelModule</module_name>
       <class_name type="string">NoneFilterWheelModule</class_name>
     </none_wheel1>
+
+    <none_zstage>
+      <module_name type="string">storm_control.sc_hardware.none.noneZStageModule</module_name>
+      <class_name type="string">NoneZStageModule</class_name>
+
+      <configuration>
+	<jump_size type="float">0.1</jump_size>
+	<maximum type="float">100.0</maximum>
+	<minimum type="float">0.0</minimum>
+	<warning_high type="float">95.0</warning_high>
+	<warning_low type="float">5.0</warning_low>
+      </configuration>
+    </none_zstage>
 
     <!-- Stage control GUI -->
     <stage>

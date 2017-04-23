@@ -34,6 +34,9 @@ class FocusLockView(halDialog.HalDialog):
         layout.setContentsMargins(0,0,0,0)
         layout.addWidget(self.lock_display)
 
+    def setFunctionality(self, name, functionality):
+        self.lock_display.setFunctionality(name, functionality)
+
     def show(self):
         super().show()
         self.setFixedSize(self.width(), self.height())
@@ -43,6 +46,7 @@ class FocusLock(halModule.HalModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
+        self.configuration = module_params.get("configuration")
 
         self.view = FocusLockView(module_name = self.module_name,
                                   configuration = module_params.get("configuration"))
@@ -55,13 +59,27 @@ class FocusLock(halModule.HalModule):
 
     def cleanUp(self, qt_settings):
         self.view.cleanUp(qt_settings)
-        
+
+    def handleResponse(self, message, response):
+        if message.isType("get functionality"):
+            self.view.setFunctionality(message.getData()["extra data"],
+                                       response.getData()["functionality"])
+            
     def processMessage(self, message):
 
         if message.isType("configure1"):
             self.sendMessage(halMessage.HalMessage(m_type = "add to menu",
                                                    data = {"item name" : "Focus Lock",
                                                            "item msg" : "show focus lock"}))
+
+            # Get functionalities.
+            self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
+                                                   data = {"name" : self.configuration.get("qpd"),
+                                                           "extra data" : "qpd"}))
+            
+            self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
+                                                   data = {"name" : self.configuration.get("z_stage"),
+                                                           "extra data" : "z_stage"}))
 
         elif message.isType("show focus lock"):
             self.view.show()
