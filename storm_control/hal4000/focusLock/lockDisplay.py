@@ -17,10 +17,10 @@ class LockDisplay(QtWidgets.QGroupBox):
     """
     def __init__(self, configuration = None, **kwds):
         super().__init__(**kwds)
-        self.display_widgets = []
         self.ir_laser_functionality = None
         self.ir_on = False
         self.ir_power = configuration.get("ir_power", 0)
+
 
         # UI setup
         self.ui = lockdisplayUi.Ui_GroupBox()
@@ -33,13 +33,12 @@ class LockDisplay(QtWidgets.QGroupBox):
 
         # Add the widgets that will actually display the data from the
         # QPD and z stage.
-        z_stage_widget = QStageDisplay(functionality_name = "z_stage",
-                                       qlabel = self.ui.zText,
-                                       parent = self)
+        self.q_stage_display = QStageDisplay(functionality_name = "z_stage",
+                                             qlabel = self.ui.zText,
+                                             parent = self)
         layout = QtWidgets.QGridLayout(self.ui.zFrame)
         layout.setContentsMargins(2,2,2,2)
-        layout.addWidget(z_stage_widget)
-        self.display_widgets.append(z_stage_widget)
+        layout.addWidget(self.q_stage_display)
 
     def handleIrButton(self, boolean):
         """
@@ -67,9 +66,8 @@ class LockDisplay(QtWidgets.QGroupBox):
     def haveAllFunctionalities(self):
         if self.ir_laser_functionality is None:
             return False
-        for widget in self.display_widgets:
-            if not widget.haveFunctionality():
-                return False
+        if not self.q_stage_display.haveFunctionality():
+            return False
         return True
         
     def setFunctionality(self, name, functionality):
@@ -83,9 +81,8 @@ class LockDisplay(QtWidgets.QGroupBox):
                 self.ui.irSlider.setMaximum(self.ir_laser_functionality.getMaximum())
                 self.ui.irSlider.setValue(self.ir_power)
                 self.ui.irSlider.valueChanged.connect(self.handleIrSlider)
-        else:
-            for widget in self.display_widgets:
-                widget.setFunctionality(name, functionality)
+        elif (name == "z_stage"):
+            self.q_stage_display.setFunctionality(functionality)
 
 
 #
@@ -140,13 +137,12 @@ class QStatusDisplay(QtWidgets.QWidget):
     def resizeEvent(self, event):
         self.update()
         
-    def setFunctionality(self, name, functionality):
-        if (name == self.functionality_name):
-            self.functionality = functionality
-            self.scale_max = self.functionality.getMaximum()
-            self.scale_min = self.functionality.getMinimum()
-            self.scale_range = 1.0/(self.scale_max - self.scale_min)
-        
+    def setFunctionality(self, functionality):
+        self.functionality = functionality
+        self.scale_max = self.functionality.getMaximum()
+        self.scale_min = self.functionality.getMinimum()
+        self.scale_range = 1.0/(self.scale_max - self.scale_min)
+
     def updateValue(self, value):
         self.value = value
         self.update()
@@ -187,12 +183,11 @@ class QOffsetDisplay(QStatusDisplay):
         painter.setBrush(color)
         painter.drawRect(2, self.height() - self.convert(self.value) - 2, self.width() - 5, 3)
 
-    def setFunctionality(self, name, functionality):
-        super().setFunctionality(name, functionality)
-        if self.functionality is not None:
-            self.has_center_bar = self.functionality.hasCenterBar()
-            self.warning_high = self.functionality.getWarningHigh()
-            self.warning_low = self.functionality.getWarningLow()
+    def setFunctionality(self, functionality):
+        super().setFunctionality(functionality)
+        self.has_center_bar = self.functionality.hasCenterBar()
+        self.warning_high = self.functionality.getWarningHigh()
+        self.warning_low = self.functionality.getWarningLow()
 
 
 class QStageDisplay(QOffsetDisplay):
@@ -234,11 +229,10 @@ class QStageDisplay(QOffsetDisplay):
                 self.setToolTip(self.tooltips[0])
             self.update()
             
-    def setFunctionality(self, name, functionality):
-        super().setFunctionality(name, functionality)
-        if self.functionality is not None:
-            self.updateValue(self.functionality.getCurrentPosition())
-            self.functionality.zStagePosition.connect(self.updateValue)
+    def setFunctionality(self, functionality):
+        super().setFunctionality(functionality)
+        self.updateValue(self.functionality.getCurrentPosition())
+        self.functionality.zStagePosition.connect(self.updateValue)
 
     def updateValue(self, value):
         super().updateValue(value)

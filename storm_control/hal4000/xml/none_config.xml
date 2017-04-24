@@ -256,6 +256,7 @@
       <class_name type="string">FocusLock</class_name>
       <module_name type="string">storm_control.hal4000.focusLock.focusLock</module_name>
       <configuration>
+	<ir_laser type="string">none_irlaser</ir_laser>
 	<jump_size type="float">0.1</jump_size>
 	<qpd type="string">none_qpd</qpd>
 	<z_stage type="string">none_zstage</z_stage>

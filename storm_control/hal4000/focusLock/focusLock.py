@@ -74,6 +74,10 @@ class FocusLock(halModule.HalModule):
 
             # Get functionalities.
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
+                                                   data = {"name" : self.configuration.get("ir_laser"),
+                                                           "extra data" : "ir_laser"}))
+
+            self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : self.configuration.get("qpd"),
                                                            "extra data" : "qpd"}))
             
