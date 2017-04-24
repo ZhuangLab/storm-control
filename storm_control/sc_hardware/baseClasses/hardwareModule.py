@@ -132,10 +132,4 @@ class HardwareModule(halModule.HalModule):
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        
-        # Other modules will send this to get hardware functionalities.
-        halMessage.addMessage("get functionality",
-                              check_exists = False,
-                              validator = {"data" : {"name" : [True, str],
-                                                     "extra data" : [False, str]},
-                                           "resp" : {"functionality" : [True, HardwareFunctionality]}})
+

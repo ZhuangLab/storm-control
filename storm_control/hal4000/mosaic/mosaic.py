@@ -72,19 +72,15 @@ class Mosaic(halModule.HalModule):
             self.view.setObjectiveText(getObjectiveName(self.parameters))
 
             # Add view to HAL UI display.
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "add to ui",
-                                                       data = self.configure_dict))
+            self.sendMessage(halMessage.HalMessage(m_type = "add to ui",
+                                                   data = self.configure_dict))
 
             # Broadcast initial parameters.
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "initial parameters",
-                                                       data = {"parameters" : self.parameters}))
+            self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
+                                                   data = {"parameters" : self.parameters}))
 
             # Broadcast initial pixel size.
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "pixel size",
-                                                       data = {"pixel size" : getObjectivePixelSize(self.parameters)}))
+            self.sendPixelSize(getObjectivePixelSize(self.parameters))
 
         elif message.isType("new parameters"):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
@@ -96,11 +92,8 @@ class Mosaic(halModule.HalModule):
                 objective = p.get("objective")
                 self.parameters.setv("objective", objective)
                 self.view.setObjectiveText(getObjectiveName(self.parameters))
-
-                pixel_size = getObjectivePixelSize(self.parameters)
-                self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "pixel size",
-                                                           data = {"pixel size" : pixel_size}))
+                
+                self.sendPixelSize(getObjectivePixelSize(self.parameters))
 
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"new parameters" : self.parameters}))
@@ -108,6 +101,11 @@ class Mosaic(halModule.HalModule):
         elif message.isType("stop film"):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : self.parameters}))
+
+    def sendPixelSize(self, pixel_size):
+        props = {"pixel_size" : pixel_size}
+        self.sendMessage(halMessage.HalMessage(m_type = "configuration",
+                                               data = {"properties" : props}))
 
 
 #

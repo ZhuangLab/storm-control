@@ -14,6 +14,8 @@ import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.hdebug as hdebug
 import storm_control.sc_library.parameters as params
 
+import storm_control.hal4000.halLib.halFunctionality as halFunctionality
+
 #
 # This dictionary contains all of the valid message types. Modules
 # may dynamically add to this dictionary using addMessage().
@@ -69,10 +71,15 @@ def initializeMessages():
                                    "item msg" : [True, str]},
                          "resp" : None},
         'close event' : {"data" : None, "resp" : None},
+        'configuration' :  {"data" : {"properties" : [True, dict]},
+                            "resp" : None},
         'configure1' : {"data" : {"all_modules" : [True, dict]},
                         "resp" : {}},
         'configure2' : {"data" : None, "resp" : None},
         'configure3' :  {"data" : None, "resp" : None},
+        'get functionality' : {"data" : {"name" : [True, str],
+                                         "extra data" : [False, str]},
+                               "resp" : {"functionality" : [True, halFunctionality.HalFunctionality]}},
         'initial parameters' :  {"data" : {"parameters" : [True, params.StormXMLObject]},
                                  "resp" : None},
         'new directory' : {"data" : {"directory" : [True, str]},
@@ -267,6 +274,9 @@ class HalMessage(HalMessageBase):
 
     def refCountIsZero(self):
         return (self.ref_count == 0)
+
+    def sourceIs(self, source_name):
+        return (source_name == self.source.module_name)
 
 
 class HalMessageError(object):
