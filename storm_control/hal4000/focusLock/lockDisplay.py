@@ -266,12 +266,6 @@ class QSumDisplay(QStatusDisplay):
         super().__init__(**kwds)
         self.warning_low = None
         self.warning_high = None
-        
-#        self.warning_low = self.convert(float(warning_low))
-#        if warning_high:
-#            self.warning_high = self.convert(float(warning_high))
-#        else:
-#            self.warning_high = False
 
     def paintEvent(self, event):
         super().paintEvent(event)

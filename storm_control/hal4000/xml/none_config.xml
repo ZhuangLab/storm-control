@@ -256,6 +256,7 @@
       <class_name type="string">FocusLock</class_name>
       <module_name type="string">storm_control.hal4000.focusLock.focusLock</module_name>
       <configuration>
+	<jump_size type="float">0.1</jump_size>
 	<qpd type="string">none_qpd</qpd>
 	<z_stage type="string">none_zstage</z_stage>
       </configuration>
@@ -372,7 +373,6 @@
       <class_name type="string">NoneZStageModule</class_name>
 
       <configuration>
-	<jump_size type="float">0.1</jump_size>
 	<maximum type="float">100.0</maximum>
 	<minimum type="float">0.0</minimum>
 	<warning_high type="float">95.0</warning_high>

@@ -14,7 +14,6 @@ import storm_control.sc_hardware.baseClasses.lockModule as lockModule
 
 
 class NoneZStageFunctionality(hardwareModule.HardwareFunctionality, lockModule.ZStageFunctionalityMixin):
-    zStageJump = QtCore.pyqtSignal(float)
     zStagePosition = QtCore.pyqtSignal(float)
 
     def __init__(self, **kwds):
@@ -32,9 +31,6 @@ class NoneZStageFunctionality(hardwareModule.HardwareFunctionality, lockModule.Z
     def goRelative(self, z_delta):
         z_pos = self.z_position + z_delta
         self.goAbsolute(z_pos)
-
-    def jump(self, delta):
-        self.zStageJump.emit(self.jump_size * delta)
     
 
 class NoneZStageModule(hardwareModule.HardwareModule):
@@ -45,7 +41,6 @@ class NoneZStageModule(hardwareModule.HardwareModule):
 
         configuration = module_params.get("configuration")
         self.z_stage_functionality = NoneZStageFunctionality(has_center_bar = True,
-                                                             jump_size = configuration.get("jump_size"),
                                                              maximum = configuration.get("maximum"),
                                                              minimum = configuration.get("minimum"),
                                                              warning_high = configuration.get("warning_high"),

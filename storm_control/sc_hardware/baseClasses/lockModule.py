@@ -53,14 +53,12 @@ class ZStageFunctionalityMixin(LockFunctionalityMixin):
     """
     Z stages are expected to work in units of microns.
 
-    A Z stage will emit two signals:
-    (1) zStageJump() - One of the clients requested a stage jump.
-    (2) zStagePosition() - The current z stage position.
+    A Z stage emits one signal:
+    (1) zStagePosition() - The current z stage position.
     """
     def __init__(self, jump_size = None, **kwds):
         super().__init__(**kwds)
         self.center = 0.5 * (self.maximum - self.minimum)
-        self.jump_size = jump_size
         self.z_position = 0.0
 
     def getCurrentPosition(self):
@@ -71,14 +69,7 @@ class ZStageFunctionalityMixin(LockFunctionalityMixin):
 
     def goRelative(self, z_delta):
         pass
-        
-    def jump(self, delta):
-        """
-        Users will call this to move the stage. If focus lock
-        is engaged then the lock target will need to change.
-        """
-        pass
-
+    
     def recenter(self):
         pass
     
