@@ -15,38 +15,55 @@ class LockFunctionalityMixin(object):
     device is. Most of these are to help the focus lock GUI
     render the output of the device properly.
     """
-    def __init__(self,
-                 has_center_bar = False,
-                 maximum = None,
-                 minimum = None,
-                 warning_high = None,
-                 warning_low = None,
-                 **kwds):
+    def __init__(self, parameters = None, **kwds):
         super().__init__(**kwds)
-        self.has_center_bar = has_center_bar
-        self.maximum = maximum
-        self.minimum = minimum
-        self.warning_high = warning_high
-        self.warning_low = warning_low
+        self.parameters = parameters
 
-    def getMaximum(self):
-        return self.maximum
+    def getParameter(self, pname):
+        return self.parameters.get(pname)
 
-    def getMinimum(self):
-        return self.minimum
-
-    def getWarningHigh(self):
-        return self.warning_high
-        
-    def getWarningLow(self):
-        return self.warning_low
-        
-    def hasCenterBar(self):
-        return self.has_center_bar
-
+    def hasParameter(self, pname):
+        return self.parameters.has(pname)
+    
 
 class QPDFunctionalityMixin(LockFunctionalityMixin):
-    pass
+    """
+    QPDs are expected to return the current offset in
+    units of microns.
+
+    A QPD emits one signal:
+    (1) qpdUpdate() - The current QPD state as a 
+        dictionary. {"offset" : offset(microns),
+                     "sum" : sum signal (AU),
+                     other data..}
+    """
+    def __init__(self, units_to_microns = None, **kwds):
+        super().__init__(**kwds)
+        self.units_to_microns = units_to_microns
+
+    def getOffset(self):
+        """
+        Perform a reading & emit the qpdUpdate signal. The time
+        that this takes will determine the focus lock update time,
+        so ideally it is not too slow (or too fast), something
+        like 1/10th second is good.
+        """
+        pass
+        
+    def getType(self):
+        return "qpd"
+    
+
+class QPDCameraFunctionalityMixin(QPDFunctionalityMixin):
+
+    def adjustCamera(self, dx, dy):
+        """
+        Adjust the camera AOI.
+        """
+        pass
+
+    def getType(self):
+        return "camera"
 
 
 class ZStageFunctionalityMixin(LockFunctionalityMixin):
@@ -56,9 +73,8 @@ class ZStageFunctionalityMixin(LockFunctionalityMixin):
     A Z stage emits one signal:
     (1) zStagePosition() - The current z stage position.
     """
-    def __init__(self, jump_size = None, **kwds):
+    def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.center = 0.5 * (self.maximum - self.minimum)
         self.z_position = 0.0
 
     def getCurrentPosition(self):

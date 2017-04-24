@@ -18,7 +18,9 @@ class NoneZStageFunctionality(hardwareModule.HardwareFunctionality, lockModule.Z
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.z_position = 0.5 * (self.maximum + self.minimum)
+        self.maximum = self.getParameter("maximum")
+        self.minimum = self.getParameter("minimum")
+        self.z_position = 0.5 * (self.maximum - self.minimum)
 
     def goAbsolute(self, z_pos):
         if (z_pos < self.minimum):
@@ -31,7 +33,7 @@ class NoneZStageFunctionality(hardwareModule.HardwareFunctionality, lockModule.Z
     def goRelative(self, z_delta):
         z_pos = self.z_position + z_delta
         self.goAbsolute(z_pos)
-    
+
 
 class NoneZStageModule(hardwareModule.HardwareModule):
 
@@ -40,11 +42,7 @@ class NoneZStageModule(hardwareModule.HardwareModule):
         self.z_stage_functionality = None
 
         configuration = module_params.get("configuration")
-        self.z_stage_functionality = NoneZStageFunctionality(has_center_bar = True,
-                                                             maximum = configuration.get("maximum"),
-                                                             minimum = configuration.get("minimum"),
-                                                             warning_high = configuration.get("warning_high"),
-                                                             warning_low = configuration.get("warning_low"))
+        self.z_stage_functionality = NoneZStageFunctionality(parameters = configuration.get("parameters"))
 
     def getFunctionality(self, message):
         if (message.getData()["name"] == self.module_name):

@@ -32,13 +32,24 @@ class LockDisplay(QtWidgets.QGroupBox):
 
         # Add the widgets that will actually display the data from the
         # QPD and z stage.
-        self.q_stage_display = QStageDisplay(functionality_name = "z_stage",
-                                             jump_size = configuration.get("jump_size"),
-                                             qlabel = self.ui.zText,
+        self.q_qpd_offset_display = QQPDOffsetDisplay(q_label = self.ui.offsetText,
+                                                      parent = self)
+        layout = QtWidgets.QGridLayout(self.ui.offsetFrame)
+        layout.setContentsMargins(2,2,2,2)
+        layout.addWidget(self.q_qpd_offset_display)
+
+        self.q_stage_display = QStageDisplay(jump_size = configuration.get("jump_size"),
+                                             q_label = self.ui.zText,
                                              parent = self)
         layout = QtWidgets.QGridLayout(self.ui.zFrame)
         layout.setContentsMargins(2,2,2,2)
         layout.addWidget(self.q_stage_display)
+
+        self.q_qpd_sum_display = QQPDSumDisplay(q_label = self.ui.sumText,
+                                                parent = self)
+        layout = QtWidgets.QGridLayout(self.ui.sumFrame)
+        layout.setContentsMargins(2,2,2,2)
+        layout.addWidget(self.q_qpd_sum_display)
 
     def handleIrButton(self, boolean):
         """
@@ -81,6 +92,9 @@ class LockDisplay(QtWidgets.QGroupBox):
                 self.ui.irSlider.setMaximum(self.ir_laser_functionality.getMaximum())
                 self.ui.irSlider.setValue(self.ir_power)
                 self.ui.irSlider.valueChanged.connect(self.handleIrSlider)
+        elif (name == "qpd"):
+            self.q_qpd_offset_display.setFunctionality(functionality)
+            self.q_qpd_sum_display.setFunctionality(functionality)
         elif (name == "z_stage"):
             self.q_stage_display.setFunctionality(functionality)
 
@@ -90,15 +104,15 @@ class LockDisplay(QtWidgets.QGroupBox):
 #
 class QStatusDisplay(QtWidgets.QWidget):
 
-    def __init__(self, functionality_name = None, qlabel = None, **kwds):
+    def __init__(self, **kwds):
         super().__init__(**kwds)
         self.functionality = None
-        self.functionality_name = functionality_name
-        self.qlabel = qlabel
         self.scale_min = None
         self.scale_max = None
         self.scale_range = None
         self.value = 0
+        self.warning_high = None
+        self.warning_low = None
 
     def convert(self, value):
         """
@@ -110,17 +124,6 @@ class QStatusDisplay(QtWidgets.QWidget):
         if scaled < 0:
             scaled = 0
         return scaled
-
-    def getValue(self, normalized = True):
-        """
-        Returns the current value.
-        
-        FIXME: Do we use this?
-        """
-        if normalized:
-            return float(self.value)/float(self.height())
-        else:
-            return float(self.value)
 
     def haveFunctionality(self):
         return self.functionality is not None
@@ -136,12 +139,9 @@ class QStatusDisplay(QtWidgets.QWidget):
 
     def resizeEvent(self, event):
         self.update()
-        
+                    
     def setFunctionality(self, functionality):
         self.functionality = functionality
-        self.scale_max = self.functionality.getMaximum()
-        self.scale_min = self.functionality.getMinimum()
-        self.scale_range = 1.0/(self.scale_max - self.scale_min)
 
     def updateValue(self, value):
         self.value = value
@@ -150,12 +150,12 @@ class QStatusDisplay(QtWidgets.QWidget):
 
 class QOffsetDisplay(QStatusDisplay):
 
-    def __init__(self, has_center_bar = False, **kwds):
+    def __init__(self, **kwds):
         """
         Focus lock offset & stage position.
         """
         super().__init__(**kwds)
-        self.has_center_bar = has_center_bar
+        self.has_center_bar = None
 
     def paintEvent(self, event):
         if self.functionality is None:
@@ -168,8 +168,10 @@ class QOffsetDisplay(QStatusDisplay):
         color = QtGui.QColor(255, 150, 150)
         painter.setPen(color)
         painter.setBrush(color)
-        painter.drawRect(0, self.height() - self.convert(self.warning_low), self.width(), self.height())
-        painter.drawRect(0, 0, self.width(), self.height() - self.convert(self.warning_high))
+        if self.warning_low is not None:
+            painter.drawRect(0, self.height() - self.convert(self.warning_low), self.width(), self.height())
+        if self.warning_high is not None:
+            painter.drawRect(0, 0, self.width(), self.height() - self.convert(self.warning_high))
 
         if self.has_center_bar:
             center_bar = int(0.5 * self.height())
@@ -183,21 +185,100 @@ class QOffsetDisplay(QStatusDisplay):
         painter.setBrush(color)
         painter.drawRect(2, self.height() - self.convert(self.value) - 2, self.width() - 5, 3)
 
+
+class QQPDOffsetDisplay(QOffsetDisplay):
+    """
+    Focus lock offset display. Converts to nanometers.
+    """
+    def __init__(self, q_label = None, **kwds):
+        super().__init__(**kwds)
+        self.q_label = q_label
+
+    def handleUpdate(self, qpd_dict):
+        self.updateValue(1000.0 * qpd_dict["offset"])
+        
+    def updateValue(self, value):
+        super().updateValue(value)
+        self.q_label.setText("{0:.1f}".format(value))
+
     def setFunctionality(self, functionality):
         super().setFunctionality(functionality)
-        self.has_center_bar = self.functionality.hasCenterBar()
-        self.warning_high = self.functionality.getWarningHigh()
-        self.warning_low = self.functionality.getWarningLow()
+        self.has_center_bar = self.functionality.getParameter("offset_has_center_bar")
+        self.scale_max = 1000.0 * self.functionality.getParameter("offset_maximum")
+        self.scale_min = 1000.0 * self.functionality.getParameter("offset_minimum")
+        self.warning_high = 1000.0 * self.functionality.getParameter("offset_warning_high")
+        self.warning_low = 1000.0 * self.functionality.getParameter("offset_warning_low")
+
+        self.scale_range = 1.0/(self.scale_max - self.scale_min)
+        self.functionality.qpdUpdate.connect(self.updateValue)
 
 
+class QQPDSumDisplay(QStatusDisplay):
+    """
+    Focus lock sum signal display.
+    """
+    def __init__(self, q_label = None, **kwds):
+        super().__init__(**kwds)
+        self.q_label = q_label
+
+    def handleUpdate(self, qpd_dict):
+        self.updateValue(qpd_dict["sum"])
+        
+    def paintEvent(self, event):
+        if self.functionality is None:
+            return
+        
+        painter = QtGui.QPainter(self)
+        self.paintBackground(painter)        
+
+        # warning bars
+        color = QtGui.QColor(255, 150, 150)
+        painter.setPen(color)
+        painter.setBrush(color)
+        if self.warning_low is not None:
+            painter.drawRect(0, self.height() - self.convert(self.warning_low), self.width(), self.height())
+        if self.warning_high is not None:
+            painter.drawRect(0, 0, self.width(), self.height() - self.convert(self.warning_high))
+
+        # foreground
+        color = QtGui.QColor(0, 255, 0, 200)
+        if self.warning_low is not None:
+            if (self.value < self.warning_low):
+                color = QtGui.QColor(255, 0, 0, 200)
+        if self.warning_high is not None:
+            if (self.value >= self.warning_high):
+                color = QtGui.QColor(255, 0, 0, 200)
+        painter.setPen(color)
+        painter.setBrush(color)
+        painter.drawRect(2, self.height() - self.value, self.width() - 5, self.value)
+
+    def updateValue(self, value):
+        super().updateValue(value)
+        self.q_label.setText("{0:.1f}".format(value))
+
+    def setFunctionality(self, functionality):
+        super().setFunctionality(functionality)
+        self.has_center_bar = self.functionality.getParameter("sum_has_center_bar")
+        self.scale_max = self.functionality.getParameter("sum_maximum")
+        self.scale_min = self.functionality.getParameter("sum_minimum")
+        if self.functionality.hasParameter("sum_warning_high"):
+            self.warning_high = self.functionality.getParameter("sum_warning_high")
+        if self.functionality.hasParameter("sum_warning_low"):
+            self.warning_low = self.functionality.getParameter("sum_warning_low")
+
+        self.scale_range = 1.0/(self.scale_max - self.scale_min)
+        self.functionality.qpdUpdate.connect(self.updateValue)        
+
+        
 class QStageDisplay(QOffsetDisplay):
     """
     Z stage position.
     """
     jump = QtCore.pyqtSignal(float)
     
-    def __init__(self, jump_size = None, **kwds):
+    def __init__(self, q_label = None, jump_size = None, **kwds):
         super().__init__(**kwds)
+        self.q_label = q_label
         self.jump_size = jump_size
 
         self.adjust_mode = False
@@ -231,16 +312,23 @@ class QStageDisplay(QOffsetDisplay):
             else:
                 self.setToolTip(self.tooltips[0])
             self.update()
-            
+
     def setFunctionality(self, functionality):
         super().setFunctionality(functionality)
+        self.has_center_bar = self.functionality.getParameter("has_center_bar")
+        self.scale_max = self.functionality.getParameter("maximum")
+        self.scale_min = self.functionality.getParameter("minimum")
+        self.warning_high = self.functionality.getParameter("warning_high")
+        self.warning_low = self.functionality.getParameter("warning_low")
+            
+        self.scale_range = 1.0/(self.scale_max - self.scale_min)
         self.updateValue(self.functionality.getCurrentPosition())
         self.functionality.zStagePosition.connect(self.updateValue)
 
     def updateValue(self, value):
         super().updateValue(value)
-        self.qlabel.setText("{0:.3f}um".format(value))
-         
+        self.q_label.setText("{0:.3f}um".format(value))
+            
     def wheelEvent(self, event):
         """
         Handles mouse wheel events. Emits the adjustStage signal 
@@ -254,39 +342,6 @@ class QStageDisplay(QOffsetDisplay):
             event.accept()
 
             
-class QSumDisplay(QStatusDisplay):
-
-    def __init__(self, warning_low = None, warning_high = None, **kwds):
-        """
-        Focus lock sum signal display.
-        """
-        super().__init__(**kwds)
-        self.warning_low = None
-        self.warning_high = None
-
-    def paintEvent(self, event):
-        super().paintEvent(event)
-        
-        painter = QtGui.QPainter(self)
-
-        # warning bar
-        if self.warning_low is not None:
-            color = QtGui.QColor(255, 150, 150)
-            painter.setPen(color)
-            painter.setBrush(color)
-            painter.drawRect(0, self.y_size - self.warning_low, self.x_size, self.y_size)
-
-        # foreground
-        color = QtGui.QColor(0, 255, 0, 200)
-        if self.warning_low is not None:
-            if (self.value < self.warning_low):
-                color = QtGui.QColor(255, 0, 0, 200)
-        if self.warning_high is not None:
-            if (self.value >= self.warning_high):
-                color = QtGui.QColor(255, 0, 0, 200)
-        painter.setPen(color)
-        painter.setBrush(color)
-        painter.drawRect(2, self.height() - self.value, self.width() - 5, self.value)            
 
 
 #

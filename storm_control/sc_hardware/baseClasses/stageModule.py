@@ -15,7 +15,7 @@ import storm_control.sc_library.parameters as params
 
 class StageFunctionality(hardwareModule.BufferedFunctionality):
     stagePosition = QtCore.pyqtSignal(float, float)
-    _update_ = QtCore.pyqtSignal(object)
+    _update_ = QtCore.pyqtSignal(list)
 
     def __init__(self, stage = None, update_interval = None, is_slow = False, **kwds):
         """
