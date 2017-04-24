@@ -79,18 +79,19 @@ class Timing(halModule.HalModule):
         self.setAllowed([default_time_base])
         self.parameters.setv("time_base", default_time_base)
 
-        # The timing to use for the film.
-        halMessage.addMessage("film timing",
-                              validator = {"data" : {"functionality" : [True, TimingFunctionality]},
-                                           "resp" : None})
+#        # The timing to use for the film.
+#        halMessage.addMessage("film timing",
+#                              validator = {"data" : {"functionality" : [True, TimingFunctionality]},
+#                                           "resp" : None})
 
     def handleResponse(self, message, response):
         if message.isType("get functionality"):
             self.timing_functionality.connectCameraFunctionality(response.getData()["functionality"])
 
             # Broadcast timing information for the film.
-            self.sendMessage(halMessage.HalMessage(m_type = "film timing",
-                                                   data = {"functionality" : self.timing_functionality}))
+            props = {"functionality" : self.timing_functionality}
+            self.sendMessage(halMessage.HalMessage(m_type = "configuration",
+                                                   data = {"properties" : props}))
             
             # Tell film.film that this module is ready to film.
             self.sendMessage(halMessage.HalMessage(m_type = "ready to film"))

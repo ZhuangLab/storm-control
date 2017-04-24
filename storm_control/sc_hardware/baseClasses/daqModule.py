@@ -104,7 +104,10 @@ class DaqModule(hardwareModule.HardwareModule):
     
     def processMessage(self, message):
 
-        if message.isType("configure1"):
+        if message.isType("configuration") and message.sourceIs("timing"):
+            self.filmTiming(message)
+            
+        elif message.isType("configure1"):
             self.configure1(message)
 
         elif message.isType("daq waveforms"):
@@ -112,9 +115,6 @@ class DaqModule(hardwareModule.HardwareModule):
 
         elif message.isType("get functionality"):
             self.getFunctionality(message)
-            
-        elif message.isType("film timing"):
-            self.filmTiming(message)
             
         elif message.isType("start film"):
             self.startFilm(message)

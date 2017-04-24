@@ -325,6 +325,9 @@ class Illumination(halModule.HalModule):
 
     def processMessage(self, message):
 
+        if message.isType("configuration") and message.sourceIs("timing"):
+            self.view.setTimingFunctionality(message.getData()["properties"]["functionality"])
+
         if message.isType("configure1"):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "add to menu",
@@ -386,8 +389,6 @@ class Illumination(halModule.HalModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : p}))
 
-        elif message.isType("film timing"):
-            self.view.setTimingFunctionality(message.getData()["functionality"])
 
 
 #

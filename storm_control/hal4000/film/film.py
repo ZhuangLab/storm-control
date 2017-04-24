@@ -471,7 +471,15 @@ class Film(halModule.HalModule):
                 # we can save this in the tif images / stacks.
                 self.pixel_size = message.getData()["properties"]["pixel_size"]
                 print(self.pixel_size)
-            
+
+            elif message.sourceIs("timing"):
+                # We'll get this message from timing.timing, the part we are interested in is
+                # the timing functionality which we will use both to update the frame counter
+                # and to know when a fixed length film is complete.
+                self.timing_functionality = message.getData()["properties"]["functionality"]
+                self.timing_functionality.newFrame.connect(self.handleNewFrame)
+                self.timing_functionality.stopped.connect(self.stopFilmingLevel1)
+
         elif message.isType("configure1"):
             self.sendMessage(halMessage.HalMessage(m_type = "add to ui",
                                                    data = self.configure_dict))
@@ -484,15 +492,6 @@ class Film(halModule.HalModule):
             for name in message.getData()["feed names"]:
                 self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                        data = {"name" : name}))
-
-        elif message.isType("film timing"):
-            
-            # We'll get this message from timing.timing, the part we are interested in is
-            # the timing functionality which we will use both to update the frame counter
-            # and to know when a fixed length film is complete.
-            self.timing_functionality = message.getData()["functionality"]
-            self.timing_functionality.newFrame.connect(self.handleNewFrame)
-            self.timing_functionality.stopped.connect(self.stopFilmingLevel1)
             
         elif message.isType("new directory"):
             self.view.setDirectory(message.getData()["directory"])

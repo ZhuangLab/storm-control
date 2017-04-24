@@ -46,13 +46,6 @@ class Camera(halModule.HalModule):
         self.camera_control = a_class(camera_name = self.module_name,
                                       config = camera_params.get("parameters"),
                                       is_master = camera_params.get("master"))
-
-#        # Other modules will send this to get a camera/feed functionality.
-#        halMessage.addMessage("get camera functionality",
-#                              check_exists = False,
-#                              validator = {"data" : {"camera" : [True, str],
-#                                                     "extra data" : [False, str]},
-#                                           "resp" : {"functionality" : [True, cameraFunctionality.CameraFunctionality]}})
                                    
     def cleanUp(self, qt_settings):
         self.camera_control.cleanUp()
@@ -60,20 +53,18 @@ class Camera(halModule.HalModule):
 
     def processMessage(self, message):
 
-        if message.isType("configure1"):
-            # Broadcast initial parameters.
-            self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
-                                                   data = {"parameters" : self.camera_control.getParameters()}))
-
-        elif message.isType("film timing"):
-            # This message comes from timing.timing, if we are the timing camera
-            # and this is a fixed length film then we'll need to configure for
-            # fixed length filming.
-            if (message.getData()["functionality"].getTimeBase() == self.module_name):
+        if message.isType("configuration") and message.sourceIs("timing"):
+            timing_fn = message.getData()["properties"]["functionality"]
+            if (timing_fn.getTimeBase() == self.module_name):
                 if self.film_length is not None:
                     halModule.runWorkerTask(self,
                                             message, 
                                             lambda : self.setFilmLength(self.film_length))
+            
+        if message.isType("configure1"):
+            # Broadcast initial parameters.
+            self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
+                                                   data = {"parameters" : self.camera_control.getParameters()}))
 
         elif message.isType("get functionality"):
             # This message comes from display.cameraDisplay among others.
