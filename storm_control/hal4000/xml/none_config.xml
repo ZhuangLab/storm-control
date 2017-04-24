@@ -2,8 +2,9 @@
 <config>
 
   <!-- The starting directory. -->
-  <directory type="directory">/home/hbabcock/Data/</directory>
-  
+  <!-- <directory type="directory">/home/hbabcock/Data/</directory> -->
+  <directory type="directory">C:/Data/</directory>
+
   <!-- The setup name -->
   <setup_name type="string">none</setup_name>
 
@@ -355,6 +356,26 @@
       </configuration>      
     </none_405>
 
+    <none_qpd>
+      <module_name type="string">storm_control.sc_hardware.none.noneQPDModule</module_name>
+      <class_name type="string">NoneQPDModule</class_name>
+
+      <configuration>
+	<parameters>
+	  <offset_has_center_bar type="boolean">True</offset_has_center_bar>
+	  <offset_maximum type="float">0.6</offset_maximum>
+	  <offset_minimum type="float">-0.6</offset_minimum>
+	  <offset_warning_high type="float">0.5</offset_warning_high>
+	  <offset_warning_low type="float">-0.5</offset_warning_low>
+	  <sum_has_center_bar type="boolean">True</sum_has_center_bar>
+	  <sum_maximum type="float">1000.0</sum_maximum>
+	  <sum_minimum type="float">0.0</sum_minimum>
+	  <sum_warning_low type="float">100.0</sum_warning_low>
+	</parameters>
+	<units_to_microns type="float">1.0</units_to_microns>
+      </configuration>
+    </none_qpd>
+
     <none_stage>
       <module_name type="string">storm_control.sc_hardware.none.noneStageModule</module_name>
       <class_name type="string">NoneStageModule</class_name>
@@ -374,10 +395,13 @@
       <class_name type="string">NoneZStageModule</class_name>
 
       <configuration>
-	<maximum type="float">100.0</maximum>
-	<minimum type="float">0.0</minimum>
-	<warning_high type="float">95.0</warning_high>
-	<warning_low type="float">5.0</warning_low>
+	<parameters>
+	  <has_center_bar type="boolean">True</has_center_bar>
+	  <maximum type="float">100.0</maximum>
+	  <minimum type="float">0.0</minimum>
+	  <warning_high type="float">95.0</warning_high>
+	  <warning_low type="float">5.0</warning_low>
+	</parameters>
       </configuration>
     </none_zstage>
 
