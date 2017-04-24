@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-focus lock.
+(single) focus lock.
 
 Hazen 04/17
 """
@@ -11,6 +11,7 @@ import storm_control.hal4000.halLib.halDialog as halDialog
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
+import storm_control.hal4000.focusLock.lockControl as lockControl
 import storm_control.hal4000.focusLock.lockDisplay as lockDisplay
 
 # UI.
@@ -48,6 +49,7 @@ class FocusLock(halModule.HalModule):
         super().__init__(**kwds)
         self.configuration = module_params.get("configuration")
 
+        self.control = lockControl.LockControl()
         self.view = FocusLockView(module_name = self.module_name,
                                   configuration = module_params.get("configuration"))
         self.view.halDialogInit(qt_settings,
@@ -62,6 +64,8 @@ class FocusLock(halModule.HalModule):
 
     def handleResponse(self, message, response):
         if message.isType("get functionality"):
+            self.control.setFunctionality(message.getData()["extra data"],
+                                          response.getData()["functionality"])
             self.view.setFunctionality(message.getData()["extra data"],
                                        response.getData()["functionality"])
             

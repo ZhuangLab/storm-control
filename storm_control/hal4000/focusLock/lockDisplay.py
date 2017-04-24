@@ -193,11 +193,9 @@ class QQPDOffsetDisplay(QOffsetDisplay):
     def __init__(self, q_label = None, **kwds):
         super().__init__(**kwds)
         self.q_label = q_label
-
-    def handleUpdate(self, qpd_dict):
-        self.updateValue(1000.0 * qpd_dict["offset"])
         
-    def updateValue(self, value):
+    def updateValue(self, qpd_dict):
+        value = 1000.0 * qpd_dict["offset"]
         super().updateValue(value)
         self.q_label.setText("{0:.1f}".format(value))
 
@@ -221,9 +219,6 @@ class QQPDSumDisplay(QStatusDisplay):
         super().__init__(**kwds)
         self.q_label = q_label
 
-    def handleUpdate(self, qpd_dict):
-        self.updateValue(qpd_dict["sum"])
-        
     def paintEvent(self, event):
         if self.functionality is None:
             return
@@ -236,7 +231,8 @@ class QQPDSumDisplay(QStatusDisplay):
         painter.setPen(color)
         painter.setBrush(color)
         if self.warning_low is not None:
-            painter.drawRect(0, self.height() - self.convert(self.warning_low), self.width(), self.height())
+            painter.drawRect(0, self.height() - self.convert(self.warning_low),
+                             self.width(), self.height())
         if self.warning_high is not None:
             painter.drawRect(0, 0, self.width(), self.height() - self.convert(self.warning_high))
 
@@ -250,9 +246,11 @@ class QQPDSumDisplay(QStatusDisplay):
                 color = QtGui.QColor(255, 0, 0, 200)
         painter.setPen(color)
         painter.setBrush(color)
-        painter.drawRect(2, self.height() - self.value, self.width() - 5, self.value)
+        painter.drawRect(2, self.height() - self.convert(self.value),
+                         self.width() - 5, self.convert(self.value))
 
-    def updateValue(self, value):
+    def updateValue(self, qpd_dict):
+        value = qpd_dict["sum"]
         super().updateValue(value)
         self.q_label.setText("{0:.1f}".format(value))
 

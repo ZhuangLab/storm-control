@@ -4,7 +4,7 @@ Emulated QPD functionality
 
 Hazen 04/17
 """
-
+import math
 import time
 
 from PyQt5 import QtCore
@@ -38,7 +38,8 @@ class NoneQPDFunctionality(hardwareModule.BufferedFunctionality, lockModule.QPDF
 
     def scan(self):
         time.sleep(0.1)
-        self._update_.emit([self.z_offset, 600.0, 0.0, 0.0])
+        self.z_offset = 0.01 * math.sin(2.0 * time.time())
+        return([self.z_offset, 600.0, 0.0, 0.0])
 
 
 class NoneQPDModule(hardwareModule.HardwareModule):
