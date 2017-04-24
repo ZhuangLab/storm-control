@@ -21,7 +21,6 @@ class LockDisplay(QtWidgets.QGroupBox):
         self.ir_on = False
         self.ir_power = configuration.get("ir_power", 0)
 
-
         # UI setup
         self.ui = lockdisplayUi.Ui_GroupBox()
         self.ui.setupUi(self)
@@ -34,6 +33,7 @@ class LockDisplay(QtWidgets.QGroupBox):
         # Add the widgets that will actually display the data from the
         # QPD and z stage.
         self.q_stage_display = QStageDisplay(functionality_name = "z_stage",
+                                             jump_size = configuration.get("jump_size"),
                                              qlabel = self.ui.zText,
                                              parent = self)
         layout = QtWidgets.QGridLayout(self.ui.zFrame)
@@ -194,8 +194,11 @@ class QStageDisplay(QOffsetDisplay):
     """
     Z stage position.
     """
-    def __init__(self, **kwds):
+    jump = QtCore.pyqtSignal(float)
+    
+    def __init__(self, jump_size = None, **kwds):
         super().__init__(**kwds)
+        self.jump_size = jump_size
 
         self.adjust_mode = False
         self.tooltips = ["click to adjust", "use scroll wheel to move stage"]
@@ -245,9 +248,9 @@ class QStageDisplay(QOffsetDisplay):
         """
         if self.adjust_mode and (not event.angleDelta().isNull()):
             if (event.angleDelta().y() > 0):
-                self.functionality.jump(1.0)
+                self.jump.emit(self.jump_size)
             else:
-                self.functionality.jump(-1.0)
+                self.jump.emit(-self.jump_size)
             event.accept()
 
             
