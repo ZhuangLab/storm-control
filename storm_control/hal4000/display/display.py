@@ -90,7 +90,13 @@ class Display(halModule.HalModule):
 
     def processMessage(self, message):
 
-        if message.isType("configure1"):
+        if message.isType("configuration"):
+            if message.sourceIs("feeds"):
+                feed_names = message.getData()["properties"]["feed names"]
+                for viewer in self.viewers:
+                    viewer.setFeedNames(feed_names)
+
+        elif message.isType("configure1"):
             
             # The ClassicViewer might need to tell other modules to
             # incorporate some of it's UI elements.
@@ -106,10 +112,6 @@ class Display(halModule.HalModule):
                                                            m_type = "add to menu",
                                                            data = {"item name" : "Camera Viewer",
                                                                    "item msg" : "new camera viewer"}))
-
-        elif message.isType("current feeds"):
-            for viewer in self.viewers:
-                viewer.setFeedNames(message.getData()["feed names"])
 
         elif message.isType("new camera viewer"):
             self.newCameraViewer()

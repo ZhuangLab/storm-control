@@ -370,8 +370,8 @@ class CameraFrameViewer(QtWidgets.QFrame):
         1. Replace current parameters with the new parameters when
            we get the 'new parameters' message.
 
-        2. Wait for the 'current feeds' message when the setFeedNames()
-           method will get called.
+        2. Wait for the 'configuration' message from the feeds module
+           when the setFeedNames() method will get called.
 
         3. At the end of setFeedNames() Execute a feed change to the 
            new camera / feed, this will send a 'get functionality' 

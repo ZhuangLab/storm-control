@@ -466,7 +466,13 @@ class Film(halModule.HalModule):
     def processMessage(self, message):
            
         if message.isType("configuration"):
-            if message.sourceIs("mosaic"):
+            if message.sourceIs("feeds"):
+                self.camera_functionalities = []
+                for name in message.getData()["properties"]["feed names"]:
+                    self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
+                                                           data = {"name" : name}))
+                
+            elif message.sourceIs("mosaic"):
                 # We need to keep track of the current value so that
                 # we can save this in the tif images / stacks.
                 self.pixel_size = message.getData()["properties"]["pixel_size"]
@@ -486,12 +492,6 @@ class Film(halModule.HalModule):
                 
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.view.getParameters()}))
-
-        elif message.isType("current feeds"):
-            self.camera_functionalities = []
-            for name in message.getData()["feed names"]:
-                self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
-                                                       data = {"name" : name}))
             
         elif message.isType("new directory"):
             self.view.setDirectory(message.getData()["directory"])

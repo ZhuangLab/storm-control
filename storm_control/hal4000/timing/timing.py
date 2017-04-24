@@ -98,21 +98,22 @@ class Timing(halModule.HalModule):
         
     def processMessage(self, message):
 
-        if message.isType("configure1"):
+        if message.isType("configuration"):
+            if message.sourceIs("feeds"):
+                cur_time_base = self.parameters.get("time_base")
+                self.parameters.getp("time_base").setAllowed(message.getData()["properties"]["feed names"])
+                self.parameters.setv("time_base", cur_time_base)
+
+        elif message.isType("configure1"):
 
             # Broadcast initial parameters.
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.parameters}))
 
-        elif message.isType("feed names"):
-            cur_time_base = self.parameters.get("time_base")
-            self.parameters.getp("time_base").setAllowed(message.getData()["feed names"])
-            self.parameters.setv("time_base", cur_time_base)
-
         elif message.isType("new parameters"):
             #
             # FIXME: The problem is that we won't know the allowed set of feed names until
-            #        feeds.feeds sends the 'feed names' message. Using the old allowed
+            #        feeds.feeds sends the 'configuration' message. Using the old allowed
             #        might cause a problem as the new time base might not exist in the
             #        old allowed. For now we are just setting allowed to be whatever the
             #        time_base parameter value is. Then at 'feed names' we check that

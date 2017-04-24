@@ -255,6 +255,9 @@ class Stage(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : self.stage_fn_name}))
 
+            self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
+                                                   data = {"parameters" : self.view.getParameters()}))
+
         elif message.isType("new directory"):
             self.view.setDirectory(message.getData()["directory"])
             

@@ -53,15 +53,16 @@ class Camera(halModule.HalModule):
 
     def processMessage(self, message):
 
-        if message.isType("configuration") and message.sourceIs("timing"):
-            timing_fn = message.getData()["properties"]["functionality"]
-            if (timing_fn.getTimeBase() == self.module_name):
-                if self.film_length is not None:
-                    halModule.runWorkerTask(self,
-                                            message, 
-                                            lambda : self.setFilmLength(self.film_length))
-            
-        if message.isType("configure1"):
+        if message.isType("configuration"):
+            if message.sourceIs("timing"):
+                timing_fn = message.getData()["properties"]["functionality"]
+                if (timing_fn.getTimeBase() == self.module_name):
+                    if self.film_length is not None:
+                        halModule.runWorkerTask(self,
+                                                message, 
+                                                lambda : self.setFilmLength(self.film_length))
+
+        elif message.isType("configure1"):
             # Broadcast initial parameters.
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.camera_control.getParameters()}))

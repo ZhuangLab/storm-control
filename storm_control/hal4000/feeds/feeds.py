@@ -452,12 +452,6 @@ class Feeds(halModule.HalModule):
         self.camera_names = []
         self.feed_controller = None
         self.feed_names = []
-
-        # This is broadcast at startup and when the parameters change
-        # to tell other modules what cameras/feeds are available.
-        halMessage.addMessage("current feeds",
-                              validator = {"data" : {"feed names" : [True, list]},
-                                           "resp" : None})
         
         # This message comes from the display.display when it creates a new
         # viewer.
@@ -467,15 +461,16 @@ class Feeds(halModule.HalModule):
         
     def broadcastCurrentFeeds(self):
         """
-        Send the 'current feeds' message.
+        Send a 'configuration' message with the current feed names.
 
         film.film uses this message to know what all the feeds are.
 
         display.cameraDisplay uses this message to populate the feed chooser
         combobox.
         """
-        self.sendMessage(halMessage.HalMessage(m_type = "current feeds",
-                                               data = {"feed names" : self.feed_names}))
+        props = {"feed names" : self.feed_names}
+        self.sendMessage(halMessage.HalMessage(m_type = "configuration",
+                                               data = {"properties" : props}))
 
     def handleResponse(self, message, response):
         if message.isType("get functionality"):

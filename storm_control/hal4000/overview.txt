@@ -43,10 +43,7 @@ Important message sequences:
     b. 'updated parameters' - The parameters are good and all
        the modules must now switch to the new parameters.
 
-    c. 'current feeds' - This is a list of the currently of the
-       names of the currently active camera / feeds.
-
-    d. 'settings lockout' with data "locked out" = False - The
+    c. 'settings lockout' with data "locked out" = False - The
        parameter change is complete.
 
 
@@ -90,6 +87,15 @@ Other message details:
 (2) Messages can set a sync flag which will block messages that
     arrive after the message from being processed until the
     message if completely processed & finalized.
+
+
+Popular message types are:
+
+(1) 'configuration' - The properties of a module have changed
+    in a way that other modules may be interested in.
+
+(2) 'get functionality' - A module needs something from another
+    module, see the explanation of Functionalities below.
 
 
 Functionalities - In addition to sending messages to each other

@@ -147,10 +147,9 @@ class Settings(halModule.HalModule):
         self.view.enableUI(False)
         
         # is_edit means we are sending a modified version of the current parameters.
-        self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "new parameters",
-                                                   data = {"parameters" : parameters.copy(),
-                                                           "is_edit" : is_edit}))
+        self.sendMessage(halMessage.HalMessage(m_type = "new parameters",
+                                               data = {"parameters" : parameters.copy(),
+                                                       "is_edit" : is_edit}))
 
     def handleResponses(self, message):
         
@@ -210,12 +209,13 @@ class Settings(halModule.HalModule):
                     
                 # Let modules, such as feeds.feeds known that all of the modules
                 # have updated their parameters.
-                self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "updated parameters",
-                                                           data = {"parameters" : self.view.getCurrentParameters().copy()}))
+                self.sendMessage(halMessage.HalMessage(m_type = "updated parameters",
+                                                       data = {"parameters" : self.view.getCurrentParameters().copy()},
+                                                       finalizer = self.updateComplete))
+                                 
                 
     def processMessage(self, message):
-        
+
         if message.isType("configure1"):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "add to ui",
@@ -224,13 +224,6 @@ class Settings(halModule.HalModule):
         elif message.isType("configure2"):
             self.view.copyDefaultParameters()
             self.view.markCurrentAsInitialized()
-
-        elif message.isType("current feeds"):
-            # This is the signal that the parameters have been completely updated.
-            self.setLockout(False)
-            
-            # Renable the UI
-            self.view.enableUI(True)
 
         elif message.isType("get parameters"):
             p = self.view.getParameters(message.getData()["index or name"])
@@ -277,8 +270,9 @@ class Settings(halModule.HalModule):
 
     def setLockout(self, state):
         self.locked_out = state
-        self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "settings lockout",
-                                                   data = {"locked out" : self.locked_out}))
+        self.sendMessage(halMessage.HalMessage(m_type = "settings lockout",
+                                               data = {"locked out" : self.locked_out}))
 
-
+    def updateComplete(self):
+        self.setLockout(False)
+        self.view.enableUI(True)

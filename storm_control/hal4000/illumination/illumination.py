@@ -325,22 +325,20 @@ class Illumination(halModule.HalModule):
 
     def processMessage(self, message):
 
-        if message.isType("configuration") and message.sourceIs("timing"):
-            self.view.setTimingFunctionality(message.getData()["properties"]["functionality"])
+        if message.isType("configuration"):
+            if message.sourceIs("timing"):
+                self.view.setTimingFunctionality(message.getData()["properties"]["functionality"])
 
-        if message.isType("configure1"):
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "add to menu",
-                                                       data = {"item name" : "Illumination",
-                                                               "item msg" : "show illumination"}))
+        elif message.isType("configure1"):
+            self.sendMessage(halMessage.HalMessage(m_type = "add to menu",
+                                                   data = {"item name" : "Illumination",
+                                                           "item msg" : "show illumination"}))
             
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "initial parameters",
-                                                       data = {"parameters" : self.view.getParameters()}))
+            self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
+                                                   data = {"parameters" : self.view.getParameters()}))
 
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "illumination channels",
-                                                       data = {"names" : self.view.getChannelNames()}))
+            self.sendMessage(halMessage.HalMessage(m_type = "illumination channels",
+                                                   data = {"names" : self.view.getChannelNames()}))
 
             self.view.getFunctionalities()
 
