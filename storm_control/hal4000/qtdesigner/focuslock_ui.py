@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'focuslock.ui'
 #
-# Created by: PyQt5 UI code generator 5.7
+# Created by: PyQt5 UI code generator 5.8.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(323, 216)
+        Dialog.resize(323, 231)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -32,14 +32,14 @@ class Ui_Dialog(object):
         self.modeBox.setObjectName("modeBox")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.modeBox)
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.modeWidget = QtWidgets.QWidget(self.modeBox)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.modeWidget.sizePolicy().hasHeightForWidth())
-        self.modeWidget.setSizePolicy(sizePolicy)
-        self.modeWidget.setObjectName("modeWidget")
-        self.horizontalLayout.addWidget(self.modeWidget)
+        self.modeScrollArea = QtWidgets.QScrollArea(self.modeBox)
+        self.modeScrollArea.setWidgetResizable(True)
+        self.modeScrollArea.setObjectName("modeScrollArea")
+        self.scrollAreaWidgetContents = QtWidgets.QWidget()
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 76, 88))
+        self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
+        self.modeScrollArea.setWidget(self.scrollAreaWidgetContents)
+        self.horizontalLayout.addWidget(self.modeScrollArea)
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
         spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)

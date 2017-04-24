@@ -1,135 +1,105 @@
-#!/usr/bin/python
-#
-## @file
-#
-# These classes implement various focus lock modes.
-#
-# Hazen 05/15
-#
+#!/usr/bin/env python
+"""
+These classes implement various focus lock modes. They determine
+all the behaviors of the focus lock.
 
+Hazen 05/15
+"""
 import numpy
-from PyQt5 import QtCore
 import scipy.optimize
 
+from PyQt5 import QtCore
+
+import storm_control.sc_library.parameters as params
 
 # Focus quality determination for the optimal lock.
 import storm_control.hal4000.focuslock.focusQuality as focusQuality
 
-## LockMode
-#
-# The base class for all the lock modes.
-#
+
+# Mixin classes to that provide various scan functionalities.
+class FindSumMixin(object):
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        # Add parameters specific to finding sum.
+
+    def handleQPDUpdate(self, qpd_state):
+        if (self.mode == "find_sum"):
+            if (power > self.max_sum):
+                self.max_sum = power
+                self.max_pos = self.stage_z
+            if (self.max_sum > self.requested_sum) and (power < (0.5 * self.max_sum)):
+                self.moveStageAbs(self.max_pos)
+                self.find_sum = False
+                self.foundSum.emit(self.max_sum)
+            else:
+                if (self.stage_z >= (2 * self.z_center)):
+                    if (self.max_sum > 0):
+                        self.moveStageAbs(self.max_pos)
+                    else:
+                        self.moveStageAbs(self.z_center)
+                    self.find_sum = False
+                    self.foundSum.emit(self.max_sum)
+                else:
+                    self.moveStageRel(1.0)
+
+
 class LockMode(QtCore.QObject):
-    
-    ## __init__
-    #
-    # @param control_thread A thread object that controls the focus lock.
-    # @param parameters A parameters object.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, control_thread, parameters, parent):
-        QtCore.QObject.__init__(self, parent)
-        self.control_thread = control_thread
-        self.locked = False
+    """
+    The base class for all the lock modes.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.mode = "normal"
         self.name = "NA"
+        self.qpd_state = None
+        self.z_stage_functionality = None
 
-    ## amLocked
-    #
-    # @return True/False if the focus lock is currently engaged.
-    #
     def amLocked(self):
-        return self.locked
+        return False
 
-    ## getName
-    #
-    # @return The name of the focus lock mode.
-    #
     def getName(self):
+        """
+        Returns the name of the lock mode (as it should appear
+        in the lock mode combo box).
+        """
         return self.name
 
-    ## handleJump
-    #
-    # @param jumpsize The amount to jump the piezo stage in um.
-    #
-    def handleJump(self, jumpsize):
-        pass
+    def handleJump(self, delta_z):
+        if self.z_stage_functionality is not None:
+            self.z_stage_functionality.goRelative(delta_z)
 
-    ## lockButtonToggle
-    #
-    # Invert the state of the lock button.
-    #
+    def handleQPDUpdate(self, qpd_state):
+        self.qpd_state = qpd_state
+        
     def lockButtonToggle(self):
         pass
 
-    ## newFrame
-    #
-    # Handles a new frame from the camera.
-    #
-    # @param frame A frame object.
-    # @param offset The offset signal from the focus lock.
-    # @param power The sum signal from the focus lock.
-    # @param stage_z The z position of the piezo stage.
-    #
-    def newFrame(self, frame, offset, power, stage_z):
+    def newFrame(self, frame, stage_z):
         pass
 
-    ## newParameters
-    #
-    # Handles new parameters.
-    #
-    # @param parameters A parameters object.
-    #
     def newParameters(self, parameters):
         pass
 
-    ## reset
-    #
-    # ??
-    #
-    def reset(self):
-        pass
-
-    ## restartLock
-    #
-    # Restarts the focus lock when the relock timer fires.
-    #
     def restartLock(self):
         pass
 
-    ## setLockTarget
-    #
-    # Sets the focus lock target to the desired value.
-    #
-    # @param target The desired lock target.
-    #
     def setLockTarget(self, target):
         pass
 
-    ## shouldDisplayLockButton
-    #
-    # @return True/False if a lock button should be displayed for this mode.
-    #
+    def setMode(self, new_mode):
+        self.mode = new_mode
+        
     def shouldDisplayLockButton(self):
         return False
 
-    ## shouldDisplayLockLabel
-    #
-    # @return True/False if a label should be displayed for this mode.
-    #
-    def shouldDisplayLockLabel(self):
-        return self.amLocked()
+    def setZStageFunctionality(self, z_stage_functionality):
+        self.z_stage_functionality = z_stage_functionality
 
-    ## startLock
-    #
-    # Start the focus lock.
-    #
     def startLock(self):
         pass
 
-    ## stopLock
-    #
-    # Stop the focus lock.
-    #
     def stopLock(self):
         pass
 

@@ -259,6 +259,7 @@
       <configuration>
 	<ir_laser type="string">none_irlaser</ir_laser>
 	<jump_size type="float">0.1</jump_size>
+	<lock_modes type="string">NoLockMode,AlwaysOnLockMode,OptimalLockMode</lock_modes>
 	<qpd type="string">none_qpd</qpd>
 	<z_stage type="string">none_zstage</z_stage>
       </configuration>
