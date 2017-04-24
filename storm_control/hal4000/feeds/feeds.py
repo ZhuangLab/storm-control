@@ -474,12 +474,11 @@ class Feeds(halModule.HalModule):
         display.cameraDisplay uses this message to populate the feed chooser
         combobox.
         """
-        self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "current feeds",
-                                                   data = {"feed names" : self.feed_names}))
+        self.sendMessage(halMessage.HalMessage(m_type = "current feeds",
+                                               data = {"feed names" : self.feed_names}))
 
     def handleResponse(self, message, response):
-        if message.isType("get camera functionality"):
+        if message.isType("get functionality"):
             feed = self.feed_controller.getFeed(message.getData()["extra data"])
             feed.setCameraFunctionality(response.getData()["functionality"])
 
@@ -501,9 +500,9 @@ class Feeds(halModule.HalModule):
             self.feed_names = copy.copy(self.camera_names)
             self.broadcastCurrentFeeds()
 
-        elif message.isType("get camera functionality"):
+        elif message.isType("get functionality"):
             if self.feed_controller is not None:
-                feed_name = message.getData()["camera"]
+                feed_name = message.getData()["name"]
                 if feed_name in self.feed_controller.getFeedNames():
                     message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                       data = {"functionality" : self.feed_controller.getFeed(feed_name)}))
@@ -526,10 +525,9 @@ class Feeds(halModule.HalModule):
             if self.feed_controller is not None:
                 for feed in self.feed_controller.getFeeds():
                     self.feed_names.append(feed.getCameraName())
-                    self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                               m_type = "get camera functionality",
-                                                               data = {"camera" : feed.getParameter("source"),
-                                                                       "extra data" : feed.getCameraName()}))
+                    self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
+                                                           data = {"name" : feed.getParameter("source"),
+                                                                   "extra data" : feed.getCameraName()}))
             else:
                 self.broadcastCurrentFeeds()
 

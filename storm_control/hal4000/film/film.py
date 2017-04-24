@@ -401,7 +401,7 @@ class Film(halModule.HalModule):
         
     def handleResponses(self, message):
 
-        if message.isType("get camera functionality"):
+        if message.isType("get functionality"):
             assert (len(message.getResponses()) == 1)
             for response in message.getResponses():
                 self.camera_functionalities.append(response.getData()["functionality"])
@@ -482,8 +482,8 @@ class Film(halModule.HalModule):
         elif message.isType("current feeds"):
             self.camera_functionalities = []
             for name in message.getData()["feed names"]:
-                self.sendMessage(halMessage.HalMessage(m_type = "get camera functionality",
-                                                       data = {"camera" : name}))
+                self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
+                                                       data = {"name" : name}))
 
         elif message.isType("film timing"):
             
@@ -549,8 +549,8 @@ class Film(halModule.HalModule):
 
     def setLockout(self, state):
         self.locked_out = state
-        self.sendMessage.(halMessage.HalMessage(m_type = "film lockout",
-                                                data = {"locked out" : self.locked_out}))
+        self.sendMessage(halMessage.HalMessage(m_type = "film lockout",
+                                               data = {"locked out" : self.locked_out}))
 
     def startCameras(self):
         

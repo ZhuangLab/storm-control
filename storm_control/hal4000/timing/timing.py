@@ -85,26 +85,23 @@ class Timing(halModule.HalModule):
                                            "resp" : None})
 
     def handleResponse(self, message, response):
-        if message.isType("get camera functionality"):
+        if message.isType("get functionality"):
             self.timing_functionality.connectCameraFunctionality(response.getData()["functionality"])
 
             # Broadcast timing information for the film.
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "film timing",
-                                                       data = {"functionality" : self.timing_functionality}))
+            self.sendMessage(halMessage.HalMessage(m_type = "film timing",
+                                                   data = {"functionality" : self.timing_functionality}))
             
             # Tell film.film that this module is ready to film.
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "ready to film"))
+            self.sendMessage(halMessage.HalMessage(m_type = "ready to film"))
         
     def processMessage(self, message):
 
         if message.isType("configure1"):
 
             # Broadcast initial parameters.
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "initial parameters",
-                                                       data = {"parameters" : self.parameters}))
+            self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
+                                                   data = {"parameters" : self.parameters}))
 
         elif message.isType("feed names"):
             cur_time_base = self.parameters.get("time_base")
@@ -137,10 +134,9 @@ class Timing(halModule.HalModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"wait for" : self.module_name}))
             self.timing_functionality = TimingFunctionality(time_base = self.parameters.get("time_base"))
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "get camera functionality",
-                                                       data = {"camera" : self.timing_functionality.getTimeBase()}))
-            
+            self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
+                                                   data = {"name" : self.timing_functionality.getTimeBase()}))
+
         elif message.isType("stop film"):
             self.timing_functionality.disconnectCameraFunctionality()
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,

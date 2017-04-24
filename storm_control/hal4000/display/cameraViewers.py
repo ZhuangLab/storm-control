@@ -50,8 +50,8 @@ class CameraParamsMixin(object):
 
     def handleFeedChange(self, feed_name):
         self.guiMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "get camera functionality",
-                                                   data = {"camera" : feed_name,
+                                                   m_type = "get functionality",
+                                                   data = {"name" : feed_name,
                                                            "extra data" : self.module_name}))
 
     def handleGuiMessage(self, message):

@@ -47,12 +47,12 @@ class Camera(halModule.HalModule):
                                       config = camera_params.get("parameters"),
                                       is_master = camera_params.get("master"))
 
-        # Other modules will send this to get a camera/feed functionality.
-        halMessage.addMessage("get camera functionality",
-                              check_exists = False,
-                              validator = {"data" : {"camera" : [True, str],
-                                                     "extra data" : [False, str]},
-                                           "resp" : {"functionality" : [True, cameraFunctionality.CameraFunctionality]}})
+#        # Other modules will send this to get a camera/feed functionality.
+#        halMessage.addMessage("get camera functionality",
+#                              check_exists = False,
+#                              validator = {"data" : {"camera" : [True, str],
+#                                                     "extra data" : [False, str]},
+#                                           "resp" : {"functionality" : [True, cameraFunctionality.CameraFunctionality]}})
                                    
     def cleanUp(self, qt_settings):
         self.camera_control.cleanUp()
@@ -62,9 +62,8 @@ class Camera(halModule.HalModule):
 
         if message.isType("configure1"):
             # Broadcast initial parameters.
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "initial parameters",
-                                                       data = {"parameters" : self.camera_control.getParameters()}))
+            self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
+                                                   data = {"parameters" : self.camera_control.getParameters()}))
 
         elif message.isType("film timing"):
             # This message comes from timing.timing, if we are the timing camera
@@ -76,9 +75,9 @@ class Camera(halModule.HalModule):
                                             message, 
                                             lambda : self.setFilmLength(self.film_length))
 
-        elif message.isType("get camera functionality"):
+        elif message.isType("get functionality"):
             # This message comes from display.cameraDisplay among others.
-            if (message.getData()["camera"] == self.module_name):
+            if (message.getData()["name"] == self.module_name):
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                   data = {"functionality" : self.camera_control.getCameraFunctionality()}))
 

@@ -374,7 +374,7 @@ class CameraFrameViewer(QtWidgets.QFrame):
            method will get called.
 
         3. At the end of setFeedNames() Execute a feed change to the 
-           new camera / feed, this will send a 'get camera functionality' 
+           new camera / feed, this will send a 'get functionality' 
            message.
 
         4. The camera / feed will respond with a functionality.
@@ -394,7 +394,7 @@ class CameraFrameViewer(QtWidgets.QFrame):
     def setCameraFunctionality(self, camera_functionality):
         """
         This method gets called when the view changes it's current feed. The
-        sequence is that a 'get camera functionality' message is sent. When
+        sequence is that a 'get functionality' message is sent. When
         the display module gets the updated functionality it calls this 
         method.
         """

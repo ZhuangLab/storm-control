@@ -78,7 +78,7 @@ class Display(halModule.HalModule):
         self.newMessage.emit(message)
         
     def handleResponse(self, message, response):
-        if message.isType("get camera functionality"):
+        if message.isType("get functionality"):
             for viewer in self.viewers:
                 if (viewer.getViewerName() == message.getData()["extra data"]):
                     viewer.setCameraFunctionality(response.getData()["functionality"])
