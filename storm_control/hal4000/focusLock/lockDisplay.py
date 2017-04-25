@@ -52,7 +52,7 @@ class LockDisplay(QtWidgets.QGroupBox):
         layout.addWidget(self.q_qpd_sum_display)
 
     def handleGoodLock(self, good_lock):
-        pass
+        self.q_qpd_offset_display.handleGoodLock(good_lock)
     
     def handleIrButton(self, boolean):
         """
@@ -160,6 +160,7 @@ class QOffsetDisplay(QStatusDisplay):
         Focus lock offset & stage position.
         """
         super().__init__(**kwds)
+        self.bar_color = QtGui.QColor(0, 0, 0, 150)
         self.has_center_bar = None
 
     def paintEvent(self, event):
@@ -185,9 +186,8 @@ class QOffsetDisplay(QStatusDisplay):
             painter.drawLine(0, center_bar, self.width(), center_bar)
 
         # Foreground.
-        color = QtGui.QColor(0, 0, 0, 150)
-        painter.setPen(color)
-        painter.setBrush(color)
+        painter.setPen(self.bar_color)
+        painter.setBrush(self.bar_color)
         painter.drawRect(2, self.height() - self.convert(self.value) - 2, self.width() - 5, 3)
 
 
@@ -198,11 +198,12 @@ class QQPDOffsetDisplay(QOffsetDisplay):
     def __init__(self, q_label = None, **kwds):
         super().__init__(**kwds)
         self.q_label = q_label
-        
-    def updateValue(self, qpd_dict):
-        value = 1000.0 * qpd_dict["offset"]
-        super().updateValue(value)
-        self.q_label.setText("{0:.1f}".format(value))
+
+    def handleGoodLock(self, good_lock):
+        if good_lock:
+            self.bar_color = QtGui.QColor(0, 255, 0, 150)
+        else:
+            self.bar_color = QtGui.QColor(0, 0, 0, 150)
 
     def setFunctionality(self, functionality):
         super().setFunctionality(functionality)
@@ -215,7 +216,12 @@ class QQPDOffsetDisplay(QOffsetDisplay):
         self.scale_range = 1.0/(self.scale_max - self.scale_min)
         self.functionality.qpdUpdate.connect(self.updateValue)
 
+    def updateValue(self, qpd_dict):
+        value = 1000.0 * qpd_dict["offset"]
+        super().updateValue(value)
+        self.q_label.setText("{0:.1f}".format(value))
 
+        
 class QQPDSumDisplay(QStatusDisplay):
     """
     Focus lock sum signal display.
@@ -254,11 +260,6 @@ class QQPDSumDisplay(QStatusDisplay):
         painter.drawRect(2, self.height() - self.convert(self.value),
                          self.width() - 5, self.convert(self.value))
 
-    def updateValue(self, qpd_dict):
-        value = qpd_dict["sum"]
-        super().updateValue(value)
-        self.q_label.setText("{0:.1f}".format(value))
-
     def setFunctionality(self, functionality):
         super().setFunctionality(functionality)
         self.has_center_bar = self.functionality.getParameter("sum_has_center_bar")
@@ -271,6 +272,11 @@ class QQPDSumDisplay(QStatusDisplay):
 
         self.scale_range = 1.0/(self.scale_max - self.scale_min)
         self.functionality.qpdUpdate.connect(self.updateValue)        
+
+    def updateValue(self, qpd_dict):
+        value = qpd_dict["sum"]
+        super().updateValue(value)
+        self.q_label.setText("{0:.1f}".format(value))
 
         
 class QStageDisplay(QOffsetDisplay):

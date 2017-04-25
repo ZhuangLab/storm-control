@@ -66,6 +66,7 @@ class FocusLockView(halDialog.HalDialog):
         c_params = configuration.get("parameters")
         for pname in c_params.getAttrs():
             self.parameters.setv(pname, c_params.get(pname))
+        self.newParameters(self.parameters)
 
         # Connect signals.
         self.ui.jumpNButton.clicked.connect(self.handleJumpNButton)
@@ -125,7 +126,7 @@ class FocusLockView(halDialog.HalDialog):
     def newParameters(self, parameters):
         for attr in params.difference(parameters, self.parameters):
             self.parameters.setv(attr, parameters.get(attr))
-        for mode in self.modes():
+        for mode in self.modes:
             mode.newParameters(self.parameters)
 
     def setFunctionality(self, name, functionality):

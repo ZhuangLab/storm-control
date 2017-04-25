@@ -168,6 +168,7 @@ class LockedMixin(object):
                     self.lm_buffer[self.lm_counter] = 1
                 else:
                     self.lm_buffer[self.lm_counter] = 0
+                print(diff, self.lm_offset_threshold, self.lm_counter)
 
                 # Simple proportional control.
                 dz = 0.9 * diff
@@ -187,9 +188,13 @@ class LockedMixin(object):
         self.lm_buffer = numpy.zeros(self.lm_buffer_length, dtype = numpy.uint8)
             
     def newParameters(self, parameters):
+        if hasattr(super(), "newParameters"):
+            super().newParameters(parameters)
+            
         self.lm_buffer_length = parameters.get("buffer_length")
         self.lm_min_sum = parameters.get("minimum_sum")
         self.lm_offset_threshold = parameters.get("offset_threshold")
+        print(self.lm_offset_threshold)
                 
     def startLockBehavior(self, behavior_name, behavior_params):
         if (behavior_name == self.lm_mode_name):
@@ -295,10 +300,12 @@ class LockMode(QtCore.QObject):
         return self.good_lock
 
     def newParameters(self, parameters):
-        super().newParameters(parameters)
         self.parameters = parameters
+        if hasattr(super(), "newParameters"):
+            super().newParameters(parameters)
 
     def setLockStatus(self, status):
+        print(">sll", status)
         self.good_lock = status
         self.goodLock.emit(status)
         
