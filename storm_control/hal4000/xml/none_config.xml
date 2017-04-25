@@ -2,8 +2,8 @@
 <config>
 
   <!-- The starting directory. -->
-  <!-- <directory type="directory">/home/hbabcock/Data/</directory> -->
-  <directory type="directory">C:/Data/</directory>
+  <directory type="directory">/home/hbabcock/Data/</directory>
+  <!-- <directory type="directory">C:/Data/</directory> -->
 
   <!-- The setup name -->
   <setup_name type="string">none</setup_name>
@@ -397,6 +397,7 @@
 
       <configuration>
 	<parameters>
+	  <center type="float">50.0</center>
 	  <has_center_bar type="boolean">True</has_center_bar>
 	  <maximum type="float">100.0</maximum>
 	  <minimum type="float">0.0</minimum>

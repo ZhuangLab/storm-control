@@ -10,6 +10,7 @@ from PyQt5 import QtCore
 
 
 class LockControl(QtCore.QObject):
+
     
     def __init__(self, **kwds):
         super().__init__(**kwds)
@@ -48,11 +49,26 @@ class LockControl(QtCore.QObject):
             self.qpd_functionality.getOffset()
 
     def setLockMode(self, new_mode):
+        """
+        new_mode is a focusLock.LockMode object (listed in the mode combo box).
+        """
         self.lock_mode = new_mode
+        self.lock_mode.initialize()
         self.lock_mode.setZStageFunctionality(self.z_stage_functionality)
-        
+        self.z_stage_functionality.recenter()
+
     def startFilm(self):
         self.lock_mode.startFilm()
 
-    def stopFilm(self):
-        self.lock_mode.stopFilm()
+    def startLock(self, sub_mode_name, sub_mode_params):
+        """
+        Not sure if this is the best name, but all the modes have a 'normal'
+        functionality as well as the possibility to perform things like a
+        scan for sum signal. Which of these is active can be specified by 
+        calling this function.
+        """
+        self.lock_mode.startSubMode(sub_mode_name, sub_mode_params)
+        
+        
+#    def stopFilm(self):
+#        self.lock_mode.stopFilm()

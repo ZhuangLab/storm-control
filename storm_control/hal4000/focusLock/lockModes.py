@@ -10,55 +10,192 @@ import scipy.optimize
 
 from PyQt5 import QtCore
 
+import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
 
 # Focus quality determination for the optimal lock.
 import storm_control.hal4000.focuslock.focusQuality as focusQuality
 
 
-# Mixin classes to that provide various scan functionalities.
-class FindSumMixin(object):
+class LockModeException(halExceptions.HalException):
+    pass
 
+
+#
+# Mixin classes provide various locking and scanning behaviours.
+# The idea is that these are more or less self-contained and setting
+# the lock modes 'mode' attribute will switch between them.
+#
+class FindSumMixin(object):
+    """
+    This will run a find sum scan, starting at the z stage minimum and
+    moving to the maximum, or until a maximum in the QPD sum signal is
+    found that is larger than the requested minimum sum signal.
+    """
     def __init__(self, **kwds):
         super().__init__(**kwds)
+        self.fsm_max_pos = 0.0
+        self.fsm_max_sum = 0.0
+        self.fsm_max_z = 0.0
+        self.fsm_min_sum = 0.0
+        self.fsm_min_z = 0.0
+        self.fsm_mode_name = "find_sum"
+        self.fsm_requested_sum = 0.0
+        self.fsm_step_size = 0.0
+
+        self.behavior_names.append(self.fsm_mode_name)
 
         # Add parameters specific to finding sum.
+        self.parameters.add(params.ParameterRangeFloat(description = "Step size for find sum search.",
+                                                       name = "fsm_step_size",
+                                                       value = 1.0,
+                                                       min_value = 0.1,
+                                                       max_value = 10.0))
 
     def handleQPDUpdate(self, qpd_state):
-        if (self.mode == "find_sum"):
-            if (power > self.max_sum):
-                self.max_sum = power
-                self.max_pos = self.stage_z
-            if (self.max_sum > self.requested_sum) and (power < (0.5 * self.max_sum)):
-                self.moveStageAbs(self.max_pos)
-                self.find_sum = False
-                self.foundSum.emit(self.max_sum)
+        if (self.behavior == self.fsm_mode_name):
+            power = qpd_state["sum"]
+            z_pos = self.z_stage_functionality.getCurrentPosition()
+
+            # Check if the current power is greater than the
+            # maximum we've seen so far.
+            if (power > self.fsm_max_sum):
+                self.fsm_max_sum = power
+                self.fsm_max_pos = z_pos
+
+            # Check if the power has started to go back down, if it has
+            # then we've hopefully found the maximum.
+            if (self.fsm_max_sum > self.fsm_requested_sum) and (power < (0.5 * self.fsm_max_sum)):
+                self.z_stage_functionality.goAbsolute(self.fsm_max_pos)
+                self.done.emit(True)
             else:
-                if (self.stage_z >= (2 * self.z_center)):
-                    if (self.max_sum > 0):
-                        self.moveStageAbs(self.max_pos)
+                # Are we at the maximum z?
+                if (z_pos >= self.fsm_max_z):
+
+                    # Did we find anything at all?
+                    if (self.fsm_max_sum > self.fsm_min_sum):
+                        self.z_stage_functionality.goAbsolute(self.fsm_max_pos)
+
+                    # Otherwise just go back to the center position.
                     else:
-                        self.moveStageAbs(self.z_center)
-                    self.find_sum = False
-                    self.foundSum.emit(self.max_sum)
+                        self.z_stage_functionality.recenter()
+
+                    # Emit signal for failure.
+                    self.done.emit(False)
+
+                # Move up one step size.
                 else:
-                    self.moveStageRel(1.0)
+                    self.z_stage_functionality.goRelative(self.fsm_step_size)
+
+    def startLock(self, behavior_name, behavior_params):
+        if (behavior_name == self.fsm_mode_name):
+            self.fsm_max_pos = 0.0
+            self.fsm_max_sum = 0.0
+            self.fsm_requested_sum = behavior_params["requested_sum"]
+            self.fsm_min_sum = 0.1 * self.fsm_requested_sum
+            self.fsm_step_size = self.parameters.get("fsm_step_size")
+
+            # Move to z = 0.
+            self.fsm_max_z = self.z_stage_functionality.getMaximum()
+            self.fsm_min_z = self.z_stage_functionality.getMinimum()
+            self.z_stage_functionality.goAbsolute(self.fsm_min_z)
 
 
-class LockMode(QtCore.QObject):
+class LockedMixin(object):
     """
-    The base class for all the lock modes.
+    This will try and hold the specified lock target. It also keeps
+    track of the quality of the lock.
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.mode = "normal"
+        self.lm_buffer = None
+        self.lm_buffer_length = 1
+        self.lm_counter = 0
+        self.lm_min_sum = 0.0
+        self.lm_mode_name = "locked"
+        self.lm_offset_threshold = 0.0
+        self.lm_target = 0.0
+
+        self.behavior_names.append(self.lm_mode_name)
+
+    def handleQPDUpdate(self, qpd_state):
+        if (self.behavior == self.lm_mode_name):
+            if (qpd_state["sum"] > self.lm_min_sum):
+                diff = (qpd_state["offset"] - self.lm_target)
+                if (abs(diff) < self.lm_offset_threshold):
+                    self.lm_buffer[self.lm_counter] = 1
+                else:
+                    self.lm_buffer[self.lm_counter] = 0
+
+                # Simple proportional control.
+                dz = 0.9 * diff
+                self.z_stage_functionality.goRelative(dz)
+            else:
+                self.lm_buffer[self.lm_counter] = 0
+                
+            self.good_lock = (numpy.sum(self.lm_buffer) == self.lm_buffer_length)
+            self.lm_counter += 1
+                
+    def startLock(self, behavior_name, behavior_params):
+        if (behavior_name == self.lm_mode_name):
+            self.lm_buffer_length = behavior_params["buffer_length"]
+            self.lm_counter = 0
+            self.lm_min_sum = behavior_params["minimum_sum"]
+            self.lm_offset_threshold = behavior_params["offset_threshold"]
+            
+            self.lm_buffer = numpy.zeros(self.lm_buffer_length, dtype = numpy.uint8)
+
+            # Did the user request a target?
+            if "lm_target" in behavior_params:
+                self.lm_target = behavior_params["lm_target"]
+
+            # If not, use the current QPD offset.
+            else:
+                self.lm_target = self.qpd_state["offset"]
+
+            if "z_start" in behavior_params:
+                self.z_stage_functionality.goAbsolute(behavior_params["z_start"])
+    
+
+class LockMode(QtCore.QObject, FindSumMixin, LockedMixin):
+    """
+    The base class for all the lock modes.
+
+    Modes are 'state' of the focus lock. They are called when there
+    is a new QPD reading or a new frame (from the camera/feed that
+    is being used to time the acquisition).
+
+    The modes have control of the zstage to do the actual stage
+    moves. Note that the requests to move the zstage are queued so
+    if the zstage is slow it could get overwhelmed by move requests.
+    """
+    # This signal is emitted when a mode finishes,
+    # with True/False for success or failure.
+    done = QtCore.pyqtSignal(bool)
+
+    # This is signal is emitted when the lock state
+    # changes between bad and good.
+    goodLock = QtCore.pyqtSignal(bool)
+
+    def __init__(self, **kwds):
+
+        # (Awkwardly) these are updated by the mixins.
+        self.behavior_names = []
+        self.parameters = params.StormXMLObject()
+        
+        super().__init__(**kwds)
+
+        self.behavior = "none"
+        self.good_lock = False
         self.name = "NA"
         self.qpd_state = None
         self.z_stage_functionality = None
 
-    def amLocked(self):
-        return False
+        self.behavior_names.append(self.sub_mode)
 
+    def amLocked(self):
+        return self.good_lock
+        
     def getName(self):
         """
         Returns the name of the lock mode (as it should appear
@@ -66,42 +203,50 @@ class LockMode(QtCore.QObject):
         """
         return self.name
 
-    def handleJump(self, delta_z):
-        if self.z_stage_functionality is not None:
-            self.z_stage_functionality.goRelative(delta_z)
-
     def handleQPDUpdate(self, qpd_state):
         self.qpd_state = qpd_state
-        
-    def lockButtonToggle(self):
-        pass
 
-    def newFrame(self, frame, stage_z):
+    def initialize(self):
+        """
+        This is called when the mode becomes the 'active' mode.
+        """
+        pass
+    
+#    def lockButtonToggle(self):
+#        pass
+
+    def newFrame(self, frame):
         pass
 
     def newParameters(self, parameters):
-        pass
-
-    def restartLock(self):
-        pass
+        for attr in params.difference(self.parameters, parameters):
+            self.parameters.setv(attr, parameters.get(attr))
 
     def setLockTarget(self, target):
-        pass
-
-    def setMode(self, new_mode):
-        self.mode = new_mode
+        self.lm_target = target
         
-    def shouldDisplayLockButton(self):
-        return False
-
     def setZStageFunctionality(self, z_stage_functionality):
         self.z_stage_functionality = z_stage_functionality
 
-    def startLock(self):
-        pass
+    def shouldEnableLockButton(self):
+        return False
 
-    def stopLock(self):
+    def startFilm(self):
         pass
+    
+    def startLock(self, behavior_name, behavior_params):
+        """
+        Start a 'behavior' of the lock mode.
+        """
+        if not behavior_name in self.behavior_names:
+            raise LockModeException("Unknown lock behavior '" + sub_mode_name + "'.")
+
+        self.good_lock = False
+        super().startSubMode(behavior_name, behavior_params)
+        self.behavior = behavior_name
+
+#    def stopLock(self):
+#        pass
 
 
 ## JumpLockMode

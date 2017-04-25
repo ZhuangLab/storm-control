@@ -77,9 +77,18 @@ class ZStageFunctionalityMixin(LockFunctionalityMixin):
         super().__init__(**kwds)
         self.z_position = 0.0
 
+    def getCenterPosition(self):
+        return self.getParameter("center")
+    
     def getCurrentPosition(self):
         return self.z_position
-        
+
+    def getMaximum(self):
+        return self.getParameter("maximum")
+
+    def getMinimum(self):
+        return self.getParameter("minimum")
+    
     def goAbsolute(self, z_pos):
         pass
 
@@ -87,7 +96,7 @@ class ZStageFunctionalityMixin(LockFunctionalityMixin):
         pass
     
     def recenter(self):
-        pass
+        self.goAbsolute(self.getCenterPosition())
     
 
 class LockModule(hardwareModule.HardwareModule):
