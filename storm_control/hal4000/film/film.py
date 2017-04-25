@@ -476,7 +476,6 @@ class Film(halModule.HalModule):
                 # We need to keep track of the current value so that
                 # we can save this in the tif images / stacks.
                 self.pixel_size = message.getData()["properties"]["pixel_size"]
-                print(self.pixel_size)
 
             elif message.sourceIs("timing"):
                 # We'll get this message from timing.timing, the part we are interested in is
