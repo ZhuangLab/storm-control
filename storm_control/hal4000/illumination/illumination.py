@@ -388,7 +388,6 @@ class Illumination(halModule.HalModule):
                                                               data = {"parameters" : p}))
 
 
-
 #
 # The MIT License
 #

@@ -154,6 +154,9 @@ class LockedMixin(object):
                                              name = "minimum_sum",
                                              value = -1.0))
 
+    def getLockTarget(self):
+        return self.lm_target
+        
     def handleQPDUpdate(self, qpd_state):
         if hasattr(super(), "handleQPDUpdate"):
             super().handleQPDUpdate(qpd_state)
@@ -271,11 +274,17 @@ class LockMode(QtCore.QObject):
         """
         return self.name
 
+    def getQPDState(self):
+        return self.qpd_state
+
+    def handleNewFrame(self, frame):
+        pass
+    
     def handleQPDUpdate(self, qpd_state):
         self.qpd_state = qpd_state
         if hasattr(super(), "handleQPDUpdate"):
             super().handleQPDUpdate(qpd_state)
-
+            
     def initialize(self):
         """
         This is called when the mode becomes the 'active' mode.
@@ -284,9 +293,6 @@ class LockMode(QtCore.QObject):
 
     def isGoodLock(self):
         return self.good_lock
-
-    def newFrame(self, frame):
-        pass
 
     def newParameters(self, parameters):
         super().newParameters(parameters)
@@ -372,6 +378,9 @@ class NoLockMode(LockMode):
         super().__init__(**kwds)
         self.name = "No lock"
 
+    def getLockTarget(self):
+        return 0.0
+
     def handleJump(self, jumpsize):
         """
         Jumps the pizeo stage immediately by the distance jumpsize.
@@ -386,7 +395,10 @@ class AutoLockMode(JumpLockMode):
     def __init__(self, **kwds):
         super().__init__(**kwds)
         self.name = "Auto Lock"
-        
+
+    def getLockTarget(self):
+        super().getLockTarget()
+    
     def startFilm(self):
         self.startLock()
 

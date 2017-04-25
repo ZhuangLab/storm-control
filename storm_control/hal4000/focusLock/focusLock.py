@@ -190,7 +190,11 @@ class FocusLock(halModule.HalModule):
             
     def processMessage(self, message):
 
-        if message.isType("configure1"):
+        if message.isType("configuration"):
+            if message.sourceIs("timing"):
+                self.control.setTimingFunctionality(message.getData()["properties"]["functionality"])
+
+        elif message.isType("configure1"):
             self.sendMessage(halMessage.HalMessage(m_type = "add to menu",
                                                    data = {"item name" : "Focus Lock",
                                                            "item msg" : "show focus lock"}))
@@ -207,6 +211,17 @@ class FocusLock(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : self.configuration.get("z_stage"),
                                                            "extra data" : "z_stage"}))
+            
+            self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
+                                                   data = {"parameters" : self.view.getParameters()}))
+
+        elif message.isType("new parameters"):
+            p = message.getData()["parameters"]
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"old parameters" : self.view.getParameters().copy()}))
+            self.view.newParameters(p.get(self.module_name))
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"new parameters" : self.view.getParameters()}))
 
         elif message.isType("show focus lock"):
             self.view.show()
@@ -216,3 +231,17 @@ class FocusLock(halModule.HalModule):
             self.control.start()
             if message.getData()["show_gui"]:
                 self.view.showIfVisible()
+
+        elif message.isType("start film"):
+            self.control.startFilm(message.getData()["film settings"])
+
+        elif message.isType("stop film"):
+            self.control.stopFilm()
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.view.getParameters().copy()}))
+            lock_target = params.ParameterFloat(name = "lock_target",
+                                                value = self.control.getLockTarget())
+            lock_mode = params.ParameterString(name = "lock_mode",
+                                               value = self.control.getLockModeName())
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"acquisition" : [lock_target, lock_mode]}))
