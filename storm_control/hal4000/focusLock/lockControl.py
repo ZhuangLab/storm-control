@@ -25,6 +25,9 @@ class LockControl(QtCore.QObject):
     
     def getLockTarget(self):
         return self.lock_mode.getLockTarget()
+
+    def getQPDSumSignal(self):
+        return self.lock_mode.getQPDState()["sum"]
     
     def handleJump(self, delta_z):
         self.lock_mode.handleJump(delta_z)

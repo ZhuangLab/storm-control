@@ -356,7 +356,7 @@ class JumpLockMode(LockMode, FindSumMixin, LockedMixin):
         stops the lock, jumps the piezo stage and starts the relock timer.
         """
         if (self.behavior == "locked"):
-            self.stopLock()
+            self.behavior = "none"
             self.relock_timer.start()
         self.z_stage_functionality.goRelative(jumpsize)
         

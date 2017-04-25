@@ -239,9 +239,13 @@ class FocusLock(halModule.HalModule):
             self.control.stopFilm()
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : self.view.getParameters().copy()}))
-            lock_target = params.ParameterFloat(name = "lock_target",
-                                                value = self.control.getLockTarget())
             lock_mode = params.ParameterString(name = "lock_mode",
                                                value = self.control.getLockModeName())
+            lock_sum = params.ParameterFloat(name = "lock_sum",
+                                                value = self.control.getQPDSumSignal())
+            lock_target = params.ParameterFloat(name = "lock_target",
+                                                value = self.control.getLockTarget())
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"acquisition" : [lock_target, lock_mode]}))
+                                                              data = {"acquisition" : [lock_mode,
+                                                                                       lock_sum,
+                                                                                       lock_target]}))
