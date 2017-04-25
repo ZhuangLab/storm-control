@@ -81,7 +81,14 @@
            </widget>
           </item>
           <item>
-           <widget class="QDoubleSpinBox" name="lockTargetDoubleSpinBox"/>
+           <widget class="QSpinBox" name="lockTargetSpinBox">
+            <property name="minimum">
+             <number>-2000</number>
+            </property>
+            <property name="maximum">
+             <number>2000</number>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -116,6 +123,9 @@
             </property>
             <property name="text">
              <string>Lock</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
             </property>
            </widget>
           </item>

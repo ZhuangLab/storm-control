@@ -2,8 +2,8 @@
 <config>
 
   <!-- The starting directory. -->
-  <directory type="directory">/home/hbabcock/Data/</directory>
-  <!-- <directory type="directory">C:/Data/</directory> -->
+  <!-- <directory type="directory">/home/hbabcock/Data/</directory> -->
+  <directory type="directory">C:/Data/</directory>
 
   <!-- The setup name -->
   <setup_name type="string">none</setup_name>
@@ -259,9 +259,14 @@
       <configuration>
 	<ir_laser type="string">none_irlaser</ir_laser>
 	<jump_size type="float">0.1</jump_size>
-	<lock_modes type="string">NoLockMode,AlwaysOnLockMode,OptimalLockMode</lock_modes>
+	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode</lock_modes>
 	<qpd type="string">none_qpd</qpd>
 	<z_stage type="string">none_zstage</z_stage>
+	<parameters>
+	  <buffer_length type="int">5</buffer_length>
+	  <fsm_step_size type="float">1.0</fsm_step_size>
+	  <offset_threshold type="float">0.1</offset_threshold>
+	</parameters>
       </configuration>
     </focuslock>
     

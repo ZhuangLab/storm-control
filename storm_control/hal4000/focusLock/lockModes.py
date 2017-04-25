@@ -14,7 +14,7 @@ import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
 
 # Focus quality determination for the optimal lock.
-import storm_control.hal4000.focuslock.focusQuality as focusQuality
+import storm_control.hal4000.focusLock.focusQuality as focusQuality
 
 
 class LockModeException(halExceptions.HalException):
@@ -25,6 +25,9 @@ class LockModeException(halExceptions.HalException):
 # Mixin classes provide various locking and scanning behaviours.
 # The idea is that these are more or less self-contained and setting
 # the lock modes 'mode' attribute will switch between them.
+#
+# These are active when the 'behavior' attribute corresponds to
+# their name.
 #
 class FindSumMixin(object):
     """
@@ -43,16 +46,26 @@ class FindSumMixin(object):
         self.fsm_requested_sum = 0.0
         self.fsm_step_size = 0.0
 
+        if not hasattr(self, "behavior_names"):
+            self.behavior_names = []
+            
         self.behavior_names.append(self.fsm_mode_name)
 
-        # Add parameters specific to finding sum.
-        self.parameters.add(params.ParameterRangeFloat(description = "Step size for find sum search.",
-                                                       name = "fsm_step_size",
-                                                       value = 1.0,
-                                                       min_value = 0.1,
-                                                       max_value = 10.0))
+    @staticmethod
+    def addParameters(parameters):
+        """
+        Add parameters specific to finding sum.
+        """
+        parameters.add(params.ParameterRangeFloat(description = "Step size for find sum search.",
+                                                  name = "fsm_step_size",
+                                                  value = 1.0,
+                                                  min_value = 0.1,
+                                                  max_value = 10.0))
 
     def handleQPDUpdate(self, qpd_state):
+        if hasattr(super(), "handleQPDUpdate"):
+            super().handleQPDUpdate(qpd_state)
+            
         if (self.behavior == self.fsm_mode_name):
             power = qpd_state["sum"]
             z_pos = self.z_stage_functionality.getCurrentPosition()
@@ -87,13 +100,16 @@ class FindSumMixin(object):
                 else:
                     self.z_stage_functionality.goRelative(self.fsm_step_size)
 
-    def startLock(self, behavior_name, behavior_params):
+    def startLockBehavior(self, behavior_name, behavior_params):
         if (behavior_name == self.fsm_mode_name):
             self.fsm_max_pos = 0.0
             self.fsm_max_sum = 0.0
             self.fsm_requested_sum = behavior_params["requested_sum"]
             self.fsm_min_sum = 0.1 * self.fsm_requested_sum
-            self.fsm_step_size = self.parameters.get("fsm_step_size")
+            if "fsm_step_size" in behavior_params:
+                self.fsm_step_size = behavior_params["fsm_step_size"]
+            else:
+                self.fsm_step_size = self.parameters.get("fsm_step_size")
 
             # Move to z = 0.
             self.fsm_max_z = self.z_stage_functionality.getMaximum()
@@ -103,8 +119,8 @@ class FindSumMixin(object):
 
 class LockedMixin(object):
     """
-    This will try and hold the specified lock target. It also keeps
-    track of the quality of the lock.
+    This will try and hold the specified lock target. It 
+    also keeps track of the quality of the lock.
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
@@ -116,9 +132,32 @@ class LockedMixin(object):
         self.lm_offset_threshold = 0.0
         self.lm_target = 0.0
 
+        if not hasattr(self, "behavior_names"):
+            self.behavior_names = []
+
         self.behavior_names.append(self.lm_mode_name)
 
+    @staticmethod
+    def addParameters(parameters):
+        """
+        Add parameters specific to staying in lock.
+        """
+        parameters.add(params.ParameterInt(description = "Number of repeats for the lock to be considered good.",
+                                           name = "buffer_length",
+                                           value = 5))
+        
+        parameters.add(params.ParameterFloat(description = "Maximum allowed difference to still be in lock.",
+                                             name = "offset_threshold",
+                                             value = 0.1))
+
+        parameters.add(params.ParameterFloat(description = "Minimum sum to be considered locked.",
+                                             name = "minimum_sum",
+                                             value = -1.0))
+
     def handleQPDUpdate(self, qpd_state):
+        if hasattr(super(), "handleQPDUpdate"):
+            super().handleQPDUpdate(qpd_state)
+
         if (self.behavior == self.lm_mode_name):
             if (qpd_state["sum"] > self.lm_min_sum):
                 diff = (qpd_state["offset"] - self.lm_target)
@@ -132,32 +171,57 @@ class LockedMixin(object):
                 self.z_stage_functionality.goRelative(dz)
             else:
                 self.lm_buffer[self.lm_counter] = 0
-                
-            self.good_lock = (numpy.sum(self.lm_buffer) == self.lm_buffer_length)
-            self.lm_counter += 1
-                
-    def startLock(self, behavior_name, behavior_params):
-        if (behavior_name == self.lm_mode_name):
-            self.lm_buffer_length = behavior_params["buffer_length"]
-            self.lm_counter = 0
-            self.lm_min_sum = behavior_params["minimum_sum"]
-            self.lm_offset_threshold = behavior_params["offset_threshold"]
-            
-            self.lm_buffer = numpy.zeros(self.lm_buffer_length, dtype = numpy.uint8)
 
+            good_lock = (numpy.sum(self.lm_buffer) == self.lm_buffer_length)
+            if (good_lock != self.good_lock):
+                self.setLockStatus(good_lock)
+
+            self.lm_counter += 1
+            if (self.lm_counter == self.lm_buffer_length):
+                self.lm_counter = 0
+
+    def initializeLMBuffer(self):
+        self.lm_buffer = numpy.zeros(self.lm_buffer_length, dtype = numpy.uint8)
+            
+    def newParameters(self, parameters):
+        self.lm_buffer_length = parameters.get("buffer_length")
+        self.lm_min_sum = parameters.get("minimum_sum")
+        self.lm_offset_threshold = parameters.get("offset_threshold")
+                
+    def startLockBehavior(self, behavior_name, behavior_params):
+        if (behavior_name == self.lm_mode_name):
+            self.lm_counter = 0
+
+            if "buffer_length" in behavior_params:
+                self.lm_buffer_length = behavior_params["buffer_length"]
+            else:
+                self.lm_buffer_length = self.parameters.get("buffer_length")
+
+            if "minimum_sum" in behavior_params:
+                self.lm_min_sum = behavior_params["minimum_sum"]
+            else:
+                self.lm_min_sum = self.parameters.get("minimum_sum")
+
+            if "offset_threshold" in behavior_params:
+                self.lm_offset_threshold = behavior_params["offset_threshold"]
+            else:
+                self.lm_offset_threshold = parameters.get("offset_threshold")
+            
             # Did the user request a target?
-            if "lm_target" in behavior_params:
-                self.lm_target = behavior_params["lm_target"]
+            if "target" in behavior_params:
+                self.setLockTarget(behavior_params["target"])
 
             # If not, use the current QPD offset.
             else:
-                self.lm_target = self.qpd_state["offset"]
+                self.setLockTarget(self.qpd_state["offset"])
 
             if "z_start" in behavior_params:
                 self.z_stage_functionality.goAbsolute(behavior_params["z_start"])
+
+            self.initializeLMBuffer()
     
 
-class LockMode(QtCore.QObject, FindSumMixin, LockedMixin):
+class LockMode(QtCore.QObject):
     """
     The base class for all the lock modes.
 
@@ -168,6 +232,9 @@ class LockMode(QtCore.QObject, FindSumMixin, LockedMixin):
     The modes have control of the zstage to do the actual stage
     moves. Note that the requests to move the zstage are queued so
     if the zstage is slow it could get overwhelmed by move requests.
+
+    The modes share a single parameter object. The parameters specific
+    to a particular mode are stored under the modes 'name' attribute.
     """
     # This signal is emitted when a mode finishes,
     # with True/False for success or failure.
@@ -177,25 +244,26 @@ class LockMode(QtCore.QObject, FindSumMixin, LockedMixin):
     # changes between bad and good.
     goodLock = QtCore.pyqtSignal(bool)
 
-    def __init__(self, **kwds):
+    # Emitted when the current lock target is changed.
+    lockTarget = QtCore.pyqtSignal(float)
 
-        # (Awkwardly) these are updated by the mixins.
-        self.behavior_names = []
-        self.parameters = params.StormXMLObject()
-        
+    def __init__(self, parameters = None, **kwds):
         super().__init__(**kwds)
-
         self.behavior = "none"
         self.good_lock = False
         self.name = "NA"
+        self.parameters = parameters
         self.qpd_state = None
         self.z_stage_functionality = None
 
-        self.behavior_names.append(self.sub_mode)
+        if not hasattr(self, "behavior_names"):
+            self.behavior_names = []
+            
+        self.behavior_names.append(self.behavior)
 
     def amLocked(self):
-        return self.good_lock
-        
+        return (self.behavior == "locked")
+    
     def getName(self):
         """
         Returns the name of the lock mode (as it should appear
@@ -205,26 +273,33 @@ class LockMode(QtCore.QObject, FindSumMixin, LockedMixin):
 
     def handleQPDUpdate(self, qpd_state):
         self.qpd_state = qpd_state
+        if hasattr(super(), "handleQPDUpdate"):
+            super().handleQPDUpdate(qpd_state)
 
     def initialize(self):
         """
         This is called when the mode becomes the 'active' mode.
         """
         pass
-    
-#    def lockButtonToggle(self):
-#        pass
+
+    def isGoodLock(self):
+        return self.good_lock
 
     def newFrame(self, frame):
         pass
 
     def newParameters(self, parameters):
-        for attr in params.difference(self.parameters, parameters):
-            self.parameters.setv(attr, parameters.get(attr))
+        super().newParameters(parameters)
+        self.parameters = parameters
 
-    def setLockTarget(self, target):
-        self.lm_target = target
+    def setLockStatus(self, status):
+        self.good_lock = status
+        self.goodLock.emit(status)
         
+    def setLockTarget(self, target):
+        self.lockTarget.emit(target)
+        self.lm_target = target
+
     def setZStageFunctionality(self, z_stage_functionality):
         self.z_stage_functionality = z_stage_functionality
 
@@ -233,913 +308,127 @@ class LockMode(QtCore.QObject, FindSumMixin, LockedMixin):
 
     def startFilm(self):
         pass
-    
-    def startLock(self, behavior_name, behavior_params):
+
+    def startLock(self):
+        pass
+        
+    def startLockBehavior(self, behavior_name, behavior_params):
         """
         Start a 'behavior' of the lock mode.
         """
         if not behavior_name in self.behavior_names:
             raise LockModeException("Unknown lock behavior '" + sub_mode_name + "'.")
 
-        self.good_lock = False
-        super().startSubMode(behavior_name, behavior_params)
+        self.setLockStatus(False)
+        super().startLockBehavior(behavior_name, behavior_params)
         self.behavior = behavior_name
 
-#    def stopLock(self):
-#        pass
+    def stopLock(self):
+        self.behavior = "none"
+        self.z_stage_functionality.recenter()
 
+    def stopFilm(self):
+        pass
+    
+        
+class JumpLockMode(LockMode, FindSumMixin, LockedMixin):
+    """
+    Sub class for handling locks, jumps and combinations thereof. Basically
+    every class that can lock is a sub-class of this class.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
 
-## JumpLockMode
-#
-# Derived Class for handling locks, jumps and combinations thereof.
-#
-class JumpLockMode(LockMode):
-
-    ## __init__
-    #
-    # @param control_thread A thread object that controls the focus lock.
-    # @param parameters A parameters object.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, control_thread, parameters, parent):
-        LockMode.__init__(self, control_thread, parameters, parent)
         self.relock_timer = QtCore.QTimer(self)
         self.relock_timer.setInterval(200)
         self.relock_timer.setSingleShot(True)
-        self.relock_timer.timeout.connect(self.restartLock)
+        self.relock_timer.timeout.connect(self.handleRelockTimer)
 
-    ## handleJump
-    # 
-    # Jumps the piezo stage immediately if it is not locked. Otherwise it stops the
-    # lock, jumps the piezo stage and starts the relock timer.
-    #
-    # @param jumpsize The distance to jump the piezo stage.
-    #
     def handleJump(self, jumpsize):
-        if self.locked:
-            self.control_thread.stopLock()
-        self.control_thread.moveStageRel(jumpsize)
-        if self.locked:
+        """
+        Jumps the piezo stage immediately if it is not locked. Otherwise it 
+        stops the lock, jumps the piezo stage and starts the relock timer.
+        """
+        if (self.behavior == "locked"):
+            self.stopLock()
             self.relock_timer.start()
+        self.z_stage_functionality.goRelative(jumpsize)
+        
+    def handleRelockTimer(self):
+        """
+        Restarts the focus lock when the relock timer fires.
+        """
+        self.startLock()
 
-    ## restartLock
-    #
-    # Restarts the focus lock when the relock timer fires.
-    #
-    def restartLock(self):
-        self.control_thread.startLock()
-
-    ## setLockTarget
-    #
-    # Sets the focus lock target to the desired value.
-    #
-    # @param target The desired lock target.
-    #
-    def setLockTarget(self, target):
-        self.control_thread.setTarget(target)
 
 #
-# Modes are listed in the order in which they appear on
-# the dialog box.
-#
-
-## NoLockMode
-#
-# No focus lock
+# These are in the order that they usually appear in the combo box.
 #
 class NoLockMode(LockMode):
+    """
+    No focus lock.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.name = "No lock"
 
-    ## __init__
-    #
-    # @param control_thread A thread object that controls the focus lock.
-    # @param parameters A parameters object.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, control_thread, parameters, parent):
-        LockMode.__init__(self, control_thread, parameters, parent)
-        self.name = "Off"
-
-    ## handleJump
-    #
-    # Jumps the pizeo stage immediately by the distance jumpsize.
-    #
-    # @param jumpsize The distance to jump the stage.
-    #
     def handleJump(self, jumpsize):
-        self.control_thread.moveStageRel(jumpsize)
+        """
+        Jumps the pizeo stage immediately by the distance jumpsize.
+        """
+        self.z_stage_functionality.goRelative(jumpsize)
 
 
-## AutoLockMode
-#
-# Lock will be on during filming, but cannot be turned on manually.
-#
 class AutoLockMode(JumpLockMode):
-
-    ## __init__
-    #
-    # @param control_thread A thread object that controls the focus lock.
-    # @param parameters A parameters object.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, control_thread, parameters, parent):
-        JumpLockMode.__init__(self, control_thread, parameters, parent)
+    """
+    Lock will be on during filming, but cannot be turned on manually.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
         self.name = "Auto Lock"
+        
+    def startFilm(self):
+        self.startLock()
 
-    ## startLock
-    #
-    # Start the focus lock.
-    #
     def startLock(self):
-        self.control_thread.startLock()
-        self.locked = True
+        self.setLockStatus(False)
+        self.initializeLMBuffer()
+        self.setLockTarget(self.qpd_state["offset"])
+        self.behavior = "locked"
 
-    ## stopLock
-    #
-    # Stop the focus lock.
-    #
-    def stopLock(self):
-        if self.locked:
-            self.control_thread.stopLock()
-            self.control_thread.recenter()
-            self.locked = False
+    def stopFilm(self):
+        self.stopLock()
+        self.z_stage_functionality.recenter()
 
 
-## AlwaysOnLockMode
-#
-# Lock will start during filming, or when the lock button is 
-# pressed (in which case it will always stay on)
-#
-class AlwaysOnLockMode(JumpLockMode):
-
-    ## __init__
-    #
-    # @param control_thread A thread object that controls the focus lock.
-    # @param parameters A parameters object.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, control_thread, parameters, parent):
-        JumpLockMode.__init__(self, control_thread, parameters, parent)
-        self.button_locked = False
+class AlwaysOnLockMode(AutoLockMode):
+    """
+    Lock will start during filming, or when the lock button is 
+    pressed (in which case it will always stay on)
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.film_on = False
         self.name = "Always On"
 
-    ## lockButtonToggle
-    #
-    # Sets the button_locked flag and start/stops the focus lock.
-    #
-    def lockButtonToggle(self):
-        if self.button_locked:
-            self.button_locked = False
-            self.stopLock()
-        else:
+    def shouldEnableLockButton(self):
+        return True
+
+    def startFilm(self):
+        if not self.amLocked():
+            self.film_on = True
             self.startLock()
-            self.button_locked = True
 
-    ## newParameters
-    #
-    # This is a noop, not sure why this method is in this class.
-    #
-    # @param parameters A parameters object.
-    #
-    def newParameters(self, parameters):
-        pass
-
-    ## reset
-    #
-    # Turn the lock off it was turned on using the lock button.
-    #
-    def reset(self):
-        if self.button_locked:
-            self.lockButtonToggle()
-
-    ## shouldDisplayLockButton
-    #
-    # @return True
-    #
-    def shouldDisplayLockButton(self):
-        return True
-
-    ## startLock
-    #
-    # Starts the focus lock.
-    #
-    def startLock(self):
-        if not self.locked:
-            self.control_thread.startLock()
-            self.locked = True
-
-    ## stopLock
-    #
-    # Stops the focus lock.
-    #
-    def stopLock(self):
-        if self.locked and (not self.button_locked):
-            self.control_thread.stopLock()
-            self.control_thread.recenter()
-            self.locked = False
-
-
-## OptimalLockMode
-#
-# At the start of filming the stage is moved
-# in a triangle wave. First it goes up to bracket_step, then down
-# to -bracket_step and then finally back to zero. At each point
-# along the way the focus quality & offset are recorded. When the
-# stage returns to zero, the data is fit with a gaussian and the
-# lock target is set to the offset corresponding to the center
-# of the gaussian.
-#
-class OptimalLockMode(JumpLockMode):
-
-    ## __init__
-    #
-    # @param control_thread A thread object that controls the focus lock.
-    # @param parameters A parameters object.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, control_thread, parameters, parent):
-        JumpLockMode.__init__(self, control_thread, parameters, parent)
-        self.bracket_step = None
-        self.button_locked = False
-        self.cur_z = None
-        self.counter = 0
-        self.fvalues = None
-        self.lock_target = None
-        self.mode = "None"
-        self.name = "Optimal"
-        self.quality_threshold = 0
-        self.scan_hold = None
-        self.scan_step = None
-        self.scan_state = 1
-        self.zvalues = None
-
-    ## getName
-    #
-    # Not sure why this method is in this class.
-    #
-    # @return "Optimal"
-    #
-    def getName(self):
-        return "Optimal"
-
-    ## initScan
-    #
-    # Configures all the variables that will be used during the scan
-    # to find the optimal lock target.
-    #
-    def initScan(self):
-        self.cur_z = 0.0
-        self.mode = "Optimizing"
-        self.scan_state = 1
-        self.counter = 0
-        size_guess = round(self.scan_hold * (self.bracket_step / self.scan_step) * 6)
-        self.fvalues = numpy.zeros(size_guess)
-        self.zvalues = numpy.zeros(size_guess)
-
-    ## lockButtonToggle
-    #
-    # Toggle the lock button. This stops the lock and also recenters the piezo.
-    #
-    def lockButtonToggle(self):
-        if self.button_locked:
-            self.locked = False
-            self.button_locked = False
-            self.control_thread.stopLock()
-            self.control_thread.recenter()
-        else:
-            self.control_thread.startLock()
-            self.lock_target = self.control_thread.getLockTarget()
-            self.button_locked = True
-            self.locked = True
-
-    ## newFrame
-    #
-    # Handles a new frame from the camera. If the mode is optimizing this calculates
-    # the focus quality of the frame and moves the piezo to its next position.
-    #
-    # @param frame A frame object.
-    # @param offset The offset signal from the focus lock.
-    # @param power The sum signal from the focus lock.
-    # @param stage_z The z position of the piezo stage.
-    #
-    def newFrame(self, frame, offset, power, stage_z):
-        if (self.mode == "Optimizing"):
-            if frame:
-                quality = focusQuality.imageGradient(frame)
-                if (quality > self.quality_threshold):
-                    self.zvalues[self.counter] = offset
-                    self.fvalues[self.counter] = quality
-                    self.counter += 1
-
-                    if ((self.counter % self.scan_hold) == 0):
-                        if (self.scan_state == 1): # Scan up
-                            if (self.cur_z >= self.bracket_step):
-                                self.scan_state = 2
-                            else:
-                                self.cur_z += self.scan_step
-                                self.handleJump(self.scan_step)
-                        elif (self.scan_state == 2): # Scan back down
-                            if (self.cur_z <= -self.bracket_step):
-                                self.scan_state = 3
-                            else:
-                                self.cur_z -= self.scan_step
-                                self.handleJump(-self.scan_step)
-                        else: # Scan back to zero
-                            if (self.cur_z >= 0.0):
-                                self.mode = "Locked"
-                                n = self.counter - 1
-
-                                # Fit offset data to a*x*x + b*x + c.
-                                #m0 = numpy.concatenate((numpy.ones(n),
-                                #                        self.zvalues[0:n],
-                                #                        self.zvalues[0:n] * self.zvalues[0:n]))
-                                #m0 = numpy.reshape(m0, (3, n))
-                                #m1 = numpy.dot(numpy.linalg.inv(numpy.dot(m0, numpy.transpose(m0))), m0)
-                                #v0 = numpy.dot(m1, self.fvalues[0:n])
-                                #optimum = -v0[1]/(2.0 * v0[2])
-
-                                # Fit offset data to a 1D gaussian (lorentzian would be better?)
-                                zvalues = self.zvalues[0:n]
-                                fvalues = self.fvalues[0:n]
-                                fitfunc = lambda p, x: p[0] + p[1] * numpy.exp(- (x - p[2]) * (x - p[2]) * p[3])
-                                errfunc = lambda p: fitfunc(p, zvalues) - fvalues
-                                p0 = [numpy.min(fvalues),
-                                      numpy.max(fvalues) - numpy.min(fvalues),
-                                      zvalues[numpy.argmax(fvalues)],
-                                      9.0] # empirically determined width parameter
-                                p1, success = scipy.optimize.leastsq(errfunc, p0[:])
-                                if success == 1:
-                                    optimum = p1[2]
-                                else:
-                                    print("Fit for optimal lock failed.")
-                                    # hope that this is close enough
-                                    optimum = zvalues[numpy.argmax(fvalues)]
-
-                                print("Optimal Target:", optimum)
-                                self.control_thread.setTarget(optimum)
-                            else:
-                                self.cur_z += self.scan_step
-                                self.handleJump(self.scan_step)
-
-    ## newParameters
-    #
-    # Handles new parameters.
-    #
-    # @param parameters A parameters object.
-    #
-    def newParameters(self, parameters):
-        self.quality_threshold = parameters.get("olock_quality_threshold")
-        self.qpd_zcenter = parameters.get("qpd_zcenter")
-        self.bracket_step = 0.001 * parameters.get("olock_bracket_step")
-        self.scan_step = 0.001 * parameters.get("olock_scan_step")
-        self.scan_hold = parameters.get("olock_scan_hold")
-
-    ## reset
-    #
-    # Turn the lock off it was turned on using the lock button.
-    #
-    def reset(self):
-        if self.button_locked:
-            self.lockButtonToggle()
-
-    ## shouldDisplayLockButton
-    #
-    # @return True
-    #
-    def shouldDisplayLockButton(self):
-        return True
-
-    ## startLock
-    #
-    # Call initScan and starts the focus lock.
-    #
-    def startLock(self):
-        self.initScan()
-        self.control_thread.setTarget(self.lock_target)
-        self.control_thread.startLock()
-        self.locked = True
-
-    ## stopLock
-    #
-    # Stops the focus lock.
-    #
-    def stopLock(self):
-        if self.locked:
-            self.control_thread.setTarget(self.lock_target)
-            if (not self.button_locked):
-                self.locked = False
-                self.control_thread.stopLock()
-                self.control_thread.recenter()
-
-
-## CalibrationLockMode
-#
-# No lock, the stage is driven through a pre-determined set of 
-# z positions for calibration purposes during filming.
-#
-class CalibrationLockMode(JumpLockMode):
-
-    ## __init__
-    #
-    # @param control_thread A thread object that controls the focus lock.
-    # @param parameters A parameters object.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, control_thread, parameters, parent):
-        JumpLockMode.__init__(self, control_thread, parameters, parent)
-        self.counter = 0
-        self.max_zvals = 0
-        self.name = "Calibrate"
-        self.zvals = []
-
-    ## calibrationSetup
-    #
-    # Configure the variables that will be used to execute the z scan.
-    #
-    # @param z_center The piezo center position of the scan.
-    # @param deadtime The deadtime before the start of the scan.
-    # @param zrange The distance to scan (the scan goes from -zrange to zrange).
-    # @param step_size The distance to step at each step.
-    # @param frames_to_pause The number of frames to pause between steps.
-    #
-    def calibrationSetup(self, z_center, deadtime, zrange, step_size, frames_to_pause):
-        # Are these checks a good idea?
-        if 0:
-            assert deadtime > 0, "calibrationSetup: deadtime is too small" + str(deadtime)
-            assert zrange > 10, "calibrationSetup: range is too small" + str(zrange)
-            assert zrange < 1000, "calibrationSetup: range is too large" + str(zrange)
-            assert step_size > 0.0, "calibrationSetup: negative step size" + str(step_size)
-            assert step_size < 100.0, "calibrationSetup: step size is to large" + str(step_size)
-            assert frames_to_pause > 0, "calibrationSetup: frames_to_pause it too smale" + str(frames_to_pause)
-
-        def addZval(z_val):
-            self.zvals.append(z_val)
-            self.max_zvals += 1
-
-        self.zvals = []
-        self.max_zvals = 0
-        # convert to um
-        zrange = 0.001 * zrange
-        step_size = 0.001 * step_size
-
-        # initial hold
-        for i in range(deadtime-1):
-            addZval(z_center)
-
-        # staircase
-        addZval(-zrange)
-        z = z_center - zrange
-        stop = z_center + zrange - 0.5 * step_size
-        while (z < stop):
-            for i in range(frames_to_pause-1):
-                addZval(0.0)
-            addZval(step_size)
-            z += step_size
-
-        addZval(-zrange)
-
-        # final hold
-        for i in range(deadtime-1):
-            addZval(z_center)
-
-    ## newFrame
-    #
-    # Handles a new frame from the camera. This moves to a new z position
-    # if the scan has not been completed.
-    #
-    # @param frame A frame object.
-    # @param offset The offset signal from the focus lock.
-    # @param power The sum signal from the focus lock.
-    # @param stage_z The z position of the piezo stage.
-    #
-    def newFrame(self, frame, offset, power, stage_z):
-        if self.counter < self.max_zvals:
-            self.control_thread.moveStageRel(self.zvals[self.counter])
-            self.counter += 1
-
-    ## newParameters
-    #
-    # Handles new parameters.
-    #
-    # @param parameters A parameters object.
-    #
-    def newParameters(self, parameters):
-        #self.calibrationSetup(parameters.qpd_zcenter, 
-        self.calibrationSetup(0.0, 
-                              parameters.get("cal_deadtime"), 
-                              parameters.get("cal_range"), 
-                              parameters.get("cal_step_size"), 
-                              parameters.get("cal_frames_to_pause"))
-
-    ## startLock
-    #
-    # Sets the frame counter which is used to index through the list of z positions to zero.
-    #
-    def startLock(self):
-        self.counter = 0
-
-#    def stopLock(self):
-#        self.control_thread.recenter()
-
-
-## ZScanLockMode
-#
-# The stage will move through a series of positions as specified in 
-# the calibration file during filming, locking is optional.
-#
-class ZScanLockMode(JumpLockMode):
-
-    ## __init__
-    #
-    # @param control_thread A thread object that controls the focus lock.
-    # @param parameters A parameters object.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, control_thread, parameters, parent):
-        JumpLockMode.__init__(self, control_thread, parameters, parent)
-        self.counter = 0
-        self.current_z = None
-        self.name = "Z Scan"
-        self.z_start = None
-        self.z_step = None
-        self.z_frames_to_pause = None
-        self.z_stop = None
-        self.z_focus_lock = None
-
-    ## newFrame
-    #
-    # Handles a new frame from the camera. This moves to a new z position
-    # if the scan has not been completed.
-    #
-    # @param frame A frame object.
-    # @param offset The offset signal from the focus lock.
-    # @param power The sum signal from the focus lock.
-    # @param stage_z The z position of the piezo stage.
-    #
-    def newFrame(self, frame, offset, power, stage_z):
-        if abs(self.current_z - self.z_stop) > self.z_step:
-            if self.counter == self.z_frames_to_pause:
-                self.counter = 0
-                self.current_z += self.z_step
-                if self.locked:
-                    self.relock_timer.stop()
-                    self.control_thread.stopLock()
-                self.control_thread.moveStageRel(self.z_step)
-                if self.locked:
-                    self.relock_timer.start()
-            self.counter += 1
-
-    ## newParameters
-    #
-    # Handles new parameters.
-    #
-    # @param parameters A parameters object.
-    #
-    def newParameters(self, parameters):
-        self.z_start = parameters.get("zscan_start", 0.0)
-        self.z_step = parameters.get("zscan_step")
-        self.z_frames_to_pause = parameters.get("zscan_frames_to_pause")
-        self.z_stop = parameters.get("zscan_stop")
-        self.z_focus_lock = parameters.get("zscan_focus_lock", 0)
-
-    ## startLock
-    #
-    # Reset the piezo stage z position. Reset the frame counter. Start
-    # the lock (if necessary).
-    #
-    def startLock(self):
-        self.counter = 0
-        self.current_z = self.z_start
-        self.control_thread.moveStageAbs(self.z_start)
-        if self.z_focus_lock:
-            self.relock_timer.start()
-            self.locked = True
-
-    ## stopLock
-    #
-    # Stop the lock & the relock timer. Recenter the piezo.
-    #
-    def stopLock(self):
-        if self.z_focus_lock:
-            self.control_thread.stopLock()
-            self.relock_timer.stop()
-            self.locked = False
-        self.control_thread.recenter()
-
-## LargeOffsetLock
-#
-# For Shu & Graham.
-#
-# The stage will jump the distance specified with jump control.
-# Every 600 frames it will jump back to the zero position, relock,
-# and then jump back again. This gives you a focus lock that
-# (sort of) works a large distance from a surface.
-#
-class LargeOffsetLock(JumpLockMode):
-
-    ## __init__
-    #
-    # @param control_thread A thread object that controls the focus lock.
-    # @param parameters A parameters object.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, control_thread, parameters, parent):
-        JumpLockMode.__init__(self, control_thread, parameters, parent)
-        self.frame_delay = 600
-        self.name = "Large Offset"
-
-        self.jump_down_timer = QtCore.QTimer(self)
-        self.jump_down_timer.setInterval(1000)
-        self.jump_down_timer.setSingleShot(True)
-        self.jump_down_timer.timeout.connect(self.restartLock)
-
-        self.jump_up_timer = QtCore.QTimer(self)
-        self.jump_up_timer.setInterval(2000)
-        self.jump_up_timer.setSingleShot(True)
-        self.jump_up_timer.timeout.connect(self.jumpBackToTarget)
+    def stopFilm(self):
+        if self.film_on:
+            self.film_on = False
+            self.stopLock()
     
-        self.jumpsize = 0.0
-
-    ## handleJump
-    #
-    # This does not actually jump, it just records the distance to jump.
-    #
-    def handleJump(self, jumpsize):
-        self.jumpsize = jumpsize
-
-    ## jumpBackToTarget
-    #
-    # Stops the lock and jumps back to the target focal plane.
-    #
-    def jumpBackToTarget(self):
-        if self.locked:
-            self.control_thread.stopLock()
-            self.control_thread.moveStageRel(self.jumpsize)
-
-    ## newFrame
-    #
-    # Handles a new frame from the camera. If the frame number matches the
-    # delay time then refindLock method is called.
-    #
-    # @param frame A frame object.
-    # @param offset The offset signal from the focus lock.
-    # @param power The sum signal from the focus lock.
-    # @param stage_z The z position of the piezo stage.
-    #
-    def newFrame(self, frame, offset, power, stage_z):
-        if ((frame.number != 0) and ((frame.number % self.frame_delay) == 0)):
-            self.refindLock()
-
-    ## newParameters
-    #
-    # Handles new parameters.
-    #
-    # @param parameters A parameters object.
-    #
-    def newParameters(self, parameters):
-        if hasattr(parameters, "jump_down_delay"):
-            self.jump_down_timer.setInterval(parameters.get("jump_down_delay"))
-        if hasattr(parameters, "frame_delay"):
-            self.frame_delay = parameters.get("frame_delay")
-        if hasattr(parameters, "jump_up_delay"):
-            self.jump_up_timer.setInterval(parameters.get("jump_up_delay"))
-
-    ## refindLock
-    #
-    # Jump the stage back to a lockable focal plane and starts the timer to jump
-    # back to a lockable focus plane.
-    #
-    def refindLock(self):
-        if self.locked:
-            self.control_thread.moveStageRel(-self.jumpsize)
-            self.jump_down_timer.start()
-
-    ## restartLock        
-    #
-    # If locked, set the lock target to zero and lock to this target.
-    #
-    def restartLock(self):
-        if self.locked:
-            self.control_thread.setTarget(0.0)
-            self.control_thread.startLock()
-            self.jump_up_timer.start()
-
-    ## startLock
-    #
-    # Set the lock target to zero, turn on the lock and start the timer to
-    # jump to the imaging focal plane.
-    #
-    def startLock(self):
-        self.locked = True
-        self.control_thread.setTarget(0.0)
-        self.control_thread.startLock()
-        self.jump_up_timer.start()
-
-    ## stopLock
-    #
-    # Turn off the lock and recenter the piezo.
-    #
-    def stopLock(self):
-        if self.locked:
-            self.locked = False
-            self.control_thread.stopLock()
-            self.control_thread.recenter()
-
-
-## ZScanLockModeV2
-#
-# The stage will scan up (or down) from it's current lock target. This is
-# different from v1 in that it only moves in one direction and it maintains
-# the lock during/after scanning.
-#
-class ZScanLockModeV2(AlwaysOnLockMode):
-
-    ## __init__
-    #
-    # @param control_thread A thread object that controls the focus lock.
-    # @param parameters A parameters object.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, control_thread, parameters, parent):
-        AlwaysOnLockMode.__init__(self, control_thread, parameters, parent)
-        self.relock_timer.setInterval(2000)
-        self.counter = None
-        self.current_z = None
-        self.name = "Z Scan"
-        self.start_lock_target = None
-        self.z_step = None
-        self.z_frames_to_pause = None
-        self.z_stop = None
-
-    ## newFrame
-    #
-    # Handles a new frame from the camera. This moves to a new z position
-    # if the scan has not been completed.
-    #
-    # @param frame A frame object.
-    # @param offset The offset signal from the focus lock.
-    # @param power The sum signal from the focus lock.
-    # @param stage_z The z position of the piezo stage.
-    #
-    def newFrame(self, frame, offset, power, stage_z):
-        if (abs(self.current_z) < self.z_stop):
-            if (self.counter == self.z_frames_to_pause):
-                self.counter = 0
-                self.current_z += self.z_step
-                if self.locked:
-                    self.relock_timer.stop()
-                    self.control_thread.stopLock()
-                self.control_thread.moveStageRel(self.z_step)
-                if self.locked:
-                    self.relock_timer.start()
-            self.counter += 1
-
-    ## newParameters
-    #
-    # Handles new parameters.
-    #
-    # @param parameters A parameters object.
-    #
-    def newParameters(self, parameters):
-        self.z_step = parameters.get("zscan_step")
-        self.z_frames_to_pause = parameters.get("zscan_frames_to_pause")
-        self.z_stop = parameters.get("zscan_stop")
-
-    ## setLockTarget
-    #
-    # Sets the focus lock target to the desired value.
-    #
-    # @param target The desired lock target.
-    #
-    def setLockTarget(self, target):
-        self.start_lock_target = self.control_thread.getLockTarget()
-        AlwaysOnLockMode.setLockTarget(self, target)
-
-    ## startLock
-    #
-    # Starts the focus lock.
-    #
-    def startLock(self):
-        AlwaysOnLockMode.startLock(self)
-        self.counter = 0
-        self.current_z = 0.0
-        self.start_lock_target = self.control_thread.getLockTarget()
-
-    ## stopLock
-    #
-    # Stops the focus lock.
-    #
-    def stopLock(self):
-        self.control_thread.setTarget(self.start_lock_target)
-        AlwaysOnLockMode.stopLock(self)
-
-
-## HardareZScanLockMode
-#
-# When the lock button is pressed this mode acts as if it was 'Always On'; however, when
-# a film is started/stopped it will execute a defined set of z_offsets, hardware timed,
-# based on values provided in the parameters file
-class HardareZScanLockMode(JumpLockMode):
-
-    ## __init__
-    #
-    # @param control_thread A thread object that controls the focus lock.
-    # @param parameters A parameters object.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, control_thread, parameters, parent):
-        JumpLockMode.__init__(self, control_thread, parameters, parent)
-        self.button_locked = False
-        self.name = "Hardware Z Scan"
-        self.z_offsets = None
-        self.stage = None
-        
-    ## lockButtonToggle
-    #
-    # Sets the button_locked flag and start/stops the focus lock.
-    #
-    def lockButtonToggle(self):
-        if self.button_locked:
-            if not self.locked:
-                self.control_thread.startLock()
-                self.locked = True
-            self.button_locked = False
-        else:
-            if self.locked and (not self.button_locked):
-                self.control_thread.stopLock()
-                self.control_thread.recenter()
-                self.locked = False
-            self.button_locked = True
-
-    ## newParameters
-    #
-    # Update the z offsets.
-    #
-    # @param parameters A parameters object.
-    #
-    def newParameters(self, parameters):
-        z_offsets_string = parameters.get("z_offsets", "")
-
-        if len(z_offsets_string) < 1:
-            self.z_offsets = None
-        else:
-            split_strings = z_offsets_string.split(",")
-            converted_values = []
-            for split_value in split_strings:
-                converted_values.append(float(split_value))
-
-            self.z_offsets = converted_values
-
-    ## reset
-    #
-    # Turn the lock off it was turned on using the lock button.
-    #
-    def reset(self):
-        if self.button_locked:
-            self.lockButtonToggle()
-
-    ## shouldDisplayLockButton
-    #
-    # @return True
-    #
-    def shouldDisplayLockButton(self):
-        return True
-
-    ## startLock
-    #
-    # Starts the focus lock.  (But overloaded so that only when startFilm is called)
-    #
-    def startLock(self):
-        # Handle the case that no z_offsets were provided
-        if self.z_offsets == None:
-            self.control_thread.startLock()
-        else:
-            # Request stage from the control thread
-            self.stage = self.control_thread.getStage()
-            current_stage_z = self.control_thread.getStageZ()
-            
-            # Issue command to start hardware-timed movements
-            self.stage.startHardwareTimedMove(current_stage_z + self.z_offsets)
-
-    ## stopLock
-    #
-    # Stops the focus lock.
-    #
-    def stopLock(self):
-        # Handle the case that no z_offsets were provided
-        if self.z_offsets == None:
-            self.control_thread.stopLock()
-        else:
-            # Close stage
-            self.stage.cleanupHardwareTimedMove()
-            self.stage = None
-
-            # Tell the control thread that the stage has been returned
-            self.control_thread.releaseStage()
 
 #
 # The MIT License
 #
-# Copyright (c) 2015 Zhuang Lab, Harvard University
+# Copyright (c) 2017 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

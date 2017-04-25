@@ -51,6 +51,9 @@ class LockDisplay(QtWidgets.QGroupBox):
         layout.setContentsMargins(2,2,2,2)
         layout.addWidget(self.q_qpd_sum_display)
 
+    def handleGoodLock(self, good_lock):
+        pass
+    
     def handleIrButton(self, boolean):
         """
         Handles the IR laser button. Turns the laser on/off and
@@ -78,6 +81,8 @@ class LockDisplay(QtWidgets.QGroupBox):
         if self.ir_laser_functionality is None:
             return False
         if not self.q_stage_display.haveFunctionality():
+            return False
+        if not self.q_qpd_offset_display.haveFunctionality():
             return False
         return True
         

@@ -4,8 +4,11 @@
 
 Hazen 04/17
 """
+import importlib
 
 from PyQt5 import QtCore, QtWidgets
+
+import storm_control.sc_library.parameters as params
 
 import storm_control.hal4000.halLib.halDialog as halDialog
 import storm_control.hal4000.halLib.halMessage as halMessage
@@ -13,6 +16,7 @@ import storm_control.hal4000.halLib.halModule as halModule
 
 import storm_control.hal4000.focusLock.lockControl as lockControl
 import storm_control.hal4000.focusLock.lockDisplay as lockDisplay
+import storm_control.hal4000.focusLock.lockModes as lockModes
 
 # UI.
 import storm_control.hal4000.qtdesigner.focuslock_ui as focuslockUi
@@ -21,9 +25,21 @@ import storm_control.hal4000.qtdesigner.focuslock_ui as focuslockUi
 class FocusLockView(halDialog.HalDialog):
     """
     Manages the focus lock GUI.
+
+    Changes to the lock mode state are expected to go through the
+    LockControl class, rather than being done by directly working
+    with the lock mode.
     """
+    jump = QtCore.pyqtSignal(float)
+    lockStarted = QtCore.pyqtSignal(bool)
+    lockTarget = QtCore.pyqtSignal(float)
+    modeChanged = QtCore.pyqtSignal(object)
+
     def __init__(self, configuration = None, **kwds):
         super().__init__(**kwds)
+        self.current_mode = None
+        self.modes = []
+        self.parameters = params.StormXMLObject()
 
         self.ui = focuslockUi.Ui_Dialog()
         self.ui.setupUi(self)
@@ -35,13 +51,110 @@ class FocusLockView(halDialog.HalDialog):
         layout.setContentsMargins(0,0,0,0)
         layout.addWidget(self.lock_display)
 
+        # Configure modes.
+        lockModes.FindSumMixin.addParameters(self.parameters)
+        lockModes.LockedMixin.addParameters(self.parameters)
+        for mode_class_name in configuration.get("lock_modes").split(","):
+            a_class = getattr(lockModes, mode_class_name.strip())
+            a_object = a_class(parameters = self.parameters,
+                               parent = self)
+            self.ui.modeComboBox.addItem(a_object.getName(), [a_object])
+            self.modes.append(a_class(parameters = self.parameters,
+                                      parent = self))
+
+        # Set parameters values based on the config file parameters.
+        c_params = configuration.get("parameters")
+        for pname in c_params.getAttrs():
+            self.parameters.setv(pname, c_params.get(pname))
+
+        # Connect signals.
+        self.ui.jumpNButton.clicked.connect(self.handleJumpNButton)
+        self.ui.jumpPButton.clicked.connect(self.handleJumpPButton)
+        self.ui.lockButton.clicked.connect(self.handleLockButton)
+        self.ui.lockTargetSpinBox.valueChanged.connect(self.handleLockTarget)
+        self.ui.modeComboBox.currentIndexChanged.connect(self.handleModeComboBox)
+
+    def amLocked(self):
+        return self.ui.lockButton.isChecked()
+    
+    def getParameters(self):
+        return self.parameters
+
+    def handleJumpNButton(self):
+        self.jump.emit(-self.ui.jumpSpinBox.value())
+
+    def handleJumpPButton(self):
+        self.jump.emit(self.ui.jumpSpinBox.value())
+
+    def handleLockButton(self):
+        # This is called after the button's state has changed.
+        if self.amLocked():
+            self.ui.lockButton.setText("Unlock")
+            self.lockStarted.emit(True)
+        else:
+            self.ui.lockButton.setText("Lock")
+            self.lockStarted.emit(False)
+    
+    def handleModeComboBox(self, index):
+
+        # Clean up previous mode.
+        if self.current_mode is not None:
+
+            # This will turn off the lock, if it is on.
+            if self.amLocked():
+                self.handleLockButton()
+
+            # Disconnect signals.
+            self.current_mode.lockTarget.disconnect(self.setLockTargetSpinBox)
+            self.current_mode.goodLock.disconnect(self.lock_display.handleGoodLock)
+            
+        self.current_mode = self.ui.modeComboBox.itemData(index)[0]
+        self.ui.lockButton.setEnabled(self.current_mode.shouldEnableLockButton())
+
+        # Connect signals.
+        self.current_mode.lockTarget.connect(self.setLockTargetSpinBox)
+        self.current_mode.goodLock.connect(self.lock_display.handleGoodLock)
+        
+        self.modeChanged.emit(self.current_mode)
+
+    def handleLockTarget(self, new_target):
+        # For convenience targets appear in the GUI as nanometers, but
+        # the focus lock uses microns.
+        self.lockTarget.emit(0.001 * new_target)
+        
+    def newParameters(self, parameters):
+        for attr in params.difference(parameters, self.parameters):
+            self.parameters.setv(attr, parameters.get(attr))
+        for mode in self.modes():
+            mode.newParameters(self.parameters)
+
     def setFunctionality(self, name, functionality):
+        # If this is the QPD and 'minimum_sum' (to be considered locked) was
+        # not specified in the config file then use the QPDs 'sum_warning_low'
+        # parameter as the minimum sum.
+        if (name == "qpd"):
+            if (self.parameters.get("minimum_sum") == -1.0):
+                self.parameters.setv("minimum_sum", functionality.getParameter("sum_warning_low"))
+                
         self.lock_display.setFunctionality(name, functionality)
+
+        # FIXME: Need to check if all functionalities are good & disable UI if not.
+
+    def setLockTargetSpinBox(self, new_value):
+        self.ui.lockTargetSpinBox.valueChanged.disconnect(self.handleLockTarget)
+        self.ui.lockTargetSpinBox.setValue(int(1000.0 * new_value))
+        self.ui.lockTargetSpinBox.valueChanged.connect(self.handleLockTarget)
 
     def show(self):
         super().show()
         self.setFixedSize(self.width(), self.height())
-        
+
+    def start(self):
+        if (self.ui.modeComboBox.currentIndex() != 0):
+            self.ui.modeComboBox.setCurrentIndex(0)
+        else:
+            self.handleModeComboBox(0)
+
         
 class FocusLock(halModule.HalModule):
 
@@ -54,6 +167,12 @@ class FocusLock(halModule.HalModule):
                                   configuration = module_params.get("configuration"))
         self.view.halDialogInit(qt_settings,
                                 module_params.get("setup_name") + " focus lock")
+
+        # Connect signals.
+        self.view.jump.connect(self.control.handleJump)
+        self.view.lockStarted.connect(self.control.handleLockStarted)
+        self.view.lockTarget.connect(self.control.handleLockTarget)
+        self.view.modeChanged.connect(self.control.handleModeChanged)
 
         # Unhide focus lock control.
         halMessage.addMessage("show focus lock",
@@ -93,5 +212,7 @@ class FocusLock(halModule.HalModule):
             self.view.show()
 
         elif message.isType("start"):
+            self.view.start()
+            self.control.start()
             if message.getData()["show_gui"]:
-                self.view.showIfVisible()            
+                self.view.showIfVisible()
