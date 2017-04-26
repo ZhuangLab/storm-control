@@ -41,9 +41,9 @@ def populateModel(model, parameters):
             q_item.setData(EditorItemData(parameter = param))
             if param.isMutable():
                 q_item.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable)
+                model.appendRow(q_item)
             #else:
             #    q_item.setFlags(QtCore.Qt.NoItemFlags)
-            model.appendRow(q_item)
 
 
 class EditorItemData(object):
@@ -171,7 +171,7 @@ class EditorTreeViewDelegate(QtWidgets.QStyledItemDelegate):
 
             # Check if the editor changed anything.
             if (q_item.data().parameter.getv() != editor.getParameter().getv()):
-
+                
                 # Update the item based on the editor change.
                 q_item.data().parameter.setv(editor.getParameter().getv())
 

@@ -13,6 +13,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import storm_control.sc_library.parameters as params
 
 
+def truncateString(a_string):
+    max_len = 25
+    if (len(a_string) > max_len):
+        return ".." + a_string[-(max_len-2):]
+    else:
+        return a_string
+
+    
 def drawParameter(parameter, painter, a_rect, widget):
     """
     Draws parameter with the appropriate style.
@@ -22,7 +30,7 @@ def drawParameter(parameter, painter, a_rect, widget):
     painter.setClipRect(a_rect)
     painter.drawText(a_rect,
                      QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft,
-                     parameter.toString())
+                     truncateString(parameter.toString()))
     
 #    if isinstance(parameter, params.ParameterFloat):
 #        # FIXME: How to draw this to look like a QLineEdit?
@@ -71,6 +79,10 @@ def getEditor(parameter = None, parent = None):
         return EditorRangeInt(parent = parent)
     elif isinstance(parameter, params.ParameterSet):
         return EditorSet(parent = parent)
+    elif isinstance(parameter, params.ParameterStringFilename):
+        return EditorStringFilename(parent = parent)
+    elif isinstance(parameter, params.ParameterString):
+        return EditorString(parent = parent)
 
 
 class EditorMixin(object):
@@ -103,7 +115,7 @@ class EditorNumber(QtWidgets.QLineEdit, EditorMixin):
 
     def setParameter(self, parameter):
         super().setParameter(parameter)
-        self.textChanged.disconnect()
+        self.textChanged.disconnect(self.handleTextChanged)
         self.setText(self.parameter.toString())
         self.textChanged.connect(self.handleTextChanged)
         
@@ -134,7 +146,7 @@ class EditorRangeFloat(QtWidgets.QDoubleSpinBox, EditorMixin):
 
     def setParameter(self, parameter):
         super().setParameter(parameter)
-        self.valueChanged.disconnect()
+        self.valueChanged.disconnect(self.handleValueChanged)
         self.setDecimals(self.parameter.getDecimals())
         self.setMaximum(self.parameter.getMaximum())
         self.setMinimum(self.parameter.getMinimum())
@@ -154,7 +166,7 @@ class EditorRangeInt(QtWidgets.QSpinBox, EditorMixin):
 
     def setParameter(self, parameter):
         super().setParameter(parameter)
-        self.valueChanged.disconnect()
+        self.valueChanged.disconnect(self.handleValueChanged)
         self.setMaximum(self.parameter.getMaximum())
         self.setMinimum(self.parameter.getMinimum())
         self.setValue(self.parameter.getv())
@@ -173,12 +185,92 @@ class EditorSet(QtWidgets.QComboBox, EditorMixin):
 
     def setParameter(self, parameter):
         super().setParameter(parameter)
-        self.currentIndexChanged.disconnect()
+        self.currentIndexChanged.disconnect(self.handleIndexChanged)
         self.clear()
         for elt in sorted(self.parameter.getAllowed()):
             self.addItem(str(elt), elt)
         self.setCurrentIndex(self.findText(str(self.parameter.getv())))
         self.currentIndexChanged.connect(self.handleIndexChanged)
+
+
+class EditorString(QtWidgets.QLineEdit, EditorMixin):
+    
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.textChanged.connect(self.handleTextChanged)
+
+    def handleTextChanged(self, new_text):
+        self.parameter.setv(new_text)
+        self.updateParameter.emit(self)
+
+    def setParameter(self, parameter):
+        super().setParameter(parameter)
+        self.textChanged.disconnect(self.handleTextChanged)
+        self.setText(self.parameter.getv())
+        self.textChanged.connect(self.handleTextChanged)    
+
+
+#
+# FIXME: These are a little baroque, in edit mode they become
+#        push buttons which you have to click to actually change
+#        the file / directory. Maybe there is a better way?
+#
+#        I could not figure out what was getting called to show
+#        these widgets, and I could not get putting the edit
+#        functionality in setParameter() to work.
+#
+
+class EditorStringDialog(QtWidgets.QPushButton, EditorMixin):
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.setStyleSheet("Text-align:left");
+        self.clicked.connect(self.handleClicked)
+
+    def handleClicked(self):                
+        new_directory = QtWidgets.QFileDialog.getExistingDirectory(self, 
+                                                                   "Choose Directory",
+                                                                   self.parameter.getv(),
+                                                                   QtWidgets.QFileDialog.ShowDirsOnly)
+        if new_directory and os.path.exists(new_directory):
+            self.parameter.setv(new_directory)
+            self.setText(truncateString(self.parameter.getv()))
+            self.updateParameter.emit(self)
+
+    def setParameter(self, parameter):
+        super().setParameter(parameter)
+        self.setText(truncateString(self.parameter.getv()))
+
+
+class EditorStringFilename(QtWidgets.QPushButton, EditorMixin):
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.setStyleSheet("Text-align:left");
+        self.clicked.connect(self.handleClicked)
+
+    def handleClicked(self):
+        old_filename = self.parameter.getv()
+        extension = "Current Type (*" + os.path.splitext(old_filename)[1] + ");; All Types (*.*)"
+        if self.parameter.use_save_dialog:
+            new_filename = QtWidgets.QFileDialog.getSaveFileName(self, 
+                                                                 "Save",
+                                                                 old_filename,
+                                                                 extension)[0]
+        else:
+            new_filename = QtWidgets.QFileDialog.getOpenFileName(self,
+                                                                 "Open",
+                                                                 old_filename,
+                                                                 extension)[0]
+        print(new_filename)
+        if new_filename is not None:
+            self.parameter.setv(new_filename)
+            self.setText(truncateString(self.parameter.getv()))
+            self.updateParameter.emit(self)
+        
+    def setParameter(self, parameter):
+        super().setParameter(parameter)
+        self.setText(truncateString(self.parameter.getv()))
 
 
 #
