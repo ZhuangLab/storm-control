@@ -9,6 +9,12 @@ import numpy
 
 import xml.etree.ElementTree as ElementTree
 
+import storm_control.sc_library.halExceptions as halExceptions
+
+
+class ShutterXMLException(halExceptions.HalException):
+    pass
+
 
 class ShuttersInfo(object):
     """
@@ -33,7 +39,8 @@ def parseShuttersXML(number_channels, shutters_file, oversampling = 100):
 
     # Load XML shutters file.
     xml = ElementTree.parse(shutters_file).getroot()
-    assert xml.tag == "repeat", shutters_file + " is not a shutters file."
+    if (xml.tag != "repeat"):
+        raise ShutterXMLException(shutters_file + " is not a shutters file.")
 
     # Use user-specified oversampling (if requested), otherwise use 100.
     oversampling = 100
