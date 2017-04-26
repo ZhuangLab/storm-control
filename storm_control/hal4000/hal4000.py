@@ -299,7 +299,7 @@ class HalView(QtWidgets.QMainWindow):
                                                                     "New Settings",
                                                                     self.xml_directory, 
                                                                     "*.xml")[0]
-        if parameters_filename:
+        if parameters_filename is not None:
             self.xml_directory = os.path.dirname(parameters_filename)
             self.guiMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "new parameters file",
@@ -310,7 +310,7 @@ class HalView(QtWidgets.QMainWindow):
                                                                   "New Shutter Sequence", 
                                                                   self.xml_directory, 
                                                                   "*.xml")[0]
-        if shutters_filename:
+        if shutters_filename is not None:
             self.xml_directory = os.path.dirname(shutters_filename)
             self.guiMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "new shutters file",

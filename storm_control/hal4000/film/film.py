@@ -31,8 +31,9 @@ import storm_control.hal4000.qtdesigner.film_ui as filmUi
 
 
 def truncateFilename(filename):
-    if (len(filename) > 37):
-        return ".." + filename[-35:]
+    max_len = 25
+    if (len(filename) > max_len):
+        return ".." + filename[-(max_len-2):]
     else:
         return filename
     
