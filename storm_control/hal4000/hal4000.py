@@ -598,6 +598,12 @@ class HalCore(QtCore.QObject):
                 # Notify the sender of any responses to the message.
                 if sent_message.hasResponses():
                     sent_message.getSource().handleResponses(sent_message)
+                    
+                # Print a warning if the message was 'get functionality'
+                # and there were no responses.
+                elif sent_message.isType("get functionality"):
+                    print(">> Warning functionality '" + sent_message.getData()["name"] + "' not found!")
+                    hdebug.logText("no functionality " + sent_message.getData()["name"])
 
             else:
                 unhandled.append(sent_message)

@@ -1,11 +1,9 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Debugging decorators & logging.
-#
-# Hazen 01/14
-#
+#!/usr/bin/env python
+"""
+Debugging decorators & logging.
+
+Hazen 01/14
+"""
 
 import functools
 import logging
@@ -26,14 +24,11 @@ def objectToString(a_object, a_name, a_attrs):
     a_string = a_string + ">"
     return a_string
 
-## debug
-#
-# Function decorator. This logs all the arguments to a function that it decorates
-# if logging has been started.
-#
-# @param fn The function to decorate.
-#
 def debug(fn):
+    """
+    Function decorator. This logs all the arguments to a function that it decorates
+    if logging has been started.
+    """
     global a_logger, logging_mutex
     @functools.wraps(fn)
     def __wrapper(*args, **kw):
@@ -59,26 +54,21 @@ def debug(fn):
         return temp
     return __wrapper
 
-## getDebug
-#
-# @return True/False if debugging information desired.
-#
 def getDebug():
+    """
+    Return True/False if debugging information desired.
+    """
     global a_logger
     if a_logger:
         return True
     else:
         return False
 
-## logText
-#
-# Note: Calling this with to_console = True from a thread that is not
-#   the main thread seemed to occasionally lock the computer.
-#
-# @param a_string The text string to add to the log file.
-# @param to_console (Optional) print the string on stdout, defaults to False.
-#
 def logText(a_string, to_console = False):
+    """
+    Note: Calling this with to_console = True from a thread that is not
+          the main thread seemed to occasionally lock the computer.
+    """
     global a_logger, logging_mutex
     if a_logger:
         logging_mutex.lock()
@@ -90,17 +80,15 @@ def logText(a_string, to_console = False):
     else:
         print(a_string)
 
-
-## startLogging
-#
-# This should only be called once in "main". It uses QSettings() to generate
-# a new index (1-10) each time that it is called so that (hopefully) we can
-# log from multiple programs with the same name.
-#
-# @param directory The directory to save the log files in.
-# @param program_name The name of the program that is doing the logging.
-#
 def startLogging(directory, program_name):
+    """
+    This should only be called once in "main". It uses QSettings() to generate
+    a new index (1-10) each time that it is called so that (hopefully) we can
+    log from multiple programs with the same name.
+
+    FIXME? As this seems to just append to existing log files, it would probably
+           be better to delete the existing files first.
+    """
     global a_logger
 
     # Get logger index (to allow logging from several programs with the same name).
@@ -132,6 +120,7 @@ def startLogging(directory, program_name):
     if a_logger:
         rf_handler.setFormatter(rt_formatter)
         a_logger.addHandler(rf_handler)
+        
 
 #
 # The MIT License
