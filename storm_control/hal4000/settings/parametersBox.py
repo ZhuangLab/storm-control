@@ -92,6 +92,9 @@ class ParametersBox(QtWidgets.QGroupBox):
 
     def handleEditorUpdate(self, parameters):
         self.newParameters.emit(parameters, True)
+
+        # FIXME: Probably only want do this is we change was successful.
+        self.ui.settingsListView.setCurrentParametersStale()
         
     def handleEditParameters(self, parameters):
 

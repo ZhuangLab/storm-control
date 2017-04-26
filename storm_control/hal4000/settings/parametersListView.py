@@ -16,10 +16,10 @@ def getItemData(q_std_item):
 
 class ParametersItemData(object):
     """
-    WTF? Apparently Qt clones items when dragging and dropping
+    Hmm.. Apparently Qt clones items when dragging and dropping
     making it very difficult use customized QStandardItems in
     a re-orderable list. So instead we store the data in an object
-    and store the object in a QStandardItem. Hackish..
+    and store the object in a QStandardItem.
     """
     def __init__(self, parameters = None, **kwds):
         super().__init__(**kwds)
@@ -221,6 +221,10 @@ class ParametersMVC(QtWidgets.QListView):
         
     def setCurrentItem(self, q_item):
         self.handleClicked(self.model.indexFromItem(q_item))
+
+    def setCurrentParametersStale(self):
+        print(">scps")
+        getItemData(self.getCurrentItem()).stale = True
 
     def setItemParameters(self, q_item, parameters):
         getItemData(q_item).parameters = parameters
