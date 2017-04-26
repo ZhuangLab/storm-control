@@ -133,7 +133,6 @@ class FocusLockView(halDialog.HalDialog):
         for attr in params.difference(parameters, self.parameters):
             self.parameters.setv(attr, parameters.get(attr))
         for mode in self.modes:
-            print(">np", mode)
             mode.newParameters(self.parameters)
 
     def setFunctionality(self, name, functionality):
@@ -249,6 +248,8 @@ class FocusLock(halModule.HalModule):
             self.control.stopFilm()
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : self.view.getParameters().copy()}))
+            lock_good = params.ParameterSetBoolean(name = "good_lock",
+                                                   value = self.control.isGoodLock())
             lock_mode = params.ParameterString(name = "lock_mode",
                                                value = self.control.getLockModeName())
             lock_sum = params.ParameterFloat(name = "lock_sum",
@@ -256,6 +257,7 @@ class FocusLock(halModule.HalModule):
             lock_target = params.ParameterFloat(name = "lock_target",
                                                 value = self.control.getLockTarget())
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"acquisition" : [lock_mode,
+                                                              data = {"acquisition" : [lock_good,
+                                                                                       lock_mode,
                                                                                        lock_sum,
                                                                                        lock_target]}))

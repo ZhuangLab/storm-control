@@ -48,7 +48,6 @@ class LockControl(QtCore.QObject):
         """
         new_mode is a focusLock.LockMode object (listed in the mode combo box).
         """
-        print(">hmc")
         if self.lock_mode is not None and self.lock_mode.amLocked():
             self.stopLock()
             

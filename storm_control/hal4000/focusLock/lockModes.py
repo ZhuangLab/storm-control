@@ -179,7 +179,7 @@ class LockedMixin(object):
             else:
                 self.lm_buffer[self.lm_counter] = 0
 
-            good_lock = (numpy.sum(self.lm_buffer) == self.lm_buffer_length)
+            good_lock = bool(numpy.sum(self.lm_buffer) == self.lm_buffer_length)
             if (good_lock != self.good_lock):
                 self.setLockStatus(good_lock)
 
