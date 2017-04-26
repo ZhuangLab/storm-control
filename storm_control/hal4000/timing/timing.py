@@ -76,7 +76,7 @@ class Timing(halModule.HalModule):
 
         self.parameters = params.StormXMLObject()
 
-        self.parameters.add(params.ParameterSetString(description = "Feed to use a time base when filming",
+        self.parameters.add(params.ParameterSetString(description = "Feed to use as the time base when filming",
                                                       name = "time_base",
                                                       value = "",
                                                       allowed = [""]))
