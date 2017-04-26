@@ -41,6 +41,8 @@ class FindSumMixin(object):
     moving to the maximum, or until a maximum in the QPD sum signal is
     found that is larger than the requested minimum sum signal.
     """
+    fsm_pname = "find_sum"
+    
     def __init__(self, **kwds):
         super().__init__(**kwds)
         self.fsm_max_pos = 0.0
@@ -62,11 +64,12 @@ class FindSumMixin(object):
         """
         Add parameters specific to finding sum.
         """
-        parameters.add(params.ParameterRangeFloat(description = "Step size for find sum search.",
-                                                  name = "fsm_step_size",
-                                                  value = 1.0,
-                                                  min_value = 0.1,
-                                                  max_value = 10.0))
+        p = parameters.addSubSection(FindSumMixin.fsm_pname)
+        p.add(params.ParameterRangeFloat(description = "Step size for find sum search.",
+                                         name = "step_size",
+                                         value = 1.0,
+                                         min_value = 0.1,
+                                         max_value = 10.0))
 
     def handleQPDUpdate(self, qpd_state):
         if hasattr(super(), "handleQPDUpdate"):
@@ -115,7 +118,7 @@ class FindSumMixin(object):
             if "fsm_step_size" in behavior_params:
                 self.fsm_step_size = behavior_params["fsm_step_size"]
             else:
-                self.fsm_step_size = self.parameters.get("fsm_step_size")
+                self.fsm_step_size = self.parameters.get(self.fsm_pname + ".fsm_step_size")
 
             # Move to z = 0.
             self.fsm_max_z = self.z_stage_functionality.getMaximum()
@@ -128,6 +131,8 @@ class LockedMixin(object):
     This will try and hold the specified lock target. It 
     also keeps track of the quality of the lock.
     """
+    lm_pname = "locked"
+
     def __init__(self, **kwds):
         super().__init__(**kwds)
         self.lm_buffer = None
@@ -148,17 +153,18 @@ class LockedMixin(object):
         """
         Add parameters specific to staying in lock.
         """
-        parameters.add(params.ParameterInt(description = "Number of repeats for the lock to be considered good.",
-                                           name = "buffer_length",
-                                           value = 5))
+        p = parameters.addSubSection(LockedMixin.lm_pname)
+        p.add(params.ParameterInt(description = "Number of repeats for the lock to be considered good.",
+                                  name = "buffer_length",
+                                  value = 5))
         
-        parameters.add(params.ParameterFloat(description = "Maximum allowed difference to still be in lock.",
-                                             name = "offset_threshold",
-                                             value = 0.1))
+        p.add(params.ParameterFloat(description = "Maximum allowed difference to still be in lock (nm).",
+                                    name = "offset_threshold",
+                                    value = 20.0))
 
-        parameters.add(params.ParameterFloat(description = "Minimum sum to be considered locked.",
-                                             name = "minimum_sum",
-                                             value = -1.0))
+        p.add(params.ParameterFloat(description = "Minimum sum to be considered locked.",
+                                    name = "minimum_sum",
+                                    value = -1.0))
 
     def getLockTarget(self):
         return self.lm_target
@@ -192,34 +198,36 @@ class LockedMixin(object):
     def newParameters(self, parameters):
         if hasattr(super(), "newParameters"):
             super().newParameters(parameters)
-            
-        self.lm_buffer_length = parameters.get("buffer_length")
-        self.lm_min_sum = parameters.get("minimum_sum")
-        self.lm_offset_threshold = parameters.get("offset_threshold")
+
+        p = parameters.get(self.lm_pname)
+        self.lm_buffer_length = p.get("buffer_length")
+        self.lm_min_sum = p.get("minimum_sum")
+        self.lm_offset_threshold = p.get("offset_threshold")
 
     def startLock(self):
-        print(">sl")
+        print(">start lock")
         self.lm_counter = 0
         self.lm_buffer = numpy.zeros(self.lm_buffer_length, dtype = numpy.uint8)
         self.behavior = "locked"
 
     def startLockBehavior(self, behavior_name, behavior_params):
         if (behavior_name == self.lm_mode_name):
-            
+            p = self.parameters.get(self.lm_pname)
+
             if "buffer_length" in behavior_params:
                 self.lm_buffer_length = behavior_params["buffer_length"]
             else:
-                self.lm_buffer_length = self.parameters.get("buffer_length")
+                self.lm_buffer_length = p.get("buffer_length")
 
             if "minimum_sum" in behavior_params:
                 self.lm_min_sum = behavior_params["minimum_sum"]
             else:
-                self.lm_min_sum = self.parameters.get("minimum_sum")
+                self.lm_min_sum = p.get("minimum_sum")
 
             if "offset_threshold" in behavior_params:
                 self.lm_offset_threshold = behavior_params["offset_threshold"]
             else:
-                self.lm_offset_threshold = parameters.get("offset_threshold")
+                self.lm_offset_threshold = p.get("offset_threshold")
             
             # Did the user request a target?
             if "target" in behavior_params:
@@ -464,7 +472,7 @@ class OptimalLockMode(AlwaysOnLockMode):
     set to the offset corresponding to the center of the gaussian.
     """
     def __init__(self, parameters = None, **kwds):
-        kwds[parameters] = parameters
+        kwds["parameters"] = parameters
         super().__init__(**kwds)
         self.name = "Optimal"
         self.olm_bracket_step = None
@@ -484,38 +492,25 @@ class OptimalLockMode(AlwaysOnLockMode):
         p.add(params.ParameterRangeFloat(description = "Distance +- z in nanometers",
                                          name = "bracket_step",
                                          value = 1000.0,
-                                         minimum = 10.0,
-                                         maximum = 10000.0))
+                                         min_value = 10.0,
+                                         max_value = 10000.0))
         p.add(params.ParameterRangeFloat(description = "Minimum 'quality' signal",
                                          name = "quality_threshold",
                                          value = 0.0,
-                                         minimum = 0.0,
-                                         maximum = 1000.0))        
+                                         min_value = 0.0,
+                                         max_value = 1000.0))        
         p.add(params.ParameterRangeFloat(description = "Step size in z in nanometers",
                                          name = "scan_step",
                                          value = 100.0,
-                                         minimum = 10.0,
-                                         maximum = 1000.0))
+                                         min_value = 10.0,
+                                         max_value = 1000.0))
         p.add(params.ParameterRangeInt(description = "Frames to pause between steps",
                                        name = "scan_hold",
                                        value = 10,
-                                       minimum = 1,
-                                       maximum = 100))
-        
-    def initializeScan(self):
-        """
-        Configures all the variables that will be used during 
-        the scan to find the optimal lock target.
-        """
-        self.olm_mode = "optimizing"
-        self.olm_relative_z = 0.0
-        self.olm_scan_state = "scan up"
-        self.olm_counter = 0
-        size_guess = round(self.scan_hold * (self.bracket_step / self.scan_step) * 6)
-        self.olm_fvalues = numpy.zeros(size_guess)
-        self.olm_zvalues = numpy.zeros(size_guess)
+                                       min_value = 1,
+                                       max_value = 100))
 
-    def newFrame(self, frame):
+    def handleNewFrame(self, frame):
         """
         Handles a new frame from the camera. If the mode is optimizing this calculates
         the focus quality of the frame and moves the piezo to its next position.
@@ -523,11 +518,11 @@ class OptimalLockMode(AlwaysOnLockMode):
         if (self.olm_mode == "optimizing"):
             quality = focusQuality.imageGradient(frame)
             if (quality > self.olm_quality_threshold):
-                self.olm_zvalues[self.counter] = self.qpd_state["offset"]
-                self.olm_fvalues[self.counter] = quality
+                self.olm_zvalues[self.olm_counter] = self.qpd_state["offset"]
+                self.olm_fvalues[self.olm_counter] = quality
                 self.olm_counter += 1
 
-                if ((self.old_counter % self.olm_scan_hold) == 0):
+                if ((self.olm_counter % self.olm_scan_hold) == 0):
 
                     # Scan up
                     if (self.olm_scan_state == "scan up"):
@@ -540,7 +535,7 @@ class OptimalLockMode(AlwaysOnLockMode):
                     # Scan back down                            
                     elif (self.olm_scan_state == "scan down"): 
                         if (self.olm_relative_z <= -self.olm_bracket_step):
-                            self.scan_state = "zero"
+                            self.olm_scan_state = "zero"
                         else:
                             self.olm_relative_z -= self.olm_scan_step
                             self.z_stage_functionality.goRelative(-self.olm_scan_step)
@@ -574,6 +569,19 @@ class OptimalLockMode(AlwaysOnLockMode):
                             self.olm_relative_z += self.olm_scan_step
                             self.z_stage_functionality.goRelative(self.olm_scan_step)
 
+    def initializeScan(self):
+        """
+        Configures all the variables that will be used during 
+        the scan to find the optimal lock target.
+        """
+        self.olm_mode = "optimizing"
+        self.olm_relative_z = 0.0
+        self.olm_scan_state = "scan up"
+        self.olm_counter = 0
+        size_guess = round(self.olm_scan_hold * (self.olm_bracket_step / self.olm_scan_step) * 6)
+        self.olm_fvalues = numpy.zeros(size_guess)
+        self.olm_zvalues = numpy.zeros(size_guess)
+                            
     def newParameters(self, parameters):
         if hasattr(super(), "newParameters"):
             super().newParameters(parameters)
@@ -584,9 +592,10 @@ class OptimalLockMode(AlwaysOnLockMode):
         self.olm_scan_hold = p.get("scan_hold")
 
     def startFilm(self):
-        self.behavior = "none"
-        self.initScan()
-        
+        if self.amLocked():
+            self.behavior = "none"
+            self.initializeScan()
+
 
 class CalibrationLockMode(JumpLockMode):
     """
@@ -594,7 +603,7 @@ class CalibrationLockMode(JumpLockMode):
     z positions for calibration purposes during filming.
     """
     def __init__(self, parameters = None, **kwds):
-        kwds[parameters] = parameters    
+        kwds["parameters"] = parameters    
         super().__init__(**kwds)
         self.clm_counter = 0
         self.clm_max_zvals = 0
@@ -607,24 +616,24 @@ class CalibrationLockMode(JumpLockMode):
         p.add(params.ParameterRangeInt(description = "Frames to pause between steps.",
                                        name = "frames_to_pause",
                                        value = 2,
-                                       minimum = 1,
-                                       maximum = 100))        
+                                       min_value = 1,
+                                       max_value = 100))        
         p.add(params.ParameterRangeInt(description = "Frames before to pause at start.",
                                        name = "deadtime",
                                        value = 20,
-                                       minimum = 1,
-                                       maximum = 100))
+                                       min_value = 1,
+                                       max_value = 100))
         p.add(params.ParameterRangeFloat(description = "Distance +- z to move in nanometers.",
                                          name = "range",
                                          value = 600,
-                                         minimum = 100,
-                                         maximum = 5000))
+                                         min_value = 100,
+                                         max_value = 5000))
         p.add(params.ParameterRangeFloat(description = "Step size in z in nanometers.",
-                                         name = "cal_step_size",
+                                         name = "step_size",
                                          value = 10,
-                                         minimum = 1,
-                                         maximum = 100))
-        
+                                         min_value = 1,
+                                         max_value = 100))
+
     def calibrationSetup(self, z_center, deadtime, zrange, step_size, frames_to_pause):
         """
         Configure the variables that will be used to execute the z scan.
@@ -675,13 +684,13 @@ class CalibrationLockMode(JumpLockMode):
         for i in range(deadtime-1):
             addZval(z_center)
 
-    def newFrame(self, frame):
+    def handleNewFrame(self, frame):
         """
-        Handles a new frame from the camera. This moves to a new z position
-        if the scan has not been completed.
+        Handles a new frame from the camera. This moves to a new 
+        z position if the scan has not been completed.
         """
         if (self.clm_counter < self.clm_max_zvals):
-            self.z_stage_functionality.goRelative(self.zvals[self.counter])
+            self.z_stage_functionality.goRelative(self.clm_zvals[self.clm_counter])
             self.clm_counter += 1
 
     def newParameters(self, parameters):

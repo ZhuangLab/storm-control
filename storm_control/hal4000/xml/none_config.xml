@@ -259,14 +259,18 @@
       <configuration>
 	<ir_laser type="string">none_irlaser</ir_laser>
 	<ir_power type="int">10</ir_power>
-	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode</lock_modes>
+	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,OptimalLockMode,CalibrationLockMode</lock_modes>
 	<qpd type="string">none_qpd</qpd>
 	<z_stage type="string">none_zstage</z_stage>
 	<parameters>
-	  <buffer_length type="int">5</buffer_length>
-	  <fsm_step_size type="float">1.0</fsm_step_size>
+	  <find_sum>
+	    <step_size type="float">1.0</step_size>
+	  </find_sum>
+	  <locked>
+	    <buffer_length type="int">5</buffer_length>
+	    <offset_threshold type="float">20.0</offset_threshold>
+	  </locked>
 	  <jump_size type="float">0.1</jump_size>
-	  <offset_threshold type="float">0.1</offset_threshold>
 	</parameters>
       </configuration>
     </focuslock>

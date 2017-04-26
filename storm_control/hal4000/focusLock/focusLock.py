@@ -65,13 +65,13 @@ class FocusLockView(halDialog.HalDialog):
             a_object = a_class(parameters = self.parameters,
                                parent = self)
             self.ui.modeComboBox.addItem(a_object.getName())
-            self.modes.append(a_class(parameters = self.parameters,
-                                      parent = self))
+            self.modes.append(a_object)
 
         # Set parameters values based on the config file parameters.
         c_params = configuration.get("parameters")
-        for pname in c_params.getAttrs():
-            self.parameters.setv(pname, c_params.get(pname))
+        for attr in params.difference(c_params, self.parameters):
+            print(attr, c_params.get(attr))
+            self.parameters.setv(attr, self.parameters.get(attr))
         self.newParameters(self.parameters)
 
         # Connect signals.
@@ -146,9 +146,10 @@ class FocusLockView(halDialog.HalDialog):
         # not specified in the config file then use the QPDs 'sum_warning_low'
         # parameter as the minimum sum.
         if (name == "qpd"):
-            if (self.parameters.get("minimum_sum") == -1.0):
-                self.parameters.setv("minimum_sum", functionality.getParameter("sum_warning_low"))
-                
+            lm_pname = lockModes.LockedMixin.lm_pname
+            if (self.parameters.get(lm_pname + ".minimum_sum") == -1.0):
+                self.parameters.setv(lm_pname + ".minimum_sum", functionality.getParameter("sum_warning_low"))
+
         self.lock_display.setFunctionality(name, functionality)
 
         # Enable UI if we have everything we need to work.
