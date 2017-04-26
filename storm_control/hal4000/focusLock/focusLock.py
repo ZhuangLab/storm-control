@@ -44,6 +44,11 @@ class FocusLockView(halDialog.HalDialog):
         self.ui = focuslockUi.Ui_Dialog()
         self.ui.setupUi(self)
 
+        # Add parameters
+        self.parameters.add(params.ParameterFloat(description = "Z stage jump size",
+                                                  name = "jump_size",
+                                                  value = 0.1))
+        
         # Set up lock display.
         self.lock_display = lockDisplay.LockDisplay(configuration = configuration,
                                                     jump_signal = self.jump,
@@ -132,6 +137,7 @@ class FocusLockView(halDialog.HalDialog):
     def newParameters(self, parameters):
         for attr in params.difference(parameters, self.parameters):
             self.parameters.setv(attr, parameters.get(attr))
+        self.lock_display.newParameters(parameters)
         for mode in self.modes:
             mode.newParameters(self.parameters)
 

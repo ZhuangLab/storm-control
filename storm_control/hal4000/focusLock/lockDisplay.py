@@ -40,7 +40,6 @@ class LockDisplay(QtWidgets.QGroupBox):
         layout.addWidget(self.q_qpd_offset_display)
 
         self.q_stage_display = QStageDisplay(jump_signal = jump_signal,
-                                             jump_size = configuration.get("jump_size"),
                                              q_label = self.ui.zText,
                                              parent = self)
         layout = QtWidgets.QGridLayout(self.ui.zFrame)
@@ -87,6 +86,9 @@ class LockDisplay(QtWidgets.QGroupBox):
         if not self.q_qpd_offset_display.haveFunctionality():
             return False
         return True
+
+    def newParameters(self, parameters):
+        self.q_stage_display.setJumpSize(parameters.get("jump_size"))
         
     def setFunctionality(self, name, functionality):
         if (name == "ir_laser"):
@@ -362,10 +364,10 @@ class QStageDisplay(QOffsetDisplay):
     """
     Z stage position.
     """
-    def __init__(self, jump_signal = None, jump_size = None, q_label = None, **kwds):
+    def __init__(self, jump_signal = None, q_label = None, **kwds):
         super().__init__(**kwds)
         self.jump_signal = jump_signal
-        self.jump_size = jump_size
+        self.jump_size = None
         self.q_label = q_label
         
         self.adjust_mode = False
@@ -411,6 +413,9 @@ class QStageDisplay(QOffsetDisplay):
         self.scale_range = 1.0/(self.scale_max - self.scale_min)
         self.updateValue(self.functionality.getCurrentPosition())
         self.functionality.zStagePosition.connect(self.updateValue)
+
+    def setJumpSize(self, jump_size):
+        self.jump_size = jump_size
 
     def updateValue(self, value):
         if self.isEnabled():

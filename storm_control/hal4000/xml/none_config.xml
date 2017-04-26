@@ -259,13 +259,13 @@
       <configuration>
 	<ir_laser type="string">none_irlaser</ir_laser>
 	<ir_power type="int">10</ir_power>
-	<jump_size type="float">0.1</jump_size>
 	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode</lock_modes>
 	<qpd type="string">none_qpd</qpd>
 	<z_stage type="string">none_zstage</z_stage>
 	<parameters>
 	  <buffer_length type="int">5</buffer_length>
 	  <fsm_step_size type="float">1.0</fsm_step_size>
+	  <jump_size type="float">0.1</jump_size>
 	  <offset_threshold type="float">0.1</offset_threshold>
 	</parameters>
       </configuration>
