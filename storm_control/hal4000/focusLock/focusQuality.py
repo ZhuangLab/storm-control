@@ -1,11 +1,9 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Python interface to the focus_quality library.
-#
-# Hazen 10/13
-#
+#!/usr/bin/env python
+"""
+Python interface to the focus_quality library.
+
+Hazen 10/13
+"""
 
 import ctypes
 import numpy
@@ -13,15 +11,14 @@ from numpy.ctypeslib import ndpointer
 import os
 import sys
 
-focus_quality = False
+focus_quality = None
 
-## loadFocusQuality
-#
-# Loads the focus quality DLL, if it has not already been loaded.
-#
 def loadFocusQualityDLL():
+    """
+    Loads the focus quality DLL, if it has not already been loaded.
+    """
     global focus_quality
-    if not focus_quality:
+    if focus_quality is None:
 
         directory = os.path.dirname(__file__)
         if (directory == ""):
@@ -41,11 +38,10 @@ c_imageGradient.argtypes = [ndpointer(dtype=numpy.uint16),
                             ctypes.c_int]
 c_imageGradient.restype = ctypes.c_float
 
-## imageGradient
-#
-# Returns the magnitude of the image gradient in the x direction.
-#
 def imageGradient(frame):
+    """
+    Returns the magnitude of the image gradient in the x direction.
+    """
     return c_imageGradient(frame.getData(),
                            frame.image_x,
                            frame.image_y)
@@ -57,9 +53,10 @@ def imageGradient(frame):
 
 if (__name__ == "__main__"):
 
-    import camera.frame as frame
     import numpy
     import time
+
+    import storm_control.hal4000.camera.frame as frame
 
     image_x = 512
     image_y = 512
