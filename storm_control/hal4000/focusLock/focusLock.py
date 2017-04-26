@@ -58,7 +58,7 @@ class FocusLockView(halDialog.HalDialog):
             a_class = getattr(lockModes, mode_class_name.strip())
             a_object = a_class(parameters = self.parameters,
                                parent = self)
-            self.ui.modeComboBox.addItem(a_object.getName(), [a_object])
+            self.ui.modeComboBox.addItem(a_object.getName())
             self.modes.append(a_class(parameters = self.parameters,
                                       parent = self))
 
@@ -108,14 +108,17 @@ class FocusLockView(halDialog.HalDialog):
             # Disconnect signals.
             self.current_mode.lockTarget.disconnect(self.setLockTargetSpinBox)
             self.current_mode.goodLock.disconnect(self.lock_display.handleGoodLock)
-            
-        self.current_mode = self.ui.modeComboBox.itemData(index)[0]
+
+        # Storing the modes in data in the combobox does not seem to work
+        # as it looks like copies of the mode get stored, messing up
+        # newParameters().
+        self.current_mode = self.modes[index]
         self.ui.lockButton.setEnabled(self.current_mode.shouldEnableLockButton())
 
         # Connect signals.
         self.current_mode.lockTarget.connect(self.setLockTargetSpinBox)
         self.current_mode.goodLock.connect(self.lock_display.handleGoodLock)
-        
+
         self.modeChanged.emit(self.current_mode)
 
     def handleLockTarget(self, new_target):
@@ -127,6 +130,7 @@ class FocusLockView(halDialog.HalDialog):
         for attr in params.difference(parameters, self.parameters):
             self.parameters.setv(attr, parameters.get(attr))
         for mode in self.modes:
+            print(">np", mode)
             mode.newParameters(self.parameters)
 
     def setFunctionality(self, name, functionality):

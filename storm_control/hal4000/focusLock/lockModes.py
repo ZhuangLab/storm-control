@@ -29,6 +29,10 @@ class LockModeException(halExceptions.HalException):
 # These are active when the 'behavior' attribute corresponds to
 # their name.
 #
+# FIXME: Was this actually a good idea? Getting the inheritance
+#        to work correctly is messy. Maybe these should just
+#        have been different class of objects?
+#
 class FindSumMixin(object):
     """
     This will run a find sum scan, starting at the z stage minimum and
@@ -129,7 +133,7 @@ class LockedMixin(object):
         self.lm_counter = 0
         self.lm_min_sum = 0.0
         self.lm_mode_name = "locked"
-        self.lm_offset_threshold = 0.0
+        self.lm_offset_threshold = 0.01
         self.lm_target = 0.0
 
         if not hasattr(self, "behavior_names"):
@@ -168,7 +172,6 @@ class LockedMixin(object):
                     self.lm_buffer[self.lm_counter] = 1
                 else:
                     self.lm_buffer[self.lm_counter] = 0
-                print(diff, self.lm_offset_threshold, self.lm_counter)
 
                 # Simple proportional control.
                 dz = 0.9 * diff
@@ -194,7 +197,6 @@ class LockedMixin(object):
         self.lm_buffer_length = parameters.get("buffer_length")
         self.lm_min_sum = parameters.get("minimum_sum")
         self.lm_offset_threshold = parameters.get("offset_threshold")
-        print(self.lm_offset_threshold)
                 
     def startLockBehavior(self, behavior_name, behavior_params):
         if (behavior_name == self.lm_mode_name):
@@ -339,6 +341,7 @@ class LockMode(QtCore.QObject):
     def stopLock(self):
         self.behavior = "none"
         self.z_stage_functionality.recenter()
+        self.setLockStatus(False)
 
     def stopFilm(self):
         pass
@@ -402,9 +405,6 @@ class AutoLockMode(JumpLockMode):
     def __init__(self, **kwds):
         super().__init__(**kwds)
         self.name = "Auto Lock"
-
-    def getLockTarget(self):
-        super().getLockTarget()
     
     def startFilm(self):
         self.startLock()
