@@ -46,6 +46,7 @@ class FocusLockView(halDialog.HalDialog):
 
         # Set up lock display.
         self.lock_display = lockDisplay.LockDisplay(configuration = configuration,
+                                                    jump_signal = self.jump,
                                                     parent = self)
         layout = QtWidgets.QGridLayout(self.ui.lockDisplayWidget)
         layout.setContentsMargins(0,0,0,0)

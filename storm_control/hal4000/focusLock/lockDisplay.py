@@ -15,7 +15,7 @@ class LockDisplay(QtWidgets.QGroupBox):
     """
     The lock display UI group box.
     """
-    def __init__(self, configuration = None, **kwds):
+    def __init__(self, configuration = None, jump_signal = None, **kwds):
         super().__init__(**kwds)
         self.ir_laser_functionality = None
         self.ir_on = False
@@ -38,7 +38,8 @@ class LockDisplay(QtWidgets.QGroupBox):
         layout.setContentsMargins(2,2,2,2)
         layout.addWidget(self.q_qpd_offset_display)
 
-        self.q_stage_display = QStageDisplay(jump_size = configuration.get("jump_size"),
+        self.q_stage_display = QStageDisplay(jump_signal = jump_signal,
+                                             jump_size = configuration.get("jump_size"),
                                              q_label = self.ui.zText,
                                              parent = self)
         layout = QtWidgets.QGridLayout(self.ui.zFrame)
@@ -292,13 +293,12 @@ class QStageDisplay(QOffsetDisplay):
     """
     Z stage position.
     """
-    jump = QtCore.pyqtSignal(float)
-    
-    def __init__(self, q_label = None, jump_size = None, **kwds):
+    def __init__(self, jump_signal = None, jump_size = None, q_label = None, **kwds):
         super().__init__(**kwds)
-        self.q_label = q_label
+        self.jump_signal = jump_signal
         self.jump_size = jump_size
-
+        self.q_label = q_label
+        
         self.adjust_mode = False
         self.tooltips = ["click to adjust", "use scroll wheel to move stage"]
 
@@ -355,12 +355,10 @@ class QStageDisplay(QOffsetDisplay):
         """
         if self.adjust_mode and (not event.angleDelta().isNull()):
             if (event.angleDelta().y() > 0):
-                self.jump.emit(self.jump_size)
+                self.jump_signal.emit(self.jump_size)
             else:
-                self.jump.emit(-self.jump_size)
+                self.jump_signal.emit(-self.jump_size)
             event.accept()
-
-            
 
 
 #
