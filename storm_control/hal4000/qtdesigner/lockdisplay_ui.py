@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_GroupBox(object):
     def setupUi(self, GroupBox):
         GroupBox.setObjectName("GroupBox")
-        GroupBox.resize(310, 276)
+        GroupBox.resize(310, 282)
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout(GroupBox)
         self.horizontalLayout_3.setSpacing(0)
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
@@ -129,6 +129,7 @@ class Ui_GroupBox(object):
         spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem1)
         self.irButton = QtWidgets.QPushButton(GroupBox)
+        self.irButton.setCheckable(True)
         self.irButton.setObjectName("irButton")
         self.horizontalLayout_2.addWidget(self.irButton)
         self.verticalLayout_4.addLayout(self.horizontalLayout_2)

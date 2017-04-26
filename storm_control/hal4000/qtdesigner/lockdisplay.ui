@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>310</width>
-    <height>276</height>
+    <height>282</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -303,6 +303,9 @@
         <widget class="QPushButton" name="irButton">
          <property name="text">
           <string>IR ON</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
