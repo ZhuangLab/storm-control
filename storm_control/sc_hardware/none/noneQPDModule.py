@@ -39,7 +39,7 @@ class NoneQPDFunctionality(hardwareModule.BufferedFunctionality, lockModule.QPDF
     def scan(self):
         time.sleep(0.1)
         self.z_offset = 0.01 * math.sin(2.0 * time.time())
-        return([self.z_offset, 600.0, 0.0, 0.0])
+        return([self.z_offset, 600.0, 600.0 * self.z_offset, 100.0 * self.z_offset])
 
 
 class NoneQPDModule(hardwareModule.HardwareModule):

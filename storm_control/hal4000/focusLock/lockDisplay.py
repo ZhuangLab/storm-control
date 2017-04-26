@@ -20,6 +20,7 @@ class LockDisplay(QtWidgets.QGroupBox):
         self.ir_laser_functionality = None
         self.ir_on = False
         self.ir_power = configuration.get("ir_power", 0)
+        self.q_qpd_display = None
 
         # UI setup
         self.ui = lockdisplayUi.Ui_GroupBox()
@@ -102,6 +103,23 @@ class LockDisplay(QtWidgets.QGroupBox):
         elif (name == "qpd"):
             self.q_qpd_offset_display.setFunctionality(functionality)
             self.q_qpd_sum_display.setFunctionality(functionality)
+
+            # Display the output of a QPD.
+            if (functionality.getType() == "qpd"):
+                self.q_qpd_display = QQPDDisplay(q_xlabel = self.ui.qpdXText,
+                                                 q_ylabel = self.ui.qpdYText,
+                                                 parent = self)
+                layout = QtWidgets.QGridLayout(self.ui.qpdFrame)
+                layout.setContentsMargins(0,0,0,0)
+                layout.addWidget(self.q_qpd_display)
+                self.ui.qpdXText.show()
+                self.ui.qpdYText.show()
+                self.q_qpd_display.setFunctionality(functionality)
+
+            # Display camera output.
+            else:
+                pass
+
         elif (name == "z_stage"):
             self.q_stage_display.setFunctionality(functionality)
 
@@ -195,6 +213,57 @@ class QOffsetDisplay(QStatusDisplay):
         painter.setBrush(self.bar_color)
         painter.drawRect(2, self.height() - self.convert(self.value) - 2, self.width() - 5, 3)
 
+
+class QQPDDisplay(QStatusDisplay):
+    """
+    QPD XY position. This widget is assumed to be square.
+    """
+    def __init__(self, q_xlabel = None, q_ylabel = None, **kwds):
+        super().__init__(**kwds)
+        self.q_xlabel = q_xlabel
+        self.q_ylabel = q_ylabel
+        self.x_value = 0
+        self.y_value = 0
+
+    def paintEvent(self, event):
+        if self.functionality is None:
+            return
+        
+        if not self.isEnabled():
+            return
+        
+        painter = QtGui.QPainter(self)
+        self.paintBackground(painter)
+        
+        # cross hairs
+        color = QtGui.QColor(50, 50, 50)
+        center = self.convert(0.0) - 4
+        painter.setPen(color)
+        painter.drawLine(0, center, self.width(), center)
+        painter.drawLine(center, 0, center, self.height())
+
+        # spot
+        color = QtGui.QColor(0, 0, 0, 150)
+        painter.setPen(color)
+        painter.setBrush(color)
+        painter.drawEllipse(self.convert(self.x_value) - 7, self.convert(self.y_value) - 7, 6, 6)
+
+    def setFunctionality(self, functionality):
+        super().setFunctionality(functionality)
+        self.scale_max = self.functionality.getParameter("max_voltage")
+        self.scale_min = self.functionality.getParameter("min_voltage")
+        
+        self.scale_range = 1.0/(self.scale_max - self.scale_min)
+        self.functionality.qpdUpdate.connect(self.updateValue)        
+
+    def updateValue(self, qpd_dict):
+        if self.isEnabled():
+            self.x_value = qpd_dict["x"]
+            self.y_value = qpd_dict["y"]
+            self.q_xlabel.setText("x: {0:.1f}".format(self.x_value))
+            self.q_ylabel.setText("y: {0:.1f}".format(self.y_value))
+            self.update()
+        
 
 class QQPDOffsetDisplay(QOffsetDisplay):
     """

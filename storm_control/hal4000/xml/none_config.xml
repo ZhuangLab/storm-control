@@ -374,6 +374,8 @@
 
       <configuration>
 	<parameters>
+	  <max_voltage type="float">10.0</max_voltage>
+	  <min_voltage type="float">-10.0</min_voltage>
 	  <offset_has_center_bar type="boolean">True</offset_has_center_bar>
 	  <offset_maximum type="float">0.6</offset_maximum>
 	  <offset_minimum type="float">-0.6</offset_minimum>
