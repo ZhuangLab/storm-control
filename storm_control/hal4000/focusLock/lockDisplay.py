@@ -93,9 +93,10 @@ class LockDisplay(QtWidgets.QGroupBox):
             self.ui.irButton.show()
             self.ui.irButton.clicked.connect(self.handleIrButton)
             if self.ir_laser_functionality.hasPowerAdjustment():
-                self.ui.irSlider.show()
                 self.ui.irSlider.setMaximum(self.ir_laser_functionality.getMaximum())
+                self.ui.irSlider.setMinimum(self.ir_laser_functionality.getMinimum())
                 self.ui.irSlider.setValue(self.ir_power)
+                self.ui.irSlider.show()
                 self.ui.irSlider.valueChanged.connect(self.handleIrSlider)
         elif (name == "qpd"):
             self.q_qpd_offset_display.setFunctionality(functionality)
@@ -166,6 +167,9 @@ class QOffsetDisplay(QStatusDisplay):
     def paintEvent(self, event):
         if self.functionality is None:
             return
+        
+        if not self.isEnabled():
+            return
 
         painter = QtGui.QPainter(self)
         self.paintBackground(painter)
@@ -217,9 +221,10 @@ class QQPDOffsetDisplay(QOffsetDisplay):
         self.functionality.qpdUpdate.connect(self.updateValue)
 
     def updateValue(self, qpd_dict):
-        value = 1000.0 * qpd_dict["offset"]
-        super().updateValue(value)
-        self.q_label.setText("{0:.1f}".format(value))
+        if self.isEnabled():
+            value = 1000.0 * qpd_dict["offset"]
+            super().updateValue(value)
+            self.q_label.setText("{0:.1f}".format(value))
 
         
 class QQPDSumDisplay(QStatusDisplay):
@@ -234,6 +239,9 @@ class QQPDSumDisplay(QStatusDisplay):
         if self.functionality is None:
             return
         
+        if not self.isEnabled():
+            return
+                
         painter = QtGui.QPainter(self)
         self.paintBackground(painter)        
 
@@ -274,9 +282,10 @@ class QQPDSumDisplay(QStatusDisplay):
         self.functionality.qpdUpdate.connect(self.updateValue)        
 
     def updateValue(self, qpd_dict):
-        value = qpd_dict["sum"]
-        super().updateValue(value)
-        self.q_label.setText("{0:.1f}".format(value))
+        if self.isEnabled():
+            value = qpd_dict["sum"]
+            super().updateValue(value)
+            self.q_label.setText("{0:.1f}".format(value))
 
         
 class QStageDisplay(QOffsetDisplay):
@@ -335,9 +344,10 @@ class QStageDisplay(QOffsetDisplay):
         self.functionality.zStagePosition.connect(self.updateValue)
 
     def updateValue(self, value):
-        super().updateValue(value)
-        self.q_label.setText("{0:.3f}um".format(value))
-            
+        if self.isEnabled():
+            super().updateValue(value)
+            self.q_label.setText("{0:.3f}um".format(value))
+
     def wheelEvent(self, event):
         """
         Handles mouse wheel events. Emits the adjustStage signal 

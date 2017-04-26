@@ -2,8 +2,8 @@
 <config>
 
   <!-- The starting directory. -->
-  <!-- <directory type="directory">/home/hbabcock/Data/</directory> -->
-  <directory type="directory">C:/Data/</directory>
+  <directory type="directory">/home/hbabcock/Data/</directory>
+  <!-- <directory type="directory">C:/Data/</directory> -->
 
   <!-- The setup name -->
   <setup_name type="string">none</setup_name>
@@ -258,6 +258,7 @@
       <module_name type="string">storm_control.hal4000.focusLock.focusLock</module_name>
       <configuration>
 	<ir_laser type="string">none_irlaser</ir_laser>
+	<ir_power type="int">10</ir_power>
 	<jump_size type="float">0.1</jump_size>
 	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode</lock_modes>
 	<qpd type="string">none_qpd</qpd>
@@ -362,6 +363,11 @@
       </configuration>      
     </none_405>
 
+    <none_irlaser>
+      <module_name type="string">storm_control.sc_hardware.none.noneIRLaserModule</module_name>
+      <class_name type="string">NoneIRLaserModule</class_name>
+    </none_irlaser>
+    
     <none_qpd>
       <module_name type="string">storm_control.sc_hardware.none.noneQPDModule</module_name>
       <class_name type="string">NoneQPDModule</class_name>

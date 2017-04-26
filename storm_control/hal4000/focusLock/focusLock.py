@@ -75,6 +75,8 @@ class FocusLockView(halDialog.HalDialog):
         self.ui.lockTargetSpinBox.valueChanged.connect(self.handleLockTarget)
         self.ui.modeComboBox.currentIndexChanged.connect(self.handleModeComboBox)
 
+        self.setEnabled(False)
+
     def amLocked(self):
         return self.ui.lockButton.isChecked()
     
@@ -143,7 +145,9 @@ class FocusLockView(halDialog.HalDialog):
                 
         self.lock_display.setFunctionality(name, functionality)
 
-        # FIXME: Need to check if all functionalities are good & disable UI if not.
+        # Enable UI if we have everything we need to work.
+        if self.lock_display.haveAllFunctionalities():
+            self.setEnabled(True)
 
     def setLockTargetSpinBox(self, new_value):
         self.ui.lockTargetSpinBox.valueChanged.disconnect(self.handleLockTarget)
