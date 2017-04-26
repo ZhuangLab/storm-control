@@ -41,8 +41,8 @@ def populateModel(model, parameters):
             q_item.setData(EditorItemData(parameter = param))
             if param.isMutable():
                 q_item.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable)
-            else:
-                q_item.setFlags(QtCore.Qt.NoItemFlags)
+            #else:
+            #    q_item.setFlags(QtCore.Qt.NoItemFlags)
             model.appendRow(q_item)
 
 

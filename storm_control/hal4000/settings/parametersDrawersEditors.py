@@ -65,6 +65,8 @@ def getEditor(parameter = None, parent = None):
         return EditorFloat(parent = parent)
     elif isinstance(parameter, params.ParameterInt):
         return EditorInt(parent = parent)
+    elif isinstance(parameter, params.ParameterRangeFloat):
+        return EditorRangeFloat(parent = parent)    
     elif isinstance(parameter, params.ParameterRangeInt):
         return EditorRangeInt(parent = parent)
     elif isinstance(parameter, params.ParameterSet):
@@ -120,6 +122,26 @@ class EditorInt(EditorNumber):
         self.setValidator(QtGui.QIntValidator(self))
 
 
+class EditorRangeFloat(QtWidgets.QDoubleSpinBox, EditorMixin):
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.valueChanged.connect(self.handleValueChanged)
+
+    def handleValueChanged(self, new_value):
+        self.parameter.setv(new_value)
+        self.updateParameter.emit(self)
+
+    def setParameter(self, parameter):
+        super().setParameter(parameter)
+        self.valueChanged.disconnect()
+        self.setDecimals(self.parameter.getDecimals())
+        self.setMaximum(self.parameter.getMaximum())
+        self.setMinimum(self.parameter.getMinimum())
+        self.setValue(self.parameter.getv())
+        self.valueChanged.connect(self.handleValueChanged)
+
+        
 class EditorRangeInt(QtWidgets.QSpinBox, EditorMixin):
 
     def __init__(self, **kwds):

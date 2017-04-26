@@ -364,10 +364,14 @@ class ParameterRangeFloat(ParameterRange):
     """
     Float range parameter.
     """
-    def __init__(self, **kwds):
+    def __init__(self, decimals = 2, **kwds):
         super().__init__(**kwds)
+        self.decimals = decimals
         self.ptype = "float"
 
+    def getDecimals(self):
+        return self.decimals
+    
     def toType(self, value):
         return float(value)
 
