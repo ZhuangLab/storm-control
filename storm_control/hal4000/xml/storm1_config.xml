@@ -45,8 +45,8 @@
       <parameters>
 
 	<!-- The default color table. Other options are in hal4000/colorTables/all_tables -->
-	<colortable type="string">ramp_sat.ctbl</colortable>
-	
+	<colortable type="string">idl5.ctbl</colortable>
+
       </parameters>
     </display>
     
