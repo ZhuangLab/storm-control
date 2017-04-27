@@ -229,6 +229,8 @@ class AOTF64Bit(AOTF):
         Create a 32 bit process for communication with the AOTF and
         verify that it can talk to the AOTF.
         """
+        print(python32_exe)
+
         self.encoding = 'utf-8'
 
         # Create socket.
@@ -237,14 +239,16 @@ class AOTF64Bit(AOTF):
         self.aotf_socket.bind(("127.0.0.1", 9001))
 
         # Create sub-process to control the AOTF.
-        dir = os.path.dirname(__file__)
-        if (len(dir) > 0):
-            self.aotf_cmd = dir + "\AOTF32Bit.py"
+        ctech_dir = os.path.dirname(__file__)
+        if (len(ctech_dir) > 0):
+            aotf_cmd = os.path.join(ctech_dir, "AOTF32Bit.py")
         else:
-            self.aotf_cmd = "AOTF32Bit.py"
+            aotf_cmd = "AOTF32Bit.py"
+
+        print(aotf_cmd)
 
         self.live = True
-        self.aotf_proc = subprocess.Popen([python32_exe, self.aotf_cmd], close_fds = True)
+        self.aotf_proc = subprocess.Popen([python32_exe, aotf_cmd], close_fds = True)
 
         # Wait for connection from the sub-process.
         self.aotf_socket.listen(1)

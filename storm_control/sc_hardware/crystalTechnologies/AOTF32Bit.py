@@ -1,12 +1,10 @@
-#!/usr/bin/python
-#
-## @file
-#
-# This is part of the work-around for the lack
-# of a 64 bit version of the AotfLibrary.dll file.
-#
-# Hazen 12/13
-#
+#!/usr/bin/env python
+"""
+This is part of the work-around for the lack
+of a 64 bit version of the AotfLibrary.dll file.
+
+Hazen 12/13
+"""
 
 import socket
 import sys
