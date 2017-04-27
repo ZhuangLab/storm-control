@@ -262,8 +262,7 @@ class EditorStringFilename(QtWidgets.QPushButton, EditorMixin):
                                                                  "Open",
                                                                  old_filename,
                                                                  extension)[0]
-        print(new_filename)
-        if new_filename is not None:
+        if new_filename:
             self.parameter.setv(new_filename)
             self.setText(truncateString(self.parameter.getv()))
             self.updateParameter.emit(self)
