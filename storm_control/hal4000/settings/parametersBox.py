@@ -93,9 +93,9 @@ class ParametersBox(QtWidgets.QGroupBox):
     def handleEditorUpdate(self, parameters):
         self.newParameters.emit(parameters, True)
 
-        # FIXME: Probably only want do this is we change was successful.
-        self.ui.settingsListView.setCurrentParametersStale()
-        
+        # FIXME: Probably only want to do this if the change was successful.
+        self.ui.settingsListView.setRCParametersStale()
+
     def handleEditParameters(self, parameters):
 
         # Disable the ListView while we are editing the parameters.
@@ -117,13 +117,12 @@ class ParametersBox(QtWidgets.QGroupBox):
                                                          os.path.dirname(str(parameters.get("parameters_file"))),
                                                          "*.xml")[0]
         if filename:
-            self.changed = False
-            self.setText(parametersEditorDialog.getFileName(filename))
-            self.parameters.set("parameters_file", filename)
-            if self.editor_dialog is not None:
-                self.editor_dialog.updateParametersNameLabel()
-            self.parameters.saveToFile(filename)
-            self.updateDisplay()
+            if not filename.endswith(".xml"):
+                filename += ".xml"
+            parameters.set("parameters_file", filename)
+            parameters.saveToFile(filename)
+            setting_name = os.path.splitext(os.path.basename(filename))[0]
+            self.ui.settingsListView.setRCParametersName(setting_name)
 
     def markCurrentAsInitialized(self):
         cur_p = self.getCurrentParameters()

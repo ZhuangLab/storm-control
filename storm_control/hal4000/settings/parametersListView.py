@@ -33,10 +33,13 @@ class ParametersListViewDelegate(QtWidgets.QStyledItemDelegate):
     """
     def paint(self, painter, option, index):
         p_item = index.model().itemFromIndex(index)
-
+        p_data = getItemData(p_item)
+        
         opt = QtWidgets.QStyleOptionButton()
         if (p_item.checkState() == QtCore.Qt.Checked):
             opt.state = QtWidgets.QStyle.State_On
+        if p_data.stale:
+            opt.palette.setColor(QtGui.QPalette.WindowText, QtGui.QColor(255,0,0))
         opt.rect = option.rect
         opt.text = p_item.text()
 
@@ -181,10 +184,15 @@ class ParametersMVC(QtWidgets.QListView):
         self.editParameters.emit(getItemData(self.getCurrentItem()).parameters)
 
     def handleSave(self, boolean):
+        #
+        # Why do we need to emit a signal instead of just doing everything
+        # here? Not sure, but it we throw up a QFileDialog here the colors
+        # are all funny..
+        #
         data = getItemData(self.rc_item)
         self.saveParameters.emit(data.parameters)
         data.stale = False
-    
+
     def mousePressEvent(self, event):
         if (event.button() == QtCore.Qt.RightButton):
             rc_index = self.indexAt(event.pos())
@@ -222,9 +230,11 @@ class ParametersMVC(QtWidgets.QListView):
     def setCurrentItem(self, q_item):
         self.handleClicked(self.model.indexFromItem(q_item))
 
-    def setCurrentParametersStale(self):
-        print(">scps")
-        getItemData(self.getCurrentItem()).stale = True
+    def setRCParametersName(self, name):
+        self.rc_item.setText(name)
+                
+    def setRCParametersStale(self):
+        getItemData(self.rc_item).stale = True
 
     def setItemParameters(self, q_item, parameters):
         getItemData(q_item).parameters = parameters
