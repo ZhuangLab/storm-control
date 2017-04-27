@@ -38,8 +38,8 @@ class Camera(halModule.HalModule):
     """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
-        self.film_length = None
-        
+        self.film_settings = None
+
         camera_params = module_params.get("camera")
         a_module = importlib.import_module(camera_params.get("module_name"))
         a_class = getattr(a_module, camera_params.get("class_name"))
@@ -56,11 +56,10 @@ class Camera(halModule.HalModule):
         if message.isType("configuration"):
             if message.sourceIs("timing"):
                 timing_fn = message.getData()["properties"]["functionality"]
-                if (timing_fn.getTimeBase() == self.module_name):
-                    if self.film_length is not None:
-                        halModule.runWorkerTask(self,
-                                                message, 
-                                                lambda : self.setFilmLength(self.film_length))
+                is_time_base = (timing_fn.getTimeBase() == self.module_name)
+                halModule.runWorkerTask(self,
+                                        message, 
+                                        lambda : self.startFilm(is_time_base))
 
         elif message.isType("configure1"):
             # Broadcast initial parameters.
@@ -93,11 +92,10 @@ class Camera(halModule.HalModule):
                 halModule.runWorkerTask(self, message, self.startCamera)
 
         elif message.isType("start film"):
-            # This message comes from film.film, we save the film length
-            # in the self.film_length attribute.
-            film_settings = message.getData()["film settings"]
-            if film_settings.isFixedLength():
-                self.film_length = film_settings.getFilmLength()
+            # This message comes from film.film, we save the film settings
+            # but don't actually do anything until we get a 'configuration'
+            # message from timing.timing.
+            self.film_settings = message.getData()["film settings"]
 
         elif message.isType("stop camera"):
             # This message comes from film.film.
@@ -107,19 +105,22 @@ class Camera(halModule.HalModule):
         elif message.isType("stop film"):
             # This message comes from film.film, it goes to all camera at once.
             self.film_length = None
-            self.camera_control.stopFilm()
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : self.camera_control.getParameters()}))
+            halModule.runWorkerTask(self, message, self.stopFilm)
 
-    def setFilmLength(self, film_length):
-        self.camera_control.setFilmLength(film_length)
-        
     def startCamera(self):
         self.camera_control.startCamera()
 
+    def startFilm(self, is_time_base):
+        self.camera_control.startFilm(self.film_settings, is_time_base)
+
     def stopCamera(self):
         self.camera_control.stopCamera()
-        
+
+    def stopFilm(self):
+        self.camera_control.stopFilm()
+
     def toggleShutter(self):
         self.camera_control.toggleShutter()
         

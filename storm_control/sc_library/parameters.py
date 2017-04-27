@@ -273,6 +273,9 @@ class Parameter(object):
 
     def setMutable(self, value):
         self.is_mutable = bool(value)
+
+    def setOrder(self, new_order):
+        self.order = new_order
         
     def setv(self, new_value):
         self.value = self.toType(new_value)

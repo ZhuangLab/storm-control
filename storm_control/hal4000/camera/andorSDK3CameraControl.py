@@ -184,11 +184,16 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
                     to_change.append(pname)
 
         if (len(to_change)>0):
-            self.stopCamera()
+            if self.running:
+                was_running = self.running
+                self.stopCamera()
+
             for pname in to_change:
                 self.camera.setProperty(pname, self.andor_props[pname], parameters.get(pname))
                 self.parameters.setv(pname, parameters.get(pname))
-            self.startCamera()
+
+            if was_running:
+                self.startCamera()
 
         # Get the target temperature for the camera. On some 
         # cameras this cannot be set.
@@ -207,12 +212,12 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
         self.parameters.setv("fps",
                              self.camera.getProperty("FrameRate", self.andor_props["FrameRate"]))
 
-    def setFilmLength(self, film_length):
+    def startFilm(self, film_settings, is_time_base):
         print(">sfl", self.camera_name, self.camera_working, film_length)
-        super().setFilmLength(film_length)
-        if self.camera_working:
+        super().startFilm(film_settings, is_time_base)
+        if self.camera_working and self.film_length is not None:
             self.camera.setProperty("CycleMode", self.andor_props["CycleMode"], "Fixed")
-            self.camera.setProperty("FrameCount", self.andor_props["FrameCount"], film_length)
+            self.camera.setProperty("FrameCount", self.andor_props["FrameCount"], self.film_length)
 
     def stopFilm(self):
         super().stopFilm()

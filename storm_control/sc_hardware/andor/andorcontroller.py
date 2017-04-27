@@ -984,8 +984,8 @@ class AndorCamera:
                    "SetImage")
         self.ROI = ROI
         self.binning = binning
-        self.x_pixels = (self.ROI[1] - self.ROI[0] + 1)/self.binning[0]
-        self.y_pixels = (self.ROI[3] - self.ROI[2] + 1)/self.binning[1]
+        self.x_pixels = int((self.ROI[1] - self.ROI[0] + 1)/self.binning[0])
+        self.y_pixels = int((self.ROI[3] - self.ROI[2] + 1)/self.binning[1])
         self.pixels = self.x_pixels * self.y_pixels
         self.frame_size = [self.x_pixels, self.y_pixels]
 

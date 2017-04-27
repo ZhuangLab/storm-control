@@ -300,13 +300,6 @@ class CameraControl(QtCore.QThread):
         """
         self.parameters.set("emccd_gain", gain)
         self.camera_functionality.emccdGain.emit(gain)
-
-    def setFilmLength(self, film_length):
-        """
-        The camera should stop after it has taken this many frames and it should
-        not emit more than this number of newFrame signals.
-        """
-        self.film_length = film_length
         
     def startCamera(self):
 
@@ -318,6 +311,14 @@ class CameraControl(QtCore.QThread):
         self.start(QtCore.QThread.NormalPriority)
 
         self.camera_functionality.started.emit()
+
+    def startFilm(self, film_settings, is_time_base):
+        """
+        If this is a fixed length film and this camera is the time
+        base for the film, then set the film_length attribute.
+        """
+        if film_settings.isFixedLength() and is_time_base:
+            self.film_length = film_settings.getFilmLength()
 
     def stopCamera(self):
         if self.running:

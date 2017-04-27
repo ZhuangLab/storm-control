@@ -114,7 +114,7 @@ class ParamsViewer(QtWidgets.QGroupBox):
             self.ui.EMCCDLabel.setText("EMCCD Gain: {0:d}".format(gainp.getv()))
             self.ui.EMCCDSlider.valueChanged.connect(self.handleGainChange)
 
-        if self.cam_fn.hasParameter("external_trigger"):
+        if self.cam_fn.hasParameter("external_trigger") and self.cam_fn.getParameter("external_trigger"):
             self.ui.exposureTimeText.setText("External")
             self.ui.FPSText.setText("External")
         else:
