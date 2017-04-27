@@ -35,7 +35,7 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
         self.colortable = None
         self.display_range = [0, 200]
         self.display_saturated_pixels = False
-        self.draw_grid = True
+        self.draw_grid = False
         self.draw_target = False
         self.frame_x_offset = 0
         self.frame_y_offset = 0
@@ -169,7 +169,7 @@ class QtCameraGraphicsItem(QtWidgets.QGraphicsItem):
         # Create QImage & re-scale to compensate for binning, if any.
         temp_image = QtGui.QImage(temp.data, w, h, QtGui.QImage.Format_Indexed8)
         if (self.scale_x != 1) or (self.scale_y != 1):
-            self.q_image = temp_image.scale(w * self.scale_x, h * self.scale_y)
+            self.q_image = temp_image.scaled(w * self.scale_x, h * self.scale_y)
         else:
             self.q_image = temp_image
         self.q_image.ndarray = temp
