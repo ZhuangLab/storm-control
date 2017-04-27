@@ -68,7 +68,7 @@ class AmplitudeMixin(object):
     
 class AmplitudeFunctionality(hardwareModule.HardwareFunctionality, AmplitudeMixin):
     """
-    Base class for an amplitude functionality. The sub-class must override processRequest().
+    Base class for an amplitude functionality.
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
@@ -76,7 +76,7 @@ class AmplitudeFunctionality(hardwareModule.HardwareFunctionality, AmplitudeMixi
         
 class AmplitudeFunctionalityBuffered(hardwareModule.BufferedFunctionality, AmplitudeMixin):
     """
-    Base class for a buffered amplitude functionality. The sub-class must override processRequest().
+    Base class for a buffered amplitude functionality.
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
