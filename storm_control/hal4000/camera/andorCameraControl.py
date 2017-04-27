@@ -36,6 +36,9 @@ class AndorCameraControl(cameraControl.HWCameraControl):
                                                                             have_temperature = True,
                                                                             is_master = is_master,
                                                                             parameters = self.parameters)
+        self.camera_functionality.setEMCCDGain = self.setEMCCDGain
+        self.camera_functionality.toggleShutter = self.toggleShutter
+
 
         # Load Andor DLL & get the camera.
         andor.loadAndorDLL(os.path.join(config.get("andor_path"), config.get("andor_dll")))
@@ -160,15 +163,20 @@ class AndorCameraControl(cameraControl.HWCameraControl):
 
         self.newParameters(self.parameters, initialization = True)
 
+    def closeShutter(self):
+        super().closeShutter()
+        if self.camera_working:
+            running = self.running
+            if running:
+                self.stopCamera()
 
-#    def closeShutter(self):
-#        self.shutter = False
-#        if self.got_camera:
-#            if self.reversed_shutter:
-#                self.camera.openShutter()
-#            else:
-#                self.camera.closeShutter()
+            if self.reversed_shutter:
+                self.camera.openShutter()
+            else:
+                self.camera.closeShutter()
 
+            if running:
+                self.startCamera()
 #    def getAcquisitionTimings(self, which_camera):
 #        if self.got_camera:
 #            return self.camera.getAcquisitionTimings()[:-1]
@@ -216,8 +224,6 @@ class AndorCameraControl(cameraControl.HWCameraControl):
             # that parameters get set in the proper order.
             #
             for pname in self.parameters.getSortedAttrs():
-
-                print(pname, parameters.get(pname))
 
                 if not pname in to_change:
                     continue
@@ -331,17 +337,32 @@ class AndorCameraControl(cameraControl.HWCameraControl):
             if running:
                 self.startCamera()
 
-#    def openShutter(self):
-#        self.shutter = True
-#        if self.got_camera:
-#            if self.reversed_shutter:
-#                self.camera.closeShutter()
-#            else:
-#                self.camera.openShutter()
+    def openShutter(self):
+        super().openShutter()
+        if self.camera_working:
+            running = self.running
+            if running:
+                self.stopCamera()
 
-#    def setEMCCDGain(self, which_camera, gain):
-#        if self.got_camera:
-#            self.camera.setEMCCDGain(gain)
+            if self.reversed_shutter:
+                self.camera.closeShutter()
+            else:
+                self.camera.openShutter()
+
+            if running:
+                self.startCamera()
+
+    def setEMCCDGain(self, gain):
+        super().setEMCCDGain(gain)
+        if self.camera_working:
+            running = self.running
+            if running:
+                self.stopCamera()
+
+            self.camera.setEMCCDGain(gain)
+
+            if running:
+                self.startCamera()
 
     def startFilm(self, film_settings, is_time_base):
         super().startFilm(film_settings, is_time_base)
