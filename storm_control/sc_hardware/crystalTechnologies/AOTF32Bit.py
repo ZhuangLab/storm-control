@@ -17,20 +17,21 @@ my_aotf = AOTF.AOTF()
 my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 my_socket.connect(("127.0.0.1", 9001))
  
+encoding = 'utf-8'
 running = True
 while running:
-   next_cmd = my_socket.recv(1024)
+   next_cmd = my_socket.recv(1024).decode(encoding)
    if (next_cmd == "shutdown"):
       my_aotf.shutDown()
-      my_socket.sendall("done")
+      my_socket.sendall("done".encode(encoding))
       my_socket.close()
       running = False
    else:
       if my_aotf.live:
          response = my_aotf._sendCmd(next_cmd)
-         my_socket.sendall(response)
+         my_socket.sendall(response.encode(encoding))
       else:
-         my_socket.sendall("Invalid")
+         my_socket.sendall("Invalid".encode(encoding))
 
 #
 # The MIT License
