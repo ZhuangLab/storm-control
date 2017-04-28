@@ -148,7 +148,6 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
                 self.stopCamera()
 
             for pname in to_change:
-                print(pname, parameters.get(pname))
                 self.camera.setPropertyValue(pname, parameters.get(pname))
                 self.parameters.setv(pname, parameters.get(pname))
 
