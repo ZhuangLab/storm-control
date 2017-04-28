@@ -31,6 +31,26 @@ class NidaqFunctionality(daqModule.DaqFunctionality):
             self.task = None
 
 
+class AOTaskFunctionality(NidaqFunctionality):
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+    def createTask(self):
+        self.task = nicontrol.AnalogOutput(source = self.source)
+        self.task.startTask()
+        
+    def output(self, voltage):
+        if self.task is None:
+            self.createTask()
+        try:
+            self.task.output(voltage)
+        except nicontrol.NIException as exception:
+            hdebug.logText("AOTaskFunctionality Error", str(exception))
+            self.task.stopTask()
+            self.createTask()
+
+
 class DOTaskFunctionality(NidaqFunctionality):
 
     def __init__(self, **kwds):
@@ -46,8 +66,7 @@ class DOTaskFunctionality(NidaqFunctionality):
         try:
             self.task.output(state)
         except nicontrol.NIException as exception:
-            #print("DoTaskFunctionality Error", str(exception))            
-            hdebug.logText("DoTaskFunctionality Error", str(exception))
+            hdebug.logText("DOTaskFunctionality Error", str(exception))
             self.task.stopTask()
             self.createTask()
 
@@ -80,7 +99,10 @@ class NidaqModule(daqModule.DaqModule):
                 task_params = task.get(task_name)
             
                 daq_fn_name = ".".join([self.module_name, fn_name, task_name])
-                if (task_name == "do_task"):
+                if (task_name == "ao_task"):
+                    self.daq_fns[daq_fn_name] = AOTaskFunctionality(source = task_params.get("source"),
+                                                                    used_during_filming = task_params.get("used_during_filming"))
+                elif (task_name == "do_task"):
                     self.daq_fns[daq_fn_name] = DOTaskFunctionality(source = task_params.get("source"),
                                                                     used_during_filming = task_params.get("used_during_filming"))
                 else:
@@ -102,7 +124,7 @@ class NidaqModule(daqModule.DaqModule):
 
             # Get frames per second from the timing functionality. This is
             # a property of the camera that drives the timing functionality.
-            fps = message.getData()["functionality"].getFPS()
+            fps = message.getData()["properties"]["functionality"].getFPS()
             
             # Calculate frequency. This is set slightly higher than the camere
             # frequency so that we are ready at the start of the next frame.

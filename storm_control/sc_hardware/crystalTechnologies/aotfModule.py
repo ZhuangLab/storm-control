@@ -77,6 +77,8 @@ class AOTFModule(amplitudeModule.AmplitudeModule):
 
     def cleanUp(self, qt_settings):
         if self.aotf is not None:
+            for aotf_fn in self.aotf_fns:
+                aotf_fn.wait()
             self.aotf.shutDown()
 
     def getFunctionality(self, message):

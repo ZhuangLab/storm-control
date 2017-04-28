@@ -70,6 +70,9 @@ class DaqModule(hardwareModule.HardwareModule):
         self.waveform_len = 0
 
         # The message for passing waveforms to a Daq module.
+        #
+        # FIXME: Replace with a configuration message?
+        #
         halMessage.addMessage("daq waveforms",
                               validator = {"data" : {"waveforms" : [True, list]},
                                            "resp" : None})
@@ -81,6 +84,8 @@ class DaqModule(hardwareModule.HardwareModule):
         waveforms = message.getData()["waveforms"]
         for waveform in waveforms:
             assert isinstance(waveform, DaqWaveform)
+
+            print(waveform.getSource())
 
             # Check that all the waveforms are the same
             # length with the same oversampling.

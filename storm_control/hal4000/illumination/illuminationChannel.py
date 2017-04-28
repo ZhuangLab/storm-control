@@ -147,6 +147,7 @@ class Channel(QtCore.QObject):
         As a side effect this records the on/off setting in the
         'on_off_state' property of the parameters.
         """
+        print(">", self.channel_id)
         if self.filming:
             return
         
