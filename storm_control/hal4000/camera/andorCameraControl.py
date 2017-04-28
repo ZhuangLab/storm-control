@@ -177,11 +177,6 @@ class AndorCameraControl(cameraControl.HWCameraControl):
 
             if running:
                 self.startCamera()
-#    def getAcquisitionTimings(self, which_camera):
-#        if self.got_camera:
-#            return self.camera.getAcquisitionTimings()[:-1]
-#        else:
-#            return [1.0, 1.0]
 
     def getTemperature(self):
         if self.camera_working:
@@ -191,6 +186,12 @@ class AndorCameraControl(cameraControl.HWCameraControl):
                                                         "state" : temp[1]})
 
     def newParameters(self, parameters, initialization = False):
+        size_x = parameters.get("x_end") - parameters.get("x_start") + 1
+        size_y = parameters.get("y_end") - parameters.get("y_start") + 1
+        parameters.setv("x_pixels", size_x)
+        parameters.setv("y_pixels", size_y)
+        parameters.setv("bytes_per_frame", 2 * size_x * size_y)
+
         super().newParameters(parameters)
 
         self.camera_working = True
@@ -324,11 +325,8 @@ class AndorCameraControl(cameraControl.HWCameraControl):
                                                     new_binning[0])
                     self.camera.setROIAndBinning(new_roi, new_binning)
 
-            size_x = self.parameters.get("x_end") - self.parameters.get("x_start") + 1
-            size_y = self.parameters.get("y_end") - self.parameters.get("y_start") + 1
-            self.parameters.setv("x_pixels", size_x)
-            self.parameters.setv("y_pixels", size_y)
-            self.parameters.setv("bytes_per_frame", 2 * size_x * size_y)
+            for pname = ["bytes_per_frame", "x_pixels", "y_pixels"]:
+                self.parameters.setv(pname, parameters.get(pname))
 
             [exposure_time, cycle_time] = self.camera.getAcquisitionTimings()[:-1]
             self.parameters.setv("exposure_time", exposure_time)

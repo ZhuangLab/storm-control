@@ -29,14 +29,13 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
         kwds["config"] = config
         super().__init__(**kwds)
         
-        # The camera configuration.
+        # The camera functionality.
         self.camera_functionality = cameraFunctionality.CameraFunctionality(camera_name = self.camera_name,
                                                                             have_temperature = True,
                                                                             is_master = is_master,
                                                                             parameters = self.parameters)
         
-        # Load the library and start the camera, camera 0 will be used
-        # if no 'camera_id' is specified.
+        # Load the library and start the camera.
         andor.loadSDK3DLL(config.get("andor_sdk"))
         self.camera = andor.SDK3Camera(config.get("camera_id"))
 
@@ -184,15 +183,16 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
                     to_change.append(pname)
 
         if (len(to_change)>0):
-            if self.running:
-                was_running = self.running
+            running = self.running
+            if running:
+                self.camera_functionality.invalid.emit()
                 self.stopCamera()
 
             for pname in to_change:
                 self.camera.setProperty(pname, self.andor_props[pname], parameters.get(pname))
                 self.parameters.setv(pname, parameters.get(pname))
 
-            if was_running:
+            if running:
                 self.startCamera()
 
         # Get the target temperature for the camera. On some 

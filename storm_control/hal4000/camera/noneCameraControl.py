@@ -95,6 +95,12 @@ class NoneCameraControl(cameraControl.CameraControl):
         self.newParameters(self.parameters, initialization = True)
 
     def newParameters(self, parameters, initialization = False):
+        size_x = parameters.get("x_end") - parameters.get("x_start") + 1
+        size_y = parameters.get("y_end") - parameters.get("y_start") + 1
+        parameters.setv("x_pixels", size_x)
+        parameters.setv("y_pixels", size_y)
+        parameters.setv("bytes_per_frame", 2 * size_x * size_y)
+
         super().newParameters(parameters)
 
         # Figure out which parameters have changed.
@@ -123,18 +129,11 @@ class NoneCameraControl(cameraControl.CameraControl):
 
             p.set("fps", 1.0/p.get("exposure_time"))
 
-            size_x = p.get("x_end") - p.get("x_start") + 1
-            size_y = p.get("y_end") - p.get("y_start") + 1
-
-            p.set("x_pixels", size_x)
-            p.set("y_pixels", size_y)
             self.fake_frame_size = [size_x, size_y]
             self.fake_frame = numpy.zeros(size_x * size_y, dtype = numpy.uint16)
             for i in range(size_x):
                 for j in range(size_y):
                     self.fake_frame[j*size_x+i] = i % 128 + j % 128
-
-            p.set("bytes_per_frame", 2 * size_x * size_y)            
 
             if running:
                 self.startCamera()
