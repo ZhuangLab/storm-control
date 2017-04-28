@@ -70,10 +70,10 @@ class AOTFModule(amplitudeModule.AmplitudeModule):
                         frequencies[0] = fn_params.get("on_frequency")
                         self.aotf.fskOff(channel)
 
-                    self.aotf_fn[aotf_fn_name] = AOTFFunctionality(aotf = self.aotf,
-                                                                   channel = channel,
-                                                                   frequencies = frequencies,
-                                                                   maximum = fn_params.get("maximum"))
+                    self.aotf_fns[aotf_fn_name] = AOTFFunctionality(aotf = self.aotf,
+                                                                    channel = channel,
+                                                                    frequencies = frequencies,
+                                                                    maximum = fn_params.get("maximum"))
 
     def cleanUp(self, qt_settings):
         if self.aotf is not None:
