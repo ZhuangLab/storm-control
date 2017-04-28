@@ -308,7 +308,11 @@ class Film(halModule.HalModule):
         self.writers = None
         self.writers_stopped_timer = QtCore.QTimer(self)
 
-        self.logfile_fp = open(module_params.get("directory") + "image_log.txt", "a")
+        try:
+            self.logfile_fp = open(module_params.get("directory") + "image_log.txt", "a")
+        except FileNotFoundError:
+            print(">> image_log.txt file not found")
+            self.logfile_fp = None
 
         self.writers_stopped_timer.setSingleShot(True)
         self.writers_stopped_timer.setInterval(10)
@@ -378,7 +382,8 @@ class Film(halModule.HalModule):
                                            "resp" : None})
 
     def cleanUp(self, qt_settings):
-        self.logfile_fp.close()
+        if self.logfile_fp is not None:
+            self.logfile_fp.close()
 
     def handleLiveModeChange(self, state):
         if state:
@@ -449,12 +454,13 @@ class Film(halModule.HalModule):
                 
                 to_save.saveToFile(film_settings.getBasename() + ".xml")
                 
-                msg = ",".join([str(datetime.datetime.now()),
-                                film_settings.getBasename(),
-                                notes])
-                msg += "\r\n"
-                self.logfile_fp.write(msg)
-                self.logfile_fp.flush()
+                if self.logfile_fp is not None:
+                    msg = ",".join([str(datetime.datetime.now()),
+                                    film_settings.getBasename(),
+                                    notes])
+                    msg += "\r\n"
+                    self.logfile_fp.write(msg)
+                    self.logfile_fp.flush()
 
     def handleStopCamera(self):
         self.active_cameras -= 1
