@@ -1,12 +1,10 @@
-#!/usr/bin/python
-#
-## @file
-#
-# This script is used for camera calibration. It records the sum of x and 
-# the sum of x*x for every pixel in every frame.
-#
-# Hazen 10/13
-#
+#!/usr/bin/env python
+"""
+This script is used for camera calibration. It records the sum of x and 
+the sum of x*x for every pixel in every frame.
+
+Hazen 10/13
+"""
 
 import numpy
 import sys
@@ -15,10 +13,10 @@ import time
 import hamamatsu_camera as hc
 
 if (len(sys.argv) != 3):
-    print "usage: <filename> <number frames>"
+    print("usage: <filename> <number frames>")
     exit()
 
-hcam = hc.HamamatsuCameraMR(0)
+hcam = hc.HamamatsuCameraMR(camera_id = 0)
 
 # Set camera parameters.
 cam_offset = 0
@@ -41,7 +39,7 @@ if False:
     hcam.setPropertyValue("subarray_hsize", cam_x)
     hcam.setPropertyValue("subarray_vsize", cam_y)
 
-print "integration time (seconds):", 1.0/hcam.getPropertyValue("internal_frame_rate")[0]
+print("integration time (seconds):", 1.0/hcam.getPropertyValue("internal_frame_rate")[0])
 
 # Create numpy arrays.
 mean = numpy.zeros((cam_x, cam_y), dtype = numpy.int64)
@@ -61,7 +59,7 @@ while (processed < n_frames):
     captured += len(frames)
     
     if ((processed%10)==0):
-        print "Accumulated", processed, "frames, current back log is", len(frames), "frames"
+        print("Accumulated", processed, "frames, current back log is", len(frames), "frames")
     
     if (len(frames) > 0):
         aframe = frames[0].getData().astype(numpy.int32) - cam_offset
@@ -78,8 +76,8 @@ while (processed < n_frames):
 
 end_time = time.time()
 hcam.stopAcquisition()
-print "Captured:", captured, "frames in", (end_time - start_time), "seconds."
-print "FPS:", captured/(end_time - start_time)
+print("Captured:", captured, "frames in", (end_time - start_time), "seconds.")
+print("FPS:", captured/(end_time - start_time))
 
 # Compute mean & variance & save results.
 #mean = mean/float(n_frames)
@@ -88,8 +86,8 @@ print "FPS:", captured/(end_time - start_time)
 numpy.save(sys.argv[1], [numpy.array([n_frames]), mean, var])
 
 mean_mean = numpy.mean(mean)/float(n_frames)
-print "mean of mean:", mean_mean
-print "mean of variance:", numpy.mean(var)/float(n_frames) - mean_mean*mean_mean
+print("mean of mean:", mean_mean)
+print("mean of variance:", numpy.mean(var)/float(n_frames) - mean_mean*mean_mean)
 
 #
 # The MIT License
