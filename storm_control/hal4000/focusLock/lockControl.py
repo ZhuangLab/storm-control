@@ -132,7 +132,7 @@ class LockControl(QtCore.QObject):
             self.lock_mode.stopFilm()
 
         self.timing_functionality.newFrame.disconnect(self.handleNewFrame)
-        self.timing_functionality = None:
+        self.timing_functionality = None
 
     def stopLock(self):
         if self.working:

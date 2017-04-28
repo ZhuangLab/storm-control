@@ -458,7 +458,7 @@ class ProgressionsView(halDialog.HalDialog):
             self.setInitialPower(active, power)
 
         self.timing_functionality.newFrame.disconnect(self.handleNewFrame)
-        self.timing_functionality = None:
+        self.timing_functionality = None
     
         if self.use_was_checked:
             self.use_was_checked = False
