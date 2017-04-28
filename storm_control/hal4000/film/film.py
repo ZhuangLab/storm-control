@@ -638,6 +638,7 @@ class Film(halModule.HalModule):
         # Disconnect the timing functionality as it is stopped now.
         self.timing_functionality.newFrame.disconnect(self.handleNewFrame)
         self.timing_functionality.stopped.disconnect(self.stopFilmingLevel1)
+        self.timing_functionality = None
 
         self.film_state = "stop"
         self.stopCameras()

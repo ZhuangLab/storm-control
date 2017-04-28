@@ -421,8 +421,6 @@ class ProgressionsView(halDialog.HalDialog):
                 self.ilm_functionality.remoteSetPower(int(i), power[i])
 
     def setTimingFunctionality(self, timing_functionality):
-        if self.timing_functionality is not None:
-            self.timing_functionality.newFrame.disconnect(self.handleNewFrame)
         self.timing_functionality = timing_functionality
         self.timing_functionality.newFrame.connect(self.handleNewFrame)
 
@@ -458,6 +456,10 @@ class ProgressionsView(halDialog.HalDialog):
         if self.channels is not None:
             [active, power] = self.channels.stopFilm()
             self.setInitialPower(active, power)
+
+        self.timing_functionality.newFrame.disconnect(self.handleNewFrame)
+        self.timing_functionality = None:
+    
         if self.use_was_checked:
             self.use_was_checked = False
             self.ui.progressionsCheckBox.setChecked(True)

@@ -93,8 +93,6 @@ class LockControl(QtCore.QObject):
 
     def setTimingFunctionality(self, functionality):
         if self.working:
-            if self.timing_functionality is not None:
-                self.timing_functionality.newFrame.disconnect(self.handleNewFrame)
             self.timing_functionality = functionality.getCameraFunctionality()
             self.timing_functionality.newFrame.connect(self.handleNewFrame)
 
@@ -132,6 +130,9 @@ class LockControl(QtCore.QObject):
                 self.offset_fp.close()
                 self.offset_fp = None
             self.lock_mode.stopFilm()
+
+        self.timing_functionality.newFrame.disconnect(self.handleNewFrame)
+        self.timing_functionality = None:
 
     def stopLock(self):
         if self.working:
