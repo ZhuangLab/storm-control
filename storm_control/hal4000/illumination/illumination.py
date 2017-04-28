@@ -243,6 +243,8 @@ class IlluminationView(halDialog.HalDialog):
         self.channels_by_name[channel_name].setFunctionality(fn_name, functionality)
 
     def setTimingFunctionality(self, timing_functionality):
+        if self.timing_functionality is not None:
+            self.timing_functionality.newFrame.disconnect(self.handleNewFrame)
         self.timing_functionality = timing_functionality
         self.timing_functionality.newFrame.connect(self.handleNewFrame)
         

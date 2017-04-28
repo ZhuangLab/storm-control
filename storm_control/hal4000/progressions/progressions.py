@@ -46,50 +46,47 @@ class MathChannels(Channels):
     """
     Channels class for mathematical progressions (linear, exponential).
     """
-    def __init__(self, configuration = None, channels = None, x_positions = None, parent = None, **kwds):
+    def __init__(self, configuration = None, channels = None, parent = None, **kwds):
         """
         Called to layout the GUI for math channels. These 
         channels match the channels of the illumination.
         """
         super().__init__(**kwds)
 
-        y = 40
-        dy = 26
+        layout = parent.layout()
         self.channels = []
         self.which_checked = []
-        for channel in channels:
+        for i, channel in enumerate(channels):
             self.powers.append(0.0)
             self.which_checked.append(False)
-            channel_frame = QtWidgets.QFrame(parent)
-            channel_frame.setGeometry(0, y, 340, 24)
 
             # channel number
-            channel_text = QtWidgets.QLabel(channel_frame)
-            channel_text.setGeometry(x_positions[0], 2, 25, 18)
+            channel_text = QtWidgets.QLabel(parent)
             channel_text.setText(channel)
+            layout.addWidget(channel_text, i+1, 0)
 
             # check box
-            channel_active_check_box = QtWidgets.QCheckBox(channel_frame)
-            channel_active_check_box.setGeometry(x_positions[1], 2, 18, 18)
+            channel_active_check_box = QtWidgets.QCheckBox(parent)
+            layout.addWidget(channel_active_check_box, i+1, 1)
 
             # initial value
-            channel_initial_spin_box = QtWidgets.QDoubleSpinBox(channel_frame)
-            channel_initial_spin_box.setGeometry(x_positions[2], 2, 68, 18)
+            channel_initial_spin_box = QtWidgets.QDoubleSpinBox(parent)
+            layout.addWidget(channel_initial_spin_box, i+1, 2)
             channel_initial_spin_box.setDecimals(4)
             channel_initial_spin_box.setMaximum(1.0)
             channel_initial_spin_box.setValue(configuration.get("starting_value"))
             channel_initial_spin_box.setSingleStep(0.0001)
 
             # increment
-            channel_inc_spin_box = QtWidgets.QDoubleSpinBox(channel_frame)
-            channel_inc_spin_box.setGeometry(x_positions[3], 2, 68, 18)
+            channel_inc_spin_box = QtWidgets.QDoubleSpinBox(parent)
+            layout.addWidget(channel_inc_spin_box, i+1, 3)
             channel_inc_spin_box.setDecimals(4)
             channel_inc_spin_box.setValue(configuration.get("increment"))
             channel_inc_spin_box.setSingleStep(0.0001)
 
             # time to increment
-            channel_time_spin_box = QtWidgets.QSpinBox(channel_frame)
-            channel_time_spin_box.setGeometry(x_positions[4], 2, 68, 18)
+            channel_time_spin_box = QtWidgets.QSpinBox(parent)
+            layout.addWidget(channel_time_spin_box, i+1, 4)
             channel_time_spin_box.setMinimum(100)
             channel_time_spin_box.setMaximum(100000)
             channel_time_spin_box.setValue(configuration.get("frames"))
@@ -99,10 +96,6 @@ class MathChannels(Channels):
                                   channel_initial_spin_box,
                                   channel_inc_spin_box,
                                   channel_time_spin_box])
-
-            y += dy
-
-        self.height = y
 
     def remoteSetChannel(self, which_channel, initial, inc, time):
         """
@@ -317,6 +310,7 @@ class ProgressionsView(halDialog.HalDialog):
         self.linear_channels = None
         self.file_channels = None
         self.parameters = params.StormXMLObject()
+        self.timing_functionality = None
         self.use_was_checked = False
         self.which_checked = []
 
@@ -353,19 +347,19 @@ class ProgressionsView(halDialog.HalDialog):
             self.ui.filenameLabel.setText(power_filename[-40:])
             self.file_channels.newFile(power_filename)
             
-    def handleNewFrame(self, frame, filming):
+    def handleNewFrame(self, frame_number):
         """
         This is called when we get new frames from the camera. It
         calls the newFrame method of the active channels object.
         If this returns that power updates are necessary then it
         emits the appropriate progIncPower signals.
         """
-        if filming and self.channels and frame.master:
-            if (frame.number > 0):
-                [active, increment] = self.channels.newFrame(frame.number)
+        if self.channels is not None:
+            if (frame_number > 0):
+                [active, increment] = self.channels.handleNewFrame(frame_number)
                 for i in range(len(active)):
                     if active[i]:
-                        self.incPower.emit(int(i), increment[i])
+                        self.ilm_functionality.remoteIncPower(int(i), increment[i])
 
     def handleProgressionsCheck(self, state):
         """
@@ -392,7 +386,7 @@ class ProgressionsView(halDialog.HalDialog):
     def setDirectory(self, directory):
         self.directory = directory
         
-    def setFunctionality(self, functionality):
+    def setIlmFunctionality(self, functionality):
         """
         Configure the illumination channels using the illumination functionality.
         """
@@ -407,36 +401,16 @@ class ProgressionsView(halDialog.HalDialog):
         # Linear increasing power tab setup.
         self.linear_channels = LinearChannels(channels = channels,
                                               configuration = self.configuration,
-                                              x_positions = [self.ui.channelLabel.pos().x(),
-                                                             self.ui.activeLabel.pos().x(),
-                                                             self.ui.startLabel.pos().x(),
-                                                             self.ui.incrementLabel.pos().x(),
-                                                             self.ui.framesLabel.pos().x()],
                                               parent = self.ui.linearTab)
 
         # Exponential increasing power tab setup.
         self.exp_channels = ExponentialChannels(channels = channels,
                                                 configuration = self.configuration,
-                                                x_positions = [self.ui.channelLabel_2.pos().x(),
-                                                               self.ui.activeLabel_2.pos().x(),
-                                                               self.ui.startLabel_2.pos().x(),
-                                                               self.ui.incrementLabel_2.pos().x(),
-                                                               self.ui.framesLabel_2.pos().x()],
                                                 parent = self.ui.expTab)
 
         # Increment power as specified in a file.
         self.file_channels = FileChannels()
 
-#        # adjust overall size to match number of channels
-#        y = self.linear_channels.height + 65
-#        old_width = self.ui.progressionsBox.width()
-#        self.ui.progressionsBox.setGeometry(10, 0, old_width, y + 2)
-#
-#        self.ui.okButton.setGeometry(old_width - 65, y + 5, 75, 24)
-#        self.ui.progressionsCheckBox.setGeometry(2, y + 7, 151, 18)
-#
-#        self.setFixedSize(self.width(), y + 36)
-        
     def setInitialPower(self, active, power):
         """
         This emits progSetPower signals to set the power. This 
@@ -444,7 +418,17 @@ class ProgressionsView(halDialog.HalDialog):
         """
         for i in range(len(active)):
             if active[i]:
-                self.setPower.emit(int(i), power[i])
+                self.ilm_functionality.remoteSetPower(int(i), power[i])
+
+    def setTimingFunctionality(self, timing_functionality):
+        if self.timing_functionality is not None:
+            self.timing_functionality.newFrame.disconnect(self.handleNewFrame)
+        self.timing_functionality = timing_functionality
+        self.timing_functionality.newFrame.connect(self.handleNewFrame)
+
+    def show(self):
+        super().show()
+        self.setFixedSize(self.width(), self.height())                
 
     def startFilm(self):
         """
@@ -454,9 +438,9 @@ class ProgressionsView(halDialog.HalDialog):
         object. Then it sets the intial powers as specified by the
         active channel.
         """
-        self.channels = False
+        self.channels = None
         if (self.isVisible() and self.parameters.get("use_progressions")):
-            # determine which tab is active.
+            # Determine which tab is active.
             if self.ui.linearTab.isVisible():
                 self.channels = self.linear_channels
             elif self.ui.expTab.isVisible():
@@ -471,7 +455,7 @@ class ProgressionsView(halDialog.HalDialog):
         Called when the film stops. This resets the 
         powers to their initial values.
         """
-        if self.channels:
+        if self.channels is not None:
             [active, power] = self.channels.stopFilm()
             self.setInitialPower(active, power)
         if self.use_was_checked:
@@ -501,14 +485,18 @@ class Progressions(halModule.HalModule):
 
     def handleResponse(self, message, response):
         if message.isType("get functionality"):
-            self.view.setFunctionality(response.getData()["functionality"])
+            self.view.setIlmFunctionality(response.getData()["functionality"])
             self.sendMessage(halMessage.HalMessage(m_type = "add to menu",
                                                    data = {"item name" : "Progressions",
                                                            "item msg" : "show progressions"}))
 
     def processMessage(self, message):
-            
-        if message.isType("configure1"):
+
+        if message.isType("configuration"):
+            if message.sourceIs("timing"):
+                self.view.setTimingFunctionality(message.getData()["properties"]["functionality"])
+                
+        elif message.isType("configure1"):
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : self.ilm_fn_name}))
 
@@ -533,7 +521,11 @@ class Progressions(halModule.HalModule):
             if message.getData()["show_gui"] and self.view.haveFunctionality():
                 self.view.showIfVisible()
 
+        elif message.isType("start film"):
+            self.view.startFilm()
+
         elif message.isType("stop film"):
+            self.view.stopFilm()
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : self.view.getParameters()}))
 
