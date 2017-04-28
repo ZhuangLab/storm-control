@@ -13,6 +13,7 @@ import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
 
 import storm_control.hal4000.halLib.halDialog as halDialog
+import storm_control.hal4000.halLib.halFunctionality as halFunctionality
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
@@ -23,6 +24,24 @@ import storm_control.hal4000.illumination.xmlParser as xmlParser
 # UI.
 import storm_control.hal4000.qtdesigner.illumination_ui as illuminationUi
 
+
+class IlluminationFunctionality(halFunctionality.HalFunctionality):
+
+    def __init__(self,
+                 get_channel_names = None,
+                 remote_inc_power = None,
+                 remote_set_power = None,
+                 **kwds):
+        super().__init__(**kwds)
+        
+        assert(callable(get_channel_names))
+        assert(callable(remote_inc_power))
+        assert(callable(remote_set_power))
+        
+        self.getChannelNames = get_channel_names
+        self.remoteIncPower = remote_inc_power
+        self.remoteSetPower = remote_set_power
+        
 
 #
 # FIXME: The parameters object is shared with all of the channels. It
@@ -284,22 +303,26 @@ class Illumination(halModule.HalModule):
                                 module_params.get("setup_name") + " illumination control")
         self.view.guiMessage.connect(self.handleGuiMessage)
 
+        self.ilm_functionality = IlluminationFunctionality(get_channel_names = self.view.getChannelNames,
+                                                           remote_inc_power = self.view.remoteIncPower,
+                                                           remote_set_power = self.view.remoteSetPower)
+
         # The names of the illumination channels that are available.
         halMessage.addMessage("illumination channels",
                               validator = {"data" : {"names" : [True, list]},
                                            "resp" : None})
 
-        # Increment the power of an illumination channel.
-        halMessage.addMessage("remote inc power",
-                              validator = {"data" : {"channel" : [True, (str, int)],
-                                                     "power" : [True, float]},
-                                           "resp" : None})
+#        # Increment the power of an illumination channel.
+#        halMessage.addMessage("remote inc power",
+#                              validator = {"data" : {"channel" : [True, (str, int)],
+#                                                     "power" : [True, float]},
+#                                           "resp" : None})
 
-        # Set the power of an illumination channel.
-        halMessage.addMessage("remote set power",
-                              validator = {"data" : {"channel" : [True, (str, int)],
-                                                     "power" : [True, float]},
-                                           "resp" : None})        
+#        # Set the power of an illumination channel.
+#        halMessage.addMessage("remote set power",
+#                              validator = {"data" : {"channel" : [True, (str, int)],
+#                                                     "power" : [True, float]},
+#                                           "resp" : None})        
 
         # Shutters sequence.
         halMessage.addMessage("shutters sequence",
@@ -342,6 +365,11 @@ class Illumination(halModule.HalModule):
 
             self.view.getFunctionalities()
 
+        elif message.isType("get functionality"):
+            if (message.getData()["name"] == self.module_name):
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                  data = {"functionality" : self.ilm_functionality})) 
+
         elif message.isType("new parameters"):
             p = message.getData()["parameters"]
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
@@ -354,13 +382,13 @@ class Illumination(halModule.HalModule):
         elif message.isType("new shutters file"):
             self.view.newShutters(message.getData()["filename"])
             
-        elif message.isType("remote inc power"):
-            self.view.remoteIncPower(message.getData()["channel"],
-                                     message.getData()["power"])
+#        elif message.isType("remote inc power"):
+#            self.view.remoteIncPower(message.getData()["channel"],
+#                                     message.getData()["power"])
 
-        elif message.isType("remote set power"):
-            self.view.remoteSetPower(message.getData()["channel"],
-                                     message.getData()["power"])            
+#        elif message.isType("remote set power"):
+#            self.view.remoteSetPower(message.getData()["channel"],
+#                                     message.getData()["power"])
 
         elif message.isType("show illumination"):
             self.view.show()
