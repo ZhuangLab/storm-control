@@ -266,10 +266,8 @@ class CameraControl(QtCore.QThread):
         # This restriction is necessary because in order to display
         # pictures as QImages they need to 32 bit aligned.
         #
-        if parameters.has("x_end"):
-            x_pixels = parameters.get("x_end") - parameters.get("x_start") + 1
-            if((x_pixels % 4) != 0):
-                raise CameraException("The camera ROI must be a multiple of 4 in x!")
+        if (((parameters.get("x_pixels")*parameters.get("y_pixels"))%4) != 0):
+            raise CameraException("The area of the camera ROI must be a multiple of 4!")
 
         # Update parameter ranges based on binning.
         #
@@ -350,6 +348,7 @@ class HWCameraControl(CameraControl):
         self.camera.shutdown()
 
     def run(self):
+        print(">run")
         self.running = True
         self.camera.startAcquisition()
         while(self.running):

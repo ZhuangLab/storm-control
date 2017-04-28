@@ -25,17 +25,17 @@ hcam.setPropertyValue("exposure_time", 0.01)
 hcam.setPropertyValue("binning", "1x1")
 hcam.setPropertyValue("readout_speed", 2)
 
-if True:
+if False:
     cam_x = 2048
     cam_y = 2048
     hcam.setPropertyValue("subarray_hsize", cam_x)
     hcam.setPropertyValue("subarray_vsize", cam_y)
 
-if False:
-    cam_x = 512
+if True:
+    cam_x = 511
     cam_y = 512
-    hcam.setPropertyValue("subarray_hpos", 768)
-    hcam.setPropertyValue("subarray_vpos", 768)
+    hcam.setPropertyValue("subarray_hpos", 0)
+    hcam.setPropertyValue("subarray_vpos", 0)
     hcam.setPropertyValue("subarray_hsize", cam_x)
     hcam.setPropertyValue("subarray_vsize", cam_y)
 

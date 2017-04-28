@@ -9,6 +9,8 @@ I used c_int32 when this is explicitly specified, otherwise I use c_int.
 FIXME: I'm using the "old" functions because these are documented..
        Switch to the "new" functions at some point.
 
+FIXME: How to set the acquisition length?
+
 Hazen 10/13
 """
 
@@ -345,6 +347,38 @@ class HamamatsuCamera(object):
         else:
             return p_attr
 
+    def getPropertyRange(self, property_name):
+        """
+        Return the range for an attribute.
+        """
+        prop_attr = self.getPropertyAttribute(property_name)
+        temp = prop_attr.attribute & DCAMPROP_TYPE_MASK
+        if (temp == DCAMPROP_TYPE_REAL):
+            return [float(prop_attr.valuemin), float(prop_attr.valuemax)]
+        else:
+            return [int(prop_attr.valuemin), int(prop_attr.valuemax)]
+
+    def getPropertyRW(self, property_name):
+        """
+        Return if a property is readable / writeable.
+        """
+        prop_attr = self.getPropertyAttribute(property_name)
+        rw = []
+
+        # Check if the property is readable.
+        if (prop_attr.attribute & DCAMPROP_ATTR_READABLE):
+            rw.append(True)
+        else:
+            rw.append(False)
+
+        # Check if the property is writeable.
+        if (prop_attr.attribute & DCAMPROP_ATTR_WRITABLE):
+            rw.append(True)
+        else:
+            rw.append(False)
+
+        return rw
+
     def getPropertyText(self, property_name):
         """
         #Return the text options of a property (if any).
@@ -387,38 +421,6 @@ class HamamatsuCamera(object):
                     done = True
 
             return text_options
-
-    def getPropertyRange(self, property_name):
-        """
-        Return the range for an attribute.
-        """
-        prop_attr = self.getPropertyAttribute(property_name)
-        temp = prop_attr.attribute & DCAMPROP_TYPE_MASK
-        if (temp == DCAMPROP_TYPE_REAL):
-            return [float(prop_attr.valuemin), float(prop_attr.valuemax)]
-        else:
-            return [int(prop_attr.valuemin), int(prop_attr.valuemax)]
-
-    def getPropertyRW(self, property_name):
-        """
-        Return if a property is readable / writeable.
-        """
-        prop_attr = self.getPropertyAttribute(property_name)
-        rw = []
-
-        # Check if the property is readable.
-        if (prop_attr.attribute & DCAMPROP_ATTR_READABLE):
-            rw.append(True)
-        else:
-            rw.append(False)
-
-        # Check if the property is writeable.
-        if (prop_attr.attribute & DCAMPROP_ATTR_WRITABLE):
-            rw.append(True)
-        else:
-            rw.append(False)
-
-        return rw
 
     def getPropertyValue(self, property_name):
         """
@@ -616,6 +618,13 @@ class HamamatsuCamera(object):
         """
         self.checkStatus(dcam.dcam_close(self.camera_handle),
                          "dcam_close")
+
+    def sortedPropertyTextOptions(self, property_name):
+        """
+        Returns the property text options a list sorted by value.
+        """
+        text_values = self.getPropertyText(property_name)
+        return sorted(text_values, key = text_values.get)
 
 
 class HamamatsuCameraMR(HamamatsuCamera):

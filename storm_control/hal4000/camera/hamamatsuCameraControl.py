@@ -1,189 +1,171 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Camera control specialized for a Hamamatsu camera.
-#
-# Hazen 09/15
-#
+#!/usr/bin/env python
+"""
+Camera control specialized for a Hamamatsu camera.
 
-import os
-import platform
+Hazen 09/15
+"""
 from PyQt5 import QtCore
-import traceback
 
-
-# Debugging
-import storm_control.sc_library.hdebug as hdebug
-
-import storm_control.sc_library.parameters as params
-import storm_control.hal4000.camera.frame as frame
-import storm_control.hal4000.camera.cameraControl as cameraControl
 import storm_control.sc_hardware.hamamatsu.hamamatsu_camera as hcam
+import storm_control.sc_library.parameters as params
 
-## ACameraControl
-#
-# This class is used to control a Hamamatsu (sCMOS) camera.
-#
-class ACameraControl(cameraControl.HWCameraControl):
-
-    ## __init__
-    #
-    # Create a Hamamatsu camera control object and initialize
-    # the camera.
-    #
-    # @param hardware Camera hardware settings.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    @hdebug.debug
-    def __init__(self, hardware, parameters, parent = None):
-        cameraControl.HWCameraControl.__init__(self, hardware, parameters, parent)
-
-        if hardware:
-            self.camera = hcam.HamamatsuCameraMR(hardware.get("camera_id", 0))
-        else:
-            self.camera = hcam.HamamatsuCameraMR(0)
-
-        # Add Hamatsu Flash4 specific camera parameters.
-        cam_params = parameters.get("camera1")
-
-        # FIXME: These should all be obtained by querying the camere.
-        cam_params.add("max_intensity", params.ParameterInt("",
-                                                            "max_intensity",
-                                                            4096,
-                                                            is_mutable = False,
-                                                            is_saved = False))
-
-        cam_params.add("x_start", params.ParameterRangeInt("AOI X start",
-                                                           "x_start",
-                                                           768, 0, 2046))
-        cam_params.add("x_end", params.ParameterRangeInt("AOI X end",
-                                                         "x_end",
-                                                         1279, 1, 2047))
-        cam_params.add("y_start", params.ParameterRangeInt("AOI Y start",
-                                                           "y_start",
-                                                           768, 0, 2046))
-        cam_params.add("y_end", params.ParameterRangeInt("AOI Y end",
-                                                         "y_end",
-                                                         1279, 1, 2047))
-
-        cam_params.add("x_bin", params.ParameterRangeInt("Binning in X",
-                                                         "x_bin",
-                                                         1, 1, 4))
-        cam_params.add("y_bin", params.ParameterRangeInt("Binning in Y",
-                                                         "y_bin",
-                                                         1, 1, 4))
-
-        cam_params.add("exposure_time", params.ParameterRangeFloat("Exposure time (seconds)", 
-                                                                   "exposure_time", 
-                                                                   0.01, 0.0, 60.0))
-
-        cam_params.add("defect_correct_mode", params.ParameterSetInt("Defect correction mode",
-                                                                     "defect_correct_mode",
-                                                                     1, [0, 1]))
-
-        cam_params.add("external_trigger", params.ParameterSetInt("Use external trigger",
-                                                                  "external_trigger",
-                                                                  0, [0, 1]))
+import storm_control.hal4000.camera.cameraControl as cameraControl
+import storm_control.hal4000.camera.cameraFunctionality as cameraFunctionality
 
 
-    ## getAcquisitionTimings
-    #
-    # Returns the internal frame rate of the camera.
-    #
-    # @param which_camera The camera to get the timing information for.
-    #
-    # @return A python array containing the inverse of the internal frame rate.
-    #
-    @hdebug.debug
-    def getAcquisitionTimings(self, which_camera):
+class HamamatsuCameraControl(cameraControl.HWCameraControl):
+    """
+    Interface to a Hamamatsu sCMOS camera.
+    """
+    def __init__(self, config = None, is_master = False, **kwds):
+        kwds["config"] = config
+        super().__init__(**kwds)
 
-        # The camera frame rate seems to be max(exposure time, readout time).
-        # This number may not be good accurate enough for shutter synchronization?
+        # The camera configuration.
+        self.camera_functionality = cameraFunctionality.CameraFunctionality(camera_name = self.camera_name,
+                                                                            is_master = is_master,
+                                                                            parameters = self.parameters)
+
+        # Load the library and start the camera.
+        self.camera = hcam.HamamatsuCameraMR(camera_id = config.get("camera_id"))
+
+        # Dictionary of the Hamamatsu camera properties we'll support.
+        self.hcam_props = {"binning" : True,
+                           "defect_correct_mode" : True,
+                           "exposure_time" : True,
+                           "output_trigger_kind[0]" : True,
+                           "readout_speed" : True,
+                           "subarray_hpos" : True,
+                           "subarray_hsize" : True,
+                           "subarray_vpos" : True,
+                           "subarray_vsize" : True,
+                           "trigger_source" : True}
+
+        max_intensity = 2**self.camera.getPropertyValue("bit_per_channel")[0]
+        self.parameters.setv("max_intensity", max_intensity)
+
+        self.parameters.setv("exposure_time", 0.1)
+
+        x_chip = self.camera.getPropertyValue("image_width")[0]
+        y_chip = self.camera.getPropertyValue("image_height")[0]
+        self.parameters.setv("x_chip", x_chip)
+        self.parameters.setv("y_chip", y_chip)
+
+        text_values = self.camera.sortedPropertyTextOptions("binning")
+        self.parameters.add(params.ParameterSetString(description = "Camera binning.",
+                                                      name = "binning",
+                                                      value = text_values[0],
+                                                      allowed = text_values))
+        
+        text_values = self.camera.sortedPropertyTextOptions("defect_correct_mode")
+        self.parameters.add(params.ParameterSetString(description = "Defect correction mode.",
+                                                      name = "defect_correct_mode",
+                                                      value = text_values[0],
+                                                      allowed = text_values))
+
+        # FIXME: Can't save this as the property name is not valid XML.
+        text_values = self.camera.sortedPropertyTextOptions("output_trigger_kind[0]")
+        self.parameters.add(params.ParameterSetString(description = "Camera 'fire' pin output signal.",
+                                                      name = "output_trigger_kind[0]",
+                                                      value = text_values[1],
+                                                      allowed = text_values,
+                                                      is_saved = False))
+
+        self.parameters.add(params.ParameterRangeInt(description = "Read out speed",
+                                                     name = "readout_speed",
+                                                     value = 2,
+                                                     min_value = 1,
+                                                     max_value = 2))
+
+        # These all need to multiples of 4.
+        self.parameters.add(params.ParameterRangeInt(description = "AOI X start",
+                                                     name = "subarray_hpos",
+                                                     value = 0, 
+                                                     min_value = 0, 
+                                                     max_value = (x_chip - 1)))
+
+        self.parameters.add(params.ParameterRangeInt(description = "AOI Width",
+                                                     name = "subarray_hsize",
+                                                     value = x_chip, 
+                                                     min_value = 4, 
+                                                     max_value = x_chip))
+
+        self.parameters.add(params.ParameterRangeInt(description = "AOI Y start",
+                                                     name = "subarray_vpos",
+                                                     value = 0, 
+                                                     min_value = 0, 
+                                                     max_value = (y_chip - 1)))
+
+        self.parameters.add(params.ParameterRangeInt(description = "AOI Height",
+                                                     name = "subarray_vsize",
+                                                     value = y_chip, 
+                                                     min_value = 4, 
+                                                     max_value = y_chip))
+
+        text_values = self.camera.sortedPropertyTextOptions("trigger_source")
+        self.parameters.add(params.ParameterSetString(description = "Camera trigger source.",
+                                                      name = "trigger_source",
+                                                      value = text_values[0],
+                                                      allowed = text_values))
+
+        ## Disable editing of the HAL versions of these parameters.
+        for param in ["x_bin", "x_end", "x_start", "y_end", "y_start", "y_bin"]:
+            self.parameters.getp(param).setMutable(False)
+
+        self.newParameters(self.parameters, initialization = True)
+
+    def newParameters(self, parameters, initialization = False):
+
+        # Translate AOI information to parameters used by HAL.
+        # HAL is 1 based, hcam is 0 based.
+        binning = int(parameters.get("binning")[0])
+        parameters.set("x_bin", binning)
+        parameters.set("x_end", parameters.get("subarray_hpos") + parameters.get("subarray_hsize"))
+        parameters.set("x_pixels", parameters.get("subarray_hsize"))
+        parameters.set("x_start", parameters.get("subarray_hpos") + 1)
+        
+        parameters.set("y_bin", binning)
+        parameters.set("y_end", parameters.get("subarray_vpos") + parameters.get("subarray_vsize"))
+        parameters.set("y_pixels", parameters.get("subarray_vsize"))
+        parameters.set("y_start", parameters.get("subarray_vpos") + 1)
+
+        # Super class performs some simple checks & update some things.
+        super().newParameters(parameters)
+
+        self.camera_working = True
+
+        # Update the parameter values, only the Hamamatsu specific 
+        # ones and only if they are different.
+        to_change = []
+        for pname in self.hcam_props:
+            if (self.parameters.get(pname) != parameters.get(pname)) or initialization:
+                to_change.append(pname)
+
+        if (len(to_change)>0):
+            running = self.running
+            if running:
+                self.camera_functionality.invalid.emit()
+                self.stopCamera()
+
+            for pname in to_change:
+                print(pname, parameters.get(pname))
+                self.camera.setPropertyValue(pname, parameters.get(pname))
+                self.parameters.setv(pname, parameters.get(pname))
+
+            if running:
+                self.startCamera()
+
         exposure_time = self.camera.getPropertyValue("exposure_time")[0]
         readout_time = self.camera.getPropertyValue("timing_readout_time")[0]
         if (exposure_time < readout_time):
-            frame_rate = 1.0/readout_time
-
-            # Print a warning since the user probably does not want this to be true.
-            hdebug.logText("Camera exposure time (" + str(exposure_time) + ") is less than the readout time (" + str(readout_time), True)
-
+            fps = 1.0/readout_time
+            print(">> Warning! exposure time is shorter than readout time.")
         else:
-            frame_rate = 1.0/exposure_time
+            fps = 1.0/exposure_time
 
-        temp = 1.0/frame_rate
-        return [temp, temp]
+        self.parameters.setv("exposure_time", exposure_time)
+        self.parameters.setv("fps", fps)
 
-    ## newParameters
-    #
-    # Update the camera parameters based on a new parameters object.
-    #
-    # @param parameters A parameters object.
-    #
-    @hdebug.debug
-    def newParameters(self, parameters):
-        p = parameters.get("camera1")
-
-        size_x = (p.get("x_end") - p.get("x_start") + 1)/p.get("x_bin")
-        size_y = (p.get("y_end") - p.get("y_start") + 1)/p.get("y_bin")
-        p.set("x_pixels", size_x)
-        p.set("y_pixels", size_y)
-
-        try:
-            # Set ROI location and size.
-            self.camera.setPropertyValue("subarray_hpos", p.get("x_start"))
-            self.camera.setPropertyValue("subarray_hsize", p.get("x_pixels"))
-            self.camera.setPropertyValue("subarray_vpos", p.get("y_start"))
-            self.camera.setPropertyValue("subarray_vsize", p.get("y_pixels"))
-
-            # Set binning.
-            if (p.get("x_bin") != p.get("y_bin")):
-                raise AssertionError("unequal binning is not supported.")
-            if (p.get("x_bin") == 1):
-                self.camera.setPropertyValue("binning", "1x1")
-            elif (p.get("x_bin") == 2):
-                self.camera.setPropertyValue("binning", "2x2")
-            elif (p.get("x_bin") == 4):
-                self.camera.setPropertyValue("binning", "4x4")
-            else:
-                raise AssertionError("unsupported bin size", p.get("x_bin"))
-
-            # Set the rest of the hamamatsu properties.
-            #
-            # Note: These could overwrite the above. For example, if you
-            #   have both "x_start" and "subarray_hpos" in the parameters
-            #   file then "subarray_hpos" will overwrite "x_start". Trouble
-            #   may follow if they are not set to the same value.
-            #
-            for key in p.getAttrs():
-                if (key == "binning"): # sigh..
-                    continue
-                if self.camera.isCameraProperty(key):
-                    self.camera.setPropertyValue(key, p.get(key))
-
-            # Set camera sub-array mode so that it will return the correct frame rate.
-            self.camera.setSubArrayMode()
-
-            p.set("bytes_per_frame", 2 * p.get("x_pixels") * p.get("y_pixels") / (p.get("x_bin") * p.get("y_bin")))
-
-            self.got_camera = True
-
-        except hcam.DCAMException:
-            hdebug.logText("QCameraThread: Bad camera settings")
-            print traceback.format_exc()
-            self.got_camera = False
-
-        self.parameters = p
-
-    ## quit
-    #
-    # Stops the camera thread and shutsdown the camera.
-    #
-    @hdebug.debug
-    def quit(self):
-        self.stopThread()
-        self.wait()
-        self.camera.shutdown()
 
 #
 # The MIT License
