@@ -224,7 +224,7 @@ class IlluminationView(halDialog.HalDialog):
             # Channels determine whether or not they are used for filming based on the waveform.
             channel.setUsedForFilm(waveforms[i])
             
-            # Channels create waveform objects (or not) based on the waveform.
+            # Channels create DaqWaveform objects (or not) based on the waveform.
             self.waveforms.extend(channel.getDaqWaveforms(waveforms[i], oversampling))
 
     def remoteIncPower(self, channel, power_inc):
