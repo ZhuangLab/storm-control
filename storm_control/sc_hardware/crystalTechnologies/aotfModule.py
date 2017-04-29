@@ -4,6 +4,7 @@ HAL interface to Crystal Technologies AOTFs.
 
 Hazen 04/17
 """
+from PyQt5 import QtCore
 
 import storm_control.hal4000.halLib.halMessage as halMessage
 
@@ -39,6 +40,7 @@ class AOTFModule(amplitudeModule.AmplitudeModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
         self.aotf_fns = {}
+        self.aotf_mutex = QtCore.QMutex()
 
         if self.aotf is not None:
             configuration = module_params.get("configuration")
@@ -72,6 +74,7 @@ class AOTFModule(amplitudeModule.AmplitudeModule):
 
                     self.aotf_fns[aotf_fn_name] = AOTFFunctionality(aotf = self.aotf,
                                                                     channel = channel,
+                                                                    device_mutex = self.aotf_mutex,
                                                                     frequencies = frequencies,
                                                                     maximum = fn_params.get("maximum"))
 
