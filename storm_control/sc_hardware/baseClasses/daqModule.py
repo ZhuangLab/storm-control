@@ -112,8 +112,6 @@ class DaqModule(hardwareModule.HardwareModule):
         for waveform in waveforms:
             assert isinstance(waveform, DaqWaveform)
 
-            print(waveform.getSource())
-
             # Check that all the waveforms are the same
             # length with the same oversampling.
             if (self.oversampling == 0):

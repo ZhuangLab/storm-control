@@ -25,8 +25,10 @@ class Channel(QtCore.QObject):
         super().__init__(**kwds)
 
         self.amplitude_range = 1.0
+        self.bad_module = True
         self.channel_id = channel_id
         self.channel_ui = False
+        self.functionalities_in_use = False
         self.display_normalized = False
         self.filming = False
         self.filming_disabled = False
@@ -38,7 +40,6 @@ class Channel(QtCore.QObject):
         self.parameters = False
         self.used_for_film = False
         self.was_on = False
-        self.bad_module = True
 
         #
         # Create variables for communication with the various hardware functionalities.
@@ -118,7 +119,7 @@ class Channel(QtCore.QObject):
 
         # Convert waveform to digital.
         if self.digital_modulation is not None:
-            temp = numpy.round(numpy.copy(waveform)).astype(numpy.uint8)
+            temp = numpy.round(waveform).astype(numpy.uint8)
             temp[(temp != 0)] = 1
             temp = numpy.ascontiguousarray(temp, dtype = numpy.uint8)
             daq_waveforms.append(daqModule.DaqWaveform(is_analog = False,
@@ -139,6 +140,15 @@ class Channel(QtCore.QObject):
     def getName(self):
         return self.name
 
+    def handleFilming(self, am_filming):
+        """
+        This signal will come from the daq when it has taken over / released
+        a functionality at the start/end of filming.
+        """
+        self.functionalities_in_use = am_filming
+        if not am_filming:
+            self.stopFilm()
+        
     def handleOnOffChange(self, on):
         """
         Handles a request to turn the channel on / off. These all
@@ -147,10 +157,9 @@ class Channel(QtCore.QObject):
         As a side effect this records the on/off setting in the
         'on_off_state' property of the parameters.
         """
-        print(">", self.channel_id)
         if self.filming:
-            return
-        
+            raise Exception("Logic flaw detected.")
+
         if on:
             if self.amplitude_modulation is not None:
                 self.amplitude_modulation.onOff(self.channel_ui.getAmplitude(), True)
@@ -268,6 +277,19 @@ class Channel(QtCore.QObject):
             self.channel_ui.enableChannel()
             self.channel_ui.onOffChange.connect(self.handleOnOffChange)
             self.channel_ui.powerChange.connect(self.handleSetPower)
+
+            # This deals with daq taking over the functionalities when filming. We
+            # need to know when it is done and we can safely reset things after
+            # the film has stopped.
+            #
+            # Both digital and analog modulation functionalities will emit a 'filming'
+            # signal when filming starts/stops. Connect to the digital_modulation
+            # functionality first the signal from this functionality is gauranteed
+            # to come after the signal from the analog_modulation.
+            if self.digital_modulation is not None:
+                self.digital_modulation.filming.connect(self.handleFilming)
+            elif self.analog_modulation is not None:
+                self.analog_modulation.filming.connect(self.handleFilming)
         
     def setUsedForFilm(self, waveform):
         """
@@ -344,18 +366,32 @@ class Channel(QtCore.QObject):
         """
         Called at the end of filming to reset things.
         """
-        self.filming = False
-        
-        if self.filming_disabled:
-            self.channel_ui.enableChannel(self.was_on)
-            self.filming_disabled = False
-        else:
-            self.channel_ui.stopFilm()
+        #
+        # There are two ways to arrive here: (1) During illumination.illumination
+        # processing of the stopFilm() message. (2) A functionality that this
+        # channel uses is released by the daq and emits a 'filming' message.
+        # 
+        # If the daq is still using the functionalities we need, just return
+        # and wait for the 'filming' signal from the daq. When we get it we
+        # will again call this method.
+        #
+        if self.functionalities_in_use:
+            return
 
-            # This should restore the pre-film state (open/closed).
-            self.channel_ui.onOffChange.connect(self.handleOnOffChange)
+        # Otherwise we can reset everything.
+        if self.filming:
+            self.filming = False
+        
+            if self.filming_disabled:
+                self.channel_ui.enableChannel(self.was_on)
+                self.filming_disabled = False
+            else:
+                self.channel_ui.stopFilm()
+
+                # This should restore the pre-film state (open/closed).
+                self.channel_ui.onOffChange.connect(self.handleOnOffChange)
             
-        self.channel_ui.setOnOff(self.was_on)
+            self.channel_ui.setOnOff(self.was_on)
 
 #
 # The MIT License

@@ -17,15 +17,11 @@ class NoneDaqModuleException(halExceptions.HardwareException):
 
 
 class AOTaskFunctionality(daqModule.DaqFunctionality):
-
-    def output(self, voltage):
-        pass
+    pass
 
     
 class DOTaskFunctionality(daqModule.DaqFunctionality):
-
-    def output(self, state):
-        pass
+    pass
 
     
 class NoneDaqModule(daqModule.DaqModule):
@@ -69,6 +65,10 @@ class NoneDaqModule(daqModule.DaqModule):
                 self.daq_fns_by_source[waveform.getSource()].setFilming(True)
             for waveform in self.digital_waveforms:
                 self.daq_fns_by_source[waveform.getSource()].setFilming(True)
+
+            # Notify film.film that we are ready.
+            self.newMessage.emit(halMessage.HalMessage(source = self,
+                                                       m_type = "ready to film"))
 
     def stopFilm(self, message):
         if self.run_shutters:
