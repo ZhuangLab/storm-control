@@ -201,71 +201,59 @@
 	<ilm750>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line4</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm750>
 
 	<ilm647>
 	  <ao_task>
 	    <source type="string">/Dev1/ao3</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </ao_task>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line12</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm647>
 	<ilm647sh>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line3</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm647sh>
 
 	<ilm560>
 	  <ao_task>
 	    <source type="string">/Dev1/ao2</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </ao_task>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line11</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm560>
 	<ilm560sh>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line2</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm560sh>
 
 	<ilm488>
 	  <ao_task>
 	    <source type="string">/Dev1/ao1</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </ao_task>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line10</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm488>
 	<ilm488sh>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line1</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm488sh>
 
 	<ilm405>
 	  <ao_task>
 	    <source type="string">/Dev1/ao0</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </ao_task>
 	</ilm405>
 	<ilm405sh>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line0</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm405sh>	
 

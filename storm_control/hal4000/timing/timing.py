@@ -142,6 +142,7 @@ class Timing(halModule.HalModule):
 
         elif message.isType("stop film"):
             self.timing_functionality.disconnectCameraFunctionality()
+            self.timing_functionality = None
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : self.parameters.copy()}))
 

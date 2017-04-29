@@ -22,13 +22,19 @@ class NidaqFunctionality(daqModule.DaqFunctionality):
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
+        self.am_filming = False
         self.task = None
         
-    def setInvalid(self):
-        super().setInvalid()
-        if self.task is not None:
+    def setFilming(self, start):
+        """
+        start is True/False if filming is starting/stopping.
+        """
+        super().setFilming(start)
+        if start:
             self.task.stopTask()
             self.task = None
+        else:
+            self.createTask()
 
 
 class AOTaskFunctionality(NidaqFunctionality):
@@ -41,6 +47,7 @@ class AOTaskFunctionality(NidaqFunctionality):
         self.task.startTask()
         
     def output(self, voltage):
+        super().output(voltage)
         if self.task is None:
             self.createTask()
         try:
@@ -61,6 +68,7 @@ class DOTaskFunctionality(NidaqFunctionality):
         self.task.startTask()
         
     def output(self, state):
+        super().output(state)
         if self.task is None:
             self.createTask()
         try:
@@ -75,7 +83,6 @@ class NidaqModule(daqModule.DaqModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
-        self.run_shutters = False
 
         # These are the tasks that are used for waveform output.
         self.ao_task = None
@@ -88,6 +95,7 @@ class NidaqModule(daqModule.DaqModule):
 
         # Create functionalities we will provide, these are all Daq tasks.        
         self.daq_fns = {}
+        self.daq_fns_by_source = {}
         for fn_name in configuration.getAttrs():
             
             # Don't provide a timing configuration, at least for now.
@@ -100,11 +108,13 @@ class NidaqModule(daqModule.DaqModule):
             
                 daq_fn_name = ".".join([self.module_name, fn_name, task_name])
                 if (task_name == "ao_task"):
-                    self.daq_fns[daq_fn_name] = AOTaskFunctionality(source = task_params.get("source"),
-                                                                    used_during_filming = task_params.get("used_during_filming"))
+                    ao_task = AOTaskFunctionality(source = task_params.get("source"))
+                    self.daq_fns[daq_fn_name] = ao_task
+                    self.daq_fns_by_source[ao_task.getSource()] = ao_task
                 elif (task_name == "do_task"):
-                    self.daq_fns[daq_fn_name] = DOTaskFunctionality(source = task_params.get("source"),
-                                                                    used_during_filming = task_params.get("used_during_filming"))
+                    do_task = DOTaskFunctionality(source = task_params.get("source"))
+                    self.daq_fns[daq_fn_name] = do_task
+                    self.daq_fns_by_source[do_task.getSource()] = do_task
                 else:
                     raise NidaqModuleException("Unknown task type", task_name)
 
@@ -114,13 +124,6 @@ class NidaqModule(daqModule.DaqModule):
         includes the frames per second information that we need.
         """
         if self.run_shutters:
-
-            # Invalidate all the tasks that we'll need for waveform output. This
-            # is maybe not so important as these tasks are able to reset themselves
-            # anyway in the event that there is an error.
-            for daq_fn in self.daq_fns:
-                if self.daq_fns[daq_fn].getUsedDuringFilming():
-                    self.daq_fns[daq_fn].setInvalid()
 
             # Get frames per second from the timing functionality. This is
             # a property of the camera that drives the timing functionality.
@@ -162,6 +165,11 @@ class NidaqModule(daqModule.DaqModule):
         """
         self.ao_task = None
         if (len(self.analog_waveforms) > 0):
+            
+            # Mark all the functionalities whose resources we'll need during
+            # filming, and have them emit the 'filming' signal.
+            for waveform in self.analog_waveforms:
+                self.daq_fns_by_source[waveform.getSource()].setFilming(True)
 
             # Sort by source.
             analog_data = sorted(self.analog_waveforms, key = lambda x: x.getSource())
@@ -235,6 +243,11 @@ class NidaqModule(daqModule.DaqModule):
     def setupDigital(self, frequency, wv_clock):
         self.do_task = None
         if (len(self.digital_waveforms) > 0):
+
+            # Mark all the functionalities whose resources we'll need during
+            # filming, and have them emit the 'filming' signal.
+            for waveform in self.digital_waveforms:
+                self.daq_fns_by_source[waveform.getSource()].setFilming(True)
                 
             # Sort by board, channel.
             digital_data = sorted(self.digital_waveforms, key = lambda x: x.getSource())
@@ -275,25 +288,29 @@ class NidaqModule(daqModule.DaqModule):
                 hdebug.logText("startDoTask critical failure")
                 raise NidaqModuleException("NIException: startDoTask critical failure")        
 
-    def startFilm(self, message):
-        self.run_shutters = message.getData()["film settings"].runShutters()
-        if self.run_shutters:
-            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"wait for" : self.module_name}))
-
     def stopFilm(self, message):
         """
         Handle the 'stop film' message.
         """
-        super().stopFilm(message)
-        for task in [self.ct_task, self.ao_task, self.do_task]:
-            if task is not None:
-                try:
-                    task.stopTask()
-                except nicontrol.NIException as e:
-                    hdebug.logText("stop / clear failed for task " + str(task) + " with " + str(e))
+        if self.run_shutters:
+            for task in [self.ct_task, self.ao_task, self.do_task]:
+                if task is not None:
+                    try:
+                        task.stopTask()
+                    except nicontrol.NIException as e:
+                        hdebug.logText("stop / clear failed for task " + str(task) + " with " + str(e))
 
-        # Need to explicitly clear these so that PyDAQmx will release the resources.
-        self.ao_task = None
-        self.ct_task = None
-        self.do_task = None
+            # Need to explicitly clear these so that PyDAQmx will release the resources.
+            self.ao_task = None
+            self.ct_task = None
+            self.do_task = None
+
+            # Restore functionalities & notify modules that were using them.
+            for waveform in self.analog_waveforms:
+                self.daq_fns_by_source[waveform.getSource()].setFilming(False)
+
+            for waveform in self.digital_waveforms:
+                self.daq_fns_by_source[waveform.getSource()].setFilming(False)
+
+        # This free the waveform arrays & reset the oversampling attribute.
+        super().stopFilm(message)

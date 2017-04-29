@@ -6,10 +6,16 @@ Hazen 04/17
 """
 
 import numpy
+from PyQt5 import QtCore
 
 import storm_control.hal4000.halLib.halMessage as halMessage
 
 import storm_control.sc_hardware.baseClasses.hardwareModule as hardwareModule
+import storm_control.sc_library.halExceptions as halExceptions
+
+
+class DaqModuleException(halExceptions.HardwareException):
+    pass
 
 
 class DaqWaveform(object):
@@ -45,22 +51,43 @@ class DaqWaveform(object):
     
 class DaqFunctionality(hardwareModule.HardwareFunctionality):
 
-    def __init__(self, source = None, used_during_filming = True, **kwds):
+    #
+    # If the daq needs this functionality during a film it will send this
+    # signal at the start of the film with 'True' and at the end of the
+    # film with 'False'.
+    #
+    # Note that by the time this signal is received this functionality
+    # may already be in use by the daq, so at least at the start of filming
+    # any modules that use this functionality need to act *before* they
+    # get the signal.
+    #
+    filming = QtCore.pyqtSignal(bool)
+    
+    def __init__(self, source = None, **kwds):
         super().__init__(**kwds)
+        self.am_filming = False
         self.source = source
-        self.used_during_filming = used_during_filming
 
     def getSource(self):
         return self.source
 
-    def getUsedDuringFilming(self):
-        return self.used_during_filming    
+    def output(self, value):
+        if self.am_filming:
+            raise DaqModuleException("Attempt to use '" + self.getSource() + "' when it is in use for filming.")
+
+    def setFilming(self, start):
+        """
+        start is True/False if filming is starting/stopping.
+        """
+        self.am_filming = start
+        self.filming.emit(start)
 
 
 class DaqModule(hardwareModule.HardwareModule):
     
     def __init__(self, **kwds):
         super().__init__(**kwds)
+        self.run_shutters = False
 
         # These are the waveforms to output during a film.
         self.analog_waveforms = []
@@ -128,7 +155,10 @@ class DaqModule(hardwareModule.HardwareModule):
             self.stopFilm(message)
 
     def startFilm(self, message):
-        pass
+        self.run_shutters = message.getData()["film settings"].runShutters()
+        if self.run_shutters:
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"wait for" : self.module_name}))
 
     def stopFilm(self, message):
         self.oversampling = 0

@@ -292,18 +292,44 @@ class Channel(QtCore.QObject):
 
                 #
                 # Check the radio box without actually turning anything on/off
-                # that is not already on/off. Analog and digital modulation are
-                # taken over by the daq so we don't need to do anything with
-                # them. All we need to do is set the power and open the shutter?
+                # that is not already on/off. Then turn off analog and digital
+                # modulation. These will be taken over by the daq module once
+                # it gets the timing information from the timing module.
                 #
                 self.channel_ui.onOffChange.disconnect(self.handleOnOffChange)
                 self.channel_ui.setOnOff(True)
-                
-                if self.amplitude_modulation is not None:
-                    self.amplitude_modulation.output(self.channel_ui.getAmplitude())
 
-                if self.mechanical_shutter is not None:                    
-                    self.mechanical_shutter.output(True)
+                #
+                # 'Close' analog and digital modulation.
+                #
+                # This prevents a burst of light before the start of the film
+                # if the channel is already on with non-zero amplitude, but
+                # the shutter sequence would turn it off.
+                #
+                # Also, there is a possible race condition here as the daq
+                # will take over these lines in order to run the shutter
+                # sequence. As the daq is not a buffered functionality I
+                # don't think there is an actual race condition, but it is
+                # something to be aware of if the daq changes.
+                #
+                if self.analog_modulation is not None:
+                    self.analog_modulation.output(self.min_voltage)
+
+                if self.digital_modulation is not None:
+                    self.digital_modulation.output(False)
+                
+                # 'Open' amplitude control.
+                cur_power = self.channel_ui.getAmplitude()
+                if self.amplitude_modulation is not None:
+                    self.amplitude_modulation.onOff(cur_power, True)
+                    self.amplitude_modulation.output(cur_power)
+
+                # Open shutter.
+                if self.mechanical_shutter is not None:
+                    if (cur_power == self.min_amplitude):
+                        self.mechanical_shutter.output(False)
+                    else:
+                        self.mechanical_shutter.output(True)
 
                 self.channel_ui.startFilm()
             else:

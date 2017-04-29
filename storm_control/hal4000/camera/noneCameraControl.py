@@ -113,7 +113,6 @@ class NoneCameraControl(cameraControl.CameraControl):
         if (len(changed_p_names) > 0):
             running = self.running
             if running:
-                self.camera_functionality.invalid.emit()
                 self.stopCamera()
         
             p = self.parameters
@@ -137,6 +136,8 @@ class NoneCameraControl(cameraControl.CameraControl):
 
             if running:
                 self.startCamera()
+
+            self.camera_functionality.parametersChanged.emit()
         
     def run(self):
         self.running = True

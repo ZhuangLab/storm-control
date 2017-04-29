@@ -193,59 +193,50 @@
 	<ilm750>
 	  <do_task>
 	    <source type="string">/do/line0</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm750>
 
 	<ilm647>
 	  <ao_task>
 	    <source type="string">/ao/line0</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </ao_task>
 
 	  <do_task>
 	    <source type="string">/do/line1</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>	  
 	</ilm647>
 
 	<ilm647m>
 	  <do_task>
 	    <source type="string">/do/line2</source>
-	    <used_during_filming type="boolean">False</used_during_filming>
 	  </do_task>
 	</ilm647m>
 
 	<ilm561>
 	  <ao_task>
 	    <source type="string">/ao/line1</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </ao_task>
 
 	  <do_task>
 	    <source type="string">/do/line3</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm561>
 
 	<ilm532>
 	  <do_task>
 	    <source type="string">/do/line4</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm532>
 
 	<ilm488>
 	  <ao_task>
 	    <source type="string">/ao/line2</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </ao_task>
 	</ilm488>
 
 	<ilm405>
 	  <do_task>
 	    <source type="string">/do/line5</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm405>	
       </configuration>

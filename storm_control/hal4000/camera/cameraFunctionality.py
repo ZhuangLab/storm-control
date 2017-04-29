@@ -19,14 +19,15 @@ class CameraFunctionality(halFunctionality.HalFunctionality):
     Camera functionality in a form that other modules can interact with. 
 
     There is one of these per camera and it will exist for the lifetime of 
-    HAL. When the camera starts to change it's parameters an invalid signal
-    is emitted.
+    HAL. When the camera changes it's parameters a parametersChanged
+    signal is emitted.
 
     During a parameter change feed.feed and display.display disconnect
     from camera functionalities and then request new ones.
     """
     emccdGain = QtCore.pyqtSignal(int)
     newFrame = QtCore.pyqtSignal(object)
+    parametersChanged = QtCore.pyqtSignal()
     shutter = QtCore.pyqtSignal(bool)
     started = QtCore.pyqtSignal()
     stopped = QtCore.pyqtSignal()

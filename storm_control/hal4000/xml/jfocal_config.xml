@@ -182,35 +182,30 @@
 	<ilm754>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line0</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm754>
 
 	<ilm656>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line1</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm656>
 
 	<ilm561>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line2</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm561>
 
 	<ilm488>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line3</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm488>
 
 	<ilm405>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line4</source>
-	    <used_during_filming type="boolean">True</used_during_filming>
 	  </do_task>
 	</ilm405>	
       </configuration>

@@ -84,7 +84,6 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
         assert(self.number_connections == 0)
         self.number_connections += 1
         
-        self.cam_fn.invalid.connect(self.handleInvalid)
         self.cam_fn.newFrame.connect(self.handleNewFrame)
         self.cam_fn.started.connect(self.handleStarted)
         self.cam_fn.stopped.connect(self.handleStopped)
@@ -98,7 +97,6 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
         self.number_connections += 1
         
         if self.cam_fn is not None:
-            self.cam_fn.invalid.disconnect(self.handleInvalid)
             self.cam_fn.newFrame.disconnect(self.handleNewFrame)
             self.cam_fn.started.disconnect(self.handleStarted)
             self.cam_fn.stopped.disconnect(self.handleStopped)
@@ -114,18 +112,6 @@ class FeedFunctionality(cameraFunctionality.CameraFunctionality):
         Return the name of the feed (as specified in the XML file).
         """
         return self.feed_name
-
-    def handleInvalid(self):
-        """
-        This is called when the camera emit's an invalid signal. This
-        happens when the parameters are changed.
-
-        Unlike for the camera, feed functionalities really are invalid
-        at this point. The feed controller will disconnect them from
-        their camera functionality and throw them away when the parameters
-        change.
-        """
-        self.setInvalid()
 
     def handleNewFrame(self, new_frame):
         sliced_data = self.sliceFrame(new_frame)
@@ -413,6 +399,13 @@ class FeedController(object):
                 return False
         return True
 
+    def disconnectFeeds(self):
+        """
+        Disconnect the feeds from their camera functionalities.
+        """
+        for feed in self.getFeeds():
+            feed.disconnectCameraFunctionality()
+
     def getFeed(self, feed_name):
         return self.feeds[feed_name]
         
@@ -425,15 +418,6 @@ class FeedController(object):
     def getParameters(self):
         return self.parameters
 
-    def invalidateFeeds(self):
-        """
-        Disconnect the feeds from their camera functionalities and notify
-        any users that they are invalid.
-        """
-        for feed in self.getFeeds():
-            feed.disconnectCameraFunctionality()
-            feed.setInvalid()
-            
     def resetFeeds(self):
         for feed in self.getFeeds():
             feed.reset()
@@ -510,7 +494,7 @@ class Feeds(halModule.HalModule):
             params = message.getData()["parameters"]
             checkParameters(params)
             if self.feed_controller is not None:
-                self.feed_controller.invalidateFeeds()
+                self.feed_controller.disconnectFeeds()
                 self.feed_controller = None
             if params.has("feeds"):
                 self.feed_controller = FeedController(parameters = params.get("feeds"))

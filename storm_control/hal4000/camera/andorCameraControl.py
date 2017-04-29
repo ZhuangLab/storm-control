@@ -203,7 +203,6 @@ class AndorCameraControl(cameraControl.HWCameraControl):
         if (len(to_change) > 0):
             running = self.running
             if running:
-                self.camera_functionality.invalid.emit()
                 self.stopCamera()
 
             self.camera.setACQMode("run_till_abort")
@@ -334,6 +333,8 @@ class AndorCameraControl(cameraControl.HWCameraControl):
 
             if running:
                 self.startCamera()
+
+            self.camera_functionality.parametersChanged.emit()
 
     def openShutter(self):
         super().openShutter()

@@ -144,27 +144,27 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
         if (len(to_change)>0):
             running = self.running
             if running:
-                self.camera_functionality.invalid.emit()
                 self.stopCamera()
 
             for pname in to_change:
                 self.camera.setPropertyValue(pname, parameters.get(pname))
                 self.parameters.setv(pname, parameters.get(pname))
 
+            exposure_time = self.camera.getPropertyValue("exposure_time")[0]
+            readout_time = self.camera.getPropertyValue("timing_readout_time")[0]
+            if (exposure_time < readout_time):
+                fps = 1.0/readout_time
+                print(">> Warning! exposure time is shorter than readout time.")
+            else:
+                fps = 1.0/exposure_time
+
+            self.parameters.setv("exposure_time", exposure_time)
+            self.parameters.setv("fps", fps)
+
             if running:
                 self.startCamera()
-
-        exposure_time = self.camera.getPropertyValue("exposure_time")[0]
-        readout_time = self.camera.getPropertyValue("timing_readout_time")[0]
-        if (exposure_time < readout_time):
-            fps = 1.0/readout_time
-            print(">> Warning! exposure time is shorter than readout time.")
-        else:
-            fps = 1.0/exposure_time
-
-        self.parameters.setv("exposure_time", exposure_time)
-        self.parameters.setv("fps", fps)
-
+                
+            self.camera_functionality.parametersChanged.emit()
 
 #
 # The MIT License

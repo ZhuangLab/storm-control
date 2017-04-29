@@ -185,7 +185,6 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
         if (len(to_change)>0):
             running = self.running
             if running:
-                self.camera_functionality.invalid.emit()
                 self.stopCamera()
 
             for pname in to_change:
@@ -195,22 +194,24 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
             if running:
                 self.startCamera()
 
-        # Get the target temperature for the camera. On some 
-        # cameras this cannot be set.
-        #
-        # FIXME: What is this? Also we are don't seem to be setting the temperature?
-        #
-        #p.set("temperature", self.camera.getProperty("TemperatureControl", "enum"))
+            # Get the target temperature for the camera. On some 
+            # cameras this cannot be set.
+            #
+            # FIXME: What is this? Also we are don't seem to be setting the temperature?
+            #
+            #p.set("temperature", self.camera.getProperty("TemperatureControl", "enum"))
 
-        # Update frame size & timing information.
-        self.parameters.setv("bytes_per_frame",
-                             2 * self.parameters.get("AOIHeight") * self.parameters.get("AOIWidth"))
+            # Update frame size & timing information.
+            self.parameters.setv("bytes_per_frame",
+                                 2 * self.parameters.get("AOIHeight") * self.parameters.get("AOIWidth"))
         
-        self.parameters.setv("exposure_time",
-                             self.camera.getProperty("ExposureTime", self.andor_props["ExposureTime"]))
+            self.parameters.setv("exposure_time",
+                                 self.camera.getProperty("ExposureTime", self.andor_props["ExposureTime"]))
         
-        self.parameters.setv("fps",
-                             self.camera.getProperty("FrameRate", self.andor_props["FrameRate"]))
+            self.parameters.setv("fps",
+                                 self.camera.getProperty("FrameRate", self.andor_props["FrameRate"]))
+
+            self.camera_functionality.parametersChanged.emit()
 
     def startFilm(self, film_settings, is_time_base):
         print(">sfl", self.camera_name, self.camera_working, film_length)
