@@ -373,7 +373,7 @@ class Channel(QtCore.QObject):
         # 
         # If the daq is still using the functionalities we need, just return
         # and wait for the 'filming' signal from the daq. When we get it we
-        # will again call this method.
+        # will call this method again.
         #
         if self.functionalities_in_use:
             return
