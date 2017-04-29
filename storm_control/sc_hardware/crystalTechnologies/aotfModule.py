@@ -64,7 +64,7 @@ class AOTFModule(amplitudeModule.AmplitudeModule):
                                    fn_params.get("off_frequency"),
                                    fn_params.get("off_frequency")]
 
-                    # FIXME: This won't work unless fsk_mode is 0 or 1.
+                    # FIXME: This won't work unless fsk_mode is 1.
                     if use_fsk:
                         frequencies[1] = fn_params.get("on_frequency")
                         self.aotf.fskOn(channel, fsk_mode)
