@@ -278,14 +278,16 @@ class Channel(QtCore.QObject):
             self.channel_ui.onOffChange.connect(self.handleOnOffChange)
             self.channel_ui.powerChange.connect(self.handleSetPower)
 
+            #
             # This deals with daq taking over the functionalities when filming. We
             # need to know when it is done and we can safely reset things after
             # the film has stopped.
             #
             # Both digital and analog modulation functionalities will emit a 'filming'
             # signal when filming starts/stops. Connect to the digital_modulation
-            # functionality first the signal from this functionality is gauranteed
+            # functionality first as the signal from this functionality is gauranteed
             # to come after the signal from the analog_modulation.
+            #
             if self.digital_modulation is not None:
                 self.digital_modulation.filming.connect(self.handleFilming)
             elif self.analog_modulation is not None:
