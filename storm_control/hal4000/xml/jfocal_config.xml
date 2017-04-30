@@ -179,6 +179,13 @@
 	     Other modules will request them with a 'get functionality'
 	     message and "name" = "daq.xxx.yyy". -->
 
+	<galvo>
+	  <wv_task>
+	    <clock>/Dev2/ctr0out</clock>
+	    <lines>/Dev2/ao0,/Dev/ao1</lines>
+	  </wv_task>
+	</galvo>
+	
 	<ilm754>
 	  <do_task>
 	    <source type="string">/Dev1/port0/line0</source>
