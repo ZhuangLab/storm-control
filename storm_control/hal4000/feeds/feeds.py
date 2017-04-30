@@ -35,8 +35,14 @@ def checkParameters(parameters):
     if not parameters.has("feeds"):
         return
 
-    # Check the feed parameters. For now all we are doing is
-    # verifying that the feed x size is a multiple of 4.
+    # Check the feed parameters. For now all we are doing is verifying that
+    # the feed ROI area is a multiple of 4.
+    #
+    # FIXME: There are many possible problems here. Some cameras don't use
+    #        'x_pixels' and 'y_pixels' so these only get set to meaningful
+    #        values when the camera's newParameters method is called, which
+    #        may or may not happen before this function gets called.
+    #
     feed_parameters = parameters.get("feeds")
     for feed_name in feed_parameters.getAttrs():
         fp = feed_parameters.get(feed_name)
@@ -45,10 +51,15 @@ def checkParameters(parameters):
         x_start = fp.get("x_start", 1)
         x_end = fp.get("x_end", cp.get("x_pixels"))
         x_pixels = x_end - x_start + 1
+
+        y_start = fp.get("y_start", 1)
+        y_end = fp.get("y_end", cp.get("y_pixels"))
+        y_pixels = y_end - y_start + 1
         
         # Check that the feed size is a multiple of 4 in x.
-        if not ((x_pixels % 4) == 0):
-            raise FeedException("x size of " + str(x_pixels) + " is not a multiple of 4 in feed " + feed_name)
+        roi_area = x_pixels * y_pixels
+        if not ((roi_area % 4) == 0):
+            raise FeedException("ROI area of " + str(roi_area) + " is not a multiple of 4 in feed " + feed_name)
 
 
 class FeedException(halExceptions.HalException):
