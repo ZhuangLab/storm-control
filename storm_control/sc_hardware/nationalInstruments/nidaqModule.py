@@ -4,6 +4,7 @@ HAL interface to National Instruments cards.
 
 Hazen 04/17
 """
+import numpy
 
 import storm_control.hal4000.halLib.halMessage as halMessage
 
@@ -79,6 +80,76 @@ class DOTaskFunctionality(NidaqFunctionality):
             self.createTask()
 
 
+class WVTaskFunctionality(daqModule.DaqFunctionality):
+    """
+    For generating analog waveforms. 
+
+    Notes: (1) This is meant for standalone devices like a galvo, not 
+               for generating waveforms during filming, which is handled 
+               by the daq module.
+
+           (2) Lines needs to be in an order that is acceptable to NI.
+    """
+    def __init__(self, clock = None, lines = None, max_val = 10.0, min_val = -10.0, **kwds):
+        super().__init__(**kwds)
+        self.clock = clock
+        self.lines = lines
+        self.max_val = max_val
+        self.min_val = min_val
+        self.task = None
+
+    def analogOut(self, values = None):
+        """
+        Output a single analog value on each line.
+        """
+        self.stopAndDelete()
+        for i, line in enumerate(self.lines):
+            nicontrol.setAnalogLine(line, values[i])
+
+    def startStopTask(self, start):
+        """
+        True/False to start/stop the task.
+        """
+        if start:
+            self.task.startTask()
+        else:
+            self.task.stopTask()
+        
+    def stopAndDelete(self):
+        """
+        Stop the waveform task and delete it, if it exists.
+        """
+        if self.task:
+            self.task.stopTask()
+            self.task = None
+        
+    def waveformOut(self, waveforms = None, sample_rate = None, finite = False, rising = True, start = True):
+        """
+        waveforms is a list of numpy arrays of type numpy.float64 that
+        are assumed to be of equal length.
+        """
+        self.stopAndDelete()
+
+        # Create task.
+        self.task = nicontrol.AnalogWaveformOutput(self.lines[0],
+                                                   max_val = self.max_val,
+                                                   min_val = self.min_val)
+
+        # Add lines.
+        for line in self.lines[1:]:
+            self.task.addChannel(source = line)
+
+        # Add waveforms.
+        self.task.setWaveforms(waveforms = numpy.concatenate(waveforms),
+                               sample_rate = sample_rate,
+                               clock = self.clock,
+                               finite = finite,
+                               rising = rising)
+
+        if start:
+            self.task.startTask()
+        
+
 class NidaqModule(daqModule.DaqModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
@@ -108,15 +179,19 @@ class NidaqModule(daqModule.DaqModule):
             
                 daq_fn_name = ".".join([self.module_name, fn_name, task_name])
                 if (task_name == "ao_task"):
-                    ao_task = AOTaskFunctionality(source = task_params.get("source"))
-                    self.daq_fns[daq_fn_name] = ao_task
-                    self.daq_fns_by_source[ao_task.getSource()] = ao_task
+                    task = AOTaskFunctionality(source = task_params.get("source"))
                 elif (task_name == "do_task"):
-                    do_task = DOTaskFunctionality(source = task_params.get("source"))
-                    self.daq_fns[daq_fn_name] = do_task
-                    self.daq_fns_by_source[do_task.getSource()] = do_task
+                    task = DOTaskFunctionality(source = task_params.get("source"))
+                elif (task_name == "wv_task"):
+                    lines = map(strip, task_params.get("lines").split(",")),
+                    task = WVTaskFunctionality(clock = task_params.get("clock"),
+                                               lines = lines
+                                               source = lines[0])
                 else:
                     raise NidaqModuleException("Unknown task type", task_name)
+                
+                self.daq_fns[daq_fn_name] = task
+                self.daq_fns_by_source[ao_task.getSource()] = task
 
     def filmTiming(self, message):
         """
