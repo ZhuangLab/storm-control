@@ -307,10 +307,10 @@ class Illumination(halModule.HalModule):
                                                            remote_inc_power = self.view.remoteIncPower,
                                                            remote_set_power = self.view.remoteSetPower)
 
-        # The names of the illumination channels that are available.
-        halMessage.addMessage("illumination channels",
-                              validator = {"data" : {"names" : [True, list]},
-                                           "resp" : None})
+#        # The names of the illumination channels that are available.
+ #       halMessage.addMessage("illumination channels",
+ #                             validator = {"data" : {"names" : [True, list]},
+ #                                          "resp" : None})
 
 #        # Increment the power of an illumination channel.
 #        halMessage.addMessage("remote inc power",
@@ -324,10 +324,10 @@ class Illumination(halModule.HalModule):
 #                                                     "power" : [True, float]},
 #                                           "resp" : None})        
 
-        # Shutters sequence.
-        halMessage.addMessage("shutters sequence",
-                              validator = {"data" : {"sequence" : [True, xmlParser.ShuttersInfo]},
-                                           "resp" : None})
+#        # Shutters sequence.
+#        halMessage.addMessage("shutters sequence",
+#                              validator = {"data" : {"sequence" : [True, xmlParser.ShuttersInfo]},
+#                                           "resp" : None})
                               
 #        # Unhide illumination control.
 #        halMessage.addMessage("show illumination",
@@ -360,8 +360,8 @@ class Illumination(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.view.getParameters()}))
 
-            self.sendMessage(halMessage.HalMessage(m_type = "illumination channels",
-                                                   data = {"names" : self.view.getChannelNames()}))
+#            self.sendMessage(halMessage.HalMessage(m_type = "illumination channels",
+#                                                   data = {"names" : self.view.getChannelNames()}))
 
             self.view.getFunctionalities()
 
