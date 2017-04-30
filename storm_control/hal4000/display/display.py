@@ -48,13 +48,13 @@ class Display(halModule.HalModule):
         
         self.viewers[0].guiMessage.connect(self.handleGuiMessage)
         
-        # Unhide / create a new camera viewer.
-        halMessage.addMessage("new camera viewer",
-                              validator = {"data" : None, "resp" : None})
-
-        # Unhide / create a new feed viewer.
-        halMessage.addMessage("new feed viewer",
-                              validator = {"data" : None, "resp" : None})
+#        # Unhide / create a new camera viewer.
+#        halMessage.addMessage("new camera viewer",
+#                              validator = {"data" : None, "resp" : None})
+#
+#        # Unhide / create a new feed viewer.
+#        halMessage.addMessage("new feed viewer",
+#                              validator = {"data" : None, "resp" : None})
         
         # This message comes from the shutter button.
         halMessage.addMessage("shutter clicked",
@@ -106,18 +106,12 @@ class Display(halModule.HalModule):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "add to menu",
                                                        data = {"item name" : "Feed Viewer",
-                                                               "item msg" : "new feed viewer"}))
+                                                               "item data" : "new feed viewer"}))
             if not self.is_classic:
                 self.newMessage.emit(halMessage.HalMessage(source = self,
                                                            m_type = "add to menu",
                                                            data = {"item name" : "Camera Viewer",
-                                                                   "item msg" : "new camera viewer"}))
-
-        elif message.isType("new camera viewer"):
-            self.newCameraViewer()
-
-        elif message.isType("new feed viewer"):
-            self.newFeedViewer()
+                                                                   "item data" : "new camera viewer"}))
 
         elif message.isType("new parameters"):
             p = message.getData()["parameters"]
@@ -128,6 +122,12 @@ class Display(halModule.HalModule):
                                            viewer.getDefaultParameters()))
                 message.addResponse(halMessage.HalMessageResponse(source = viewer.getViewerName(),
                                                                   data = {"new parameters" : viewer.getParameters()}))
+
+        elif message.isType("show"):
+            if (message.getData()["show"] == "new camera viewer"):
+                self.newCameraViewer()
+            elif (message.getData()["show"] == "new feed viewer"):
+                self.newFeedViewer()
 
         elif message.isType("start"):
             self.show_gui = message.getData()["show_gui"]

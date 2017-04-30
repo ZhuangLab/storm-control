@@ -67,14 +67,13 @@ class HalController(halModule.HalModule):
         This just passes through the messages from the GUI after 
         correcting the source.
         """
-        message.source = self
-        self.newMessage.emit(message)
+        self.sendMessage(message)
 
     def processMessage(self, message):
 
         if message.isType("add to menu"):
             self.view.addMenuItem(message.getData()["item name"],
-                                  message.getData()["item msg"])
+                                  message.getData()["item data"])
 
         elif message.isType("add to ui"):
             [module, parent_widget] = message.getData()["ui_parent"].split(".")
@@ -172,11 +171,11 @@ class HalView(QtWidgets.QMainWindow):
         self.close_timer.timeout.connect(self.handleCloseTimer)
         self.close_timer.setSingleShot(True)
 
-    def addMenuItem(self, item_name, item_action):
+    def addMenuItem(self, item_name, item_data):
         """
         A menu item (from another module) that should be added to the file menu.
         """
-        self.menu_items_to_add.append([item_name, item_action])
+        self.menu_items_to_add.append([item_name, item_data])
 
     def addMenuItems(self):
         """
@@ -186,7 +185,7 @@ class HalView(QtWidgets.QMainWindow):
             for item in sorted(self.menu_items_to_add, key = lambda x : x[0]):
                 a_action = QtWidgets.QAction(self.tr(item[0]), self)
                 self.ui.menuFile.insertAction(self.ui.actionQuit, a_action)
-                a_action.triggered.connect(lambda x, elt = item[1] : self.handleMenuMessage(elt))
+                a_action.triggered.connect(lambda x, item_data = item[1] : self.handleMenuMessage(item_data))
             self.ui.menuFile.insertSeparator(self.ui.actionQuit)
         
     def addUiWidget(self, parent_widget_name, ui_widget, ui_order):
@@ -275,8 +274,7 @@ class HalView(QtWidgets.QMainWindow):
         
     def handleCloseTimer(self):
         self.close_now = True
-        self.guiMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "close event",
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "close event",
                                                    sync = True))
             
     def handleDirectory(self, boolean):
@@ -286,13 +284,12 @@ class HalView(QtWidgets.QMainWindow):
                                                                    QtWidgets.QFileDialog.ShowDirsOnly)
         if new_directory and os.path.exists(new_directory):
             self.film_directory = new_directory
-            self.guiMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "new directory",
+            self.guiMessage.emit(halMessage.HalMessage(m_type = "new directory",
                                                        data = {"directory" : self.film_directory}))
 
-    def handleMenuMessage(self, m_type):
-        self.guiMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = m_type))
+    def handleMenuMessage(self, item_data):
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "show",
+                                                   data = {"show" : item_data}))
         
     def handleSettings(self, boolean):
         parameters_filename = QtWidgets.QFileDialog.getOpenFileName(self,
@@ -301,8 +298,7 @@ class HalView(QtWidgets.QMainWindow):
                                                                     "*.xml")[0]
         if parameters_filename:
             self.xml_directory = os.path.dirname(parameters_filename)
-            self.guiMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "new parameters file",
+            self.guiMessage.emit(halMessage.HalMessage(m_type = "new parameters file",
                                                        data = {"filename" : parameters_filename}))
 
     def handleShutters(self, boolean):
@@ -312,14 +308,12 @@ class HalView(QtWidgets.QMainWindow):
                                                                   "*.xml")[0]
         if shutters_filename:
             self.xml_directory = os.path.dirname(shutters_filename)
-            self.guiMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "new shutters file",
+            self.guiMessage.emit(halMessage.HalMessage(m_type = "new shutters file",
                                                        data = {"filename" : shutters_filename}))
 
     def handleQuit(self, boolean):
         self.close_now = True
-        self.guiMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "close event",
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "close event",
                                                    sync = True))
 
     def startFilm(self, film_settings):

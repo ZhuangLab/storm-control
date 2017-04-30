@@ -478,9 +478,9 @@ class Progressions(halModule.HalModule):
         self.view.halDialogInit(qt_settings,
                                 module_params.get("setup_name") + " progression control")
 
-        # Unhide stage control.
-        halMessage.addMessage("show progressions",
-                              validator = {"data" : None, "resp" : None})
+#        # Unhide stage control.
+#        halMessage.addMessage("show progressions",
+#                              validator = {"data" : None, "resp" : None})
         
     def cleanUp(self, qt_settings):
         self.view.cleanUp(qt_settings)
@@ -490,7 +490,7 @@ class Progressions(halModule.HalModule):
             self.view.setIlmFunctionality(response.getData()["functionality"])
             self.sendMessage(halMessage.HalMessage(m_type = "add to menu",
                                                    data = {"item name" : "Progressions",
-                                                           "item msg" : "show progressions"}))
+                                                           "item data" : "progressions"}))
 
     def processMessage(self, message):
 
@@ -516,8 +516,9 @@ class Progressions(halModule.HalModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"new parameters" : self.view.getParameters()}))
             
-        elif message.isType("show progressions"):
-            self.view.show()
+        elif message.isType("show"):
+            if (message.getData()["show"] == "progressions"):
+                self.view.show()
 
         elif message.isType("start"):
             if message.getData()["show_gui"] and self.view.haveFunctionality():

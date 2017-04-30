@@ -234,9 +234,9 @@ class Stage(halModule.HalModule):
         self.view.halDialogInit(qt_settings,
                                 module_params.get("setup_name") + " stage control")
 
-        # Unhide stage control.
-        halMessage.addMessage("show stage",
-                              validator = {"data" : None, "resp" : None})
+#        # Unhide stage control.
+#        halMessage.addMessage("show stage",
+#                              validator = {"data" : None, "resp" : None})
         
     def cleanUp(self, qt_settings):
         self.view.cleanUp(qt_settings)
@@ -250,7 +250,7 @@ class Stage(halModule.HalModule):
         if message.isType("configure1"):
             self.sendMessage(halMessage.HalMessage(m_type = "add to menu",
                                                    data = {"item name" : "Stage",
-                                                           "item msg" : "show stage"}))
+                                                           "item data" : "stage"}))
 
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : self.stage_fn_name}))
@@ -269,8 +269,9 @@ class Stage(halModule.HalModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"new parameters" : self.view.getParameters()}))
             
-        elif message.isType("show stage"):
-            self.view.show()
+        elif message.isType("show"):
+            if (message.getData()["show"] == "stage"):
+                self.view.show()
 
         elif message.isType("start"):
             if message.getData()["show_gui"]:

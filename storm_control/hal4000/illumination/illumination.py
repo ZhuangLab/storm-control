@@ -329,9 +329,9 @@ class Illumination(halModule.HalModule):
                               validator = {"data" : {"sequence" : [True, xmlParser.ShuttersInfo]},
                                            "resp" : None})
                               
-        # Unhide illumination control.
-        halMessage.addMessage("show illumination",
-                              validator = {"data" : None, "resp" : None})
+#        # Unhide illumination control.
+#        halMessage.addMessage("show illumination",
+#                              validator = {"data" : None, "resp" : None})
 
     def cleanUp(self, qt_settings):
         self.view.cleanUp(qt_settings)
@@ -355,8 +355,8 @@ class Illumination(halModule.HalModule):
         elif message.isType("configure1"):
             self.sendMessage(halMessage.HalMessage(m_type = "add to menu",
                                                    data = {"item name" : "Illumination",
-                                                           "item msg" : "show illumination"}))
-            
+                                                           "item data" : "illumination"}))
+        
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.view.getParameters()}))
 
@@ -390,8 +390,9 @@ class Illumination(halModule.HalModule):
 #            self.view.remoteSetPower(message.getData()["channel"],
 #                                     message.getData()["power"])
 
-        elif message.isType("show illumination"):
-            self.view.show()
+        elif message.isType("show"):
+            if (message.getData()["show"] == "illumination"):
+                self.view.show()
 
         elif message.isType("start"):
             # This is here because we need to have gotten the hardware functionalities
