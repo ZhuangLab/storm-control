@@ -134,7 +134,7 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
                                                        min_value = -50.0,
                                                        max_value = 25.0))
 
-        ## Disable editing of the HAL versions of these parameters.
+        # Disable editing of the HAL versions of these parameters.
         for param in ["exposure_time", "x_bin", "x_end", "x_start", "y_end", "y_start", "y_bin"]:
             self.parameters.getp(param).setMutable(False)
 
