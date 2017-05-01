@@ -1,59 +1,41 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Camera control specialized for a Point Grey (Spinnaker) camera.
-#
-# Hazen 12/16
-#
+#!/usr/bin/env python
+"""
+Camera control specialized for a Point Grey (Spinnaker) camera.
 
-from PyQt4 import QtCore
-import os
-import platform
-import traceback
+Hazen 05/17
+"""
+import storm_control.sc_hardware.pointGrey.spinnaker as spinnaker
+import storm_control.sc_library.parameters as params
 
-# Debugging
-import sc_library.hdebug as hdebug
+import storm_control.hal4000.camera.cameraControl as cameraControl
+import storm_control.hal4000.camera.cameraFunctionality as cameraFunctionality
 
-import sc_library.parameters as params
-import camera.frame as frame
-import camera.cameraControl as cameraControl
 
-import sc_hardware.pointGrey.spinnaker as spinnaker
-
-## ACameraControl
-#
-# This class is used to control a Point Grey (Spinnaker) camera.
-#
-class ACameraControl(cameraControl.HWCameraControl):
-
-    ## __init__
-    #
-    # Create a Spinnaker camera control object and initialize
-    # the camera.
-    #
-    # @param hardware Camera hardware settings.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    @hdebug.debug
-    def __init__(self, hardware, parameters, parent = None):
-        cameraControl.HWCameraControl.__init__(self, hardware, parameters, parent)
+class PointGreyCameraControl(cameraControl.HWCameraControl):
+    """
+    This class is used to control a Point Grey (Spinnaker) camera.
+    """
+    def __init__(self, config = None, is_master = False, **kwds):
+        kwds["config"] = config
+        super().__init__(**kwds)
+        
+        # The camera functionality.
+        self.camera_functionality = cameraFunctionality.CameraFunctionality(camera_name = self.camera_name,
+                                                                            is_master = is_master,
+                                                                            parameters = self.parameters)
 
         # Initialize library.
-        spinnaker.loadSpinnakerDLL(r'C:\Program Files\Point Grey Research\Spinnaker\bin64\vs2013\SpinnakerC_v120.dll')
+        spinnaker.loadSpinnakerDLL(config.get("pgrey_dll"))
         spinnaker.spinSystemGetInstance()
 
-        # Get the first camera.
-        self.camera = spinnaker.spinGetCamera(0)
+        # Get the first camera & set some defaults.
+        self.camera = spinnaker.spinGetCamera(config.get("camera_id"))
 
-        # Add Point Grey specific camera parameters.
-        #
-        # FIXME: These should all be obtained by querying the camera,
-        #        and of course they should be adjustable.
-        #
-        
-        cam_params = parameters.get("camera1")
+        # This is 12 bit mode.
+        self.camera.getProperty("VideoMode")
+        self.camera.setProperty("VideoMode", "Mode7")
 
+        # We don't want any of these 'features'.
         self.camera.getProperty("AcquisitionFrameRateAuto")
         self.camera.setProperty("AcquisitionFrameRateAuto", "Off")
 
@@ -72,105 +54,128 @@ class ACameraControl(cameraControl.HWCameraControl):
         self.camera.getProperty("GammaEnabled")
         self.camera.setProperty("GammaEnabled", False)
 
-        self.camera.getProperty("VideoMode")
-        self.camera.setProperty("VideoMode", "Mode7")
+        # Dictionary of Point Grey specific camera parameters.
+        #
+        self.pgrey_props = {"AcquisitionFrameRate" : True,
+                            "BlackLevel" : True,
+                            "Gain" : True,
+                            "Height" : True,
+                            "OffsetX" : True,
+                            "OffsetY" : True,
+                            "Width" : True}
 
-        self.camera.getProperty("AcquisitionFrameRate")
-        self.camera.setProperty("AcquisitionFrameRate", 100.0)
+        max_intensity = 2**12
+        self.parameters.setv("max_intensity", max_intensity)
 
-        self.camera.getProperty("ExposureTime")
-        self.camera.setProperty("ExposureTime", 9910.0)
+        x_chip = self.camera.getProperty("WidthMax").spinNodeGetValue()
+        y_chip = self.camera.getProperty("HeightMax").spinNodeGetValue()
+        self.parameters.setv("x_chip", x_chip)
+        self.parameters.setv("y_chip", y_chip)
 
-        self.camera.getProperty("BlackLevel")
-        self.camera.setProperty("BlackLevel", 1.0)
-
-        self.camera.getProperty("Gain")
-        self.camera.setProperty("Gain", 10.0)
-
-        x_start = self.camera.getProperty("OffsetX").spinNodeGetValue()
-        x_end = x_start + self.camera.getProperty("Width").spinNodeGetValue() - 1
-        y_start = self.camera.getProperty("OffsetY").spinNodeGetValue()
-        y_end = y_start + self.camera.getProperty("Height").spinNodeGetValue() - 1
-
-        cam_params.add("max_intensity", params.ParameterInt("",
-                                                            "max_intensity",
-                                                            4096,
-                                                            is_mutable = False,
-                                                            is_saved = False))
-
-        cam_params.add("x_start", params.ParameterRangeInt("AOI X start",
-                                                           "x_start",
-                                                           x_start, 0, 2446))
-        cam_params.add("x_end", params.ParameterRangeInt("AOI X end",
-                                                         "x_end",
-                                                         x_end, 1, 2447))
-        cam_params.add("y_start", params.ParameterRangeInt("AOI Y start",
-                                                           "y_start",
-                                                           y_start, 0, 2046))
-        cam_params.add("y_end", params.ParameterRangeInt("AOI Y end",
-                                                         "y_end",
-                                                         y_end, 1, 2047))
-
-        cam_params.add("x_bin", params.ParameterRangeInt("Binning in X",
-                                                         "x_bin",
-                                                         1, 1, 4))
-        cam_params.add("y_bin", params.ParameterRangeInt("Binning in Y",
-                                                         "y_bin",
-                                                         1, 1, 4))
-
-        cam_params.add("exposure_time", params.ParameterRangeFloat("Exposure time (seconds)", 
-                                                                   "exposure_time", 
-                                                                   0.1, 0.0, 60.0))
-
-
-    ## getAcquisitionTimings
-    #
-    # Returns the internal frame rate of the camera.
-    #
-    # @param which_camera The camera to get the timing information for.
-    #
-    # @return A python array containing the inverse of the internal frame rate.
-    #
-    @hdebug.debug
-    def getAcquisitionTimings(self, which_camera):
-        exposure_time = 1.0/self.camera.getProperty("AcquisitionFrameRate").spinNodeGetValue()
-        return [exposure_time, exposure_time]
-
-    ## newParameters
-    #
-    # Update the camera parameters based on a new parameters object.
-    #
-    # @param parameters A parameters object.
-    #
-    @hdebug.debug
-    def newParameters(self, parameters):
-        p = parameters.get("camera1")
-
-        size_x = (p.get("x_end") - p.get("x_start") + 1)/p.get("x_bin")
-        size_y = (p.get("y_end") - p.get("y_start") + 1)/p.get("y_bin")
-        p.set("x_pixels", size_x)
-        p.set("y_pixels", size_y)
+        self.parameters.add(params.ParameterRangeFloat(description = "Acquisition frame rate (FPS)",
+                                                       name = "AcquisitionFrameRate",
+                                                       value = 10.0,
+                                                       max_value = self.camera.getProperty("AcquisitionFrameRate").spinNodeGetMaximum(),
+                                                       min_value = self.camera.getProperty("AcquisitionFrameRate").spinNodeGetMinimum()))
         
-        p.set("bytes_per_frame", 2 * p.get("x_pixels") * p.get("y_pixels") / (p.get("x_bin") * p.get("y_bin")))
+        self.parameters.add(params.ParameterRangeFloat(description = "Black level",
+                                                       name = "BlackLevel",
+                                                       value = 1.0,
+                                                       max_value = self.camera.getProperty("BlackLevel").spinNodeGetMaximum(),
+                                                       min_value = self.camera.getProperty("BlackLevel").spinNodeGetMinimum()))
         
-        self.parameters = p
-        self.got_camera = True
+        self.parameters.add(params.ParameterRangeFloat(description = "Gain",
+                                                       name = "Gain",
+                                                       value = 10.0,
+                                                       max_value = self.camera.getProperty("Gain").spinNodeGetMaximum(),
+                                                       min_value = self.camera.getProperty("Gain").spinNodeGetMinimum()))
+
+        self.parameters.add(params.ParameterRangeInt(description = "AOI height",
+                                                     name = "Height",
+                                                     value = y_chip,
+                                                     max_value = self.camera.getProperty("Height").spinNodeGetMaximum(),
+                                                     min_value = self.camera.getProperty("Height").spinNodeGetMinimum()))
+
+        self.parameters.add(params.ParameterRangeInt(description = "AOI x offset",
+                                                     name = "OffsetX",
+                                                     value = 0,
+                                                     max_value = self.camera.getProperty("OffsetX").spinNodeGetMaximum(),
+                                                     min_value = self.camera.getProperty("OffsetX").spinNodeGetMinimum()))
+
+        self.parameters.add(params.ParameterRangeInt(description = "AOI y offset",
+                                                     name = "OffsetY",
+                                                     value = 0,
+                                                     max_value = self.camera.getProperty("OffsetY").spinNodeGetMaximum(),
+                                                     min_value = self.camera.getProperty("OffsetY").spinNodeGetMinimum()))
+
+        self.parameters.add(params.ParameterRangeInt(description = "AOI width",
+                                                     name = "Width",
+                                                     value = x_chip,
+                                                     max_value = self.camera.getProperty("Width").spinNodeGetMaximum(),
+                                                     min_value = self.camera.getProperty("Width").spinNodeGetMinimum()))
+
+        # Disable editing of the HAL versions of these parameters.
+        for param in ["exposure_time", "x_bin", "x_end", "x_start", "y_end", "y_start", "y_bin"]:
+            self.parameters.getp(param).setMutable(False)
+
+        self.newParameters(self.parameters, initialization = True)
+                             
+    def newParameters(self, parameters, initialization = False):
         
-    ## quit
-    #
-    # Stops the camera thread and shutsdown the camera.
-    #
-    @hdebug.debug
-    def quit(self):
-        self.stopThread()
-        self.wait()
-        self.camera.release()
-        spinnaker.spinSystemReleaseInstance()
+        # Translate AOI information to parameters used by HAL.
+        parameters.set("x_end", parameters.get("OffsetX") + parameters.get("Width") - 1)
+        parameters.set("x_pixels", parameters.get("Width"))
+        parameters.set("x_start", parameters.get("OffsetX") + 1)
+        
+        parameters.set("y_end", parameters.get("OffsetY") + parameters.get("Height") - 1)
+        parameters.set("y_pixels", parameters.get("Height"))
+        parameters.set("y_start", parameters.get("OffsetY") + 1)
+
+        # Super class performs some simple checks & update some things.
+        super().newParameters(parameters)
+
+        self.camera_working = True
+
+        # Update the parameter values, only the Point Grey specific 
+        # ones and only if they are different.
+        to_change = []
+        for pname in self.pgrey_props:
+            if (self.parameters.get(pname) != parameters.get(pname)) or initialization:
+                to_change.append(pname)
+        
+        if (len(to_change)>0):
+            running = self.running
+            if running:
+                self.stopCamera()
+
+            # Change camera.
+            for pname in to_change:
+                self.camera.setProperty(pname, parameters.get(pname))
+
+            # Update properties, note that the allowed ranges of many
+            # of the parameters will likely change.
+            for pname in self.pgrey_props:
+                param = self.parameters.getp(pname)
+                param.setMaximum(self.camera.getProperty(pname).spinNodeGetMaximum())
+                param.setMinimum(self.camera.getProperty(pname).spinNodeGetMinimum())
+                param.setv(parameters.get(pname))
+
+            # Set the exposure time to be the maximum given the current frame rate.
+            self.camera.setProperty("ExposureTime", self.camera.getProperty("ExposureTime").spinNodeGetMaximum())
+            
+            self.parameters.setv("exposure_time", 1.0e-6 * self.camera.getProperty("ExposureTime").spinNodeGetValue())
+            self.parameters.setv("fps", self.camera.getProperty("AcquisitionFrameRate").spinNodeGetValue())
+
+            if running:
+                self.startCamera()
+                
+            self.camera_functionality.parametersChanged.emit()
+
 
 #
 # The MIT License
 #
-# Copyright (c) 2016 Zhuang Lab, Harvard University
+# Copyright (c) 2017 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

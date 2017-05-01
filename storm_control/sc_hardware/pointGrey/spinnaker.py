@@ -1,20 +1,20 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Interface to Point Grey's Spinnaker C library. This uses a
-# helper C library (spinshim.dll) that provides a callback
-# for the Spinnaker ImageEvent. This is done in order to try
-# capture every frame from the camera, which spinCameraGetNextImage()
-# does not seem to gaurantee.
-#
-# You will need the folder where the library is located in your
-# windows path. For me this is:
-#
-# C:\Program Files\Point Grey Research\Spinnaker\bin64\vs2013\
-#
-# Hazen 12/16
-#
+#!/usr/bin/env python
+"""
+Interface to Point Grey's Spinnaker C library. This uses a
+helper C library (spinshim.dll) that provides a callback
+for the Spinnaker ImageEvent. This is done in order to try
+capture every frame from the camera, which spinCameraGetNextImage()
+does not seem to gaurantee.
+
+You will need the folder where the library is located in your
+windows path. For me this is:
+
+C:\Program Files\Point Grey Research\Spinnaker\bin64\vs2013\
+
+FIXME: Fixed length film support?
+
+Hazen 05/17
+"""
 
 import ctypes
 import numpy
@@ -94,7 +94,7 @@ def spinGetCameras():
 
     spinCameraListCreateEmpty()
     spinSystemGetCameras()
-    spinCamereListGetSize()
+    spinCameraListGetSize()
     """
     global h_system
     h_camera_list = ctypes.c_void_p(0)
@@ -358,6 +358,10 @@ class SpinCamera(object):
             raise SpinnakerExceptionNotFound("Property " + pname + " not in cache, cannot be set.")
 
         self.properties[pname].spinNodeSetValue(pvalue)
+
+    def shutdown(self):
+        self.release()
+        spinSystemReleaseInstance()
 
     def startAcquisition(self):
         if self.h_camera is None:
