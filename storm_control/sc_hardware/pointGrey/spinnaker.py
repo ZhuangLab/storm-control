@@ -73,7 +73,6 @@ def loadSpinnakerDLL(dll_name):
         spindll = ctypes.windll.LoadLibrary(dll_name)
 
         spinshim_path = os.path.dirname(os.path.abspath(__file__))
-        print(spinshim_path)
         spinshimdll = ctypes.windll.LoadLibrary(spinshim_path + "/spinshim.dll")
 
 
