@@ -159,7 +159,8 @@ class SCamData(object):
     """
     Storage of camera data.
     """
-    def __init__(self, size):
+    def __init__(self, size = None, **kwds):
+        super().__init__(**kwds)
         self.size = size
         self.np_array = numpy.ascontiguousarray(numpy.empty(size, dtype = numpy.uint16))
 
@@ -187,10 +188,12 @@ class SpinCamera(object):
 
     Note: Currently this only works with Mono12Packed IIDC-msb image format.
     """
-    def __init__(self, h_camera):
+    def __init__(self, h_camera = None, **kwds):
+        super().__init__(**kwds)
         self.aoi_width = None
         self.aoi_height = None
         self.buffer_len = 50
+        self.encoding = 'utf-8'
         self.h_camera = h_camera
         self.im_event = None
         self.properties = {}
@@ -229,7 +232,7 @@ class SpinCamera(object):
             # image we'll immediately throw this object away.
             #
             image_size = self.aoi_width * self.aoi_height
-            s_cam_data = SCamData(image_size)
+            s_cam_data = SCamData(size = image_size)
             image = ShimImage(ctypes.c_int(PixelFormat_Mono12Packed),
                               ctypes.c_size_t(self.aoi_height),
                               ctypes.c_size_t(image_size),
@@ -261,7 +264,7 @@ class SpinCamera(object):
         if not p_name in self.properties:
             
             # Get node by searching the node maps to see if we can find it.
-            c_p_name = ctypes.c_char_p(p_name)
+            c_p_name = ctypes.c_char_p(p_name.encode(self.encoding))
             h_node = ctypes.c_void_p(0)
             for node_map in self.node_maps:
                 checkErrorCode(spindll.spinNodeMapGetNode(node_map, c_p_name, ctypes.byref(h_node)),
@@ -280,27 +283,27 @@ class SpinCamera(object):
 
             # Value (basically integer?) type.
             if (p_type == 0):
-                self.properties[p_name] = SpinNodeValue(h_node)
+                self.properties[p_name] = SpinNodeValue(h_node = h_node)
 
             # Integer type.
             elif (p_type == 2):
-                self.properties[p_name] = SpinNodeInteger(h_node)
+                self.properties[p_name] = SpinNodeInteger(h_node = h_node)
 
             # Boolean type.
             elif (p_type == 3):
-                self.properties[p_name] = SpinNodeBoolean(h_node)
+                self.properties[p_name] = SpinNodeBoolean(h_node = h_node)
             
             # Float type.
             elif (p_type == 4):
-                self.properties[p_name] = SpinNodeFloat(h_node)
+                self.properties[p_name] = SpinNodeFloat(h_node = h_node)
 
             # String type.
             elif (p_type == 6):
-                self.properties[p_name] = SpinNodeString(h_node)
+                self.properties[p_name] = SpinNodeString(h_node = h_node)
 
             # Enumeration type.
             elif (p_type == 8):
-                self.properties[p_name] = SpinNodeEnumeration(h_node)
+                self.properties[p_name] = SpinNodeEnumeration(h_node = h_node)
                 
             else:
                 print("Unknown node type", p_type)
@@ -394,7 +397,9 @@ class SpinNode(object):
     """
     Base class for accessing and configuring camera properties.
     """
-    def __init__(self, h_node):
+    def __init__(self, h_node = None, **kwds):
+        super().__init__(**kwds)
+        self.encoding = 'utf-8'
         self.h_node = h_node
         self.value = None
         
@@ -406,14 +411,14 @@ class SpinNode(object):
         p_buf = ctypes.create_string_buffer(max_len.value)
         checkErrorCode(spindll.spinNodeGetDescription(self.h_node, p_buf, ctypes.byref(max_len)),
                        "spinNodeGetDescription")
-        return p_buf.value
+        return p_buf.value.decode(self.encoding)
 
     def spinNodeGetName(self):
         max_len = ctypes.c_size_t(100)
         p_buf = ctypes.create_string_buffer(max_len.value)
         checkErrorCode(spindll.spinNodeGetName(self.h_node, p_buf, ctypes.byref(max_len)),
                        "spinNodeGetName")
-        return p_buf.value
+        return p_buf.value.decode(self.encoding)
 
     def spinNodeGetValue(self):
         """
@@ -450,8 +455,8 @@ class SpinNodeBoolean(SpinNode):
     """
     Boolean values.
     """
-    def __init__(self, h_node):
-        SpinNode.__init__(self, h_node)
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
         self.value = self.spinNodeGetValue()
 
     def spinNodeGetValue(self):
@@ -477,8 +482,8 @@ class SpinNodeEnumeration(SpinNode):
     """
     Enumerated values.
     """
-    def __init__(self, h_node):
-        SpinNode.__init__(self, h_node)
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
 
         # Get a list of all the possible value.
         p_value = ctypes.c_size_t(0)
@@ -501,7 +506,7 @@ class SpinNodeEnumeration(SpinNode):
         p_buf = ctypes.create_string_buffer(max_len.value)
         checkErrorCode(spindll.spinEnumerationEntryGetSymbolic(h_entry, p_buf, ctypes.byref(max_len)),
                        "spinEnumerationEntryGetSymbolic")
-        return p_buf.value
+        return p_buf.value.decode(self.encoding)
             
     def spinNodeGetValue(self):
         if self.spinNodeIsReadable():
@@ -520,13 +525,13 @@ class SpinNodeEnumeration(SpinNode):
 
             if self.spinNodeIsWritable():
                 h_choice = ctypes.c_void_p(0)
-                c_value = ctypes.create_string_buffer(new_value)
+                c_value = ctypes.c_char_p(new_value.encode(self.encoding))
                 checkErrorCode(spindll.spinEnumerationGetEntryByName(self.h_node, c_value, ctypes.byref(h_choice)),
                                "spinEnumerationGetEntryByName")
-                choice = ctype.c_uint64(0)
-                checkErrorCode(spindll.spinEnumerationEntryGetValue(h_choice, ctypes.byref(choice)),
-                               "spinEnumerationEntryGetValue")
-                checkErrorCode(spindll.spinEnumerationSetIntValue(h_choice, choice),
+                choice = ctypes.c_uint64(0)
+                checkErrorCode(spindll.spinEnumerationEntryGetIntValue(h_choice, ctypes.byref(choice)),
+                               "spinEnumerationEntryGetEnumValue")
+                checkErrorCode(spindll.spinEnumerationSetIntValue(self.h_node, choice),
                                "spinEnumerationEntrySetIntValue")
 
                 self.value = new_value
@@ -537,15 +542,15 @@ class SpinNodeFloat(SpinNode):
     """
     Float camera property.
     """
-    def __init__(self, h_node):
-        SpinNode.__init__(self, h_node)
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
 
         # Get unit.
         max_len = ctypes.c_size_t(20)
         p_buf = ctypes.create_string_buffer(max_len.value)
         checkErrorCode(spindll.spinFloatGetUnit(self.h_node, p_buf, ctypes.byref(max_len)),
                        "spinFloatGetUnit")
-        self.v_unit = p_buf.value
+        self.v_unit = p_buf.value.decode(self.encoding)
 
         self.value = self.spinNodeGetValue()
 
@@ -592,8 +597,8 @@ class SpinNodeInteger(SpinNode):
     """
     Integer camera property.
     """
-    def __init__(self, h_node):
-        SpinNode.__init__(self, h_node)
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
 
         # Get the current value.
         self.value = self.spinNodeGetValue()
@@ -659,7 +664,7 @@ class SpinNodeString(SpinNode):
             p_buf = ctypes.create_string_buffer(max_len.value)
             checkErrorCode(spindll.spinStringGetValue(self.h_node, p_buf, ctypes.byref(max_len)),
                            "spinStringGetValue")
-            self.value = p_buf.value
+            self.value = p_buf.value.decode(self.encoding)
             return self.value
 
 
@@ -667,8 +672,8 @@ class SpinNodeValue(SpinNode):
     """
     ValueNode / spinEnumeration camera property.
     """
-    def __init__(self, h_node):
-        SpinNode.__init__(self, h_node)
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
 
         self.value = self.spinNodeGetValue()
 

@@ -29,6 +29,9 @@ cam = spinnaker.spinGetCamera(0)
 # to set all the other parameters, for example "mode7", disabling defect correction
 # and using the appropriate AOI.
 #
+cam.getProperty("VideoMode")
+cam.setProperty("VideoMode", "Mode7")
+
 cam.getProperty("AcquisitionFrameRateAuto")
 cam.setProperty("AcquisitionFrameRateAuto", "Off")
 
@@ -47,14 +50,14 @@ cam.setProperty("SharpnessEnabled", False)
 cam.getProperty("GammaEnabled")
 cam.setProperty("GammaEnabled", False)
 
-cam.getProperty("VideoMode")
-cam.setProperty("VideoMode", "Mode7")
-
 cam.getProperty("AcquisitionFrameRate")
-cam.setProperty("AcquisitionFrameRate", 100.0)
+cam.setProperty("AcquisitionFrameRate", 30.0)
 
 cam.getProperty("ExposureTime")
-cam.setProperty("ExposureTime", 9910.0)
+cam.setProperty("ExposureTime", cam.getProperty("ExposureTime").spinNodeGetMaximum())
+
+print("Exposure time:", cam.getProperty("ExposureTime").spinNodeGetValue())
+print("Frame rate:", cam.getProperty("AcquisitionFrameRate").spinNodeGetValue())
 
 cam.getProperty("BlackLevel")
 cam.setProperty("BlackLevel", 1.0)
