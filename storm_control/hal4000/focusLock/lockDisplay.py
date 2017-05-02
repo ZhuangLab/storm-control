@@ -342,7 +342,6 @@ class QQPDSumDisplay(QStatusDisplay):
 
     def setFunctionality(self, functionality):
         super().setFunctionality(functionality)
-        self.has_center_bar = self.functionality.getParameter("sum_has_center_bar")
         self.scale_max = self.functionality.getParameter("sum_maximum")
         self.scale_min = self.functionality.getParameter("sum_minimum")
         if self.functionality.hasParameter("sum_warning_high"):

@@ -376,7 +376,6 @@
 	  <offset_minimum type="float">-0.6</offset_minimum>
 	  <offset_warning_high type="float">0.5</offset_warning_high>
 	  <offset_warning_low type="float">-0.5</offset_warning_low>
-	  <sum_has_center_bar type="boolean">True</sum_has_center_bar>
 	  <sum_maximum type="float">1000.0</sum_maximum>
 	  <sum_minimum type="float">0.0</sum_minimum>
 	  <sum_warning_low type="float">100.0</sum_warning_low>
