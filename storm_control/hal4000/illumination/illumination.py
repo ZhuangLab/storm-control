@@ -337,8 +337,7 @@ class Illumination(halModule.HalModule):
         self.view.cleanUp(qt_settings)
 
     def handleGuiMessage(self, message):
-        message.source = self
-        self.newMessage.emit(message)
+        self.sendMessage(message)
                 
     def handleResponse(self, message, response):
         if message.isType("get functionality"):
