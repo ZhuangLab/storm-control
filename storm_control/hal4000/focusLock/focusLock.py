@@ -185,17 +185,17 @@ class FocusLock(halModule.HalModule):
                                 module_params.get("setup_name") + " focus lock")
 
         # Connect signals.
+        self.control.controlMessage.connect(self.handleControlMessage)
         self.view.jump.connect(self.control.handleJump)
         self.view.lockStarted.connect(self.control.handleLockStarted)
         self.view.lockTarget.connect(self.control.handleLockTarget)
         self.view.modeChanged.connect(self.control.handleModeChanged)
 
-#        # Unhide focus lock control.
-#        halMessage.addMessage("show focus lock",
-#                              validator = {"data" : None, "resp" : None})
-
     def cleanUp(self, qt_settings):
         self.view.cleanUp(qt_settings)
+
+    def handleControlMessage(self, message):
+        self.sendMessage(message)
 
     def handleResponse(self, message, response):
         if message.isType("get functionality"):

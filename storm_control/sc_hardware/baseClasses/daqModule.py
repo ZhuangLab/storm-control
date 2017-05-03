@@ -68,6 +68,9 @@ class DaqFunctionality(hardwareModule.HardwareFunctionality):
         self.am_filming = False
         self.source = source
 
+    def amFilming(self):
+        return self.am_filming
+        
     def getSource(self):
         return self.source
 

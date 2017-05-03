@@ -95,6 +95,15 @@ class ZStageFunctionalityMixin(LockFunctionalityMixin):
     def getCurrentPosition(self):
         return self.z_position
 
+    def getDaqWaveform(self, waveform):
+        """
+        Scale the analog waveform (a numpy array) that the daq will use to drive 
+        the z-stage in hardware timed mode to the correct voltages.
+
+        Returns a daqModule.DaqWaveform object.
+        """
+        pass
+
     def getMaximum(self):
         return self.getParameter("maximum")
 
@@ -119,13 +128,6 @@ class ZStageFunctionalityMixin(LockFunctionalityMixin):
     def recenter(self):
         self.goAbsolute(self.getCenterPosition())
 
-    def rescaleWaveform(self, waveform):
-        """
-        Scale the analog waveform (a numpy array) that the daq will use to drive 
-        the z-stage in hardware timed mode to the correct voltages.
-        """
-        pass
-        
 
 class LockModule(hardwareModule.HardwareModule):
     pass

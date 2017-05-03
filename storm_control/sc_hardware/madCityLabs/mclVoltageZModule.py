@@ -9,11 +9,21 @@ from PyQt5 import QtCore
 
 import storm_control.hal4000.halLib.halMessage as halMessage
 
+import storm_control.sc_hardware.baseClasses.daqModule as daqModule
 import storm_control.sc_hardware.baseClasses.hardwareModule as hardwareModule
 import storm_control.sc_hardware.baseClasses.lockModule as lockModule
 
 
 class MCLVoltageZFunctionality(hardwareModule.HardwareFunctionality, lockModule.ZStageFunctionalityMixin):
+    """
+    This supports hardware timed z scans. These work by passing control of the
+    analog line that this functionality is using back to the DAQ at the start
+    of filming. A focuslock.lockModes.LockMode that uses this should *not* use
+    the analog line during filming. We're blocking this by checking if the
+    line is being used for filming before we try and set a voltage on it.
+
+    FIXME: The stage will appear to stop moving during filming.
+    """
     zStagePosition = QtCore.pyqtSignal(float)
 
     def __init__(self, ao_fn = None, microns_to_volts = None, **kwds):
@@ -24,7 +34,15 @@ class MCLVoltageZFunctionality(hardwareModule.HardwareFunctionality, lockModule.
         self.minimum = self.getParameter("minimum")
         self.recenter()
 
+    def getDaqWaveform(self, waveform):
+        waveform = waveform * self.microns_to_volts
+        return daqModule.DaqWaveform(source = self.ao_fn.getSource(),
+                                     waveform = waveform)
+            
     def goAbsolute(self, z_pos):
+        if self.ao_fn.amFilming():
+            return
+        
         if (z_pos < self.minimum):
             z_pos = self.minimum
         if (z_pos > self.maximum):
@@ -40,9 +58,6 @@ class MCLVoltageZFunctionality(hardwareModule.HardwareFunctionality, lockModule.
     def haveHardwareTiming(self):
         return True
 
-    def rescaleWaveform(self, waveform):
-        return waveform * self.microns_to_volts
-    
 
 class MCLVoltageZ(hardwareModule.HardwareModule):
     """

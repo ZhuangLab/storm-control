@@ -8,8 +8,11 @@ Hazen 04/17
 
 from PyQt5 import QtCore
 
+import storm_control.hal4000.halLib.halMessage as halMessage
+
 
 class LockControl(QtCore.QObject):
+    controlMessage = QtCore.pyqtSignal(object)
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
@@ -108,6 +111,13 @@ class LockControl(QtCore.QObject):
             if film_settings.isSaved():
                 self.offset_fp = open(film_settings.getBasename() + ".off", "w")
                 self.offset_fp.write(" ".join(["frame", "offset", "power", "stage-z"]) + "\n")
+
+            # Check for a waveform from a hardware timed lock mode that uses the DAQ.
+            waveform = self.lock_mode.getWaveform()
+            if waveform is not None:
+                self.controlMessage.emit(halMessage.HalMessage(m_type = "daq waveforms",
+                                                               data = {"waveforms" : [waveform]}))
+                
             self.lock_mode.startFilm()
         
     def startLock(self):
