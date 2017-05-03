@@ -52,4 +52,4 @@ class NoneZStageModule(hardwareModule.HardwareModule):
     def processMessage(self, message):
         
         if message.isType("get functionality"):
-            self.getFunctionality(message)            
+            self.getFunctionality(message)

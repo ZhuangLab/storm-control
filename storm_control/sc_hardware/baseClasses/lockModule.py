@@ -106,10 +106,26 @@ class ZStageFunctionalityMixin(LockFunctionalityMixin):
 
     def goRelative(self, z_delta):
         pass
+
+    def haveHardwareTiming(self):
+        """
+        Return True/False if the stage supports hardware timing. What this
+        currently means is that the stage is actually driven by a DAQ card, 
+        so the DAQ card can control the stage movement timed off a camera.
+        Typically only used while filming to z scans.
+        """
+        return False
     
     def recenter(self):
         self.goAbsolute(self.getCenterPosition())
-    
+
+    def rescaleWaveform(self, waveform):
+        """
+        Scale the analog waveform (a numpy array) that the daq will use to drive 
+        the z-stage in hardware timed mode to the correct voltages.
+        """
+        pass
+        
 
 class LockModule(hardwareModule.HardwareModule):
     pass

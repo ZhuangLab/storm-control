@@ -214,9 +214,15 @@
 	  <do_task>
 	    <source type="string">/Dev1/port0/line4</source>
 	  </do_task>
-	</ilm405>	
+	</ilm405>
+
+	<mcl>
+	  <ao_task>
+	    <source type="string">/Dev1/ao0</source>
+	  </ao_task>
+	</mcl>
       </configuration>
-      
+
     </daq>
 
     <!-- Illumination (lasers, shutters, etc) control GUI. -->
@@ -281,6 +287,25 @@
       </configuration>
     </marzhauser_stage>
 
+    <!-- Mad City Labs Z piezo -->
+    <none_zstage>
+      <module_name type="string">storm_control.sc_hardware.madCityLabs.mclVoltageZModule</module_name>
+      <class_name type="string">MCLVoltageZ</class_name>
+
+      <configuration>
+	<parameters>
+	  <center type="float">125.0</center>
+	  <has_center_bar type="boolean">True</has_center_bar>
+	  <maximum type="float">250.0</maximum>
+	  <minimum type="float">0.0</minimum>
+	  <warning_high type="float">240.0</warning_high>
+	  <warning_low type="float">10.0</warning_low>
+	</parameters>
+	<ao_fn_name type="string">daq.mcl.ao_task</ao_fn_name>
+	<microns_to_volts type="float">0.04</microns_to_volts>
+      </configuration>
+    </none_zstage>
+    
     <!-- Stage control GUI -->
     <stage>
       <class_name type="string">Stage</class_name>

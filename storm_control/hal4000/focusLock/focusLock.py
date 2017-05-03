@@ -214,8 +214,15 @@ class FocusLock(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "add to menu",
                                                    data = {"item name" : "Focus Lock",
                                                            "item data" : "focus lock"}))
+            
+            self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
+                                                   data = {"parameters" : self.view.getParameters()}))
 
-            # Get functionalities.
+        elif message.isType("configure2"):
+            
+            # Get functionalities. Do this here because the modules that provide these functionalities
+            # will likely need functionalities from other modules. The IR laser for example might
+            # need a functionality from a DAQ module.
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : self.configuration.get("ir_laser"),
                                                            "extra data" : "ir_laser"}))
@@ -228,9 +235,6 @@ class FocusLock(halModule.HalModule):
                                                    data = {"name" : self.configuration.get("z_stage"),
                                                            "extra data" : "z_stage"}))
             
-            self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
-                                                   data = {"parameters" : self.view.getParameters()}))
-
         elif message.isType("new parameters"):
             p = message.getData()["parameters"]
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
