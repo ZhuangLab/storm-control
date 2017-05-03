@@ -38,11 +38,41 @@ class NidaqFunctionality(daqModule.DaqFunctionality):
             self.createTask()
 
 
+class AITaskFunctionality(NidaqFunctionality):
+    """
+    Asynchronous acquisition of a series of voltages.
+    """
+    def __init__(self, clock = None, lines = None, n_points = None, sampling_rate = None, **kwds):
+        super().__init__(**kwds):
+        self.clock = clock
+        self.lines = lines
+        self.n_points = n_points
+        self.sampling_rate = sampling_rate
+
+    def createTask(self):
+        self.task = nicontrol.AnalogWaveformInput(source = self.lines[0])
+        for line in self.lines[:1]:
+            self.task.addChannel(source = line)
+        self.task.configureAcquisition(source = self.clock,
+                                       samples = self.n_points,
+                                       sample_rate_Hz = self.sampling_rate)
+        self.task.startTask()
+
+    def getData(self):
+        if self.task is None:
+            self.createTask()
+        try:
+            return self.task.getData()
+        except nicontrol.NIException as exception:
+            hdebug.logText("AITaskFunctionality Error", str(exception))
+            self.task.stopTask()
+            self.createTask()
+
+
 class AOTaskFunctionality(NidaqFunctionality):
-
-    def __init__(self, **kwds):
-        super().__init__(**kwds)
-
+    """
+    Asynchronous output of a voltage on a single line.
+    """
     def createTask(self):
         self.task = nicontrol.AnalogOutput(source = self.source)
         self.task.startTask()
@@ -60,10 +90,9 @@ class AOTaskFunctionality(NidaqFunctionality):
 
 
 class DOTaskFunctionality(NidaqFunctionality):
-
-    def __init__(self, **kwds):
-        super().__init__(**kwds)
-
+    """
+    Asynchronous output of a (digital) voltage on a single line.
+    """
     def createTask(self):
         self.task = nicontrol.DigitalOutput(source = self.source)
         self.task.startTask()
@@ -178,14 +207,21 @@ class NidaqModule(daqModule.DaqModule):
                 task_params = task.get(task_name)
             
                 daq_fn_name = ".".join([self.module_name, fn_name, task_name])
-                if (task_name == "ao_task"):
+                if (task_name == "ai_task"):
+                    lines = map(strip, task_params.get("lines").split(",")),
+                    task = AITaskFunctionality(clock = task_params.get("clock"),
+                                               lines = lines,
+                                               n_points = task_params.get("n_points"),
+                                               sampling_rate = task_params.get("sampling_rate"),
+                                               source = lines[0])
+                elif (task_name == "ao_task"):
                     task = AOTaskFunctionality(source = task_params.get("source"))
                 elif (task_name == "do_task"):
                     task = DOTaskFunctionality(source = task_params.get("source"))
                 elif (task_name == "wv_task"):
                     lines = map(strip, task_params.get("lines").split(",")),
                     task = WVTaskFunctionality(clock = task_params.get("clock"),
-                                               lines = lines
+                                               lines = lines,
                                                source = lines[0])
                 else:
                     raise NidaqModuleException("Unknown task type", task_name)

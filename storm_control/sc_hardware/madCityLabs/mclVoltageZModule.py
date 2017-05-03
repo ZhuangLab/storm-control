@@ -68,7 +68,6 @@ class MCLVoltageZ(hardwareModule.HardwareModule):
         if message.isType("configure1"):
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : self.configuration.get("ao_fn_name")}))
-                                                           "extra data" : "ir_laser"}))
         
         elif message.isType("get functionality"):
             if (message.getData()["name"] == self.module_name):

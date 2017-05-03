@@ -144,7 +144,7 @@ class AnalogWaveformInput(NIDAQTask):
             msg = "Failed to read the right number of samples "
             msg += str(c_samples_read.value) + " " + str(self.samples)
             raise NIException(msg)
-        return data
+        return numpy.reshape(data, (self.samples, self.channels))
 
 
 class AnalogWaveformOutput(NIDAQTask):
