@@ -119,7 +119,7 @@ class LockDisplay(QtWidgets.QGroupBox):
                 self.q_qpd_display.setFunctionality(functionality)
 
             # Display camera output.
-            if (functionality.getType() == "camera"):
+            elif (functionality.getType() == "camera"):
                 self.q_qpd_display = QCamDisplay(parent = self)
                 layout = QtWidgets.QGridLayout(self.ui.qpdFrame)
                 layout.setContentsMargins(0,0,0,0)
@@ -233,8 +233,8 @@ class QCamDisplay(QtWidgets.QWidget):
             self.draw_e2 = False
         else:
             self.draw_e2 = True
-            self.x_off2 = ((qpd_data["y_off2"]]+w/2)/float(w))*float(self.width())
-            self.y_off2 = ((qpd_data["x_off2"]]+w/2)/float(w))*float(self.height())
+            self.x_off2 = ((qpd_data["y_off2"]+w/2)/float(w))*float(self.width())
+            self.y_off2 = ((qpd_data["x_off2"]+w/2)/float(w))*float(self.height())
 
         # Red dot in camera display
         self.show_dot = not self.show_dot
