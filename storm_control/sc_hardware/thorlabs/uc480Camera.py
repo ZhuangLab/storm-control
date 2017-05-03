@@ -340,22 +340,23 @@ class CameraQPD(object):
     pixels is returned as the focus lock sum.
     """
     def __init__(self,
+                 background = None,                 
                  camera_id = 1,
                  fit_mutex = False,
-                 x_width = 200,
-                 y_width = 200,
-                 sigma = 8.0,
-                 offset_file = False,
-                 background = 0,
+                 ini_file = None,
+                 offset_file = None,
+                 sigma = None,
+                 x_width = None,
+                 y_width = None,
                  **kwds):
         super().__init__(**kwds)
         
-        self.offset_file = offset_file
         self.background = background
         self.fit_mode = 1
         self.fit_mutex = fit_mutex
         self.fit_size = int(1.5 * sigma)
         self.image = None
+        self.offset_file = None
         self.sigma = sigma
         self.x_off1 = 0.0
         self.y_off1 = 0.0
@@ -363,20 +364,19 @@ class CameraQPD(object):
         self.y_off2 = 0.0
         self.zero_dist = 0.5 * x_width
 
+        # Add path information to files that should be in the same directory.
+        ini_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ini_file)
+        self.offset_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), offset_file)
+        
         # Open camera
-        self.cam = Camera(camera_id)
+        self.cam = Camera(camera_id, ini_file = ini_file)
 
         # Set timeout
         self.cam.setTimeout(1)
 
         # Set camera AOI x_start, y_start.
-        if self.offset_file and (os.path.exists(self.offset_file)):
-            with open(self.offset_file) as fp:
-                [self.x_start, self.y_start] = map(int, fp.readline().split(",")[:2])
-        else:
-            print("Warning! No focus lock camera offset file found!", self.offset_file)
-            self.x_start = 0
-            self.y_start = 0
+        with open(self.offset_file) as fp:
+            [self.x_start, self.y_start] = map(int, fp.readline().split(",")[:2])
 
         # Set camera AOI.
         self.x_width = x_width

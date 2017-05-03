@@ -56,9 +56,21 @@ class QPDFunctionalityMixin(LockFunctionalityMixin):
 
 class QPDCameraFunctionalityMixin(QPDFunctionalityMixin):
 
-    def adjustCamera(self, dx, dy):
+    def adjustAOI(self, dx, dy):
         """
         Adjust the camera AOI.
+        """
+        pass
+
+    def adjustZeroDist(self, inc):
+        """
+        Adjust the inter spot distance that will is zero.
+        """
+        pass
+
+    def changeFitMode(self, mode):
+        """
+        Change how the spot(s) are fit to measure the offset.
         """
         pass
 
