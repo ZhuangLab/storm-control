@@ -50,7 +50,8 @@ class MCLStage(object):
         stage is then queried to determine its various properties.
         """
         super().__init__(**kwds)
-
+        self.connected = True
+        
         # load DLL is necessary
         if not MCLStage.dll_loaded:
             loadMCLDLL(mcl_lib)
@@ -79,6 +80,7 @@ class MCLStage(object):
 
         if (self.handle == 0):
             print("Failed to connect to the MCL stage. Perhaps it is turned off?")
+            self.connected = False
 
         # Get the stage information.
         if self.handle:
@@ -139,6 +141,9 @@ class MCLStage(object):
         Return the dictionary of properties.
         """
         return self._props_
+
+    def getStatus(self):
+        return self.connected
 
     def moveTo(self, axis, position):
         """

@@ -55,7 +55,7 @@ class MCLVoltageZ(hardwareModule.HardwareModule):
 
     def cleanUp(self, qt_settings):
         if self.z_stage_functionality is not None:
-            self.z_stage_functionality.recenter()
+            self.z_stage_functionality.goAbsolute(self.z_stage_functionality.getMinimum())
         
     def handleResponse(self, message):
         if message.isType("get functionality"):
