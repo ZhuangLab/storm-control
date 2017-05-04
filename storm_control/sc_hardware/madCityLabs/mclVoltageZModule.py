@@ -22,6 +22,10 @@ class MCLVoltageZFunctionality(hardwareModule.HardwareFunctionality, lockModule.
     the analog line during filming. We're blocking this by checking if the
     line is being used for filming before we try and set a voltage on it.
 
+    Note: This will remember the current z position at the start of the film
+          and return to it at the end of the film, which might not be what
+          we want?
+
     FIXME: The stage will appear to stop moving during filming.
     """
     zStagePosition = QtCore.pyqtSignal(float)
@@ -29,9 +33,13 @@ class MCLVoltageZFunctionality(hardwareModule.HardwareFunctionality, lockModule.
     def __init__(self, ao_fn = None, microns_to_volts = None, **kwds):
         super().__init__(**kwds)
         self.ao_fn = ao_fn
+        self.film_z = None
         self.maximum = self.getParameter("maximum")
         self.microns_to_volts = microns_to_volts
         self.minimum = self.getParameter("minimum")
+
+        self.ao_fn.filming.connect(self.handleFilming)
+        
         self.recenter()
 
     def getDaqWaveform(self, waveform):
@@ -54,6 +62,16 @@ class MCLVoltageZFunctionality(hardwareModule.HardwareFunctionality, lockModule.
     def goRelative(self, z_delta):
         z_pos = self.z_position + z_delta
         self.goAbsolute(z_pos)
+
+    def handleFilming(self, filming):
+        
+        # Record current z position at the start of the film.
+        if filming:
+            self.film_z = self.z_position
+
+        # Return to the current z position at the end of the film.
+        else:
+            self.goAbsolute(self.film_z)
 
     def haveHardwareTiming(self):
         return True

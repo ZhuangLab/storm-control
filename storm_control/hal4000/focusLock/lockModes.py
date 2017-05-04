@@ -714,7 +714,7 @@ class CalibrationLockMode(JumpLockMode):
         self.clm_counter = 0
 
 
-class HardwareZScanLockMode(JumpLockMode):
+class HardwareZScanLockMode(AlwaysOnLockMode):
     """
     This holds a focus target. Then during filming it does a hardware
     times z scan.
@@ -738,6 +738,11 @@ class HardwareZScanLockMode(JumpLockMode):
                                      value = ""))
         
     def getWaveform(self):
+        """
+        This is called before startFilm() by lockControl.LockControl. It
+        returns the waveform to use during filming as a daqModule.DaqWaveform,
+        or None if there is no waveform or one shouldn't be used.
+        """
         if self.amLocked() and self.hzs_zvals is not None:
             waveform = self.hzs_vals + self.z_stage_functionality.getCurrentPosition()
             return self.z_stage_functionality.getDaqWaveform(waveform)
@@ -764,7 +769,9 @@ class HardwareZScanLockMode(JumpLockMode):
 
     def stopFilm(self):
         if self.hzs_film_off:
-            self.startLock()
+            self.hzs_film_off = False
+            self.behavior = "locked"
+
 
 #
 # The MIT License
