@@ -38,7 +38,7 @@ class HardwareWorker(QtCore.QRunnable):
     be useful by itself for one off communication with hardware.
 
     Note: These are automatically deleted after use, so if you want
-          to re-use them you need to call setAutoDelete(False).
+          to reuse them you need to call setAutoDelete(False).
     """
     def __init__(self, task = None, args = [], **kwds):
         super().__init__(**kwds)
