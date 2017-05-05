@@ -182,7 +182,7 @@ class LockedMixin(object):
                     self.lm_buffer[self.lm_counter] = 0
 
                 # Simple proportional control.
-                dz = 0.9 * diff
+                dz = -0.9 * diff
                 self.z_stage_functionality.goRelative(dz)
             else:
                 self.lm_buffer[self.lm_counter] = 0
@@ -205,7 +205,6 @@ class LockedMixin(object):
         self.lm_offset_threshold = p.get("offset_threshold")
 
     def startLock(self):
-        print(">start lock")
         self.lm_counter = 0
         self.lm_buffer = numpy.zeros(self.lm_buffer_length, dtype = numpy.uint8)
         self.behavior = "locked"
