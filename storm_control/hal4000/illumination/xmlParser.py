@@ -35,6 +35,9 @@ class ShuttersInfo(object):
 def parseShuttersXML(number_channels, shutters_file, oversampling = 100):
     """
     This parses a XML file that defines a shutter sequence.
+
+    FIXME: Not all setup support oversampling, this should complain if
+           the setup does not support oversampling.
     """
 
     # Load XML shutters file.
