@@ -225,6 +225,29 @@
 
     </daq>
 
+    <!-- Focus lock control GUI. -->
+    <focuslock>
+      <class_name type="string">FocusLock</class_name>
+      <module_name type="string">storm_control.hal4000.focusLock.focusLock</module_name>
+      <configuration>
+	<ir_laser type="string">none_irlaser</ir_laser>
+	<ir_power type="int">10</ir_power>
+	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,OptimalLockMode,CalibrationLockMode</lock_modes>
+	<qpd type="string">uc480_camera</qpd>
+	<z_stage type="string">mcl_zstage</z_stage>
+	<parameters>
+	  <find_sum>
+	    <step_size type="float">1.0</step_size>
+	  </find_sum>
+	  <locked>
+	    <buffer_length type="int">5</buffer_length>
+	    <offset_threshold type="float">20.0</offset_threshold>
+	  </locked>
+	  <jump_size type="float">0.1</jump_size>
+	</parameters>
+      </configuration>
+    </focuslock>
+    
     <!-- Illumination (lasers, shutters, etc) control GUI. -->
     <illumination>
       <class_name type="string">Illumination</class_name>
@@ -288,7 +311,7 @@
     </marzhauser_stage>
 
     <!-- Mad City Labs Z piezo -->
-    <none_zstage>
+    <mcl_zstage>
       <module_name type="string">storm_control.sc_hardware.madCityLabs.mclVoltageZModule</module_name>
       <class_name type="string">MCLVoltageZ</class_name>
 
@@ -304,8 +327,8 @@
 	<ao_fn_name type="string">daq.mcl.ao_task</ao_fn_name>
 	<microns_to_volts type="float">0.04</microns_to_volts>
       </configuration>
-    </none_zstage>
-    
+    </mcl_zstage>
+
     <!-- Stage control GUI -->
     <stage>
       <class_name type="string">Stage</class_name>

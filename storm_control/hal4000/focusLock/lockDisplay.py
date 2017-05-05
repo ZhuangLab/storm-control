@@ -219,7 +219,7 @@ class QCamDisplay(QtWidgets.QWidget):
         else:
             self.zoom_image = False
 
-        self.e_size = round(1.5 * data[5] * float(self.width())/float(w))
+        self.e_size = round(1.5 * qpd_data["sigma"] * float(self.width())/float(w))
 
         # Update offsets.
         if (qpd_data["x_off1"] == 0.0):
@@ -367,7 +367,7 @@ class QCamDisplay(QtWidgets.QWidget):
 
     def setFunctionality(self, functionality):
         self.functionality = functionality
-        self.functionality.qpUpdate.connect(self.handleQPDUpdate)
+        self.functionality.qpdUpdate.connect(self.handleQPDUpdate)
 
 
 class QStatusDisplay(QtWidgets.QWidget):

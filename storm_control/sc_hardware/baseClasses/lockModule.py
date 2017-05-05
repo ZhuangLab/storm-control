@@ -31,9 +31,9 @@ class QPDFunctionalityMixin(LockFunctionalityMixin):
     QPDs are expected to return the current offset in
     units of microns.
 
-    A QPD emits one signal:
-    (1) qpdUpdate() - The current QPD state as a 
-        dictionary. {"offset" : offset(microns),
+    A QPD must emit a qpdUpdate signal:
+      qpdUpdate() - The current QPD state as a dictionary. 
+                    {"offset" : offset(microns),
                      "sum" : sum signal (AU),
                      other data..}
     """

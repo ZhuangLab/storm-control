@@ -14,7 +14,7 @@ import storm_control.sc_hardware.baseClasses.lockModule as lockModule
 import storm_control.sc_hardware.thorlabs.uc480Camera as uc480Camera
 
 
-class UC480QPDCameraFunctionality(hardwareModule.BufferedFunctionality, lockModule.QPDFunctionalityMixin):
+class UC480QPDCameraFunctionality(hardwareModule.BufferedFunctionality, lockModule.QPDCameraFunctionalityMixin):
     qpdUpdate = QtCore.pyqtSignal(dict)
 
     def __init__(self, camera = None, reps = None, **kwds):

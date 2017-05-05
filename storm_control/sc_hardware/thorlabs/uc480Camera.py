@@ -387,8 +387,8 @@ class CameraQPD(object):
         self.cam.setFrameRate()
 
         # Some derived parameters
-        self.half_x = self.x_width/2
-        self.half_y = self.y_width/2
+        self.half_x = int(self.x_width/2)
+        self.half_y = int(self.y_width/2)
         self.X = numpy.arange(self.y_width) - 0.5*float(self.y_width)
 
     def adjustAOI(self, dx, dy):
