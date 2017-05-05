@@ -62,7 +62,7 @@ class UC480Camera(hardwareModule.HardwareModule):
         uc480Camera.loadDLL(configuration.get("uc480_dll"))
         self.camera = uc480Camera.CameraQPD(background = configuration.get("background"),
                                             camera_id = configuration.get("camera_id"),
-                                            ini_file = configurtation.get("ini_file"),
+                                            ini_file = configuration.get("ini_file"),
                                             offset_file = configuration.get("offset_file"),
                                             sigma = configuration.get("sigma"),
                                             x_width = configuration.get("x_width"),
@@ -73,7 +73,7 @@ class UC480Camera(hardwareModule.HardwareModule):
                                                                 units_to_microns = configuration.get("units_to_microns"))
 
     def cleanUp(self, qt_settings):
-        self.qpd_functionality.wait()
+        self.camera_functionality.wait()
         self.camera.shutDown()
 
     def getFunctionality(self, message):

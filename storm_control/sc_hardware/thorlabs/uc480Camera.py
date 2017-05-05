@@ -112,7 +112,7 @@ def fitAFunctionLS(data, params, fn):
         good = False
     return [result, good]
 
-def loadDLL(self, dll_name):
+def loadDLL(dll_name):
     global uc480
     if uc480 is None:
         uc480 = ctypes.cdll.LoadLibrary(dll_name)
@@ -244,16 +244,16 @@ class Camera(Handle):
               "is_GetTimeout")
         return pTimeout.value
 
-    def loadParameters(self, file):
+    def loadParameters(self, filename):
         check(uc480.is_LoadParameters(self,
-                                      ctypes.c_char_p(file)))
+                                      ctypes.c_char_p(filename.encode())))
 
-    def saveParameters(self, file):
+    def saveParameters(self, filename):
         """
         Save the current camera settings to a file.
         """
         check(uc480.is_SaveParameters(self,
-                                      ctypes.c_char_p(file)))
+                                      ctypes.c_char_p(filename.encode())))
 
     def setAOI(self, x_start, y_start, width, height):
         # x and y start have to be multiples of 2.
@@ -356,7 +356,7 @@ class CameraQPD(object):
         self.fit_mutex = fit_mutex
         self.fit_size = int(1.5 * sigma)
         self.image = None
-        self.offset_file = None
+        self.offset_file = offset_file
         self.sigma = sigma
         self.x_off1 = 0.0
         self.y_off1 = 0.0
@@ -366,8 +366,7 @@ class CameraQPD(object):
 
         # Add path information to files that should be in the same directory.
         ini_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ini_file)
-        self.offset_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), offset_file)
-        
+
         # Open camera
         self.cam = Camera(camera_id, ini_file = ini_file)
 
