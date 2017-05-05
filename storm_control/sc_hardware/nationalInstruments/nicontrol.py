@@ -39,6 +39,10 @@ class NIDAQTask(PyDAQmx.Task):
         with getLock():
             super().__init__(**kwds)
 
+    def clearTask(self):
+        with getLock():
+            super().ClearTask()
+
     def startTask(self):
         with getLock():
             super().StartTask()

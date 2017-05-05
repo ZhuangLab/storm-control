@@ -32,8 +32,10 @@ class NidaqFunctionality(daqModule.DaqFunctionality):
         """
         super().setFilming(start)
         if start:
-            self.task.stopTask()
-            self.task = None
+            if self.task is not None:
+                self.task.stopTask()
+                self.task.clearTask()
+                self.task = None
         else:
             self.createTask()
 
@@ -43,7 +45,7 @@ class AITaskFunctionality(NidaqFunctionality):
     Asynchronous acquisition of a series of voltages.
     """
     def __init__(self, clock = None, lines = None, n_points = None, sampling_rate = None, **kwds):
-        super().__init__(**kwds):
+        super().__init__(**kwds)
         self.clock = clock
         self.lines = lines
         self.n_points = n_points
@@ -208,7 +210,7 @@ class NidaqModule(daqModule.DaqModule):
             
                 daq_fn_name = ".".join([self.module_name, fn_name, task_name])
                 if (task_name == "ai_task"):
-                    lines = map(strip, task_params.get("lines").split(",")),
+                    lines = list(map(lambda x: x.strip(), task_params.get("lines").split(",")))
                     task = AITaskFunctionality(clock = task_params.get("clock"),
                                                lines = lines,
                                                n_points = task_params.get("n_points"),
@@ -219,7 +221,7 @@ class NidaqModule(daqModule.DaqModule):
                 elif (task_name == "do_task"):
                     task = DOTaskFunctionality(source = task_params.get("source"))
                 elif (task_name == "wv_task"):
-                    lines = map(strip, task_params.get("lines").split(",")),
+                    lines = list(map(lambda x: x.strip(), task_params.get("lines").split(",")))
                     task = WVTaskFunctionality(clock = task_params.get("clock"),
                                                lines = lines,
                                                source = lines[0])
@@ -227,7 +229,7 @@ class NidaqModule(daqModule.DaqModule):
                     raise NidaqModuleException("Unknown task type", task_name)
                 
                 self.daq_fns[daq_fn_name] = task
-                self.daq_fns_by_source[ao_task.getSource()] = task
+                self.daq_fns_by_source[task.getSource()] = task
 
     def filmTiming(self, message):
         """
@@ -408,6 +410,7 @@ class NidaqModule(daqModule.DaqModule):
                 if task is not None:
                     try:
                         task.stopTask()
+                        task.clearTask()
                     except nicontrol.NIException as e:
                         hdebug.logText("stop / clear failed for task " + str(task) + " with " + str(e))
 
@@ -423,5 +426,5 @@ class NidaqModule(daqModule.DaqModule):
             for waveform in self.digital_waveforms:
                 self.daq_fns_by_source[waveform.getSource()].setFilming(False)
 
-        # This free the waveform arrays & reset the oversampling attribute.
+        # This frees the waveform arrays & reset the oversampling attribute.
         super().stopFilm(message)
