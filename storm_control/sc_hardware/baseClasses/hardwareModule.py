@@ -36,6 +36,9 @@ class HardwareWorker(QtCore.QRunnable):
     """
     Primarily this is used by BufferedFunctionality, but it may also 
     be useful by itself for one off communication with hardware.
+
+    Note: These are automatically deleted after use, so if you want
+          to re-use them you need to call setAutoDelete(False).
     """
     def __init__(self, task = None, args = [], **kwds):
         super().__init__(**kwds)
@@ -112,12 +115,15 @@ class BufferedFunctionality(HardwareFunctionality):
             ret_signal.emit(retv)
 
     def start(self, task, args, ret_signal):
-        if not self.running:
-            return
         hw = HardwareWorker(task = self.run,
                             args = [task, args, ret_signal])
-        getThreadPool().start(hw)
+        self.startWorker(hw)
 
+    def startWorker(self, worker):
+        if not self.running:
+            return
+        getThreadPool().start(worker)
+        
     def wait(self):
         """
         Block job submission and wait for the last job to finish.
