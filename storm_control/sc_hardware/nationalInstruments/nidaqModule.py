@@ -91,6 +91,28 @@ class AOTaskFunctionality(NidaqFunctionality):
             self.createTask()
 
 
+class CTTaskFunctionality(NidaqFunctionality):
+    """
+    Counter output.
+    """
+    def __init__(self, frequency = None, **kwds):
+        super().__init__(**kwds)
+        self.frequency = frequency
+
+    def pwmOutput(self, duty_cycle):
+        if self.task is not None:
+            self.task.stopTask()
+            self.task.clearTask()
+            self.task = None
+            
+        if (duty_cycle > 0.0):
+            self.task = nicontrol.CounterOutput(source = self.source,
+                                                frequency = self.frequency,
+                                                duty_cycle = duty_cycle)
+            self.task.setCounter(0)
+            self.task.startTask()
+
+    
 class DOTaskFunctionality(NidaqFunctionality):
     """
     Asynchronous output of a (digital) voltage on a single line.
@@ -154,7 +176,7 @@ class WVTaskFunctionality(daqModule.DaqFunctionality):
             self.task.stopTask()
             self.task = None
         
-    def waveformOut(self, waveforms = None, sample_rate = None, finite = False, rising = True, start = True):
+    def waveformOutput(self, waveforms = None, sample_rate = None, finite = False, rising = True, start = True):
         """
         waveforms is a list of numpy arrays of type numpy.float64 that
         are assumed to be of equal length.
@@ -218,6 +240,9 @@ class NidaqModule(daqModule.DaqModule):
                                                source = lines[0])
                 elif (task_name == "ao_task"):
                     task = AOTaskFunctionality(source = task_params.get("source"))
+                elif (task_name == "ct_task"):
+                    task = CTTaskFunctionality(source = task_params.get("source"),
+                                               frequency = task_params.get("frequency"))
                 elif (task_name == "do_task"):
                     task = DOTaskFunctionality(source = task_params.get("source"))
                 elif (task_name == "wv_task"):
