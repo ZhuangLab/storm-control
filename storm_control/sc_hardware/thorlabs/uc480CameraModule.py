@@ -16,51 +16,66 @@ import storm_control.sc_hardware.baseClasses.lockModule as lockModule
 import storm_control.sc_hardware.thorlabs.uc480Camera as uc480Camera
 
 
-class UC480QPDCameraFunctionality(hardwareModule.BufferedFunctionality, lockModule.QPDCameraFunctionalityMixin):
+class UC480QPDCameraFunctionality(QtCore.QThread, lockModule.QPDCameraFunctionalityMixin):
     qpdUpdate = QtCore.pyqtSignal(dict)
 
     def __init__(self, camera = None, reps = None, **kwds):
         super().__init__(**kwds)
         self.camera = camera
+        self.device_mutex = QtCore.QMutex()
         self.end_time = time.time()
         self.reps = reps
+        self.running = False
 
-        self.scan_worker = hardwareModule.HardwareWorker(task = self.run,
-                                                         args = [self.scan, [], self.qpdUpdate])
-        self.scan_worker.setAutoDelete(False)
+        #self.scan_worker = hardwareModule.HardwareWorker(task = self.run,
+        #                                                 args = [self.scan, [], self.qpdUpdate])
+        #self.scan_worker.setAutoDelete(False)
 
     def adjustAOI(self, dx, dy):
+        return
         self.maybeRun(task = self.camera.adjustAOI,
                       args = [dx, dy])
 
     def adjustZeroDist(self, inc):
+        return
         self.maybeRun(task = self.camera.adjustZeroDist,
                       args = [inc])
 
     def changeFitMode(self, mode):
+        return
         self.mustRun(task = self.camera.changeFitMode,
                      args = [mode])
         
     def getOffset(self):
-        self.startWorker(self.scan_worker)
+        if not self.running:
+            self.start(QtCore.QThread.NormalPriority)
+#        self.startWorker(self.scan_worker)
 
-    def scan(self):
-        start = time.time()
-        print(">time between scans", start - self.end_time)
-        [power, offset] = self.camera.qpdScan(reps = self.reps)[:2]
-        [image, x_off1, y_off1, x_off2, y_off2, sigma] = self.camera.getImage()
-        self.end_time = time.time()
-        print(">scan time", self.end_time - start)
-        print("")
-        return {"offset" : offset * self.units_to_microns,
-                "sum" : power,
-                "image" : image,
-                "sigma" : sigma,
-                "x_off1" : x_off1,
-                "y_off1" : y_off1,
-                "x_off2" : x_off2,
-                "y_off2" : y_off2}
+    def run(self):
+        self.running = True
+        while(self.running):
+            start = time.time()
+            print(">time between scans", start - self.end_time)
+            self.device_mutex.lock()
+            [power, offset] = self.camera.qpdScan(reps = self.reps)[:2]
+            [image, x_off1, y_off1, x_off2, y_off2, sigma] = self.camera.getImage()
+            self.device_mutex.unlock()
+            self.end_time = time.time()
+            print(">scan time", self.end_time - start)
+            print("")
+            self.qpdUpdate.emit({"offset" : offset * self.units_to_microns,
+                                 "sum" : power,
+                                 "image" : image,
+                                 "sigma" : sigma,
+                                 "x_off1" : x_off1,
+                                 "y_off1" : y_off1,
+                                 "x_off2" : x_off2,
+                                 "y_off2" : y_off2})
 
+    def wait(self):
+        self.running = False
+        super().wait()
+        
 
 class UC480Camera(hardwareModule.HardwareModule):
 
