@@ -216,6 +216,13 @@
 	  </do_task>
 	</ilm405>
 
+	<ir_laser>
+	  <ct_task>
+	    <source type="string">/Dev1/ctr0</source>
+	    <frequency type="float">50000</frequency>
+	  </ct_task>
+	</ir_laser>
+	
 	<mcl>
 	  <ao_task>
 	    <source type="string">/Dev1/ao0</source>
@@ -230,7 +237,7 @@
       <class_name type="string">FocusLock</class_name>
       <module_name type="string">storm_control.hal4000.focusLock.focusLock</module_name>
       <configuration>
-	<ir_laser type="string">none_irlaser</ir_laser>
+	<ir_laser type="string">ldc_irlaser</ir_laser>
 	<ir_power type="int">10</ir_power>
 	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,OptimalLockMode,CalibrationLockMode</lock_modes>
 	<qpd type="string">uc480_camera</qpd>
@@ -299,6 +306,16 @@
       </configuration>
     </illumination>
 
+    <!-- Thorlabs LDC control -->
+    <ldc_irlaser>
+      <module_name type="string">storm_control.sc_hardware.thorlabs.LDCModule</module_name>
+      <class_name type="string">LDCIRLaserModule</class_name>
+
+      <configuration>
+	<ct_fn_name type="string">daq.ir_laser.ct_task</ct_fn_name>
+      </configuration>
+    </ldc_irlaser>
+
     <!-- Marzhauzer stage -->
     <marzhauser_stage>
       <module_name type="string">storm_control.sc_hardware.marzhauser.marzhauserModule</module_name>
@@ -361,7 +378,7 @@
 	<uc480_dll type="string">c:/windows/system32/uc480_64.dll</uc480_dll>
 	<x_width type="int">900</x_width>
 	<y_width type="int">50</y_width>
-	<units_to_microns type="float">-1000.0</units_to_microns>
+	<units_to_microns type="float">-1.0</units_to_microns>
       </configuration>
     </uc480_camera>
   </modules>
