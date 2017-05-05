@@ -14,39 +14,61 @@ import storm_control.sc_hardware.baseClasses.lockModule as lockModule
 import storm_control.sc_hardware.thorlabs.uc480Camera as uc480Camera
 
 
-class UC480QPDCameraFunctionality(QtCore.QThread, lockModule.QPDCameraFunctionalityMixin):
+class UC480QPDCameraFunctionality(hardwareModule.BufferedFunctionality, lockModule.QPDCameraFunctionalityMixin):
     qpdUpdate = QtCore.pyqtSignal(dict)
 
     def __init__(self, camera = None, reps = None, **kwds):
         super().__init__(**kwds)
         self.camera = camera
-        self.device_mutex = QtCore.QMutex()
         self.reps = reps
-        self.running = False
-
-        #self.scan_worker = hardwareModule.HardwareWorker(task = self.run,
-        #                                                 args = [self.scan, [], self.qpdUpdate])
-        #self.scan_worker.setAutoDelete(False)
+        self.scan_thread = UC480ScanThread(camera = self.camera,
+                                           device_mutex = self.device_mutex,
+                                           qpd_update_signal = self.qpdUpdate,
+                                           units_to_microns = self.units_to_microns)
 
     def adjustAOI(self, dx, dy):
-        return
         self.maybeRun(task = self.camera.adjustAOI,
                       args = [dx, dy])
 
     def adjustZeroDist(self, inc):
-        return
         self.maybeRun(task = self.camera.adjustZeroDist,
                       args = [inc])
 
     def changeFitMode(self, mode):
-        return
         self.mustRun(task = self.camera.changeFitMode,
                      args = [mode])
         
     def getOffset(self):
+        #
+        # lockControl.LockControl will call this each time the qpdUpdate signal
+        # is emitted, but we only want the thread to get started once.
+        #
         if not self.running:
-            self.start(QtCore.QThread.NormalPriority)
-#        self.startWorker(self.scan_worker)
+            self.scan_thread.startScan()
+
+    def wait(self):
+        super().wait()
+        self.scan_thread.stopScan()
+
+
+class UC480ScanThread(QtCore.QThread):
+    """
+    Handles periodic polling of the camera to determine the current offset. 
+    In testing this approach appeared more performant than starting a new
+    QRunnable for each scan.
+    """
+    def __init__(self,
+                 camera = None,
+                 device_mutex = None,
+                 qpd_update_signal = None,
+                 units_to_microns = None,
+                 **kwds):
+        super().__init__(**kwds)
+        self.camera = camera
+        self.device_mutex = device_mutex
+        self.qpd_update_signal = qpd_update_signal
+        self.running = False
+        self.units_to_microns = units_to_microns
 
     def run(self):
         self.running = True
@@ -55,22 +77,27 @@ class UC480QPDCameraFunctionality(QtCore.QThread, lockModule.QPDCameraFunctional
             [power, offset] = self.camera.qpdScan(reps = self.reps)[:2]
             [image, x_off1, y_off1, x_off2, y_off2, sigma] = self.camera.getImage()
             self.device_mutex.unlock()
-            self.qpdUpdate.emit({"offset" : offset * self.units_to_microns,
-                                 "sum" : power,
-                                 "image" : image,
-                                 "sigma" : sigma,
-                                 "x_off1" : x_off1,
-                                 "y_off1" : y_off1,
-                                 "x_off2" : x_off2,
-                                 "y_off2" : y_off2})
+            self.qpd_update_signal.emit({"offset" : offset * self.units_to_microns,
+                                         "sum" : power,
+                                         "image" : image,
+                                         "sigma" : sigma,
+                                         "x_off1" : x_off1,
+                                         "y_off1" : y_off1,
+                                         "x_off2" : x_off2,
+                                         "y_off2" : y_off2})
 
-    def wait(self):
+    def startScan(self):
+        self.start(QtCore.QThread.NormalPriority)
+
+    def stopScan(self):
         self.running = False
-        super().wait()
-        
+        self.wait()
+            
 
 class UC480Camera(hardwareModule.HardwareModule):
-
+    """
+    HAL module that interfaces with a Thorlabs UC480 camera.
+    """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
         self.camera = None
