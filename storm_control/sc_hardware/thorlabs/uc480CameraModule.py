@@ -5,8 +5,6 @@ UC480 Camera QPD functionality.
 Hazen 04/17
 """
 
-import time
-
 from PyQt5 import QtCore
 
 import storm_control.hal4000.halLib.halMessage as halMessage
@@ -23,7 +21,6 @@ class UC480QPDCameraFunctionality(QtCore.QThread, lockModule.QPDCameraFunctional
         super().__init__(**kwds)
         self.camera = camera
         self.device_mutex = QtCore.QMutex()
-        self.end_time = time.time()
         self.reps = reps
         self.running = False
 
@@ -54,15 +51,10 @@ class UC480QPDCameraFunctionality(QtCore.QThread, lockModule.QPDCameraFunctional
     def run(self):
         self.running = True
         while(self.running):
-            start = time.time()
-            print(">time between scans", start - self.end_time)
             self.device_mutex.lock()
             [power, offset] = self.camera.qpdScan(reps = self.reps)[:2]
             [image, x_off1, y_off1, x_off2, y_off2, sigma] = self.camera.getImage()
             self.device_mutex.unlock()
-            self.end_time = time.time()
-            print(">scan time", self.end_time - start)
-            print("")
             self.qpdUpdate.emit({"offset" : offset * self.units_to_microns,
                                  "sum" : power,
                                  "image" : image,
