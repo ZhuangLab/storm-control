@@ -538,9 +538,9 @@ class CameraQPD(object):
             if (total_good == 0):
                 offset = 0
             elif (total_good == 1):
-                offset = ((dist1 + dist2) - 0.5*self.zero_dist)*power 
+                offset = ((dist1 + dist2) - 0.5*self.zero_dist)
             else:
-                offset = ((dist1 + dist2) - self.zero_dist)*power
+                offset = ((dist1 + dist2) - self.zero_dist)
 
             return [power, offset, 0]
 
@@ -578,9 +578,9 @@ class CameraQPD(object):
             if (total_good == 0):
                 offset = 0
             elif (total_good == 1):
-                offset = ((dist1 + dist2) - 0.5*self.zero_dist)*power
+                offset = ((dist1 + dist2) - 0.5*self.zero_dist)
             else:
-                offset = ((dist1 + dist2) - self.zero_dist)*power
+                offset = ((dist1 + dist2) - self.zero_dist)
 
             # The moment calculation is too fast. This is to slow things
             # down so that (hopefully) the camera doesn't freeze up.
