@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'lockdisplay.ui'
 #
-# Created by: PyQt5 UI code generator 5.7
+# Created by: PyQt5 UI code generator 5.8.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -35,9 +35,10 @@ class Ui_GroupBox(object):
         self.offsetFrame.setObjectName("offsetFrame")
         self.verticalLayout.addWidget(self.offsetFrame, 0, QtCore.Qt.AlignHCenter)
         self.offsetText = QtWidgets.QLabel(GroupBox)
+        self.offsetText.setMaximumSize(QtCore.QSize(50, 16777215))
         self.offsetText.setAlignment(QtCore.Qt.AlignCenter)
         self.offsetText.setObjectName("offsetText")
-        self.verticalLayout.addWidget(self.offsetText)
+        self.verticalLayout.addWidget(self.offsetText, 0, QtCore.Qt.AlignHCenter)
         self.horizontalLayout_3.addLayout(self.verticalLayout)
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
         self.verticalLayout_2.setObjectName("verticalLayout_2")
@@ -59,9 +60,10 @@ class Ui_GroupBox(object):
         self.sumFrame.setObjectName("sumFrame")
         self.verticalLayout_2.addWidget(self.sumFrame, 0, QtCore.Qt.AlignHCenter)
         self.sumText = QtWidgets.QLabel(GroupBox)
+        self.sumText.setMaximumSize(QtCore.QSize(50, 16777215))
         self.sumText.setAlignment(QtCore.Qt.AlignCenter)
         self.sumText.setObjectName("sumText")
-        self.verticalLayout_2.addWidget(self.sumText)
+        self.verticalLayout_2.addWidget(self.sumText, 0, QtCore.Qt.AlignHCenter)
         self.horizontalLayout_3.addLayout(self.verticalLayout_2)
         self.verticalLayout_3 = QtWidgets.QVBoxLayout()
         self.verticalLayout_3.setObjectName("verticalLayout_3")
@@ -84,9 +86,10 @@ class Ui_GroupBox(object):
         self.zFrame.setObjectName("zFrame")
         self.verticalLayout_3.addWidget(self.zFrame, 0, QtCore.Qt.AlignHCenter)
         self.zText = QtWidgets.QLabel(GroupBox)
+        self.zText.setMaximumSize(QtCore.QSize(50, 16777215))
         self.zText.setAlignment(QtCore.Qt.AlignCenter)
         self.zText.setObjectName("zText")
-        self.verticalLayout_3.addWidget(self.zText)
+        self.verticalLayout_3.addWidget(self.zText, 0, QtCore.Qt.AlignHCenter)
         self.horizontalLayout_3.addLayout(self.verticalLayout_3)
         self.verticalLayout_4 = QtWidgets.QVBoxLayout()
         self.verticalLayout_4.setObjectName("verticalLayout_4")
