@@ -172,8 +172,9 @@ class WVTaskFunctionality(daqModule.DaqFunctionality):
         """
         Stop the waveform task and delete it, if it exists.
         """
-        if self.task:
+        if self.task is not None:
             self.task.stopTask()
+            self.task.clearTask()
             self.task = None
         
     def waveformOutput(self, waveforms = None, sample_rate = None, finite = False, rising = True, start = True):
