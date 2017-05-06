@@ -1,270 +1,155 @@
-#!/usr/bin/python
-#
-## @file
-#
-# The galvo control UI.
-#
-# Jeff Moffitt 11/15
-#
+#!/usr/bin/env python
+"""
+The galvo control UI. Actual control of the hardware is
+provided by a waveform functionality from the DAQ.
 
-import numpy as np
+Jeff Moffitt 11/15
+Hazen Babcock 05/17
+"""
+
+import fractions
+import numpy
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
-import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
-
+import storm_control.hal4000.halLib.halDialog as halDialog
+import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
-# National instruments control
-import storm_control.sc_hardware.nationalInstruments.nicontrol as nicontrol
 
-# Debugging
-import storm_control.sc_library.hdebug as hdebug
-
-# UIs.
+# UI.
 import storm_control.hal4000.qtdesigner.galvo_ui as galvoUi
 
-## GavloControl
-#
-# Galvo Control Dialog Box
-#
-# This is the UI for controlling a set of galvonometer mirrors.
-# In its general form, this class could control any sort of XY scan system.
-#
-class GalvoControl(QtWidgets.QDialog, halModule.HalModule):
 
-    ## __init__
-    #
-    # @param parameters A parameters object.
-    # @param parent The PyQt parent of this object.
-    #
-    @hdebug.debug
-    def __init__(self, hardware, parameters, parent):
-        QtWidgets.QMainWindow.__init__(self, parent)
-        halModule.HalModule.__init__(self)
+class GalvoView(halDialog.HalDialog):
+    """
+    Manages the galvo GUI.
+    """
+    def __init__(self, configuration = None, **kwds):
+        super().__init__(**kwds)
+        self.sampling_rate = configuration.get("sampling_rate")
+        self.scan_fn = None
 
-        # Define default values
-        self.x_offset = 0.0
-        self.y_offset = 0.0
-        self.x_amp = 1.0
-        self.y_amp = 1.0
-        self.x_freq = 1000.0 # In Hz
-        self.y_freq = 1000.0 # In Hz
-        self.running = False
-        self.run_during_film = False
-
-        self.home_voltage = [0.0, 0.0]
-
-        self.output_limits = [-10.0, 10.0]
-        self.sampleRate = 2500.0 # In Hz
-        
-        self.ni_task = False
-
-        # Initialize waveform
-        self.waveform = False
-
-        # update parameters
-        self.parameters = parameters
-        
-        if parent:
-            self.have_parent = True
-        else:
-            self.have_parent = False
-
-        # UI setup
         self.ui = galvoUi.Ui_Dialog()
         self.ui.setupUi(self)
-        self.setWindowTitle(parameters.get("setup_name") + " Galvo Control")
-        self.setWindowIcon(qtAppIcon.QAppIcon())
 
-        # Connect signals.
-        if self.have_parent:
-            self.ui.okButton.setText("Close")
-            self.ui.okButton.clicked.connect(self.handleOk)
-        else:
-            self.ui.okButton.setText("Quit")
-            self.ui.okButton.clicked.connect(self.handleQuit)
+        self.ui.xAmplitudeSpinBox.setValue(configuration.get("x_amp"))
+        self.ui.yAmplitudeSpinBox.setValue(configuration.get("y_amp"))
+        self.ui.xFrequencySpinBox.setValue(configuration.get("x_freq"))
+        self.ui.yFrequencySpinBox.setValue(configuration.get("y_freq"))
+        self.ui.xOffsetSpinBox.setValue(configuration.get("x_offset"))
+        self.ui.yOffsetSpinBox.setValue(configuration.get("y_offset"))
 
         self.ui.activateButton.setText("Run")
         self.ui.activateButton.clicked.connect(self.handleActivate)
 
-        # set modeless
-        self.setModal(False)
+        self.setEnabled(False)
 
-        # Update display
-        self.updateDisplay()
-
-        # Initialize to home voltage
-        nicontrol.setAnalogLine("USB-6002", 0, self.home_voltage[0])
-        nicontrol.setAnalogLine("USB-6002", 1, self.home_voltage[1])
-
-    ## cleanup
-    #
-    @hdebug.debug
-    def cleanup(self):
-        pass
-        # This will need to eventually close the ni task
-
-    def coerceToRange(self, waveform):
-        # UNDER CONSTRUCTION
-
-        return waveform
-
-    ## handleOk
-    #
-    # Hide the window.
-    #
-    # @param bool Dummy parameter.
-    #
-    @hdebug.debug
-    def handleOk(self, bool):
-        self.hide()
-
-    ## handleOk
-    #
-    # Handle press of the activate button.
-    #
-    # @param bool Dummy parameter.
-    #
-    @hdebug.debug
-    def handleActivate(self, bool):
+    def handleActivate(self, boolean):
         if self.running:
             self.ui.activateButton.setText("Run")
             self.toggleControls(True)
-            self.stopTask()
+            self.stopScan()
         else:
             self.ui.activateButton.setText("Stop")
-            self.updateParameters()
             self.toggleControls(False)
-            self.startTask()
+            self.startScan()
 
-    ## updateDisplay
-    #
-    # Update the display values to reflect the internal values of the class
-    #
-    # @param bool Dummy parameter.
-    #
-    def updateDisplay(self):
-        self.ui.xOffsetSpinBox.setValue(self.x_offset)
-        self.ui.yOffsetSpinBox.setValue(self.y_offset)
-        self.ui.xAmplitudeSpinBox.setValue(self.x_amp)
-        self.ui.yAmplitudeSpinBox.setValue(self.y_amp)
-        self.ui.xFrequencySpinBox.setValue(self.x_freq)
-        self.ui.yFrequencySpinBox.setValue(self.y_freq)
+    def setFunctionality(self, scan_functionality):
+        self.scan_fn = scan_functionality
+        self.setEnabled(True)
 
-    ## toggleControls
-    #
-    # Enable or disable controls to allow the user to change these only when the mirrors are not running
-    #
-    # @param bool Dummy parameter.
-    #
-    def toggleControls(self, isEnabled):
-        self.ui.xAmplitudeSpinBox.setEnabled(isEnabled)
-        self.ui.xOffsetSpinBox.setEnabled(isEnabled)
-        self.ui.xFrequencySpinBox.setEnabled(isEnabled)
-        self.ui.yAmplitudeSpinBox.setEnabled(isEnabled)
-        self.ui.yOffsetSpinBox.setEnabled(isEnabled)
-        self.ui.yFrequencySpinBox.setEnabled(isEnabled)
+    def startScan(self):
+        """
+        Start scanning the mirrors in a sinusoidal pattern.
+        """
+        x_amp = self.ui.xAmplitudeSpinBox.value()
+        x_freq = self.ui.xFrequencySpinBox.value()
+        x_offset = self.ui.xOffsetSpinBox.value()
+        
+        y_amp = self.ui.yAmplitudeSpinBox.value()
+        y_freq = self.ui.yFrequencySpinBox.value()
+        y_offset = self.ui.yOffsetSpinBox.value()
 
-    ## updateParameters
-    #
-    # Update the internal values to match the display values
-    #
-    # @param bool Dummy parameter.
-    #
-    def updateParameters(self):
-        self.x_offset = self.ui.xOffsetSpinBox.value()
-        self.y_offset = self.ui.yOffsetSpinBox.value()
-        self.x_amp = self.ui.xAmplitudeSpinBox.value()
-        self.y_amp = self.ui.yAmplitudeSpinBox.value()
-        self.x_freq = self.ui.xFrequencySpinBox.value()
-        self.y_freq = self.ui.yFrequencySpinBox.value()    
-
-    ## startTask
-    #
-    # Build the waveforms and start the mirrors
-    #
-    # @param bool Dummy parameter.
-    #
-    def startTask(self):
-        # Create NI analog tasks
-        self.ni_task = nicontrol.AnalogWaveformOutput("USB-6002", 0)
-        self.ni_task.addChannel("USB-6002", 1)
-
-        # Identify the longest period and use as the length of the buffer: NOTE: the higher frequency must be a multiple of the lowest
-        duration = max(1/self.x_freq, 1/self.y_freq)
-        time = np.arange(0, duration, 1/self.sampleRate)
+        #
+        # Note: This is different from the original versions behavior because
+        #       I think the old version would have created waveforms with steps
+        #       in them if x_freq was not a multiple of y_freq (or vice-versa).
+        #
+        #       This version might lead to huge waveforms?
+        #
+        #       (HB 5/17).
+        #
+        freq = int((x_freq * y_freq)/fractions.gcd(x_freq, y_freq))
+        time = numpy.arange(0.0, 1.0/freq, 1.0/self.sampling_rate)
 
         # Create waveforms
-        wave_x = self.x_offset + self.x_amp * np.sin(2 * np.pi * self.x_freq * time)
-        wave_y = self.y_offset + self.y_amp * np.sin(2 * np.pi * self.y_freq * time)
-        self.waveform = self.coerceToRange(np.concatenate((wave_x, wave_y)))
+        wave_x = x_offset + x_amp * numpy.sin(2 * numpy.pi * x_freq * time)
+        wave_y = y_offset + y_amp * numpy.sin(2 * numpy.pi * y_freq * time)
 
-        # Send waveform to ni card
-        self.ni_task.setWaveform(self.waveform, self.sampleRate, clock = "ctr0out")
-
-        # Start task
-        self.ni_task.startTask()
-
-        self.running = True
-
-    ## stopTask
-    #
-    # Stop the task
-    #
-    # @param bool Dummy parameter.
-    #
-    def stopTask(self):
-        # Stop current task
-        self.ni_task.stopTask()
-        self.ni_task.clearTask()
-
-        # Return to home voltage
-        nicontrol.setAnalogLine("USB-6002", 0, self.home_voltage[0])
-        nicontrol.setAnalogLine("USB-6002", 1, self.home_voltage[1])
-
-        # Update internal state
-        self.running = False
-
-    ## handleQuit
-    #
-    # Close the window.
-    #
-    # @param bool Dummy parameter.
-    #
-    @hdebug.debug
-    def handleQuit(self, bool):
-        if self.running:
-            self.stopTask()
-        self.close()
-
-    ## closeEvent
-    #
-    # Close the dialog if it has no parent, otherwise just hide it.
-    #
-    # @param event A PyQt event.
-    #
-    @hdebug.debug
-    def closeEvent(self, event):
-        if self.have_parent:
-            event.ignore()
-            self.hide()
-
-    ## newParameters
-    #
-    # Called when a new set of parameters is chosen.
-    #
-    # @param parameters A parameters object.
-    #
-    @hdebug.debug
-    def newParameters(self, parameters):
-        pass
-
+        self.scan_fn.waveformOutput(waveforms = [wave_x, wave_y],
+                                    sample_rate = self.sampling_rate)
         
+    def stopScan(self):
+        """
+        Stop moving the mirrors & return to zero position.
+        """
+        self.scan_fn.analogOut([self.ui.xOffsetSpinBox.value(),
+                                self.ui.yOffsetSpinBox.value()])
+
+    def toggleControls(self, isEnabled):
+        """
+        Enable or disable controls to allow the user to 
+        change these only when the mirrors are not running.
+        """
+        self.ui.xAmplitudeSpinBox.setEnabled(is_enabled)
+        self.ui.xOffsetSpinBox.setEnabled(is_enabled)
+        self.ui.xFrequencySpinBox.setEnabled(is_enabled)
+        self.ui.yAmplitudeSpinBox.setEnabled(is_enabled)
+        self.ui.yOffsetSpinBox.setEnabled(is_enabled)
+        self.ui.yFrequencySpinBox.setEnabled(is_enabled)        
+
+
+class Galvo(halModule.HalModule):
+
+    def __init__(self, module_params = None, qt_settings = None, **kwds):
+        super().__init__(**kwds)
+        self.configuration = module_params.get("configuration")
+
+        self.view = GalvoView(module_name = self.module_name,
+                              configuration = module_params.get("configuration"))
+        self.view.halDialogInit(qt_settings,
+                                module_params.get("setup_name") + " galvo control")
+
+    def cleanUp(self, qt_settings):
+        self.view.cleanUp(qt_settings)
+
+    def handleResponse(self, message, response):
+        if message.isType("get functionality"):
+            self.view.setFunctionality(response.getData()["functionality"])
+
+    def processMessage(self, message):
+
+        if message.isType("configure1"):
+            self.sendMessage(halMessage.HalMessage(m_type = "add to menu",
+                                                   data = {"item name" : "Galvo Control",
+                                                           "item data" : "galvo control"}))
+
+            self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
+                                                   data = {"name" : self.configuration.get("scan_fn")}))
+
+        elif message.isType("show"):
+            if (message.getData()["show"] == "focus lock"):
+                self.view.show()            
+
+        elif message.isType("start"):
+            if message.getData()["show_gui"]:
+                self.view.showIfVisible()
+
+
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2017 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

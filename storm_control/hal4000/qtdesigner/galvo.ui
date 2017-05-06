@@ -70,22 +70,6 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="0">
-         <widget class="QDoubleSpinBox" name="xFrequencySpinBox">
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-          <property name="minimum">
-           <double>0.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>2500.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.010000000000000</double>
-          </property>
-         </widget>
-        </item>
         <item row="2" column="1">
          <widget class="QLabel" name="xFrequencyLabel">
           <property name="text">
@@ -106,6 +90,16 @@
           </property>
           <property name="singleStep">
            <double>0.010000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QSpinBox" name="xFrequencySpinBox">
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="maximum">
+           <number>100000</number>
           </property>
          </widget>
         </item>
@@ -164,26 +158,20 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="0">
-         <widget class="QDoubleSpinBox" name="yFrequencySpinBox">
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-          <property name="minimum">
-           <double>0.000000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>2500.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.010000000000000</double>
-          </property>
-         </widget>
-        </item>
         <item row="2" column="1">
          <widget class="QLabel" name="yFrequencyLabel">
           <property name="text">
            <string>Frequency (Hz)</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QSpinBox" name="yFrequencySpinBox">
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="maximum">
+           <number>100000</number>
           </property>
          </widget>
         </item>
@@ -204,6 +192,9 @@
        </property>
        <property name="text">
         <string>Activate</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
        </property>
       </widget>
      </item>

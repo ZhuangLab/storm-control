@@ -254,6 +254,22 @@
 	</parameters>
       </configuration>
     </focuslock>
+
+    <!-- Galvo control GUI. -->
+    <galvo>
+      <class_name type="string">Galvo</class_name>
+      <module_name type="string">storm_control.hal4000.miscControl.galvoControl</module_name>
+      <configuration>
+	<x_amp type="float">1.0</x_amp>
+	<x_freq type="int">1000</x_freq>
+	<x_offset type="float">0.0</x_offset>
+	<y_amp type="float">1.0</y_amp>
+	<y_freq type="int">1000</y_freq>
+	<y_offset type="float">0.0</y_offset>
+	<scan_fn type="string">daq.galvo.wv_task</scan_fn>
+	<sampling_rate></sampling_rate>
+      </configuration>
+    </galvo>
     
     <!-- Illumination (lasers, shutters, etc) control GUI. -->
     <illumination>
