@@ -1,5 +1,5 @@
 
-(0) Create a virtual environment to run HAL in. Among other advantages
+(1) Create a virtual environment to run HAL in. Among other advantages
     this will isolate different versions of HAL from each other.
 
     1. http://python-guide-pt-br.readthedocs.io/en/latest/dev/virtualenvs/
@@ -8,9 +8,9 @@
     Note: Link (2) above describes the best way to create the virtual
           environment on windows.
 
-(1) Install Dependencies:
+(2) Install Dependencies:
  (a) Mingw (only if you need to compile C libraries)
- (b) Python3 (64 bit is best)
+ (b) Python3 (64 bit is preferred)
  (c) PyQt5
  (d) pywin32
  (e) numpy
@@ -19,11 +19,11 @@
  (h) PyBluez (for bluetooth / android)
  (i) Pillow (or PIL).
 
-(2-3) Note: You should be able to skip the next two steps if you
+(3-4) Note: You should be able to skip the next two steps if you
  are running 64 bit windows as the compiled files are now included in
  the project.
 
-(2) Compile UI elements (in the qtdesigner folder):
+(3) Compile UI elements (in the qtdesigner folder):
  With PyQt you should get a program installed called pyuic.py. This
  should be in your path if you are using a virtual environment and
  it is activated.
@@ -47,19 +47,19 @@
        detached mode you will need to compile the 'detached' ui
        elements.
 
-(3) Compile C helper libraries:
+(4) Compile C helper libraries:
  Instructions on how to compile the libraries are in the library headers.
  (a) hal4000/halLib/c_image_manipulation.c (for Hamamatsu sCMOS camera).
  (b) hal4000/objectFinder/LMMoment.c (for the spot counter).
  (d) hal4000/focusLock/focus_quality.c (for optimal focus lock mode)
 
 
-(4) Add the storm_control directory to your Python path by placing a .pth file in 
+(5) Add the storm_control directory to your Python path by placing a .pth file in 
  the python site-packages directory, e.g. venv_dir/lib/site-packages.
  An example .pth file is included as hal4000/storm_control.pth.  
  
  
-(5) Create data & logs directories:
+(6) Create data & logs directories:
  The default directory for saving data is "c:\Data\". You can change
  this is in settings xml file. You will also need to create a sub-directory
  of the default directory called "logs", which is where hal (and the other
@@ -67,24 +67,20 @@
  directory the full path for the log files is "c:\Data\logs\".
 
 
-(6) Verify that the software works:
- The settings_default.xml file contains some of the options related to
- program setup and etc. As a first step to verify that the software runs
- absent any hardware issues do the following:
-
- (a) Set setup_name to none
-
- Then, in the folder where the hal-4000.py file is located type 
- "python hal-4000.py xml/none_config.xml" to run the program. With these
- settings the software should start without any warning messages and display
- a simple pattern in the camera view area.
+(7) Verify that the software works:
+ In the folder where the hal-4000.py file is located type: 
+ "python hal-4000.py xml/none_config.xml"
+ 
+ This will run HAL in emulation mode. In this configuration the software
+ should start without any warning messages and display a simple pattern
+ in the camera view area.
 
  xml/none_config.xml specifies how to configure HAL to run the 'none' (or
  emulated) setup. Other example configurations can be found in the
  hal4000/xml directory.
 
 
-(7) Modifying to work with your hardware:
+(8) Modifying to work with your hardware:
  This is the hard part as it is of course hardware dependent. Python classes
  for control of the hardware that is available in our lab can be found in
  folders that are named (more or less) by the manufacturer of the hardware.
