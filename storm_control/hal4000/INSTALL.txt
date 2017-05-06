@@ -1,8 +1,17 @@
 
+(0) Create a virtual environment to run HAL in. Among other advantages
+    this will isolate different versions of HAL from each other.
+
+    1. http://python-guide-pt-br.readthedocs.io/en/latest/dev/virtualenvs/
+    2. https://www.riverbankcomputing.com/pipermail/pyqt/2017-March/039032.html
+
+    Note: Link (2) above describes the best way to create the virtual
+          environment on windows.
+
 (1) Install Dependencies:
  (a) Mingw (only if you need to compile C libraries)
- (b) Python
- (c) PyQt
+ (b) Python3 (64 bit is best)
+ (c) PyQt5
  (d) pywin32
  (e) numpy
  (f) scipy (for the optimal focus lock mode)
@@ -15,10 +24,9 @@
  the project.
 
 (2) Compile UI elements (in the qtdesigner folder):
- With PyQt you should get a program installed called pyuic.py. Typically
- it can be found in PythonXY\lib\site-packages\pyqt4\uic\. You use it
- like this pyuic.py asdf.ui > asdf.py. You'll need to compile all of the
- following:
+ With PyQt you should get a program installed called pyuic.py. This
+ should be in your path if you are using a virtual environment and
+ it is activated.
 
  (a) camera-params.ui > camera_params_ui.py
  (b) camera-display.ui > camera_display_ui.py
@@ -29,29 +37,26 @@
  (g) spotcounter.ui > spotcounter_ui.py
  (h) stage.ui > stage_ui.py
  (i) progression.ui > progression_ui.py
+ (j) feed-viewer.ui > feed_viewer_ui.py
+ (k) film.ui > film_ui.py
+ (l) settings.ui > settings_ui.py
+ 
+ ..
 
- If you plan to use the detached camera view, or two cameras you will
- also need to compile these files:
- (a) hal4000-detached.ui > hal4000_detached_ui.py
- (b) camera-detached.ui > camera_detached_ui.py
- (c) camera-params-detached.ui > camera_params_detached_ui.py
-
+ Note: The above list may not be complete. And if you are using
+       detached mode you will need to compile the 'detached' ui
+       elements.
 
 (3) Compile C helper libraries:
  Instructions on how to compile the libraries are in the library headers.
- (a) sc_hardware/hamamatsu/scmos_image_manipulation.c (for Hamamatsu sCMOS camera).
- (b) objectFinder/LMMoment.c (for the spot counter).
- (c) phreshPhotonics/averager.c (only if you are using their QPD).
- (d) sc_hardware/focusLock/focus_quality.c (for optimal focus lock mode)
+ (a) hal4000/halLib/c_image_manipulation.c (for Hamamatsu sCMOS camera).
+ (b) hal4000/objectFinder/LMMoment.c (for the spot counter).
+ (d) hal4000/focusLock/focus_quality.c (for optimal focus lock mode)
 
 
 (4) Add the storm_control directory to your Python path by placing a .pth file in 
- the python install directory, e.g. C:\Python27\. 
- An example .pth file is included under hal4000\storm_control.pth.  
-
- Note: This is no longer necessary if you only run hal, dave or steve as they
- will automatically configure the Python path. However it can still be
- convenient as this will let you run many of the other modules independently.
+ the python site-packages directory, e.g. venv_dir/lib/site-packages.
+ An example .pth file is included as hal4000/storm_control.pth.  
  
  
 (5) Create data & logs directories:
@@ -70,29 +75,26 @@
  (a) Set setup_name to none
 
  Then, in the folder where the hal-4000.py file is located type 
- "python hal-4000.py" to run the program. With these settings the software 
- should start without any warning messages and display a simple pattern in 
- the camera view area.
+ "python hal-4000.py xml/none_config.xml" to run the program. With these
+ settings the software should start without any warning messages and display
+ a simple pattern in the camera view area.
 
- This will use the parameters from the none_default.xml file. Other example
- parameter files are labeled prism2_default.xml storm3_default.xml, etc..
+ xml/none_config.xml specifies how to configure HAL to run the 'none' (or
+ emulated) setup. Other example configurations can be found in the
+ hal4000/xml directory.
 
 
 (7) Modifying to work with your hardware:
  This is the hard part as it is of course hardware dependent. Python classes
  for control of the hardware that is available in our lab can be found in
  folders that are named (more or less) by the manufacturer of the hardware.
+
+ You will need to write / modify one of the existing config.xml file so that
+ it describes how to control your hardware. An important concept here is the
+ idea of functionalities. These are (typically) provided by hardware
+ modules and used by GUI modules. A DAQ board for example may provide a
+ number of different functionalities that other modules can use to control
+ the analog/digital lines that the DAQ provides.
  
- In addition there are the following folders:
- (1) camera - Classes for camera control, image display & parameter display.
- (2) focuslock - Classes for focus lock control.
- (3) illumination - Classes for illumination & shuttering.
- (4) stagecontrol - Classes for controlling a motorized XY stage.
- (5) miscControl - Classes for controlling various miscellaneous hardware
-        such as filter wheels.
-
- In these folders you will see files/Classes that start with a machine name, 
- e.g. storm3IlluminationControl or noneIlluminationControl. You will probably
- need to create your own version of the files specialized to interface with 
- your specific hardware.
-
+ In addition, some of the hardware may not have been updated to work in the
+ current version of HAL so some actual programming may be necessary.
