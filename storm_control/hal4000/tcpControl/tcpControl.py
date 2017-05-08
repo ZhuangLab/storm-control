@@ -1,67 +1,86 @@
-#!/usr/bin/python
-#
-## @file 
-#
-# Handles remote control (via TCP/IP of the data collection program)
-#
-# Hazen 02/14
-#
+#!/usr/bin/env python
+"""
+Handles remote control (via TCP/IP of the data collection program)
 
+Hazen 05/17
+"""
+
+from PyQt5 import QtCore
+
+import storm_control.sc_library.tcpServer as tcpServer
+
+import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
-import storm_control.sc_library.hdebug as hdebug
-from storm_control.sc_library.tcpServer import TCPServer
 
-## TCP/IP Control Class
-#
-# To allow only one connection at a time from the local computer
-# the server is closed once the connection is made. When the
-# connection is broken the server is opened again.
-#
-class HalTCPControl(TCPServer, halModule.HalModule):
+class Controller(QtCore.QObject):
+    """
+    . . . 
+    """
+    controlMessage = QtCore.pyqtSignal(object)
+    
+    def __init__(self, server = None, **kwds):
+        super().__init__(**kwds)
+        self.server = server
+        self.focuslock_functionality = None
+        self.progression_functionality = None
+        self.stage_functionality = None
 
-    ## __init__
-    #
-    # Create the TCPControl object, listening on the port specified by 
-    # port. This is supposed to only accept connections from processes
-    # on the same computer.
-    #
-    # @param hardware A hardware object.
-    # @param parameters A parameters object.
-    # @param parent The PyQt parent.
-    #
-    def __init__(self, hardware, parameters, parent):
-        TCPServer.__init__(self,
-                           port = hardware.get("tcp_port"),
-                           server_name = "Hal",
-                           parent = parent,
-                           verbose = False)
-        halModule.HalModule.__init__(self)
+        self.server.comGotConnection.connect(self.handleNewConnection)
+        self.server.comLostConnection.connect(self.handleLostConnection)
+        self.server.messageReceived.connect(self.handleMessageReceived)
 
-    ## connectSignals
-    #
-    # @param signals An array of signals that we might be interested in connecting to.
-    #
-    @hdebug.debug
-    def connectSignals(self, signals):
-        for signal in signals:
-            if (signal[1] == "tcpComplete"):
-                signal[2].connect(self.sendMessage)
+    def handleLostConnection(self):
+        pass
 
-    ## getSignals
-    #
-    # @return The signals this module provides.
-    #
-    @hdebug.debug
-    def getSignals(self):
-        return [[self.hal_type, "commGotConnection", self.comGotConnection],
-                [self.hal_type, "commLostConnection", self.comLostConnection],
-                [self.hal_type, "commMessage", self.messageReceived]]
+    def handleMessageReceived(self, message):
+        """
+        TCP message handling.
+        """
+        print(">hmr")
+        print(message)
+        print("")
+    
+    def handleNewConnection(self):
+        pass
+
+    def setFunctionality(self, name, functionality):
+        if (name == "focuslock"):
+            self.focuslock_functionality = functionality
+        elif (name == "progression"):
+            self.progression_functionality = functionality
+        elif (name == "stage"):
+            self.stage_functionality = functionality
+        
+
+class TCPControl(halModule.HalModule):
+    """
+    HAL TCP control module.
+    """
+    def __init__(self, module_params = None, qt_settings = None, **kwds):
+        super().__init__(**kwds)
+
+        configuration = module_params.get("configuration")
+        server = tcpServer.TCPServer(port = configuration.get("tcp_port"),
+                                     server_name = "Hal",
+                                     parent = self)
+        self.control = Controller(server = server,
+                                  parent = self)
+        self.control.controlMessage.connect(self.handleControlMessage)
+
+    def handleControlMessage(self, message):
+        self.sendMessage(message)
+        
+    def processMessage(self, message):
+
+        if message.isType("configure1"):
+            pass
+        
 
 #
 # The MIT License
 #
-# Copyright (c) 2014 Zhuang Lab, Harvard University
+# Copyright (c) 2017 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
