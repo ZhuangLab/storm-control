@@ -196,6 +196,7 @@ class SpinCamera(object):
         self.h_camera = h_camera
         self.im_event = None
         self.properties = {}
+        self.verbose = True
 
         # Initialize.
         checkErrorCode(spindll.spinCameraInit(self.h_camera), "spinCameraInit")
@@ -357,6 +358,8 @@ class SpinCamera(object):
         if not pname in self.properties:
             raise SpinnakerExceptionNotFound("Property " + pname + " not in cache, cannot be set.")
 
+        if self.verbose:
+            print(">spinnaker setProperty", pname)
         self.properties[pname].spinNodeSetValue(pvalue)
 
     def shutdown(self):
