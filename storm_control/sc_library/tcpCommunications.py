@@ -1,112 +1,94 @@
-#!/usr/bin/python
-#
-## @file 
-#
-# A TCP communications class that provides the basic methods for relaying TCP messages.
-#
-# Jeffrey Moffitt
-# 3/16/14
-# jeffmoffitt@gmail.com
-#
-# Hazen 05/14
-#
+#!/usr/bin/env python
+"""
+A TCP communications class that provides the basic methods for relaying TCP messages.
+
+Jeffrey Moffitt
+3/16/14
+jeffmoffitt@gmail.com
+
+Hazen 05/14
+"""
 
 from PyQt5 import QtCore, QtNetwork
 
 from storm_control.sc_library.tcpMessage import TCPMessage
 
-## TCPCommunications
-#
-# An abstract class used to define the basic process of exchanging TCP messages. Client and
-# servers should be inherited from this class.
-#
-class TCPCommunications(QtCore.QObject):
-    messageReceived = QtCore.pyqtSignal(object) # Relay received TCP messages.
 
-    ## __init__
-    #
-    # Constructor for this class.
-    #
-    # @param parent A reference to an owning class.
-    # @param port The TCP/IP port for communication.
-    # @param server_name A string name for the communication server.
-    # @param address An address for the TCP/IP communication. Defaults to the local machine.
-    # @param verbose A boolean controlling the verbosity of the class.
-    #
+class TCPCommunicationsMixin(object):
+    """
+    A mixin class that defines the basic process of exchanging TCP 
+    messages. Client and servers (multi-) inherit this class.
+
+    They will should also include the following signal:
+    messageReceived = QtCore.pyqtSignal(object)
+    """
     def __init__(self,
-                 port=9500,
-                 server_name = "default",
                  address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
-                 parent = None,
-                 verbose = False):
-        QtCore.QObject.__init__(self)
-        
+                 encoding = 'utf-8',
+                 port = 9500,
+                 server_name = "default",
+                 verbose = False,
+                 **kwds):
+        super().__init__(**kwds)
+
         # Initialize internal attributes
         self.address = address
+        self.encoding = encoding
         self.port = port 
         self.server_name = server_name
         self.socket = None
         self.verbose = verbose
     
-    ## close
-    #
-    # Close the socket
-    #
     def close(self):
+        """
+        Close the socket.
+        """
         if self.socket:
             self.socket.close()
             if self.verbose:
                 print("Closing TCP communications: " + self.server_name)
             
-    ## handleBusy
-    #
-    # Handle a busy message. Reserved for future use.
-    #
     def handleBusy(self):
+        """
+        Handle a busy message. Reserved for future use.
+        """
         pass
 
-    ## handleReadyRead
-    #
-    # Create TCP message class from JSON message and forward as appropriate
-    #
     def handleReadyRead(self):
+        """
+        Create TCP message class from JSON message and forward as appropriate
+        """
         message_str = ""
         while self.socket.canReadLine():
             # Read data line
-            message_str += str(self.socket.readLine(), 'ascii')
+            message_str += str(self.socket.readLine(), self.encoding)
 
         # Create message.
         message = TCPMessage.fromJSON(message_str)
         if self.verbose:
             print("Received: \n" + str(message))
 
-        if message.getType() == "Busy":
+        if (message.getType() == "Busy"):
             self.handleBusy()
         else:
             self.messageReceived.emit(message)
     
-    ## isConnected
-    #
-    # Return true if the socket is connected and active.
-    #
-    # @return A boolean describing the connected state of the socket.
-    #
     def isConnected(self):
+        """
+        Return true if the socket is connected and active.
+        """
         if self.socket and (self.socket.state() == QtNetwork.QAbstractSocket.ConnectedState):
             return True
         else:
             return False
 
-    ## sendMessage
-    #
-    # Send TCP message as JSON string if the socket is connected.
-    #
-    # @param message A TCPMessage object.
-    #
     def sendMessage(self, message):
+        """
+        Send TCP message as JSON string if the socket is connected.
+        """
         if self.isConnected():
             message_str = message.toJSON() + "\n"
-            self.socket.write(message_str.encode('ascii'))
+            self.socket.write(message_str.encode(self.encoding))
             self.socket.flush()
             if self.verbose:
                 print("Sent: \n" + str(message))
@@ -115,6 +97,7 @@ class TCPCommunications(QtCore.QObject):
             message.setError(True, "Communication Error: " + self.server_name + " socket not connected")
             print(message)
             self.messageReceived.emit(message) # Return message with error
+
 
 #
 # The MIT License

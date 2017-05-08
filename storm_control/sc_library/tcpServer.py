@@ -1,14 +1,14 @@
-#!/usr/bin/python
-# 
-# A TCP communication class that acts as the server side for generic communications
-# between programs in the storm-control project
-# 
-# Jeff Moffitt
-# 3/8/14
-# jeffmoffitt@gmail.com
-#
-# Hazen 05/14
-#
+#!/usr/bin/env python
+"""
+A TCP communication class that acts as the server side for generic communications
+between programs in the storm-control project
+
+Jeff Moffitt
+3/8/14
+jeffmoffitt@gmail.com
+
+Hazen 05/14
+"""
 
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets, QtNetwork
@@ -16,38 +16,17 @@ from PyQt5 import QtCore, QtGui, QtWidgets, QtNetwork
 from storm_control.sc_library.tcpMessage import TCPMessage
 import storm_control.sc_library.tcpCommunications as tcpCommunications
 
-## TCPServer
-#
-# A TCP server for passing TCP messages between programs
-#
-class TCPServer(QtNetwork.QTcpServer, tcpCommunications.TCPCommunications):
-    messageReceived = tcpCommunications.TCPCommunications.messageReceived
+
+class TCPServer(QtNetwork.QTcpServer, tcpCommunications.TCPCommunicationsMixin):
+    """
+    A TCP server for passing TCP messages between programs.
+    """
     comGotConnection = QtCore.pyqtSignal()
     comLostConnection = QtCore.pyqtSignal()
+    messageReceived = QtCore.pyqtSignal(object)
     
-    ## __init__
-    #
-    # Class constructor
-    #
-    # @param parent A reference to an owning class.
-    # @param port The TCP/IP port for communication.
-    # @param server_name A string name for the communication server.
-    # @param address An address for the TCP/IP communication.
-    # @param verbose A boolean controlling the verbosity of the class
-    #
-    def __init__(self,
-                 port = 9500,
-                 server_name = "default",
-                 address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
-                 parent = None,
-                 verbose = False):
-        QtNetwork.QTcpServer.__init__(self, parent)
-        tcpCommunications.TCPCommunications.__init__(self,
-                                                     parent=parent,
-                                                     port=port,
-                                                     server_name=server_name,
-                                                     address=address,
-                                                     verbose=verbose)
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
 
         # Connect new connection signal
         self.newConnection.connect(self.handleClientConnection)
@@ -55,11 +34,10 @@ class TCPServer(QtNetwork.QTcpServer, tcpCommunications.TCPCommunications):
         # Listen for new connections
         self.connectToNewClients()
 
-    ## connectToNewClients
-    #
-    # Listen for new clients
-    #
     def connectToNewClients(self):
+        """
+        Listen for new clients.
+        """
         if self.verbose:
             string = "Listening for new clients at: \n"
             string += "    Address: " + self.address.toString() + "\n"
@@ -67,12 +45,11 @@ class TCPServer(QtNetwork.QTcpServer, tcpCommunications.TCPCommunications):
             print(string)
         self.listen(self.address, self.port)
         self.comGotConnection.emit()
-        
-    ## disconnectFromClients
-    #
-    # Disconnect from clients
-    #
+ 
     def disconnectFromClients(self):
+        """
+        Disconnect from clients.
+        """
         if self.verbose:
             print("Force disconnect from clients")
         if self.isConnected():
@@ -83,11 +60,10 @@ class TCPServer(QtNetwork.QTcpServer, tcpCommunications.TCPCommunications):
             self.comLostConnection.emit()
             self.connectToNewClients()
     
-    ## handleClientConnection
-    #
-    # Handle connection from a new client
-    #
     def handleClientConnection(self):
+        """
+        Handle connection from a new client.
+        """
         socket = self.nextPendingConnection()
 
         if not self.isConnected():
@@ -104,12 +80,11 @@ class TCPServer(QtNetwork.QTcpServer, tcpCommunications.TCPCommunications):
             socket.write(message.toJSON() + "\n")
             socket.disconnectFromHost()
             socket.close()
-        
-    ## handleClientDisconnect
-    #
-    # Handle diconnection of client
-    #
+
     def handleClientDisconnect(self):
+        """
+        Handle disconnection of client.
+        """
         self.socket.disconnectFromHost()
         self.socket.close()
         self.socket = None
@@ -118,18 +93,12 @@ class TCPServer(QtNetwork.QTcpServer, tcpCommunications.TCPCommunications):
             print("Client disconnected")
             
         
-## StandAlone
-# 
-# Stand Alone Test Class
-#                                                               
 class StandAlone(QtWidgets.QMainWindow):
-
-    ## __init__
-    #
-    # @param parent (optional) The PyQt parent of this object, defaults to none.
-    #
-    def __init__(self, parent = None):
-        super(StandAlone, self).__init__(parent)
+    """
+    Stand alone test class.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
 
         # Create server
         self.server = TCPServer(port = 9500, verbose = True)
@@ -137,45 +106,37 @@ class StandAlone(QtWidgets.QMainWindow):
         # Connect PyQt signals
         self.server.comGotConnection.connect(self.handleNewConnection)
         self.server.comLostConnection.connect(self.handleLostConnection)
-        self.server.messageReady.connect(self.handleMessageReady)            
+        self.server.messageReceived.connect(self.handleMessageReceived)
 
-    ## handleNewConnection
-    # 
-    # Handle New Connection.
-    # 
     def handleNewConnection(self):
+        """
+        Handle new connection.
+        """
         print("Established connection")
 
-    ## handleLostConnection
-    # 
-    # Handle Lost Connection.
-    # 
     def handleLostConnection(self):
+        """
+        Handle lost connection.
+        """
         print("Lost connection")
 
-    ## handleMessageReady
-    # 
-    # Handle New Message.
-    #
-    # @param message A TCPMessage object.
-    # 
-    def handleMessageReady(self, message):
+    def handleMessageReceived(self, message):
+        """
+        Handle new message.
+        """
         # Parse Based on Message Type
-        if message.getType() == "Stage Position":
+        if (message.getType() == "Stage Position"):
             print("Stage X: ", message.getData("Stage_X"), "Stage Y: ", message.getData("Stage_Y"))
             self.server.sendMessage(message)
             
-        elif message.getType() == "Movie":
+        elif (message.getType() == "Movie"):
             print("Movie: ", "Name: ", message.getData("Name"), "Parameters: ", message.getData("Parameters"))
             self.server.sendMessage(message)
 
-    ## closeEvent
-    # 
-    # Handle close event.
-    #
-    # @param event A PyQt QEvent object.
-    # 
     def closeEvent(self, event):
+        """
+        Handle close event.
+        """
         self.server.close()
         self.close()
 
@@ -188,6 +149,7 @@ if (__name__ == "__main__"):
     window = StandAlone()
     window.show()
     sys.exit(app.exec_())
+
 
 #
 # The MIT License

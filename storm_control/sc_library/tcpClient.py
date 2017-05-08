@@ -1,13 +1,12 @@
-#!/usr/bin/python
-#
-## @file 
-#
-# A TCP communication class that acts as the client side for generic communications
-# between programs in the storm-control project
-#
-# Jeffrey Moffitt
-# 3/8/14
-# jeffmoffitt@gmail.com
+#!/usr/bin/env python
+"""
+A TCP communication class that acts as the client side for generic communications
+between programs in the storm-control project
+
+Jeffrey Moffitt
+3/8/14
+jeffmoffitt@gmail.com
+"""
 
 # 
 # Import
@@ -19,46 +18,26 @@ from PyQt5 import QtCore, QtGui, QtNetwork, QtWidgets
 from storm_control.sc_library.tcpMessage import TCPMessage
 import storm_control.sc_library.tcpCommunications as tcpCommunications
 
-## TCPClient
-#
-# A TCP client class used to transfer TCP messages from one program to another
-#
-class TCPClient(tcpCommunications.TCPCommunications):
-    comLostConnection = QtCore.pyqtSignal()
 
-    ## __init__
-    #
-    # Class constructor
-    #
-    # @param parent A reference to an owning class.
-    # @param port The TCP/IP port for communication.
-    # @param server_name A string name for the communication server.
-    # @param address An address for the TCP/IP communication.
-    # @param verbose A boolean controlling the verbosity of the class
-    #
-    def __init__(self,
-                 parent = None,
-                 port=9500,
-                 server_name = "default",
-                 address = QtNetwork.QHostAddress(QtNetwork.QHostAddress.LocalHost),
-                 verbose = False):
-        tcpCommunications.TCPCommunications.__init__(self,
-                                                     parent = parent,
-                                                     port = port,
-                                                     server_name = server_name,
-                                                     address = address,
-                                                     verbose = verbose)
+class TCPClient(QtCore.QObject, tcpCommunications.TCPCommunicationsMixin):
+    """
+    A TCP client class used to transfer TCP messages from one program to another
+    """
+    comLostConnection = QtCore.pyqtSignal()
+    messageReceived = QtCore.pyqtSignal(object)
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
         
         # Create instance of TCP socket
         self.socket = QtNetwork.QTcpSocket()
         self.socket.disconnected.connect(self.handleDisconnect)
         self.socket.readyRead.connect(self.handleReadyRead)
 
-    ## connectToServer
-    #
-    # Attempt to establish a connection with the server at the indicated address and port
-    #
     def connectToServer(self):
+        """
+        Attempt to establish a connection with the server at the indicated address and port
+        """
         if self.verbose:
             print("-"*50)
             string = "Looking for " + self.server_name + " server at: \n"
@@ -72,64 +51,54 @@ class TCPClient(tcpCommunications.TCPCommunications):
         if not self.socket.waitForConnected(1000):
             print(self.server_name + " server not found")
 
-    ## handleDisconnect
-    #
-    # Handles the disconnect from the socket.
-    #
     def handleDisconnect(self):
+        """
+        Handles the disconnect from the socket.
+        """
         self.comLostConnection.emit()
 
-    ## startCommunication
-    #
-    # Start communications with server
-    #
-    # @return a_boolean Returns true if the client is connected.
     def startCommunication(self):
+        """
+        Start communications with server
+        """
         if not self.isConnected():
             self.connectToServer()
         return self.isConnected()
 
-    ## stopCommunication
-    #
-    # Stop communications with server
-    #
     def stopCommunication(self):
+        """
+        Stop communications with server.
+        """
         if self.isConnected():
             self.socket.disconnectFromHost()
 
 
-## StandAlone
-# 
-# Stand Alone Test Class
-#                                                               
 class StandAlone(QtWidgets.QMainWindow):
+    """
+    Stand Alone Test Class.
+    """
 
-    ## __init__
-    #
-    # @param parent (optional) The PyQt parent of this object.
-    #
-    def __init__(self, parent = None):
-        super(StandAlone, self).__init__(parent)
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
 
         # Create client
         self.client = TCPClient(port = 9500, server_name = "Test", verbose = True)
 
-        self.client.messageReceived.connect(self.handleMessageReady)
+        self.client.messageReceived.connect(self.handleMessageReceived)
         self.client.startCommunication()
 
         self.message_ID = 1
         self.sendTestMessage()
 
-    ## sendTestMessage
-    # 
-    # Send Test Messages
-    # 
     def sendTestMessage(self):
-        if self.message_ID == 1:
+        """
+        Send test messages.
+        """
+        if (self.message_ID == 1):
             # Create Test message
             message = TCPMessage(message_type = "Stage Position",
                                  message_data = {"Stage_X": 100.00, "Stage_Y": 0.00})
-        elif self.message_ID ==2:
+        elif (self.message_ID ==2):
             message = TCPMessage(message_type = "Movie",
                                  message_data = {"Name": "Test_Movie_01", "Parameters": 1})
 
@@ -140,33 +109,26 @@ class StandAlone(QtWidgets.QMainWindow):
         self.sent_message = message
         self.client.sendMessage(message)
         
-    ## handleMessageReady
-    # 
-    # Handle New Message.
-    #
-    # @param message A TCPMessage object.
-    # 
-    def handleMessageReady(self, message):
+    def handleMessageReceived(self, message):
+        """
+        Handle new message.
+        """
         # Handle responses to messages
-        if self.sent_message.getID() == message.getID():
-            if message.isComplete():
-                print("Completed message: ")
-                print(message)
+        if (self.sent_message.getID() == message.getID()):
+            print(message)
         else:
             print("Received an unexpected message")
 
         self.sendTestMessage()
 
-    ## closeEvent
-    # 
-    # Handle close event.
-    #
-    # @param event A PyQt QEvent object.
-    # 
     def closeEvent(self, event):
+        """
+        Handle close event.
+        """
         self.client.close()
         self.close()
-       
+
+
 # 
 # Test/Demo of Class
 #                         

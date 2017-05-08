@@ -1,25 +1,22 @@
-#!/usr/bin/python
-#
-## @file 
-#
-# Handles remote control (via TCP/IP of the data collection program) 
-# 
-# Jeffrey Moffitt
-# 3/8/14
-# jeffmoffitt@gmail.com
-# 
-# Hazen 05/14
-#
+#!/usr/bin/env python
+"""
+Handles remote control (via TCP/IP of the data collection program) 
+
+Jeffrey Moffitt
+3/8/14
+jeffmoffitt@gmail.com
+
+Hazen 05/14
+"""
 
 import copy
 import json
 
 
-## TCPMessage
-#
-# Contains the contents and status of a TCP message.
-#
 class TCPMessage(object):
+    """
+    Contains the contents and status of a TCP message.
+    """
     _COUNTER = 0 # Track number of created instances of this class.
 
     ## __init__
@@ -31,11 +28,14 @@ class TCPMessage(object):
     # @param test_mode A boolean specifying whether the command is a test command
     #
     def __init__(self,
-                 message_type = False,
+                 message_type = None,
                  message_data = {},
-                 test_mode = False):
+                 test_mode = False,
+                 **kwds):
+        super().__init__(**kwds)
 
-        assert message_type, "Message type must be defined!"
+        assert message_type is not None
+        
         #self.complete = False
         self.error = False
         self.error_message = None
