@@ -19,14 +19,6 @@ class TCPMessage(object):
     """
     _COUNTER = 0 # Track number of created instances of this class.
 
-    ## __init__
-    #
-    # The constructor for a TCP message object
-    #
-    # @param message_type A string specifying the type of the command.
-    # @param message_data A dictionary containing the message data.
-    # @param test_mode A boolean specifying whether the command is a test command
-    #
     def __init__(self,
                  message_type = None,
                  message_data = {},
@@ -47,139 +39,95 @@ class TCPMessage(object):
         self.message_id = TCPMessage._COUNTER # Record instance number.
         TCPMessage._COUNTER += 1 # Increment the instance counter.
 
-    ## addData
-    #
-    # Add or change the contents of fields in the message data dictionary
-    #
-    # @param key_name A string specifying the name/type of the data to be added to the message data.
-    # @param value The data.
-    #
     def addData(self, key_name, value):
+        """
+        Add or change the contents of fields in the message data dictionary.
+        """
         self.message_data[key_name] = value
 
-    ## addResponse
-    #
-    # Add or change the contents of fields in the response data dictionary
-    #
-    # @param key_name A string specifying the name/type of the data to be added to the response data.
-    # @param value The data.
-    #
     def addResponse(self, key_name, value):
+        """
+        Add or change the contents of fields in the response data dictionary.
+        """
         self.response[key_name] = value
 
-    ## fromJSON
-    #
-    # Creates a Message from a JSON string.
-    #
-    # @param json_string A JSON string containing the serialized object data.
-    #
     @staticmethod
     def fromJSON(json_string):
+        """
+        Creates a Message from a JSON string.
+        """
         message = TCPMessage(message_type = True)
         message.__dict__.update(json.loads(json_string))
         return message
 
-    ## getData
-    #
-    # Access elements of the message data by name
-    #
-    # @param key_name A string specifying the name/type of the data to be accessed from the message data.
-    #
-    # @return The value of the requested entry.
-    #
     def getData(self, key_name):
+        """
+        Access elements of the message data by name.
+        """
         return self.message_data.get(key_name, None)
 
-    ## getErrorMessage
-    #
-    # Return the error message string, which is empty if no error occurred. 
-    #
-    # @return A string describing any errors if present.
-    #
     def getErrorMessage(self):
+        """
+        Return the error message string, which is empty if no error occurred. 
+        """
         return self.error_message
 
-    ## getID
-    #
-    # Return a unique ID for each message object
-    #
-    # @return An unique ID for the message.
-    #
     def getID(self):
+        """
+        Return a unique ID for each message object.
+        """
         return self.message_id
 
-    ## getMessageData
-    #
-    # @return The message data dictionary.
-    #
     def getMessageData(self):
+        """
+        Return the message data dictionary.
+        """
         return self.message_data
 
-    ## getResponse
-    #
-    # Access elements of the response message by name. If the element is not present, None is returned.
-    #
-    # @param key_name A string specifying the name/type of the data to be accessed from the response data.
-    # @return The value of the requested entry.
-    #
     def getResponse(self, key_name):
+        """
+        Access elements of the response message by name. If the element is 
+        not present, None is returned.
+        """
         return self.response.get(key_name, None)
 
-    ## getType
-    #
-    # Return a string describing the message type
-    #
-    # @return A string describing the type of the message.
-    #    
     def getType(self):
+        """
+        Return a string describing the message type.
+        """
         return self.message_type
 
-    ## hasError
-    #
-    # Return the error status of the message
-    #
-    # @return A boolean which indicates whether an error has occurred or not.
-    #    
     def hasError(self):
+        """
+        Return the error status of the message.
+        """
         return self.error
 
-    ## isTest
-    #
-    # Return the test status of the message. If the message is in test mode, then it will not be
-    # executed. Rather its validity and properties of its execution will be returned. 
-    #
-    # @return A boolean which indicates whether the message is in test mode.
-    #  
     def isTest(self):
+        """
+        Return the test status of the message. If the message is in test 
+        mode, then it will not be executed. Rather its validity and properties 
+        of its execution will be returned. 
+        """
         return self.test_mode
 
-    ## setError
-    #
-    # Set the error status of the message
-    #
-    # @param error_boolean A boolean that indicates whether an error has occurred
-    # @param error_message A string describing the error
-    #  
     def setError(self, error_boolean, error_message):
+        """
+        Set the error status of the message.
+        """
         self.error = error_boolean
         self.error_message = error_message
 
-    ## setTestMode
-    #
-    # Set the test status of the message
-    #
-    # @param test_boolean A boolean that indicates whether the message should be considered a test
-    #
     def setTestMode(self, test_boolean):
+        """
+        Set the test status of the message.
+        """
         self.test_mode = test_boolean
 
-    ## toJSON
-    #
-    # Serialize using JSON.
-    #
-    # @return A string containing the JSON serialization.
-    #
     def toJSON(self):
+        """
+        Serialize using JSON.
+        """
         return json.dumps(self.__dict__)
 
     ## markAsComplete
@@ -189,13 +137,10 @@ class TCPMessage(object):
     #def markAsComplete(self):
     #    self.complete = True
 
-    ## __str__
-    #
-    # Generate a string representation of the message
-    #
-    # @return string_rep A string representation of the contents of the message and its properties
-    #
     def __str__(self):
+        """
+        Generate a string representation of the message.
+        """
         string_rep = "\tMessage Type: " + str(self.message_type)
         for attribute in sorted(vars(self).keys()):
             if not (attribute == "message_type"):
