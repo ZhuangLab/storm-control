@@ -31,10 +31,20 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         # Get the first camera & set some defaults.
         self.camera = spinnaker.spinGetCamera(config.get("camera_id"))
 
-        # This is 12 bit mode.
+        # In order to turn of pixel defect correction the camera has to
+        # be in video mode 0.
         self.camera.getProperty("VideoMode")
-        self.camera.setProperty("VideoMode", "Mode7")
+        self.camera.setProperty("VideoMode", "Mode0")
+        
+        self.camera.getProperty("pgrDefectPixelCorrectionEnable")
+        self.camera.setProperty("pgrDefectPixelCorrectionEnable", False)
 
+        # Verify that we have turned off this 'feature'.
+        assert not self.camera.getProperty("pgrDefectPixelCorrectionEnable").spinNodeGetValue()
+        
+        # Change to 12 bit mode.
+        self.camera.setProperty("VideoMode", "Mode7")
+                
         # We don't want any of these 'features'.
         self.camera.getProperty("AcquisitionFrameRateAuto")
         self.camera.setProperty("AcquisitionFrameRateAuto", "Off")
@@ -42,17 +52,23 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         self.camera.getProperty("ExposureAuto")
         self.camera.setProperty("ExposureAuto", "Off")
 
+        self.camera.getProperty("GainAuto")
+        self.camera.setProperty("GainAuto", "Off")        
+
+        self.camera.getProperty("pgrExposureCompensationAuto")
+        self.camera.setProperty("pgrExposureCompensationAuto", "Off")
+        
         self.camera.getProperty("BlackLevelClampingEnable")
         self.camera.setProperty("BlackLevelClampingEnable", False)
-
-        self.camera.getProperty("pgrDefectPixelCorrectionEnable")
-        self.camera.setProperty("pgrDefectPixelCorrectionEnable", False)
 
         self.camera.getProperty("SharpnessEnabled")
         self.camera.setProperty("SharpnessEnabled", False)
 
         self.camera.getProperty("GammaEnabled")
         self.camera.setProperty("GammaEnabled", False)
+
+        self.camera.getProperty("OnBoardColorProcessEnabled")
+        self.camera.setProperty("OnBoardColorProcessEnabled", False)        
 
         # Dictionary of Point Grey specific camera parameters.
         #

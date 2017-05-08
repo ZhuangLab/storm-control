@@ -30,19 +30,32 @@ cam = spinnaker.spinGetCamera(0)
 # and using the appropriate AOI.
 #
 cam.getProperty("VideoMode")
-cam.setProperty("VideoMode", "Mode7")
+cam.setProperty("VideoMode", "Mode0")
+        
+cam.getProperty("pgrDefectPixelCorrectionEnable")
+cam.setProperty("pgrDefectPixelCorrectionEnable", False)
 
+# Verify that we have turned off this 'feature'.
+assert not cam.getProperty("pgrDefectPixelCorrectionEnable").spinNodeGetValue()
+        
+# Change to 12 bit mode.
+cam.setProperty("VideoMode", "Mode7")
+                
+# We don't want any of these 'features'.
 cam.getProperty("AcquisitionFrameRateAuto")
 cam.setProperty("AcquisitionFrameRateAuto", "Off")
 
 cam.getProperty("ExposureAuto")
 cam.setProperty("ExposureAuto", "Off")
 
+cam.getProperty("GainAuto")
+cam.setProperty("GainAuto", "Off")        
+
+cam.getProperty("pgrExposureCompensationAuto")
+cam.setProperty("pgrExposureCompensationAuto", "Off")
+        
 cam.getProperty("BlackLevelClampingEnable")
 cam.setProperty("BlackLevelClampingEnable", False)
-
-cam.getProperty("pgrDefectPixelCorrectionEnable")
-cam.setProperty("pgrDefectPixelCorrectionEnable", False)
 
 cam.getProperty("SharpnessEnabled")
 cam.setProperty("SharpnessEnabled", False)
@@ -50,6 +63,10 @@ cam.setProperty("SharpnessEnabled", False)
 cam.getProperty("GammaEnabled")
 cam.setProperty("GammaEnabled", False)
 
+cam.getProperty("OnBoardColorProcessEnabled")
+cam.setProperty("OnBoardColorProcessEnabled", False)
+        
+# COnfigure acquisition.
 cam.getProperty("AcquisitionFrameRate")
 cam.setProperty("AcquisitionFrameRate", 30.0)
 
