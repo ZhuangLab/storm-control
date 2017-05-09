@@ -14,14 +14,13 @@ import storm_control.sc_library.parameters as params
 
 
 class StageFunctionality(hardwareModule.BufferedFunctionality):
-    stagePosition = QtCore.pyqtSignal(float, float)
-    _update_ = QtCore.pyqtSignal(list)
+    isMoving = QtCore.pyqtSignal(bool)
+    stagePosition = QtCore.pyqtSignal(dict)
 
     def __init__(self, stage = None, update_interval = None, is_slow = False, **kwds):
         """
         stage - A hardware object that behaves like a stage.
-        update_interval - How frequently to update in milli-seconds, something 
-                          like 500 is usually good.
+
         is_slow - Some stages are particularly slow, they only run at 9600 baud
                   for example. In that case it is probably best not to try and
                   use them for things like screen drag based movement.
@@ -29,21 +28,8 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
         super().__init__(**kwds)
         self.is_slow = is_slow
         self.pixels_to_microns = 1.0
+        self.pos_dict = None
         self.stage = stage
-        self.sx = None
-        self.sy = None
-
-        # Each time this timer fires we'll query the stage for it's
-        # current position.
-        self.updateTimer = QtCore.QTimer()
-        self.updateTimer.setInterval(update_interval)
-        self.updateTimer.timeout.connect(self.handleUpdateTimer)
-        self.updateTimer.start()
-
-        # Due to implementation details of the BufferedFunctionality we'll get
-        # the position from the stage as a list, so we need to process that
-        # information to convert it into a proper stagePosition signal.
-        self._update_.connect(self.handleUpdate)
 
     def dragMove(self, x, y):
         """
@@ -55,7 +41,7 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
                       args = [x, y])
 
     def getCurrentPosition(self):
-        return [self.sx, self.sy]
+        return self.pos_dict
 
     def goAbsolute(self, x, y):
         """
@@ -71,17 +57,9 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
         self.maybeRun(task = self.stage.goRelative,
                       args = [dx, dy])
 
-    def handleUpdate(self, position):
-        """
-        Emit the current stage position in microns.
-        """
-        [self.sx, self.sy] = position
-        self.stagePosition.emit(*position)
+    def isSlow(self):
+        return self.is_slow
         
-    def handleUpdateTimer(self):
-        self.mustRun(task = self.stage.position,
-                     ret_signal = self._update_)
-
     def jog(self, xs, ys):
         """
         Usually used by the joystick, units are pixels.
@@ -151,8 +129,8 @@ class StageModule(hardwareModule.HardwareModule):
         if self.stage is not None:
             self.stage_functionality.mustRun(task = self.stage.joystickOnOff,
                                              args = [True])
-            [x, y] = self.stage_functionality.getCurrentPosition()
-            pos_string = "{0:.2f},{1:.2f}".format(x, y)
+            pos_dict = self.stage_functionality.getCurrentPosition()
+            pos_string = "{0:.2f},{1:.2f}".format(pos_dict["x"], pos_dict["y"])
             pos_param = params.ParameterCustom(name = "stage_position",
                                                value = pos_string)
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,

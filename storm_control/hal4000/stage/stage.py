@@ -195,9 +195,9 @@ class StageView(halDialog.HalDialog):
         self.ui.xmoveDoubleSpinBox.setValue(x)
         self.ui.ymoveDoubleSpinBox.setValue(y)
         
-    def handleStagePosition(self, stage_x, stage_y):
-        self.ui.xposText.setText("{0:.3f}".format(stage_x))
-        self.ui.yposText.setText("{0:.3f}".format(stage_y))
+    def handleStagePosition(self, pos_dict):
+        self.ui.xposText.setText("{0:.3f}".format(pos_dict["x"]))
+        self.ui.yposText.setText("{0:.3f}".format(pos_dict["y"]))
 
     def handleZeroButton(self, boolean):
         self.stage_functionality.zero()
