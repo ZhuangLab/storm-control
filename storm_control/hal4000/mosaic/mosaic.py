@@ -59,11 +59,6 @@ class Mosaic(halModule.HalModule):
                                "ui_parent" : "hal.containerWidget",
                                "ui_widget" : self.view}
 
-        # The current pixel size.
-        halMessage.addMessage("pixel size",
-                              validator = {"data" : {"pixel size" : [True, float]},
-                                           "resp" : None})
-
     def processMessage(self, message):
 
         if message.isType("configure1"):
