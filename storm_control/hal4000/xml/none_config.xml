@@ -435,6 +435,15 @@
 	<stage_functionality type="string">none_stage</stage_functionality>
       </configuration>
     </stage>
+
+    <!-- TCP control -->
+    <tcp_control>
+      <module_name type="string">storm_control.hal4000.tcpControl.tcpControl</module_name>
+      <class_name type="string">TCPControl</class_name>	    
+      <configuration>
+	<tcp_port type="int">9000</tcp_port>
+      </configuration>
+    </tcp_control>
     
   </modules>
   

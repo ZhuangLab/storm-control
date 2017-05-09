@@ -7,6 +7,7 @@ Hazen 05/17
 
 from PyQt5 import QtCore
 
+import storm_control.sc_library.tcpMessage as tcpMessage
 import storm_control.sc_library.tcpServer as tcpServer
 
 import storm_control.hal4000.halLib.halMessage as halMessage
@@ -15,23 +16,24 @@ import storm_control.hal4000.halLib.halModule as halModule
 
 class Controller(QtCore.QObject):
     """
-    . . . 
+    ..
     """
     controlMessage = QtCore.pyqtSignal(object)
     
     def __init__(self, server = None, **kwds):
         super().__init__(**kwds)
         self.server = server
-        self.focuslock_functionality = None
-        self.progression_functionality = None
-        self.stage_functionality = None
 
         self.server.comGotConnection.connect(self.handleNewConnection)
         self.server.comLostConnection.connect(self.handleLostConnection)
         self.server.messageReceived.connect(self.handleMessageReceived)
 
+    def cleanUp(self):
+        self.server.close()
+        
     def handleLostConnection(self):
-        pass
+        self.controlMessage.emit(halMessage.HalMessage(m_type = "configuration",
+                                                       data = {"properties" : {"connected" : False}}))
 
     def handleMessageReceived(self, message):
         """
@@ -40,18 +42,19 @@ class Controller(QtCore.QObject):
         print(">hmr")
         print(message)
         print("")
+        self.controlMessage.emit(halMessage.HalMessage(m_type = "tcp message",
+                                                       data = {"tcp message" : message}))
     
     def handleNewConnection(self):
-        pass
+        self.controlMessage.emit(halMessage.HalMessage(m_type = "configuration",
+                                                       data = {"properties" : {"connected" : True}}))
 
-    def setFunctionality(self, name, functionality):
-        if (name == "focuslock"):
-            self.focuslock_functionality = functionality
-        elif (name == "progression"):
-            self.progression_functionality = functionality
-        elif (name == "stage"):
-            self.stage_functionality = functionality
-        
+    def sendResponse(self, tcp_message, was_handled):
+        if not was_handled:
+            print(">> Warning no response to", tcp_message.getType())
+            tcp_message.setError(True, "This message was not handled.")
+        self.server.sendMessage(tcp_message)
+
 
 class TCPControl(halModule.HalModule):
     """
@@ -68,9 +71,30 @@ class TCPControl(halModule.HalModule):
                                   parent = self)
         self.control.controlMessage.connect(self.handleControlMessage)
 
+        # TCP messages are packaged into this HAL message.
+        #
+        # The module(s) that handle the message need to add a 'handled' response
+        # so that we know that someone did something with the message.
+        #
+        halMessage.addMessage("tcp message",
+                              validator = {"data" : {"tcp message" : [True, tcpMessage.TCPMessage]},
+                                           "resp" : {"handled" : [True, bool]}})
+
+    def cleanUp(self, qt_settings):
+        self.control.cleanUp()
+
     def handleControlMessage(self, message):
         self.sendMessage(message)
-        
+
+    def handleResponses(self, message):
+        if message.isType("tcp message"):
+            #
+            # FIXME: We might want to check for 'True' responses? Not sure
+            #        why we'd ever respond with 'False' however.
+            #
+            self.control.sendResponse(message.getData()["tcp message"],
+                                      message.hasResponses())
+
     def processMessage(self, message):
 
         if message.isType("configure1"):

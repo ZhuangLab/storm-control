@@ -101,6 +101,20 @@ class HalController(halModule.HalModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"acquisition" : [notes_param]}))
 
+        elif message.isType("tcp message"):
+            tcp_message = message.getData()["tcp message"]
+            if tcp_message.isType("Set Directory"):
+                directory = tcp_message.getData("directory")
+                if not os.path.isdir(directory):
+                    tcp_message.setError(True, directory + " is an invalid directory")
+                else:
+                    if not tcp_message.isTest():
+                        self.view.setFilmDirectory(directory)
+                        self.sendMessage(halMessage.HalMessage(m_type = "new directory",
+                                                               data = {"directory" : self.view.getFilmDirectory()}))
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                  data = {"handled" : True}))
+                        
         elif message.isType("tests done"):
             self.view.close()
 
@@ -315,6 +329,9 @@ class HalView(QtWidgets.QMainWindow):
         self.close_now = True
         self.guiMessage.emit(halMessage.HalMessage(m_type = "close event",
                                                    sync = True))
+
+    def setFilmDirectory(self, film_directory):
+        self.film_directory = film_directory
 
     def startFilm(self, film_settings):
         pass
