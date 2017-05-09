@@ -477,10 +477,6 @@ class Progressions(halModule.HalModule):
                                      module_name = self.module_name)
         self.view.halDialogInit(qt_settings,
                                 module_params.get("setup_name") + " progression control")
-
-#        # Unhide stage control.
-#        halMessage.addMessage("show progressions",
-#                              validator = {"data" : None, "resp" : None})
         
     def cleanUp(self, qt_settings):
         self.view.cleanUp(qt_settings)

@@ -47,15 +47,7 @@ class Display(halModule.HalModule):
             self.viewers.append(camera_viewer)
         
         self.viewers[0].guiMessage.connect(self.handleGuiMessage)
-        
-#        # Unhide / create a new camera viewer.
-#        halMessage.addMessage("new camera viewer",
-#                              validator = {"data" : None, "resp" : None})
-#
-#        # Unhide / create a new feed viewer.
-#        halMessage.addMessage("new feed viewer",
-#                              validator = {"data" : None, "resp" : None})
-        
+
         # This message comes from the shutter button.
         halMessage.addMessage("shutter clicked",
                               validator = {"data" : {"display_name" : [True, str],
