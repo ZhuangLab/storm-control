@@ -94,6 +94,12 @@ class TCPMessage(object):
     def getType(self):
         """
         Return a string describing the message type.
+
+        The use of this to check for a certain method type is deprecated! 
+        Use isType() instead! i.e.:
+
+        if message.isType("asdf"):        # correct.
+        if (message.getType() == "asdf"): # wrong.
         """
         return self.message_type
 
@@ -110,6 +116,12 @@ class TCPMessage(object):
         of its execution will be returned. 
         """
         return self.test_mode
+
+    def isType(self, string):
+        """
+        Use this to check if the message is a certain type.
+        """
+        return (self.message_type == string)
 
     def setError(self, error_boolean, error_message):
         """
