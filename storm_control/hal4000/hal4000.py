@@ -549,6 +549,13 @@ class HalCore(QtCore.QObject):
         # Start the message timer, if it is not already running.
         self.startMessageTimer()
 
+    def handleResponses(self, message):
+        """
+        This is just a place holder. There should not be any responses
+        to message from HalCore.
+        """
+        assert not message.hasResponses()
+
     def handleSendMessage(self):
         """
         Handle sending the current message to all the modules.
@@ -590,12 +597,11 @@ class HalCore(QtCore.QObject):
                         halMessage.validateResponse(validator, sent_message, response)
 
                 # Notify the sender of any responses to the message.
-                if sent_message.hasResponses():
-                    sent_message.getSource().handleResponses(sent_message)
-                    
+                sent_message.getSource().handleResponses(sent_message)
+
                 # Print a warning if the message was 'get functionality'
                 # and there were no responses.
-                elif sent_message.isType("get functionality"):
+                if sent_message.isType("get functionality") and not sent_message.hasResponses():
                     print(">> Warning functionality '" + sent_message.getData()["name"] + "' not found!")
                     hdebug.logText("no functionality " + sent_message.getData()["name"])
 

@@ -143,9 +143,10 @@ class HalModule(QtCore.QObject):
         Override this if you want to handle all the message
         responses (as a list).
         """
-        for response in message.getResponses():
-            self.handleResponse(message, response)
-    
+        if message.hasResponses():
+            for response in message.getResponses():
+                self.handleResponse(message, response)
+
     def handleWarning(self, message, m_error):
         """
         Override with class specific warning handling.
