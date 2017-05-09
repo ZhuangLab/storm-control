@@ -437,11 +437,7 @@ class FeedController(object):
 class Feeds(halModule.HalModule):
     """
     Feeds controller.
-
-    This sends the following messages:
-     'feed list'
-    """    
-
+    """
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
         self.camera_names = []
