@@ -80,6 +80,7 @@ class Server(QtCore.QObject):
         Handle lost connection.
         """
         print("Lost connection")
+        self.server.close()
         QtWidgets.QApplication.quit()
 
     def handleMessageReceived(self, message):
@@ -95,7 +96,6 @@ class Server(QtCore.QObject):
 
         elif message.isType("Done"):
             self.server.sendMessage(message)
-            self.server.close()
 
 
 if (__name__ == "__main__"):
