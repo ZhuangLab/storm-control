@@ -20,24 +20,15 @@ class NoneStage(QtCore.QObject):
         self.x = 0.0
         self.y = 0.0
 
-        self.moveTimer = QtCore.QTimer()
-        self.moveTimer.setInterval(100)
-        self.moveTimer.setSingleShot(True)
-        self.moveTimer.timeout.connect(self.handleMoveTimer)
-
     def getStatus(self):
         return True
     
     def goAbsolute(self, x, y):
         self.x = x
         self.y = y
-        #self.moveTimer.start()
 
     def goRelative(self, dx, dy):
         self.goAbsolute(self.x + dx, self.y + dy)
-
-    def handleMoveTimer(self):
-        pass
 
     def jog(self, xs, ys):
         pass
@@ -69,12 +60,25 @@ class NoneStageFunctionality(stageModule.StageFunctionality):
         """
         super().__init__(**kwds)
 
+        self.moveTimer = QtCore.QTimer()
+        self.moveTimer.setInterval(200)
+        self.moveTimer.setSingleShot(True)
+        self.moveTimer.timeout.connect(self.handleMoveTimer)
+        
         # Each time this timer fires we'll 'query' the stage for it's
         # current position.
         self.updateTimer = QtCore.QTimer()
         self.updateTimer.setInterval(update_interval)
         self.updateTimer.timeout.connect(self.handleUpdateTimer)
         self.updateTimer.start()
+
+    def goAbsolute(self, x, y):
+        super().goAbsolute(x, y)
+        self.isMoving.emit(True)
+        self.moveTimer.start()
+
+    def handleMoveTimer(self):
+        self.isMoving.emit(False)
         
     def handleUpdateTimer(self):
         """

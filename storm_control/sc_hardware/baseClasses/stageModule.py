@@ -98,17 +98,22 @@ class StageModule(hardwareModule.HardwareModule):
             self.stage.shutDown()
 
     def getFunctionality(self, message):
-        if (message.getData()["name"] == self.module_name) and (self.stage_functionality is not None):
+        if (message.getData()["name"] == self.module_name):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"functionality" : self.stage_functionality}))
 
     def pixelSize(self, message):
-        if self.stage is not None:
-            self.stage_functionality.setPixelsToMicrons(message.getData()["pixel size"])
+        self.stage_functionality.setPixelsToMicrons(message.getData()["pixel size"])
 
     def processMessage(self, message):
+        if self.stage is None:
+            return
 
-        if message.isType("get functionality"):
+        if message.isType("configuration"):
+            if message.sourceIs("tcp_control"):
+                self.tcpConnection(message.getData()["properties"]["connected"])
+
+        elif message.isType("get functionality"):
             self.getFunctionality(message)
 
         elif message.isType("pixel size"):
@@ -119,19 +124,85 @@ class StageModule(hardwareModule.HardwareModule):
 
         elif message.isType("stop film"):
             self.stopFilm(message)
-            
+
+        elif message.isType("tcp message"):
+            self.tcpMessage(message)
+
     def startFilm(self, message):
-        if self.stage is not None:
-            self.stage_functionality.mustRun(task = self.stage.joystickOnOff,
-                                             args = [False])
+        self.stage_functionality.mustRun(task = self.stage.joystickOnOff,
+                                         args = [False])
 
     def stopFilm(self, message):
-        if self.stage is not None:
-            self.stage_functionality.mustRun(task = self.stage.joystickOnOff,
-                                             args = [True])
-            pos_dict = self.stage_functionality.getCurrentPosition()
-            pos_string = "{0:.2f},{1:.2f}".format(pos_dict["x"], pos_dict["y"])
-            pos_param = params.ParameterCustom(name = "stage_position",
-                                               value = pos_string)
+        self.stage_functionality.mustRun(task = self.stage.joystickOnOff,
+                                         args = [True])
+        pos_dict = self.stage_functionality.getCurrentPosition()
+        pos_string = "{0:.2f},{1:.2f}".format(pos_dict["x"], pos_dict["y"])
+        pos_param = params.ParameterCustom(name = "stage_position",
+                                           value = pos_string)
+        message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                          data = {"acquisition" : [pos_param]}))
+
+    def tcpConnection(self, connected):
+        pass
+    
+    def tcpMessage(self, message):
+        tcp_message = message.getData()["tcp message"]
+        if tcp_message.isType("Move Stage"):
+            if tcp_message.isTest():
+                tcp_message.addResponse("duration", 1)
+            else:
+                #
+                # We don't want HAL to finalize this message until
+                # the stage has finished the move.
+                #
+                message.incRefCount()
+
+                #
+                # Create a TCPMoveHandler object. This object will store the message until
+                # the stage sends a signal that it is no longer moving.
+                #
+                tcp_move_handler = TCPMoveHandler(hal_message = message,
+                                                  stage_functionality = self.stage_functionality)
+                self.stage_functionality.isMoving.connect(tcp_move_handler.handleIsMoving)
+
+                #
+                # Tell the stage to move.
+                #
+                self.stage_functionality.goAbsolute(tcp_message.getData("stage_x"),
+                                                    tcp_message.getData("stage_y"))
+                
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"acquisition" : [pos_param]}))
+                                                              data = {"handled" : True}))                
+
+        elif tcp_message.isType("Get Stage Position"):
+            pos_dict = self.stage_functionality.getCurrentPosition()
+            tcp_message.addResponse("stage_x", pos_dict["x"])
+            tcp_message.addResponse("stage_y", pos_dict["y"])
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"handled" : True}))
+
+
+class TCPMoveHandler(object):
+        
+    def __init__(self, hal_message = None, stage_functionality = None, **kwds):
+        super().__init__(**kwds)
+        self.hal_message = hal_message
+        self.stage_functionality = stage_functionality
+
+        # Add this object as a tag on the message so that it won't get deleted
+        # by the garbage collector.
+        self.hal_message.tcp_move_handler = self
+
+    def handleIsMoving(self, is_moving):
+        #
+        # If the stage has stopped moving, decrement the HAL message ref count
+        # so that message will get finalized (and a response will be sent to
+        # whomever requested the move).
+        #
+        if not is_moving:
+            self.hal_message.decRefCount()
+            self.stage_functionality.isMoving.disconnect(self.handleIsMoving)
+
+            # Delete the reference to this object so that it will get deleted
+            # by the garbage collector.
+            self.hal_message.tcp_move_handler = None
