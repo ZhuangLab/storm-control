@@ -425,5 +425,16 @@
       </configuration>
     </illumination>
 
+    <!-- Coherent OBIS 405 laser control. -->
+    <obis405>
+      <module_name type="string">storm_control.sc_hardware.coherent.coherentModule</module_name>
+      <class_name type="string">CoherentObis</class_name>
+
+      <configuration>
+	<port type="string">COM19</port>
+	<used_during_filming type="boolean">True</used_during_filming>
+      </configuration>
+    </obis405>
+
   </modules>  
 </config>
