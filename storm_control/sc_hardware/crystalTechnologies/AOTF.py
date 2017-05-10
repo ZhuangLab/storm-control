@@ -291,7 +291,9 @@ class AOTFTelnet(AOTF):
         """
         Open telnet connection and verify that it works.
         """
-
+        self.encoding = 'utf-8'
+        self.live = True
+        
         # Open connection.
         try:
             self.aotf_conn = telnetlib.Telnet(ip_address, timeout = 0.1)
@@ -303,9 +305,9 @@ class AOTFTelnet(AOTF):
         self.timeout = timeout
 
         # Login.
-        self.aotf_conn.read_until("login: ", self.timeout)
-        self.aotf_conn.write("root\n")
-        self.aotf_conn.read_until("Password: ", self.timeout)
+        self.aotf_conn.read_until("login: ".encode(self.encoding), self.timeout)
+        self.aotf_conn.write("root\n".encode(self.encoding))
+        self.aotf_conn.read_until("Password: ".encode(self.encoding), self.timeout)
 
         dirname = os.path.dirname(__file__)
         if (len(dirname) == 0):
@@ -313,15 +315,15 @@ class AOTFTelnet(AOTF):
         #print(dirname)
         with open(dirname + '/aotf_pass.txt', 'r') as fp:
             password = fp.readline()
-        self.aotf_conn.write(password + "\n")
-        self.aotf_conn.read_until("root:~> ", self.timeout)
+        msg = password + "\n"
+        self.aotf_conn.write(msg.encode(self.encoding))
+        self.aotf_conn.read_until("root:~> ".encode(self.encoding), self.timeout)
 
         # Start Aotf control program.
-        self.aotf_conn.write("/bin/Aotf\n")
-        self.aotf_conn.read_until("* ", self.timeout)
+        self.aotf_conn.write("/bin/Aotf\n".encode(self.encoding))
+        self.aotf_conn.read_until("* ".encode(self.encoding), self.timeout)
 
         # Verify that we can talk to the Aotf.
-        self.live = True
         if not self._aotfOpen():
             self.live = False
         
@@ -338,12 +340,10 @@ class AOTFTelnet(AOTF):
         Send a command to the AOTF using IPC.
         """
         if self.live:
-            #print("sent", cmd)
-            self.aotf_conn.write(cmd + "\n")
-            #resp = self.aotf_conn.read_until("\r\n* ", self.timeout)
-            resp = self.aotf_conn.read_until("* ", self.timeout)
-            #print("got", resp)
-            return resp
+            msg = cmd + "\n"
+            self.aotf_conn.write(msg.encode(self.encoding))
+            resp = self.aotf_conn.read_until("* ".encode(self.encoding), self.timeout)
+            return resp.decode(self.encoding)
         else:
             return "Invalid"
 
@@ -354,15 +354,15 @@ class AOTFTelnet(AOTF):
         if self.live:
             self._sendCmd("shutdown")
             self.aotf_conn.close()
-        
+
 
 #
 # Testing.
 #
 if (__name__ == "__main__"):
     #my_aotf = AOTF()
-    my_aotf = AOTF64Bit(python32_exe = "C:/Users/hazen/AppData/Local/Programs/Python/Python36-32/python")
-    #my_aotf = AOTFTelnet("192.168.10.3")
+    #my_aotf = AOTF64Bit(python32_exe = "C:/Users/hazen/AppData/Local/Programs/Python/Python36-32/python")
+    my_aotf = AOTFTelnet("192.168.10.3")
 
     if not my_aotf.getStatus():
         exit()

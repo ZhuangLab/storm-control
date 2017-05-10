@@ -80,7 +80,7 @@ class AOTFModule(amplitudeModule.AmplitudeModule):
 
     def cleanUp(self, qt_settings):
         if self.aotf is not None:
-            for aotf_fn in self.aotf_fns:
+            for aotf_fn in self.aotf_fns.values():
                 aotf_fn.wait()
             self.aotf.shutDown()
 
@@ -100,3 +100,15 @@ class AOTF64BitModule(AOTFModule):
             self.aotf = None
 
         super().__init__(**kwds)
+
+
+class AOTFTelnet(AOTFModule):
+                                
+    def __init__(self, module_params = None, **kwds):
+        kwds["module_params"] = module_params
+        self.aotf = AOTF.AOTFTelnet(ip_address = module_params.get("configuration").get("ip_address"))
+        if not self.aotf.getStatus():
+            self.aotf = None
+
+        super().__init__(**kwds)
+        
