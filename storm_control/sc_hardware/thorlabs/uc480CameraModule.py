@@ -20,10 +20,10 @@ class UC480QPDCameraFunctionality(hardwareModule.BufferedFunctionality, lockModu
     def __init__(self, camera = None, reps = None, **kwds):
         super().__init__(**kwds)
         self.camera = camera
-        self.reps = reps
         self.scan_thread = UC480ScanThread(camera = self.camera,
                                            device_mutex = self.device_mutex,
                                            qpd_update_signal = self.qpdUpdate,
+                                           reps = reps,
                                            units_to_microns = self.units_to_microns)
 
     def adjustAOI(self, dx, dy):
@@ -43,7 +43,7 @@ class UC480QPDCameraFunctionality(hardwareModule.BufferedFunctionality, lockModu
         # lockControl.LockControl will call this each time the qpdUpdate signal
         # is emitted, but we only want the thread to get started once.
         #
-        if not self.running:
+        if not self.scan_thread.isRunning():
             self.scan_thread.startScan()
 
     def wait(self):
@@ -61,15 +61,20 @@ class UC480ScanThread(QtCore.QThread):
                  camera = None,
                  device_mutex = None,
                  qpd_update_signal = None,
+                 reps = None,
                  units_to_microns = None,
                  **kwds):
         super().__init__(**kwds)
         self.camera = camera
         self.device_mutex = device_mutex
         self.qpd_update_signal = qpd_update_signal
+        self.reps = reps
         self.running = False
         self.units_to_microns = units_to_microns
 
+    def isRunning(self):
+        return self.running
+        
     def run(self):
         self.running = True
         while(self.running):

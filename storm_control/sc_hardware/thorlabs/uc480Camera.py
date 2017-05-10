@@ -492,7 +492,7 @@ class CameraQPD(object):
         """
         data = self.capture().copy()
 
-        if self.background > 0: # Toggle between sum signal calculations
+        if (self.background > 0): # Toggle between sum signal calculations
             power = numpy.sum(data) - self.background
         else:
             power = numpy.max(data)
@@ -594,7 +594,7 @@ if (__name__ == "__main__"):
 
     from PIL import Image
 
-    loadDLL("c:\windows\system32\uc480_64.dll")
+    loadDLL("c:/windows/system32/uc480_64.dll")
 
     cam = Camera(1)
     reps = 50
