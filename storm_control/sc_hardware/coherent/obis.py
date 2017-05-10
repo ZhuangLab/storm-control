@@ -26,14 +26,14 @@ class Obis(RS232.RS232):
         self.pmax = 5.0
             
         try:
-            # open port
+            # Open port.
             super().__init__(**kwds)
 
-            # see if the laser is connected
+            # See if the laser is connected.
             assert not(self.commWithResp("?SYSTem:INFormation:MODel?") == None)
 
         # FIXME: This should not catch everything!
-        except:
+        except AttributeError:
             print(traceback.format_exc())
             self.live = False
             print("Failed to connect to Obis Laser at port", kwds["port"])
@@ -137,10 +137,10 @@ class Obis(RS232.RS232):
 if (__name__ == "__main__"):
     import time
     
-    obis = Obis(port = "COM9")
+    obis = Obis(port = "COM19")
     if obis.getStatus():
-        print obis.getPowerRange()
-        print obis.getLaserOnOff()
+        print(obis.getPowerRange())
+        print(obis.getLaserOnOff())
         obis.setPower(200.0)
         time.sleep(10)
         obis.shutDown()
