@@ -5,6 +5,7 @@ Handles remote control (via TCP/IP of the data collection program)
 Hazen 05/17
 """
 
+import os
 from PyQt5 import QtCore
 
 import storm_control.sc_library.tcpMessage as tcpMessage
@@ -55,9 +56,21 @@ class Controller(QtCore.QObject):
             print(">TCP message received:")
             print(tcp_message)
             print("")
+        
+        if tcp_message.isType("Set Directory"):
+            print(">> Warning the 'Set Directory' message is deprecated.")
+            directory = tcp_message.getData("directory")
+            if not os.path.isdir(directory):
+                tcp_message.setError(True, directory + " is an invalid directory")
+            else:
+                if not tcp_message.isTest():
+                    self.controlMessage.emit(halMessage.HalMessage(m_type = "change directory",
+                                                                   data = {"directory" : directory},
+                                                                   finalizer = lambda : self.server.sendMessage(tcp_message)))
+                    return
+            self.server.sendMessage(tcp_message)
 
-        # Handle movie requests.
-        if tcp_message.isType("Take Movie"):
+        elif tcp_message.isType("Take Movie"):
 
             # Check that movie length is valid.
             if (tcp_message.getData("length") is None) or (tcp_message.getData("length") < 1):
@@ -79,7 +92,7 @@ class Controller(QtCore.QObject):
                                                                data = {"request" : film_request}))
                 self.film_message = tcp_message
 
-        # Everything else is (hopefully) handled by other modules.
+        # Everything else is (in theory) handled by other modules.
         else:
             self.controlMessage.emit(halMessage.HalMessage(m_type = "tcp message",
                                                            data = {"tcp message" : tcp_message}))

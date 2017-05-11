@@ -81,7 +81,10 @@ class HalController(halModule.HalModule):
                 self.view.addUiWidget(parent_widget,
                                       message.getData()["ui_widget"],
                                       message.getData().get("ui_order"))
-            
+
+        elif message.isType("change directory"):
+            self.view.setFilmDirectory(message.getData()["directory"])
+                        
         elif message.isType("start"):
             if message.getData()["show_gui"]:
                 self.view.addMenuItems()
