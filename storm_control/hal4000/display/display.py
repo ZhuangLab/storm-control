@@ -73,7 +73,13 @@ class Display(halModule.HalModule):
     def handleResponse(self, message, response):
         if message.isType("get functionality"):
             if (message.getData()["extra data"] == "stage_fn"):
-                self.stage_functionality = response.getData()["functionality"]
+                stage_fn = response.getData()["functionality"]
+
+                # Drag motion is disabled for stages that declare themselves to be slow.
+                if stage_fn.isSlow():
+                    return
+
+                self.stage_functionality = stage_fn
                 for viewer in self.viewers:
                     viewer.setStageFunctionality(self.stage_functionality)
             else:
