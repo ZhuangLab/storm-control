@@ -71,6 +71,9 @@ class FindSumMixin(object):
                                          min_value = 0.1,
                                          max_value = 10.0))
 
+    def getFindSumMaxSum(self):
+        return self.fsm_max_sum
+
     def handleQPDUpdate(self, qpd_state):
         if hasattr(super(), "handleQPDUpdate"):
             super().handleQPDUpdate(qpd_state)

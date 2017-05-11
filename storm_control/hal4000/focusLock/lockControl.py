@@ -75,15 +75,18 @@ class LockControl(QtCore.QObject):
         """
         if self.current_state is not None:
 
-            # Set the error message if unsuccessful.
-            if not success:
-                tcp_message = self.current_state["tcp_message"]
-                if tcp_message.isType("Check Focus Lock"):
-                    tcp_message.setError(True, "Check focus lock failed.")
-                elif tcp_message.isType("Find Sum"):
-                    tcp_message.setError(True, "Find sum failed.")
-                else:
-                    raise Exception("No error message for " + tcp_message.getType())
+            # Add the TCP message response.
+            tcp_message = self.current_state["tcp_message"]
+            
+            if tcp_message.isType("Check Focus Lock"):
+                tcp_message.addResponse("focus_status", success)
+
+            elif tcp_message.isType("Find Sum"):
+                if success:
+                    tcp_message.addResponse("found_sum", self.lock_mode.getFindSumMaxSum())
+                
+            else:
+                raise Exception("No response handling for " + tcp_message.getType())
 
             # Relock if we were locked.
             if self.current_state["locked"]:
