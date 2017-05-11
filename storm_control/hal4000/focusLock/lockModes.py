@@ -349,7 +349,12 @@ class ScanMixin(object):
 
             # Set scan range.
             if "scan_range" in behavior_params:
-                sm_z_range = 0.5 * behavior_params["scan_range"]
+                
+                # None means scan the entire range of the z stage.
+                if behavior_params["scan_range"] is None:
+                    sm_z_range = self.z_stage_functionality.getMaximum() - self.z_stage_functionality.getMinimum()
+                else:
+                    sm_z_range = 0.5 * behavior_params["scan_range"]
             else:
                 sm_z_range = 0.5 * p.get("scan_range")
 
@@ -367,6 +372,13 @@ class ScanMixin(object):
                 self.sm_z_end = self.last_good_z + sm_z_range
                 self.sm_z_start = self.last_good_z - sm_z_range
 
+            # Fix end points is they are outside the range of the z stage.
+            if (self.sm_z_end > self.z_stage_functionality.getMaximum()):
+                self.sm_z_end = self.z_stage_functionality.getMaximum()
+                
+            if (self.sm_z_start < self.z_stage_functionality.getMinimum()):
+                self.sm_z_start = self.z_stage_functionality.getMinimum()
+                
             # Set target offset.
             if "target" in behavior_params:
                 self.sm_target = behavior_params["target"]
@@ -436,7 +448,7 @@ class LockMode(QtCore.QObject):
         """
         self.behavior = "none"
         self.done.emit(success)
-                        
+
     def getName(self):
         """
         Returns the name of the lock mode (as it should appear
@@ -464,6 +476,8 @@ class LockMode(QtCore.QObject):
     def initialize(self):
         """
         This is called when the mode becomes the 'active' mode.
+
+        FIXME: We don't seem to use this..
         """
         pass
 
@@ -474,7 +488,7 @@ class LockMode(QtCore.QObject):
         self.parameters = parameters
         if hasattr(super(), "newParameters"):
             super().newParameters(parameters)
-
+        
     def setLockStatus(self, status):
         self.good_lock = status
         self.goodLock.emit(status)
@@ -507,7 +521,7 @@ class LockMode(QtCore.QObject):
         Start a 'behavior' of the lock mode.
         """
         if not behavior_name in self.behavior_names:
-            raise LockModeException("Unknown lock behavior '" + sub_mode_name + "'.")
+            raise LockModeException("Unknown lock behavior '" + behavior_name + "'.")
 
         self.setLockStatus(False)
         #

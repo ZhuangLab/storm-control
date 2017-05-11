@@ -16,6 +16,7 @@ class LockControl(QtCore.QObject):
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
+        self.current_state = None
         self.lock_mode = None
         self.offset_fp = None
         self.qpd_functionality = None
@@ -23,6 +24,11 @@ class LockControl(QtCore.QObject):
         self.working = False
         self.z_stage_functionality = None
 
+        # Qt timer for checking focus lock
+        self.check_focus_timer = QtCore.QTimer()
+        self.check_focus_timer.setSingleShot(True)
+        self.check_focus_timer.timeout.connect(self.handleCheckFocusLock)
+        
     def getLockModeName(self):
         return self.lock_mode.getName()
     
@@ -31,7 +37,63 @@ class LockControl(QtCore.QObject):
 
     def getQPDSumSignal(self):
         return self.lock_mode.getQPDState()["sum"]
-    
+
+    def handleCheckFocusLock(self):
+        """
+        This handles the 'Check Focus Lock' TCP message.
+        """
+
+        # Return if we have a good lock.
+        if self.isGoodLock():
+            self.handleDone(True)
+
+        else:
+            self.current_state["num_checks"] -= 1
+
+            # Start a scan if we still don't have a good lock.
+            if (self.current_state["num_checks"] == 0):
+                tcp_message = self.current_state["tcp_message"]
+            
+                # Start (find offset) scan mode.
+                if tcp_message.getData("focus_scan"):
+                    self.startLockBehavior("scan",
+                                           {"scan_range" : tcp_message.getData("scan_range")})
+
+                # Otherwise just return that we were not successful.
+                self.handleDone(False)
+
+            # Wait 100ms and try again.
+            else:
+                self.check_focus_timer.start(100)
+
+    def handleDone(self, success):
+        """
+        Called by the lock mode when a behavior finishes.
+
+        Note: self.current_state will only not be None if we are handling 
+              a HAL TCP message.
+        """
+        if self.current_state is not None:
+
+            # Set the error message if unsuccessful.
+            if not success:
+                tcp_message = self.current_state["tcp_message"]
+                if tcp_message.isType("Check Focus Lock"):
+                    tcp_message.setError(True, "Check focus lock failed.")
+                elif tcp_message.isType("Find Sum"):
+                    tcp_message.setError(True, "Find sum failed.")
+                else:
+                    raise Exception("No error message for " + tcp_message.getType())
+
+            # Relock if we were locked.
+            if self.current_state["locked"]:
+                self.startLock()
+
+            # This lets HAL know we have handled this message.
+            self.current_state["message"].decRefCount()
+
+            self.current_state = None
+
     def handleJump(self, delta_z):
         self.lock_mode.handleJump(delta_z)
 
@@ -50,13 +112,18 @@ class LockControl(QtCore.QObject):
     def handleModeChanged(self, new_mode):
         """
         new_mode is a focusLock.LockMode object (listed in the mode combo box).
+
+        Note: The only way to activate the 'locked' behavior is with the GUI.
+              When you change lock modes the GUI will turn off the 'locked'
+              behavior.
         """
-        if self.lock_mode is not None and self.lock_mode.amLocked():
-            self.stopLock()
-            
+        if self.lock_mode is not None:
+            self.lock_mode.done.disconnect(self.handleDone)
+
         self.lock_mode = new_mode
         self.lock_mode.initialize()
         self.lock_mode.setZStageFunctionality(self.z_stage_functionality)
+        self.lock_mode.done.connect(self.handleDone)
         self.z_stage_functionality.recenter()
 
     def handleNewFrame(self, frame):
@@ -80,6 +147,59 @@ class LockControl(QtCore.QObject):
         self.lock_mode.handleQPDUpdate(qpd_dict)
         self.qpd_functionality.getOffset()
 
+    def handleTCPMessage(self, message):
+        """
+        Handles TCP messages from tcpControl.TCPControl.
+        """
+        if not self.working:
+            return False
+        
+        tcp_message = message.getData()["tcp message"]
+        if tcp_message.isType("Check Focus Lock"):
+            if not message.isTest():
+                                     
+                # Record current state.
+                assert (self.current_state == None)
+                self.current_state = {"locked" : self.lock_mode.amLocked(),
+                                      "num_checks" : tcp_message.getData("num_focus_checks") + 1,
+                                      "message" : message,
+                                      "tcp_message" : tcp_message}
+
+                # Start checking the focus lock.
+                self.handleCheckFocusLock()
+
+                # Increment the message reference count so that HAL
+                # knows that it has not been fully processed.
+                message.incRefCount()
+
+            return True
+
+        elif tcp_message.isType("Find Sum"):
+            if not message.isTest():
+
+                # Record current state.
+                assert (self.current_state == None)
+                self.current_state = {"locked" : self.lock_mode.amLocked(),
+                                      "message" : message,
+                                      "tcp_message" : tcp_message}
+                
+                # Start find sum mode.
+                self.startLockBehavior("find_sum",
+                                       {"requested_sum" : tcp_message.getData("min_sum")})
+                
+                # Increment the message reference count so that HAL
+                # knows that it has not been fully processed.
+                message.incRefCount()
+
+            return True
+
+        elif tcp_message.isType("Set Lock Target"):
+            if not message.isTest():
+                self.lock_mode.setLockTarget(tcp_message.getData("lock_target"))
+            return True
+        
+        return False
+    
     def isGoodLock(self):
         """
         This is whether or not the focus lock mode has a 'good' 

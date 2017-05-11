@@ -97,6 +97,7 @@ class FocusLockView(halDialog.HalDialog):
         self.jump.emit(self.ui.jumpSpinBox.value())
 
     def handleLockButton(self):
+        
         # This is called after the button's state has changed.
         if self.amLocked():
             self.ui.lockButton.setText("Unlock")
@@ -112,7 +113,7 @@ class FocusLockView(halDialog.HalDialog):
 
             # This will turn off the lock, if it is on.
             if self.amLocked():
-                self.handleLockButton()
+                self.ui.lockButton.click()
 
             # Disconnect signals.
             self.current_mode.lockTarget.disconnect(self.setLockTargetSpinBox)
@@ -276,3 +277,9 @@ class FocusLock(halModule.HalModule):
                                                                                        lock_mode,
                                                                                        lock_sum,
                                                                                        lock_target]}))
+
+        elif message.isType("tcp message"):
+            handled = self.control.handleTCPMessage(message)
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"handled" : handled}))
+                
