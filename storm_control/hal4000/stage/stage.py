@@ -242,8 +242,15 @@ class Stage(halModule.HalModule):
             self.view.setStageFunctionality(response.getData()["functionality"])
             
     def processMessage(self, message):
-            
-        if message.isType("configure1"):
+
+        if message.isType("configuration"):
+
+            if message.sourceIs("hal") or message.sourceIs("testing"):
+                properties = message.getData()["properties"]
+                if "directory" in properties:
+                    self.view.setDirectory(properties["directory"])
+                
+        elif message.isType("configure1"):
             self.sendMessage(halMessage.HalMessage(m_type = "add to menu",
                                                    data = {"item name" : "Stage",
                                                            "item data" : "stage"}))
@@ -253,9 +260,6 @@ class Stage(halModule.HalModule):
 
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.view.getParameters()}))
-
-        elif message.isType("new directory"):
-            self.view.setDirectory(message.getData()["directory"])
             
         elif message.isType("new parameters"):
             p = message.getData()["parameters"]

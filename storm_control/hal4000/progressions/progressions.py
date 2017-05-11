@@ -491,18 +491,20 @@ class Progressions(halModule.HalModule):
     def processMessage(self, message):
 
         if message.isType("configuration"):
-            if message.sourceIs("timing"):
-                self.view.setTimingFunctionality(message.getData()["properties"]["functionality"])
+            if message.sourceIs("hal") or message.sourceIs("testing"):
+                properties = message.getData()["properties"]
+                if "directory" in properties:
+                    self.view.setDirectory(properties["directory"])
                 
+            elif message.sourceIs("timing"):
+                self.view.setTimingFunctionality(message.getData()["properties"]["functionality"])
+    
         elif message.isType("configure1"):
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : self.ilm_fn_name}))
 
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.view.getParameters()}))
-
-        elif message.isType("new directory"):
-            self.view.setDirectory(message.getData()["directory"])
             
         elif message.isType("new parameters"):
             p = message.getData()["parameters"]

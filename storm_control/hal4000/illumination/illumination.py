@@ -188,10 +188,11 @@ class IlluminationView(halDialog.HalDialog):
 
         self.move(current_position)
 
-        # Do it by sending a message so that film.film also updates.
+        # Update shutters file by sending a message so that film.film also updates.
+        pdict = {"shutters filename" : self.parameters.get("shutters")}
         self.guiMessage.emit(halMessage.HalMessage(source = None,
-                                                   m_type = "new shutters file",
-                                                   data = {"filename" : self.parameters.get("shutters")}))
+                                                   m_type = "configuration",
+                                                   data = {"properties" : pdict}))
 
     def newShutters(self, shutters_filename):
         """
@@ -199,6 +200,7 @@ class IlluminationView(halDialog.HalDialog):
         and also when the user loads a new shutters file for the existing
         parameters.
         """
+        
         filename_to_parse = None
         path_filename = os.path.join(self.xml_directory, shutters_filename)
 
@@ -348,7 +350,12 @@ class Illumination(halModule.HalModule):
     def processMessage(self, message):
 
         if message.isType("configuration"):
-            if message.sourceIs("timing"):
+            if message.sourceIs("hal") or message.sourceIs("illumination"):
+                properties = message.getData()["properties"]
+                if "shutters filename" in properties:
+                    self.view.newShutters(properties["shutters filename"])
+
+            elif message.sourceIs("timing"):
                 self.view.setTimingFunctionality(message.getData()["properties"]["functionality"])
 
         elif message.isType("configure1"):
@@ -377,9 +384,6 @@ class Illumination(halModule.HalModule):
             self.view.newParameters(p.get(self.module_name))
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"new parameters" : self.view.getParameters()}))
-
-        elif message.isType("new shutters file"):
-            self.view.newShutters(message.getData()["filename"])
             
 #        elif message.isType("remote inc power"):
 #            self.view.remoteIncPower(message.getData()["channel"],

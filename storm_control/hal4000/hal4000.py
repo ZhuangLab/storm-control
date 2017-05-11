@@ -88,8 +88,8 @@ class HalController(halModule.HalModule):
                 self.view.addWidgets()
                 self.view.show()
                 
-            self.sendMessage(halMessage.HalMessage(m_type = "new directory",
-                                                   data = {"directory" : self.view.getFilmDirectory()}))
+            self.sendMessage(halMessage.HalMessage(m_type = "configuration",
+                                                   data = {"properties" : {"directory" : self.view.getFilmDirectory()}}))
 
         elif message.isType("start film"):
             self.view.startFilm(message.getData()["film settings"])
@@ -104,14 +104,15 @@ class HalController(halModule.HalModule):
         elif message.isType("tcp message"):
             tcp_message = message.getData()["tcp message"]
             if tcp_message.isType("Set Directory"):
+                print(">> Warning the 'Set Directory' message is deprecated.")
                 directory = tcp_message.getData("directory")
                 if not os.path.isdir(directory):
                     tcp_message.setError(True, directory + " is an invalid directory")
                 else:
                     if not tcp_message.isTest():
                         self.view.setFilmDirectory(directory)
-                        self.sendMessage(halMessage.HalMessage(m_type = "new directory",
-                                                               data = {"directory" : self.view.getFilmDirectory()}))
+                        self.sendMessage(halMessage.HalMessage(m_type = "configuration",
+                                                               data = {"properties" : {"directory" : self.view.getFilmDirectory()}}))
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                   data = {"handled" : True}))
                         
@@ -298,8 +299,8 @@ class HalView(QtWidgets.QMainWindow):
                                                                    QtWidgets.QFileDialog.ShowDirsOnly)
         if new_directory and os.path.exists(new_directory):
             self.film_directory = new_directory
-            self.guiMessage.emit(halMessage.HalMessage(m_type = "new directory",
-                                                       data = {"directory" : self.film_directory}))
+            self.guiMessage.emit(halMessage.HalMessage(m_type = "configuration",
+                                                       data = {"properties" : {"directory" : self.film_directory}}))
 
     def handleMenuMessage(self, item_data):
         self.guiMessage.emit(halMessage.HalMessage(m_type = "show",
@@ -312,8 +313,8 @@ class HalView(QtWidgets.QMainWindow):
                                                                     "*.xml")[0]
         if parameters_filename:
             self.xml_directory = os.path.dirname(parameters_filename)
-            self.guiMessage.emit(halMessage.HalMessage(m_type = "new parameters file",
-                                                       data = {"filename" : parameters_filename}))
+            self.guiMessage.emit(halMessage.HalMessage(m_type = "configuration",
+                                                       data = {"properties" : {"parameters filename" : parameters_filename}}))
 
     def handleShutters(self, boolean):
         shutters_filename = QtWidgets.QFileDialog.getOpenFileName(self, 
@@ -322,8 +323,8 @@ class HalView(QtWidgets.QMainWindow):
                                                                   "*.xml")[0]
         if shutters_filename:
             self.xml_directory = os.path.dirname(shutters_filename)
-            self.guiMessage.emit(halMessage.HalMessage(m_type = "new shutters file",
-                                                       data = {"filename" : shutters_filename}))
+            self.guiMessage.emit(halMessage.HalMessage(m_type = "configuration",
+                                                       data = {"properties" : {"shutters filename" : shutters_filename}}))
 
     def handleQuit(self, boolean):
         self.close_now = True
@@ -494,9 +495,9 @@ class HalCore(QtCore.QObject):
         # update default parameters.
         if parameters_file_name is not None:
             message_chain.append(halMessage.HalMessage(source = self,
-                                                 m_type = "new parameters file",
-                                                 data = {"filename" : parameters_file_name,
-                                                         "is_default" : True}))        
+                                                 m_type = "configuration",
+                                                 data = {"properties" : {"parameters filename" : parameters_file_name,
+                                                                         "is_default" : True}}))
 
         # start.
         #

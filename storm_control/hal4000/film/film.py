@@ -123,15 +123,24 @@ class FilmBox(QtWidgets.QGroupBox):
         return name
 
     def getFilmSettings(self, film_request):
-
+            
         if film_request.isTCPRequest():
             #
             # TCP requested films are
+            #
             # 1. Always fixed length.
             # 2. Will always overwrite.
             # 3. Are always saved.
+            # 4. Always have a base name.
             #
-            return filmSettings.FilmSettings(basename = os.path.join(self.parameters.get("directory"), film_request.getBasename()),
+
+            # Figure out what directory to use.
+            if film_request.getDirectory() is None:
+                directory = self.parameters.get("directory")
+            else:
+                directory = film_request.getDirectory()
+
+            return filmSettings.FilmSettings(basename = os.path.join(directory, film_request.getBasename()),
                                              filetype = self.parameters.get("filetype"),
                                              film_length = film_request.getFrames(),
                                              run_shutters = self.ui.autoShuttersCheckBox.isChecked(),
@@ -478,12 +487,29 @@ class Film(halModule.HalModule):
                 for name in message.getData()["properties"]["feed names"]:
                     self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                            data = {"name" : name}))
-                
+
+            elif message.sourceIs("hal"):
+                properties = message.getData()["properties"]
+                if "directory" in properties:
+                    self.view.setDirectory(properties["directory"])
+                if "shutters filename" in properties:
+                    self.view.setShutters(properties["shutters filename"])
+
+            elif message.sourceIs("illumination"):
+                properties = message.getData()["properties"]
+                if "shutters filename" in properties:
+                    self.view.setShutters(properties["shutters filename"])
+
             elif message.sourceIs("mosaic"):
                 # We need to keep track of the current value so that
                 # we can save this in the tif images / stacks.
                 self.pixel_size = message.getData()["properties"]["pixel_size"]
 
+            elif message.sourceIs("testing"):
+                properties = message.getData()["properties"]
+                if "directory" in properties:
+                    self.view.setDirectory(properties["directory"])
+                    
             elif message.sourceIs("timing"):
                 # We'll get this message from timing.timing, the part we are interested in is
                 # the timing functionality which we will use both to update the frame counter
@@ -498,9 +524,6 @@ class Film(halModule.HalModule):
                 
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.view.getParameters()}))
-            
-        elif message.isType("new directory"):
-            self.view.setDirectory(message.getData()["directory"])
 
         elif message.isType("new parameters"):
             if self.locked_out:
@@ -511,9 +534,6 @@ class Film(halModule.HalModule):
             self.view.newParameters(message.getData()["parameters"].get(self.module_name))
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"new parameters" : self.view.getParameters()}))
-
-        elif message.isType("new shutters file"):
-            self.view.setShutters(message.getData()["filename"])
 
         elif message.isType("ready to film"):
             self.wait_for.remove(message.getSourceName())
