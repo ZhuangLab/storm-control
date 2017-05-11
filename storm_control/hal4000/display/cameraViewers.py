@@ -49,8 +49,7 @@ class CameraParamsMixin(object):
         return self.module_name
 
     def handleFeedChange(self, feed_name):
-        self.guiMessage.emit(halMessage.HalMessage(source = self,
-                                                   m_type = "get functionality",
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : feed_name,
                                                            "extra data" : self.module_name}))
 
@@ -67,6 +66,9 @@ class CameraParamsMixin(object):
         self.frame_viewer.setCameraFunctionality(camera_functionality)
         if self.params_viewer is not None:
             self.params_viewer.setCameraFunctionality(camera_functionality)
+
+    def setStageFunctionality(self, stage_functionality):
+        self.frame_viewer.setStageFunctionality(stage_functionality)
 
     def setFeedNames(self, feed_names):
         self.frame_viewer.setFeedNames(feed_names)
@@ -197,54 +199,3 @@ class DetachedViewer(halDialog.HalDialog, CameraParamsMixin):
         self.handleFeedChange(self.frame_viewer.getFeedName())
 
 
-
-
-
-
-#    def handleShutterButton(self, boolean):
-#        self.guiMessage.emit(halMessage.HalMessage(source = self,
-#                                                   m_type = "shutter clicked",
-#                                                   data = {"display_name" : self.module_name,
-#                                                           "camera" : self.camera_name}))
-        
-
-#        if self.params_viewer is not None:
-#            self.params_viewer.newParameters(parameters.get(self.camera_name))
-
-#    def getFeedName(self):
-#        return self.frame_viewer.getFeedName()
-        
-#    def getViewerName(self):
-#        return self.module_name
-
-#    def enableStageDrag(self, enabled):
-#        self.frame_viewer.enableStageDrag(enabled)
-
-#    def getDefaultParameters(self):
-#        return self.frame_viewer.getDefaultParameters()
-        
-
-
-#    def messageCameraEMCCDGain(self, camera_name, emccd_gain):
-#        if (camera_name == self.camera_name):
-#            if self.params_viewer is not None:
-#                self.params_viewer.setEMCCDGain(emccd_gain)
-
-#    def messageCameraShutter(self, camera_name, camera_shutter):
-#        if (camera_name == self.camera_name):
-#            self.frame_viewer.setShutter(camera_shutter)
-
-#    def messageCameraTemperature(self, camera_name, state, temperature):
-#        if (camera_name == self.camera_name):
-#            if self.params_viewer is not None:
-#                self.params_viewer.setTemperature(state, temperature)
-
-                
-#    def messageGetFeedInformation(self, feed_info):
-#        self.frame_viewer.setFeedInformation(feed_info)
-
-#    def messageFeedsInformation(self, feeds_info):
-#        self.frame_viewer.setFeeds(feeds_info)
-
-#    def messageNewFrame(self, frame):
-#        self.frame_viewer.newFrame(frame)

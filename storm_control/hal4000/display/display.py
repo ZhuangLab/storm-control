@@ -30,6 +30,7 @@ class Display(halModule.HalModule):
         self.parameters = module_params.get("parameters")
         self.qt_settings = qt_settings
         self.show_gui = True
+        self.stage_functionality = None
         self.window_title = module_params.get("setup_name")
         
         self.viewers = []
@@ -71,9 +72,14 @@ class Display(halModule.HalModule):
         
     def handleResponse(self, message, response):
         if message.isType("get functionality"):
-            for viewer in self.viewers:
-                if (viewer.getViewerName() == message.getData()["extra data"]):
-                    viewer.setCameraFunctionality(response.getData()["functionality"])
+            if (message.getData()["extra data"] == "stage_fn"):
+                self.stage_functionality = response.getData()["functionality"]
+                for viewer in self.viewers:
+                    viewer.setStageFunctionality(self.stage_functionality)
+            else:
+                for viewer in self.viewers:
+                    if (viewer.getViewerName() == message.getData()["extra data"]):
+                        viewer.setCameraFunctionality(response.getData()["functionality"])
 
         elif message.isType("get feed names"):
             for viewer in self.viewers:
@@ -88,6 +94,12 @@ class Display(halModule.HalModule):
                 for viewer in self.viewers:
                     viewer.setFeedNames(feed_names)
 
+            elif message.sourceIs("stage"):
+                stage_fn_name = message.getData()["properties"]["stage functionality name"]
+                self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
+                                                       data = {"name" : stage_fn_name,
+                                                               "extra data" : "stage_fn"}))
+
         elif message.isType("configure1"):
             
             # The ClassicViewer might need to tell other modules to
@@ -95,15 +107,13 @@ class Display(halModule.HalModule):
             self.viewers[0].configure1()
 
             # Add a menu option(s) to generate more viewers.
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "add to menu",
-                                                       data = {"item name" : "Feed Viewer",
-                                                               "item data" : "new feed viewer"}))
+            self.sendMessage(halMessage.HalMessage(m_type = "add to menu",
+                                                   data = {"item name" : "Feed Viewer",
+                                                           "item data" : "new feed viewer"}))
             if not self.is_classic:
-                self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                           m_type = "add to menu",
-                                                           data = {"item name" : "Camera Viewer",
-                                                                   "item data" : "new camera viewer"}))
+                self.sendMessage(halMessage.HalMessage(m_type = "add to menu",
+                                                       data = {"item name" : "Camera Viewer",
+                                                               "item data" : "new camera viewer"}))
 
         elif message.isType("new parameters"):
             p = message.getData()["parameters"]
@@ -154,13 +164,14 @@ class Display(halModule.HalModule):
                                                          default_colortable = self.parameters.get("colortable"))
             camera_viewer.halDialogInit(self.qt_settings, self.window_title + " camera viewer")
             camera_viewer.guiMessage.connect(self.handleGuiMessage)
+            if self.stage_functionality is not None:
+                camera_viewer.setStageFunctionality(self.stage_functionality)
             camera_viewer.showViewer(self.show_gui)
             self.viewers.append(camera_viewer)
 
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "get feed names",
-                                                       data = {"extra data" : camera_viewer.getViewerName()}))
-    
+            self.sendMessage(halMessage.HalMessage(m_type = "get feed names",
+                                                   data = {"extra data" : camera_viewer.getViewerName()}))
+
     def newFeedViewer(self):
 
         # First look for an existing viewer that is just hidden.
@@ -176,12 +187,13 @@ class Display(halModule.HalModule):
                                                    default_colortable = self.parameters.get("colortable"))
             feed_viewer.halDialogInit(self.qt_settings, self.window_title + " feed viewer")        
             feed_viewer.guiMessage.connect(self.handleGuiMessage)
+            if self.stage_functionality is not None:
+                feed_viewer.setStageFunctionality(self.stage_functionality)
             feed_viewer.showViewer(self.show_gui)
             self.viewers.append(feed_viewer)
 
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "get feed names",
-                                                       data = {"extra data" : feed_viewer.getViewerName()}))
+            self.sendMessage(halMessage.HalMessage(m_type = "get feed names",
+                                                   data = {"extra data" : feed_viewer.getViewerName()}))
 
 
 #

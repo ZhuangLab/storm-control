@@ -83,6 +83,7 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.show_grid = False
         self.show_info = True
         self.show_target = False
+        self.stage_functionality = None
 
         #
         # Keep track of the default feed_name in the default parameters, these
@@ -142,9 +143,8 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.camera_view.newScale.connect(self.handleNewScale)
         self.camera_view.verticalScrollBar().sliderReleased.connect(self.handleScrollBar)
 
-#        self.camera_view.dragMove.connect(self.handleDragMove)
-#        self.camera_view.dragStart.connect(self.handleDragStart)        
-#        self.camera_view.rubberBandChanged.connect(self.handleRubberBandChanged)
+        self.camera_view.dragMove.connect(self.handleDragMove)
+        self.camera_view.rubberBandChanged.connect(self.handleRubberBandChanged)
 
         self.ui.autoScaleButton.clicked.connect(self.handleAutoScale)
         self.ui.colorComboBox.currentIndexChanged[str].connect(self.handleColorTableChange)
@@ -290,6 +290,9 @@ class CameraFrameViewer(QtWidgets.QFrame):
             if self.broadcast_q_image:
                 pass
 
+    def handleDragMove(self, dx, dy):
+        self.stage_functionality.dragMove(dx, dy)
+        
     def handleFeedChange(self, feed_name):
         """
         This sends a message to the new camera / feed that it will respond 
@@ -348,6 +351,11 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.setParameter("display_min", int(scale_min))
         self.updateRange()
 
+    def handleRubberBandChanged(self, rubber_band_rect, from_scene_point, to_scene_point):
+        print(">hrbc", rubber_band_rect)
+        print(">hrbc", from_scene_point)
+        print(">hrbc", to_scene_point)
+        
     def handleScrollBar(self):
         self.camera_view.getCurrentCenter()
 
@@ -510,6 +518,10 @@ class CameraFrameViewer(QtWidgets.QFrame):
         feed_params = self.parameters.get(self.getFeedName())
         feed_params.set(pname, pvalue)
         return pvalue
+
+    def setStageFunctionality(self, stage_functionality):
+        self.stage_functionality = stage_functionality
+        self.camera_view.enableStageDrag(True)
         
     def setSyncMax(self, sync_max):
         self.setParameter("sync_max", sync_max)

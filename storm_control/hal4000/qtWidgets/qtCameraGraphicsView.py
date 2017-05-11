@@ -16,7 +16,6 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
     have keep track of all these details.
     """
     dragMove = QtCore.pyqtSignal(int, int)
-    dragStart = QtCore.pyqtSignal()
     newCenter = QtCore.pyqtSignal(int, int)
     newScale = QtCore.pyqtSignal(int)
     
@@ -86,7 +85,6 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
 
         if self.ctrl_key_down:
             self.drag_mode = True
-            self.dragStart.emit()
             self.drag_x = event.x()
             self.drag_y = event.y()
             QtWidgets.QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ClosedHandCursor))
