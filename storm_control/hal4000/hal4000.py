@@ -103,22 +103,7 @@ class HalController(halModule.HalModule):
                                                  value = self.view.getNotesEditText())
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"acquisition" : [notes_param]}))
-
-        elif message.isType("tcp message"):
-            tcp_message = message.getData()["tcp message"]
-            if tcp_message.isType("Set Directory"):
-                print(">> Warning the 'Set Directory' message is deprecated.")
-                directory = tcp_message.getData("directory")
-                if not os.path.isdir(directory):
-                    tcp_message.setError(True, directory + " is an invalid directory")
-                else:
-                    if not tcp_message.isTest():
-                        self.view.setFilmDirectory(directory)
-                        self.sendMessage(halMessage.HalMessage(m_type = "change directory",
-                                                               data = {"directory" : self.view.getFilmDirectory()}))
-                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                                  data = {"handled" : True}))
-                        
+            
         elif message.isType("tests done"):
             self.view.close()
 
