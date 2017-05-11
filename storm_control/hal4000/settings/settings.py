@@ -93,12 +93,6 @@ class Settings(halModule.HalModule):
                                            "resp" : {"new parameters" : [False, params.StormXMLObject],
                                                      "old parameters" : [False, params.StormXMLObject]}})
 
-#        # Add a new parameters file to the list of parameters.
-#        halMessage.addMessage("new parameters file",
-#                              validator = {"data" : {"filename" : [True, str],
-#                                                     "is_default" : [False, bool]},
-#                                           "resp" : None})
-
         # A request from another module to set the current parameters.
         halMessage.addMessage("set parameters",
                               validator = {"data" : {"index or name" : [True, (str, int)]},
