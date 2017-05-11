@@ -603,11 +603,10 @@ class Window(QtWidgets.QMainWindow):
         directory = QtWidgets.QFileDialog.getExistingDirectory(self,
                                                                "New Directory",
                                                                str(self.parameters.get("directory")),
-                                                               QtWidgets.QFileDialog.ShowDirsOnly)[0]
+                                                               QtWidgets.QFileDialog.ShowDirsOnly)
         if directory:
             self.parameters.set("directory", directory + os.path.sep)
             self.snapshot_directory = directory + os.path.sep
-            print(self.parameters.get("directory"))
 
     ## handleSnapshot
     #
@@ -801,9 +800,8 @@ class Window(QtWidgets.QMainWindow):
             self.toggleTakingPicturesStatus(True)
             
             self.comm.commConnect()
-            if self.comm.setDirectory(self.parameters.get("directory")):
-                self.comm.captureStart(self.current_center.x_um, self.current_center.y_um)
-            else:
+            self.comm.setDirectory(self.parameters.get("directory"))
+            if not self.comm.captureStart(self.current_center.x_um, self.current_center.y_um):
                 self.toggleTakingPicturesStatus(False)
                 self.picture_queue = []
 

@@ -66,9 +66,10 @@ def mosaicSettingsMessage():
 #
 # @return A TCPMessage object.
 #
-def movieMessage(filename):
+def movieMessage(filename, directory):
     return tcpMessage.TCPMessage(message_type = "Take Movie",
                                  message_data = {"name" : filename,
+                                                 "directory" : directory,
                                                  "length" : 1})
 
 ## moveStageMessage
@@ -108,13 +109,20 @@ class Image(object):
     # @param params A StormXMLObject describing the acqusition.
     #
     def __init__(self, data, size, params):
-        self.camera = params.get("acquisition.camera")
+        self.camera = params.get("acquisition.camera", "camera1")
         self.data = data
         self.height = size[0]
-        self.image_min = params.get(self.camera + ".scalemin")
-        self.image_max = params.get(self.camera + ".scalemax")
+
+        # Pre HAL2 movies.
+        if params.has(self.camera + ".scalemin"):
+            self.image_min = params.get(self.camera + ".scalemin")
+            self.image_max = params.get(self.camera + ".scalemax")
+        else:
+            self.image_min = params.get("display00.camera1.display_min")
+            self.image_max = params.get("display00.camera1.display_max")
+            
         self.parameters = params
-        self.parameters_file = params.get("parameters_file")
+        self.parameters_file = params.get("parameters_file", "NA")
         self.width = size[1]
 
         location = list(map(float, params.get("acquisition.stage_position").split(",")))
@@ -204,8 +212,6 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def captureStart(self, stagex, stagey):
-
-        print(stagex, stagey)
         
         if os.path.exists(self.fullname()):
             os.remove(self.fullname())
@@ -218,8 +224,10 @@ class Capture(QtCore.QObject):
             self.messages.append(mosaicSettingsMessage())                                 
         self.messages.append(objectiveMessage())
         self.messages.append(moveStageMessage(stagex, stagey))
-        self.messages.append(movieMessage(self.filename))
+        self.messages.append(movieMessage(self.filename,
+                                          self.directory))
         self.sendFirstMessage()
+        return True
 
     ## commConnect
     #
@@ -482,13 +490,13 @@ class Capture(QtCore.QObject):
     def setDirectory(self, directory):
         self.directory = directory
 
-        if not self.tcp_client.isConnected():
-            hdebug.logText("setDirectory: not connected to HAL.")
-            return False
+        #if not self.tcp_client.isConnected():
+        #    hdebug.logText("setDirectory: not connected to HAL.")
+        #    return False
 
-        self.messages.append(directoryMessage(self.directory))
-        self.sendFirstMessage()
-        return True
+        #self.messages.append(directoryMessage(self.directory))
+        #self.sendFirstMessage()
+        #return True
 
     ## shutDown
     #
