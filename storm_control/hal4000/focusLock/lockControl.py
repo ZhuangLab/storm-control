@@ -156,6 +156,9 @@ class LockControl(QtCore.QObject):
         """
         if not self.working:
             return False
+
+        if not self.lock_mode.canHandleTCPMessages():
+            return False
         
         tcp_message = message.getData()["tcp message"]
         if tcp_message.isType("Check Focus Lock"):

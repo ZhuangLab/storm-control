@@ -452,6 +452,12 @@ class LockMode(QtCore.QObject):
         self.behavior = "none"
         self.done.emit(success)
 
+    def canHandleTCPMessages(self):
+        """
+        Modes without any of the mixins cannot handle TCP messages.
+        """
+        return False
+    
     def getName(self):
         """
         Returns the name of the lock mode (as it should appear
@@ -557,6 +563,12 @@ class JumpLockMode(LockMode, FindSumMixin, LockedMixin, ScanMixin):
         self.jlm_relock_timer.setSingleShot(True)
         self.jlm_relock_timer.timeout.connect(self.handleRelockTimer)
 
+    def canHandleTCPMessages(self):
+        """
+        Modes with (all) of the mixins can handle TCP messages.
+        """
+        return True
+    
     def handleJump(self, jumpsize):
         """
         Jumps the piezo stage immediately if it is not locked. Otherwise it 
