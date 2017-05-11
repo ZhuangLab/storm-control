@@ -10,6 +10,7 @@ from PyQt5 import QtCore
 import storm_control.sc_library.tcpMessage as tcpMessage
 import storm_control.sc_library.tcpServer as tcpServer
 
+import storm_control.hal4000.film.filmRequest as filmRequest
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
 
@@ -20,9 +21,11 @@ class Controller(QtCore.QObject):
     """
     controlMessage = QtCore.pyqtSignal(object)
     
-    def __init__(self, server = None, **kwds):
+    def __init__(self, server = None, verbose = True, **kwds):
         super().__init__(**kwds)
+        self.film_message = None
         self.server = server
+        self.verbose = verbose
 
         self.server.comGotConnection.connect(self.handleNewConnection)
         self.server.comLostConnection.connect(self.handleLostConnection)
@@ -30,20 +33,56 @@ class Controller(QtCore.QObject):
 
     def cleanUp(self):
         self.server.close()
+
+    def filmComplete(self):
+        """
+        This method will get called when film.film sends a 'film lockout' message with
+        'locked out' False, which is the signal for the end of a film.
+        """
+        if self.film_message is not None:
+            self.server.sendMessage(self.film_message)
+        self.film_message = None
         
     def handleLostConnection(self):
         self.controlMessage.emit(halMessage.HalMessage(m_type = "configuration",
                                                        data = {"properties" : {"connected" : False}}))
 
-    def handleMessageReceived(self, message):
+    def handleMessageReceived(self, tcp_message):
         """
         TCP message handling.
         """
-        print(">hmr")
-        print(message)
-        print("")
-        self.controlMessage.emit(halMessage.HalMessage(m_type = "tcp message",
-                                                       data = {"tcp message" : message}))
+        if self.verbose:
+            print(">TCP message received:")
+            print(tcp_message)
+            print("")
+
+        # Handle movie requests.
+        if tcp_message.isType("Take Movie"):
+
+            # Check that movie length is valid.
+            if (tcp_message.getData("length") is None) or (tcp_message.getData("length") < 1):
+                tcp_message.setError(True, str(message.getData("length")) + " is an invalid movie length")
+                self.server.sendMessage(tcp_message)
+                return
+
+            # Some messy logic here to check if we will over-write an existing film?
+            
+            if tcp_message.isTest():
+                # More messy logic here to return film size, time, etc.. here.
+                pass
+            else:
+                film_request = filmRequest.FilmRequest(basename = tcp_message.getData("name"),
+                                                       directory = tcp_message.getData("directory"),
+                                                       frames = tcp_message.getData("length"),
+                                                       tcp_request = True)
+                self.controlMessage.emit(halMessage.HalMessage(m_type = "start film request",
+                                                               data = {"request" : film_request}))
+                self.film_message = tcp_message
+
+        # Everything else is (hopefully) handled by other modules.
+        else:
+            self.controlMessage.emit(halMessage.HalMessage(m_type = "tcp message",
+                                                           data = {"tcp message" : tcp_message}))
     
     def handleNewConnection(self):
         self.controlMessage.emit(halMessage.HalMessage(m_type = "configuration",
@@ -97,8 +136,9 @@ class TCPControl(halModule.HalModule):
 
     def processMessage(self, message):
 
-        if message.isType("configure1"):
-            pass
+        if message.isType("film lockout"):
+            if not message.getData()["locked out"]:
+                self.control.filmComplete()
         
 
 #
