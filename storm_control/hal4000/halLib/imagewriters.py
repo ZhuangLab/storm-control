@@ -15,6 +15,11 @@ from PyQt5 import QtCore
 import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
 
+
+class ImageWriterException(halExceptions.HalException):
+    pass
+
+
 def availableFileFormats():
     """
     Return a list of the available movie formats.
@@ -38,7 +43,7 @@ def createFileWriter(camera_functionality, film_settings):
         return TIFFile(camera_functionality = camera_functionality,
                        film_settings = film_settings)
     else:
-        raise halExceptions.HalException("Unknown output file format '" + ft + "'")
+        raise ImageWriterException("Unknown output file format '" + ft + "'")
 
 
 class BaseFileWriter(object):
