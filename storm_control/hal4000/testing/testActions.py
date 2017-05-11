@@ -144,7 +144,8 @@ class Record(TestAction):
 
         self.film_request = filmRequest.FilmRequest(basename = filename,
                                                     frames = length,
-                                                    tcp_request = True)                                                
+                                                    overwrite = True,
+                                                    tcp_request = True)
 
     def getMessageData(self):
         return {"request" : self.film_request}
