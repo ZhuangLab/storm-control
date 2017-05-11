@@ -196,7 +196,7 @@ def parameters(parameters_file, recurse = False, add_filename_param = True):
     """
     xml = ElementTree.parse(parameters_file).getroot()
     if (xml.tag != "settings"):
-        raise ParameterException(parameters_file + " is not a setting file.")
+        raise ParametersException(parameters_file + " is not a setting file.")
 
     # Create XML object.
     xml_object = StormXMLObject(xml, recurse)
@@ -813,7 +813,7 @@ class StormXMLObject(object):
             else:
                 msg = "Lengths do not match in parameters multi-set. "
                 msg += str(len(pname)) + ", " + str(len(pvalue))
-                raise ParameterException(msg)
+                raise ParametersException(msg)
             return
 
         # If the parameter does not already exist a ParameterSimple
@@ -842,7 +842,7 @@ class StormXMLObject(object):
             else:
                 msg = "Lengths do not match in parameters multi-set. "
                 msg += str(len(pname)) + ", " + str(len(value))
-                raise ParameterException(msg)
+                raise ParametersException(msg)
             return
 
         self.getp(pname).setv(value)
