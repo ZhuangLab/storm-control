@@ -60,6 +60,7 @@ class FocusLockView(halDialog.HalDialog):
         # Configure modes.
         lockModes.FindSumMixin.addParameters(self.parameters)
         lockModes.LockedMixin.addParameters(self.parameters)
+        lockModes.ScanMixin.addParameters(self.parameters)
         for mode_class_name in configuration.get("lock_modes").split(","):
             a_class = getattr(lockModes, mode_class_name.strip())
             a_object = a_class(parameters = self.parameters,
@@ -142,13 +143,15 @@ class FocusLockView(halDialog.HalDialog):
             mode.newParameters(self.parameters)
 
     def setFunctionality(self, name, functionality):
+        #
         # If this is the QPD and 'minimum_sum' (to be considered locked) was
         # not specified in the config file then use the QPDs 'sum_warning_low'
         # parameter as the minimum sum.
+        #
         if (name == "qpd"):
-            lm_pname = lockModes.LockedMixin.lm_pname
-            if (self.parameters.get(lm_pname + ".minimum_sum") == -1.0):
-                self.parameters.setv(lm_pname + ".minimum_sum", functionality.getParameter("sum_warning_low"))
+            for pname in [lockModes.LockedMixin.lm_pname, lockModes.ScanMixin.sm_pname]:
+                if (self.parameters.get(pname + ".minimum_sum") == -1.0):
+                    self.parameters.setv(pname + ".minimum_sum", functionality.getParameter("sum_warning_low"))
 
         self.lock_display.setFunctionality(name, functionality)
 

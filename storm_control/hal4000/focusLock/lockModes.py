@@ -89,7 +89,8 @@ class FindSumMixin(object):
             # then we've hopefully found the maximum.
             if (self.fsm_max_sum > self.fsm_requested_sum) and (power < (0.5 * self.fsm_max_sum)):
                 self.z_stage_functionality.goAbsolute(self.fsm_max_pos)
-                self.done.emit(True)
+                self.behaviorDone(True)
+
             else:
                 # Are we at the maximum z?
                 if (z_pos >= self.fsm_max_z):
@@ -103,13 +104,16 @@ class FindSumMixin(object):
                         self.z_stage_functionality.recenter()
 
                     # Emit signal for failure.
-                    self.done.emit(False)
+                    self.behaviorDone(False)
 
                 # Move up one step size.
                 else:
                     self.z_stage_functionality.goRelative(self.fsm_step_size)
 
     def startLockBehavior(self, behavior_name, behavior_params):
+        if hasattr(super(), "startLockBehavior"):
+            super().startLockBehavior(behavior_name, behavior_params)
+            
         if (behavior_name == self.fsm_mode_name):
             self.fsm_max_pos = 0.0
             self.fsm_max_sum = 0.0
@@ -140,7 +144,7 @@ class LockedMixin(object):
         self.lm_counter = 0
         self.lm_min_sum = 0.0
         self.lm_mode_name = "locked"
-        self.lm_offset_threshold = 0.01
+        self.lm_offset_threshold = 0.02
         self.lm_target = 0.0
 
         if not hasattr(self, "behavior_names"):
@@ -162,7 +166,7 @@ class LockedMixin(object):
                                     name = "offset_threshold",
                                     value = 20.0))
 
-        p.add(params.ParameterFloat(description = "Minimum sum to be considered locked.",
+        p.add(params.ParameterFloat(description = "Minimum sum to be considered locked (AU).",
                                     name = "minimum_sum",
                                     value = -1.0))
 
@@ -188,6 +192,7 @@ class LockedMixin(object):
                 self.lm_buffer[self.lm_counter] = 0
 
             good_lock = bool(numpy.sum(self.lm_buffer) == self.lm_buffer_length)
+            self.last_good_z = self.z_stage_functionality.getCurrentPosition()
             if (good_lock != self.good_lock):
                 self.setLockStatus(good_lock)
 
@@ -202,7 +207,7 @@ class LockedMixin(object):
         p = parameters.get(self.lm_pname)
         self.lm_buffer_length = p.get("buffer_length")
         self.lm_min_sum = p.get("minimum_sum")
-        self.lm_offset_threshold = p.get("offset_threshold")
+        self.lm_offset_threshold = 1.0e-3 * p.get("offset_threshold")
 
     def startLock(self):
         self.lm_counter = 0
@@ -210,6 +215,9 @@ class LockedMixin(object):
         self.behavior = "locked"
 
     def startLockBehavior(self, behavior_name, behavior_params):
+        if hasattr(super(), "startLockBehavior"):
+            super().startLockBehavior(behavior_name, behavior_params)
+
         if (behavior_name == self.lm_mode_name):
             p = self.parameters.get(self.lm_pname)
 
@@ -224,10 +232,10 @@ class LockedMixin(object):
                 self.lm_min_sum = p.get("minimum_sum")
 
             if "offset_threshold" in behavior_params:
-                self.lm_offset_threshold = behavior_params["offset_threshold"]
+                self.lm_offset_threshold = 1.0e-3 * behavior_params["offset_threshold"]
             else:
-                self.lm_offset_threshold = p.get("offset_threshold")
-            
+                self.lm_offset_threshold = 1.0e-3 * p.get("offset_threshold")
+
             # Did the user request a target?
             if "target" in behavior_params:
                 self.setLockTarget(behavior_params["target"])
@@ -240,7 +248,134 @@ class LockedMixin(object):
                 self.z_stage_functionality.goAbsolute(behavior_params["z_start"])
 
             self.startLock()
-    
+
+
+class ScanMixin(object):
+    """
+    This will do a (local) scan for the z position with the correct
+    offset.
+
+    FIXME: Is this the right thing for this behavior to do?
+    """
+    sm_pname = "scan"
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.sm_min_sum = None
+        self.sm_mode_name = "scan"
+        self.sm_offset_threshold = None
+        self.sm_target = None
+        self.sm_z_end = None
+        self.sm_z_start = None
+        self.sm_z_step = None
+
+        if not hasattr(self, "behavior_names"):
+            self.behavior_names = []
+            
+        self.behavior_names.append(self.sm_mode_name)
+
+    @staticmethod
+    def addParameters(parameters):
+        """
+        Add parameters specific to scan mode.
+        """
+        p = parameters.addSubSection(ScanMixin.sm_pname)
+        p.add(params.ParameterFloat(description = "Minimum sum for finding the correct offset (AU).",
+                                    name = "minimum_sum",
+                                    value = -1.0))
+
+        p.add(params.ParameterFloat(description = "Maximum allowed difference for finding the correct offset (nm).",
+                                    name = "offset_threshold",
+                                    value = 100.0))
+        
+        p.add(params.ParameterFloat(description = "Scan range in microns.",
+                                    name = "scan_range",
+                                    value = 10.0))
+        
+        p.add(params.ParameterFloat(description = "Scan step size in microns.",
+                                    name = "scan_step",
+                                    value = 0.05))
+
+    def handleQPDUpdate(self, qpd_state):
+        if hasattr(super(), "handleQPDUpdate"):
+            super().handleQPDUpdate(qpd_state)
+            
+        if (self.behavior == self.sm_mode_name):
+
+            if (qpd_state["sum"] > self.sm_min_sum):
+                diff = (qpd_state["offset"] - self.sm_target)
+
+                #
+                # If we are at a z position where we are getting the correct offset
+                # then we are done.
+                #
+                if (abs(diff) < self.sm_offset_threshold):
+                    self.behaviorDone(True)
+                    
+                else:
+
+                    #
+                    # If we hit the end of the range and did not find anything then
+                    # return to the last z position where we had a good lock and stop.
+                    #
+                    if (self.z_stage_functionality.getCurrentPosition() > self.sm_z_end):
+                        self.z_stage_functionality.goAbsolute(self.last_good_z)
+                        self.behaviorDone(False)
+
+                    #
+                    # Otherwise continue to move up.
+                    #
+                    else:
+                        self.z_stage_functionality.goRelative(self.sm_z_step)
+
+    def startLockBehavior(self, behavior_name, behavior_params):
+        if hasattr(super(), "startLockBehavior"):
+            super().startLockBehavior(behavior_name, behavior_params)
+            
+        if (behavior_name == self.sm_mode_name):
+            p = self.parameters.get(self.sm_pname)
+
+            # Set minimum sum.
+            if "minimum_sum" in behavior_params:
+                self.sm_min_sum = behavior_params["minimum_sum"]
+            else:
+                self.sm_min_sum = p.get("minimum_sum")
+
+            # Set offset threshold.
+            if "offset_threshold" in behavior_params:
+                self.sm_offset_threshold = 1.0e-3 * behavior_params["offset_threshold"]
+            else:
+                self.sm_offset_threshold = 1.0e-3 * p.get("offset_threshold")
+
+            # Set scan range.
+            if "scan_range" in behavior_params:
+                sm_z_range = 0.5 * behavior_params["scan_range"]
+            else:
+                sm_z_range = 0.5 * p.get("scan_range")
+
+            # Set z step size.
+            if "scan_step" in behavior_params:
+                self.sm_z_step = behavior_params["scan_step"]
+            else:
+                self.sm_z_step = p.get("scan_step")
+
+            # Set z starting and ending positions.
+            if "z_center" in behavior_params:
+                self.sm_z_end = behavior_params["z_center"] + sm_z_range
+                self.sm_z_start = behavior_params["z_center"] - sm_z_range
+            else:
+                self.sm_z_end = self.last_good_z + sm_z_range
+                self.sm_z_start = self.last_good_z - sm_z_range
+
+            # Set target offset.
+            if "target" in behavior_params:
+                self.sm_target = behavior_params["target"]
+            else:
+                self.sm_target = self.lm_target
+
+            # Move z stage to the starting point.
+            self.z_stage_functionality.goAbsolute(self.sm_z_start)
+
 
 class LockMode(QtCore.QObject):
     """
@@ -277,6 +412,7 @@ class LockMode(QtCore.QObject):
         super().__init__(**kwds)
         self.behavior = "none"
         self.good_lock = False
+        self.last_good_z = None
         self.name = "NA"
         self.parameters = parameters
         self.qpd_state = None
@@ -289,7 +425,18 @@ class LockMode(QtCore.QObject):
 
     def amLocked(self):
         return (self.behavior == "locked")
-    
+
+    def behaviorDone(self, success):
+        """
+        Behaviors that end should call this method when they have
+        finished, and indicate whether they succeeded or failed.
+
+        The mode will go into the idle state and wait for 
+        lockControl.LockControl to tell it what to do next.
+        """
+        self.behavior = "none"
+        self.done.emit(success)
+                        
     def getName(self):
         """
         Returns the name of the lock mode (as it should appear
@@ -347,6 +494,11 @@ class LockMode(QtCore.QObject):
 
     def startLock(self):
         self.setLockStatus(False)
+
+        #
+        # The assumption here is that the only super class that will
+        # have a startLock() method is the LockedMixin class.
+        #
         if hasattr(super(), "startLock"):
             super().startLock()
         
@@ -358,7 +510,12 @@ class LockMode(QtCore.QObject):
             raise LockModeException("Unknown lock behavior '" + sub_mode_name + "'.")
 
         self.setLockStatus(False)
-        super().startLockBehavior(behavior_name, behavior_params)
+        #
+        # Basically this searches through the various mixin classes till
+        # it finds the one that implements the requested behavior.
+        #
+        if hasattr(super(), "startLockBehavior"):
+            super().startLockBehavior(behavior_name, behavior_params)
         self.behavior = behavior_name
 
     def stopLock(self):
@@ -370,7 +527,7 @@ class LockMode(QtCore.QObject):
         pass
     
         
-class JumpLockMode(LockMode, FindSumMixin, LockedMixin):
+class JumpLockMode(LockMode, FindSumMixin, LockedMixin, ScanMixin):
     """
     Sub class for handling locks, jumps and combinations thereof. Basically
     every class that can lock is a sub-class of this class.
