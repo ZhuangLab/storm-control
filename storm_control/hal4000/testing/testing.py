@@ -66,8 +66,9 @@ class Testing(halModule.HalModule):
 
     def handleResponses(self, message):
 
-        if message.isType(self.current_action.getResponseFilter()):
-            self.current_action.handleResponses(message)
+        if message.hasResponses():
+            if message.isType(self.current_action.getResponseFilter()):
+                self.current_action.handleResponses(message)
 
     def processMessage(self, message):
 
