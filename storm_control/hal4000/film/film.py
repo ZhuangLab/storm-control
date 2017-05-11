@@ -129,9 +129,8 @@ class FilmBox(QtWidgets.QGroupBox):
             # TCP requested films are
             #
             # 1. Always fixed length.
-            # 2. Will always overwrite.
-            # 3. Are always saved.
-            # 4. Always have a base name.
+            # 2. Are always saved.
+            # 3. Always have a base name.
             #
 
             # Figure out what directory to use.
@@ -143,6 +142,7 @@ class FilmBox(QtWidgets.QGroupBox):
             return filmSettings.FilmSettings(basename = os.path.join(directory, film_request.getBasename()),
                                              filetype = self.parameters.get("filetype"),
                                              film_length = film_request.getFrames(),
+                                             overwrite = film_request.overwriteOk(),
                                              run_shutters = self.ui.autoShuttersCheckBox.isChecked(),
                                              tcp_request = True)
 
@@ -460,9 +460,9 @@ class Film(halModule.HalModule):
                             acq_p.addParameter(p.getName(), p)
                             if (p.getName() == "notes"):
                                 notes = p.getv()
-                
+
                 to_save.saveToFile(film_settings.getBasename() + ".xml")
-                
+
                 if self.logfile_fp is not None:
                     msg = ",".join([str(datetime.datetime.now()),
                                     film_settings.getBasename(),
@@ -616,7 +616,15 @@ class Film(halModule.HalModule):
         by the 'start camera' message.
         """
         self.film_state = "run"
-        
+
+        #
+        # Check if we are going to overwrite existing files by checking
+        # if we are going to overwrite the movies .xml file.
+        #
+        filename = self.film_settings.getBasename() + ".xml"
+        if not self.film_settings.overwriteOk() and os.path.exists(filename):
+            raise halExceptions.HALException("Movie files exist and overwrite Ok is false " + filename)
+
         # Create writers as needed for each feed.
         self.writers = []
         if self.film_settings.isSaved():

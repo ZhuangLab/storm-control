@@ -12,6 +12,7 @@ class FilmSettings(object):
                  basename = "",
                  filetype = "",
                  film_length = 0,
+                 overwrite = True,
                  pixel_size = 1.0,
                  run_shutters = False,
                  save_film = True,
@@ -24,6 +25,7 @@ class FilmSettings(object):
         assert(isinstance(basename, str))
         assert(isinstance(filetype, str))
         assert(isinstance(film_length, int))
+        assert(isinstance(overwrite, bool))
         assert(isinstance(run_shutters, bool))
         assert(isinstance(save_film, bool))
         assert(isinstance(tcp_request, bool))
@@ -40,6 +42,10 @@ class FilmSettings(object):
         # The number of frames in the movie (only relevant for fixed length).
         self.film_length = film_length
 
+        # Whether or not to overwrite an existing file. If this is not True
+        # and the file already exists HAL is expected to crash.
+        self.overwrite = overwrite
+        
         # Whether or not to run the shutters.
         self.run_shutters = run_shutters
 
@@ -57,7 +63,7 @@ class FilmSettings(object):
 
     def getFilmLength(self):
         return self.film_length
-        
+
     def getPixelSize(self):
         return self.pixel_size
     
@@ -69,6 +75,9 @@ class FilmSettings(object):
     
     def isTCPRequest(self):
         return self.tcp_request
+
+    def overwriteOk(self):
+        return self.overwrite
     
     def runShutters(self):
         return self.run_shutters
