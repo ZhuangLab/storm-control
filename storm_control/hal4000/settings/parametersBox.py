@@ -78,9 +78,15 @@ class ParametersBox(QtWidgets.QGroupBox):
         Return a copy of parameters that correspond to name, which could 
         be an integer (the row number) or the parameters name.
         """
-        q_item = self.ui.settingsListView.getQItemByValue(value)
-        if q_item is not None:
-            return self.ui.settingsListView.getItemParameters(q_item).copy()
+        # If value was explicitly set to 'None' return the current parameters.
+        if value is None:
+            return self.getCurrentParameters().copy()
+
+        # Otherwise return the requested parameters.
+        else:
+            q_item = self.ui.settingsListView.getQItemByValue(value)
+            if q_item is not None:
+                return self.ui.settingsListView.getItemParameters(q_item).copy()
 
     def handleEditorClosed(self):
         self.editor_dialog.closed.disconnect()
