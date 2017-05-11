@@ -9,6 +9,7 @@ class FilmRequest(object):
 
     def __init__(self,
                  basename = None,
+                 directory = None,
                  frames = 0,
                  overwrite = False,
                  tcp_request = False,
@@ -22,6 +23,10 @@ class FilmRequest(object):
         # The basename to use, if this is None then film.film will figure
         # out what basename to use.
         self.basename = basename
+
+        # The directory to save the movie in. If this is none then the
+        # current working directory will be used.
+        self.directory = directory
         
         # Length of the film in frames. This is only relevant for TCP
         # requested movies.
@@ -35,6 +40,9 @@ class FilmRequest(object):
 
     def getBasename(self):
         return self.basename
+
+    def getDirectory(self):
+        return self.directory
 
     def getFiletype(self):
         return self.filetype
