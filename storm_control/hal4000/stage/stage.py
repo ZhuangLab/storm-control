@@ -260,6 +260,9 @@ class Stage(halModule.HalModule):
 
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.view.getParameters()}))
+
+            self.sendMessage(halMessage.HalMessage(m_type = "configuration",
+                                                   data = {"properties" : {"stage functionality name" : self.stage_fn_name}}))
             
         elif message.isType("new parameters"):
             p = message.getData()["parameters"]
