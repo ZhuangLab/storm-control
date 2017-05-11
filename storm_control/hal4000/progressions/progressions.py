@@ -464,6 +464,48 @@ class ProgressionsView(halDialog.HalDialog):
             self.use_was_checked = False
             self.ui.progressionsCheckBox.setChecked(True)
 
+    def tcpHandleProgressionFile(self, filename):
+        """
+        Handles TCP message to set the power
+        file for file based power progressions.
+        """
+        if os.path.exists(filename):
+            self.ui.filenameLabel.setText(filename[-40:])
+            self.file_channels.newFile(filename)
+
+    def tcpHandleProgressionLockout(self):
+        """
+        Handles TCP message to lockout progressions.
+        """
+        self.use_was_checked = self.ui.progressionsCheckBox.isChecked()
+        self.ui.progressionsCheckBox.setChecked(False)
+            
+    def tcpHandleProgressionSet(self, channel, start_power, frames, increment):
+        """
+        Handles TCP message to set the values of a math channel.
+        """
+        if frames is None:
+            frames = 100
+        if increment is None:
+            increment = 0.0
+        if self.ui.linearTab.isVisible():
+            self.linear_channels.remoteSetChannel(channel, start_power, increment, frames)
+        elif self.ui.expTab.isVisible():
+            self.exp_channels.remoteSetChannel(channel, start_power, increment, frames)
+
+    def tcpHandleProgressionType(self, type):
+        """
+        Handles TCP message to set the progression type.
+        """
+        self.show()
+        self.ui.progressionsCheckBox.setChecked(True)
+        if (type == "linear"):
+            self.ui.tabWidget.setCurrentWidget(self.ui.linearTab)
+        elif (type == "exponential"):
+            self.ui.tabWidget.setCurrentWidget(self.ui.expTab)
+        elif (type == "file"):
+            self.ui.tabWidget.setCurrentWidget(self.ui.fileTab)
+
 
 class Progressions(halModule.HalModule):
 
@@ -528,65 +570,36 @@ class Progressions(halModule.HalModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : self.view.getParameters()}))
 
+        elif message.isType("tcp message"):
+            tcp_message = message.getData()["tcp message"]
+            if (tcp_message.isType("Set Progression")):
+                if not message.isTest():
+                    if (message.getData("type") == "lockedout"):
+                        self.view.tcpHandleProgressionLockout()
+                    elif (message.getData("type") == "file"):
+                        self.view.tcpHandleProgressionType(message.getData("type"))
+                        self.view.tcpHandleProgressionFile(message.getData("filename"))
+                    else:
+                        self.view.tcpHandleProgressionType(message.getData("type"))
+                        for channel in message.getData("channels"):
+                            self.view.tcpHandleProgressionSet(channel[0],
+                                                              channel[1],
+                                                              channel[2],
+                                                              channel[3])
+                else:
+                    if (message.getData("type") == "file"):
+                        if not (message.getData("filename") == None):
+                            full_path = os.path.abspath(message.getData("filename"))
+                            if not os.path.exists(full_path):
+                                err_message = str(message.getData("filename"))
+                                err_message += " is not a valid path."
+                                message.setError(True, err_message)
+                        else:
+                            err_message += "No filename provided."
+                            message.setError(True, err_message)
 
-    ## tcpHandleProgressionFile
-    #
-    # Handles TCP/IP signal to set the power
-    # file for file based power progressions.
-    #
-    # @param filename The filename of the power file.
-    #
-#    @hdebug.debug
-#    def tcpHandleProgressionFile(self, filename):
-#        if os.path.exists(filename):
-#            self.ui.filenameLabel.setText(filename[-40:])
-#            self.file_channels.newFile(filename)
-        
-    ## tcpHandleProgressionSet
-    #
-    # Handles TCP/IP signal to set the values of a math channel.
-    #
-    # @param channel The channel number.
-    # @param start_power The starting power.
-    # @param frames The number of frames between increments.
-    # @param increment The amount to increments.
-    #
-#    @hdebug.debug
-#    def tcpHandleProgressionSet(self, channel, start_power, frames, increment):
-#        if frames is None:
-#            frames = 100
-#        if increment is None:
-#            increment = 0.0
-#        if self.ui.linearTab.isVisible():
-#            self.linear_channels.remoteSetChannel(channel, start_power, increment, frames)
-#        elif self.ui.expTab.isVisible():
-#            self.exp_channels.remoteSetChannel(channel, start_power, increment, frames)
-
-    ## tcpHandleProgressionLockout
-    #
-    # Handles TCP/IP signal to lockout progressions.
-    #
-#    def tcpHandleProgressionLockout(self):
-#        self.use_was_checked = self.ui.progressionsCheckBox.isChecked()
-#        self.ui.progressionsCheckBox.setChecked(False)
-
-    ## tcpHandleProgressionType
-    #
-    # Handles TCP/IP signal to set the progression type.
-    #
-    # @param type This is one of "linear", "exponential" or "file"
-    #
-#    @hdebug.debug
-#    def tcpHandleProgressionType(self, type):
-#        self.show()
-#        self.ui.progressionsCheckBox.setChecked(True)
-#        if (type == "linear"):
-#            self.ui.tabWidget.setCurrentWidget(self.ui.linearTab)
-#        elif (type == "exponential"):
-#            self.ui.tabWidget.setCurrentWidget(self.ui.expTab)
-#        elif (type == "file"):
-#            self.ui.tabWidget.setCurrentWidget(self.ui.fileTab)
-
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                  data = {"handled" : True}))
 
 #
 # The MIT License
