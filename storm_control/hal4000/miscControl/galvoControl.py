@@ -70,16 +70,10 @@ class GalvoView(halDialog.HalDialog):
         y_freq = self.ui.yFrequencySpinBox.value()
         y_offset = self.ui.yOffsetSpinBox.value()
 
-        #
-        # Note: This is different from the original versions behavior because
-        #       I think the old version would have created waveforms with steps
-        #       in them if x_freq was not a multiple of y_freq (or vice-versa).
-        #
-        #       This version might lead to huge waveforms?
-        #
-        #       (HB 5/17).
-        #
-        freq = int((x_freq * y_freq)/fractions.gcd(x_freq, y_freq))
+        if not (((x_freq % y_freq) == 0) or ((y_freq % x_freq) == 0)):
+            print(">> Warning galvo frequencies are not multiples of each other.")
+
+        freq = max(x_freq, y_freq)
         time = numpy.arange(0.0, 1.0/freq, 1.0/self.sampling_rate)
 
         # Create waveforms
