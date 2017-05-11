@@ -1105,7 +1105,10 @@ class DATakeMovie(DaveAction):
         self.message = tcpMessage.TCPMessage(message_type = "Take Movie",
                                              message_data = message_data)
 
-        # Require validation
+        # Require validation.
+        #
+        # FIXME: This should be '+=' not '='?
+        #
         self.id = self.message.getType() + " "
         self.id = str(self.length) + " "
         if message_data["parameters"] is not None:
@@ -1162,7 +1165,10 @@ class DAValveProtocol(DaveAction):
         self.message = tcpMessage.TCPMessage(message_type = "Kilroy Protocol",
                                              message_data = {"name": self.protocol_name})
 
-        # Require validation
+        # Require validation.
+        #
+        # FIXME: This should be '+=' not '='?
+        #
         self.id = self.message.getType() + " "
         self.id = self.protocol_name        
 
