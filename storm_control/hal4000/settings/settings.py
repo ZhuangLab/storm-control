@@ -216,33 +216,7 @@ class Settings(halModule.HalModule):
                 
     def processMessage(self, message):
 
-        if message.isType("configuration"):
-
-            if message.sourceIs("hal") or message.sourceIs("core") or message.sourceIs("testing"):
-                data = message.getData()["properties"]
-                
-                if not ("parameters filename" in data):
-                    return
-                
-                # Ignore this message if the UI is disabled and send a warning.
-                if not self.view.getEnabled():
-                    msg = "Parameters files cannot be added during editting / filming" 
-                    message.addError(halMessage.HalMessageError(source = self.module_name,
-                                                                message = msg))
-                    return
-            
-                data = message.getData()["properties"]
-
-                # Check if these parameters should be default parameters. For now
-                # anyway this should only be possible at initialization.
-                is_default = False
-                if "is_default" in data:
-                    is_default = data["is_default"]
-
-                # Process new parameters file.
-                self.view.newParametersFile(data["parameters filename"], is_default)
-
-        elif message.isType("configure1"):
+        if message.isType("configure1"):
             self.newMessage.emit(halMessage.HalMessage(source = self,
                                                        m_type = "add to ui",
                                                        data = self.configure_dict))
@@ -263,6 +237,26 @@ class Settings(halModule.HalModule):
             self.view.updateCurrentParameters(message.getSourceName(),
                                               message.getData()["parameters"].copy())
             
+        elif message.isType("new parameters file"):
+                
+            # Ignore this message if the UI is disabled and send a warning.
+            if not self.view.getEnabled():
+                msg = "Parameters files cannot be added during editting / filming" 
+                message.addError(halMessage.HalMessageError(source = self.module_name,
+                                                                message = msg))
+                return
+            
+            data = message.getData()
+
+            # Check if these parameters should be default parameters. For now
+            # anyway this should only be possible at initialization.
+            is_default = False
+            if "is default" in data:
+                is_default = data["is default"]
+
+            # Process new parameters file.
+            self.view.newParametersFile(data["filename"], is_default)
+
         elif message.isType("set parameters"):
             if self.locked_out:
                 raise halException.HalException("'set parameters' received while locked out.")

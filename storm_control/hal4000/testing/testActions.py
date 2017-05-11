@@ -122,15 +122,15 @@ class LoadParameters(TestAction):
 
         self.filename = filename
         self.is_default = is_default
-        self.m_type = "configuration"
+        self.m_type = "new parameters file"
 
     def finalizer(self):
         super().finalizer()
         self.actionDone.emit()
 
     def getMessageData(self):
-        return {"properties" : {"parameters filename" : self.filename,
-                                "is_default" : self.is_default}}
+        return {"filename" : self.filename,
+                "is default" : self.is_default}
 
 
 class Record(TestAction):
@@ -165,14 +165,14 @@ class SetDirectory(TestAction):
         super().__init__(**kwds)
 
         self.directory = directory
-        self.m_type = "configuration"
+        self.m_type = "change directory"
 
     def finalizer(self):
         super().finalizer()
         self.actionDone.emit()
         
     def getMessageData(self):
-        return {"properties" : {"directory" : self.directory}}
+        return {"directory" : self.directory}
     
     
 class SetParameters(TestAction):

@@ -483,20 +483,16 @@ class Film(halModule.HalModule):
                 self.stopFilmingLevel2()
 
     def processMessage(self, message):
-           
-        if message.isType("configuration"):
+
+        if message.isType("change directory"):
+            self.view.setDirectory(message.getData()["directory"])
+                    
+        elif message.isType("configuration"):
             if message.sourceIs("feeds"):
                 self.camera_functionalities = []
                 for name in message.getData()["properties"]["feed names"]:
                     self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                            data = {"name" : name}))
-
-            elif message.sourceIs("hal"):
-                properties = message.getData()["properties"]
-                if "directory" in properties:
-                    self.view.setDirectory(properties["directory"])
-                if "shutters filename" in properties:
-                    self.view.setShutters(properties["shutters filename"])
 
             elif message.sourceIs("illumination"):
                 properties = message.getData()["properties"]
@@ -507,11 +503,6 @@ class Film(halModule.HalModule):
                 # We need to keep track of the current value so that
                 # we can save this in the tif images / stacks.
                 self.pixel_size = message.getData()["properties"]["pixel_size"]
-
-            elif message.sourceIs("testing"):
-                properties = message.getData()["properties"]
-                if "directory" in properties:
-                    self.view.setDirectory(properties["directory"])
                     
             elif message.sourceIs("timing"):
                 # We'll get this message from timing.timing, the part we are interested in is
@@ -537,6 +528,10 @@ class Film(halModule.HalModule):
             self.view.newParameters(message.getData()["parameters"].get(self.module_name))
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"new parameters" : self.view.getParameters()}))
+
+
+        elif message.isType("new shutters file"):
+            self.view.setShutters(message.getData()["filename"])
 
         elif message.isType("ready to film"):
             self.wait_for.remove(message.getSourceName())

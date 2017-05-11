@@ -243,13 +243,9 @@ class Stage(halModule.HalModule):
             
     def processMessage(self, message):
 
-        if message.isType("configuration"):
+        if message.isType("change directory"):
+            self.view.setDirectory(message.getData()["directory"])
 
-            if message.sourceIs("hal") or message.sourceIs("testing"):
-                properties = message.getData()["properties"]
-                if "directory" in properties:
-                    self.view.setDirectory(properties["directory"])
-                
         elif message.isType("configure1"):
             self.sendMessage(halMessage.HalMessage(m_type = "add to menu",
                                                    data = {"item name" : "Stage",
