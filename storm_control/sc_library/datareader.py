@@ -1,10 +1,17 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+"""
+Classes that handles reading STORM movie files. This is used by
+the Steve program and it assumes the existance of an XML file
+that describes everything that one needs to know about a movie.
+
+Hazen 07/15
+"""
+
 #
-# Classes that handles reading STORM movie files. This is used by
-# the Steve program and it assumes the existance of an XML file
-# that describes everything that one needs to know about a movie.
+# FIXME: Why not just use the version if the storm-analysis project?
 #
-# Hazen 07/15
+#        Or maybe only support the .dax format as Steve is limited
+#        to whatever HALs current filetype is anyway?
 #
 
 import numpy
@@ -14,13 +21,14 @@ import re
 
 import storm_control.sc_library.parameters as parameters
 
-#
-# Creates a StormXMLObject from a .inf file that can be
-# used by Steve. Note that this object is missing many
-# of the properties of the standard object created from
-# a setting xml file.
-#
+
 def infToXmlObject(filename):
+    """
+    Creates a StormXMLObject from a .inf file that can be
+    used by Steve. Note that this object is missing many
+    of the properties of the standard object created from
+    a setting xml file.
+    """
 
     xml = parameters.StormXMLObject([])
 
@@ -103,11 +111,12 @@ def infToXmlObject(filename):
     xml.set("acquisition.stage_position", pos_string)
     return xml
 
-#
-# Returns the appropriate object based on the file type as
-# saved in the corresponding XML file.
-#
+
 def reader(filename):
+    """
+    Returns the appropriate object based on the file type as
+    saved in the corresponding XML file.
+    """
     no_ext_name = os.path.splitext(filename)[0]
 
     # Look for XML file.
@@ -116,6 +125,11 @@ def reader(filename):
 
     # If it does not exist, then create the xml object
     # from the .inf file.
+    #
+    # FIXME: This is not going to work correctly for films from a multiple
+    #        camera setup where all of the cameras are saving films with
+    #        an extension.
+    #
     elif os.path.exists(no_ext_name + ".inf"):
         xml = infToXmlObject(no_ext_name + ".inf")
 
@@ -125,37 +139,51 @@ def reader(filename):
     file_type = xml.get("film.filetype")
 
     if (file_type == ".dax"):
-        return DaxReader(filename, xml)
+        return DaxReader(filename = filename,
+                         xml = xml)
     elif (file_type == ".spe"):
-        return SpeReader(filename, xml)
+        return SpeReader(filename = filename,
+                         xml = xml)
     elif (file_type == ".tif"): 
-        return TifReader(filename, xml)
+        return TifReader(filename = filename,
+                         xml = xml)
     else:
         print(file_type, "is not a recognized file type")
     raise IOError("only .dax, .spe and .tif are supported (case sensitive..)")
 
 
-#
-# The superclass containing those functions that 
-# are common to reading a STORM movie file.
-#
-# Subclasses should implement:
-#  1. __init__(self, filename, verbose = False)
-#     This function should open the file and extract the
-#     various key bits of meta-data such as the size in XY
-#     and the length of the movie.
-#
-#  2. loadAFrame(self, frame_number)
-#     Load the requested frame and return it as numpy array.
-#
 class DataReader(object):
+    """
+    The superclass containing those functions that 
+    are common to reading a STORM movie file.
 
-    def __init__(self, filename, xml):
+    Subclasses should implement:
+     1. __init__(self, filename, verbose = False)
+        This function should open the file and extract the
+        various key bits of meta-data such as the size in XY
+        and the length of the movie.
+
+     2. loadAFrame(self, frame_number)
+        Load the requested frame and return it as numpy array.
+    """
+    def __init__(self, filename = None, xml = None, **kwds):
+        super().__init__(**kwds)
+        
         self.fileptr = False
         self.filename = filename
         self.xml = xml
 
-        self.camera = self.xml.get("acquisition.camera")
+        #
+        # FIXME: What was this for? It is likely not that useful anymore
+        #        with multiple camera setups. Now different cameras generate
+        #        files with different extensions. There is only a single
+        #        xml file with the basename, and each camera (at least for
+        #        .dax) only has a very simple .inf file.
+        #
+        #        This is all going to break unless the setup had a "camera1"
+        #        camera.
+        #
+        self.camera = self.xml.get("acquisition.camera", "camera1")
         
     # Close the file on cleanup.
     def __del__(self):
@@ -185,16 +213,15 @@ class DataReader(object):
     def filmSize(self):
         return [self.image_width, self.image_height, self.number_frames]
 
-#
-# Dax reader class. This is a Zhuang lab custom format.
-#
-class DaxReader(DataReader):
-    
-    # dax specific initialization
-    def __init__(self, filename, xml):
-        DataReader.__init__(self, filename, xml)
 
-        self.bigendian = self.xml.get("film.want_big_endian")
+class DaxReader(DataReader):
+    """
+    Dax reader class. This is a Zhuang lab custom format.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.bigendian = self.xml.get("film.want_big_endian", False)
         self.image_height = self.xml.get(self.camera + ".y_pixels")
         self.image_width = self.xml.get(self.camera + ".x_pixels")
 
@@ -205,7 +232,7 @@ class DaxReader(DataReader):
         self.number_frames = int(self.xml.get("acquisition.number_frames"))
         
         # open the dax file
-        self.fileptr = open(filename, "rb")
+        self.fileptr = open(self.filename, "rb")
 
     # load a frame & return it as a numpy array
     def loadAFrame(self, frame_number):
@@ -219,18 +246,17 @@ class DaxReader(DataReader):
             return image_data
 
 
-#
-# SPE (Roper Scientific) reader class.
-#
 class SpeReader(DataReader):
-
+    """
+    SPE (Roper Scientific) reader class.
+    """
     # Spe specific initialization.
-    def __init__(self, filename, xml):
-        DataReader.__init__(self, filename, xml)
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
         
         # Open the file & read the header.
         self.header_size = 4100
-        self.fileptr = open(filename, "rb")
+        self.fileptr = open(self.filename, "rb")
 
         # FIXME: Should check that these match the XML file.        
         self.fileptr.seek(42)
@@ -269,12 +295,12 @@ class SpeReader(DataReader):
             return image_data
 
 
-#
-# TIF reader class.
-#
 class TifReader(DataReader):
-    def __init__(self, filename, xml):
-        DataReader.__init__(self, filename, xml)
+    """
+    TIF reader class.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
                 
         self.fileptr = False
         self.im = Image.open(filename)
