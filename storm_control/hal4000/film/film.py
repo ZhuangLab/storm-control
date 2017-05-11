@@ -471,6 +471,9 @@ class Film(halModule.HalModule):
                     self.logfile_fp.write(msg)
                     self.logfile_fp.flush()
 
+            # Now that everything is complete end the filming lock out.
+            self.setLockout(False)
+
     def handleStopCamera(self):
         self.active_cameras -= 1
         if (self.active_cameras == 0):
@@ -677,7 +680,7 @@ class Film(halModule.HalModule):
 
         # Check that the writers have stopped. The problem (I think) is a race condition
         # where the 'stopped' signal from the Camera has not reached the functionalities
-        # or the writers before the handleStopCamera() finalizer for the 'stop camera'
+        # of the writers before the handleStopCamera() finalizer for the 'stop camera'
         # message calls this function. If any of the writers have not stopped we wait
         # ~10ms and try again.
         for writer in self.writers:
@@ -704,9 +707,6 @@ class Film(halModule.HalModule):
         # Restart cameras, if needed.
         if self.view.amInLiveMode():
             self.startCameras()
-
-        # End the filming lock out.
-        self.setLockout(False)
         
         # Increment film counter.
         if not self.film_settings.isTCPRequest():
