@@ -61,6 +61,10 @@ class Kilroy(QtGui.QMainWindow):
 
         # Create PumpControl instance
         self.pumpControl = PumpControl(parameters = parameters)
+
+        # Connect error signals for valve chain and pump control
+        self.valveChain.error_signal.connect(self.handleError)
+        self.pumpControl.error_signal.connect(self.handleError)
                                        
         # Create KilroyProtocols instance and connect signals
         self.kilroyProtocols = KilroyProtocols(protocol_xml_path = self.protocols_file,
@@ -102,6 +106,28 @@ class Kilroy(QtGui.QMainWindow):
         self.mainLayout.addWidget(self.valveChain.mainWidget, 0, 2, 2, 2)
         self.mainLayout.addWidget(self.pumpControl.mainWidget, 0, 4, 2, 1)
         #self.mainLayout.addWidget(self.tcpServer.mainWidget, 2, 2, 1, 4)
+
+    # ----------------------------------------------------------------------------------------
+    # Handle an error from a hardware class
+    # ----------------------------------------------------------------------------------------
+    def handleError(self, error_message):
+
+        # If this was a TCP requested message, then mark the message as containing an error
+        if (self.received_message is not None):
+            self.received_message.setError(True, error_message)
+
+        # If a protocol is running, then stop it
+        if self.kilroyProtocols.isRunningProtocol():
+            self.kilroyProtocols.stopProtocol()  # The message (if there is one) will be returned via the natural stop protocol mechanisms
+        elif (self.received_message is not None): # This case should never occur
+            self.tcpServer.sendMessage(self.received_message)
+            self.received_message = None # Reset the received_message
+
+        # Create a dialog for the error to inform the user
+        QtGui.QMessageBox.information(self,
+                              "Hardware problem!",
+                              error_message)
+
 
     # ----------------------------------------------------------------------------------------
     # Redirect protocol status change from kilroyProtocols to valveChain

@@ -13,15 +13,21 @@
 import serial
 import sys
 import time
+from PyQt4 import QtCore
 
 # ----------------------------------------------------------------------------------------
 # HamiltonMVP Class Definition
 # ----------------------------------------------------------------------------------------
-class HamiltonMVP():
+class HamiltonMVP(QtCore.QObject):
+
+    # Define custom commands
+    error_signal = QtCore.pyqtSignal(object) # Signal for a hardware error
+    
     def __init__(self,
                  com_port = 2,
                  num_simulated_valves = 0,
                  verbose = False):
+        super(HamiltonMVP, self).__init__()
 
         # Define attributes
         self.com_port = com_port
@@ -351,7 +357,14 @@ class HamiltonMVP():
     # Read from Serial Port
     # ------------------------------------------------------------------------------------
     def read(self):
-        response = self.serial.read(self.read_length)
+        # Read from the serial report and raise an error if one occurs
+        try:
+            response = self.serial.read(self.read_length)
+        except:
+            print "Encounter an error during Hamilton Serial Port Read"
+            self.error_signal.emit("Hamilton MVP serial port read error")
+            raise
+            
         if self.verbose:
             print "Received: " + str((response, ""))
         return response
@@ -419,7 +432,14 @@ class HamiltonMVP():
     # Write to Serial Port
     # ------------------------------------------------------------------------------------    
     def write(self, message):
-        self.serial.write(message)
+        # Write to the serial port and raise an error if one occurs
+        try:
+            self.serial.write(message)
+        except:
+            print "An error has occured in writing to the Hamilton MVP serial port. Message: " + message
+            self.error_signal.emit("Hamilton MVP serial port write error.")
+            raise
+        
         if self.verbose:
             print "Wrote: " + message[:-1] # Display all but final carriage return
 

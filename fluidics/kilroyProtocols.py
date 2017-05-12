@@ -29,6 +29,7 @@ class KilroyProtocols(QtGui.QMainWindow):
     command_ready_signal = QtCore.pyqtSignal() # A command is ready to be issued
     status_change_signal = QtCore.pyqtSignal() # A protocol status change occured
     completed_protocol_signal = QtCore.pyqtSignal(object) # Name of completed protocol
+    error_signal = QtCore.pyqtSignal(object) # An error has occurred (CURRENTLY UNUSED! USE ME FOR PROTOCOL ERRORS)
         
     def __init__(self,
                  protocol_xml_path = "default_config.xml",
@@ -351,6 +352,7 @@ class KilroyProtocols(QtGui.QMainWindow):
                 textString = "    " + command[0] + ": " + command[1] + ": "
                 textString += str(self.protocol_durations[protocol_ID][command_ID]) + " s"
                 print textString
+                
     # ------------------------------------------------------------------------------------
     # Display loaded protocols
     # ------------------------------------------------------------------------------------                                                
@@ -425,7 +427,7 @@ class KilroyProtocols(QtGui.QMainWindow):
     def startProtocolLocally(self):
         # Run protocol
         self.received_message = None # Remove existing messages
-        self.startProtocol()
+        self.startProtocol()        
 
     # ------------------------------------------------------------------------------------
     # Initialize and start a protocol specified by a TCP message

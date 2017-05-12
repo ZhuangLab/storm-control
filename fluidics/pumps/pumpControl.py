@@ -19,6 +19,10 @@ from PyQt4 import QtCore, QtGui
 # PumpControl Class Definition
 # ----------------------------------------------------------------------------------------
 class PumpControl(QtGui.QWidget):
+
+    # Define custom commands
+    error_signal = QtCore.pyqtSignal(object) # Signal for a hardware error
+
     def __init__(self,
                  parameters = False,
                  parent = None):
@@ -43,6 +47,9 @@ class PumpControl(QtGui.QWidget):
 
         # Create Instance of Pump
         self.pump = pump_module.APump(parameters = parameters)
+
+        # Connect error signal of the pump
+        self.pump.error_signal.connect(self.handleError)
 
         # Create GUI Elements
         self.createGUI()
@@ -168,6 +175,16 @@ class PumpControl(QtGui.QWidget):
     # ----------------------------------------------------------------------------------------
     def pollPumpStatus(self):
         self.updateStatus(self.pump.getStatus())
+
+    # ------------------------------------------------------------------------------------
+    # Handle error
+    # ------------------------------------------------------------------------------------
+    def handleError(self, error_message):
+        # Simply pass on the error message via a qt signal
+        self.error_signal.emit(error_message) 
+
+        # Stop polling the pump status
+        self.status_timer.stop()
 
     # ----------------------------------------------------------------------------------------
     # Handle Change Flow Request

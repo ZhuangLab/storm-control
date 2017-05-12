@@ -21,6 +21,10 @@ from hamilton import HamiltonMVP
 # ValveChain Class Definition
 # ----------------------------------------------------------------------------------------
 class ValveChain(QtGui.QWidget):
+
+    # Define custom commands
+    error_signal = QtCore.pyqtSignal(object) # Signal for a hardware error
+    
     def __init__(self,
                  parent = None,
                  com_port = 2,
@@ -44,6 +48,9 @@ class ValveChain(QtGui.QWidget):
         else:
             self.valve_chain = HamiltonMVP(com_port = self.com_port,
                                            verbose = self.verbose)
+
+        # Connect the error signal
+        self.valve_chain.error_signal.connect(self.handleError)
 
         # Create QtValveControl widgets for each valve in the chain
         self.num_valves = self.valve_chain.howManyValves()
@@ -122,6 +129,15 @@ class ValveChain(QtGui.QWidget):
 
         self.menu_names = ["Valve"]
         self.menu_items = [[self.valve_reset_action]]
+
+    # ------------------------------------------------------------------------------------
+    # Handle error
+    # ------------------------------------------------------------------------------------
+    def handleError(self, error_message):
+        # Simply pass on the error message via a qt signal
+        self.error_signal.emit(error_message)
+        # Stop polling the valves
+        self.valve_poll_timer.stop()
 
     # ------------------------------------------------------------------------------------
     # Determine number of valves

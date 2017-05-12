@@ -12,6 +12,7 @@
 # ----------------------------------------------------------------------------------------
 import serial
 import time
+from PyQt4 import QtCore
 
 acknowledge = '\x06'
 start = '\x0A'
@@ -20,9 +21,14 @@ stop = '\x0D'
 # ----------------------------------------------------------------------------------------
 # GlisonMP3 Class Definition
 # ----------------------------------------------------------------------------------------
-class APump():
+class APump(QtCore.QObject):
+
+    # Define custom commands
+    error_signal = QtCore.pyqtSignal(object) # Signal for a hardware error
+    
     def __init__(self,
                  parameters = False):
+        super(APump, self).__init__()
 
         # Define attributes
         self.com_port = parameters.get("pump_com_port", 3)
@@ -145,14 +151,21 @@ class APump():
             self.getResponse()
 
     def sendString(self, string):
-        self.serial.write(string)
+        try:
+            self.serial.write(string)
+        except:
+            print "An error has occurred writing to the gilson serial port. Message: " + string
+            self.error_signal.emit("Gilson pump serial write error.")
+            raise
 
     def getResponse(self):
         response = None
         try:
-            response =self.serial.read()
-        except serial.SerialTimeoutException:
-            print "Gilson pump encountered a read timeout"
+            response = self.serial.read()
+        except:
+            print "An error has occurred reading from the gilson serial port."
+            self.error_signal.emit("Gilson pump serial read error.")
+            raise
 
         return response
 
