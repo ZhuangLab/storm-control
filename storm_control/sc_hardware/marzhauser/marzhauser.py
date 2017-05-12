@@ -15,15 +15,10 @@ class MarzhauserRS232(RS232.RS232):
     Marzhauser RS232 interface class.
     """
 
-    def __init__(self, wait_time = 0.02, **kwds):
+    def __init__(self, **kwds):
         """
         Connect to the Marzhuaser stage at the specified port.
         """
-        # Add Marzhauser RS232 default settings.
-        kwds["baudrate"] = 57600
-        kwds["end_of_line"] = "\r"
-        kwds["wait_time"] = wait_time
-        
         self.live = True
         self.unit_to_um = 1000.0
         self.um_to_unit = 1.0/self.unit_to_um
@@ -46,45 +41,38 @@ class MarzhauserRS232(RS232.RS232):
     def goAbsolute(self, x, y):
         x = x * self.um_to_unit
         y = y * self.um_to_unit
-        self.commWithResp(" ".join(["!moa", str(x), str(y)]))
+        self.writeline(" ".join(["!moa", str(x), str(y)]))
 
     def goRelative(self, x, y):
         x = x * self.um_to_unit
         y = y * self.um_to_unit
-        self.commWithResp(" ".join(["!mor", str(x), str(y)]))
+        self.writeline(" ".join(["!mor", str(x), str(y)]))
 
     def jog(self, x_speed, y_speed):
         vx = x_speed * self.um_to_unit
         vy = y_speed * self.um_to_unit
-        self.commWithResp(" ".join(["!speed ", str(vx), str(vy)]))
+        self.writeline(" ".join(["!speed ", str(vx), str(vy)]))
         
     def joystickOnOff(self, on):
         if on:
-            self.commWithResp("!joy 2")
+            self.writeline("!joy 2")
         else:
-            self.commWithResp("!joy 0")
+            self.writeline("!joy 0")
 
     def position(self):
-        try:
-            [self.x, self.y] = map(lambda x: float(x)*self.unit_to_um, 
-                                   self.commWithResp("?pos")[:-2].split(" "))
-            return [self.x, self.y]
-        except Exception as ex:
-            print(">pos", ex)
-            hdebug.logText("  Warning: Bad position from Marzhauser stage.")
-            return [self.x, self.y]
+        self.writeline("?pos")
 
     def serialNumber(self):
         """
         Return the stages serial number.
         """
-        return self.commWithResp("?readsn")
+        return self.writeline("?readsn")
 
     def setVelocity(self, x_vel, y_vel):
-        self.commWithResp(" ".join(["!vel",str(x_vel),str(y_vel)]))
+        self.writeline(" ".join(["!vel",str(x_vel),str(y_vel)]))
 
     def zero(self):
-        self.commWithResp("!pos 0 0")
+        self.writeline("!pos 0 0")
 
 
 #
@@ -92,21 +80,24 @@ class MarzhauserRS232(RS232.RS232):
 #
 if (__name__ == "__main__"):
     import time
+
+    stage = MarzhauserRS232(port = "COM5", baudrate = 57600)
     
-    stage = MarzhauserRS232(port = "COM5")
+    def comm(cmd, timeout):
+        cmd()
+        time.sleep(timeout)
+        return stage.readline()
+    
     if stage.getStatus():
-        print("SN:", stage.serialNumber())
-        stage.zero()
-        time.sleep(0.1)
-        print("Position:", stage.position())
-        stage.goAbsolute(100.0, 100.0)
-        time.sleep(0.5)
-        print("Position:", stage.position())
-        stage.goRelative(100.0, 100.0)
-        time.sleep(0.5)
-        print("Position:", stage.position())
-        time.sleep(0.1)
+        print("SN:", comm(stage.serialNumber, 0.1))
+        print("zero:", comm(stage.zero, 0.1))
+        print("position:", comm(stage.position, 0.1))
+        print("goAbsolute:", comm(lambda: stage.goAbsolute(100,100), 0.5))
+        print("position:", comm(stage.position, 0.1))
+        print("goRelative:", len(comm(lambda: stage.goRelative(100,100), 0.5)))
+        print("position:", comm(stage.position, 0.1))
         stage.shutDown()
+
 
 #
 # The MIT License
