@@ -17,7 +17,7 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
     isMoving = QtCore.pyqtSignal(bool)
     stagePosition = QtCore.pyqtSignal(dict)
 
-    def __init__(self, stage = None, update_interval = None, is_slow = False, **kwds):
+    def __init__(self, stage = None, is_slow = False, **kwds):
         """
         stage - A hardware object that behaves like a stage.
 
