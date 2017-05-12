@@ -465,23 +465,25 @@ class SDK3Camera:
 if (__name__ == "__main__"):
     loadSDK3DLL("C:/Program Files/Andor SOLIS/")
 
-    cam = SDK3Camera()
-    if 1:
+    cam = SDK3Camera(1)
+    if False:
         print "model", cam.getProperty("CameraModel", "str")
         print "name", cam.getProperty("CameraName", "str")
         print "xsize", cam.getProperty("SensorWidth", "int")
         print "ysize", cam.getProperty("SensorHeight", "int")
         print "target", cam.getProperty("TemperatureControl", "enum")
 
-    if 0:
+    if True:
         cam.setProperty("AOIWidth", "int", 2048)
         cam.setProperty("AOIHeight", "int", 2048)
         cam.setProperty("ExposureTime", "float", 0.01)
+#        cam.setProperty("CycleMode", "enum", "Fixed")
+#        cam.setProperty("FrameCount", "int", 2)
         cam.startAcquisition()
         for i in range(20):
             frames = cam.getFrames()[0]
             for frame in frames:
-                print i, frame.getData()
+                print i, frame.getData()[0]
             time.sleep(0.1)
         cam.stopAcquisition()
 
