@@ -18,14 +18,14 @@ class RS232(object):
     def __init__(self,
                  baudrate = None,
                  encoding = 'utf-8',
-                 end_of_line = None,
+                 end_of_line = "\r",
                  port = None,
-                 timeout = None,
-                 wait_time = None,
+                 timeout = 1.0e-3,
+                 wait_time = 1.0e-2,
                  **kwds):
         """
         port - The port for RS-232 communication, e.g. "COM4".
-        timeout - The time out value for communication.
+        timeout - The RS-232 time out value.
         baudrate - The RS-232 communication speed, e.g. 9800.
         end_of_line - What character(s) are used to indicate the end of a line.
         wait_time - How long to wait between polling events before it is decided 
@@ -48,8 +48,7 @@ class RS232(object):
         """
         Send a command and wait (a little) for a response.
         """
-        self.tty.flush()
-        self.write(command + self.end_of_line)
+        self.sendCommand(command)
         time.sleep(10 * self.wait_time)
         response = ""
         response_len = self.tty.inWaiting()
@@ -82,6 +81,10 @@ class RS232(object):
     def read(self, response_len):
         response = self.tty.read(response_len)
         return response.decode(self.encoding)
+
+    def readline(self):
+        response = self.tty.readline()
+        return response.decode(self.encoding).strip()
         
     def sendCommand(self, command):
         self.tty.flush()
@@ -119,6 +122,9 @@ class RS232(object):
     def write(self, string):
         self.tty.write(string.encode(self.encoding))
 
+    def writeline(self, string):
+        msg = string + self.end_of_line
+        self.tty.write(msg.encode(self.encoding))
 
 #
 # The MIT License
