@@ -195,9 +195,8 @@ class TCPMoveHandler(object):
 
     def handleIsMoving(self, is_moving):
         #
-        # If the stage has stopped moving, decrement the HAL message ref count
-        # so that message will get finalized (and a response will be sent to
-        # whomever requested the move).
+        # If the stage has stopped moving, decrement the HAL message
+        # ref count so that message will get finalized.
         #
         if not is_moving:
             self.hal_message.decRefCount()
