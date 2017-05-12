@@ -73,7 +73,6 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
         self.pixels_to_microns = pixels_to_microns
 
     def wait(self):
-        self.updateTimer.stop()
         super().wait()
 
     def zero(self):
@@ -102,8 +101,8 @@ class StageModule(hardwareModule.HardwareModule):
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"functionality" : self.stage_functionality}))
 
-    def pixelSize(self, message):
-        self.stage_functionality.setPixelsToMicrons(message.getData()["pixel size"])
+    def pixelSize(self, pixel_size):
+        self.stage_functionality.setPixelsToMicrons(pixel_size)
 
     def processMessage(self, message):
         if self.stage is None:
@@ -113,11 +112,11 @@ class StageModule(hardwareModule.HardwareModule):
             if message.sourceIs("tcp_control"):
                 self.tcpConnection(message.getData()["properties"]["connected"])
 
+            elif message.sourceIs("mosaic"):
+                self.pixelSize(message.getData()["properties"]["pixel_size"])
+
         elif message.isType("get functionality"):
             self.getFunctionality(message)
-
-        elif message.isType("pixel size"):
-            self.pixelSize(message)
             
         elif message.isType("start film"):
             self.startFilm(message)

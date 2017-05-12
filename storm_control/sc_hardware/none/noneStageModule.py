@@ -91,6 +91,10 @@ class NoneStageFunctionality(stageModule.StageFunctionality):
         self.pos_dict = self.stage.position()
         return self.pos_dict
 
+    def wait(self):
+        self.updateTimer.stop()
+        super().wait()
+
 
 class NoneStageModule(stageModule.StageModule):
 
