@@ -162,8 +162,10 @@ class LockControl(QtCore.QObject):
         
         tcp_message = message.getData()["tcp message"]
         if tcp_message.isType("Check Focus Lock"):
-            if not message.isTest():
-                                     
+            if tcp_message.isTest():
+                tcp_message.addResponse("duration", 2)
+                
+            else:
                 # Record current state.
                 assert (self.current_state == None)
                 self.current_state = {"locked" : self.lock_mode.amLocked(),
@@ -181,21 +183,31 @@ class LockControl(QtCore.QObject):
             return True
 
         elif tcp_message.isType("Find Sum"):
-            if not message.isTest():
+            if tcp_message.isTest():
+                tcp_message.addResponse("duration", 10)
+                
+            else:
 
-                # Record current state.
-                assert (self.current_state == None)
-                self.current_state = {"locked" : self.lock_mode.amLocked(),
-                                      "message" : message,
-                                      "tcp_message" : tcp_message}
+                # Check if we already have enough sum signal.
+                if (self.getQPDSumSignal() > tcp_message.getData("min_sum")):
+                    tcp_message.addResponse("found_sum", self.getQPDSumSignal())
+
+                # If not, start scanning.
+                else:
+                     
+                    # Record current state.
+                    assert (self.current_state == None)
+                    self.current_state = {"locked" : self.lock_mode.amLocked(),
+                                          "message" : message,
+                                          "tcp_message" : tcp_message}
                 
-                # Start find sum mode.
-                self.startLockBehavior("find_sum",
-                                       {"requested_sum" : tcp_message.getData("min_sum")})
+                    # Start find sum mode.
+                    self.startLockBehavior("find_sum",
+                                           {"requested_sum" : tcp_message.getData("min_sum")})
                 
-                # Increment the message reference count so that HAL
-                # knows that it has not been fully processed.
-                message.incRefCount()
+                    # Increment the message reference count so that HAL
+                    # knows that it has not been fully processed.
+                    message.incRefCount()
 
             return True
 
