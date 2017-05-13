@@ -22,7 +22,19 @@ def getThreadPool():
     """
     return halModule.threadpool
 
-    
+def runHardwareTask(module, message, task):
+    """
+    This just wraps halModule.runWorkerTask so that hardware modules do not
+    need to also import halLib.halModule.
+
+    Use this if your hardware module gets a message from HAL to do something 
+    which it cannot process immediately. This includes error handling and as
+    well as holding onto the message so that HAL knows that is has not been
+    fully processed.
+    """
+    halModule.runWorkerTask(module, message, task)
+
+
 class HardwareFunctionality(halFunctionality.HalFunctionality):
     """
     These are requested using the 'get functionality' message. The
