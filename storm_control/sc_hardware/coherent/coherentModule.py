@@ -8,6 +8,7 @@ Hazen 04/17
 import storm_control.hal4000.halLib.halMessage as halMessage
 
 import storm_control.sc_hardware.baseClasses.amplitudeModule as amplitudeModule
+import storm_control.sc_hardware.baseClasses.hardwareModule as hardwareModule
 
 
 class CoherentLaserFunctionality(amplitudeModule.AmplitudeFunctionalityBuffered):
@@ -56,18 +57,23 @@ class CoherentModule(amplitudeModule.AmplitudeModule):
                                                              data = {"functionality" : self.laser_functionality}))
 
     def setExtControl(self, state):
-        self.laser_functionality.mustRun(task = self.laser.setExtControl,
-                                         args = [state])
+        self.device_mutex.lock()
+        self.laser.setExtControl(state)
+        self.device_mutex.unlock()
                 
     def startFilm(self, message):
         if message.getData()["film settings"].runShutters():
             if self.used_during_filming and (self.laser_functionality is not None):
-                self.setExtControl(True)
+                hardwareModule.runHardwareTask(self,
+                                               message,
+                                               lambda : self.setExtControl(True))
                 self.film_mode = True
 
     def stopFilm(self, message):
         if self.film_mode:
-            self.setExtControl(False)
+            hardwareModule.runHardwareTask(self,
+                                           message,
+                                           lambda : self.setExtControl(True))
             self.film_mode = False
 
 
