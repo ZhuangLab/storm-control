@@ -74,14 +74,16 @@ class HalModule(QtCore.QObject):
     To handle messages sub-classes should override the appropriate
     processMessage method.
 
-    Any processMessage() method should execute essentially instantly. 
-    If the task they need to accomplish cannot be done immediately then
-    processing should be handed off to a HalConcurrentTask to be run
-    in separate. This will keep the task from freezing the GUI and 
-    causing other issues.
+    The processMessage() method should execute essentially instantly. If
+    it needs to do something that will take some time, then processing
+    should be handled using runWorkerTask(). This will process the message 
+    in a separate thread, and hold onto the message so that HAL knows
+    that message processing is not complete. This will keep the task from 
+    freezing the GUI and causing other issues.
 
     Conventions:
        1. self.view is the GUI view, if any that is associated with this module.
+       2. self.control is the controller, if any.
 
     """
     newMessage = QtCore.pyqtSignal(object)
