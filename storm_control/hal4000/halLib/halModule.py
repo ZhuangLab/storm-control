@@ -25,6 +25,8 @@ def runWorkerTask(module, message, task):
     """
     Use this to handle long running (non-GUI) tasks. See
     camera.camera.py for examples.
+
+    This will also handle errors in manner that HAL expects.
     """
 
     # Increment the count because once this message is handed off

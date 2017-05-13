@@ -21,6 +21,7 @@ The message life cycle:
 (5) If the module cannot process the message essentially
     instantaneously it is expected to handle the module to a
     thread and return control of the main thread to HAL.
+    Use halLib.halModule.runWorkerTask() for this purpose.
     
 (6) When the message is completely processed by the modules
     (or threads they have started) HAL calls the message finalizer
@@ -86,7 +87,7 @@ Other message details:
 
 (2) Messages can set a sync flag which will block messages that
     arrive after the message from being processed until the
-    message if completely processed & finalized.
+    message is completely processed & finalized.
 
 
 Popular message types are:
@@ -116,6 +117,17 @@ of messages between a single sender & receiver that need to
 be processed in more or less real time should be done with
 functionalities, and everything else should go through HAL
 (including requestes for functionalities from other modules).
+
+Note also that functionalities don't provide any timing
+gaurantees. If your module gets a message and hands off
+some processing to a (buffered) functionality then from
+HAL's perspective this message has been completely handled.
+If it is important that HAL knows when the processing is
+finished then it is better to use halModule.runWorkerTask()
+to do the processing. For example, if a piece of hardware
+needs to change in response to a 'new parameters' message
+it should use hardwareModule.runHardwareTask() to accomplish
+this (runHardwareTask is just a wrapper for runWorkerTask).
 
 
 Feeds - These are derived from a source camera and provide
