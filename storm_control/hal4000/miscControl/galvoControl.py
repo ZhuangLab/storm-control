@@ -132,8 +132,8 @@ class Galvo(halModule.HalModule):
                                                    data = {"name" : self.configuration.get("scan_fn")}))
 
         elif message.isType("show"):
-            if (message.getData()["show"] == "focus lock"):
-                self.view.show()            
+            if (message.getData()["show"] == "galvo control"):
+                self.view.show()
 
         elif message.isType("start"):
             if message.getData()["show_gui"]:
