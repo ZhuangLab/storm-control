@@ -381,6 +381,12 @@
 	  <sum_warning_low type="float">100.0</sum_warning_low>
 	</parameters>
 	<units_to_microns type="float">1.0</units_to_microns>
+
+	<!-- These are for simulation / testing -->
+	<noise type="float">0.5e-2</noise>
+	<tilt type="float">1.0e-3</tilt>
+	<xy_stage_fn type="string">none_stage</xy_stage_fn>
+	<z_stage_fn type="string">none_zstage</z_stage_fn>
       </configuration>
     </none_qpd>
 
