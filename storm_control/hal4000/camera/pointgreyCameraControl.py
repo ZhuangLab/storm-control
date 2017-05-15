@@ -43,6 +43,9 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         assert not self.camera.getProperty("pgrDefectPixelCorrectionEnable").spinNodeGetValue()
         
         # Change to 12 bit mode.
+        self.camera.getProperty("PixelFormat")
+        self.camera.setProperty("PixelFormat", "Mono12Packed")
+        
         self.camera.setProperty("VideoMode", "Mode7")
                 
         # We don't want any of these 'features'.
