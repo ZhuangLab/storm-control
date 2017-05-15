@@ -40,11 +40,11 @@ def calculateMovieStats(tcp_message, parameters):
         if parameters.get(cameraName(i) + ".saved"):
             total_bytes_per_frame += parameters.get(cameraName(i) + ".bytes_per_frame")
             i += 1
-    message.addResponse("disk_usage", (total_bytes_per_frame * frames)/(2**20))
+    tcp_message.addResponse("disk_usage", (total_bytes_per_frame * frames)/(2**20))
 
     # Estimate movie duration in seconds.
     fps = parameters.get(parameters.get("timing.time_base") + ".fps")
-    message.addResponse("duration", frames/fps)
+    tcp_message.addResponse("duration", frames/fps)
     
     
 class TCPAction(QtCore.QObject):
@@ -395,7 +395,7 @@ class Controller(QtCore.QObject):
 
             # More messy logic here to return film size, time, etc..
             if tcp_message.isTest():
-
+                
                 # If the movie has parameters specified, we'll request them specially.
                 if tcp_message.getData("parameters") is not None:
                     action = TCPActionGetMovieStats(tcp_message = tcp_message)
@@ -427,6 +427,7 @@ class Controller(QtCore.QObject):
 
     def setParameters(self, parameters):
         self.parameters = parameters
+        self.test_parameters = parameters
         
         
 class TCPControl(halModule.HalModule):
@@ -483,10 +484,20 @@ class TCPControl(halModule.HalModule):
         self.sendMessage(message)
 
     def handleResponses(self, message):
-        if self.control_action is not None:
+
+        #
+        # At 'configure2' we get the default parameters, we know this is
+        # 'configure2' because this is the only time that self.control_action
+        # is None.
+        #
+        if self.control_action is None:
+            if message.isType("get parameters"):
+                response = message.getResponses()[0]
+                self.control.setParameters(response.getData()["parameters"])
+        else:
             if self.control_action.handleResponses(message):
                 self.finalizeControlAction()
-
+                
     def processMessage(self, message):
         
         if self.control_action is not None:
@@ -496,8 +507,14 @@ class TCPControl(halModule.HalModule):
         if message.isType("change directory"):
             self.control.setDirectory(message.getData()["directory"])
 
+        # At least for testing we'll need the default parameters.
+        elif message.isType("configure2"):
+            self.sendMessage(halMessage.HalMessage(m_type = "get parameters",
+                                                   data = {"index or name" : 0}))
+
         elif message.isType("updated parameters"):
             self.control.setParameters(message.getData()["parameters"])
+
 
 
 #

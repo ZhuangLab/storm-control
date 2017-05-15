@@ -59,6 +59,7 @@ class NoneStageFunctionality(stageModule.StageFunctionality):
                           like 500 is usually good.
         """
         super().__init__(**kwds)
+        self.pos_dict = self.stage.position()
 
         self.moveTimer = QtCore.QTimer()
         self.moveTimer.setInterval(200)
@@ -74,6 +75,11 @@ class NoneStageFunctionality(stageModule.StageFunctionality):
 
     def goAbsolute(self, x, y):
         super().goAbsolute(x, y)
+        
+        # This is for TCP testing, so we don't have to
+        # wait for the (position) update timer to fire.
+        self.pos_dict = self.stage.position()
+        
         self.isMoving.emit(True)
         self.moveTimer.start()
 
