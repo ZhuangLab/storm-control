@@ -73,6 +73,7 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         self.camera.getProperty("OnBoardColorProcessEnabled")
         self.camera.setProperty("OnBoardColorProcessEnabled", False)        
 
+        #
         # Dictionary of Point Grey specific camera parameters.
         #
         self.pgrey_props = {"AcquisitionFrameRate" : True,
@@ -83,18 +84,44 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
                             "OffsetY" : True,
                             "Width" : True}
 
+        # Load properties as required by the spinnaker Python wrapper.
+        for pname in self.pgrey_props:
+            self.camera.getProperty(pname)
+
         max_intensity = 2**12
         self.parameters.setv("max_intensity", max_intensity)
 
+        # Set chip size and HAL parameter ranges.
         x_chip = self.camera.getProperty("WidthMax").spinNodeGetValue()
-        y_chip = self.camera.getProperty("HeightMax").spinNodeGetValue()
         self.parameters.setv("x_chip", x_chip)
-        self.parameters.setv("y_chip", y_chip)
+        for pname in ["x_end", "x_start"]:
+            self.parameters.getp(pname).setMaximum(x_chip)
 
+        y_chip = self.camera.getProperty("HeightMax").spinNodeGetValue()
+        self.parameters.setv("y_chip", y_chip)
+        for pname in ["y_end", "y_start"]:
+            self.parameters.getp(pname).setMaximum(y_chip)        
+
+        #
+        # Reset X, Y offsets. We do this here because otherwise the
+        # initial ranges of these parameters will be incorrect and the
+        # only way to fix them is using the parameters editor.
+        #
+        self.camera.setProperty("OffsetX", 0)
+        self.camera.setProperty("OffsetY", 0)
+
+        #
+        # FIXME: We're using a made up max_value for this parameter because it is
+        #        the default parameter. If we use the real range then any
+        #        parameters that are added later could have their frame rate
+        #        changed in an unexpected way. Unfortunately this also means that
+        #        if the user goes above the real maximum on this parameter then
+        #        the software will crash.
+        #
         self.parameters.add(params.ParameterRangeFloat(description = "Acquisition frame rate (FPS)",
                                                        name = "AcquisitionFrameRate",
                                                        value = 10.0,
-                                                       max_value = self.camera.getProperty("AcquisitionFrameRate").spinNodeGetMaximum(),
+                                                       max_value = 500.0,
                                                        min_value = self.camera.getProperty("AcquisitionFrameRate").spinNodeGetMinimum()))
         
         self.parameters.add(params.ParameterRangeFloat(description = "Black level",
@@ -112,26 +139,26 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         self.parameters.add(params.ParameterRangeInt(description = "AOI height",
                                                      name = "Height",
                                                      value = y_chip,
-                                                     max_value = self.camera.getProperty("Height").spinNodeGetMaximum(),
-                                                     min_value = self.camera.getProperty("Height").spinNodeGetMinimum()))
+                                                     max_value = y_chip,
+                                                     min_value = 4))
 
         self.parameters.add(params.ParameterRangeInt(description = "AOI x offset",
                                                      name = "OffsetX",
                                                      value = 0,
-                                                     max_value = self.camera.getProperty("OffsetX").spinNodeGetMaximum(),
-                                                     min_value = self.camera.getProperty("OffsetX").spinNodeGetMinimum()))
+                                                     max_value = x_chip - 4,
+                                                     min_value = 0))
 
         self.parameters.add(params.ParameterRangeInt(description = "AOI y offset",
                                                      name = "OffsetY",
                                                      value = 0,
-                                                     max_value = self.camera.getProperty("OffsetY").spinNodeGetMaximum(),
-                                                     min_value = self.camera.getProperty("OffsetY").spinNodeGetMinimum()))
+                                                     max_value = y_chip - 4,
+                                                     min_value = 0))
 
         self.parameters.add(params.ParameterRangeInt(description = "AOI width",
                                                      name = "Width",
                                                      value = x_chip,
-                                                     max_value = self.camera.getProperty("Width").spinNodeGetMaximum(),
-                                                     min_value = self.camera.getProperty("Width").spinNodeGetMinimum()))
+                                                     max_value = x_chip,
+                                                     min_value = 4))
 
         # Disable editing of the HAL versions of these parameters.
         for param in ["exposure_time", "x_bin", "x_end", "x_start", "y_end", "y_start", "y_bin"]:
@@ -140,15 +167,16 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         self.newParameters(self.parameters, initialization = True)
                              
     def newParameters(self, parameters, initialization = False):
+        print(">np", parameters.get("OffsetX"), parameters.get("OffsetY"))
         
         # Translate AOI information to parameters used by HAL.
-        parameters.set("x_end", parameters.get("OffsetX") + parameters.get("Width") - 1)
-        parameters.set("x_pixels", parameters.get("Width"))
-        parameters.set("x_start", parameters.get("OffsetX") + 1)
+        parameters.setv("x_end", parameters.get("OffsetX") + parameters.get("Width") - 1)
+        parameters.setv("x_pixels", parameters.get("Width"))
+        parameters.setv("x_start", parameters.get("OffsetX") + 1)
         
-        parameters.set("y_end", parameters.get("OffsetY") + parameters.get("Height") - 1)
-        parameters.set("y_pixels", parameters.get("Height"))
-        parameters.set("y_start", parameters.get("OffsetY") + 1)
+        parameters.setv("y_end", parameters.get("OffsetY") + parameters.get("Height") - 1)
+        parameters.setv("y_pixels", parameters.get("Height"))
+        parameters.setv("y_start", parameters.get("OffsetY") + 1)
 
         # Super class performs some simple checks & update some things.
         super().newParameters(parameters)
@@ -159,6 +187,7 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         # ones and only if they are different.
         to_change = []
         for pname in self.pgrey_props:
+            print(">", pname, self.parameters.get(pname), parameters.get(pname))
             if (self.parameters.get(pname) != parameters.get(pname)) or initialization:
                 to_change.append(pname)
         
@@ -169,11 +198,43 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
 
             # Change camera.
             for pname in to_change:
+                print(">", pname, parameters.get(pname))
+
+                # Some fiddly handling of changing the ROI size in a way
+                # that does not clash with the property ranges.
+                if (pname == "Height"):
+                    if (parameters.get(pname) > self.parameters.get(pname)):
+                        self.camera.setProperty("OffsetY", parameters.get("OffsetY"))
+                        
+                elif (pname == "OffsetX"):
+                    if (parameters.get(pname) > self.parameters.get(pname)):
+                        self.camera.setProperty("Width", parameters.get("Width"))
+                        
+                elif (pname == "OffsetY"):
+                    if (parameters.get(pname) > self.parameters.get(pname)):
+                        self.camera.setProperty("Height", parameters.get("Height"))
+
+                elif (pname == "Width"):
+                    if (parameters.get(pname) > self.parameters.get(pname)):
+                        self.camera.setProperty("OffsetX", parameters.get("OffsetX"))
+
                 self.camera.setProperty(pname, parameters.get(pname))
 
+            #
             # Update properties, note that the allowed ranges of many
             # of the parameters will likely change.
+            #
             for pname in self.pgrey_props:
+
+                #
+                # Ugh. We don't want to change the ranges of some of the initial
+                # parameters because could mess up the properties of any settings
+                # files that are later loaded into HAL.
+                #
+                if initialization:
+                    if pname in ["AcquisitionFrameRate", "Height", "OffsetX", "OffsetY", "Width"]:
+                        continue
+
                 param = self.parameters.getp(pname)
                 param.setMaximum(self.camera.getProperty(pname).spinNodeGetMaximum())
                 param.setMinimum(self.camera.getProperty(pname).spinNodeGetMinimum())
