@@ -271,7 +271,9 @@ class CameraControl(QtCore.QThread):
 
         # Update parameter ranges based on binning.
         #
-        # FIXME: For most cameras these parameters are not even relevant.
+        # FIXME: For most cameras these parameters are not even relevant,
+        #        so setting there range is not going to do anything. In
+        #        the parameters editor they won't even be shown.
         #
         max_x = self.parameters.get("x_chip") / parameters.get("x_bin")
         for attr in ["x_start", "x_end"]:
@@ -281,8 +283,13 @@ class CameraControl(QtCore.QThread):
         for attr in ["y_start", "y_end"]:
             self.parameters.getp(attr).setMaximum(max_y)
 
-        self.parameters.set("extension", parameters.get("extension"))
-        self.parameters.set("saved", parameters.get("saved"))
+        # Update parameters that are also used for the display.
+        for pname in ["x_bin", "x_pixels", "x_start", "y_bin", "y_pixels", "y_start"]:
+            self.parameters.setv(pname, parameters.get(pname))
+
+        # Update parameters that are used for filming.
+        self.parameters.setv("extension", parameters.get("extension"))
+        self.parameters.setv("saved", parameters.get("saved"))
 
     def openShutter(self):
         """
