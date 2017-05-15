@@ -119,15 +119,15 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
         # Translate AOI information to parameters used by HAL.
         # HAL is 1 based, hcam is 0 based.
         binning = int(parameters.get("binning")[0])
-        parameters.set("x_bin", binning)
-        parameters.set("x_end", parameters.get("subarray_hpos") + parameters.get("subarray_hsize"))
-        parameters.set("x_pixels", parameters.get("subarray_hsize"))
-        parameters.set("x_start", parameters.get("subarray_hpos") + 1)
+        parameters.setv("x_bin", binning)
+        parameters.setv("x_end", parameters.get("subarray_hpos") + parameters.get("subarray_hsize"))
+        parameters.setv("x_pixels", parameters.get("subarray_hsize"))
+        parameters.setv("x_start", parameters.get("subarray_hpos") + 1)
         
-        parameters.set("y_bin", binning)
-        parameters.set("y_end", parameters.get("subarray_vpos") + parameters.get("subarray_vsize"))
-        parameters.set("y_pixels", parameters.get("subarray_vsize"))
-        parameters.set("y_start", parameters.get("subarray_vpos") + 1)
+        parameters.setv("y_bin", binning)
+        parameters.setv("y_end", parameters.get("subarray_vpos") + parameters.get("subarray_vsize"))
+        parameters.setv("y_pixels", parameters.get("subarray_vsize"))
+        parameters.setv("y_start", parameters.get("subarray_vpos") + 1)
 
         # Super class performs some simple checks & update some things.
         super().newParameters(parameters)
