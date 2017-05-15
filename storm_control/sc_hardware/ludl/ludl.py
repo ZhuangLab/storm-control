@@ -75,6 +75,9 @@ class Ludl(object):
     def setVelocity(self, x_vel, y_vel):
         self._command("Speed x=" + str(x_vel) + ",y=" + str(y_vel))
 
+    def status(self):
+        return self._command("Status")
+
     def zero(self):
         self._command("Here x=0 y=0 b=0")
 
@@ -145,15 +148,15 @@ class LudlTCP(Ludl):
         
         # Test connection.
         self.live = True
-        test = self._command("Ver")
+#        test = self._command("Ver")
 
-#        try:
-#            test = self._command("Ver")
-#        except:
-#            print("Error in LudlTCP init:", sys.exc_info())
-#            self.live = False
-#        if not self.live:
-#            print("Ludl Stage is not connected? Stage is not on?")
+        try:
+            test = self._command("Ver")
+        except:
+            print("Error in LudlTCP init:", sys.exc_info())
+            self.live = False
+        if not self.live:
+            print("Ludl Stage is not connected? Stage is not on?")
 
         if (self.live):
             self._command("CAN 3, 83, 267, 0")
@@ -162,7 +165,7 @@ class LudlTCP(Ludl):
     def _command(self, command):
         try:
             self.connection.request("GET", self.formCommand(command))
-            response = self.connection.getresponse().read().split("\r")[2].strip()
+            response = self.connection.getresponse().read().decode(self.encoding).split("\r")[2].strip()
             return ["A: " + response]
         except http.client.CannotSendRequest:
             print("Stage connection lost, attempting re-connection.")
@@ -174,7 +177,8 @@ class LudlTCP(Ludl):
         Creates a properly formatted command.
         """
         msg = "/conajx.asp?&ECMD1=\"" + command + "\""
-        return msg.encode(self.encoding)
+        return msg
+        #return msg.encode(self.encoding)
     
     def shutDown(self):
         """
@@ -197,11 +201,16 @@ if (__name__ == "__main__"):
     if stage.getStatus():
         print(stage.position())
 
-        if False:
+        if True:
             stage.zero()
             time.sleep(0.5)
             stage.goRelative(1000.0, 1000.0)
+            for i in range(10):
+                start_time = time.time()
+                status = stage.status()
+                print(i, status, time.time() - start_time)
             time.sleep(1.0)
+            print(stage.status())
             print(stage.position())
             stage.goAbsolute(0.0, 0.0)
             time.sleep(1.0)
