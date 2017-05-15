@@ -10,8 +10,11 @@ Dave does when controlling HAL.
 Hazen 04/17
 """
 
+import storm_control.sc_library.tcpClient as tcpClient
+
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
+import storm_control.hal4000.testing.testActionsTCP as testActionsTCP
 
 
 class Testing(halModule.HalModule):
@@ -81,3 +84,50 @@ class Testing(halModule.HalModule):
         if self.current_action is not None:
             if message.isType(self.current_action.getMessageFilter()):
                 self.current_action.handleMessage(message)
+
+
+class TestingTCP(Testing):
+    """
+    This adds the ability to test HAL's handling of TCP commands.
+    """
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.hal_client = None
+
+    def handleActionDone(self):
+        
+        # This is little fiddly as it needs to handle both
+        # TestAction and TestActionTCP actions.
+
+        # If there are no more actions, close the TCP connection to HAL.
+        done = False
+        if (len(self.test_actions) == 0):
+            self.hal_client.stopCommunication()
+            self.hal_client.close()
+            done = True
+
+        # Super class handles TestActions. Note that for TestActionTCP
+        # this will send a "noop" message through HAL's queue.
+        super().handleActionDone()
+
+        # Check if this TestActionTCP and we need to send a TCPMessage.
+        if not done and isinstance(self.current_action, testActionsTCP.TestActionTCP):
+            self.hal_client.sendMessage(self.current_action.tcp_message)
+
+    def handleMessageReceived(self, tcp_message):
+        """
+        Handle a TCP (response) message from HAL.
+        """
+        self.current_action.handleMessageReceived(tcp_message)
+        
+    def processMessage(self, message):
+
+        if message.isType("start"):
+            self.hal_client = tcpClient.TCPClient(port = 9000,
+                                                  server_name = "HAL",
+                                                  verbose = False)
+            self.hal_client.messageReceived.connect(self.handleMessageReceived)
+            self.hal_client.startCommunication()
+
+        super().processMessage(message)
