@@ -167,7 +167,6 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         self.newParameters(self.parameters, initialization = True)
                              
     def newParameters(self, parameters, initialization = False):
-        print(">np", parameters.get("OffsetX"), parameters.get("OffsetY"))
         
         # Translate AOI information to parameters used by HAL.
         parameters.setv("x_end", parameters.get("OffsetX") + parameters.get("Width") - 1)
@@ -187,7 +186,6 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         # ones and only if they are different.
         to_change = []
         for pname in self.pgrey_props:
-            print(">", pname, self.parameters.get(pname), parameters.get(pname))
             if (self.parameters.get(pname) != parameters.get(pname)) or initialization:
                 to_change.append(pname)
         
@@ -198,7 +196,6 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
 
             # Change camera.
             for pname in to_change:
-                print(">", pname, parameters.get(pname))
 
                 # Some fiddly handling of changing the ROI size in a way
                 # that does not clash with the property ranges.
