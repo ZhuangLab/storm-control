@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<settings>
+  <camera1 validate="True">
+    <x_end type="int">256</x_end>
+    <x_start type="int">1</x_start>
+    <y_end type="int">256</y_end>
+    <y_start type="int">1</y_start>
+  </camera1>
+</settings>
