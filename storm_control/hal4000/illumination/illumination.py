@@ -104,9 +104,10 @@ class IlluminationView(halDialog.HalDialog):
                                                                          value = buttons))
 
         # Default shutters file.
+        filename = os.path.join(self.xml_directory, "shutters_default.xml")
         self.parameters.add(params.ParameterStringFilename(description = "Shutters file name",
                                                            name= "shutters",
-                                                           value = "shutters_default.xml",
+                                                           value = filename,
                                                            use_save_dialog = False))
 
         # Illumination channels setup.
