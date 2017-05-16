@@ -276,6 +276,10 @@ class TCPActionTakeMovie(TCPAction):
         # This handles the case that the requested parameters are already
         # the current parameters.
         #
+
+        # Check that this is a response to the 'set parameters' message.
+        if not message.isType("set parameters"):
+            return False
         
         # Check if this a response to our action, or a response to some
         # other message from the tcpControl class.
