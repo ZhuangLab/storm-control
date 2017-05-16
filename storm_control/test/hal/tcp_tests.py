@@ -77,13 +77,13 @@ class MoveStage1(testing.TestingTCP):
         super().__init__(**kwds)
 
         #
-        # We have to pause for 200ms so that the stage
+        # We have to pause for 500ms so that the stage
         # a chance to update it's position.
         #
         x = 10.0
         y = 10.0
         self.test_actions = [testActionsTCP.MoveStage(x = x, y = y),
-                             testActions.Timer(200),
+                             testActions.Timer(500),
                              GetStagePositionAction1(x = x, y = y),
                              MoveStageAction1(test_mode = True, x = 0.0, y = 0.0)]
 
