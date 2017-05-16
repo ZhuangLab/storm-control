@@ -219,3 +219,135 @@ class TakeMovie3(testing.TestingTCP):
                                               name = filename,
                                               test_mode = True)]
 
+class TakeMovieAction4(testActionsTCP.TakeMovie):
+        
+    def checkMessage(self, tcp_message):
+        assert(tcp_message.getResponse("disk_usage") == 6.25)
+        assert(tcp_message.getResponse("duration") == 1.0)
+
+class TakeMovie4(testing.TestingTCP):
+    """
+    Test test_mode w/ parameters request.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        directory = test.dataDirectory()
+        filename = "movie_01"
+
+        p_name = "256x256"
+        self.test_actions = [testActions.LoadParameters(filename = test.halXmlFilePathAndName(p_name + ".xml")),
+                             TakeMovieAction4(directory = directory,
+                                              length = 50,
+                                              name = filename,
+                                              parameters = p_name,
+                                              test_mode = True)]
+
+class TakeMovie5(testing.TestingTCP):
+    """
+    Test test_mode w/ parameters request.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        directory = test.dataDirectory()
+        filename = "movie_01"
+        self.test_actions = [TakeMovieAction3(directory = directory,
+                                              length = 50,
+                                              name = filename,
+                                              parameters = "default",
+                                              test_mode = True)]
+
+class TakeMovie6(testing.TestingTCP):
+    """
+    Request a movie by TCP with parameters that exist.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        directory = test.dataDirectory()
+        filename = "movie_01"
+
+        # Remove old movie (if any).
+        fullname = os.path.join(directory, filename + ".dax")
+        if os.path.exists(fullname):
+            os.remove(fullname)
+            
+        self.test_actions = [TakeMovieAction1(directory = directory,
+                                              length = 5,
+                                              name = filename,
+                                              parameters = "default")]
+
+class TakeMovieAction7(testActionsTCP.TakeMovie):
+
+    def checkMessage(self, tcp_message):
+        movie = datareader.inferReader(os.path.join(self.directory, self.name + ".dax"))
+        assert(movie.filmSize() == [256, 256, self.length])
+
+class TakeMovie7(testing.TestingTCP):
+    """
+    Request a movie by TCP with parameters that exist but that 
+    are not the current parameters.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        directory = test.dataDirectory()
+        filename = "movie_01"
+
+        # Remove old movie (if any).
+        fullname = os.path.join(directory, filename + ".dax")
+        if os.path.exists(fullname):
+            os.remove(fullname)
+
+        p_name = "256x256"
+        self.test_actions = [testActions.LoadParameters(filename = test.halXmlFilePathAndName(p_name + ".xml")),            
+                             TakeMovieAction7(directory = directory,
+                                              length = 5,
+                                              name = filename,
+                                              parameters = p_name)]
+
+class TakeMovie8(testing.TestingTCP):
+    """
+    Request a movie by TCP with parameters that don't exist (test_mode).
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        directory = test.dataDirectory()
+        filename = "movie_01"
+
+        # Remove old movie (if any).
+        fullname = os.path.join(directory, filename + ".dax")
+        if os.path.exists(fullname):
+            os.remove(fullname)
+
+        p_name = "256x256"
+        self.test_actions = [TakeMovieAction2(directory = directory,
+                                              length = 5,
+                                              name = filename,
+                                              parameters = p_name,
+                                              test_mode = True)]
+
+class TakeMovie9(testing.TestingTCP):
+    """
+    Request a movie by TCP with parameters that don't exist.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        directory = test.dataDirectory()
+        filename = "movie_01"
+
+        # Remove old movie (if any).
+        fullname = os.path.join(directory, filename + ".dax")
+        if os.path.exists(fullname):
+            os.remove(fullname)
+
+        p_name = "256x256"
+        self.test_actions = [TakeMovieAction2(directory = directory,
+                                              length = 5,
+                                              name = filename,
+                                              parameters = p_name)]        
+
+

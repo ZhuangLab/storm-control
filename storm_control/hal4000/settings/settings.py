@@ -97,7 +97,8 @@ class Settings(halModule.HalModule):
         # A request from another module to set the current parameters.
         halMessage.addMessage("set parameters",
                               validator = {"data" : {"index or name" : [True, (str, int)]},
-                                           "resp" : {"found" : [True, bool]}})
+                                           "resp" : {"found" : [True, bool],
+                                                     "current" : [True, bool]}})
 
         # Sent when changing the settings is not possible/possible. While this is
         # true we'll throw an error if another modules attempts to change the settings.
@@ -260,9 +261,10 @@ class Settings(halModule.HalModule):
         elif message.isType("set parameters"):
             if self.locked_out:
                 raise halException.HalException("'set parameters' received while locked out.")
-            found = self.view.setParameters(message.getData()["index or name"])
+            [found, current] = self.view.setParameters(message.getData()["index or name"])
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"found" : found}))
+                                                              data = {"current" : current,
+                                                                      "found" : found}))
                 
         elif message.isType("start film"):
             self.view.enableUI(False)

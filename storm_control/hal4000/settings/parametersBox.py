@@ -184,13 +184,18 @@ class ParametersBox(QtWidgets.QGroupBox):
         """
         Set the current parameters to be those that correspond to name, which 
         can be an integer (the row number), or a string (the name of the parameters).
+
+        Returns [found - True/False, current - True/False]
         """
         q_item = self.ui.settingsListView.getQItemByValue(value)
         if q_item is None:
-            return False
+            return [False, False]
         else:
-            self.ui.settingsListView.setCurrentItem(q_item)
-            return True
+            if (q_item == self.ui.settingsListView.getCurrentItem()):
+                return [True, True]
+            else:
+                self.ui.settingsListView.setCurrentItem(q_item)
+                return [True, False]
 
     def updateCurrentParameters(self, section, parameters):
         """

@@ -122,13 +122,16 @@ class TCPActionGetMovieStats(TCPAction):
 
         # Check for singleton response.
         responses = message.getResponses()
-        assert (len(responses == 1))
-        parameters = responses[0].getData()["parameters"]
+        assert (len(responses) == 1)
 
         # Check that the requested parameters were found.
-        if parameters is None:
+        found = responses[0].getData()["found"]
+        if not found:
             self.tcp_message.setError(True, "Parameters '" + self.tcp_message.getData("parameters") + "' not found")
+            self.was_handled = True
             return True
+        
+        parameters = responses[0].getData()["parameters"]
 
         # Check if the parameters are initialized.
         if parameters.get("initialized", False):
@@ -269,6 +272,35 @@ class TCPActionTakeMovie(TCPAction):
                                                      data = {"request" : self.film_request})
 
     def handleResponses(self, message):
+        #
+        # This handles the case that the requested parameters are already
+        # the current parameters.
+        #
+        
+        # Check if this a response to our action, or a response to some
+        # other message from the tcpControl class.
+        if (message != self.hal_message):
+            return False
+        
+        # Check for singleton response.
+        responses = message.getResponses()
+        assert (len(responses) == 1)
+
+        # Check that the requested parameters were found.
+        found = responses[0].getData()["found"]
+        if not found:
+            self.tcp_message.setError(True, "Parameters '" + self.tcp_message.getData("parameters") + "' not found")
+            self.was_handled = True
+            return True
+
+        # If these are the current parameters, send a 'start film request', if
+        # they are not then 'settings.settings' will switch HAL to these parameters
+        # and we'll monitor for the completion of the parameter change.
+        if responses[0].getData()["current"]:
+            msg = halMessage.HalMessage(m_type = "start film request",
+                                        data = {"request" : self.film_request})
+            self.actionMessage.emit(msg)
+
         return False
 
     def processMessage(self, message):
@@ -276,10 +308,11 @@ class TCPActionTakeMovie(TCPAction):
         # This is the signal that the parameter change is
         # complete and we can start filming.
         #
-        if message.isType("updated parameters"):
-            msg = halMessage.HalMessage(m_type = "start film request",
-                                        data = {"request" : self.film_request})
-            self.actionMessage.emit(msg)
+        if message.isType("settings lockout"):
+            if not message.getData()["locked out"]:
+                msg = halMessage.HalMessage(m_type = "start film request",
+                                            data = {"request" : self.film_request})
+                self.actionMessage.emit(msg)
 
         #
         # The 'film lockout' message with data 'locked out' is the signal
@@ -317,6 +350,9 @@ class Controller(QtCore.QObject):
     3. 'Check Focus Lock'
     4. 'Take Movie'
     In this sequence 1 and 2 can happen in parallel.
+
+    Note also the expectation that the TCP client does not send another message
+    until it gets a response to the first message.
     """
     controlAction = QtCore.pyqtSignal(object)
     controlMessage = QtCore.pyqtSignal(object)
@@ -426,6 +462,7 @@ class Controller(QtCore.QObject):
                 # If the movie has parameters specified, we'll request them specially.
                 if tcp_message.getData("parameters") is not None:
                     action = TCPActionGetMovieStats(tcp_message = tcp_message)
+                    self.controlAction.emit(action)
 
                 # Otherwise calculate based on the current parameters.
                 else:

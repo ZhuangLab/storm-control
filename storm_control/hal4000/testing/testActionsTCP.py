@@ -91,16 +91,24 @@ class TakeMovie(TestActionTCP):
                  length = None,
                  name = None,
                  overwrite = True,
+                 parameters = None,
                  test_mode = None,
                  **kwds):
         super().__init__(**kwds)
         self.directory = directory
         self.length = length
         self.name = name
+        self.parameters = parameters
+
+        data_dict = {"directory" : self.directory,
+                     "length" : self.length,
+                     "name": self.name,
+                     "overwrite" : overwrite}
+        if parameters is not None:
+            data_dict["parameters"] = parameters
+
+        print(data_dict)
         
         self.tcp_message = tcpMessage.TCPMessage(message_type = "Take Movie",
-                                                 message_data = {"directory" : self.directory,
-                                                                 "length" : self.length,
-                                                                 "name": self.name,
-                                                                 "overwrite" : overwrite},
+                                                 message_data = data_dict,
                                                  test_mode = test_mode)
