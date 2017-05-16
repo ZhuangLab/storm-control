@@ -8,6 +8,7 @@ Hazen 05/17
 import os
 from PyQt5 import QtCore
 
+import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.tcpMessage as tcpMessage
 import storm_control.sc_library.tcpServer as tcpServer
 
@@ -114,10 +115,15 @@ class TCPActionGetMovieStats(TCPAction):
 
     def handleResponses(self, message):
 
+        # Check if this a response to our action, or a response to some
+        # other message from the tcpControl class.
+        if (message != self.hal_message):
+            return False
+
         # Check for singleton response.
         responses = message.getResponses()
         assert (len(responses == 1))
-        parameters = responses[0]["parameters"]
+        parameters = responses[0].getData()["parameters"]
 
         # Check that the requested parameters were found.
         if parameters is None:
@@ -161,15 +167,23 @@ class TCPActionGetParameters(TCPAction):
 
     def handleResponses(self, message):
 
+        # Check if this a response to our action, or a response to some
+        # other message from the tcpControl class.
+        if (message != self.hal_message):
+            return False
+
         # Check for singleton response.
         responses = message.getResponses()
-        assert (len(responses == 1))
-        self.parameters = responses[0]["parameters"]
+        assert (len(responses) == 1)
 
         # Check that the requested parameters were found.
-        if self.parameters is None:
+        found = responses[0].getData()["found"]
+        if not found:
             self.tcp_message.setError(True, "Parameters '" + self.tcp_message.getData("parameters") + "' not found")
+            self.was_handled = True
             return True
+        
+        self.parameters = responses[0].getData()["parameters"]
 
         # Check if the parameters are initialized.
         if not self.parameters.get("initialized", False):
@@ -203,6 +217,23 @@ class TCPActionSetParameters(TCPAction):
         return {"parameters" : self.parameters}
 
     def handleResponses(self, message):
+        
+        # Check if this a response to our action, or a response to some
+        # other message from the tcpControl class.
+        if (message != self.hal_message):
+            return False
+
+        # Check for singleton response.
+        responses = message.getResponses()
+        assert (len(responses) == 1)
+
+        # Check that the requested parameters were found.
+        found = responses[0].getData()["found"]
+        if not found:
+            self.tcp_message.setError(True, "Parameters '" + self.tcp_message.getData("parameters") + "' not found")
+            self.was_handled = True
+            return True
+        
         return False
 
     def processMessage(self, message):
@@ -292,9 +323,7 @@ class Controller(QtCore.QObject):
     
     def __init__(self, parallel_mode = None, server = None, verbose = True, **kwds):
         super().__init__(**kwds)
-        self.directory = None
         self.parallel_mode = None
-        self.parameters = None
         self.server = server
         self.test_directory = None
         self.test_parameters = None
@@ -317,8 +346,6 @@ class Controller(QtCore.QObject):
         self.server.close()
         
     def handleLostConnection(self):
-        self.test_directory = self.directory
-        self.test_parameters = self.parameters
         self.controlMessage.emit(halMessage.HalMessage(m_type = "configuration",
                                                        data = {"properties" : {"connected" : False}}))
 
@@ -423,10 +450,9 @@ class Controller(QtCore.QObject):
                                                        data = {"properties" : {"connected" : True}}))
 
     def setDirectory(self, directory):
-        self.directory = directory
+        self.test_directory = directory
 
     def setParameters(self, parameters):
-        self.parameters = parameters
         self.test_parameters = parameters
         
         
@@ -497,7 +523,7 @@ class TCPControl(halModule.HalModule):
         else:
             if self.control_action.handleResponses(message):
                 self.finalizeControlAction()
-                
+
     def processMessage(self, message):
         
         if self.control_action is not None:

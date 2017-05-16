@@ -88,6 +88,53 @@ class MoveStage1(testing.TestingTCP):
                              MoveStageAction1(test_mode = True, x = 0.0, y = 0.0)]
 
 #
+# Test "Set Parameters" message.
+#
+class SetParametersAction1(testActionsTCP.SetParameters):
+
+    def checkMessage(self, tcp_message):
+        assert not tcp_message.hasError()
+        
+class SetParameters1(testing.TestingTCP):
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        fname = "256x512"
+        self.test_actions = [testActions.LoadParameters(filename = test.halXmlFilePathAndName(fname + ".xml")),
+                             SetParametersAction1(name_or_index = fname)]
+
+class SetParametersAction2(testActionsTCP.SetParameters):
+
+    def checkMessage(self, tcp_message):
+        assert tcp_message.hasError()
+
+class SetParameters2(testing.TestingTCP):
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        fname = "256x512"
+        self.test_actions = [SetParametersAction2(name_or_index = fname, test_mode = True)]
+        
+class SetParameters3(testing.TestingTCP):
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        fname = "256x512"
+        self.test_actions = [SetParametersAction2(name_or_index = fname)]
+        
+class SetParameters4(testing.TestingTCP):
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        fname = "256x512"
+        self.test_actions = [testActions.LoadParameters(filename = test.halXmlFilePathAndName(fname + ".xml")),
+                             SetParametersAction1(name_or_index = fname, test_mode = True)]
+
+#
 # Test "Take Movie" message.
 #
 class TakeMovieAction1(testActionsTCP.TakeMovie):
@@ -97,7 +144,9 @@ class TakeMovieAction1(testActionsTCP.TakeMovie):
         assert(movie.filmSize() == [512, 512, self.length])
         
 class TakeMovie1(testing.TestingTCP):
-
+    """
+    Request a movie by TCP and verify that it is taken & the correct size.
+    """
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
@@ -119,7 +168,9 @@ class TakeMovieAction2(testActionsTCP.TakeMovie):
         assert tcp_message.hasError()
 
 class TakeMovie2(testing.TestingTCP):
-
+    """
+    Test TCP movie overwrite handling.
+    """
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
@@ -154,7 +205,9 @@ class TakeMovieAction3(testActionsTCP.TakeMovie):
         assert(tcp_message.getResponse("duration") == 1.0)
 
 class TakeMovie3(testing.TestingTCP):
-
+    """
+    Simple test of test_mode.
+    """
     def __init__(self, **kwds):
         super().__init__(**kwds)
 

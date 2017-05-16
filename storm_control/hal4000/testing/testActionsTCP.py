@@ -72,7 +72,16 @@ class MoveStage(TestActionTCP):
                                                                  "stage_y" : y},
                                                  test_mode = test_mode)
 
-
+class SetParameters(TestActionTCP):
+    """
+    Tell HAL to use a particular parameters file."
+    """
+    def __init__(self, name_or_index = None, test_mode = None, **kwds):
+        super().__init__(**kwds)
+        self.tcp_message = tcpMessage.TCPMessage(message_type = "Set Parameters",
+                                                 message_data = {"parameters" : name_or_index},
+                                                 test_mode = test_mode)
+        
 class TakeMovie(TestActionTCP):
     """
     Tell HAL to take a movie.

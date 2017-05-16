@@ -70,7 +70,8 @@ class Settings(halModule.HalModule):
         # A request from another module for one of the sets of parameters.
         halMessage.addMessage("get parameters",
                               validator = {"data" : {"index or name" : [True, (str, int)]},
-                                           "resp" : {"parameters" : [True, params.StormXMLObject]}})
+                                           "resp" : {"parameters" : [False, params.StormXMLObject],
+                                                     "found" : [True, bool]}})
         
         # The current parameters have changed.
         #
@@ -96,7 +97,7 @@ class Settings(halModule.HalModule):
         # A request from another module to set the current parameters.
         halMessage.addMessage("set parameters",
                               validator = {"data" : {"index or name" : [True, (str, int)]},
-                                           "resp" : None})
+                                           "resp" : {"found" : [True, bool]}})
 
         # Sent when changing the settings is not possible/possible. While this is
         # true we'll throw an error if another modules attempts to change the settings.
@@ -221,8 +222,13 @@ class Settings(halModule.HalModule):
 
         elif message.isType("get parameters"):
             p = self.view.getParameters(message.getData()["index or name"])
-            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"parameters" : p}))
+            if p is None:
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                  data = {"found" : False}))
+            else:
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                  data = {"parameters" : p,
+                                                                          "found" : True}))
 
         elif message.isType("initial parameters"):
             
@@ -254,8 +260,10 @@ class Settings(halModule.HalModule):
         elif message.isType("set parameters"):
             if self.locked_out:
                 raise halException.HalException("'set parameters' received while locked out.")
-            self.view.setParameters(message.getData()["index or name"])
-            
+            found = self.view.setParameters(message.getData()["index or name"])
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"found" : found}))
+                
         elif message.isType("start film"):
             self.view.enableUI(False)
             
