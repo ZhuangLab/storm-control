@@ -199,6 +199,24 @@ class SetParameters(TestAction):
         if not message.getData()["locked out"]:
             self.actionDone.emit()
         
+
+class ShowGUIControl(TestAction):
+    """
+    Show one of the GUI controls.
+    """
+    def __init__(self, control_name = "", **kwds):
+        super().__init__(**kwds)
+
+        self.control_name = control_name
+        self.m_type = "show"
+
+    def finalizer(self):
+        super().finalizer()
+        self.actionDone.emit()
+
+    def getMessageData(self):
+        return {"show" : self.control_name}
+
     
 class Timer(TestAction):
     """

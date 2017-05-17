@@ -621,7 +621,16 @@ class AutoLockMode(JumpLockMode):
     def startLock(self, target = None):
         super().startLock()
         if target is None:
-            self.setLockTarget(self.qpd_state["offset"])
+            
+            #
+            # If the user changes the mode and then hits the lock button really
+            # really fast then self.qpd_state might be None. However this problem
+            # is more typically encountered when running unit tests.
+            #
+            if self.qpd_state is None:
+                self.setLockTarget(0)
+            else:
+                self.setLockTarget(self.qpd_state["offset"])
         else:
             self.setLockTarget(target)
 

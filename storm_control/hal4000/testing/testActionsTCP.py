@@ -72,6 +72,19 @@ class MoveStage(TestActionTCP):
                                                                  "stage_y" : y},
                                                  test_mode = test_mode)
 
+class SetFocusLockMode(TestActionTCP):
+    """
+    Technically this is only supposed to be used for testing.
+
+    Tell HAL to change the (user) selected focus lock mode and locked status.
+    """
+    def __init__(self, mode_name = None, locked = None, test_mode = None, **kwds):
+        super().__init__(**kwds)
+        self.tcp_message = tcpMessage.TCPMessage(message_type = "Set Focus Lock Mode",
+                                                 message_data = {"mode_name" : mode_name,
+                                                                 "locked" : locked},
+                                                 test_mode = test_mode)
+
 class SetParameters(TestActionTCP):
     """
     Tell HAL to use a particular parameters file."

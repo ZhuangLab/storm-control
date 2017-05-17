@@ -105,7 +105,12 @@ class FocusLockView(halDialog.HalDialog):
         else:
             self.ui.lockButton.setText("Lock")
             self.lockStarted.emit(False)
-    
+
+    def handleLockTarget(self, new_target):
+        # For convenience targets appear in the GUI as nanometers, but
+        # the focus lock uses microns.
+        self.lockTarget.emit(0.001 * new_target)
+            
     def handleModeComboBox(self, index):
 
         # Clean up previous mode.
@@ -131,11 +136,32 @@ class FocusLockView(halDialog.HalDialog):
 
         self.modeChanged.emit(self.current_mode)
 
-    def handleLockTarget(self, new_target):
-        # For convenience targets appear in the GUI as nanometers, but
-        # the focus lock uses microns.
-        self.lockTarget.emit(0.001 * new_target)
+    def handleTCPMessage(self, message):
+        #
+        # Technically you can't change the focus lock mode or locked status
+        # via TCP, but this ability is necessary for unit tests..
+        #
+        tcp_message = message.getData()["tcp message"]
+        if tcp_message.isType("Set Focus Lock Mode"):
+            if tcp_message.isTest():
+                return True
+
+            mode_name = tcp_message.getData("mode_name")
+            locked = tcp_message.getData("locked")
+
+            for i in range(self.ui.modeComboBox.count()):
+                if (mode_name == self.ui.modeComboBox.itemText(i)):
+                    self.ui.modeComboBox.setCurrentIndex(i)
+                    if locked and not self.amLocked() and self.ui.lockButton.isEnabled():
+                        self.ui.lockButton.click()
+                    return True
+
+            tcp_message.setError(True, "Requested mode '" + mode_name + "' not found.")
+            return True
         
+        else:
+            return False
+
     def newParameters(self, parameters):
         for attr in params.difference(parameters, self.parameters):
             self.parameters.setv(attr, parameters.get(attr))
@@ -280,6 +306,8 @@ class FocusLock(halModule.HalModule):
 
         elif message.isType("tcp message"):
             handled = self.control.handleTCPMessage(message)
+            if not handled:
+                handled = self.view.handleTCPMessage(message)
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"handled" : handled}))
-                
+

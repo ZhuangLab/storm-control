@@ -88,6 +88,25 @@ class MoveStage1(testing.TestingTCP):
                              MoveStageAction1(test_mode = True, x = 0.0, y = 0.0)]
 
 #
+# Test "Set Focus Lock Mode" message.
+#
+class SetFocusLockModeAction1(testActionsTCP.SetFocusLockMode):
+
+    def checkMessage(self, tcp_message):
+        print(tcp_message)
+
+class SetFocusLockMode1(testing.TestingTCP):        
+        
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [testActions.ShowGUIControl(control_name = "focus lock"),
+                             testActions.Timer(100),
+                             SetFocusLockModeAction1(mode_name = "Always On",
+                                                     locked = True),
+                             testActions.Timer(2000)]
+
+#
 # Test "Set Parameters" message.
 #
 class SetParametersAction1(testActionsTCP.SetParameters):
