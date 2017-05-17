@@ -71,7 +71,17 @@ class MoveStage(TestActionTCP):
                                                  message_data = {"stage_x" : x,
                                                                  "stage_y" : y},
                                                  test_mode = test_mode)
+        
 
+class NoSuchMessage(TestActionTCP):
+    """
+    Send HAL an unsupported message.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.tcp_message = tcpMessage.TCPMessage(message_type = "No Such Message")
+        
+        
 class SetFocusLockMode(TestActionTCP):
     """
     Technically this is only supposed to be used for testing.

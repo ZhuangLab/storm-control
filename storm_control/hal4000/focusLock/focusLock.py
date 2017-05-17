@@ -305,9 +305,16 @@ class FocusLock(halModule.HalModule):
                                                                                        lock_target]}))
 
         elif message.isType("tcp message"):
+
+            # See control handles this message.
             handled = self.control.handleTCPMessage(message)
+
+            # If not, check view.
             if not handled:
                 handled = self.view.handleTCPMessage(message)
-            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"handled" : handled}))
+
+            # Mark if we handled the message.
+            if handled:
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                  data = {"handled" : True}))
 

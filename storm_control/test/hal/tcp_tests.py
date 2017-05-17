@@ -88,15 +88,35 @@ class MoveStage1(testing.TestingTCP):
                              MoveStageAction1(test_mode = True, x = 0.0, y = 0.0)]
 
 #
+# Test handling of messages that are not supported.
+#
+class NoSuchMessageAction1(testActionsTCP.NoSuchMessage):
+
+    def checkMessage(self, tcp_message):
+        assert tcp_message.hasError()
+
+class NoSuchMessage1(testing.TestingTCP):
+    """
+    Test sending a message that HAL does not handle.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [NoSuchMessageAction1()]
+#                             test_mode = True]
+
+#
 # Test "Set Focus Lock Mode" message.
 #
 class SetFocusLockModeAction1(testActionsTCP.SetFocusLockMode):
 
     def checkMessage(self, tcp_message):
-        print(tcp_message)
+        assert not tcp_message.hasError()
 
-class SetFocusLockMode1(testing.TestingTCP):        
-        
+class SetFocusLockMode1(testing.TestingTCP):
+    """
+    Test changing to "Always On" and starting the focus lock.
+    """
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
@@ -105,6 +125,20 @@ class SetFocusLockMode1(testing.TestingTCP):
                              SetFocusLockModeAction1(mode_name = "Always On",
                                                      locked = True),
                              testActions.Timer(2000)]
+
+class SetFocusLockModeAction2(testActionsTCP.SetFocusLockMode):
+
+    def checkMessage(self, tcp_message):
+        assert tcp_message.hasError()
+
+class SetFocusLockMode2(testing.TestingTCP):
+    """
+    Test changing trying to change to a mode that does not exist.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [SetFocusLockModeAction2(mode_name = "XYZZY")]
 
 #
 # Test "Set Parameters" message.
