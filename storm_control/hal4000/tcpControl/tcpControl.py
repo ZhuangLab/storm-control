@@ -98,7 +98,7 @@ class TCPAction(QtCore.QObject):
         
     def sendResponse(self, server):
         if not self.was_handled:
-            print(">> Warning no response to", self.tcp_message.getType())
+            print(">> Warning no response to '" + self.tcp_message.getType() + "'")
             self.tcp_message.setError(True, "This message was not handled.")
         server.sendMessage(self.tcp_message)
 
