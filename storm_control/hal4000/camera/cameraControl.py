@@ -4,6 +4,8 @@ Base class for controlling a camera.
 
 See noneCameraControl.py or andorCameraControl.py for specific examples.
 
+Note that "slave" cameras are assumed to always be hardware timed.
+
 Hazen 2/17
 """
 
