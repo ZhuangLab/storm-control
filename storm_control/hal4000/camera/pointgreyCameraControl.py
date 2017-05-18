@@ -2,6 +2,9 @@
 """
 Camera control specialized for a Point Grey (Spinnaker) camera.
 
+Tested on :
+   GS3-U3-51S5M
+
 Hazen 05/17
 """
 import storm_control.sc_hardware.pointGrey.spinnaker as spinnaker
@@ -18,10 +21,11 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
     def __init__(self, config = None, is_master = False, **kwds):
         kwds["config"] = config
         super().__init__(**kwds)
+        self.is_master = is_master
         
         # The camera functionality.
         self.camera_functionality = cameraFunctionality.CameraFunctionality(camera_name = self.camera_name,
-                                                                            is_master = is_master,
+                                                                            is_master = self.is_master,
                                                                             parameters = self.parameters)
 
         # Initialize library.
@@ -73,17 +77,75 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         self.camera.getProperty("OnBoardColorProcessEnabled")
         self.camera.setProperty("OnBoardColorProcessEnabled", False)        
 
+        # Configure 'master' cameras to not use triggering.
+        #
+        self.camera.getProperty("TriggerMode")
+        if self.is_master:
+            self.camera.setProperty("TriggerMode", "Off")
+            self.camera.getProperty("LineSelector")
+            self.camera.setProperty("LineSelector", "Line1")
+            self.camera.getProperty("LineSource")
+            self.camera.setProperty("LineSource", "ExternalTriggerActive")
+
+        # Configure 'slave' cameras to use triggering.
+        #
+        # We are following: http://www.ptgrey.com/KB/11052
+        # "Configuring Synchronized Capture with Multiple Cameras"
+        #
+        # Also, we connected the master camera to the DAQ card
+        # using it's OPTO-OUT connection.
+        #
+        else:
+            self.camera.setProperty("TriggerMode", "On")
+            self.camera.getProperty("TriggerSource")
+            self.camera.setProperty("TriggerSource", "Line3")
+            self.camera.getProperty("TriggerOverlap")
+            self.camera.setProperty("TriggerOverlap", "ReadOut")
+
         #
         # Dictionary of Point Grey specific camera parameters.
         #
-        self.pgrey_props = {"AcquisitionFrameRate" : True,
-                            "BlackLevel" : True,
+
+        # All cameras can set these.
+        self.pgrey_props = {"BlackLevel" : True,
                             "Gain" : True,
                             "Height" : True,
                             "OffsetX" : True,
                             "OffsetY" : True,
                             "Width" : True}
 
+        # Only master cameras can set "AcquisitionFrameRate".
+        if self.is_master:
+            self.pgrey_props["AcquisitionFrameRate"] = True
+
+            #
+            # FIXME: We're using a made up max_value for this parameter because it is
+            #        the default parameter. If we use the real range then any
+            #        parameters that are added later could have their frame rate
+            #        changed in an unexpected way. Unfortunately this also means that
+            #        if the user goes above the real maximum on this parameter then
+            #        the software will crash.
+            #
+            self.parameters.add(params.ParameterRangeFloat(description = "Acquisition frame rate (FPS)",
+                                                           name = "AcquisitionFrameRate",
+                                                           value = 10.0,
+                                                           max_value = 500.0,
+                                                           min_value = self.camera.getProperty("AcquisitionFrameRate").spinNodeGetMinimum()))
+
+        # Slave cameras can set "ExposureTime".
+        #
+        # FIXME? If this is too large then the slave will be taking images
+        #        at a different rate than master. Maybe this should be
+        #        limited? Automatically set based on "master" frame rate?
+        #
+        else:
+            self.pgrey_props["ExposureTime"] = True
+            self.parameters.add(params.ParameterRangeFloat(description = "Exposure time (us)",
+                                                           name = "ExposureTime",
+                                                           value = 99800.0,
+                                                           max_value = self.camera.getProperty("ExposureTime").spinNodeGetMaximum(),
+                                                           min_value = self.camera.getProperty("ExposureTime").spinNodeGetMinimum()))
+            
         # Load properties as required by the spinnaker Python wrapper.
         for pname in self.pgrey_props:
             self.camera.getProperty(pname)
@@ -110,20 +172,6 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         self.camera.setProperty("OffsetX", 0)
         self.camera.setProperty("OffsetY", 0)
 
-        #
-        # FIXME: We're using a made up max_value for this parameter because it is
-        #        the default parameter. If we use the real range then any
-        #        parameters that are added later could have their frame rate
-        #        changed in an unexpected way. Unfortunately this also means that
-        #        if the user goes above the real maximum on this parameter then
-        #        the software will crash.
-        #
-        self.parameters.add(params.ParameterRangeFloat(description = "Acquisition frame rate (FPS)",
-                                                       name = "AcquisitionFrameRate",
-                                                       value = 10.0,
-                                                       max_value = 500.0,
-                                                       min_value = self.camera.getProperty("AcquisitionFrameRate").spinNodeGetMinimum()))
-        
         self.parameters.add(params.ParameterRangeFloat(description = "Black level",
                                                        name = "BlackLevel",
                                                        value = 1.0,
@@ -229,7 +277,7 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
                 # files that are later loaded into HAL.
                 #
                 if initialization:
-                    if pname in ["AcquisitionFrameRate", "Height", "OffsetX", "OffsetY", "Width"]:
+                    if pname in ["AcquisitionFrameRate", "ExposureTime", "Height", "OffsetX", "OffsetY", "Width"]:
                         continue
 
                 param = self.parameters.getp(pname)
@@ -238,17 +286,35 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
                 param.setv(parameters.get(pname))
 
             # Set the exposure time to be the maximum given the current frame rate.
-            self.camera.setProperty("ExposureTime", self.camera.getProperty("ExposureTime").spinNodeGetMaximum())
-            
-            self.parameters.setv("exposure_time", 1.0e-6 * self.camera.getProperty("ExposureTime").spinNodeGetValue())
-            self.parameters.setv("fps", self.camera.getProperty("AcquisitionFrameRate").spinNodeGetValue())
+            if self.is_master:
+                self.camera.setProperty("ExposureTime", self.camera.getProperty("ExposureTime").spinNodeGetMaximum())
+                self.parameters.setv("exposure_time", 1.0e-6 * self.camera.getProperty("ExposureTime").spinNodeGetValue())
+                self.parameters.setv("fps", self.camera.getProperty("AcquisitionFrameRate").spinNodeGetValue())
 
             if running:
                 self.startCamera()
                 
             self.camera_functionality.parametersChanged.emit()
 
+    def startCamera(self):
+        #
+        # It appears that the camera continues to put out pulses even
+        # when it is (at least in theory) not actually running. This
+        # messes up the DAQ timing. To try and solve this problem we
+        # re-configure the output source to one that is constant
+        # when the camera stops.
+        #
+        if self.is_master:
+            self.camera.setProperty("LineSelector", "Line1")
+            self.camera.setProperty("LineSource", "ExposureActive")
+        super().startCamera()
 
+    def stopCamera(self):
+        super().stopCamera()
+        if self.is_master:
+            self.camera.setProperty("LineSelector", "Line1")
+            self.camera.setProperty("LineSource", "ExternalTriggerActive")
+        
 #
 # The MIT License
 #
