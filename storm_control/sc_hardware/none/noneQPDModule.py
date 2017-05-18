@@ -48,9 +48,9 @@ class NoneQPDFunctionality(hardwareModule.BufferedFunctionality, lockModule.QPDF
             pos_dict = self.xy_stage_fn.getCurrentPosition()
             if pos_dict is not None:
                 dx = pos_dict["x"]
-                dy = pos_dict["y"]
-                dd = math.sqrt(dx*dx + dy*dy)
-                z_center += self.tilt * dd
+                #dy = pos_dict["y"]
+                #dd = math.sqrt(dx*dx + dy*dy)
+                z_center += self.tilt * dx
 
             if (z_center > self.z_stage_max):
                 z_center = self.z_stage_max
@@ -61,9 +61,14 @@ class NoneQPDFunctionality(hardwareModule.BufferedFunctionality, lockModule.QPDF
 
         if (self.noise > 0.0):
             z_offset += random.gauss(0.0, self.noise)
+
+        power = 600.0 * math.exp(-0.250 * (z_offset * z_offset))
+        
+        if (power < (0.5 * self.getParameter("sum_warning_low"))):
+            z_offset = 0.0
             
         return {"offset" : z_offset,
-                "sum" : 600.0 * math.exp(-0.250 * (z_offset * z_offset)),
+                "sum" : power,
                 "x" : 100.0 * z_offset,
                 "y" : 0.0}
 

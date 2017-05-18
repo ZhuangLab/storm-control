@@ -34,6 +34,26 @@ class TestActionTCP(testActions.TestAction):
         self.actionDone.emit()
 
 
+class CheckFocusLock(TestActionTCP):
+    """
+    Check the focus lock and do a scan if it has lost lock.
+    """
+    def __init__(self,
+                 focus_scan = None,
+                 num_focus_checks = None,
+                 scan_range = None,
+                 test_mode = False,
+                 z_center = None,
+                 **kwds):
+        super().__init__(**kwds)
+        self.tcp_message = tcpMessage.TCPMessage(message_type = "Check Focus Lock",
+                                                 message_data = {"focus_scan" : focus_scan,
+                                                                 "num_focus_checks" : num_focus_checks,
+                                                                 "scan_range" : scan_range,
+                                                                 "z_center" : z_center},
+                                                 test_mode = test_mode)
+        
+        
 class GetMosaicSettings(TestActionTCP):
     """
     Query HAL for the current mosaic settings.

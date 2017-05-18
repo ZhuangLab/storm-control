@@ -13,6 +13,89 @@ import storm_control.test as test
 
 
 #
+# Test "Check Focus Lock" message.
+#
+#
+# Test "Set Lock Target" message.
+#
+class CheckFocusLockAction1(testActionsTCP.CheckFocusLock):
+
+    def checkMessage(self, tcp_message):
+        assert(tcp_message.getResponse("focus_status"))
+        
+class CheckFocusLock1(testing.TestingTCP):
+    """
+    Check that the focus lock returns that it is locked.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [testActions.ShowGUIControl(control_name = "focus lock"),
+                             testActions.Timer(100),
+                             SetFocusLockModeAction1(mode_name = "Always On",
+                                                     locked = True),
+                             testActions.Timer(100),
+                             CheckFocusLockAction1(focus_scan = False,
+                                                   num_focus_checks = 5)]
+
+class CheckFocusLockAction2(testActionsTCP.CheckFocusLock):
+
+    def checkMessage(self, tcp_message):
+        assert not (tcp_message.getResponse("focus_status"))
+
+class CheckFocusLock2(testing.TestingTCP):
+    """
+    Check that the focus lock returns that it is not locked. Note that
+    moving the stage x um offsets the locked center position by x um.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [testActions.ShowGUIControl(control_name = "focus lock"),
+                             testActions.Timer(100),
+                             SetFocusLockModeAction1(mode_name = "Always On",
+                                                     locked = True),
+                             testActionsTCP.MoveStage(x = 10, y = 0),
+                             testActions.Timer(200),
+                             CheckFocusLockAction2(focus_scan = False,
+                                                   num_focus_checks = 5)]
+        
+class CheckFocusLock3(testing.TestingTCP):
+    """
+    Check that the focus lock can find lock again.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [testActions.ShowGUIControl(control_name = "focus lock"),
+                             testActions.Timer(100),
+                             SetFocusLockModeAction1(mode_name = "Always On",
+                                                     locked = True),
+                             testActionsTCP.MoveStage(x = -6, y = 0),
+                             testActions.Timer(200),
+                             CheckFocusLockAction1(focus_scan = True,
+                                                   num_focus_checks = 5,
+                                                   scan_range = 20)]
+        
+class CheckFocusLock4(testing.TestingTCP):
+    """
+    Check that the focus lock can't find lock again 
+    if the scan range is too small.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [testActions.ShowGUIControl(control_name = "focus lock"),
+                             testActions.Timer(100),
+                             SetFocusLockModeAction1(mode_name = "Always On",
+                                                     locked = True),
+                             testActionsTCP.MoveStage(x = -6, y = 0),
+                             testActions.Timer(200),
+                             CheckFocusLockAction2(focus_scan = True,
+                                                   num_focus_checks = 5,
+                                                   scan_range = 4)]
+
+#
 # Test "Get Mosaic Settings" message.
 #
 class GetMosaicSettingsAction1(testActionsTCP.GetMosaicSettings):

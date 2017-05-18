@@ -62,7 +62,8 @@ class LockControl(QtCore.QObject):
                     self.startLockBehavior("scan", slb_dict)
 
                 # Otherwise just return that we were not successful.
-                self.handleDone(False)
+                else:
+                    self.handleDone(False)
 
             # Wait 100ms and try again.
             else:
@@ -272,7 +273,7 @@ class LockControl(QtCore.QObject):
         calling this function.
         """
         if self.working:
-            self.lock_mode.startLock(sub_mode_name, sub_mode_params)
+            self.lock_mode.startLockBehavior(sub_mode_name, sub_mode_params)
 
     def stopFilm(self):
         if self.working:

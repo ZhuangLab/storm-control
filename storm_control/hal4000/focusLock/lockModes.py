@@ -305,31 +305,32 @@ class ScanMixin(object):
             
         if (self.behavior == self.sm_mode_name):
 
+            diff = 2.0 * self.sm_offset_threshold
             if (qpd_state["sum"] > self.sm_min_sum):
                 diff = (qpd_state["offset"] - self.sm_target)
 
-                #
-                # If we are at a z position where we are getting the correct offset
-                # then we are done.
-                #
-                if (abs(diff) < self.sm_offset_threshold):
-                    self.behaviorDone(True)
+            #
+            # If we are at a z position where we are getting the correct offset
+            # then we are done.
+            #
+            if (abs(diff) < self.sm_offset_threshold):
+                self.behaviorDone(True)
                     
+            else:
+                
+                #
+                # If we hit the end of the range and did not find anything then
+                # return to the last z position where we had a good lock and stop.
+                #
+                if (self.z_stage_functionality.getCurrentPosition() > self.sm_z_end):
+                    self.z_stage_functionality.goAbsolute(self.last_good_z)
+                    self.behaviorDone(False)
+
+                #
+                # Otherwise continue to move up.
+                #
                 else:
-
-                    #
-                    # If we hit the end of the range and did not find anything then
-                    # return to the last z position where we had a good lock and stop.
-                    #
-                    if (self.z_stage_functionality.getCurrentPosition() > self.sm_z_end):
-                        self.z_stage_functionality.goAbsolute(self.last_good_z)
-                        self.behaviorDone(False)
-
-                    #
-                    # Otherwise continue to move up.
-                    #
-                    else:
-                        self.z_stage_functionality.goRelative(self.sm_z_step)
+                    self.z_stage_functionality.goRelative(self.sm_z_step)
 
     def startLockBehavior(self, behavior_name, behavior_params):
         if hasattr(super(), "startLockBehavior"):
@@ -351,6 +352,9 @@ class ScanMixin(object):
                 self.sm_offset_threshold = 1.0e-3 * p.get("offset_threshold")
 
             # Set scan range.
+            #
+            # FIXME: User will specify full range or half range size?
+            #
             if "scan_range" in behavior_params:
                 
                 # None means scan the entire range of the z stage.

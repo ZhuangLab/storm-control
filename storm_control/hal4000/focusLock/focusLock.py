@@ -182,9 +182,11 @@ class FocusLockView(halDialog.HalDialog):
 
         self.lock_display.setFunctionality(name, functionality)
 
-        # Enable UI if we have everything we need to work.
+        # Enable UI if we have everything we need to work. Also call newParameters()
+        # so that the 'minimum_sum' is set.
         if self.lock_display.haveAllFunctionalities():
             self.setEnabled(True)
+            self.newParameters(self.parameters)
 
     def setLockTargetSpinBox(self, new_value):
         self.ui.lockTargetSpinBox.valueChanged.disconnect(self.handleLockTarget)

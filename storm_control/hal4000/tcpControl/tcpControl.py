@@ -400,14 +400,14 @@ class Controller(QtCore.QObject):
 
         if tcp_message.isType('Check Focus Lock'):
             # This is supposed to ensure that everything else, like stage moves is complete.
-            self.controlMessage.emit(halMessage.SyncMessage)
+            self.controlMessage.emit(halMessage.SyncMessage())
             
             action = TCPAction(tcp_message = tcp_message)
             self.controlAction.emit(action)
 
         elif tcp_message.isType('Find Sum'):
             # This is supposed to ensure that everything else, like stage moves is complete.
-            self.controlMessage.emit(halMessage.SyncMessage)
+            self.controlMessage.emit(halMessage.SyncMessage())
             
             action = TCPAction(tcp_message = tcp_message)
             self.controlAction.emit(action)            
