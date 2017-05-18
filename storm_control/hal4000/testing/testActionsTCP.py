@@ -95,6 +95,16 @@ class SetFocusLockMode(TestActionTCP):
                                                                  "locked" : locked},
                                                  test_mode = test_mode)
 
+class SetLockTarget(TestActionTCP):
+    """
+    Set the focus lock (offset) target.
+    """
+    def __init__(self, lock_target = None, test_mode = None, **kwds):
+        super().__init__(**kwds)
+        self.tcp_message = tcpMessage.TCPMessage(message_type = "Set Lock Target",
+                                                 message_data = {"lock_target" : lock_target},
+                                                 test_mode = test_mode)
+        
 class SetParameters(TestActionTCP):
     """
     Tell HAL to use a particular parameters file."

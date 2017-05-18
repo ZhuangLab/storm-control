@@ -56,8 +56,10 @@ class LockControl(QtCore.QObject):
             
                 # Start (find offset) scan mode.
                 if tcp_message.getData("focus_scan"):
-                    self.startLockBehavior("scan",
-                                           {"scan_range" : tcp_message.getData("scan_range")})
+                    slb_dict = {"scan_range" : tcp_message.getData("scan_range")}
+                    if tcp_message.getData("z_center") is not None:
+                        slb_dict["z_center"] = tcp_message.getData("z_center")
+                    self.startLockBehavior("scan", slb_dict)
 
                 # Otherwise just return that we were not successful.
                 self.handleDone(False)
@@ -212,7 +214,7 @@ class LockControl(QtCore.QObject):
             return True
 
         elif tcp_message.isType("Set Lock Target"):
-            if not message.isTest():
+            if not tcp_message.isTest():
                 self.lock_mode.setLockTarget(tcp_message.getData("lock_target"))
             return True
         
