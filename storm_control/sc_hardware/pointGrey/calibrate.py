@@ -39,8 +39,14 @@ cam.setProperty("pgrDefectPixelCorrectionEnable", False)
 assert not cam.getProperty("pgrDefectPixelCorrectionEnable").spinNodeGetValue()
         
 # Change to 12 bit mode.
+cam.getProperty("PixelFormat")
+cam.setProperty("PixelFormat", "Mono12Packed")     
 cam.setProperty("VideoMode", "Mode7")
-                
+
+# Turn off hardware triggering.
+cam.getProperty("TriggerMode")
+cam.setProperty("TriggerMode", "Off")
+            
 # We don't want any of these 'features'.
 cam.getProperty("AcquisitionFrameRateAuto")
 cam.setProperty("AcquisitionFrameRateAuto", "Off")
