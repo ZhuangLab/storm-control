@@ -662,7 +662,7 @@ class QStageDisplay(QOffsetDisplay):
     def updateValue(self, value):
         if self.isEnabled():
             super().updateValue(value)
-            self.q_label.setText("{0:.3f}um".format(value))
+            self.q_label.setText("{0:.3f}".format(value))
 
     def wheelEvent(self, event):
         """
