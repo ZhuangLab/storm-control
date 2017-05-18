@@ -363,7 +363,7 @@ class SyncMessage(HalMessage):
     A message whose sole purpose is to jam up the queue until 
     everything before it is processed. Use sparingly..
     """
-    def __init__(self, source):
+    def __init__(self, source = None):
         kwds = {"m_type" : "sync",
                 "source" : source,
                 "sync" : True}
