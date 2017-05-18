@@ -95,6 +95,25 @@ class CheckFocusLock4(testing.TestingTCP):
                                                    num_focus_checks = 5,
                                                    scan_range = 4)]
 
+class CheckFocusLockAction3(testActionsTCP.CheckFocusLock):
+
+    def checkMessage(self, tcp_message):
+        assert(tcp_message.getResponse("duration") == 2)
+        
+class CheckFocusLock5(testing.TestingTCP):
+    """
+    Check that the focus lock returns a duration in test mode.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [SetFocusLockModeAction1(mode_name = "Always On",
+                                                     locked = False),                             
+                             CheckFocusLockAction3(focus_scan = False,
+                                                   num_focus_checks = 5,
+                                                   test_mode = True)]
+        
+
 #
 # Test "Get Mosaic Settings" message.
 #
