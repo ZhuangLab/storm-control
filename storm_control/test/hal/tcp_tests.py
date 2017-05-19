@@ -132,7 +132,7 @@ class GetMosaicSettings1(testing.TestingTCP):
 class GetMosaicSettingsAction2(testActionsTCP.GetMosaicSettings):
 
     def checkMessage(self, tcp_message):
-        pass
+        assert not tcp_message.hasError()
         
 class GetMosaicSettings2(testing.TestingTCP):
 
@@ -156,6 +156,18 @@ class GetObjective1(testing.TestingTCP):
         super().__init__(**kwds)
 
         self.test_actions = [GetObjectiveAction1()]
+
+class GetObjectiveAction2(testActionsTCP.GetObjective):
+
+    def checkMessage(self, tcp_message):
+        assert not tcp_message.hasError()
+
+class GetObjective2(testing.TestingTCP):
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [GetObjectiveAction2(test_mode = True)]
 
 #
 # Test "Get Stage Position" message.
