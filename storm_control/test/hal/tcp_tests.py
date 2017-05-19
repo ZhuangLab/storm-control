@@ -75,7 +75,7 @@ class CheckFocusLock3(testing.TestingTCP):
                              testActions.Timer(200),
                              CheckFocusLockAction1(focus_scan = True,
                                                    num_focus_checks = 5,
-                                                   scan_range = 20),
+                                                   scan_range = 8),
                              testActions.Timer(200),
                              CheckFocusLockAction1(focus_scan = False,
                                                    num_focus_checks = 5)]
@@ -97,7 +97,7 @@ class CheckFocusLock4(testing.TestingTCP):
                              testActions.Timer(200),
                              CheckFocusLockAction2(focus_scan = True,
                                                    num_focus_checks = 5,
-                                                   scan_range = 4)]
+                                                   scan_range = 1)]
 
 class CheckFocusLockAction3(testActionsTCP.CheckFocusLock):
 
@@ -116,7 +116,32 @@ class CheckFocusLock5(testing.TestingTCP):
                              CheckFocusLockAction3(focus_scan = False,
                                                    num_focus_checks = 5,
                                                    test_mode = True)]
-        
+
+class CheckFocusLock6(testing.TestingTCP):
+    """
+    Check that a search for offset starts from the last good z position.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [testActions.ShowGUIControl(control_name = "focus lock"),
+                             testActions.Timer(100),
+                             SetFocusLockModeAction1(mode_name = "Always On",
+                                                     locked = True),
+                             testActionsTCP.MoveStage(x = -6, y = 0),
+                             testActions.Timer(200),
+                             CheckFocusLockAction1(focus_scan = True,
+                                                   num_focus_checks = 5,
+                                                   scan_range = 8),
+                             testActionsTCP.MoveStage(x = -12, y = 0),
+                             testActions.Timer(200),
+                             CheckFocusLockAction1(focus_scan = True,
+                                                   num_focus_checks = 5,
+                                                   scan_range = 8),
+                             testActions.Timer(200),
+                             CheckFocusLockAction1(focus_scan = False,
+                                                   num_focus_checks = 5)]
+
 
 #
 # Test "Get Mosaic Settings" message.

@@ -361,9 +361,9 @@ class ScanMixin(object):
                 if behavior_params["scan_range"] is None:
                     sm_z_range = self.z_stage_functionality.getMaximum() - self.z_stage_functionality.getMinimum()
                 else:
-                    sm_z_range = 0.5 * behavior_params["scan_range"]
+                    sm_z_range = behavior_params["scan_range"]
             else:
-                sm_z_range = 0.5 * p.get("scan_range")
+                sm_z_range = p.get("scan_range")
 
             # Set z step size.
             if "scan_step" in behavior_params:
