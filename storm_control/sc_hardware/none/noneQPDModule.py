@@ -56,7 +56,7 @@ class NoneQPDFunctionality(hardwareModule.BufferedFunctionality, lockModule.QPDF
                 z_center = self.z_stage_max
             elif (z_center < self.z_stage_min):
                 z_center = self.z_stage_min
-
+                
             z_offset = self.z_stage_fn.getCurrentPosition() - z_center
 
         if (self.noise > 0.0):
@@ -78,8 +78,8 @@ class NoneQPDFunctionality(hardwareModule.BufferedFunctionality, lockModule.QPDF
         elif (name == "z_stage"):
             self.z_stage_fn = functionality
             self.z_stage_center = self.z_stage_fn.getCenterPosition()
-            self.z_stage_max = self.z_stage_fn.getMaximum() - 10.0
-            self.z_stage_min = self.z_stage_fn.getMinimum() + 10.0
+            self.z_stage_max = self.z_stage_fn.getMaximum()
+            self.z_stage_min = self.z_stage_fn.getMinimum()
         else:
             print(">> Warning unknown function", name)
 
