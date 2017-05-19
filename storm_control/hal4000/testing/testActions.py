@@ -47,6 +47,12 @@ class TestAction(QtCore.QObject):
         return self.m_type
         
     def getSourceName(self):
+        #
+        # FIXME: It seemed like a good idea for the action to be able to spoof
+        #        the source module, but this is never used? Maybe it was
+        #        actually a bad idea because then the action will never get
+        #        any responses.
+        #
         return "testing"
     
     def finalizer(self):
