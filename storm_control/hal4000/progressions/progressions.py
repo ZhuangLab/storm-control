@@ -519,7 +519,22 @@ class Progressions(halModule.HalModule):
                                      module_name = self.module_name)
         self.view.halDialogInit(qt_settings,
                                 module_params.get("setup_name") + " progression control")
-        
+
+    def checkTCPFilename(self, tcp_message):
+        if not (tcp_message.getData("filename") == None):
+            filename = tcp_message.getData("filename")
+            if not os.path.exists(filename):
+                err_message = "power file '" + filename
+                err_message += "' does not exist."
+                tcp_message.setError(True, err_message)
+                return False
+            else:
+                return True
+        else:
+            err_message += "No power file provided."
+            tcp_message.setError(True, err_message)
+            return False
+                            
     def cleanUp(self, qt_settings):
         self.view.cleanUp(qt_settings)
 
@@ -573,30 +588,23 @@ class Progressions(halModule.HalModule):
         elif message.isType("tcp message"):
             tcp_message = message.getData()["tcp message"]
             if (tcp_message.isType("Set Progression")):
-                if not message.isTest():
-                    if (message.getData("type") == "lockedout"):
+                if not tcp_message.isTest():
+                    if (tcp_message.getData("type") == "lockedout"):
                         self.view.tcpHandleProgressionLockout()
-                    elif (message.getData("type") == "file"):
-                        self.view.tcpHandleProgressionType(message.getData("type"))
-                        self.view.tcpHandleProgressionFile(message.getData("filename"))
+                    elif (tcp_message.getData("type") == "file"):
+                        if self.checkTCPFilename(tcp_message):
+                            self.view.tcpHandleProgressionType(tcp_message.getData("type"))
+                            self.view.tcpHandleProgressionFile(tcp_message.getData("filename"))
                     else:
-                        self.view.tcpHandleProgressionType(message.getData("type"))
-                        for channel in message.getData("channels"):
+                        self.view.tcpHandleProgressionType(tcp_message.getData("type"))
+                        for channel in tcp_message.getData("channels"):
                             self.view.tcpHandleProgressionSet(channel[0],
                                                               channel[1],
                                                               channel[2],
                                                               channel[3])
                 else:
-                    if (message.getData("type") == "file"):
-                        if not (message.getData("filename") == None):
-                            full_path = os.path.abspath(message.getData("filename"))
-                            if not os.path.exists(full_path):
-                                err_message = str(message.getData("filename"))
-                                err_message += " is not a valid path."
-                                message.setError(True, err_message)
-                        else:
-                            err_message += "No filename provided."
-                            message.setError(True, err_message)
+                    if (tcp_message.getData("type") == "file"):
+                        self.checkTCPFilename(tcp_message)
 
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                   data = {"handled" : True}))

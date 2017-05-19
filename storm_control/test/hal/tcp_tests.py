@@ -473,6 +473,83 @@ class SetParameters4(testing.TestingTCP):
         self.test_actions = [testActions.LoadParameters(filename = test.halXmlFilePathAndName(fname + ".xml")),
                              SetParametersAction1(name_or_index = fname, test_mode = True)]
 
+        
+#
+# Test "Set Progression" message.
+#
+# FIXME: These are really just checking that there are no communication errors. They
+#        don't check whether the progressions actually work.
+#
+class SetProgressionAction1(testActionsTCP.SetProgression):
+
+    def checkMessage(self, tcp_message):
+        assert not tcp_message.hasError()
+
+class SetProgression1(testing.TestingTCP):
+    """
+    Test loading a power file that exists.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [SetProgressionAction1(filename = test.halXmlFilePathAndName("prog_test.power"),
+                                                   prog_type = "file"),
+                             testActions.Timer(1000)]
+
+class SetProgressionAction2(testActionsTCP.SetProgression):
+
+    def checkMessage(self, tcp_message):
+        assert tcp_message.hasError()
+
+class SetProgression2(testing.TestingTCP):
+    """
+    Test loading a power file that does not exist.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [SetProgressionAction2(filename = "foo.power",
+                                                   prog_type = "file")]
+
+class SetProgression3(testing.TestingTCP):
+    """
+    Test loading a power file that exists in test_mode.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [SetProgressionAction1(filename = test.halXmlFilePathAndName("prog_test.power"),
+                                                   prog_type = "file",
+                                                   test_mode = True)]
+                             
+class SetProgression4(testing.TestingTCP):
+    """
+    Test loading a power file that does not exist in test_mode.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [SetProgressionAction2(filename = "foo.power",
+                                                   prog_type = "file",
+                                                   test_mode = True)]
+
+class SetProgression5(testing.TestingTCP):
+    """
+    Test locking out the progression and that it resets after filming.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [SetProgressionAction1(filename = test.halXmlFilePathAndName("prog_test.power"),
+                                                   prog_type = "file"),
+                             testActions.Timer(500),
+                             SetProgressionAction1(prog_type = "lockedout"),
+                             testActions.Timer(500),
+                             TakeMovieAction1(directory = test.dataDirectory(),
+                                              length = 5,
+                                              name = "movie_01"),
+                             testActions.Timer(500)]
+
 #
 # Test "Take Movie" message.
 #

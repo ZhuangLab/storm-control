@@ -153,8 +153,20 @@ class SetParameters(TestActionTCP):
         self.tcp_message = tcpMessage.TCPMessage(message_type = "Set Parameters",
                                                  message_data = {"parameters" : name_or_index},
                                                  test_mode = self.test_mode)
+        
 
-
+class SetProgression(TestActionTCP):
+    """
+    Tell HAL to change something in the progressions dialog.
+    """
+    def __init__(self, filename = None, prog_type = None, **kwds):
+        super().__init__(**kwds)
+        self.tcp_message = tcpMessage.TCPMessage(message_type = "Set Progression",
+                                                 message_data = {"filename" : filename,
+                                                                 "type" : prog_type},
+                                                 test_mode = self.test_mode)
+        
+        
 class TakeMovie(TestActionTCP):
     """
     Tell HAL to take a movie.
