@@ -44,9 +44,6 @@ class CameraParamsMixin(object):
             
     def getParameters(self):
         return self.frame_viewer.getParameters()
-
-    def getSyncMax(self):
-        return self.frame_viewer.getParameter("sync_max")
     
     def getViewerName(self):
         return self.module_name

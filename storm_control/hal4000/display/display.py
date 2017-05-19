@@ -161,50 +161,38 @@ class Display(halModule.HalModule):
 #                viewer.updatedParameters(message.getData()["parameters"])
 
     def newCameraViewer(self):
-
-        # First look for an existing viewer that is just hidden.
-        found_existing_viewer = False
-        for viewer in self.viewers:
-            if isinstance(viewer, cameraViewers.DetachedViewer) and not viewer.isVisible():
-                viewer.show()
-                found_existing_viewer = True
-
-        # If none exists, create a new feed viewer.
-        if not found_existing_viewer:
-            camera_viewer = cameraViewers.DetachedViewer(module_name = self.getNextViewerName(),
-                                                         default_colortable = self.parameters.get("colortable"))
-            camera_viewer.halDialogInit(self.qt_settings, self.window_title + " camera viewer")
-            camera_viewer.guiMessage.connect(self.handleGuiMessage)
-            if self.stage_functionality is not None:
-                camera_viewer.setStageFunctionality(self.stage_functionality)
-            camera_viewer.showViewer(self.show_gui)
-            self.viewers.append(camera_viewer)
-
-            self.sendMessage(halMessage.HalMessage(m_type = "get feed names",
-                                                   data = {"extra data" : camera_viewer.getViewerName()}))
+        self.newViewer(cameraViewers.DetachedViewer, "camera viewer")
 
     def newFeedViewer(self):
+        self.newViewer(cameraViewers.FeedViewer, "feed viewer")
 
+    def newViewer(self, v_type, v_name):
+        #
+        # FIXME: If you create a viewer during a film it is not going to
+        #        to be in filming mode, and you won't be able to change
+        #        things like sync_max.
+        #
+        
         # First look for an existing viewer that is just hidden.
         found_existing_viewer = False
         for viewer in self.viewers:
-            if isinstance(viewer, cameraViewers.FeedViewer) and not viewer.isVisible():
+            if isinstance(viewer, v_type) and not viewer.isVisible():
                 viewer.show()
                 found_existing_viewer = True
-                
-        # If none exists, create a new feed viewer.
+
+        # If none exists, create a viewer of the requested type.
         if not found_existing_viewer:
-            feed_viewer = cameraViewers.FeedViewer(module_name = self.getNextViewerName(),
-                                                   default_colortable = self.parameters.get("colortable"))
-            feed_viewer.halDialogInit(self.qt_settings, self.window_title + " feed viewer")        
-            feed_viewer.guiMessage.connect(self.handleGuiMessage)
+            viewer = v_type(module_name = self.getNextViewerName(),
+                            default_colortable = self.parameters.get("colortable"))
+            viewer.halDialogInit(self.qt_settings, self.window_title + " " + v_name)
+            viewer.guiMessage.connect(self.handleGuiMessage)
             if self.stage_functionality is not None:
-                feed_viewer.setStageFunctionality(self.stage_functionality)
-            feed_viewer.showViewer(self.show_gui)
-            self.viewers.append(feed_viewer)
+                viewer.setStageFunctionality(self.stage_functionality)
+            viewer.showViewer(self.show_gui)
+            self.viewers.append(viewer)
 
             self.sendMessage(halMessage.HalMessage(m_type = "get feed names",
-                                                   data = {"extra data" : feed_viewer.getViewerName()}))
+                                                   data = {"extra data" : viewer.getViewerName()}))
 
 
 #
