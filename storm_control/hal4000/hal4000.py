@@ -30,6 +30,7 @@ import storm_control.sc_library.hdebug as hdebug
 import storm_control.sc_library.hgit as hgit
 import storm_control.sc_library.parameters as params
 
+import storm_control.hal4000.halLib.halDialog as halDialog
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 import storm_control.hal4000.halLib.halModule as halModule
@@ -409,7 +410,14 @@ class HalCore(QtCore.QObject):
             all_modules["core"] = self
         else:
             all_modules["core"] = True
-        for module_name in sorted(config.get("modules").getAttrs()):
+
+        #
+        # Need to load HAL's main window first so that other GUI windows will
+        # have the correct Qt parent.
+        #
+        module_names = sorted(config.get("modules").getAttrs())
+        module_names.insert(0, module_names.pop(module_names.index("hal")))        
+        for module_name in module_names:
             print("  " + module_name)
 
             # Get module specific parameters.
@@ -427,6 +435,12 @@ class HalCore(QtCore.QObject):
             a_object = a_class(module_name = module_name,
                                module_params = module_params,
                                qt_settings = self.qt_settings)
+
+            # If this is HAL's main window set the HalDialog qt_parent class
+            # attribute so that any GUI QDialogs will have the correct Qt parent.
+            if (module_name == "hal"):
+                halDialog.HalDialog.qt_parent = a_object.view
+                
             self.modules.append(a_object)
             if testing_mode:
                 all_modules[module_name] = a_object

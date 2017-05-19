@@ -13,8 +13,18 @@ import storm_control.hal4000.qtWidgets.qtAppIcon as qtAppIcon
 
 
 class HalDialog(QtWidgets.QDialog):
+    #
+    # In order to have the correct minimization / maximization behavior the
+    # dialogs need to be children of the HAL's main window. It seemed like
+    # the easiest way to do this was to have the main window be a class
+    # attribute which we used as the parent every time we created an instance
+    # of this class.
+    #
+    qt_parent = None
 
     def __init__(self, module_name = None, **kwds):
+        if isinstance(self.qt_parent, QtWidgets.QWidget):
+            kwds["parent"] = self.qt_parent
         super().__init__(**kwds)
         self.am_visible = False
         self.ignore_close = True
