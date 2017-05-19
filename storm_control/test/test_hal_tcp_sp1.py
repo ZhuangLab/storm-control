@@ -3,7 +3,7 @@
 from storm_control.test.hal.standardHalTest import halTest
 
 
-def test_hal_tcp8():
+def test_hal_tcp_sp1():
 
     halTest(config_xml = "none_tcp_config.xml",
             class_name = "SetParameters1",
@@ -11,4 +11,4 @@ def test_hal_tcp8():
 
 
 if (__name__ == "__main__"):
-    test_hal_tcp8()
+    test_hal_tcp_sp1()
