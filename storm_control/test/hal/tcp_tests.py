@@ -129,6 +129,19 @@ class GetMosaicSettings1(testing.TestingTCP):
 
         self.test_actions = [GetMosaicSettingsAction1()]
 
+class GetMosaicSettingsAction2(testActionsTCP.GetMosaicSettings):
+
+    def checkMessage(self, tcp_message):
+        pass
+        
+class GetMosaicSettings2(testing.TestingTCP):
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [GetMosaicSettingsAction2(test_mode = True)]
+
+
 #
 # Test "Get Objective" message.
 #

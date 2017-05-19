@@ -100,17 +100,20 @@ class Mosaic(halModule.HalModule):
         elif message.isType("tcp message"):
             tcp_message = message.getData()["tcp message"]
             if tcp_message.isType("Get Mosaic Settings"):
-                i = 1
-                pname = "obj" + str(i)
-                while self.parameters.has(pname):
-                    tcp_message.addResponse(pname, self.parameters.get(pname))
-                    i += 1
+                if not tcp_message.isTest():
+                    i = 1
                     pname = "obj" + str(i)
+                    while self.parameters.has(pname):
+                        tcp_message.addResponse(pname, self.parameters.get(pname))
+                        i += 1
+                        pname = "obj" + str(i)
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                   data = {"handled" : True}))
+                
             elif tcp_message.isType("Get Objective"):
-                obj_data = self.parameters.get(self.parameters.get("objective"))
-                tcp_message.addResponse("objective", obj_data.split(",")[0])
+                if not tcp_message.isTest():
+                    obj_data = self.parameters.get(self.parameters.get("objective"))
+                    tcp_message.addResponse("objective", obj_data.split(",")[0])
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                                   data = {"handled" : True}))
 
