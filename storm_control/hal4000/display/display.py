@@ -100,6 +100,11 @@ class Display(halModule.HalModule):
                 for viewer in self.viewers:
                     viewer.setFeedNames(feed_names)
 
+            elif message.sourceIs("illumination"):
+                shutters_info = message.getData()["properties"]["shutters info"]
+                for viewer in self.viewers:
+                    viewer.setSyncMax(shutters_info.getFrames())
+
             elif message.sourceIs("stage"):
                 stage_fn_name = message.getData()["properties"]["stage functionality name"]
                 self.sendMessage(halMessage.HalMessage(m_type = "get functionality",

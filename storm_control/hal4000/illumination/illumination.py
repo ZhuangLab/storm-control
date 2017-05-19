@@ -228,6 +228,10 @@ class IlluminationView(halDialog.HalDialog):
             # Channels create DaqWaveform objects (or not) based on the waveform.
             self.waveforms.extend(channel.getDaqWaveforms(waveforms[i], oversampling))
 
+        # Broadcast shutter information.
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "configuration",
+                                                   data = {"properties" : {"shutters info" : self.shutters_info}}))
+
     def remoteIncPower(self, channel, power_inc):
         if isinstance(channel, str):
             self.channels_by_name[channel].remoteIncPower(power_inc)
@@ -308,32 +312,6 @@ class Illumination(halModule.HalModule):
                                                            remote_inc_power = self.view.remoteIncPower,
                                                            remote_set_power = self.view.remoteSetPower)
 
-#        # The names of the illumination channels that are available.
- #       halMessage.addMessage("illumination channels",
- #                             validator = {"data" : {"names" : [True, list]},
- #                                          "resp" : None})
-
-#        # Increment the power of an illumination channel.
-#        halMessage.addMessage("remote inc power",
-#                              validator = {"data" : {"channel" : [True, (str, int)],
-#                                                     "power" : [True, float]},
-#                                           "resp" : None})
-
-#        # Set the power of an illumination channel.
-#        halMessage.addMessage("remote set power",
-#                              validator = {"data" : {"channel" : [True, (str, int)],
-#                                                     "power" : [True, float]},
-#                                           "resp" : None})        
-
-#        # Shutters sequence.
-#        halMessage.addMessage("shutters sequence",
-#                              validator = {"data" : {"sequence" : [True, xmlParser.ShuttersInfo]},
-#                                           "resp" : None})
-                              
-#        # Unhide illumination control.
-#        halMessage.addMessage("show illumination",
-#                              validator = {"data" : None, "resp" : None})
-
     def cleanUp(self, qt_settings):
         self.view.cleanUp(qt_settings)
 
@@ -360,9 +338,6 @@ class Illumination(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.view.getParameters()}))
 
-#            self.sendMessage(halMessage.HalMessage(m_type = "illumination channels",
-#                                                   data = {"names" : self.view.getChannelNames()}))
-
             self.view.getFunctionalities()
 
         elif message.isType("get functionality"):
@@ -381,13 +356,6 @@ class Illumination(halModule.HalModule):
 
         elif message.isType("new shutters file"):
             self.view.newShutters(message.getData()["filename"])
-#        elif message.isType("remote inc power"):
-#            self.view.remoteIncPower(message.getData()["channel"],
-#                                     message.getData()["power"])
-
-#        elif message.isType("remote set power"):
-#            self.view.remoteSetPower(message.getData()["channel"],
-#                                     message.getData()["power"])
 
         elif message.isType("show"):
             if (message.getData()["show"] == "illumination"):
@@ -414,7 +382,6 @@ class Illumination(halModule.HalModule):
             p.set("shutters", os.path.abspath(p.get("shutters")))
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"parameters" : p}))
-
 
 #
 # The MIT License

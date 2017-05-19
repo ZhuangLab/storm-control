@@ -71,7 +71,7 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.cam_fn = None
         self.color_gradient = None
         self.color_tables = colorTables.ColorTables(os.path.dirname(__file__) + "/../colorTables/all_tables/")
-        self.cycle_length = 1
+        self.cycle_length = 0
         self.default_colortable = default_colortable
         self.default_parameters = params.StormXMLObject(validate = False) 
         self.display_name = display_name
@@ -333,7 +333,7 @@ class CameraFrameViewer(QtWidgets.QFrame):
 
     def handleNewFrame(self, frame):
         if self.filming and (self.getParameter("sync") != 0):
-            if((frame.number % self.cycle_length) == (self.getParameter("sync") - 1)):
+            if((frame.frame_number % self.cycle_length) == (self.getParameter("sync") - 1)):
                 self.frame = frame
         else:
             self.frame = frame
@@ -524,8 +524,9 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.camera_view.enableStageDrag(True)
         
     def setSyncMax(self, sync_max):
+        self.cycle_length = sync_max
         self.setParameter("sync_max", sync_max)
-        self.ui.syncSpinBox.disconnect()
+        self.ui.syncSpinBox.valueChanged.disconnect(self.handleSync)
         self.ui.syncSpinBox.setMaximum(sync_max)
         self.ui.syncSpinBox.valueChanged.connect(self.handleSync)        
 
@@ -563,52 +564,6 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.camera_widget.newRange(self.getParameter("display_min"), self.getParameter("display_max"))
 
 
-
-
-
-
-
-#    def handleDragMove(self, x_disp, y_disp):
-#        self.guiMessage.emit(halMessage.HalMessage(m_type = "drag move",
-#                                                   level = 3,
-#                                                   data = {"display_name" : self.display_name,
-#                                                           "feed_name" : self.getFeedName(),
-#                                                           "x_disp" : x_disp,
-#                                                           "y_disp" : y_disp}))
-#                
-#    def handleDragStart(self):
-#        self.guiMessage.emit(halMessage.HalMessage(m_type = "drag start",
-#                                                   level = 3,
-#                                                   data = {"display_name" : self.display_name,
-#                                                           "feed_name" : self.getFeedName()}))
-#
-#    def handleRubberBandChanged(self, rect, p1, p2):
-#        if rect.isNull():
-#            tl = self.camera_view.mapToScene(self.rubber_band_rect.topLeft())
-#            br = self.camera_view.mapToScene(self.rubber_band_rect.bottomLeft())
-#            [x1, x2] = [tl.x(), br.x()] if (tl.x() < br.x()) else [br.x(), tl.x()]
-#            [y1, y2] = [tl.y(), br.y()] if (tl.y() < br.y()) else [br.y(), tl.y()]
-#            [x1, x2, y1, y2] = map(round, [x1, x2, y1, y2])
-#            if (x1 == x2):
-#                x2 += 1
-#            if (y1 == y2):
-#                y2 += 1
-#            self.guiMessage.emit(halMessage.HalMessage(m_type = "display ROI selection",
-#                                                       data = {"display_name" : self.display_name,
-#                                                               "feed_name" : self.getFeedName(),
-#                                                               "x1" : x1,
-#                                                               "x2" : x2,
-#                                                               "y1" : y1,
-#                                                               "y2" : y2}))
-#        else:
-#            self.rubber_band_rect = rect
-#    def enableBroadcastImage(self, enabled):
-#        self.broadcast_q_image = enabled
-#        
-#    def enableStageDrag(self, enabled):
-#        self.camera_view.enableStageDrag(enabled)
-#        
-        
 #
 # The MIT License
 #

@@ -45,6 +45,9 @@ class CameraParamsMixin(object):
     def getParameters(self):
         return self.frame_viewer.getParameters()
 
+    def getSyncMax(self):
+        return self.frame_viewer.getParameter("sync_max")
+    
     def getViewerName(self):
         return self.module_name
 
@@ -67,12 +70,15 @@ class CameraParamsMixin(object):
         if self.params_viewer is not None:
             self.params_viewer.setCameraFunctionality(camera_functionality)
 
-    def setStageFunctionality(self, stage_functionality):
-        self.frame_viewer.setStageFunctionality(stage_functionality)
-
     def setFeedNames(self, feed_names):
         self.frame_viewer.setFeedNames(feed_names)
 
+    def setStageFunctionality(self, stage_functionality):
+        self.frame_viewer.setStageFunctionality(stage_functionality)
+
+    def setSyncMax(self, sync_max):
+        self.frame_viewer.setSyncMax(sync_max)
+        
     def showViewer(self, show_gui):
         self.handleFeedChange(self.frame_viewer.getFeedName())
         if show_gui:

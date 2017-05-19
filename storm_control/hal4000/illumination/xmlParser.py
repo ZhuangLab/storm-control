@@ -29,10 +29,13 @@ class ShuttersInfo(object):
         return self.color_data
 
     def getFrames(self):
+        """
+        Return the length of the shutter sequence in frames.
+        """
         return self.frames
         
         
-def parseShuttersXML(number_channels, shutters_file, oversampling = 100):
+def parseShuttersXML(number_channels, shutters_file):
     """
     This parses a XML file that defines a shutter sequence.
 
@@ -90,6 +93,8 @@ def parseShuttersXML(number_channels, shutters_file, oversampling = 100):
             elif (node.tag == "color"):
                 color = []
                 colors = node.text.split(",")
+                if (len(colors) != 3):
+                    raise ShutterXMLException("'" + node.text + "' is not a valid color descriptor.")
                 for c in colors:
                     x = int(c)
                     if x < 0:
