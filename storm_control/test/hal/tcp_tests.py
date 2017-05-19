@@ -142,7 +142,26 @@ class CheckFocusLock6(testing.TestingTCP):
                              CheckFocusLockAction1(focus_scan = False,
                                                    num_focus_checks = 5)]
 
+class CheckFocusLock7(testing.TestingTCP):
+    """
+    Check that the entire range is searched when scan_range = None.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
 
+        self.test_actions = [testActions.ShowGUIControl(control_name = "focus lock"),
+                             testActions.Timer(100),
+                             SetFocusLockModeAction1(mode_name = "Always On",
+                                                     locked = True),
+                             testActionsTCP.MoveStage(x = -44, y = 0),
+                             testActions.Timer(200),
+                             CheckFocusLockAction1(focus_scan = True,
+                                                   num_focus_checks = 5),
+                             testActions.Timer(200),
+                             CheckFocusLockAction1(focus_scan = False,
+                                                   num_focus_checks = 5)]
+
+        
 #
 # Test "Get Mosaic Settings" message.
 #
