@@ -169,6 +169,7 @@ class GetObjective2(testing.TestingTCP):
 
         self.test_actions = [GetObjectiveAction2(test_mode = True)]
 
+
 #
 # Test "Get Stage Position" message.
 #
@@ -190,6 +191,19 @@ class GetStagePosition1(testing.TestingTCP):
 
         self.test_actions = [GetStagePositionAction1()]
 
+class GetStagePositionAction2(testActionsTCP.GetStagePosition):
+        
+    def checkMessage(self, tcp_message):
+        assert not tcp_message.hasError()
+
+class GetStagePosition2(testing.TestingTCP):
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [GetStagePositionAction2(test_mode = True)]
+
+        
 #
 # Test "Move Stage" message.
 #
@@ -199,7 +213,9 @@ class MoveStageAction1(testActionsTCP.MoveStage):
         assert(tcp_message.getResponse("duration") == 1)
 
 class MoveStage1(testing.TestingTCP):
-
+    """
+    This tests both 'actual' movement and test_mode movement.
+    """
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
@@ -213,6 +229,7 @@ class MoveStage1(testing.TestingTCP):
                              testActions.Timer(500),
                              GetStagePositionAction1(x = x, y = y),
                              MoveStageAction1(test_mode = True, x = 0.0, y = 0.0)]
+
 
 #
 # Test handling of messages that are not supported.

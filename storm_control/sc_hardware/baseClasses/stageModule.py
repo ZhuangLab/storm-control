@@ -174,9 +174,10 @@ class StageModule(hardwareModule.HardwareModule):
                                                               data = {"handled" : True}))                
 
         elif tcp_message.isType("Get Stage Position"):
-            pos_dict = self.stage_functionality.getCurrentPosition()
-            tcp_message.addResponse("stage_x", pos_dict["x"])
-            tcp_message.addResponse("stage_y", pos_dict["y"])
+            if not tcp_message.isTest():
+                pos_dict = self.stage_functionality.getCurrentPosition()
+                tcp_message.addResponse("stage_x", pos_dict["x"])
+                tcp_message.addResponse("stage_y", pos_dict["y"])
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"handled" : True}))
 
