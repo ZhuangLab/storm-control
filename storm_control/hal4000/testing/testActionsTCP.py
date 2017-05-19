@@ -14,9 +14,10 @@ class TestActionTCP(testActions.TestAction):
     """
     Base class for all TCP test actions.
     """
-    def __init__(self, **kwds):
+    def __init__(self, test_mode = False, **kwds):
         super().__init__(**kwds)
         self.tcp_message = None
+        self.test_mode = test_mode
 
     def checkMessage(self, tcp_message):
         """
@@ -42,7 +43,6 @@ class CheckFocusLock(TestActionTCP):
                  focus_scan = None,
                  num_focus_checks = None,
                  scan_range = None,
-                 test_mode = False,
                  z_center = None,
                  **kwds):
         super().__init__(**kwds)
@@ -51,8 +51,8 @@ class CheckFocusLock(TestActionTCP):
                                                                  "num_focus_checks" : num_focus_checks,
                                                                  "scan_range" : scan_range,
                                                                  "z_center" : z_center},
-                                                 test_mode = test_mode)
-        
+                                                 test_mode = self.test_mode)
+
         
 class GetMosaicSettings(TestActionTCP):
     """
@@ -60,7 +60,8 @@ class GetMosaicSettings(TestActionTCP):
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.tcp_message = tcpMessage.TCPMessage(message_type = "Get Mosaic Settings")
+        self.tcp_message = tcpMessage.TCPMessage(message_type = "Get Mosaic Settings",
+                                                 test_mode = self.test_mode)
 
 
 class GetObjective(TestActionTCP):
@@ -69,7 +70,8 @@ class GetObjective(TestActionTCP):
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.tcp_message = tcpMessage.TCPMessage(message_type = "Get Objective")
+        self.tcp_message = tcpMessage.TCPMessage(message_type = "Get Objective",
+                                                 test_mode = self.test_mode)
 
         
 class GetStagePosition(TestActionTCP):
@@ -78,19 +80,20 @@ class GetStagePosition(TestActionTCP):
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.tcp_message = tcpMessage.TCPMessage(message_type = "Get Stage Position")
+        self.tcp_message = tcpMessage.TCPMessage(message_type = "Get Stage Position",
+                                                 test_mode = self.test_mode)
 
 
 class MoveStage(TestActionTCP):
     """
     Tell HAL to move the XY stage.
     """
-    def __init__(self, test_mode = False, x = None, y = None, **kwds):
+    def __init__(self, x = None, y = None, **kwds):
         super().__init__(**kwds)
         self.tcp_message = tcpMessage.TCPMessage(message_type = "Move Stage",
                                                  message_data = {"stage_x" : x,
                                                                  "stage_y" : y},
-                                                 test_mode = test_mode)
+                                                 test_mode = self.test_mode)
         
 
 class NoSuchMessage(TestActionTCP):
@@ -99,8 +102,9 @@ class NoSuchMessage(TestActionTCP):
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.tcp_message = tcpMessage.TCPMessage(message_type = "No Such Message")
-        
+        self.tcp_message = tcpMessage.TCPMessage(message_type = "No Such Message",
+                                                 test_mode = self.test_mode)
+
         
 class SetFocusLockMode(TestActionTCP):
     """
@@ -108,33 +112,36 @@ class SetFocusLockMode(TestActionTCP):
 
     Tell HAL to change the (user) selected focus lock mode and locked status.
     """
-    def __init__(self, mode_name = None, locked = None, test_mode = None, **kwds):
+    def __init__(self, mode_name = None, locked = None, **kwds):
         super().__init__(**kwds)
         self.tcp_message = tcpMessage.TCPMessage(message_type = "Set Focus Lock Mode",
                                                  message_data = {"mode_name" : mode_name,
                                                                  "locked" : locked},
-                                                 test_mode = test_mode)
+                                                 test_mode = self.test_mode)
+
 
 class SetLockTarget(TestActionTCP):
     """
     Set the focus lock (offset) target.
     """
-    def __init__(self, lock_target = None, test_mode = None, **kwds):
+    def __init__(self, lock_target = None, **kwds):
         super().__init__(**kwds)
         self.tcp_message = tcpMessage.TCPMessage(message_type = "Set Lock Target",
                                                  message_data = {"lock_target" : lock_target},
-                                                 test_mode = test_mode)
-        
+                                                 test_mode = self.test_mode)
+
+
 class SetParameters(TestActionTCP):
     """
     Tell HAL to use a particular parameters file."
     """
-    def __init__(self, name_or_index = None, test_mode = None, **kwds):
+    def __init__(self, name_or_index = None, **kwds):
         super().__init__(**kwds)
         self.tcp_message = tcpMessage.TCPMessage(message_type = "Set Parameters",
                                                  message_data = {"parameters" : name_or_index},
-                                                 test_mode = test_mode)
-        
+                                                 test_mode = self.test_mode)
+
+
 class TakeMovie(TestActionTCP):
     """
     Tell HAL to take a movie.
@@ -145,7 +152,6 @@ class TakeMovie(TestActionTCP):
                  name = None,
                  overwrite = True,
                  parameters = None,
-                 test_mode = None,
                  **kwds):
         super().__init__(**kwds)
         self.directory = directory
@@ -164,4 +170,4 @@ class TakeMovie(TestActionTCP):
         
         self.tcp_message = tcpMessage.TCPMessage(message_type = "Take Movie",
                                                  message_data = data_dict,
-                                                 test_mode = test_mode)
+                                                 test_mode = self.test_mode)
