@@ -15,9 +15,6 @@ import storm_control.test as test
 #
 # Test "Check Focus Lock" message.
 #
-#
-# Test "Set Lock Target" message.
-#
 class CheckFocusLockAction1(testActionsTCP.CheckFocusLock):
 
     def checkMessage(self, tcp_message):
@@ -102,7 +99,7 @@ class CheckFocusLock4(testing.TestingTCP):
 class CheckFocusLockAction3(testActionsTCP.CheckFocusLock):
 
     def checkMessage(self, tcp_message):
-        assert(tcp_message.getResponse("duration") == 2)
+        assert(tcp_message.getResponse("duration") is not None)
         
 class CheckFocusLock5(testing.TestingTCP):
     """
@@ -161,7 +158,86 @@ class CheckFocusLock7(testing.TestingTCP):
                              CheckFocusLockAction1(focus_scan = False,
                                                    num_focus_checks = 5)]
 
+
+#
+# Test "Find Sum" message.
+#
+class FindSumAction1(testActionsTCP.FindSum):
+
+    def checkMessage(self, tcp_message):
+        assert(tcp_message.getResponse("found_sum") is not None)
+        assert(tcp_message.getResponse("focus_status"))
         
+class FindSum1(testing.TestingTCP):
+    """
+    Test that find sum returns immediately if it already has sum.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [testActions.ShowGUIControl(control_name = "focus lock"),
+                             testActions.Timer(100),
+                             SetFocusLockModeAction1(mode_name = "Always On",
+                                                     locked = True),
+                             testActions.Timer(100),
+                             FindSumAction1(min_sum = 50)]
+
+class FindSum2(testing.TestingTCP):
+    """
+    Test that find sum can find sum & relock.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [testActions.ShowGUIControl(control_name = "focus lock"),
+                             testActions.Timer(100),
+                             SetFocusLockModeAction1(mode_name = "Always On",
+                                                     locked = True),
+                             testActionsTCP.MoveStage(x = -40.5, y = 0),
+                             testActions.Timer(200),
+                             FindSumAction1(min_sum = 100),
+                             testActions.Timer(200),
+                             CheckFocusLockAction1(focus_scan = False,
+                                                   num_focus_checks = 5)]
+
+class FindSumAction3(testActionsTCP.FindSum):
+
+    def checkMessage(self, tcp_message):
+        assert not (tcp_message.getResponse("focus_status"))
+        
+class FindSum3(testing.TestingTCP):
+    """
+    Test failure if minimum sum cannot be found.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [testActions.ShowGUIControl(control_name = "focus lock"),
+                             testActions.Timer(100),
+                             SetFocusLockModeAction1(mode_name = "Always On",
+                                                     locked = True),
+                             FindSumAction3(min_sum = 1000)]
+
+class FindSumAction4(testActionsTCP.FindSum):
+
+    def checkMessage(self, tcp_message):
+        assert (tcp_message.getResponse("duration") is not None)
+        
+class FindSum4(testing.TestingTCP):
+    """
+    Test that we get a 'duration' response in test mode.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [testActions.ShowGUIControl(control_name = "focus lock"),
+                             testActions.Timer(100),
+                             SetFocusLockModeAction1(mode_name = "Always On",
+                                                     locked = True),
+                             FindSumAction4(min_sum = 100,
+                                            test_mode = True)]
+
+
 #
 # Test "Get Mosaic Settings" message.
 #

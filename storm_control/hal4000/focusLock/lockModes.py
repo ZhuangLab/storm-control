@@ -125,7 +125,7 @@ class FindSumMixin(object):
             if "fsm_step_size" in behavior_params:
                 self.fsm_step_size = behavior_params["fsm_step_size"]
             else:
-                self.fsm_step_size = self.parameters.get(self.fsm_pname + ".fsm_step_size")
+                self.fsm_step_size = self.parameters.get(self.fsm_pname + ".step_size")
 
             # Move to z = 0.
             self.fsm_max_z = self.z_stage_functionality.getMaximum()

@@ -53,6 +53,19 @@ class CheckFocusLock(TestActionTCP):
                                                                  "z_center" : z_center},
                                                  test_mode = self.test_mode)
 
+
+class FindSum(TestActionTCP):
+    """
+    Check the focus lock sum and do a scan if it is below requested value.
+    """
+    def __init__(self,
+                 min_sum = None,
+                 **kwds):
+        super().__init__(**kwds)
+        self.tcp_message = tcpMessage.TCPMessage(message_type = "Find Sum",
+                                                 message_data = {"min_sum" : min_sum},
+                                                 test_mode = self.test_mode)
+
         
 class GetMosaicSettings(TestActionTCP):
     """

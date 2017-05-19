@@ -85,6 +85,7 @@ class LockControl(QtCore.QObject):
                 tcp_message.addResponse("focus_status", success)
 
             elif tcp_message.isType("Find Sum"):
+                tcp_message.addResponse("focus_status", success)
                 if success:
                     tcp_message.addResponse("found_sum", self.lock_mode.getFindSumMaxSum())
                 
@@ -194,6 +195,7 @@ class LockControl(QtCore.QObject):
 
                 # Check if we already have enough sum signal.
                 if (self.getQPDSumSignal() > tcp_message.getData("min_sum")):
+                    tcp_message.addResponse("focus_status", True)
                     tcp_message.addResponse("found_sum", self.getQPDSumSignal())
 
                 # If not, start scanning.
