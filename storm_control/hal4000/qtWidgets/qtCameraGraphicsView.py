@@ -139,6 +139,7 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         else:
             self.display_scale = self.calcScale(camera_functionality.getFrameMax())
             [self.center_x, self.center_y] = camera_functionality.getFrameCenter()
+            self.newCenter.emit(self.center_x, self.center_y)
             feed_parameters.set("initialized", True)
 
         # Calculate max zoom out.
@@ -179,7 +180,6 @@ class QtCameraGraphicsView(QtWidgets.QGraphicsView):
         Rescale the view so that it looks like we have zoomed in/out.
         """
         if (scale < self.min_scale) or (scale > self.max_scale):
-            print("scale out of range", scale, self.min_scale, self.max_scale)
             return
 
         self.display_scale = scale
