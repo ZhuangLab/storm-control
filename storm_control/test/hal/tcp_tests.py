@@ -62,7 +62,7 @@ class CheckFocusLock2(testing.TestingTCP):
         
 class CheckFocusLock3(testing.TestingTCP):
     """
-    Check that the focus lock can find lock again.
+    Check that the focus lock can find (and hold) lock again.
     """
     def __init__(self, **kwds):
         super().__init__(**kwds)
@@ -75,7 +75,11 @@ class CheckFocusLock3(testing.TestingTCP):
                              testActions.Timer(200),
                              CheckFocusLockAction1(focus_scan = True,
                                                    num_focus_checks = 5,
-                                                   scan_range = 20)]
+                                                   scan_range = 20),
+                             testActions.Timer(200),
+                             CheckFocusLockAction1(focus_scan = False,
+                                                   num_focus_checks = 5)]
+
         
 class CheckFocusLock4(testing.TestingTCP):
     """

@@ -93,7 +93,7 @@ class LockControl(QtCore.QObject):
 
             # Relock if we were locked.
             if self.current_state["locked"]:
-                self.startLock()
+                self.startLock(lock_target = self.current_state["lock_target"])
 
             # This lets HAL know we have handled this message.
             self.current_state["message"].decRefCount()
@@ -172,6 +172,7 @@ class LockControl(QtCore.QObject):
                 # Record current state.
                 assert (self.current_state == None)
                 self.current_state = {"locked" : self.lock_mode.amLocked(),
+                                      "lock_target" : self.lock_mode.getLockTarget(),
                                       "num_checks" : tcp_message.getData("num_focus_checks") + 1,
                                       "message" : message,
                                       "tcp_message" : tcp_message}
@@ -201,6 +202,7 @@ class LockControl(QtCore.QObject):
                     # Record current state.
                     assert (self.current_state == None)
                     self.current_state = {"locked" : self.lock_mode.amLocked(),
+                                          "lock_target" : self.lock_mode.getLockTarget(),
                                           "message" : message,
                                           "tcp_message" : tcp_message}
                 
@@ -261,9 +263,9 @@ class LockControl(QtCore.QObject):
                 
             self.lock_mode.startFilm()
         
-    def startLock(self):
+    def startLock(self, lock_target = None):
         if self.working:
-            self.lock_mode.startLock()
+            self.lock_mode.startLock(lock_target)
 
     def startLockBehavior(self, sub_mode_name, sub_mode_params):
         """
