@@ -24,8 +24,13 @@ def availableFileFormats():
     """
     Return a list of the available movie formats.
     """
+    #
+    # FIXME: Decouple extension from file type so that big tiffs can
+    #        have a normal name, and don't need the '.big' in the
+    #        extension.
+    #
 #    return [".dax", ".spe", ".tif"]
-    return [".dax", ".tif"]
+    return [".dax", ".tif", ".big.tif"]
 
 def createFileWriter(camera_functionality, film_settings):
     """
@@ -35,6 +40,10 @@ def createFileWriter(camera_functionality, film_settings):
     ft = film_settings.getFiletype()
     if (ft == ".dax"):
         return DaxFile(camera_functionality = camera_functionality,
+                       film_settings = film_settings)
+    elif (ft == ".big.tif"):
+        return TIFFile(bigtiff = True,
+                       camera_functionality = camera_functionality,
                        film_settings = film_settings)
     elif (ft == ".spe"):
         return SPEFile(camera_functionality = camera_functionality,
@@ -170,15 +179,20 @@ class SPEFile(BaseFileWriter):
 
 class TIFFile(BaseFileWriter):
     """
-    TIF file writing class. Note that this is a normal tif file format and 
-    not a big tif format so the maximum size is limited to 4GB (more or less).
+    TIF file writing class. This supports both normal and 'big' tiff.
     """
-    def __init__(self, **kwds):
+    def __init__(self, bigtiff = False, **kwds):
         super().__init__(**kwds)
         self.metadata = {'unit' : 'um'}
-        self.resolution = (1.0/self.film_settings.getPixelSize(), 1.0/self.film_settings.getPixelSize())
-        self.tif = tifffile.TiffWriter(self.filename,
-                                       imagej = True)
+        if bigtiff:
+            self.resolution = (25400.0/self.film_settings.getPixelSize(),
+                               25400.0/self.film_settings.getPixelSize())
+            self.tif = tifffile.TiffWriter(self.filename,
+                                           bigtiff = bigtiff)
+        else:
+            self.resolution = (1.0/self.film_settings.getPixelSize(), 1.0/self.film_settings.getPixelSiz)
+            self.tif = tifffile.TiffWriter(self.filename,
+                                           imagej = True)
 
     def closeWriter(self):
         super().closeWriter()
