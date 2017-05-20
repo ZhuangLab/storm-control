@@ -176,8 +176,9 @@ class TIFFile(BaseFileWriter):
     def __init__(self, **kwds):
         super().__init__(**kwds)
         self.metadata = {'unit' : 'um'}
-        self.resolution = (1.0/self.film_settings.getPixelSize(), 1.0/self.film_settings.getPixelSize(), None)
-        self.tif = tifffile.TiffWriter(self.filename)
+        self.resolution = (1.0/self.film_settings.getPixelSize(), 1.0/self.film_settings.getPixelSize())
+        self.tif = tifffile.TiffWriter(self.filename,
+                                       imagej = True)
 
     def closeWriter(self):
         super().closeWriter()
