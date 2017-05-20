@@ -190,7 +190,7 @@ class TIFFile(BaseFileWriter):
             self.tif = tifffile.TiffWriter(self.filename,
                                            bigtiff = bigtiff)
         else:
-            self.resolution = (1.0/self.film_settings.getPixelSize(), 1.0/self.film_settings.getPixelSiz)
+            self.resolution = (1.0/self.film_settings.getPixelSize(), 1.0/self.film_settings.getPixelSize())
             self.tif = tifffile.TiffWriter(self.filename,
                                            imagej = True)
 
