@@ -14,15 +14,15 @@ import time
 
 import spinnaker
 
-if (len(sys.argv) != 3):
-    print("usage: <filename> <number frames>")
+if (len(sys.argv) != 4):
+    print("usage: <camera> <filename> <number frames>")
     exit()
 
 # Initialize
 spinnaker.loadSpinnakerDLL(r'C:\Program Files\Point Grey Research\Spinnaker\bin64\vs2013\SpinnakerC_v120.dll')
 spinnaker.spinSystemGetInstance()
 
-cam = spinnaker.spinGetCamera(0)
+cam = spinnaker.spinGetCamera(int(sys.argv[1]))
 
 #
 # Basic camera configuration. The use of Spinview is recommended as an initial step
@@ -72,13 +72,14 @@ cam.setProperty("GammaEnabled", False)
 cam.getProperty("OnBoardColorProcessEnabled")
 cam.setProperty("OnBoardColorProcessEnabled", False)
         
-# COnfigure acquisition.
+# Configure acquisition.
 cam.getProperty("AcquisitionFrameRate")
-cam.setProperty("AcquisitionFrameRate", 30.0)
+cam.setProperty("AcquisitionFrameRate", 50.0)
 
 cam.getProperty("ExposureTime")
 cam.setProperty("ExposureTime", cam.getProperty("ExposureTime").spinNodeGetMaximum())
 
+print("Serial Number:", cam.getProperty("DeviceSerialNumber").spinNodeGetValue())
 print("Exposure time:", cam.getProperty("ExposureTime").spinNodeGetValue())
 print("Frame rate:", cam.getProperty("AcquisitionFrameRate").spinNodeGetValue())
 
@@ -88,9 +89,14 @@ cam.setProperty("BlackLevel", 1.0)
 cam.getProperty("Gain")
 cam.setProperty("Gain", 10.0)
 
+print("OffsetX:", cam.getProperty("OffsetX").spinNodeGetValue())
+print("OffsetY:", cam.getProperty("OffsetY").spinNodeGetValue())
 
 cam_x = cam.getProperty("Width").spinNodeGetValue()
 cam_y = cam.getProperty("Height").spinNodeGetValue()
+
+print("Width:", cam_x)
+print("Height:", cam_y)
 
 # Create numpy arrays.
 mean = numpy.zeros((cam_x, cam_y), dtype = numpy.int64)
@@ -98,10 +104,11 @@ var = numpy.zeros((cam_x, cam_y), dtype = numpy.int64)
 
 # Acquire data.
 #break_on_next_loop = False
-n_frames = int(sys.argv[2])
+n_frames = int(sys.argv[3])
 cam.startAcquisition()
 time.sleep(0.1)
 processed = 0
+last_processed = -1
 captured = 0
 start_time = time.time()
 while (processed < n_frames):
@@ -110,8 +117,9 @@ while (processed < n_frames):
     [frames, dims] = cam.getFrames()
     captured += len(frames)
     
-    if ((processed%10)==0):
+    if ((processed%10)==0) and (processed != last_processed):
         print("Accumulated", processed, "frames, current back log is", len(frames), "frames")
+        last_processed = processed
     
     if (len(frames) > 0):
         aframe = frames[0].getData().astype(numpy.int32)
@@ -134,7 +142,7 @@ spinnaker.spinSystemReleaseInstance()
 print("Captured:", captured, "frames in", (end_time - start_time), "seconds.")
 print("FPS:", captured/(end_time - start_time))
 
-numpy.save(sys.argv[1], [numpy.array([n_frames]), mean, var])
+numpy.save(sys.argv[2], [numpy.array([n_frames]), mean, var])
 
 mean_mean = numpy.mean(mean)/float(n_frames)
 print("mean of mean:", mean_mean)
