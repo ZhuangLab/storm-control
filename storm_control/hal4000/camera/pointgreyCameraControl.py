@@ -82,10 +82,18 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         self.camera.getProperty("TriggerMode")
         if self.is_master:
             self.camera.setProperty("TriggerMode", "Off")
+
+            # This line is connected to the DAQ.
             self.camera.getProperty("LineSelector")
             self.camera.setProperty("LineSelector", "Line1")
             self.camera.getProperty("LineSource")
-            self.camera.setProperty("LineSource", "ExternalTriggerActive")
+            self.camera.setProperty("LineSource", "ExposureActive")
+
+            # This line is connected to the other cameras.
+            self.camera.setProperty("LineSelector", "Line2")
+            self.camera.getProperty("LineMode")
+            self.camera.setProperty("LineMode", "Output")
+            self.camera.setProperty("LineSource", "ExposureActive")
 
         # Configure 'slave' cameras to use triggering.
         #
