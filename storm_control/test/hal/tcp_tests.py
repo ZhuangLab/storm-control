@@ -429,6 +429,8 @@ class SetLockTarget1(testing.TestingTCP):
 #
 # Test "Set Parameters" message.
 #
+# FIXME: Add test for requested parameters are the current parameters.
+#
 class SetParametersAction1(testActionsTCP.SetParameters):
 
     def checkMessage(self, tcp_message):
