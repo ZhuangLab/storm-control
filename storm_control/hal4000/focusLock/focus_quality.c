@@ -1,14 +1,18 @@
 /*
  * @file
  *
- * Methods for calculating how well focused and image is.
+ * Methods for calculating how well focused an image is.
  *
  * Hazen 8/10
  *
- * compilation:
- * gcc -c focus_quality.c
- * gcc -shared -o focus_quality.dll focus_quality.o
+ * Compilation (windows):
+ *  gcc -c focus_quality.c
+ *  gcc -shared -o focus_quality.dll focus_quality.o
  *
+ * Compilation (linux):
+ *  gcc -fPIC -g -Wall -c focus_quality.c -O3
+ *  gcc -shared -Wl,-soname,focus_quality.so.1 -o focus_quality.so.1.0.1 focus_quality.o -lc
+ *  ln -s focus_quality.so.1.0.1 focus_quality.so
  */
 
 #include <stdlib.h>
