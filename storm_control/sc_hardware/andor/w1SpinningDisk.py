@@ -12,7 +12,7 @@ import storm_control.sc_hardware.serial.RS232 as RS232
 class W1SpinningDisk(RS232.RS232):
 
     def __init__(self, **kwds):
-        super().__init__(**kdws)
+        super().__init__(**kwds)
 
         # Define error codes
         self.error_codes = {"30005": "Command name error",

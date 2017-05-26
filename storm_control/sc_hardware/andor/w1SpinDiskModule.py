@@ -94,14 +94,14 @@ class W1Control(object):
         self.parameters.add(params.ParameterSetString(description = "Camera 2 Filter Wheel Position (1-10)",
                                                       name = "filter_wheel_pos2",
                                                       value = values[0],
-                                                      values = values))
+                                                      allowed = values))
 
         # Camera dichroic positions
         values = sorted(self.camera_dichroic_config.keys())
         self.parameters.add(params.ParameterSetString(description = "Camera dichroic mirror position (1-3)",
                                                       name = "camera_dichroic_mirror",
                                                       value = values[0],
-                                                      values))
+                                                      allowed = values))
 
         # Aperature settings
         self.parameters.add(params.ParameterRangeInt(description = "Aperture value (1-10; small to large)",
@@ -195,7 +195,7 @@ class W1SpinDiskModule(hardwareModule.HardwareModule):
 
         if message.isType("configure1"):
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
-                                                   data = {"parameters" : self.control.getParameters}))
+                                                   data = {"parameters" : self.control.getParameters()}))
 
         #
         # FIXME? Maybe we want do this at 'update parameters' as we don't
@@ -213,7 +213,7 @@ class W1SpinDiskModule(hardwareModule.HardwareModule):
         self.control.newParameters(p)
         message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                           data = {"new parameters" : self.control.getParameters()}))
-        
+
 #
 # The MIT License
 #
