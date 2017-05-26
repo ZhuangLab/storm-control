@@ -25,6 +25,10 @@ class MarzhauserStageFunctionality(stageModule.StageFunctionality):
         self.updateTimer.timeout.connect(self.handleUpdateTimer)
         self.updateTimer.start()
 
+        # Connect to our own stagePosition signal in order to store
+        # the current position.
+        self.stagePosition.connect(self.handleStagePosition)
+        
         # This thread will poll the serial port for responses from
         # the stage to the commands we're sending.
         self.polling_thread = MarzhauserPollingThread(device_mutex = self.device_mutex,
@@ -33,6 +37,9 @@ class MarzhauserStageFunctionality(stageModule.StageFunctionality):
                                                       stage = self.stage,
                                                       stage_position_signal = self.stagePosition)
         self.polling_thread.startPolling()
+
+    def handleStagePosition(self, pos_dict):
+        self.pos_dict = pos_dict
 
     def handleUpdateTimer(self):
         """
