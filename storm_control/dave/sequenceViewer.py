@@ -10,7 +10,7 @@
 from xml.etree import ElementTree
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-import storm_control.dave.daveActions
+import storm_control.dave.daveActions as daveActions
 
 
 DaveActionType = QtGui.QStandardItem.UserType

@@ -89,10 +89,10 @@ def generate(parent, xml_file, position_file, generated_file):
                 if pnode is not None:
                     if (pnode.find("type").text == "file"):
                         if pnode.find("filename") is None:
-                            filename = str(QtGui.QFileDialog.getOpenFileName(parent,
+                            filename = QtWidgets.QFileDialog.getOpenFileName(parent,
                                                                              movie_node.find("name").text + " Power File",
                                                                              directory,
-                                                                             "*.power"))
+                                                                             "*.power")[0]
                             directory = os.path.dirname(filename)
                             field = ElementTree.SubElement(pnode, "filename")
                             field.text = filename

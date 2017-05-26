@@ -218,7 +218,7 @@ class XMLRecipeParser(QtWidgets.QWidget):
     #        
     def loadXML(self, xml_file_path, header = "Open XML File", file_types = "XML (*.xml)"):
         if xml_file_path == "":
-            temp_file_path = str(QtGui.QFileDialog.getOpenFileName(self, header, self.directory, file_types))
+            temp_file_path = QtWidgets.QFileDialog.getOpenFileName(self, header, self.directory, file_types)[0]
             if (len(temp_file_path) > 0):
                 if os.path.isfile(temp_file_path):
                     xml_file_path = temp_file_path
@@ -370,16 +370,16 @@ class XMLRecipeParser(QtWidgets.QWidget):
     #
     def parseXMLExperiment(self):
         # Get additional file paths
-        positions_filename = str(QtGui.QFileDialog.getOpenFileName(self, "Positions File", self.directory, "*.txt"))
+        positions_filename = QtWidgets.QFileDialog.getOpenFileName(self, "Positions File", self.directory, "*.txt")[0]
         self.directory = os.path.dirname(positions_filename)
-        output_filename = str(QtGui.QFileDialog.getSaveFileName(self, "Generated File", self.directory, "*.xml"))
+        output_filename = QtWidgets.QFileDialog.getSaveFileName(self, "Generated File", self.directory, "*.xml")[0]
         try:
             xml_generator.generateXML(self.xml_filename, positions_filename, output_filename, self.directory, self)
             self.xml_sequence_file_path = output_filename
         except:
-            QtGui.QMessageBox.information(self,
-                                          "XML Generation Error",
-                                          traceback.format_exc())
+            QtWidgets.QMessageBox.information(self,
+                                              "XML Generation Error",
+                                              traceback.format_exc())
             self.xml_sequence_file_path = ""
     
     ## replaceItems
@@ -414,20 +414,21 @@ class XMLRecipeParser(QtWidgets.QWidget):
     #
     def saveDavePrimitives(self):
         if self.xml_sequence_file_path == "":
-            self.xml_sequence_file_path = str(QtGui.QFileDialog.getSaveFileName(self,
-                                                                                 "Save XML Sequence",
-                                                                                 self.directory,
-                                                                                 "*.xml"))
+            self.xml_sequence_file_path = QtWidgets.QFileDialog.getSaveFileName(self,
+                                                                                "Save XML Sequence",
+                                                                                self.directory,
+                                                                                "*.xml")[0]
         try:
             out_fp = open(self.xml_sequence_file_path, "w")
             rough_string = ElementTree.tostring(self.da_primitives_xml, 'utf-8')        
             reparsed = minidom.parseString(rough_string)
-            out_fp.write(reparsed.toprettyxml(indent="  ", encoding = "ISO-8859-1"))
+            out_fp.write(reparsed.toprettyxml(indent="  ", encoding = "ISO-8859-1").decode())
             out_fp.close()
             self.wrote_XML = True
         except:
-            QtGui.QMessageBox.information(self,"Error",
-                                          "Error saving xml file")
+            QtWidgets.QMessageBox.information(self,
+                                              "Error saving xml file",
+                                              traceback.format_exc())
             self.xml_sequence_file_path = ""
 
     ## writtenXMLPath

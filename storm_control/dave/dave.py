@@ -288,7 +288,7 @@ class Dave(QtWidgets.QMainWindow):
     @hdebug.debug
     def dropEvent(self, event):
         for url in event.mimeData().urls():
-            self.handleDragDropFile(str(url.encodedPath())[1:])
+            self.handleDragDropFile(str(url.toLocalFile()))
 
     ## handleAbortButton
     #
@@ -581,8 +581,8 @@ class Dave(QtWidgets.QMainWindow):
                 messageBox = QtWidgets.QMessageBox(parent = self)
                 messageBox.setWindowTitle("Invalid Command")
                 messageBox.setText(message_str)
-                messageBox.setStandardButtons(QtGui.QMessageBox.No |
-                                              QtGui.QMessageBox.YesToAll)
+                messageBox.setStandardButtons(QtWidgets.QMessageBox.No |
+                                              QtWidgets.QMessageBox.YesToAll)
                 messageBox.setIcon(QtWidgets.QMessageBox.Warning)
                 messageBox.setDefaultButton(QtWidgets.QMessageBox.YesToAll)
                 button_ID = messageBox.exec_()
