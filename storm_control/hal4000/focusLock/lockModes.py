@@ -954,6 +954,7 @@ class HardwareZScanLockMode(AlwaysOnLockMode):
         if hasattr(super(), "newParameters"):
             super().newParameters(parameters)
         p = parameters.get(self.hzs_pname)
+        self.hzs_zvals = None
         if (len(p.get("z_offsets")) > 0):
             self.hzs_zvals = numpy.array(list(map(float, p.get("z_offsets").split(","))))
 
