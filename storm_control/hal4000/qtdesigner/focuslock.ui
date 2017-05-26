@@ -83,10 +83,10 @@
           <item>
            <widget class="QSpinBox" name="lockTargetSpinBox">
             <property name="minimum">
-             <number>-2000</number>
+             <number>-100000</number>
             </property>
             <property name="maximum">
-             <number>2000</number>
+             <number>100000</number>
             </property>
            </widget>
           </item>
