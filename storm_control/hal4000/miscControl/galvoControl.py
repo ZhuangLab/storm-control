@@ -26,6 +26,7 @@ class GalvoView(halDialog.HalDialog):
     """
     def __init__(self, configuration = None, **kwds):
         super().__init__(**kwds)
+        self.running = False
         self.sampling_rate = configuration.get("sampling_rate")
         self.scan_fn = None
 
@@ -53,6 +54,7 @@ class GalvoView(halDialog.HalDialog):
             self.ui.activateButton.setText("Stop")
             self.toggleControls(False)
             self.startScan()
+        self.running = not self.running
 
     def setFunctionality(self, scan_functionality):
         self.scan_fn = scan_functionality
@@ -90,7 +92,7 @@ class GalvoView(halDialog.HalDialog):
         self.scan_fn.analogOut([self.ui.xOffsetSpinBox.value(),
                                 self.ui.yOffsetSpinBox.value()])
 
-    def toggleControls(self, isEnabled):
+    def toggleControls(self, is_enabled):
         """
         Enable or disable controls to allow the user to 
         change these only when the mirrors are not running.

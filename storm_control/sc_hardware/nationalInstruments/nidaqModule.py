@@ -177,7 +177,12 @@ class WVTaskFunctionality(daqModule.DaqFunctionality):
             self.task.clearTask()
             self.task = None
         
-    def waveformOutput(self, waveforms = None, sample_rate = None, finite = False, rising = True, start = True):
+    def waveformOutput(self,
+                       waveforms = None,
+                       sample_rate = None,
+                       finite = False,
+                       rising = True,
+                       start = True):
         """
         waveforms is a list of numpy arrays of type numpy.float64 that
         are assumed to be of equal length.
@@ -194,7 +199,7 @@ class WVTaskFunctionality(daqModule.DaqFunctionality):
             self.task.addChannel(source = line)
 
         # Add waveforms.
-        self.task.setWaveforms(waveforms = numpy.concatenate(waveforms),
+        self.task.setWaveforms(waveforms = waveforms,
                                sample_rate = sample_rate,
                                clock = self.clock,
                                finite = finite,

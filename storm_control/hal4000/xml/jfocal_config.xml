@@ -182,7 +182,7 @@
 	<galvo>
 	  <wv_task>
 	    <clock>/Dev2/ctr0out</clock>
-	    <lines>/Dev2/ao0,/Dev/ao1</lines>
+	    <lines>/Dev2/ao0,/Dev2/ao1</lines>
 	  </wv_task>
 	</galvo>
 	
@@ -267,7 +267,7 @@
 	<y_freq type="int">1000</y_freq>
 	<y_offset type="float">0.0</y_offset>
 	<scan_fn type="string">daq.galvo.wv_task</scan_fn>
-	<sampling_rate></sampling_rate>
+	<sampling_rate type="float">2500.0</sampling_rate>
       </configuration>
     </galvo>
     
@@ -338,6 +338,7 @@
       <class_name type="string">MarzhauserStage</class_name>
 
       <configuration>
+	<baudrate type="int">57600</baudrate>
 	<port type="string">COM5</port>
 	<velocity type="float">2.0</velocity>
       </configuration>
