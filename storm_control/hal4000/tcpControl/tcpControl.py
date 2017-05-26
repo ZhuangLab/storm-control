@@ -100,6 +100,7 @@ class TCPAction(QtCore.QObject):
         if not self.was_handled:
             print(">> Warning no response to '" + self.tcp_message.getType() + "'")
             self.tcp_message.setError(True, "This message was not handled.")
+        print(">", self.tcp_message)
         server.sendMessage(self.tcp_message)
 
 
@@ -232,8 +233,14 @@ class TCPActionSetParameters(TCPAction):
 
         # Check that the requested parameters were found.
         found = responses[0].getData()["found"]
+        print("> hr", found)
         if not found:
             self.tcp_message.setError(True, "Parameters '" + self.tcp_message.getData("parameters") + "' not found")
+            self.was_handled = True
+            return True
+
+        # Check if the requested parameters are the current parameters.
+        if responses[0].getData()["current"]:
             self.was_handled = True
             return True
         
