@@ -33,7 +33,7 @@ class CheckFocusLock1(testing.TestingTCP):
                                                      locked = True),
                              testActions.Timer(100),
                              CheckFocusLockAction1(focus_scan = False,
-                                                   num_focus_checks = 5)]
+                                                   num_focus_checks = 6)]
 
 class CheckFocusLockAction2(testActionsTCP.CheckFocusLock):
 
@@ -55,7 +55,7 @@ class CheckFocusLock2(testing.TestingTCP):
                              testActionsTCP.MoveStage(x = 10, y = 0),
                              testActions.Timer(200),
                              CheckFocusLockAction2(focus_scan = False,
-                                                   num_focus_checks = 5)]
+                                                   num_focus_checks = 6)]
         
 class CheckFocusLock3(testing.TestingTCP):
     """
@@ -71,11 +71,11 @@ class CheckFocusLock3(testing.TestingTCP):
                              testActionsTCP.MoveStage(x = -6, y = 0),
                              testActions.Timer(200),
                              CheckFocusLockAction1(focus_scan = True,
-                                                   num_focus_checks = 5,
+                                                   num_focus_checks = 6,
                                                    scan_range = 8),
                              testActions.Timer(200),
                              CheckFocusLockAction1(focus_scan = False,
-                                                   num_focus_checks = 5)]
+                                                   num_focus_checks = 6)]
 
         
 class CheckFocusLock4(testing.TestingTCP):
@@ -93,7 +93,7 @@ class CheckFocusLock4(testing.TestingTCP):
                              testActionsTCP.MoveStage(x = -6, y = 0),
                              testActions.Timer(200),
                              CheckFocusLockAction2(focus_scan = True,
-                                                   num_focus_checks = 5,
+                                                   num_focus_checks = 6,
                                                    scan_range = 1)]
 
 class CheckFocusLockAction3(testActionsTCP.CheckFocusLock):
@@ -111,7 +111,7 @@ class CheckFocusLock5(testing.TestingTCP):
         self.test_actions = [SetFocusLockModeAction1(mode_name = "Always On",
                                                      locked = False),                             
                              CheckFocusLockAction3(focus_scan = False,
-                                                   num_focus_checks = 5,
+                                                   num_focus_checks = 6,
                                                    test_mode = True)]
 
 class CheckFocusLock6(testing.TestingTCP):
@@ -128,16 +128,16 @@ class CheckFocusLock6(testing.TestingTCP):
                              testActionsTCP.MoveStage(x = -6, y = 0),
                              testActions.Timer(200),
                              CheckFocusLockAction1(focus_scan = True,
-                                                   num_focus_checks = 5,
+                                                   num_focus_checks = 6,
                                                    scan_range = 8),
                              testActionsTCP.MoveStage(x = -12, y = 0),
                              testActions.Timer(200),
                              CheckFocusLockAction1(focus_scan = True,
-                                                   num_focus_checks = 5,
+                                                   num_focus_checks = 6,
                                                    scan_range = 8),
                              testActions.Timer(200),
                              CheckFocusLockAction1(focus_scan = False,
-                                                   num_focus_checks = 5)]
+                                                   num_focus_checks = 6)]
 
 class CheckFocusLock7(testing.TestingTCP):
     """
@@ -153,10 +153,10 @@ class CheckFocusLock7(testing.TestingTCP):
                              testActionsTCP.MoveStage(x = -44, y = 0),
                              testActions.Timer(200),
                              CheckFocusLockAction1(focus_scan = True,
-                                                   num_focus_checks = 5),
+                                                   num_focus_checks = 6),
                              testActions.Timer(200),
                              CheckFocusLockAction1(focus_scan = False,
-                                                   num_focus_checks = 5)]
+                                                   num_focus_checks = 6)]
 
 
 #
@@ -198,7 +198,7 @@ class FindSum2(testing.TestingTCP):
                              FindSumAction1(min_sum = 100),
                              testActions.Timer(200),
                              CheckFocusLockAction1(focus_scan = False,
-                                                   num_focus_checks = 5)]
+                                                   num_focus_checks = 6)]
 
 class FindSumAction3(testActionsTCP.FindSum):
 
