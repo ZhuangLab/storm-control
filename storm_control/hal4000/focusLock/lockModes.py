@@ -427,6 +427,13 @@ class LockMode(QtCore.QObject):
     # Emitted when the current lock target is changed.
     lockTarget = QtCore.pyqtSignal(float)
 
+    # The current QPD state. This is a class rather than an instance
+    # variable so it is still available even when we change lock modes.
+    qpd_state = None
+
+    # Z stage functionality. All the classes use the same one.
+    z_stage_functionality = None
+    
     def __init__(self, parameters = None, **kwds):
         super().__init__(**kwds)
         self.behavior = "none"
@@ -435,7 +442,6 @@ class LockMode(QtCore.QObject):
         self.name = "NA"
         self.parameters = parameters
         self.qpd_state = None
-        self.z_stage_functionality = None
 
         if not hasattr(self, "behavior_names"):
             self.behavior_names = []
@@ -485,14 +491,6 @@ class LockMode(QtCore.QObject):
         self.qpd_state = qpd_state
         if hasattr(super(), "handleQPDUpdate"):
             super().handleQPDUpdate(qpd_state)
-            
-    def initialize(self):
-        """
-        This is called when the mode becomes the 'active' mode.
-
-        FIXME: We don't seem to use this..
-        """
-        pass
 
     def isGoodLock(self):
         return self.good_lock
