@@ -437,7 +437,9 @@ class SetParametersAction1(testActionsTCP.SetParameters):
         assert not tcp_message.hasError()
         
 class SetParameters1(testing.TestingTCP):
-
+    """
+    Test setting the parameters to ones that exist.
+    """
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
@@ -451,7 +453,9 @@ class SetParametersAction2(testActionsTCP.SetParameters):
         assert tcp_message.hasError()
 
 class SetParameters2(testing.TestingTCP):
-
+    """
+    Test setting parameters to ones that don't exist (in test mode).
+    """
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
@@ -459,7 +463,9 @@ class SetParameters2(testing.TestingTCP):
         self.test_actions = [SetParametersAction2(name_or_index = fname, test_mode = True)]
         
 class SetParameters3(testing.TestingTCP):
-
+    """
+    Test setting parameters to ones that don't exist.
+    """
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
@@ -467,13 +473,25 @@ class SetParameters3(testing.TestingTCP):
         self.test_actions = [SetParametersAction2(name_or_index = fname)]
         
 class SetParameters4(testing.TestingTCP):
-
+    """
+    Test setting the parameters to ones that exist (in test mode).
+    """
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
         fname = "256x512"
         self.test_actions = [testActions.LoadParameters(filename = test.halXmlFilePathAndName(fname + ".xml")),
                              SetParametersAction1(name_or_index = fname, test_mode = True)]
+
+class SetParameters5(testing.TestingTCP):
+    """
+    Test setting the parameters to ones that exist, and
+    are already the current parameters.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.test_actions = [SetParametersAction1(name_or_index = 0)]
 
         
 #
