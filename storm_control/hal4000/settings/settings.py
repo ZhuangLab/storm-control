@@ -42,6 +42,7 @@ class Settings(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
         self.locked_out = False
+        self.wait_for = []
 
         self.view = parametersBox.ParametersBox(module_params = module_params,
                                                 qt_settings = qt_settings)
@@ -100,6 +101,11 @@ class Settings(halModule.HalModule):
                                            "resp" : {"new parameters" : [False, params.StormXMLObject],
                                                      "old parameters" : [False, params.StormXMLObject]}})
 
+        # This comes from other modules that added a "wait for" request
+        # to the 'updated parameters' message.
+        halMessage.addMessage("parameters changed",
+                              validator = {"data" : None, "resp" : None})
+
         # A request from another module to set the current parameters.
         halMessage.addMessage("set parameters",
                               validator = {"data" : {"index or name" : [True, (str, int)]},
@@ -112,9 +118,14 @@ class Settings(halModule.HalModule):
         # This is sent immediately after all of the modules respond to
         # the 'new parameters' message.
         #
+        # If a module is not immediately ready to go upon receipt of this
+        # message, then it should add a 'wait for' response. For example
+        # after a parameter change some modules will need information /
+        # functionalities from other modules.
+        #
         halMessage.addMessage("updated parameters",
                               validator = {"data" : {"parameters" : [True, params.StormXMLObject]},
-                                           "resp" : None})
+                                           "resp" : {"wait for" : [False, str]}})
 
     def handleError(self, message, m_error):
 
@@ -210,8 +221,16 @@ class Settings(halModule.HalModule):
                 # Let modules, such as feeds.feeds known that all of the modules
                 # have updated their parameters.
                 self.sendMessage(halMessage.HalMessage(m_type = "updated parameters",
-                                                       data = {"parameters" : self.view.getCurrentParameters().copy()},
-                                                       finalizer = self.updateComplete))
+                                                       data = {"parameters" : self.view.getCurrentParameters().copy()}))
+                
+        elif message.isType("updated parameters"):
+
+            # No waits requested, so the parameter change is complete
+            if (len(message.getResponses()) == 0):
+                self.updateComplete()
+            else:
+                for response in message.getResponses():
+                    self.wait_for.append(response.getData()["wait for"])
 
     def processMessage(self, message):
 
@@ -260,6 +279,13 @@ class Settings(halModule.HalModule):
 
             # Process new parameters file.
             self.view.newParametersFile(data["filename"], is_default)
+
+        elif message.isType("parameters changed"):
+            self.wait_for.remove(message.getSourceName())
+
+            # All modules have finished changing parameters.
+            if (len(self.wait_for) == 0):
+                self.updateComplete()
 
         elif message.isType("set parameters"):
             if self.locked_out:

@@ -311,6 +311,8 @@ class Film(halModule.HalModule):
         self.film_state = "idle"
         self.locked_out = False
         self.number_frames = 0
+        self.number_fn_requested = 0
+        self.parameter_change = False
         self.pixel_size = 1.0
         self.timing_functionality = None
         self.wait_for = []
@@ -420,6 +422,12 @@ class Film(halModule.HalModule):
             assert (len(message.getResponses()) == 1)
             for response in message.getResponses():
                 self.camera_functionalities.append(response.getData()["functionality"])
+                self.number_fn_requested -= 1
+
+            # And we are done with the parameter change.
+            if self.parameter_change and (self.number_fn_requested == 0):
+                self.parameter_change = False
+                self.sendMessage(halMessage.HalMessage(m_type = "parameters changed"))
 
         # Modules that need additional time to get ready to film should add
         # their name as a "wait for" response to the start film message.
@@ -493,6 +501,7 @@ class Film(halModule.HalModule):
                 for name in message.getData()["properties"]["feed names"]:
                     self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                            data = {"name" : name}))
+                    self.number_fn_requested += 1
 
             elif message.sourceIs("illumination"):
                 properties = message.getData()["properties"]
@@ -569,6 +578,11 @@ class Film(halModule.HalModule):
             if (self.film_state != "run"):
                 raise halException.HalException("Stop film request received while not filming.")
             self.stopFilmingLevel1()
+
+        elif message.isType("updated parameters"):
+            self.parameter_change = True
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"wait for" : self.module_name}))
 
     def setLockout(self, state):
         self.locked_out = state

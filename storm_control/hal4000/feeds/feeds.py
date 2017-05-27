@@ -475,6 +475,9 @@ class Feeds(halModule.HalModule):
         if self.feed_controller.allFeedsFunctional():
             self.broadcastCurrentFeeds()
 
+            # And we are done with the parameter change.
+            self.sendMessage(halMessage.HalMessage(m_type = "parameters changed"))
+
     def processMessage(self, message):
 
         if message.isType("configure1"):
@@ -508,6 +511,8 @@ class Feeds(halModule.HalModule):
         elif message.isType("updated parameters"):
             self.feed_names = copy.copy(self.camera_names)
             if self.feed_controller is not None:
+                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                                  data = {"wait for" : self.module_name}))
                 for feed in self.feed_controller.getFeeds():
                     self.feed_names.append(feed.getCameraName())
                     self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
