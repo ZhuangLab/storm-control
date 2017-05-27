@@ -4,6 +4,14 @@
 *.log
 *.out*
 
+##############
+## data files
+##############
+*.dax
+*.inf
+*.off
+*.power
+
 ############
 ## Windows
 ############
@@ -13,6 +21,13 @@ Thumbs.db
 
 # Folder config file
 Desktop.ini
+
+#####
+## C
+#####
+*.o
+*.so
+*.so.*
 
 #############
 ## Python
