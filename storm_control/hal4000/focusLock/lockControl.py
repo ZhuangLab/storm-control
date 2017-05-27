@@ -66,6 +66,10 @@ class LockControl(QtCore.QObject):
                     self.handleDone(False)
 
             # Wait 100ms and try again.
+            #
+            # FIXME: It would be better if this waited a certain number of QPD
+            #        updates instead of a fixed length of time.
+            #
             else:
                 self.check_focus_timer.start(100)
 
