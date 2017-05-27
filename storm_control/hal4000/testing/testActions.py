@@ -186,8 +186,8 @@ class SetParameters(TestAction):
     """
     Set current parameters.
 
-    This waits for the 'settings lockout' message with 
-    "locked out" False before proceeding.
+    This waits for the 'change parameters' message with 
+    "changing" False before proceeding.
     """
     def __init__(self, p_name = "", **kwds):
         super().__init__(**kwds)
@@ -199,10 +199,10 @@ class SetParameters(TestAction):
         return {"index or name" : self.p_name}
 
     def getMessageFilter(self):
-        return "settings lockout"
+        return "changing parameters"
 
     def handleMessage(self, message):
-        if not message.getData()["locked out"]:
+        if not message.getData()["changing"]:
             self.actionDone.emit()
         
 

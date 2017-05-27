@@ -319,8 +319,8 @@ class TCPActionTakeMovie(TCPAction):
         # This is the signal that the parameter change is
         # complete and we can start filming.
         #
-        if message.isType("settings lockout"):
-            if not message.getData()["locked out"]:
+        if message.isType("changing parameters"):
+            if not message.getData()["changing"]:
                 msg = halMessage.HalMessage(m_type = "start film request",
                                             data = {"request" : self.film_request})
                 self.actionMessage.emit(msg)

@@ -67,6 +67,12 @@ class Settings(halModule.HalModule):
                                "ui_parent" : "hal.containerWidget",
                                "ui_widget" : self.view}
 
+        # This message marks the beginning and the end of the parameter change
+        # life cycle.
+        halMessage.addMessage("changing parameters",
+                              validator = {"data" : {"changing" : [True, bool]},
+                                           "resp" : None})        
+
         # A request from another module for one of the sets of parameters.
         halMessage.addMessage("get parameters",
                               validator = {"data" : {"index or name" : [True, (str, int)]},
@@ -99,12 +105,6 @@ class Settings(halModule.HalModule):
                               validator = {"data" : {"index or name" : [True, (str, int)]},
                                            "resp" : {"found" : [True, bool],
                                                      "current" : [True, bool]}})
-
-        # Sent when changing the settings is not possible/possible. While this is
-        # true we'll throw an error if another modules attempts to change the settings.
-        halMessage.addMessage("settings lockout",
-                              validator = {"data" : {"locked out" : [True, bool]},
-                                           "resp" : None})        
 
         # The updated parameters.
         #
@@ -141,6 +141,8 @@ class Settings(halModule.HalModule):
         # FIXME: We also need to disable the editor, if it is open.
         #
         self.view.enableUI(False)
+
+        self.setLockout(True)
         
         # is_edit means we are sending a modified version of the current parameters.
         self.sendMessage(halMessage.HalMessage(m_type = "new parameters",
@@ -169,7 +171,9 @@ class Settings(halModule.HalModule):
                         data = response.getData()
                         if "old parameters" in data:
                             self.view.updateCurrentParameters(response.source, data["old parameters"])
-                    self.handleNewParameters(self.view.getCurrentParameters(), True)
+                    self.sendMessage(halMessage.HalMessage(m_type = "new parameters",
+                                                           data = {"parameters" : self.view.getCurrentParameters(),
+                                                                   "is_edit" : True}))
                             
                 # Otherwise set the current selection back to previous selection.
                 # This will automatically send a 'new parameters' message.
@@ -208,8 +212,7 @@ class Settings(halModule.HalModule):
                 self.sendMessage(halMessage.HalMessage(m_type = "updated parameters",
                                                        data = {"parameters" : self.view.getCurrentParameters().copy()},
                                                        finalizer = self.updateComplete))
-                                 
-                
+
     def processMessage(self, message):
 
         if message.isType("configure1"):
@@ -244,9 +247,9 @@ class Settings(halModule.HalModule):
             if not self.view.getEnabled():
                 msg = "Parameters files cannot be added during editting / filming" 
                 message.addError(halMessage.HalMessageError(source = self.module_name,
-                                                                message = msg))
+                                                            message = msg))
                 return
-            
+
             data = message.getData()
 
             # Check if these parameters should be default parameters. For now
@@ -274,8 +277,8 @@ class Settings(halModule.HalModule):
 
     def setLockout(self, state):
         self.locked_out = state
-        self.sendMessage(halMessage.HalMessage(m_type = "settings lockout",
-                                               data = {"locked out" : self.locked_out}))
+        self.sendMessage(halMessage.HalMessage(m_type = "changing parameters",
+                                               data = {"changing" : self.locked_out}))
 
     def updateComplete(self):
         self.setLockout(False)
