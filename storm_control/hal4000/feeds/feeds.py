@@ -470,8 +470,7 @@ class Feeds(halModule.HalModule):
 
         #
         # If we have camera functionality for all the feeds then it is safe to
-        # broadcast the new feed information. This is the marker for the end
-        # of the 'new parameters' update cycle.
+        # broadcast the new feed information.
         #
         if self.feed_controller.allFeedsFunctional():
             self.broadcastCurrentFeeds()
