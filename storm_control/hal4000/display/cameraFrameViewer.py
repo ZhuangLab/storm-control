@@ -14,6 +14,7 @@ frame display. This includes:
 Hazen 2/17
 """
 import os
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 import storm_control.sc_library.halExceptions as halExceptions
@@ -87,8 +88,8 @@ class CameraFrameViewer(QtWidgets.QFrame):
 
         #
         # Keep track of the default feed_name in the default parameters, these
-        # are the paraemeters that will be used when we change parameter files
-        # and the parameters files doesn't specify anything for this this view.
+        # are the parameters that will be used when we change parameter files
+        # and the parameters file doesn't specify anything for this view.
         #
         self.default_parameters.add(params.ParameterString(name = "feed_name",
                                                            value = feed_name,
@@ -298,7 +299,18 @@ class CameraFrameViewer(QtWidgets.QFrame):
         This sends a message to the new camera / feed that it will respond 
         to with information about how it should be displayed.
         """
-        self.parameters.set("feed_name", str(feed_name))
+
+        #
+        # Disconnect current camera functionality. Anything that results
+        # in a change in the camera functionality should pass through
+        # this method, otherwise we can end up with multiple camera
+        # functionalities connected to handleNewFrame, which will be a
+        # mess..
+        #
+        if self.cam_fn is not None:
+            self.cam_fn.newFrame.disconnect(self.handleNewFrame)
+            
+        self.parameters.setv("feed_name", str(feed_name))
         self.feedChange.emit(feed_name)
 
     def handleGrid(self, boolean):
@@ -413,11 +425,20 @@ class CameraFrameViewer(QtWidgets.QFrame):
         else:
             self.ui.shutterButton.setCameraFunctionality(camera_functionality.getCameraFunctionality())
 
-        # A sanity check..
+        # A sanity check that this is the right feed.
         assert (self.getFeedName() == camera_functionality.getCameraName())
 
+        # A sanity check that the old camera functionality is disconnected.
         if self.cam_fn is not None:
-            self.cam_fn.newFrame.disconnect(self.handleNewFrame)
+            try:
+                self.cam_fn.newFrame.disconnect(self.handleNewFrame)
+            except TypeError:
+                pass
+            else:
+                msg = "Old camera functionality was not disconnected."
+                raise halExceptions.HalException(msg)
+                
+        # Connect new camera functionality.
         self.cam_fn = camera_functionality
         self.cam_fn.newFrame.connect(self.handleNewFrame)
 

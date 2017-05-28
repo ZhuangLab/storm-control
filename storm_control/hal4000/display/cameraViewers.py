@@ -77,7 +77,10 @@ class CameraParamsMixin(object):
         self.frame_viewer.setSyncMax(sync_max)
         
     def showViewer(self, show_gui):
-        self.handleFeedChange(self.frame_viewer.getFeedName())
+        #
+        # See note for ClassicViewer.showViewer().
+        #
+        self.frame_viewer.handleFeedChange(self.frame_viewer.getFeedName())
         if show_gui:
             self.show()
 
@@ -136,11 +139,12 @@ class ClassicViewer(QtCore.QObject, CameraParamsMixin):
                                                            "ui_parent" : "hal.containerWidget",
                                                            "ui_widget" : self.params_viewer}))
 
-    def configure2(self):
-        self.handleFeedChange(self.frame_viewer.getFeedName())
-
+    #
+    # Why? We change again to the current feed because at this point the display window will
+    # now have the correct size, so the displayed feed won't be ridiculously small.
+    #
     def showViewer(self, show_gui):
-        self.handleFeedChange(self.frame_viewer.getFeedName())
+        self.frame_viewer.handleFeedChange(self.frame_viewer.getFeedName())
 
     
 class FeedViewer(halDialog.HalDialog, CameraParamsMixin):
@@ -197,8 +201,4 @@ class DetachedViewer(halDialog.HalDialog, CameraParamsMixin):
         self.frame_viewer.feedChange.connect(self.handleFeedChange)
         self.frame_viewer.guiMessage.connect(self.handleGuiMessage)
         self.frame_viewer.ui.recordButton.clicked.connect(self.handleRecordButton)
-
-    def configure2(self):
-        self.handleFeedChange(self.frame_viewer.getFeedName())
-
 
