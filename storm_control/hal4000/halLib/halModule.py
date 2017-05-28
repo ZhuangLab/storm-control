@@ -207,7 +207,7 @@ class HalModule(QtCore.QObject):
         """
         Use this to send a message from the module.
 
-        FIXME: Need to update mnay of the modules to use this.
+        FIXME: Have all modules been updated to use this?
         """
         message.source = self
         self.newMessage.emit(message)
