@@ -144,7 +144,7 @@ class Settings(halModule.HalModule):
         two it is.
         """
         if self.locked_out:
-            raise halException.HalException("parameter change attempted while locked out.")
+            raise halExceptions.HalException("parameter change attempted while locked out.")
 
         # Disable the UI so the user can't change the parameters again while we
         # are processing the current change.
