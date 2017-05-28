@@ -4,7 +4,7 @@
     <x_end type="int">512</x_end>
     <x_start type="int">256</x_start>
     <y_end type="int">512</y_end>
-    <y_start type="int">1</y_start>
+    <y_start type="int">256</y_start>
   </camera1>
   <display00 validate="False">
     <camera1 validate="True">
