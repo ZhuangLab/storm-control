@@ -57,9 +57,8 @@ def checkParameters(parameters):
         y_pixels = y_end - y_start + 1
         
         # Check that the feed size is a multiple of 4 in x.
-        roi_area = x_pixels * y_pixels
-        if not ((roi_area % 4) == 0):
-            raise FeedException("ROI area of " + str(roi_area) + " is not a multiple of 4 in feed " + feed_name)
+        if not ((x_pixels % 4) == 0):
+            raise FeedException("The x size of the feed ROI must be a multiple of 4 in " + feed_name)
 
 
 class FeedException(halExceptions.HalException):
