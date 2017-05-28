@@ -12,6 +12,7 @@ from PyQt5 import QtCore, QtWidgets
 
 import storm_control.sc_library.parameters as params
 
+import storm_control.hal4000.halLib.halDialog as halDialog
 import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 import storm_control.hal4000.settings.parametersEditorDialog as parametersEditorDialog
 
@@ -109,7 +110,8 @@ class ParametersBox(QtWidgets.QGroupBox):
 
         self.editor_dialog = parametersEditorDialog.ParametersEditorDialog(window_title = self.editor_window_title,
                                                                            qt_settings = self.qt_settings,
-                                                                           parameters = parameters)
+                                                                           parameters = parameters,
+                                                                           parent = halDialog.HalDialog.qt_parent)
         self.editor_dialog.closed.connect(self.handleEditorClosed)
         self.editor_dialog.update.connect(self.handleEditorUpdate)
         self.editor_dialog.show()
