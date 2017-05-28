@@ -142,8 +142,9 @@ class LockControl(QtCore.QObject):
     def handleNewFrame(self, frame):
         if self.offset_fp is not None:
             frame_number = frame.frame_number + 1
-            offset = self.lock_mode.getQPDState()["offset"]
-            power = self.lock_mode.getQPDState()["sum"]
+            pos_dict = self.lock_mode.getQPDState()
+            offset = pos_dict["offset"]
+            power = pos_dict["sum"]
             stage_z = self.z_stage_functionality.getCurrentPosition()
             self.offset_fp.write("{0:d} {1:.6f} {2:.6f} {3:.6f}\n".format(frame_number,
                                                                           offset,

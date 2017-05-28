@@ -21,6 +21,7 @@ class NoneQPDFunctionality(hardwareModule.BufferedFunctionality, lockModule.QPDF
 
     def __init__(self, noise = 0.0, tilt = 0.0, **kwds):
         super().__init__(**kwds)
+        self.first_scan = True
         self.noise = noise
         self.tilt = tilt
         self.xy_stage_fn = None
@@ -35,7 +36,10 @@ class NoneQPDFunctionality(hardwareModule.BufferedFunctionality, lockModule.QPDF
                      ret_signal = self.qpdUpdate)
 
     def scan(self):
-        time.sleep(0.1)
+        if self.first_scan:
+            self.first_scan = False
+        else:
+            time.sleep(0.1)
 
         #
         # Determine current z offset. This is the offset of the z stage from
