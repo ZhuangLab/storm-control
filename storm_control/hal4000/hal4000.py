@@ -545,7 +545,7 @@ class HalCore(QtCore.QObject):
             else:
                 msg = "Got a warning" + msg
                 halMessageBox.halMessageBoxInfo(msg)
-        
+
     def handleMessage(self, message):
         """
         Adds a message to the queue of images to send.
@@ -567,6 +567,55 @@ class HalCore(QtCore.QObject):
         # Start the message timer, if it is not already running.
         self.startMessageTimer()
 
+    def handleProcessed(self, message):
+        """
+        Removes a processed message from the queue of sent messages
+        and performs message finalization.
+        """
+
+        # Remove message from list of sent messages.
+        self.sent_messages.remove(message)
+
+        # Disconnect messages processed signal.
+        message.processed.disconnect(self.handleProcessed)
+        
+        # Call message finalizer.
+        message.finalize()
+
+        # Always exit on exceptions in strict mode.
+        if self.strict and message.hasErrors():
+            for m_error in message.getErrors():
+                if m_error.hasException():
+                    m_error.printException()
+                    self.cleanUp()
+                    return
+
+        # Notify the sender if errors occured while processing the
+        # message and exit if the sender doesn't handle the error.
+        if message.hasErrors():
+            if not message.getSource().handleErrors(sent_message):
+                self.cleanUp()
+                return
+
+        # Check the responses if we are in strict mode.
+        if self.strict:
+            validator = halMessage.valid_messages[message.m_type].get("resp")
+            for response in message.getResponses():
+                halMessage.validateResponse(validator, message, response)
+
+        # Notify the sender of any responses to the message.
+        message.getSource().handleResponses(message)
+
+        # Print a warning if the message was 'get functionality'
+        # and there were no responses.
+        if message.isType("get functionality") and not message.hasResponses():
+            print(">> Warning functionality '" + message.getData()["name"] + "' not found!")
+            hdebug.logText("no functionality " + message.getData()["name"])
+
+        # Start message processing timer in case there are other messages
+        # waiting for this message to get finalized.
+        self.startMessageTimer()
+
     def handleResponses(self, message):
         """
         This is just a place holder. There should not be any responses
@@ -578,73 +627,17 @@ class HalCore(QtCore.QObject):
         """
         Handle sending the current message to all the modules.
         """
-        interval = -1
-        #
-        # Remove all the messages that have already been
-        # handled from the list of sent messages.
-        #
-        unhandled = []
-        for sent_message in self.sent_messages:
-            if sent_message.refCountIsZero():
-                #
-                # Good times.. If the source throws up a message box and other
-                # messages come in then we'll get more and more message boxes
-                # and eventually HAL will crash, so try and block that here.
-                #
-                if sent_message.finalizing:
-                    continue
-                sent_message.finalizing = True
-
-                # Call message finalizer.
-                sent_message.finalize()
-
-                # Always exit on exceptions in strict mode.
-                if self.strict and sent_message.hasErrors():
-                    for m_error in sent_message.getErrors():
-                        if m_error.hasException():
-                            m_error.printException()
-                            self.cleanUp()
-                            return
-
-                # Notify the sender if errors occured while processing the
-                # message and exit if the sender doesn't handle the error.
-                if sent_message.hasErrors():
-                    if not sent_message.getSource().handleErrors(sent_message):
-                        self.cleanUp()
-                        return
-
-                # Check the responses if we are in strict mode.
-                if self.strict:
-                    validator = halMessage.valid_messages[sent_message.m_type].get("resp")
-                    for response in sent_message.getResponses():
-                        halMessage.validateResponse(validator, sent_message, response)
-
-                # Notify the sender of any responses to the message.
-                sent_message.getSource().handleResponses(sent_message)
-
-                # Print a warning if the message was 'get functionality'
-                # and there were no responses.
-                if sent_message.isType("get functionality") and not sent_message.hasResponses():
-                    print(">> Warning functionality '" + sent_message.getData()["name"] + "' not found!")
-                    hdebug.logText("no functionality " + sent_message.getData()["name"])
-
-            else:
-                unhandled.append(sent_message)
-        self.sent_messages = unhandled
-
         # Process the next message.
         if (len(self.queued_messages) > 0):
             cur_message = self.queued_messages.popleft()
             
             #
             # If this message requested synchronization and there are
-            # pending messages then push it back into the queue and
-            # wait ~50 milliseconds.
+            # pending messages then push it back into the queue.
             #
             if cur_message.sync and (len(self.sent_messages) > 0):
                 print("> waiting on", cur_message.m_type)
                 self.queued_messages.appendleft(cur_message)
-                interval = 50
             
             #
             # Otherwise process the message.
@@ -665,7 +658,8 @@ class HalCore(QtCore.QObject):
                     # Otherwise send the message.
                     else:
                         cur_message.logEvent("sent")
-                            
+
+                        cur_message.processed.connect(self.handleProcessed)
                         self.sent_messages.append(cur_message)
                         for module in self.modules:
                             cur_message.ref_count += 1
@@ -673,28 +667,7 @@ class HalCore(QtCore.QObject):
 
                     # Process any remaining messages with immediate timeout.
                     if (len(self.queued_messages) > 0):
-                        interval = 0
-
-                    #
-                    # Otherwise wait ~50 milliseconds, then check if the message
-                    # that was just sent has been processed.
-                    #
-                    # See note below about sent messages and finalizers.
-                    #
-                    else:
-                        interval = 50
-
-        #
-        # If have unprocesses messages wait ~50 milliseconds and check again.
-        #
-        # We do this even if we don't have queued messages because one or of
-        # the sent messages might have a finalizer specified.
-        #
-        elif (len(self.sent_messages) > 0):
-            interval = 50
-
-        if (interval > -1):
-            self.startMessageTimer(interval = interval)
+                        self.startMessageTimer()
 
     def startMessageTimer(self, interval = 0):
         if not self.queued_messages_timer.isActive():

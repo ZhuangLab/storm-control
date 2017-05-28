@@ -167,68 +167,54 @@ class HalMessageException(halExceptions.HalException):
     pass
 
 
-# FIXME: This is only the base class for HalMessage, do we need it separate?
-class HalMessageBase(object):
-    """
-    Base class for the HalMessage as well as for various response
-    such as errors, warnings or data.
-    """
-    def __init__(self, m_type = "", source = None, **kwds):
+class HalMessage(QtCore.QObject):
+    istype_warned = {}    
+    processed = QtCore.pyqtSignal(object)
+
+    def __init__(self,
+                 data = None,
+                 finalizer = None,
+                 m_type = "",
+                 source = None,
+                 sync = False,
+                 **kwds):
         """
+        data - Python object containing the message data. This must be a dictionary.
+
+        finalizer - A function with no arguments to call when the message has been 
+                    completely processed by all of the modules.
+
         m_type - String that defines the message type. This should be a space 
                  separated lower case string.
 
         source - HalModule object that sent the message.
-        """
-        super().__init__(**kwds)
-
-        if not isinstance(m_type, str):
-            raise HalMessageException("m_type is not of type 'str'")
-
-        self.m_type = m_type
-        self.source = source
-        
-    def getSource(self):
-        return self.source
-
-    def getSourceName(self):
-        return self.source.module_name
-
-    def getType(self):
-        return self.m_type
-
-
-class HalMessage(HalMessageBase):
-    istype_warned = {}
-
-    def __init__(self, data = None, sync = False, finalizer = None, **kwds):
-        """
-        data - Python object containing the message data. This must be a dictionary.
 
         sync - Boolean that indicates whether or not all the messages before
                this message should be processed before continuing to this message.
-
-        finalizer - A function with no arguments to call when the message has been 
-                    completely processed by all of the modules.
         """
         super().__init__(**kwds)
 
         if data is not None:
             if not isinstance(data, dict):
                 raise HalMessageException("data is not of type 'dict'")
-        
-        if not isinstance(sync, bool):
-            raise HalMessageException("sync is not of type 'bool'")
-        
+
         if finalizer is not None:
             if not callable(finalizer):
                 raise HalMessageException("function is not of type 'function'")
 
+        if not isinstance(m_type, str):
+            raise HalMessageException("m_type is not of type 'str'")
+                 
+        if not isinstance(sync, bool):
+            raise HalMessageException("sync is not of type 'bool'")
+                         
         self.data = data
-        self.finalizing = False
+#        self.finalizing = False
         self.finalizer = finalizer
         self.m_errors = []
         self.responses = []
+        self.m_type = m_type
+        self.source = source
         self.sync = sync
 
         # We use a mutex for the ref_count because threaded
@@ -243,7 +229,9 @@ class HalMessage(HalMessageBase):
 
     def decRefCount(self):
         self.ref_count -= 1
-        
+        if (self.ref_count == 0):
+            self.processed.emit(self)
+
     def finalize(self):
 
         if self.finalizer is not None:
@@ -269,7 +257,16 @@ class HalMessage(HalMessageBase):
 
     def incRefCount(self):
         self.ref_count += 1
-        
+
+    def getSource(self):
+        return self.source
+
+    def getSourceName(self):
+        return self.source.module_name
+
+    def getType(self):
+        return self.m_type
+
     def isType(self, m_type):
         if (not m_type in valid_messages) and (not m_type in self.istype_warned):
             #raise HalMessageException("'" + m_type + "' is not a valid message type.")
@@ -280,8 +277,8 @@ class HalMessage(HalMessageBase):
     def logEvent(self, event_name):
         hdebug.logText(",".join([event_name, str(id(self)), self.source.module_name, self.m_type]))
 
-    def refCountIsZero(self):
-        return (self.ref_count == 0)
+#    def refCountIsZero(self):
+#        return (self.ref_count == 0)
 
     def sourceIs(self, source_name):
         return (source_name == self.source.module_name)
