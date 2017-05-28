@@ -122,10 +122,12 @@ class HalModule(QtCore.QObject):
             data = m_error.source + ": " + m_error.message
             if m_error.hasException():
                 if not self.handleError(message, m_error):
-                    m_error.printExceptionAndDie()
+                    m_error.printException()
+                    return False
             else:
                 if not self.handleWarning(message, m_error):
                     halMessageBox.halMessageBoxInfo(data)
+        return True
 
     def handleMessage(self, message):
         """

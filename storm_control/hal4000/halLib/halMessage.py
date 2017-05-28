@@ -325,14 +325,16 @@ class HalMessageError(object):
     def hasException(self):
         return self.m_exception is not None
 
-    def printExceptionAndDie(self):
-        print("")
-        print("Got an exception from '" + self.source + "' of type '" + self.message + "'!")
-        print("")        
-        print("Traceback when the exception occurred:")
-        print(self.stack_trace)
-        print("")
-        raise self.m_exception
+    def printException(self):
+        e_msg = "\n"
+        e_msg += "Got an exception from '" + self.source + "' of type '" + self.message + "'!\n"
+        e_msg += "\n"
+        e_msg += "Traceback when the exception occurred:"
+        e_msg += "\n"
+        e_msg += self.stack_trace
+        e_msg += "\n"
+        print(e_msg)
+        hdebug.logText(e_msg)
 
 
 class HalMessageResponse(object):

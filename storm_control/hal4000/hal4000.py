@@ -218,7 +218,7 @@ class HalView(QtWidgets.QMainWindow):
         qt_settings.setValue(self.module_name + ".pos", self.pos())
         qt_settings.setValue(self.module_name + ".size", self.size())
         qt_settings.setValue(self.module_name + ".xml_directory", self.xml_directory)
-
+        self.close_now = True
         self.close()
 
     def closeEvent(self, event):
@@ -275,7 +275,6 @@ class HalView(QtWidgets.QMainWindow):
         return self.ui.notesEdit.toPlainText()
         
     def handleCloseTimer(self):
-        self.close_now = True
         self.guiMessage.emit(halMessage.HalMessage(m_type = "close event",
                                                    sync = True))
             
@@ -539,7 +538,8 @@ class HalCore(QtCore.QObject):
 
             # Just print the error and crash on exceptions.
             if m_error.hasException():
-                m_error.printExceptionAndDie()
+                m_error.printException()
+                self.cleanUp()
 
             # Use a informational box for warnings.
             else:
@@ -598,15 +598,20 @@ class HalCore(QtCore.QObject):
                 # Call message finalizer.
                 sent_message.finalize()
 
-                # Always die on exceptions in strict mode.
+                # Always exit on exceptions in strict mode.
                 if self.strict and sent_message.hasErrors():
                     for m_error in sent_message.getErrors():
                         if m_error.hasException():
-                            m_error.printExceptionAndDie()
+                            m_error.printException()
+                            self.cleanUp()
+                            return
 
-                # Notify the sender if errors occured while processing the message.                            
+                # Notify the sender if errors occured while processing the
+                # message and exit if the sender doesn't handle the error.
                 if sent_message.hasErrors():
-                    sent_message.getSource().handleErrors(sent_message)
+                    if not sent_message.getSource().handleErrors(sent_message):
+                        self.cleanUp()
+                        return
 
                 # Check the responses if we are in strict mode.
                 if self.strict:
@@ -650,7 +655,7 @@ class HalCore(QtCore.QObject):
                 # Check for "closeEvent" message from the main window.
                 if cur_message.isType("close event") and (cur_message.getSourceName() == "hal"):
                     self.cleanUp()
-                    interval = -2
+                    return
 
                 else:
                     # Check for "sync" message, these don't actually get sent.
