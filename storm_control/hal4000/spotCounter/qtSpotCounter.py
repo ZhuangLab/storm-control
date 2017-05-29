@@ -67,7 +67,7 @@ class FrameAnalysis(QtCore.QObject):
 class SpotCounter(QtCore.QObject):
     imageProcessed = QtCore.pyqtSignal(object)
 
-    def __init__(self, **kwds):
+    def __init__(self, free_threads = None, **kwds):
         super().__init__(**kwds)
 
         self.dropped = 0
@@ -76,11 +76,9 @@ class SpotCounter(QtCore.QObject):
         self.total = 0
 
         #
-        # Leave at least 4 threads free for HAL.
+        # Leave at least free_threads free for other HAL modules to use.
         #
-        # FIXME: Is this a reasonable number?
-        #
-        self.max_thread_count = self.threadpool.maxThreadCount() - 4
+        self.max_thread_count = self.threadpool.maxThreadCount() - free_threads
 
         # Initialize object finder.
         lmmObjectFinder.initialize()
