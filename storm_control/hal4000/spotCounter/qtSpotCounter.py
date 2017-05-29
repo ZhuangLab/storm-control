@@ -1,196 +1,126 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Qt Thread for counting the number of spots 
-# in a frame and graphing the results.
-#
-# Hazen 09/13
-#
+#!/usr/bin/env python
+"""
+Analyze frames using QRunnables and QThreadPool.
+
+FIXME: Is qtSpotCounter.py really the best name for this file?
+
+Hazen 05/17
+"""
 
 from PyQt5 import QtCore
 
+import storm_control.hal4000.halLib.halModule as halModule
+import storm_control.hal4000.spotCounter.lmmObjectFinder as lmmObjectFinder
 
-import storm_control.hal4000.objectFinder.lmmObjectFinder as lmmObjectFinder
 
+class AnalysisWorker(QtCore.QRunnable):
+    """
+    Runnable for performing image analysis.
+    """
+    def __init__(self, frame_analysis = None, **kwds):
+        super().__init__(**kwds)
+        self.frame_analysis = frame_analysis
 
-## QObjectCounterThread
-#
-# The thread class, which does all the actual object counting.
-#
-class QObjectCounterThread(QtCore.QThread):
-    imageProcessed = QtCore.pyqtSignal(int, object, int, object, object, int)
-
-    ## __init__
-    #
-    # @param parameters A parameters object.
-    # @param index The index of the thread (an integer).
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, parameters, index, parent = None):
-        QtCore.QThread.__init__(self, parent)
-
-        self.frame = False
-        self.mutex = QtCore.QMutex()
-        self.running = True
-        self.thread_index = index
-        self.threshold = parameters.get("threshold")
-
-    ## newImage
-    #
-    # A new image for this thread to analyze.
-    #
-    # @param frame A frame object.
-    #
-    def newImage(self, frame):
-        self.mutex.lock()
-        self.frame = frame
-        self.mutex.unlock()
-
-    ## newParameters
-    #
-    # @param parameters A parameters object.
-    #
-    def newParameters(self, parameters):
-        self.mutex.lock()
-        self.threshold = parameters.get("threshold")
-        self.mutex.unlock()
-
-    ## run
-    #
-    # The thread loop.
-    #
     def run(self):
-         while (self.running):
-             self.mutex.lock()
-             if self.frame:
-                 [x_locs, y_locs, spots] = lmmObjectFinder.findObjects(self.frame.getData(),
-                                                                       self.frame.image_x,
-                                                                       self.frame.image_y,
-                                                                       self.threshold)
-                 self.imageProcessed.emit(self.thread_index,
-                                          self.frame.which_camera,
-                                          self.frame.number,
-                                          x_locs,
-                                          y_locs,
-                                          spots)
-                 self.frame = False
-                     
-             self.mutex.unlock()
-             self.usleep(50)
+        self.frame_analysis.analyzeImage()
 
-    ## stopThread
-    #
-    # Tells the thread loop to stop running.
-    #
-    def stopThread(self):
-        self.running = False
+    
+class FrameAnalysis(QtCore.QObject):
+    """
+    This class:
+     1. Stores the frame to analyze.
+     2. Does the analysis (with AnalysisWorker).
+     3. Stores the results of the analysis.
+     4. Signals when the analysis is done.
+    """
+    analysisDone = QtCore.pyqtSignal(object)
+    
+    def __init__(self,
+                 camera_name = None,
+                 frame = None,
+                 threshold = None,
+                 **kwds):
+        super().__init__(**kwds)
+        self.camera_name = camera_name
+        self.frame = frame
+        self.locs_count = 0
+        self.threshold = threshold
+        self.x_locs = None
+        self.y_locs = None
 
+    def analyzeImage(self):
+        [self.x_locs, self.y_locs, self.locs_count] = lmmObjectFinder.findObjects(self.frame,
+                                                                                  self.threshold)
+        self.analysisDone.emit(self)
 
-## QObjectCounter
-#
-# The front end.
-#
-class QObjectCounter(QtCore.QObject):
-    imageProcessed = QtCore.pyqtSignal(object, int, object, object, int)
+    def getCameraName(self):
+        return self.camera_name
+    
+    def getCounts(self):
+        return self.locs_count
 
-    ## __init__
-    #
-    # @param parameters A parameters object.
-    # @param number_threads The number of object finding threads to start.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    def __init__(self, parameters, number_threads = 16, parent = None):
-        QtCore.QObject.__init__(self, parent)
+    def getLocalizations(self):
+        return [self.x_locs[:self.locs_count],
+                self.y_locs[:self.locs_count]]
+        
+
+class SpotCounter(QtCore.QObject):
+    imageProcessed = QtCore.pyqtSignal(object)
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
 
         self.dropped = 0
-        self.number_threads = number_threads
+        self.in_process = []
+        self.threadpool = halModule.threadpool
         self.total = 0
+
+        #
+        # Leave at least 4 threads free for HAL.
+        #
+        # FIXME: Is this a reasonable number?
+        #
+        self.max_thread_count = self.threadpool.maxThreadCount() - 4
 
         # Initialize object finder.
         lmmObjectFinder.initialize()
 
-        # Initialize threads.
-        self.idle = []
-        self.threads = []
-        for i in range(self.number_threads):
-            self.threads.append(QObjectCounterThread(parameters, i))
-            self.idle.append(True)
-            
-        for thread in self.threads:
-            thread.start(QtCore.QThread.NormalPriority)
-            thread.imageProcessed.connect(self.returnResults)
-
-    ## newImageToCount
-    #
-    # Assigns a new image to be analyzed to the first available thread. If
-    # no threads are available then the image is considered to have been dropped.
-    #
-    # @param frame A frame object.
-    #
-    def newImageToCount(self, frame):
-        self.total += 1
-        if frame:
-            i = 0
-            not_found = True
-            while (i < self.number_threads) and not_found:
-                if self.idle[i]:
-                    self.threads[i].newImage(frame)
-                    self.idle[i] = False
-                    not_found = False
-                i += 1
-            if not_found:
-                self.dropped += 1
-
-    ## newParameters
-    #
-    # @param parameters A parameters object.
-    #
-    def newParameters(self, parameters):
-        for thread in self.threads:
-            thread.newParameters(parameters)
-
-    ## returnResults
-    #
-    # When a thread completes it emits a image processed signal, which this gets. This then
-    # marks the thread as not busy and emits a imageProcessed signal.
-    #
-    # @param thread_index The index of the thread that did the processing.
-    # @param which_camera The camera that the image that was processed came from.
-    # @param frame_number The frame number of the image that was processed.
-    # @param x_locs A numpy array of localization x positions.
-    # @param y_locs A numpy array of localization y positions.
-    # @param spots The number of spots in the x_locs, y_locs arrays.
-    #
-    def returnResults(self, thread_index, which_camera, frame_number, x_locs, y_locs, spots):
-        self.idle[thread_index] = True
-        self.imageProcessed.emit(which_camera,
-                                 frame_number,
-                                 x_locs,
-                                 y_locs,
-                                 spots)
-
-    ## shutDown
-    #
-    # Call the cleanup function of the object finder C code.
-    # Stop all the threads.
-    # Print how many images were analyzed and how many were dropped.
-    #
-    def shutDown(self):
+    def cleanUp(self):
+        
         # Object finder cleanup.
         lmmObjectFinder.cleanup()
 
-        # Thread cleanup.
-        for thread in self.threads:
-            thread.stopThread()
-            thread.wait()
+        # Print statistics.
         print("Spot counter dropped", self.dropped, "images out of", self.total, "total images")
 
+    def handleAnalysisDone(self, frame_analysis):
+        self.in_process.remove(frame_analysis)
+        frame_analysis.analysisDone.disconnect(self.handleAnalysisDone)
+        self.imageProcessed.emit(frame_analysis)
+        
+    def newFrameToAnalyze(self, camera_name, frame, threshold):
+        self.total += 1
 
+        # Check if there is a thread available to analyze the image.
+        if (self.threadpool.activeThreadCount() < self.max_thread_count):
+
+            # Create analysis object.
+            frame_analysis = FrameAnalysis(camera_name = camera_name,
+                                           frame = frame,
+                                           threshold = threshold)
+            frame_analysis.analysisDone.connect(self.handleAnalysisDone)
+            self.in_process.append(frame_analysis)
+
+            # Start analysis.
+            self.threadpool.start(AnalysisWorker(frame_analysis = frame_analysis))
+
+        else:
+            self.dropped += 1
+            
 #
 # The MIT License
 #
-# Copyright (c) 2013 Zhuang Lab, Harvard University
+# Copyright (c) 2017 Zhuang Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
