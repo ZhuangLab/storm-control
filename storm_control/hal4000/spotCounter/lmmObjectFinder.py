@@ -1,14 +1,12 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Python interface to the LMMoment object finder. This object finder
-# works by indentifying local maxima, then computing their first moment.
-#
-# Note that the maximum number of objects found per image is limited to 1000.
-#
-# Hazen 09/13
-#
+#!/usr/bin/env python
+"""
+Python interface to the LMMoment object finder. This object finder
+works by indentifying local maxima, then computing their first moment.
+
+Note that the maximum number of objects found per image is limited to 1000.
+
+Hazen 09/13
+"""
 
 import ctypes
 import numpy
@@ -20,14 +18,12 @@ lmmoment = False
 
 max_locs = 1000
 
-## cleanup
 #
 # Called at program shutdown to free arrays allocated in C.
 #
-def cleanup():
+def cleanUp():
     lmmoment.cleanup()
 
-## initialize
 #
 # Called at program start up to allocate array and perform other
 # initialization in C.
@@ -57,34 +53,29 @@ def initialize():
                                              ctypes.c_void_p]
     lmmoment.initialize()
 
-## findObjects
-#
-# Find the objects in the image.
-#
-# @param np_image The image as a numpy.uint16 array.
-# @param image_x The size of the image in x in pixels.
-# @param image_y The size of the image in y in pixels.
-# @param threshold The minimum height difference between the local maxima and the pixels on the edge of the peak.
-#
-# @return [[peak x positions], [peak y positions], number of peaks].
-# 
-def findObjects(np_image, image_x, image_y, threshold):
-        x = numpy.zeros((max_locs), dtype = numpy.float32)
-        y = numpy.zeros((max_locs), dtype = numpy.float32)
-        n = ctypes.c_int(max_locs)
-        lmmoment.numberAndLocObjects(numpy.ascontiguousarray(np_image, dtype = numpy.uint16),
-                                     image_y,
-                                     image_x,
-                                     threshold,
-                                     x,
-                                     y,
-                                     ctypes.byref(n))
-        return [x, y, n.value]
+
+def findObjects(frame, threshold):
+    """
+    Find the objects in the image.
+    """
+    x = numpy.zeros((max_locs), dtype = numpy.float32)
+    y = numpy.zeros((max_locs), dtype = numpy.float32)
+    n = ctypes.c_int(max_locs)
+    lmmoment.numberAndLocObjects(numpy.ascontiguousarray(frame.getData(), dtype = numpy.uint16),
+                                 frame.image_y,
+                                 frame.image_x,
+                                 threshold,
+                                 x,
+                                 y,
+                                 ctypes.byref(n))
+    return [x, y, n.value]
 
 
 # testing
 if (__name__ == "__main__"):
 
+    import storm_control.hal4000.camera.frame as frame
+    
     import numpy
     import time
 
@@ -92,12 +83,17 @@ if (__name__ == "__main__"):
 
     image_x = 1024
     image_y = 1024
-    image = numpy.ones((image_x, image_y), dtype = numpy.uint16)
+
+    a_frame = frame.Frame(numpy.ones((image_x, image_y), dtype = numpy.uint16),
+                          0,
+                          image_x,
+                          image_y,
+                          "na")
 
     repeats = 100
     start = time.time()
     for i in range(repeats):
-        [x, y, n] = findObjects(image, image_x, image_y, 100)
+        [x, y, n] = findObjects(a_frame, 100)
         if ((i % 10) == 0):
             print(i, n)
     end = time.time()
