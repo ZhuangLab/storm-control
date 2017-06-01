@@ -652,6 +652,14 @@ class Film(halModule.HalModule):
         self.sendMessage(halMessage.HalMessage(sync = True,
                                                m_type = "start film",
                                                data = {"film settings" : self.film_settings}))
+        
+        # Force sync.
+        #
+        # Why? If we don't do this some modules will add a 'wait for'
+        # response, then send a 'ready to film' message before this
+        # module ever gets all the responses to 'start film'.
+        #
+        self.sendMessage(halMessage.SyncMessage(self))        
 
     def stopCameras(self):
         
