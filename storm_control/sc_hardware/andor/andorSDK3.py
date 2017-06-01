@@ -416,6 +416,7 @@ class SDK3Camera(object):
         if pname is "ExposureTime":
             setFloat(self.camera_handle, pname, pvalue)
             setFloat(self.camera_handle, "FrameRate", 1e5) # Force frame rate to highest value possible
+            
         elif pname is "FrameRate":
             print("WARNING: Setting FrameRate is not supported")
             setFloat(self.camera_handle, pname, pvalue)
@@ -423,7 +424,6 @@ class SDK3Camera(object):
             raise AndorException("FrameRate is not supported") # Raise a hardware error
 
         else:
-
             if self.isEnumerated(pname):
                 ptype = "enum"
 

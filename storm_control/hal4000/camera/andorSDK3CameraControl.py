@@ -28,6 +28,7 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
         """
         kwds["config"] = config
         super().__init__(**kwds)
+        self.is_master = is_master
         
         # The camera functionality.
         self.camera_functionality = cameraFunctionality.CameraFunctionality(camera_name = self.camera_name,
@@ -59,10 +60,17 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
                             "SensorWidth" : "int",
                             "SimplePreAmpGainControl" : "enum",
                             "TemperatureControl" : "enum",
-                            "TemperatureStatus" : "enum"}
+                            "TemperatureStatus" : "enum",
+                            "TriggerMode" : "enum"}
         
         self.camera.setProperty("CycleMode", self.andor_props["CycleMode"], "Continuous")
-        
+
+        # Configure master/slave.
+        if self.is_master:
+            self.camera.setProperty("TriggerMode", self.andor_props["TriggerMode"], "Internal")
+        else:
+            self.camera.setProperty("TriggerMode", self.andor_props["TriggerMode"], "External")
+
         # Add Andor SDK3 specific parameters.
         #
         # FIXME: These parameter have different names but the same meaning as the
@@ -188,6 +196,9 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
                 self.stopCamera()
 
             for pname in to_change:
+                if (pname == "ExposureTime") and not self.is_master:
+                    continue
+                print(">", pname, parameters.get(pname))
                 self.camera.setProperty(pname, self.andor_props[pname], parameters.get(pname))
                 self.parameters.setv(pname, parameters.get(pname))
 
