@@ -46,6 +46,7 @@ class MarzhauserStageFunctionality(stageModule.StageFunctionality):
         Query the stage for its current position.
         """
         self.mustRun(task = self.stage.position)
+        #pass
 
     def wait(self):
         self.updateTimer.stop()
@@ -76,9 +77,9 @@ class MarzhauserPollingThread(QtCore.QThread):
         self.running = True
         while(self.running):
             self.device_mutex.lock()
-            resp = self.stage.readline()
+            responses = self.stage.readline()
             self.device_mutex.unlock()
-
+            
             # Parse response. The expectation is that it is one of two things:
             #
             # (1) A status string like "#@--" that indicates that the stage
@@ -87,27 +88,33 @@ class MarzhauserPollingThread(QtCore.QThread):
             # (2) The current position "X.XX Y.YY ..".
             #
 
-            # Check for 'statusaxis' response form.
-            if (len(resp) == 5):
-                if (resp[:2] == "@@"):
-                    print(">mpt not moving")
-                    self.is_moving_signal.emit(False)
-                else:
-                    print(">mpt moving")
-                    self.is_moving_signal.emit(True)
+            for resp in responses.split("\r"):
 
-            # Otherwise try and parse as a position.
-            else:
-                resp = resp.split(" ")
-                if (len(resp) >= 2):
-                    are_floats = True
-                    try:
-                        [sx, sy] = map(float, resp[:2])
-                    except ValueError:
-                        are_floats = False
-                    if are_floats:
-                        self.stage_position_signal.emit({"x" : 1000.0 * sx,
-                                                         "y" : 1000.0 * sy})
+                # The response was no response.
+                if (len(resp) == 0):
+                    continue
+                
+                # Check for 'statusaxis' response form.
+                elif (len(resp) == 5):
+                    if (resp[:2] == "@@"):
+                        print("> mpt not moving")
+                        self.is_moving_signal.emit(False)
+                    else:
+                        print("> mpt moving")
+                        self.is_moving_signal.emit(True)
+
+                # Otherwise try and parse as a position.
+                else:
+                    resp = resp.split(" ")
+                    if (len(resp) >= 2):
+                        are_floats = True
+                        try:
+                            [sx, sy] = map(float, resp[:2])
+                        except ValueError:
+                            are_floats = False
+                        if are_floats:
+                            self.stage_position_signal.emit({"x" : 1000.0 * sx,
+                                                             "y" : 1000.0 * sy})
 
             # Sleep for ~ x milliseconds.
             self.msleep(self.sleep_time)
