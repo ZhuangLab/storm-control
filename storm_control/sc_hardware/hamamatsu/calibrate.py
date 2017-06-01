@@ -32,14 +32,16 @@ if False:
     hcam.setPropertyValue("subarray_vsize", cam_y)
 
 if True:
-    cam_x = 511
+    cam_x = 512
     cam_y = 512
-    hcam.setPropertyValue("subarray_hpos", 0)
-    hcam.setPropertyValue("subarray_vpos", 0)
+    hcam.setPropertyValue("subarray_hpos", 768)
+    hcam.setPropertyValue("subarray_vpos", 768)
     hcam.setPropertyValue("subarray_hsize", cam_x)
     hcam.setPropertyValue("subarray_vsize", cam_y)
 
 print("integration time (seconds):", 1.0/hcam.getPropertyValue("internal_frame_rate")[0])
+print("width", hcam.getPropertyValue("subarray_hsize"))
+print("height", hcam.getPropertyValue("subarray_vsize"))
 
 # Create numpy arrays.
 mean = numpy.zeros((cam_x, cam_y), dtype = numpy.int64)
