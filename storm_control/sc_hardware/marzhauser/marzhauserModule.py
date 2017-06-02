@@ -97,10 +97,8 @@ class MarzhauserPollingThread(QtCore.QThread):
                 # Check for 'statusaxis' response form.
                 elif (len(resp) == 5):
                     if (resp[:2] == "@@"):
-                        print("> mpt not moving")
                         self.is_moving_signal.emit(False)
                     else:
-                        print("> mpt moving")
                         self.is_moving_signal.emit(True)
 
                 # Otherwise try and parse as a position.
@@ -113,8 +111,8 @@ class MarzhauserPollingThread(QtCore.QThread):
                         except ValueError:
                             are_floats = False
                         if are_floats:
-                            self.stage_position_signal.emit({"x" : 1000.0 * sx,
-                                                             "y" : 1000.0 * sy})
+                            self.stage_position_signal.emit({"x" : sx * self.stage.unit_to_um,
+                                                             "y" : sy * self.stage.unit_to_um})
 
             # Sleep for ~ x milliseconds.
             self.msleep(self.sleep_time)
