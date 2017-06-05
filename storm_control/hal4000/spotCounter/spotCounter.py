@@ -19,7 +19,7 @@ import storm_control.hal4000.halLib.halDialog as halDialog
 import storm_control.hal4000.halLib.halModule as halModule
 
 # The module that actually does the analysis.
-import storm_control.hal4000.qtWidgets.qtSpotCounter as qtSpotCounter
+import storm_control.hal4000.spotCounter.findSpots as findSpots
 
 # UI.
 import storm_control.hal4000.qtdesigner.spotcounter_ui as spotcounterUi
@@ -29,24 +29,72 @@ class Analyzer(QtCore.QObject):
     """
     Manages the analysis of a single camera feed.
     """
-    def __init__(self, camera_fn = None, pixel_size = None, shutters_info = None):
+    def __init__(self,
+                 camera_fn = None,
+                 parameters = None,
+                 pixel_size = None,
+                 shutters_info = None,
+                 spot_counter = None):
         super().__init__(**kwds)
         self.camera_fn = camera_fn
-        self.pixel_size = pixel_size
-        self.shutters_info = shutters_info
+        self.filming = False
+        self.spot_counter = spot_counter
 
+        self.spot_graph = displaySpots.SpotGraph(shutters_info = self.shutters_info)
+        self.spot_picture = displaySpots.SpotPicture(pixel_size = pixel_size,
+                                                     scale_bar_len = parameters.get("scale_bar_len"),
+                                                     shutters_info = shutters_info,
+                                                     x_pixels = parameters.get("x_pixels"),
+                                                     y_pixels = parameters.get("y_pixels"))
+
+        self.camera_fn.newFrame.connect(self.handleNewFrame)
+        self.spot_counter.imageProcessed.connect(self.handleProcessedImage)
+
+    def cleanUp(self):
+        self.camera_fn.newFrame.disconnect(self.handleNewFrame)
+        self.spot_counter.imageProcessed.disconnect(self.handleProcessedImage)
+        
     def getCameraName(self):
         return self.camera_fn.getCameraName()
+
+    def getCounts(self):
+        self.spot_graph.getCounts()
+
+    def handleNewFrame(self, frame):
+        self.spot_counter.newFrameToAnalyze(self,
+                                            self.camera_fn.getCameraName(),
+                                            frame,
+                                            self.parameters.get("threshold"))
+        
+    def handleProcessedImage(self, frame_analysis):
+        if (frame_analysis.getCameraName() == self.camera_fn.getCameraName()):
+
+            # Always update the spot count graph.
+            self.spot_graph(frame_analysis.getFrameNumber(),
+                            frame_analysis.getCounts())
+            
+            # Only update the image if we are filming.
+            if self.filming:
+                self.spot_picture(frame_analysis.getLocalizations)
+
+    def savePicture(self, basename):
+        self.spot_picture.savePicture(basename, self.camera_fn.getParameter("extension"))
+
+    def setMaxSpots(self, max_spots):
+        self.spot_graph.setMaxSpots(max_spots)
         
     def setShuttersInfo(self, shutters_info):
-        self.shutters_info = shutters_info
+        self.spot_graph.setShuttersInfo(shutters_info)
+        self.spot_picture.setShuttersInfo(shutters_info)
 
     def startFilm(self, film_settings):
-        pass
+        self.filming = True
+        self.spot_graph.clearGraph()
+        self.spot_picture.clearPicture()
 
     def stopFilm(self):
-        pass
-    
+        self.filming = False
+
 
 class SpotCounterView(halDialog.HalDialog):
     """
@@ -54,13 +102,14 @@ class SpotCounterView(halDialog.HalDialog):
     """
     def __init__(self, configuration = None, **kwds):
         super().__init__(**kwds)
+        self.analyzers = []
 
         # UI setup.
         self.ui = illuminationUi.Ui_Dialog()
         self.ui.setupUi(self)
 
     def newAnalyzers(self, analyzers):
-        pass
+        self.analyzers = analyzers
 
 
 class SpotCounter(halModule.HalModule):
@@ -68,11 +117,15 @@ class SpotCounter(halModule.HalModule):
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
         self.analyzers = []
+        self.basename = None
+        self.feed_names = []
         self.number_fn_requested = 0
         self.pixel_size = 0.1
         self.shutters_info = None
 
         configuration = module_params.get("configuration")
+
+        self.spot_finder = findSpots.SpotCounter(configuration.get("free_threads"))
 
         self.view = SpotCounterView(module_name = self.module_name,
                                     configuration = configuration)
@@ -81,30 +134,41 @@ class SpotCounter(halModule.HalModule):
 
         # Spot counter parameters.
         self.parameters = params.StormXMLObject()
+        
+#        self.parameters.add(params.ParameterRangeInt(description = "Maximum counts for the spotcounter graph",
+#                                                     name = "max_spots",
+#                                                     value = 500,
+#                                                     min_value = 0,
+#                                                     max_value = 1000,
+#                                                     is_mutable = False,
+#                                                     is_saved = False))
 
-        spotc_params.add("cell_size", params.ParameterRangeInt("Cell size for background subtraction",
-                                                               "cell_size", 32, 8, 128,
-                                                               is_mutable = False,
-                                                               is_saved = False))
+#        self.parameters.add(params.ParameterRangeInt(description = "Minimum counts for the spotcounter graph",
+#                                                     name = "min_spots",
+#                                                     value = 0,
+#                                                     min_value = 0,
+#                                                     max_value = 1000,
+#                                                     is_mutable = False,
+#                                                     is_saved = False))
         
-        spotc_params.add("max_spots", params.ParameterRangeInt("Maximum counts for the spotcounter graph",
-                                                               "max_spots", 500, 0, 1000,
-                                                               is_mutable = False,
-                                                               is_saved = False))
+        self.parameters.add(params.ParameterRangeFloat(description = "Scale bar length in nm",
+                                                       name = "scale_bar_len",
+                                                       value = 1000,
+                                                       min_value = 100,
+                                                       max_value = 10000))
         
-        spotc_params.add("min_spots", params.ParameterRangeInt("Minimum counts for the spotcounter graph",
-                                                               "min_spots", 0, 0, 1000,
-                                                               is_mutable = False,
-                                                               is_saved = False))
-        
-        spotc_params.add("scale_bar_len", params.ParameterRangeFloat("Scale bar length in nm",
-                                                                     "scale_bar_len", 1000, 100, 10000))
-        
-        spotc_params.add("threshold", params.ParameterRangeInt("Spot detection threshold (camera counts)",
-                                                               "threshold", 250, 1, 10000))
-        
+        self.parameters.add(params.ParameterRangeInt(description = "Spot detection threshold (camera counts)",
+                                                     name = "threshold",
+                                                     value = 250,
+                                                     min_value = 1,
+                                                     max_value = 10000))
 
+    def cleanUp(self, qt_settings):
+        self.spot_finder.cleanUp()
+        self.view.cleanUp(qt_settings)
+        
     def handleResponses(self, message):
+        
         if message.isType("get functionality"):
             assert (len(message.getResponses()) == 1)
             for response in message.getResponses():
@@ -113,6 +177,7 @@ class SpotCounter(halModule.HalModule):
                 # Only analyze data from a camera.
                 if fn.isCamera():
                     self.analyzers.append(Analyzer(camera_fn = fn,
+                                                   parameters = self.parameters,
                                                    pixel_size = self.pixel_size,
                                                    shutters_info = self.shutters_info))
 
@@ -123,13 +188,16 @@ class SpotCounter(halModule.HalModule):
                 
     def processMessage(self, message):
 
-        if message.isType("configuration"):
+        if message.isType("changing parameters"):
+            if not message.getData()["changing"]:
+                self.newAnalyzers()
+            
+        elif message.isType("configuration"):
+
             if message.sourceIs("feeds"):
-                self.analyzers = []
+                self.feed_names = []
                 for name in message.getData()["properties"]["feed names"]:
-                    self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
-                                                           data = {"name" : name}))
-                    self.number_fn_requested += 1
+                    self.feed_names.append(name)
 
             elif message.sourceIs("illumination"):
                 self.shutters_info = message.getData()["properties"]["shutters info"]
@@ -140,25 +208,73 @@ class SpotCounter(halModule.HalModule):
                 self.pixel_size = message.getData()["properties"]["pixel_size"]
 
         elif message.isType("configure1"):
+
+            # Broadcast initial parameters.
+            self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
+                                                   data = {"parameters" : self.parameters}))
+
             self.sendMessage(halMessage.HalMessage(m_type = "add to menu",
                                                    data = {"item name" : "Spot Counter",
                                                            "item data" : "spot counter"}))
 
+        elif message.isType("new parameters"):
+            #
+            # Just record the new parameters here. Then when we get a 'configuration' message
+            # from feeds.feeds we'll get the names of the new feeds. And finally when we get
+            # the 'changing parameters' message we'll update the analyzers.
+            #
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"old parameters" : self.parameters.copy()}))
+            self.parameters = message.getData()["parameters"].get(self.module_name)
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"new parameters" : self.parameters}))
+            
         elif message.isType("show"):
             if (message.getData()["show"] == "spot counter"):
                 self.view.show()
 
         elif message.isType("start"):
+            self.newAnalyzers()
             if message.getData()["show_gui"]:
                 self.view.showIfVisible()
 
         elif message.isType("start film"):
+            film_settings = message.getData()["film settings"]
+            if film_settings.isSaved():
+                self.basename = film_settings.getBasename()
+
             for analyzer in self.analyzers:
-                analyzer.startFilm(message.getData()["film settings"])
+                analyzer.startFilm(film_settings)
 
         elif message.isType("stop film"):
+            total_spots = 0
             for analyzer in self.analyzers:
                 analyzer.stopFilm()
+                total_spots += analyzer.getCounts()
+                if self.basename is not None:
+                    analyzer.savePicture(self.basename)
+
+            self.basename = None
+            
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.parameters.copy()}))
+
+            counts_param = params.ParameterInt(name = "spot_counts",
+                                               value = total_spots)
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"acquisition" : [counts_param]}))
+
+    def newAnalyzers(self):
+        #
+        # Create new analyzers after a parameter change, or when HAL
+        # starts. This is done by requesting functionalities for all
+        # the available feeds.
+        #
+        self.analyzers = []
+        for name in self.feed_names:
+            self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
+                                                   data = {"name" : name}))
+            self.number_fn_requested += 1
 
 #
 # The MIT License

@@ -2,8 +2,6 @@
 """
 Analyze frames using QRunnables and QThreadPool.
 
-FIXME: Is qtSpotCounter.py really the best name for this file?
-
 Hazen 05/17
 """
 
@@ -59,6 +57,9 @@ class FrameAnalysis(QtCore.QObject):
     def getCounts(self):
         return self.locs_count
 
+    def getFrameNumber(self):
+        return self.frame.frame_number
+        
     def getLocalizations(self):
         return [self.x_locs[:self.locs_count],
                 self.y_locs[:self.locs_count]]
