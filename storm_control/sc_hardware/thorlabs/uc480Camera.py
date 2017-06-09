@@ -102,6 +102,7 @@ def fitAFunctionLS(data, params, fn):
     """
     Does least squares fitting of a function.
     """
+    start_time = time.time()
     result = params
     errorfunction = lambda p: numpy.ravel(fn(*p)(*numpy.indices(data.shape)) - data)
     good = True
@@ -110,6 +111,13 @@ def fitAFunctionLS(data, params, fn):
         hdebug.logText("Fitting problem: " + mesg)
         #print "Fitting problem:", mesg
         good = False
+    end_time = time.time()
+    if (infodict["nfev"] > 70) or ((end_time - start_time) > 0.1):
+        print("> QPD-480 Slow fitting detected")
+        print(">", infodict["nfev"], time.time() - start_time)
+        print(">", params)
+        print(">", result)
+        print()
     return [result, good]
 
 def loadDLL(dll_name):
@@ -356,6 +364,7 @@ class CameraQPD(object):
         self.fit_mutex = fit_mutex
         self.fit_size = int(1.5 * sigma)
         self.image = None
+        self.last_power = 0
         self.offset_file = offset_file
         self.sigma = sigma
         self.x_off1 = 0.0
@@ -384,7 +393,7 @@ class CameraQPD(object):
 
         # Run at maximum speed.
         self.cam.setPixelClock()
-        self.cam.setFrameRate()
+        self.cam.setFrameRate(verbose = True)
 
         # Some derived parameters
         self.half_x = int(self.x_width/2)
@@ -498,13 +507,26 @@ class CameraQPD(object):
             power = numpy.max(data)
         
         if (power < 25):
+            #
             # This hack is because if you bombard the USB camera with 
             # update requests too frequently it will freeze. Or so I
             # believe, not sure if this is actually true.
             #
             # It still seems to freeze?
-            time.sleep(0.02)
+            #
+            time.sleep(0.05)
             return [0, 0, 0]
+
+        if (power == self.last_power):
+            #
+            # Or for reasons unclear it will keep returning the same
+            # frame?
+            #        
+            print("> UC480-QPD: Duplicate image detected!")
+            time.sleep(0.1)
+            return [0, 0, 0]
+
+        self.last_power = power
 
         # Determine offset by fitting gaussians to the two beam spots.
         # In the event that only beam spot can be fit then this will
