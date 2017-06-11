@@ -244,7 +244,7 @@ class ParametersEditorDialog(QtWidgets.QDialog):
         self.ui.okButton.clicked.connect(self.handleOk)
         self.ui.updateButton.clicked.connect(self.handleUpdate)
 
-        # Restore previous tree stage, if any.
+        # Restore previous tree state, if any.
         self.reExpand()
         
     def closeEvent(self, event):
