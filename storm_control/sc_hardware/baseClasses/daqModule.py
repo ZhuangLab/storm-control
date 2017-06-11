@@ -141,6 +141,10 @@ class DaqModule(hardwareModule.HardwareModule):
             self.filmTiming(message)
             
         elif message.isType("configure1"):
+            # Let film.film know that it needs to wait for us
+            # to get ready before starting the cameras.
+            self.sendMessage(halMessage.HalMessage(m_type = "wait for",
+                                                   data = {"module names" : ["film"]}))
             self.configure1(message)
 
         elif message.isType("daq waveforms"):
@@ -157,9 +161,11 @@ class DaqModule(hardwareModule.HardwareModule):
 
     def startFilm(self, message):
         self.run_shutters = message.getData()["film settings"].runShutters()
-        if self.run_shutters:
-            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"wait for" : self.module_name}))
+
+        # Sub-classes must provide a "ready to film" response when they
+        # are ready to film otherwise film.film will hang.
+        if not self.run_shutters:
+            self.sendMessage(halMessage.HalMessage(m_type = "ready to film"))
 
     def stopFilm(self, message):
         self.oversampling = 0

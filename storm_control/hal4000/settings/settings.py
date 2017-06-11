@@ -24,6 +24,7 @@ be expecting to work with a ParameterRangeInt.
 
 Hazen 03/17
 """
+import copy
 import os
 
 from PyQt5 import QtWidgets
@@ -43,6 +44,7 @@ class Settings(halModule.HalModule):
         super().__init__(**kwds)
         self.locked_out = False
         self.wait_for = []
+        self.waiting_on = []
 
         self.view = parametersBox.ParametersBox(module_params = module_params,
                                                 qt_settings = qt_settings)
@@ -101,8 +103,7 @@ class Settings(halModule.HalModule):
                                            "resp" : {"new parameters" : [False, params.StormXMLObject],
                                                      "old parameters" : [False, params.StormXMLObject]}})
 
-        # This comes from other modules that added a "wait for" request
-        # to the 'updated parameters' message.
+        # This comes from other modules that requested "wait for" at startup.
         halMessage.addMessage("parameters changed",
                               validator = {"data" : None, "resp" : None})
 
@@ -118,14 +119,11 @@ class Settings(halModule.HalModule):
         # This is sent immediately after all of the modules respond to
         # the 'new parameters' message.
         #
-        # If a module is not immediately ready to go upon receipt of this
-        # message, then it should add a 'wait for' response. For example
-        # after a parameter change some modules will need information /
-        # functionalities from other modules.
+        # The parameter change cycle won't actually complete till all the
+        # modules that requested a wait send the "parameters changed" message.
         #
         halMessage.addMessage("updated parameters",
-                              validator = {"data" : {"parameters" : [True, params.StormXMLObject]},
-                                           "resp" : {"wait for" : [False, str]}})
+                              validator = {"data" : {"parameters" : [True, params.StormXMLObject]}})
 
     def handleError(self, message, m_error):
 
@@ -220,17 +218,16 @@ class Settings(halModule.HalModule):
                     
                 # Let modules, such as feeds.feeds known that all of the modules
                 # have updated their parameters.
+                self.waiting_on = copy.copy(self.wait_for)
+                print(">", self.waiting_on)
                 self.sendMessage(halMessage.HalMessage(m_type = "updated parameters",
                                                        data = {"parameters" : self.view.getCurrentParameters().copy()}))
                 
         elif message.isType("updated parameters"):
 
             # No waits requested, so the parameter change is complete
-            if (len(message.getResponses()) == 0):
+            if (len(self.waiting_on) == 0):
                 self.updateComplete()
-            else:
-                for response in message.getResponses():
-                    self.wait_for.append(response.getData()["wait for"])
 
     def processMessage(self, message):
 
@@ -281,10 +278,10 @@ class Settings(halModule.HalModule):
             self.view.newParametersFile(data["filename"], is_default)
 
         elif message.isType("parameters changed"):
-            self.wait_for.remove(message.getSourceName())
+            self.waiting_on.remove(message.getSourceName())
 
             # All modules have finished changing parameters.
-            if (len(self.wait_for) == 0):
+            if (len(self.waiting_on) == 0):
                 self.updateComplete()
 
         elif message.isType("set parameters"):
@@ -301,6 +298,10 @@ class Settings(halModule.HalModule):
         elif message.isType("stop film"):
             self.view.enableUI(True)
 
+        elif message.isType("wait for"):
+            if self.module_name in message.getData()["module names"]:
+                self.wait_for.append(message.getSourceName())
+            
     def setLockout(self, state):
         self.locked_out = state
         self.sendMessage(halMessage.HalMessage(m_type = "changing parameters",

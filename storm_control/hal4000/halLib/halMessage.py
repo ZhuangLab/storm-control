@@ -98,6 +98,7 @@ def initializeMessages():
                     "resp" : None},
         'sync' :  {"data" : None, "resp" : None},
         'test' :  {"data" : None, "resp" : None},
+        'wait for' : {"data" : {"module names" : [True, list]}, "resp" : None}
     }
 
 def validate(validator, data, base_string):

@@ -60,9 +60,7 @@ Important message sequences:
        master cameras are stopped first, then slave cameras.
        
     c. 'start film' - Modules that have special behaviour during
-       filming should prepare to start. Also modules that need
-       additional time to prepare should add a "wait for"
-       response to this message.
+       filming should prepare to start.
 
     d. 'ready to film' - This comes from the modules that
        requested a wait before starting the film.
@@ -93,13 +91,20 @@ Other message details:
     message is completely processed & finalized.
 
 
-Popular message types are:
+Common message types are:
 
 (1) 'configuration' - The properties of a module have changed
     in a way that other modules may be interested in.
 
 (2) 'get functionality' - A module needs something from another
     module, see the explanation of Functionalities below.
+
+(3) 'wait for' - Sent at startup by modules to indicate that
+    they will not be ready once they have a processed a message,
+    typically because they will need information from other
+    modules. A daq module is an example, when it get "start film"
+    it still needs all the waveforms before it is actually
+    ready for filming.
 
 
 Functionalities - In addition to sending messages to each other

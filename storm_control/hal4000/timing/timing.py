@@ -111,6 +111,11 @@ class Timing(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.parameters}))
 
+            # Let film.film know that it needs to wait for us
+            # to get ready before starting the cameras.
+            self.sendMessage(halMessage.HalMessage(m_type = "wait for",
+                                                   data = {"module names" : ["film"]}))
+
         elif message.isType("new parameters"):
             #
             # FIXME: The problem is that we won't know the allowed set of feed names until
@@ -133,9 +138,6 @@ class Timing(halModule.HalModule):
                                                               data = {"new parameters" : self.parameters}))
 
         elif message.isType("start film"):
-            # Tell film to wait for a 'ready to film' message from us.
-            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"wait for" : self.module_name}))
             self.timing_functionality = TimingFunctionality(time_base = self.parameters.get("time_base"))
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : self.timing_functionality.getTimeBase()}))

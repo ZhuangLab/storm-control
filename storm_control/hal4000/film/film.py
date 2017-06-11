@@ -12,6 +12,7 @@ now located in this module.
 Hazen 01/17
 """
 
+import copy
 import datetime
 import os
 
@@ -316,6 +317,7 @@ class Film(halModule.HalModule):
         self.pixel_size = 1.0
         self.timing_functionality = None
         self.wait_for = []
+        self.waiting_on = []
         self.writers = None
         self.writers_stopped_timer = QtCore.QTimer(self)
 
@@ -345,11 +347,12 @@ class Film(halModule.HalModule):
 
         # Sent when filming is not possible/possible. While this is true we'll
         # throw an error if another modules attempts to start/stop a film
-        # or a camera.
+        # or a camera. This is also the marker for the beginning / end of the
+        # the film cycle.
         halMessage.addMessage("film lockout",
                               validator = {"data" : {"locked out" : [True, bool]},
                                            "resp" : None})
-                                  
+        
         # In live mode the camera also runs between films.
         halMessage.addMessage("live mode",
                               validator = {"data" : {"live mode" : [True, bool]},
@@ -366,9 +369,12 @@ class Film(halModule.HalModule):
                                            "resp" : None})
 
         # Start filming.
+        #
+        # Filming won't start until all the modules that have
+        # requested a wait send a "ready to film" message.
+        #
         halMessage.addMessage("start film",
-                              validator = {"data" : {"film settings" : [True, filmSettings.FilmSettings]},
-                                           "resp" : {"wait for" : [False, str]}})
+                              validator = {"data" : {"film settings" : [True, filmSettings.FilmSettings]}})
 
         # Request to start filming, either from a record button or via TCP.
         halMessage.addMessage("start film request",
@@ -429,16 +435,13 @@ class Film(halModule.HalModule):
                 self.parameter_change = False
                 self.sendMessage(halMessage.HalMessage(m_type = "parameters changed"))
 
-        # Modules that need additional time to get ready to film should add
-        # their name as a "wait for" response to the start film message.
+        # Modules that need additional time to get ready to film should
+        # specify at start up that they need to be waited for.
         elif message.isType("start film"):
 
             # No waits requested, so start now.
-            if (len(message.getResponses()) == 0):
+            if (len(self.waiting_on) == 0):
                 self.startCameras()
-            else:
-                for response in message.getResponses():
-                    self.wait_for.append(response.getData()["wait for"])
         
         # Modules are expected to add their current parameters as responses
         # to the 'stop film' message. We save them in an xml file here.
@@ -528,6 +531,11 @@ class Film(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.view.getParameters()}))
 
+            # Let the settings.settings module know that it needs
+            # to wait for us during a parameter change.
+            self.sendMessage(halMessage.HalMessage(m_type = "wait for",
+                                                   data = {"module names" : ["settings"]}))
+
         elif message.isType("new parameters"):
             if self.locked_out:
                 raise halExceptions.HalException("'new parameters' received while locked out.")
@@ -543,10 +551,10 @@ class Film(halModule.HalModule):
             self.view.setShutters(message.getData()["filename"])
 
         elif message.isType("ready to film"):
-            self.wait_for.remove(message.getSourceName())
+            self.waiting_on.remove(message.getSourceName())
 
             # All modules are ready, so start the cameras.
-            if (len(self.wait_for) == 0):
+            if (len(self.waiting_on) == 0):
                 self.startCameras()
 
         elif message.isType("start"):
@@ -581,8 +589,10 @@ class Film(halModule.HalModule):
 
         elif message.isType("updated parameters"):
             self.parameter_change = True
-            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"wait for" : self.module_name}))
+
+        elif message.isType("wait for"):
+            if self.module_name in message.getData()["module names"]:
+                self.wait_for.append(message.getSourceName())
 
     def setLockout(self, state):
         self.locked_out = state
@@ -649,17 +659,10 @@ class Film(halModule.HalModule):
             self.view.updateSize(0.0)
         
         # Start filming.
+        self.waiting_on = copy.copy(self.wait_for)
         self.sendMessage(halMessage.HalMessage(sync = True,
                                                m_type = "start film",
                                                data = {"film settings" : self.film_settings}))
-        
-        # Force sync.
-        #
-        # Why? If we don't do this some modules will add a 'wait for'
-        # response, then send a 'ready to film' message before this
-        # module ever gets all the responses to 'start film'.
-        #
-        self.sendMessage(halMessage.SyncMessage(self))        
 
     def stopCameras(self):
         

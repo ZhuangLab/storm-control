@@ -483,6 +483,11 @@ class Feeds(halModule.HalModule):
             for module_name in message.getData()["all_modules"]:
                 if module_name.startswith("camera"):
                     self.camera_names.append(module_name)
+
+            # Let the settings.settings module know that it needs
+            # to wait for us during a parameter change.
+            self.sendMessage(halMessage.HalMessage(m_type = "wait for",
+                                                   data = {"module names" : ["settings"]}))
             
             self.feed_names = copy.copy(self.camera_names)
             self.broadcastCurrentFeeds()
@@ -510,8 +515,6 @@ class Feeds(halModule.HalModule):
         elif message.isType("updated parameters"):
             self.feed_names = copy.copy(self.camera_names)
             if self.feed_controller is not None:
-                message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                                  data = {"wait for" : self.module_name}))
                 for feed in self.feed_controller.getFeeds():
                     self.feed_names.append(feed.getCameraName())
                     self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
@@ -519,6 +522,7 @@ class Feeds(halModule.HalModule):
                                                                    "extra data" : feed.getCameraName()}))
             else:
                 self.broadcastCurrentFeeds()
+                self.sendMessage(halMessage.HalMessage(m_type = "parameters changed"))
 
         elif message.isType("start film"):
             if self.feed_controller is not None:
