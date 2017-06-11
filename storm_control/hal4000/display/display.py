@@ -126,6 +126,11 @@ class Display(halModule.HalModule):
                                                        data = {"item name" : "Camera Viewer",
                                                                "item data" : "new camera viewer"}))
 
+        elif message.isType("current parameters"):
+            for viewer in self.viewers:
+                message.addResponse(halMessage.HalMessageResponse(source = viewer.getViewerName(),
+                                                                  data = {"parameters" : viewer.getParameters().copy()}))
+                
         elif message.isType("new parameters"):
             p = message.getData()["parameters"]
             for viewer in self.viewers:

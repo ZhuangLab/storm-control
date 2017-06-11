@@ -23,6 +23,7 @@ class ParametersBox(QtWidgets.QGroupBox):
     """
     The group box that contains the parameters ListView.
     """
+    editParameters = QtCore.pyqtSignal()
     newParameters = QtCore.pyqtSignal(object, bool)
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
@@ -103,18 +104,16 @@ class ParametersBox(QtWidgets.QGroupBox):
         # FIXME: Probably only want to do this if the change was successful.
         self.ui.settingsListView.setRCParametersStale()
 
-    def handleEditParameters(self, parameters):
+    def handleEditParameters(self):
 
         # Disable the ListView while we are editing the parameters.
         self.enableUI(False)
 
-        self.editor_dialog = parametersEditorDialog.ParametersEditorDialog(window_title = self.editor_window_title,
-                                                                           qt_settings = self.qt_settings,
-                                                                           parameters = parameters,
-                                                                           parent = halDialog.HalDialog.qt_parent)
-        self.editor_dialog.closed.connect(self.handleEditorClosed)
-        self.editor_dialog.update.connect(self.handleEditorUpdate)
-        self.editor_dialog.show()
+        # Emit editParameters signal. This will cause settings.settings to emit
+        # the "current parameters". Other modules will respond with their current
+        # parameters we'll start the editor. We take this approach because the
+        # version of the parameters that the list view are likely stale.
+        self.editParameters.emit()
 
     def handleNewParameters(self, parameters):
         self.newParameters.emit(parameters, False)
@@ -198,6 +197,15 @@ class ParametersBox(QtWidgets.QGroupBox):
             else:
                 self.ui.settingsListView.setCurrentItem(q_item)
                 return [True, False]
+
+    def startParameterEditor(self):
+        self.editor_dialog = parametersEditorDialog.ParametersEditorDialog(window_title = self.editor_window_title,
+                                                                           qt_settings = self.qt_settings,
+                                                                           parameters = self.ui.settingsListView.getCurrentParameters(),
+                                                                           parent = halDialog.HalDialog.qt_parent)
+        self.editor_dialog.closed.connect(self.handleEditorClosed)
+        self.editor_dialog.update.connect(self.handleEditorUpdate)
+        self.editor_dialog.show()
 
     def updateCurrentParameters(self, section, parameters):
         """

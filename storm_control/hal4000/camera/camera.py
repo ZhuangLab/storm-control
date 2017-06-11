@@ -66,6 +66,11 @@ class Camera(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.camera_control.getParameters()}))
 
+
+        elif message.isType("current parameters"):
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.camera_control.getParameters().copy()}))
+            
         elif message.isType("get functionality"):
             # This message comes from display.cameraDisplay among others.
             if (message.getData()["name"] == self.module_name):

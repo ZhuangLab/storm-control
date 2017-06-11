@@ -48,6 +48,7 @@ class Settings(halModule.HalModule):
 
         self.view = parametersBox.ParametersBox(module_params = module_params,
                                                 qt_settings = qt_settings)
+        self.view.editParameters.connect(self.handleEditParameters)
         self.view.newParameters.connect(self.handleNewParameters)
 
         p = params.StormXMLObject()
@@ -76,6 +77,12 @@ class Settings(halModule.HalModule):
                               validator = {"data" : {"changing" : [True, bool]},
                                            "resp" : None})        
 
+        # Other modules should respond to this message with their current
+        # parameters.
+        halMessage.addMessage("current parameters",
+                              validator = {"data" : None,
+                                           "resp" : {"parameters" : [False, params.StormXMLObject]}})
+                              
         # A request from another module for one of the sets of parameters.
         halMessage.addMessage("get parameters",
                               validator = {"data" : {"index or name" : [True, (str, int)]},
@@ -125,6 +132,15 @@ class Settings(halModule.HalModule):
         halMessage.addMessage("updated parameters",
                               validator = {"data" : {"parameters" : [True, params.StormXMLObject]}})
 
+    def handleEditParameters(self):
+        """
+        Send the 'current parameters' message.
+
+        Once all the modules have responded with their current parameters
+        we will start the editor.
+        """
+        self.sendMessage(halMessage.HalMessage(m_type = "current parameters"))
+        
     def handleError(self, message, m_error):
 
         # We can hopefully handle all 'new parameters' errors by reverting
@@ -159,8 +175,20 @@ class Settings(halModule.HalModule):
                                                        "is_edit" : is_edit}))
 
     def handleResponses(self, message):
-        
-        if message.isType("new parameters"):
+
+        if message.isType("current parameters"):
+            
+            # Update our copy of the current parameters.
+            for response in message.getResponses():
+                data = response.getData()
+                if "parameters" in data:
+                    self.view.updateCurrentParameters(response.source,
+                                                      data["parameters"].copy())
+
+            # Start the editor.
+            self.view.startParameterEditor()
+                    
+        elif message.isType("new parameters"):
 
             # Check if we got any errors.
             if message.hasErrors():
@@ -219,7 +247,6 @@ class Settings(halModule.HalModule):
                 # Let modules, such as feeds.feeds known that all of the modules
                 # have updated their parameters.
                 self.waiting_on = copy.copy(self.wait_for)
-                print(">", self.waiting_on)
                 self.sendMessage(halMessage.HalMessage(m_type = "updated parameters",
                                                        data = {"parameters" : self.view.getCurrentParameters().copy()}))
                 

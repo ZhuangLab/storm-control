@@ -536,6 +536,10 @@ class Film(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "wait for",
                                                    data = {"module names" : ["settings"]}))
 
+        elif message.isType("current parameters"):
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.view.getParameters().copy()}))
+
         elif message.isType("new parameters"):
             if self.locked_out:
                 raise halExceptions.HalException("'new parameters' received while locked out.")

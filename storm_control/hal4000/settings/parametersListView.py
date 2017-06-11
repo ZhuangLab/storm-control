@@ -61,7 +61,7 @@ class ParametersMVC(QtWidgets.QListView):
     QListView. It also keeps track of the current selected item and the 
     previously selected item.
     """
-    editParameters = QtCore.pyqtSignal(object)
+    editParameters = QtCore.pyqtSignal()
     newParameters = QtCore.pyqtSignal(object)
     saveParameters = QtCore.pyqtSignal(object)
 
@@ -181,7 +181,7 @@ class ParametersMVC(QtWidgets.QListView):
 
     def handleEdit(self, boolean):
         # You can only edit the current parameters.
-        self.editParameters.emit(getItemData(self.getCurrentItem()).parameters)
+        self.editParameters.emit()
 
     def handleSave(self, boolean):
         #

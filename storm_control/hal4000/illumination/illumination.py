@@ -340,6 +340,10 @@ class Illumination(halModule.HalModule):
 
             self.view.getFunctionalities()
 
+        elif message.isType("current parameters"):
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.view.getParameters().copy()}))
+
         elif message.isType("get functionality"):
             if (message.getData()["name"] == self.module_name):
                 message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
