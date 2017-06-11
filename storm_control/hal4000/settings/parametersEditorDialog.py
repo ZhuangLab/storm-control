@@ -209,6 +209,7 @@ class ParametersEditorDialog(QtWidgets.QDialog):
         """
         super().__init__(**kwds)
         self.changed_items = {}
+        self.expanded = []
         self.module_name = "parameters_editor"
         self.parameters = parameters.copy()
         self.qt_settings = qt_settings
@@ -235,6 +236,8 @@ class ParametersEditorDialog(QtWidgets.QDialog):
         self.ui.updateButton.setEnabled(False)
 
         self.editor_model.itemChanged.connect(self.handleItemChanged)
+        self.ui.editorTreeView.collapsed.connect(self.handleCollapsed)
+        self.ui.editorTreeView.expanded.connect(self.handleExpanded)
         self.ui.okButton.clicked.connect(self.handleOk)
         self.ui.updateButton.clicked.connect(self.handleUpdate)
         
@@ -252,6 +255,14 @@ class ParametersEditorDialog(QtWidgets.QDialog):
         self.qt_settings.setValue(self.module_name + ".size", self.size())
         self.qt_settings.sync()
 
+    def handleCollapsed(self, model_index):
+        item_name = self.editor_model.itemFromIndex(model_index).text()
+        self.expanded.remove(item_name)
+
+    def handleExpanded(self, model_index):
+        item_name = self.editor_model.itemFromIndex(model_index).text()
+        self.expanded.append(item_name)
+
     def handleItemChanged(self, q_item):
         self.changed_items[id(q_item)] = q_item
         self.ui.okButton.setStyleSheet("QPushButton { color : red }")
@@ -264,17 +275,13 @@ class ParametersEditorDialog(QtWidgets.QDialog):
         self.update.emit(self.parameters)
 
     def updateParameters(self, new_parameters):
-        #
-        # FIXME: For now we are just replacing the current model with a new
-        #        model. What we should do is update the data in the current
-        #        model with new parameters. In order to do this though we
-        #        need to maintain a connection between each parameter and
-        #        it's location in the model.
-        #
+        print(self.expanded)
+
         self.changed_items = {}
         self.ui.okButton.setStyleSheet("QPushButton { color : black }")
         self.ui.updateButton.setEnabled(False)
 
+        # Re-create model.
         self.parameters = new_parameters
         new_model = EditorModel()
         populateModel(new_model, self.parameters)
@@ -282,3 +289,31 @@ class ParametersEditorDialog(QtWidgets.QDialog):
         self.ui.editorTreeView.setModel(new_model)
         self.editor_model = new_model
         self.editor_model.itemChanged.connect(self.handleItemChanged)
+
+        # Disconnect this signal so we don't get duplicates
+        # when we do the expansion.
+        self.ui.editorTreeView.expanded.disconnect(self.handleExpanded)
+        
+        # Expand relevant items in the tree view.
+        #
+        # Works recursively. We are assuming that the names of the
+        # expandable items are unique.
+        #
+        def expand(parent = QtCore.QModelIndex()):
+            for i in range(self.editor_model.rowCount()):
+                model_index = self.editor_model.index(i, 0, parent)
+                item = self.editor_model.itemFromIndex(model_index)
+                
+                if item is None:
+                    continue
+                
+                if item.hasChildren():
+                    if item.text() in self.expanded:
+                        self.ui.editorTreeView.setExpanded(model_index, True)
+                    expand(parent = model_index)
+
+        expand()
+
+        # Re-connect signal.
+        self.ui.editorTreeView.expanded.connect(self.handleExpanded)
+        
