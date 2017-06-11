@@ -203,13 +203,16 @@ class ParametersEditorDialog(QtWidgets.QDialog):
     """
     closed = QtCore.pyqtSignal()
     update = QtCore.pyqtSignal(object)
-    
+
+    # This is a class variable so that it persists between sessions. There
+    # should only ever be a single instance open at any given time.
+    expanded = []
+
     def __init__(self, window_title = None, qt_settings = None, parameters = None, **kwds):
         """
         """
         super().__init__(**kwds)
         self.changed_items = {}
-        self.expanded = []
         self.module_name = "parameters_editor"
         self.parameters = parameters.copy()
         self.qt_settings = qt_settings
@@ -240,6 +243,9 @@ class ParametersEditorDialog(QtWidgets.QDialog):
         self.ui.editorTreeView.expanded.connect(self.handleExpanded)
         self.ui.okButton.clicked.connect(self.handleOk)
         self.ui.updateButton.clicked.connect(self.handleUpdate)
+
+        # Restore previous tree stage, if any.
+        self.reExpand()
         
     def closeEvent(self, event):
         if (len(self.changed_items) > 0):
@@ -273,27 +279,21 @@ class ParametersEditorDialog(QtWidgets.QDialog):
 
     def handleUpdate(self):
         self.update.emit(self.parameters)
-
-    def updateParameters(self, new_parameters):
-        print(self.expanded)
-
-        self.changed_items = {}
-        self.ui.okButton.setStyleSheet("QPushButton { color : black }")
-        self.ui.updateButton.setEnabled(False)
-
-        # Re-create model.
-        self.parameters = new_parameters
-        new_model = EditorModel()
-        populateModel(new_model, self.parameters)
-        self.editor_model.itemChanged.disconnect()
-        self.ui.editorTreeView.setModel(new_model)
-        self.editor_model = new_model
-        self.editor_model.itemChanged.connect(self.handleItemChanged)
-
+        
+    def reExpand(self):
+        """
+        Expand items in the tree view that were previously open.
+        """
+        if (len(self.expanded) == 0):
+            return
+        
+        #
         # Disconnect this signal so we don't get duplicates
         # when we do the expansion.
+        #
         self.ui.editorTreeView.expanded.disconnect(self.handleExpanded)
-        
+
+        #
         # Expand relevant items in the tree view.
         #
         # Works recursively. We are assuming that the names of the
@@ -315,5 +315,23 @@ class ParametersEditorDialog(QtWidgets.QDialog):
         expand()
 
         # Re-connect signal.
-        self.ui.editorTreeView.expanded.connect(self.handleExpanded)
-        
+        self.ui.editorTreeView.expanded.connect(self.handleExpanded)                    
+
+    def updateParameters(self, new_parameters):
+
+        self.changed_items = {}
+        self.ui.okButton.setStyleSheet("QPushButton { color : black }")
+        self.ui.updateButton.setEnabled(False)
+
+        # Re-create model.
+        self.parameters = new_parameters
+        new_model = EditorModel()
+        populateModel(new_model, self.parameters)
+        self.editor_model.itemChanged.disconnect()
+        self.ui.editorTreeView.setModel(new_model)
+        self.editor_model = new_model
+        self.editor_model.itemChanged.connect(self.handleItemChanged)
+
+        # Restore previous tree view state.        
+        self.reExpand()
+
