@@ -294,8 +294,7 @@ class NidaqModule(daqModule.DaqModule):
             self.setupDigital(frequency, wv_clock)
 
             # Notify film.film that we are ready.
-            self.newMessage.emit(halMessage.HalMessage(source = self,
-                                                       m_type = "ready to film"))
+            self.sendMessage(halMessage.HalMessage(m_type = "ready to film"))
             
     def getFunctionality(self, message):
         daq_fn_name = message.getData()["name"]
