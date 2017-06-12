@@ -243,6 +243,16 @@
       
     </daq>
 
+    <!-- Filter wheel control GUI. -->
+    <filter_wheel>
+      <class_name type="string">FilterWheel</class_name>
+      <module_name type="string">storm_control.hal4000.miscControl.filterWheel</module_name>
+      <configuration>
+	<filter_wheel_fn type="string">none_filter_wheel</filter_wheel_fn>
+	<filters type="string">DAPI,Cy2,Cy3,A647,A750,None</filters>
+      </configuration>
+    </filter_wheel>
+    
     <!-- Focus lock control GUI. -->
     <focuslock>
       <class_name type="string">FocusLock</class_name>
