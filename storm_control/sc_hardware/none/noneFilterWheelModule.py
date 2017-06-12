@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-HAL module for emulating a laser.
+HAL module for emulating an illumination filter wheel.
 
 Hazen 04/17
 """
