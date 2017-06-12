@@ -104,6 +104,15 @@ class Settings(halModule.HalModule):
         # during the parameter update we still have a record of the last
         # good state in "old parameters".
         #
+        # Notes:
+        #   1. We send a copy of the parameters in the listview, so if the
+        #      module wants to it can just use these as the parameters without
+        #      copying them again.
+        #
+        #   2. The 'old parameters' response should be a copy.
+        #
+        #   3. The 'new parameters' response does not need to be a copy.
+        #
         halMessage.addMessage("new parameters",
                               validator = {"data" : {"parameters" : [True, params.StormXMLObject],
                                                      "is_edit" : [True, bool]},
