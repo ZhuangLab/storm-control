@@ -167,7 +167,7 @@
 	  <default_min type="int">30</default_min>
 	  <flip_horizontal type="boolean">False</flip_horizontal>
 	  <flip_vertical type="boolean">False</flip_vertical>
-	  <transpose type="boolean">False</transpose>
+	  <transpose type="boolean">True</transpose>
 
 	  <!-- These can be changed / editted. -->
 
@@ -201,7 +201,7 @@
 	  <default_min type="int">30</default_min>
 	  <flip_horizontal type="boolean">False</flip_horizontal>
 	  <flip_vertical type="boolean">False</flip_vertical>
-	  <transpose type="boolean">False</transpose>
+	  <transpose type="boolean">True</transpose>
 
 	  <!-- These can be changed / editted. -->
 
@@ -233,9 +233,9 @@
 	  <!-- These are the display defaults, not the camera range. -->
 	  <default_max type="int">200</default_max> 
 	  <default_min type="int">30</default_min>
-	  <flip_horizontal type="boolean">False</flip_horizontal>
+	  <flip_horizontal type="boolean">True</flip_horizontal>
 	  <flip_vertical type="boolean">False</flip_vertical>
-	  <transpose type="boolean">False</transpose>
+	  <transpose type="boolean">True</transpose>
 
 	  <!-- These can be changed / editted. -->
 
@@ -505,7 +505,7 @@
       <configuration>
 	<stage_functionality type="string">ludl_stage</stage_functionality>
       </configuration>
-  </stage>
+    </stage>
 
     <!-- Thorlabs UC480 camera for the focus lock -->
     <uc480_camera>
@@ -526,7 +526,7 @@
 	<camera_id type="int">1</camera_id>
 	<ini_file type="string">uc480_settings.ini</ini_file>
 	<offset_file type="string">C:/Users/Hazen/Code/storm-control-development/storm_control/hal4000/cam_offsets_hbaic1_1.txt</offset_file>
-	<sigma type="float">12.0</sigma>
+	<sigma type="float">2.0</sigma>
 	<uc480_dll type="string">c:/windows/system32/uc480_64.dll</uc480_dll>
 	<x_width type="int">700</x_width>
 	<y_width type="int">100</y_width>
