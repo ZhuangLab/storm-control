@@ -248,7 +248,7 @@
       <class_name type="string">FilterWheel</class_name>
       <module_name type="string">storm_control.hal4000.miscControl.filterWheel</module_name>
       <configuration>
-	<filter_wheel_fn type="string">none_filter_wheel</filter_wheel_fn>
+	<filter_wheel_fn type="string">none_em_filter_wheel</filter_wheel_fn>
 	<filters type="string">DAPI,Cy2,Cy3,A647,A750,None</filters>
       </configuration>
     </filter_wheel>
@@ -368,6 +368,11 @@
       </configuration>      
     </none_405>
 
+    <none_em_filter_wheel>
+      <module_name type="string">storm_control.sc_hardware.none.noneEMFilterWheelModule</module_name>
+      <class_name type="string">NoneEMFilterWheelModule</class_name>
+    </none_em_filter_wheel>
+      
     <none_irlaser>
       <module_name type="string">storm_control.sc_hardware.none.noneIRLaserModule</module_name>
       <class_name type="string">NoneIRLaserModule</class_name>

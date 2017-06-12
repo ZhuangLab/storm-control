@@ -54,7 +54,7 @@ class FilterWheelView(halDialog.HalDialog):
                                                       name = "current_filter",
                                                       value = filter_names[0],
                                                       allowed = filter_names))
-        #self.setEnabled(False)
+        self.setEnabled(False)
 
     def getParameters(self):
         return self.parameters
@@ -79,8 +79,9 @@ class FilterWheelView(halDialog.HalDialog):
 
     def setFunctionality(self, filter_fn):
         self.filter_fn = filter_fn
+        self.setEnabled(True)
         self.setCurrentFilter()
-    
+
 
 class FilterWheel(halModule.HalModule):
 
