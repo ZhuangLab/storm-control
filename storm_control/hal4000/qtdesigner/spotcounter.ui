@@ -287,7 +287,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QComboBox" name="feedComboBox"/>
+      <widget class="QComboBox" name="analyzerComboBox"/>
      </item>
      <item>
       <spacer name="horizontalSpacer">
