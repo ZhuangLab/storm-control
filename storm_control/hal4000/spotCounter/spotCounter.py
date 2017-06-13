@@ -39,13 +39,14 @@ class Analyzer(QtCore.QObject):
         self.camera_fn = camera_fn
         self.filming = False
         self.spot_counter = spot_counter
+        self.threshold = parameters.get("threshold")
+        self.total_counts = 0
 
         self.spot_graph = displaySpots.SpotGraph(shutters_info = self.shutters_info)
-        self.spot_picture = displaySpots.SpotPicture(pixel_size = pixel_size,
+        self.spot_picture = displaySpots.SpotPicture(camera_fn = camera_fn,
+                                                     pixel_size = pixel_size,
                                                      scale_bar_len = parameters.get("scale_bar_len"),
-                                                     shutters_info = shutters_info,
-                                                     x_pixels = parameters.get("x_pixels"),
-                                                     y_pixels = parameters.get("y_pixels"))
+                                                     shutters_info = shutters_info)
 
         self.camera_fn.newFrame.connect(self.handleNewFrame)
         self.spot_counter.imageProcessed.connect(self.handleProcessedImage)
@@ -58,27 +59,37 @@ class Analyzer(QtCore.QObject):
         return self.camera_fn.getCameraName()
 
     def getCounts(self):
-        self.spot_graph.getCounts()
+        return self.total_counts
 
+    def getSpotGraph(self):
+        return self.spot_graph
+
+    def getSpotPicture(self):
+        return self.spot_picture
+    
     def handleNewFrame(self, frame):
         self.spot_counter.newFrameToAnalyze(self,
                                             self.camera_fn.getCameraName(),
                                             frame,
-                                            self.parameters.get("threshold"))
+                                            self.threshold)
         
     def handleProcessedImage(self, frame_analysis):
         if (frame_analysis.getCameraName() == self.camera_fn.getCameraName()):
 
+            # Update counts total.
+            self.total_counts += frame_analysis.getCounts()
+            
             # Always update the spot count graph.
-            self.spot_graph(frame_analysis.getFrameNumber(),
-                            frame_analysis.getCounts())
+            self.spot_graph.updatePoint(frame_analysis.getFrameNumber(),
+                                        frame_analysis.getCounts())
             
             # Only update the image if we are filming.
             if self.filming:
-                self.spot_picture(frame_analysis.getLocalizations)
+                self.spot_picture.updateImage(frame_analysis.getFrameNumber(),
+                                              frame_analysis.getLocalizations)
 
     def savePicture(self, basename):
-        self.spot_picture.savePicture(basename, self.camera_fn.getParameter("extension"))
+        self.spot_picture.savePicture(basename + "_" + self.camera_fn.getParameter("extension"))
 
     def setMaxSpots(self, max_spots):
         self.spot_graph.setMaxSpots(max_spots)
@@ -89,6 +100,7 @@ class Analyzer(QtCore.QObject):
 
     def startFilm(self, film_settings):
         self.filming = True
+        self.total_counts = 0
         self.spot_graph.clearGraph()
         self.spot_picture.clearPicture()
 
@@ -103,15 +115,40 @@ class SpotCounterView(halDialog.HalDialog):
     def __init__(self, configuration = None, **kwds):
         super().__init__(**kwds)
         self.analyzers = []
+        self.parameters = None
 
         # UI setup.
         self.ui = illuminationUi.Ui_Dialog()
         self.ui.setupUi(self)
 
-    def newAnalyzers(self, analyzers):
+        self.ui.analyzerComboBox.currentIndexChanged.connect(self.handleAnalyzerChange)
+        self.ui.maxSpinBox.valueChanged.connect(self.handleMaxSpinBox)
+
+        self.setEnabled(False)
+
+    def handleAnalyzerChange(self, index):
+        pass
+    
+    def handleMaxSpinBox(self, new_max):
+        for analyzer in self.analyzers:
+            analyzer.setMaxSpots(new_max)
+        self.parameters.setv("max_spots", new_max)
+
+    def newAnalyzers(self, parameters, analyzers):
+        #
+        # This method is the first one that will get called
+        # when the parameters change. We set everything up here.
+        #
+
+        # Clean up.
+        self.ui.analyzerComboBox.clear()
+
         self.analyzers = analyzers
+        
 
-
+        self.setEnabled(True)
+        
+        
 class SpotCounter(halModule.HalModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
@@ -125,7 +162,8 @@ class SpotCounter(halModule.HalModule):
 
         configuration = module_params.get("configuration")
 
-        self.spot_finder = findSpots.SpotCounter(configuration.get("free_threads"))
+        self.spot_counter = findSpots.SpotCounter(free_threads = configuration.get("free_threads"),
+                                                  max_size = configuration.get("max_size"))
 
         self.view = SpotCounterView(module_name = self.module_name,
                                     configuration = configuration)
@@ -135,21 +173,13 @@ class SpotCounter(halModule.HalModule):
         # Spot counter parameters.
         self.parameters = params.StormXMLObject()
         
-#        self.parameters.add(params.ParameterRangeInt(description = "Maximum counts for the spotcounter graph",
-#                                                     name = "max_spots",
-#                                                     value = 500,
-#                                                     min_value = 0,
-#                                                     max_value = 1000,
-#                                                     is_mutable = False,
-#                                                     is_saved = False))
-
-#        self.parameters.add(params.ParameterRangeInt(description = "Minimum counts for the spotcounter graph",
-#                                                     name = "min_spots",
-#                                                     value = 0,
-#                                                     min_value = 0,
-#                                                     max_value = 1000,
-#                                                     is_mutable = False,
-#                                                     is_saved = False))
+        self.parameters.add(params.ParameterRangeInt(description = "Maximum counts for the spotcounter graph",
+                                                     name = "max_spots",
+                                                     value = 500,
+                                                     min_value = 0,
+                                                     max_value = 1000,
+                                                     is_mutable = False,
+                                                     is_saved = False))
         
         self.parameters.add(params.ParameterRangeFloat(description = "Scale bar length in nm",
                                                        name = "scale_bar_len",
@@ -163,10 +193,16 @@ class SpotCounter(halModule.HalModule):
                                                      min_value = 1,
                                                      max_value = 10000))
 
+        self.parameters.add(params.ParameterString(description = "Which camera to display.",
+                                                   name = "which_camera",
+                                                   value = "",
+                                                   is_mutable = False,
+                                                   is_saved = False)
+
     def cleanUp(self, qt_settings):
-        self.spot_finder.cleanUp()
+        self.spot_counter.cleanUp()
         self.view.cleanUp(qt_settings)
-        
+
     def handleResponses(self, message):
         
         if message.isType("get functionality"):
@@ -179,12 +215,14 @@ class SpotCounter(halModule.HalModule):
                     self.analyzers.append(Analyzer(camera_fn = fn,
                                                    parameters = self.parameters,
                                                    pixel_size = self.pixel_size,
-                                                   shutters_info = self.shutters_info))
+                                                   shutters_info = self.shutters_info,
+                                                   spot_counter = self.spot_counter))
 
                 self.number_fn_requested -= 1
 
             if (self.number_fn_requested == 0):
-                self.view.newAnalyzers(self.analyzers)
+                self.view.newAnalyzers(self.parameters,
+                                       self.analyzers)
                 
     def processMessage(self, message):
 

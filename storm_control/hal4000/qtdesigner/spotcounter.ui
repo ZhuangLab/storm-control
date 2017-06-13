@@ -112,16 +112,6 @@
              </property>
             </spacer>
            </item>
-           <item>
-            <widget class="QSpinBox" name="minSpinBox">
-             <property name="maximum">
-              <number>1000</number>
-             </property>
-             <property name="singleStep">
-              <number>10</number>
-             </property>
-            </widget>
-           </item>
           </layout>
          </item>
          <item>
@@ -144,7 +134,6 @@
            <property name="frameShadow">
             <enum>QFrame::Sunken</enum>
            </property>
-           <zorder></zorder>
           </widget>
          </item>
          <item>

@@ -68,11 +68,14 @@ class FrameAnalysis(QtCore.QObject):
 class SpotCounter(QtCore.QObject):
     imageProcessed = QtCore.pyqtSignal(object)
 
-    def __init__(self, free_threads = None, **kwds):
+    def __init__(self, free_threads = None, max_size = 0, **kwds):
         super().__init__(**kwds)
 
         self.dropped = 0
         self.in_process = []
+
+        # This is the maximum size in pixels of an image that we will analyze.
+        self.max_size = max_size
         self.threadpool = halModule.threadpool
         self.total = 0
 
@@ -98,6 +101,12 @@ class SpotCounter(QtCore.QObject):
         self.imageProcessed.emit(frame_analysis)
         
     def newFrameToAnalyze(self, camera_name, frame, threshold):
+        
+        # Check if the current camera image is small
+        # enough that we can analyze it.
+        if ((frame.image_x * frame.image_y) > self.max_size):
+            return
+        
         self.total += 1
 
         # Check if there is a thread available to analyze the image.
