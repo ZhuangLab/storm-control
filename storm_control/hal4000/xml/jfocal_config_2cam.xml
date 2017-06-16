@@ -262,6 +262,16 @@
 	    <source type="string">/Dev1/ao0</source>
 	  </ao_task>
 	</mcl>
+
+	<pulse_delay>
+	  <ct_task>
+	    <source type="string">/Dev1/ctr1</source>
+	    <frequency type="float">1000</frequency>
+	    <retriggerable type="boolean">False</retriggerable>
+	    <trigger_source type="string">/Dev1/pfiX</trigger_source>
+	  </ct_task>
+	</pulse_delay>
+      
       </configuration>
 
     </daq>
@@ -396,6 +406,16 @@
 	<microns_to_volts type="float">0.04</microns_to_volts>
       </configuration>
     </mcl_zstage>
+
+    <!-- Pulse delay start for camera synchronization. -->
+    <pulse_delay>
+      <class_name type="string">PulseDelayCamera</class_name>
+      <module_name type="string">storm_control.sc_hardware.generic.pulseDelay</module_name>
+      <configuration>
+	<camera type="string">camera2</camera>
+	<counter_functionality type="string">daq.pulse_delay.ct_task</counter_functionality>
+      </configuration>
+    </pulse_delay>
 
     <!-- Stage control GUI -->
     <stage>
