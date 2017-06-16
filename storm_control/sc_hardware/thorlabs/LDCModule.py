@@ -17,7 +17,7 @@ class LDCIRLaserAdjustableFunctionality(amplitudeModule.AmplitudeFunctionality):
     def __init__(self, ct_task = None, **kwds):
         super().__init__(**kwds)
         self.ct_task = ct_task
-        self.scale = 1.0/(self.maximum - self.minimum)
+        self.scale = 1.0/(self.maximum - self.minimum + 1.0)
 
     def hasPowerAdjustment(self):
         return True

@@ -14,6 +14,7 @@ class NoneIRLaserFunctionality(amplitudeModule.AmplitudeFunctionality):
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
+        self.scale = 1.0/(self.maximum - self.minimum + 1.0)
 
     def hasPowerAdjustment(self):
         return True
@@ -22,7 +23,7 @@ class NoneIRLaserFunctionality(amplitudeModule.AmplitudeFunctionality):
         pass
     
     def output(self, power):
-        pass
+        duty_cycle = (power - self.minimum)*self.scale
 
 
 class NoneIRLaserModule(amplitudeModule.AmplitudeModule):
