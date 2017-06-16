@@ -95,11 +95,13 @@ class CTTaskFunctionality(NidaqFunctionality):
     """
     Counter output.
     """
-    def __init__(self, frequency = None, **kwds):
+    def __init__(self, frequency = None, retriggerable = True, trigger_source = None, **kwds):
         super().__init__(**kwds)
         self.frequency = frequency
-
-    def pwmOutput(self, duty_cycle):
+        self.retriggerable = retriggerable
+        self.trigger_source = trigger_source
+        
+    def pwmOutput(self, duty_cycle = 0.5, cycles = 0):
         if self.task is not None:
             self.task.stopTask()
             self.task.clearTask()
@@ -109,7 +111,10 @@ class CTTaskFunctionality(NidaqFunctionality):
             self.task = nicontrol.CounterOutput(source = self.source,
                                                 frequency = self.frequency,
                                                 duty_cycle = duty_cycle)
-            self.task.setCounter(0)
+            if self.trigger_source is not None:
+                self.task.setTrigger(trigger_source = self.trigger_source,
+                                     retriggerable = self.retriggerable)
+            self.task.setCounter(cycles)
             self.task.startTask()
 
     
@@ -247,8 +252,13 @@ class NidaqModule(daqModule.DaqModule):
                 elif (task_name == "ao_task"):
                     task = AOTaskFunctionality(source = task_params.get("source"))
                 elif (task_name == "ct_task"):
+                    trigger_source = None
+                    if task_params.has("trigger_source"):
+                        trigger_source = task_params.get("trigger_source")
                     task = CTTaskFunctionality(source = task_params.get("source"),
-                                               frequency = task_params.get("frequency"))
+                                               frequency = task_params.get("frequency"),
+                                               retriggerable = task_params.get("retriggerable", False),
+                                               trigger_source = trigger_source)
                 elif (task_name == "do_task"):
                     task = DOTaskFunctionality(source = task_params.get("source"))
                 elif (task_name == "wv_task"):
