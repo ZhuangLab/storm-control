@@ -588,7 +588,7 @@ class Film(halModule.HalModule):
 
         elif message.isType("stop film request"):
             if (self.film_state != "run"):
-                raise halException.HalException("Stop film request received while not filming.")
+                raise halExceptions.HalException("Stop film request received while not filming.")
             self.stopFilmingLevel1()
 
         elif message.isType("updated parameters"):
