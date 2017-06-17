@@ -10,6 +10,7 @@ Hazen 2/17
 """
 
 from PyQt5 import QtCore
+import time
 
 import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_library.parameters as params
@@ -32,7 +33,7 @@ class CameraControl(QtCore.QThread):
         super().__init__(**kwds)
 
         # This is the hardware module that will actually control the camera.
-        self.camera = False
+        self.camera = None
 
         # Sub-classes should set this to a CameraFunctionality object.
         self.camera_functionality = None
@@ -315,8 +316,14 @@ class CameraControl(QtCore.QThread):
             self.getTemperature()
         
         self.frame_number = 0
-        self.start(QtCore.QThread.NormalPriority)
 
+        # Start a (hardware) camera.
+        if self.camera is not None:
+            self.camera.startAcquisition()
+
+        # Start the thread to handle data from the camera.
+        self.start(QtCore.QThread.NormalPriority)
+        
         self.camera_functionality.started.emit()
 
     def startFilm(self, film_settings, is_time_base):
@@ -329,8 +336,14 @@ class CameraControl(QtCore.QThread):
 
     def stopCamera(self):
         if self.running:
+
+            # Stop the thread.
             self.running = False
             self.wait()
+
+            # Stop a (hardware) camera.
+            if self.camera is not None:
+                self.camera.stopAcquisition()
 
         self.camera_functionality.stopped.emit()
 
@@ -359,7 +372,6 @@ class HWCameraControl(CameraControl):
     def run(self):
         print(">run")
         self.running = True
-        self.camera.startAcquisition()
         while(self.running):
 
             # Get data from camera and create frame objects.
@@ -388,7 +400,7 @@ class HWCameraControl(CameraControl):
                 # Emit new data signal.
                 self.newData.emit(frame_data)
             self.msleep(5)
-        self.camera.stopAcquisition()            
+
 
 #    def startCamera(self):
 #        print(">start", self.camera_name, self.running)

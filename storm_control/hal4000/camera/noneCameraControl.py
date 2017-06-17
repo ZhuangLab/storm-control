@@ -20,8 +20,6 @@ class NoneCameraControl(cameraControl.CameraControl):
     def __init__(self, config = None, is_master = False, **kwds):
         kwds["config"] = config
         super().__init__(**kwds)
-
-        self.camera = True
         
         self.fake_frame = 0
         self.fake_frame_size = [0,0]
