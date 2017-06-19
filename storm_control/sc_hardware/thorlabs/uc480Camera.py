@@ -98,6 +98,8 @@ def create_camera_list(num_cameras):
     a_list.Count = num_cameras
     return a_list
 
+last_warning_time = None
+
 def fitAFunctionLS(data, params, fn):
     """
     Does least squares fitting of a function.
@@ -112,12 +114,18 @@ def fitAFunctionLS(data, params, fn):
         #print "Fitting problem:", mesg
         good = False
     end_time = time.time()
+
     if (infodict["nfev"] > 70) or ((end_time - start_time) > 0.1):
-        print("> QPD-480 Slow fitting detected")
-        print(">", infodict["nfev"], time.time() - start_time)
-        print(">", params)
-        print(">", result)
-        print()
+        
+        global last_warning_time
+        if last_warning_time is None or ((time.time() - last_warning_time) > 2.0):
+            print("> QPD-480 Slow fitting detected")
+            print(">", infodict["nfev"], time.time() - start_time)
+            print(">", params)
+            print(">", result)
+            print()
+            last_warning_time = time.time()
+        
     return [result, good]
 
 def loadDLL(dll_name):
