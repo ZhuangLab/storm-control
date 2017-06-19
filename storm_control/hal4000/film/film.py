@@ -577,6 +577,8 @@ class Film(halModule.HalModule):
             if film_settings is not None:
                 film_settings.setPixelSize(self.pixel_size)
                 self.startFilmingLevel1(film_settings)
+            else:
+                self.setLockout(False)
 
         elif message.isType("stop camera"):
             if self.locked_out and (message.getSource() != self):
