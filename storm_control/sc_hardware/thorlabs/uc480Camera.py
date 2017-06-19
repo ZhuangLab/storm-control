@@ -312,7 +312,7 @@ class Camera(Handle):
                                     ctypes.byref(new_fps)),
               "is_SetFrameRate")
         if verbose:
-            print("uc480: Set frame rate to", new_fps.value, "FPS")
+            print("uc480: Set frame rate to {0:.1f} FPS".format(new_fps.value))
 
     def setPixelClock(self, pixel_clock_MHz = 30):
         """
