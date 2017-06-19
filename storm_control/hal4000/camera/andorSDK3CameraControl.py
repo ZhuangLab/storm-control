@@ -54,6 +54,8 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
                             "FrameCount" : "int",
                             "FrameRate" : "float",
                             "FanSpeed" : "enum",
+                            "IOInvert" : "bool",
+                            "IOSelector" : "enum",
                             "SensorCooling" : "bool",
                             "SensorHeight" : "int",
                             "SensorTemperature" : "float",
@@ -73,10 +75,17 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
         #       to change newParameters() to not set some properties. "ExposureTime" for
         #       example might be an issue.
         #
-        if self.is_master:
+        if self.is_master and not config.get("external_start", False):
+            print(">", self.camera_name, "internal")
             self.camera.setProperty("TriggerMode", self.andor_props["TriggerMode"], "Internal")
         else:
+            print(">", self.camera_name, "external start")
             self.camera.setProperty("TriggerMode", self.andor_props["TriggerMode"], "External Start")
+
+#        if config.get("io_invert", False):
+#            print(">", self.camera_name, "io_invert")
+#            self.camera.setProperty("IOSelector", self.andor_props["IOSelector"], "External Trigger")
+#            self.camera.setProperty("IOInvert", self.andor_props["IOInvert"], False)
 
         # Add Andor SDK3 specific parameters.
         #
