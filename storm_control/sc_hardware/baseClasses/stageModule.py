@@ -26,6 +26,8 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
                   use them for things like screen drag based movement.
         """
         super().__init__(**kwds)
+        self.drag_start_x = None
+        self.drag_start_y = None
         self.is_slow = is_slow
         self.pixels_to_microns = 1.0
         self.pos_dict = None
@@ -35,11 +37,23 @@ class StageFunctionality(hardwareModule.BufferedFunctionality):
         """
         Usually used by display.display, units are pixels.
         """
-        x = x * self.pixels_to_microns
-        y = y * self.pixels_to_microns
+        x = x * self.pixels_to_microns + self.drag_start_x
+        y = y * self.pixels_to_microns + self.drag_start_y
         self.maybeRun(task = self.stage.goAbsolute,
                       args = [x, y])
 
+    def dragStart(self):
+        #
+        # This will not work well if the stage does not know it's
+        # current position..
+        #
+        if self.pos_dict is not None:
+            self.drag_start_x = self.pos_dict["x"]
+            self.drag_start_y = self.pos_dict["y"]
+        else:
+            self.drag_start_x = 0
+            self.drag_start_y = 0
+            
     def getCurrentPosition(self):
         return self.pos_dict
 

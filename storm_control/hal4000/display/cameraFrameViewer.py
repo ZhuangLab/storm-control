@@ -145,6 +145,7 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.camera_view.verticalScrollBar().sliderReleased.connect(self.handleScrollBar)
 
         self.camera_view.dragMove.connect(self.handleDragMove)
+        self.camera_view.dragStart.connect(self.handleDragStart)
         self.camera_view.rubberBandChanged.connect(self.handleRubberBandChanged)
 
         self.ui.autoScaleButton.clicked.connect(self.handleAutoScale)
@@ -293,6 +294,9 @@ class CameraFrameViewer(QtWidgets.QFrame):
 
     def handleDragMove(self, dx, dy):
         self.stage_functionality.dragMove(dx, dy)
+
+    def handleDragStart(self):
+        self.stage_functionality.dragStart()
         
     def handleFeedChange(self, feed_name):
         """
