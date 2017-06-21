@@ -90,6 +90,10 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
             self.camera.setProperty("LineSource", "ExposureActive")
 
             # This line is connected to the other cameras.
+            #
+            # FIXME: This is not working correctly. You have to start
+            #        the Point Grey software to configure this properly.
+            #
             self.camera.setProperty("LineSelector", "Line2")
             self.camera.getProperty("LineMode")
             self.camera.setProperty("LineMode", "Output")
