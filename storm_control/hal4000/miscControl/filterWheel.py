@@ -63,7 +63,9 @@ class FilterWheelView(halDialog.HalDialog):
         for i, button in enumerate(self.buttons):
             if button.isChecked():
                 button.setStyleSheet("QPushButton { color: red}")
+                # FIXME: This won't work if two filters have the same name.
                 self.parameters.setv("current_filter", button.text())
+                self.filter_fn.setCurrentPosition(i)
             else:
                 button.setStyleSheet("QPushButton { color: black}")
 

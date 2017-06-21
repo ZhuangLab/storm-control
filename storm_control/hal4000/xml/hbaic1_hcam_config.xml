@@ -256,6 +256,16 @@
       </configuration>
     </daq>
 
+    <!-- Filter wheel control GUI. -->
+    <filter_wheel>
+      <class_name type="string">FilterWheel</class_name>
+      <module_name type="string">storm_control.hal4000.miscControl.filterWheel</module_name>
+      <configuration>
+	<filter_wheel_fn type="string">prior_controller.filter_wheel1</filter_wheel_fn>
+	<filters type="string">Penta,405,488,560,647,750,None</filters>
+      </configuration>
+    </filter_wheel>
+    
     <!-- Focus lock control GUI. -->
     <focuslock>
       <class_name type="string">FocusLock</class_name>
@@ -409,6 +419,21 @@
       </configuration>
     </obis405>
 
+    <!-- Prior filter wheel controller. -->
+    <prior_controller>
+      <module_name type="string">storm_control.sc_hardware.prior.priorModule</module_name>
+      <class_name type="string">PriorController</class_name>
+
+      <configuration>
+	<baudrate type="int">115200</baudrate>
+	<port type="string">COM7</port>
+	<velocity type="float">2.0</velocity>
+	<filter_wheel1>
+	  <maximum type="int">10</maximum>
+	</filter_wheel1>
+      </configuration>
+    </prior_controller>
+    
     <!-- Stage control GUI -->
     <stage>
       <class_name type="string">Stage</class_name>
