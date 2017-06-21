@@ -14,10 +14,9 @@ class MarzhauserRS232(RS232.RS232):
     """
     Marzhauser RS232 interface class.
     """
-
     def __init__(self, **kwds):
         """
-        Connect to the Marzhuaser stage at the specified port.
+        Connect to the Marzhauser stage at the specified port.
         """
         self.live = True
         self.unit_to_um = 1000.0
