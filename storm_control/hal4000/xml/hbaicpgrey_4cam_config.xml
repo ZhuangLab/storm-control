@@ -498,6 +498,12 @@
       </configuration>
     </obis405>
 
+    <!-- sCMOS calibration module -->
+    <scmos_cal>
+      <module_name type="string">storm_control.hal4000.miscControl.scmosCalibration</module_name>
+      <class_name type="string">SCMOSCalibration</class_name>
+    </scmos_cal>
+    
     <!-- Stage control GUI -->
     <stage>
       <class_name type="string">Stage</class_name>
