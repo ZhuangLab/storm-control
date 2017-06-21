@@ -61,6 +61,7 @@ class Calibrator(QtCore.QObject):
         self.newFrame.emit(self.id_number, float(self.accumulated/self.n_frames))
         
         if (self.accumulated == self.n_frames):
+            self.camera_fn.newFrame.disconnect(self.handleNewFrame)
             numpy.save(self.filename, [numpy.array([self.n_frames]), self.mean, self.var])
             self.done.emit()
             
