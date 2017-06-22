@@ -27,15 +27,23 @@ def runWorkerTask(module, message, task):
     camera.camera.py for examples.
 
     This will also handle errors in manner that HAL expects.
+
+    Note: Only one of these can be run at a time in order to gaurantee
+          that messages are handled serially. This assumes that the
+          threadpool starts the tasks in the order they are received.
     """
 
     # Increment the count because once this message is handed off
     # HalModule will automatically decrement the count.
     message.incRefCount()
     ct_task = HalWorker(message = message,
+                        mutex = module.worker_mutex,
                         task = task)
     ct_task.hwsignaler.workerDone.connect(module.handleWorkerDone)
     ct_task.hwsignaler.workerError.connect(module.handleWorkerError)
+
+    # This had better start tasks in the order they are received or
+    # there could be all kinds of issues..
     threadpool.start(ct_task)
 
 
@@ -54,16 +62,19 @@ class HalWorker(QtCore.QRunnable):
     Note that the message will remain in HAL's sent messages queue
     until this (and all other processing) are complete.
     """
-    def __init__(self, message = None, task = None, **kwds):
+    def __init__(self, message = None, mutex = None, task = None, **kwds):
         super().__init__(**kwds)
         self.message = message
+        self.mutex = mutex
         self.task = task
 
         self.hwsignaler = HalWorkerSignaler()
 
     def run(self):
         try:
+            self.mutex.lock()
             self.task()
+            self.mutex.unlock()
         except Exception as exception:
             self.hwsignaler.workerError.emit(self.message,
                                              exception,
@@ -95,6 +106,7 @@ class HalModule(QtCore.QObject):
         self.module_name = module_name
 
         self.queued_messages = deque()
+        self.worker_mutex = QtCore.QMutex()
 
         self.queued_messages_timer = QtCore.QTimer(self)
         self.queued_messages_timer.setInterval(0)
