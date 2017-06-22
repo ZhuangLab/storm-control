@@ -101,6 +101,7 @@ class SCMOSCalibrationView(halDialog.HalDialog):
         self.ui = scmosCalibrationUi.Ui_Dialog()
         self.ui.setupUi(self)
 
+        self.ui.calibrationFileLineEdit.textChanged.connect(self.handleFileLineEdit)
         self.ui.startButton.clicked.connect(self.handleStartButton)
         
         self.ui.startButton.setEnabled(False)
@@ -111,9 +112,9 @@ class SCMOSCalibrationView(halDialog.HalDialog):
             if os.path.exists(fname):
                 self.will_overwrite = True
                 self.ui.calibrationFileLineEdit.setStyleSheet("QLineEdit { color: red}")
-        else:
-            self.will_overwrite = False
-            self.ui.calibrationFileLineEdit.setStyleSheet("QLineEdit { color: black}")
+            else:
+                self.will_overwrite = False
+                self.ui.calibrationFileLineEdit.setStyleSheet("QLineEdit { color: black}")
 
     def gotAllCameras(self):
         self.adjustSize()
@@ -136,6 +137,9 @@ class SCMOSCalibrationView(halDialog.HalDialog):
             elt[1].reset()
         self.ui.startButton.setStyleSheet("QPushButton { color: black }")
         self.ui.startButton.setText("Start")            
+
+    def handleFileLineEdit(self, text):
+        self.checkExists()
         
     def handleNewFrame(self, calibrator_number, progress):
         self.ui_elements[calibrator_number][1].setValue(round(100.0*progress))
@@ -187,6 +191,7 @@ class SCMOSCalibrationView(halDialog.HalDialog):
 
         # Progress bar.
         prog_bar = QtWidgets.QProgressBar(self)
+        prog_bar.setMinimumWidth(120)
         prog_bar.setMinimum(0)
         prog_bar.setMaximum(100)
         ui_row.append(prog_bar)
@@ -194,7 +199,7 @@ class SCMOSCalibrationView(halDialog.HalDialog):
 
         # Add stats label.
         stats_label = QtWidgets.QLabel("NA", self)
-        stats_label.setMinimumWidth(170)
+        stats_label.setMinimumWidth(150)
         stats_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         ui_row.append(stats_label)
         self.cgb_layout.addWidget(stats_label, len(self.ui_elements), 2)
