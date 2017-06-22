@@ -517,6 +517,8 @@ class HalCore(QtCore.QObject):
                                                        m_type = "start",
                                                        data = {"show_gui" : show_gui},
                                                        sync = True))
+
+        message_chain.append(halMessage.SyncMessage(self))
             
         self.handleMessage(halMessage.chainMessages(self.handleMessage,
                                                     message_chain))
@@ -636,7 +638,10 @@ class HalCore(QtCore.QObject):
             # pending messages then push it back into the queue.
             #
             if cur_message.sync and (len(self.sent_messages) > 0):
-                print("> waiting on", cur_message.m_type)
+                print("> waiting for the following to be processed:")
+                for message in self.sent_messages:
+                    print("  ", message.m_type)
+                print("")
                 self.queued_messages.appendleft(cur_message)
             
             #
