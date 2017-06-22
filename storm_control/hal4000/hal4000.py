@@ -512,14 +512,14 @@ class HalCore(QtCore.QObject):
                                                        data = {"show_gui" : show_gui},
                                                        sync = True,
                                                        finalizer = lambda : app.setQuitOnLastWindowClosed(True)))
+
         else:
            message_chain.append(halMessage.HalMessage(source = self,
-                                                       m_type = "start",
-                                                       data = {"show_gui" : show_gui},
-                                                       sync = True))
+                                                      m_type = "start",
+                                                      data = {"show_gui" : show_gui},
+                                                      sync = True))
+           message_chain.append(halMessage.SyncMessage(source = self))
 
-        message_chain.append(halMessage.SyncMessage(self))
-            
         self.handleMessage(halMessage.chainMessages(self.handleMessage,
                                                     message_chain))
 
