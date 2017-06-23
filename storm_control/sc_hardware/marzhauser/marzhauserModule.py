@@ -140,3 +140,6 @@ class MarzhauserStage(stageModule.StageModule):
             self.stage.setVelocity(velocity, velocity)
             self.stage_functionality = MarzhauserStageFunctionality(stage = self.stage,
                                                                     update_interval = 500)
+
+        else:
+            self.stage = None

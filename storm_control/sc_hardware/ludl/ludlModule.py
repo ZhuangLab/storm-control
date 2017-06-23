@@ -53,4 +53,6 @@ class LudlStageTCP(stageModule.StageModule):
         if self.stage.getStatus():
             self.stage_functionality = LudlStageFunctionality(stage = self.stage,
                                                               update_interval = 500)
+        else:
+            self.stage = None
 
