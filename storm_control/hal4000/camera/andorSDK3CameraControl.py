@@ -79,8 +79,8 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
             print(">", self.camera_name, "internal")
             self.camera.setProperty("TriggerMode", self.andor_props["TriggerMode"], "Internal")
         else:
-            print(">", self.camera_name, "external start")
-            self.camera.setProperty("TriggerMode", self.andor_props["TriggerMode"], "External Start")
+            print(">", self.camera_name, "external")
+            self.camera.setProperty("TriggerMode", self.andor_props["TriggerMode"], "External")
 
 #        if config.get("io_invert", False):
 #            print(">", self.camera_name, "io_invert")

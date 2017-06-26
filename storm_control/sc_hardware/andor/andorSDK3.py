@@ -415,8 +415,11 @@ class SDK3Camera(object):
         # Handle a few special cases:
         if pname is "ExposureTime":
             setFloat(self.camera_handle, pname, pvalue)
-            setFloat(self.camera_handle, "FrameRate", 1e5) # Force frame rate to highest value possible
-            
+            try:
+                setFloat(self.camera_handle, "FrameRate", 1e5) # Force frame rate to highest value possible
+            except AndorException as e:
+                print("Ignoring", str(e))
+                
         elif pname is "FrameRate":
             print("WARNING: Setting FrameRate is not supported")
             setFloat(self.camera_handle, pname, pvalue)
