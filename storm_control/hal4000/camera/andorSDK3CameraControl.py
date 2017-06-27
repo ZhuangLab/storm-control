@@ -67,25 +67,9 @@ class AndorSDK3CameraControl(cameraControl.HWCameraControl):
         
         self.camera.setProperty("CycleMode", self.andor_props["CycleMode"], "Continuous")
 
-        self.camera.setProperty("TriggerMode", self.andor_props["TriggerMode"], "Internal")
-        
-        # Configure master/slave.
-        #
-        # Note: If you want to use a different TriggerMode for the slave camere you may need
-        #       to change newParameters() to not set some properties. "ExposureTime" for
-        #       example might be an issue.
-        #
-        if self.is_master and not config.get("external_start", False):
-            print(">", self.camera_name, "internal")
-            self.camera.setProperty("TriggerMode", self.andor_props["TriggerMode"], "Internal")
-        else:
-            print(">", self.camera_name, "external")
-            self.camera.setProperty("TriggerMode", self.andor_props["TriggerMode"], "External")
-
-#        if config.get("io_invert", False):
-#            print(">", self.camera_name, "io_invert")
-#            self.camera.setProperty("IOSelector", self.andor_props["IOSelector"], "External Trigger")
-#            self.camera.setProperty("IOInvert", self.andor_props["IOInvert"], False)
+        # Set trigger mode.
+        print(">", self.camera_name, "trigger mode set to", config.get("trigger_mode"))
+        self.camera.setProperty("TriggerMode", self.andor_props["TriggerMode"], config.get("trigger_mode"))
 
         # Add Andor SDK3 specific parameters.
         #
