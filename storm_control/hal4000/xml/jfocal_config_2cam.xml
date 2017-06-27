@@ -79,7 +79,7 @@
 	<transpose desc="Transpose image (mosaic)" type="boolean">False</transpose>
 
 	<objective desc="Current objective" type="string" values="obj1,obj2,obj3">obj1</objective>
-	<obj1 desc="Objective 1" type="custom">100x,0.160,0.0,0.0</obj1>
+	<obj1 desc="Objective 1" type="custom">60x,0.109,0.0,0.0</obj1>
 	<obj2 desc="Objective 2" type="custom">10x,1.60,0.0,0.0</obj2>
 	<obj3 desc="Objective 3" type="custom">4x,4.0,0.0,0.0</obj3>	
       </parameters>
@@ -134,8 +134,8 @@
 	  <!-- These are the display defaults, not the camera range. -->
 	  <default_max type="int">500</default_max> 
 	  <default_min type="int">0</default_min>
-	  <flip_horizontal type="boolean">False</flip_horizontal>
-	  <flip_vertical type="boolean">False</flip_vertical>
+	  <flip_horizontal type="boolean">True</flip_horizontal>
+	  <flip_vertical type="boolean">True</flip_vertical>
 	  <transpose type="boolean">False</transpose>
 
 	  <!-- These can be changed / editted. -->
@@ -172,7 +172,7 @@
 	  <default_max type="int">500</default_max> 
 	  <default_min type="int">0</default_min>
 	  <flip_horizontal type="boolean">False</flip_horizontal>
-	  <flip_vertical type="boolean">False</flip_vertical>
+	  <flip_vertical type="boolean">True</flip_vertical>
 	  <transpose type="boolean">False</transpose>
 
 	  <!-- These can be changed / editted. -->
