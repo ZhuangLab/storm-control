@@ -128,6 +128,9 @@
 	  <!-- Which camera to use -->
 	  <camera_id type="int">1</camera_id>
 
+	  <!-- What trigger mode to use, "Internal", "External", "External Start", etc.. -->
+	  <trigger_mode type="string">Internal</trigger_mode>
+
 	  <!-- These are the display defaults, not the camera range. -->
 	  <default_max type="int">500</default_max> 
 	  <default_min type="int">0</default_min>
@@ -162,6 +165,9 @@
 	  <!-- Which camera to use -->
 	  <camera_id type="int">0</camera_id>
 
+	  <!-- What trigger mode to use, "Internal", "External", "External Start", etc.. -->
+	  <trigger_mode type="string">External</trigger_mode>
+	  
 	  <!-- These are the display defaults, not the camera range. -->
 	  <default_max type="int">500</default_max> 
 	  <default_min type="int">0</default_min>
