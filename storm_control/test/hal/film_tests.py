@@ -17,8 +17,16 @@ class FilmTest1(testing.Testing):
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
-        self.test_actions = [testActions.SetDirectory(directory = test.dataDirectory()),
-                             testActions.Record(filename = "movie_01")]
+        directory = test.dataDirectory()
+        filename = "movie_01"
+
+        # Remove old movie (if any).
+        fullname = os.path.join(directory, filename + ".dax")
+        if os.path.exists(fullname):
+            os.remove(fullname)
+
+        self.test_actions = [testActions.SetDirectory(directory = directory),
+                             testActions.Record(filename = filename)]
 
 #
 # Test taking movies with feeds.
@@ -28,10 +36,20 @@ class FilmTest2(testing.Testing):
     def __init__(self, **kwds):
         super().__init__(**kwds)
 
-        self.test_actions = [testActions.SetDirectory(directory = test.dataDirectory()),
+        directory = test.dataDirectory()
+        filename = "movie_02"
+
+        # Remove old movie (if any).
+        fullname = os.path.join(directory, filename + ".dax")
+        if os.path.exists(fullname):
+            os.remove(fullname)
+            
+        self.test_actions = [testActions.SetDirectory(directory = directory),
                              testActions.LoadParameters(filename = test.halXmlFilePathAndName("feed_examples.xml")),
                              testActions.SetParameters(p_name = 0),
-                             testActions.Record(filename = "movie_02")]
+                             testActions.Timer(timeout = 1000),
+                             testActions.Record(filename = filename),
+                             testActions.Timer(timeout = 2000)]
 
 #
 # Test that we can load the parameters files from a movie.
@@ -42,8 +60,16 @@ class FilmTest3(testing.Testing):
         super().__init__(**kwds)
 
         directory = test.dataDirectory()
+        filename = "movie_03"
+
+        # Remove old movie (if any).
+        fullname = os.path.join(directory, filename + ".dax")
+        if os.path.exists(fullname):
+            os.remove(fullname)
+            os.remove(os.path.join(directory, filename + ".xml"))
+            
         self.test_actions = [testActions.SetDirectory(directory = directory),
-                             testActions.Record(filename = "movie_03"),
+                             testActions.Record(filename = filename),
                              testActions.LoadParameters(os.path.join(directory, "movie_03.xml")),
                              testActions.SetParameters(p_name = 0),
                              testActions.Timer(timeout = 500)]
