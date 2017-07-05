@@ -10,15 +10,31 @@ import numpy
 from PyQt5 import QtGui, QtWidgets
 
 
-class SpotGraph(QtWidgets.QWidget):
+class SpotWidget(QtWidgets.QWidget):
     """
-    The spot graph for a camera feed.
+    Spot graph / display base class.
     """
     def __init__(self, shutters_info = None, **kwds):
         super().__init__(**kwds)
 
+        if shutters_info is None:
+            self.colors = [None]
+            self.cycle_length = 1
+        else:
+            self.setShuttersInfo(shutters_info)
+
+    def setShuttersInfo(self, shutters_info):
         self.colors = shutters_info.getColorData()
         self.cycle_length = shutters_info.getFrames()
+
+
+class SpotGraph(SpotWidget):
+    """
+    The spot graph for a camera feed.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+            
         self.x_points = 100
         self.y_max = 500.0
 
@@ -55,12 +71,12 @@ class SpotGraph(QtWidgets.QWidget):
                 painter.drawLine(ix, 0, ix, self.height())
                 x += self.delta_x * self.cycle_length
 
-            y = 0.0
-            while y < float(self.height()):
-                iy = int(y)
-                painter.drawLine(0, iy, self.width(), iy)
+        y = 0.0
+        while y < float(self.height()):
+            iy = int(y)
+            painter.drawLine(0, iy, self.width(), iy)
 
-                y += self.delta_y
+            y += self.delta_y
 
         #
         # Plot the data.
@@ -71,7 +87,7 @@ class SpotGraph(QtWidgets.QWidget):
         x1 = 0
         y1 = self.height() - int(self.data[0]/self.y_max * self.height())
         for i in range(self.data.size - 1):
-            x2 = int(self.x_scale * float(i+1))
+            x2 = int(self.delta_x * float(i+1))
             y2 = self.height() - int(self.data[i+1]/self.y_max * self.height())
             painter.drawLine(x1, y1, x2, y2)
             x1 = x2
@@ -85,9 +101,9 @@ class SpotGraph(QtWidgets.QWidget):
             else:
                 qt_color = QtGui.QColor(*color)
             painter.setPen(QtGui.QColor(0, 0, 0))
-            painter.setBrush(qtcolor)
+            painter.setBrush(qt_color)
 
-            x = int(self.x_scale * float(i))
+            x = int(self.delta_x * float(i))
             y = self.height() - int(self.data[i]/self.y_max * self.height())
             painter.drawEllipse(x - 2, y - 2, 4, 4)
 
@@ -97,21 +113,18 @@ class SpotGraph(QtWidgets.QWidget):
 
     def updatePoint(self, frame_number, counts):
         self.data[frame_number%self.x_points] = counts
-        self.update()
+        #self.update()
 
         
-class SpotPicture(QtWidgets.QWidget):
+class SpotPicture(SpotWidget):
 
     def __init__(self,
                  camera_fn = None,
                  pixel_size = None,
                  scale_bar_len = None,
-                 shutters_info = None,
                  **kwds):
         super().__init__(**kwds)
         
-        self.colors = shutters_info.getColorData()
-        self.cycle_length = shutters_info.getFrames()        
         self.scale_bar_len = int(round(scale_bar_len/pixel_size))
 
         self.scale = 2.0  # Fixed for now, but possibly something we can change.

@@ -45,7 +45,7 @@ class FrameAnalysis(QtCore.QObject):
         self.threshold = threshold
         self.x_locs = None
         self.y_locs = None
-
+        
     def analyzeImage(self):
         [self.x_locs, self.y_locs, self.locs_count] = lmmObjectFinder.findObjects(self.frame,
                                                                                   self.threshold)
@@ -84,16 +84,18 @@ class SpotCounter(QtCore.QObject):
         #
         self.max_thread_count = self.threadpool.maxThreadCount() - free_threads
 
+        print("> max threads", self.threadpool.maxThreadCount())
+
         # Initialize object finder.
         lmmObjectFinder.initialize()
 
     def cleanUp(self):
         
         # Object finder cleanup.
-        lmmObjectFinder.cleanup()
+        lmmObjectFinder.cleanUp()
 
         # Print statistics.
-        print("Spot counter dropped", self.dropped, "images out of", self.total, "total images")
+        print("> spot counter dropped", self.dropped, "images out of", self.total, "total images")
 
     def handleAnalysisDone(self, frame_analysis):
         self.in_process.remove(frame_analysis)
@@ -110,6 +112,7 @@ class SpotCounter(QtCore.QObject):
         self.total += 1
 
         # Check if there is a thread available to analyze the image.
+        print(">nfta", self.threadpool.activeThreadCount(), self.max_thread_count)
         if (self.threadpool.activeThreadCount() < self.max_thread_count):
 
             # Create analysis object.

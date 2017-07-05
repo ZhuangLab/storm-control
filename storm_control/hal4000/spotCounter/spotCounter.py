@@ -16,7 +16,10 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import storm_control.sc_library.parameters as params
 
 import storm_control.hal4000.halLib.halDialog as halDialog
+import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halModule as halModule
+
+import storm_control.hal4000.spotCounter.displaySpots as displaySpots
 
 # The module that actually does the analysis.
 import storm_control.hal4000.spotCounter.findSpots as findSpots
@@ -34,7 +37,8 @@ class Analyzer(QtCore.QObject):
                  parameters = None,
                  pixel_size = None,
                  shutters_info = None,
-                 spot_counter = None):
+                 spot_counter = None,
+                 **kwds):
         super().__init__(**kwds)
         self.camera_fn = camera_fn
         self.filming = False
@@ -42,7 +46,7 @@ class Analyzer(QtCore.QObject):
         self.threshold = parameters.get("threshold")
         self.total_counts = 0
 
-        self.spot_graph = displaySpots.SpotGraph(shutters_info = self.shutters_info)
+        self.spot_graph = displaySpots.SpotGraph(shutters_info = shutters_info)
         self.spot_picture = displaySpots.SpotPicture(camera_fn = camera_fn,
                                                      pixel_size = pixel_size,
                                                      scale_bar_len = parameters.get("scale_bar_len"),
@@ -68,8 +72,7 @@ class Analyzer(QtCore.QObject):
         return self.spot_picture
     
     def handleNewFrame(self, frame):
-        self.spot_counter.newFrameToAnalyze(self,
-                                            self.camera_fn.getCameraName(),
+        self.spot_counter.newFrameToAnalyze(self.camera_fn.getCameraName(),
                                             frame,
                                             self.threshold)
         
@@ -80,9 +83,10 @@ class Analyzer(QtCore.QObject):
             self.total_counts += frame_analysis.getCounts()
             
             # Always update the spot count graph.
-            self.spot_graph.updatePoint(frame_analysis.getFrameNumber(),
-                                        frame_analysis.getCounts())
-            
+            if False:
+                self.spot_graph.updatePoint(frame_analysis.getFrameNumber(),
+                                            frame_analysis.getCounts())
+
             # Only update the image if we are filming.
             if self.filming:
                 self.spot_picture.updateImage(frame_analysis.getFrameNumber(),
@@ -118,17 +122,30 @@ class SpotCounterView(halDialog.HalDialog):
         self.parameters = None
 
         # UI setup.
-        self.ui = illuminationUi.Ui_Dialog()
+        self.ui = spotcounterUi.Ui_Dialog()
         self.ui.setupUi(self)
 
         self.ui.analyzerComboBox.currentIndexChanged.connect(self.handleAnalyzerChange)
         self.ui.maxSpinBox.valueChanged.connect(self.handleMaxSpinBox)
 
+        self.graph_layout = QtWidgets.QHBoxLayout(self.ui.graphFrame)
+        self.graph_layout.setContentsMargins(0,0,0,0)
+
+        self.picture_layout = QtWidgets.QHBoxLayout(self.ui.imageFrame)
+        self.picture_layout.setContentsMargins(0,0,0,0)
+        
         self.setEnabled(False)
 
     def handleAnalyzerChange(self, index):
-        pass
-    
+
+        # Remove previous analyzer from the display.
+        self.graph_layout.takeAt(0)
+        self.picture_layout.takeAt(0)
+
+        # Add the new analyzers display widgets.
+        self.graph_layout.addWidget(self.analyzers[index].getSpotGraph())
+        self.picture_layout.addWidget(self.analyzers[index].getSpotPicture())
+        
     def handleMaxSpinBox(self, new_max):
         for analyzer in self.analyzers:
             analyzer.setMaxSpots(new_max)
@@ -143,8 +160,9 @@ class SpotCounterView(halDialog.HalDialog):
         # Clean up.
         self.ui.analyzerComboBox.clear()
 
+        self.parameters = parameters
         self.analyzers = analyzers
-        
+        self.handleAnalyzerChange(0)
 
         self.setEnabled(True)
         
@@ -197,7 +215,7 @@ class SpotCounter(halModule.HalModule):
                                                    name = "which_camera",
                                                    value = "",
                                                    is_mutable = False,
-                                                   is_saved = False)
+                                                   is_saved = False))
 
     def cleanUp(self, qt_settings):
         self.spot_counter.cleanUp()
