@@ -73,6 +73,13 @@ class Ludl(object):
                 "z" : self.z}
 
     def setVelocity(self, x_vel, y_vel):
+        """
+        Set the maximum velocity in LUDL units.
+
+        (Rough) measurements with stspeed = 50000:
+        10000 - about 10 seconds to move 5mm.
+        25000 - about 3.5 seconds to move 5mm.
+        """
         self._command("Speed x=" + str(x_vel))
         self._command("Speed y=" + str(y_vel))
 
@@ -122,7 +129,6 @@ class LudlRS232(Ludl):
             #set z piezo to be controlled by serial     
             #self._command("CAN 3, 83, 267, 0")
             self._command("stspeed x=50000, y=50000")
-            self._command("speed x=10000, y=10000")
 
     def _command(self, command):
         response = self.connection.commWithResp(command)
@@ -149,7 +155,6 @@ class LudlTCP(Ludl):
         
         # Test connection.
         self.live = True
-#        test = self._command("Ver")
 
         try:
             test = self._command("Ver")
@@ -160,8 +165,14 @@ class LudlTCP(Ludl):
             print("Ludl Stage is not connected? Stage is not on?")
 
         if (self.live):
-            self._command("CAN 3, 83, 267, 0")
-            self._command("stspeed x=50000, y=50000")
+#            self._command("CAN 3, 83, 267, 0")
+            #
+            # FIXME? If this is really the starting speed then it
+            #        is larger than the maximum speed, is that a
+            #        good idea?
+            #
+            self._command("stspeed x=50000")
+            self._command("stspeed y=50000")
 
     def _command(self, command):
         try:
