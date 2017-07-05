@@ -118,7 +118,7 @@ class SCMOSCalibrationView(halDialog.HalDialog):
 
     def gotAllCameras(self):
         self.adjustSize()
-        self.setFixedSize(self.width(), self.height())
+        #self.setFixedSize(self.width(), self.height())
         self.checkExists()
         
     def handleDone(self):
