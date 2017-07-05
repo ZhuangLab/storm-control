@@ -73,7 +73,8 @@ class Ludl(object):
                 "z" : self.z}
 
     def setVelocity(self, x_vel, y_vel):
-        self._command("Speed x=" + str(x_vel) + ",y=" + str(y_vel))
+        self._command("Speed x=" + str(x_vel))
+        self._command("Speed y=" + str(y_vel))
 
     def status(self):
         return self._command("Status")
@@ -144,7 +145,7 @@ class LudlTCP(Ludl):
         super().__init__(**kwds)
         self.encoding = 'utf-8'
         self.ip_address = ip_address
-        self.connection = http.client.HTTPConnection(self.ip_address, timeout=1)
+        self.connection = http.client.HTTPConnection(self.ip_address, timeout=10)
         
         # Test connection.
         self.live = True
