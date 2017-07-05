@@ -2,10 +2,10 @@
 <config>
 
   <!-- The starting directory. -->
-  <directory type="directory">C:/Data/</directory>
+  <directory type="directory">F:/Data2/</directory>
   
   <!-- The setup name -->
-  <setup_name type="string">hbaic-pgrey</setup_name>
+  <setup_name type="string">hbaic-hcam</setup_name>
 
   <!-- The ui type, this is 'classic' or 'detached' -->
   <ui_type type="string">detached</ui_type>
@@ -79,7 +79,7 @@
 	<transpose desc="Transpose image (mosaic)" type="boolean">False</transpose>
 
 	<objective desc="Current objective" type="string" values="obj1,obj2,obj3">obj1</objective>
-	<obj1 desc="Objective 1" type="custom">100x,0.160,0.0,0.0</obj1>
+	<obj1 desc="Objective 1" type="custom">60x,0.120,0.0,0.0</obj1>
 	<obj2 desc="Objective 2" type="custom">10x,1.60,0.0,0.0</obj2>
 	<obj3 desc="Objective 3" type="custom">4x,4.0,0.0,0.0</obj3>	
       </parameters>
@@ -134,7 +134,7 @@
 	  <!-- These can be changed / editted. -->
 
 	  <!-- This is the extension to use (if any) when saving data from this camera. -->
-	  <extension type="string">hcam</extension>
+	  <extension type="string"></extension>
 	  
 	  <!-- Whether or not data from this camera is saved during filming. -->
 	  <saved type="boolean">True</saved>
@@ -433,6 +433,12 @@
 	</filter_wheel1>
       </configuration>
     </prior_controller>
+
+    <!-- sCMOS calibration module -->
+    <scmos_cal>
+      <module_name type="string">storm_control.hal4000.miscControl.scmosCalibration</module_name>
+      <class_name type="string">SCMOSCalibration</class_name>
+    </scmos_cal>
     
     <!-- Stage control GUI -->
     <stage>
@@ -466,9 +472,9 @@
 	<uc480_dll type="string">c:/windows/system32/uc480_64.dll</uc480_dll>
 	<x_width type="int">700</x_width>
 	<y_width type="int">100</y_width>
-	<units_to_microns type="float">-1.0</units_to_microns>
+	<units_to_microns type="float">0.135</units_to_microns>
       </configuration>
-    </uc480_camera>    
+    </uc480_camera>
     
   </modules>  
 </config>

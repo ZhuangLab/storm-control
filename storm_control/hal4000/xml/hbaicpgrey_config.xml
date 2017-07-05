@@ -2,7 +2,7 @@
 <config>
 
   <!-- The starting directory. -->
-  <directory type="directory">C:/Data/</directory>
+  <directory type="directory">F:/Data2/</directory>
   
   <!-- The setup name -->
   <setup_name type="string">hbaic-pgrey</setup_name>
@@ -138,7 +138,7 @@
 	  <!-- These can be changed / editted. -->
 
 	  <!-- This is the extension to use (if any) when saving data from this camera. -->
-	  <extension type="string">c1</extension>
+	  <extension type="string"></extension>
 	  
 	  <!-- Whether or not data from this camera is saved during filming. -->
 	  <saved type="boolean">True</saved>
@@ -396,6 +396,12 @@
       </configuration>
     </obis405>
 
+    <!-- sCMOS calibration module -->
+    <scmos_cal>
+      <module_name type="string">storm_control.hal4000.miscControl.scmosCalibration</module_name>
+      <class_name type="string">SCMOSCalibration</class_name>
+    </scmos_cal>
+    
     <!-- Stage control GUI -->
     <stage>
       <class_name type="string">Stage</class_name>
@@ -403,7 +409,7 @@
       <configuration>
 	<stage_functionality type="string">ludl_stage</stage_functionality>
       </configuration>
-  </stage>
+    </stage>
 
     <!-- Thorlabs UC480 camera for the focus lock -->
     <uc480_camera>
@@ -428,7 +434,7 @@
 	<uc480_dll type="string">c:/windows/system32/uc480_64.dll</uc480_dll>
 	<x_width type="int">700</x_width>
 	<y_width type="int">100</y_width>
-	<units_to_microns type="float">0.22</units_to_microns>
+	<units_to_microns type="float">0.135</units_to_microns>
       </configuration>
     </uc480_camera>
     

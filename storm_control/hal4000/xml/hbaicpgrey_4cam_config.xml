@@ -2,7 +2,7 @@
 <config>
 
   <!-- The starting directory. -->
-  <directory type="directory">C:/Data/</directory>
+  <directory type="directory">E:/SSD_Data/</directory>
   
   <!-- The setup name -->
   <setup_name type="string">hbaic-pgrey</setup_name>
@@ -536,7 +536,7 @@
 	<uc480_dll type="string">c:/windows/system32/uc480_64.dll</uc480_dll>
 	<x_width type="int">700</x_width>
 	<y_width type="int">100</y_width>
-	<units_to_microns type="float">0.22</units_to_microns>
+	<units_to_microns type="float">0.135</units_to_microns>
       </configuration>
     </uc480_camera>
     
