@@ -51,6 +51,7 @@ class LudlStageTCP(stageModule.StageModule):
         self.stage = ludl.LudlTCP(ip_address = configuration.get("ip_address"))
 
         if self.stage.getStatus():
+            self.stage.setVelocity(10000,10000)
             self.stage_functionality = LudlStageFunctionality(stage = self.stage,
                                                               update_interval = 500)
         else:
