@@ -112,7 +112,6 @@ class SpotCounter(QtCore.QObject):
         self.total += 1
 
         # Check if there is a thread available to analyze the image.
-        print(">nfta", self.threadpool.activeThreadCount(), self.max_thread_count)
         if (self.threadpool.activeThreadCount() < self.max_thread_count):
 
             # Create analysis object.

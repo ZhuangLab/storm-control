@@ -60,14 +60,15 @@ def findObjects(frame, threshold):
     """
     x = numpy.zeros((max_locs), dtype = numpy.float32)
     y = numpy.zeros((max_locs), dtype = numpy.float32)
-    n = ctypes.c_int(max_locs)
-    lmmoment.numberAndLocObjects(numpy.ascontiguousarray(frame.getData(), dtype = numpy.uint16),
-                                 frame.image_y,
-                                 frame.image_x,
-                                 threshold,
-                                 x,
-                                 y,
-                                 ctypes.byref(n))
+    n = ctypes.c_int(0)
+#    n = ctypes.c_int(max_locs)
+#    lmmoment.numberAndLocObjects(numpy.ascontiguousarray(frame.getData(), dtype = numpy.uint16),
+#                                 frame.image_y,
+#                                 frame.image_x,
+#                                 threshold,
+#                                 x,
+#                                 y,
+#                                 ctypes.byref(n))
     return [x, y, n.value]
 
 

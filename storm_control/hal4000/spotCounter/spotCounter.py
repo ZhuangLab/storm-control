@@ -125,6 +125,9 @@ class SpotCounterView(halDialog.HalDialog):
         self.ui = spotcounterUi.Ui_Dialog()
         self.ui.setupUi(self)
 
+        self.ui.countsLabel1.setText("0")
+        self.ui.countsLabel2.setText("0")
+        
         self.ui.analyzerComboBox.currentIndexChanged.connect(self.handleAnalyzerChange)
         self.ui.maxSpinBox.valueChanged.connect(self.handleMaxSpinBox)
 
