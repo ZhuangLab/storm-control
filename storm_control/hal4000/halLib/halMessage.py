@@ -259,6 +259,9 @@ class HalMessage(QtCore.QObject):
     def incRefCount(self):
         self.ref_count += 1
 
+    def getRefCount(self):
+        return self.ref_count
+    
     def getSource(self):
         return self.source
 
