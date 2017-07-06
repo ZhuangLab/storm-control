@@ -49,16 +49,21 @@ class HardwareWorker(QtCore.QRunnable):
     Primarily this is used by BufferedFunctionality, but it may also 
     be useful by itself for one off communication with hardware.
 
-    Note: These are automatically deleted after use, so if you want
-          to reuse them you need to call setAutoDelete(False).
+    Note: These are all run with setAutoDelete(False) as it appears
+          problematic to have Qt do the memory management.
     """
     def __init__(self, task = None, args = [], **kwds):
         super().__init__(**kwds)
         self.args = args
         self.task = task
+        self.task_complete = False
 
+    def isFinished(self):
+        return self.task_complete
+        
     def run(self):
         self.task(*self.args)
+        self.task_complete = True
 
 
 class BufferedFunctionality(HardwareFunctionality):
@@ -81,12 +86,25 @@ class BufferedFunctionality(HardwareFunctionality):
         self.device_mutex = device_mutex        
         self.next_request = None
         self.running = True
+        self.workers = []
         
-        # This signal is used to let us know when the current 'maybe'
-        # request is done and we should start the next one.
+        # This signal is used to let us know
+        # when a worker has finished.
         self.done.connect(self.handleDone)
 
+    def cleanUpWorkers(self):
+        """
+        Remove any workers that have finished.
+        """
+        still_working = []
+        for worker in self.workers:
+            if not worker.isFinished():
+                still_working.append(worker)
+        self.workers = still_working
+
     def handleDone(self):
+
+        # Start the next 'maybe' request, if there was one.
         if self.next_request is not None:
             self.start(*self.next_request)
             self.next_request = None
@@ -134,6 +152,15 @@ class BufferedFunctionality(HardwareFunctionality):
     def startWorker(self, worker):
         if not self.running:
             return
+
+        # Remove any old workers that have finished.
+        self.cleanUpWorkers()
+
+        # We need to manage the workers ourselves because otherwise we'll
+        # experience strange/sporadic errors like the GUI freezing.
+        worker.setAutoDelete(False)
+        self.workers.append(worker)
+        
         getThreadPool().start(worker)
         
     def wait(self):
@@ -144,6 +171,8 @@ class BufferedFunctionality(HardwareFunctionality):
         while(self.busy):
             print("BufferedFunctionality wait")
             time.sleep(0.1)
+
+        self.cleanUpWorkers()
 
 
 class HardwareModule(halModule.HalModule):
