@@ -28,11 +28,12 @@ def runWorkerTask(module, message, task):
 
     This will also handle errors in manner that HAL expects.
 
-    Note: Only one of these can be run at a time in order to gaurantee
-          that messages are handled serially. This assumes that the
-          threadpool starts the tasks in the order they are received.
+    Note: Only one of these can be run at a time (per module) in order 
+          to gaurantee that messages are handled serially. This assumes 
+          that the threadpool starts the tasks in the order they are 
+          received.
     """
-
+    
     # Increment the count because once this message is handed off
     # HalModule will automatically decrement the count.
     message.incRefCount()
@@ -41,6 +42,11 @@ def runWorkerTask(module, message, task):
                         task = task)
     ct_task.hwsignaler.workerDone.connect(module.handleWorkerDone)
     ct_task.hwsignaler.workerError.connect(module.handleWorkerError)
+
+    # We need to manage the tasks ourselves because otherwise we'll
+    # experience strange/sporadic errors like the GUI freezing.
+    ct_task.setAutoDelete(False)
+    module.workers[id(ct_task)] = ct_task
 
     # This had better start tasks in the order they are received or
     # there could be all kinds of issues..
@@ -51,8 +57,8 @@ class HalWorkerSignaler(QtCore.QObject):
     """
     A signaler class for HalWorker.
     """
-    workerDone = QtCore.pyqtSignal(object)
-    workerError = QtCore.pyqtSignal(object, object, str)
+    workerDone = QtCore.pyqtSignal(object, object)
+    workerError = QtCore.pyqtSignal(object, object, object, str)
 
 
 class HalWorker(QtCore.QRunnable):
@@ -67,19 +73,27 @@ class HalWorker(QtCore.QRunnable):
         self.message = message
         self.mutex = mutex
         self.task = task
+        self.task_complete = False
 
         self.hwsignaler = HalWorkerSignaler()
 
+    def isFinished(self):
+        return self.task_complete
+    
     def run(self):
         try:
             self.mutex.lock()
             self.task()
             self.mutex.unlock()
         except Exception as exception:
-            self.hwsignaler.workerError.emit(self.message,
+            self.hwsignaler.workerError.emit(id(self),
+                                             self.message,
                                              exception,
                                              traceback.format_exc())
-        self.hwsignaler.workerDone.emit(self.message)
+        finally:
+            self.task_complete = True
+            
+        self.hwsignaler.workerDone.emit(id(self), self.message)
 
         
 class HalModule(QtCore.QObject):
@@ -106,6 +120,7 @@ class HalModule(QtCore.QObject):
         self.module_name = module_name
 
         self.queued_messages = deque()
+        self.workers = {}
         self.worker_mutex = QtCore.QMutex()
 
         self.queued_messages_timer = QtCore.QTimer(self)
@@ -119,6 +134,15 @@ class HalModule(QtCore.QObject):
         GUI settings.
         """
         pass
+
+    def cleanUpWorker(self, worker_id):
+        """
+        Disconnects any workers that have finished and discard them.
+        """
+        worker = self.workers[worker_id]
+        worker.hwsignaler.workerDone.disconnect(self.handleWorkerDone)
+        worker.hwsignaler.workerError.disconnect(self.handleWorkerError)
+        del self.workers[worker_id]
         
     def handleError(self, message, m_error):
         """
@@ -171,7 +195,7 @@ class HalModule(QtCore.QObject):
         """
         return False
 
-    def handleWorkerDone(self, message):
+    def handleWorkerDone(self, worker_id, message):
         """
         You probably don't want to override this..
         """
@@ -180,11 +204,16 @@ class HalModule(QtCore.QObject):
         # Log when the worker finished.
         message.logEvent("worker done")
 
-    def handleWorkerError(self, message, exception, stack_trace):
+        # Cleanup the worker.
+        self.cleanUpWorker(worker_id)
+
+    def handleWorkerError(self, worker_id, message, exception, stack_trace):
         message.addError(halMessage.HalMessageError(source = self.module_name,
                                                     message = str(exception),
                                                     m_exception = exception,
                                                     stack_trace = stack_trace))
+        # Cleanup the worker.
+        self.cleanUpWorker(worker_id)
 
     def processMessage(self, message):
         """
