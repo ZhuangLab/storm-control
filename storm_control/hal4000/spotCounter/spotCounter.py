@@ -83,7 +83,7 @@ class Analyzer(QtCore.QObject):
             self.total_counts += frame_analysis.getCounts()
             
             # Always update the spot count graph.
-            if False:
+            if True:
                 self.spot_graph.updatePoint(frame_analysis.getFrameNumber(),
                                             frame_analysis.getCounts())
 
@@ -221,9 +221,14 @@ class SpotCounter(halModule.HalModule):
                                                    is_saved = False))
 
     def cleanUp(self, qt_settings):
+        self.cleanUpAnalyzers()
         self.spot_counter.cleanUp()
         self.view.cleanUp(qt_settings)
 
+    def cleanUpAnalyzers(self):
+        for analyzer in self.analyzers:
+            analyzer.cleanUp()
+            
     def handleResponses(self, message):
         
         if message.isType("get functionality"):
@@ -324,6 +329,10 @@ class SpotCounter(halModule.HalModule):
                                                               data = {"acquisition" : [counts_param]}))
 
     def newAnalyzers(self):
+
+        # Disconnect old analyzers.
+        self.cleanUpAnalyzers()
+        
         #
         # Create new analyzers after a parameter change, or when HAL
         # starts. This is done by requesting functionalities for all

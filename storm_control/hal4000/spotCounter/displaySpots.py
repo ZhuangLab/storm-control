@@ -63,8 +63,8 @@ class SpotGraph(SpotWidget):
         #
         # Draw grid lines in x.
         #
+        painter.setPen(QtGui.QColor(200, 200, 200))
         if (self.cycle_length > 1):
-            painter.setPen(QtGui.QColor(200, 200, 200))
             x = 0.0
             while x < float(self.width()):
                 ix = int(x)
@@ -107,13 +107,18 @@ class SpotGraph(SpotWidget):
             y = self.height() - int(self.data[i]/self.y_max * self.height())
             painter.drawEllipse(x - 2, y - 2, 4, 4)
 
+    def resizeEvent(self, event):
+        self.delta_x = float(self.width())/float(self.x_points-1)
+        self.delta_y = float(self.height())/5.0
+        self.update()
+        
     def setMaxSpots(self, max_spots):
         self.y_max = float(max_spots)
         self.update()
 
     def updatePoint(self, frame_number, counts):
         self.data[frame_number%self.x_points] = counts
-        #self.update()
+        self.update()
 
         
 class SpotPicture(SpotWidget):

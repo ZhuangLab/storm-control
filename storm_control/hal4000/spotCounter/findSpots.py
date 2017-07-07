@@ -4,6 +4,7 @@ Analyze frames using QRunnables and QThreadPool.
 
 Hazen 05/17
 """
+import time
 
 from PyQt5 import QtCore
 
@@ -103,6 +104,17 @@ class SpotCounter(QtCore.QObject):
         lmmObjectFinder.initialize()
             
     def cleanUp(self):
+
+        # Wait for workers to finish.
+        still_busy = True
+        while still_busy:
+            all_busy = False
+            for worker in self.workers:
+                if worker.isBusy():
+                    all_busy = True
+                    break
+            still_busy = all_busy
+            time.sleep(0.1)
         
         # Object finder cleanup.
         lmmObjectFinder.cleanUp()
