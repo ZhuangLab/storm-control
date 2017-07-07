@@ -257,6 +257,7 @@
     </daq>
 
     <!-- Filter wheel control GUI. -->
+    <!--
     <filter_wheel>
       <class_name type="string">FilterWheel</class_name>
       <module_name type="string">storm_control.hal4000.miscControl.filterWheel</module_name>
@@ -264,7 +265,8 @@
 	<filter_wheel_fn type="string">prior_controller.filter_wheel1</filter_wheel_fn>
 	<filters type="string">Penta,405,488,560,647,750,None</filters>
       </configuration>
-    </filter_wheel>
+      </filter_wheel>
+      -->
     
     <!-- Focus lock control GUI. -->
     <focuslock>
@@ -304,7 +306,7 @@
 	<sampling_rate type="float">2500.0</sampling_rate>
       </configuration>
     </galvo>
-    
+
     <!-- Illumination (lasers, shutters, etc) control GUI. -->
     <illumination>
       <class_name type="string">Illumination</class_name>
@@ -378,7 +380,6 @@
       </configuration>
     </ldc_irlaser>
 
-
     <!-- Ludl stage -->
     <ludl_stage>
       <module_name type="string">storm_control.sc_hardware.ludl.ludlModule</module_name>
@@ -387,7 +388,7 @@
       <configuration>
 	<ip_address type="string">192.168.100.1</ip_address>
       </configuration>
-    </ludl_stage>    
+    </ludl_stage>
     
     <!-- Mad City Labs Z piezo -->
     <mcl_zstage>
@@ -420,6 +421,7 @@
     </obis405>
 
     <!-- Prior filter wheel controller. -->
+    <!--
     <prior_controller>
       <module_name type="string">storm_control.sc_hardware.prior.priorModule</module_name>
       <class_name type="string">PriorController</class_name>
@@ -432,14 +434,27 @@
 	  <maximum type="int">10</maximum>
 	</filter_wheel1>
       </configuration>
-    </prior_controller>
+      </prior_controller>
+      -->
 
     <!-- sCMOS calibration module -->
+    <!--
     <scmos_cal>
       <module_name type="string">storm_control.hal4000.miscControl.scmosCalibration</module_name>
       <class_name type="string">SCMOSCalibration</class_name>
-    </scmos_cal>
-    
+      </scmos_cal>
+      -->
+
+    <!-- Spot counter GUI -->
+    <spotcounter>
+      <class_name type="string">SpotCounter</class_name>
+      <module_name type="string">storm_control.hal4000.spotCounter.spotCounter</module_name>
+      <configuration>
+	<max_threads type="int">4</max_threads>
+	<max_size type="int">263000</max_size>
+      </configuration>
+    </spotcounter>
+
     <!-- Stage control GUI -->
     <stage>
       <class_name type="string">Stage</class_name>
@@ -474,7 +489,7 @@
 	<y_width type="int">100</y_width>
 	<units_to_microns type="float">0.135</units_to_microns>
       </configuration>
-    </uc480_camera>
+      </uc480_camera>
     
   </modules>  
 </config>

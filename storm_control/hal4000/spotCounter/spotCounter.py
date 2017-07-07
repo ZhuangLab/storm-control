@@ -90,7 +90,7 @@ class Analyzer(QtCore.QObject):
             # Only update the image if we are filming.
             if self.filming:
                 self.spot_picture.updateImage(frame_analysis.getFrameNumber(),
-                                              frame_analysis.getLocalizations)
+                                              frame_analysis.getLocalizations())
 
     def savePicture(self, basename):
         self.spot_picture.savePicture(basename + "_" + self.camera_fn.getParameter("extension"))
@@ -316,6 +316,7 @@ class SpotCounter(halModule.HalModule):
                 analyzer.stopFilm()
                 total_spots += analyzer.getCounts()
                 if self.basename is not None:
+                    print(">savePicture", self.basename)
                     analyzer.savePicture(self.basename)
 
             self.basename = None

@@ -192,7 +192,7 @@ class SpotPicture(SpotWidget):
         painter.drawRect(5, 5, 5 + self.scale_bar_len, 5)
 
     def savePicture(self, filename):
-        self.q_pixmap.save(filename, "PNG", -1)
+        self.q_pixmap.save(filename + ".png", "PNG", -1)
         
     def updateImage(self, frame_number, locs):
 
@@ -200,6 +200,7 @@ class SpotPicture(SpotWidget):
         color = self.colors[frame_number % self.cycle_length]
         if color is None:
             return
+        print(">", color)
         
         x = numpy.round(self.scale*locs[0])
         y = numpy.round(self.scale*locs[1])
