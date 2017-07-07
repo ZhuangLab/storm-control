@@ -304,7 +304,7 @@
 	<sampling_rate type="float">2500.0</sampling_rate>
       </configuration>
     </galvo>
-    
+
     <!-- Illumination (lasers, shutters, etc) control GUI. -->
     <illumination>
       <class_name type="string">Illumination</class_name>
@@ -378,7 +378,6 @@
       </configuration>
     </ldc_irlaser>
 
-
     <!-- Ludl stage -->
     <ludl_stage>
       <module_name type="string">storm_control.sc_hardware.ludl.ludlModule</module_name>
@@ -439,7 +438,17 @@
       <module_name type="string">storm_control.hal4000.miscControl.scmosCalibration</module_name>
       <class_name type="string">SCMOSCalibration</class_name>
     </scmos_cal>
-    
+
+    <!-- Spot counter GUI -->
+    <spotcounter>
+      <class_name type="string">SpotCounter</class_name>
+      <module_name type="string">storm_control.hal4000.spotCounter.spotCounter</module_name>
+      <configuration>
+	<max_threads type="int">4</max_threads>
+	<max_size type="int">263000</max_size>
+      </configuration>
+    </spotcounter>
+
     <!-- Stage control GUI -->
     <stage>
       <class_name type="string">Stage</class_name>

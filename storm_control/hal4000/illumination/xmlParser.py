@@ -63,7 +63,7 @@ def parseShuttersXML(number_channels, shutters_file):
     #
     color_data = []
     for i in range(frames):
-        color_data.append(0)
+        color_data.append(None)
 
     #
     # Create waveforms.
