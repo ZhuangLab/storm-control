@@ -131,7 +131,6 @@ class SpotPicture(SpotWidget):
         super().__init__(**kwds)
         
         self.scale_bar_len = int(round(1.0e-3 * scale_bar_len/pixel_size))
-        print(">", self.scale_bar_len, scale_bar_len, pixel_size)
 
         self.scale = 2.0  # Fixed for now, but possibly something we can change.
 
@@ -200,12 +199,11 @@ class SpotPicture(SpotWidget):
         color = self.colors[frame_number % self.cycle_length]
         if color is None:
             return
-        print(">", color)
         
         x = numpy.round(self.scale*locs[0])
         y = numpy.round(self.scale*locs[1])
 
-        painter.QtGui.QPainter(self.q_pixmap)
+        painter = QtGui.QPainter(self.q_pixmap)
         painter.setTransform(self.transform)
         painter.setPen(QtGui.QColor(*color))
         

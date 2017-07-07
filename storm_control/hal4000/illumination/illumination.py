@@ -228,6 +228,10 @@ class IlluminationView(halDialog.HalDialog):
             # Channels create DaqWaveform objects (or not) based on the waveform.
             self.waveforms.extend(channel.getDaqWaveforms(waveforms[i], oversampling))
 
+        # Send shutters info to other modules
+        self.guiMessage.emit(halMessage.HalMessage(m_type = "configuration",
+                                                   data = {"properties" : {"shutters info" : self.shutters_info}}))
+
     def remoteIncPower(self, channel, power_inc):
         if isinstance(channel, str):
             self.channels_by_name[channel].remoteIncPower(power_inc)
@@ -272,8 +276,8 @@ class IlluminationView(halDialog.HalDialog):
                                                            data = {"waveforms" : self.waveforms}))
 
             # Send shutters info to other modules
-            self.guiMessage.emit(halMessage.HalMessage(m_type = "configuration",
-                                                       data = {"properties" : {"shutters info" : self.shutters_info}}))
+#            self.guiMessage.emit(halMessage.HalMessage(m_type = "configuration",
+#                                                       data = {"properties" : {"shutters info" : self.shutters_info}}))
             
     def stopFilm(self):
 

@@ -224,11 +224,6 @@ class CameraFrameViewer(QtWidgets.QFrame):
                                   name = "sync",
                                   value = 0))
 
-        p.add(params.ParameterInt(name = "sync_max",
-                                  value = 0,
-                                  is_mutable = False,
-                                  is_saved = False))
-
         # Set parameters with default values from feed/camera functionality
         if cam_fn.hasParameter("colortable"):
             p.setv("colortable", cam_fn.getParameter("colortable"))
@@ -509,7 +504,6 @@ class CameraFrameViewer(QtWidgets.QFrame):
         self.ui.rangeSlider.setValues([float(self.getParameter("display_min")),
                                        float(self.getParameter("display_max"))])
 
-        self.setSyncMax(self.getParameter("sync_max"))
         self.ui.syncSpinBox.setValue(self.getParameter("sync"))
 
     def setFeedNames(self, feed_names):
@@ -550,7 +544,6 @@ class CameraFrameViewer(QtWidgets.QFrame):
         
     def setSyncMax(self, sync_max):
         self.cycle_length = sync_max
-        self.setParameter("sync_max", sync_max)
         self.ui.syncSpinBox.valueChanged.disconnect(self.handleSync)
         self.ui.syncSpinBox.setMaximum(sync_max)
         self.ui.syncSpinBox.valueChanged.connect(self.handleSync)        
