@@ -130,7 +130,8 @@ class SpotPicture(SpotWidget):
                  **kwds):
         super().__init__(**kwds)
         
-        self.scale_bar_len = int(round(scale_bar_len/pixel_size))
+        self.scale_bar_len = int(round(1.0e-3 * scale_bar_len/pixel_size))
+        print(">", self.scale_bar_len, scale_bar_len, pixel_size)
 
         self.scale = 2.0  # Fixed for now, but possibly something we can change.
 
@@ -169,8 +170,7 @@ class SpotPicture(SpotWidget):
 
         self.transform = flip_lr * flip_ud * flip_xy
         
-        self.setFixedSize(int(self.scale * xp),
-                          int(self.scale * yp))
+        self.setFixedSize(xp, yp)
 
     def clearPicture(self):
         painter = QtGui.QPainter(self.q_pixmap)

@@ -133,9 +133,6 @@ class SpotCounterView(halDialog.HalDialog):
 
         self.graph_layout = QtWidgets.QHBoxLayout(self.ui.graphFrame)
         self.graph_layout.setContentsMargins(0,0,0,0)
-
-        self.picture_layout = QtWidgets.QHBoxLayout(self.ui.imageFrame)
-        self.picture_layout.setContentsMargins(0,0,0,0)
         
         self.setEnabled(False)
 
@@ -143,12 +140,11 @@ class SpotCounterView(halDialog.HalDialog):
 
         # Remove previous analyzer from the display.
         self.graph_layout.takeAt(0)
-        self.picture_layout.takeAt(0)
 
         # Add the new analyzers display widgets.
         self.graph_layout.addWidget(self.analyzers[index].getSpotGraph())
-        self.picture_layout.addWidget(self.analyzers[index].getSpotPicture())
-        
+        self.ui.imageScrollArea.setWidget(self.analyzers[index].getSpotPicture())
+
     def handleMaxSpinBox(self, new_max):
         for analyzer in self.analyzers:
             analyzer.setMaxSpots(new_max)
@@ -204,10 +200,10 @@ class SpotCounter(halModule.HalModule):
         
         self.parameters.add(params.ParameterRangeFloat(description = "Scale bar length in nm",
                                                        name = "scale_bar_len",
-                                                       value = 1000,
+                                                       value = 2000,
                                                        min_value = 100,
                                                        max_value = 10000))
-        
+
         self.parameters.add(params.ParameterRangeInt(description = "Spot detection threshold (camera counts)",
                                                      name = "threshold",
                                                      value = 250,
