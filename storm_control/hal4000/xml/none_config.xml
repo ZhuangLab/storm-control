@@ -438,7 +438,7 @@
       <module_name type="string">storm_control.hal4000.spotCounter.spotCounter</module_name>
       <class_name type="string">SpotCounter</class_name>	    
       <configuration>
-	<free_threads type="int">4</free_threads>
+	<max_threads type="int">4</max_threads>
 	<max_size type="int">263000</max_size>
       </configuration>
     </spotcounter>

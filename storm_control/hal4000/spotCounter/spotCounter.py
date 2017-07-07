@@ -183,7 +183,7 @@ class SpotCounter(halModule.HalModule):
 
         configuration = module_params.get("configuration")
 
-        self.spot_counter = findSpots.SpotCounter(free_threads = configuration.get("free_threads"),
+        self.spot_counter = findSpots.SpotCounter(max_threads = configuration.get("max_threads"),
                                                   max_size = configuration.get("max_size"))
 
         self.view = SpotCounterView(module_name = self.module_name,

@@ -15,12 +15,31 @@ class AnalysisWorker(QtCore.QRunnable):
     """
     Runnable for performing image analysis.
     """
-    def __init__(self, frame_analysis = None, **kwds):
+    def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.frame_analysis = frame_analysis
+        self.aw_signaler = AnalysisWorkerSignaler()
+        self.frame_analysis = None
+        self.busy = False
 
+    def isBusy(self):
+        return self.busy
+        
     def run(self):
         self.frame_analysis.analyzeImage()
+        self.aw_signaler.analysisDone.emit(self.frame_analysis)
+        self.busy = False
+        
+    def setFrameAnalysis(self, frame_analysis):
+        self.frame_analysis = frame_analysis
+        self.busy = True
+
+
+class AnalysisWorkerSignaler(QtCore.QObject):
+    """
+    Signal class used by the AnalysisWorker to indicate that
+    the analysis of a frame is complete.
+    """
+    analysisDone = QtCore.pyqtSignal(object)
 
     
 class FrameAnalysis(QtCore.QObject):
@@ -29,10 +48,7 @@ class FrameAnalysis(QtCore.QObject):
      1. Stores the frame to analyze.
      2. Does the analysis (with AnalysisWorker).
      3. Stores the results of the analysis.
-     4. Signals when the analysis is done.
     """
-    analysisDone = QtCore.pyqtSignal(object)
-    
     def __init__(self,
                  camera_name = None,
                  frame = None,
@@ -49,7 +65,6 @@ class FrameAnalysis(QtCore.QObject):
     def analyzeImage(self):
         [self.x_locs, self.y_locs, self.locs_count] = lmmObjectFinder.findObjects(self.frame,
                                                                                   self.threshold)
-        self.analysisDone.emit(self)
 
     def getCameraName(self):
         return self.camera_name
@@ -68,27 +83,25 @@ class FrameAnalysis(QtCore.QObject):
 class SpotCounter(QtCore.QObject):
     imageProcessed = QtCore.pyqtSignal(object)
 
-    def __init__(self, free_threads = None, max_size = 0, **kwds):
+    def __init__(self, max_threads = None, max_size = 0, **kwds):
         super().__init__(**kwds)
 
         self.dropped = 0
-        self.in_process = []
-
-        # This is the maximum size in pixels of an image that we will analyze.
         self.max_size = max_size
         self.threadpool = halModule.threadpool
         self.total = 0
+        self.workers = []
 
-        #
-        # Leave at least free_threads free for other HAL modules to use.
-        #
-        self.max_thread_count = self.threadpool.maxThreadCount() - free_threads
-
-        print("> max threads", self.threadpool.maxThreadCount())
+        # Create analysis workers.
+        for i in range(max_threads):
+            aw = AnalysisWorker()
+            aw.setAutoDelete(False)
+            aw.aw_signaler.analysisDone.connect(self.handleAnalysisDone)
+            self.workers.append(aw)
 
         # Initialize object finder.
         lmmObjectFinder.initialize()
-
+            
     def cleanUp(self):
         
         # Object finder cleanup.
@@ -98,8 +111,6 @@ class SpotCounter(QtCore.QObject):
         print("> spot counter dropped", self.dropped, "images out of", self.total, "total images")
 
     def handleAnalysisDone(self, frame_analysis):
-        self.in_process.remove(frame_analysis)
-        frame_analysis.analysisDone.disconnect(self.handleAnalysisDone)
         self.imageProcessed.emit(frame_analysis)
         
     def newFrameToAnalyze(self, camera_name, frame, threshold):
@@ -112,21 +123,20 @@ class SpotCounter(QtCore.QObject):
         self.total += 1
 
         # Check if there is a thread available to analyze the image.
-        if (self.threadpool.activeThreadCount() < self.max_thread_count):
+        was_dropped = True
+        for worker in self.workers:
+            if not worker.isBusy():
+                worker.setFrameAnalysis(FrameAnalysis(camera_name = camera_name,
+                                                      frame = frame,
+                                                      threshold = threshold))
+                self.threadpool.start(worker)
+                was_dropped = False
+                break
 
-            # Create analysis object.
-            frame_analysis = FrameAnalysis(camera_name = camera_name,
-                                           frame = frame,
-                                           threshold = threshold)
-            frame_analysis.analysisDone.connect(self.handleAnalysisDone)
-            self.in_process.append(frame_analysis)
-
-            # Start analysis.
-            self.threadpool.start(AnalysisWorker(frame_analysis = frame_analysis))
-
-        else:
+        if was_dropped:
             self.dropped += 1
-            
+
+
 #
 # The MIT License
 #
