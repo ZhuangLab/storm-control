@@ -139,8 +139,7 @@ class SpotPicture(SpotWidget):
         yp = int(self.scale * camera_fn.getParameter("y_pixels"))
 
         # For rendering an intermediate picture.
-        self.q_pixmap = QtGui.QPixmap(int(self.scale * xp),
-                                      int(self.scale * yp))
+        self.q_pixmap = QtGui.QPixmap(xp, yp)
 
         # Figure out transform matrix.
         #
@@ -191,6 +190,7 @@ class SpotPicture(SpotWidget):
         painter.drawRect(5, 5, 5 + self.scale_bar_len, 5)
 
     def savePicture(self, filename):
+        print(self.q_pixmap.width(), self.q_pixmap.height())
         self.q_pixmap.save(filename + ".png", "PNG", -1)
         
     def updateImage(self, frame_number, locs):

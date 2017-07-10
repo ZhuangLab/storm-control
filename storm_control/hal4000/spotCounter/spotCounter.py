@@ -32,6 +32,8 @@ class Analyzer(QtCore.QObject):
     """
     Manages the analysis of a single camera feed.
     """
+    totalCount = QtCore.pyqtSignal(int)
+    
     def __init__(self,
                  camera_fn = None,
                  parameters = None,
@@ -87,10 +89,12 @@ class Analyzer(QtCore.QObject):
                 self.spot_graph.updatePoint(frame_analysis.getFrameNumber(),
                                             frame_analysis.getCounts())
 
-            # Only update the image if we are filming.
+            # Only update the image and total counts if we are filming.
             if self.filming:
                 self.spot_picture.updateImage(frame_analysis.getFrameNumber(),
                                               frame_analysis.getLocalizations())
+
+                self.totalCount.emit(self.total_counts)
 
     def savePicture(self, basename):
         self.spot_picture.savePicture(basename + "_" + self.camera_fn.getParameter("extension"))
@@ -107,6 +111,7 @@ class Analyzer(QtCore.QObject):
         self.total_counts = 0
         self.spot_graph.clearGraph()
         self.spot_picture.clearPicture()
+        self.totalCount.emit(self.total_counts)
 
     def stopFilm(self):
         self.filming = False
@@ -119,6 +124,7 @@ class SpotCounterView(halDialog.HalDialog):
     def __init__(self, configuration = None, **kwds):
         super().__init__(**kwds)
         self.analyzers = []
+        self.cur_analyzer = None
         self.parameters = None
 
         # UI setup.
@@ -138,17 +144,32 @@ class SpotCounterView(halDialog.HalDialog):
 
     def handleAnalyzerChange(self, index):
 
+        # Disconnect old analyzer.
+        if self.cur_analyzer is not None:
+            self.cur_analyzer.totalCount.disconnect(self.handleTotalCount)
+        
         # Remove previous analyzer from the display.
         self.graph_layout.takeAt(0)
 
         # Add the new analyzers display widgets.
-        self.graph_layout.addWidget(self.analyzers[index].getSpotGraph())
-        self.ui.imageScrollArea.setWidget(self.analyzers[index].getSpotPicture())
+        self.cur_analyzer = self.analyzers[index]
+        self.graph_layout.addWidget(self.cur_analyzer.getSpotGraph())
+        self.ui.imageScrollArea.setWidget(self.cur_analyzer.getSpotPicture())
+
+        # Connect new analyzer.
+        self.cur_analyzer.totalCount.connect(self.handleTotalCount)
+
+        # Save current analyzer in the parameters.
+        self.parameters.setv("which_camera", self.cur_analyzer.getCameraName())
 
     def handleMaxSpinBox(self, new_max):
         for analyzer in self.analyzers:
             analyzer.setMaxSpots(new_max)
         self.parameters.setv("max_spots", new_max)
+
+    def handleTotalCount(self, total_count):
+        self.ui.countsLabel1.setText(str(total_count))
+        self.ui.countsLabel2.setText(str(total_count))
 
     def newAnalyzers(self, parameters, analyzers):
         #
@@ -158,11 +179,28 @@ class SpotCounterView(halDialog.HalDialog):
 
         # Clean up.
         self.ui.analyzerComboBox.clear()
+        self.handleTotalCount(0)
+
+        # Configure combo box.
+        cur_analyzer = 0
+        self.ui.analyzerComboBox.currentIndexChanged.disconnect(self.handleAnalyzerChange)
+        if (len(analyzers) == 1):
+            self.ui.analyzerComboBox.hide()
+        else:
+            self.ui.analyzerComboBox.show()
+            for i, analyzer in enumerate(analyzers):
+                if (parameters.get("which_camera") == analyzer.getCameraName()):
+                    cur_analyzer = i
+                self.ui.analyzerComboBox.addItem(analyzer.getCameraName())
+            
+        self.ui.analyzerComboBox.currentIndexChanged.connect(self.handleAnalyzerChange)        
 
         self.parameters = parameters
         self.analyzers = analyzers
-        self.handleAnalyzerChange(0)
+        self.handleAnalyzerChange(cur_analyzer)
 
+        self.ui.maxSpinBox.setValue(self.parameters.get("max_spots"))
+        
         self.setEnabled(True)
         
         
