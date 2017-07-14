@@ -211,7 +211,7 @@
 	<galvo>
 	  <wv_task>
 	    <clock>/Dev1/ctr0out</clock>
-	    <lines>/Dev1/ao0,/Dev/ao1</lines>
+	    <lines>/Dev1/ao0,/Dev1/ao1</lines>
 	  </wv_task>
 	</galvo>
 
