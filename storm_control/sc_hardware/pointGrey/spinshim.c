@@ -9,8 +9,8 @@
  * Hazen 12/16
  *
  * Compilation (windows):
- * gcc -c c_image_manipulation.c -O3
- * gcc -shared -o c_image_manipulation.dll c_image_manipulation.o
+ * gcc -c spinshim.c -O3
+ * gcc -shared -o spinshim.dll spinshim.o
  */
 
 #include <stdint.h>
