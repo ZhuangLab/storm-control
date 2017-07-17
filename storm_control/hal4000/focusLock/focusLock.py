@@ -72,7 +72,7 @@ class FocusLockView(halDialog.HalDialog):
         c_params = configuration.get("parameters")
         for attr in params.difference(c_params, self.parameters):
             print(attr, c_params.get(attr))
-            self.parameters.setv(attr, self.parameters.get(attr))
+            self.parameters.setv(attr, c_params.get(attr))
         self.newParameters(self.parameters)
 
         # Connect signals.
@@ -246,7 +246,7 @@ class FocusLock(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "add to menu",
                                                    data = {"item name" : "Focus Lock",
                                                            "item data" : "focus lock"}))
-            
+
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.view.getParameters()}))
 
