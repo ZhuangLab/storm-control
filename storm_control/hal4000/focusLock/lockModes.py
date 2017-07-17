@@ -209,6 +209,8 @@ class LockedMixin(object):
 
         p = parameters.get(self.lm_pname)
         self.lm_buffer_length = p.get("buffer_length")
+        self.lm_buffer = numpy.zeros(self.lm_buffer_length, dtype = numpy.uint8)
+        self.lm_counter = 0
         self.lm_min_sum = p.get("minimum_sum")
         self.lm_offset_threshold = 1.0e-3 * p.get("offset_threshold")
 
