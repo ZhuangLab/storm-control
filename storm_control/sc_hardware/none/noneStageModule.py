@@ -102,6 +102,15 @@ class NoneStageFunctionality(stageModule.StageFunctionality):
         super().wait()
 
 
+class NoneStageFunctionalityBroken(NoneStageFunctionality):
+    """
+    This is in testing to verify that the watchdog timer
+    functionality is working.
+    """
+    def handleMoveTimer(self):
+        pass
+
+
 class NoneStageModule(stageModule.StageModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
@@ -117,3 +126,15 @@ class NoneStageModule(stageModule.StageModule):
         self.stage_functionality = NoneStageFunctionality(stage = self.stage,
                                                           update_interval = 500)
 
+
+class NoneStageModuleBroken(NoneStageModule):
+    """
+    This is in testing to verify that the watchdog timer
+    functionality is working.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        self.stage_functionality = NoneStageFunctionalityBroken(stage = self.stage,
+                                                                update_interval = 500)
+
+        self.watchdog_timeout = 100

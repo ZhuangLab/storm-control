@@ -105,6 +105,13 @@ class StageModule(hardwareModule.HardwareModule):
         self.stage = None
         self.stage_functionality = None
 
+        #
+        # This is the default timeout for TCP requested moves. If the stage
+        # does respond that the move has completed in this time then we are
+        # just going to assume that we missed something.
+        #
+        self.watchdog_timeout = 10000
+
     def cleanUp(self, qt_settings):
         if self.stage is not None:
             self.stage_functionality.wait()
@@ -175,7 +182,8 @@ class StageModule(hardwareModule.HardwareModule):
                 # the stage sends a signal that it is no longer moving.
                 #
                 tcp_move_handler = TCPMoveHandler(hal_message = message,
-                                                  stage_functionality = self.stage_functionality)
+                                                  stage_functionality = self.stage_functionality,
+                                                  watchdog_timeout = self.watchdog_timeout)
                 self.stage_functionality.isMoving.connect(tcp_move_handler.handleIsMoving)
 
                 #
@@ -185,7 +193,7 @@ class StageModule(hardwareModule.HardwareModule):
                                                     tcp_message.getData("stage_y"))
                 
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
-                                                              data = {"handled" : True}))                
+                                                              data = {"handled" : True}))
 
         elif tcp_message.isType("Get Stage Position"):
             if not tcp_message.isTest():
@@ -196,12 +204,32 @@ class StageModule(hardwareModule.HardwareModule):
                                                               data = {"handled" : True}))
 
 
-class TCPMoveHandler(object):
-        
-    def __init__(self, hal_message = None, stage_functionality = None, **kwds):
+class TCPMoveHandler(QtCore.QObject):
+
+    def __init__(self,
+                 hal_message = None,
+                 stage_functionality = None,
+                 watchdog_timeout = None,
+                 **kwds):
         super().__init__(**kwds)
         self.hal_message = hal_message
         self.stage_functionality = stage_functionality
+
+        #
+        # Set watch dog timer to fire in X milli-seconds. If this goes off we're
+        # just going to assume that the stage has completed it's motion.
+        #
+
+        if watchdog_timeout is None:
+            print("Error detected in TCPMoveHandler")
+
+        # Heh, this assertion is useless since it happens inside a thread?
+        assert watchdog_timeout is not None
+                
+        self.watchdog_timer = QtCore.QTimer(self)
+        self.watchdog_timer.timeout.connect(self.handleWatchdogTimer)
+        self.watchdog_timer.setSingleShot(True)
+        self.watchdog_timer.start(watchdog_timeout)
 
         # Add this object as a tag on the message so that it won't get deleted
         # by the garbage collector.
@@ -219,3 +247,17 @@ class TCPMoveHandler(object):
             # Delete the reference to this object so that it will get deleted
             # by the garbage collector.
             self.hal_message.tcp_move_handler = None
+
+    def handleWatchdogTimer(self):
+        print("> stage move request timed out")
+        #
+        # If land here, then we're assuming the stage finished the move
+        # but we missed this for some reason.
+        #
+        self.hal_message.decRefCount()
+        self.stage_functionality.isMoving.disconnect(self.handleIsMoving)
+
+        # Delete the reference to this object so that it will get deleted
+        # by the garbage collector.
+        self.hal_message.tcp_move_handler = None
+        
