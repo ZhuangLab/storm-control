@@ -365,6 +365,7 @@ class Controller(QtCore.QObject):
     """
     controlAction = QtCore.pyqtSignal(object)
     controlMessage = QtCore.pyqtSignal(object)
+    gotConnection = QtCore.pyqtSignal(bool)
     
     def __init__(self, parallel_mode = None, server = None, verbose = True, **kwds):
         super().__init__(**kwds)
@@ -391,8 +392,7 @@ class Controller(QtCore.QObject):
         self.server.close()
         
     def handleLostConnection(self):
-        self.controlMessage.emit(halMessage.HalMessage(m_type = "configuration",
-                                                       data = {"properties" : {"connected" : False}}))
+        self.gotConnection.emit(False)
 
     def handleMessageReceived(self, tcp_message):
         """
@@ -492,8 +492,7 @@ class Controller(QtCore.QObject):
                 self.server.sendMessage(tcp_message)
                 
     def handleNewConnection(self):
-        self.controlMessage.emit(halMessage.HalMessage(m_type = "configuration",
-                                                       data = {"properties" : {"connected" : True}}))
+        self.gotConnection.emit(True)
 
     def setDirectory(self, directory):
         self.test_directory = directory
@@ -554,6 +553,24 @@ class TCPControl(halModule.HalModule):
         # even if the request is still being handled by HAL.
         #
         self.sendMessage(message)
+
+    def handleGotConnection(self, connected):
+        if connected:
+            self.sendMessage(halMessage.HalMessage(m_type = "configuration",
+                                                   data = {"properties" : {"connected" : True}}))
+        else:
+            #
+            # If we are still processing a message just clean it up and
+            # throw it away. Not sure if this is the right thing, but if
+            # the Dave / Steve disconnects and reconnects then we are
+            # going to have issues if we're still processing an action.
+            #
+            if self.control_action is not None:
+                self.control_action.actionMessage.disconnect(self.sendMessage)
+                self.control_action = None
+                
+            self.sendMessage(halMessage.HalMessage(m_type = "configuration",
+                                                   data = {"properties" : {"connected" : False}}))
 
     def handleResponses(self, message):
 
