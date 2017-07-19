@@ -329,6 +329,8 @@ class TCPActionTakeMovie(TCPAction):
         #
         elif message.isType("film lockout"):
             if not message.getData()["locked out"]:
+                acq_p = message.getData()["acquisition parameters"]
+                self.tcp_message.addResponse("min_spots", acq_p.get("spot_counts", 0))
                 return True
 
         return False    
