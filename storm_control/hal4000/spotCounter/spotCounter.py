@@ -350,7 +350,6 @@ class SpotCounter(halModule.HalModule):
                 analyzer.stopFilm()
                 total_spots += analyzer.getCounts()
                 if self.basename is not None:
-                    print(">savePicture", self.basename)
                     analyzer.savePicture(self.basename)
 
             self.basename = None

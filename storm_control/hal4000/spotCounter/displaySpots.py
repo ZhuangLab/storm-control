@@ -190,7 +190,6 @@ class SpotPicture(SpotWidget):
         painter.drawRect(5, 5, 5 + self.scale_bar_len, 5)
 
     def savePicture(self, filename):
-        print(self.q_pixmap.width(), self.q_pixmap.height())
         self.q_pixmap.save(filename + ".png", "PNG", -1)
         
     def updateImage(self, frame_number, locs):
