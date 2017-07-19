@@ -641,7 +641,7 @@ class HalCore(QtCore.QObject):
                 print("> waiting for the following to be processed:")
                 for message in self.sent_messages:
                     text = "  '" + message.m_type + "' from " + message.getSourceName() + ", "
-                    text += str(message.getRefCount()) + " module(s) have not responded."
+                    text += str(message.getRefCount()) + " module(s) have not responded yet."
                     print(text)
                 print("")
                 self.queued_messages.appendleft(cur_message)
