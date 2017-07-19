@@ -350,7 +350,8 @@ class Film(halModule.HalModule):
         # or a camera. This is also the marker for the beginning / end of the
         # the film cycle.
         halMessage.addMessage("film lockout",
-                              validator = {"data" : {"locked out" : [True, bool]},
+                              validator = {"data" : {"locked out" : [True, bool],
+                                                     "acquisition parameters" : [False, params.StormXMLObject]},
                                            "resp" : None})
         
         # In live mode the camera also runs between films.
@@ -483,7 +484,7 @@ class Film(halModule.HalModule):
                     self.logfile_fp.flush()
 
             # Now that everything is complete end the filming lock out.
-            self.setLockout(False)
+            self.setLockout(False, acquisition_parameters = acq_p)
 
     def handleStopCamera(self):
         self.active_cameras -= 1
@@ -600,11 +601,16 @@ class Film(halModule.HalModule):
             if self.module_name in message.getData()["module names"]:
                 self.wait_for.append(message.getSourceName())
 
-    def setLockout(self, state):
+    def setLockout(self, state, acquisition_parameters = None):
         self.locked_out = state
-        self.sendMessage(halMessage.HalMessage(m_type = "film lockout",
-                                               data = {"locked out" : self.locked_out}))
-
+        if acquisition_parameters is not None:
+            self.sendMessage(halMessage.HalMessage(m_type = "film lockout",
+                                                   data = {"locked out" : self.locked_out,
+                                                           "acquisition parameters" : acquisition_parameters}))
+        else:
+            self.sendMessage(halMessage.HalMessage(m_type = "film lockout",
+                                                   data = {"locked out" : self.locked_out}))
+            
     def startCameras(self):
         
         # Start slave cameras first.
