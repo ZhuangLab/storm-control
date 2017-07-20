@@ -800,4 +800,53 @@ class TakeMovie9(testing.TestingTCP):
                                               name = filename,
                                               parameters = p_name)]        
 
+class TakeMovieAction10(testActionsTCP.TakeMovie):
+        
+    def checkMessage(self, tcp_message):
+        assert(tcp_message.getResponse("found_spots") == None)
+        
+class TakeMovie10(testing.TestingTCP):
+    """
+    Request a movie by TCP without a spot counter and verify that
+    'found_spots' is None.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        
+        directory = test.dataDirectory()
+        filename = "movie_01"
+        
+        # Remove old movie (if any).
+        fullname = os.path.join(directory, filename + ".dax")
+        if os.path.exists(fullname):
+            os.remove(fullname)
+            
+            self.test_actions = [TakeMovieAction10(directory = directory,
+                                                   length = 5,
+                                                   name = filename)]
 
+class TakeMovieAction11(testActionsTCP.TakeMovie):
+        
+    def checkMessage(self, tcp_message):
+        print(tcp_message)
+        assert(tcp_message.getResponse("found_spots") == 0)
+        
+class TakeMovie11(testing.TestingTCP):
+    """
+    Request a movie by TCP with a spot counter and verify that
+    'found_spots' is 0.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        
+        directory = test.dataDirectory()
+        filename = "movie_01"
+        
+        # Remove old movie (if any).
+        fullname = os.path.join(directory, filename + ".dax")
+        if os.path.exists(fullname):
+            os.remove(fullname)
+            
+            self.test_actions = [TakeMovieAction11(directory = directory,
+                                                   length = 5,
+                                                   name = filename)]
