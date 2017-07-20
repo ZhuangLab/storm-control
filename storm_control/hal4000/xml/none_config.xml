@@ -454,7 +454,7 @@
       <class_name type="string">SCMOSCalibration</class_name>
     </scmos_cal>
         
-    <!-- Spot counter GUI -->
+    <!-- Spot counter and GUI -->
     <spotcounter>
       <module_name type="string">storm_control.hal4000.spotCounter.spotCounter</module_name>
       <class_name type="string">SpotCounter</class_name>	    
