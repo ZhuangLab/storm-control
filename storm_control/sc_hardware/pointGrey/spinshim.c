@@ -118,7 +118,7 @@ int getNextImage(imageEvent *ie, image *im)
   int i,j;
   uint16_t pval;
   uint8_t *data8;
-  uint16_t *data16, *hal_image;  
+  uint16_t *data16, *hal_image;
   image* ie_im;
 
   /* Return if there are no new images. */
@@ -160,7 +160,8 @@ int getNextImage(imageEvent *ie, image *im)
    */
   switch (im->pixel_format){
 
-  case 3:
+  case PixelFormat_Mono8: // 3
+  
     /* Convert Mono8 to 16 bit unsigned integer. */
     data8 = (uint8_t *)ie_im->data;
     hal_image = (uint16_t *)im->data;
@@ -169,7 +170,7 @@ int getNextImage(imageEvent *ie, image *im)
     }
     break;
 
-  case 8 :
+  case PixelFormat_Mono12p : // 8
     /* Convert Mono12p to 16 bit unsigned integer. */    
     data8 = (uint8_t *)ie_im->data;
     hal_image = (uint16_t *)im->data;
@@ -177,20 +178,20 @@ int getNextImage(imageEvent *ie, image *im)
     for(i=0;i<ie_im->im_size;i+=3){
     
       /* First 12 bits */
-      pval = 16 * ((uint16_t)data8[i]);
-      pval += (uint16_t)((data8[i+1] & 0xF0) >> 4);
+      pval = (uint16_t)data8[i];
+      pval += 256*(uint16_t)(data8[i+1] & 0x0F);
       hal_image[j] = pval;
       j += 1;
       
       /* Second 12 bits */
-      pval = 16 * ((uint16_t)data8[i+2]);
-      pval += (uint16_t)(data8[i+1] & 0x0F);
+      pval = 16*(uint16_t)data8[i+2];
+      pval += (uint16_t)((data8[i+1] & 0xF0) >> 4);
       hal_image[j] = pval;
       j += 1;
     }
-    break;    
+    break;
 
-  case 10:
+  case PixelFormat_Mono16: // 10
     /* 
      * Convert Mono16 to 16 bit unsigned integer.
      *
@@ -203,7 +204,7 @@ int getNextImage(imageEvent *ie, image *im)
     }
     break;
 
-  case 214 :
+  case PixelFormat_Mono12Packed : // 214
     /* Convert Mono12Packed to 16 bit unsigned integer. */    
     data8 = (uint8_t *)ie_im->data;
     hal_image = (uint16_t *)im->data;
@@ -212,13 +213,13 @@ int getNextImage(imageEvent *ie, image *im)
     
       /* First 12 bits */
       pval = 16 * ((uint16_t)data8[i]);
-      pval += (uint16_t)((data8[i+1] & 0xF0) >> 4);
+      pval += (uint16_t)(data8[i+1] & 0x0F);
       hal_image[j] = pval;
       j += 1;
       
       /* Second 12 bits */
       pval = 16 * ((uint16_t)data8[i+2]);
-      pval += (uint16_t)(data8[i+1] & 0x0F);
+      pval += (uint16_t)((data8[i+1] & 0xF0) >> 4);	    
       hal_image[j] = pval;
       j += 1;
     }

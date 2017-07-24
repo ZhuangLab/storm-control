@@ -46,7 +46,8 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         # Change to 12 bit mode.
         self.camera.getProperty("PixelFormat")
         #self.camera.setProperty("PixelFormat", "Mono12Packed")
-        self.camera.setProperty("PixelFormat", "Mono12p")
+        #self.camera.setProperty("PixelFormat", "Mono12p")
+        self.camera.setProperty("PixelFormat", "Mono16")
 
         self.camera.setProperty("VideoMode", "Mode7")
                 
