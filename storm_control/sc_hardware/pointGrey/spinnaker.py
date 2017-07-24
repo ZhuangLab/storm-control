@@ -28,9 +28,10 @@ SPINSHIM_ERR_SUCCESS = 0
 SPINSHIM_ERR_NO_NEW_IMAGES = -2005
 
 # Pixel formats.
-PixelFormat_Mono12p = 8
-PixelFormat_Mono16 = 10
-PixelFormat_Mono12Packed = 214
+pixel_formats = {"Mono8" : 3,
+                 "Mono12Packed" : 214,
+                 "Mono12p" : 8,
+                 "Mono16" : 10}
 
 # Global variables.
 h_system = None
@@ -195,6 +196,7 @@ class SpinCamera(object):
         self.encoding = 'utf-8'
         self.h_camera = h_camera
         self.im_event = None
+        self.pixel_format = None
         self.properties = {}
         self.verbose = True
 
@@ -233,7 +235,7 @@ class SpinCamera(object):
             #
             image_size = self.aoi_width * self.aoi_height
             s_cam_data = SCamData(size = image_size)
-            image = ShimImage(ctypes.c_int(PixelFormat_Mono12Packed),
+            image = ShimImage(ctypes.c_int(self.pixel_format),
                               ctypes.c_size_t(self.aoi_height),
                               ctypes.c_size_t(image_size),
                               ctypes.c_size_t(self.aoi_width),
@@ -372,6 +374,7 @@ class SpinCamera(object):
 
         self.aoi_height = self.getProperty("Height").spinNodeGetValue()
         self.aoi_width = self.getProperty("Width").spinNodeGetValue()
+        self.pixel_format = pixel_formats[self.getProperty("PixelFormat").spinNodeGetValue()]
         
         # Configure number of stream buffers to match what we want.
         #

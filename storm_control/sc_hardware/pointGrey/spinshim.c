@@ -32,6 +32,7 @@ typedef enum _spinShimError{
   SPINSHIM_ERR_INCORRECTFORMAT = -2003,
   SPINSHIM_ERR_INCORRECTSIZE = -2004,
   SPINSHIM_ERR_NO_NEW_IMAGES = -2005,
+  SPINSHIM_ERR_UNKNOWNFORMAT = -2006,
  
 } spinShimError;
 
@@ -117,7 +118,7 @@ int getNextImage(imageEvent *ie, image *im)
   int i,j;
   uint16_t pval;
   uint8_t *data8;
-  uint16_t *data16;
+  uint16_t *data16, *hal_image;  
   image* ie_im;
 
   /* Return if there are no new images. */
@@ -157,26 +158,75 @@ int getNextImage(imageEvent *ie, image *im)
    * Convert and image to correct format, while also copying
    * into space allocated by user.
    */
-  if (im->pixel_format == 214){
-    
-    /* Convert 12 bit packed to 16 bit unsigned integer. */    
+  switch (im->pixel_format){
+
+  case 3:
+    /* Convert Mono8 to 16 bit unsigned integer. */
     data8 = (uint8_t *)ie_im->data;
-    data16 = (uint16_t *)im->data;
+    hal_image = (uint16_t *)im->data;
+    for(i=0;i<ie_im->im_size;i++){
+      hal_image[i] = data8[i];
+    }
+    break;
+
+  case 8 :
+    /* Convert Mono12p to 16 bit unsigned integer. */    
+    data8 = (uint8_t *)ie_im->data;
+    hal_image = (uint16_t *)im->data;
     j = 0;
     for(i=0;i<ie_im->im_size;i+=3){
     
       /* First 12 bits */
       pval = 16 * ((uint16_t)data8[i]);
       pval += (uint16_t)((data8[i+1] & 0xF0) >> 4);
-      data16[j] = pval;
+      hal_image[j] = pval;
       j += 1;
       
       /* Second 12 bits */
       pval = 16 * ((uint16_t)data8[i+2]);
       pval += (uint16_t)(data8[i+1] & 0x0F);
-      data16[j] = pval;
+      hal_image[j] = pval;
       j += 1;
     }
+    break;    
+
+  case 10:
+    /* 
+     * Convert Mono16 to 16 bit unsigned integer.
+     *
+     * FIXME: Designed specifically for 12 bit cameras.
+     */
+    data16 = (uint16_t *)ie_im->data;
+    hal_image = (uint16_t *)im->data;
+    for(i=0;i<ie_im->im_size/2;i++){
+      hal_image[i] = data16[i] >> 4;
+    }
+    break;
+
+  case 214 :
+    /* Convert Mono12Packed to 16 bit unsigned integer. */    
+    data8 = (uint8_t *)ie_im->data;
+    hal_image = (uint16_t *)im->data;
+    j = 0;
+    for(i=0;i<ie_im->im_size;i+=3){
+    
+      /* First 12 bits */
+      pval = 16 * ((uint16_t)data8[i]);
+      pval += (uint16_t)((data8[i+1] & 0xF0) >> 4);
+      hal_image[j] = pval;
+      j += 1;
+      
+      /* Second 12 bits */
+      pval = 16 * ((uint16_t)data8[i+2]);
+      pval += (uint16_t)(data8[i+1] & 0x0F);
+      hal_image[j] = pval;
+      j += 1;
+    }
+    break;
+
+  default :
+    printf("SpinShim: Unknown pixel format %d\n", im->pixel_format);
+    return SPINSHIM_ERR_UNKNOWNFORMAT;
   }
 
   /* Set data to NULL as a mark that this image has been transferred out. */

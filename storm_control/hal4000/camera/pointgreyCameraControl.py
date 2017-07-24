@@ -42,14 +42,12 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         
         self.camera.getProperty("pgrDefectPixelCorrectionEnable")
         self.camera.setProperty("pgrDefectPixelCorrectionEnable", False)
-
-        # Verify that we have turned off this 'feature'.
-        assert not self.camera.getProperty("pgrDefectPixelCorrectionEnable").spinNodeGetValue()
         
         # Change to 12 bit mode.
         self.camera.getProperty("PixelFormat")
-        self.camera.setProperty("PixelFormat", "Mono12Packed")
-        
+        #self.camera.setProperty("PixelFormat", "Mono12Packed")
+        self.camera.setProperty("PixelFormat", "Mono12p")
+
         self.camera.setProperty("VideoMode", "Mode7")
                 
         # We don't want any of these 'features'.
@@ -74,8 +72,20 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
         self.camera.getProperty("GammaEnabled")
         self.camera.setProperty("GammaEnabled", False)
 
+        #
+        # No idea what this means in the context of a black and white
+        # camera. We try and turn it off but that seems to be much
+        # harder to do than one would hope.
+        #
         self.camera.getProperty("OnBoardColorProcessEnabled")
-        self.camera.setProperty("OnBoardColorProcessEnabled", False)        
+        self.camera.setProperty("OnBoardColorProcessEnabled", False)
+
+        # Verify that we have turned off some of these 'features'.
+        for feature in ["pgrDefectPixelCorrectionEnable",
+                        "BlackLevelClampingEnable",
+                        "SharpnessEnabled",
+                        "GammaEnabled"]:
+            assert not self.camera.getProperty(feature).spinNodeGetValue()
 
         # Configure 'master' cameras to not use triggering.
         #
