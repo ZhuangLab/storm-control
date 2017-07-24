@@ -8,9 +8,12 @@
  *
  * Hazen 12/16
  *
- * Compilation (windows):
- * gcc -c spinshim.c -O3
- * gcc -shared -o spinshim.dll spinshim.o
+ * Compilation (windows / MinGW):
+ *
+ * c:\MinGW\bin\gcc.exe -c spinshim.c -I"C:\Program Files\Point Grey Research\Spinnaker\include\spinc" -I"C:\MinGW\x86_64-w64-mingw32\include"
+ * c:\MinGW\bin\gcc.exe -shared -o spinshim.dll spinshim.o -L"C:\Program Files\Point Grey Research\Spinnaker\bin64\vs2013" -lSpinnakerC_v120
+ *
+ * See also : compile_bat.bat
  */
 
 #include <stdint.h>
