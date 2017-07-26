@@ -1,4 +1,9 @@
 
+2017-07-26: Changed everything in the process of updating for Python3 and
+            PyQt5. The entire configuration of a single setup is now
+	    specified in a single XML file. See storm_control/hal4000/xml
+	    for examples.
+
 2016-02-23: Implement a (basic) parameters editor. This will make it easier
 	    for users to change (most) of the parameters.
 
