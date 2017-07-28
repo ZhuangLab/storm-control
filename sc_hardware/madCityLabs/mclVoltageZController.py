@@ -59,6 +59,7 @@ class MCLVZControl(object):
     # @ param z positions (in um)
     #
     def startHardwareTimedMove(self, z_positions):
+        
         # Clean up the previous task
         self.ni_task.stopTask()
         self.ni_task.clearTask()

@@ -30,12 +30,10 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
     def __init__(self, hardware, parameters, parent = None):
         # Jfocal specific focus lock parameters
         lock_params = parameters.addSubSection("focuslock")
-##        lock_params.add("qpd_zcenter", params.ParameterRangeFloat("Piezo center position in microns",
-##                                                                  "qpd_zcenter",
-##                                                                  100.0, 0.0, 200.0))
+
         lock_params.add("qpd_zcenter", params.ParameterRangeFloat("Piezo center position in microns",
                                                           "qpd_zcenter",
-                                                          50.0, 0.0, 100.0))
+                                                          100.0, 0.0, 200.0))
 
         lock_params.add("qpd_scale", params.ParameterRangeFloat("Offset to nm calibration value",
                                                                 "qpd_scale",
@@ -68,8 +66,7 @@ class AFocusLockZ(focusLockZ.FocusLockZCam):
                                  sigma = 4.0,
                                  offset_file = "cam_offsets_jfocal_1.txt",
                                  background = 50000)
-##        stage = MCLVZC.MCLVZControl("PCIe-6351", 0, scale = 10.0/200.0, trigger_source = "PFI0")
-        stage = MCLVZC.MCLVZControl("PCIe-6351", 0, scale = 10.0/100.0, trigger_source = "PFI0")
+        stage = MCLVZC.MCLVZControl("PCIe-6351", 0, scale = 10.0/200.0, trigger_source = "PFI0")
 
         lock_fn = lambda (x): lock_params.get("focus_rate") * x
         control_thread = stageOffsetControl.StageCamThread(cam,
