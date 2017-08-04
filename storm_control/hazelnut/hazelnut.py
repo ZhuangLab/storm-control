@@ -146,34 +146,39 @@ class DirObjectSFTP(DirObject):
     """
     Specialized for a SFTP protocol.
     """
-    def __init__(self, sftp_tranport):
+    def __init__(self, sftp_transport, destination_directory):
         DirObject.__init__(self)
         self.sftp_transport = sftp_transport
-        self.sftp_client = self.ftps_transort.open_sftp_client()
+        self.sftp_client = self.sftp_transport.open_sftp_client()
 
+        # Check that the destination directory exists.
+        try:
+            sftp_attr = self.sftp_client.chdir(destination_directory)
+        except IOError as e:
+            print(e)
+            msg_box = QtWidgets.QMessageBox()
+            msg_box.setText(destination_directory + " does not exist?")
+            msg_box.setIcon(QtWidgets.QMessageBox.Critical)
+            msg_box.exec_()
+            self.sftp_client = None
+            
     def shouldTransfer(self, file_object):
         try:
-            f_stat = self.sftp_client(file_object.getPartialPathName())
+            sftp_attr = self.sftp_client.stat(file_object.getPartialPathName())
         except IOError:
             return True
 
-        print f_stat
-        dest_file_time = datetime.datetime.fromtimestamp(f_stat.mtime)
+        print(sftp_attr)
+        dest_file_time = datetime.datetime.fromtimestamp(sftp_attr.st_mtime)
         if file_object.isNewerThan(dest_file_time):
             return True
         else:
             return False
         
     def transferFile(self, file_object, callback):
+        assert (self.sftp_client is not None)
         
-        # Make a directory if necessary first.
-        dest_dir = os.path.dirname(dest_file)
-        try:
-            f_stat = self.sftp_client(dest_dir)
-        except IOError:
-            self.sftp_client.mkdir(dest_dir)
-
-        sftp_callback = lambda(bytes_trans, bytes_total) : callback(int(100.0 * bytes_trans/bytes_total))
+        sftp_callback = lambda bytes_trans, bytes_total : callback(int(100.0 * bytes_trans/bytes_total))
         self.sftp_client.put(file_object.getFullPathName(),
                              file_object.getPartialPathName(),
                              callback = sftp_callback)
@@ -265,8 +270,8 @@ class Window(QtWidgets.QMainWindow):
                 self.destination_dir_obj = DirObjectFileSystem(dest[1], local = False)
                 self.ui.destinationLabel.setText(dest[1])
             if (dest[0] == "sftp"):
-                self.destination_dir_obj = DirObjectSFTP(dest[1])
-                self.ui.destinationLabel.setText(str(dest[1]))
+                self.destination_dir_obj = DirObjectSFTP(dest[1], dest[2])
+                self.ui.destinationLabel.setText(str(dest[2]))
             self.ui.transferQueueMVC.addDestination(self.destination_dir_obj)
             if self.source_dir_obj is not None:
                 self.ui.startPushButton.setEnabled(True)

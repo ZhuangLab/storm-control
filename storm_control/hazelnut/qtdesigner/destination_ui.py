@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'destination.ui'
 #
-# Created by: PyQt5 UI code generator 5.5.1
+# Created by: PyQt5 UI code generator 5.7
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -11,14 +11,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(654, 220)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        Dialog.resize(526, 259)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(Dialog.sizePolicy().hasHeightForWidth())
         Dialog.setSizePolicy(sizePolicy)
-        Dialog.setMinimumSize(QtCore.QSize(0, 220))
-        Dialog.setMaximumSize(QtCore.QSize(16777215, 220))
+        Dialog.setMinimumSize(QtCore.QSize(0, 0))
+        Dialog.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(Dialog)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.horizontalLayout = QtWidgets.QHBoxLayout()
@@ -34,6 +34,7 @@ class Ui_Dialog(object):
         self.shareButton.setObjectName("shareButton")
         self.horizontalLayout.addWidget(self.shareButton)
         self.shareGroupBox = QtWidgets.QGroupBox(Dialog)
+        self.shareGroupBox.setMinimumSize(QtCore.QSize(480, 0))
         self.shareGroupBox.setObjectName("shareGroupBox")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.shareGroupBox)
         self.verticalLayout.setObjectName("verticalLayout")
@@ -53,20 +54,28 @@ class Ui_Dialog(object):
         self.groupBox.setObjectName("groupBox")
         self.gridLayout = QtWidgets.QGridLayout(self.groupBox)
         self.gridLayout.setObjectName("gridLayout")
+        self.directoryLineEdit = QtWidgets.QLineEdit(self.groupBox)
+        self.directoryLineEdit.setObjectName("directoryLineEdit")
+        self.gridLayout.addWidget(self.directoryLineEdit, 3, 1, 1, 1)
         self.addressLabel = QtWidgets.QLabel(self.groupBox)
         self.addressLabel.setObjectName("addressLabel")
-        self.gridLayout.addWidget(self.addressLabel, 0, 0, 1, 1)
+        self.gridLayout.addWidget(self.addressLabel, 1, 0, 1, 1)
         self.addressLineEdit = QtWidgets.QLineEdit(self.groupBox)
         self.addressLineEdit.setObjectName("addressLineEdit")
-        self.gridLayout.addWidget(self.addressLineEdit, 0, 1, 1, 1)
-        self.usernameLabel = QtWidgets.QLabel(self.groupBox)
-        self.usernameLabel.setObjectName("usernameLabel")
-        self.gridLayout.addWidget(self.usernameLabel, 1, 0, 1, 1)
+        self.gridLayout.addWidget(self.addressLineEdit, 1, 1, 1, 1)
         self.usernameLineEdit = QtWidgets.QLineEdit(self.groupBox)
         self.usernameLineEdit.setObjectName("usernameLineEdit")
-        self.gridLayout.addWidget(self.usernameLineEdit, 1, 1, 1, 1)
+        self.gridLayout.addWidget(self.usernameLineEdit, 0, 1, 1, 1)
+        self.usernameLabel = QtWidgets.QLabel(self.groupBox)
+        self.usernameLabel.setObjectName("usernameLabel")
+        self.gridLayout.addWidget(self.usernameLabel, 0, 0, 1, 1)
+        self.directoryLabel = QtWidgets.QLabel(self.groupBox)
+        self.directoryLabel.setObjectName("directoryLabel")
+        self.gridLayout.addWidget(self.directoryLabel, 3, 0, 1, 1)
         self.horizontalLayout_2.addWidget(self.groupBox)
         self.verticalLayout_2.addLayout(self.horizontalLayout_2)
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_2.addItem(spacerItem)
         self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
@@ -86,4 +95,5 @@ class Ui_Dialog(object):
         self.groupBox.setTitle(_translate("Dialog", "SFTP"))
         self.addressLabel.setText(_translate("Dialog", "Address"))
         self.usernameLabel.setText(_translate("Dialog", "Username"))
+        self.directoryLabel.setText(_translate("Dialog", "Directory"))
 

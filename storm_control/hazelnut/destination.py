@@ -38,7 +38,8 @@ class DestinationDialog(QtWidgets.QDialog):
         if (self.transfer_mode == "sftp"):
             return [self.transfer_mode,
                     self.ui.addressLineEdit.text(),
-                    self.ui.usernameLineEdit.text()]
+                    self.ui.usernameLineEdit.text(),
+                    self.ui.directoryLineEdit.text()]
 
     def handleDirectoryButton(self):
         new_directory = str(QtWidgets.QFileDialog.getExistingDirectory(self,
@@ -75,12 +76,12 @@ class DestinationDialogHandler(QtWidgets.QWidget):
         responses = []
         for prompt in prompt_list:
             [resp, is_ok] = QtWidgets.QInputDialog.getText(self, title, prompt[0])
-            print resp
+            print(resp)
             response.append(resp)
         return responses
 
     def getDestination(self):
-        if self.dest_dialog.exec_()
+        if self.dest_dialog.exec_():
             destination = self.dest_dialog.getDestination()
             
             # Special handling of SFTP.
@@ -89,15 +90,16 @@ class DestinationDialogHandler(QtWidgets.QWidget):
                 transport.start_client()
                 try:
                     #
-                    # FIXME: This does work not in PyQt, not sure why.
+                    # FIXME: This does work not in PyQt, not sure why. This means
+                    #        that user will have to use the command line.
                     #
                     #transport.auth_interactive(destination[2], self.authHandler)
                     transport.auth_interactive_dumb(destination[2])
                 except paramiko.AuthenticationException as e:
-                    print e
+                    print(e)
                     QtWidgets.QMessageBox.about(self, "Hazelnut", "SFTP authentication failed.")
                     return None
-                return ["sftp", transport]
+                return ["sftp", transport, destination[3]]
             else:
                 return destination
 
