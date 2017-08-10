@@ -477,7 +477,7 @@
 	<camera_id type="int">1</camera_id>
 	<ini_file type="string">uc480_settings.ini</ini_file>
 	<offset_file type="string">C:/Users/Hazen/Code/storm-control-development/storm_control/hal4000/cam_offsets_hbaic1_1.txt</offset_file>
-	<sigma type="float">2.0</sigma>
+	<sigma type="float">3.5</sigma>
 	<uc480_dll type="string">c:/windows/system32/uc480_64.dll</uc480_dll>
 	<x_width type="int">700</x_width>
 	<y_width type="int">100</y_width>
