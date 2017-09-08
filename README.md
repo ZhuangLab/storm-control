@@ -1,3 +1,6 @@
+## Note! ##
+Development has shifted to Python3 and PyQt5. This is currently available in the python3_pyqt5 branch, which will become the master branch 'soon'. This is the branch that you want to use if you want to control multiple cameras, etc..
+
 ## storm-control ##
 This is a repository of code developed in the [Zhuang Lab](http://zhuang.harvard.edu) for the acquisition of STORM movies.
 
