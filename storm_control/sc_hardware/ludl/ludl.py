@@ -207,8 +207,8 @@ class LudlTCP(Ludl):
 if (__name__ == "__main__"):
     import time
 
-    #stage = LudlRS232("COM8")
-    stage = LudlTCP()
+    stage = LudlRS232("COM29")
+    #stage = LudlTCP()
     
     if stage.getStatus():
         print(stage.position())
