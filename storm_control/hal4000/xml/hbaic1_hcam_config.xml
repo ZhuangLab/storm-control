@@ -381,12 +381,12 @@
     <!-- Ludl stage -->
     <ludl_stage>
       <module_name type="string">storm_control.sc_hardware.ludl.ludlModule</module_name>
-      <class_name type="string">LudlStageTCP</class_name>
+      <class_name type="string">LudlStageRS232</class_name>
       
-      <configuration>
-	<ip_address type="string">192.168.100.1</ip_address>
+      <configuration>	
+	<com_port type="string">COM29</com_port>
       </configuration>
-    </ludl_stage>    
+    </ludl_stage>
     
     <!-- Mad City Labs Z piezo -->
     <mcl_zstage>
