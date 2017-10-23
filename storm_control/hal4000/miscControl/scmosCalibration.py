@@ -24,7 +24,7 @@ class Calibrator(QtCore.QObject):
     Handles accumulating data from the camera, doing the calibration
     calculations and saving the results.
     """
-    done = QtCore.pyqtSignal()
+    done = QtCore.pyqtSignal(int)
     newFrame = QtCore.pyqtSignal(int, float)
 
     def __init__(self, camera_fn = None, id_number = None, **kwds):
@@ -35,8 +35,13 @@ class Calibrator(QtCore.QObject):
         self.id_number = id_number
         self.mean = None
         self.n_frames = 0
+        self.running = False
         self.var = None
 
+    def clearStats(self):
+        self.mean = None
+        self.var = None
+        
     def getFileName(self, basename):
         if (len(self.camera_fn.getParameter("extension")) != 0):
             basename += "_" + self.camera_fn.getParameter("extension")
@@ -44,7 +49,7 @@ class Calibrator(QtCore.QObject):
         return basename
 
     def getStats(self):
-        if self.mean is not None:
+        if self.mean is not None and (self.accumulated == self.n_frames):
             mean_mean = numpy.mean(self.mean)/float(self.n_frames)
             mean_var = numpy.mean(self.var)/float(self.n_frames) - mean_mean*mean_mean
             return [mean_mean, mean_var]
@@ -59,12 +64,13 @@ class Calibrator(QtCore.QObject):
 
         self.accumulated += 1
         self.newFrame.emit(self.id_number, float(self.accumulated/self.n_frames))
-        
+
         if (self.accumulated == self.n_frames):
             self.camera_fn.newFrame.disconnect(self.handleNewFrame)
             numpy.save(self.filename, [numpy.array([self.n_frames]), self.mean, self.var])
-            self.done.emit()
-            
+            self.running = False
+            self.done.emit(self.id_number)
+
     def start(self, basename, n_frames):
         self.filename = self.getFileName(basename)
         self.n_frames = n_frames
@@ -77,12 +83,13 @@ class Calibrator(QtCore.QObject):
         
         self.camera_fn.newFrame.connect(self.handleNewFrame)
 
+        self.running = True
+
     def stop(self):
-        if self.mean is not None:
+        if self.running:
             self.camera_fn.newFrame.disconnect(self.handleNewFrame)
-            self.mean = None
-            self.var = None
-            self.done.emit()
+            self.running = False
+            self.done.emit(self.id_number)
     
     
 class SCMOSCalibrationView(halDialog.HalDialog):
@@ -121,22 +128,22 @@ class SCMOSCalibrationView(halDialog.HalDialog):
         #self.setFixedSize(self.width(), self.height())
         self.checkExists()
         
-    def handleDone(self):
+    def handleDone(self, cal_id):
         self.n_running -= 1
-        if (self.n_running == 0):
-            self.checkExists()
 
         # Update stats.
-        for i, cal in enumerate(self.calibrators):
-            [mean, var] = cal.getStats()
-            if mean is not None:
-                self.ui_elements[i][2].setText("{0:.2f} +- {1:.2f}".format(mean, var))
+        [mean, var] = self.calibrators[cal_id].getStats()
+        self.calibrators[cal_id].clearStats()
+        if mean is not None:
+            self.ui_elements[cal_id][2].setText("{0:.2f} +- {1:.2f}".format(mean, var))
             
-        # Reset GUI.
-        for elt in self.ui_elements:
-            elt[1].reset()
-        self.ui.startButton.setStyleSheet("QPushButton { color: black }")
-        self.ui.startButton.setText("Start")            
+        # Reset GUI if all the calibrators have finished.
+        if (self.n_running == 0):
+            self.checkExists()
+            for elt in self.ui_elements:
+                elt[1].reset()
+            self.ui.startButton.setStyleSheet("QPushButton { color: black }")
+            self.ui.startButton.setText("Start")            
 
     def handleFileLineEdit(self, text):
         self.checkExists()

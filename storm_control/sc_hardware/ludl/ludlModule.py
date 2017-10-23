@@ -42,6 +42,22 @@ class LudlStageFunctionality(stageModule.StageFunctionality):
         super().wait()
 
 
+class LudlStageRS232(stageModule.StageModule):
+
+    def __init__(self, module_params = None, qt_settings = None, **kwds):
+        super().__init__(**kwds)
+        
+        configuration = module_params.get("configuration")
+        self.stage = ludl.LudlRS232(port = configuration.get("com_port"))
+
+        if self.stage.getStatus():
+            self.stage.setVelocity(10000,10000)
+            self.stage_functionality = LudlStageFunctionality(stage = self.stage,
+                                                              update_interval = 500)
+        else:
+            self.stage = None
+
+            
 class LudlStageTCP(stageModule.StageModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
