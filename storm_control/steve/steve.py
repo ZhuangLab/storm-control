@@ -571,10 +571,10 @@ class Window(QtWidgets.QMainWindow):
                                                                 self.parameters.get("directory"),
                                                                 "*.msc")[0]
         if mosaic_filename:
-            mosaic_fileptr = open(mosaic_filename, "w")
-            self.view.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
-            self.positions.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
-            self.sections.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
+            with open(mosaic_filename, "w") as mosaic_fileptr:
+                self.view.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
+                self.positions.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
+                self.sections.saveToMosaicFile(mosaic_fileptr, mosaic_filename)
 
     ## handleScaleChange.
     #
@@ -697,11 +697,11 @@ class Window(QtWidgets.QMainWindow):
             mosaic_fp.seek(0)
 
             # Create progress bar
-            progress_bar = QtGui.QProgressDialog("Load Files...",
-                                                 "Abort Load",
-                                                 0,
-                                                 number_lines,
-                                                 self)
+            progress_bar = QtWidgets.QProgressDialog("Load Files...",
+                                                     "Abort Load",
+                                                     0,
+                                                     number_lines,
+                                                     self)
             progress_bar.setWindowModality(QtCore.Qt.WindowModal)
 
             mosaic_dirname = os.path.dirname(mosaic_filename)

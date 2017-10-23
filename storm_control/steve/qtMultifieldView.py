@@ -183,7 +183,7 @@ class MultifieldView(QtWidgets.QGraphicsView):
     #
     def keyPressEvent(self, event):
         # this allows keyboard scrolling to work
-        QtGui.QGraphicsView.keyPressEvent(self, event)
+        QtWidgets.QGraphicsView.keyPressEvent(self, event)
 
     ## loadFromMosaicFileData
     #
@@ -196,7 +196,8 @@ class MultifieldView(QtWidgets.QGraphicsView):
     #
     def loadFromMosaicFileData(self, data, directory):
         if (data[0] == "image"):
-            image_dict = pickle.load(open(directory + "/" + data[1]))
+            with open(directory + "/" + data[1], "rb") as fp:
+                image_dict = pickle.load(fp)
             a_image_item = viewImageItem(0, 0, 0, 0, "na", 1.0, 0.0)
             a_image_item.setState(image_dict)
 
@@ -234,11 +235,11 @@ class MultifieldView(QtWidgets.QGraphicsView):
     # @param filename The name of the mosaic file.
     #
     def saveToMosaicFile(self, fileptr, filename):
-        progress_bar = QtGui.QProgressDialog("Saving Files...",
-                                             "Abort Save",
-                                             0,
-                                             len(self.items()),
-                                             self)
+        progress_bar = QtWidgets.QProgressDialog("Saving Files...",
+                                                 "Abort Save",
+                                                 0,
+                                                 len(self.items()),
+                                                 self)
         progress_bar.setWindowModality(QtCore.Qt.WindowModal)
 
         basename = os.path.splitext(os.path.basename(filename))[0]
@@ -251,7 +252,8 @@ class MultifieldView(QtWidgets.QGraphicsView):
             name = basename + "_" + str(i+1)
             fileptr.write("image," + name + ".stv\r\n")
 
-            pickle.dump(item.getState(), open(dirname + name + ".stv", "w"))
+            with open(dirname + name + ".stv", "wb") as fp:
+                pickle.dump(item.getState(), fp)
 
         progress_bar.close()
 

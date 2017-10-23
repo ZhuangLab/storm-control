@@ -70,7 +70,8 @@ def movieMessage(filename, directory):
     return tcpMessage.TCPMessage(message_type = "Take Movie",
                                  message_data = {"name" : filename,
                                                  "directory" : directory,
-                                                 "length" : 1})
+                                                 "length" : 1,
+                                                 "overwrite" : True})
 
 ## moveStageMessage
 #
