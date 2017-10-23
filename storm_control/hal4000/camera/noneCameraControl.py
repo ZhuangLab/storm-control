@@ -139,6 +139,7 @@ class NoneCameraControl(cameraControl.CameraControl):
         
     def run(self):
         self.running = True
+        self.thread_started = True
         while(self.running):
             aframe = frame.Frame(numpy.roll(self.fake_frame,
                                             int(self.frame_number * self.parameters.get("roll"))),

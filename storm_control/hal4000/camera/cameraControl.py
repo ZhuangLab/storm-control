@@ -57,6 +57,10 @@ class CameraControl(QtCore.QThread):
         # to the camera hardware to stop.
         self.running = False
 
+        # This is how we know that the camera thread that is talking to the
+        # camera actually started.
+        self.thread_started = False
+
         #
         # These are the minimal parameters that every camera must provide
         # to work with HAL.
@@ -316,14 +320,21 @@ class CameraControl(QtCore.QThread):
             self.getTemperature()
         
         self.frame_number = 0
-        
+
         # Start the thread to handle data from the camera.
+        self.thread_started = False
         self.start(QtCore.QThread.NormalPriority)
 
         # Wait until the thread has actually started the camera.
-        while not self.running:
+        #
+        # Why not just use self.running? Because this creates a race condition
+        # with short films where the camera gets started and stopped during the
+        # time we are sleeping in the while loop so we never know that the camera
+        # even started.
+        #
+        while not self.thread_started:
             time.sleep(0.01)
-            
+
         self.camera_functionality.started.emit()
 
     def startFilm(self, film_settings, is_time_base):
@@ -373,6 +384,7 @@ class HWCameraControl(CameraControl):
         #
         self.camera.startAcquisition()
         self.running = True
+        self.thread_started = True
         while(self.running):
 
             # Get data from camera and create frame objects.
