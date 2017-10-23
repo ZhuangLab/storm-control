@@ -36,10 +36,11 @@ class MarzhauserRS232(RS232.RS232):
             print(traceback.format_exc())
             self.live = False
             print("Marzhauser Stage is not connected? Stage is not on?")
-
+            
     def goAbsolute(self, x, y):
         x = x * self.um_to_unit
         y = y * self.um_to_unit
+        # FIXME: Too many digits here? Use format() instead? int()?"
         self.writeline(" ".join(["!moa", str(x), str(y)]))
 
     def goRelative(self, x, y):
