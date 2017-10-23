@@ -70,8 +70,7 @@ def movieMessage(filename, directory):
     return tcpMessage.TCPMessage(message_type = "Take Movie",
                                  message_data = {"name" : filename,
                                                  "directory" : directory,
-                                                 "length" : 1,
-                                                 "overwrite" : True})
+                                                 "length" : 1})
 
 ## moveStageMessage
 #
@@ -213,9 +212,11 @@ class Capture(QtCore.QObject):
     #
     @hdebug.debug
     def captureStart(self, stagex, stagey):
+        print("captureStart", stagex, stagey)
         
         if os.path.exists(self.fullname()):
             os.remove(self.fullname())
+            os.remove(self.fullname(extension = ".xml"))
         
         if not self.tcp_client.isConnected():
             hdebug.logText("captureStart: not connected to HAL.")
@@ -255,8 +256,8 @@ class Capture(QtCore.QObject):
     # @return The filename with path & extension as a string.
     #
     @hdebug.debug
-    def fullname(self):
-        return self.directory + self.filename + ".dax"
+    def fullname(self, extension = ".dax"):
+        return self.directory + self.filename + extension
 
     ## getObjective
     #
