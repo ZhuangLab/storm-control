@@ -78,14 +78,14 @@ class NoneStageFunctionality(stageModule.StageFunctionality):
         
         # This is for TCP testing, so we don't have to
         # wait for the (position) update timer to fire.
-        self.pos_dict = self.stage.position()
+        self.pos_dict = {"x" : x, "y" : y}
         
         self.isMoving.emit(True)
         self.moveTimer.start()
 
     def handleMoveTimer(self):
         self.isMoving.emit(False)
-        
+
     def handleUpdateTimer(self):
         """
         Query the stage for its current position.
