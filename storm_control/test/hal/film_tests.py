@@ -73,3 +73,24 @@ class FilmTest3(testing.Testing):
                              testActions.LoadParameters(os.path.join(directory, "movie_03.xml")),
                              testActions.SetParameters(p_name = 0),
                              testActions.Timer(timeout = 500)]
+
+#
+# Test that we can take 10x one frame films without hanging.
+#
+class FilmTest4(testing.Testing):
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        directory = test.dataDirectory()
+        filename = "movie_04"
+
+        # Remove old movie (if any).
+        fullname = os.path.join(directory, filename + ".dax")
+        if os.path.exists(fullname):
+            os.remove(fullname)
+            os.remove(os.path.join(directory, filename + ".xml"))
+
+        self.test_actions = [testActions.SetDirectory(directory = directory)]
+        for i in range(10):
+            self.test_actions.append(testActions.Record(filename = filename, length = 1))
