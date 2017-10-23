@@ -191,7 +191,16 @@ class StageModule(hardwareModule.HardwareModule):
                 #
                 self.stage_functionality.goAbsolute(tcp_message.getData("stage_x"),
                                                     tcp_message.getData("stage_y"))
-                
+                #
+                # FIXME: After the move we need some way to gaurantee that the stage
+                #        reports it's current position, which is hopefully where it
+                #        was told to go, and not some stale position. This will be a
+                #        problem if the movies are so short that the stages updateTimer()
+                #        does not get a chance to go off before we finish taking the
+                #        film. However, maybe we don't want to wait the X milliseconds
+                #        it would take the stage to update? For TCP moves just return
+                #        the position where the stage should be?
+                #
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"handled" : True}))
 
