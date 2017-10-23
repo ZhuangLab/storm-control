@@ -60,11 +60,11 @@ class TCPMessage(object):
         message.__dict__.update(json.loads(json_string))
         return message
 
-    def getData(self, key_name):
+    def getData(self, key_name, default = None):
         """
         Access elements of the message data by name.
         """
-        return self.message_data.get(key_name, None)
+        return self.message_data.get(key_name, default)
 
     def getErrorMessage(self):
         """
