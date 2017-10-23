@@ -263,7 +263,7 @@ class TCPActionTakeMovie(TCPAction):
         self.film_request = filmRequest.FilmRequest(basename = self.tcp_message.getData("name"),
                                                     directory = self.tcp_message.getData("directory"),
                                                     frames = self.tcp_message.getData("length"),
-                                                    overwrite = self.tcp_message.getData("overwrite"),
+                                                    overwrite = self.tcp_message.getData("overwrite", default = False),
                                                     tcp_request = True)
 
         # Do we need to change parameters first?
