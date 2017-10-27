@@ -186,7 +186,7 @@ class SpinCamera(object):
     """
     The interface to a single camera.
 
-    Note: Currently this only works with Mono12Packed IIDC-msb image format.
+    Note: Currently this only works with Mono8, Mono12p, Mono12Packed and Mono16.
     """
     def __init__(self, h_camera = None, **kwds):
         super().__init__(**kwds)
