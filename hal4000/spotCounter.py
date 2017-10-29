@@ -486,6 +486,12 @@ class SpotCounter(QtGui.QDialog, halModule.HalModule):
                                                                is_mutable = False,
                                                                is_saved = False))
         
+        spotc_params.add("interval", params.ParameterInt("Frame interval for the spot counter",
+                                                         "interval",
+                                                         1,
+                                                         is_mutable = True,
+                                                         is_saved = True))
+        
         spotc_params.add("max_spots", params.ParameterRangeInt("Maximum counts for the spotcounter graph",
                                                                "max_spots", 500, 0, 1000,
                                                                is_mutable = False,
