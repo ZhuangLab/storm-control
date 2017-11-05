@@ -40,7 +40,6 @@ class AOTF(object):
                that we'd ever make the mistake of trying to create two of
                these classes in a single process.
         """
-        super().__init__(**kwds)
         self.encoding = 'utf-8'
         self.live = True
 
