@@ -149,6 +149,7 @@ class LockedMixin(object):
         self.lm_mode_name = "locked"
         self.lm_offset_threshold = 0.02
         self.lm_target = 0.0
+        self.lm_gain = -0.9
 
         if not hasattr(self, "behavior_names"):
             self.behavior_names = []
@@ -173,6 +174,10 @@ class LockedMixin(object):
                                     name = "minimum_sum",
                                     value = -1.0))
 
+        p.add(params.ParameterFloat(description = "Gain for focus lock feedback loop",
+                name = "gain",
+                value = -0.9))
+
     def getLockTarget(self):
         return self.lm_target
         
@@ -189,7 +194,7 @@ class LockedMixin(object):
                     self.lm_buffer[self.lm_counter] = 0
 
                 # Simple proportional control.
-                dz = -0.9 * diff
+                dz = self.lm_gain * diff
                 self.z_stage_functionality.goRelative(dz)
             else:
                 self.lm_buffer[self.lm_counter] = 0
@@ -213,6 +218,7 @@ class LockedMixin(object):
         self.lm_counter = 0
         self.lm_min_sum = p.get("minimum_sum")
         self.lm_offset_threshold = 1.0e-3 * p.get("offset_threshold")
+        self.lm_gain = p.get("gain")
 
     def startLock(self):
         self.lm_counter = 0
