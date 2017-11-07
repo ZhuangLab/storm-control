@@ -116,7 +116,7 @@ class APump():
         newCharacter = self.getResponse()
         response = ""
         while not (ord(newCharacter) & 0x80):
-            response += newCharacter
+            response += newCharacter.decode()
             self.sendString(acknowledge)
             newCharacter = self.getResponse()
 
@@ -145,7 +145,7 @@ class APump():
             self.getResponse()
 
     def sendString(self, string):
-        self.serial.write(string)
+        self.serial.write(string.encode())
 
     def getResponse(self):
         return self.serial.read()

@@ -347,7 +347,7 @@ class HamiltonMVP(object):
     # Read from Serial Port
     # ------------------------------------------------------------------------------------
     def read(self):
-        response = self.serial.read(self.read_length)
+        response = self.serial.read(self.read_length).decode()
         if self.verbose:
             print("Received: " + str((response, "")))
         return response
@@ -415,7 +415,7 @@ class HamiltonMVP(object):
     # Write to Serial Port
     # ------------------------------------------------------------------------------------    
     def write(self, message):
-        self.serial.write(message)
+        self.serial.write(message.encode())
         if self.verbose:
             print("Wrote: " + message[:-1]) # Display all but final carriage return
 
