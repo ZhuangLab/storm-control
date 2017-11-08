@@ -149,6 +149,7 @@ class LockedMixin(object):
         self.lm_mode_name = "locked"
         self.lm_offset_threshold = 0.02
         self.lm_target = 0.0
+        self.lm_gain = -0.9
 
         if not hasattr(self, "behavior_names"):
             self.behavior_names = []
@@ -173,6 +174,10 @@ class LockedMixin(object):
                                     name = "minimum_sum",
                                     value = -1.0))
 
+        p.add(params.ParameterFloat(description = "Gain for focus lock feedback loop",
+                name = "gain",
+                value = -0.9))
+
     def getLockTarget(self):
         return self.lm_target
         
@@ -189,7 +194,7 @@ class LockedMixin(object):
                     self.lm_buffer[self.lm_counter] = 0
 
                 # Simple proportional control.
-                dz = -0.9 * diff
+                dz = self.lm_gain * diff
                 self.z_stage_functionality.goRelative(dz)
             else:
                 self.lm_buffer[self.lm_counter] = 0
@@ -213,6 +218,7 @@ class LockedMixin(object):
         self.lm_counter = 0
         self.lm_min_sum = p.get("minimum_sum")
         self.lm_offset_threshold = 1.0e-3 * p.get("offset_threshold")
+        self.lm_gain = p.get("gain")
 
     def startLock(self):
         self.lm_counter = 0
@@ -306,11 +312,11 @@ class ScanMixin(object):
             super().handleQPDUpdate(qpd_state)
             
         if (self.behavior == self.sm_mode_name):
-
+            
             diff = 2.0 * self.sm_offset_threshold
             if (qpd_state["sum"] > self.sm_min_sum):
                 diff = (qpd_state["offset"] - self.sm_target)
-
+            
             #
             # If we are at a z position where we are getting the correct offset
             # then we are done.
@@ -337,7 +343,8 @@ class ScanMixin(object):
     def startLockBehavior(self, behavior_name, behavior_params):
         if hasattr(super(), "startLockBehavior"):
             super().startLockBehavior(behavior_name, behavior_params)
-            
+           
+
         if (behavior_name == self.sm_mode_name):
             p = self.parameters.get(self.sm_pname)
 
@@ -360,7 +367,7 @@ class ScanMixin(object):
             if "scan_range" in behavior_params:
                 
                 # None means scan the entire range of the z stage.
-                if behavior_params["scan_range"] is None:
+                if behavior_params["scan_range"] is None or behavior_params["scan_range"] is False:
                     sm_z_range = self.z_stage_functionality.getMaximum() - self.z_stage_functionality.getMinimum()
                 else:
                     sm_z_range = behavior_params["scan_range"]

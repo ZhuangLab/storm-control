@@ -740,7 +740,7 @@ class Dave(QtWidgets.QMainWindow):
         warning_message = warning_item.getFullInfo()
         warning_message = warning_message + "\n" + "Would you like to go to this command?"
         messageBox.setText(warning_message)
-        messageBox.setStandardButtons(QtWidgets.QMessageBox.No | QtGui.QMessageBox.Yes)
+        messageBox.setStandardButtons(QtWidgets.QMessageBox.No | QtWidgets.QMessageBox.Yes)
         messageBox.setDefaultButton(QtWidgets.QMessageBox.No)
         button_ID = messageBox.exec_()
 

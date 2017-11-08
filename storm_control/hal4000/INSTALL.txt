@@ -18,6 +18,8 @@
  (g) pywinusb (for the logitech joystick)
  (h) PyBluez (for bluetooth / android)
  (i) Pillow (or PIL).
+ (j) Tifffile
+ (k) PyDAQmx (for national instruments DAQ)
 
 (3-4) Note: You should be able to skip the next two steps if you
  are running 64 bit windows as the compiled files are now included in
@@ -69,7 +71,7 @@
 
 (7) Verify that the software works:
  In the folder where the hal-4000.py file is located type: 
- "python hal-4000.py xml/none_config.xml"
+ "python hal4000.py xml/none_config.xml"
  
  This will run HAL in emulation mode. In this configuration the software
  should start without any warning messages and display a simple pattern
