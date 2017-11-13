@@ -63,7 +63,7 @@ class LockPeakFinder(object):
             self.fg_filter = matchedFilterC.MatchedFilter(fg_psf)
 
             # Create fitter.
-            self.mfit = daoFitC.MultiFitter2D()
+            self.mfit = daoFitC.MultiFitter2DFixed()
             #self.mfit.default_tol = 1.0e-3
             self.mfit.initializeC(image)
             self.mfit.newImage(image)
@@ -97,5 +97,5 @@ class LockPeakFinder(object):
             y = self.mfit.getPeakProperty("y")
             return [y[0], x[0], True]
         else:
-            return [0, 0, False]            
+            return [0, 0, False]
 
