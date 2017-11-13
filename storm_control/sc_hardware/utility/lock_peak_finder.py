@@ -64,6 +64,8 @@ class LockPeakFinder(object):
 
             # Create fitter.
             self.mfit = daoFitC.MultiFitter2DFixed()
+            #self.mfit = daoFitC.MultiFitter2D()
+            #self.mfit = daoFitC.MultiFitter3D()
             #self.mfit.default_tol = 1.0e-3
             self.mfit.initializeC(image)
             self.mfit.newImage(image)
