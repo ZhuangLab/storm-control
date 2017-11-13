@@ -23,6 +23,8 @@ import time
 
 import storm_control.sc_library.hdebug as hdebug
 
+import storm_control.sc_hardware.utility.lock_peak_finder as lockPeakFinder
+
 uc480 = None
 
 
@@ -368,6 +370,8 @@ class CameraQPD(object):
         super().__init__(**kwds)
         
         self.background = background
+        self.fit_hl = None
+        self.fit_hr = None
         self.fit_mode = 1
         self.fit_mutex = fit_mutex
         self.fit_size = int(1.5 * sigma)
@@ -496,11 +500,15 @@ class CameraQPD(object):
 
     def shutDown(self):
         """
-        Save the current camere AOI location and offset. Shutdown the camera.
+        Save the current camera AOI location and offset. Shutdown the camera.
         """
         if self.offset_file:
             with open(self.offset_file, "w") as fp:
                 fp.write(str(self.x_start) + "," + str(self.y_start))
+        if self.fit_hl is not None:
+            self.fit_hl.cleanup()
+            self.fit_hr.cleanup()
+            
         self.cam.shutDown()
 
     def singleQpdScan(self):
@@ -510,7 +518,7 @@ class CameraQPD(object):
         data = self.capture().copy()
 
         if (self.background > 0): # Toggle between sum signal calculations
-            power = numpy.sum(data) - self.background
+            power = numpy.sum(data.astype(numpy.int64)) - self.background
         else:
             power = numpy.max(data)
         
@@ -548,22 +556,48 @@ class CameraQPD(object):
             self.x_off2 = 0.0
             self.y_off2 = 0.0
 
-            # Fit first gaussian to data in the left half of the picture.
-            total_good =0
-            [max_x, max_y, params, status] = self.fitGaussian(data[:,:self.half_x])
-            if status:
-                total_good += 1
-                self.x_off1 = float(max_x) + params[2] - self.half_y
-                self.y_off1 = float(max_y) + params[3] - self.half_x
-                dist1 = abs(self.y_off1)
+            # numpy finder/fitter.
+            if False:
+                
+                # Fit first gaussian to data in the left half of the picture.
+                total_good =0
+                [max_x, max_y, params, status] = self.fitGaussian(data[:,:self.half_x])
+                if status:
+                    total_good += 1
+                    self.x_off1 = float(max_x) + params[2] - self.half_y
+                    self.y_off1 = float(max_y) + params[3] - self.half_x
+                    dist1 = abs(self.y_off1)
 
-            # Fit second gaussian to data in the right half of the picture.
-            [max_x, max_y, params, status] = self.fitGaussian(data[:,-self.half_x:])
-            if status:
-                total_good += 1
-                self.x_off2 = float(max_x) + params[2] - self.half_y
-                self.y_off2 = float(max_y) + params[3]
-                dist2 = abs(self.y_off2)
+                # Fit second gaussian to data in the right half of the picture.
+                [max_x, max_y, params, status] = self.fitGaussian(data[:,-self.half_x:])
+                if status:
+                    total_good += 1
+                    self.x_off2 = float(max_x) + params[2] - self.half_y
+                    self.y_off2 = float(max_y) + params[3]
+                    dist2 = abs(self.y_off2)
+
+            # storm-analysis finder/fitter.
+            else:
+                if self.fit_hl is None:
+                    self.fit_hl = lockPeakFinder.LockPeakFinder(sigma = self.sigma,
+                                                                threshold = 10)
+                    self.fit_hr = lockPeakFinder.LockPeakFinder(sigma = self.sigma,
+                                                                threshold = 10)
+
+                total_good = 0
+                [x1, y1, status] = self.fit_hl.findFitPeak(data[:,:self.half_x])
+                if status:
+                    total_good += 1
+                    self.x_off1 = x1 - self.half_y
+                    self.y_off1 = y1 - self.half_x
+                    dist1 = abs(self.y_off1)
+                
+                [x2, y2, status] = self.fit_hl.findFitPeak(data[:,-self.half_x:])
+                if status:
+                    total_good += 1
+                    self.x_off2 = x2 - self.half_y
+                    self.y_off2 = y2
+                    dist2 = abs(self.y_off2)
 
             if (total_good == 0):
                 offset = 0
