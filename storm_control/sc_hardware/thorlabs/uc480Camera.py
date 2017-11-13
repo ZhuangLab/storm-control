@@ -594,7 +594,7 @@ class CameraQPD(object):
                     self.y_off1 = y1 - self.half_x
                     dist1 = abs(self.y_off1)
                 
-                [x2, y2, status] = self.fit_hl.findFitPeak(data[:,-self.half_x:])
+                [x2, y2, status] = self.fit_hr.findFitPeak(data[:,-self.half_x:])
                 if status:
                     total_good += 1
                     self.x_off2 = x2 - self.half_y

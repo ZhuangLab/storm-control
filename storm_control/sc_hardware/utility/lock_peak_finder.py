@@ -38,8 +38,8 @@ class LockPeakFinder(object):
 
     def cleanup(self):
         if self.mfit is not None:
-            self.fg_filter.cleanup()
-            self.mfit.cleanup()
+            self.mfit.cleanup(verbose = False)
+            #self.fg_filter.cleanup()
 
     def findFitPeak(self, image):
         """
@@ -78,10 +78,6 @@ class LockPeakFinder(object):
         # No peaks found check
         if(x.size == 0):
             return [0, 0, False]
-#        else:
-#            print(numpy.max(image), numpy.min(image))
-#            print(x,y,h)
-#            print()
 
         max_index = numpy.argmax(h)
 
