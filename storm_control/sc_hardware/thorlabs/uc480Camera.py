@@ -579,9 +579,11 @@ class CameraQPD(object):
             # storm-analysis finder/fitter.
             else:
                 if self.fit_hl is None:
-                    self.fit_hl = lockPeakFinder.LockPeakFinder(sigma = self.sigma,
+                    self.fit_hl = lockPeakFinder.LockPeakFinder(offset = 5.0,
+                                                                sigma = self.sigma,
                                                                 threshold = 10)
-                    self.fit_hr = lockPeakFinder.LockPeakFinder(sigma = self.sigma,
+                    self.fit_hr = lockPeakFinder.LockPeakFinder(offset = 5.0,
+                                                                sigma = self.sigma,
                                                                 threshold = 10)
 
                 total_good = 0
