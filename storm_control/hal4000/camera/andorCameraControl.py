@@ -39,12 +39,38 @@ class AndorCameraControl(cameraControl.HWCameraControl):
         self.camera_functionality.setEMCCDGain = self.setEMCCDGain
         self.camera_functionality.toggleShutter = self.toggleShutter
 
-
         # Load Andor DLL & get the camera.
         andor.loadAndorDLL(os.path.join(config.get("andor_path"), config.get("andor_dll")))
         handle = andor.getCameraHandles()[config.get("camera_id")]
         self.camera = andor.AndorCamera(config.get("andor_path"), handle)
 
+        # Dictionary of Andor camera properties we'll support.
+        self.andor_props = {"adchannel" : True,
+                            "baselineclamp" : True,
+                            "emccd_advanced" : True,
+                            "emccd_gain" : True,
+                            "emgainmode" : True,
+                            "exposure_time" : True,
+                            "extension" : True,
+                            "external_trigger" : True,
+                            "frame_transfer_mode" : True,
+                            "hsspeed" : True,
+                            "isolated_cropmode" : True,
+                            "kinetic_cycle_time" : True,
+                            "low_during_filming" : True,
+                            "off_during_filming" : True,
+                            "preampgain" : True,
+                            "saved" : True,
+                            "temperature" : True,
+                            "vsamplitude" : True,
+                            "vsspeed" : True,
+                            "x_bin" : True,
+                            "x_end" : True,
+                            "x_start" : True,
+                            "y_bin" : True,
+                            "y_end" : True,
+                            "y_start" : True}
+        
         # Add Andor EMCCD specific parameters.
         self.parameters.setv("max_intensity", self.camera.getMaxIntensity())
 
@@ -195,10 +221,13 @@ class AndorCameraControl(cameraControl.HWCameraControl):
         super().newParameters(parameters)
 
         self.camera_working = True
-        if initialization:
-            to_change = parameters.getSortedAttrs()
-        else:
-            to_change = params.difference(parameters, self.parameters)
+
+        # Update the parameter values, only the Andor specific ones
+        # and only if they are different.
+        to_change = []
+        for pname in self.andor_props:
+            if (self.parameters.get(pname) != parameters.get(pname)) or initialization:
+                to_change.append(pname)
 
         if (len(to_change) > 0):
             running = self.running
@@ -324,7 +353,7 @@ class AndorCameraControl(cameraControl.HWCameraControl):
                                                     new_binning[0])
                     self.camera.setROIAndBinning(new_roi, new_binning)
 
-            for pname = ["bytes_per_frame", "x_pixels", "y_pixels"]:
+            for pname in ["bytes_per_frame", "x_pixels", "y_pixels"]:
                 self.parameters.setv(pname, parameters.get(pname))
 
             [exposure_time, cycle_time] = self.camera.getAcquisitionTimings()[:-1]
