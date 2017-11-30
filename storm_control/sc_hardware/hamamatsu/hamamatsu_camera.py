@@ -650,7 +650,7 @@ class HamamatsuCamera(object):
         else:
             self.setPropertyValue("subarray_mode", "ON")
 
-    def setAcquisitionMode(self, mode, number_frames = None):
+    def setACQMode(self, mode, number_frames = None):
         '''
         Set the acquisition mode to either run until aborted or to 
         stop after acquiring a set number of frames.
