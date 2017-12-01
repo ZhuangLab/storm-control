@@ -375,7 +375,14 @@ class NidaqModule(daqModule.DaqModule):
                                                            frequency = frequency, 
                                                            duty_cycle = 0.5)
                     self.ct_task.setCounter(number_samples = self.oversampling)
-                    self.ct_task.setTrigger(trigger_source = self.timing.get("camera_fire_pin"))
+
+                    rising_edge = True
+                    if self.timing.has("rising_edge"):
+                        rising_edge = self.timing.get("rising_edge")
+
+                    self.ct_task.setTrigger(
+                            trigger_source = self.timing.get("camera_fire_pin"),
+                            rising_edge = rising_edge)
                     self.ct_task.startTask()
                 except nicontrol.NIException as exception:
                     print(exception)
