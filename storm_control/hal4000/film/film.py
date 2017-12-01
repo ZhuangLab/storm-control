@@ -440,8 +440,8 @@ class Film(halModule.HalModule):
         # specify at start up that they need to be waited for.
         elif message.isType("start film"):
 
-            # No waits requested, so start now.
-            if (len(self.waiting_on) == 0):
+            # No modules requested waits, so start now.
+            if (len(self.wait_for) == 0):
                 self.startCameras()
         
         # Modules are expected to add their current parameters as responses
