@@ -166,6 +166,24 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
                 
             self.camera_functionality.parametersChanged.emit()
 
+    def startFilm(self, film_settings, is_time_base):
+        super().startFilm(film_settings, is_time_base)
+        if self.camera_working:
+            if self.film_length is not None:
+                if (self.film_length > 1000):
+                    self.camera.setACQMode("run_till_abort")
+                else:
+                    self.camera.setACQMode(
+                            "fixed_length", 
+                            number_frames = self.film_length)
+            else:
+                self.camera.setACQMode("run_till_abort")
+
+    def stopFilm(self):
+        super().stopFilm()
+        if self.camera_working:
+            self.camera.setACQMode("run_till_abort")
+
 #
 # The MIT License
 #

@@ -174,10 +174,6 @@ class LockedMixin(object):
                                     name = "minimum_sum",
                                     value = -1.0))
 
-        p.add(params.ParameterFloat(description = "Gain for focus lock feedback loop",
-                name = "gain",
-                value = -0.9))
-
     def getLockTarget(self):
         return self.lm_target
         
@@ -218,7 +214,6 @@ class LockedMixin(object):
         self.lm_counter = 0
         self.lm_min_sum = p.get("minimum_sum")
         self.lm_offset_threshold = 1.0e-3 * p.get("offset_threshold")
-        self.lm_gain = p.get("gain")
 
     def startLock(self):
         self.lm_counter = 0
