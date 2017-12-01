@@ -254,7 +254,7 @@ class HamamatsuCamera(object):
         # Set up wait handle
         paramwait = DCAMWAIT_OPEN(0, 0, None, self.camera_handle)
         paramwait.size = ctypes.sizeof(paramwait)
-        self.checkStatus(dcam.dcamwait_open(paramwait), 
+        self.checkStatus(dcam.dcamwait_open(ctypes.byref(paramwait)), 
                 "dcamwait_open")
         self.wait_handle = paramwait.hwait
 
@@ -379,6 +379,7 @@ class HamamatsuCamera(object):
                              "dcam_unlockdata")
 
             frames.append(hc_data)
+
 
         return [frames, [self.frame_x, self.frame_y]]
 
@@ -784,6 +785,7 @@ class HamamatsuCameraMR(HamamatsuCamera):
         """
         self.captureSetup()
 
+
         #
         # Allocate new image buffers if necessary.
         # Allocate as many frames as can fit in 2GB of memory.
@@ -798,8 +800,6 @@ class HamamatsuCameraMR(HamamatsuCamera):
             else:
                 self.number_image_buffers = n_buffers
 
-
-            self.number_image_buffers = 10
 
             # Allocate new image buffers.
             ptr_array = ctypes.c_void_p * self.number_image_buffers
@@ -817,6 +817,7 @@ class HamamatsuCameraMR(HamamatsuCamera):
         # We need to attach & release for each acquisition otherwise
         # we'll get an error if we try to change the ROI in any way
         # between acquisitions.
+
 
         paramattach = DCAMBUF_ATTACH(0, DCAMBUF_ATTACHKIND_FRAME,
                 self.hcam_ptr, self.number_image_buffers)
@@ -843,6 +844,7 @@ class HamamatsuCameraMR(HamamatsuCamera):
         """
         Stop data acquisition and release the memory associates with the frames.
         """
+
 
         # Stop acquisition.
         self.checkStatus(dcam.dcamcap_stop(self.camera_handle),
@@ -929,7 +931,7 @@ if (__name__ == "__main__"):
             print("Testing run till abort acquisition")
             hcam.startAcquisition()
             cnt = 0
-            for i in range(30000):
+            for i in range(300):
                 [frames, dims] = hcam.getFrames()
                 for aframe in frames:
                     print(cnt, aframe[0:5])
@@ -942,10 +944,10 @@ if (__name__ == "__main__"):
         if True:
             for j in range (10):
                 print("Testing fixed length acquisition")
-                hcam.setAcquisitionMode("fixed_length", number_frames = 10)
+                hcam.setACQMode("fixed_length", number_frames = 10)
                 hcam.startAcquisition()
                 cnt = 0
-                for i in range(30000):
+                for i in range(10):
                     [frames, dims] = hcam.getFrames()
                     for aframe in frames:
                         print(cnt, aframe[0:5])
