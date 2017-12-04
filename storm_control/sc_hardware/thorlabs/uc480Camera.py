@@ -17,16 +17,19 @@ import ctypes.wintypes
 import numpy
 import os
 
-import scipy
-import scipy.optimize
 import time
 
 import storm_control.sc_library.hdebug as hdebug
 
-import storm_control.sc_hardware.utility.lock_peak_finder as lockPeakFinder
+# import fitting libraries.
+import storm_control.sc_hardware.utility.np_lock_peak_finder as npLPF
+
+try:
+    import storm_control.sc_hardware.utility.sa_lock_peak_finder as saLPF
+except ModuleNotFoundError:
+    pass
 
 uc480 = None
-
 
 Handle = ctypes.wintypes.HANDLE
 
@@ -100,77 +103,10 @@ def create_camera_list(num_cameras):
     a_list.Count = num_cameras
     return a_list
 
-last_warning_time = None
-
-def fitAFunctionLS(data, params, fn):
-    """
-    Does least squares fitting of a function.
-    """
-    start_time = time.time()
-    result = params
-    errorfunction = lambda p: numpy.ravel(fn(*p)(*numpy.indices(data.shape)) - data)
-    good = True
-    [result, cov_x, infodict, mesg, success] = scipy.optimize.leastsq(errorfunction, params, full_output = 1, maxfev = 500)
-    if (success < 1) or (success > 4):
-        hdebug.logText("Fitting problem: " + mesg)
-        #print "Fitting problem:", mesg
-        good = False
-    end_time = time.time()
-
-    if (infodict["nfev"] > 70) or ((end_time - start_time) > 0.1):
-        
-        global last_warning_time
-        if last_warning_time is None or ((time.time() - last_warning_time) > 2.0):
-            print("> QPD-480 Slow fitting detected")
-            print(">", infodict["nfev"], time.time() - start_time)
-            print(">", params)
-            print(">", result)
-            print()
-            last_warning_time = time.time()
-        
-    return [result, good]
-
 def loadDLL(dll_name):
     global uc480
     if uc480 is None:
         uc480 = ctypes.cdll.LoadLibrary(dll_name)
-    
-
-def symmetricGaussian(background, height, center_x, center_y, width):
-    """
-    Returns a function that will return the amplitude of a symmetric 2D-gaussian at a given x, y point.
-    """
-    return lambda x,y: background + height*numpy.exp(-(((center_x-x)/width)**2 + ((center_y-y)/width)**2) * 2)
-
-def fixedEllipticalGaussian(background, height, center_x, center_y, width_x, width_y):
-    """
-    Returns a function that will return the amplitude of a elliptical gaussian (constrained to be oriented
-    along the XY axis) at a given x, y point.
-    """
-    return lambda x,y: background + height*numpy.exp(-(((center_x-x)/width_x)**2 + ((center_y-y)/width_y)**2) * 2)
-
-def fitSymmetricGaussian(data, sigma):
-    """
-    Fits a symmetric gaussian to the data.
-    """
-    params = [numpy.min(data),
-              numpy.max(data),
-              0.5 * data.shape[0],
-              0.5 * data.shape[1],
-              2.0 * sigma]
-    return fitAFunctionLS(data, params, symmetricGaussian)
-
-def fitFixedEllipticalGaussian(data, sigma):
-    """
-    Fits a fixed-axis elliptical gaussian to the data.
-    """
-    params = [numpy.min(data),
-              numpy.max(data),
-              0.5 * data.shape[0],
-              0.5 * data.shape[1],
-              2.0 * sigma,
-              2.0 * sigma]
-    return fitAFunctionLS(data, params, fixedEllipticalGaussian)
 
 
 class Camera(Handle):
@@ -360,7 +296,6 @@ class CameraQPD(object):
     def __init__(self,
                  background = None,                 
                  camera_id = 1,
-                 fit_mutex = False,
                  ini_file = None,
                  offset_file = None,
                  sigma = None,
@@ -370,10 +305,7 @@ class CameraQPD(object):
         super().__init__(**kwds)
         
         self.background = background
-        self.fit_hl = None
-        self.fit_hr = None
         self.fit_mode = 1
-        self.fit_mutex = fit_mutex
         self.fit_size = int(1.5 * sigma)
         self.image = None
         self.last_power = 0
@@ -441,27 +373,44 @@ class CameraQPD(object):
         """
         self.fit_mode = mode
 
-    def fitGaussian(self, data):
-        if (numpy.max(data) < 25):
-            return [False, False, False, False]
-        x_width = data.shape[0]
-        y_width = data.shape[1]
-        max_i = data.argmax()
-        max_x = int(max_i/y_width)
-        max_y = int(max_i%y_width)
-        if (max_x > (self.fit_size-1)) and (max_x < (x_width - self.fit_size)) and (max_y > (self.fit_size-1)) and (max_y < (y_width - self.fit_size)):
-            if self.fit_mutex:
-                self.fit_mutex.lock()
-            #[params, status] = fitSymmetricGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
-            #[params, status] = fitFixedEllipticalGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
-            [params, status] = fitFixedEllipticalGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], self.sigma)
-            if self.fit_mutex:
-                self.fit_mutex.unlock()
-            params[2] -= self.fit_size
-            params[3] -= self.fit_size
-            return [max_x, max_y, params, status]
-        else:
-            return [False, False, False, False]
+    def doMoments(self, data):
+        """
+        Perform a moment based calculation of the distances.
+        """
+        self.x_off1 = 1.0e-6
+        self.y_off1 = 0.0
+        self.x_off2 = 1.0e-6
+        self.y_off2 = 0.0
+
+        total_good = 0
+        data_band = data[self.half_y-15:self.half_y+15,:]
+
+        # Moment for the object in the left half of the picture.
+        x = numpy.arange(self.half_x)
+        data_ave = numpy.average(data_band[:,:self.half_x], axis = 0)
+        power1 = numpy.sum(data_ave)
+
+        dist1 = 0.0
+        if (power1 > 0.0):
+            total_good += 1
+            self.y_off1 = numpy.sum(x * data_ave) / power1 - self.half_x
+            dist1 = abs(self.y_off1)
+
+        # Moment for the object in the right half of the picture.
+        data_ave = numpy.average(data_band[:,self.half_x:], axis = 0)
+        power2 = numpy.sum(data_ave)
+
+        dist2 = 0.0
+        if (power2 > 0.0):
+            total_good += 1
+            self.y_off2 = numpy.sum(x * data_ave) / power2
+            dist2 = abs(self.y_off2)
+
+        # The moment calculation is too fast. This is to slow things
+        # down so that (hopefully) the camera doesn't freeze up.
+        time.sleep(0.02)
+        
+        return [total_good, dist1, dist2]
 
     def getImage(self):
         return [self.image, self.x_off1, self.y_off1, self.x_off2, self.y_off2, self.sigma]
@@ -505,10 +454,6 @@ class CameraQPD(object):
         if self.offset_file:
             with open(self.offset_file, "w") as fp:
                 fp.write(str(self.x_start) + "," + str(self.y_start))
-        if self.fit_hl is not None:
-            self.fit_hl.cleanup()
-            self.fit_hr.cleanup()
-            
         self.cam.shutDown()
 
     def singleQpdScan(self):
@@ -549,112 +494,135 @@ class CameraQPD(object):
         # attempt to compensate. However this assumes that the two
         # spots are centered across the mid-line of camera ROI.
         if (self.fit_mode == 1):
-            dist1 = 0
-            dist2 = 0
-            self.x_off1 = 0.0
-            self.y_off1 = 0.0
-            self.x_off2 = 0.0
-            self.y_off2 = 0.0
-
-            # numpy finder/fitter.
-            if False:
-                
-                # Fit first gaussian to data in the left half of the picture.
-                total_good =0
-                [max_x, max_y, params, status] = self.fitGaussian(data[:,:self.half_x])
-                if status:
-                    total_good += 1
-                    self.x_off1 = float(max_x) + params[2] - self.half_y
-                    self.y_off1 = float(max_y) + params[3] - self.half_x
-                    dist1 = abs(self.y_off1)
-
-                # Fit second gaussian to data in the right half of the picture.
-                [max_x, max_y, params, status] = self.fitGaussian(data[:,-self.half_x:])
-                if status:
-                    total_good += 1
-                    self.x_off2 = float(max_x) + params[2] - self.half_y
-                    self.y_off2 = float(max_y) + params[3]
-                    dist2 = abs(self.y_off2)
-
-            # storm-analysis finder/fitter.
-            else:
-                if self.fit_hl is None:
-                    self.fit_hl = lockPeakFinder.LockPeakFinder(offset = 5.0,
-                                                                sigma = self.sigma,
-                                                                threshold = 10)
-                    self.fit_hr = lockPeakFinder.LockPeakFinder(offset = 5.0,
-                                                                sigma = self.sigma,
-                                                                threshold = 10)
-
-                total_good = 0
-                [x1, y1, status] = self.fit_hl.findFitPeak(data[:,:self.half_x])
-                if status:
-                    total_good += 1
-                    self.x_off1 = x1 - self.half_y
-                    self.y_off1 = y1 - self.half_x
-                    dist1 = abs(self.y_off1)
-                
-                [x2, y2, status] = self.fit_hr.findFitPeak(data[:,-self.half_x:])
-                if status:
-                    total_good += 1
-                    self.x_off2 = x2 - self.half_y
-                    self.y_off2 = y2
-                    dist2 = abs(self.y_off2)
-
-            if (total_good == 0):
-                offset = 0
-            elif (total_good == 1):
-                offset = ((dist1 + dist2) - 0.5*self.zero_dist)
-            else:
-                offset = ((dist1 + dist2) - self.zero_dist)
-
-            return [power, offset, 0]
+            [total_good, dist1, dist2] = self.doFit(data)
 
         # Determine offset by moments calculation.
         else:
-            self.x_off1 = 1.0e-6
-            self.y_off1 = 0.0
-            self.x_off2 = 1.0e-6
-            self.y_off2 = 0.0
+            [total_good, dist1, dist2] = self.doMoments(data)
+                        
+        # Calculate offset.
+        if (total_good == 0):
+            offset = 0
+        elif (total_good == 1):
+            offset = ((dist1 + dist2) - 0.5*self.zero_dist)
+        else:
+            offset = ((dist1 + dist2) - self.zero_dist)
 
-            total_good = 0
-            data_band = data[self.half_y-15:self.half_y+15,:]
-
-            # Moment for the object in the left half of the picture.
-            x = numpy.arange(self.half_x)
-            data_ave = numpy.average(data_band[:,:self.half_x], axis = 0)
-            power1 = numpy.sum(data_ave)
-
-            dist1 = 0.0
-            if (power1 > 0.0):
-                total_good += 1
-                self.y_off1 = numpy.sum(x * data_ave) / power1 - self.half_x
-                dist1 = abs(self.y_off1)
-
-            # Moment for the object in the right half of the picture.
-            data_ave = numpy.average(data_band[:,self.half_x:], axis = 0)
-            power2 = numpy.sum(data_ave)
-
-            dist2 = 0.0
-            if (power2 > 0.0):
-                total_good += 1
-                self.y_off2 = numpy.sum(x * data_ave) / power2
-                dist2 = abs(self.y_off2)
-
-            if (total_good == 0):
-                offset = 0
-            elif (total_good == 1):
-                offset = ((dist1 + dist2) - 0.5*self.zero_dist)
-            else:
-                offset = ((dist1 + dist2) - self.zero_dist)
-
-            # The moment calculation is too fast. This is to slow things
-            # down so that (hopefully) the camera doesn't freeze up.
-            time.sleep(0.02)
-
-            return [power, offset, 0]
+        return [power, offset, 0]
 
 
+class CameraQPDScipyFit(CameraQPD):
+    """
+    This version uses scipy to do the fitting.
+    """
+    def __init__(self, fit_mutex = False, **kwds):
+        super().__init__(**kwds)
+
+        self.fit_mutex = fit_mutex
+
+    def doFit(self, data):
+        dist1 = 0
+        dist2 = 0
+        self.x_off1 = 0.0
+        self.y_off1 = 0.0
+        self.x_off2 = 0.0
+        self.y_off2 = 0.0
+
+        # numpy finder/fitter.
+        #
+        # Fit first gaussian to data in the left half of the picture.
+        total_good =0
+        [max_x, max_y, params, status] = self.fitGaussian(data[:,:self.half_x])
+        if status:
+            total_good += 1
+            self.x_off1 = float(max_x) + params[2] - self.half_y
+            self.y_off1 = float(max_y) + params[3] - self.half_x
+            dist1 = abs(self.y_off1)
+
+        # Fit second gaussian to data in the right half of the picture.
+        [max_x, max_y, params, status] = self.fitGaussian(data[:,-self.half_x:])
+        if status:
+            total_good += 1
+            self.x_off2 = float(max_x) + params[2] - self.half_y
+            self.y_off2 = float(max_y) + params[3]
+            dist2 = abs(self.y_off2)
+
+        return [total_good, dist1, dist2]
+        
+    def fitGaussian(self, data):
+        if (numpy.max(data) < 25):
+            return [False, False, False, False]
+        x_width = data.shape[0]
+        y_width = data.shape[1]
+        max_i = data.argmax()
+        max_x = int(max_i/y_width)
+        max_y = int(max_i%y_width)
+        if (max_x > (self.fit_size-1)) and (max_x < (x_width - self.fit_size)) and (max_y > (self.fit_size-1)) and (max_y < (y_width - self.fit_size)):
+            if self.fit_mutex:
+                self.fit_mutex.lock()
+            #[params, status] = npLPF.fitSymmetricGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
+            #[params, status] = npLPF.fitFixedEllipticalGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], 8.0)
+            [params, status] = npLPF.fitFixedEllipticalGaussian(data[max_x-self.fit_size:max_x+self.fit_size,max_y-self.fit_size:max_y+self.fit_size], self.sigma)
+            if self.fit_mutex:
+                self.fit_mutex.unlock()
+            params[2] -= self.fit_size
+            params[3] -= self.fit_size
+            return [max_x, max_y, params, status]
+        else:
+            return [False, False, False, False]
+
+
+class CameraQPDSAFit(CameraQPD):
+    """
+    This version uses the storm-analysis project to do the fitting.
+    """
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        self.fit_hl = None
+        self.fit_hr = None
+
+    def doFit(self, data):
+        dist1 = 0
+        dist2 = 0
+        self.x_off1 = 0.0
+        self.y_off1 = 0.0
+        self.x_off2 = 0.0
+        self.y_off2 = 0.0
+
+        if self.fit_hl is None:
+            self.fit_hl = saLPF.LockPeakFinder(offset = 5.0,
+                                                        sigma = self.sigma,
+                                                        threshold = 10)
+            self.fit_hr = saLPF.LockPeakFinder(offset = 5.0,
+                                               sigma = self.sigma,
+                                               threshold = 10)
+
+        total_good = 0
+        [x1, y1, status] = self.fit_hl.findFitPeak(data[:,:self.half_x])
+        if status:
+            total_good += 1
+            self.x_off1 = x1 - self.half_y
+            self.y_off1 = y1 - self.half_x
+            dist1 = abs(self.y_off1)
+                
+        [x2, y2, status] = self.fit_hr.findFitPeak(data[:,-self.half_x:])
+        if status:
+            total_good += 1
+            self.x_off2 = x2 - self.half_y
+            self.y_off2 = y2
+            dist2 = abs(self.y_off2)
+
+        return [total_good, dist1, dist2]
+
+    def shutDown(self):
+        super().shutDown()
+        
+        if self.fit_hl is not None:
+            self.fit_hl.cleanup()
+            self.fit_hr.cleanup()
+
+        
 # Testing
 if (__name__ == "__main__"):
 

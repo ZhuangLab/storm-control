@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-Peak finder for use by the camera based focus locks.
+Peak finder for use by the camera based focus locks. This 
+version requires the storm-analysis project.
 
 Hazen 11/17
 """

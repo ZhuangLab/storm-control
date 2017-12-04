@@ -544,6 +544,7 @@
 	<offset_file type="string">C:/Users/Hazen/Code/storm-control-development/storm_control/hal4000/cam_offsets_hbaic1_1.txt</offset_file>
 	<sigma type="float">2.0</sigma>
 	<uc480_dll type="string">c:/windows/system32/uc480_64.dll</uc480_dll>
+	<use_storm_analysis type="boolean">True</use_storm_analysis>
 	<x_width type="int">700</x_width>
 	<y_width type="int">100</y_width>
 	<units_to_microns type="float">0.211</units_to_microns>
