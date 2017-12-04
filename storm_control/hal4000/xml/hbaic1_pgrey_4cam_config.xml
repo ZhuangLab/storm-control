@@ -2,7 +2,7 @@
 <config>
 
   <!-- The starting directory. -->
-  <directory type="directory">F:/Data2/</directory>
+  <directory type="directory">E:/SSD_Data/</directory>
   
   <!-- The setup name -->
   <setup_name type="string">hbaic-pgrey</setup_name>
@@ -138,7 +138,7 @@
 	  <!-- These can be changed / editted. -->
 
 	  <!-- This is the extension to use (if any) when saving data from this camera. -->
-	  <extension type="string"></extension>
+	  <extension type="string">c1</extension>
 	  
 	  <!-- Whether or not data from this camera is saved during filming. -->
 	  <saved type="boolean">True</saved>
@@ -146,6 +146,108 @@
 	</parameters>
       </camera>
     </camera1>
+
+    <camera2>
+      <class_name type="string">Camera</class_name>
+      <module_name type="string">storm_control.hal4000.camera.camera</module_name>
+      <camera>
+	<master type="boolean">False</master>
+	<class_name type="string">PointGreyCameraControl</class_name>
+	<module_name type="string">storm_control.hal4000.camera.pointgreyCameraControl</module_name>
+	<parameters>
+	  
+	  <!-- The location of the Point Grey DLL -->
+	  <pgrey_dll type="string">C:/Program Files/Point Grey Research/Spinnaker/bin64/vs2013/SpinnakerC_v120.dll</pgrey_dll>
+
+	  <!-- Which camera to use -->
+	  <camera_id type="int">1</camera_id>
+
+	  <!-- These are the display defaults, not the camera range. -->
+	  <default_max type="int">200</default_max> 
+	  <default_min type="int">30</default_min>
+	  <flip_horizontal type="boolean">False</flip_horizontal>
+	  <flip_vertical type="boolean">False</flip_vertical>
+	  <transpose type="boolean">True</transpose>
+
+	  <!-- These can be changed / editted. -->
+
+	  <!-- This is the extension to use (if any) when saving data from this camera. -->
+	  <extension type="string">c2</extension>
+	  
+	  <!-- Whether or not data from this camera is saved during filming. -->
+	  <saved type="boolean">True</saved>
+
+	</parameters>
+      </camera>
+    </camera2>
+
+    <camera3>
+      <class_name type="string">Camera</class_name>
+      <module_name type="string">storm_control.hal4000.camera.camera</module_name>
+      <camera>
+	<master type="boolean">False</master>
+	<class_name type="string">PointGreyCameraControl</class_name>
+	<module_name type="string">storm_control.hal4000.camera.pointgreyCameraControl</module_name>
+	<parameters>
+	  
+	  <!-- The location of the Point Grey DLL -->
+	  <pgrey_dll type="string">C:/Program Files/Point Grey Research/Spinnaker/bin64/vs2013/SpinnakerC_v120.dll</pgrey_dll>
+
+	  <!-- Which camera to use -->
+	  <camera_id type="int">2</camera_id>
+
+	  <!-- These are the display defaults, not the camera range. -->
+	  <default_max type="int">200</default_max> 
+	  <default_min type="int">30</default_min>
+	  <flip_horizontal type="boolean">False</flip_horizontal>
+	  <flip_vertical type="boolean">False</flip_vertical>
+	  <transpose type="boolean">True</transpose>
+
+	  <!-- These can be changed / editted. -->
+
+	  <!-- This is the extension to use (if any) when saving data from this camera. -->
+	  <extension type="string">c3</extension>
+	  
+	  <!-- Whether or not data from this camera is saved during filming. -->
+	  <saved type="boolean">True</saved>
+
+	</parameters>
+      </camera>
+    </camera3>       
+
+    <camera4>
+      <class_name type="string">Camera</class_name>
+      <module_name type="string">storm_control.hal4000.camera.camera</module_name>
+      <camera>
+	<master type="boolean">False</master>
+	<class_name type="string">PointGreyCameraControl</class_name>
+	<module_name type="string">storm_control.hal4000.camera.pointgreyCameraControl</module_name>
+	<parameters>
+	  
+	  <!-- The location of the Point Grey DLL -->
+	  <pgrey_dll type="string">C:/Program Files/Point Grey Research/Spinnaker/bin64/vs2013/SpinnakerC_v120.dll</pgrey_dll>
+
+	  <!-- Which camera to use -->
+	  <camera_id type="int">3</camera_id>
+
+	  <!-- These are the display defaults, not the camera range. -->
+	  <default_max type="int">200</default_max> 
+	  <default_min type="int">30</default_min>
+	  <flip_horizontal type="boolean">True</flip_horizontal>
+	  <flip_vertical type="boolean">False</flip_vertical>
+	  <transpose type="boolean">True</transpose>
+
+	  <!-- These can be changed / editted. -->
+
+	  <!-- This is the extension to use (if any) when saving data from this camera. -->
+	  <extension type="string">c4</extension>
+	  
+	  <!-- Whether or not data from this camera is saved during filming. -->
+	  <saved type="boolean">True</saved>
+
+	</parameters>
+      </camera>
+    </camera4>
 
     <!-- Crystal Technologies AOTF (Telnet) -->
     <ctech_aotf>
@@ -211,7 +313,7 @@
 	<galvo>
 	  <wv_task>
 	    <clock>/Dev1/ctr0out</clock>
-	    <lines>/Dev1/ao0,/Dev1/ao1</lines>
+	    <lines>/Dev1/ao0,/Dev/ao1</lines>
 	  </wv_task>
 	</galvo>
 
@@ -410,7 +512,17 @@
 	<stage_functionality type="string">ludl_stage</stage_functionality>
       </configuration>
     </stage>
-
+    
+    <!-- TCP control -->
+    <tcp_control>
+      <module_name type="string">storm_control.hal4000.tcpControl.tcpControl</module_name>
+      <class_name type="string">TCPControl</class_name>	    
+      <configuration>
+	<parallel_mode type="boolean">True</parallel_mode>
+	<tcp_port type="int">9000</tcp_port>
+      </configuration>
+    </tcp_control>
+    
     <!-- Thorlabs UC480 camera for the focus lock -->
     <uc480_camera>
       <class_name type="string">UC480Camera</class_name>
@@ -432,9 +544,10 @@
 	<offset_file type="string">C:/Users/Hazen/Code/storm-control-development/storm_control/hal4000/cam_offsets_hbaic1_1.txt</offset_file>
 	<sigma type="float">2.0</sigma>
 	<uc480_dll type="string">c:/windows/system32/uc480_64.dll</uc480_dll>
+	<use_storm_analysis type="boolean">True</use_storm_analysis>
 	<x_width type="int">700</x_width>
 	<y_width type="int">100</y_width>
-	<units_to_microns type="float">0.135</units_to_microns>
+	<units_to_microns type="float">0.211</units_to_microns>
       </configuration>
     </uc480_camera>
     

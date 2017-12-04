@@ -445,6 +445,16 @@
       </configuration>
     </stage>
 
+    <!-- TCP control -->
+    <tcp_control>
+      <module_name type="string">storm_control.hal4000.tcpControl.tcpControl</module_name>
+      <class_name type="string">TCPControl</class_name>	    
+      <configuration>
+	<parallel_mode type="boolean">True</parallel_mode>
+	<tcp_port type="int">9000</tcp_port>
+      </configuration>
+    </tcp_control>
+    
     <!-- Thorlabs UC480 camera for the focus lock -->
     <uc480_camera>
       <class_name type="string">UC480Camera</class_name>
@@ -464,11 +474,12 @@
 	<camera_id type="int">1</camera_id>
 	<ini_file type="string">uc480_settings.ini</ini_file>
 	<offset_file type="string">C:/Users/Hazen/Code/storm-control-development/storm_control/hal4000/cam_offsets_hbaic1_1.txt</offset_file>
-	<sigma type="float">2.0</sigma>
+	<sigma type="float">4.0</sigma>
 	<uc480_dll type="string">c:/windows/system32/uc480_64.dll</uc480_dll>
+	<use_storm_analysis type="boolean">True</use_storm_analysis>
 	<x_width type="int">700</x_width>
 	<y_width type="int">100</y_width>
-	<units_to_microns type="float">0.135</units_to_microns>
+	<units_to_microns type="float">0.211</units_to_microns>
       </configuration>
     </uc480_camera>
     

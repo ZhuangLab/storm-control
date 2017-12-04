@@ -110,13 +110,29 @@ class UC480Camera(hardwareModule.HardwareModule):
 
         configuration = module_params.get("configuration")
         uc480Camera.loadDLL(configuration.get("uc480_dll"))
-        self.camera = uc480Camera.CameraQPD(background = configuration.get("background"),
-                                            camera_id = configuration.get("camera_id"),
-                                            ini_file = configuration.get("ini_file"),
-                                            offset_file = configuration.get("offset_file"),
-                                            sigma = configuration.get("sigma"),
-                                            x_width = configuration.get("x_width"),
-                                            y_width = configuration.get("y_width"))
+
+        # Use the storm-analysis project for fitting. This is hopefully both faster
+        # and more accurate than the Numpy/Scipy fitter.
+        #
+        if (configuration.get("use_storm_analysis", False)):
+            print("> using storm-analysis for fitting.")
+            self.camera = uc480Camera.CameraQPDSAFit(background = configuration.get("background"),
+                                                     camera_id = configuration.get("camera_id"),
+                                                     ini_file = configuration.get("ini_file"),
+                                                     offset_file = configuration.get("offset_file"),
+                                                     sigma = configuration.get("sigma"),
+                                                     x_width = configuration.get("x_width"),
+                                                     y_width = configuration.get("y_width"))
+        # Use the Numpy/Scipy fitter.
+        else:
+            print("> using numpy/scipy for fitting.")
+            self.camera = uc480Camera.CameraQPDScipyFit(background = configuration.get("background"),
+                                                        camera_id = configuration.get("camera_id"),
+                                                        ini_file = configuration.get("ini_file"),
+                                                        offset_file = configuration.get("offset_file"),
+                                                        sigma = configuration.get("sigma"),
+                                                        x_width = configuration.get("x_width"),
+                                                        y_width = configuration.get("y_width"))
         self.camera_functionality = UC480QPDCameraFunctionality(camera = self.camera,
                                                                 parameters = configuration.get("parameters"),
                                                                 reps = configuration.get("reps", 4),
