@@ -32,6 +32,7 @@ class Calibrator(QtCore.QObject):
         self.accumulated = 0
         self.camera_fn = camera_fn
         self.filename = None
+        self.frame_mean = None
         self.id_number = id_number
         self.mean = None
         self.n_frames = 0
@@ -59,6 +60,7 @@ class Calibrator(QtCore.QObject):
     def handleNewFrame(self, frame):
         frame_32 = frame.getData().astype(numpy.int32)
         frame_32 = numpy.reshape(frame_32, self.mean.shape)
+        self.frame_mean[self.accumulated] = numpy.mean(frame_32)
         self.mean += frame_32
         self.var += frame_32 * frame_32
 
@@ -67,7 +69,7 @@ class Calibrator(QtCore.QObject):
 
         if (self.accumulated == self.n_frames):
             self.camera_fn.newFrame.disconnect(self.handleNewFrame)
-            numpy.save(self.filename, [numpy.array([self.n_frames]), self.mean, self.var])
+            numpy.save(self.filename, [self.frame_mean, self.mean, self.var])
             self.running = False
             self.done.emit(self.id_number)
 
@@ -78,9 +80,10 @@ class Calibrator(QtCore.QObject):
         self.accumulated = 0
         cam_x = self.camera_fn.getParameter("x_pixels")
         cam_y = self.camera_fn.getParameter("y_pixels")
+        self.frame_mean = numpy.zeros(self.n_frames)
         self.mean = numpy.zeros((cam_x, cam_y), dtype = numpy.int64)
         self.var = numpy.zeros((cam_x, cam_y), dtype = numpy.int64)
-        
+
         self.camera_fn.newFrame.connect(self.handleNewFrame)
 
         self.running = True
