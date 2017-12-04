@@ -1,0 +1,520 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<config>
+
+  <!-- The starting directory. -->
+  <directory type="directory">C:/Data/</directory>
+  
+  <!-- The setup name -->
+  <setup_name type="string">hbaic-pgrey</setup_name>
+
+  <!-- The ui type, this is 'classic' or 'detached' -->
+  <ui_type type="string">detached</ui_type>
+
+  <!--
+      This has two effects:
+      
+      (1) If this is True any exception will immediately crash HAL, which can
+      be useful for debugging. If it is False then some exceptions will be
+      handled by the modules.
+      
+      (2) If it is False we also don't check whether messages are valid.
+  -->
+  <strict type="boolean">True</strict>
+  
+  <!--
+      Define the modules to use for this setup.
+  -->
+  <modules>
+
+    <!--
+	This is the main window, you must have this.
+    -->
+    <hal>
+      <class_name type="string">HalController</class_name>
+      <module_name type="string">storm_control.hal4000.hal4000</module_name>
+    </hal>
+
+    <!--
+	You also need all of these.
+    -->
+
+    <!-- Camera display. -->
+    <display>
+      <class_name type="string">Display</class_name>
+      <module_name type="string">storm_control.hal4000.display.display</module_name>
+      <parameters>
+
+	<!-- The default color table. Other options are in hal4000/colorTables/all_tables -->
+	<colortable type="string">ramp.ctbl</colortable>
+	
+      </parameters>
+    </display>
+    
+    <!-- Feeds. -->
+    <feeds>
+      <class_name type="string">Feeds</class_name>
+      <module_name type="string">storm_control.hal4000.feeds.feeds</module_name>
+    </feeds>
+
+    <!-- Filming and starting/stopping the camera. -->
+    <film>
+      <class_name type="string">Film</class_name>
+      <module_name type="string">storm_control.hal4000.film.film</module_name>
+
+      <!-- Film parameters specific to this setup go here. -->
+      <parameters>
+	<extension desc="Movie file name extension" type="string" values=",Red,Green,Blue"></extension>
+      </parameters>
+    </film>
+
+    <!-- Which objective is being used, etc. -->
+    <mosaic>
+      <class_name type="string">Mosaic</class_name>
+      <module_name type="string">storm_control.hal4000.mosaic.mosaic</module_name>
+
+      <!-- List objectives available on this setup here. -->
+      <parameters>
+	<flip_horizontal desc="Flip image horizontal (mosaic)" type="boolean">False</flip_horizontal>
+	<flip_vertical desc="Flip image vertical (mosaic)" type="boolean">False</flip_vertical>
+	<transpose desc="Transpose image (mosaic)" type="boolean">False</transpose>
+
+	<objective desc="Current objective" type="string" values="obj1,obj2,obj3">obj1</objective>
+	<obj1 desc="Objective 1" type="custom">60x,0.120,0.0,0.0</obj1>
+	<obj2 desc="Objective 2" type="custom">10x,1.60,0.0,0.0</obj2>
+	<obj3 desc="Objective 3" type="custom">4x,4.0,0.0,0.0</obj3>	
+      </parameters>
+    </mosaic>
+
+    <!-- Loading, changing and editting settings/parameters -->
+    <settings>
+      <class_name type="string">Settings</class_name>
+      <module_name type="string">storm_control.hal4000.settings.settings</module_name>
+    </settings>
+
+    <!-- Set the time base for films. -->
+    <timing>
+      <class_name type="string">Timing</class_name>
+      <module_name type="string">storm_control.hal4000.timing.timing</module_name>
+      <parameters>
+	<time_base type="string">camera1</time_base>
+      </parameters>
+    </timing>
+  
+    <!--
+	Everything else is optional, but you probably want at least one camera.
+    -->
+
+    <!-- Camera control. -->
+    <!--
+	Note that the cameras must have the names "camera1", "camera2", etc..
+	
+	Cameras are either "master" (they provide their own hardware timing)
+	or "slave" they are timed by another camera. Each time the cameras
+	are started the slave cameras are started first, then the master cameras.
+    -->
+
+    <camera1>
+      <class_name type="string">Camera</class_name>
+      <module_name type="string">storm_control.hal4000.camera.camera</module_name>
+      <camera>
+	<master type="boolean">True</master>
+	<class_name type="string">PointGreyCameraControl</class_name>
+	<module_name type="string">storm_control.hal4000.camera.pointgreyCameraControl</module_name>
+	<parameters>
+	  
+	  <!-- The location of the Point Grey DLL -->
+	  <pgrey_dll type="string">C:/Program Files/Point Grey Research/Spinnaker/bin64/vs2013/SpinnakerC_v120.dll</pgrey_dll>
+
+	  <!-- Which camera to use -->
+	  <camera_id type="int">0</camera_id>
+
+	  <!-- These are the display defaults, not the camera range. -->
+	  <default_max type="int">200</default_max> 
+	  <default_min type="int">30</default_min>
+	  <flip_horizontal type="boolean">True</flip_horizontal>
+	  <flip_vertical type="boolean">False</flip_vertical>
+	  <transpose type="boolean">True</transpose>
+
+	  <!-- These can be changed / editted. -->
+
+	  <!-- This is the extension to use (if any) when saving data from this camera. -->
+	  <extension type="string">pgrey</extension>
+	  
+	  <!-- Whether or not data from this camera is saved during filming. -->
+	  <saved type="boolean">True</saved>
+
+	</parameters>
+      </camera>
+    </camera1>
+
+    <camera2>
+      <class_name type="string">Camera</class_name>
+      <module_name type="string">storm_control.hal4000.camera.camera</module_name>
+      <camera>
+	<master type="boolean">True</master>
+	<class_name type="string">AndorCameraControl</class_name>
+	<module_name type="string">storm_control.hal4000.camera.andorCameraControl</module_name>
+	<parameters>
+	  
+	  <!-- The location of the Andor DLL. -->
+	  <andor_path type="string">C:/Program Files/Andor Driver Pack 2/</andor_path>
+
+	  <!-- The name of the Andor DLL. -->
+	  <andor_dll type="string">atmcd64d.dll</andor_dll>
+
+	  <!-- Which camera to use -->
+	  <camera_id type="int">0</camera_id>
+
+	  <!-- These are the display defaults, not the camera range. -->
+	  <default_max type="int">2000</default_max> 
+	  <default_min type="int">100</default_min>
+	  <flip_horizontal type="boolean">False</flip_horizontal>
+	  <flip_vertical type="boolean">False</flip_vertical>
+	  <transpose type="boolean">False</transpose>
+
+	  <!-- These can be changed / editted. -->
+
+	  <!-- This is the extension to use (if any) when saving data from this camera. -->
+	  <extension type="string"></extension>
+	  
+	  <!-- Whether or not data from this camera is saved during filming. -->
+	  <saved type="boolean">True</saved>
+
+	</parameters>
+      </camera>
+    </camera2>
+    
+    <!-- Crystal Technologies AOTF (Telnet) -->
+    <ctech_aotf>
+      <module_name type="string">storm_control.sc_hardware.crystalTechnologies.aotfModule</module_name>
+      <class_name type="string">AOTFTelnet</class_name>
+      <configuration>
+	<use_fsk type="boolean">True</use_fsk>
+	<fsk_mode type="int">1</fsk_mode>
+	<ip_address type="string">192.168.10.4</ip_address>
+
+	<ch750>
+	  <maximum type="int">8000</maximum>
+	  <channel type="int">0</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">75.71</on_frequency>
+	</ch750>
+
+	<ch647>
+	  <maximum type="int">7400</maximum>
+	  <channel type="int">1</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">90.16</on_frequency>
+	</ch647>
+
+	<ch561>
+	  <maximum type="int">6400</maximum>
+	  <channel type="int">2</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">108.15</on_frequency>
+	</ch561>
+
+	<ch488>
+	  <maximum type="int">5700</maximum>
+	  <channel type="int">3</channel>
+	  <off_frequency type="float">20.0</off_frequency>
+	  <on_frequency type="float">130.24</on_frequency>
+	</ch488>
+
+      </configuration>
+    </ctech_aotf>
+
+    <!-- DAQ control -->
+    <daq>
+      <module_name type="string">storm_control.sc_hardware.nationalInstruments.nidaqModule</module_name>
+      <class_name type="string">NidaqModule</class_name>
+
+      <configuration>
+
+	<!-- This is the default timing source to use while filming. "Oversampled"
+	     films will use the counter for timing. The counter is driven by the
+	     camera fire pin. Other films will just use the camera fire pin directly.
+	-->
+	<timing>
+	  <camera_fire_pin type="string">/Dev2/PFI5</camera_fire_pin>
+	  <counter type="string">/Dev2/ctr0</counter>
+	  <counter_out type="string">/Dev2/PFI12</counter_out>
+	</timing>
+
+	<!-- These are the things that we provide DAQ functionality for.
+	     Other modules will request them with a 'get functionality'
+	     message and "name" = "daq.xxx.yyy". -->
+
+	<galvo>
+	  <wv_task>
+	    <clock>/Dev1/ctr0out</clock>
+	    <lines>/Dev1/ao0,/Dev1/ao1</lines>
+	  </wv_task>
+	</galvo>
+
+	<ilm750>
+	  <do_task>
+	    <source type="string">/Dev2/port0/line0</source>
+	  </do_task>
+	</ilm750>
+
+	<ilm647>
+	  <do_task>
+	    <source type="string">/Dev2/port0/line1</source>
+	  </do_task>
+	</ilm647>
+
+	<ilm561>
+	  <do_task>
+	    <source type="string">/Dev2/port0/line2</source>
+	  </do_task>
+	</ilm561>
+
+	<ilm488>
+	  <do_task>
+	    <source type="string">/Dev2/port0/line3</source>
+	  </do_task>
+	</ilm488>
+
+	<ilm405>
+	  <do_task>
+	    <source type="string">/Dev2/port0/line4</source>
+	  </do_task>
+	</ilm405>
+
+	<ir_laser>
+	  <ct_task>
+	    <source type="string">/Dev2/ctr2</source>
+	    <frequency type="float">50000</frequency>
+	  </ct_task>
+	</ir_laser>
+	
+	<mcl>
+	  <ao_task>
+	    <source type="string">/Dev2/ao0</source>
+	  </ao_task>
+	</mcl>
+      </configuration>
+    </daq>
+
+    <!-- Filter wheel control GUI. -->
+    <filter_wheel>
+      <class_name type="string">FilterWheel</class_name>
+      <module_name type="string">storm_control.hal4000.miscControl.filterWheel</module_name>
+      <configuration>
+	<filter_wheel_fn type="string">prior_controller.filter_wheel1</filter_wheel_fn>
+	<filters type="string">Penta,405,488,560,647,750,None</filters>
+      </configuration>
+    </filter_wheel>
+
+    <!-- Focus lock control GUI. -->
+    <focuslock>
+      <class_name type="string">FocusLock</class_name>
+      <module_name type="string">storm_control.hal4000.focusLock.focusLock</module_name>
+      <configuration>
+	<ir_laser type="string">ldc_irlaser</ir_laser>
+	<ir_power type="int">10</ir_power>
+	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,OptimalLockMode,CalibrationLockMode</lock_modes>
+	<qpd type="string">uc480_camera</qpd>
+	<z_stage type="string">mcl_zstage</z_stage>
+	<parameters>
+	  <find_sum>
+	    <step_size type="float">1.0</step_size>
+	  </find_sum>
+	  <locked>
+	    <buffer_length type="int">5</buffer_length>
+	    <offset_threshold type="float">20.0</offset_threshold>
+	  </locked>
+	  <jump_size type="float">0.1</jump_size>
+	</parameters>
+      </configuration>
+    </focuslock>
+
+    <!-- Galvo control GUI. -->
+    <galvo>
+      <class_name type="string">Galvo</class_name>
+      <module_name type="string">storm_control.hal4000.miscControl.galvoControl</module_name>
+      <configuration>
+	<x_amp type="float">1.0</x_amp>
+	<x_freq type="int">700</x_freq>
+	<x_offset type="float">0.0</x_offset>
+	<y_amp type="float">1.0</y_amp>
+	<y_freq type="int">100</y_freq>
+	<y_offset type="float">0.0</y_offset>
+	<scan_fn type="string">daq.galvo.wv_task</scan_fn>
+	<sampling_rate type="float">2500.0</sampling_rate>
+      </configuration>
+    </galvo>
+    
+    <!-- Illumination (lasers, shutters, etc) control GUI. -->
+    <illumination>
+      <class_name type="string">Illumination</class_name>
+      <module_name type="string">storm_control.hal4000.illumination.illumination</module_name>
+      <configuration>
+
+	<!-- Note: The name of the channel is the gui_name.
+	     XML tags cannot start with numbers. -->
+	<ch1>
+	  <gui_name type="string">750</gui_name>
+	  <color type="string">200,0,0</color>
+	  <amplitude_modulation>
+	    <hw_fn_name>ctech_aotf.ch750</hw_fn_name>
+	  </amplitude_modulation>
+	  <digital_modulation>
+	    <hw_fn_name type="string">daq.ilm750.do_task</hw_fn_name>
+	  </digital_modulation>
+	</ch1>
+	<ch2>
+	  <gui_name type="string">647</gui_name>
+	  <color type="string">255,0,0</color>
+	  <amplitude_modulation>
+	    <hw_fn_name>ctech_aotf.ch647</hw_fn_name>
+	  </amplitude_modulation>
+	  <digital_modulation>
+	    <hw_fn_name type="string">daq.ilm647.do_task</hw_fn_name>
+	  </digital_modulation>
+	</ch2>
+	<ch3>
+	  <gui_name type="string">561</gui_name>
+	  <color type="string">255,255,0</color>
+	  <amplitude_modulation>
+	    <hw_fn_name>ctech_aotf.ch561</hw_fn_name>
+	  </amplitude_modulation>
+	  <digital_modulation>
+	    <hw_fn_name type="string">daq.ilm561.do_task</hw_fn_name>
+	  </digital_modulation>
+	</ch3>
+	<ch4>
+	  <gui_name type="string">488</gui_name>
+	  <color type="string">0,0,255</color>
+	  <amplitude_modulation>
+	    <hw_fn_name>ctech_aotf.ch488</hw_fn_name>
+	  </amplitude_modulation>
+	  <digital_modulation>
+	    <hw_fn_name type="string">daq.ilm488.do_task</hw_fn_name>
+	  </digital_modulation>
+	</ch4>
+	<ch5>
+	  <gui_name type="string">405</gui_name>
+	  <color type="string">255,0,255</color>
+	  
+	  <amplitude_modulation>
+	    <hw_fn_name>obis405</hw_fn_name>
+	  </amplitude_modulation>
+
+	  <digital_modulation>
+	    <hw_fn_name type="string">daq.ilm405.do_task</hw_fn_name>
+	  </digital_modulation>
+	</ch5>
+      </configuration>
+    </illumination>
+
+    <!-- Thorlabs LDC control -->
+    <ldc_irlaser>
+      <module_name type="string">storm_control.sc_hardware.thorlabs.LDCModule</module_name>
+      <class_name type="string">LDCIRLaserModule</class_name>
+
+      <configuration>
+	<ct_fn_name type="string">daq.ir_laser.ct_task</ct_fn_name>
+      </configuration>
+    </ldc_irlaser>
+
+    <!-- Ludl stage -->
+    <ludl_stage>
+      <module_name type="string">storm_control.sc_hardware.ludl.ludlModule</module_name>
+      <class_name type="string">LudlStageTCP</class_name>
+      
+      <configuration>
+	<ip_address type="string">192.168.100.1</ip_address>
+      </configuration>
+    </ludl_stage>
+    
+    <!-- Mad City Labs Z piezo -->
+    <mcl_zstage>
+      <module_name type="string">storm_control.sc_hardware.madCityLabs.mclVoltageZModule</module_name>
+      <class_name type="string">MCLVoltageZ</class_name>
+
+      <configuration>
+	<parameters>
+	  <center type="float">50.0</center>
+	  <has_center_bar type="boolean">True</has_center_bar>
+	  <maximum type="float">100.0</maximum>
+	  <minimum type="float">0.0</minimum>
+	  <warning_high type="float">90.0</warning_high>
+	  <warning_low type="float">10.0</warning_low>
+	</parameters>
+	<ao_fn_name type="string">daq.mcl.ao_task</ao_fn_name>
+	<microns_to_volts type="float">0.1</microns_to_volts>
+      </configuration>
+    </mcl_zstage>
+
+    <!-- Coherent OBIS 405 laser control. -->
+    <obis405>
+      <module_name type="string">storm_control.sc_hardware.coherent.coherentModule</module_name>
+      <class_name type="string">CoherentObis</class_name>
+
+      <configuration>
+	<port type="string">COM19</port>
+	<used_during_filming type="boolean">True</used_during_filming>
+      </configuration>
+    </obis405>
+
+    <!-- Prior filter wheel controller. -->
+    <prior_controller>
+      <module_name type="string">storm_control.sc_hardware.prior.priorModule</module_name>
+      <class_name type="string">PriorController</class_name>
+
+      <configuration>
+	<baudrate type="int">115200</baudrate>
+	<port type="string">COM7</port>
+	<velocity type="float">2.0</velocity>
+	<filter_wheel1>
+	  <maximum type="int">10</maximum>
+	</filter_wheel1>
+      </configuration>
+    </prior_controller>    
+
+    <!-- sCMOS calibration module -->
+    <scmos_cal>
+      <module_name type="string">storm_control.hal4000.miscControl.scmosCalibration</module_name>
+      <class_name type="string">SCMOSCalibration</class_name>
+    </scmos_cal>
+        
+    <!-- Stage control GUI -->
+    <stage>
+      <class_name type="string">Stage</class_name>
+      <module_name type="string">storm_control.hal4000.stage.stage</module_name>
+      <configuration>
+	<stage_functionality type="string">ludl_stage</stage_functionality>
+      </configuration>
+    </stage>
+
+    <!-- Thorlabs UC480 camera for the focus lock -->
+    <uc480_camera>
+      <class_name type="string">UC480Camera</class_name>
+      <module_name type="string">storm_control.sc_hardware.thorlabs.uc480CameraModule</module_name>
+      <configuration>
+	<parameters>
+	  <offset_has_center_bar type="boolean">True</offset_has_center_bar>
+	  <offset_maximum type="float">1.0</offset_maximum>
+	  <offset_minimum type="float">-1.0</offset_minimum>
+	  <offset_warning_high type="float">0.8</offset_warning_high>
+	  <offset_warning_low type="float">-0.8</offset_warning_low>	  
+	  <sum_maximum type="float">200000.0</sum_maximum>
+	  <sum_minimum type="float">50.0</sum_minimum>
+	  <sum_warning_low type="float">10000.0</sum_warning_low>
+	</parameters>
+	<background type="int">100000</background>
+	<camera_id type="int">1</camera_id>
+	<ini_file type="string">uc480_settings.ini</ini_file>
+	<offset_file type="string">C:/Users/Hazen/Code/storm-control-development/storm_control/hal4000/cam_offsets_hbaic1_1.txt</offset_file>
+	<sigma type="float">2.0</sigma>
+	<uc480_dll type="string">c:/windows/system32/uc480_64.dll</uc480_dll>
+	<x_width type="int">700</x_width>
+	<y_width type="int">100</y_width>
+	<units_to_microns type="float">0.135</units_to_microns>
+      </configuration>
+    </uc480_camera>
+    
+  </modules>  
+</config>
