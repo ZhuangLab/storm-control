@@ -267,7 +267,8 @@ class CounterOutput(NIDAQTask):
         with getLock():
             self.DisableStartTrig()
                 
-    def setTrigger(self, trigger_source = None, retriggerable = True):
+    def setTrigger(self, trigger_source = None, retriggerable = True,
+				rising_edge = True):
         if retriggerable:
             with getLock():
                 self.SetStartTrigRetriggerable(1)
@@ -276,8 +277,12 @@ class CounterOutput(NIDAQTask):
                 self.SetStartTrigRetriggerable(0)
         
         with getLock():
-            self.CfgDigEdgeStartTrig(trigger_source,
+            if rising_edge:
+                self.CfgDigEdgeStartTrig(trigger_source,
                                      PyDAQmx.DAQmx_Val_Rising)
+            else:
+                self.CfgDigEdgeStartTrig(trigger_source,
+                                     PyDAQmx.DAQmx_Val_Falling)
 
     def trigger(self):
         with getLock():
