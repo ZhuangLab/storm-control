@@ -20,7 +20,7 @@ import storm_control.sc_library.halExceptions as halExceptions
 # Hamamatsu constants.
 DCAMCAP_EVENT_FRAMEREADY = int("0x0002", 0)
 
-# DCAM API.
+# DCAM4 API.
 DCAMERR_ERROR = 0
 DCAMERR_NOERROR = 1
 
@@ -114,6 +114,38 @@ class DCAMBUF_ATTACH(ctypes.Structure):
             ("iKind", ctypes.c_int32),
             ("buffer", ctypes.POINTER(ctypes.c_void_p)),
             ("buffercount", ctypes.c_int32)]
+
+## DCAMBUF_FRAME
+#
+# The dcam buffer frame structure
+#
+class DCAMBUF_FRAME(ctypes.Structure):
+    _fields_ = [("size", ctypes.c_int32), 
+            ("iKind", ctypes.c_int32),
+            ("option", ctypes.c_int32),
+            ("iFrame", ctypes.c_int32),
+            ("buf", ctypes.c_void_p),
+            ("rowbytes", ctypes.c_int32),
+            ("type", ctypes.c_int32),
+            ("width", ctypes.c_int32),
+            ("height", ctypes.c_int32),
+            ("left", ctypes.c_int32),
+            ("top", ctypes.c_int32),
+            ("timestamp", ctypes.c_int32),
+            ("framestamp", ctypes.c_int32),
+            ("camerastamp", ctypes.c_int32)]
+
+
+## DCAMDEV_STRING
+#
+# The dcam device string structure
+#
+class DCAMDEV_STRING(ctypes.Structure):
+    _fields_ = [("size", ctypes.c_int32), 
+            ("iString", ctypes.c_int32),
+            ("text", ctypes.c_char_p),
+            ("textbytes", ctypes.c_int32)]
+
 
 ## DCAMPROP_ATTR
 #
@@ -248,7 +280,7 @@ class HamamatsuCamera(object):
         paramopen = DCAMDEV_OPEN(0, self.camera_id, None)
         paramopen.size = ctypes.sizeof(paramopen)
         self.checkStatus(dcam.dcamdev_open(ctypes.byref(paramopen)),
-                         "dcam_open")
+                         "dcamdev_open")
         self.camera_handle = paramopen.hdcam
 
         # Set up wait handle
@@ -317,19 +349,19 @@ class HamamatsuCamera(object):
                                           ctypes.byref(prop_id),
                                           ctypes.c_int32(DCAMPROP_OPTION_NEAREST))
         if (ret != 0) and (ret != DCAMERR_NOERROR):
-            self.checkStatus(ret, "dcam_getnextpropertyid")
+            self.checkStatus(ret, "dcamprop_getnextid")
 
         # Get the first property.
         ret = dcam.dcamprop_getnextid(self.camera_handle,
                                           ctypes.byref(prop_id),
                                           ctypes.c_int32(DCAMPROP_OPTION_NEXT))
         if (ret != 0) and (ret != DCAMERR_NOERROR):
-            self.checkStatus(ret, "dcam_getnextpropertyid")
+            self.checkStatus(ret, "dcamprop_getnextid")
         self.checkStatus(dcam.dcamprop_getname(self.camera_handle,
                                                    prop_id,
                                                    c_buf,
                                                    ctypes.c_int32(c_buf_len)),
-                         "dcam_getpropertyname")
+                         "dcamprop_getname")
 
         # Get the rest of the properties.
         last = -1
@@ -340,12 +372,12 @@ class HamamatsuCamera(object):
                                               ctypes.byref(prop_id),
                                               ctypes.c_int32(DCAMPROP_OPTION_NEXT))
             if (ret != 0) and (ret != DCAMERR_NOERROR):
-                self.checkStatus(ret, "dcam_getnextpropertyid")
+                self.checkStatus(ret, "dcamprop_getnextid")
             self.checkStatus(dcam.dcamprop_getname(self.camera_handle,
                                                        prop_id,
                                                        c_buf,
                                                        ctypes.c_int32(c_buf_len)),
-                             "dcam_getpropertyname")
+                             "dcamprop_getname")
         return properties
 
     def getFrames(self):
@@ -358,25 +390,18 @@ class HamamatsuCamera(object):
         frames = []
         for n in self.newFrames():
 
+            paramlock = DCAMBUF_FRAME(
+                    0, 0, 0, n, None, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+            paramlock.size = ctypes.sizeof(paramlock)	
+
             # Lock the frame in the camera buffer & get address.
-            data_address = ctypes.c_void_p(0)
-            row_bytes = ctypes.c_int32(0)
-            self.checkStatus(dcam.dcam_lockdata(self.camera_handle,
-                                                ctypes.byref(data_address),
-                                                ctypes.byref(row_bytes),
-                                                ctypes.c_int32(n)),
-                             "dcam_lockdata")
+            self.checkStatus(dcam.dcambuf_lockframe(self.camera_handle,
+                                                ctypes.byref(paramlock)),
+                             "dcambuf_lockframe")
 
             # Create storage for the frame & copy into this storage.
             hc_data = HCamData(self.frame_bytes)
-            hc_data.copyData(data_address)
-
-            # Unlock the frame.
-            #
-            # According to the documentation, this would be done automatically
-            # on the next call to lockdata, but we do this anyway.
-            self.checkStatus(dcam.dcam_unlockdata(self.camera_handle),
-                             "dcam_unlockdata")
+            hc_data.copyData(paramlock.buf)
 
             frames.append(hc_data)
 
@@ -387,14 +412,21 @@ class HamamatsuCamera(object):
         """
         Returns the model of the camera
         """
+
         c_buf_len = 20
-        c_buf = ctypes.create_string_buffer(c_buf_len)
-        self.checkStatus(dcam.dcam_getmodelinfo(ctypes.c_int32(camera_id),
-                                                ctypes.c_int32(DCAM_IDSTR_MODEL),
-                                                c_buf,
-                                                ctypes.c_int(c_buf_len)),
-                         "dcam_getmodelinfo")
-        return c_buf.value.decode(self.encoding)
+        string_value = ctypes.create_string_buffer(c_buf_len)
+        paramstring = DCAMDEV_STRING(
+                        0, 
+                        DCAM_IDSTR_MODEL, 
+                        ctypes.cast(string_value, ctypes.c_char_p),
+                        c_buf_len)
+        paramstring.size = ctypes.sizeof(paramstring)
+
+        self.checkStatus(dcam.dcamdev_getstring(ctypes.c_int32(camera_id),
+                                                ctypes.byref(paramstring)),
+                         "dcamdev_getstring")
+
+        return string_value.value.decode(self.encoding)
 
     def getProperties(self):
         """
@@ -412,9 +444,9 @@ class HamamatsuCamera(object):
         p_attr = DCAMPROP_ATTR()
         p_attr.cbSize = ctypes.sizeof(p_attr)
         p_attr.iProp = self.properties[property_name]
-        ret = self.checkStatus(dcam.dcam_getpropertyattr(self.camera_handle,
+        ret = self.checkStatus(dcam.dcamprop_getattr(self.camera_handle,
                                                          ctypes.byref(p_attr)),
-                               "dcam_getpropertyattr")
+                               "dcamprop_getattr")
         if (ret == 0):
             print("property", property_id, "is not supported")
             return False
@@ -482,7 +514,7 @@ class HamamatsuCamera(object):
                 # Get text of current value.
                 self.checkStatus(dcam.dcamprop_getvaluetext(self.camera_handle, 
                                                 ctypes.byref(prop_text)),
-                                 "dcam_getpropertyvaluetext")
+                                 "dcamprop_getvaluetext")
                 text_options[prop_text.text.decode(self.encoding)] = int(v.value)
 
                 # Get next value.
@@ -516,7 +548,7 @@ class HamamatsuCamera(object):
         self.checkStatus(dcam.dcamprop_getvalue(self.camera_handle,
                                                     ctypes.c_int32(prop_id),
                                                     ctypes.byref(c_value)),
-                         "dcam_getpropertyvalue")
+                         "dcamprop_getvalue")
 
         # Convert type based on attribute type.
         temp = prop_attr.attribute & DCAMPROP_TYPE_MASK
@@ -566,7 +598,7 @@ class HamamatsuCamera(object):
         paramtransfer.size = ctypes.sizeof(paramtransfer)
         self.checkStatus(dcam.dcamcap_transferinfo(self.camera_handle,
                                                ctypes.byref(paramtransfer)),
-                         "dcam_gettransferinfo")
+                         "dcamcap_transferinfo")
         cur_buffer_index = paramtransfer.nNewestFrameIndex
         cur_frame_number = paramtransfer.nFrameCount
 
@@ -633,7 +665,7 @@ class HamamatsuCamera(object):
                                            ctypes.c_int32(prop_id),
                                            ctypes.byref(p_value),
                                            ctypes.c_int32(DCAM_DEFAULT_ARG)),
-                         "dcam_setgetpropertyvalue")
+                         "dcamprop_setgetvalue")
         return p_value.value
 
     def setSubArrayMode(self):
@@ -687,7 +719,7 @@ class HamamatsuCamera(object):
         self.number_image_buffers = n_buffers
         self.checkStatus(dcam.dcambuf_alloc(self.camera_handle,
                                   ctypes.c_int32(self.number_image_buffers)),
-                         "dcam_allocframe")
+                         "dcambuf_alloc")
 
         # Start acquisition.
         if self.acquisition_mode is "run_till_abort":
@@ -713,8 +745,9 @@ class HamamatsuCamera(object):
 
         # Free image buffers.
         self.number_image_buffers = 0
-        self.checkStatus(dcam.dcam_freeframe(self.camera_handle),
-                         "dcam_freeframe")
+        self.checkStatus(dcam.dcambuf_release(self.camera_handle,
+                                                DCAMBUF_ATTACHKIND_FRAME),
+                         "dcambuf_release")
 
     def shutdown(self):
         """
@@ -722,8 +755,8 @@ class HamamatsuCamera(object):
         """
         self.checkStatus(dcam.dcamwait_close(self.wait_handle),
                          "dcamwait_close")
-        self.checkStatus(dcam.dcam_close(self.camera_handle),
-                         "dcam_close")
+        self.checkStatus(dcam.dcamdev_close(self.camera_handle),
+                         "dcamdev_close")
 
     def sortedPropertyTextOptions(self, property_name):
         """
@@ -834,7 +867,7 @@ class HamamatsuCameraMR(HamamatsuCamera):
             paramattach.buffercount = self.number_frames
             self.checkStatus(dcam.dcambuf_attach(self.camera_handle,
                                     paramattach),
-                             "dcam_attachbuffer")
+                             "dcambuf_attach")
             self.checkStatus(dcam.dcamcap_start(self.camera_handle,
                                     DCAMCAP_START_SNAP),
                              "dcamcap_start")
@@ -852,8 +885,9 @@ class HamamatsuCameraMR(HamamatsuCamera):
 
         # Release image buffers.
         if (self.hcam_ptr):
-            self.checkStatus(dcam.dcam_releasebuffer(self.camera_handle),
-                             "dcam_releasebuffer")
+            self.checkStatus(dcam.dcambuf_release(self.camera_handle,
+                                                DCAMBUF_ATTACHKIND_FRAME),
+                         "dcambuf_release")
 
         print("max camera backlog was:", self.max_backlog)
         self.max_backlog = 0
