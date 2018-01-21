@@ -4,6 +4,8 @@ Development has shifted to Python3 and PyQt5. This is currently available in the
 ## storm-control ##
 This is a repository of code developed in the [Zhuang Lab](http://zhuang.harvard.edu) for the acquisition of STORM movies.
 
+[Discussion Group](https://groups.google.com/groups/storm-analysis)
+
 ## Installation ##
 You will need Python and PyQt as well as a number of other libraries. Please see the Install.txt file in the hal4000 folder.
 
