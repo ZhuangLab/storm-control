@@ -17,5 +17,4 @@ steve - This folder contains software (steve.py) that is used to take and assemb
 
 test - Unit tests for this project.
 
-zee_calibrator - This folder contains software (main.py) that is used to generate calibration curves for astigmatism based 3D STORM imaging. Calibration data acquired using Hal needs to be analyzed by STORM image analysis software like Insight3 (available by request from the Zhuang Lab) or 3D-DAOSTORM before it can be processed using zee-calibrator.
-
+zee_calibrator - (Deprecated) This folder contains software (main.py) that is used to generate calibration curves for astigmatism based 3D STORM imaging. Calibration data acquired using Hal needs to be analyzed by STORM image analysis software like Insight3 (available by request from the Zhuang Lab) or 3D-DAOSTORM before it can be processed using zee-calibrator.
