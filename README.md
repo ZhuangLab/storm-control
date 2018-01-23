@@ -6,7 +6,7 @@ This is a repository of code developed in the [Zhuang Lab](http://zhuang.harvard
 Warning! There have been many changes and this software is now only compatible with Python3 / PyQt5! If you want the end of the line of the (deprecated) Python2 / PyQt4 software then use the python2_pyqt4 branch.
 
 ## Installation ##
-You will need Python and PyQt as well as a number of other libraries. Please see the Install.txt file in the hal4000 folder.
+You will need Python3 and PyQt5 as well as a number of other libraries. Please see the Install.txt file in the hal4000 folder.
 
 ## General notes ##
 1. This software is written primarily in Python with a few C helper libraries.
