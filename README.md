@@ -1,6 +1,8 @@
 ## storm-control ##
 This is a repository of code developed in the [Zhuang Lab](http://zhuang.harvard.edu) for the acquisition of STORM movies.
 
+[Discussion Group](https://groups.google.com/d/forum/storm-analysis)
+
 Warning! There have been many changes and this software is now only compatible with Python3 / PyQt5! If you want the end of the line of the (deprecated) Python2 / PyQt4 software then use the python2_pyqt4 branch.
 
 ## Installation ##
