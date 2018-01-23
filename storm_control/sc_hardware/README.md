@@ -9,6 +9,7 @@
 | CMOS Camera | DLL | Andor | Works, in use |
 | CMOS Camera | DLL | Hamamatsu | Works, in use |
 | CMOS Camera | DLL | FLIR Imaging | Works, in use |
+| CMOS Camera | DLL | Photometrics | In development |
 | DAQ | DLL | National Instruments | Works, in use |
 | DAQ (U3) | DLL | Labjack | Works, in use |
 | EMCCD Camera | DLL | Andor | Works, in use |
@@ -24,7 +25,7 @@
 | Laser (Obis) | RS-232 | Coherent | Worked, not used |
 | Microscope (IX2) | RS-232 | Olympus | Works, in use |
 | Microscope (IX3) | MM | Olympus | Worked, not used |
-| Microscope (TiU) | MM | Nikon | Works, in use |
+| Microscope (TiU) | MM | Nikon | Worked, not used |
 | Motorized Stage (SMC100) | RS-232 | Newport | Works, in use |
 | Motorized Stage | COM | Thorlabs | Doesn't work |
 | Piezo | COM | Thorlabs | Doesn't work |
