@@ -8,6 +8,7 @@
 | AOTF | RS-232 | Gooch and Housego | Worked, not used |
 | CMOS Camera | DLL | Andor | Works, in use |
 | CMOS Camera | DLL | Hamamatsu | Works, in use |
+| CMOS Camera | DLL | FLIR Imaging | Works, in use |
 | DAQ | DLL | National Instruments | Works, in use |
 | DAQ (U3) | DLL | Labjack | Works, in use |
 | EMCCD Camera | DLL | Andor | Works, in use |
