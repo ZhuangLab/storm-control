@@ -21,6 +21,3 @@ Option 1: This runs HAL in emulation mode.
 Option 2: This will run an actual setup.
 
 > python hal-4000.py xml/my_setup_config.xml
-
-See also the .bat files that we use to start the software on our
-setups.
