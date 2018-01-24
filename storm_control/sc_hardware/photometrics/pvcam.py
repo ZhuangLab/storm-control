@@ -437,10 +437,11 @@ if (__name__ == "__main__"):
     initPVCAM()
 
     # Get camera names.
-    name = getCameraNames()
+    names = getCameraNames()
+    print("Camera names", ",".join(names))
 
     # Get the first camera.
-    cam = PVCAMCamera(camera_name = name[0])
+    cam = PVCAMCamera(camera_name = names[0])
 
     # Test getting some parameters.
     for param in ["param_temp", "param_pix_par_size", "param_shtr_status",
