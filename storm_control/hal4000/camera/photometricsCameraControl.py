@@ -2,6 +2,9 @@
 """
 Camera control specialized for a Photometrics camera.
 
+FIXME? This never calls pvcam.uninitPVCAM() to close the PVCAM
+       library. Not sure if this matters.
+
 Hazen 1/18
 """
 from PyQt5 import QtCore
@@ -30,6 +33,7 @@ class PhotometricsCameraControl(cameraControl.HWCameraControl):
         # Load the library and start the camera.
         #
         pvcam.loadPVCAMDLL(config.get("pvcam_sdk"))
+        pvcam.initPVCAM()
 
         names = pvcam.getCameraNames()
         if not config.get("camera_name") in names:
