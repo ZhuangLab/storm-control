@@ -9,8 +9,8 @@ import numpy
 import sys
 import time
 
-import sc_library.halExceptions as halExceptions
-import sc_hardware.photometrics.pvcam_constants as pvc
+import storm_control.sc_library.halExceptions as halExceptions
+import storm_control.sc_hardware.photometrics.pvcam_constants as pvc
 
 pvcam = None
 
@@ -47,7 +47,7 @@ def getCameraNames():
     camera_names = []
     for i in range(n_cams.value):
         check(pvcam.pl_cam_get_name(pvc.int16(i), cam_name), "pl_cam_get_name")
-        camera_names.append(cam_name.value)
+        camera_names.append(cam_name.value.decode("ascii"))
 
     return camera_names
 
