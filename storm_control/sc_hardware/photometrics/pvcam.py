@@ -343,7 +343,7 @@ class PVCAMCamera(object):
         """
         pid = self.nameToID(pname)
         avail = self.getParam(pid, None, pvc.ATTR_AVAIL)
-        return not (avail.value == 0)
+        return not (avail == 0)
 
     def nameToID(self, pname):
         
