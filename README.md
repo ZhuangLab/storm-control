@@ -1,5 +1,5 @@
 ## storm-control ##
-This is a repository of code developed in the [Zhuang Lab](http://zhuang.harvard.edu) for the acquisition of STORM movies.
+This is a repository of code developed in the [Zhuang lab](http://zhuang.harvard.edu) and the [Babcock Lab](https://hazenbabcock.github.io/) for the acquisition of STORM movies.
 
 [Discussion Group](https://groups.google.com/d/forum/storm-analysis)
 
