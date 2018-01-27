@@ -193,7 +193,7 @@
 	  <camera_fire_pin type="string">/Dev3/PFI0</camera_fire_pin>
 	  <counter type="string">/Dev3/ctr0</counter>
 	  <counter_out type="string">/Dev3/PFI12</counter_out>
-	  <rising_edge type="boolean">True</rising_edge>
+	  <rising_edge type="boolean">False</rising_edge>
 	</timing>
 
 	<!-- These are the things that we provide DAQ functionality for.
