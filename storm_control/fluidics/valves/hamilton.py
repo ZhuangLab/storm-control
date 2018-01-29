@@ -23,8 +23,6 @@ class HamiltonMVP(object):
                  verbose = False):
 
         # Define attributes
-        print("COM:", com_port)
-        
         self.com_port = com_port
         self.verbose = verbose
         self.num_simulated_valves = num_simulated_valves
