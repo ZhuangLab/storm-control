@@ -116,7 +116,7 @@ class APump():
         newCharacter = self.getResponse()
         response = ""
         while not (ord(newCharacter) & 0x80):
-            response += newCharacter
+            response += newCharacter.decode()
             self.sendString(acknowledge)
             newCharacter = self.getResponse()
 
