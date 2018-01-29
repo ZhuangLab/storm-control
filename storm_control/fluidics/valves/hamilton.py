@@ -18,11 +18,13 @@ import time
 # ----------------------------------------------------------------------------------------
 class HamiltonMVP(object):
     def __init__(self,
-                 com_port = 2,
+                 com_port = "COM2",
                  num_simulated_valves = 0,
                  verbose = False):
 
         # Define attributes
+        print("COM:", com_port)
+        
         self.com_port = com_port
         self.verbose = verbose
         self.num_simulated_valves = num_simulated_valves
@@ -34,11 +36,11 @@ class HamiltonMVP(object):
         if not self.simulate:
             import serial
             self.serial = serial.Serial(port = self.com_port, 
-                                 baudrate = 9600, 
-                                 bytesize = serial.SEVENBITS, 
-                                 parity = serial.PARITY_ODD, 
-                                 stopbits = serial.STOPBITS_ONE, 
-                                 timeout = 0.1)
+                                        baudrate = 9600, 
+                                        bytesize = serial.SEVENBITS, 
+                                        parity = serial.PARITY_ODD, 
+                                        stopbits = serial.STOPBITS_ONE, 
+                                        timeout = 0.1)
         
         # Define important serial characters
         self.acknowledge = "\x06"
@@ -207,7 +209,7 @@ class HamiltonMVP(object):
 
         # Write message and read response
         self.write(message)
-        response = self.read()
+        response = self.read().decode()
         
         # Parse response into sent message and response
         repeated_message = response[:(response.find(self.carriage_return)-1)]
@@ -415,7 +417,7 @@ class HamiltonMVP(object):
     # Write to Serial Port
     # ------------------------------------------------------------------------------------    
     def write(self, message):
-        self.serial.write(message)
+        self.serial.write(message.encode())
         if self.verbose:
             print("Wrote: " + message[:-1]) # Display all but final carriage return
 

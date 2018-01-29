@@ -23,7 +23,7 @@ from storm_control.fluidics.valves.hamilton import HamiltonMVP
 class ValveChain(QtWidgets.QWidget):
     def __init__(self,
                  parent = None,
-                 com_port = 2,
+                 com_port = "COM2",
                  num_simulated_valves = 0,
                  verbose = False
                  ):
