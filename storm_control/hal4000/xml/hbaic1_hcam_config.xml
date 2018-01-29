@@ -150,7 +150,7 @@
       <configuration>
 	<use_fsk type="boolean">True</use_fsk>
 	<fsk_mode type="int">1</fsk_mode>
-	<ip_address type="string">192.168.10.3</ip_address>
+	<ip_address type="string">192.168.10.4</ip_address>
 
 	<ch750>
 	  <maximum type="int">8000</maximum>
