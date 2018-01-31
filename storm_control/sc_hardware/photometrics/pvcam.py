@@ -21,11 +21,11 @@ def check(value, fn_name = "??"):
     if (value == 0):
 
         # Get the error message from the PVCAM library.
-        error_msg = ctypes.c_char_p(' ' * pvc.ERROR_MSG_LEN)
+        error_msg = ctypes.c_char_p((' ' * pvc.ERROR_MSG_LEN).encode())
         pvcam.pl_error_message(pvcam.pl_error_code(), error_msg)
 
         # Compose error message.
-        error_message = fn_name + " failed with message: " + error_msg.value
+        error_message = fn_name + " failed with message: " + error_msg.value.decode()
 
         # Raise exception.
         raise PVCAMException(error_message)
@@ -43,8 +43,7 @@ def getCameraNames():
     check(pvcam.pl_cam_get_total(ctypes.byref(n_cams)), "pl_cam_get_total")
 
     # Query the camera names.
-    name_string = ' ' * pvc.CAM_NAME_LEN
-    cam_name = ctypes.c_char_p(name_string.encode())
+    cam_name = ctypes.c_char_p((' ' * pvc.CAM_NAME_LEN).encode())
     camera_names = []
     for i in range(n_cams.value):
         check(pvcam.pl_cam_get_name(pvc.int16(i), cam_name), "pl_cam_get_name")
@@ -133,9 +132,9 @@ class PVCAMCamera(object):
 
         How to determine the number of frames per second at a given exposure 
         time? HAL will need to know this in order to time other things properly.
-        """
-        self.frame_x = (x_end - x_start)/x_bin
-        self.frame_y = (y_end - y_start)/y_bin
+        """        
+        self.frame_x = int((x_end - x_start + 1)/x_bin)
+        self.frame_y = int((y_end - y_start + 1)/y_bin)
         
         # Setup acquisition & determine how large a frame is (in pixels).
         frame_size = pvc.uns32(0)
@@ -180,7 +179,7 @@ class PVCAMCamera(object):
         #       the image.
         #
         while (self.n_processed < self.n_captured.value):
-            print(self.n_processed, self.n_captured.value, self.buffer_len, self.frame_size)
+            #print(self.n_processed, self.n_captured.value, self.buffer_len, self.frame_size)
             index = self.n_processed % self.buffer_len
             start = index * self.frame_size
             end = (index + 1) * self.frame_size
