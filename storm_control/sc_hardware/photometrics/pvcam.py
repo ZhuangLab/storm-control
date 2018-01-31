@@ -43,7 +43,8 @@ def getCameraNames():
     check(pvcam.pl_cam_get_total(ctypes.byref(n_cams)), "pl_cam_get_total")
 
     # Query the camera names.
-    cam_name = ctypes.c_char_p(' ' * pvc.CAM_NAME_LEN)
+    name_string = ' ' * pvc.CAM_NAME_LEN
+    cam_name = ctypes.c_char_p(name_string.encode())
     camera_names = []
     for i in range(n_cams.value):
         check(pvcam.pl_cam_get_name(pvc.int16(i), cam_name), "pl_cam_get_name")
@@ -66,10 +67,10 @@ def loadPVCAMDLL(pvcam_library_name):
         pvcam = ctypes.WinDLL(pvcam_library_name)
 
 # Callback for receiving EOF events from the PVCAM library.
-PVCAM_EOF_FUNC = ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.POINTER(pvc.FRAME_INFO), cypes.POINTER(pvc.uns32))
+PVCAM_EOF_FUNC = ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.POINTER(pvc.FRAME_INFO), ctypes.POINTER(pvc.uns32))
 
 def py_eof_callback(c_frame_info, c_counter):
-    print("eof_callback", c_counter[0], c_frame_info.contents.FrameNr)
+    #print("eof_callback", c_counter[0], c_frame_info.contents.FrameNr)
     c_counter[0] += 1
     return 0
 
@@ -106,7 +107,7 @@ class PVCAMCamera(object):
         self.n_processed = 0
 
         # Open camera.
-        c_name = ctypes.c_char_p(camera_name)
+        c_name = ctypes.c_char_p(camera_name.encode())
         self.hcam = pvc.int16(0)
         check(pvcam.pl_cam_open(c_name,
                                 ctypes.byref(self.hcam),
@@ -144,14 +145,14 @@ class PVCAMCamera(object):
                                       ctypes.byref(region),
                                       pvc.int16(pvc.TIMED_MODE),
                                       pvc.uns32(exposure_time),
-                                      cytpes.byref(frame_size),
+                                      ctypes.byref(frame_size),
                                       pvc.int16(pvc.CIRC_OVERWRITE)),
               "pl_exp_setup_cont")
 
         # This assumes that we are dealing with a 16 bit camera.
         # We should verify that it is the same self.frame_x * self.frame_y?
         #
-        self.frame_size = frame_size.value/2
+        self.frame_size = int(frame_size.value/2)
 
         # Allocate storage for the frames. For now we'll just allocate storage
         # for 100 frames, but it would be better to have this depend on the
@@ -228,14 +229,14 @@ class PVCAMCamera(object):
         # Get value for strings.
         if (ptype == pvc.TYPE_CHAR_PTR):
             # Get the string.
-            count = self.getParameterCount(pid)
-            cstring = ctypes.c_char_p(' ' * count)
+            count = self.getParameterCount(pname)            
+            cstring = ctypes.c_char_p((' ' * count).encode())
             check(pvcam.pl_get_param(self.hcam,
                                      pid,
                                      pvc.int16(pvc.ATTR_CURRENT),
                                      cstring),
                   "pl_get_param")
-            return cstring.value        
+            return cstring.value.decode()
 
         raise PVCAMException("getParameter: unsupported type " + str(ptype))
     
@@ -266,7 +267,7 @@ class PVCAMCamera(object):
             
         # Create string to store results.
         maxlen = 100
-        cstring = ctypes.c_char_p(' ' * maxlen)
+        cstring = ctypes.c_char_p((' ' * maxlen).encode())
         
         check(pvcam.pl_get_enum_param(self.hcam,
                                       pid,
@@ -276,7 +277,7 @@ class PVCAMCamera(object):
                                       pvc.uns32(maxlen)),
               "pl_get_enum_param")
 
-        return [pvalue.value, cstring.value]
+        return [pvalue.value, cstring.value.decode()]
 
     def getParameterMax(self, pname):
         """
@@ -310,7 +311,7 @@ class PVCAMCamera(object):
         """
         Get the type of a parameter.
         """
-        self.getParam(pid, None, pvc.ATTR_TYPE)
+        return self.getParam(pid, None, pvc.ATTR_TYPE)
 
     def getTypeInstance(self, ptype):
         """
@@ -362,7 +363,7 @@ class PVCAMCamera(object):
         """
         Set parameter pname to pvalue.
         """
-        pid = self.nameToId(pname)
+        pid = self.nameToID(pname)
         ptype = self.getParameterType(pid)
 
         # Set parameter for numbers.
@@ -461,7 +462,7 @@ if (__name__ == "__main__"):
         cam.setParameter("param_readout_port", value)
         n_speeds = cam.getParameterMax("param_spdtab_index")
         for j in range(n_speeds):
-            cam.setParameter("param_spd_tab_index", j)
+            cam.setParameter("param_spdtab_index", j)
             for param in ["param_bit_depth", "param_pix_time", "param_gain_index"]:
                 print("  ", i, j, param, "=", cam.getParameter(param))
     
