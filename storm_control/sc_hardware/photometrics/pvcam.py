@@ -69,7 +69,7 @@ def loadPVCAMDLL(pvcam_library_name):
 PVCAM_EOF_FUNC = ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.POINTER(pvc.FRAME_INFO), ctypes.POINTER(pvc.uns32))
 
 def py_eof_callback(c_frame_info, c_counter):
-    #print("eof_callback", c_counter[0], c_frame_info.contents.FrameNr)
+    print("eof_callback", c_counter[0], c_frame_info.contents.TimeStamp)
     c_counter[0] += 1
     return 0
 
@@ -95,11 +95,11 @@ class PVCAMCamera(object):
     we'll return all the frames that have been acquired since the last polling.
     """
     def __init__(self, camera_name = None, **kwds):
-        super(PVCAMCamera, self).__init__(**kwds)
+        super().__init__(**kwds)
 
         self.buffer_len = None
         self.data_buffer = None
-        self.frame_size = None
+        self.frame_bytes = None
         self.frame_x = None
         self.frame_y = None
         self.n_captured = pvc.uns32(0) # No more than 4 billion frames in a single capture..
@@ -148,20 +148,15 @@ class PVCAMCamera(object):
                                       pvc.int16(pvc.CIRC_OVERWRITE)),
               "pl_exp_setup_cont")
 
-        # This assumes that we are dealing with a 16 bit camera.
-        # We should verify that it is the same self.frame_x * self.frame_y?
+        # Store frame size in bytes.
         #
-        self.frame_size = int(frame_size.value/2)
+        self.frame_bytes = frame_size.value
 
-        # Allocate storage for the frames. For now we'll just allocate storage
-        # for 100 frames, but it would be better to have this depend on the
-        # exposure time (i.e. enough frames to buffer 2 seconds or something).
+        # Allocate storage for the frames. Use PVCAM's recommendation for the size.
         #
-        # Note: The PVCAM library limits the maximum buffer size to 2**32 bytes.
-        #
-        self.buffer_len = 100
-        size = self.buffer_len * self.frame_size
-        self.data_buffer = numpy.ascontiguousarray(numpy.empty(size, dtype = numpy.uint16))
+        size = self.getParameterDefault("param_frame_buffer_size")
+        self.data_buffer = numpy.ascontiguousarray(numpy.empty(size, dtype = numpy.uint8))
+        self.buffer_len = int(size/self.frame_bytes)
 
     def getFrames(self):
         frames = []
@@ -169,23 +164,27 @@ class PVCAMCamera(object):
         # Check if we have not gotten too far behind.
         if ((self.n_captured.value - self.n_processed) >= self.buffer_len):
             raise PVCAMException("PVCam buffer overflow.")
-        
-        # Get all the images that are currently available.
-        #
-        # Note: We are copying the images out of the buffer into (temporary)
-        #       storage. Instead we could just create images that pointed
-        #       to the buffer memory. However we decided not to do this as
-        #       we don't have a good way to know when HAL is done processing
-        #       the image.
-        #
-        while (self.n_processed < self.n_captured.value):
-            #print(self.n_processed, self.n_captured.value, self.buffer_len, self.frame_size)
-            index = self.n_processed % self.buffer_len
-            start = index * self.frame_size
-            end = (index + 1) * self.frame_size
-            frames.append(PVCAMFrameData(np_array = numpy.copy(self.data_buffer[start:end])))
-            self.n_processed += 1
 
+        # Get all the images that are currently available. Starting with the
+        # oldest first. You have to call 'pl_exp_unlock_oldest_frame' because
+        # otherwise you'll just get the same frame over and over again..
+        # 
+        while (self.n_processed < self.n_captured.value):
+            data_ptr = ctypes.c_void_p()
+            check(pvcam.pl_exp_get_oldest_frame(self.hcam,
+                                                ctypes.byref(data_ptr)),
+                  "pl_exp_get_oldest_frame")
+
+            pv_data = PVCAMFrameData(self.frame_bytes)
+            pv_data.copyData(data_ptr)
+            frames.append(pv_data)
+            
+            check(pvcam.pl_exp_unlock_oldest_frame(self.hcam),
+                  "pl_exp_unlock_oldest_frame")
+            
+            print(self.n_processed, self.buffer_len, data_ptr)
+            self.n_processed += 1
+            
         return [frames, [self.frame_x, self.frame_y]]
         
     def getParam(self, pid, value, attrib):
@@ -211,7 +210,7 @@ class PVCAMCamera(object):
               "pl_get_param")
         return value.value
     
-    def getParameter(self, pname):
+    def getParameter(self, pname, attr_type):
         """
         Returns the current value of a parameter.
 
@@ -223,7 +222,7 @@ class PVCAMCamera(object):
         # Get value for numbers.
         value = self.getTypeInstance(ptype)
         if value is not None:
-            return self.getParam(pid, value, pvc.ATTR_CURRENT)
+            return self.getParam(pid, value, attr_type)
 
         # Get value for strings.
         if (ptype == pvc.TYPE_CHAR_PTR):
@@ -232,7 +231,7 @@ class PVCAMCamera(object):
             cstring = ctypes.c_char_p((' ' * count).encode())
             check(pvcam.pl_get_param(self.hcam,
                                      pid,
-                                     pvc.int16(pvc.ATTR_CURRENT),
+                                     pvc.int16(attr_type),
                                      cstring),
                   "pl_get_param")
             return cstring.value.decode()
@@ -245,6 +244,18 @@ class PVCAMCamera(object):
         """
         pid = self.nameToID(pname)
         return self.getParam(pid, None, pvc.ATTR_COUNT)
+    
+    def getParameterCurrent(self, pname):
+        """
+        Return the current value for a parameter.
+        """
+        return self.getParameter(pname, pvc.ATTR_CURRENT)
+    
+    def getParameterDefault(self, pname):
+        """
+        Return the default value for a parameter.
+        """
+        return self.getParameter(pname, pvc.ATTR_DEFAULT)
     
     def getParameterEnum(self, pname, pindex = None):
         """
@@ -329,7 +340,7 @@ class PVCAMCamera(object):
         elif (ptype == pvc.TYPE_UNS32):
             return pvc.uns32()
         elif (ptype == pvc.TYPE_UNS64):
-            return pvc.uns64()
+            return pvc.ulong64()
         elif (ptype == pvc.TYPE_ENUM):
             return pvc.int32()
         elif (ptype == pvc.TYPE_BOOLEAN):
@@ -401,7 +412,7 @@ class PVCAMCamera(object):
         # Start the acquisition.
         check(pvcam.pl_exp_start_cont(self.hcam,
                                       self.data_buffer.ctypes.data,
-                                      pvc.uns32(2*self.data_buffer.size)),
+                                      pvc.uns32(self.data_buffer.size)),
               "pl_exp_start_cont")
 
     def stopAcquisition(self):
@@ -419,11 +430,21 @@ class PVCAMFrameData(object):
 
     By now you'd think we'd have a generic base class for this..
     """
-    def __init__(self, np_array = None, **kwds):
-        super(PVCAMFrameData, self).__init__(**kwds)
-        
-        self.np_array = np_array
+    def __init__(self, size = None, **kwds):
+        """
+        Create a data object of the appropriate size.
+        """
+        super().__init__(**kwds)
+        self.np_array = numpy.ascontiguousarray(numpy.empty(int(size/2), dtype=numpy.uint16))
+        self.size = size
 
+    def copyData(self, address):
+        """
+        Uses the C memmove function to copy data from an address in memory
+        into memory allocated for the numpy array of this object.
+        """
+        ctypes.memmove(self.np_array.ctypes.data, address, self.size)
+        
     def getData(self):
         return self.np_array
 
@@ -448,7 +469,7 @@ if (__name__ == "__main__"):
                   "param_readout_time", "param_bit_depth", "param_chip_name"]:
         print("Parameter: ", param)
         if cam.hasParameter(param):
-            print("  value = ", cam.getParameter(param))
+            print("  value = ", cam.getParameterCurrent(param))
         else:
             print("  not available.")
 
@@ -461,25 +482,38 @@ if (__name__ == "__main__"):
         cam.setParameter("param_readout_port", value)
         n_speeds = cam.getParameterMax("param_spdtab_index")
         for j in range(n_speeds):
+            print("speed", j)
             cam.setParameter("param_spdtab_index", j)
             for param in ["param_bit_depth", "param_pix_time", "param_gain_index"]:
-                print("  ", i, j, param, "=", cam.getParameter(param))
+                print("  ", i, j, param, "=", cam.getParameterCurrent(param))
     
     # Configure acquisition, 512 x 512, 100ms exposure.
-    cam.captureSetup(0, 511, 1, 0, 511, 1, 100)
+    cam.captureSetup(0, 1199, 1, 0, 1199, 1, 100)
     
-    # Test repeated acquisition.
-    for i in range(2):
+    # Test acquisition.
+    for i in range(1):
 
-        # Start / stop acquisition.
+        # Start acquisition.
+        print("Starting camera.")
         cam.startAcquisition()
-        time.sleep(1.0)
+
+        for j in range(4):
+            time.sleep(1.0)
+            print("query", j)
+            
+            # See if we can get the frames that were acquired.
+            [frames, shape] = cam.getFrames()
+            for k, frame in enumerate(frames):
+                print(k, frame.getData()[0:3])
+
+        # Stop acquisition.
+        print("Stopping camera.")
         cam.stopAcquisition()
 
         # See if we can get the frames that were acquired.
         [frames, shape] = cam.getFrames()
-        for i, frame in enumerate(frames):
-            print(frame.getData()[0:3])
+        for j, frame in enumerate(frames):
+            print(j, frame.getData()[0:3])
     
     # Close the camera.
     cam.shutdown()
