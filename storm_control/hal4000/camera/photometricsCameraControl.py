@@ -47,6 +47,7 @@ class PhotometricsCameraControl(cameraControl.HWCameraControl):
         #
         have_shutter = self.camera.hasParameter("param_shtr_status")
         have_temperature = self.camera.hasParameter("param_temp_setpoint")
+        have_temperature = False
         
         self.camera_functionality = cameraFunctionality.CameraFunctionality(camera_name = self.camera_name,
                                                                             have_shutter = have_shutter,
@@ -116,13 +117,19 @@ class PhotometricsCameraControl(cameraControl.HWCameraControl):
                 self.stopCamera()
 
             # Reconfigure the camera.
-            self.camera.captureSetup(parameters.get("x_start"),
-                                     parameters.get("x_end"),
+
+            # HAL uses seconds, PVCAM uses milliseconds (as integers).
+            exposure_time = int(1000.0 * parameters.get("exposure_time"))
+
+            # The camera is zero indexed, but the HAL parameters are
+            # one indexed.
+            self.camera.captureSetup(parameters.get("x_start")-1,
+                                     parameters.get("x_end")-1,
                                      parameters.get("x_bin"),
-                                     parameters.get("y_start"),
-                                     parameters.get("y_end"),
+                                     parameters.get("y_start")-1,
+                                     parameters.get("y_end")-1,
                                      parameters.get("y_bin"),
-                                     parameters.get("exposure_time"))
+                                     exposure_time)
 
             # Copy changed parameter values.
             for pname in to_change:
