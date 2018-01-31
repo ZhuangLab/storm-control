@@ -64,11 +64,15 @@ class PhotometricsCameraControl(cameraControl.HWCameraControl):
                             "y_bin" : True,
                             "y_end" : True,
                             "y_start" : True}
-        
+
+        # Should query the camera for this.
+        #
+        self.parameters.setv("max_intensity", 2**12)
+                
         # X/Y may be reversed here.
         #
-        x_chip = self.camera.getParameter("param_par_size")
-        y_chip = self.camera.getParameter("param_ser_size")
+        x_chip = self.camera.getParameterCurrent("param_par_size")
+        y_chip = self.camera.getParameterCurrent("param_ser_size")
 
         # Adjust ranges of our size and binning parameters based on the chip size.
         #
