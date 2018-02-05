@@ -102,7 +102,7 @@ class ParametersBox(QtWidgets.QGroupBox):
         self.newParameters.emit(parameters, True)
 
         # FIXME: Probably only want to do this if the change was successful.
-        self.ui.settingsListView.setRCParametersStale()
+        self.ui.settingsListView.setRCParametersStale(True)
 
     def handleEditParameters(self):
 
@@ -130,6 +130,7 @@ class ParametersBox(QtWidgets.QGroupBox):
             parameters.saveToFile(filename)
             setting_name = os.path.splitext(os.path.basename(filename))[0]
             self.ui.settingsListView.setRCParametersName(setting_name)
+            self.ui.settingsListView.setRCParametersStale(False)
 
     def markCurrentAsInitialized(self):
         cur_p = self.getCurrentParameters()

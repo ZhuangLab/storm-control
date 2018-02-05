@@ -197,7 +197,6 @@ class ParametersMVC(QtWidgets.QListView):
         #
         data = getItemData(self.rc_item)
         self.saveParameters.emit(data.parameters)
-        data.stale = False
 
     def mousePressEvent(self, event):
         if (event.button() == QtCore.Qt.RightButton):
@@ -239,8 +238,8 @@ class ParametersMVC(QtWidgets.QListView):
     def setRCParametersName(self, name):
         self.rc_item.setText(name)
                 
-    def setRCParametersStale(self):
-        getItemData(self.rc_item).stale = True
+    def setRCParametersStale(self, is_stale):
+        getItemData(self.rc_item).stale = is_stale
 
     def setItemParameters(self, q_item, parameters):
         getItemData(q_item).parameters = parameters
