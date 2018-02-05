@@ -13,6 +13,7 @@ import storm_control.sc_library.parameters as params
 
 import storm_control.hal4000.halLib.halDialog as halDialog
 import storm_control.hal4000.halLib.halMessage as halMessage
+import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 import storm_control.hal4000.halLib.halModule as halModule
 
 import storm_control.hal4000.qtdesigner.stage_ui as stageUi
@@ -200,7 +201,11 @@ class StageView(halDialog.HalDialog):
         self.ui.yposText.setText("{0:.3f}".format(pos_dict["y"]))
 
     def handleZeroButton(self, boolean):
-        self.stage_functionality.zero()
+        resp = halMessageBox.halMessageBoxResponse(self,
+                                                   "Confirm Stage Zero",
+                                                   "Are you sure that you want to zero the stage position?")
+        if (resp == QtWidgets.QMessageBox.Yes):
+            self.stage_functionality.zero()
 
     def newParameters(self, parameters):
         small_step = parameters.get("small_step_size")
