@@ -207,7 +207,7 @@ class HamiltonMVP(object):
 
         # Write message and read response
         self.write(message)
-        response = self.read().decode()
+        response = self.read()
         
         # Parse response into sent message and response
         repeated_message = response[:(response.find(self.carriage_return)-1)]

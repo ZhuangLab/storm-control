@@ -148,7 +148,8 @@ class APump():
         self.serial.write(string.encode())
 
     def getResponse(self):
-        return self.serial.read().decode()
+        return self.serial.read()
+        #return self.serial.read().decode()
 
 
 
