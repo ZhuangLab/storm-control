@@ -37,7 +37,7 @@ class ParametersBox(QtWidgets.QGroupBox):
         self.ui = settingsUi.Ui_GroupBox()
         self.ui.setupUi(self)
 
-        self.ui.settingsListView.setStyleSheet("background-color: transparent;")
+        self.ui.settingsListView.setStyleSheet("QListView { background-color: transparent;}")
 
         self.ui.settingsListView.editParameters.connect(self.handleEditParameters)
         self.ui.settingsListView.newParameters.connect(self.handleNewParameters)

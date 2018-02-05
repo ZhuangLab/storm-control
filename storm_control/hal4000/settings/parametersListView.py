@@ -103,6 +103,12 @@ class ParametersMVC(QtWidgets.QListView):
         q_item = QtGui.QStandardItem(name)
         q_item.setData(ParametersItemData(parameters = parameters))
         q_item.setCheckable(True)
+
+        ttip = "Right click to edit"
+        if (parameters.has("parameters_file")):
+            ttip += "\n" + parameters.get("parameters_file")
+        q_item.setToolTip(ttip)
+        
         self.model.insertRow(0, q_item)
 
         # The first parameter in is the default parameters
