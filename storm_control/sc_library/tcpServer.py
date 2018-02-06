@@ -77,7 +77,7 @@ class TCPServer(QtNetwork.QTcpServer, tcpCommunications.TCPCommunicationsMixin):
             message = TCPMessage(message_type = "Busy") # from tcpMessage.TCPMessage
             if self.verbose:
                 print("Sent: \n" + str(message))
-            socket.write(message.toJSON() + "\n")
+            socket.write(bytes(message.toJSON() + "\n"))
             socket.disconnectFromHost()
             socket.close()
 
