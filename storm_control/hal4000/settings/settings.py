@@ -322,7 +322,7 @@ class Settings(halModule.HalModule):
 
         elif message.isType("set parameters"):
             if self.locked_out:
-                raise halException.HalException("'set parameters' received while locked out.")
+                raise halExceptions.HalException("'set parameters' received while locked out.")
             [found, current] = self.view.setParameters(message.getData()["index or name"])
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
                                                               data = {"current" : current,
