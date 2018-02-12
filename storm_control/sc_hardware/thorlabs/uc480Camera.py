@@ -294,6 +294,7 @@ class CameraQPD(object):
     pixels is returned as the focus lock sum.
     """
     def __init__(self,
+                 allow_single_fits = False,
                  background = None,                 
                  camera_id = 1,
                  ini_file = None,
@@ -303,7 +304,8 @@ class CameraQPD(object):
                  y_width = None,
                  **kwds):
         super().__init__(**kwds)
-        
+
+        self.allow_single_fits = allow_single_fits
         self.background = background
         self.fit_mode = 1
         self.fit_size = int(1.5 * sigma)
@@ -504,7 +506,10 @@ class CameraQPD(object):
         if (total_good == 0):
             return [0, 0, 0]
         elif (total_good == 1):
-            offset = ((dist1 + dist2) - 0.5*self.zero_dist)
+            if self.allow_single_fits:
+                offset = ((dist1 + dist2) - 0.5*self.zero_dist)
+            else:
+                return [0, 0, 0]
         else:
             offset = ((dist1 + dist2) - self.zero_dist)
 

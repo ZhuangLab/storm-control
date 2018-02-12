@@ -82,15 +82,15 @@ class UC480ScanThread(QtCore.QThread):
             [power, offset] = self.camera.qpdScan(reps = self.reps)[:2]
             [image, x_off1, y_off1, x_off2, y_off2, sigma] = self.camera.getImage()
             self.device_mutex.unlock()
-            if(power > 0):
-                self.qpd_update_signal.emit({"offset" : offset * self.units_to_microns,
-                                             "sum" : power,
-                                             "image" : image,
-                                             "sigma" : sigma,
-                                             "x_off1" : x_off1,
-                                             "y_off1" : y_off1,
-                                             "x_off2" : x_off2,
-                                             "y_off2" : y_off2})
+            self.qpd_update_signal.emit({"is_good" : (power > 0),
+                                         "image" : image,
+                                         "offset" : offset * self.units_to_microns,
+                                         "sigma" : sigma,
+                                         "sum" : power,
+                                         "x_off1" : x_off1,
+                                         "y_off1" : y_off1,
+                                         "x_off2" : x_off2,
+                                         "y_off2" : y_off2})
 
     def startScan(self):
         self.start(QtCore.QThread.NormalPriority)
@@ -117,7 +117,8 @@ class UC480Camera(hardwareModule.HardwareModule):
         #
         if (configuration.get("use_storm_analysis", False)):
             print("> using storm-analysis for fitting.")
-            self.camera = uc480Camera.CameraQPDSAFit(background = configuration.get("background"),
+            self.camera = uc480Camera.CameraQPDSAFit(allow_single_fits = configuration.get("allow_single_fits", False),
+                                                     background = configuration.get("background"),
                                                      camera_id = configuration.get("camera_id"),
                                                      ini_file = configuration.get("ini_file"),
                                                      offset_file = configuration.get("offset_file"),
@@ -127,7 +128,8 @@ class UC480Camera(hardwareModule.HardwareModule):
         # Use the Numpy/Scipy fitter.
         else:
             print("> using numpy/scipy for fitting.")
-            self.camera = uc480Camera.CameraQPDScipyFit(background = configuration.get("background"),
+            self.camera = uc480Camera.CameraQPDScipyFit(allow_single_fits = configuration.get("allow_single_fits", False),
+                                                        background = configuration.get("background"),
                                                         camera_id = configuration.get("camera_id"),
                                                         ini_file = configuration.get("ini_file"),
                                                         offset_file = configuration.get("offset_file"),
