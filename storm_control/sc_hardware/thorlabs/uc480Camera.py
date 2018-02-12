@@ -483,7 +483,7 @@ class CameraQPD(object):
             # Or for reasons unclear it will keep returning the same
             # frame?
             #        
-            print("> UC480-QPD: Duplicate image detected!")
+            #print("> UC480-QPD: Duplicate image detected!")
             time.sleep(0.1)
             return [0, 0, 0]
 
@@ -502,7 +502,7 @@ class CameraQPD(object):
                         
         # Calculate offset.
         if (total_good == 0):
-            offset = 0
+            return [0, 0, 0]
         elif (total_good == 1):
             offset = ((dist1 + dist2) - 0.5*self.zero_dist)
         else:
