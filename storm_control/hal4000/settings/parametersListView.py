@@ -103,12 +103,8 @@ class ParametersMVC(QtWidgets.QListView):
         q_item = QtGui.QStandardItem(name)
         q_item.setData(ParametersItemData(parameters = parameters))
         q_item.setCheckable(True)
-
-        ttip = "Right click to edit"
-        if (parameters.has("parameters_file")):
-            ttip += "\n" + parameters.get("parameters_file")
-        q_item.setToolTip(ttip)
         
+        self.setToolTip(q_item)
         self.model.insertRow(0, q_item)
 
         # The first parameter in is the default parameters
@@ -182,6 +178,7 @@ class ParametersMVC(QtWidgets.QListView):
     def handleDuplicate(self, boolean):
         dup_item = QtGui.QStandardItem(self.rc_item.text())
         dup_item.setData(ParametersItemData(getItemData(self.rc_item).parameters.copy()))
+        self.setToolTip(dup_item)
         row = self.model.indexFromItem(self.rc_item).row()
         self.model.insertRow(row, dup_item)
 
@@ -244,6 +241,17 @@ class ParametersMVC(QtWidgets.QListView):
     def setItemParameters(self, q_item, parameters):
         getItemData(q_item).parameters = parameters
 
+    def setToolTip(self, q_item):
+        parameters = self.getItemParameters(q_item)
+
+        ttip = "Right click to edit"
+        if (parameters.has("parameters_file")):
+            ttip += "\n" + parameters.get("parameters_file")
+        q_item.setToolTip(ttip)
+
+    def updateRCToolTip(self):
+        self.setToolTip(self.rc_item)
+        
 
 class ParametersStandardItemModel(QtGui.QStandardItemModel):
 

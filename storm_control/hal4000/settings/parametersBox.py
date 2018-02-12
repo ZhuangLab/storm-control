@@ -131,6 +131,7 @@ class ParametersBox(QtWidgets.QGroupBox):
             setting_name = os.path.splitext(os.path.basename(filename))[0]
             self.ui.settingsListView.setRCParametersName(setting_name)
             self.ui.settingsListView.setRCParametersStale(False)
+            self.ui.settingsListView.updateRCToolTip()
 
     def markCurrentAsInitialized(self):
         cur_p = self.getCurrentParameters()
