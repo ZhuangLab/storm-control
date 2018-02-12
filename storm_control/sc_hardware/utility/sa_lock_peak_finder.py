@@ -23,16 +23,14 @@ class LockPeakFinder(object):
 
         self.mfit = None
         self.offset = offset
+        self.roi_size = 10
         self.sigma = sigma
 
         # Filter for smoothing the image for peak finding.
         #
         self.fg_filter = None
-        
-        # The 10 pixel margin is a hard coded property of the 3D-DAOSTORM
-        # fitter in storm-analysis (storm_analysis/sa_library/dao_fit.c).
-        #
-        self.mxf = iaUtilsC.MaximaFinder(margin = 10,
+
+        self.mxf = iaUtilsC.MaximaFinder(margin = self.roi_size,
                                          radius = 2 * self.sigma,
                                          threshold = threshold + self.offset,
                                          z_values = [0.0])
@@ -64,7 +62,7 @@ class LockPeakFinder(object):
             self.fg_filter = matchedFilterC.MatchedFilter(fg_psf)
 
             # Create fitter.
-            self.mfit = daoFitC.MultiFitter2DFixed()
+            self.mfit = daoFitC.MultiFitter2DFixed(roi_size = self.roi_size)
             #self.mfit = daoFitC.MultiFitter2D()
             #self.mfit = daoFitC.MultiFitter3D()
             #self.mfit.default_tol = 1.0e-3
