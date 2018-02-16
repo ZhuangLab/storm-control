@@ -219,7 +219,7 @@ class StandAlone(QtWidgets.QMainWindow):
     # ----------------------------------------------------------------------------------------
     def dropEvent(self, event):
         for url in event.mimeData().urls():
-            self.kilroy.kilroyProtocols.loadFullConfiguration(xml_file_path = str(url.encodedPath())[1:])
+            self.kilroy.kilroyProtocols.loadFullConfiguration(xml_file_path = str(url.path())[1:])
 
     # ----------------------------------------------------------------------------------------
     # Handle close event
