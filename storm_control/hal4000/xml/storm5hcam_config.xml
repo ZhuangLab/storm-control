@@ -275,7 +275,6 @@
 	  <locked>
 	    <buffer_length type="int">5</buffer_length>
 	    <offset_threshold type="float">500.0</offset_threshold>
-	    <gain type="float">0.1</gain>
 	  </locked>
 	  <scan>
             <scan_step type="float">1.0</scan_step>
