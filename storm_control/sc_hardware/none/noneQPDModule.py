@@ -71,7 +71,8 @@ class NoneQPDFunctionality(hardwareModule.BufferedFunctionality, lockModule.QPDF
         if (power < (0.5 * self.getParameter("sum_warning_low"))):
             z_offset = 0.0
             
-        return {"offset" : z_offset,
+        return {"is_good" : True,
+                "offset" : z_offset,
                 "sum" : power,
                 "x" : 100.0 * z_offset,
                 "y" : 0.0}

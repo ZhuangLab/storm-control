@@ -22,7 +22,7 @@ from storm_control.fluidics.valves.valve import AbstractValve
 # ----------------------------------------------------------------------------------------
 class HamiltonMVP(AbstractValve):
     def __init__(self,
-                 com_port = 2,
+                 com_port = "COM2",
                  num_simulated_valves = 0,
                  verbose = False):
 
@@ -38,11 +38,11 @@ class HamiltonMVP(AbstractValve):
         if not self.simulate:
             import serial
             self.serial = serial.Serial(port = self.com_port, 
-                                 baudrate = 9600, 
-                                 bytesize = serial.SEVENBITS, 
-                                 parity = serial.PARITY_ODD, 
-                                 stopbits = serial.STOPBITS_ONE, 
-                                 timeout = 0.1)
+                                        baudrate = 9600, 
+                                        bytesize = serial.SEVENBITS, 
+                                        parity = serial.PARITY_ODD, 
+                                        stopbits = serial.STOPBITS_ONE, 
+                                        timeout = 0.1)
         
         # Define important serial characters
         self.acknowledge = "\x06"

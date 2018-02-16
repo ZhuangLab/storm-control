@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<settings><!-- Default kilroy settings -->
+  <!-- Valve parameters -->
+  <valves_com_port type="string">COM24</valves_com_port>	<!-- COM port of serial connection to valves -->  
+  <num_simulated_valves type="int">0</num_simulated_valves><!-- Number of valves to simulate (Defaults to 0) -->
+
+  <!-- Pump parameters -->
+  <pump_class type="string">pumps.gilson_mp3</pump_class><!-- Control class for pump -->
+  <pump_com_port type="string">COM17</pump_com_port><!-- COM port of serial connection to pump -->
+  <pump_ID type="int">30</pump_ID><!-- ID of Pump -->
+  <simulate_pump type="boolean">False</simulate_pump><!-- Simulate pump? (Defaults to False) -->
+  <flip_flow_direction type="boolean">True</flip_flow_direction><!-- Flip the direction defined as forward? -->
+
+  <!-- General Kilroy parameters -->
+  <verbose type="boolean">False</verbose>
+  <serial_verbose type="boolean">False</serial_verbose>  <!-- display serial commands? -->
+  <tcp_port type="int">9500</tcp_port> <!-- TCP/IP port for local communication with Dave -->
+  <protocols_file type = "">default_config.xml</protocols_file><!-- Location of default protocol -->
+  <commands_file type = "">default_config.xml</commands_file><!-- Location of default commands -->
+
+</settings>

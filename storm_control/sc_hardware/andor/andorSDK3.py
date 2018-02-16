@@ -319,11 +319,11 @@ class SDK3Camera(object):
         self.pixel_encoding = self.getProperty("PixelEncoding", "enum")
         self.stride = self.getProperty("AOIStride", "int")
         frame_bytes = self.getProperty("ImageSizeBytes", "int")
-        n_buffers = int((2.0 * 1024 * 1024 * 1024)/frame_bytes)
+        n_buffers = min(int((2.0 * 1024 * 1024 * 1024)/frame_bytes), 2000)
 
-        #
-        # Create new buffers if the image size has changed. Allocate ~4GB
-        # of memory for this purpose (2GB for raw buffers and 2GB for the
+        # Create new buffers if the image size has changed. This will allocate
+        # space for ~4GB of buffers (2GB for raw buffers and 2GB for the the
+        # frames), or space for 4000 frames (2000 for raw buffers and 2000 for
         # the frames). In theory we will not be able to write over active
         # frames because they would also be active buffers..
         #
@@ -331,8 +331,7 @@ class SDK3Camera(object):
             self.raw_data = []
             for i in range(n_buffers):
                 self.raw_data.append(AndorRawData(size = frame_bytes))
-
-        #
+                
         # frame_bytes can be the same even when the frame size is different.
         #
         if ((frame_x * frame_y) != (self.frame_x * self.frame_y)):

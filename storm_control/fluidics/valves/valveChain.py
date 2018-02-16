@@ -24,7 +24,7 @@ from storm_control.fluidics.valves.idex import TitanValve
 class ValveChain(QtWidgets.QWidget):
     def __init__(self,
                  parent = None,
-                 com_port = 2,
+                 com_port = "COM2",
                  num_simulated_valves = 0,
                  valve_type = 'Hamilton',
                  verbose = False

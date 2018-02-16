@@ -37,7 +37,7 @@ class ParametersBox(QtWidgets.QGroupBox):
         self.ui = settingsUi.Ui_GroupBox()
         self.ui.setupUi(self)
 
-        self.ui.settingsListView.setStyleSheet("background-color: transparent;")
+        self.ui.settingsListView.setStyleSheet("QListView { background-color: transparent;}")
 
         self.ui.settingsListView.editParameters.connect(self.handleEditParameters)
         self.ui.settingsListView.newParameters.connect(self.handleNewParameters)
@@ -102,7 +102,7 @@ class ParametersBox(QtWidgets.QGroupBox):
         self.newParameters.emit(parameters, True)
 
         # FIXME: Probably only want to do this if the change was successful.
-        self.ui.settingsListView.setRCParametersStale()
+        self.ui.settingsListView.setRCParametersStale(True)
 
     def handleEditParameters(self):
 
@@ -130,6 +130,8 @@ class ParametersBox(QtWidgets.QGroupBox):
             parameters.saveToFile(filename)
             setting_name = os.path.splitext(os.path.basename(filename))[0]
             self.ui.settingsListView.setRCParametersName(setting_name)
+            self.ui.settingsListView.setRCParametersStale(False)
+            self.ui.settingsListView.updateRCToolTip()
 
     def markCurrentAsInitialized(self):
         cur_p = self.getCurrentParameters()

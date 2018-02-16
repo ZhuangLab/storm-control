@@ -2,8 +2,7 @@
 <config>
 
   <!-- The starting directory. -->
-  <directory type="directory">/home/hbabcock/Data/</directory>
-  <!-- <directory type="directory">C:/Data/</directory> -->
+  <directory type="directory">C:/Data/</directory>
 
   <!-- The setup name -->
   <setup_name type="string">none</setup_name>

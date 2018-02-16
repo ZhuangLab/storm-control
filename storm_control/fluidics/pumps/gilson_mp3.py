@@ -25,7 +25,7 @@ class APump():
                  parameters = False):
 
         # Define attributes
-        self.com_port = parameters.get("pump_com_port", 3)
+        self.com_port = parameters.get("pump_com_port", "COM3")
         self.pump_ID = parameters.get("pump_ID", 30)
         self.verbose = parameters.get("verbose", True)
         self.simulate = parameters.get("simulate_pump", True)
@@ -34,11 +34,11 @@ class APump():
         
         # Create serial port
         self.serial = serial.Serial(port = self.com_port, 
-                baudrate = 19200, 
-                parity= serial.PARITY_EVEN, 
-                bytesize=serial.EIGHTBITS, 
-                stopbits=serial.STOPBITS_TWO, 
-                timeout=0.1)
+                                    baudrate = 19200, 
+                                    parity= serial.PARITY_EVEN, 
+                                    bytesize=serial.EIGHTBITS, 
+                                    stopbits=serial.STOPBITS_TWO, 
+                                    timeout=0.1)
 
         # Define initial pump status
         self.flow_status = "Stopped"
@@ -149,6 +149,7 @@ class APump():
 
     def getResponse(self):
         return self.serial.read()
+        #return self.serial.read().decode()
 
 
 

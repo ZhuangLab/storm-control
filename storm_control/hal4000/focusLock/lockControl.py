@@ -158,7 +158,8 @@ class LockControl(QtCore.QObject):
         mode tells us to move (or not) based on the current QPD signal, 
         then we poll the QPD again.
         """
-        self.lock_mode.handleQPDUpdate(qpd_dict)
+        if qpd_dict["is_good"]:
+            self.lock_mode.handleQPDUpdate(qpd_dict)
         self.qpd_functionality.getOffset()
 
     def handleTCPMessage(self, message):

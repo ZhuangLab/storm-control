@@ -845,15 +845,18 @@ class HamamatsuCameraMR(HamamatsuCamera):
         """
         self.captureSetup()
 
-
-        #
-        # Allocate new image buffers if necessary.
-        # Allocate as many frames as can fit in 2GB of memory.
+        # Allocate new image buffers if necessary. This will allocate
+        # as many frames as can fit in 2GB of memory, or 2000 frames,
+        # which ever is smaller. The problem is that if the frame size
+        # is small than a lot of buffers can fit in 2GB. Assuming that
+        # the camera maximum speed is something like 1KHz 2000 frames
+        # should be enough for 2 seconds of storage, which will hopefully
+        # be long enough.
         #
         if (self.old_frame_bytes != self.frame_bytes) or \
                 (self.acquisition_mode is "fixed_length"):
 
-            n_buffers = int((2.0 * 1024 * 1024 * 1024)/self.frame_bytes)
+            n_buffers = min(int((2.0 * 1024 * 1024 * 1024)/self.frame_bytes), 2000)
             if self.acquisition_mode is "fixed_length":
                 self.number_image_buffers = self.number_frames
             else:
