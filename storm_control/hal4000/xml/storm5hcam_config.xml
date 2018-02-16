@@ -395,20 +395,20 @@
     
     <!-- Mad City Labs Z piezo -->
     <mcl_zstage>
-      <module_name type="string">storm_control.sc_hardware.madCityLabs.mclVoltageZModule</module_name>
-      <class_name type="string">MCLVoltageZ</class_name>
+      <module_name type="string">storm_control.sc_hardware.ludl.ludlVoltageZModule</module_name>
+      <class_name type="string">LudlVoltageZ</class_name>
 
       <configuration>
 	<parameters>
-	  <center type="float">50.0</center>
+	  <center type="float">200.0</center>
 	  <has_center_bar type="boolean">True</has_center_bar>
-	  <maximum type="float">100.0</maximum>
+	  <maximum type="float">350.0</maximum>
 	  <minimum type="float">0.0</minimum>
-	  <warning_high type="float">90.0</warning_high>
-	  <warning_low type="float">10.0</warning_low>
+	  <warning_high type="float">330.0</warning_high>
+	  <warning_low type="float">20.0</warning_low>
 	</parameters>
 	<ao_fn_name type="string">daq.mcl.ao_task</ao_fn_name>
-	<microns_to_volts type="float">0.1</microns_to_volts>
+	<microns_to_volts type="float">0.029</microns_to_volts>
       </configuration>
     </mcl_zstage>
 
