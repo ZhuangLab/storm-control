@@ -16,6 +16,7 @@ import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 from storm_control.fluidics.valves.qtValveControl import QtValveControl
 from storm_control.fluidics.valves.hamilton import HamiltonMVP
+from storm_control.fluidics.valves.idex import TitanValve
 
 # ----------------------------------------------------------------------------------------
 # ValveChain Class Definition
@@ -25,6 +26,7 @@ class ValveChain(QtWidgets.QWidget):
                  parent = None,
                  com_port = 2,
                  num_simulated_valves = 0,
+                 valve_type = 'Hamilton',
                  verbose = False
                  ):
 
@@ -37,13 +39,19 @@ class ValveChain(QtWidgets.QWidget):
         self.poll_time = 2000
 
         # Create instance of Hamilton class
-        if num_simulated_valves > 0:
+        print(valve_type)
+        if valve_type == 'Simulated':
             self.valve_chain = HamiltonMVP(com_port = 0,
-                                           num_simulated_valves = num_simulated_valves,
-                                           verbose = self.verbose)
-        else:
+				   num_simulated_valves = num_simulated_valves,
+				   verbose = self.verbose)
+
+        elif valve_type == 'Hamilton':	
             self.valve_chain = HamiltonMVP(com_port = self.com_port,
                                            verbose = self.verbose)
+
+        elif valve_type == 'Titan':
+            self.valve_chain = TitanValve(com_port = self.com_port,
+                    verbose = self.verbose)
 
         # Create QtValveControl widgets for each valve in the chain
         self.num_valves = self.valve_chain.howManyValves()

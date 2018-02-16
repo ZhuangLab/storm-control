@@ -39,6 +39,11 @@ class Kilroy(QtWidgets.QMainWindow):
             self.num_simulated_valves = 0
         else:
             self.num_simulated_valves = parameters.get("num_simulated_valves")
+
+        if not parameters.has("valve_type"):
+            self.valve_type = 'Hamilton'
+        else:
+            self.valve_type = parameters.get("valve_type")
             
         if not parameters.has("protocols_file"):
             self.protocols_file = "default_config.xml"
@@ -61,6 +66,7 @@ class Kilroy(QtWidgets.QMainWindow):
         # Create ValveChain instance
         self.valveChain = ValveChain(com_port = self.valve_com_port,
                                      num_simulated_valves = self.num_simulated_valves,
+                                     valve_type=self.valve_type,
                                      verbose = self.verbose)
 
         # Create PumpControl instance
