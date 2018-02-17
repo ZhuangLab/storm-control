@@ -18,7 +18,6 @@ import numpy
 import storm_control.sc_library.halExceptions as halExceptions
 
 # Hamamatsu constants.
-DCAMCAP_EVENT_FRAMEREADY = int("0x0002", 0)
 
 # DCAM4 API.
 DCAMERR_ERROR = 0
@@ -37,6 +36,17 @@ DCAMPROP_TYPE_LONG = int("0x00000002", 0)
 DCAMPROP_TYPE_REAL = int("0x00000003", 0)
 DCAMPROP_TYPE_MASK = int("0x0000000F", 0)
 
+DCAMCAP_STATUS_ERROR = int("0x00000000", 0)
+DCAMCAP_STATUS_BUSY = int("0x00000001", 0)
+DCAMCAP_STATUS_READY = int("0x00000002", 0)
+DCAMCAP_STATUS_STABLE = int("0x00000003", 0)
+DCAMCAP_STATUS_UNSTABLE = int("0x00000004", 0)
+
+DCAMWAIT_CAPEVENT_FRAMEREADY = int("0x0002", 0)
+DCAMWAIT_CAPEVENT_STOPPED = int("0x0010", 0)
+
+DCAMWAIT_RECEVENT_MISSED = int("0x00000200", 0)
+DCAMWAIT_RECEVENT_STOPPED = int("0x00000400", 0)
 DCAMWAIT_TIMEOUT_INFINITE = int("0x80000000", 0)
 
 DCAM_DEFAULT_ARG = 0
@@ -271,6 +281,7 @@ class HamamatsuCamera(object):
 
         self.acquisition_mode = "run_till_abort"
         self.number_frames = 0
+
 
 
         # Get camera model.
@@ -579,18 +590,27 @@ class HamamatsuCamera(object):
     def newFrames(self):
         """
         Return a list of the ids of all the new frames since the last check.
+        Returns an empty list if the camera has already stopped and no frames
+        are available.
     
         This will block waiting for at least one new frame.
         """
 
-        # Wait for a new frame.
-        paramstart = DCAMWAIT_START(
-                0, 0, DCAMCAP_EVENT_FRAMEREADY, DCAMWAIT_TIMEOUT_INFINITE)
-        paramstart.size = ctypes.sizeof(paramstart)
+        captureStatus = ctypes.c_int32(0)
+        self.checkStatus(dcam.dcamcap_status(
+            self.camera_handle, ctypes.byref(captureStatus)))
 
-        self.checkStatus(dcam.dcamwait_start(self.wait_handle,
-                                        ctypes.byref(paramstart)),
-                         "dcamwait_start")
+        # Wait for a new frame if the camera is acquiring.
+        if captureStatus.value == DCAMCAP_STATUS_BUSY:
+            paramstart = DCAMWAIT_START(
+                    0, 
+                    0, 
+                    DCAMWAIT_CAPEVENT_FRAMEREADY | DCAMWAIT_CAPEVENT_STOPPED, 
+                    100)
+            paramstart.size = ctypes.sizeof(paramstart)
+            self.checkStatus(dcam.dcamwait_start(self.wait_handle,
+                                            ctypes.byref(paramstart)),
+                             "dcamwait_start")
 
         # Check how many new frames there are.
         paramtransfer = DCAMCAP_TRANSFERINFO(
@@ -693,6 +713,9 @@ class HamamatsuCamera(object):
         if mode is "fixed_length", then number_frames indicates the number
         of frames to acquire.
         '''
+
+        self.stopAcquisition()
+
         if self.acquisition_mode is "fixed_length" or \
                 self.acquisition_mode is "run_till_abort":
             self.acquisition_mode = mode
@@ -716,7 +739,11 @@ class HamamatsuCamera(object):
             n_buffers = int(2.0*self.getPropertyValue("internal_frame_rate")[0])
         elif self.acquisition_mode is "fixed_length":
             n_buffers = self.number_frames
+
         self.number_image_buffers = n_buffers
+
+	
+
         self.checkStatus(dcam.dcambuf_alloc(self.camera_handle,
                                   ctypes.c_int32(self.number_image_buffers)),
                          "dcambuf_alloc")
@@ -827,12 +854,11 @@ class HamamatsuCameraMR(HamamatsuCamera):
         # be long enough.
         #
         if (self.old_frame_bytes != self.frame_bytes) or \
-                (self.acquisition_mode is "fixed_length" and \
-                self.number_image_buffers < self.number_frames) :
+                (self.acquisition_mode is "fixed_length"):
 
             n_buffers = min(int((2.0 * 1024 * 1024 * 1024)/self.frame_bytes), 2000)
             if self.acquisition_mode is "fixed_length":
-                self.number_image_buffers = max(n_buffers, self.number_frames)
+                self.number_image_buffers = self.number_frames
             else:
                 self.number_image_buffers = n_buffers
 
@@ -901,6 +927,7 @@ class HamamatsuCameraMR(HamamatsuCamera):
 if (__name__ == "__main__"):
 
     import time
+    import random
 
     print("found:", n_cameras, "cameras")
     if (n_cameras > 0):
@@ -910,7 +937,7 @@ if (__name__ == "__main__"):
         print("camera 0 model:", hcam.getModelInfo(0))
 
         # List support properties.
-        if True:
+        if False:
             print("Supported properties:")
             props = hcam.getProperties()
             for i, id_name in enumerate(sorted(props.keys())):
@@ -929,7 +956,7 @@ if (__name__ == "__main__"):
                         print("         ", key, "/", text_values[key])
 
         # Test setting & getting some parameters.
-        if True:
+        if False:
             print(hcam.setPropertyValue("exposure_time", 0.001))
 
             #print(hcam.setPropertyValue("subarray_hsize", 2048))
@@ -963,7 +990,7 @@ if (__name__ == "__main__"):
                 print(param, hcam.getPropertyValue(param)[0])
 
         # Test 'run_till_abort' acquisition.
-        if True:
+        if False:
             print("Testing run till abort acquisition")
             hcam.startAcquisition()
             cnt = 0
@@ -978,17 +1005,32 @@ if (__name__ == "__main__"):
 
         # Test 'fixed_length' acquisition.
         if True:
-            for j in range (10):
+            for j in range (10000):
                 print("Testing fixed length acquisition")
                 hcam.setACQMode("fixed_length", number_frames = 10)
                 hcam.startAcquisition()
                 cnt = 0
-                for i in range(10):
+                iterations = 0
+                while cnt < 11 and iterations < 20:
                     [frames, dims] = hcam.getFrames()
+                    waitTime = random.random()*0.03
+                    time.sleep(waitTime)
+                    iterations += 1
+                    print('Frames loaded: ' + str(len(frames)))
+                    print('Wait time: ' + str(waitTime))
                     for aframe in frames:
                         print(cnt, aframe[0:5])
                         cnt += 1
+                if cnt < 10:
+                    print('##############Error: Not all frames found#########')
+                    input("Press enter to continue")
                 print("Frames acquired: " + str(cnt))        
+                hcam.stopAcquisition()
+
+                hcam.setACQMode("run_till_abort")
+                hcam.startAcquisition()
+                time.sleep(random.random())
+                contFrames = hcam.getFrames()
                 hcam.stopAcquisition()
 
 

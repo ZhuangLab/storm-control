@@ -288,16 +288,16 @@ class Film(halModule.HalModule):
 
         #
         # The method sequence for a film is:
-        #   1. startFilmLevel1() - Initiates the start of filming.
+        #   1. startFilmingLevel1() - Initiates the start of filming.
         #      film_state = "start"
         #
-        #   2. startFilmLevel2() - Fires when all the cameras have stopped.
+        #   2. startFilmingLevel2() - Fires when all the cameras have stopped.
         #      film_state = "run"
         #
-        #   3. stopFilmLevel1() - Initiates the end of filming.
+        #   3. stopFilmingLevel1() - Initiates the end of filming.
         #      film_state = "stop"
         #
-        #   4. stopFilmLevel2() - Fire when all the cameras have stopped.
+        #   4. stopFilmingLevel2() - Fire when all the cameras have stopped.
         #      film_state = "idle"
         #
         # The problem that we are trying to solve is that we need to wait until

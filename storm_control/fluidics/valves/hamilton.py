@@ -5,6 +5,8 @@
 # Jeff Moffitt
 # 12/17/13
 # jeffmoffitt@gmail.com
+#
+# TODO: Simulated port should be in a different class
 # ----------------------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------------------
@@ -13,10 +15,12 @@
 import sys
 import time
 
+from storm_control.fluidics.valves.valve import AbstractValve
+
 # ----------------------------------------------------------------------------------------
 # HamiltonMVP Class Definition
 # ----------------------------------------------------------------------------------------
-class HamiltonMVP(object):
+class HamiltonMVP(AbstractValve):
     def __init__(self,
                  com_port = "COM2",
                  num_simulated_valves = 0,
