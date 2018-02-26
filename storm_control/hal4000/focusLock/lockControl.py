@@ -36,7 +36,11 @@ class LockControl(QtCore.QObject):
         return self.lock_mode.getLockTarget()
 
     def getQPDSumSignal(self):
-        return self.lock_mode.getQPDState()["sum"]
+        pos_dict = self.lock_mode.getQPDState()
+        if pos_dict is not None:
+            return pos_dict["sum"]
+        else:
+            return 0.0
 
     def handleCheckFocusLock(self):
         """
@@ -143,15 +147,19 @@ class LockControl(QtCore.QObject):
         if self.offset_fp is not None:
             frame_number = frame.frame_number + 1
             pos_dict = self.lock_mode.getQPDState()
-            offset = pos_dict["offset"]
-            power = pos_dict["sum"]
-            stage_z = self.z_stage_functionality.getCurrentPosition()
-            self.offset_fp.write("{0:d} {1:.6f} {2:.6f} {3:.6f}\n".format(frame_number,
-                                                                          offset,
-                                                                          power,
-                                                                          stage_z))
+            if pos_dict is not None:
+                offset = pos_dict["offset"]
+                power = pos_dict["sum"]
+                stage_z = self.z_stage_functionality.getCurrentPosition()
+                self.offset_fp.write("{0:d} {1:.6f} {2:.6f} {3:.6f}\n".format(frame_number,
+                                                                              offset,
+                                                                              power,
+                                                                              stage_z))
+            else:
+                self.offset_fp.write("{0:d} 0.0 0.0 0.0\n".format(frame_number))
+
         self.lock_mode.handleNewFrame(frame)
-                
+
     def handleQPDUpdate(self, qpd_dict):
         """
         Basically this is where all the action happens. The current

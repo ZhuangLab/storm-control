@@ -458,6 +458,16 @@
       </configuration>
     </stage>
 
+    <!-- TCP control -->
+    <tcp_control>
+      <module_name type="string">storm_control.hal4000.tcpControl.tcpControl</module_name>
+      <class_name type="string">TCPControl</class_name>	    
+      <configuration>
+	<parallel_mode type="boolean">True</parallel_mode>
+	<tcp_port type="int">9000</tcp_port>
+      </configuration>
+    </tcp_control>
+    
     <!-- Thorlabs UC480 camera for the focus lock -->
     <uc480_camera>
       <class_name type="string">UC480Camera</class_name>
@@ -485,6 +495,6 @@
 	<units_to_microns type="float">0.135</units_to_microns>
       </configuration>
     </uc480_camera>
-    
+
   </modules>  
 </config>
