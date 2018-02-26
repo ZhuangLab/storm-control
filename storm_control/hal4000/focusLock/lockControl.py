@@ -36,11 +36,7 @@ class LockControl(QtCore.QObject):
         return self.lock_mode.getLockTarget()
 
     def getQPDSumSignal(self):
-        pos_dict = self.lock_mode.getQPDState()
-        if pos_dict is not None:
-            return pos_dict["sum"]
-        else:
-            return 0.0
+        return self.lock_mode.getQPDState()["sum"]
 
     def handleCheckFocusLock(self):
         """
@@ -147,16 +143,13 @@ class LockControl(QtCore.QObject):
         if self.offset_fp is not None:
             frame_number = frame.frame_number + 1
             pos_dict = self.lock_mode.getQPDState()
-            if pos_dict is not None:
-                offset = pos_dict["offset"]
-                power = pos_dict["sum"]
-                stage_z = self.z_stage_functionality.getCurrentPosition()
-                self.offset_fp.write("{0:d} {1:.6f} {2:.6f} {3:.6f}\n".format(frame_number,
-                                                                              offset,
-                                                                              power,
-                                                                              stage_z))
-            else:
-                self.offset_fp.write("{0:d} 0.0 0.0 0.0\n".format(frame_number))
+            offset = pos_dict["offset"]
+            power = pos_dict["sum"]
+            stage_z = self.z_stage_functionality.getCurrentPosition()
+            self.offset_fp.write("{0:d} {1:.6f} {2:.6f} {3:.6f}\n".format(frame_number,
+                                                                          offset,
+                                                                          power,
+                                                                          stage_z))
 
         self.lock_mode.handleNewFrame(frame)
 
@@ -164,10 +157,9 @@ class LockControl(QtCore.QObject):
         """
         Basically this is where all the action happens. The current
         mode tells us to move (or not) based on the current QPD signal, 
-        then we poll the QPD again.
+        then we poll the QPD again by calling the getOffset() method.
         """
-        if qpd_dict["is_good"]:
-            self.lock_mode.handleQPDUpdate(qpd_dict)
+        self.lock_mode.handleQPDUpdate(qpd_dict)
         self.qpd_functionality.getOffset()
 
     def handleTCPMessage(self, message):
