@@ -74,12 +74,12 @@
 
       <!-- List objectives available on this setup here. -->
       <parameters>
-	<flip_horizontal desc="Flip image horizontal (mosaic)" type="boolean">False</flip_horizontal>
+	<flip_horizontal desc="Flip image horizontal (mosaic)" type="boolean">True</flip_horizontal>
 	<flip_vertical desc="Flip image vertical (mosaic)" type="boolean">False</flip_vertical>
-	<transpose desc="Transpose image (mosaic)" type="boolean">False</transpose>
+	<transpose desc="Transpose image (mosaic)" type="boolean">True</transpose>
 
 	<objective desc="Current objective" type="string" values="obj1,obj2,obj3">obj1</objective>
-	<obj1 desc="Objective 1" type="custom">60x,0.120,0.0,0.0</obj1>
+	<obj1 desc="Objective 1" type="custom">60x,0.108,0.0,0.0</obj1>
 	<obj2 desc="Objective 2" type="custom">10x,1.60,0.0,0.0</obj2>
 	<obj3 desc="Objective 3" type="custom">4x,4.0,0.0,0.0</obj3>	
       </parameters>
