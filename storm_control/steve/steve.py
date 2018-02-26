@@ -723,7 +723,6 @@ class Window(QtWidgets.QMainWindow):
                     continue
                 
                 data = line.rstrip().split(",")
-                print(data)
                 if (self.view.loadFromMosaicFileData(data, mosaic_dirname)):
                     legacy_format = False
                 elif (self.positions.loadFromMosaicFileData(data, mosaic_dirname)):
