@@ -138,7 +138,7 @@ class UC480Camera(hardwareModule.HardwareModule):
                                                         y_width = configuration.get("y_width"))
         self.camera_functionality = UC480QPDCameraFunctionality(camera = self.camera,
                                                                 parameters = configuration.get("parameters"),
-                                                                reps = configuration.get("reps", 1),
+                                                                reps = configuration.get("reps", 4),
                                                                 units_to_microns = configuration.get("units_to_microns"))
 
     def cleanUp(self, qt_settings):
