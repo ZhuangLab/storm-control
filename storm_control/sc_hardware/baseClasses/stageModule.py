@@ -107,8 +107,8 @@ class StageModule(hardwareModule.HardwareModule):
 
         #
         # This is the default timeout for TCP requested moves. If the stage
-        # does respond that the move has completed in this time then we are
-        # just going to assume that we missed something.
+        # does not respond that the move has completed in this time then we
+        # are just going to assume that we missed something.
         #
         self.watchdog_timeout = 10000
 
