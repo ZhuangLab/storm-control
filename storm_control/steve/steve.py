@@ -692,7 +692,15 @@ class Window(QtWidgets.QMainWindow):
             number_lines = 0
             while 1:
                 line = mosaic_fp.readline()
-                if not line: break
+                if not line:
+                    break
+
+                # Deal with '\r\n'. Maybe we should not be saving files with this
+                # on the end of the line? We were doing it so that they displayed
+                # properly in notepad.
+                #
+                if (len(line) == 1):
+                    continue
                 number_lines += 1
             mosaic_fp.seek(0)
 
@@ -708,9 +716,14 @@ class Window(QtWidgets.QMainWindow):
             file_number = 1
             while 1:
                 if progress_bar.wasCanceled(): break
-                line = mosaic_fp.readline().rstrip()
-                if not line: break
-                data = line.split(",")
+                line = mosaic_fp.readline()
+                if not line:
+                    break
+                if (len(line) == 1):
+                    continue
+                
+                data = line.rstrip().split(",")
+                print(data)
                 if (self.view.loadFromMosaicFileData(data, mosaic_dirname)):
                     legacy_format = False
                 elif (self.positions.loadFromMosaicFileData(data, mosaic_dirname)):
