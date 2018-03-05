@@ -35,13 +35,14 @@ class ShuttersInfo(object):
         return self.frames
         
         
-def parseShuttersXML(number_channels, shutters_file):
+def parseShuttersXML(channel_name_to_id, shutters_file, can_oversample = True):
     """
     This parses a XML file that defines a shutter sequence.
 
-    FIXME: Not all setup support oversampling, this should complain if
-           the setup does not support oversampling.
+    FIXME: Not all setup support oversampling, but as yet none of them set
+           the can_oversample argument.
     """
+    number_channels = len(channel_name_to_id)
 
     # Load XML shutters file.
     xml = ElementTree.parse(shutters_file).getroot()
@@ -49,12 +50,25 @@ def parseShuttersXML(number_channels, shutters_file):
         raise ShutterXMLException(shutters_file + " is not a shutters file.")
 
     # Use user-specified oversampling (if requested), otherwise use 100.
-    oversampling = 100
+    if can_oversample:
+        oversampling = 100
+    else:
+        oversampling = 1
+        
     if xml.find("oversampling") is not None:
         oversampling = int(xml.find("oversampling").text)
 
+    if ((not can_oversample) and (oversampling > 1)):
+        raise ShutterXMLException("This setup does not support oversampling.")
+
     # The length of the sequence.
     frames = int(xml.find("frames").text)
+
+    # The user is using the channel names rather than their ID's to specify
+    # the different channels.
+    by_name = False
+    if xml.find("by_name") is not None:
+        by_name = bool(int(xml.find("by_name").text))
 
     #
     # We store a color to associate with each frame. This can be accessed by
@@ -76,20 +90,45 @@ def parseShuttersXML(number_channels, shutters_file):
 
     # Add in the events.
     for event in xml.findall("event"):
-        channel = -1
-        power = 0
-        on = 0
-        off = 0
-        color = 0
+        channel = None
+        power = None
+        on = None
+        off = None
+        color = False
         for node in event:
             if (node.tag == "channel"):
-                channel = int(node.text)
+
+                # Channels by name.
+                if by_name:
+                    if (node.text in channel_name_to_id):
+                        channel = channel_name_to_id[node.text]
+                    else:
+                        raise ShutterXMLException("Invalid channel descriptor " + str(node.text))
+                    
+                # Channels by ID.
+                try:
+                    channel = int(node.text)
+                except ValueError:
+                    raise ShutterXMLException("Invalid channel number " + str(node.text))
+
+                if (channel >= number_channels):
+                    raise ShutterXMLException("Channel number is too large " + str(channel))
+                    
             elif (node.tag == "power"):
-                power = float(node.text)
+                try:
+                    power = float(node.text)
+                except ValueError:
+                    raise ShutterXMLException("Invalid channel power " + str(node.text))                    
             elif (node.tag == "on"):
-                on = int(float(node.text) * float(oversampling))
+                try:
+                    on = int(float(node.text) * float(oversampling))
+                except ValueError:
+                    raise ShutterXMLException("Invalid on time " + str(node.text))
             elif (node.tag == "off"):
-                off = int(float(node.text) * float(oversampling))
+                try:
+                    off = int(float(node.text) * float(oversampling))
+                except ValueError:
+                    raise ShutterXMLException("Invalid off time " + str(node.text))
             elif (node.tag == "color"):
                 color = []
                 colors = node.text.split(",")
@@ -102,27 +141,40 @@ def parseShuttersXML(number_channels, shutters_file):
                     if x > 255:
                         x = 255
                     color.append(x)
-        if (channel != -1) and (channel < number_channels):
-            assert on >= 0, "on out of range: " + str(on) + " " + str(channel)
-            assert on <= frames * oversampling, "on out of range: " + str(on) + " " + str(channel)
-            assert off >= 0, "off out of range: " + str(on) + " " + str(channel)
-            assert off <= frames * oversampling, "off out of range: " + str(on) + " " + str(channel)
 
-            # Channel waveform setup.
-            i = on
-            waveform = waveforms[channel]
-            while i < off:
-                waveform[i] = power
+        # Check values.
+        if channel is None:
+            raise ShutterXMLException("Event channel must be specified.")
+        if power is None:
+            raise ShutterXMLException("Event power must be specified.")
+        if on is None:
+            raise ShutterXMLException("Event on time must be specified.")
+        if off is None:
+            raise ShutterXMLException("Event off time must be specified.")
+        if (on < 0):
+            raise ShutterXMLException("On time out of range: " + str(on) + " " + str(channel))
+        if (on > frames * oversampling):
+            raise ShutterXMLException("On time out of range: " + str(on) + " " + str(channel))
+        if (off < 0):
+            raise ShutterXMLException("Off time out of range: " + str(on) + " " + str(channel))
+        if (off > frames * oversampling):
+            raise ShutterXMLException("Off time out of range: " + str(on) + " " + str(channel))
+
+        # Channel waveform setup.
+        i = on
+        waveform = waveforms[channel]
+        while i < off:
+            waveform[i] = power
+            i += 1
+
+        # Color information setup.
+        if color:
+            color_start = int(round(float(on)/float(oversampling)))
+            color_end = int(round(float(off)/float(oversampling)))
+            i = color_start
+            while i < color_end:
+                color_data[i] = color
                 i += 1
-
-            # Color information setup.
-            if color:
-                color_start = int(round(float(on)/float(oversampling)))
-                color_end = int(round(float(off)/float(oversampling)))
-                i = color_start
-                while i < color_end:
-                    color_data[i] = color
-                    i += 1
 
     return [ShuttersInfo(color_data = color_data, frames = frames),
             waveforms,

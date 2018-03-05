@@ -56,6 +56,7 @@ class IlluminationView(halDialog.HalDialog):
     def __init__(self, configuration = None, **kwds):
         super().__init__(**kwds)
 
+        self.channel_name_to_id = {}
         self.channels = []
         self.channels_by_name = {}
         self.parameters = params.StormXMLObject()
@@ -118,6 +119,7 @@ class IlluminationView(halDialog.HalDialog):
             a_instance = illuminationChannel.Channel(channel_id = i,
                                                      configuration = configuration.get(cname),
                                                      parent = self.ui.powerControlBox)
+            self.channel_name_to_id[a_instance.getName()] = i
             self.channels.append(a_instance)
             self.channels_by_name[a_instance.getName()] = a_instance
             layout.addWidget(a_instance.channel_ui)
@@ -217,7 +219,7 @@ class IlluminationView(halDialog.HalDialog):
         self.parameters.set("shutters", shutters_filename)
                             
         # Parse XML to get shutter information, waveforms, etc.
-        [self.shutters_info, waveforms, oversampling] = xmlParser.parseShuttersXML(len(self.channels),
+        [self.shutters_info, waveforms, oversampling] = xmlParser.parseShuttersXML(self.channel_name_to_id,
                                                                                    filename_to_parse)
 
         self.waveforms = []
