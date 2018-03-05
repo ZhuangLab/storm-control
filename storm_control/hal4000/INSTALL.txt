@@ -8,6 +8,7 @@
     Note: Link (2) above describes the best way to create the virtual
           environment on windows.
 
+
 (2) Install Dependencies:
  (a) Mingw (only if you need to compile C libraries)
  (b) Python3 (64 bit is preferred)
@@ -21,9 +22,11 @@
  (j) Tifffile
  (k) PyDAQmx (for national instruments DAQ)
 
+
 (3-4) Note: You should be able to skip the next two steps if you
  are running 64 bit windows as the compiled files are now included in
  the project.
+
 
 (3) Compile UI elements (in the qtdesigner folder):
  With PyQt you should get a program installed called pyuic.py. This
@@ -49,11 +52,12 @@
        detached mode you will need to compile the 'detached' ui
        elements.
 
-(4) Compile C helper libraries:
- Instructions on how to compile the libraries are in the library headers.
- (a) hal4000/halLib/c_image_manipulation.c (for Hamamatsu sCMOS camera).
- (b) hal4000/objectFinder/LMMoment.c (for the spot counter).
- (d) hal4000/focusLock/focus_quality.c (for optimal focus lock mode)
+
+(4) Compile C helper libraries using scons. You'll may also need Python2.7 for
+ this depending on your version of scons.
+
+ $ cd /path/to/storm_control
+ $ scons
 
 
 (5) Add the storm_control directory to your Python path by placing a .pth file in 

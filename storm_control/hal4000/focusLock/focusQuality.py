@@ -11,32 +11,16 @@ from numpy.ctypeslib import ndpointer
 import os
 import sys
 
-focus_quality = None
+import storm_control.c_libraries.loadclib as loadclib
 
-def loadFocusQualityDLL():
-    """
-    Loads the focus quality DLL, if it has not already been loaded.
-    """
-    global focus_quality
-    if focus_quality is None:
+focus_quality = loadclib.loadCLibrary("focus_quality")
 
-        directory = os.path.dirname(__file__)
-        if (directory == ""):
-            directory = "./"
-        else:
-            directory += "/"
-
-        if (sys.platform == "win32"):
-            focus_quality = ctypes.cdll.LoadLibrary(directory + "focus_quality.dll")
-        else:
-            focus_quality = ctypes.cdll.LoadLibrary(directory + "focus_quality.so")
-
-loadFocusQualityDLL()
 c_imageGradient = focus_quality.imageGradient
 c_imageGradient.argtypes = [ndpointer(dtype=numpy.uint16),
                             ctypes.c_int,
                             ctypes.c_int]
 c_imageGradient.restype = ctypes.c_float
+
 
 def imageGradient(frame):
     """
@@ -46,33 +30,6 @@ def imageGradient(frame):
                            frame.image_x,
                            frame.image_y)
 
-
-#
-# Testing
-# 
-
-if (__name__ == "__main__"):
-
-    import numpy
-    import time
-
-    import storm_control.hal4000.camera.frame as frame
-
-    image_x = 512
-    image_y = 512
-    aframe = frame.Frame(numpy.ones((image_x, image_y), dtype = numpy.uint16),
-                         0,
-                         image_x,
-                         image_y,
-                         "camera1",
-                         True)
-
-    repeats = 200
-    start = time.time()
-    for i in range(repeats):
-        imageGradient(aframe)
-    end = time.time()
-    print("Time to process an image: ", ((end - start)/repeats), " seconds")
 
 
 #

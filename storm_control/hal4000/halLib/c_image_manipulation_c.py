@@ -1,14 +1,13 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Python interface to the C image manipulation library. The library
-# is used to speed up the rendering of the image in the UI. My experience
-# was that for large images, such as those from a sCMOS camera, using numpy
-# to do the image scaling and type conversion was not fast enough.
-#
-# Hazen 09/15
-# 
+#!/usr/bin/env python
+"""
+
+Python interface to the C image manipulation library. The library
+is used to speed up the rendering of the image in the UI. My experience
+was that for large images, such as those from a sCMOS camera, using numpy
+to do the image scaling and type conversion was not fast enough.
+
+Hazen 09/15
+"""
 
 import ctypes
 import math
@@ -17,18 +16,11 @@ from numpy.ctypeslib import ndpointer
 import os
 import sys
 
-directory = os.path.dirname(__file__)
-if (directory == ""):
-    directory = "./"
-else:
-    directory += "/"
+import storm_control.c_libraries.loadclib as loadclib
 
 try:
-    if (sys.platform == "win32"):
-        image_manip = ctypes.cdll.LoadLibrary(directory + "c_image_manipulation.dll")
-    else:
-        image_manip = ctypes.cdll.LoadLibrary(directory + "c_image_manipulation.so")
-            
+    image_manip = loadclib.loadCLibrary("c_image_manipulation")
+
     # C interface definition.
     image_manip.compare.argtypes = [ndpointer(dtype=numpy.uint8),
                                     ndpointer(dtype=numpy.uint8),
@@ -58,17 +50,16 @@ except OSError:
     print("C image manipulation library not found, reverting to numpy.")
     image_manip = None
 
-## compare
-#
-# This does a bytewise comparison of two images.
-#
-# @param image1 The first image.
-# @param image2 The second image.
-#
-# @return The number of differences greater than 1.
-#
+
 def compare(image1, image2):
+    """
+    This does a bytewise comparison of two images.
     
+    image1 - The first image.
+    image2 - The second image.
+
+    Returns the number of differences greater than 1.    
+    """
     if (image1.size != image2.size):
         print("Images are not the same size!")
         return
@@ -76,24 +67,23 @@ def compare(image1, image2):
     return image_manip.compare(image1, image2, image1.size)
 
 
-## rescaleImage
-#
-# This converts a uint16 image into a uint8 image based on the display
-# range. As a side effect it also returns the minimum and maximum values
-# in the image.
-#
-# @param image The original image as numpy.uint16 array.
-# @param flip_h Flip horizontal.
-# @param flip_v Flip vertical.
-# @param transpose Transpose image.
-# @param display_range [image value that equals 0, image value that equals 255].
-# @param saturated_value The value above which the image has saturated the camera.
-# @param use_numpy (optional) Use numpy even if the C library exists, defaults to False.
-#
-# @return [numpy.uint8 image, original image minimum, original image maximum]
-#
 def rescaleImage(image, flip_h, flip_v, transpose, display_range, saturated_value, use_numpy = False):
+    """
+    This converts a uint16 image into a uint8 image based on the display
+    range. As a side effect it also returns the minimum and maximum values
+    in the image.
 
+    image - The original image as numpy.uint16 array.
+    flip_h - Flip horizontal.
+    flip_v - Flip vertical.
+    transpose - Transpose image.
+    display_range - [image value that equals 0, image value that equals 255].
+    saturated_value - The value above which the image has saturated the camera.
+    use_numpy - (optional) Use numpy even if the C library exists, defaults to False.
+
+    return [numpy.uint8 image, original image minimum, original image maximum]
+    """
+    
     # Create a string specifying the operations that will be performed on the image.
     op_code = ""
     for op in [flip_h, flip_v, transpose]:
@@ -165,64 +155,6 @@ def rescaleImage(image, flip_h, flip_v, transpose, display_range, saturated_valu
         rescaled = rescaled.astype(numpy.uint8, order='C')
 
     return [rescaled, image_min, image_max]
-
-
-# Testing
-#
-# This does a quick test for all the different possibilities. You will need to provide a raw image.
-#
-if (__name__ == "__main__"):
-
-    from PIL import Image
-
-    if (len(sys.argv)!=2):
-        print("Usage <image_file>")
-        exit()
-        
-    im = Image.open(sys.argv[1])
-    nim = numpy.ascontiguousarray(numpy.amax(numpy.array(im), 2).astype(numpy.uint16))
-
-    all_ori = [[False, False, False],
-               [False, False, True],
-               [False, True, False],
-               [False, True, True],
-               [True, False, False],
-               [True, False, True],
-               [True, True, False],
-               [True, True, True]]
-
-    #all_ori = [[False, False, False]]
-    
-    for ori in all_ori:
-        print("Testing:", ori)
-        [flip_h, flip_v, transpose] = ori
-
-        if False:
-            [c_nim, image_min, image_max] = rescaleImage(nim, flip_h, flip_v, transpose, [0, 100], None)
-            [py_nim, image_min, image_max] = rescaleImage(nim, flip_h, flip_v, transpose, [0, 100], None, True)
-        else:
-            [c_nim, image_min, image_max] = rescaleImage(nim, flip_h, flip_v, transpose, [0, 100], 101)
-            [py_nim, image_min, image_max] = rescaleImage(nim, flip_h, flip_v, transpose, [0, 100], 101, True)
-
-        print("  byte wise comparison:", compare(c_nim, py_nim), "pixels are different.")
-        
-        c_nim = c_nim.astype(numpy.int)
-        py_nim = py_nim.astype(numpy.int)
-
-        # Allow single value differences which occur due to differences in rounding.
-        mask = (numpy.abs(c_nim - py_nim) > 1)
-        
-        if (numpy.count_nonzero(mask) > 0):
-            print("  Failed", numpy.count_nonzero(mask), numpy.max(numpy.abs(c_nim - py_nim)))
-            
-            fim = Image.fromarray(c_nim.astype(numpy.uint8))
-            fim.save("out.png")
-
-            diff = c_nim - py_nim + 128
-            fim = Image.fromarray(diff.astype(numpy.uint8))
-            fim.save("diff.png")
-        else:
-            print("  Ok")
 
             
 #

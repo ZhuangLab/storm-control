@@ -28,6 +28,7 @@ Desktop.ini
 *.o
 *.so
 *.so.*
+*.os
 
 #############
 ## Python

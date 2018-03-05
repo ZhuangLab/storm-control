@@ -14,33 +14,27 @@ from numpy.ctypeslib import ndpointer
 import os
 import sys
 
-lmmoment = False
+import storm_control.c_libraries.loadclib as loadclib
 
+lmmoment = False
 max_locs = 1000
 
-#
-# Called at program shutdown to free arrays allocated in C.
-#
+
 def cleanUp():
+    """
+    Called at program shutdown to free arrays allocated in C.
+    """
     lmmoment.cleanup()
 
-#
-# Called at program start up to allocate array and perform other
-# initialization in C.
-#
+
 def initialize():
+    """
+    Called at program start up to allocate array and perform other
+    initialization in C.
+    """
+    
     global lmmoment
-
-    directory = os.path.dirname(__file__)
-    if (directory == ""):
-        directory = "./"
-    else:
-        directory += "/"
-
-    if (sys.platform == "win32"):
-        lmmoment = ctypes.cdll.LoadLibrary(directory + "LMMoment.dll")
-    else:
-        lmmoment = ctypes.cdll.LoadLibrary(directory + "LMMoment.so")
+    lmmoment = loadclib.loadCLibrary("LMMoment")
 
     lmmoment.initialize.argtypes = []
     lmmoment.cleanup.argtypes = []
@@ -70,34 +64,6 @@ def findObjects(frame, threshold):
                                  ctypes.byref(n))
     return [x, y, n.value]
 
-
-# testing
-if (__name__ == "__main__"):
-
-    import storm_control.hal4000.camera.frame as frame
-    
-    import numpy
-    import time
-
-    initialize()
-
-    image_x = 1024
-    image_y = 1024
-
-    a_frame = frame.Frame(numpy.ones((image_x, image_y), dtype = numpy.uint16),
-                          0,
-                          image_x,
-                          image_y,
-                          "na")
-
-    repeats = 100
-    start = time.time()
-    for i in range(repeats):
-        [x, y, n] = findObjects(a_frame, 100)
-        if ((i % 10) == 0):
-            print(i, n)
-    end = time.time()
-    print("Time to process an image: ", ((end - start)/repeats), " seconds")
 
 #
 # The MIT License
