@@ -39,7 +39,7 @@ def parseShuttersXML(channel_name_to_id, shutters_file, can_oversample = True):
     """
     This parses a XML file that defines a shutter sequence.
 
-    FIXME: Not all setup support oversampling, but as yet none of them set
+    FIXME: Not all setup support oversampling, but none of them currently set
            the can_oversample argument.
     """
     number_channels = len(channel_name_to_id)
@@ -106,13 +106,11 @@ def parseShuttersXML(channel_name_to_id, shutters_file, can_oversample = True):
                         raise ShutterXMLException("Invalid channel descriptor " + str(node.text))
                     
                 # Channels by ID.
-                try:
-                    channel = int(node.text)
-                except ValueError:
-                    raise ShutterXMLException("Invalid channel number " + str(node.text))
-
-                if (channel >= number_channels):
-                    raise ShutterXMLException("Channel number is too large " + str(channel))
+                else:
+                    try:
+                        channel = int(node.text)
+                    except ValueError:
+                        raise ShutterXMLException("Invalid channel number " + str(node.text))
                     
             elif (node.tag == "power"):
                 try:
@@ -151,14 +149,20 @@ def parseShuttersXML(channel_name_to_id, shutters_file, can_oversample = True):
             raise ShutterXMLException("Event on time must be specified.")
         if off is None:
             raise ShutterXMLException("Event off time must be specified.")
+
+        # Check range.
+        if (channel < 0):
+            raise ShutterXMLException("Channel number is negative: " + str(channel) + ".")
+        if (channel >= number_channels):
+            raise ShutterXMLException("Channel number is too large: " + str(channel) + ".")        
         if (on < 0):
-            raise ShutterXMLException("On time out of range: " + str(on) + " " + str(channel))
+            raise ShutterXMLException("On time out of range: " + str(on) + " in channel " + str(channel) + ".")
         if (on > frames * oversampling):
-            raise ShutterXMLException("On time out of range: " + str(on) + " " + str(channel))
+            raise ShutterXMLException("On time out of range: " + str(on) + " in channel " + str(channel) + ".")
         if (off < 0):
-            raise ShutterXMLException("Off time out of range: " + str(on) + " " + str(channel))
+            raise ShutterXMLException("Off time out of range: " + str(on) + " in channel " + str(channel) + ".")
         if (off > frames * oversampling):
-            raise ShutterXMLException("Off time out of range: " + str(on) + " " + str(channel))
+            raise ShutterXMLException("Off time out of range: " + str(on) + " in channel " + str(channel) + ".")
 
         # Channel waveform setup.
         i = on

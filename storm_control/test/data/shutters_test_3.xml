@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<repeat>
+  <frames>3</frames>
+  <event>
+    <power>1.0</power>
+    <on>1.0</on>
+    <off>2.0</off>
+    <color>255,0,0</color>
+  </event>
+</repeat>
