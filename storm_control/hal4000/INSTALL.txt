@@ -53,7 +53,7 @@
        elements.
 
 
-(4) Compile C helper libraries using scons. You'll may also need Python2.7 for
+(4) Compile C helper libraries using scons. You may also need Python2.7 for
  this depending on your version of scons.
 
  $ cd /path/to/storm_control
