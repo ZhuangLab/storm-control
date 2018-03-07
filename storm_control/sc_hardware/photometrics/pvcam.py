@@ -7,7 +7,6 @@ Hazen 10/17
 import ctypes
 import numpy
 import sys
-import time
 
 import storm_control.sc_library.halExceptions as halExceptions
 import storm_control.sc_hardware.photometrics.pvcam_constants as pvc
@@ -69,7 +68,12 @@ def loadPVCAMDLL(pvcam_library_name):
 PVCAM_EOF_FUNC = ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.POINTER(pvc.FRAME_INFO), ctypes.POINTER(pvc.uns32))
 
 def py_eof_callback(c_frame_info, c_counter):
-    print("eof_callback", c_counter[0], c_frame_info.contents.TimeStamp)
+    print("eof_callback",
+          c_counter[0],
+          c_frame_info.contents.FrameNr,
+          c_frame_info.contents.TimeStamp,
+          c_frame_info.contents.ReadoutTime,
+          c_frame_info.contents.TimeStampBOF)
     c_counter[0] += 1
     return 0
 
@@ -155,8 +159,11 @@ class PVCAMCamera(object):
         # Allocate storage for the frames. Use PVCAM's recommendation for the size.
         #
         size = self.getParameterDefault("param_frame_buffer_size")
-        self.data_buffer = numpy.ascontiguousarray(numpy.empty(size, dtype = numpy.uint8))
+        self.data_buffer = numpy.ascontiguousarray(numpy.zeros(size, dtype = numpy.uint8))
         self.buffer_len = int(size/self.frame_bytes)
+
+        print("cs1", self.frame_bytes, size, self.buffer_len)
+        print("cs2", self.data_buffer.ctypes.data)
 
     def getFrames(self):
         frames = []
@@ -182,7 +189,7 @@ class PVCAMCamera(object):
             check(pvcam.pl_exp_unlock_oldest_frame(self.hcam),
                   "pl_exp_unlock_oldest_frame")
             
-            print(self.n_processed, self.buffer_len, data_ptr)
+            print("getFrames", self.n_processed, data_ptr)
             self.n_processed += 1
             
         return [frames, [self.frame_x, self.frame_y]]
@@ -410,6 +417,7 @@ class PVCAMCamera(object):
         self.n_processed = 0
 
         # Start the acquisition.
+        print("startAcquisition", self.data_buffer.ctypes.data)
         check(pvcam.pl_exp_start_cont(self.hcam,
                                       self.data_buffer.ctypes.data,
                                       pvc.uns32(self.data_buffer.size)),
@@ -453,6 +461,9 @@ class PVCAMFrameData(object):
     
 
 if (__name__ == "__main__"):
+    import tifffile
+    import time
+
     loadPVCAMDLL("c:\Windows\System32\pvcam64.dll")
 
     initPVCAM()
@@ -465,56 +476,76 @@ if (__name__ == "__main__"):
     cam = PVCAMCamera(camera_name = names[0])
 
     # Test getting some parameters.
-    for param in ["param_temp", "param_pix_par_size", "param_shtr_status",
-                  "param_readout_time", "param_bit_depth", "param_chip_name"]:
-        print("Parameter: ", param)
-        if cam.hasParameter(param):
-            print("  value = ", cam.getParameterCurrent(param))
-        else:
-            print("  not available.")
+    if False:
+        for param in ["param_temp", "param_pix_par_size", "param_shtr_status",
+                      "param_readout_time", "param_bit_depth", "param_chip_name"]:
+            print("Parameter: ", param)
+            if cam.hasParameter(param):
+                print("  value = ", cam.getParameterCurrent(param))
+            else:
+                print("  not available.")
 
     # Test querying the number of ports and readout speeds.
-    print("querying ports and speeds.")
-    n_ports = cam.getParameterCount("param_readout_port")
-    for i in range(n_ports):
-        [value, desc] = cam.getParameterEnum("param_readout_port", i)
-        print("value = ", value, "desc = ", desc)
-        cam.setParameter("param_readout_port", value)
-        n_speeds = cam.getParameterMax("param_spdtab_index")
-        for j in range(n_speeds):
-            print("speed", j)
-            cam.setParameter("param_spdtab_index", j)
-            for param in ["param_bit_depth", "param_pix_time", "param_gain_index"]:
-                print("  ", i, j, param, "=", cam.getParameterCurrent(param))
-    
-    # Configure acquisition, 512 x 512, 100ms exposure.
-    cam.captureSetup(0, 1199, 1, 0, 1199, 1, 100)
-    
+    if False:
+        print("querying ports and speeds.")
+        n_ports = cam.getParameterCount("param_readout_port")
+        for i in range(n_ports):
+            [value, desc] = cam.getParameterEnum("param_readout_port", i)
+            print("value = ", value, "desc = ", desc)
+            cam.setParameter("param_readout_port", value)
+            n_speeds = cam.getParameterMax("param_spdtab_index")
+            for j in range(n_speeds):
+                print("speed", j)
+                cam.setParameter("param_spdtab_index", j)
+                for param in ["param_bit_depth", "param_pix_time", "param_gain_index"]:
+                    print("  ", i, j, param, "=", cam.getParameterCurrent(param))
+
+    # Test querying exposure
+    if False:
+        print(cam.getParameterCount("param_exp_res"), cam.getParameterCurrent("param_exp_res"))
+        print(cam.getParameterCurrent("param_expose_out_mode"))
+        print(cam.getParameterCurrent("param_metadata_enabled"))
+
     # Test acquisition.
-    for i in range(1):
+    if True:
 
-        # Start acquisition.
-        print("Starting camera.")
-        cam.startAcquisition()
+        x_size = 1024
+        y_size = 1024
+        
+        # Configure acquisition, x_size by y_size, X millisecond exposure.
+        cam.captureSetup(0, x_size - 1, 1, 0, y_size - 1, 1, 100)
 
-        for j in range(4):
-            time.sleep(1.0)
-            print("query", j)
+        tf = tifffile.TiffWriter("capture.tif")
+        
+        # Test acquisition.
+        for i in range(1):
+
+            # Start acquisition.
+            print("Starting camera.")
+            cam.startAcquisition()
+
+            for j in range(1):
+                time.sleep(2.0)
+                print("query", j)
+            
+                # See if we can get the frames that were acquired.
+                [frames, shape] = cam.getFrames()
+                for k, frame in enumerate(frames):
+                    print(k, frame.getData()[0:3])
+                    tf.save(frame.getData().reshape((x_size, y_size)))
+
+            # Stop acquisition.
+            print("Stopping camera.")
+            cam.stopAcquisition()
             
             # See if we can get the frames that were acquired.
             [frames, shape] = cam.getFrames()
-            for k, frame in enumerate(frames):
-                print(k, frame.getData()[0:3])
+            for j, frame in enumerate(frames):
+                print(j, frame.getData()[0:3])
+                tf.save(frame.getData().reshape((x_size, y_size)))
 
-        # Stop acquisition.
-        print("Stopping camera.")
-        cam.stopAcquisition()
-
-        # See if we can get the frames that were acquired.
-        [frames, shape] = cam.getFrames()
-        for j, frame in enumerate(frames):
-            print(j, frame.getData()[0:3])
-    
+        tf.close()
+        
     # Close the camera.
     cam.shutdown()
 
