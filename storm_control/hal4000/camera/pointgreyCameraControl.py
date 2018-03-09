@@ -314,6 +314,10 @@ class PointGreyCameraControl(cameraControl.HWCameraControl):
                 self.parameters.setv("exposure_time", 1.0e-6 * self.camera.getProperty("ExposureTime").spinNodeGetValue())
                 self.parameters.setv("fps", self.camera.getProperty("AcquisitionFrameRate").spinNodeGetValue())
 
+            # Update camera frame size.
+            self.parameters.setv("bytes_per_frame",
+                                 2 * self.parameters.get("Height") * self.parameters.get("Width"))
+
             if running:
                 self.startCamera()
                 

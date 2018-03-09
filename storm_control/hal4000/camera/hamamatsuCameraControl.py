@@ -161,6 +161,10 @@ class HamamatsuCameraControl(cameraControl.HWCameraControl):
             self.parameters.setv("exposure_time", exposure_time)
             self.parameters.setv("fps", fps)
 
+            # Update camera frame size.
+            self.parameters.setv("bytes_per_frame",
+                                 2 * self.parameters.get("subarray_hsize") * self.parameters.get("subarray_vsize"))
+
             if running:
                 self.startCamera()
                 
