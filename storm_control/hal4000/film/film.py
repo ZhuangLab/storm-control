@@ -448,6 +448,7 @@ class Film(halModule.HalModule):
         # to the 'stop film' message. We save them in an xml file here.
         elif message.isType("stop film"):
             self.film_state = "idle"
+            acq_p = None
             notes = ""
             film_settings = message.getData()["film settings"]
             number_frames = message.getData()["number frames"]
