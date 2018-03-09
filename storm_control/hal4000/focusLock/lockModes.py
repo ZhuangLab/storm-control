@@ -913,6 +913,8 @@ class CalibrationLockMode(JumpLockMode):
     def startFilm(self):
         self.clm_counter = 0
 
+    def stopFilm(self):
+        self.z_stage_functionality.recenter()        
 
 class HardwareZScanLockMode(AlwaysOnLockMode):
     """
