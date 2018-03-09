@@ -122,6 +122,7 @@ class UC480Camera(hardwareModule.HardwareModule):
                                                      camera_id = configuration.get("camera_id"),
                                                      ini_file = configuration.get("ini_file"),
                                                      offset_file = configuration.get("offset_file"),
+                                                     pixel_clock = configuration.get("pixel_clock", 30),
                                                      sigma = configuration.get("sigma"),
                                                      x_width = configuration.get("x_width"),
                                                      y_width = configuration.get("y_width"))
@@ -133,6 +134,7 @@ class UC480Camera(hardwareModule.HardwareModule):
                                                         camera_id = configuration.get("camera_id"),
                                                         ini_file = configuration.get("ini_file"),
                                                         offset_file = configuration.get("offset_file"),
+                                                        pixel_clock = configuration.get("pixel_clock", 30),
                                                         sigma = configuration.get("sigma"),
                                                         x_width = configuration.get("x_width"),
                                                         y_width = configuration.get("y_width"))

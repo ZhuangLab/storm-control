@@ -252,7 +252,7 @@ class Camera(Handle):
         if verbose:
             print("uc480: Set frame rate to {0:.1f} FPS".format(new_fps.value))
 
-    def setPixelClock(self, pixel_clock_MHz = 30):
+    def setPixelClock(self, pixel_clock_MHz):
         """
         43MHz seems to be the max for this camera?
         """
@@ -299,6 +299,7 @@ class CameraQPD(object):
                  camera_id = 1,
                  ini_file = None,
                  offset_file = None,
+                 pixel_clock = None,
                  sigma = None,
                  x_width = None,
                  y_width = None,
@@ -338,7 +339,7 @@ class CameraQPD(object):
         self.setAOI()
 
         # Run at maximum speed.
-        self.cam.setPixelClock()
+        self.cam.setPixelClock(pixel_clock)
         self.cam.setFrameRate(verbose = True)
 
         # Some derived parameters
