@@ -25,6 +25,7 @@ Desktop.ini
 #####
 ## C
 #####
+*.a
 *.o
 *.so
 *.so.*
