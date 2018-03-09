@@ -20,6 +20,8 @@ import ctypes
 import numpy
 import os
 
+import storm_control.c_libraries.loadclib as loadclib
+
 # Spinnaker error codes.
 SPINNAKER_ERR_SUCCESS = 0
 
@@ -72,9 +74,7 @@ def loadSpinnakerDLL(dll_name):
     global spinshimdll
     if spindll is None:
         spindll = ctypes.windll.LoadLibrary(dll_name)
-
-        spinshim_path = os.path.dirname(os.path.abspath(__file__))
-        spinshimdll = ctypes.windll.LoadLibrary(spinshim_path + "/spinshim.dll")
+        spinshimdll = loadclib.loadCLibrary("spinshim")
 
 
 def spinGetCamera(cam_id):

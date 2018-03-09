@@ -6,14 +6,20 @@
  * which enable us to take continuous movies instead of grabbing
  * a series of random images.
  *
- * Hazen 12/16
+ * Compile using scons and storm-control/SConstruct.
+ *
+ * $ cd storm-control
+ * $ path/to/scons.bat 
+ *
+ * Hazen 03/18
+ *
  *
  * Compilation (windows / MinGW):
  *
  * c:\MinGW\bin\gcc.exe -c spinshim.c -I"C:\Program Files\Point Grey Research\Spinnaker\include\spinc" -I"C:\MinGW\x86_64-w64-mingw32\include"
  * c:\MinGW\bin\gcc.exe -shared -o spinshim.dll spinshim.o -L"C:\Program Files\Point Grey Research\Spinnaker\bin64\vs2013" -lSpinnakerC_v120
  *
- * See also : compile_bat.bat
+ * Then copy the dll to storm-control/storm_control/c_libraries
  */
 
 #include <stdint.h>
