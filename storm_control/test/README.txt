@@ -17,3 +17,9 @@ And run the tests with:
 py.test --boxed
 
 So that each test gets run in it's own Python instance.
+
+Note also that you should probably run the tests in this directory
+due to possible relative path issues.
+
+$ cd storm-control/storm_control/test
+$ py.test --boxed
