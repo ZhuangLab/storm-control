@@ -32,3 +32,4 @@ def halTest(config_xml = "", class_name = "Testing", test_module = "", show_gui 
                           show_gui = show_gui)
     
     app.exec_()
+    app = None
