@@ -119,7 +119,7 @@ class HalView(QtWidgets.QMainWindow):
 
     def __init__(self, module_name = None, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
-
+                
         self.close_now = False
         self.close_timer = QtCore.QTimer(self)
         self.film_directory = module_params.get("directory")
@@ -336,7 +336,6 @@ class ClassicView(HalView):
         self.classic_view = True
         super().__init__(**kwds)
 
-
 class DetachedView(HalView):
     """
     The 'detached' main window view. This includes a record
@@ -523,6 +522,12 @@ class HalCore(QtCore.QObject):
         self.handleMessage(halMessage.chainMessages(self.handleMessage,
                                                     message_chain))
 
+    def close(self):
+        """
+        This is called by qtbot at the end of a test.
+        """
+        self.cleanUp()
+        
     def cleanUp(self):
         for module in self.modules:
             module.cleanUp(self.qt_settings)
@@ -530,6 +535,18 @@ class HalCore(QtCore.QObject):
         halModule.threadpool.waitForDone()
         print(" Dave? What are you doing Dave?")
         print("  ...")
+
+    def findChild(self, qt_type, name, options = QtCore.Qt.FindChildrenRecursively):
+        """
+        Overwrite the QT version as the 'child' will be (hopefully) be in one of
+        the modules.
+        """
+        for module in self.modules:
+            print(module)
+            m_child = module.findChild(qt_type, name, options)
+            if m_child is not None:
+                return m_child
+        return None
 
     def handleErrors(self, message):
         """

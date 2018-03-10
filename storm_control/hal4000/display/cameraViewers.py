@@ -38,7 +38,7 @@ class CameraParamsMixin(object):
 
     def configure2(self):
         pass    
-
+        
     def getDefaultParameters(self):
         return self.frame_viewer.getDefaultParameters()
             
@@ -139,6 +139,19 @@ class ClassicViewer(QtCore.QObject, CameraParamsMixin):
                                                            "ui_parent" : "hal.containerWidget",
                                                            "ui_widget" : self.params_viewer}))
 
+    def findChild(self, qt_type, name, options):
+        """
+        Overwrite the QT version as the 'child' as the child could only
+        be in self.frame_viewer or self.params_viewer. 
+        """
+        for view in [self.frame_viewer, self.params_viewer]:
+            print("cameraView", view)
+            if view is not None:
+                print(view)
+                m_child = view.findChild(qt_type, name, options)
+                if m_child is not None:
+                    return m_child
+                
     #
     # Why? We change again to the current feed because at this point the display window will
     # now have the correct size, so the displayed feed won't be ridiculously small.
@@ -160,6 +173,7 @@ class FeedViewer(halDialog.HalDialog, CameraParamsMixin):
         self.frame_viewer = cameraFrameViewer.CameraFrameViewer(display_name = self.module_name,
                                                                 feed_name = camera_name,
                                                                 default_colortable = default_colortable)
+        self.params_viewer = None
 
         self.ui = feedViewerUi.Ui_Dialog()
         self.ui.setupUi(self)

@@ -127,6 +127,8 @@ class HalModule(QtCore.QObject):
         self.queued_messages_timer.setInterval(0)
         self.queued_messages_timer.timeout.connect(self.nextMessage)
         self.queued_messages_timer.setSingleShot(True)
+
+        self.view = None
         
     def cleanUp(self, qt_settings):
         """
@@ -143,7 +145,19 @@ class HalModule(QtCore.QObject):
         worker.hwsignaler.workerDone.disconnect(self.handleWorkerDone)
         worker.hwsignaler.workerError.disconnect(self.handleWorkerError)
         del self.workers[worker_id]
-        
+
+    def findChild(self, qt_type, name, options):
+        """
+        Overwrite the QT version as the 'child' could only
+        be in the view, if any.
+        """
+        if self.view is not None:
+            print("fc", self.view, self.view.objectName(), name)
+            if (self.view.objectName() == name):
+                return self.view
+            else:
+                return self.view.findChild(qt_type, name, options)
+
     def handleError(self, message, m_error):
         """
         Override this with class specific error handling.

@@ -59,6 +59,17 @@ class Display(halModule.HalModule):
         for viewer in self.viewers:
             viewer.cleanUp(qt_settings)
 
+    def findChild(self, qt_type, name, options):
+        """
+        Overwrite the halModule version as the 'child' could only
+        be in the one of the viewers.
+        """
+        for view in self.viewers:
+            print("display", view)
+            m_child = view.findChild(qt_type, name, options)
+            if m_child is not None:
+                return m_child
+
     def getNextViewerName(self):
         return "display{0:02d}".format(len(self.viewers))
 
