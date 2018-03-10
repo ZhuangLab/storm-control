@@ -546,7 +546,7 @@ class HalCore(QtCore.QObject):
             m_child = module.findChild(qt_type, name, options)
             if m_child is not None:
                 return m_child
-        return None
+        assert False, "UI element " + name + " not found."
 
     def handleErrors(self, message):
         """
