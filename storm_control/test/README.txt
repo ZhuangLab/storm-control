@@ -1,5 +1,11 @@
 
-Some of the tests depend on the storm-analysis project.
+Some of the tests depend on the storm-analysis project. This
+requires the following modules:
+
+1. pytest
+2. pytest-mock
+3. pytest-qt
+
 
 Running these tests in the standard way may fail, perhaps due
 the creation of so many QApplications?
