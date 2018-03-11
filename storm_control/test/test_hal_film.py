@@ -81,3 +81,30 @@ def test_hal_film_4(qtbot, mock):
 
     # Wait a second for the film to complete, then exit.
     qtbot.wait(1000)
+
+
+def test_hal_film_5():
+    """
+    Test repeated film acquisition.
+    """
+    halTest(config_xml = "none_classic_config.xml",
+            class_name = "FilmTest4",
+            test_module = "storm_control.test.hal.film_tests")
+
+    # Check that the final movie is correct.
+    movie = datareader.inferReader(os.path.join(test.dataDirectory(), "movie_04.dax"))
+    assert(movie.filmSize() == [512, 512, 1])
+    
+
+def test_hal_film_6():
+
+    # This is expected to record a movie called 'movie_01.dax'
+    halTest(config_xml = "none_tcp_config_low_qpd_signal.xml",
+            class_name = "FilmTest5",
+            test_module = "storm_control.test.hal.film_tests",
+            show_gui = True)
+
+    # Check that the movie is the right length.
+    movie = datareader.inferReader(os.path.join(test.dataDirectory(), "movie_01.dax"))
+    assert(movie.filmSize() == [512, 512, 10])
+    

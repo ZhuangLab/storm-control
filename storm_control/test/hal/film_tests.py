@@ -94,3 +94,26 @@ class FilmTest4(testing.Testing):
         self.test_actions = [testActions.SetDirectory(directory = directory)]
         for i in range(10):
             self.test_actions.append(testActions.Record(filename = filename, length = 1))
+
+
+class FilmTest5(testing.Testing):
+    """
+    Test that we can still take a film even if the QPD signal is too low.
+    """
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+
+        directory = test.dataDirectory()
+        filename = "movie_01"
+
+        # Remove old movie (if any).
+        fullname = os.path.join(directory, filename + ".dax")
+        if os.path.exists(fullname):
+            os.remove(fullname)
+            os.remove(os.path.join(directory, filename + ".xml"))
+
+        self.test_actions = [testActions.SetDirectory(directory = directory),
+                             testActions.ShowGUIControl(control_name = "focus lock"),
+                             testActions.Timer(100),
+                             testActions.Record(filename = filename, length = 10)]
