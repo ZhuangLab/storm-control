@@ -1,35 +1,14 @@
-#!/usr/bin/python
-#
-## @file
-#
-# A very simple git parser.
-#
-# Hazen 05/14
-#
+#!/usr/bin/env python
+"""
+A very simple git parser. Note that this will only give the 
+correct answer if you run it in a storm-control directory.
 
-import os
+Hazen 02/18
+"""
+from subprocess import check_output
 
-branch = ""
-version = ""
-
-try:
-    directory = os.path.abspath(__file__)
-    for i in range(3):
-        directory = os.path.split(directory)[0]
-    git_dir = os.path.join(directory, ".git")
-
-    fp = open(os.path.join(git_dir, "HEAD"))
-    ref = fp.readline().rstrip().split(" ")[1]
-    branch = os.path.basename(ref)
-    fp.close()
-
-    fp = open(os.path.join(git_dir, ref))
-    version = fp.readline().rstrip()
-    fp.close()
-    
-except FileNotFoundError:
-    print("Did not find .git directory here:", git_dir)
-
+branch = check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).strip().decode()
+version = check_output(["git", "rev-parse", "HEAD"]).strip().decode()
     
 def getBranch():
     return branch
