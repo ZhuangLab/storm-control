@@ -31,6 +31,8 @@ script:
   - pip3 install pyqt5
   - pip3 install numpy
   - pip3 install scipy
+  - pip3 install pillow
+  - pip3 install pyqtgraph
   - pip3 install tifffile
   - pip3 install serial
   - pip3 install pytest
@@ -44,12 +46,14 @@ script:
 
   # stackoverflow - https://stackoverflow.com/questions/3402168/permanently-add-a-directory-to-pythonpath
   - SITEDIR=$(python3 -m site --user-site)
+  - echo "$SITEDIR"
   
   # create if it doesn't exist
   - mkdir -p "$SITEDIR"
 
-  # create .pth for storm-analysis.
+  # create .pth for storm-analysis and storm-control
   - echo "($pwd)/storm-analysis/" > "$SITEDIR/storm_analysis.pth"
+  - echo "($pwd)/storm-control/" > "$SITEDIR/storm_control.pth"
 
   - ls
   - cd storm-control
