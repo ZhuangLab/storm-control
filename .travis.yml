@@ -1,0 +1,58 @@
+
+sudo: false
+
+dist: trusty
+
+addons:
+  apt:
+    packages:
+      - scons
+
+# headless as some of the tests will show the GUI.
+#
+# https://docs.travis-ci.com/user/gui-and-headless-browsers/
+#
+before_script:
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 3 # give xvfb some time to start
+
+script:
+  - pwd
+  - python3 --version
+
+  # Install dependencies.
+  - pip3 install pyqt5
+  - pip3 install numpy
+  - pip3 install scipy
+  - pip3 install tifffile
+  - pip3 install serial
+  - pip3 install pytest
+  - pip3 install pytest-mock
+  - pip3 install pytest-qt
+  - pip3 install pytest-xdist
+
+  # Install storm-analysis (lite.. we only need the datareader.py file for the tests).
+  - cd ..
+  - git clone https://github.com/ZhuangLab/storm-analysis
+
+  # stackoverflow - https://stackoverflow.com/questions/3402168/permanently-add-a-directory-to-pythonpath
+  - SITEDIR=$(python3 -m site --user-site)
+  
+  # create if it doesn't exist
+  - mkdir -p "$SITEDIR"
+
+  # create .pth for storm-analysis.
+  - echo ($pwd)/storm-analysis/ > "$SITEDIR/storm_analysis.pth"
+
+  - ls
+  - cd storm-control
+
+  # build C libraries.
+  - scons
+
+  # test
+  - cd storm_control/test
+  - py.test --boxed
+
+  
