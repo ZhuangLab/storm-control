@@ -1,7 +1,7 @@
 
 sudo: false
 
-dist: trusty
+dist: xenial
 
 addons:
   apt:
@@ -43,7 +43,7 @@ script:
   - mkdir -p "$SITEDIR"
 
   # create .pth for storm-analysis.
-  - echo ($pwd)/storm-analysis/ > "$SITEDIR/storm_analysis.pth"
+  - echo "($pwd)/storm-analysis/" > "$SITEDIR/storm_analysis.pth"
 
   - ls
   - cd storm-control
