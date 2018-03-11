@@ -1,8 +1,14 @@
 
+# Use containers.
 sudo: false
 
 dist: xenial
 
+language: python
+
+python:
+  - 3.6
+  
 addons:
   apt:
     packages:
