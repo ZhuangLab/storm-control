@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import storm_analysis.sa_library.datareader as datareader
 
 import storm_control.hal4000.hal4000 as hal4000
+import storm_control.sc_library.hdebug as hdebug
 import storm_control.sc_library.parameters as params
 import storm_control.test as test
 
@@ -61,7 +62,9 @@ def test_hal_film_4(qtbot, mock):
     # https://github.com/pytest-dev/pytest-qt/issues/18
     #
     mock.patch.object(QtWidgets.QMessageBox, 'question', return_value = QtWidgets.QMessageBox.Yes)
-    
+
+    hdebug.startLogging(test.logDirectory(), "hal4000")
+        
     config = params.config(test.halXmlFilePathAndName("none_classic_config.xml"))
     hal = hal4000.HalCore(config = config)
 
