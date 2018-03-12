@@ -46,8 +46,8 @@ script:
 
   # stackoverflow - https://stackoverflow.com/questions/3402168/permanently-add-a-directory-to-pythonpath
   - echo "$PYTHONPATH"
-  - export PYTHONPATH="${PYTHONPATH}:($pwd)/storm-analysis/"
-  - export PYTHONPATH="${PYTHONPATH}:($pwd)/storm-control/"
+  - export PYTHONPATH="${PYTHONPATH}:`pwd`/storm-analysis/"
+  - export PYTHONPATH="${PYTHONPATH}:`pwd`/storm-control/"
   - echo "$PYTHONPATH"
   - python -c "import sys; print(sys.path)"
   
