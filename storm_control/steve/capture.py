@@ -6,7 +6,7 @@ QPixmap.
 
 Hazen 03/14
 """
-
+import contextlib
 import math
 import numpy
 import os
@@ -64,11 +64,14 @@ def movieMessage(filename, directory):
     filename - The name of the movie.
     directory - Where to save the movie.
     """
+    #
+    # Note - We don't use 'overwrite' = True as the captureStart() method
+    #        is supposed to take care of removing the previous film.
+    #
     return tcpMessage.TCPMessage(message_type = "Take Movie",
                                  message_data = {"name" : filename,
                                                  "directory" : directory,
-                                                 "length" : 1,
-                                                 "overwrite" : True})
+                                                 "length" : 1})
 
 ## moveStageMessage
 #
@@ -212,7 +215,7 @@ class Capture(QtCore.QObject):
     def captureStart(self, stagex, stagey):
         print("captureStart", stagex, stagey)
         
-        if os.path.exists(self.fullname()):
+        with contextlib.suppress(FileNotFoundError):
             os.remove(self.fullname())
             os.remove(self.fullname(extension = ".xml"))
         
