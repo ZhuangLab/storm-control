@@ -43,8 +43,8 @@ class LudlStageFunctionality(stageModule.StageFunctionality):
         # 10mm / second. Add an additional fixed amount.
         dx = x - self.pos_dict["x"]
         dy = y - self.pos_dict["y"]
-        time_estimate = math.sqrt(dx*dx + dy*dy)/10000.0 + 0.25
-        print("time estimate", time_estimate)
+        time_estimate = math.sqrt(dx*dx + dy*dy)/10000.0 + 1.0
+        print("> stage move time estimate is {0:.3f} seconds".format(time_estimate))
 
         # Set interval and start the timer.
         self.moving_timer.setInterval(time_estimate * 1.0e+3)
