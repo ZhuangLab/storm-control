@@ -40,10 +40,13 @@ class LudlStageFunctionality(stageModule.StageFunctionality):
         super().goAbsolute(x, y)
 
         # Figure out how far we have to move in microns. Assume we can move
-        # 10mm / second. Add an additional fixed amount.
+        # 10mm / second. Add an additional 2 seconds as this seems to be
+        # how long it takes for the stage to realize that it is where it
+        # should be.
+        #
         dx = x - self.pos_dict["x"]
         dy = y - self.pos_dict["y"]
-        time_estimate = math.sqrt(dx*dx + dy*dy)/10000.0 + 1.0
+        time_estimate = math.sqrt(dx*dx + dy*dy)/10000.0 + 2.0
         print("> stage move time estimate is {0:.3f} seconds".format(time_estimate))
 
         # Set interval and start the timer.
@@ -65,6 +68,7 @@ class LudlStageFunctionality(stageModule.StageFunctionality):
                      ret_signal = self.stagePosition)
 
     def position(self):
+        #
         # Don't update the position if the move timer is active. When we were
         # told to move we set the stage position to the final position and we
         # don't want to change that in the middle of the move. Why? If we get
@@ -73,8 +77,15 @@ class LudlStageFunctionality(stageModule.StageFunctionality):
         # movie position will be incorrect. This assumes that the stage does
         # finally arrive at the requested position..
         #
+        # .. And this still doesn't work. I think the stage reports a stale
+        # position for some time during/after a move, so even though the move
+        # has stopped you'll still get the old position. Not necessarily a
+        # a problem for Dave but definitely a problem for Steve.
+        #
+        stage_position = self.stage.position()
         if not self.moving_timer.isActive():
-            self.pos_dict = self.stage.position()
+            #self.pos_dict = self.stage.position()
+            self.pos_dict = stage_position
         return self.pos_dict
         
     def wait(self):
