@@ -598,8 +598,8 @@ class CameraQPDSAFit(CameraQPD):
 
         if self.fit_hl is None:
             self.fit_hl = saLPF.LockPeakFinder(offset = 5.0,
-                                                        sigma = self.sigma,
-                                                        threshold = 10)
+                                               sigma = self.sigma,
+                                               threshold = 10)
             self.fit_hr = saLPF.LockPeakFinder(offset = 5.0,
                                                sigma = self.sigma,
                                                threshold = 10)
@@ -637,7 +637,7 @@ if (__name__ == "__main__"):
     loadDLL("c:/windows/system32/uc480_64.dll")
 
     cam = Camera(1)
-    reps = 50
+    reps = 200
 
     if False:
         cam.setAOI(772, 566, 200, 200)
@@ -664,18 +664,19 @@ if (__name__ == "__main__"):
         print("time:", time.time() - st)
         cam.stopCapture()
 
-    if False:
+    if True:
         cam.setAOI(100, 100, 300, 300)
-        cam.setPixelClock()
-        cam.setFrameRate()
+        cam.setPixelClock(25)
+        cam.setFrameRate(verbose = True)
         st = time.time()
+        print("starting")
         for i in range(reps):
             #print i
             image = cam.captureImage()
-            print(i, numpy.sum(image))
-        print("time:", time.time() - st)
+            #print(i, numpy.sum(image))
+        print("{0:0d} frames in {1:.3f} seconds".format(reps, time.time() - st))
 
-    if True:
+    if False:
         image = cam.captureImage()
         im = Image.fromarray(image)
         im.save("temp.png")
