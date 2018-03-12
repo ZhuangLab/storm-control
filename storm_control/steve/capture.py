@@ -1,13 +1,11 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Handles telling the acquisition program to get
-# a picture & converts the captured image into a
-# QPixmap.
-#
-# Hazen 03/14
-#
+#!/usr/bin/env python
+"""
+Handles telling the acquisition program to get
+a picture & converts the captured image into a
+QPixmap.
+
+Hazen 03/14
+"""
 
 import math
 import numpy
@@ -58,19 +56,19 @@ def getPositionMessage():
 def mosaicSettingsMessage():
     return tcpMessage.TCPMessage(message_type = "Get Mosaic Settings")
     
-## movieMessage
-#
-# Creates a movie message for communication via TCPClient.
-#
-# @param filename The name of the movie.
-#
-# @return A TCPMessage object.
-#
+
 def movieMessage(filename, directory):
+    """
+    Creates a movie message for communication via TCPClient.
+
+    filename - The name of the movie.
+    directory - Where to save the movie.
+    """
     return tcpMessage.TCPMessage(message_type = "Take Movie",
                                  message_data = {"name" : filename,
                                                  "directory" : directory,
-                                                 "length" : 1})
+                                                 "length" : 1,
+                                                 "overwrite" : True})
 
 ## moveStageMessage
 #
