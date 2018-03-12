@@ -45,15 +45,21 @@ script:
   - git clone https://github.com/ZhuangLab/storm-analysis
 
   # stackoverflow - https://stackoverflow.com/questions/3402168/permanently-add-a-directory-to-pythonpath
-  - SITEDIR=$(python3 -m site --user-site)
-  - echo "$SITEDIR"
+  - echo "$PYTHONPATH"
+  - export PYTHONPATH="${PYTHONPATH}:($pwd)/storm-analysis/"
+  - export PYTHONPATH="${PYTHONPATH}:($pwd)/storm-control/"
+  - echo "$PYTHONPATH"
+  - python -c "import sys; print(sys.path)"
+  
+  #- SITEDIR=$(python3 -m site --user-site)
+  #- echo "$SITEDIR"
   
   # create if it doesn't exist
-  - mkdir -p "$SITEDIR"
+  #- mkdir -p "$SITEDIR"
 
   # create .pth for storm-analysis and storm-control
-  - echo "($pwd)/storm-analysis/" > "$SITEDIR/storm_analysis.pth"
-  - echo "($pwd)/storm-control/" > "$SITEDIR/storm_control.pth"
+  #- echo "($pwd)/storm-analysis/" > "$SITEDIR/storm_analysis.pth"
+  #- echo "($pwd)/storm-control/" > "$SITEDIR/storm_control.pth"
 
   - ls
   - cd storm-control
