@@ -9,7 +9,7 @@
 | CMOS Camera | DLL | Andor | Works, in use |
 | CMOS Camera | DLL | Hamamatsu | Works, in use |
 | CMOS Camera | DLL | FLIR Imaging | Works, in use |
-| CMOS Camera | DLL | Photometrics | In development |
+| CMOS Camera | DLL | Photometrics | Works |
 | DAQ | DLL | National Instruments | Works, in use |
 | DAQ (U3) | DLL | Labjack | Works, in use |
 | EMCCD Camera | DLL | Andor | Works, in use |
