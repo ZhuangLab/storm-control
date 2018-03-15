@@ -68,12 +68,6 @@ def loadPVCAMDLL(pvcam_library_name):
 PVCAM_EOF_FUNC = ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.POINTER(pvc.FRAME_INFO), ctypes.POINTER(pvc.uns32))
 
 def py_eof_callback(c_frame_info, c_counter):
-    print("eof_callback",
-          c_counter[0],
-          c_frame_info.contents.FrameNr,
-          c_frame_info.contents.TimeStamp,
-          c_frame_info.contents.ReadoutTime,
-          c_frame_info.contents.TimeStampBOF)
     c_counter[0] += 1
     return 0
 
@@ -162,9 +156,6 @@ class PVCAMCamera(object):
         self.data_buffer = numpy.ascontiguousarray(numpy.zeros(size, dtype = numpy.uint8))
         self.buffer_len = int(size/self.frame_bytes)
 
-        print("cs1", self.frame_bytes, size, self.buffer_len)
-        print("cs2", self.data_buffer.ctypes.data)
-
     def getFrames(self):
         frames = []
 
@@ -189,7 +180,6 @@ class PVCAMCamera(object):
             check(pvcam.pl_exp_unlock_oldest_frame(self.hcam),
                   "pl_exp_unlock_oldest_frame")
             
-            print("getFrames", self.n_processed, data_ptr)
             self.n_processed += 1
             
         return [frames, [self.frame_x, self.frame_y]]
@@ -417,7 +407,6 @@ class PVCAMCamera(object):
         self.n_processed = 0
 
         # Start the acquisition.
-        print("startAcquisition", self.data_buffer.ctypes.data)
         check(pvcam.pl_exp_start_cont(self.hcam,
                                       self.data_buffer.ctypes.data,
                                       pvc.uns32(self.data_buffer.size)),
