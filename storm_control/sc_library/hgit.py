@@ -7,8 +7,13 @@ Hazen 02/18
 """
 from subprocess import check_output
 
-branch = check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).strip().decode()
-version = check_output(["git", "rev-parse", "HEAD"]).strip().decode()
+branch = "master"
+version = ""
+try:
+    branch = check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).strip().decode()
+    version = check_output(["git", "rev-parse", "HEAD"]).strip().decode()
+except FileNotFoundError:
+    pass
     
 def getBranch():
     return branch
