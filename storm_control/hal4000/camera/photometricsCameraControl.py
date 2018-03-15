@@ -55,9 +55,18 @@ class PhotometricsCameraControl(cameraControl.HWCameraControl):
                                                                             is_master = is_master,
                                                                             parameters = self.parameters)
 
+        # Add Photometrics specific parameters. These all start with 'param_'.
+        #
+        self.parameters.add(params.ParameterRangeInt(description = "Sensor readout speed",
+                                                     name = "param_spdtab_index",
+                                                     value = self.camera.getParameterCurrent("param_spdtab_index"),
+                                                     min_value = 0,
+                                                     max_value = self.camera.getParameterCount("param_spdtab_index") - 1))
+
         # Dictionary of the Photometrics camera properties we'll support.
         #
         self.pvcam_props = {"exposure_time" : True,
+                            "param_spdtab_index" : True,
                             "x_bin" : True,
                             "x_end" : True,
                             "x_start" : True,
@@ -65,9 +74,11 @@ class PhotometricsCameraControl(cameraControl.HWCameraControl):
                             "y_end" : True,
                             "y_start" : True}
 
-        # Should query the camera for this.
+        # FIXME: Display needs to realize that the camera bit depth has
+        #        changed. For now we're just setting to the maximum.
         #
-        self.parameters.setv("max_intensity", 2**12)
+        #bit_depth = self.camera.getParameterCurrent("param_bit_depth")
+        self.parameters.setv("max_intensity", 2**16)
                 
         # X/Y may be reversed here.
         #
@@ -121,6 +132,9 @@ class PhotometricsCameraControl(cameraControl.HWCameraControl):
                 self.stopCamera()
 
             # Reconfigure the camera.
+            for pname in to_change:
+                if pname.startswith("param_"):
+                    self.camera.setParameter(pname, parameters.get(pname))
 
             # HAL uses seconds, PVCAM uses milliseconds (as integers).
             exposure_time = int(1000.0 * parameters.get("exposure_time"))
@@ -146,6 +160,10 @@ class PhotometricsCameraControl(cameraControl.HWCameraControl):
             #        an API function that does this.
             cycle_time = self.parameters.get("exposure_time")
             self.parameters.setv("fps", 1.0/cycle_time)
+
+            # Update bit depth.
+            #bit_depth = self.camera.getParameterCurrent("param_bit_depth")
+            #self.parameters.setv("max_intensity", 2**bit_depth)
 
             if running:
                 self.startCamera()

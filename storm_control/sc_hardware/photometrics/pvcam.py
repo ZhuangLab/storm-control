@@ -475,28 +475,35 @@ if (__name__ == "__main__"):
                 print("  not available.")
 
     # Test querying the number of ports and readout speeds.
-    if False:
+    if True:
         print("querying ports and speeds.")
         n_ports = cam.getParameterCount("param_readout_port")
+        print("Number of ports", n_ports)
         for i in range(n_ports):
             [value, desc] = cam.getParameterEnum("param_readout_port", i)
             print("value = ", value, "desc = ", desc)
             cam.setParameter("param_readout_port", value)
-            n_speeds = cam.getParameterMax("param_spdtab_index")
+            n_speeds = cam.getParameterCount("param_spdtab_index")
+            print("  Number of speeds", n_speeds)
             for j in range(n_speeds):
-                print("speed", j)
+                print("    speed", j)
                 cam.setParameter("param_spdtab_index", j)
                 for param in ["param_bit_depth", "param_pix_time", "param_gain_index"]:
-                    print("  ", i, j, param, "=", cam.getParameterCurrent(param))
+                    print("      ", i, j, param, "=", cam.getParameterCurrent(param))
 
-    # Test querying exposure
+    # Test querying speed / bit depth.
+    if False:
+        print("Number of speeds", cam.getParameterCount("param_spdtab_index"))
+        print("Number bit depths", cam.getParameterCount("param_bit_depth"))
+    
+    # Test querying exposure.
     if False:
         print(cam.getParameterCount("param_exp_res"), cam.getParameterCurrent("param_exp_res"))
         print(cam.getParameterCurrent("param_expose_out_mode"))
         print(cam.getParameterCurrent("param_metadata_enabled"))
 
     # Test acquisition.
-    if True:
+    if False:
 
         x_size = 1024
         y_size = 1024
