@@ -222,10 +222,20 @@ class HalModule(QtCore.QObject):
         self.cleanUpWorker(worker_id)
 
     def handleWorkerError(self, worker_id, message, exception, stack_trace):
+        """
+        You probably don't want to override this..
+        """
         message.addError(halMessage.HalMessageError(source = self.module_name,
                                                     message = str(exception),
                                                     m_exception = exception,
                                                     stack_trace = stack_trace))
+
+        # Decrement ref count otherwise the error will hang HAL.
+        message.decRefCount()
+
+        # Log when the worker failed.
+        message.logEvent("worker failed")
+
         # Cleanup the worker.
         self.cleanUpWorker(worker_id)
 
