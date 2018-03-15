@@ -179,7 +179,7 @@ class PVCAMCamera(object):
             
             check(pvcam.pl_exp_unlock_oldest_frame(self.hcam),
                   "pl_exp_unlock_oldest_frame")
-            
+
             self.n_processed += 1
             
         return [frames, [self.frame_x, self.frame_y]]
