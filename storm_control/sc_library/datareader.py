@@ -239,7 +239,7 @@ class DaxReader(DataReader):
         if self.fileptr:
             self.checkFrameNumber(frame_number)
             self.fileptr.seek(frame_number * self.image_height * self.image_width * 2)
-            image_data = numpy.fromfile(self.fileptr, dtype='int16', count = self.image_height * self.image_width)
+            image_data = numpy.fromfile(self.fileptr, dtype=numpy.uint16, count = self.image_height * self.image_width)
             image_data = numpy.transpose(numpy.reshape(image_data, [self.image_width, self.image_height]))
             if self.bigendian:
                 image_data.byteswap(True)
