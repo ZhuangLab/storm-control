@@ -21,6 +21,7 @@
  (i) Pillow (or PIL).
  (j) Tifffile
  (k) PyDAQmx (for national instruments DAQ)
+ (l) pyserial
 
 
 (3-4) Note: You should be able to skip the next two steps if you
