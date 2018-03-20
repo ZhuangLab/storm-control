@@ -26,7 +26,8 @@ before_script:
 script:
   - pwd
   - python3 --version
-
+  - pip install --upgrade pip
+  
   # Install dependencies.
   - pip3 install pyqt5
   - pip3 install numpy
@@ -35,7 +36,7 @@ script:
   - pip3 install pyqtgraph
   - pip3 install matplotlib
   - pip3 install tifffile
-  - pip3 install serial
+  - pip3 install pyserial
   - pip3 install pytest
   - pip3 install pytest-mock
   - pip3 install pytest-qt
