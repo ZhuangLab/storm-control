@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<config>
+
+  <!-- The starting directory. -->
+  <directory type="directory">./data/</directory>
+  
+  <!-- The setup name -->
+  <setup_name type="string">error</setup_name>
+
+  <!-- The ui type, this is 'classic' or 'detached' -->
+  <ui_type type="string">classic</ui_type>
+
+  <!--
+      This has two effects:
+      
+      (1) If this is True any exception will immediately crash HAL, which can
+      be useful for debugging. If it is False then some exceptions will be
+      handled by the modules.
+      
+      (2) If it is False we also don't check whether messages are valid.
+  -->
+  <strict type="boolean">True</strict>
+  
+  <!--
+      Define the modules to use for this setup.
+  -->
+  <modules>
+
+    <!--
+	This is the main window, you must have this.
+    -->
+    <hal>
+      <module_name type="string">storm_control.hal4000.hal4000</module_name>
+      <class_name type="string">HalController</class_name>
+    </hal>
+
+    <!--
+	You also need all of these.
+    -->
+
+    <!-- Camera display. -->
+    <display>
+      <class_name type="string">Display</class_name>
+      <module_name type="string">storm_control.hal4000.display.display</module_name>
+      <parameters>
+
+	<!-- The default color table. Other options are in hal4000/colorTables/all_tables -->
+	<colortable type="string">idl5.ctbl</colortable>
+	
+      </parameters>
+    </display>
+    
+    <!-- Feeds. -->
+    <feeds>
+      <class_name type="string">Feeds</class_name>
+      <module_name type="string">storm_control.hal4000.feeds.feeds</module_name>
+    </feeds>
+
+    <!-- Filming and starting/stopping the camera. -->
+    <film>
+      <class_name type="string">Film</class_name>
+      <module_name type="string">storm_control.hal4000.film.film</module_name>
+
+      <!-- Film parameters specific to this setup go here. -->
+      <parameters>
+	<extension desc="Movie file name extension" type="string" values=",Red,Green,Blue"></extension>
+      </parameters>
+    </film>
+
+    <!-- Which objective is being used, etc. -->
+    <mosaic>
+      <class_name type="string">Mosaic</class_name>
+      <module_name type="string">storm_control.hal4000.mosaic.mosaic</module_name>
+
+      <!-- List objectives available on this setup here. -->
+      <parameters>
+	<flip_horizontal desc="Flip image horizontal (mosaic)" type="boolean">False</flip_horizontal>
+	<flip_vertical desc="Flip image vertical (mosaic)" type="boolean">False</flip_vertical>
+	<transpose desc="Transpose image (mosaic)" type="boolean">False</transpose>
+
+	<objective desc="Current objective" type="string" values="obj1,obj2,obj3">obj1</objective>
+	<obj1 desc="Objective 1" type="custom">100x,0.160,0.0,0.0</obj1>
+	<obj2 desc="Objective 2" type="custom">10x,1.60,0.0,0.0</obj2>
+	<obj3 desc="Objective 3" type="custom">4x,4.0,0.0,0.0</obj3>	
+      </parameters>
+    </mosaic>
+
+    <!-- Loading, changing and editting settings/parameters -->
+    <settings>
+      <class_name type="string">Settings</class_name>
+      <module_name type="string">storm_control.hal4000.settings.settings</module_name>
+    </settings>
+
+    <!-- Set the (software) time base for films. -->
+    <timing>
+      <class_name type="string">Timing</class_name>
+      <module_name type="string">storm_control.hal4000.timing.timing</module_name>
+      <parameters>
+	<time_base type="string">camera1</time_base>
+      </parameters>
+    </timing>
+    
+    <!--
+	Everything else is optional, but you probably want at least one camera.
+    -->
+
+    <!-- Camera control. -->
+    <!--
+	Note that the cameras must have the names "camera1", "camera2", etc..
+	
+	Cameras are either "master" (they provide their own hardware timing)
+	or "slave" they are timed by another camera. Each time the cameras
+	are started the slave cameras are started first, then the master cameras.
+	
+	Also, "camera1" is assumed to be the master camera and many other modules
+	(software) synchronize to this camera.
+    -->
+    
+    <camera1>
+      <class_name type="string">Camera</class_name>
+      <module_name type="string">storm_control.hal4000.camera.camera</module_name>
+      <camera>
+	<master type="boolean">True</master>
+	<class_name type="string">NoneCameraControl</class_name>
+	<module_name type="string">storm_control.hal4000.camera.noneCameraControl</module_name>
+	<parameters>
+
+	  <!-- This is specific to the emulated camera. -->
+	  <roll type="float">1.0</roll>
+
+	  <!-- These should be specified for every camera, and cannot be changed
+	       in HAL when running. -->
+	  <default_max type="int">300</default_max> <!-- these are the display defaults, not the camera range. -->
+	  <default_min type="int">0</default_min>
+	  <flip_horizontal type="boolean">False</flip_horizontal>
+	  <flip_vertical type="boolean">False</flip_vertical>
+	  <transpose type="boolean">False</transpose>
+
+	  <!-- These can be changed / editted. -->
+
+	  <!-- This is the extension to use (if any) when saving data from this camera. -->
+	  <extension type="string"></extension>
+
+	  <!-- Whether or not data from this camera is saved during filming. -->
+	  <saved type="boolean">True</saved>
+
+	</parameters>
+      </camera>
+    </camera1>
+
+    <error_test>
+      <class_name type="string">TestWorkerError</class_name>
+      <module_name type="string">storm_control.hal4000.testing.testErrors</module_name>
+    </error_test>
+
+  </modules>
+  
+</config>
