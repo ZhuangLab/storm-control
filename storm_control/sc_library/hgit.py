@@ -5,6 +5,7 @@ correct answer if you run it in a storm-control directory.
 
 Hazen 02/18
 """
+import subprocess
 from subprocess import check_output
 
 branch = "master"
@@ -13,6 +14,8 @@ try:
     branch = check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).strip().decode()
     version = check_output(["git", "rev-parse", "HEAD"]).strip().decode()
 except FileNotFoundError:
+    pass
+except subprocess.CalledProcessError:
     pass
     
 def getBranch():
