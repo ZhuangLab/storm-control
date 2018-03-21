@@ -51,9 +51,9 @@ class Calibrator(QtCore.QObject):
 
     def getStats(self):
         if self.mean is not None and (self.accumulated == self.n_frames):
-            mean_mean = numpy.mean(self.mean)/float(self.n_frames)
-            mean_var = numpy.mean(self.var)/float(self.n_frames) - mean_mean*mean_mean
-            return [mean_mean, mean_var]
+            mean_mean = self.mean/float(self.n_frames)
+            mean_var = self.var/float(self.n_frames) - mean_mean*mean_mean
+            return [numpy.mean(mean_mean), numpy.mean(mean_var)]
         else:
             return [None, None]
         
