@@ -13,6 +13,9 @@ C:\Program Files\Point Grey Research\Spinnaker\bin64\vs2013\
 
 FIXME: Fixed length film support?
 
+NOTE: FLIR Imaging now provides Spinnaker support in Python:
+      https://www.ptgrey.com/support/downloads
+
 Hazen 05/17
 """
 
