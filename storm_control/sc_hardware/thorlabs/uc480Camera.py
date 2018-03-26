@@ -639,7 +639,7 @@ if (__name__ == "__main__"):
     loadDLL("c:/windows/system32/uc480_64.dll")
 
     cam = Camera(1)
-    reps = 200
+    reps = 1000
 
     if False:
         cam.setAOI(772, 566, 200, 200)
@@ -667,7 +667,7 @@ if (__name__ == "__main__"):
         cam.stopCapture()
 
     if True:
-        cam.setAOI(100, 100, 300, 300)
+        cam.setAOI(100, 100, 700, 100)
         cam.setPixelClock(25)
         cam.setFrameRate(verbose = True)
         st = time.time()
@@ -676,7 +676,8 @@ if (__name__ == "__main__"):
             #print i
             image = cam.captureImage()
             #print(i, numpy.sum(image))
-        print("{0:0d} frames in {1:.3f} seconds".format(reps, time.time() - st))
+        elapsed_time = time.time() - st
+        print("{0:0d} frames in {1:.3f} seconds, {2:.3f} FPS".format(reps, elapsed_time, reps/elapsed_time))
 
     if False:
         image = cam.captureImage()
