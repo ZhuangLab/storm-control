@@ -32,15 +32,16 @@ class QPDFunctionalityMixin(LockFunctionalityMixin):
     units of microns.
 
     A QPD must emit a qpdUpdate signal:
-      qpdUpdate() - The current QPD state as a dictionary. 
-                    {"offset" : offset(microns),
-                     "sum" : sum signal (AU),
-                     other data..}
+      qpdUpdate(dict) - New data is available from the QPD
+                        as a dictionary.
+                       {"offset" : offset(microns),
+                        "sum" : sum signal (AU),
+                        other data..}
     """
     def __init__(self, units_to_microns = None, **kwds):
         super().__init__(**kwds)
         self.units_to_microns = units_to_microns
-
+    
     def getOffset(self):
         """
         Perform a reading & emit the qpdUpdate signal. The time
@@ -49,7 +50,7 @@ class QPDFunctionalityMixin(LockFunctionalityMixin):
         like 1/10th second is good.
         """
         pass
-        
+    
     def getType(self):
         return "qpd"
     
