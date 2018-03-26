@@ -16,15 +16,17 @@ import storm_control.sc_hardware.thorlabs.uc480Camera as uc480Camera
 
 class UC480QPDCameraFunctionality(hardwareModule.BufferedFunctionality, lockModule.QPDCameraFunctionalityMixin):
     qpdUpdate = QtCore.pyqtSignal(dict)
+    threadUpdate = QtCore.pyqtSignal(dict)
 
     def __init__(self, camera = None, reps = None, **kwds):
         super().__init__(**kwds)
         self.camera = camera
         self.scan_thread = UC480ScanThread(camera = self.camera,
                                            device_mutex = self.device_mutex,
-                                           qpd_update_signal = self.qpdUpdate,
+                                           qpd_update_signal = self.threadUpdate,
                                            reps = reps,
                                            units_to_microns = self.units_to_microns)
+        self.threadUpdate.connect(self.handleThreadUpdate)
 
     def adjustAOI(self, dx, dy):
         self.maybeRun(task = self.camera.adjustAOI,
@@ -37,6 +39,17 @@ class UC480QPDCameraFunctionality(hardwareModule.BufferedFunctionality, lockModu
     def changeFitMode(self, mode):
         self.mustRun(task = self.camera.changeFitMode,
                      args = [mode])
+
+    def handleThreadUpdate(self, qpd_dict):
+        #
+        # Why are we doing this? In testing we found that bouncing the update signal
+        # from the scan_thread through this class meant we could sample about twice
+        # as fast as having scan_thread directly emit the qpdUpdate() signal. It is
+        # not that clear why this should be the case. Perhaps signals are not buffered
+        # so scan_thread was having to wait for the focus lock control / GUI to
+        # process the signal before it could start on the next sample?
+        #
+        self.qpdUpdate.emit(qpd_dict)
         
     def getOffset(self):
         #
@@ -45,7 +58,7 @@ class UC480QPDCameraFunctionality(hardwareModule.BufferedFunctionality, lockModu
         #
         if not self.scan_thread.isRunning():
             self.scan_thread.startScan()
-
+            
     def wait(self):
         super().wait()
         self.scan_thread.stopScan()
@@ -71,17 +84,15 @@ class UC480ScanThread(QtCore.QThread):
         self.reps = reps
         self.running = False
         self.units_to_microns = units_to_microns
-
+    
     def isRunning(self):
         return self.running
         
     def run(self):
         self.running = True
         while(self.running):
-            self.device_mutex.lock()
             [power, offset] = self.camera.qpdScan(reps = self.reps)[:2]
             [image, x_off1, y_off1, x_off2, y_off2, sigma] = self.camera.getImage()
-            self.device_mutex.unlock()
             self.qpd_update_signal.emit({"is_good" : (power > 0),
                                          "image" : image,
                                          "offset" : offset * self.units_to_microns,
