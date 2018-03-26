@@ -26,7 +26,9 @@ import storm_control.sc_hardware.utility.np_lock_peak_finder as npLPF
 
 try:
     import storm_control.sc_hardware.utility.sa_lock_peak_finder as saLPF
-except ModuleNotFoundError:
+except ModuleNotFoundError as mnfe:
+    print(">> Warning storm analysis lock fitting module not found. <<")
+    print(mnfe)
     pass
 
 uc480 = None
