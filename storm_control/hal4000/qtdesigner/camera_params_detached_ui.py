@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'camera-params-detached.ui'
 #
-# Created by: PyQt5 UI code generator 5.7
+# Created by: PyQt5 UI code generator 5.9.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -11,12 +11,12 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_GroupBox(object):
     def setupUi(self, GroupBox):
         GroupBox.setObjectName("GroupBox")
-        GroupBox.resize(451, 72)
+        GroupBox.resize(414, 108)
         GroupBox.setMinimumSize(QtCore.QSize(414, 0))
-        self.horizontalLayout_7 = QtWidgets.QHBoxLayout(GroupBox)
-        self.horizontalLayout_7.setContentsMargins(2, 2, 2, 2)
-        self.horizontalLayout_7.setSpacing(2)
-        self.horizontalLayout_7.setObjectName("horizontalLayout_7")
+        self.horizontalLayout_8 = QtWidgets.QHBoxLayout(GroupBox)
+        self.horizontalLayout_8.setContentsMargins(2, 2, 2, 2)
+        self.horizontalLayout_8.setSpacing(6)
+        self.horizontalLayout_8.setObjectName("horizontalLayout_8")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
         self.verticalLayout_2.setSpacing(0)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
@@ -96,7 +96,17 @@ class Ui_GroupBox(object):
         self.pictureSizeText.setObjectName("pictureSizeText")
         self.horizontalLayout_6.addWidget(self.pictureSizeText)
         self.verticalLayout_2.addLayout(self.horizontalLayout_6)
-        self.horizontalLayout_7.addLayout(self.verticalLayout_2)
+        self.horizontalLayout_7 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_7.setObjectName("horizontalLayout_7")
+        self.pictureStartLabel = QtWidgets.QLabel(GroupBox)
+        self.pictureStartLabel.setObjectName("pictureStartLabel")
+        self.horizontalLayout_7.addWidget(self.pictureStartLabel)
+        self.pictureStartText = QtWidgets.QLabel(GroupBox)
+        self.pictureStartText.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.pictureStartText.setObjectName("pictureStartText")
+        self.horizontalLayout_7.addWidget(self.pictureStartText)
+        self.verticalLayout_2.addLayout(self.horizontalLayout_7)
+        self.horizontalLayout_8.addLayout(self.verticalLayout_2)
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setSpacing(0)
         self.verticalLayout.setObjectName("verticalLayout")
@@ -176,9 +186,11 @@ class Ui_GroupBox(object):
         self.preampGainText.setObjectName("preampGainText")
         self.horizontalLayout_5.addWidget(self.preampGainText)
         self.verticalLayout.addLayout(self.horizontalLayout_5)
-        self.horizontalLayout_7.addLayout(self.verticalLayout)
-        spacerItem = QtWidgets.QSpacerItem(71, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_7.addItem(spacerItem)
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem)
+        self.horizontalLayout_8.addLayout(self.verticalLayout)
+        spacerItem1 = QtWidgets.QSpacerItem(71, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_8.addItem(spacerItem1)
 
         self.retranslateUi(GroupBox)
         QtCore.QMetaObject.connectSlotsByName(GroupBox)
@@ -193,6 +205,8 @@ class Ui_GroupBox(object):
         self.FPSText.setText(_translate("GroupBox", "0"))
         self.pictureSizeLabel.setText(_translate("GroupBox", "Picture Size:"))
         self.pictureSizeText.setText(_translate("GroupBox", "0"))
+        self.pictureStartLabel.setText(_translate("GroupBox", "Picture Start:"))
+        self.pictureStartText.setText(_translate("GroupBox", "asdf"))
         self.temperatureLabel.setText(_translate("GroupBox", "Temperature (C):"))
         self.temperatureText.setText(_translate("GroupBox", "0"))
         self.EMCCDLabel.setText(_translate("GroupBox", "EMCCD Gain: 0"))
