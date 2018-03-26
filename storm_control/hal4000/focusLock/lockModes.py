@@ -150,7 +150,7 @@ class LockedMixin(object):
         self.lm_mode_name = "locked"
         self.lm_offset_threshold = 0.02
         self.lm_target = 0.0
-        self.lm_gain = -0.9
+        self.lm_gain = 0.7
 
         if not hasattr(self, "behavior_names"):
             self.behavior_names = []
@@ -166,6 +166,12 @@ class LockedMixin(object):
         p.add(params.ParameterInt(description = "Number of repeats for the lock to be considered good.",
                                   name = "buffer_length",
                                   value = 5))
+
+        p.add(params.ParameterRangeFloat(description = "Lock response gain.",
+                                         name = "lock_gain",
+                                         value = 0.7,
+                                         min_value = 0.0,
+                                         max_value = 1.0))
         
         p.add(params.ParameterFloat(description = "Maximum allowed difference to still be in lock (nm).",
                                     name = "offset_threshold",
@@ -191,7 +197,7 @@ class LockedMixin(object):
                     self.lm_buffer[self.lm_counter] = 0
 
                 # Simple proportional control.
-                dz = self.lm_gain * diff
+                dz = -1.0 * self.lm_gain * diff
                 self.z_stage_functionality.goRelative(dz)
             else:
                 self.lm_buffer[self.lm_counter] = 0
@@ -213,6 +219,7 @@ class LockedMixin(object):
         self.lm_buffer_length = p.get("buffer_length")
         self.lm_buffer = numpy.zeros(self.lm_buffer_length, dtype = numpy.uint8)
         self.lm_counter = 0
+        self.lm_gain = p.get("lock_gain")
         self.lm_min_sum = p.get("minimum_sum")
         self.lm_offset_threshold = 1.0e-3 * p.get("offset_threshold")
 
