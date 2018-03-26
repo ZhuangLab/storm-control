@@ -14,6 +14,16 @@ import storm_control.sc_hardware.ludl.ludl as ludl
 
 
 class LudlStageFunctionality(stageModule.StageFunctionality):
+    """
+    This stage does not provide any feedback (at least via RS-232) about
+    whether or not it is moving, and if is has started/finished moving.
+    Also any communication with stage takes about 0.25 seconds per command
+    regardless of the channel (RS-232 or HTTP). So in the case of a move 
+    absolute command we're just estimating how long it would take the stage 
+    to do the move and setting a timer to go off at the end of that time.
+    We also assume that the stage ends up where we wanted it to be and use
+    the requested position as the current position of the stage.
+    """
     positionUpdate = QtCore.pyqtSignal(dict)
 
     def __init__(self, update_interval = None, **kwds):
