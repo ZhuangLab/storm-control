@@ -23,7 +23,7 @@ class LockPeakFinder(object):
 
         self.mfit = None
         self.offset = offset
-        self.roi_size = 10
+        self.roi_size = int(4.0 * sigma)
         self.sigma = sigma
 
         # Filter for smoothing the image for peak finding.
