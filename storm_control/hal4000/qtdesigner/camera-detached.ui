@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>645</width>
-    <height>660</height>
+    <height>625</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -35,22 +35,13 @@
    <property name="spacing">
     <number>0</number>
    </property>
-   <property name="leftMargin">
-    <number>0</number>
-   </property>
-   <property name="topMargin">
-    <number>0</number>
-   </property>
-   <property name="rightMargin">
-    <number>0</number>
-   </property>
-   <property name="bottomMargin">
+   <property name="margin">
     <number>0</number>
    </property>
    <item>
     <widget class="QFrame" name="cameraFrame">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
@@ -81,7 +72,7 @@
    <item>
     <widget class="QWidget" name="widget" native="true">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+      <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
@@ -89,35 +80,26 @@
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>110</height>
+       <height>0</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>110</height>
+       <height>16777215</height>
       </size>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <property name="spacing">
        <number>2</number>
       </property>
-      <property name="leftMargin">
-       <number>2</number>
-      </property>
-      <property name="topMargin">
-       <number>2</number>
-      </property>
-      <property name="rightMargin">
-       <number>2</number>
-      </property>
-      <property name="bottomMargin">
+      <property name="margin">
        <number>2</number>
       </property>
       <item>
        <widget class="QFrame" name="cameraParamsFrame">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -131,7 +113,7 @@
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>1000</height>
+          <height>16777215</height>
          </size>
         </property>
         <property name="frameShape">
@@ -153,20 +135,11 @@
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>92</height>
+          <height>16777215</height>
          </size>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
-         <property name="leftMargin">
-          <number>2</number>
-         </property>
-         <property name="topMargin">
-          <number>2</number>
-         </property>
-         <property name="rightMargin">
-          <number>2</number>
-         </property>
-         <property name="bottomMargin">
+         <property name="margin">
           <number>2</number>
          </property>
          <item>
@@ -184,6 +157,12 @@
          </item>
          <item>
           <widget class="QPushButton" name="okButton">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="maximumSize">
             <size>
              <width>100</width>
