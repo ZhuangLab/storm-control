@@ -3,7 +3,7 @@
     this will isolate different versions of HAL from each other.
 
     1. https://www.riverbankcomputing.com/pipermail/pyqt/2017-March/039032.html
-    2. http://python-guide-pt-br.readthedocs.io/en/latest/dev/virtualenvs/
+    2. http://docs.python-guide.org/en/latest/dev/virtualenvs/
 
     Note: Link (1) above describes the best way to create the virtual
           environment on Windows. If you follow the approach described
