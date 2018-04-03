@@ -999,10 +999,13 @@ class DiagnosticsLockMode(LockMode):
         self.ld_data_fp = None
         self.ld_fname_counter = 0
         self.ld_movie_fp = None
-        self.ld_take_movie = False
+        self.ld_take_movie = True
         self.ld_test_start_time = None
         self.ld_test_n_events = 0
 
+    def getLockTarget(self):
+        return 0.0
+    
     def handleQPDUpdate(self, qpd_state):
         super().handleQPDUpdate(qpd_state)
         
@@ -1020,6 +1023,10 @@ class DiagnosticsLockMode(LockMode):
     def shouldEnableLockButton(self):
         return True
 
+    def startFilm(self):
+        if self.ld_data_fp is None:
+            self.startLock()
+            
     def startLock(self, target = None):
         super().startLock()
         self.ld_test_start_time = time.time()
@@ -1031,7 +1038,11 @@ class DiagnosticsLockMode(LockMode):
 
         if self.ld_take_movie:
             self.ld_movie_fp = tifffile.TiffWriter(fname_base + ".tif")
-        
+
+    def stopFilm(self):
+        if self.ld_data_fp is not None:
+            self.stopLock()
+            
     def stopLock(self):
         super().stopLock()
 
