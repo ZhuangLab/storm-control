@@ -12,7 +12,10 @@
 	  virtual environment by hand (at least as of 2018.03.20).
           (3) describes how to create the virtual environment in 
           Windows using Anaconda.
-
+    
+    Anaconda example:
+    $ conda create --name myenv
+    $ activate myenv 
 
 (2) Install Dependencies:
  (a) Mingw (only if you need to compile C libraries)
@@ -27,6 +30,19 @@
  (j) Tifffile
  (k) PyDAQmx (for national instruments DAQ)
  (l) pyserial
+
+    Anaconda example:
+    $ conda install --name hal_env pywin32 scipy numpy pillow pyserial
+
+    PyQt5
+    
+    pywinusb
+
+    PyBluez
+
+    Tifffile
+
+    PyDAQmx
 
 
 (3-4) Note: You should be able to skip the next two steps if you
