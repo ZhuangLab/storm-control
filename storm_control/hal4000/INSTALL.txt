@@ -4,11 +4,14 @@
 
     1. https://www.riverbankcomputing.com/pipermail/pyqt/2017-March/039032.html
     2. http://docs.python-guide.org/en/latest/dev/virtualenvs/
+    3. https://conda.io/docs/user-guide/tasks/manage-environments.html
 
     Note: Link (1) above describes the best way to create the virtual
           environment on Windows. If you follow the approach described
 	  in (2) you will also need to copy the python3.dll into your
 	  virtual environment by hand (at least as of 2018.03.20).
+          (3) describes how to create the virtual environment in 
+          Windows using Anaconda.
 
 
 (2) Install Dependencies:
