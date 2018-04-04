@@ -13,7 +13,7 @@
           (3) describes how to create the virtual environment in 
           Windows using Anaconda.
     
-    Anaconda example:
+    Anaconda example (as of 4/3/18):
     $ conda create --name myenv
     $ activate myenv 
 
@@ -31,18 +31,11 @@
  (k) PyDAQmx (for national instruments DAQ)
  (l) pyserial
 
-    Anaconda example:
-    $ conda install --name hal_env pywin32 scipy numpy pillow pyserial
-
-    PyQt5
-    
-    pywinusb
-
-    PyBluez
-
-    Tifffile
-
-    PyDAQmx
+    Anaconda example (as of 4/3/18):
+    $ conda install --name hal_env numpy pillow pywin32 pyserial scipy 
+    $ pip3 install PyQt5 				(https://www.riverbankcomputing.com/software/pyqt/download5/)
+    $ pip3 install PyDAQmx    				(https://pythonhosted.org/PyDAQmx/)
+    $ conda install tifffile -c conda-forge		(https://pypi.python.org/pypi/tifffile)
 
 
 (3-4) Note: You should be able to skip the next two steps if you
