@@ -13,7 +13,7 @@
           (3) describes how to create the virtual environment in 
           Windows using Anaconda.
     
-    Anaconda example (as of 4/3/18):
+    Anaconda example in Windows10 (as of 4/3/18, conda 4.5.0, python 3.6.4.final.0 ):
     $ conda create --name myenv
     $ activate myenv 
 
@@ -31,7 +31,7 @@
  (k) PyDAQmx (for national instruments DAQ)
  (l) pyserial
 
-    Anaconda example (as of 4/3/18):
+    Anaconda example in Windows10 (as of 4/3/18, conda 4.5.0, python 3.6.4.final.0 ):
     $ conda install --name myenv pip
     $ conda install --name myenv numpy pip pillow pywin32 pyserial scipy  
     $ conda install tifffile -c conda-forge		(https://pypi.python.org/pypi/tifffile)
