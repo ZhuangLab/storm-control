@@ -32,11 +32,10 @@
  (l) pyserial
 
     Anaconda example in Windows10 (as of 4/3/18, conda 4.5.0, python 3.6.4.final.0 ):
-    $ conda install --name myenv pip
     $ conda install --name myenv numpy pip pillow pywin32 pyserial scipy  
-    $ conda install tifffile -c conda-forge		(https://pypi.python.org/pypi/tifffile)
-    $ pip install PyQt5 				(https://www.riverbankcomputing.com/software/pyqt/download5/)
-    $ pip install PyDAQmx    				(https://pythonhosted.org/PyDAQmx/)
+    $ conda install --name myenv tifffile -c conda-forge	(https://pypi.python.org/pypi/tifffile)
+    $ pip install PyQt5 					(https://www.riverbankcomputing.com/software/pyqt/download5/)
+    $ pip install PyDAQmx    					(https://pythonhosted.org/PyDAQmx/)
 
 (3-4) Note: You should be able to skip the next two steps if you
  are running 64 bit windows as the compiled files are now included in
