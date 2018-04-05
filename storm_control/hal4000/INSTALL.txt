@@ -4,12 +4,18 @@
 
     1. https://www.riverbankcomputing.com/pipermail/pyqt/2017-March/039032.html
     2. http://docs.python-guide.org/en/latest/dev/virtualenvs/
+    3. https://conda.io/docs/user-guide/tasks/manage-environments.html
 
     Note: Link (1) above describes the best way to create the virtual
           environment on Windows. If you follow the approach described
 	  in (2) you will also need to copy the python3.dll into your
 	  virtual environment by hand (at least as of 2018.03.20).
-
+          (3) describes how to create the virtual environment in 
+          Windows using Anaconda.
+    
+    Anaconda example in Windows10 (as of 4/3/18, conda 4.5.0, python 3.6.4.final.0 ):
+    $ conda create --name myenv
+    $ activate myenv 
 
 (2) Install Dependencies:
  (a) Mingw (only if you need to compile C libraries)
@@ -25,6 +31,11 @@
  (k) PyDAQmx (for national instruments DAQ)
  (l) pyserial
 
+    Anaconda example in Windows10 (as of 4/3/18, conda 4.5.0, python 3.6.4.final.0 ):
+    $ conda install --name myenv numpy pip pillow pywin32 pyserial scipy  
+    $ conda install --name myenv tifffile -c conda-forge	(https://pypi.python.org/pypi/tifffile)
+    $ pip install PyQt5 					(https://www.riverbankcomputing.com/software/pyqt/download5/)
+    $ pip install PyDAQmx    					(https://pythonhosted.org/PyDAQmx/)
 
 (3-4) Note: You should be able to skip the next two steps if you
  are running 64 bit windows as the compiled files are now included in
