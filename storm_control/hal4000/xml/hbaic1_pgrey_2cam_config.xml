@@ -301,7 +301,7 @@
       <configuration>
 	<ir_laser type="string">ldc_irlaser</ir_laser>
 	<ir_power type="int">10</ir_power>
-	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,OptimalLockMode,CalibrationLockMode</lock_modes>
+	<lock_modes type="string">NoLockMode,AutoLockMode,AlwaysOnLockMode,OptimalLockMode,CalibrationLockMode,DiagnosticsLockMode</lock_modes>
 	<qpd type="string">uc480_camera</qpd>
 	<z_stage type="string">mcl_zstage</z_stage>
 	<parameters>
