@@ -56,6 +56,12 @@ if True:
     Default(env.SharedLibrary('./storm_control/c_libraries/LMMoment',
                               ['./storm_control/hal4000/spotCounter/LMMoment.c']))
 
+# sc_hardware/utility/corr_2d_gauss.
+if True:
+    Default(env.SharedLibrary('./storm_control/c_libraries/corr_2d_gauss',
+                              ['./storm_control/sc_hardware/utility/corr_2d_gauss.c'],
+                              LIBS = ['-lm']))
+
 # sc_hardware/pointGrey/spinshim.
 #
 # May need some adjustment depending on what library you have & your directory layout.
