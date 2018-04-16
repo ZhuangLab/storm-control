@@ -36,8 +36,12 @@ class Calibrator(QtCore.QObject):
         self.id_number = id_number
         self.mean = None
         self.n_frames = 0
+        self.roi_dict = {}
         self.running = False
         self.var = None
+
+        for p in ["x_bin", "x_pixels", "x_start", "y_bin", "y_pixels", "y_start"]:
+            self.roi_dict[p] = camera_fn.getParameter(p)
 
     def clearStats(self):
         self.mean = None
@@ -69,7 +73,7 @@ class Calibrator(QtCore.QObject):
 
         if (self.accumulated == self.n_frames):
             self.camera_fn.newFrame.disconnect(self.handleNewFrame)
-            numpy.save(self.filename, [self.frame_mean, self.mean, self.var])
+            numpy.save(self.filename, [self.frame_mean, self.mean, self.var, self.roi_dict])
             self.running = False
             self.done.emit(self.id_number)
 
