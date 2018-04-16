@@ -986,7 +986,7 @@ class HardwareZScanLockMode(AlwaysOnLockMode):
             self.behavior = "locked"
 
 
-class DiagnosticsLockMode(LockMode):
+class DiagnosticsLockMode(NoLockMode):
     """
     This mode is to acquire performance information for the focus lock. The
     diagnostics files are saved in the directory that HAL is running in.
@@ -1002,9 +1002,6 @@ class DiagnosticsLockMode(LockMode):
         self.ld_take_movie = True
         self.ld_test_start_time = None
         self.ld_test_n_events = 0
-
-    def getLockTarget(self):
-        return 0.0
     
     def handleQPDUpdate(self, qpd_state):
         super().handleQPDUpdate(qpd_state)
