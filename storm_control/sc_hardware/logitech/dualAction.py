@@ -1,28 +1,24 @@
-#!/usr/bin/python
-#
-## @file
-#
-# Interface to Logitech dual action joystick.
-#
-# Hazen 9/12
-#
+#!/usr/bin/env python
+"""
+Interface to Logitech dual action joystick.
 
+Hazen 9/12
+"""
 import pywinusb.hid as hid
 
-## DualAction
-#
-# This class encapsulates the interface to a Logitech dual action 
-# joystick. It remains in the project for reference purposes
-# but it would not work correctly with HAL. See gamepad310.py for
-# an example of a joystick class that works with HAL.
-#
-class DualAction():
 
-    ## __init__
-    #
-    # Define arrays for translating joystick events and find the joystick HID.
-    #
-    def __init__(self):
+class DualAction(object):
+    """
+    This class encapsulates the interface to a Logitech dual action 
+    joystick. It remains in the project for reference purposes
+    but it would not work correctly with HAL. See gamepad310.py for
+    an example of a joystick class that works with HAL.
+    """
+    def __init__(self, **kwds):
+        """
+        Define arrays for translating joystick events and find the joystick HID.
+        """
+        super().__init__(self, **kwds)
         self.buttons = [[1,24,0],  # 1
                         [2,40,0],  # 2
                         [3,72,0],  # 3
@@ -47,47 +43,35 @@ class DualAction():
                 self.jdev = device
 
         if not self.jdev:
-            print "Logitech Dual Action joystick not found."
+            print("Logitech Dual Action joystick not found.")
 
-    ## dataHandler
-    #
-    # Processes events from the joystick.
-    #
-    # @param data A joystick event.
-    #
     def dataHandler(self, data):
-        print self.translate(data)
+        """
+        Processes events from the joystick.
+        """
+        print(self.translate(data))
 
-    ## shutDown
-    #
-    # Close the connection to the joystick at program exit.
-    #
     def shutDown(self):
+        """
+        Close the connection to the joystick at program exit.
+        """
         if self.jdev:
             self.jdev.close()
 
-    ## start
-    #
-    # Open the connection to the joystick and set handler as the callback function.
-    #
-    # @param handler The function to use to process joystick events.
-    #
     def start(self, handler):
+        """
+        Open the connection to the joystick and set handler as the callback function.
+        """
         if self.jdev:
             self.jdev.open()
             self.jdev.set_raw_data_handler(handler)
         else:
-            print "dual action joystick not connected?"
+            print("Dual action joystick not connected?")
 
-    ## translate
-    #
-    # Translate joystick events to our format.
-    #
-    # @param data A event from the joystick.
-    #
-    # @return The translated event.
-    #
     def translate(self, data):
+        """
+        Translate joystick events to our format.
+        """
         # check if it was a button event
         ##JRM If multiple joystick events are generated, this software can generate the wrong signal
         for button in self.buttons:
@@ -113,11 +97,7 @@ class DualAction():
         return ["NA"]
 
 
-#
-# Testing
-#
-
-if __name__ == "__main__":
+if (__name__ == "__main__"):
     from msvcrt import kbhit
     from time import sleep
 
