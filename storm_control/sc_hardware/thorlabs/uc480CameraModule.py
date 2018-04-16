@@ -123,10 +123,26 @@ class UC480Camera(hardwareModule.HardwareModule):
         configuration = module_params.get("configuration")
         uc480Camera.loadDLL(configuration.get("uc480_dll"))
 
+        # Use the storm-analysis project for finding and image correlation for
+        # fitting. This is hopefully less sensitive to the fringes than a
+        # Gaussian fitting approach.
+        #
+        if (configuration.get("use_correlation", False)):
+            print("> using correlation for fitting.")
+            self.camera = uc480Camera.CameraQPDCorrFit(allow_single_fits = configuration.get("allow_single_fits", False),
+                                                       background = configuration.get("background"),
+                                                       camera_id = configuration.get("camera_id"),
+                                                       ini_file = configuration.get("ini_file"),
+                                                       offset_file = configuration.get("offset_file"),
+                                                       pixel_clock = configuration.get("pixel_clock", 30),
+                                                       sigma = configuration.get("sigma"),
+                                                       x_width = configuration.get("x_width"),
+                                                       y_width = configuration.get("y_width"))
+            
         # Use the storm-analysis project for fitting. This is hopefully both faster
         # and more accurate than the Numpy/Scipy fitter.
         #
-        if (configuration.get("use_storm_analysis", False)):
+        elif (configuration.get("use_storm_analysis", False)):
             print("> using storm-analysis for fitting.")
             self.camera = uc480Camera.CameraQPDSAFit(allow_single_fits = configuration.get("allow_single_fits", False),
                                                      background = configuration.get("background"),
