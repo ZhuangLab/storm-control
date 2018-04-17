@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """
-USB Joystick control class.
+Base classes and module for USB Joystick control.
 
 Hazen 09/12
 Jeff 09/12
@@ -9,6 +9,7 @@ from PyQt5 import QtCore
 
 import storm_control.sc_library.parameters as params
 
+import storm_control.hal4000.film.filmRequest as filmRequest
 import storm_control.hal4000.halLib.halMessage as halMessage
 import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 import storm_control.hal4000.halLib.halModule as halModule
@@ -19,16 +20,14 @@ class JoystickControl(QtCore.QObject):
     Joystick monitoring class.
     """
     lock_jump = QtCore.pyqtSignal(float)
-    motion = QtCore.pyqtSignal(float, float)
-    step = QtCore.pyqtSignal(int, int)
     toggle_film = QtCore.pyqtSignal()
 
-    def __init__(self, parameters = None, joystick = None, **kwds):
+    def __init__(self, joystick = None, joystick_gains = None, **kwds):
         super().__init__(self, **kwds)
 
         self.button_timer = QtCore.QTimer(self)
         self.joystick = joystick
-        self.joystick_gains = [25.0, 250.0, 2500.0]
+        self.joystick_gains = None   # XML should be [25.0, 250.0, 2500.0]
         self.old_right_joystick = [0, 0]
         self.old_left_joystick = [0, 0]
         self.stage_functionality = None
@@ -103,7 +102,7 @@ class JoystickControl(QtCore.QObject):
         if self.to_emit:
             self.to_emit()
             self.button_timer.start()
-
+            
     def cleanUp(self):
         """
         Shutdown the joystick hardware interface at program closing.
@@ -112,7 +111,15 @@ class JoystickControl(QtCore.QObject):
 
     def getParameters(self):
         return self.parameters
-    
+
+    def handleMotion(self, x_speed, y_speed):
+        if self.stage_functionality is not None:
+            self.stage_functionality.jog(x_speed, y_speed)
+
+    def handleStep(self, x_step, y_step):
+        if self.stage_functionality is not None:
+            self.stage_functionality.goRelative(x_step, y_step)
+
     def hatEvent(self, sx, sy):
         """
         Emit the appropriate XY stage step event based on sx, sy.
@@ -122,39 +129,9 @@ class JoystickControl(QtCore.QObject):
         sy = sy * p.get("hat_step") * p.get("joystick_signy")
 
         if p.get("xy_swap"):
-            self.step.emit(sy, sx)
+            self.handleStep(sy, sx)
         else:
-            self.step.emit(sx,sy)
-
-    def leftJoystickEvent(self, x_speed, y_speed):
-        """
-        Emit the appropriate XY state motion event based on x_speed, y_speed.
-        There is both a fixed gain value, which can be changed between pre-determined
-        defaults specified in the initial parameters XML file by pressing on
-        the left joystick and additional multiplier that can be turned on or off
-        by holding down the "X" button on the joystick.
-        """
-        p = self.parameters
-
-        if(abs(x_speed) > p.get("min_offset")) or (abs(y_speed) > p.get("min_offset")):
-            if (p.get("joystick_mode") == "quadratic"):
-                x_speed = x_speed * x_speed * cmp(x_speed, 0.0)
-                y_speed = y_speed * y_speed * cmp(y_speed, 0.0)
-
-                # x_speed and y_speed range from -1.0 to 1.0.
-                # convert to units of microns per second
-                gain = p.get("multiplier") * self.joystick_gains[p.get("joystick_gain_index")]
-                x_speed = gain * x_speed * p.get("joystick_signx")
-                y_speed = gain * y_speed * p.get("joystick_signy")
-
-                # The stage and the joystick might have different ideas
-                # about which direction is x.
-                if p.get("xy_swap"):
-                    self.motion.emit(y_speed, x_speed)
-                else:
-                    self.motion.emit(x_speed, y_speed)
-        else:
-            self.motion.emit(0.0, 0.0)
+            self.handleStep(sx, sy)
 
     def joystickHandler(self, data):
         """
@@ -183,16 +160,16 @@ class JoystickControl(QtCore.QObject):
             elif(e_type == "right upper trigger") and (e_data == "Press"): # start/stop film
                 self.toggle_film.emit()
             elif(e_type == "back") and (e_data == "Press"): # emergency stage stop
-                self.motion.emit(0.0, 0.0)
+                self.handleMotion(0.0, 0.0)
             elif(e_type == "left joystick press") and (e_data == "Press"): # toggle movement gain
-                p.set("joystick_gain_index", p.get("joystick_gain_index") + 1)
+                p.setv("joystick_gain_index", p.get("joystick_gain_index") + 1)
                 if(p.get("joystick_gain_index") == len(self.joystick_gains)):
-                    p.set("joystick_gain_index", 0)
+                    p.setv("joystick_gain_index", 0)
             elif(e_type == "X"): # engage/disengage movement multiplier
                 if (e_data == "Press"):
-                    p.set("multiplier", p.get("joystick_multiplier_value"))
+                    p.setv("multiplier", p.get("joystick_multiplier_value"))
                 else: # "Release"
-                    p.set("multiplier", 1.0)
+                    p.setv("multiplier", 1.0)
                 # Recall joystick event to reflect changes in gain
                 self.leftJoystickEvent(self.old_left_joystick[0], self.old_left_joystick[1])
 
@@ -211,24 +188,85 @@ class JoystickControl(QtCore.QObject):
                 self.leftJoystickEvent(e_data[0], e_data[1])
                 self.old_left_joystick = e_data # remember joystick state
 
-     def rightJoystickEvent(self, x_speed, y_speed):
-         """
-         The right joystick is not currently used
-         """
-         pass
+    def leftJoystickEvent(self, x_speed, y_speed):
+        """
+        Emit the appropriate XY state motion event based on x_speed, y_speed.
+        There is both a fixed gain value, which can be changed between pre-determined
+        defaults specified in the initial parameters XML file by pressing on
+        the left joystick and additional multiplier that can be turned on or off
+        by holding down the "X" button on the joystick.
+        """
+        p = self.parameters
+
+        if(abs(x_speed) > p.get("min_offset")) or (abs(y_speed) > p.get("min_offset")):
+            if (p.get("joystick_mode") == "quadratic"):
+                x_speed = x_speed * x_speed * cmp(x_speed, 0.0)
+                y_speed = y_speed * y_speed * cmp(y_speed, 0.0)
+
+                # x_speed and y_speed range from -1.0 to 1.0.
+                # convert to units of microns per second
+                gain = p.get("multiplier") * self.joystick_gains[p.get("joystick_gain_index")]
+                x_speed = gain * x_speed * p.get("joystick_signx")
+                y_speed = gain * y_speed * p.get("joystick_signy")
+
+                # The stage and the joystick might have different ideas
+                # about which direction is x.
+                if p.get("xy_swap"):
+                    self.handleMotion(y_speed, x_speed)
+                else:
+                    self.handleMotion(x_speed, y_speed)
+        else:
+            self.handleMotion(0.0, 0.0)
+
+    def newParameter(self, parameters):
+
+        # Only update the mutable parameters. I think this is the right
+        # thing to do, as the user probably won't expect the gain for
+        # example to change to whatever setting was in the parameters
+        # that were stored by settings.settings.
+        #
+        # Or maybe they will? Needs some use testing..
+        #
+        for pname in parameters.getAttrs():
+            prop = parameters.getp(pname)
+            if prop.isMutable():
+                self.parameters.setv(pname, prop.getv())
+    
+    def rightJoystickEvent(self, x_speed, y_speed):
+        """
+        The right joystick is not currently used
+        """
+        pass
+
+    def setStageFunctionality(self, stage_functionality):
+        self.stage_functionality = stage_functionality
 
 
-class Joystick(halModule.HalModule):
+class JoystickModule(halModule.HalModule):
 
     def __init__(self, module_params = None, qt_settings = None, **kwds):
         super().__init__(**kwds)
+        self.filming = False
+        self.waiting_for_film = False
 
-        self.stage_fn_name = module_params.get("configuration.stage_functionality")
-        
-        self.control = joystickControl()
+        configuration = module_params.get("configuration")
+        self.gains = list(map(float, configuration.get("joystick_gains").split(",")))
         
     def cleanUp(self, qt_settings):
         self.control.cleanUp()
+
+    def handleLockJump(self, delta):
+        self.sendMessage(halMessage.HalMessage(m_type = "lock jump",
+                                               data = {"delta" : float(delta)}))
+
+    def handleToggleFilm(self):
+        if not self.waiting_for_film:
+            if self.filming:
+                self.sendMessage(halMessage.HalMessage(m_type = "stop film request"))
+            else:
+                self.sendMessage(halMessage.HalMessage(m_type = "start film request",
+                                                       data = {"request" : filmRequest.FilmRequest()}))
+            self.waiting_for_film = True
 
     def handleResponse(self, message, response):
         if message.isType("get functionality"):
@@ -237,7 +275,7 @@ class Joystick(halModule.HalModule):
     def processMessage(self, message):
 
         if message.isType("configuration"):
-            elif message.sourceIs("stage"):
+            if message.sourceIs("stage"):
                 stage_fn_name = message.getData()["properties"]["stage functionality name"]
                 self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                        data = {"name" : stage_fn_name,
@@ -246,7 +284,14 @@ class Joystick(halModule.HalModule):
         elif message.isType("configure1"):
             self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
                                                    data = {"parameters" : self.control.getParameters()}))
-            
+
+        elif message.isType("film lockout"):
+            # This means that filming has started (True), or stopped (False).
+            self.filming = message.getData()["locked out"]:
+
+            # HAL has responded so we can stop ignoring the film button.
+            self.waiting_for_film = False
+
         elif message.isType("new parameters"):
             p = message.getData()["parameters"]
             message.addResponse(halMessage.HalMessageResponse(source = self.module_name,

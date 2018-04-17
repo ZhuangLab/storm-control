@@ -223,6 +223,12 @@ class FocusLock(halModule.HalModule):
         self.view.lockTarget.connect(self.control.handleLockTarget)
         self.view.modeChanged.connect(self.control.handleModeChanged)
 
+        # This message is usually used by a USB joystick or Bluetooth control to
+        # to request that the piezo stage move.
+        halMessage.addMessage("lock jump",
+                              validator = {"data" : {"delta" : [True, float]},
+                                           "resp" : None})
+        
     def cleanUp(self, qt_settings):
         self.view.cleanUp(qt_settings)
 
@@ -266,6 +272,9 @@ class FocusLock(halModule.HalModule):
             self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
                                                    data = {"name" : self.configuration.get("z_stage"),
                                                            "extra data" : "z_stage"}))
+
+        elif message.isType("lock jump"):
+            self.control.handleJump(message.getData()["delta"])
             
         elif message.isType("new parameters"):
             p = message.getData()["parameters"]
