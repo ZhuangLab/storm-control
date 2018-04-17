@@ -81,10 +81,20 @@ def initializeMessages():
         'close event' : {"data" : None, "resp" : None},
 
         # This message is used to pass configuration information to other
-        # modules. For example, the stage module can tell other modules
-        # what the name of the stage functionality to use is, so that
-        # the other modules can acquire this functionality without the
-        # user having to explicitly specify it.
+        # modules.
+        #
+        # Examples:
+        #
+        #  1. The stage module uses this to tell other modules the name
+        #     of the stage functionality to use is, so that the other
+        #     modules can acquire this functionality without the user
+        #     having to explicitly specify it.
+        #
+        #  2. The timing module uses this message to send other modules
+        #     the timing functionality to use during a film.
+        #
+        #  3. The feeds module uses this message to let the other
+        #     modules know what the current feeds are.
         #
         'configuration' :  {"data" : {"properties" : [True, dict]},
                             "resp" : None},
