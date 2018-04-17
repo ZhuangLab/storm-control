@@ -1,129 +1,122 @@
 #!/usr/bin/python
-#
-## @file
-#
-# Joystick monitoring class.
-#
-# Hazen 09/12
-# Jeff 09/12
+"""
+USB Joystick control class.
 
+Hazen 09/12
+Jeff 09/12
+"""
 from PyQt5 import QtCore
 
-import storm_control.hal4000.halLib.halModule as halModule
 import storm_control.sc_library.parameters as params
 
-# Debugging
-import storm_control.sc_library.hdebug as hdebug
+import storm_control.hal4000.halLib.halMessage as halMessage
+import storm_control.hal4000.halLib.halMessageBox as halMessageBox
+import storm_control.hal4000.halLib.halModule as halModule
 
-## JoystickObject
-#
-# Joystick monitoring class.
-#
-class JoystickObject(QtCore.QObject, halModule.HalModule):
+
+class JoystickControl(QtCore.QObject):
+    """
+    Joystick monitoring class.
+    """
     lock_jump = QtCore.pyqtSignal(float)
     motion = QtCore.pyqtSignal(float, float)
     step = QtCore.pyqtSignal(int, int)
     toggle_film = QtCore.pyqtSignal()
 
-    ## __init__
-    #
-    # @param parameters A parameters object.
-    # @param joystick A hardware specific joystick interface object similar to that defined in logitech\gamepad310.py.
-    # @param parent (Optional) The PyQt parent of this object.
-    #
-    @hdebug.debug
-    def __init__(self, parameters, joystick, parent = None):
-        QtCore.QObject.__init__(self, parent)
-        halModule.HalModule.__init__(self, parent)
+    def __init__(self, parameters = None, joystick = None, **kwds):
+        super().__init__(self, **kwds)
 
         self.button_timer = QtCore.QTimer(self)
-        self.jstick = joystick
+        self.joystick = joystick
+        self.joystick_gains = [25.0, 250.0, 2500.0]
         self.old_right_joystick = [0, 0]
         self.old_left_joystick = [0, 0]
+        self.stage_functionality = None
         self.to_emit = False
 
-        # Add joystick specific parameters.
-        js_params = parameters.addSubSection("joystick")
-        js_params.add("joystick_gain_index", params.ParameterInt("",
-                                                                 "joystick_gain_index",
-                                                                 0,
-                                                                 is_mutable = False,
-                                                                 is_saved = False))
-        js_params.add("multiplier", params.ParameterInt("",
-                                                        "multiplier",
-                                                        1,
-                                                        is_mutable = False,
-                                                        is_saved = False))
-        js_params.add("hat_step", params.ParameterRangeFloat("Step size in um for hat button press",
-                                                             "hat_step",
-                                                             1.0, 0.0, 10.0))
-        js_params.add("joystick_gain", [25.0, 250.0, 2500.0])
-        js_params.add("joystick_multiplier_value", params.ParameterRangeFloat("X button multiplier for joystick and focus lock",
-                                                                              "joystick_multiplier_value",
-                                                                              5.0, 0.0, 50.0))
-        js_params.add("joystick_mode", params.ParameterSetString("Response mode",
-                                                                 "joystick_mode",
-                                                                 "quadratic",
-                                                                 ["linear", "quadratic"]))
-        js_params.add("joystick_signx", params.ParameterSetFloat("Sign for x motion",
-                                                                 "joystick_signx",
-                                                                 1.0, [-1.0, 1.0]))
-        js_params.add("joystick_signy", params.ParameterSetFloat("Sign for y motion",
-                                                                 "joystick_signy",
-                                                                 1.0, [-1.0, 1.0]))
-        js_params.add("lockt_step", params.ParameterRangeFloat("Focus lock step size in um",
-                                                               "lockt_step",
-                                                               0.025, 0.0, 1.0))
-        js_params.add("min_offset", params.ParameterRangeFloat("Minimum joystick offset to be non-zero",
-                                                               "min_offset",
-                                                               0.1, 0.0, 1.0))
-        js_params.add("xy_swap", params.ParameterSetBoolean("Swap x and y axises",
-                                                            "xy_swap",
-                                                            False))
-        self.parameters = js_params
+        # The joystick parameters.
+        self.parameters = params.StormXMLObject()
+        
+        self.parameters.add(params.ParameterInt(name = "joystick_gain_index",
+                                                value = 0,
+                                                is_mutable = False,
+                                                is_saved = False))
+        
+        self.parameters.add(params.ParameterInt(name = "multiplier",
+                                                value = 1,
+                                                is_mutable = False,
+                                                is_saved = False))
+        
+        self.parameters.add(params.ParameterRangeFloat(description = "Step size in um for hat button press",
+                                                       name = "hat_step",
+                                                       value = 1.0,
+                                                       min_value = 0.0,
+                                                       max_value = 10.0))
 
-        self.jstick.start(self.joystickHandler)
+        self.parameters.add(params.ParameterRangeFloat(description = "X button multiplier for joystick and focus lock",
+                                                       name = "joystick_multiplier_value",
+                                                       value = 5.0,
+                                                       min_value = 0.0,
+                                                       max_value = 50.0))
+        
+        self.parameters.add(params.ParameterSetString(description = "Response mode",
+                                                      name = "joystick_mode",
+                                                      value = "quadratic",
+                                                      allowed ["linear", "quadratic"]))
+        
+        self.parameters.add(params.ParameterSetFloat(description = "Sign for x motion",
+                                                     name = "joystick_signx",
+                                                     value = 1.0,
+                                                     allowed = [-1.0, 1.0]))
+
+        self.parameters.add(params.ParameterSetFloat(description = "Sign for y motion",
+                                                     name = "joystick_signy",
+                                                     value = 1.0,
+                                                     allowed = [-1.0, 1.0]))
+
+        self.parameters.add(params.ParameterRangeFloat(description = "Focus lock step size in um",
+                                                       name = "lockt_step",
+                                                       value = 0.025,
+                                                       min_value = 0.0,
+                                                       max_value = 1.0))
+
+        self.parameters.add(params.ParameterRangeFloat(description = "Minimum joystick offset to be non-zero",
+                                                       name = "min_offset",
+                                                       value = 0.1,
+                                                       min_value = 0.0,
+                                                       max_value = 1.0))
+
+        self.parameters.add(params.ParameterSetBoolean(description = "Swap x and y axises",
+                                                       name = "xy_swap",
+                                                       value = False))
+
+        self.joystick.start(self.joystickHandler)
 
         self.button_timer.setInterval(100)
         self.button_timer.setSingleShot(True)
         self.button_timer.timeout.connect(self.buttonDownHandler)
 
-    ## buttonDownHandler
-    #
-    # Not used?
-    #
     def buttonDownHandler(self):
+        """
+        Not used?
+        """
         if self.to_emit:
             self.to_emit()
             self.button_timer.start()
 
-    ## cleanup
-    #
-    # Shutdown the joystick hardware interface at program closing.
-    #
-    @hdebug.debug
-    def cleanup(self):
-        self.jstick.shutDown()
+    def cleanUp(self):
+        """
+        Shutdown the joystick hardware interface at program closing.
+        """
+        self.joystick.shutDown()
 
-    ## getSignals
-    #
-    # @return An array of signals provided by the module.
-    #
-    @hdebug.debug
-    def getSignals(self):
-        return [[self.hal_type, "lockJump", self.lock_jump],
-                [self.hal_type, "jstickMotion", self.motion],
-                [self.hal_type, "stepMove", self.step],
-                [self.hal_type, "toggleFilm", self.toggle_film]]
-
-    ## hatEvent
-    #
-    # Emit the appropriate XY stage step event based on sx, sy.
-    #
-    # @param sx One of -1.0, 0.0, 1.0
-    # @param sy One of -1.0, 0.0, 1.0
-    #
+    def getParameters(self):
+        return self.parameters
+    
     def hatEvent(self, sx, sy):
+        """
+        Emit the appropriate XY stage step event based on sx, sy.
+        """
         p = self.parameters
         sx = sx * p.get("hat_step") * p.get("joystick_signx")
         sy = sy * p.get("hat_step") * p.get("joystick_signy")
@@ -133,26 +126,14 @@ class JoystickObject(QtCore.QObject, halModule.HalModule):
         else:
             self.step.emit(sx,sy)
 
-    ## rightJoystickEvent
-    #
-    # Not used.
-    #
-    def rightJoystickEvent(self, x_speed, y_speed):
-        # the right joystick is not currently used
-        pass
-
-    ## leftJoystickEvent
-    #
-    # Emit the appropriate XY state motion event based on x_speed, y_speed.
-    # There is both a fixed gain value, which can be changed between pre-determined
-    # defaults specified in the initial parameters XML file by pressing on
-    # the left joystick and additional multiplier that can be turned on or off
-    # by holding down the "X" button on the joystick.
-    #
-    # @param x_speed The x displacement value from the joystick.
-    # @param y_speed The y displacement value from the joystick.
-    #
     def leftJoystickEvent(self, x_speed, y_speed):
+        """
+        Emit the appropriate XY state motion event based on x_speed, y_speed.
+        There is both a fixed gain value, which can be changed between pre-determined
+        defaults specified in the initial parameters XML file by pressing on
+        the left joystick and additional multiplier that can be turned on or off
+        by holding down the "X" button on the joystick.
+        """
         p = self.parameters
 
         if(abs(x_speed) > p.get("min_offset")) or (abs(y_speed) > p.get("min_offset")):
@@ -162,7 +143,7 @@ class JoystickObject(QtCore.QObject, halModule.HalModule):
 
                 # x_speed and y_speed range from -1.0 to 1.0.
                 # convert to units of microns per second
-                gain = p.get("multiplier") * p.get("joystick_gain")[p.get("joystick_gain_index")]
+                gain = p.get("multiplier") * self.joystick_gains[p.get("joystick_gain_index")]
                 x_speed = gain * x_speed * p.get("joystick_signx")
                 y_speed = gain * y_speed * p.get("joystick_signy")
 
@@ -175,25 +156,23 @@ class JoystickObject(QtCore.QObject, halModule.HalModule):
         else:
             self.motion.emit(0.0, 0.0)
 
-    ## joystickHandler
-    #
-    # This handles events that are created by the joystick hardware object.
-    # The following events are handled:
-    #  1. "left upper trigger" and "Press" - focus up.
-    #  2. "left lower trigger" and "Press" - focus down.
-    #  3. "right upper trigger" and "Press" - start/stop filming.
-    #  4. "back" and "Press" - emergency stage stop.
-    #  5. "left joystick press" and "Press" - toggle stage motion gain.
-    #  6. "X" and "Press" - add a additional multiplier to the XY stage motion.
-    #  7. "X" and "Release" - return to the default multiplier (1.0) for XY stage motion.
-    #  8. "up", "down", "left", "right" and "Press" - hat events for moving the XY stage.
-    #  9. "left joystick" - XY stage motion driven by the left joystick.
-    #
-    # @param data A python array of joystick events.
-    #
     def joystickHandler(self, data):
+        """
+        This handles events that are created by the joystick hardware object.
+
+        The following events are handled:
+          1. "left upper trigger" and "Press" - focus up.
+          2. "left lower trigger" and "Press" - focus down.
+          3. "right upper trigger" and "Press" - start/stop filming.
+          4. "back" and "Press" - emergency stage stop.
+          5. "left joystick press" and "Press" - toggle stage motion gain.
+          6. "X" and "Press" - add a additional multiplier to the XY stage motion.
+          7. "X" and "Release" - return to the default multiplier (1.0) for XY stage motion.
+          8. "up", "down", "left", "right" and "Press" - hat events for moving the XY stage.
+          9. "left joystick" - XY stage motion driven by the left joystick.
+        """
         p = self.parameters
-        events = self.jstick.dataHandler(data)
+        events = self.joystick.dataHandler(data)
 
         for [e_type, e_data] in events:
             # Buttons
@@ -207,7 +186,7 @@ class JoystickObject(QtCore.QObject, halModule.HalModule):
                 self.motion.emit(0.0, 0.0)
             elif(e_type == "left joystick press") and (e_data == "Press"): # toggle movement gain
                 p.set("joystick_gain_index", p.get("joystick_gain_index") + 1)
-                if(p.get("joystick_gain_index") == len(p.get("joystick_gain"))):
+                if(p.get("joystick_gain_index") == len(self.joystick_gains)):
                     p.set("joystick_gain_index", 0)
             elif(e_type == "X"): # engage/disengage movement multiplier
                 if (e_data == "Press"):
@@ -232,10 +211,58 @@ class JoystickObject(QtCore.QObject, halModule.HalModule):
                 self.leftJoystickEvent(e_data[0], e_data[1])
                 self.old_left_joystick = e_data # remember joystick state
 
+     def rightJoystickEvent(self, x_speed, y_speed):
+         """
+         The right joystick is not currently used
+         """
+         pass
+
+
+class Joystick(halModule.HalModule):
+
+    def __init__(self, module_params = None, qt_settings = None, **kwds):
+        super().__init__(**kwds)
+
+        self.stage_fn_name = module_params.get("configuration.stage_functionality")
+        
+        self.control = joystickControl()
+        
+    def cleanUp(self, qt_settings):
+        self.control.cleanUp()
+
+    def handleResponse(self, message, response):
+        if message.isType("get functionality"):
+            self.control.setStageFunctionality(response.getData()["functionality"])
+            
+    def processMessage(self, message):
+
+        if message.isType("configuration"):
+            elif message.sourceIs("stage"):
+                stage_fn_name = message.getData()["properties"]["stage functionality name"]
+                self.sendMessage(halMessage.HalMessage(m_type = "get functionality",
+                                                       data = {"name" : stage_fn_name,
+                                                               "extra data" : "stage_fn"}))        
+
+        elif message.isType("configure1"):
+            self.sendMessage(halMessage.HalMessage(m_type = "initial parameters",
+                                                   data = {"parameters" : self.control.getParameters()}))
+            
+        elif message.isType("new parameters"):
+            p = message.getData()["parameters"]
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"old parameters" : self.control.getParameters().copy()}))
+            self.control.newParameters(p.get(self.module_name))
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"new parameters" : self.control.getParameters()}))
+
+        elif message.isType("stop film"):
+            message.addResponse(halMessage.HalMessageResponse(source = self.module_name,
+                                                              data = {"parameters" : self.control.getParameters()}))
+
 #
 # The MIT License
 #
-# Copyright (c) 2012 Zhuang Lab, Harvard University
+# Copyright (c) 2018 Babcock Lab, Harvard University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
