@@ -15,7 +15,7 @@ import scipy.io
 import sys
 
 if (len(sys.argv) != 2):
-    print "Usage <mosaic_file>"
+    print("Usage <mosaic_file>")
     exit()
 
 directory = os.path.dirname(sys.argv[1])
@@ -33,9 +33,10 @@ while 1:
     if (data[0] == "image"):
         image_name = data[1]
 
-        print "converting:", image_name
+        print("converting:", image_name)
 
-        image_dict = pickle.load(open(directory + "/" + image_name))
+        with open(os.path.join(directory, image_name), "rb") as fp:
+            image_dict = pickle.load(fp)
 
         mat_dict = {}
         for key in image_dict:
@@ -48,7 +49,7 @@ while 1:
             #print key, str(image_dict[key])
                 mat_dict[key] = str(image_dict[key])
 
-        scipy.io.savemat(directory + "/" + image_name[:-4] + ".mat", mat_dict)
+        scipy.io.savemat(os.path.join(directory, image_name[:-4] + ".mat"), mat_dict)
         
         file_number += 1
 
