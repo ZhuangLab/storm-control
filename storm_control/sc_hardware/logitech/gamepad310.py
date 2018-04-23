@@ -19,11 +19,12 @@ class Gamepad310(object):
     It will also work with a Logitech 510 joystick, but the product name
     will need to changed accordingly ("Rumble Pad2", or something like that).
     """
-    def __init__(self, verbose = False):
+    def __init__(self, verbose = False, **kwds):
         """
         Create the arrays for translating the joystick objects and try and
         find the joystick among the HID devices that are attached to the computer.
         """
+        super().__init__(**kwds)
         
         # initialize internal variables
         self.buttons = [["A", False, 2], #[name, state bit]

@@ -14,8 +14,8 @@ class Gamepad310Module(joystickModule.JoystickModule):
         super().__init__(**kwds)
 
         # Create joystick controller.
-        self.control = joystickControl(joystick = gamepad310.Gamepad310,
-                                       joystick_gains = self.gains)
+        self.control = joystickModule.JoystickControl(joystick = gamepad310.Gamepad310(),
+                                                      joystick_gains = self.gains)
 
         # Connect signals.
         self.control.lock_jump.connect(self.handleLockJump)

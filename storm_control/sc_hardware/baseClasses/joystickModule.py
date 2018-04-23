@@ -15,6 +15,14 @@ import storm_control.hal4000.halLib.halMessageBox as halMessageBox
 import storm_control.hal4000.halLib.halModule as halModule
 
 
+def sign(x):
+    if (x > 0.0):
+        return 1.0
+    elif (x < 0.0):
+        return -1.0
+    else:
+        return 0.0
+
 class JoystickControl(QtCore.QObject):
     """
     Joystick monitoring class.
@@ -23,11 +31,11 @@ class JoystickControl(QtCore.QObject):
     toggle_film = QtCore.pyqtSignal()
 
     def __init__(self, joystick = None, joystick_gains = None, **kwds):
-        super().__init__(self, **kwds)
+        super().__init__(**kwds)
 
         self.button_timer = QtCore.QTimer(self)
         self.joystick = joystick
-        self.joystick_gains = None   # XML should be [25.0, 250.0, 2500.0]
+        self.joystick_gains = joystick_gains   # XML should be [25.0, 250.0, 2500.0]
         self.old_right_joystick = [0, 0]
         self.old_left_joystick = [0, 0]
         self.stage_functionality = None
@@ -61,7 +69,7 @@ class JoystickControl(QtCore.QObject):
         self.parameters.add(params.ParameterSetString(description = "Response mode",
                                                       name = "joystick_mode",
                                                       value = "quadratic",
-                                                      allowed ["linear", "quadratic"]))
+                                                      allowed = ["linear", "quadratic"]))
         
         self.parameters.add(params.ParameterSetFloat(description = "Sign for x motion",
                                                      name = "joystick_signx",
@@ -200,8 +208,8 @@ class JoystickControl(QtCore.QObject):
 
         if(abs(x_speed) > p.get("min_offset")) or (abs(y_speed) > p.get("min_offset")):
             if (p.get("joystick_mode") == "quadratic"):
-                x_speed = x_speed * x_speed * cmp(x_speed, 0.0)
-                y_speed = y_speed * y_speed * cmp(y_speed, 0.0)
+                x_speed = x_speed * x_speed * sign(x_speed)
+                y_speed = y_speed * y_speed * sign(y_speed)
 
                 # x_speed and y_speed range from -1.0 to 1.0.
                 # convert to units of microns per second
@@ -287,7 +295,7 @@ class JoystickModule(halModule.HalModule):
 
         elif message.isType("film lockout"):
             # This means that filming has started (True), or stopped (False).
-            self.filming = message.getData()["locked out"]:
+            self.filming = message.getData()["locked out"]
 
             # HAL has responded so we can stop ignoring the film button.
             self.waiting_for_film = False
