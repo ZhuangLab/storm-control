@@ -34,6 +34,38 @@ class PriorFilterWheelFunctionality(filterWheelModule.FilterWheelFunctionalityBu
         self.current_position = position
 
 
+class PriorStageFunctionality(stageModule.StageFunctionality):
+    """
+    """
+    def __init__(self, update_interval = None, **kwds):
+        super().__init__(**kwds)
+
+        # Each time this timer fires we'll 'query' the stage for it's
+        # current position.
+        self.updateTimer = QtCore.QTimer()
+        self.updateTimer.setInterval(update_interval)
+        self.updateTimer.timeout.connect(self.handleUpdateTimer)
+        self.updateTimer.start()
+
+        # Connect to our own stagePosition signal in order to store
+        # the current position.
+        self.stagePosition.connect(self.handleStagePosition)
+
+    def handleStagePosition(self, pos_dict):
+        self.pos_dict = pos_dict
+
+    def handleUpdateTimer(self):
+        """
+        Query the stage for its current position.
+        """
+        self.mustRun(task = self.stage.position,
+                     ret_signal = self.stagePosition)
+
+    def wait(self):
+        self.updateTimer.stop()
+        super().wait()
+
+
 #
 # Inherit from stageModule.StageModule instead of the base class so we don't
 # have to duplicate most of the stage stuff, particularly the TCP control.
@@ -53,13 +85,16 @@ class PriorController(stageModule.StageModule):
         
         if self.controller.getStatus():
 
-            # Do have an actual XY stage connected?
+            # Do we have an actual XY stage connected?
             if self.controller.hasDevice("stage"):
+
                 # If we do, set the (maximum) stage velocity.
                 velocity = configuration.get("velocity")
-                self.stage.setVelocity(velocity, velocity)
-                #self.stage_functionality = MarzhauserStageFunctionality(stage = self.stage,
-                #                                                        update_interval = 500)
+                self.controller.setVelocity(velocity, velocity)
+
+                self.stage_functionality = PriorStageFunctionality(device_mutex = self.controller_mutex,
+                                                                   stage = self.controller,
+                                                                   update_interval = 500)
 
             # Do we have filter wheel 1?
             if self.controller.hasDevice("filter_1"):
