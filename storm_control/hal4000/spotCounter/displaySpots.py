@@ -198,6 +198,9 @@ class SpotPicture(SpotWidget):
         color = self.colors[frame_number % self.cycle_length]
         if color is None:
             return
+
+        # Add alpha value.
+        color.append(5)
         
         x = numpy.round(self.scale*locs[0])
         y = numpy.round(self.scale*locs[1])
