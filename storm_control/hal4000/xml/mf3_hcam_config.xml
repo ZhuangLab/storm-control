@@ -2,10 +2,10 @@
 <config>
 
   <!-- The starting directory. -->
-  <directory type="directory">F:/Data2/</directory>
+  <directory type="directory">E:/Data/</directory>
   
   <!-- The setup name -->
-  <setup_name type="string">hbaic-hcam</setup_name>
+  <setup_name type="string">mf3-hcam</setup_name>
 
   <!-- The ui type, this is 'classic' or 'detached' -->
   <ui_type type="string">detached</ui_type>
@@ -143,7 +143,9 @@
       </camera>
     </camera1>
 
-    <!-- Crystal Technologies AOTF (Telnet) -->
+    <!-- Crystal Technologies AOTF (Telnet) 
+		AOTF frequencies and amplitudes were measured by Leonardo Sepulveda on 04/05/2018
+	-->
     <ctech_aotf>
       <module_name type="string">storm_control.sc_hardware.crystalTechnologies.aotfModule</module_name>
       <class_name type="string">AOTFTelnet</class_name>
@@ -153,31 +155,31 @@
 	<ip_address type="string">192.168.10.4</ip_address>
 
 	<ch750>
-	  <maximum type="int">8000</maximum>
+	  <maximum type="int">8973</maximum> 
 	  <channel type="int">0</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">75.71</on_frequency>
+	  <on_frequency type="float">76.9700</on_frequency>
 	</ch750>
 
 	<ch647>
-	  <maximum type="int">7400</maximum>
+	  <maximum type="int">7626</maximum>
 	  <channel type="int">1</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">90.16</on_frequency>
+	  <on_frequency type="float">91.6450</on_frequency>
 	</ch647>
 
 	<ch561>
-	  <maximum type="int">6400</maximum>
+	  <maximum type="int">6632</maximum>
 	  <channel type="int">2</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">108.15</on_frequency>
+	  <on_frequency type="float">109.8660</on_frequency>
 	</ch561>
 
 	<ch488>
-	  <maximum type="int">5700</maximum>
+	  <maximum type="int">9349</maximum>
 	  <channel type="int">3</channel>
 	  <off_frequency type="float">20.0</off_frequency>
-	  <on_frequency type="float">130.24</on_frequency>
+	  <on_frequency type="float">132.1240</on_frequency>
 	</ch488>
 
       </configuration>
